@@ -1,0 +1,107 @@
+/* src/pages/CommunityPage/CommunityPage.css */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.38s ease, transform 0.38s ease;
+  will-change: opacity, transform;
+}
+
+.reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  will-change: transform, border-color;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.parallax-img {
+  transition: transform 0.5s ease, filter 0.5s ease;
+  will-change: transform;
+}
+
+.group:hover .parallax-img {
+  transform: scale(1.03) translateY(-2px);
+  filter: saturate(1.02);
+}
+
+.community-shell {
+  color: var(--ink-0);
+  background:
+    linear-gradient(180deg, rgba(243, 239, 230, 0.02) 0%, rgba(243, 239, 230, 0) 30%),
+    linear-gradient(var(--bg-0), var(--bg-0));
+}
+
+.community-heading {
+  font-family: "Space Grotesk", "Manrope", sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.community-rule {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--line-soft) 35%, var(--line-strong) 50%, var(--line-soft) 65%, transparent 100%);
+}
+
+.brutal-border {
+  border: 1.5px solid var(--line-soft);
+}
+
+.brutal-card {
+  border-radius: 6px;
+  background: var(--bg-1);
+}
+
+.brutal-card:hover {
+  border-color: var(--line-strong);
+}
+
+.brutal-label {
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: rgba(243, 239, 230, 0.05);
+  color: var(--ink-0);
+  letter-spacing: 0.08em;
+}
+
+.brutal-cta {
+  border: 1.5px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--ink-0);
+  color: var(--bg-0);
+  transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.brutal-cta:hover {
+  transform: translateY(-2px);
+  background: var(--accent-main);
+  color: var(--ink-0);
+  border-color: var(--accent-main);
+}
+
+.brutal-cta:focus-visible {
+  outline: 2px solid var(--line-strong);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .hover-lift, .parallax-img, .brutal-cta {
+    transition: none;
+    transform: none;
+    animation: none;
+    box-shadow: none;
+    opacity: 1;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

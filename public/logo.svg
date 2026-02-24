@@ -1,0 +1,38 @@
+<svg
+  width="320"
+  height="120"
+  viewBox="0 0 320 120"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Background transparent -->
+
+  <!-- Icon -->
+  <g transform="translate(20,20)">
+    <rect x="0" y="0" width="64" height="12" rx="6" fill="#6D5DF6"/>
+    <rect x="0" y="18" width="48" height="12" rx="6" fill="#9B8CFF"/>
+    <rect x="0" y="36" width="32" height="12" rx="6" fill="#C7BEFF"/>
+  </g>
+
+  <!-- Text -->
+  <text
+    x="110"
+    y="55"
+    font-size="28"
+    font-family="Inter, system-ui, sans-serif"
+    font-weight="600"
+    fill="#1F1F1F"
+  >
+    BookStrata
+  </text>
+
+  <text
+    x="112"
+    y="78"
+    font-size="12"
+    font-family="Inter, system-ui, sans-serif"
+    fill="#6B6B6B"
+    letter-spacing="1"
+  >
+    BOOK RANKING PLATFORM
+  </text>
+</svg>

@@ -1,0 +1,171 @@
+import { memo, useState, useRef, useEffect } from "react";
+import { Palette } from "lucide-react";
+import { TIER_COLORS } from "@/constants/colors";
+import type { Tier } from "@/types";
+import { getTextColorForBackground } from "@/utils/colorUtils";
+
+interface TierLabelProps {
+  tierId: string;
+  title: string;
+  color: string;
+  labelSize?: Tier["labelSize"];
+  onChangeColor: (tierId: string, newColor: string) => void;
+  onRename: (tierId: string, newTitle: string) => void;
+  droppableRef?: React.Ref<HTMLDivElement>;
+}
+
+const sizeClasses: Record<NonNullable<Tier["labelSize"]>, string> = {
+  xs: "text-base",
+  sm: "text-lg",
+  md: "text-xl",
+};
+
+export const TierLabel = memo(({
+  tierId,
+  title,
+  color,
+  labelSize = "sm",
+  onChangeColor,
+  onRename,
+  droppableRef,
+}: TierLabelProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [inputValue, setInputValue] = useState(title);
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsPaletteOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [wrapperRef]);
+
+  const dynamicSizeClass = sizeClasses[labelSize];
+
+  // Разбиваем текст на слова для умного переноса
+  const words = title.split(/\s+/);
+  const isMultiWord = words.length >= 2;
+
+  // Для одного слова - перенос через дефис, для нескольких - разбиваем на строки
+  const renderSmartText = () => {
+    if (isMultiWord) {
+      // Два слова: первое сверху, второе снизу
+      return (
+        <>
+          {words[0]}
+          <br />
+          {words.slice(1).join(" ")}
+        </>
+      );
+    }
+    // Одно слово - обычный вывод (CSS hyphens сделает перенос)
+    return title;
+  };
+
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+    setInputValue(title);
+  };
+
+  const handleBlur = () => {
+    if (inputValue.trim() !== title && inputValue.trim() !== "") {
+      onRename(tierId, inputValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleBlur();
+    }
+    if (e.key === "Escape") {
+      setInputValue(title);
+      setIsEditing(false);
+    }
+  };
+
+  // Фокусируемся на input, когда он появляется
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
+
+  return (
+    <div
+      ref={droppableRef || wrapperRef}
+      style={{ backgroundColor: color }}
+      className="group/label relative flex w-24 shrink-0 items-center justify-center border-r border-cyan-300/35 p-2 md:w-32 wrap-break-word"
+      onDoubleClick={handleDoubleClick}
+    >
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          className={`w-full bg-transparent text-center outline-none ${
+            getTextColorForBackground(color) === "black"
+              ? "text-black"
+              : "text-white"
+          }`}
+          style={{ fontSize: "inherit", fontWeight: "inherit" }}
+        />
+      ) : (
+        <span
+          className={`font-black ${
+            !isMultiWord ? "hyphens-auto" : "wrap-break-word"
+          } ${
+            getTextColorForBackground(color) === "black"
+              ? "text-black"
+              : "text-white"
+          } ${dynamicSizeClass}`}
+          style={!isMultiWord ? { hyphens: "auto" } : {}}
+        >
+          {renderSmartText()}
+        </span>
+      )}
+
+      <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100">
+        <button
+          onClick={() => setIsPaletteOpen(!isPaletteOpen)}
+          className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 bg-[rgba(7,12,27,0.82)] text-cyan-100 transition-colors hover:border-fuchsia-300/65 hover:text-fuchsia-100"
+          title="Изменить цвет"
+        >
+          <Palette size={12} className="text-white" />
+        </button>
+      </div>
+      {isPaletteOpen && (
+        <div className="absolute left-full top-0 z-20 ml-2 flex w-32 flex-wrap gap-1 rounded-[10px] border border-cyan-300/45 bg-[rgba(6,13,30,0.95)] p-2 shadow-[0_12px_28px_rgba(0,0,0,0.55)]">
+          {TIER_COLORS.map((swatchColor) => (
+            <div
+              key={swatchColor}
+              onClick={() => {
+                onChangeColor(tierId, swatchColor);
+                setIsPaletteOpen(false);
+              }}
+              style={{ backgroundColor: swatchColor }}
+              className={`size-5 cursor-pointer rounded ${
+                // Добавляем стилизацию для выбранного цвета
+                color.toLowerCase() === swatchColor.toLowerCase()
+                  ? "ring-2 ring-cyan-200 ring-offset-2 ring-offset-[#060d1e]"
+                  : ""
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+TierLabel.displayName = "TierLabel";

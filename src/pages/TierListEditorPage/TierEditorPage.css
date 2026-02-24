@@ -1,0 +1,77 @@
+.tier-editor-y2k {
+  position: relative;
+  background:
+    radial-gradient(120% 80% at 20% 0%, rgba(0, 255, 255, 0.16) 0%, rgba(0, 255, 255, 0) 45%),
+    radial-gradient(90% 80% at 100% 10%, rgba(255, 0, 204, 0.2) 0%, rgba(255, 0, 204, 0) 50%),
+    linear-gradient(180deg, #120025 0%, #060912 100%);
+}
+
+.tier-editor-y2k::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.06) 1px,
+    transparent 1px
+  );
+  background-size: 100% 3px;
+}
+
+.y2k-panel {
+  border: 1px solid rgba(115, 245, 255, 0.5);
+  border-radius: 14px;
+  background: linear-gradient(
+    145deg,
+    rgba(16, 13, 39, 0.94) 0%,
+    rgba(12, 23, 45, 0.92) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 1px rgba(255, 0, 204, 0.2),
+    0 10px 34px rgba(0, 0, 0, 0.45);
+}
+
+.y2k-btn-primary {
+  border: 1px solid #7df9ff;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #1effd5 0%, #00a8ff 100%);
+  color: #03050b;
+  font-weight: 700;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.y2k-btn-primary:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.08);
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.35);
+}
+
+.y2k-btn-ghost {
+  border: 1px solid rgba(125, 249, 255, 0.45);
+  border-radius: 12px;
+  background: rgba(9, 16, 35, 0.7);
+  color: #d8f9ff;
+  transition: border-color 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.y2k-btn-ghost:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 0, 204, 0.65);
+  color: #ffd6f8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .y2k-btn-primary,
+  .y2k-btn-ghost {
+    transition: none;
+  }
+
+  .y2k-btn-primary:hover,
+  .y2k-btn-ghost:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}

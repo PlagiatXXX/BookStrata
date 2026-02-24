@@ -1,0 +1,1 @@
+export const UNRANKED_AREA_ID = 'unranked-area';

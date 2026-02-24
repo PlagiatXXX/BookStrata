@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   Int        @id @default(autoincrement())
+  email                String     @unique
+  username             String?    @unique
+  avatarUrl            String?    @map("avatar_url")
+  aiAvatarsGenerated   Int        @default(0)  @map("ai_avatars_generated")
+  lastAvatarResetAt    DateTime   @default(now()) @map("last_avatar_reset_at")
+  passwordHash         String     @map("password_hash")
+  tierLists            TierList[]
+  templates            Template[]
+  tierListLikes        TierListLike[]
+  templateLikes        TemplateLike[]
+  createdAt            DateTime   @default(now()) @map("created_at")
+}
+
+model Book {
+  id              Int             @id @default(autoincrement())
+  title           String
+  author          String?
+  coverImageUrl   String          @map("cover_image_url")
+  description     String?
+  thoughts        String?
+  placements      BookPlacement[]
+  createdAt       DateTime        @default(now()) @map("created_at")
+}
+
+model TierList {
+  id          Int             @id @default(autoincrement())
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  title       String
+  year        Int?
+  isTemplate  Boolean         @default(false) @map("is_template")
+  isPublic   Boolean         @default(false) @map("is_public")
+  tiers       Tier[]
+  placements  BookPlacement[]
+  likes       TierListLike[]
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  @@map("tier_lists")
+}
+
+model Tier {
+  id         Int             @id @default(autoincrement())
+  tierList   TierList        @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+  tierListId Int
+  title      String
+  color      String          @default("#808080")
+  rank       Int
+  items      BookPlacement[]
+
+  @@index([tierListId, rank])
+}
+
+model BookPlacement {
+  tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+  tierListId Int
+  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  bookId     Int
+  tier       Tier?    @relation(fields: [tierId], references: [id], onDelete: SetNull)
+  tierId     Int?
+  rank       Int
+
+  @@id([tierListId, bookId])
+  @@index([tierId, rank])
+}
+
+model Template {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  tiers         Json
+  defaultBooks  Json?    @map("default_books")
+  isPublic      Boolean  @default(false) @map("is_public")
+  author        User?    @relation(fields: [authorId], references: [id])
+  authorId      Int?     @map("author_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  likes         TemplateLike[]
+}
+
+// Лайки тир-листов
+model TierListLike {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+  tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+  tierListId Int
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, tierListId])
+  @@index([tierListId])
+}
+
+// Лайки шаблонов
+model TemplateLike {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateId String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, templateId])
+  @@index([templateId])
+}
