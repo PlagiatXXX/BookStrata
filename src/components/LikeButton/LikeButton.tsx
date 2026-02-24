@@ -9,7 +9,7 @@ import {
   apiGetTierListLikes,
   apiGetTemplateLikes,
   type LikesResponse 
-} from '@/lib/authApi';
+} from '@/lib/likesApi';
 
 interface LikeButtonProps {
   id: number | string;

@@ -21,10 +21,10 @@ export const BookViewModal = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl" titleId="book-details-title">
-      <div className="relative flex max-h-[90vh] w-full flex-col gap-5 bg-(--bg-1) p-6 text-(--ink-0)">
+      <div className="relative flex max-h-[90vh] w-full flex-col gap-5 bg-[var(--bg-1)] p-6 text-(--ink-0)">
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 flex size-8 cursor-pointer items-center justify-center rounded-sm border border-(--line-soft) text-(--ink-1) transition-colors hover:border-(--line-strong) hover:text-(--ink-0)"
+          className="absolute right-5 top-5 flex size-8 cursor-pointer items-center justify-center rounded-sm border border-[var(--line-soft)] text-[var(--ink-1)] transition-colors hover:border-[var(--line-strong)] hover:text-[var(--ink-0)]"
           aria-label="Закрыть"
         >
           <X size={16} />

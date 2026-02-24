@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { useTheme } from "@/hooks/useTheme";
 import TemplateLibrary from "@/components/TemplateLibrary/TemplateLibrary";
 import { getPublicTierLists } from "@/lib/api";
-import { apiGetLikedTierListIds } from "@/lib/authApi";
+import { apiGetLikedTierListIds } from "@/lib/likesApi";
 import { Spinner } from "@/components/Spinner";
 import PublicTierListCards from "@/components/TemplateLibrary/PublicTierListCards";
 
