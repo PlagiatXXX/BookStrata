@@ -5,11 +5,9 @@ import { useTemplates } from "@/hooks/useTemplates";
 import TemplateCard from "@/components/TemplateCard/TemplateCard";
 import { Button } from "@/ui/Button";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
-import { useTheme } from "@/hooks/useTheme";
 import { Spinner } from "@/components/Spinner";
 
 const AllTemplatesPage: React.FC = () => {
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const { data: templates, isLoading, isError, refetch } = useTemplates();
 
@@ -22,7 +20,6 @@ const AllTemplatesPage: React.FC = () => {
       <DashboardLayout
         onMyRatingsClick={handleBackClick}
         showTemplatesNav={true}
-        showThemeToggle={true}
         showSearch={false}
         activeItem="Все шаблоны"
       >
@@ -38,7 +35,6 @@ const AllTemplatesPage: React.FC = () => {
       <DashboardLayout
         onMyRatingsClick={handleBackClick}
         showTemplatesNav={true}
-        showThemeToggle={true}
         showSearch={false}
         activeItem="Все шаблоны"
       >
@@ -58,7 +54,6 @@ const AllTemplatesPage: React.FC = () => {
     <DashboardLayout
       onMyRatingsClick={handleBackClick}
       showTemplatesNav={true}
-      showThemeToggle={true}
       showSearch={false}
       activeItem="Все шаблоны"
     >
@@ -78,14 +73,10 @@ const AllTemplatesPage: React.FC = () => {
 
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h1
-                  className={`font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl ${
-                    theme === "light" ? "text-slate-900" : "text-[#f3efe6]"
-                  } mb-2`}
-                >
+                <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl text-[#f3efe6] mb-2">
                   Все шаблоны
                 </h1>
-                <p className={`text-sm ${theme === "light" ? "text-slate-700" : "text-[#b8b1a3]"}`}>
+                <p className="text-sm text-[#b8b1a3]">
                   Выберите шаблон для создания нового тир-листа
                 </p>
               </div>
@@ -103,11 +94,7 @@ const AllTemplatesPage: React.FC = () => {
         <div className="relative px-4 pb-12 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="mb-8">
-              <h2
-                className={`font-display text-2xl font-semibold tracking-tight ${
-                  theme === "light" ? "text-slate-900" : "text-[#f3efe6]"
-                } mb-2`}
-              >
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-[#f3efe6] mb-2">
                 Доступные шаблоны
               </h2>
               <div className="h-0.5 w-20 bg-(--accent-main)"></div>

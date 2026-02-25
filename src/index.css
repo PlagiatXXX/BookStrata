@@ -1,5 +1,22 @@
 @import "tailwindcss"
 
+/* === COMMUNITY PAGE DESIGN TOKENS === */
+:root {
+  /* Colors - Warm brutalist palette */
+  --ink-0: #f3efe6;        /* Primary text */
+  --ink-1: #b8b1a3;        /* Secondary text */
+  --bg-0: #0a0a0a;         /* Main background */
+  --bg-1: #121212;         /* Card background */
+  --line-soft: #3a3a3a;    /* Soft border */
+  --line-strong: #5a5a5a;  /* Strong border */
+  --accent-main: #d94f2b;  /* Primary accent (burnt orange) */
+  --accent-secondary: #2f6b5f;  /* Secondary accent (teal) */
+  
+  /* Typography */
+  --font-display: "Space Grotesk", "Manrope", system-ui, sans-serif;
+}
+
+/* Global styles */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

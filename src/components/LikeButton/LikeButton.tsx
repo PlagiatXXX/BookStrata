@@ -90,22 +90,9 @@ export function LikeButton({
       }
 
       // Также обновляем кэш publicTierLists напрямую
-      const publicCache = queryClient.getQueryData<{ data: Array<{ id: number | string; likesCount: number }> }>(['publicTierLists']);
-      if (publicCache) {
-        const newPublicData = {
-          ...publicCache,
-          data: publicCache.data.map((item) => {
-            if (item.id === id) {
-              return { ...item, likesCount: response.likesCount };
-            }
-            return item;
-          }),
-        };
-        queryClient.setQueryData(['publicTierLists'], newPublicData);
-      }
-
       // Инвалидируем для синхронизации с сервером
       queryClient.invalidateQueries({ queryKey: ['publicTierLists'] });
+      queryClient.invalidateQueries({ queryKey: ['publicTierListsSorted'] });
       queryClient.invalidateQueries({ queryKey: ['likedTierListIds'] });
       queryClient.invalidateQueries({ queryKey: ['tierListLikes'] });
     } catch (error) {

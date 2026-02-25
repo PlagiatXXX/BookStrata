@@ -17,8 +17,6 @@ interface BookEditModalProps {
       thoughts?: string;
     },
   ) => void;
-  _tierListId?: string;
-  _onCoverUpload?: (bookId: string, coverImageUrl: string) => void;
 }
 
 export const BookEditModal = ({
@@ -26,8 +24,6 @@ export const BookEditModal = ({
   onClose,
   book,
   onSave,
-  _tierListId,
-  _onCoverUpload,
 }: BookEditModalProps) => {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");

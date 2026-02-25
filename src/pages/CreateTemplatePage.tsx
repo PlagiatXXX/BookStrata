@@ -3,13 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Home } from "lucide-react";
 import { sileo } from 'sileo';
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
-import { useTheme } from "@/hooks/useTheme";
 import TemplateBuilder from "../components/TemplateBuilder/TemplateBuilder";
 import { useCreateTemplate } from "../hooks/useTemplates";
 import type { CreateTemplateData, UpdateTemplateData } from "../types/templates";
 
 const CreateTemplatePage: React.FC = () => {
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const { mutateAsync: createTemplate } = useCreateTemplate();
   const location = useLocation();
@@ -52,7 +50,6 @@ const CreateTemplatePage: React.FC = () => {
     <DashboardLayout
       onMyRatingsClick={handleMyRatingsClick}
       showTemplatesNav={false}
-      showThemeToggle={false}
       showSearch={false}
     >
       <main className="relative flex-1 overflow-y-auto min-h-screen bg-[url('/templates.webp')] bg-cover bg-center">
@@ -78,14 +75,10 @@ const CreateTemplatePage: React.FC = () => {
               </button>
             </div>
 
-            <h1
-              className={`font-display text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl ${
-                theme === "light" ? "text-slate-900" : "text-[#f3efe6]"
-              } mb-1`}
-            >
+            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl text-[#f3efe6] mb-1">
               Создание шаблона
             </h1>
-            <p className={`text-sm ${theme === "light" ? "text-slate-700" : "text-[#b8b1a3]"}`}>
+            <p className="text-sm text-[#b8b1a3]">
               Создайте шаблон для быстрого использования рейтингов tier-списков
             </p>
           </div>

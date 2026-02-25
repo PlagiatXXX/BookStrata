@@ -153,7 +153,7 @@ export const useAutoSaveOptimized = ({
         });
       }
     }
-  }, [listId, enabled, getSavePayload, saveFunction]);
+  }, [listId, enabled, getSavePayload, saveFunction, skipNewBooks]);
 
   // Debounce эффект
   useEffect(() => {

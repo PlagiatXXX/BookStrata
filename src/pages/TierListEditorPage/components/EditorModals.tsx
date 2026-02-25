@@ -67,7 +67,6 @@ interface EditorModalsProps {
     author: string | null;
     coverImageUrl: string;
   } | null) => void;
-  onCoverUpload?: (bookId: string, coverImageUrl: string) => void;
   isUpdatingBook: boolean;
   isSavingBeforeLeave: boolean;
 }
@@ -99,7 +98,6 @@ export const EditorModals = ({
   onSaveAndLeave,
   onSaveBook,
   onBookAdded,
-  onCoverUpload,
   isUpdatingBook,
   isSavingBeforeLeave,
 }: EditorModalsProps) => {
@@ -145,8 +143,6 @@ export const EditorModals = ({
         onClose={onCloseEditBook}
         book={bookToEdit}
         onSave={onSaveBook}
-        _tierListId={tierListId}
-        _onCoverUpload={onCoverUpload}
       />
 
       <BookViewModal

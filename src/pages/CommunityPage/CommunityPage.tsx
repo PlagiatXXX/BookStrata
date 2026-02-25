@@ -65,7 +65,6 @@ export default function CommunityPage() {
     <DashboardLayout
       onMyRatingsClick={() => navigate('/')}
       showTemplatesNav={true}
-      showThemeToggle={false}
       showSearch={false}
       activeItem="Новости"
     >

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getInitials } from './presets';
+import { getInitials, getInitialsColor } from './presets';
 import { logger } from '@/lib/logger';
 
 interface AvatarProps {
@@ -19,6 +19,7 @@ const sizeClasses = {
 
 export function Avatar({ url, username, size = 'md', className = '' }: AvatarProps) {
   const initials = getInitials(username);
+  const initialsColor = getInitialsColor(username);
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -40,7 +41,7 @@ export function Avatar({ url, username, size = 'md', className = '' }: AvatarPro
   if (!url || hasError) {
     return (
       <div
-        className={`${sizeClasses[size]} rounded-full bg-linear-to-br from-violet-500/30 to-fuchsia-500/30 flex items-center justify-center font-bold text-white shadow-inner ${className}`}
+        className={`${sizeClasses[size]} rounded-full bg-linear-to-br ${initialsColor} flex items-center justify-center font-bold text-white shadow-inner ${className}`}
       >
         {initials}
       </div>

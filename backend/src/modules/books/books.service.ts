@@ -1,5 +1,4 @@
 // backend/src/modules/books/books.service.ts
-import { prisma } from '../../lib/prisma.js';
 
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';

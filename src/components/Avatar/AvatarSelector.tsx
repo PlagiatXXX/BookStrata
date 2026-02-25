@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { Spinner } from "@/components/Spinner";
 import { Avatar } from "./Avatar";
-import { presetCategories, allPresets } from "./presets";
+import { presetCategories, allPresets, getInitials } from "./presets";
+import type { PresetStyle } from "./presets";
 import { getAuthToken } from "@/lib/authApi";
 
 interface AvatarSelectorProps {
@@ -45,8 +46,7 @@ export function AvatarSelector({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isWaitingForResult, setIsWaitingForResult] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeCategory, setActiveCategory] =
-    useState<keyof typeof presetCategories>("cartoon");
+  const [activeCategory, setActiveCategory] = useState<PresetStyle>("cartoon");
   const [error, setError] = useState<string | null>(null);
   const [limitInfo, setLimitInfo] = useState<LimitInfo | null>(null);
   const [generationBaseAvatar, setGenerationBaseAvatar] = useState<
@@ -151,6 +151,7 @@ export function AvatarSelector({
 
   const handlePresetSelect = (preset: (typeof allPresets)[0]) => {
     setPreviewUrl(preset.full);
+    setPreviewLoadState('ready');
     setError(null);
   };
 
@@ -285,9 +286,7 @@ export function AvatarSelector({
                 {Object.entries(presetCategories).map(([key, category]) => (
                   <button
                     key={key}
-                    onClick={() =>
-                      setActiveCategory(key as keyof typeof presetCategories)
-                    }
+                    onClick={() => setActiveCategory(key as PresetStyle)}
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                       activeCategory === key
                         ? "bg-primary text-white"
@@ -299,7 +298,7 @@ export function AvatarSelector({
                 ))}
               </div>
 
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                 {presetCategories[activeCategory].presets.map((preset) => (
                   <button
                     key={preset.id}
@@ -311,9 +310,23 @@ export function AvatarSelector({
                     }`}
                   >
                     <img
-                      src={preset.thumbnail}
-                      alt={preset.seed}
+                      src={preset.full}
+                      alt={preset.name}
                       className="w-full h-full object-cover"
+                      onLoad={() => setPreviewLoadState('ready')}
+                      onError={(e) => {
+                        // Fallback: если картинка не загрузилась, показываем инициалы
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent && !parent.querySelector('.avatar-fallback')) {
+                          parent.classList.add('flex', 'items-center', 'justify-center', 'bg-surface-light', 'dark:bg-[#2d2d44]');
+                          const fallback = document.createElement('span');
+                          fallback.className = 'avatar-fallback text-xs font-bold text-gray-400';
+                          fallback.textContent = getInitials(preset.name);
+                          parent.appendChild(fallback);
+                        }
+                      }}
                     />
                     {previewUrl === preset.full && (
                       <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">

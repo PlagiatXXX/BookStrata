@@ -12,10 +12,21 @@ import type {
  * Преобразует API-шаблон в тип Template
  */
 export function transformApiTemplateToState(apiTemplate: any) {
+  const previewImageUrl =
+    apiTemplate.previewImageUrl ||
+    apiTemplate.preview_image_url ||
+    apiTemplate.coverImageUrl ||
+    apiTemplate.defaultBooks?.[0]?.coverImageUrl ||
+    apiTemplate.defaultBooks?.[0]?.cover_image_url;
+
   return {
     id: String(apiTemplate.id),
     title: apiTemplate.title,
     description: apiTemplate.description,
+    previewImageUrl,
+    category: apiTemplate.category || undefined,
+    isArchived: Boolean(apiTemplate.isArchived),
+    isFavorite: Boolean(apiTemplate.isFavorite),
     tiers: apiTemplate.tiers.map(transformApiTierTemplateToState),
     defaultBooks: apiTemplate.defaultBooks?.map(transformApiBookToState),
     isPublic: apiTemplate.isPublic,

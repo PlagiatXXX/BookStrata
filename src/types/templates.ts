@@ -21,6 +21,10 @@ export interface Template {
   id: string;
   title: string;
   description?: string;
+  previewImageUrl?: string;
+  category?: string;
+  isArchived?: boolean;
+  isFavorite?: boolean;
   tiers: TierTemplate[];
   defaultBooks?: BookTemplate[];
   isPublic: boolean;

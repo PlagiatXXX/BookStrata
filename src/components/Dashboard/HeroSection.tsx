@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/ui/Button";
 import { useAuth } from "@/hooks/useAuthContext";
-import { useTheme } from "@/hooks/useTheme";
 import { useUser } from "@/hooks/useUser";
 import { Avatar } from "@/components/Avatar";
 
@@ -15,7 +14,6 @@ interface HeroSectionProps {
 export const HeroSection = memo(({ onCreateClick, onLogout }: HeroSectionProps) => {
   const { user: authUser, refreshUser } = useAuth();
   const { user } = useUser();
-  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const username = authUser?.username || user?.username;
@@ -38,18 +36,10 @@ export const HeroSection = memo(({ onCreateClick, onLogout }: HeroSectionProps) 
       <div className="mx-auto max-w-6xl">
         <div className="mb-10 flex flex-wrap items-start justify-between gap-4 md:items-center">
           <div className="min-w-72 flex-1">
-            <h1
-              className={`mb-4 font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-6xl ${
-                theme === "light" ? "text-slate-900" : "text-[#f3efe6]"
-              }`}
-            >
+            <h1 className="mb-4 font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-6xl text-[#f3efe6]">
               Мои рейтинги
             </h1>
-            <p
-              className={`mb-2 flex items-center gap-2 text-lg ${
-                theme === "light" ? "text-slate-700" : "text-[#b8b1a3]"
-              }`}
-            >
+            <p className="mb-2 flex items-center gap-2 text-lg text-[#b8b1a3]">
               <span>Привет,</span>
               <button
                 onClick={() => navigate("/profile")}
@@ -61,13 +51,7 @@ export const HeroSection = memo(({ onCreateClick, onLogout }: HeroSectionProps) 
                   size="md"
                   className="ring-2 ring-(--accent-main)/40"
                 />
-                <span
-                  className={`font-display text-base font-semibold tracking-[0.01em] transition-colors ${
-                    theme === "light"
-                      ? "text-(--accent-main) group-hover:text-[#b64224]"
-                      : "text-(--accent-main) group-hover:text-[#f17a54]"
-                  }`}
-                >
+                <span className="font-display text-base font-semibold tracking-[0.01em] transition-colors text-(--accent-main) group-hover:text-[#f17a54]">
                   {username}
                 </span>
               </button>
@@ -79,7 +63,7 @@ export const HeroSection = memo(({ onCreateClick, onLogout }: HeroSectionProps) 
                 Выйти
               </button>
             </p>
-            <p className={`text-sm ${theme === "light" ? "text-slate-600" : "text-[#b8b1a3]"}`}>
+            <p className="text-sm text-[#b8b1a3]">
               Управляйте и организуйте ваши рейтинги в одном месте
             </p>
           </div>

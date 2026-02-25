@@ -1,16 +1,19 @@
 import { memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import type { TierListShort } from '@/lib/tierListApi';
+import { LikeButton } from "@/components/LikeButton";
 
 interface PublicTierListCardsProps {
   tierLists: TierListShort[];
   likedIdsSet: Set<number>;
+  currentUserId?: number;
 }
 
 const PublicTierListCards = memo(function PublicTierListCards({
   tierLists,
   likedIdsSet,
+  currentUserId,
 }: PublicTierListCardsProps) {
   const navigate = useNavigate();
 
@@ -31,18 +34,19 @@ const PublicTierListCards = memo(function PublicTierListCards({
           </h3>
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-[#b8b1a3] truncate">
-              {tierList.user?.username || "Unknown"}
+              {tierList.user?.username || "Неизвестный автор"}
             </span>
             <div className="flex items-center gap-2">
-              <div
-                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs border ${
-                  likedIdsSet.has(tierList.id)
-                    ? "bg-pink-500/20 text-pink-300 border-pink-400/40"
-                    : "bg-white/10 text-[#b8b1a3] border-white/20"
-                }`}
-              >
-                <Heart size={12} className={`${likedIdsSet.has(tierList.id) ? "fill-current" : ""}`} />
-                <span className="font-medium">{tierList.likesCount || 0}</span>
+              <div onClick={(e) => e.stopPropagation()}>
+                <LikeButton
+                  id={tierList.id}
+                  type="tierlist"
+                  initialLikes={tierList.likesCount || 0}
+                  initialLiked={likedIdsSet.has(tierList.id)}
+                  authorId={tierList.user?.id}
+                  currentUserId={currentUserId}
+                  size="sm"
+                />
               </div>
             </div>
           </div>

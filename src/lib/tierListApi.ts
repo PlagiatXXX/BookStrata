@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { TierListData } from '@/types';
 import type { ApiTierListResponse, ApiBookPlacement } from '@/types/api';
 import { apiClient, buildUrl } from './api-client';
@@ -402,7 +403,7 @@ export async function saveTierListOptimized(
 
   // Формируем placements для отправки
   // Если есть новые книги, нужно добавить их placements с реальными ID
-  let placementsToSend = payload.placements || [];
+  const placementsToSend = payload.placements || [];
 
   if (payload.newBooks && payload.newBooks.length > 0 && listData) {
     // Добавляем placements для новых книг

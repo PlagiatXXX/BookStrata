@@ -81,7 +81,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: 'object',
           required: ['avatarUrl'],
           properties: {
-            avatarUrl: { type: 'string', format: 'uri' },
+            avatarUrl: { type: 'string' },
           },
         },
       },

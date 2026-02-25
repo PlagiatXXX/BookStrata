@@ -7,7 +7,6 @@ interface DashboardLayoutProps {
   onSearch?: (query: string) => void;
   searchValue?: string;
   showTemplatesNav?: boolean;
-  showThemeToggle?: boolean;
   showSearch?: boolean;
   activeItem?: string;
 }
@@ -18,18 +17,16 @@ export function DashboardLayout({
   onSearch,
   searchValue,
   showTemplatesNav = true,
-  showThemeToggle = true,
   showSearch = true,
   activeItem,
 }: DashboardLayoutProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-background-light text-slate-900 light:bg-background-light dark:bg-background-dark dark:text-white">
+    <div className="flex min-h-screen flex-col bg-background-dark text-white">
       <Header
         onMyRatingsClick={onMyRatingsClick}
         onSearch={onSearch}
         searchValue={searchValue}
         showTemplatesNav={showTemplatesNav}
-        showThemeToggle={showThemeToggle}
         showSearch={showSearch}
         activeItem={activeItem}
       />

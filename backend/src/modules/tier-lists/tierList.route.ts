@@ -9,7 +9,6 @@ import type { GetTierListsQuery, CreateTierListBody } from './tierList.schema.js
 import { like, unlike, getLikesWithStatus, getLikedTierListIds } from './likes/likes.service.js';
 import { uploadBase64, uploadFromUrl } from '../../lib/cloudinary.js';
 import { addBooksToTierList } from './tierList.service.js';
-import { updateBookCover } from './tierList.service.js';
 
 // Опциональный middleware - проверяет токен если есть, но не требует
 async function optionalAuthMiddleware(request: FastifyRequest) {
@@ -297,7 +296,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         const uploadResult = await uploadBase64(coverImageUrl, 'tiermaker-pro/book-covers');
 
         // Обновляем обложку в базе данных
-        const updatedBook = await service.updateBookCover(bookId, uploadResult.url);
+        await service.updateBookCover(bookId, uploadResult.url);
 
         fastify.log.info({ bookId, coverUrl: uploadResult.url }, 'Book cover updated');
         return reply.code(200).send({ coverImageUrl: uploadResult.url });
