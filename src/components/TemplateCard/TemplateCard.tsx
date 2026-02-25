@@ -140,7 +140,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           id={template.id}
           type="template"
           initialLikes={template.likesCount || 0}
-          authorId={template.authorId || undefined}
+          authorId={template.authorId ? parseInt(template.authorId, 10) : undefined}
           currentUserId={currentUserId}
           size="sm"
         />

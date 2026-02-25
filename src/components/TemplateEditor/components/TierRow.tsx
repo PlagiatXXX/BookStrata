@@ -10,9 +10,9 @@ interface SortableTierRowProps {
   nameError?: string;
   colorError?: string;
   canDelete: boolean;
-  onUpdateTier: (tierId: string, patch: Partial<TierTemplate>) => void;
-  onDuplicate: (tierId: string) => void;
-  onDelete: (tierId: string) => void;
+  onUpdateTier: (index: number, patch: Partial<TierTemplate>) => void;
+  onDuplicate: (index: number) => void;
+  onDelete: (index: number) => void;
 }
 
 export function TierRow({
@@ -32,6 +32,9 @@ export function TierRow({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
+  // Находим индекс тира
+  const tierIndex = tier.order;
 
   return (
     <div
@@ -55,7 +58,7 @@ export function TierRow({
           <Input
             value={tier.name}
             maxLength={24}
-            onChange={(event) => onUpdateTier(tier.id, { name: event.target.value })}
+            onChange={(event) => onUpdateTier(tierIndex, { name: event.target.value })}
             placeholder="Например, S"
           />
           {nameError && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
@@ -67,12 +70,12 @@ export function TierRow({
             <input
               type="color"
               value={tier.color}
-              onChange={(event) => onUpdateTier(tier.id, { color: event.target.value })}
+              onChange={(event) => onUpdateTier(tierIndex, { color: event.target.value })}
               className="h-10 w-14 rounded-md border border-white/25 bg-transparent"
             />
             <Input
               value={tier.color}
-              onChange={(event) => onUpdateTier(tier.id, { color: event.target.value })}
+              onChange={(event) => onUpdateTier(tierIndex, { color: event.target.value })}
               placeholder="#RRGGBB"
             />
           </div>
@@ -84,7 +87,7 @@ export function TierRow({
             type="button"
             variant="outline"
             className="flex-1"
-            onClick={() => onDuplicate(tier.id)}
+            onClick={() => onDuplicate(tierIndex)}
           >
             <Copy size={14} />
             Дублировать
@@ -93,7 +96,7 @@ export function TierRow({
             type="button"
             variant="destructive"
             className="flex-1"
-            onClick={() => onDelete(tier.id)}
+            onClick={() => onDelete(tierIndex)}
             disabled={!canDelete}
           >
             <Trash2 size={14} />

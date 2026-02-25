@@ -1,4 +1,4 @@
-import { Icon } from "@/ui/Icon"
+import { BarChart3, Eye } from "lucide-react"
 import { Button } from "@/ui/Button"
 
 export function AppHeader() {
@@ -7,7 +7,7 @@ export function AppHeader() {
       <div className="flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-3">
           <div className="size-8 rounded-lg bg-primary flex items-center justify-center">
-            <Icon name="leaderboard" className="text-white text-lg" />
+            <BarChart3 className="text-white text-lg" />
           </div>
           <h1 className="text-lg font-bold tracking-tight text-white">
             Premium Tier
@@ -31,7 +31,7 @@ export function AppHeader() {
 
         <div className="flex items-center gap-3">
           <Button className="hidden md:inline-flex">
-            <Icon name="visibility" className="text-lg" />
+            <Eye className="text-lg" />
             Preview
           </Button>
 

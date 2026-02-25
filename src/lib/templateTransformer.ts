@@ -59,7 +59,7 @@ function transformApiTierTemplateToState(apiTier: any): TierTemplate {
  */
 function transformStateTierTemplateToApi(stateTier: TierTemplate): ApiTierTemplate {
   return {
-    id: stateTier.id,
+    id: Number(stateTier.id),
     name: stateTier.name,
     color: stateTier.color,
     order: stateTier.order,

@@ -145,8 +145,8 @@ export const EditorModals = ({
         onClose={onCloseEditBook}
         book={bookToEdit}
         onSave={onSaveBook}
-        tierListId={tierListId}
-        onCoverUpload={onCoverUpload}
+        _tierListId={tierListId}
+        _onCoverUpload={onCoverUpload}
       />
 
       <BookViewModal

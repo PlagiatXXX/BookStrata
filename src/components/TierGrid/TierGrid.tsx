@@ -26,13 +26,13 @@ export const TierGrid = memo(
       listData,
       activeTierId,
       onAddRow,
-      onChangeTierColor,
-      onRenameTier,
-      onDeleteTier,
-      onDeleteBook,
+      onChangeTierColor = () => {},
+      onRenameTier = () => {},
+      onDeleteTier = () => {},
+      onDeleteBook = () => {},
       onEditBook,
       onViewBook,
-      onSetActiveTier,
+      onSetActiveTier = () => {},
     } = props;
     const { tiers, tierOrder, books } = listData;
 

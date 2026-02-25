@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Users, Folder, X, Menu, Moon, Sun, User } from "lucide-react";
+import { List, Users, Folder, X, Menu, Moon, Sun } from "lucide-react";
 
 interface NavItem {
   label: string;

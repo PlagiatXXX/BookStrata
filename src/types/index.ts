@@ -27,6 +27,9 @@ export interface TierListData {
   isPublic?: boolean;
 }
 
+// Экспорт типов из tier.ts
+export type { TierItem, TierRow, TierState } from './tier';
+
 // Импортируем и экспортируем типы из templates.ts
 import type {
   Template,

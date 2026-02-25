@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext.tsx";
 import { Spinner } from "@/components/Spinner";
 
 function AppShell() {

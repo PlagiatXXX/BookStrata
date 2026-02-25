@@ -15,14 +15,14 @@ import type { TierTemplate } from '@/types/templates';
 
 interface TiersStepProps {
   tiers: TierTemplate[];
-  tierNameErrors: Record<string, string>;
-  tierColorErrors: Record<string, string>;
+  tierNameErrors: (string | undefined)[];
+  tierColorErrors: (string | undefined)[];
   tiersError?: string;
   onAddTier: () => void;
   onResetToPreset: () => void;
-  onUpdateTier: (tierId: string, patch: Partial<TierTemplate>) => void;
-  onDuplicateTier: (tierId: string) => void;
-  onRemoveTier: (tierId: string) => void;
+  onUpdateTier: (index: number, patch: Partial<TierTemplate>) => void;
+  onDuplicateTier: (index: number) => void;
+  onRemoveTier: (index: number) => void;
   onMoveTier: (oldIndex: number, newIndex: number) => void;
 }
 
@@ -70,12 +70,12 @@ export function TiersStep({
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={tierIds} strategy={rectSortingStrategy}>
           <div className="space-y-3">
-            {tiers.map((tier) => (
+            {tiers.map((tier, index) => (
               <TierRow
                 key={tier.id}
                 tier={tier}
-                nameError={tierNameErrors[tier.id]}
-                colorError={tierColorErrors[tier.id]}
+                nameError={tierNameErrors[index] ?? undefined}
+                colorError={tierColorErrors[index] ?? undefined}
                 canDelete={tiers.length > 1}
                 onUpdateTier={onUpdateTier}
                 onDuplicate={onDuplicateTier}

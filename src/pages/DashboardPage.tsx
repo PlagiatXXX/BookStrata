@@ -1,6 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import {
+  PlusCircle,
+  RefreshCw,
+  SearchX,
+  AlertCircle,
+  List,
+  Edit2,
+  Clock,
+  Globe,
+  Lock,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { Button } from "@/ui/Button";
 import { Modal } from "@/ui/Modal";
@@ -218,9 +232,7 @@ export function DashboardPage() {
                 onClick={() => setIsCreateModalOpen(true)}
                 className="px-8 py-4 text-lg"
               >
-                <span className="material-symbols-outlined mr-2 align-middle">
-                  add_circle
-                </span>
+                <PlusCircle className="mr-2 inline align-middle" size={20} />
                 Создать новый тир-лист
               </Button>
 
@@ -250,18 +262,14 @@ export function DashboardPage() {
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <div className="text-gray-400 text-lg">
-                  <span className="material-symbols-outlined inline-block animate-spin mr-3">
-                    refresh
-                  </span>
+                  <RefreshCw className="mr-2 inline animate-spin" size={20} />
                   Загрузка тир-листов...
                 </div>
               </div>
             ) : searchQuery && filteredTierLists.length === 0 ? (
               <div className="text-center py-20">
                 <div className="mb-6">
-                  <span className="material-symbols-outlined text-7xl text-gray-500 dark:text-gray-500 light:text-gray-400 inline-block">
-                    search_off
-                  </span>
+                  <SearchX size={64} className="text-gray-500 inline-block" />
                 </div>
                 <p
                   className={`text-xl ${
@@ -292,9 +300,7 @@ export function DashboardPage() {
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                   <div className="mb-6">
-                    <span className="material-symbols-outlined text-7xl text-red-500 inline-block">
-                      error_outline
-                    </span>
+                    <AlertCircle size={64} className="text-red-500 inline-block" />
                   </div>
                   <p className="text-xl text-red-400 mb-2">
                     Ошибка загрузки тир-листов
@@ -315,7 +321,7 @@ export function DashboardPage() {
                     onClick={() => refetch()}
                     className="inline-flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined">refresh</span>
+                    <RefreshCw size={18} />
                     Попробовать снова
                   </Button>
                 </div>
@@ -323,15 +329,7 @@ export function DashboardPage() {
             ) : tierLists.length === 0 ? (
               <div className="text-center py-20">
                 <div className="mb-6">
-                  <span
-                    className={`material-symbols-outlined text-7xl ${
-                      theme === "light"
-                        ? "text-gray-400 dark:text-gray-500"
-                        : "text-gray-500"
-                    } inline-block`}
-                  >
-                    list_alt
-                  </span>
+                  <List size={64} className="text-gray-500 inline-block" />
                 </div>
                 <p
                   className={`text-xl ${
@@ -361,7 +359,7 @@ export function DashboardPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {tierLists.map((tierList: TierListShort) => {
-                  const createdDate = new Date(tierList.created_at);
+                  const createdDate = new Date(tierList.createdAt);
                   const isNew =
                     new Date().getTime() - createdDate.getTime() <
                     24 * 60 * 60 * 1000;
@@ -383,9 +381,7 @@ export function DashboardPage() {
                         className="absolute top-2 right-2 z-20 p-1 rounded bg-transparent hover:bg-cyan-500/50 text-gray-300 hover:text-white transition-all md:opacity-0 md:group-hover:opacity-100 opacity-100 cursor-pointer border-gray-500/30 hover:border-cyan-400/30"
                         title="Переименовать"
                       >
-                        <span className="material-symbols-outlined text-base">
-                          edit
-                        </span>
+                        <Edit2 size={16} />
                       </button>
 
                       {/* Content */}
@@ -405,9 +401,7 @@ export function DashboardPage() {
                         </div>
 
                         <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-400 light:text-gray-600 light:dark:text-gray-300 mb-4">
-                          <span className="material-symbols-outlined text-base">
-                            schedule
-                          </span>
+                          <Clock size={16} />
                           <span>
                             {createdDate.toLocaleDateString("ru-RU", {
                               year: "numeric",
@@ -419,19 +413,15 @@ export function DashboardPage() {
 
                         {/* Tags */}
                         <div className="flex gap-2 flex-wrap">
-                          {tierList.is_public && (
+                          {tierList.isPublic && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/20 text-blue-300 dark:text-blue-300 light:text-blue-600 light:dark:text-blue-400 text-xs font-medium rounded-full border border-blue-400/30">
-                              <span className="material-symbols-outlined text-sm">
-                                public
-                              </span>
+                              <Globe size={14} />
                               Публичный
                             </span>
                           )}
-                          {!tierList.is_public && (
+                          {!tierList.isPublic && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-500/20 text-gray-300 dark:text-gray-300 light:text-gray-600 light:dark:text-gray-300 text-xs font-medium rounded-full border border-gray-400/30">
-                              <span className="material-symbols-outlined text-sm">
-                                lock
-                              </span>
+                              <Lock size={14} />
                               Приватный
                             </span>
                           )}
@@ -464,9 +454,7 @@ export function DashboardPage() {
                   disabled={currentPage === 1}
                   className="px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-linear-to-r from-cyan-500/20 to-purple-600/20 hover:from-cyan-500/40 hover:to-purple-600/40 text-cyan-300 hover:text-cyan-200 disabled:hover:from-cyan-500/20 disabled:hover:to-purple-600/20"
                 >
-                  <span className="material-symbols-outlined inline-block mr-2 text-lg align-middle">
-                    arrow_back
-                  </span>
+                  <ArrowLeft className="mr-2 inline align-middle" size={20} />
                   Назад
                 </button>
 
@@ -486,9 +474,7 @@ export function DashboardPage() {
                   className="px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-linear-to-r from-cyan-500/20 to-purple-600/20 hover:from-cyan-500/40 hover:to-purple-600/40 text-cyan-300 hover:text-cyan-200 disabled:hover:from-cyan-500/20 disabled:hover:to-purple-600/20"
                 >
                   Вперёд
-                  <span className="material-symbols-outlined inline-block ml-2 text-lg align-middle">
-                    arrow_forward
-                  </span>
+                  <ArrowRight className="ml-2 inline align-middle" size={20} />
                 </button>
               </div>
             )}
@@ -544,16 +530,12 @@ export function DashboardPage() {
             >
               {isPending ? (
                 <>
-                  <span className="material-symbols-outlined inline-block animate-spin mr-2">
-                    refresh
-                  </span>
+                  <RefreshCw className="mr-2 inline animate-spin" size={18} />
                   Создание...
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined inline-block mr-2">
-                    add_circle
-                  </span>
+                  <PlusCircle className="mr-2 inline" size={18} />
                   Создать
                 </>
               )}
@@ -607,16 +589,12 @@ export function DashboardPage() {
             >
               {isRenaming ? (
                 <>
-                  <span className="material-symbols-outlined inline-block animate-spin mr-2">
-                    refresh
-                  </span>
+                  <RefreshCw className="mr-2 inline animate-spin" size={18} />
                   Сохранение...
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined inline-block mr-2">
-                    check_circle
-                  </span>
+                  <CheckCircle2 className="mr-2 inline" size={18} />
                   Сохранить
                 </>
               )}
