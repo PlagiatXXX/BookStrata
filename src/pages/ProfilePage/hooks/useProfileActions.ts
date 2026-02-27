@@ -107,7 +107,11 @@ export function useProfileActions(): UseProfileActionsReturn {
       logger.error(error instanceof Error ? error : new Error(String(error)), {
         action: 'saveUsername',
       });
-      sileo.error({ title: error instanceof Error ? error.message : 'Ошибка при сохранении', duration: 3000 });
+      sileo.error({ 
+        title: error instanceof Error ? error.message : 'Ошибка при сохранении', 
+        description: 'Проверьте соединение и попробуйте снова',
+        duration: 3000 
+      });
     } finally {
       setIsSavingUsername(false);
     }
@@ -137,12 +141,20 @@ export function useProfileActions(): UseProfileActionsReturn {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      sileo.error({ title: 'Пароли не совпадают', duration: 3000 });
+      sileo.error({ 
+        title: 'Пароли не совпадают', 
+        description: 'Проверьте, что новый пароль и подтверждение одинаковы',
+        duration: 3000 
+      });
       return;
     }
 
     if (newPassword.length < 4) {
-      sileo.error({ title: 'Пароль должен быть не менее 4 символов', duration: 3000 });
+      sileo.error({ 
+        title: 'Короткий пароль', 
+        description: 'Пароль должен быть не менее 4 символов',
+        duration: 3000 
+      });
       return;
     }
 
@@ -179,7 +191,11 @@ export function useProfileActions(): UseProfileActionsReturn {
       logger.error(error instanceof Error ? error : new Error(String(error)), {
         action: 'changePassword',
       });
-      sileo.error({ title: error instanceof Error ? error.message : 'Ошибка при смене пароля', duration: 3000 });
+      sileo.error({ 
+        title: error instanceof Error ? error.message : 'Ошибка при смене пароля', 
+        description: 'Проверьте текущий пароль и попробуйте снова',
+        duration: 3000 
+      });
     } finally {
       setIsChangingPassword(false);
     }

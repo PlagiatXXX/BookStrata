@@ -61,6 +61,7 @@ interface UseTemplateEditorStateReturn {
 const initialFormState: TemplateEditorFormState = {
   title: "",
   description: "",
+  coverImageUrl: "",
   tiers: [],
   defaultBooks: [],
   features: {
@@ -123,11 +124,9 @@ export function useTemplateEditorState({
     if (formState.tiers.length === 0) {
       warns.push("Добавьте хотя бы один тир");
     }
-    if (formState.title.trim().length < 3) {
-      warns.push("Название слишком короткое");
-    }
+    // Убрали предупреждение о коротком названии — можно от 1 символа
     return warns;
-  }, [formState.tiers.length, formState.title]);
+  }, [formState.tiers.length]);
 
   const validateStep = useCallback(
     (step: TemplateEditorStep): boolean => {

@@ -324,7 +324,11 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
         deleteIdRef.current = null;
       },
       onError: () => {
-        sileo.error({ title: "Не удалось удалить шаблон. Попробуйте снова.", duration: 3000 });
+        sileo.error({ 
+          title: "Не удалось удалить шаблон", 
+          description: "Попробуйте снова позже",
+          duration: 3000 
+        });
       },
     });
   };
@@ -360,7 +364,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
         onMyRatingsClick={handleGoBack}
         onSearch={setSearchQuery}
         searchValue={searchQuery}
-        showTemplatesNav={false}
+        showTemplatesNav={true}
         showSearch={true}
         activeItem="Шаблоны"
       />
@@ -480,7 +484,10 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   </Button>
                 </div>
               </aside>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              
+              {/* Основной контент */}
+              <div className="w-full min-w-0">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-[#f3efe6]">
                     {activeSection === "public"
@@ -624,22 +631,24 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                 )
               ) : filteredTemplates.length > 0 ? (
                 viewMode === "masonry" ? (
-                  <div className="columns-1 gap-4 sm:columns-2 xl:columns-4">
+                  <div className="w-full columns-1 gap-4 sm:columns-2 xl:columns-4">
                     {filteredTemplates.map((template, index) => (
-                      <TemplateCard
-                        key={template.id}
-                        template={template}
-                        onEdit={handleEdit}
-                        onDelete={handleDeleteClick}
-                        variant="cover"
-                        coverHeight={
-                          COVER_HEIGHTS[index % COVER_HEIGHTS.length]
-                        }
-                      />
+                      <div key={template.id} className="break-inside-avoid">
+                        <TemplateCard
+                          key={template.id}
+                          template={template}
+                          onEdit={handleEdit}
+                          onDelete={handleDeleteClick}
+                          variant="cover"
+                          coverHeight={
+                            COVER_HEIGHTS[index % COVER_HEIGHTS.length]
+                          }
+                        />
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="w-full grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredTemplates.map((template) => (
                       <TemplateCard
                         key={template.id}
@@ -663,6 +672,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   </p>
                 </div>
               )}
+              </div>
             </div>
           </div>
         </div>

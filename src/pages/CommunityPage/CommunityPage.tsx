@@ -55,7 +55,11 @@ export default function CommunityPage() {
       navigate(`/tier-lists/${createdList.id}`);
     } catch (error) {
       console.error(error);
-      sileo.error({ title: 'Не удалось открыть шаблон в рейтингах', duration: 3000 });
+      sileo.error({ 
+        title: "Не удалось открыть шаблон", 
+        description: "Попробуйте снова позже",
+        duration: 3000 
+      });
     } finally {
       setApplyingTemplateId(null);
     }

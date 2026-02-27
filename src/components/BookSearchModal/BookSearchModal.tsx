@@ -262,9 +262,17 @@ export const BookSearchModal = ({
           errorMessage.includes("cover");
 
         if (isNoCoverError) {
-          sileo.error({ title: `У книги "${book.title}" нет обложки`, duration: 3000 });
+          sileo.error({ 
+            title: `Нет обложки`, 
+            description: `У книги "${book.title}" нет обложки`,
+            duration: 3000 
+          });
         } else {
-          sileo.error({ title: `Не удалось добавить: ${book.title}`, duration: 3000 });
+          sileo.error({ 
+            title: `Не удалось добавить книгу`, 
+            description: `Ошибка при добавлении "${book.title}"`,
+            duration: 3000 
+          });
         }
       }
     }
@@ -298,9 +306,17 @@ export const BookSearchModal = ({
         errorMessage.includes("cover");
 
       if (isNoCoverError) {
-        sileo.error({ title: `У книги "${book.title}" нет обложки`, duration: 3000 });
+        sileo.error({ 
+          title: `Нет обложки`, 
+          description: `У книги "${book.title}" нет обложки`,
+          duration: 3000 
+        });
       } else {
-        sileo.error({ title: "Не удалось добавить книгу", duration: 3000 });
+        sileo.error({ 
+          title: "Не удалось добавить книгу", 
+          description: "Попробуйте другую книгу",
+          duration: 3000 
+        });
       }
     } finally {
       setIsViewAdding(false);

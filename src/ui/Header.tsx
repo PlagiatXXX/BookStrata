@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
@@ -29,11 +29,21 @@ export const Header = ({
   searchValue = "",
   showTemplatesNav = true,
   showSearch = true,
-  activeItem,
+  activeItem: activeItemProp,
 }: HeaderProps = {}) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, user: authUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Автоматическое определение активной вкладки на основе пути
+  const activeItem = activeItemProp || (() => {
+    const path = location.pathname;
+    if (path === "/community") return "Новости";
+    if (path === "/templates" || path.startsWith("/templates/")) return "Шаблоны";
+    if (path === "/" || path.startsWith("/tier-lists/")) return "Мои Рейтинги";
+    return undefined;
+  })();
 
   // Обновлять данные пользователя при изменении аватара
   useEffect(() => {

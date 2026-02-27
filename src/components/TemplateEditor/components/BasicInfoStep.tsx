@@ -1,22 +1,26 @@
-import { Input } from '@/ui/Input';
-import { Textarea } from '@/ui/Textarea';
+import { Input } from "@/ui/Input";
+import { Textarea } from "@/ui/Textarea";
 
 interface BasicInfoStepProps {
   title: string;
   description: string;
+  coverImageUrl?: string;
   titleError?: string;
   descriptionError?: string;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
+  onCoverImageUrlChange: (value: string) => void;
 }
 
 export function BasicInfoStep({
   title,
   description,
+  coverImageUrl,
   titleError,
   descriptionError,
   onTitleChange,
   onDescriptionChange,
+  onCoverImageUrlChange,
 }: BasicInfoStepProps) {
   return (
     <section className="space-y-4">
@@ -33,6 +37,20 @@ export function BasicInfoStep({
         {titleError && (
           <p className="text-xs text-red-500 mt-1">{titleError}</p>
         )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2 text-[#f3efe6]">
+          Обложка шаблона
+        </label>
+        <Input
+          value={coverImageUrl || ""}
+          onChange={(event) => onCoverImageUrlChange(event.target.value)}
+          placeholder="https://example.com/cover.jpg"
+        />
+        <p className="text-xs text-gray-400 mt-2">
+          Введите URL изображения для обложки или оставьте пустым
+        </p>
       </div>
 
       <div>
@@ -60,8 +78,9 @@ export function BasicInfoStep({
 
       <div className="rounded-md border border-cyan-700/50 bg-cyan-900/30 p-4">
         <p className="text-sm text-cyan-100/90">
-          <span className="font-medium">Примечание:</span> Шаблоны всегда личные и видны только вам. 
-          Когда вы используете шаблон для создания тир-листа, он появляется в вашем профиле.
+          <span className="font-medium">Примечание:</span> Шаблоны всегда личные
+          и видны только вам. Когда вы используете шаблон для создания
+          тир-листа, он появляется в вашем профиле.
         </p>
       </div>
     </section>

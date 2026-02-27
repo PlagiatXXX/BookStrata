@@ -91,10 +91,6 @@ export const useCreateTemplate = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'user'] });
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'all'] });
-    },
-    onError: (error) => {
-      console.error("[useCreateTemplate] Ошибка:", error);
-      sileo.error({ title: 'Не удалось создать шаблон', duration: 3000 });
     }
   });
 };
@@ -135,8 +131,12 @@ export const useUpdateTemplate = () => {
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'user'] });
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'all'] });
     },
-    onError: () => {
-      sileo.error({ title: 'Не удалось обновить шаблон', duration: 3000 });
+    onError: (error: any) => {
+      sileo.error({ 
+        title: 'Не удалось обновить шаблон', 
+        description: error?.message || 'Попробуйте снова позже',
+        duration: 3000 
+      });
     }
   });
 };
@@ -153,8 +153,12 @@ export const useDeleteTemplate = () => {
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'user'] });
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'all'] });
     },
-    onError: () => {
-      sileo.error({ title: 'Не удалось удалить шаблон', duration: 3000 });
+    onError: (error: any) => {
+      sileo.error({ 
+        title: 'Не удалось удалить шаблон', 
+        description: error?.message || 'Попробуйте снова позже',
+        duration: 3000 
+      });
     }
   });
 };
@@ -173,8 +177,12 @@ export const useApplyTemplate = () => {
       // После применения шаблона обновляем список тир-листов
       queryClient.invalidateQueries({ queryKey: ['tier-lists'] });
     },
-    onError: () => {
-      sileo.error({ title: 'Не удалось применить шаблон', duration: 3000 });
+    onError: (error: any) => {
+      sileo.error({ 
+        title: 'Не удалось применить шаблон', 
+        description: error?.message || 'Попробуйте снова позже',
+        duration: 3000 
+      });
     }
   });
 };

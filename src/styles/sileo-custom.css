@@ -1,0 +1,57 @@
+/* Кастомизация Sileo toast уведомлений */
+
+/* Убираем text-transform: capitalize с заголовков */
+[data-sileo-title] {
+  text-transform: none !important;
+}
+
+/* Убираем text-transform с описания (если есть) */
+[data-sileo-description] {
+  text-transform: none !important;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 640px) {
+  [data-sileo-viewport] {
+    --sileo-width: calc(100vw - 2rem) !important;
+    max-width: calc(100vw - 2rem) !important;
+  }
+  
+  [data-sileo-toast] {
+    --sileo-width: calc(100vw - 2rem) !important;
+    width: calc(100vw - 2rem) !important;
+  }
+  
+  [data-sileo-title] {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+  
+  [data-sileo-description] {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+}
+
+/* Планшеты */
+@media (min-width: 641px) and (max-width: 1024px) {
+  [data-sileo-viewport] {
+    --sileo-width: 380px !important;
+  }
+  
+  [data-sileo-toast] {
+    --sileo-width: 380px !important;
+    width: 380px !important;
+  }
+}
+
+/* Кнопка действия на мобильных */
+@media (max-width: 640px) {
+  [data-sileo-button] {
+    font-size: 0.75rem !important;
+    padding: 0.375rem 0.75rem !important;
+  }
+}

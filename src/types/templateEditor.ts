@@ -3,6 +3,7 @@ import type { BookTemplate, TierTemplate } from "./templates";
 export interface TemplateEditorFormState {
   title: string;
   description: string;
+  coverImageUrl?: string;
   tiers: TierTemplate[];
   defaultBooks?: BookTemplate[];
   features: {

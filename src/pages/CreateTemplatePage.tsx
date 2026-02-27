@@ -23,13 +23,18 @@ const CreateTemplatePage: React.FC = () => {
         title: !!data.title, 
         tiers: !!data.tiers 
       });
-      sileo.error({ title: "Ошибка сохранения полей", duration: 3000 });
+      sileo.error({ 
+        title: "Ошибка сохранения", 
+        description: "Заполните название и добавьте хотя бы один уровень",
+        duration: 3000 
+      });
       return;
     }
 
     const payload: CreateTemplateData = {
       title: data.title,
       description: data.description,
+      coverImageUrl: data.coverImageUrl,
       tiers: data.tiers,
       defaultBooks: data.defaultBooks,
       isPublic: false, // Шаблоны всегда личные
@@ -41,9 +46,32 @@ const CreateTemplatePage: React.FC = () => {
       await createTemplate(payload);
       sileo.success({ title: "Шаблон успешно создан", duration: 3000 });
       navigate("/templates", { state: { initialSection: "private" } });
-    } catch (error) {
+    } catch (error: any) {
       console.error("[CreateTemplatePage] Ошибка при создании:", error);
-      sileo.error({ title: "Произошла ошибка при создании шаблона. Пожалуйста, попробуйте еще раз.", duration: 3000 });
+      
+      // Проверяем, является ли ошибка превышением лимита
+      const isLimitError = error?.message?.includes("Превышен лимит шаблонов");
+      
+      if (isLimitError) {
+        // Показываем ошибку с кнопкой Pro-подписки
+        sileo.action({
+          title: "Лимит шаблонов превышен",
+          description: error.message,
+          duration: 8000,
+          button: {
+            title: "Оформить Pro",
+            onClick: () => {
+              // TODO: Здесь будет переход на страницу оплаты Pro-подписки
+              navigate("/pro");
+            },
+          },
+        });
+      } else {
+        sileo.error({ 
+          title: "Произошла ошибка при создании шаблона. Пожалуйста, попробуйте еще раз.", 
+          duration: 3000 
+        });
+      }
     }
   };
 

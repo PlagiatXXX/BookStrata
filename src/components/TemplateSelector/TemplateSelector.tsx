@@ -55,7 +55,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect }) => {
       setIsOpen(false);
       navigate(`/tier-lists/${result.id}`);
     } catch {
-      sileo.error({ title: "Не удалось создать тир-лист из шаблона. Попробуйте снова.", duration: 3000 });
+      sileo.error({ 
+        title: "Не удалось создать тир-лист", 
+        description: "Попробуйте снова позже",
+        duration: 3000 
+      });
     } finally {
       setIsUsingTemplate(false);
     }

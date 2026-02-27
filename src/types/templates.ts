@@ -37,6 +37,7 @@ export interface Template {
 export interface CreateTemplateData {
   title: string;
   description?: string;
+  coverImageUrl?: string;
   tiers: TierTemplate[];
   defaultBooks?: BookTemplate[];
   isPublic?: boolean;
@@ -45,6 +46,7 @@ export interface CreateTemplateData {
 export interface UpdateTemplateData {
   title?: string;
   description?: string;
+  coverImageUrl?: string;
   tiers?: TierTemplate[];
   defaultBooks?: BookTemplate[];
   isPublic?: boolean;

@@ -319,7 +319,11 @@ export const TierListEditorPage = () => {
       blocker.proceed?.();
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), { action: 'saveBeforeLeave' });
-      sileo.error({ title: 'Не удалось сохранить. Выйти без сохранения?', duration: 3000 });
+      sileo.error({ 
+        title: 'Не удалось сохранить', 
+        description: 'Попробуйте выйти без сохранения',
+        duration: 3000 
+      });
     } finally {
       setIsSavingBeforeLeave(false);
     }

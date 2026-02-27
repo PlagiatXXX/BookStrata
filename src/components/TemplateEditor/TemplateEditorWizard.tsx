@@ -55,10 +55,12 @@ const TemplateEditorWizard: React.FC<TemplateEditorWizardProps> = ({
             <BasicInfoStep
               title={editor.formState.title}
               description={editor.formState.description}
+              coverImageUrl={editor.formState.coverImageUrl}
               titleError={editor.validation.titleError}
               descriptionError={editor.validation.descriptionError}
               onTitleChange={(value) => editor.updateField('title', value)}
               onDescriptionChange={(value) => editor.updateField('description', value)}
+              onCoverImageUrlChange={(value) => editor.updateField('coverImageUrl', value)}
             />
           )}
 

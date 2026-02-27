@@ -6,6 +6,7 @@ import { z } from 'zod';
 const createTemplateSchema = z.object({
   title: z.string().min(1).max(255),
   description: z.string().max(1000).optional(),
+  coverImageUrl: z.string().url().optional().or(z.literal('')),
   tiers: z.array(
     z.object({
       id: z.union([z.string(), z.number()]), // Принимаем и строки, и числа
@@ -21,6 +22,7 @@ const createTemplateSchema = z.object({
 const updateTemplateSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().max(1000).optional(),
+  coverImageUrl: z.string().url().optional().or(z.literal('')),
   tiers: z.array(
     z.object({
       id: z.union([z.string(), z.number()]), // Принимаем и строки, и числа
@@ -49,16 +51,29 @@ export class TemplatesService {
 
   async createTemplate(input: CreateTemplateInput, userId?: string) {
     const validatedInput = await this.validateCreateTemplate(input);
-    
+
     console.log("[TemplatesService] createTemplate вызван с:", {
       input,
       userId,
       validatedInput
     });
 
+    // Проверка лимита шаблонов (5 для бесплатной версии)
+    if (userId) {
+      const userTemplatesCount = await this.prisma.template.count({
+        where: { authorId: parseInt(userId) }
+      });
+      
+      const MAX_TEMPLATES = 5; // Лимит для бесплатной версии
+      if (userTemplatesCount >= MAX_TEMPLATES) {
+        throw new Error(`Превышен лимит шаблонов. Максимальное количество: ${MAX_TEMPLATES}. Оформите Pro-подписку для увеличения лимита.`);
+      }
+    }
+
     const templateData: any = {
       title: validatedInput.title,
       description: validatedInput.description,
+      coverImageUrl: validatedInput.coverImageUrl,
       tiers: validatedInput.tiers as any, // Приведение к типу any для JSON поля
       defaultBooks: validatedInput.defaultBooks as any, // Приведение к типу any для JSON поля
       isPublic: validatedInput.isPublic,

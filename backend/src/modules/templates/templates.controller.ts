@@ -75,8 +75,17 @@ export async function templatesController(fastify: FastifyInstance, prisma: Pris
     } catch (error: any) {
       req.log.error(error, "Error creating template");
 
-      if (error instanceof Error && error.message.includes('Validation')) {
-        return res.status(400).send({ error: error.message });
+      // Проверяем тип ошибки
+      if (error instanceof Error) {
+        // Ошибка валидации
+        if (error.message.includes('Validation')) {
+          return res.status(400).send({ error: error.message });
+        }
+        
+        // Ошибка превышения лимита
+        if (error.message.includes('Превышен лимит шаблонов')) {
+          return res.status(400).send({ error: error.message });
+        }
       }
 
       return res.status(500).send({ error: 'Internal server error' });

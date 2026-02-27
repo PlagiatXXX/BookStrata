@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, Globe, Lock, Play } from "lucide-react";
+import { Edit2, Trash2, Play } from "lucide-react";
 import type { Template } from "../../types";
 import { Button } from "../../ui/Button";
 import { useApplyTemplate } from "../../hooks/useTemplates";
@@ -44,7 +44,11 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
       sileo.success({ title: "Шаблон успешно применен!", duration: 3000 });
       navigate(`/tier-lists/${result.id}`);
     } catch {
-      sileo.error({ title: "Не удалось применить шаблон. Попробуйте снова.", duration: 3000 });
+      sileo.error({ 
+        title: "Не удалось применить шаблон", 
+        description: "Попробуйте снова позже",
+        duration: 3000 
+      });
     }
   };
 
@@ -68,15 +72,6 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(5,15,23,0.95)_8%,rgba(5,15,23,0.25)_45%,rgba(5,15,23,0.02)_75%)]" />
 
           <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
-            <span
-              className={`rounded-full border px-2 py-0.5 text-[11px] font-medium backdrop-blur ${
-                template.isPublic
-                  ? "border-emerald-300/50 bg-emerald-500/25 text-emerald-100"
-                  : "border-sky-300/50 bg-sky-500/25 text-sky-100"
-              }`}
-            >
-              {template.isPublic ? "Публичный" : "Частный"}
-            </span>
             {showEditDelete && onEdit && onDelete && (
               <div className="flex gap-1">
                 <button
@@ -146,19 +141,6 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             </Button>
           </div>
         )}
-      </div>
-
-      <div className="mt-2 shrink-0">
-        <span
-          className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs ${
-            template.isPublic
-              ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-200"
-              : "border-amber-400/50 bg-amber-500/20 text-amber-200"
-          }`}
-        >
-          {template.isPublic ? <Globe size={12} /> : <Lock size={12} />}
-          {template.isPublic ? "Публичный" : "Частный"}
-        </span>
       </div>
 
       {template.description && (

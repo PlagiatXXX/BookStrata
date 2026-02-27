@@ -62,7 +62,11 @@ export function ProfilePage() {
       sileo.success({ title: 'Аватар обновлен', duration: 3000 });
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), { action: 'handleAvatarSave' });
-      sileo.error({ title: 'Ошибка при сохранении аватара', duration: 3000 });
+      sileo.error({ 
+        title: "Ошибка при сохранении аватара", 
+        description: "Попробуйте загрузить другое изображение",
+        duration: 3000 
+      });
     }
   };
 

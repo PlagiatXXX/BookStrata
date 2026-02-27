@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { Toaster } from "sileo";
 import { AuthProvider } from "@/contexts/AuthContext.tsx";
 import { Spinner } from "@/components/Spinner";
+import "../styles/sileo-custom.css";
 
 function AppShell() {
   return (

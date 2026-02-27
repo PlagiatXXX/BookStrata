@@ -51,7 +51,11 @@ export function useTierEditorActions({
           action: 'toggleTierListPublic',
           tierListId,
         });
-        sileo.error({ title: 'Не удалось изменить видимость тир-листа', duration: 3000 });
+        sileo.error({ 
+          title: 'Не удалось изменить видимость', 
+          description: 'Попробуйте снова позже',
+          duration: 3000 
+        });
       } finally {
         setIsTogglingPublic(false);
       }
@@ -85,7 +89,11 @@ export function useTierEditorActions({
             tierListId,
             bookId,
           });
-          sileo.error({ title: 'Не удалось сохранить изменения книги', duration: 3000 });
+          sileo.error({ 
+            title: 'Не удалось сохранить изменения', 
+            description: 'Попробуйте снова позже',
+            duration: 3000 
+          });
         } finally {
           setIsUpdatingBook(false);
         }
@@ -107,7 +115,11 @@ export function useTierEditorActions({
             tierListId,
             bookId,
           });
-          sileo.error({ title: 'Не удалось удалить книгу с сервера', duration: 3000 });
+          sileo.error({ 
+            title: 'Не удалось удалить книгу', 
+            description: 'Попробуйте снова позже',
+            duration: 3000 
+          });
         }
       })();
     },
@@ -145,7 +157,11 @@ export function useTierEditorActions({
         action: 'deleteTierList',
         tierListId,
       });
-      sileo.error({ title: 'Не удалось удалить тир-лист', duration: 3000 });
+      sileo.error({ 
+        title: 'Не удалось удалить тир-лист', 
+        description: 'Попробуйте снова позже',
+        duration: 3000 
+      });
     }
   }, [navigate, setDeletedTierIds, tierListId]);
 

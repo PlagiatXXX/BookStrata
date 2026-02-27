@@ -19,7 +19,11 @@ const EditTemplatePage: React.FC = () => {
       sileo.success({ title: "Шаблон успешно обновлен!", duration: 3000 });
       navigate("/templates");
     } catch {
-      sileo.error({ title: "Не удалось обновить шаблон. Попробуйте снова.", duration: 3000 });
+      sileo.error({ 
+        title: "Не удалось обновить шаблон", 
+        description: "Попробуйте снова позже",
+        duration: 3000 
+      });
     }
   };
 
