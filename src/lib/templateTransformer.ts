@@ -70,7 +70,7 @@ function transformApiTierTemplateToState(apiTier: any): TierTemplate {
  */
 function transformStateTierTemplateToApi(stateTier: TierTemplate): ApiTierTemplate {
   return {
-    id: Number(stateTier.id),
+    id: stateTier.id, // Оставляем строкой, т.к. Zod схема ожидает string
     name: stateTier.name,
     color: stateTier.color,
     order: stateTier.order,

@@ -262,15 +262,15 @@ export const BookSearchModal = ({
           errorMessage.includes("cover");
 
         if (isNoCoverError) {
-          sileo.error({ title: `У книги "${book.title}" нет обложки` });
+          sileo.error({ title: `У книги "${book.title}" нет обложки`, duration: 3000 });
         } else {
-          sileo.error({ title: `Не удалось добавить: ${book.title}` });
+          sileo.error({ title: `Не удалось добавить: ${book.title}`, duration: 3000 });
         }
       }
     }
 
     if (successCount > 0) {
-      sileo.success({ title: `Добавлено ${successCount} ${successCount === 1 ? "книга" : successCount < 5 ? "книги" : "книг"}` });
+      sileo.success({ title: `Добавлено ${successCount} ${successCount === 1 ? "книга" : successCount < 5 ? "книги" : "книг"}`, duration: 3000 });
       onBookAdded?.(lastAddedBook);
       handleClose();
     }
@@ -282,7 +282,7 @@ export const BookSearchModal = ({
     setIsViewAdding(true);
     try {
       const result = await addBookFromGoogleBooks(tierListId, book);
-      sileo.success({ title: "Книга добавлена" });
+      sileo.success({ title: "Книга добавлена", duration: 3000 });
       onBookAdded?.(result);
       setViewBook(null);
       handleClose();
@@ -298,9 +298,9 @@ export const BookSearchModal = ({
         errorMessage.includes("cover");
 
       if (isNoCoverError) {
-        sileo.error({ title: `У книги "${book.title}" нет обложки` });
+        sileo.error({ title: `У книги "${book.title}" нет обложки`, duration: 3000 });
       } else {
-        sileo.error({ title: "Не удалось добавить книгу" });
+        sileo.error({ title: "Не удалось добавить книгу", duration: 3000 });
       }
     } finally {
       setIsViewAdding(false);

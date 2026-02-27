@@ -47,34 +47,38 @@ export async function templatesController(fastify: FastifyInstance, prisma: Pris
 
   // Создать новый шаблон
   fastify.post('/templates', async (
-    req: FastifyRequest<{ 
+    req: FastifyRequest<{
       Headers: AuthHeaders;
-      Body: { title: string; description?: string; tiers: { id: string; name: string; color: string; order: number }[]; defaultBooks?: any[]; isPublic?: boolean } 
-    }>, 
+      Body: { title: string; description?: string; tiers: { id: string; name: string; color: string; order: number }[]; defaultBooks?: any[]; isPublic?: boolean }
+    }>,
     res: FastifyReply
   ) => {
     try {
       const userId = (req as any).user?.userId;
-      
+
       if (!userId) {
+        req.log.error("No userId in request");
         return res.status(401).send({ error: 'Authorization required' });
       }
+
+      req.log.info("Creating template for userId:", userId, "body:", JSON.stringify(req.body));
 
       // Установим значение по умолчанию для isPublic, если оно не предоставлено
       const bodyWithDefaults = {
         ...req.body,
         isPublic: req.body.isPublic ?? false
       };
-      
+
       const template = await service.createTemplate(bodyWithDefaults, String(userId));
+      req.log.info("Template created successfully: %s", template.id);
       return res.send(template);
     } catch (error: any) {
-      req.log.error(error);
-      
+      req.log.error(error, "Error creating template");
+
       if (error instanceof Error && error.message.includes('Validation')) {
         return res.status(400).send({ error: error.message });
       }
-      
+
       return res.status(500).send({ error: 'Internal server error' });
     }
   });

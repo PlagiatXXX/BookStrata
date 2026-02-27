@@ -319,7 +319,7 @@ export const TierListEditorPage = () => {
       blocker.proceed?.();
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), { action: 'saveBeforeLeave' });
-      sileo.error({ title: 'Не удалось сохранить. Выйти без сохранения?' });
+      sileo.error({ title: 'Не удалось сохранить. Выйти без сохранения?', duration: 3000 });
     } finally {
       setIsSavingBeforeLeave(false);
     }
@@ -540,6 +540,7 @@ export const TierListEditorPage = () => {
               autoSaveStatus={autoSaveStatus}
               lastSaved={lastSaved}
               onSaveRetry={() => savePayload(getSavePayload())}
+              isReadOnly={isReadOnly}
             />
 
             <TierGrid

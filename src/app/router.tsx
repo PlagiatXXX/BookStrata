@@ -18,10 +18,9 @@ const ProfilePage = lazy(() =>
     default: module.ProfilePage,
   }))
 );
-const TemplateLibraryPage = lazy(() => import("@/pages/TemplateLibraryPage"));
+const TemplateLibrary = lazy(() => import("@/components/TemplateLibrary/TemplateLibrary"));
 const CreateTemplatePage = lazy(() => import("@/pages/CreateTemplatePage"));
 const EditTemplatePage = lazy(() => import("@/pages/EditTemplatePage"));
-const AllTemplatesPage = lazy(() => import("@/pages/AllTemplatesPage"));
 const CommunityPage = lazy(() => import("@/pages/CommunityPage"));
 
 // Lazy loading for the DnD-heavy editor page
@@ -46,7 +45,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "/templates",
-            element: <TemplateLibraryPage />,
+            element: <TemplateLibrary />,
           },
           {
             path: "/templates/new",
@@ -55,10 +54,6 @@ export const router = createBrowserRouter([
           {
             path: "/templates/:id/edit",
             element: <EditTemplatePage />,
-          },
-          {
-            path: "/templates/all",
-            element: <AllTemplatesPage />,
           },
           {
             path: "/profile",

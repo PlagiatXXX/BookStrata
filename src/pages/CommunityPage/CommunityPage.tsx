@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, TrendingUp } from 'lucide-react';
 import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
-import toast from 'react-hot-toast';
+import { sileo } from 'sileo';
 import { createTierList, saveTierListTiers } from '@/lib/api';
 import { Footer } from '@/ui/Footer';
 import { CategoryTabs } from '@/components/CommunityComponents/CategoryTabs';
@@ -51,11 +51,11 @@ export default function CommunityPage() {
       }));
 
       await saveTierListTiers(String(createdList.id), tiersForApi);
-      toast.success('Шаблон открыт в рейтингах');
+      sileo.success({ title: 'Шаблон открыт в рейтингах', duration: 3000 });
       navigate(`/tier-lists/${createdList.id}`);
     } catch (error) {
       console.error(error);
-      toast.error('Не удалось открыть шаблон в рейтингах');
+      sileo.error({ title: 'Не удалось открыть шаблон в рейтингах', duration: 3000 });
     } finally {
       setApplyingTemplateId(null);
     }

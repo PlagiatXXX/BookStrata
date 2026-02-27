@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sileo";
 import { AuthProvider } from "@/contexts/AuthContext.tsx";
 import { Spinner } from "@/components/Spinner";
 
@@ -19,7 +19,7 @@ function AppShell() {
       >
         <Outlet />
       </Suspense>
-      <Toaster />
+      <Toaster position="top-center" theme="system" />
     </AuthProvider>
   );
 }

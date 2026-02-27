@@ -8,7 +8,7 @@ const createTemplateSchema = z.object({
   description: z.string().max(1000).optional(),
   tiers: z.array(
     z.object({
-      id: z.string(),
+      id: z.union([z.string(), z.number()]), // Принимаем и строки, и числа
       name: z.string(),
       color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/), // hex цвет
       order: z.number().int()
@@ -23,7 +23,7 @@ const updateTemplateSchema = z.object({
   description: z.string().max(1000).optional(),
   tiers: z.array(
     z.object({
-      id: z.string(),
+      id: z.union([z.string(), z.number()]), // Принимаем и строки, и числа
       name: z.string(),
       color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/), // hex цвет
       order: z.number().int()
@@ -50,6 +50,12 @@ export class TemplatesService {
   async createTemplate(input: CreateTemplateInput, userId?: string) {
     const validatedInput = await this.validateCreateTemplate(input);
     
+    console.log("[TemplatesService] createTemplate вызван с:", {
+      input,
+      userId,
+      validatedInput
+    });
+
     const templateData: any = {
       title: validatedInput.title,
       description: validatedInput.description,
@@ -57,12 +63,14 @@ export class TemplatesService {
       defaultBooks: validatedInput.defaultBooks as any, // Приведение к типу any для JSON поля
       isPublic: validatedInput.isPublic,
     };
-    
+
     // Добавляем authorId только если userId предоставлен
     if (userId) {
       templateData.authorId = parseInt(userId);
     }
-    
+
+    console.log("[TemplatesService] Создание шаблона в БД:", templateData);
+
     return this.prisma.template.create({
       data: templateData
     });

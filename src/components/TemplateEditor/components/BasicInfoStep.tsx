@@ -4,23 +4,19 @@ import { Textarea } from '@/ui/Textarea';
 interface BasicInfoStepProps {
   title: string;
   description: string;
-  isPublic: boolean;
   titleError?: string;
   descriptionError?: string;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
-  onIsPublicChange: (value: boolean) => void;
 }
 
 export function BasicInfoStep({
   title,
   description,
-  isPublic,
   titleError,
   descriptionError,
   onTitleChange,
   onDescriptionChange,
-  onIsPublicChange,
 }: BasicInfoStepProps) {
   return (
     <section className="space-y-4">
@@ -62,18 +58,11 @@ export function BasicInfoStep({
         </div>
       </div>
 
-      <div className="rounded-md border border-white/20 bg-black/25 p-4">
-        <label className="inline-flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isPublic}
-            onChange={(event) => onIsPublicChange(event.target.checked)}
-            className="size-4"
-          />
-          <span className="text-sm text-[#f3efe6]">
-            Публичный шаблон (виден другим пользователям)
-          </span>
-        </label>
+      <div className="rounded-md border border-cyan-700/50 bg-cyan-900/30 p-4">
+        <p className="text-sm text-cyan-100/90">
+          <span className="font-medium">Примечание:</span> Шаблоны всегда личные и видны только вам. 
+          Когда вы используете шаблон для создания тир-листа, он появляется в вашем профиле.
+        </p>
       </div>
     </section>
   );

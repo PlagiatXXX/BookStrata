@@ -54,6 +54,8 @@ export const useCreateTemplate = () => {
 
   return useMutation({
     mutationFn: async (data: CreateTemplateData) => {
+      console.log("[useCreateTemplate] Получены данные:", data);
+      
       const stateTemplate: Template = {
         id: '', // временный ID, будет установлен сервером
         title: data.title,
@@ -65,8 +67,10 @@ export const useCreateTemplate = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
+
       const apiTemplate = transformStateTemplateToApi(stateTemplate);
+      console.log("[useCreateTemplate] API шаблон после трансформации:", apiTemplate);
+      
       const requestData: CreateTemplateRequest = {
         title: apiTemplate.title,
         description: apiTemplate.description,
@@ -74,8 +78,12 @@ export const useCreateTemplate = () => {
         defaultBooks: apiTemplate.defaultBooks,
         isPublic: apiTemplate.isPublic
       };
-      
+
+      console.log("[useCreateTemplate] Отправка запроса на /templates:", requestData);
+
       const response: any = await api.post('/templates', requestData);
+      console.log("[useCreateTemplate] Ответ от сервера:", response);
+      
       // Бэкенд возвращает шаблон напрямую, без обёртки { data: ... }
       const template = response.data || response;
       return transformApiTemplateToState(template);
@@ -84,8 +92,9 @@ export const useCreateTemplate = () => {
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'user'] });
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'all'] });
     },
-    onError: () => {
-      sileo.error({ title: 'Не удалось создать шаблон' });
+    onError: (error) => {
+      console.error("[useCreateTemplate] Ошибка:", error);
+      sileo.error({ title: 'Не удалось создать шаблон', duration: 3000 });
     }
   });
 };
@@ -127,7 +136,7 @@ export const useUpdateTemplate = () => {
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'all'] });
     },
     onError: () => {
-      sileo.error({ title: 'Не удалось обновить шаблон' });
+      sileo.error({ title: 'Не удалось обновить шаблон', duration: 3000 });
     }
   });
 };
@@ -145,7 +154,7 @@ export const useDeleteTemplate = () => {
       queryClient.invalidateQueries({ queryKey: [TEMPLATES_QUERY_KEY, 'all'] });
     },
     onError: () => {
-      sileo.error({ title: 'Не удалось удалить шаблон' });
+      sileo.error({ title: 'Не удалось удалить шаблон', duration: 3000 });
     }
   });
 };
@@ -165,7 +174,7 @@ export const useApplyTemplate = () => {
       queryClient.invalidateQueries({ queryKey: ['tier-lists'] });
     },
     onError: () => {
-      sileo.error({ title: 'Не удалось применить шаблон' });
+      sileo.error({ title: 'Не удалось применить шаблон', duration: 3000 });
     }
   });
 };

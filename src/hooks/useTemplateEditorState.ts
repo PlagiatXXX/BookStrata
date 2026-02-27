@@ -61,7 +61,6 @@ interface UseTemplateEditorStateReturn {
 const initialFormState: TemplateEditorFormState = {
   title: "",
   description: "",
-  isPublic: true,
   tiers: [],
   defaultBooks: [],
   features: {
@@ -136,7 +135,7 @@ export function useTemplateEditorState({
         return formState.title.trim().length > 0;
       }
       if (step === 1) {
-        return formState.tiers.length > 0 && tierNameErrors.every((e) => e === null);
+        return formState.tiers.length > 0 && tierNameErrors.every((e) => !e);
       }
       return true;
     },
@@ -271,6 +270,10 @@ export function useTemplateEditorState({
   }, []);
 
   const save = useCallback(async () => {
+    console.log("[useTemplateEditorState] save вызван, formState:", formState);
+    console.log("[useTemplateEditorState] mode:", mode, "templateId:", templateId);
+    console.log("[useTemplateEditorState] validation.isValid:", validation.isValid);
+    
     setIsSubmitting(true);
     setDraftStatus("saving");
 
@@ -280,18 +283,20 @@ export function useTemplateEditorState({
         ...(mode === "edit" && templateId ? { id: templateId } : {}),
       };
 
+      console.log("[useTemplateEditorState] Отправка templateData:", templateData);
+
       await onSubmit(templateData);
       setDraftStatus("saved");
       setDraftLastSaved(new Date());
       setIsDirty(false);
     } catch (error) {
-      console.error("Failed to save template:", error);
+      console.error("[useTemplateEditorState] Failed to save template:", error);
       setDraftStatus("idle");
       throw error;
     } finally {
       setIsSubmitting(false);
     }
-  }, [formState, mode, templateId, onSubmit]);
+  }, [formState, mode, templateId, onSubmit, validation.isValid]);
 
   const discardDraft = useCallback(() => {
     localStorage.removeItem(`template-draft-${templateId || "new"}`);

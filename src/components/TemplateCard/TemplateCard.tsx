@@ -41,10 +41,10 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         id: template.id,
         newListTitle: `${template.title} (from template)`,
       });
-      sileo.success({ title: "Шаблон успешно применен!" });
+      sileo.success({ title: "Шаблон успешно применен!", duration: 3000 });
       navigate(`/tier-lists/${result.id}`);
     } catch {
-      sileo.error({ title: "Не удалось применить шаблон. Попробуйте снова." });
+      sileo.error({ title: "Не удалось применить шаблон. Попробуйте снова.", duration: 3000 });
     }
   };
 

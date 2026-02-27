@@ -55,7 +55,7 @@ export interface ApiTemplate {
 
 // Описывает тир в шаблоне
 export interface ApiTierTemplate {
-  id: number;
+  id: string;  // Prisma Template.tiers - это JSON поле, id хранится как строка
   name: string;
   color: string;
   order: number;
@@ -75,7 +75,7 @@ export interface ApiTemplateResponse {
 export interface CreateTemplateRequest {
   title: string;
   description?: string;
-  tiers: ApiTierTemplate[];
+  tiers: ApiTierTemplate[];  // ApiTierTemplate теперь имеет id: string
   defaultBooks?: ApiBook[];
   isPublic?: boolean;
 }
@@ -84,7 +84,7 @@ export interface CreateTemplateRequest {
 export interface UpdateTemplateRequest {
   title?: string;
   description?: string;
-  tiers?: ApiTierTemplate[];
+  tiers?: ApiTierTemplate[];  // ApiTierTemplate теперь имеет id: string
   defaultBooks?: ApiBook[];
   isPublic?: boolean;
 }

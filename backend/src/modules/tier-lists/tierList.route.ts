@@ -101,8 +101,18 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     schema: schema.getPublicTierListsSchema,
   },
     async (request, reply) => {
-      const tierLists = await service.getPublicTierLists(request.query);
-      return reply.send(tierLists);
+      try {
+        console.log('🔵 GET /public route called with query:', request.query);
+        const tierLists = await service.getPublicTierLists(request.query);
+        console.log('🟢 Returning public tier lists:', { dataLength: tierLists.data?.length, meta: tierLists.meta });
+        return reply.code(200).send({
+          data: tierLists.data,
+          meta: tierLists.meta,
+        });
+      } catch (err) {
+        console.error('🔴 Error in GET /public:', err);
+        throw err;
+      }
     }
   );
 

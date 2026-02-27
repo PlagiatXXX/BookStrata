@@ -51,11 +51,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect }) => {
         newListTitle: customTemplateName.trim() || undefined,
       });
 
-      sileo.success({ title: "Шаблон успешно применен!" });
+      sileo.success({ title: "Шаблон успешно применен!", duration: 3000 });
       setIsOpen(false);
       navigate(`/tier-lists/${result.id}`);
     } catch {
-      sileo.error({ title: "Не удалось создать тир-лист из шаблона. Попробуйте снова." });
+      sileo.error({ title: "Не удалось создать тир-лист из шаблона. Попробуйте снова.", duration: 3000 });
     } finally {
       setIsUsingTemplate(false);
     }
@@ -69,7 +69,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect }) => {
   const handleViewAllTemplates = () => {
     setIsOpen(false);
     setTimeout(() => {
-      navigate("/templates/all");
+      navigate("/templates");
     }, 100);
   };
 
@@ -124,7 +124,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect }) => {
                 value={customTemplateName}
                 onChange={(e) => setCustomTemplateName(e.target.value)}
                 placeholder="Оставьте пустым, чтобы использовать название шаблона"
-                className="w-full px-3 py-2 border border-white/25 rounded-md bg-black/35 text-[#f3efe6] placeholder:text-[#b8b1a3] focus:outline-none focus:ring-2 focus:ring-[var(--accent-main)]"
+                className="w-full px-3 py-2 border border-white/25 rounded-md bg-black/35 text-[#f3efe6] placeholder:text-[#b8b1a3] focus:outline-none focus:ring-2 focus:ring-(--accent-main)"
               />
             </div>
 
@@ -135,7 +135,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect }) => {
                     key={template.id}
                     className={`group relative flex flex-col h-full border rounded-md p-3 cursor-pointer transition-colors duration-200 ${
                       selectedTemplateId === template.id
-                        ? "border-[var(--accent-main)] bg-[rgba(217,79,43,0.13)] ring-1 ring-[var(--accent-main)]/30"
+                        ? "border-(--accent-main) bg-[rgba(217,79,43,0.13)] ring-1 ring-(--accent-main)/30"
                         : "border-white/20 bg-black/30 hover:bg-black/45 hover:border-white/35"
                     }`}
                     onClick={() => setSelectedTemplateId(template.id)}
@@ -193,7 +193,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect }) => {
 
                     {selectedTemplateId === template.id && (
                       <div className="absolute top-2 right-2">
-                        <CheckCircle size={16} className="text-[var(--accent-main)]" />
+                        <CheckCircle size={16} className="text-(--accent-main)" />
                       </div>
                     )}
                   </div>

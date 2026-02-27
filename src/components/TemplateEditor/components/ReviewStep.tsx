@@ -4,7 +4,6 @@ interface ReviewStepProps {
   mode: 'create' | 'edit';
   title: string;
   description: string;
-  isPublic: boolean;
   tiers: TierTemplate[];
   isDirty?: boolean;
   warnings: string[];
@@ -14,7 +13,6 @@ export function ReviewStep({
   mode,
   title,
   description,
-  isPublic,
   tiers,
   isDirty,
   warnings,
@@ -30,7 +28,7 @@ export function ReviewStep({
           <span className="font-medium">Описание:</span> {description || '—'}
         </p>
         <p className="text-sm text-[#b8b1a3] mt-1">
-          <span className="font-medium">Доступ:</span> {isPublic ? 'Публичный' : 'Приватный'}
+          <span className="font-medium">Доступ:</span> Личный (виден только вам)
         </p>
       </div>
 

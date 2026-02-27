@@ -59,10 +59,10 @@ export function ProfilePage() {
       await refreshUserData();
       window.dispatchEvent(new CustomEvent('avatar-updated'));
       window.dispatchEvent(new CustomEvent('auth-token-changed'));
-      sileo.success({ title: 'Аватар обновлен' });
+      sileo.success({ title: 'Аватар обновлен', duration: 3000 });
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), { action: 'handleAvatarSave' });
-      sileo.error({ title: 'Ошибка при сохранении аватара' });
+      sileo.error({ title: 'Ошибка при сохранении аватара', duration: 3000 });
     }
   };
 

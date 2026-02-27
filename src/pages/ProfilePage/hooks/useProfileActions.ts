@@ -100,14 +100,14 @@ export function useProfileActions(): UseProfileActionsReturn {
         throw new Error(error.error || 'Ошибка при сохранении');
       }
 
-      sileo.success({ title: 'Имя пользователя обновлено' });
+      sileo.success({ title: 'Имя пользователя обновлено', duration: 3000 });
       setIsEditingUsername(false);
       window.dispatchEvent(new CustomEvent('auth-token-changed'));
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), {
         action: 'saveUsername',
       });
-      sileo.error({ title: error instanceof Error ? error.message : 'Ошибка при сохранении' });
+      sileo.error({ title: error instanceof Error ? error.message : 'Ошибка при сохранении', duration: 3000 });
     } finally {
       setIsSavingUsername(false);
     }
@@ -137,12 +137,12 @@ export function useProfileActions(): UseProfileActionsReturn {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      sileo.error({ title: 'Пароли не совпадают' });
+      sileo.error({ title: 'Пароли не совпадают', duration: 3000 });
       return;
     }
 
     if (newPassword.length < 4) {
-      sileo.error({ title: 'Пароль должен быть не менее 4 символов' });
+      sileo.error({ title: 'Пароль должен быть не менее 4 символов', duration: 3000 });
       return;
     }
 
@@ -173,13 +173,13 @@ export function useProfileActions(): UseProfileActionsReturn {
         throw new Error(error.error || 'Ошибка при смене пароля');
       }
 
-      sileo.success({ title: 'Пароль успешно изменён' });
+      sileo.success({ title: 'Пароль успешно изменён', duration: 3000 });
       cancelPasswordChange();
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), {
         action: 'changePassword',
       });
-      sileo.error({ title: error instanceof Error ? error.message : 'Ошибка при смене пароля' });
+      sileo.error({ title: error instanceof Error ? error.message : 'Ошибка при смене пароля', duration: 3000 });
     } finally {
       setIsChangingPassword(false);
     }

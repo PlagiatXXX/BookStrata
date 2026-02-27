@@ -24,7 +24,7 @@ export const getTierListsSchema = {
     type: 'object',
     properties: {
       page: { type: 'string', default: '1' },
-      pageSize: { type: 'string', default: '10' },
+      pageSize: { type: 'string', default: '6' },
     },
   },
   response: {
@@ -266,8 +266,38 @@ export const getPublicTierListsSchema = {
     200: {
       type: 'object',
       properties: {
-        data: { type: 'array' },
-        meta: { type: 'object' },
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              title: { type: 'string' },
+              createdAt: { type: 'string' },
+              updatedAt: { type: 'string' },
+              isPublic: { type: 'boolean' },
+              user: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  username: { type: 'string' },
+                  avatarUrl: { type: 'string' },
+                },
+              },
+              likesCount: { type: 'number' },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            totalItems: { type: 'number' },
+            itemCount: { type: 'number' },
+            itemsPerPage: { type: 'number' },
+            totalPages: { type: 'number' },
+            currentPage: { type: 'number' },
+          },
+        },
       },
     },
   },

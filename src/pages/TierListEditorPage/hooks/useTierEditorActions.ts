@@ -44,13 +44,14 @@ export function useTierEditorActions({
         await toggleTierListPublic(tierListId, isPublic);
         sileo.success({
           title: isPublic ? 'Тир-лист опубликован' : 'Тир-лист скрыт',
+          duration: 3000,
         });
       } catch (error) {
         logger.error(error instanceof Error ? error : new Error(String(error)), {
           action: 'toggleTierListPublic',
           tierListId,
         });
-        sileo.error({ title: 'Не удалось изменить видимость тир-листа' });
+        sileo.error({ title: 'Не удалось изменить видимость тир-листа', duration: 3000 });
       } finally {
         setIsTogglingPublic(false);
       }
@@ -84,7 +85,7 @@ export function useTierEditorActions({
             tierListId,
             bookId,
           });
-          sileo.error({ title: 'Не удалось сохранить изменения книги' });
+          sileo.error({ title: 'Не удалось сохранить изменения книги', duration: 3000 });
         } finally {
           setIsUpdatingBook(false);
         }
@@ -106,7 +107,7 @@ export function useTierEditorActions({
             tierListId,
             bookId,
           });
-          sileo.error({ title: 'Не удалось удалить книгу с сервера' });
+          sileo.error({ title: 'Не удалось удалить книгу с сервера', duration: 3000 });
         }
       })();
     },
@@ -144,7 +145,7 @@ export function useTierEditorActions({
         action: 'deleteTierList',
         tierListId,
       });
-      sileo.error({ title: 'Не удалось удалить тир-лист' });
+      sileo.error({ title: 'Не удалось удалить тир-лист', duration: 3000 });
     }
   }, [navigate, setDeletedTierIds, tierListId]);
 

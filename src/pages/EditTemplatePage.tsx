@@ -2,7 +2,7 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Home } from "lucide-react";
-import toast from "react-hot-toast";
+import { sileo } from "sileo";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { useTemplate, useUpdateTemplate } from "../hooks/useTemplates";
 import TemplateBuilder from "../components/TemplateBuilder/TemplateBuilder";
@@ -16,10 +16,10 @@ const EditTemplatePage: React.FC = () => {
   const handleSave = async (data: any) => {
     try {
       await updateTemplate({ id: id!, data });
-      toast.success("Шаблон успешно обновлен!");
+      sileo.success({ title: "Шаблон успешно обновлен!", duration: 3000 });
       navigate("/templates");
     } catch {
-      toast.error("Не удалось обновить шаблон. Попробуйте снова.");
+      sileo.error({ title: "Не удалось обновить шаблон. Попробуйте снова.", duration: 3000 });
     }
   };
 

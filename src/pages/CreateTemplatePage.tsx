@@ -16,8 +16,14 @@ const CreateTemplatePage: React.FC = () => {
       ?.prefillTemplate ?? undefined;
 
   const handleSave = async (data: CreateTemplateData | UpdateTemplateData) => {
+    console.log("[CreateTemplatePage] handleSave вызван:", data);
+    
     if (!data.title || !data.tiers) {
-      sileo.error({ title: "Ошибка сохранения полей" });
+      console.error("[CreateTemplatePage] Отсутствие обязательных полей:", { 
+        title: !!data.title, 
+        tiers: !!data.tiers 
+      });
+      sileo.error({ title: "Ошибка сохранения полей", duration: 3000 });
       return;
     }
 
@@ -26,15 +32,18 @@ const CreateTemplatePage: React.FC = () => {
       description: data.description,
       tiers: data.tiers,
       defaultBooks: data.defaultBooks,
-      isPublic: data.isPublic,
+      isPublic: false, // Шаблоны всегда личные
     };
+
+    console.log("[CreateTemplatePage] Отправка payload:", payload);
 
     try {
       await createTemplate(payload);
-      sileo.success({ title: "Шаблон успешно создан" });
-      navigate("/templates");
-    } catch {
-      sileo.error({ title: "Произошла ошибка при создании шаблона. Пожалуйста, попробуйте еще раз." });
+      sileo.success({ title: "Шаблон успешно создан", duration: 3000 });
+      navigate("/templates", { state: { initialSection: "private" } });
+    } catch (error) {
+      console.error("[CreateTemplatePage] Ошибка при создании:", error);
+      sileo.error({ title: "Произошла ошибка при создании шаблона. Пожалуйста, попробуйте еще раз.", duration: 3000 });
     }
   };
 

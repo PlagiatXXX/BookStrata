@@ -55,12 +55,10 @@ const TemplateEditorWizard: React.FC<TemplateEditorWizardProps> = ({
             <BasicInfoStep
               title={editor.formState.title}
               description={editor.formState.description}
-              isPublic={editor.formState.isPublic}
               titleError={editor.validation.titleError}
               descriptionError={editor.validation.descriptionError}
               onTitleChange={(value) => editor.updateField('title', value)}
               onDescriptionChange={(value) => editor.updateField('description', value)}
-              onIsPublicChange={(value) => editor.updateField('isPublic', value)}
             />
           )}
 
@@ -84,7 +82,6 @@ const TemplateEditorWizard: React.FC<TemplateEditorWizardProps> = ({
               mode={mode}
               title={editor.formState.title}
               description={editor.formState.description}
-              isPublic={editor.formState.isPublic}
               tiers={editor.formState.tiers}
               isDirty={editor.isDirty}
               warnings={editor.validation.warnings}

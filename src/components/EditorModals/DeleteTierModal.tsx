@@ -20,14 +20,14 @@ export function DeleteTierModal({
       <div className="relative flex flex-col items-center p-6 text-center text-[#d8f9ff]">
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 flex size-8 cursor-pointer items-center justify-center rounded-[8px] border border-cyan-300/45 text-cyan-200/80 transition-colors hover:border-fuchsia-300/70 hover:text-fuchsia-200"
+          className="absolute right-6 top-6 flex size-8 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 text-cyan-200/80 transition-colors hover:border-fuchsia-300/70 hover:text-fuchsia-200"
           aria-label="Закрыть"
         >
           <X size={16} />
         </button>
 
         <div className="mb-4 mt-2">
-          <div className="rounded-[12px] border border-fuchsia-300/45 bg-[rgba(255,0,204,0.12)] p-3">
+          <div className="rounded-xl border border-fuchsia-300/45 bg-[rgba(255,0,204,0.12)] p-3">
             <AlertTriangle size={28} className="text-fuchsia-200" />
           </div>
         </div>
@@ -58,7 +58,7 @@ export function DeleteTierModal({
           <Button
             variant="destructive"
             onClick={onConfirm}
-            className="flex-1 rounded-[12px] border border-fuchsia-300/70 bg-[rgba(255,0,204,0.16)] text-fuchsia-100 hover:bg-[rgba(255,0,204,0.25)]"
+            className="flex-1 rounded-xl border border-fuchsia-300/70 bg-[rgba(255,0,204,0.16)] text-fuchsia-100 hover:bg-[rgba(255,0,204,0.25)]"
           >
             Удалить
           </Button>
