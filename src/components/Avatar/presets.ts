@@ -55,24 +55,6 @@ function makeLocalPreset(
 }
 
 /**
- * Кэширует URL аватарки
- */
-function cacheAvatarUrl(presetId: string, url: string): void {
-  try {
-    const cache: Record<string, CachedAvatar> = JSON.parse(
-      localStorage.getItem(AVATAR_CACHE_KEY) || '{}'
-    );
-    cache[presetId] = {
-      url,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify(cache));
-  } catch {
-    // Игнорируем ошибки localStorage
-  }
-}
-
-/**
  * Получает URL аватарки из кэша
  */
 export function getCachedAvatarUrl(preset: AvatarPreset): string | null {

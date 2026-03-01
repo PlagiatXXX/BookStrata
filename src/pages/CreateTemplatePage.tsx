@@ -46,11 +46,11 @@ const CreateTemplatePage: React.FC = () => {
       await createTemplate(payload);
       sileo.success({ title: "Шаблон успешно создан", duration: 3000 });
       navigate("/templates", { state: { initialSection: "private" } });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[CreateTemplatePage] Ошибка при создании:", error);
-      
+
       // Проверяем, является ли ошибка превышением лимита
-      const isLimitError = error?.message?.includes("Превышен лимит шаблонов");
+      const isLimitError = error instanceof Error && error.message.includes("Превышен лимит шаблонов");
       
       if (isLimitError) {
         // Показываем ошибку с кнопкой Pro-подписки

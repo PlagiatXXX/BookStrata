@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useReducer, useEffect } from "react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { Book } from "@/types";
@@ -19,30 +19,93 @@ interface BookEditModalProps {
   ) => void;
 }
 
+interface BookFormState {
+  title: string;
+  author: string;
+  description: string;
+  thoughts: string;
+}
+
+type BookFormAction =
+  | { type: 'SET_BOOK'; book: Book }
+  | { type: 'RESET' }
+  | { type: 'SET_TITLE'; title: string }
+  | { type: 'SET_AUTHOR'; author: string }
+  | { type: 'SET_DESCRIPTION'; description: string }
+  | { type: 'SET_THOUGHTS'; thoughts: string };
+
+function bookFormReducer(state: BookFormState, action: BookFormAction): BookFormState {
+  switch (action.type) {
+    case 'SET_BOOK':
+      return {
+        title: action.book.title,
+        author: action.book.author,
+        description: action.book.description || "",
+        thoughts: action.book.thoughts || "",
+      };
+    case 'RESET':
+      return {
+        title: "",
+        author: "",
+        description: "",
+        thoughts: "",
+      };
+    case 'SET_TITLE':
+      return { ...state, title: action.title };
+    case 'SET_AUTHOR':
+      return { ...state, author: action.author };
+    case 'SET_DESCRIPTION':
+      return { ...state, description: action.description };
+    case 'SET_THOUGHTS':
+      return { ...state, thoughts: action.thoughts };
+    default:
+      return state;
+  }
+}
+
+const INITIAL_STATE: BookFormState = {
+  title: "",
+  author: "",
+  description: "",
+  thoughts: "",
+};
+
 export const BookEditModal = ({
   isOpen,
   onClose,
   book,
   onSave,
 }: BookEditModalProps) => {
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [description, setDescription] = useState("");
-  const [thoughts, setThoughts] = useState("");
+  const [state, dispatch] = useReducer(bookFormReducer, INITIAL_STATE);
+  const { title, author, description, thoughts } = state;
 
   useEffect(() => {
     if (book && isOpen) {
-      logger.info("Модальное окно редактирования открыто", { 
-        bookId: book.id, 
-        bookTitle: book.title 
+      logger.info("Модальное окно редактирования открыто", {
+        bookId: book.id,
+        bookTitle: book.title
       });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTitle(book.title);
-      setAuthor(book.author);
-      setDescription(book.description || "");
-      setThoughts(book.thoughts || "");
+      dispatch({ type: 'SET_BOOK', book });
+    } else if (!isOpen) {
+      dispatch({ type: 'RESET' });
     }
   }, [book, isOpen]);
+
+  const handleTitleChange = (value: string) => {
+    dispatch({ type: 'SET_TITLE', title: value });
+  };
+
+  const handleAuthorChange = (value: string) => {
+    dispatch({ type: 'SET_AUTHOR', author: value });
+  };
+
+  const handleDescriptionChange = (value: string) => {
+    dispatch({ type: 'SET_DESCRIPTION', description: value });
+  };
+
+  const handleThoughtsChange = (value: string) => {
+    dispatch({ type: 'SET_THOUGHTS', thoughts: value });
+  };
 
   const handleSave = () => {
     logger.info("Пользователь нажал 'Сохранить' в модальном окне", {
@@ -76,7 +139,7 @@ export const BookEditModal = ({
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => handleTitleChange(e.target.value)}
               className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white text-center text-2xl font-bold"
               placeholder="Название книги"
             />
@@ -99,7 +162,7 @@ export const BookEditModal = ({
                 <input
                   type="text"
                   value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
+                  onChange={(e) => handleAuthorChange(e.target.value)}
                   className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white"
                   placeholder="Автор книги"
                 />
@@ -111,7 +174,7 @@ export const BookEditModal = ({
                 </label>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => handleDescriptionChange(e.target.value)}
                   className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white resize-none flex-1"
                   placeholder="Описание книги"
                 />
@@ -126,7 +189,7 @@ export const BookEditModal = ({
             </label>
             <textarea
               value={thoughts}
-              onChange={(e) => setThoughts(e.target.value)}
+              onChange={(e) => handleThoughtsChange(e.target.value)}
               className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white resize-none"
               rows={5}
               placeholder="Ваши мысли о книге"

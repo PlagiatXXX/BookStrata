@@ -45,16 +45,24 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
-  const currentUserId = user?.userId;
+  useAuth();
 
   // Читаем initialSection из location.state (для редиректа после создания шаблона)
   const locationInitialSection = (location.state as { initialSection?: SectionKey } | null)?.initialSection;
-  
+
   // Приоритет: location.state > initialSection prop > default "private" (для личных шаблонов)
   const defaultSection: SectionKey = locationInitialSection || initialSectionProp || "private";
 
+  // Используем initialSearchQuery напрямую как начальное значение
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+
+  const handleSectionChange = (section: SectionKey) => {
+    setActiveSection(section);
+    // Сбрасываем страницу при переключении на public секцию
+    if (section === "public") {
+      setPublicPage(1);
+    }
+  };
 
   const {
     data: templates,
@@ -134,25 +142,12 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     refetchOnWindowFocus: true,
   });
 
-  useEffect(() => {
-    if (activeSection === "public") {
-      console.log(
-        "[TemplateLibrary] Section changed to public, resetting page to 1",
-      );
-      setPublicPage(1);
-    }
-  }, [searchQuery, activeSection]);
-
   // Очищаем location.state после использования initialSection
   useEffect(() => {
     if (locationInitialSection) {
       window.history.replaceState({}, document.title);
     }
   }, [locationInitialSection]);
-
-  useEffect(() => {
-    setSearchQuery(initialSearchQuery);
-  }, [initialSearchQuery]);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -395,7 +390,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                 <div className="space-y-2">
                   <button
                     type="button"
-                    onClick={() => setActiveSection("private")}
+                    onClick={() => handleSectionChange("private")}
                     className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
                       activeSection === "private"
                         ? "bg-cyan-500/25 text-cyan-100"
@@ -406,7 +401,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveSection("public")}
+                    onClick={() => handleSectionChange("public")}
                     className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
                       activeSection === "public"
                         ? "bg-cyan-500/25 text-cyan-100"
@@ -417,7 +412,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveSection("favorites")}
+                    onClick={() => handleSectionChange("favorites")}
                     className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
                       activeSection === "favorites"
                         ? "bg-cyan-500/25 text-cyan-100"
@@ -428,7 +423,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveSection("archived")}
+                    onClick={() => handleSectionChange("archived")}
                     className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
                       activeSection === "archived"
                         ? "bg-cyan-500/25 text-cyan-100"
@@ -541,7 +536,6 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                     <PublicTierListCards
                       tierLists={publicTierLists}
                       likedIdsSet={likedIdsSet}
-                      currentUserId={currentUserId}
                     />
 
                     <nav

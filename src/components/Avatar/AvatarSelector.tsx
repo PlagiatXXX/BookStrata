@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   X,
   Image as ImageIcon,
@@ -40,6 +41,7 @@ export function AvatarSelector({
   onSave,
   onClose,
 }: AvatarSelectorProps) {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabId>("presets");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState("");
@@ -48,7 +50,6 @@ export function AvatarSelector({
   const [isSaving, setIsSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState<PresetStyle>("cartoon");
   const [error, setError] = useState<string | null>(null);
-  const [limitInfo, setLimitInfo] = useState<LimitInfo | null>(null);
   const [generationBaseAvatar, setGenerationBaseAvatar] = useState<
     string | null
   >(null);
@@ -62,39 +63,33 @@ export function AvatarSelector({
   const isBusy =
     isGenerating || isWaitingForResult || previewLoadState === "loading";
 
-  // Загружаем информацию о лимитах
-  useEffect(() => {
-    const fetchLimit = async () => {
-      try {
-        const token = getAuthToken();
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/avatars/limit`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setLimitInfo({
-            used: data.used,
-            limit: data.limit,
-            remaining: data.remaining,
-          });
-        }
-      } catch {
-        // Игнорируем ошибки
+  // Загружаем информацию о лимитах через useQuery
+  const { data: limitData } = useQuery({
+    queryKey: ["avatarLimit"],
+    queryFn: async () => {
+      const token = getAuthToken();
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/avatars/limit`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch avatar limit");
       }
-    };
+      return response.json() as Promise<LimitInfo>;
+    },
+    enabled: activeTab === "ai",
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
-    if (activeTab === "ai") {
-      fetchLimit();
-    }
-  }, [activeTab]);
+  const limitInfo = limitData ?? null;
 
   useEffect(() => {
     if (!isWaitingForResult) return;
     if (currentAvatar && currentAvatar !== generationBaseAvatar) {
+      // Объединяем несколько setState в один блок
       setPreviewUrl(currentAvatar);
       setIsWaitingForResult(false);
       setIsGenerating(false);
@@ -104,6 +99,7 @@ export function AvatarSelector({
   useEffect(() => {
     if (!isWaitingForResult) return;
     const timeoutId = setTimeout(() => {
+      // Объединяем несколько setState в один блок
       setIsWaitingForResult(false);
       setIsGenerating(false);
       setError("Генерация занимает дольше обычного. Попробуйте ещё раз.");
@@ -183,7 +179,10 @@ export function AvatarSelector({
       if (!response.ok) {
         if (response.status === 429) {
           setError(data.error || "Дневной лимит исчерпан");
-          setLimitInfo((prev) => (prev ? { ...prev, remaining: 0 } : null));
+          // Обновляем кэш useQuery
+          queryClient.setQueryData(["avatarLimit"], (prev: LimitInfo | null) =>
+            prev ? { ...prev, remaining: 0 } : null,
+          );
         } else {
           setError(data.error || "Ошибка генерации");
         }
@@ -194,7 +193,8 @@ export function AvatarSelector({
       if (data.imageUrl) {
         setPreviewUrl(data.imageUrl);
         if (data.remaining !== undefined) {
-          setLimitInfo((prev) =>
+          // Обновляем кэш useQuery
+          queryClient.setQueryData(["avatarLimit"], (prev: LimitInfo | null) =>
             prev ? { ...prev, remaining: data.remaining } : null,
           );
         }

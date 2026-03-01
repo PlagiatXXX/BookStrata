@@ -6,13 +6,11 @@ import type { TierListShort } from '@/lib/tierListApi';
 interface PublicTierListCardsProps {
   tierLists: TierListShort[];
   likedIdsSet: Set<number>;
-  currentUserId?: number;
 }
 
 const PublicTierListCards = memo(function PublicTierListCards({
   tierLists,
   likedIdsSet,
-  currentUserId,
 }: PublicTierListCardsProps) {
   const navigate = useNavigate();
 

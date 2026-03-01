@@ -53,7 +53,8 @@ const emptyData: TierListData = {
   tierIdToTempIdMap: {},
 };
 
-export const TierListEditorPage = () => {
+// Внутренний компонент с ключом для автоматического сброса состояния
+const TierListEditorContent = () => {
   const { id: tierListId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -103,11 +104,6 @@ export const TierListEditorPage = () => {
     () => new Set(likedTierListIds?.likedIds || []),
     [likedTierListIds?.likedIds],
   );
-
-  // Сбрасываем deletedTierIds при смене тир-листа
-  useEffect(() => {
-    setDeletedTierIds([]);
-  }, [tierListId]);
 
   // Трансформация данных (API -> UI)
   const initialDataForHook = useMemo((): TierListData => {
@@ -590,4 +586,10 @@ export const TierListEditorPage = () => {
       />
     </>
   );
+};
+
+// Главный компонент с key для сброса состояния при смене tierListId
+export const TierListEditorPage = () => {
+  const { id: tierListId } = useParams<{ id: string }>();
+  return <TierListEditorContent key={tierListId} />;
 };
