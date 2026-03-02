@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useReducer, useCallback, useState } from "react";
 import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { logger } from "@/lib/logger";
@@ -19,6 +19,48 @@ interface BookSearchModalProps {
       coverImageUrl: string;
     } | null,
   ) => void;
+}
+
+interface SearchState {
+  query: string;
+  selectedBooks: Set<string>;
+  hasSearched: boolean;
+}
+
+type SearchAction =
+  | { type: "SET_QUERY"; query: string }
+  | { type: "TOGGLE_BOOK"; bookKey: string }
+  | { type: "CLEAR_SELECTION" }
+  | { type: "RESET_SEARCH" }
+  | { type: "SET_SEARCHED" };
+
+const initialSearchState: SearchState = {
+  query: "",
+  selectedBooks: new Set(),
+  hasSearched: false,
+};
+
+function searchReducer(state: SearchState, action: SearchAction): SearchState {
+  switch (action.type) {
+    case "SET_QUERY":
+      return { ...state, query: action.query };
+    case "TOGGLE_BOOK":
+      { const newSet = new Set(state.selectedBooks);
+      if (newSet.has(action.bookKey)) {
+        newSet.delete(action.bookKey);
+      } else {
+        newSet.add(action.bookKey);
+      }
+      return { ...state, selectedBooks: newSet }; }
+    case "CLEAR_SELECTION":
+      return { ...state, selectedBooks: new Set() };
+    case "RESET_SEARCH":
+      return { query: "", selectedBooks: new Set(), hasSearched: false };
+    case "SET_SEARCHED":
+      return { ...state, hasSearched: true, selectedBooks: new Set() };
+    default:
+      return state;
+  }
 }
 
 // Skeleton для результатов поиска
@@ -192,11 +234,9 @@ export const BookSearchModal = ({
   tierListId,
   onBookAdded,
 }: BookSearchModalProps) => {
-  const [query, setQuery] = useState("");
-  const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set());
+  const [state, dispatch] = useReducer(searchReducer, initialSearchState);
   const [viewBook, setViewBook] = useState<OpenLibraryBook | null>(null);
   const [isViewAdding, setIsViewAdding] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
 
   const {
     search,
@@ -209,12 +249,11 @@ export const BookSearchModal = ({
   } = useBookSearch({ cacheEnabled: true });
 
   const handleSearch = useCallback(async () => {
-    if (!query.trim() || query.length < 2) return;
+    if (!state.query.trim() || state.query.length < 2) return;
 
-    setHasSearched(true);
-    setSelectedBooks(new Set());
-    await search(query);
-  }, [query, search]);
+    dispatch({ type: "SET_SEARCHED" });
+    await search(state.query);
+  }, [state.query, search]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -223,22 +262,14 @@ export const BookSearchModal = ({
   };
 
   const toggleBookSelection = (key: string) => {
-    setSelectedBooks((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(key)) {
-        newSet.delete(key);
-      } else {
-        newSet.add(key);
-      }
-      return newSet;
-    });
+    dispatch({ type: "TOGGLE_BOOK", bookKey: key });
   };
 
   const handleAddSelectedBooks = async () => {
-    if (selectedBooks.size === 0) return;
+    if (state.selectedBooks.size === 0) return;
 
     const booksToAdd = results.filter((book) =>
-      selectedBooks.has(book.openLibraryKey),
+      state.selectedBooks.has(book.openLibraryKey),
     );
 
     let successCount = 0;
@@ -293,7 +324,7 @@ export const BookSearchModal = ({
       handleClose();
     }
 
-    setSelectedBooks(new Set());
+    dispatch({ type: "CLEAR_SELECTION" });
   };
 
   const handleAddBookFromView = async (book: OpenLibraryBook) => {
@@ -335,9 +366,7 @@ export const BookSearchModal = ({
 
   const handleClose = () => {
     // Очищаем состояние перед закрытием
-    setQuery("");
-    setSelectedBooks(new Set());
-    setHasSearched(false);
+    dispatch({ type: "RESET_SEARCH" });
     clearResults();
     onClose();
   };
@@ -389,8 +418,8 @@ export const BookSearchModal = ({
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-200/65" />
                 <input
                   type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={state.query}
+                  onChange={(e) => dispatch({ type: "SET_QUERY", query: e.target.value })}
                   onKeyDown={handleKeyDown}
                   placeholder="Введите название книги или автора..."
                   className="w-full rounded-xl border border-cyan-300/45 bg-[rgba(6,12,28,0.88)] py-3 pl-10 pr-4 text-[#d8f9ff] placeholder:text-cyan-200/45 transition-colors focus:border-fuchsia-300/70 focus:outline-none"
@@ -398,7 +427,7 @@ export const BookSearchModal = ({
               </div>
               <button
                 onClick={handleSearch}
-                disabled={isLoading || query.length < 2}
+                disabled={isLoading || state.query.length < 2}
                 className="y2k-btn-primary flex cursor-pointer items-center gap-2 rounded-xl px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? <Spinner size="sm" /> : "Найти"}
@@ -414,13 +443,13 @@ export const BookSearchModal = ({
                 <span className="text-sm text-cyan-200/75">
                   Найдено: {totalResults}
                 </span>
-                {selectedBooks.size > 0 && (
+                {state.selectedBooks.size > 0 && (
                   <button
                     onClick={handleAddSelectedBooks}
                     className="y2k-btn-primary flex cursor-pointer items-center gap-2 rounded-[10px] px-4 py-2 text-sm font-semibold animate-scale-in"
                   >
                     <Plus className="w-4 h-4" />
-                    Добавить выбранные ({selectedBooks.size})
+                    Добавить выбранные ({state.selectedBooks.size})
                   </button>
                 )}
               </div>
@@ -439,7 +468,7 @@ export const BookSearchModal = ({
                   >
                     <BookItem
                       book={book}
-                      isSelected={selectedBooks.has(book.openLibraryKey)}
+                      isSelected={state.selectedBooks.has(book.openLibraryKey)}
                       onToggle={() => toggleBookSelection(book.openLibraryKey)}
                       onView={() => setViewBook(book)}
                     />
@@ -459,7 +488,7 @@ export const BookSearchModal = ({
                 {hasMore && <div id="book-search-sentinel" className="h-4" />}
 
                 {/* Empty State */}
-                {results.length === 0 && !isLoading && hasSearched && (
+                {results.length === 0 && !isLoading && state.hasSearched && (
                   <div className="py-12 text-center">
                     <BookOpen className="mx-auto mb-3 h-12 w-12 text-cyan-200/50" />
                     <p className="text-cyan-200/80">Ничего не найдено</p>
@@ -471,7 +500,7 @@ export const BookSearchModal = ({
                 )}
 
                 {/* Initial State */}
-                {results.length === 0 && !isLoading && !hasSearched && (
+                {results.length === 0 && !isLoading && !state.hasSearched && (
                   <div className="py-12 text-center">
                     <Search className="mx-auto mb-3 h-12 w-12 text-cyan-200/50" />
                     <p className="text-cyan-200/80">

@@ -20,6 +20,41 @@ const sizeClasses: Record<NonNullable<Tier["labelSize"]>, string> = {
   md: "text-xl",
 };
 
+// Отдельный компонент для умного отображения текста
+interface TierLabelTextProps {
+  title: string;
+  textColor: string;
+  dynamicSizeClass: string;
+}
+
+const TierLabelText = memo(({ title, textColor, dynamicSizeClass }: TierLabelTextProps) => {
+  const words = title.split(/\s+/);
+  const isMultiWord = words.length >= 2;
+
+  if (isMultiWord) {
+    return (
+      <span
+        className={`font-black wrap-break-word ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
+      >
+        {words[0]}
+        <br />
+        {words.slice(1).join(" ")}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`font-black hyphens-auto ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
+      style={{ hyphens: "auto" }}
+    >
+      {title}
+    </span>
+  );
+});
+
+TierLabelText.displayName = "TierLabelText";
+
 export const TierLabel = memo(({
   tierId,
   title,
@@ -49,26 +84,7 @@ export const TierLabel = memo(({
   }, [wrapperRef]);
 
   const dynamicSizeClass = sizeClasses[labelSize];
-
-  // Разбиваем текст на слова для умного переноса
-  const words = title.split(/\s+/);
-  const isMultiWord = words.length >= 2;
-
-  // Для одного слова - перенос через дефис, для нескольких - разбиваем на строки
-  const renderSmartText = () => {
-    if (isMultiWord) {
-      // Два слова: первое сверху, второе снизу
-      return (
-        <>
-          {words[0]}
-          <br />
-          {words.slice(1).join(" ")}
-        </>
-      );
-    }
-    // Одно слово - обычный вывод (CSS hyphens сделает перенос)
-    return title;
-  };
+  const textColor = getTextColorForBackground(color);
 
   const handleDoubleClick = () => {
     setIsEditing(true);
@@ -114,25 +130,12 @@ export const TierLabel = memo(({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           className={`w-full bg-transparent text-center outline-none ${
-            getTextColorForBackground(color) === "black"
-              ? "text-black"
-              : "text-white"
+            textColor === "black" ? "text-black" : "text-white"
           }`}
           style={{ fontSize: "inherit", fontWeight: "inherit" }}
         />
       ) : (
-        <span
-          className={`font-black ${
-            !isMultiWord ? "hyphens-auto" : "wrap-break-word"
-          } ${
-            getTextColorForBackground(color) === "black"
-              ? "text-black"
-              : "text-white"
-          } ${dynamicSizeClass}`}
-          style={!isMultiWord ? { hyphens: "auto" } : {}}
-        >
-          {renderSmartText()}
-        </span>
+        <TierLabelText title={title} textColor={textColor} dynamicSizeClass={dynamicSizeClass} />
       )}
 
       <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100">

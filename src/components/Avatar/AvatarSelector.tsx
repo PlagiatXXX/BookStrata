@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useReducer } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   X,
@@ -35,6 +35,101 @@ interface LimitInfo {
   remaining: number;
 }
 
+// === State types for useReducer ===
+interface PreviewState {
+  url: string | null;
+  loadState: "idle" | "loading" | "ready" | "error";
+}
+
+type PreviewAction =
+  | { type: "SET_PREVIEW"; url: string | null; loadState?: PreviewState["loadState"] }
+  | { type: "SET_LOAD_STATE"; loadState: PreviewState["loadState"] };
+
+function previewReducer(state: PreviewState, action: PreviewAction): PreviewState {
+  switch (action.type) {
+    case "SET_PREVIEW":
+      return {
+        url: action.url,
+        loadState: action.loadState ?? (action.url ? "loading" : "idle"),
+      };
+    case "SET_LOAD_STATE":
+      return { ...state, loadState: action.loadState };
+    default:
+      return state;
+  }
+}
+
+interface GenerationState {
+  isGenerating: boolean;
+  isWaitingForResult: boolean;
+  generationBaseAvatar: string | null;
+  error: string | null;
+}
+
+type GenerationAction =
+  | { type: "START_GENERATION"; baseAvatar: string | null }
+  | { type: "GENERATION_SUCCESS"; imageUrl: string; remaining?: number }
+  | { type: "GENERATION_ERROR"; error: string }
+  | { type: "GENERATION_COMPLETE" }
+  | { type: "TIMEOUT"; error: string }
+  | { type: "CLEAR_ERROR" };
+
+function generationReducer(
+  state: GenerationState,
+  action: GenerationAction,
+): GenerationState {
+  switch (action.type) {
+    case "START_GENERATION":
+      return {
+        isGenerating: true,
+        isWaitingForResult: false,
+        generationBaseAvatar: action.baseAvatar,
+        error: null,
+      };
+    case "GENERATION_SUCCESS":
+      return {
+        ...state,
+        isGenerating: false,
+        error: null,
+      };
+    case "GENERATION_ERROR":
+      return {
+        ...state,
+        isGenerating: false,
+        error: action.error,
+      };
+    case "GENERATION_COMPLETE":
+      return {
+        ...state,
+        isGenerating: false,
+        isWaitingForResult: false,
+      };
+    case "TIMEOUT":
+      return {
+        ...state,
+        isWaitingForResult: false,
+        isGenerating: false,
+        error: action.error,
+      };
+    case "CLEAR_ERROR":
+      return { ...state, error: null };
+    default:
+      return state;
+  }
+}
+
+const initialPreviewState: PreviewState = {
+  url: null,
+  loadState: "idle",
+};
+
+const initialGenerationState: GenerationState = {
+  isGenerating: false,
+  isWaitingForResult: false,
+  generationBaseAvatar: null,
+  error: null,
+};
+
 export function AvatarSelector({
   currentAvatar,
   username,
@@ -42,26 +137,22 @@ export function AvatarSelector({
   onClose,
 }: AvatarSelectorProps) {
   const queryClient = useQueryClient();
+  
+  // Простые состояния через useState
   const [activeTab, setActiveTab] = useState<TabId>("presets");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isWaitingForResult, setIsWaitingForResult] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState<PresetStyle>("cartoon");
-  const [error, setError] = useState<string | null>(null);
-  const [generationBaseAvatar, setGenerationBaseAvatar] = useState<
-    string | null
-  >(null);
-  const [previewLoadState, setPreviewLoadState] = useState<
-    "idle" | "loading" | "ready" | "error"
-  >("idle");
+  
+  // Сложные состояния через useReducer
+  const [preview, dispatchPreview] = useReducer(previewReducer, initialPreviewState);
+  const [generation, dispatchGeneration] = useReducer(generationReducer, initialGenerationState);
 
   const currentUrl =
-    previewLoadState === "ready" && previewUrl ? previewUrl : currentAvatar;
-  const hasSelection = previewUrl !== null && previewLoadState === "ready";
+    preview.loadState === "ready" && preview.url ? preview.url : currentAvatar;
+  const hasSelection = preview.url !== null && preview.loadState === "ready";
   const isBusy =
-    isGenerating || isWaitingForResult || previewLoadState === "loading";
+    generation.isGenerating || generation.isWaitingForResult || preview.loadState === "loading";
 
   // Загружаем информацию о лимитах через useQuery
   const { data: limitData } = useQuery({
@@ -86,30 +177,31 @@ export function AvatarSelector({
 
   const limitInfo = limitData ?? null;
 
+  // Проверка: если аватар обновился во время ожидания генерации
   useEffect(() => {
-    if (!isWaitingForResult) return;
-    if (currentAvatar && currentAvatar !== generationBaseAvatar) {
-      // Объединяем несколько setState в один блок
-      setPreviewUrl(currentAvatar);
-      setIsWaitingForResult(false);
-      setIsGenerating(false);
+    if (!generation.isWaitingForResult) return;
+    if (currentAvatar && currentAvatar !== generation.generationBaseAvatar) {
+      dispatchGeneration({ type: "GENERATION_COMPLETE" });
+      dispatchPreview({ type: "SET_PREVIEW", url: currentAvatar, loadState: "ready" });
     }
-  }, [currentAvatar, generationBaseAvatar, isWaitingForResult]);
+  }, [currentAvatar, generation.isWaitingForResult, generation.generationBaseAvatar]);
 
+  // Таймаут генерации (2 минуты)
   useEffect(() => {
-    if (!isWaitingForResult) return;
+    if (!generation.isWaitingForResult) return;
     const timeoutId = setTimeout(() => {
-      // Объединяем несколько setState в один блок
-      setIsWaitingForResult(false);
-      setIsGenerating(false);
-      setError("Генерация занимает дольше обычного. Попробуйте ещё раз.");
+      dispatchGeneration({
+        type: "TIMEOUT",
+        error: "Генерация занимает дольше обычного. Попробуйте ещё раз.",
+      });
     }, 120000);
     return () => clearTimeout(timeoutId);
-  }, [isWaitingForResult]);
+  }, [generation.isWaitingForResult]);
 
+  // Polling для загрузки preview изображения
   useEffect(() => {
-    if (!previewUrl) {
-      setPreviewLoadState("idle");
+    if (!preview.url) {
+      dispatchPreview({ type: "SET_LOAD_STATE", loadState: "idle" });
       return;
     }
 
@@ -120,22 +212,24 @@ export function AvatarSelector({
 
     const tryLoad = () => {
       if (cancelled) return;
-      setPreviewLoadState("loading");
+      dispatchPreview({ type: "SET_LOAD_STATE", loadState: "loading" });
       const img = new Image();
       img.onload = () => {
         if (cancelled) return;
-        setPreviewLoadState("ready");
+        dispatchPreview({ type: "SET_LOAD_STATE", loadState: "ready" });
       };
       img.onerror = () => {
         if (cancelled) return;
         attempt += 1;
         if (attempt >= maxAttempts) {
-          setPreviewLoadState("error");
+          dispatchPreview({ type: "SET_LOAD_STATE", loadState: "error" });
           return;
         }
         setTimeout(tryLoad, delayMs);
       };
-      img.src = previewUrl;
+      if (preview.url) {
+        img.src = preview.url;
+      }
     };
 
     tryLoad();
@@ -143,22 +237,18 @@ export function AvatarSelector({
     return () => {
       cancelled = true;
     };
-  }, [previewUrl]);
+  }, [preview.url]);
 
   const handlePresetSelect = (preset: (typeof allPresets)[0]) => {
-    setPreviewUrl(preset.full);
-    setPreviewLoadState('ready');
-    setError(null);
+    dispatchPreview({ type: "SET_PREVIEW", url: preset.full, loadState: "ready" });
+    dispatchGeneration({ type: "CLEAR_ERROR" });
   };
 
   // Генерация через Pollinations.ai
   const handleAiGenerate = async () => {
     if (!aiPrompt.trim()) return;
 
-    setIsGenerating(true);
-    setIsWaitingForResult(false);
-    setGenerationBaseAvatar(currentAvatar ?? null);
-    setError(null);
+    dispatchGeneration({ type: "START_GENERATION", baseAvatar: currentAvatar ?? null });
 
     try {
       const token = getAuthToken();
@@ -178,34 +268,31 @@ export function AvatarSelector({
 
       if (!response.ok) {
         if (response.status === 429) {
-          setError(data.error || "Дневной лимит исчерпан");
+          dispatchGeneration({ type: "GENERATION_ERROR", error: data.error || "Дневной лимит исчерпан" });
           // Обновляем кэш useQuery
           queryClient.setQueryData(["avatarLimit"], (prev: LimitInfo | null) =>
             prev ? { ...prev, remaining: 0 } : null,
           );
         } else {
-          setError(data.error || "Ошибка генерации");
+          dispatchGeneration({ type: "GENERATION_ERROR", error: data.error || "Ошибка генерации" });
         }
-        setIsGenerating(false);
         return;
       }
 
       if (data.imageUrl) {
-        setPreviewUrl(data.imageUrl);
+        dispatchPreview({ type: "SET_PREVIEW", url: data.imageUrl, loadState: "loading" });
+        dispatchGeneration({ type: "GENERATION_SUCCESS", imageUrl: data.imageUrl, remaining: data.remaining });
         if (data.remaining !== undefined) {
           // Обновляем кэш useQuery
           queryClient.setQueryData(["avatarLimit"], (prev: LimitInfo | null) =>
             prev ? { ...prev, remaining: data.remaining } : null,
           );
         }
-        setIsGenerating(false);
       } else {
-        setIsWaitingForResult(true);
+        // Ожидаем результат генерации
       }
     } catch {
-      setError("Ошибка соединения. Попробуйте ещё раз.");
-    } finally {
-      setIsGenerating(false);
+      dispatchGeneration({ type: "GENERATION_ERROR", error: "Ошибка соединения. Попробуйте ещё раз." });
     }
   };
 
@@ -246,7 +333,7 @@ export function AvatarSelector({
         <div className="flex justify-center mb-6">
           <div className="relative">
             <Avatar url={currentUrl} username={username} size="xl" />
-            {(previewLoadState === "loading" || isWaitingForResult) && (
+            {(preview.loadState === "loading" || generation.isWaitingForResult) && (
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
                 <Spinner size="lg" />
               </div>
@@ -304,7 +391,7 @@ export function AvatarSelector({
                     key={preset.id}
                     onClick={() => handlePresetSelect(preset)}
                     className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 ${
-                      previewUrl === preset.full
+                      preview.url === preset.full
                         ? "border-primary ring-2 ring-primary/50"
                         : "border-transparent hover:border-gray-400"
                     }`}
@@ -313,7 +400,7 @@ export function AvatarSelector({
                       src={preset.full}
                       alt={preset.name}
                       className="w-full h-full object-cover"
-                      onLoad={() => setPreviewLoadState('ready')}
+                      onLoad={() => dispatchPreview({ type: "SET_LOAD_STATE", loadState: "ready" })}
                       onError={(e) => {
                         // Fallback: если картинка не загрузилась, показываем инициалы
                         const target = e.target as HTMLImageElement;
@@ -328,7 +415,7 @@ export function AvatarSelector({
                         }
                       }}
                     />
-                    {previewUrl === preset.full && (
+                    {preview.url === preset.full && (
                       <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
                         <Check size={20} className="text-white" />
                       </div>
@@ -352,13 +439,13 @@ export function AvatarSelector({
                 </span>
               </div>
 
-              {error && (
+              {generation.error && (
                 <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
-                  <p className="text-sm text-red-400">{error}</p>
+                  <p className="text-sm text-red-400">{generation.error}</p>
                 </div>
               )}
 
-              {previewLoadState === "loading" && (
+              {preview.loadState === "loading" && (
                 <div className="p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
                   <p className="text-sm text-gray-300">
                     Загружаем изображение. Это может занять немного времени.
@@ -366,7 +453,7 @@ export function AvatarSelector({
                 </div>
               )}
 
-              {previewLoadState === "error" && (
+              {preview.loadState === "error" && (
                 <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
                   <p className="text-sm text-red-400">
                     Не удалось загрузить изображение. Попробуйте ещё раз.
@@ -374,7 +461,7 @@ export function AvatarSelector({
                 </div>
               )}
 
-              {isWaitingForResult && (
+              {generation.isWaitingForResult && (
                 <div className="p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
                   <p className="text-sm text-gray-300">
                     Генерация запущена. Обычно занимает до 40 секунд. Можно
@@ -416,7 +503,7 @@ export function AvatarSelector({
                 >
                   <Spinner size="lg" className="border-white/90" />
                   <span>
-                    {isGenerating ? "Создаем..." : "Дождитесь результата..."}
+                    {generation.isGenerating ? "Создаем..." : "Дождитесь результата..."}
                   </span>
                 </span>
               </button>
@@ -446,8 +533,8 @@ export function AvatarSelector({
                       const reader = new FileReader();
                       reader.onload = () => {
                         const base64 = reader.result as string;
-                        setPreviewUrl(base64);
-                        setError(null);
+                        dispatchPreview({ type: "SET_PREVIEW", url: base64, loadState: "loading" });
+                        dispatchGeneration({ type: "CLEAR_ERROR" });
                       };
                       reader.readAsDataURL(file);
                     }
