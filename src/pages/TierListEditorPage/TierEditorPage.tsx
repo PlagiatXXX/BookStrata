@@ -63,9 +63,6 @@ const TierListEditorContent = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [deletedTierIds, setDeletedTierIds] = useState<number[]>([]);
 
-  // Оригинальные данные для diff
-  const originalDataRef = useRef<TierListData | null>(null);
-
   // Загрузка данных с сервера
   const {
     data: apiData,
@@ -78,13 +75,6 @@ const TierListEditorContent = () => {
     enabled: !!tierListId,
     staleTime: 0,
   });
-
-  // Сохраняем оригинал после загрузки apiData
-  useEffect(() => {
-    if (apiData) {
-      originalDataRef.current = transformApiToState(apiData);
-    }
-  }, [apiData]);
 
   // Получаем количество лайков
   const { data: likesData } = useQuery({

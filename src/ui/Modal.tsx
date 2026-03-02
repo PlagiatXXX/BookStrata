@@ -29,7 +29,13 @@ export const Modal = ({
     <div
       className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-[2px] animate-fade-in sm:items-center sm:p-4"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      }}
       role="presentation"
+      tabIndex={-1}
     >
       <div
         onClick={(e) => e.stopPropagation()}

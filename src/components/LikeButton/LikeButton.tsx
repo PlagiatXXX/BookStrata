@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
-import { 
-  apiLikeTierList, 
-  apiUnlikeTierList, 
-  apiLikeTemplate, 
+import {
+  apiLikeTierList,
+  apiUnlikeTierList,
+  apiLikeTemplate,
   apiUnlikeTemplate,
   apiGetTierListLikes,
   apiGetTemplateLikes,
-  type LikesResponse 
+  type LikesResponse
 } from '@/lib/likesApi';
 
 interface LikeButtonProps {
@@ -40,6 +40,12 @@ export function LikeButton({
   const [liked, setLiked] = useState(initialLiked);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+
+  // Синхронизируем состояние с props при смене тир-листа/шаблона
+  useEffect(() => {
+    setLikes(initialLikes);
+    setLiked(initialLiked);
+  }, [id, initialLikes, initialLiked]);
 
   const isOwn = authorId !== undefined && currentUserId !== undefined && authorId === currentUserId;
   const isAuthenticated = !!currentUserId;

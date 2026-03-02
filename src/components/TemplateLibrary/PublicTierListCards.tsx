@@ -26,7 +26,15 @@ const PublicTierListCards = memo(function PublicTierListCards({
         return (
           <div
             key={tierList.id}
+            role="button"
+            tabIndex={0}
             onClick={() => handleCardClick(tierList.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCardClick(tierList.id);
+              }
+            }}
             className="cursor-pointer bg-black/45 backdrop-blur-[2px] rounded-md p-3 border border-white/20 hover:border-white/40 transition-transform duration-200 min-h-22.5"
           >
             <h3 className="font-display font-semibold text-[#f3efe6] mb-1 text-sm line-clamp-1">

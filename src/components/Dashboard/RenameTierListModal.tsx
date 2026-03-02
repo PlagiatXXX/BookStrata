@@ -60,7 +60,6 @@ export const RenameTierListModal = memo(({
                 onRename();
               }
             }}
-            autoFocus
           />
 
           <div className="flex justify-end gap-3 mt-2">

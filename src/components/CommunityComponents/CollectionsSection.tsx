@@ -28,7 +28,7 @@ export const CollectionsSection = () => {
           >
             <div className="flex gap-1 mb-4">
               {collection.coverImages.map((img, idx) => (
-                <div key={idx} className="flex-1 h-20 bg-(--bg-0) border border-(--line-soft) rounded-sm overflow-hidden">
+                <div key={`${img}-${idx}`} className="flex-1 h-20 bg-(--bg-0) border border-(--line-soft) rounded-sm overflow-hidden">
                   <img
                     alt={`Cover ${idx + 1}`}
                     className="w-full h-full object-cover"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuthContext';
 import { AvatarSelector } from '@/components/Avatar';
@@ -15,8 +15,8 @@ import { useProfileActions } from './ProfilePage/hooks/useProfileActions';
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user: authUser, refreshUser } = useAuth();
-  const { user, stats, isLoading, uploadAvatar, refreshUser: refreshUserData } = useUser();
+  const { isAuthenticated, user: authUser } = useAuth();
+  const { user, stats, isLoading, uploadAvatar, refreshUser } = useUser();
 
   const {
     // Username
@@ -46,26 +46,22 @@ export function ProfilePage() {
 
   const username = authUser?.username || user?.username;
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      refreshUserData();
-    }
-  }, [isAuthenticated, refreshUserData]);
+  // Данные загружаются автоматически через useUser (useQuery с enabled: hasToken)
 
   const handleAvatarSave = async (avatarUrl: string) => {
     try {
+      // Последовательное выполнение: сначала загрузка, потом обновление данных
       await uploadAvatar(avatarUrl);
-      await refreshUser();
-      await refreshUserData();
+      await refreshUser(); // Зависит от результата uploadAvatar
       window.dispatchEvent(new CustomEvent('avatar-updated'));
       window.dispatchEvent(new CustomEvent('auth-token-changed'));
       sileo.success({ title: 'Аватар обновлен', duration: 3000 });
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), { action: 'handleAvatarSave' });
-      sileo.error({ 
-        title: "Ошибка при сохранении аватара", 
+      sileo.error({
+        title: "Ошибка при сохранении аватара",
         description: "Попробуйте загрузить другое изображение",
-        duration: 3000 
+        duration: 3000
       });
     }
   };

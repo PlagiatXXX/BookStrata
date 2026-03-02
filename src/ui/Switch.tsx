@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 interface SwitchProps {
   checked?: boolean;
@@ -7,18 +7,14 @@ interface SwitchProps {
   disabled?: boolean;
 }
 
-export const Switch: React.FC<SwitchProps> = ({ 
-  checked = false, 
-  onCheckedChange, 
+export const Switch: React.FC<SwitchProps> = ({
+  checked = false,
+  onCheckedChange,
   id,
   disabled = false
 }) => {
-  const [isChecked, setIsChecked] = useState(checked);
-
   const handleChange = () => {
-    const newValue = !isChecked;
-    setIsChecked(newValue);
-    onCheckedChange?.(newValue);
+    onCheckedChange?.(!checked);
   };
 
   return (
@@ -28,16 +24,16 @@ export const Switch: React.FC<SwitchProps> = ({
       id={id}
       onClick={handleChange}
       disabled={disabled}
-      aria-checked={isChecked}
+      aria-checked={checked}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-        isChecked 
-          ? 'bg-blue-600' 
+        checked
+          ? 'bg-blue-600'
           : 'bg-gray-200 dark:bg-gray-700'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <span
         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-          isChecked ? 'translate-x-6' : 'translate-x-1'
+          checked ? 'translate-x-6' : 'translate-x-1'
         }`}
       />
     </button>

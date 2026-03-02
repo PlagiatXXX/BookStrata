@@ -26,8 +26,17 @@ export const BookViewModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-[2px] animate-fade-in"
+        role="button"
+        tabIndex={0}
+        className="absolute inset-0 bg-black/70 backdrop-blur-[2px] animate-fade-in cursor-pointer"
         onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClose();
+          }
+        }}
+        aria-label="Закрыть модальное окно"
       />
 
       <div className="relative mx-4 w-full max-w-xl overflow-hidden rounded-md border-2 border-(--line-soft) bg-(--bg-1) text-(--ink-0) shadow-2xl animate-scale-in">
@@ -119,7 +128,7 @@ export const BookViewModal = ({
               <div className="flex flex-wrap gap-2">
                 {book.subjects.slice(0, 5).map((subject, index) => (
                   <span
-                    key={index}
+                    key={`${subject}-${index}`}
                     className="rounded-sm border border-(--line-soft) bg-(--bg-0) px-2.5 py-1 text-xs text-(--ink-0)"
                   >
                     {subject}

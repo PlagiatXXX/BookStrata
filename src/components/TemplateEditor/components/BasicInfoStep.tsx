@@ -25,10 +25,11 @@ export function BasicInfoStep({
   return (
     <section className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-2 text-[#f3efe6]">
+        <label htmlFor="template-title-input" className="block text-sm font-medium mb-2 text-[#f3efe6]">
           Название шаблона *
         </label>
         <Input
+          id="template-title-input"
           value={title}
           maxLength={80}
           onChange={(event) => onTitleChange(event.target.value)}
@@ -40,10 +41,11 @@ export function BasicInfoStep({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2 text-[#f3efe6]">
+        <label htmlFor="template-cover-input" className="block text-sm font-medium mb-2 text-[#f3efe6]">
           Обложка шаблона
         </label>
         <Input
+          id="template-cover-input"
           value={coverImageUrl || ""}
           onChange={(event) => onCoverImageUrlChange(event.target.value)}
           placeholder="https://example.com/cover.jpg"
@@ -54,10 +56,11 @@ export function BasicInfoStep({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2 text-[#f3efe6]">
+        <label htmlFor="template-description-input" className="block text-sm font-medium mb-2 text-[#f3efe6]">
           Описание
         </label>
         <Textarea
+          id="template-description-input"
           value={description}
           maxLength={500}
           rows={5}

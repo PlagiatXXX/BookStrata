@@ -344,8 +344,16 @@ export function DashboardPage() {
 
                       <div className="dashboard-card__head">
                         <h3
+                          role="button"
+                          tabIndex={0}
                           onClick={() => handleOpenTierList(tierList.id)}
-                          className="dashboard-card__title"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleOpenTierList(tierList.id);
+                            }
+                          }}
+                          className="dashboard-card__title cursor-pointer"
                         >
                           {tierList.title}
                         </h3>
@@ -455,7 +463,6 @@ export function DashboardPage() {
             }}
             placeholder="Название тир-листа..."
             className="dashboard-modal__input"
-            autoFocus
           />
 
           <div className="dashboard-modal__actions">
@@ -513,7 +520,6 @@ export function DashboardPage() {
             }}
             placeholder="Новое название тир-листа..."
             className="dashboard-modal__input"
-            autoFocus
           />
 
           <div className="dashboard-modal__actions">

@@ -88,7 +88,6 @@ export const TEMPLATES: TemplateItem[] = [
       ],
     },
   },
-  // Актуально - Популярное на этой неделе
   {
     id: 6,
     title: 'ПОПУЛЯРНОЕ НА НЕДЕЛЕ',
@@ -111,7 +110,6 @@ export const TEMPLATES: TemplateItem[] = [
       ],
     },
   },
-  // Актуально - Классика
   {
     id: 19,
     title: 'КЛАССИЧЕСКАЯ ЛИТЕРАТУРА',
@@ -135,7 +133,6 @@ export const TEMPLATES: TemplateItem[] = [
       ],
     },
   },
-  // Фэнтези - Эпические серии
   {
     id: 3,
     title: 'ЭПИЧЕСКИЕ ФЭНТЕЗИ СЕРИИ',
@@ -159,7 +156,6 @@ export const TEMPLATES: TemplateItem[] = [
       ],
     },
   },
-  // Фэнтези - Young Adult
   {
     id: 7,
     title: 'YOUNG ADULT ФЭНТЕЗИ',
@@ -182,7 +178,6 @@ export const TEMPLATES: TemplateItem[] = [
       ],
     },
   },
-  // Фэнтези - ЛитРПГ
   {
     id: 8,
     title: 'ЛИТРПГ И ПРОГРЕССИВ',
@@ -205,7 +200,6 @@ export const TEMPLATES: TemplateItem[] = [
       ],
     },
   },
-  // Фэнтези - Романтическое
   {
     id: 9,
     title: 'РОМАНТИЧЕСКОЕ ФЭНТЕЗИ',
@@ -216,7 +210,7 @@ export const TEMPLATES: TemplateItem[] = [
     image: '/images/fantasy2.webp',
     size: 'tall',
     badge: { text: 'Романтика', color: 'accent-pink' },
-    borderColor: '#ec4899', // accent-pink
+    borderColor: '#ec4899',
     templateData: {
       title: 'Романтическое фэнтези',
       description: 'Любовь, магия и приключения.',

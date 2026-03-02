@@ -76,10 +76,11 @@ export function AiGenerationTab({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+        <label htmlFor="avatar-prompt-input" className="block text-sm font-medium text-gray-300 mb-2">
           Опишите ваш аватар
         </label>
         <textarea
+          id="avatar-prompt-input"
           value={aiPrompt}
           onChange={(e) => onPromptChange(e.target.value)}
           placeholder="Например: Мужчина с бородой в очках, синий фон, дружелюбная улыбка"

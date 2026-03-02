@@ -129,54 +129,73 @@ export const BookEditModal = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleCancel} maxWidth="2xl">
-      <div className="flex flex-col gap-4 w-full max-h-[90vh] flex-nowrap">
-        {/* Заголовок - Название по центру */}
+      <div className="flex flex-col gap-6 w-full max-h-[90vh]">
+        {/* Заголовок */}
         <div className="flex justify-center shrink-0">
-          <div className="flex flex-col gap-2 w-96">
-            <label className="text-sm font-medium text-gray-300 text-center">
-              Название
+          <div className="flex flex-col gap-2 w-full max-w-2xl">
+            <label htmlFor="book-title-input" className="text-sm font-medium text-gray-300 text-center">
+              Название книги
             </label>
             <input
+              id="book-title-input"
               type="text"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white text-center text-2xl font-bold"
-              placeholder="Название книги"
+              className="px-4 py-3 bg-surface-dark border border-surface-border rounded-lg text-white text-center text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="Введите название книги"
             />
           </div>
         </div>
 
         {/* Основной контент с прокруткой */}
-        <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-6">
+        <div className="flex-1 overflow-y-auto px-2 flex flex-col gap-6">
           {/* Верхняя часть: Обложка слева, Автор и Описание справа */}
           <div className="flex gap-6">
-            {/* Пустое место слева (где была бы обложка) */}
-            <div className="w-40 h-56 shrink-0" />
+            {/* Обложка книги слева */}
+            <div className="w-40 h-56 shrink-0 rounded-lg overflow-hidden shadow-lg bg-surface-dark border border-surface-border">
+              {book?.coverImageUrl ? (
+                <img
+                  src={book.coverImageUrl}
+                  alt={book.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="224"><rect fill="%23333" width="160" height="224"/><text fill="%23666" x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Нет обложки</text></svg>';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-surface-dark text-gray-500">
+                  <span className="text-sm">Нет обложки</span>
+                </div>
+              )}
+            </div>
 
             {/* Справа: Автор и Описание */}
             <div className="flex-1 flex flex-col gap-4 min-w-0">
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-gray-300">
+                <label htmlFor="book-author-input" className="text-sm font-medium text-gray-300">
                   Автор
                 </label>
                 <input
+                  id="book-author-input"
                   type="text"
                   value={author}
                   onChange={(e) => handleAuthorChange(e.target.value)}
-                  className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white"
+                  className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
                   placeholder="Автор книги"
                 />
               </div>
 
               <div className="flex flex-col gap-2 flex-1 min-w-0">
-                <label className="text-sm font-medium text-gray-300">
+                <label htmlFor="book-description-input" className="text-sm font-medium text-gray-300">
                   Описание
                 </label>
                 <textarea
+                  id="book-description-input"
                   value={description}
                   onChange={(e) => handleDescriptionChange(e.target.value)}
-                  className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white resize-none flex-1"
-                  placeholder="Описание книги"
+                  className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white resize-none flex-1 min-h-30 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="Краткое описание книги"
                 />
               </div>
             </div>
@@ -184,26 +203,26 @@ export const BookEditModal = ({
 
           {/* Нижняя часть: Мои мысли на всю ширину */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-300">
+            <label htmlFor="book-thoughts-input" className="text-sm font-medium text-gray-300">
               Мои мысли
             </label>
             <textarea
+              id="book-thoughts-input"
               value={thoughts}
               onChange={(e) => handleThoughtsChange(e.target.value)}
-              className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white resize-none"
+              className="px-3 py-2 bg-surface-dark border border-surface-border rounded text-white resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
               rows={5}
-              placeholder="Ваши мысли о книге"
+              placeholder="Ваши мысли, заметки и впечатления о книге"
             />
           </div>
         </div>
 
-        {/* Кнопки внизу */}
-        <div className="flex justify-end gap-3 shrink-0">
+        {/* Кнопки внизу с отступами */}
+        <div className="flex justify-end gap-3 shrink-0 pt-4 border-t border-surface-border">
           <Button variant="ghost" onClick={handleCancel}>
             Отмена
           </Button>
           <Button variant="primary" onClick={handleSave}>
-            
             Сохранить
           </Button>
         </div>

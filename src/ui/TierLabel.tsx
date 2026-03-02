@@ -149,9 +149,18 @@ export const TierLabel = memo(({
           {TIER_COLORS.map((swatchColor) => (
             <div
               key={swatchColor}
+              role="button"
+              tabIndex={0}
               onClick={() => {
                 onChangeColor(tierId, swatchColor);
                 setIsPaletteOpen(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onChangeColor(tierId, swatchColor);
+                  setIsPaletteOpen(false);
+                }
               }}
               style={{ backgroundColor: swatchColor }}
               className={`size-5 cursor-pointer rounded ${
@@ -160,6 +169,7 @@ export const TierLabel = memo(({
                   ? "ring-2 ring-cyan-200 ring-offset-2 ring-offset-[#060d1e]"
                   : ""
               }`}
+              aria-label={`Выбрать цвет ${swatchColor}`}
             />
           ))}
         </div>

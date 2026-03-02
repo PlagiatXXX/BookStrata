@@ -78,7 +78,13 @@ export const DialogContent: React.FC<DialogContentProps> = ({
     <div
       className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-[2px] sm:items-center sm:p-4"
       onClick={() => setOpen(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setOpen(false);
+        }
+      }}
       role="presentation"
+      tabIndex={-1}
     >
       <div
         onClick={(e) => e.stopPropagation()}

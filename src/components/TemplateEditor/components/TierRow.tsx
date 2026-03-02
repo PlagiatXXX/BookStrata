@@ -54,8 +54,9 @@ export function TierRow({
         </button>
 
         <div className="lg:col-span-5">
-          <label className="block text-xs mb-1 text-[#b8b1a3]">Название уровня</label>
+          <label htmlFor={`tier-name-${tierIndex}`} className="block text-xs mb-1 text-[#b8b1a3]">Название уровня</label>
           <Input
+            id={`tier-name-${tierIndex}`}
             value={tier.name}
             maxLength={24}
             onChange={(event) => onUpdateTier(tierIndex, { name: event.target.value })}
@@ -65,9 +66,10 @@ export function TierRow({
         </div>
 
         <div className="lg:col-span-3">
-          <label className="block text-xs mb-1 text-[#b8b1a3]">Цвет</label>
+          <label htmlFor={`tier-color-${tierIndex}`} className="block text-xs mb-1 text-[#b8b1a3]">Цвет</label>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <input
+              id={`tier-color-${tierIndex}`}
               type="color"
               value={tier.color}
               onChange={(event) => onUpdateTier(tierIndex, { color: event.target.value })}

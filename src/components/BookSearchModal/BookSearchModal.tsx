@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { logger } from "@/lib/logger";
@@ -85,10 +85,20 @@ function BookItem({
     >
       {/* Cover с lazy loading */}
       <div
-        className="relative h-24 w-16 shrink-0 overflow-hidden rounded-[10px] border border-cyan-300/40 bg-[rgba(6,12,28,0.9)] transition-transform hover:scale-105"
+        role="button"
+        tabIndex={0}
+        aria-label={`Просмотреть информацию о книге ${book.title}`}
+        className="relative h-24 w-16 shrink-0 overflow-hidden rounded-[10px] border border-cyan-300/40 bg-[rgba(6,12,28,0.9)] transition-transform hover:scale-105 cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           onView();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            onView();
+          }
         }}
       >
         {hasCover ? (
@@ -324,20 +334,13 @@ export const BookSearchModal = ({
   };
 
   const handleClose = () => {
+    // Очищаем состояние перед закрытием
     setQuery("");
     setSelectedBooks(new Set());
     setHasSearched(false);
     clearResults();
     onClose();
   };
-
-  // Очистка при открытии
-  useEffect(() => {
-    if (isOpen) {
-      setHasSearched(false);
-      setSelectedBooks(new Set());
-    }
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -346,8 +349,17 @@ export const BookSearchModal = ({
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         {/* Overlay */}
         <div
-          className="absolute inset-0 bg-black/60 backdrop-blur-[2px] animate-fade-in"
+          role="button"
+          tabIndex={0}
+          className="absolute inset-0 bg-black/60 backdrop-blur-[2px] animate-fade-in cursor-pointer"
           onClick={handleClose}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleClose();
+            }
+          }}
+          aria-label="Закрыть модальное окно"
         />
 
         {/* Modal */}
@@ -382,7 +394,6 @@ export const BookSearchModal = ({
                   onKeyDown={handleKeyDown}
                   placeholder="Введите название книги или автора..."
                   className="w-full rounded-xl border border-cyan-300/45 bg-[rgba(6,12,28,0.88)] py-3 pl-10 pr-4 text-[#d8f9ff] placeholder:text-cyan-200/45 transition-colors focus:border-fuchsia-300/70 focus:outline-none"
-                  autoFocus
                 />
               </div>
               <button

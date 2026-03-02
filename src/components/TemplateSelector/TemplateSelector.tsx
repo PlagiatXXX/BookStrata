@@ -120,10 +120,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect }) => {
             </DialogHeader>
 
             <div className="mb-4 shrink-0">
-              <label className="block text-sm font-medium text-[#f3efe6] mb-2">
+              <label htmlFor="tier-list-name-input" className="block text-sm font-medium text-[#f3efe6] mb-2">
                 Название тир-листа (необязательно)
               </label>
               <input
+                id="tier-list-name-input"
                 type="text"
                 value={customTemplateName}
                 onChange={(e) => setCustomTemplateName(e.target.value)}
@@ -137,12 +138,21 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect }) => {
                 {templates.map((template) => (
                   <div
                     key={template.id}
+                    role="radio"
+                    tabIndex={0}
+                    aria-checked={selectedTemplateId === template.id}
                     className={`group relative flex flex-col h-full border rounded-md p-3 cursor-pointer transition-colors duration-200 ${
                       selectedTemplateId === template.id
                         ? "border-(--accent-main) bg-[rgba(217,79,43,0.13)] ring-1 ring-(--accent-main)/30"
                         : "border-white/20 bg-black/30 hover:bg-black/45 hover:border-white/35"
                     }`}
                     onClick={() => setSelectedTemplateId(template.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedTemplateId(template.id);
+                      }
+                    }}
                   >
                     <div className="flex justify-between items-start shrink-0 gap-2">
                       <h3 className="font-semibold text-[#f3efe6] text-sm truncate pr-2">

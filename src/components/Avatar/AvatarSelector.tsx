@@ -384,10 +384,11 @@ export function AvatarSelector({
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="avatar-selector-prompt-input" className="block text-sm font-medium text-gray-300 mb-2">
                   Опишите ваш аватар
                 </label>
                 <textarea
+                  id="avatar-selector-prompt-input"
                   value={aiPrompt}
                   onChange={(e) => setAiPrompt(e.target.value)}
                   placeholder="Например: Мужчина с бородой в очках, синий фон, дружелюбная улыбка"
@@ -426,6 +427,9 @@ export function AvatarSelector({
           {activeTab === "upload" && (
             <div className="space-y-4">
               <div
+                role="button"
+                tabIndex={0}
+                aria-label="Загрузить изображение с компьютера"
                 className="border-2 border-dashed border-surface-border rounded-2xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => {
                   const input = document.createElement("input");
@@ -449,6 +453,15 @@ export function AvatarSelector({
                     }
                   };
                   input.click();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = "image/*";
+                    input.click();
+                  }
                 }}
               >
                 <UploadIcon size={48} className="mx-auto mb-4 text-gray-400" />

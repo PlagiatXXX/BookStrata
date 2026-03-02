@@ -142,12 +142,12 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     refetchOnWindowFocus: true,
   });
 
-  // Очищаем location.state после использования initialSection
+  // Очищаем location.state один раз при монтировании
   useEffect(() => {
     if (locationInitialSection) {
       window.history.replaceState({}, document.title);
     }
-  }, [locationInitialSection]);
+  }, []);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -573,7 +573,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                         {pageNumbers.map((page, index) =>
                           page === -1 ? (
                             <span
-                              key={`ellipsis-${index}`}
+                              key={`ellipsis-${index}-${page}`}
                               className="px-1 text-slate-400"
                             >
                               ...
