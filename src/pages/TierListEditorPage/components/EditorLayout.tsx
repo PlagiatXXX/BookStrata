@@ -31,9 +31,13 @@ export const EditorLayout = ({
   isReadOnly,
 }: EditorLayoutProps) => {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { 
+      activationConstraint: { distance: 5 },
+      preventScroll: true,
+    }),
     useSensor(TouchSensor, {
       activationConstraint: { delay: 250, tolerance: 5 },
+      preventScroll: true,
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,

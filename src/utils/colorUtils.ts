@@ -18,7 +18,9 @@ export function getLuminance(r: number, g: number, b: number): number {
  * @param hex Hex color string (#RRGGBB)
  * @returns RGB object with r, g, b values
  */
-export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+export function hexToRgb(
+  hex: string,
+): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
@@ -38,12 +40,12 @@ export function getTextColorForBackground(backgroundColor: string): string {
   const rgb = hexToRgb(backgroundColor);
   if (!rgb) {
     // Default to white text for unknown colors
-    return 'white';
+    return "white";
   }
 
   const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
   // If luminance is greater than 0.5, the background is light, use dark text
-  return luminance > 0.5 ? 'black' : 'white';
+  return luminance > 0.5 ? "black" : "white";
 }
 
 /**
@@ -53,7 +55,7 @@ export function getTextColorForBackground(backgroundColor: string): string {
  */
 export function getTailwindTextColorClass(backgroundColor: string): string {
   const textColor = getTextColorForBackground(backgroundColor);
-  return textColor === 'black' ? 'text-black' : 'text-white';
+  return textColor === "black" ? "text-black" : "text-white";
 }
 
 /**

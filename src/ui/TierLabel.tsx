@@ -15,9 +15,9 @@ interface TierLabelProps {
 }
 
 const sizeClasses: Record<NonNullable<Tier["labelSize"]>, string> = {
-  xs: "text-base",
-  sm: "text-lg",
-  md: "text-xl",
+  xs: "text-base md:text-base sm:text-sm max-sm:text-xs",
+  sm: "text-lg md:text-lg sm:text-base max-sm:text-xs",
+  md: "text-xl md:text-xl sm:text-lg max-sm:text-sm",
 };
 
 // Отдельный компонент для умного отображения текста
@@ -119,7 +119,12 @@ export const TierLabel = memo(({
     <div
       ref={droppableRef || wrapperRef}
       style={{ backgroundColor: color }}
-      className="group/label relative flex w-24 shrink-0 items-center justify-center border-r border-cyan-300/35 p-2 md:w-32 wrap-break-word"
+      className="group/label relative flex 
+                 w-24 md:w-32 sm:w-24 max-sm:w-16 
+                 shrink-0 items-center justify-center 
+                 border-r border-cyan-300/35 
+                 p-2 md:p-2 sm:p-1.5 max-sm:p-1 
+                 wrap-break-word"
       onDoubleClick={handleDoubleClick}
     >
       {isEditing ? (
@@ -138,13 +143,14 @@ export const TierLabel = memo(({
         <TierLabelText title={title} textColor={textColor} dynamicSizeClass={dynamicSizeClass} />
       )}
 
-      <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100">
+      <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100 max-md:opacity-100">
         <button
           onClick={() => setIsPaletteOpen(!isPaletteOpen)}
-          className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 bg-[rgba(7,12,27,0.82)] text-cyan-100 transition-colors hover:border-fuchsia-300/65 hover:text-fuchsia-100"
+          className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 bg-[rgba(7,12,27,0.82)] text-cyan-100 transition-colors hover:border-fuchsia-300/65 hover:text-fuchsia-100
+                     md:size-6 sm:size-5 max-sm:size-4"
           title="Изменить цвет"
         >
-          <Palette size={12} className="text-white" />
+          <Palette size={12} className="text-white md:w-3 md:h-3 sm:w-2.5 sm:h-2.5 max-sm:w-2 max-sm:h-2" />
         </button>
       </div>
       {isPaletteOpen && (

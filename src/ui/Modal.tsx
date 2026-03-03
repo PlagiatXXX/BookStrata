@@ -27,7 +27,7 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-[2px] animate-fade-in sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-[2px] animate-fade-in"
       onClick={onClose}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {

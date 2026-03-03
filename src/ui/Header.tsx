@@ -160,6 +160,7 @@ export const Header = ({
                   url={authUser?.avatarUrl}
                   username={authUser?.username}
                   size="sm"
+                  className="w-8 h-8 sm:w-8 sm:h-8 max-sm:w-6 max-sm:h-6"
                 />
               </button>
             )}

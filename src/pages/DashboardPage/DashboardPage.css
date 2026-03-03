@@ -499,6 +499,12 @@
     right: 0.75rem;
   }
 
+  /* Уменьшаем кнопку "Выйти" на мобильных */
+  .dashboard-btn--logout.dashboard-btn--hero-corner {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.65rem;
+  }
+
   .dashboard-pagination {
     flex-wrap: wrap;
   }

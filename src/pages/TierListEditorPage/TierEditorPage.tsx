@@ -338,9 +338,15 @@ const TierListEditorContent = () => {
   const tierGridRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { 
+      activationConstraint: { distance: 5 },
+      // Блокируем скролл во время драга на desktop
+      preventScroll: true,
+    }),
     useSensor(TouchSensor, {
       activationConstraint: { delay: 250, tolerance: 5 },
+      // Блокируем скролл во время драга на mobile
+      preventScroll: true,
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,

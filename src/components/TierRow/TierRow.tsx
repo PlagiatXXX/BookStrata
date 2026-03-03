@@ -66,7 +66,7 @@ export const TierRow = memo(
       transition,
       opacity: isDragging ? 0.5 : 1,
       zIndex: isDragging ? 100 : "auto",
-      minHeight: tier.height ? `${tier.height}px` : "140px",
+      minHeight: tier.height ? `${tier.height}px` : undefined,
     };
 
     const activeClass = isActive
@@ -97,7 +97,12 @@ export const TierRow = memo(
         >
           <div
             ref={setDroppableRef}
-            className={`relative flex flex-1 flex-wrap content-start items-center gap-3 bg-surface-dark/50 p-2 transition-colors group-hover:bg-surface-dark/80 ${droppableActiveClass}`}
+            className={`relative flex flex-1 flex-wrap content-start items-center 
+                       gap-3 md:gap-3 sm:gap-2 max-sm:gap-1.5
+                       bg-surface-dark/50 
+                       p-2 md:p-2 sm:p-1.5 max-sm:p-1
+                       min-h-[140px] md:min-h-[140px] sm:min-h-[110px] max-sm:min-h-[80px]
+                       transition-colors group-hover:bg-surface-dark/80 ${droppableActiveClass}`}
           >
             {books.map((book) => (
               <SortableBookCover
@@ -115,28 +120,28 @@ export const TierRow = memo(
           </div>
         </SortableContext>
 
-        <div className="absolute right-0 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-2 border-l border-surface-border bg-[#231028] transition-opacity">
+        <div className="absolute right-0 top-0 bottom-0 z-10 flex w-12 md:w-12 sm:w-10 max-sm:w-9 flex-col items-center justify-center gap-2 md:gap-2 sm:gap-1.5 max-sm:gap-1 border-l border-surface-border bg-[#231028] transition-opacity">
           <button
             title="Переместить"
             className="cursor-grab text-gray-400 active:cursor-grabbing hover:text-white"
             {...attributes}
             {...listeners}
           >
-            <GripVertical />
+            <GripVertical size={20} className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5" />
           </button>
           <button
             onClick={() => onSetActive(tier.id)}
             title="Настройки"
             className="text-gray-400 hover:text-white cursor-pointer"
           >
-            <Settings size={18} />
+            <Settings size={18} className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5" />
           </button>
           <button
             onClick={() => onDelete(tier.id)}
             title="Удалить тир"
             className="text-gray-400 hover:text-red-400 cursor-pointer"
           >
-            <Trash2 size={18} />
+            <Trash2 size={18} className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5" />
           </button>
         </div>
       </div>
