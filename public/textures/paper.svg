@@ -1,0 +1,24 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="paperNoise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.08"/>
+      </feComponentTransfer>
+    </filter>
+    <linearGradient id="paperGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F9F5EB"/>
+      <stop offset="100%" stop-color="#F0E8D8"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Base paper -->
+  <rect fill="url(#paperGrad)" width="512" height="512"/>
+  
+  <!-- Subtle paper texture -->
+  <rect filter="url(#paperNoise)" opacity="0.5" width="512" height="512"/>
+  
+  <!-- Edge shadow (for page effect) -->
+  <rect fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="2" x="1" y="1" width="510" height="510"/>
+</svg>

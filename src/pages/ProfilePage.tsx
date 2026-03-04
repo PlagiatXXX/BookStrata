@@ -12,6 +12,7 @@ import { ProfileActions } from './ProfilePage/components/ProfileActions';
 import { PasswordChangeForm } from './ProfilePage/components/PasswordChangeForm';
 import { StatsCards } from './ProfilePage/components/StatsCards';
 import { useProfileActions } from './ProfilePage/hooks/useProfileActions';
+import { Footer } from '@/ui/Footer';
 
 export function ProfilePage() {
   const navigate = useNavigate();
@@ -159,6 +160,8 @@ export function ProfilePage() {
           onClose={() => setShowAvatarSelector(false)}
         />
       )}
+
+      <Footer />
     </div>
   );
 }

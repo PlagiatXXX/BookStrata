@@ -4,7 +4,6 @@ import { Plus, TrendingUp } from 'lucide-react';
 import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
 import { sileo } from 'sileo';
 import { createTierList, saveTierListTiers } from '@/lib/api';
-import { Footer } from '@/ui/Footer';
 import { CategoryTabs } from '@/components/CommunityComponents/CategoryTabs';
 import { TemplateGrid } from '@/components/CommunityComponents/TemplateGrid';
 import { HeroSection } from '@/components/CommunityComponents/HeroSection';
@@ -110,7 +109,6 @@ export default function CommunityPage() {
 
           <CollectionsSection />
         </main>
-        <Footer />
       </div>
 
       <Link

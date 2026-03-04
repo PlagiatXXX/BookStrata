@@ -1,0 +1,566 @@
+/* ================= HERO LAYOUT ================= */
+
+.hero {
+  height: 60vh;
+  min-height: 480px;
+  max-height: 640px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 60px 20px;
+  position: relative;
+}
+
+/* ================= HERO UTILITY ================= */
+
+.hero-utility {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.hero-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    #e53e3e,
+    #c53030
+  );
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow:
+    0 6px 16px rgba(229, 62, 62, 0.25);
+}
+
+.hero-logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 24px rgba(229, 62, 62, 0.35);
+}
+
+/* ================= BOOK ROOT ================= */
+
+.book-root {
+  width: clamp(240px, 24vw, 320px);
+  aspect-ratio: 3 / 4;
+  perspective: 2000px;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+/* Тень снизу книги */
+.book-root::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.25) 0%, transparent 70%);
+  filter: blur(8px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.book-scene {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.hero-card {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 60px 60px;
+  border-radius: 32px;
+}
+
+.hero-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 60px;
+}
+
+.hero-left {
+  flex: 1;
+  max-width: 520px;
+}
+
+.hero-chip {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b8278;
+  margin-bottom: 16px;
+}
+
+.hero-left h1 {
+  font-size: 48px;
+  line-height: 1.15;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* Первая строка заголовка — темно-коричневый */
+.hero-left h1 .line-brown {
+  color: #4a3728;
+  display: block;
+}
+
+/* Вторая и третья строки — фиолетовый */
+.hero-left h1 .line-purple {
+  color: #6b4c9a;
+  display: block;
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #8b8278;
+  margin-bottom: 32px;
+  max-width: 480px;
+}
+
+.hero-right {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Мягкий фон за книгой */
+.hero-right::before {
+  content: "";
+  position: absolute;
+  inset: -30px -40px -30px -40px;
+  border-radius: 28px;
+}
+
+/* ================= BUTTONS ================= */
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+/* Основная кнопка — фиолетовая как на референсе */
+.hero-btn--primary {
+  background: linear-gradient(
+    135deg,
+    #7c5cdb 0%,
+    #6b4c9a 100%
+  );
+  color: #ffffff;
+  box-shadow:
+    0 10px 24px rgba(107, 76, 154, 0.28);
+}
+
+.hero-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 32px rgba(107, 76, 154, 0.35);
+}
+
+/* Вторичная кнопка — белая с обводкой как на референсе */
+.hero-btn--ghost {
+  background: #ffffff;
+  color: #4a3728;
+  border: 1.5px solid #e8e4ec;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.hero-btn--ghost:hover {
+  background: #faf8fb;
+  border-color: #d8d4e0;
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* ================= BOOK CORE ================= */
+
+.book {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  contain: paint;
+
+  --depth: 65px;  /* Увеличил глубину для объёма */
+}
+
+/* ================= COVERS ================= */
+
+.frontCover,
+.backCover {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  background-image: url("/textures/leather.webp");
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.3),
+    0 14px 24px rgba(36, 23, 20, 0.28);
+  backface-visibility: hidden;
+}
+
+/* Толщина передней обложки - видимая грань */
+.frontCover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--depth);
+  height: 100%;
+  background: 
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.4) 0%,
+      rgba(0, 0, 0, 0.1) 50%,
+      rgba(0, 0, 0, 0.4) 100%
+    );
+  transform-origin: right center;
+  transform: rotateY(90deg) translateZ(calc(var(--depth) / 2));
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* Толщина задней обложки - видимая грань */
+.backCover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--depth);
+  height: 100%;
+  background: 
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.4) 0%,
+      rgba(0, 0, 0, 0.1) 50%,
+      rgba(0, 0, 0, 0.4) 100%
+    );
+  transform-origin: left center;
+  transform: rotateY(-90deg) translateZ(calc(var(--depth) / 2));
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.frontCover {
+  transform-origin: left center;
+  transform: translateZ(calc(var(--depth) / 2));
+  will-change: transform;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+}
+
+/* Текст на обложке */
+.cover-title {
+  font-family: "Georgia", serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #4a3728;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.cover-subtitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #6b4c9a;
+  text-transform: uppercase;
+  margin-top: 8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.backCover {
+  transform: translateZ(calc(var(--depth) / -2)) rotateY(180deg);
+  transform-style: preserve-3d;
+}
+
+/* Внутренняя сторона обложки — убираем белый фон для сочетания с общим фоном */
+
+.frontCover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  background: transparent;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+/* ================= SPINE ================= */
+
+.spine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--depth);
+  border-radius: 5px;
+  
+  /* Добавляем текстуру кожи с градиентом для объёма */
+  background: 
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.3) 0%,
+      transparent 20%,
+      transparent 80%,
+      rgba(0, 0, 0, 0.3) 100%
+    ),
+    url("/textures/leather.webp");
+  background-size: cover;
+  background-position: center;
+  transform-origin: left center;
+  transform: rotateY(-90deg) translateZ(calc(var(--depth) / 2));
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  backface-visibility: hidden;
+}
+
+/* ================= PAGES ================= */
+
+.pagesThickness {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  bottom: 4px;
+  width: calc(var(--depth) - 10px);
+  border-radius: 3px;
+  z-index: 0;
+
+  /* Градиент для имитации страниц книги */
+  background:
+    repeating-linear-gradient(
+      to right,
+      #f7f2e6 0px,
+      #f7f2e6 1px,
+      #e9e0cd 1px,
+      #e9e0cd 3px
+    );
+
+  transform-origin: right center;
+  transform: rotateY(90deg) translateZ(calc(var(--depth) / 2));
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.25);
+  backface-visibility: hidden;
+
+  /* Добавляем свечение для объёма */
+  filter: brightness(0.95);
+}
+
+.pagesStack {
+  position: absolute;
+  inset: 6px;
+  border-radius: 4px;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    to bottom,
+    #f8f4e9 0px,
+    #f8f4e9 2px,
+    #ebe2d2 2px,
+    #ebe2d2 4px
+  );
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* ================= INNER PAGES ================= */
+
+.firstPage {
+  position: absolute;
+  inset: 8px;
+  border-radius: 4px;
+  /* Резервный фон + SVG текстура */
+  background-color: #F9F5EB;
+  background-image: url("/textures/paper.svg");
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 0 8px rgba(0, 0, 0, 0.08),
+    0 3px 8px rgba(0, 0, 0, 0.16);
+  transform-origin: left center;
+  will-change: transform;
+  backface-visibility: visible;
+  transform: translateZ(calc(var(--depth) / 2 - 1px));
+  z-index: 2;
+}
+
+.secondPage {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border-radius: 4px;
+  /* Резервный фон + SVG текстура */
+  background-color: #F9F5EB;
+  background-image: url("/textures/paper.svg");
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 0 8px rgba(0, 0, 0, 0.08),
+    0 3px 8px rgba(0, 0, 0, 0.16);
+  transform-origin: left center;
+  will-change: transform;
+  backface-visibility: visible;
+  transform: translateZ(calc(var(--depth) / 2 - 6px));
+  padding: 40px 36px 40px 56px;
+  z-index: 3;
+  /* Контейнер для контента внутри страницы */
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= QUOTE ================= */
+
+.quote {
+  max-width: 85%;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: clamp(16px, 2.5vw, 20px);
+  line-height: 1.7;
+  color: #3a2d1d;
+  letter-spacing: 0.02em;
+  margin-top: 20%;
+}
+
+.quote-drop-cap {
+  float: left;
+  font-size: 48px;
+  line-height: 0.9;
+  margin-right: 8px;
+  margin-top: 4px;
+  font-weight: 700;
+  color: #8b5a2b;
+}
+
+.pageNumber {
+  position: absolute;
+  bottom: 20px;
+  right: 40px;
+  font-size: 14px;
+  color: #6d5a3b;
+  font-family: "Georgia", serif;
+  font-style: italic;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1024px) {
+  .hero {
+    height: auto;
+    min-height: auto;
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+
+  .hero-card {
+    padding: 40px 30px;
+  }
+
+  .hero-inner {
+    gap: 40px;
+  }
+
+  .hero-left h1 {
+    font-size: 36px;
+  }
+
+  .book-root {
+    width: clamp(200px, 50vw, 280px);
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-card {
+    padding: 30px 20px;
+    border-radius: 24px;
+  }
+
+  .hero-left h1 {
+    font-size: 28px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .book-root {
+    display: none;
+  }
+
+  .hero-right::before {
+    display: none;
+  }
+}
+
+/* ================= ACCESSIBILITY ================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .book-scene,
+  .frontCover,
+  .firstPage,
+  .secondPage {
+    animation: none !important;
+  }
+}
+
+@media print {
+  .book-root {
+    display: none;
+  }
+
+  .hero {
+    height: auto;
+  }
+}

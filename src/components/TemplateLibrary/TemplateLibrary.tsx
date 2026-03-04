@@ -27,6 +27,7 @@ import type { PaginatedTierListsResponse } from "@/lib/api";
 import { apiGetLikedTierListIds } from "@/lib/likesApi";
 import PublicTierListCards from "./PublicTierListCards";
 import { Header } from "@/ui/Header";
+import { Footer } from "@/ui/Footer";
 
 type SectionKey = "private" | "public" | "favorites" | "archived";
 type ViewMode = "masonry" | "compact";
@@ -671,6 +672,8 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
           </div>
         </div>
       </section>
+
+      <Footer />
 
       <DeleteTemplateModal
         isOpen={deleteModalOpen}

@@ -1,8 +1,7 @@
-﻿import { useState, type CSSProperties } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
-  PlusCircle,
   RefreshCw,
   SearchX,
   AlertCircle,
@@ -10,18 +9,19 @@ import {
   Edit2,
   Trash2,
   Clock,
-  Globe,
   Lock,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  LogOut,
   X,
+  PlusCircle,
+  Globe,
 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { Modal } from "@/ui/Modal";
 import { useAuth } from "@/hooks/useAuthContext";
 import { logger } from "@/lib/logger";
+import HeroSection from "@/components/HeroSection/HeroSection";
 import {
   getUserTierLists,
   createTierList,
@@ -29,7 +29,6 @@ import {
   deleteTierList,
   type TierListShort,
 } from "@/lib/api";
-import heroBackground from "@/assets/avatars/fon.png";
 import "./DashboardPage/DashboardPage.css";
 
 export function DashboardPage() {
@@ -208,9 +207,6 @@ export function DashboardPage() {
     if (!tierListToDelete) return;
     removeTierList(tierListToDelete.id);
   };
-  const heroStyle = {
-    "--dashboard-hero-image": `url(${heroBackground})`,
-  } as CSSProperties;
 
   return (
     <DashboardLayout
@@ -220,44 +216,12 @@ export function DashboardPage() {
     >
       <section className="dashboard-home">
         <div className="dashboard-home__container">
-          <header className="dashboard-hero-banner" style={heroStyle}>
-            <div className="dashboard-hero-banner__overlay">
-              <p className="dashboard-hero-chip">Добро пожаловать, {user?.username}</p>
-              <h1 className="dashboard-hero-title">
-                Ранжируй свои списки
-                <span>как профи</span>
-              </h1>
-              <p className="dashboard-hero-subtitle">
-                Единая платформа, чтобы собирать, сравнивать и публиковать
-                тир-листы. От свежих релизов до личной классики.
-              </p>
-              <button
-                onClick={handleLogout}
-                className="dashboard-btn dashboard-btn--logout dashboard-btn--hero-corner"
-                type="button"
-              >
-                <LogOut size={16} />
-                Выйти
-              </button>
-              <div className="dashboard-hero-actions">
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="dashboard-btn dashboard-btn--primary dashboard-btn--hero"
-                  type="button"
-                >
-                  <PlusCircle size={18} />
-                  Создать тир-лист
-                </button>
-                <button
-                  onClick={() => navigate("/community")}
-                  className="dashboard-btn dashboard-btn--ghost dashboard-btn--hero"
-                  type="button"
-                >
-                  Смотреть тренды
-                </button>
-              </div>
-            </div>
-          </header>
+          <HeroSection
+            username={user?.username || ""}
+            onCreateClick={() => setIsCreateModalOpen(true)}
+            onCommunityClick={() => navigate("/community")}
+            onLogoutClick={handleLogout}
+          />
 
           <div className="dashboard-divider">
             <span>Ваши рейтинги</span>

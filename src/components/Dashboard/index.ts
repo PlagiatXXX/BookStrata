@@ -1,4 +1,3 @@
-export { HeroSection } from "./HeroSection";
 export { CreateTierListModal } from "./CreateTierListModal";
 export { RenameTierListModal } from "./RenameTierListModal";
 export { DeleteTierListModal } from "./DeleteTierListModal";

@@ -15,7 +15,7 @@ export const Footer = () => {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
 
   return (
-    <footer className="relative mt-12 border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.2),transparent_45%),radial-gradient(circle_at_90%_0%,rgba(45,212,191,0.14),transparent_38%),#0b0f1f] px-6 py-10">
+    <footer className="relative border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.2),transparent_45%),radial-gradient(circle_at_90%_0%,rgba(45,212,191,0.14),transparent_38%),#0b0f1f] px-6 py-10">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
         <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
           <div className="rounded-2xl border border-white/12 bg-black/25 p-5 backdrop-blur-[2px]">

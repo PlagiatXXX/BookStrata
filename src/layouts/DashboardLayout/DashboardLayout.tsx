@@ -1,5 +1,6 @@
 import React from "react";
 import { Header } from "@/ui/Header";
+import { Footer } from "@/ui/Footer";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -30,9 +31,10 @@ export function DashboardLayout({
         showSearch={showSearch}
         activeItem={activeItem}
       />
-      <main className="grid flex-1 grid-cols-1 lg:grid-cols-[1fr_auto] pt-16">
+      <main className="grid flex-1 grid-cols-1 lg:grid-cols-[1fr_auto] pt-24">
         {children}
       </main>
+      <Footer />
     </div>
   );
 }
