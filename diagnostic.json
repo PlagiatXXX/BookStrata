@@ -1,16 +1,5 @@
 [
   {
-    "filePath": "src/components/TemplateLibrary/TemplateLibrary.tsx",
-    "plugin": "react-doctor",
-    "rule": "no-giant-component",
-    "severity": "warning",
-    "message": "Component \"TemplateLibrary\" is 647 lines — consider breaking it into smaller focused components",
-    "help": "Extract logical sections into focused components: `<UserHeader />`, `<UserActions />`, etc.",
-    "line": 42,
-    "column": 7,
-    "category": "Architecture"
-  },
-  {
     "filePath": "src/pages/DashboardPage.tsx",
     "plugin": "react-doctor",
     "rule": "prefer-useReducer",

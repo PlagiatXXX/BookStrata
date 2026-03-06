@@ -310,7 +310,8 @@ describe('TemplateLibrary', () => {
 
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    expect(screen.getByText('Ничего не найдено')).toBeInTheDocument();
+    // По умолчанию секция private, поэтому текст "Нет шаблонов"
+    expect(screen.getByText('Нет шаблонов')).toBeInTheDocument();
   });
 
   it('должен принимать initialSearchQuery как prop', () => {
@@ -324,9 +325,10 @@ describe('TemplateLibrary', () => {
   it('должен принимать initialSection как prop', () => {
     render(<TemplateLibrary initialSection="favorites" />, { wrapper: createWrapper() });
 
-    // Секция должна быть установлена
-    const favoritesButton = screen.getByText('Избранное');
-    expect(favoritesButton.closest('button')?.className).toContain('bg-cyan-500/25');
+    // Секция должна быть установлена - ищем кнопку в сайдбаре
+    const favoritesButtons = screen.getAllByText('Избранное');
+    // Первый элемент - это кнопка в сайдбаре
+    expect(favoritesButtons[0].closest('button')?.className).toContain('bg-cyan-500/25');
   });
 
   describe('пагинация публичных тир-листов', () => {
