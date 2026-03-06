@@ -101,7 +101,7 @@ tiermaker-pro/
 
 ```bash
 # 1. Clone repository
-git clone <repository-url>
+git clone https://github.com/PlagiatXXX/BookStrata.git
 cd tiermaker-pro
 
 # 2. Install frontend dependencies
@@ -289,7 +289,6 @@ npm run dev
 ## 🎨 Styling & Theming
 
 - **TailwindCSS 4** — utility-first CSS framework
-- **Custom themes** — light/dark mode support
 - **Color constants** — `src/constants/colors.ts`
 - **Responsive design** — mobile-first approach
 
@@ -387,6 +386,7 @@ See the following files for improvement recommendations:
 - [x] Created 6 reusable components
 - [x] Added 82 unit tests for hooks
 - [x] Total test coverage: 125 tests passing
+- [x] **AvatarSelector refactoring** (462 → 256 lines, -44%)
 
 ##### New Hooks (src/pages/TierListEditorPage/hooks/)
 | Hook | Purpose | Tests |
@@ -406,6 +406,23 @@ See the following files for improvement recommendations:
 | `EditorModals` | All modal dialogs |
 | `EditorScreens` | Loading/error state screens |
 | `AutoSaveIndicator` | Save status indicator |
+
+##### New Components (src/components/Avatar/components/)
+| Component | Purpose |
+|-----------|---------|
+| `AvatarSelectorHeader` | Modal header + close button |
+| `AvatarPreview` | Avatar preview with loading state |
+| `TabNavigation` | Tab switcher (Presets/AI/Upload) |
+| `PresetsTab` | Preset categories + grid |
+| `AiGenerationTab` | AI generation form + limits |
+| `UploadTab` | File upload component |
+| `AvatarSelectorFooter` | Save/Cancel actions |
+
+##### New Hooks (src/components/Avatar/hooks/)
+| Hook | Purpose |
+|------|---------|
+| `useAvatarPreview` | Preview image polling logic |
+| `useAvatarGeneration` | AI generation + timeout handling |
 
 ##### Test Coverage
 ```
@@ -474,5 +491,5 @@ npm run start
 
 ---
 
-**Last Updated**: 5 марта 2026 г.
-**Project Status**: Active Development (Phase 2 Completed ✅)
+**Last Updated**: 6 марта 2026 г.
+**Project Status**: Active Development (Phase 2 Completed ✅, Phase 3 In Progress)

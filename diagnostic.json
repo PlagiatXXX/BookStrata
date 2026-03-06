@@ -2,17 +2,6 @@
   {
     "filePath": "src/components/TemplateLibrary/TemplateLibrary.tsx",
     "plugin": "react-doctor",
-    "rule": "prefer-useReducer",
-    "severity": "warning",
-    "message": "Component \"TemplateLibrary\" has 7 useState calls — consider useReducer for related state",
-    "help": "Group related state: `const [state, dispatch] = useReducer(reducer, { field1, field2, ... })`",
-    "line": 45,
-    "column": 7,
-    "category": "State & Effects"
-  },
-  {
-    "filePath": "src/components/TemplateLibrary/TemplateLibrary.tsx",
-    "plugin": "react-doctor",
     "rule": "no-giant-component",
     "severity": "warning",
     "message": "Component \"TemplateLibrary\" is 647 lines — consider breaking it into smaller focused components",
@@ -20,17 +9,6 @@
     "line": 42,
     "column": 7,
     "category": "Architecture"
-  },
-  {
-    "filePath": "src/pages/TierListEditorPage/TierEditorPage.tsx",
-    "plugin": "react-doctor",
-    "rule": "prefer-useReducer",
-    "severity": "warning",
-    "message": "Component \"TierListEditorContent\" has 14 useState calls — consider useReducer for related state",
-    "help": "Group related state: `const [state, dispatch] = useReducer(reducer, { field1, field2, ... })`",
-    "line": 57,
-    "column": 37,
-    "category": "State & Effects"
   },
   {
     "filePath": "src/pages/DashboardPage.tsx",
@@ -53,18 +31,5 @@
     "line": 35,
     "column": 17,
     "category": "Architecture"
-  },
-  {
-    "filePath": "src/components/Avatar/AvatarSelector.tsx",
-    "plugin": "react-doctor",
-    "rule": "no-giant-component",
-    "severity": "warning",
-    "message": "Component \"AvatarSelector\" is 462 lines — consider breaking it into smaller focused components",
-    "help": "Extract logical sections into focused components: `<UserHeader />`, `<UserActions />`, etc.",
-    "line": 38,
-    "column": 17,
-    "category": "Architecture",
-    "status": "pending",
-    "fixNote": "Requires deconstruction into smaller components - Phase 2 task"
   }
 ]

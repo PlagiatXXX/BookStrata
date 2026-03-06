@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useReducer } from 'react';
 import {
   Archive,
   ChevronLeft,
@@ -10,27 +10,31 @@ import {
   Plus,
   Rows3,
   Star,
-} from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useLocation } from "react-router-dom";
-import { sileo } from "sileo";
+} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { sileo } from 'sileo';
 
-import { useUserTemplates, useDeleteTemplate } from "../../hooks/useTemplates";
-import { useAuth } from "@/hooks/useAuthContext";
-import TemplateCard from "../TemplateCard/TemplateCard";
-import { Button } from "../../ui/Button";
-import type { Template } from "../../types/templates";
-import { DeleteTemplateModal } from "./DeleteTemplateModal";
-import { Spinner } from "@/components/Spinner";
-import { getPublicTierLists } from "@/lib/api";
-import type { PaginatedTierListsResponse } from "@/lib/api";
-import { apiGetLikedTierListIds } from "@/lib/likesApi";
-import PublicTierListCards from "./PublicTierListCards";
-import { Header } from "@/ui/Header";
-import { Footer } from "@/ui/Footer";
-
-type SectionKey = "private" | "public" | "favorites" | "archived";
-type ViewMode = "masonry" | "compact";
+import { useUserTemplates, useDeleteTemplate } from '../../hooks/useTemplates';
+import { useAuth } from '@/hooks/useAuthContext';
+import TemplateCard from '../TemplateCard/TemplateCard';
+import { Button } from '../../ui/Button';
+import type { Template } from '../../types/templates';
+import { DeleteTemplateModal } from './DeleteTemplateModal';
+import { Spinner } from '@/components/Spinner';
+import { getPublicTierLists } from '@/lib/api';
+import type { PaginatedTierListsResponse } from '@/lib/api';
+import { apiGetLikedTierListIds } from '@/lib/likesApi';
+import PublicTierListCards from './PublicTierListCards';
+import { Header } from '@/ui/Header';
+import { Footer } from '@/ui/Footer';
+import {
+  templateLibraryReducer,
+  initialState,
+  type SectionKey,
+  type ViewMode,
+  type TemplateLibraryState,
+} from './templateLibraryReducer';
 
 interface TemplateLibraryProps {
   searchQuery?: string;
@@ -41,8 +45,8 @@ const COVER_HEIGHTS = [320, 420, 360, 500, 390, 460];
 const PUBLIC_PAGE_SIZE = 6;
 
 const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
-  searchQuery: initialSearchQuery = "",
-  initialSection: initialSectionProp
+  searchQuery: initialSearchQuery = '',
+  initialSection: initialSectionProp,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,17 +56,65 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
   const locationInitialSection = (location.state as { initialSection?: SectionKey } | null)?.initialSection;
 
   // Приоритет: location.state > initialSection prop > default "private" (для личных шаблонов)
-  const defaultSection: SectionKey = locationInitialSection || initialSectionProp || "private";
+  const defaultSection: SectionKey = locationInitialSection || initialSectionProp || 'private';
 
-  // Используем initialSearchQuery напрямую как начальное значение
-  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  // Инициализируем состояние с учётом initialSearchQuery
+  const getInitialState = (): TemplateLibraryState => ({
+    ...initialState,
+    searchQuery: initialSearchQuery,
+    activeSection: defaultSection,
+  });
+
+  const [state, dispatch] = useReducer(templateLibraryReducer, null, getInitialState);
+
+  const {
+    searchQuery,
+    deleteModalOpen,
+    templateToDelete,
+    activeSection,
+    activeCategory,
+    viewMode,
+    publicPage,
+  } = state;
+
+  const deleteIdRef = useRef<string | null>(null);
+
+  const sortBy: 'updated_at' | 'likes' | 'created' = 'likes';
+
+  // Обработчики навигации
+  const handleGoBack = () => {
+    navigate('/');
+  };
+
+  // Обработчики для state
+  const handleSearchChange = (query: string) => {
+    dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
+  };
 
   const handleSectionChange = (section: SectionKey) => {
-    setActiveSection(section);
-    // Сбрасываем страницу при переключении на public секцию
-    if (section === "public") {
-      setPublicPage(1);
-    }
+    dispatch({ type: 'SET_ACTIVE_SECTION', payload: section });
+  };
+
+  const handleCategoryChange = (category: string) => {
+    dispatch({ type: 'SET_ACTIVE_CATEGORY', payload: category });
+  };
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    dispatch({ type: 'SET_VIEW_MODE', payload: mode });
+  };
+
+  const handlePageChange = (page: number) => {
+    dispatch({ type: 'SET_PUBLIC_PAGE', payload: page });
+  };
+
+  const handleDeleteClick = (template: Template) => {
+    dispatch({ type: 'OPEN_DELETE_MODAL', payload: template });
+    deleteIdRef.current = template.id;
+  };
+
+  const handleDeleteModalClose = () => {
+    dispatch({ type: 'CLOSE_DELETE_MODAL' });
+    deleteIdRef.current = null;
   };
 
   const {
@@ -72,24 +124,6 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     refetch: refetchTemplates,
   } = useUserTemplates();
   const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteTemplate();
-
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [templateToDelete, setTemplateToDelete] = useState<Template | null>(
-    null,
-  );
-  // Инициализируем activeSection с defaultSection
-  const [activeSection, setActiveSection] = useState<SectionKey>(defaultSection);
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [viewMode, setViewMode] = useState<ViewMode>("masonry");
-  const [publicPage, setPublicPage] = useState(1);
-  const deleteIdRef = useRef<string | null>(null);
-
-  const sortBy: "updated_at" | "likes" | "created" = "likes";
-
-  // Обработчики навигации
-  const handleGoBack = () => {
-    navigate("/");
-  };
 
   const {
     data: publicTierListsData,
@@ -302,28 +336,20 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     return pages;
   }, [publicPage, totalPagesForUi]);
 
-  const handleDeleteClick = (template: Template) => {
-    setTemplateToDelete(template);
-    deleteIdRef.current = template.id;
-    setDeleteModalOpen(true);
-  };
-
   const handleDeleteConfirm = () => {
     const id = deleteIdRef.current;
     if (!id) return;
 
     deleteTemplate(id, {
       onSuccess: () => {
-        sileo.success({ title: "Шаблон успешно удален", duration: 3000 });
-        setDeleteModalOpen(false);
-        setTemplateToDelete(null);
-        deleteIdRef.current = null;
+        sileo.success({ title: 'Шаблон успешно удален', duration: 3000 });
+        handleDeleteModalClose();
       },
       onError: () => {
-        sileo.error({ 
-          title: "Не удалось удалить шаблон", 
-          description: "Попробуйте снова позже",
-          duration: 3000 
+        sileo.error({
+          title: 'Не удалось удалить шаблон',
+          description: 'Попробуйте снова позже',
+          duration: 3000,
         });
       },
     });
@@ -358,7 +384,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     <div className="min-h-screen bg-background-dark">
       <Header
         onMyRatingsClick={handleGoBack}
-        onSearch={setSearchQuery}
+        onSearch={handleSearchChange}
         searchValue={searchQuery}
         showTemplatesNav={true}
         showSearch={true}
@@ -435,7 +461,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   </button>
                 </div>
 
-                {categories.length > 0 && activeSection !== "public" && (
+                {categories.length > 0 && activeSection !== 'public' && (
                   <div className="mt-6">
                     <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/70">
                       Категории
@@ -443,11 +469,11 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => setActiveCategory("all")}
+                        onClick={() => handleCategoryChange('all')}
                         className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
-                          activeCategory === "all"
-                            ? "bg-cyan-500/25 text-cyan-100"
-                            : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                          activeCategory === 'all'
+                            ? 'bg-cyan-500/25 text-cyan-100'
+                            : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
                         }`}
                       >
                         Все
@@ -456,11 +482,11 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                         <button
                           key={category}
                           type="button"
-                          onClick={() => setActiveCategory(category)}
+                          onClick={() => handleCategoryChange(category)}
                           className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
                             activeCategory === category
-                              ? "bg-cyan-500/25 text-cyan-100"
-                              : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                              ? 'bg-cyan-500/25 text-cyan-100'
+                              : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white'
                           }`}
                         >
                           {category.toUpperCase()}
@@ -497,27 +523,27 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {activeSection !== "public" && (
+                  {activeSection !== 'public' && (
                     <>
                       <div className="flex rounded-xl border border-cyan-900/80 bg-[#031923]/80 p-1">
                         <button
                           type="button"
-                          onClick={() => setViewMode("masonry")}
-                          className={`rounded-lg p-2 ${viewMode === "masonry" ? "bg-cyan-500/25 text-cyan-200" : "text-slate-300"}`}
+                          onClick={() => handleViewModeChange('masonry')}
+                          className={`rounded-lg p-2 ${viewMode === 'masonry' ? 'bg-cyan-500/25 text-cyan-200' : 'text-slate-300'}`}
                           aria-label="Плиточный вид"
                         >
                           <LayoutGrid size={16} />
                         </button>
                         <button
                           type="button"
-                          onClick={() => setViewMode("compact")}
-                          className={`rounded-lg p-2 ${viewMode === "compact" ? "bg-cyan-500/25 text-cyan-200" : "text-slate-300"}`}
+                          onClick={() => handleViewModeChange('compact')}
+                          className={`rounded-lg p-2 ${viewMode === 'compact' ? 'bg-cyan-500/25 text-cyan-200' : 'text-slate-300'}`}
                           aria-label="Компактный вид"
                         >
                           <Rows3 size={16} />
                         </button>
                       </div>
-                      <Button onClick={() => navigate("/templates/new")} size="sm">
+                      <Button onClick={() => navigate('/templates/new')} size="sm">
                         <Plus size={14} />
                         Создать шаблон
                       </Button>
@@ -559,9 +585,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                       <div className="flex items-center justify-center gap-2">
                         <button
                           type="button"
-                          onClick={() =>
-                            setPublicPage((prev) => Math.max(1, prev - 1))
-                          }
+                          onClick={() => handlePageChange(Math.max(1, publicPage - 1))}
                           disabled={
                             publicPage === 1 || isFetchingPublicTierLists
                           }
@@ -583,15 +607,15 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                             <button
                               key={page}
                               type="button"
-                              onClick={() => setPublicPage(page)}
+                              onClick={() => handlePageChange(page)}
                               disabled={isFetchingPublicTierLists}
                               aria-current={
-                                publicPage === page ? "page" : undefined
+                                publicPage === page ? 'page' : undefined
                               }
                               className={`min-w-9 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                                 publicPage === page
-                                  ? "border-cyan-300/80 bg-cyan-500/25 text-cyan-100"
-                                  : "border-cyan-800/80 bg-[#08293c] text-cyan-100 hover:bg-[#0b3550]"
+                                  ? 'border-cyan-300/80 bg-cyan-500/25 text-cyan-100'
+                                  : 'border-cyan-800/80 bg-[#08293c] text-cyan-100 hover:bg-[#0b3550]'
                               } disabled:cursor-not-allowed disabled:opacity-45`}
                             >
                               {page}
@@ -601,7 +625,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
                         <button
                           type="button"
-                          onClick={() => setPublicPage((prev) => prev + 1)}
+                          onClick={() => handlePageChange(publicPage + 1)}
                           disabled={!hasNextPage || isFetchingPublicTierLists}
                           className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-800/80 bg-[#08293c] text-cyan-100 transition-colors hover:bg-[#0b3550] disabled:cursor-not-allowed disabled:opacity-45"
                           aria-label="Следующая страница"
@@ -677,13 +701,9 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
       <DeleteTemplateModal
         isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setTemplateToDelete(null);
-          deleteIdRef.current = null;
-        }}
+        onClose={handleDeleteModalClose}
         onConfirm={handleDeleteConfirm}
-        templateTitle={templateToDelete?.title || ""}
+        templateTitle={templateToDelete?.title || ''}
         isDeleting={isDeleting}
       />
     </div>

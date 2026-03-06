@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { sileo } from 'sileo';
 import type { NavigateFunction } from 'react-router-dom';
 import type { Action } from '@/hooks/useTierList';
@@ -33,6 +34,7 @@ export function useTierEditorActions({
   setDeletedTierIds,
   navigate,
 }: UseTierEditorActionsParams) {
+  const queryClient = useQueryClient();
   const [isTogglingPublic, setIsTogglingPublic] = useState(false);
   const [isUpdatingBook, setIsUpdatingBook] = useState(false);
 
@@ -42,6 +44,10 @@ export function useTierEditorActions({
       setIsTogglingPublic(true);
       try {
         await toggleTierListPublic(tierListId, isPublic);
+        // Инвалидируем кэш для обновления данных тир-листа
+        await queryClient.invalidateQueries({
+          queryKey: ['tierList', tierListId],
+        });
         sileo.success({
           title: isPublic ? 'Тир-лист опубликован' : 'Тир-лист скрыт',
           duration: 3000,
@@ -51,16 +57,16 @@ export function useTierEditorActions({
           action: 'toggleTierListPublic',
           tierListId,
         });
-        sileo.error({ 
-          title: 'Не удалось изменить видимость', 
+        sileo.error({
+          title: 'Не удалось изменить видимость',
           description: 'Попробуйте снова позже',
-          duration: 3000 
+          duration: 3000
         });
       } finally {
         setIsTogglingPublic(false);
       }
     },
-    [tierListId]
+    [tierListId, queryClient]
   );
 
   const handleSaveBook = useCallback(
