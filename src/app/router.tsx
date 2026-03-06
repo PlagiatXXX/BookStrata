@@ -4,7 +4,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AppShell from "./App";
 
 const DashboardPage = lazy(() =>
-  import("@/pages/DashboardPage").then((module) => ({
+  import("@/pages/DashboardPage/DashboardPage").then((module) => ({
     default: module.DashboardPage,
   }))
 );

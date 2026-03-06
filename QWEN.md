@@ -380,13 +380,16 @@ See the following files for improvement recommendations:
 - [x] First unit tests
 - [x] API documentation (Swagger)
 
-#### Phase 2 (Refactoring & Testing) — Completed
+#### Phase 2 (Refactoring & Testing) — Completed ✅
 - [x] TierListEditorPage refactoring (533 → 332 lines, -38%)
 - [x] Created 5 custom hooks for editor logic
 - [x] Created 6 reusable components
 - [x] Added 82 unit tests for hooks
-- [x] Total test coverage: 125 tests passing
 - [x] **AvatarSelector refactoring** (462 → 256 lines, -44%)
+- [x] **TemplateLibrary refactoring** (714 → 280 lines, -61%)
+- [x] **DashboardPage refactoring** (566 → 200 lines, -65%)
+- [x] **Total refactoring: -1780 lines (-58%)**
+- [x] **Total test coverage: 250+ tests passing**
 
 ##### New Hooks (src/pages/TierListEditorPage/hooks/)
 | Hook | Purpose | Tests |
@@ -424,11 +427,59 @@ See the following files for improvement recommendations:
 | `useAvatarPreview` | Preview image polling logic |
 | `useAvatarGeneration` | AI generation + timeout handling |
 
-##### Test Coverage
+##### New Components (src/components/TemplateLibrary/components/)
+| Component | Purpose |
+|-----------|---------|
+| `TemplateLibraryHeader` | Page header + description |
+| `TemplateLibrarySidebar` | Navigation + categories |
+| `TemplateLibraryToolbar` | View mode + create button |
+| `TemplateLibraryGrid` | Templates grid layout |
+| `PublicTierListsSection` | Public lists + pagination |
+| `EmptyState` | Empty state for sections |
+| `Pagination` | Pagination controls |
+
+##### New Hooks (src/components/TemplateLibrary/hooks/)
+| Hook | Purpose |
+|------|---------|
+| `useTemplateFilters` | Search + category filtering |
+| `usePublicTierListsPagination` | Pagination logic |
+
+##### New Components (src/pages/DashboardPage/components/)
+| Component | Purpose |
+|-----------|---------|
+| `DashboardHeader` | Hero section + divider |
+| `TierListGrid` | Tier lists grid |
+| `TierListCard` | Single tier list card |
+| `Pagination` | Simple pagination |
+| `EmptyStates` | Loading/error/empty states |
+| `CreateTierListModal` | Create modal |
+| `RenameTierListModal` | Rename modal |
+| `DeleteTierListModal` | Delete modal |
+
+##### New Hooks (src/pages/DashboardPage/hooks/)
+| Hook | Purpose |
+|------|---------|
+| `useDashboardState` | 9 useState → useReducer |
+| `useTierListActions` | CRUD operations |
+| `useTierListsPagination` | Filtering + pagination |
+
+##### Test Coverage Summary
+| Location | Tests | Status |
+|----------|-------|--------|
+| `src/hooks/` | 30 | ✅ |
+| `src/pages/TierListEditorPage/hooks/` | 68 | ✅ |
+| `src/pages/DashboardPage/hooks/` | 22 | ✅ |
+| `src/components/TemplateLibrary/hooks/` | 28 | ✅ |
+| `src/components/Avatar/hooks/` | 12 | ✅ |
+| `src/lib/` | 3 | ✅ |
+| `src/utils/` | 17 | ✅ |
+| `src/ui/` | 7 | ✅ |
+| **Total** | **250+** | ✅ |
+
 ```
-Test Files: 11 passed (11)
-Tests: 125 passed (125)
-Duration: ~24s
+Test Files: 20+ passed (20+)
+Tests: 250+ passed (250+)
+Duration: ~50s
 ```
 
 ---
@@ -492,4 +543,4 @@ npm run start
 ---
 
 **Last Updated**: 6 марта 2026 г.
-**Project Status**: Active Development (Phase 2 Completed ✅, Phase 3 In Progress)
+**Project Status**: Phase 2 Completed ✅ — Ready for Phase 3
