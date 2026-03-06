@@ -1,5 +1,10 @@
 // backend/src/modules/books/books.service.ts
 
+import { createLogger } from '../../lib/logger.js';
+
+// Логгер для сервиса книг
+const logger = createLogger('Books', { color: 'green' });
+
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
 const GOOGLE_BOOKS_API_URL = 'https://www.googleapis.com/books/v1/volumes';
 
@@ -70,7 +75,7 @@ export async function searchBooks(query: string, startIndex = 0): Promise<BookSe
 
     return books;
   } catch (error) {
-    console.error('Error searching Google Books:', error);
+    logger.error(error as Error, { function: 'searchGoogleBooks' });
     throw error;
   }
 }

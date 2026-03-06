@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from '../../lib/prisma.js';
+import { createLogger } from '../../lib/logger.js';
 import type { GetTierListsQuery } from './tierList.schema.js';
 
 export { prisma };
+
+// Логгер для модуля тир-листов
+const logger = createLogger('TierLists', { color: 'cyan' });
 
 // Получение списка тир-листов пользователя (краткая информация)
 export async function getUserTierLists(userId: number, query: GetTierListsQuery) {
@@ -145,7 +149,10 @@ export async function updatePlacements(tierListId: number, placements: { bookId:
   const result = await prisma.$transaction(transactions);
 
   const totalTime = Date.now() - startTime;
-  console.log(`updatePlacements: placements=${placements.length}, time=${totalTime}ms`);
+  logger.debug('updatePlacements завершено', { 
+    placementsCount: placements.length, 
+    totalTimeMs: totalTime 
+  });
 
   return result;
 }
@@ -296,7 +303,12 @@ export async function saveTiers(
   });
 
   const totalTime = Date.now() - startTime;
-  console.log(`saveTiers: added=${added.length}, updated=${updated.length}, deleted=${deletedIds.length}, time=${totalTime}ms`);
+  logger.debug('saveTiers завершено', {
+    added: added.length,
+    updated: updated.length,
+    deleted: deletedIds.length,
+    totalTimeMs: totalTime
+  });
 
   // Формируем ответ в старом формате для совместимости
   const createdTiers = results.filter((t: any) => !updated.some((u: any) => u.id === t.id));
@@ -316,13 +328,13 @@ export async function togglePublic(tierListId: number, isPublic: boolean) {
 
 // Получение публичных тир-листов
 export async function getPublicTierLists(query: GetTierListsQuery) {
-  console.log('🟦 getPublicTierLists called with query:', query, 'types:', Object.entries(query).map(([k, v]) => `${k}: ${typeof v}`));
+  logger.debug('getPublicTierLists вызван', { query });
 
   const page = parseInt(query.page, 10);
   const pageSize = parseInt(query.pageSize, 10);
   const skip = (page - 1) * pageSize;
 
-  console.log('🟦 Parsed: page=', page, 'pageSize=', pageSize, 'skip=', skip);
+  logger.debug('Парсинг параметров пагинации', { page, pageSize, skip });
 
   // Преобразуем возможные варианты sortBy в удобный для дальнейшей обработки формат
   const sortBy = query.sortBy === 'updated_at' ? 'updatedAt' :
@@ -377,9 +389,9 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
       // Применяем пагинацию
       totalItems = allWithLikes.length;
       tierLists = allWithLikes.slice(skip, skip + pageSize);
-      
+
     } catch (err) {
-      console.error('🔴 Error in getPublicTierLists (likes sort):', err);
+      logger.error(err as Error, { function: 'getPublicTierLists', sort: 'likes' });
       throw err;
     }
   } else {
@@ -416,9 +428,9 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
         likesCount: tl._count.likes,
         _count: undefined,
       }));
-      
+
     } catch (err) {
-      console.error('🔴 Error in getPublicTierLists transaction:', err);
+      logger.error(err as Error, { function: 'getPublicTierLists', step: 'transaction' });
       throw err;
     }
   }
@@ -434,7 +446,14 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
       currentPage: page,
     },
   };
-  console.log(`🔍 getPublicTierLists: page=${page}, pageSize=${pageSize}, totalItems=${totalItems}, totalPages=${totalPages}, returned=${tierLists.length}`);
-  console.log(`📦 Response structure:`, JSON.stringify(responseData, null, 2));
+  
+  logger.debug('getPublicTierLists завершено', {
+    page,
+    pageSize,
+    totalItems,
+    totalPages,
+    returnedCount: tierLists.length
+  });
+  
   return responseData;
 }

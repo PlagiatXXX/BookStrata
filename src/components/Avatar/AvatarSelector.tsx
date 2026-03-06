@@ -1,6 +1,7 @@
 import { useState, useReducer, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAuthToken } from '@/lib/authApi';
+import { createLogger } from '@/lib/logger';
 import { AvatarSelectorHeader } from './components/AvatarSelectorHeader';
 import { AvatarPreview } from './components/AvatarPreview';
 import { TabNavigation } from './components/TabNavigation';
@@ -14,6 +15,9 @@ import { allPresets } from './presets';
 import type { AvatarSelectorProps, LimitInfo, PresetStyle, TabId } from './types';
 import { QUERY_STALE_TIME_MS, QUERY_GC_TIME_MS } from './constants';
 import { generationReducer } from './generationReducer';
+
+// Логгер для компонента AvatarSelector
+const logger = createLogger('AvatarSelector', { color: 'purple' });
 
 export function AvatarSelector({
   currentAvatar,
@@ -160,7 +164,7 @@ export function AvatarSelector({
       await onSave(currentUrl);
       onClose();
     } catch (error) {
-      console.error('Failed to save avatar:', error);
+      logger.error(error as Error, { action: 'saveAvatar' });
       alert('Ошибка при сохранении. Попробуйте ещё раз.');
     } finally {
       setIsSaving(false);

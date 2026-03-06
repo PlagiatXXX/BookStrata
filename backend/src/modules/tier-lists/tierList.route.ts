@@ -3,12 +3,16 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { authMiddleware } from '../auth/auth.middleware.js';
 import { validateToken } from '../auth/auth.service.js';
+import { createLogger } from '../../lib/logger.js';
 import * as service from './tierList.service.js';
 import * as schema from './tierList.schema.js';
 import type { GetTierListsQuery, CreateTierListBody } from './tierList.schema.js';
 import { like, unlike, getLikesWithStatus, getLikedTierListIds } from './likes/likes.service.js';
 import { uploadBase64, uploadFromUrl } from '../../lib/cloudinary.js';
 import { addBooksToTierList } from './tierList.service.js';
+
+// Логгер для роутов тир-листов
+const logger = createLogger('TierListsRoutes', { color: 'cyan' });
 
 // Опциональный middleware - проверяет токен если есть, но не требует
 async function optionalAuthMiddleware(request: FastifyRequest) {
@@ -102,15 +106,18 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   },
     async (request, reply) => {
       try {
-        console.log('🔵 GET /public route called with query:', request.query);
+        logger.debug('GET /public вызван', { query: request.query });
         const tierLists = await service.getPublicTierLists(request.query);
-        console.log('🟢 Returning public tier lists:', { dataLength: tierLists.data?.length, meta: tierLists.meta });
+        logger.debug('Возвращаем публичные тир-листы', { 
+          dataLength: tierLists.data?.length, 
+          meta: tierLists.meta 
+        });
         return reply.code(200).send({
           data: tierLists.data,
           meta: tierLists.meta,
         });
       } catch (err) {
-        console.error('🔴 Error in GET /public:', err);
+        logger.error(err as Error, { route: 'GET /public' });
         throw err;
       }
     }

@@ -267,10 +267,3 @@ MIT License — see [LICENSE](./LICENSE) for details.
 - **GitHub**: [@PlagiatXXX](https://github.com/PlagiatXXX)
 - **Project**: [BookStrata](https://github.com/PlagiatXXX/BookStrata)
 
----
-
-<p align="center">
-  <a href="https://pollinations.ai">
-    <img src="https://pollinations.ai/logo-white.svg" alt="Built with pollinations.ai" height="40">
-  </a>
-</p>

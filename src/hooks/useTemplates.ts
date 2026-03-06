@@ -2,14 +2,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sileo } from 'sileo';
 import { api } from '@/lib/api-client';
+import { createLogger } from '@/lib/logger';
 import { transformApiTemplateToState, transformStateTemplateToApi } from '../lib/templateTransformer';
 import type { Template, CreateTemplateData, UpdateTemplateData } from '../types/templates';
-import type { 
-  CreateTemplateRequest, 
-  UpdateTemplateRequest 
+import type {
+  CreateTemplateRequest,
+  UpdateTemplateRequest
 } from '../types/api';
 
 const TEMPLATES_QUERY_KEY = 'templates';
+
+// Логгер для модуля шаблонов
+const logger = createLogger('Templates', { color: 'magenta' });
 
 export const useTemplates = () => {
   return useQuery<Template[]>({
@@ -54,8 +58,8 @@ export const useCreateTemplate = () => {
 
   return useMutation({
     mutationFn: async (data: CreateTemplateData) => {
-      console.log("[useCreateTemplate] Получены данные:", data);
-      
+      logger.debug('Создание шаблона: входные данные', { data });
+
       const stateTemplate: Template = {
         id: '', // временный ID, будет установлен сервером
         title: data.title,
@@ -69,8 +73,8 @@ export const useCreateTemplate = () => {
       };
 
       const apiTemplate = transformStateTemplateToApi(stateTemplate);
-      console.log("[useCreateTemplate] API шаблон после трансформации:", apiTemplate);
-      
+      logger.debug('Шаблон после трансформации в API формат', { apiTemplate });
+
       const requestData: CreateTemplateRequest = {
         title: apiTemplate.title,
         description: apiTemplate.description,
@@ -79,11 +83,11 @@ export const useCreateTemplate = () => {
         isPublic: apiTemplate.isPublic
       };
 
-      console.log("[useCreateTemplate] Отправка запроса на /templates:", requestData);
+      logger.info('Отправка запроса на создание шаблона', { title: requestData.title });
 
       const response: any = await api.post('/templates', requestData);
-      console.log("[useCreateTemplate] Ответ от сервера:", response);
-      
+      logger.debug('Получен ответ от сервера', { response });
+
       // Бэкенд возвращает шаблон напрямую, без обёртки { data: ... }
       const template = response.data || response;
       return transformApiTemplateToState(template);

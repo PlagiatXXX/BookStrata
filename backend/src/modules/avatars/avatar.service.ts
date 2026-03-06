@@ -1,4 +1,8 @@
 import { prisma } from '../../lib/prisma.js';
+import { createLogger } from '../../lib/logger.js';
+
+// Логгер для сервиса аватаров
+const logger = createLogger('Avatars', { color: 'yellow' });
 
 const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY;
 const POLLINATIONS_API_URL = 'https://gen.pollinations.ai';
@@ -76,13 +80,13 @@ export async function generateAvatar(prompt: string, userId: number): Promise<{
       data: { aiAvatarsGenerated: { increment: 1 } },
     });
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       imageUrl,
-      remaining: limitCheck.remaining - 1 
+      remaining: limitCheck.remaining - 1
     };
   } catch (error) {
-    console.error('Avatar generation error:', error);
+    logger.error(error as Error, { function: 'generateAvatar', prompt });
     const fallbackUrl = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(prompt)}&backgroundColor=b6e3f4`;
     return { success: true, imageUrl: fallbackUrl };
   }

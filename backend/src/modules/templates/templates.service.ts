@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { createLogger } from '../../lib/logger.js';
+
+// Логгер для сервиса шаблонов
+const logger = createLogger('Templates', { color: 'magenta' });
 
 // Zod схемы для валидации
 const createTemplateSchema = z.object({
@@ -52,10 +56,9 @@ export class TemplatesService {
   async createTemplate(input: CreateTemplateInput, userId?: string) {
     const validatedInput = await this.validateCreateTemplate(input);
 
-    console.log("[TemplatesService] createTemplate вызван с:", {
-      input,
+    logger.debug('createTemplate вызван', {
+      title: input.title,
       userId,
-      validatedInput
     });
 
     // Проверка лимита шаблонов (5 для бесплатной версии)
@@ -84,7 +87,7 @@ export class TemplatesService {
       templateData.authorId = parseInt(userId);
     }
 
-    console.log("[TemplatesService] Создание шаблона в БД:", templateData);
+    logger.debug('Создание шаблона в БД', { title: templateData.title });
 
     return this.prisma.template.create({
       data: templateData

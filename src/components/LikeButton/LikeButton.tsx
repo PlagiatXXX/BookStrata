@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
 import {
   apiLikeTierList,
   apiUnlikeTierList,
@@ -10,6 +11,9 @@ import {
   apiGetTemplateLikes,
   type LikesResponse
 } from '@/lib/likesApi';
+
+// Логгер для компонента LikeButton
+const logger = createLogger('LikeButton', { color: 'red' });
 
 interface LikeButtonProps {
   id: number | string;
@@ -105,7 +109,7 @@ export function LikeButton({
       // При ошибке откатываем состояние
       setLiked(previousLiked);
       setLikes(previousLikes);
-      console.error('Failed to like:', error);
+      logger.error(error as Error, { action: 'like/unlike', type, id });
       // При ошибке "Already liked" обновляем состояние
       if (error instanceof Error && error.message.includes('Already liked')) {
         setLiked(true);
