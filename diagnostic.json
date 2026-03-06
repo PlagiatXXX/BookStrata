@@ -33,17 +33,6 @@
     "category": "State & Effects"
   },
   {
-    "filePath": "src/pages/TierListEditorPage/TierEditorPage.tsx",
-    "plugin": "react-doctor",
-    "rule": "no-giant-component",
-    "severity": "warning",
-    "message": "Component \"TierListEditorContent\" is 533 lines — consider breaking it into smaller focused components",
-    "help": "Extract logical sections into focused components: `<UserHeader />`, `<UserActions />`, etc.",
-    "line": 57,
-    "column": 7,
-    "category": "Architecture"
-  },
-  {
     "filePath": "src/pages/DashboardPage.tsx",
     "plugin": "react-doctor",
     "rule": "prefer-useReducer",

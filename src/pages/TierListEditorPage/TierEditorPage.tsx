@@ -1,116 +1,76 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { useParams, useNavigate, useBlocker } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useParams, useNavigate } from 'react-router-dom';
 import { sileo } from 'sileo';
-import {
-  DndContext,
-  KeyboardSensor,
-  TouchSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragOverlay,
-  type DragStartEvent,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
-import { TierGrid } from '@/components/TierGrid/TierGrid';
-import { SettingsSidebar } from '@/components/SettingsSidebar/SettingsSidebar';
-import { UnrankedItems } from '@/components/UnrankedItems/UnrankedItems';
-import { BookCover } from '@/ui/BookCover';
-import { EditorLoadingScreen, EditorErrorScreen } from '@/components/EditorScreens';
+import type { DragEndEvent } from '@dnd-kit/core';
 import { useTierList } from '@/hooks/useTierList';
 import type { Action } from '@/hooks/useTierList';
 import { useAuth } from '@/hooks/useAuthContext';
-import type { Book, Tier, TierListData } from '@/types';
-import { getInitialData } from './_initialData';
-import {
-  fetchTierList,
-  transformApiToState,
-  saveTierListOptimized,
-  type SaveTierListPayload,
-} from '@/lib/tierListApi';
-import { apiGetTierListLikes, apiGetLikedTierListIds } from '@/lib/likesApi';
 import { logger } from '@/lib/logger';
-import { useAutoSaveOptimized } from '@/hooks/useAutoSaveOptimized';
-import { getPlacementsDiff, getTiersDiff, getNewBooks as getNewBooksUtil } from '@/utils/saveDiff';
 import { EditorModals } from './components/EditorModals';
-import { EditorHeader } from './components/EditorHeader';
+import { EditorLayout } from './components/EditorLayout';
+import { EditorMainContent } from './components/EditorMainContent';
+import { EditorScreens } from './components/EditorScreens';
 import { useTierEditorActions } from './hooks/useTierEditorActions';
+import { useTierEditorState } from './hooks/useTierEditorState';
+import { useTierEditorQueries } from './hooks/useTierEditorQueries';
+import { useTierEditorDrag } from './hooks/useTierEditorDrag';
+import { useTierEditorBlocker } from './hooks/useTierEditorBlocker';
+import { useTierEditorSave } from './hooks/useTierEditorSave';
 import './TierEditorPage.css';
-
-// Пустой объект для инициализации, пока данные грузятся
-const emptyData: TierListData = {
-  id: '',
-  title: '',
-  books: {},
-  tiers: {},
-  tierOrder: [],
-  unrankedBookIds: [],
-  isPublic: false,
-  tierIdToTempIdMap: {},
-};
+import type { Book } from '@/types';
 
 // Внутренний компонент с ключом для автоматического сброса состояния
 const TierListEditorContent = () => {
   const { id: tierListId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  // Состояние для отслеживания несохраненных изменений
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [deletedTierIds, setDeletedTierIds] = useState<number[]>([]);
-
-  // Загрузка данных с сервера
+  // Получаем все состояния из хука
   const {
-    data: apiData,
+    // Состояния для отслеживания несохраненных изменений
+    hasUnsavedChanges,
+    setHasUnsavedChanges,
+    deletedTierIds,
+    setDeletedTierIds,
+
+    // Состояния модальных окон
+    showUnsavedModal,
+    setShowUnsavedModal,
+    showDeleteRatingModal,
+    setShowDeleteRatingModal,
+    ignoreUnsavedBlocker,
+    setIgnoreUnsavedBlocker,
+    isSearchModalOpen,
+    setIsSearchModalOpen,
+    isSavingBeforeLeave,
+    setIsSavingBeforeLeave,
+
+    // D&D состояния
+    activeItem,
+    setActiveItem,
+    tierToDelete,
+    setTierToDelete,
+    bookToDelete,
+    setBookToDelete,
+    activeTierId,
+    setActiveTierId,
+    isClearAllModalOpen,
+    setIsClearAllModalOpen,
+    bookToEdit,
+    setBookToEdit,
+    bookToView,
+    setBookToView,
+  } = useTierEditorState();
+
+  // Получаем данные из query хука
+  const {
+    apiData,
     isLoading,
     isError,
     error,
-  } = useQuery({
-    queryKey: ['tierList', tierListId],
-    queryFn: () => fetchTierList(tierListId!),
-    enabled: !!tierListId,
-    staleTime: 0,
-  });
-
-  // Получаем количество лайков
-  const { data: likesData } = useQuery({
-    queryKey: ['tierListLikes', tierListId],
-    queryFn: () => (tierListId ? apiGetTierListLikes(parseInt(tierListId)) : null),
-    enabled: !!tierListId,
-  });
-
-  // Получаем все лайкнутые тир-листы
-  const { data: likedTierListIds } = useQuery({
-    queryKey: ['likedTierListIds'],
-    queryFn: () => apiGetLikedTierListIds(),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const likedIdsSet = useMemo(
-    () => new Set(likedTierListIds?.likedIds || []),
-    [likedTierListIds?.likedIds],
-  );
-
-  // Трансформация данных (API -> UI)
-  const initialDataForHook = useMemo((): TierListData => {
-    if (apiData) {
-      const data = transformApiToState(apiData);
-      if (Object.keys(data.tiers).length === 0) {
-        return getInitialData(tierListId!, apiData.title || 'Новый тир-лист');
-      }
-      return data;
-    } else if (isError) {
-      return getInitialData(tierListId!, 'Новый тир-лист');
-    }
-    return emptyData;
-  }, [apiData, isError, tierListId]);
-
-  // Получаем isPublic из API данных
-  const isPublic = apiData?.isPublic ?? false;
+    likesData,
+    likedIdsSet,
+    initialDataForHook,
+    isPublic,
+  } = useTierEditorQueries(tierListId);
 
   // Проверяем владельца
   const { user: authUser } = useAuth();
@@ -135,45 +95,16 @@ const TierListEditorContent = () => {
   } = useTierList(initialDataForHook, !hasUnsavedChanges);
 
   // ========== ОПТИМИЗИРОВАННОЕ АВТОСОХРАНЕНИЕ ==========
-  const getSavePayload = useCallback((): SaveTierListPayload => {
-    if (!listData.id) return {};
-
-    const placements = getPlacementsDiff(listData);
-    const tiers = getTiersDiff(listData);
-    const newBooks = getNewBooksUtil(listData);
-
-    return {
-      placements: placements.length > 0 ? placements : undefined,
-      tiers: (tiers.added.length > 0 || tiers.updated.length > 0) ? tiers : undefined,
-      newBooks: newBooks.length > 0 ? newBooks : undefined,
-    };
-  }, [listData]);
-
-  const savePayload = useCallback(async (payload: SaveTierListPayload) => {
-    if (!tierListId) return;
-    
-    const result = await saveTierListOptimized(tierListId, payload, listData);
-    setHasUnsavedChanges(false);
-
-    // Если были созданы новые книги, заменяем временные ID на реальные
-    if (result?.bookReplacements && result.bookReplacements.length > 0) {
-      dispatch({ type: 'REPLACE_BOOK_IDS', payload: result.bookReplacements });
-    }
-
-    // Инвалидируем кэш чтобы загрузить актуальные данные
-    queryClient.invalidateQueries({ queryKey: ['tierList', tierListId] });
-
-    logger.info('Сохранение успешно', { tierListId });
-  }, [tierListId, queryClient, dispatch, listData]);
-
-  const { status: autoSaveStatus, lastSaved, forceSave, cancel } = useAutoSaveOptimized({
-    listId: tierListId || null,
-    getSavePayload,
-    saveFunction: savePayload,
-    delay: 3000, // 3 секунды
-    enabled: !isLoading && !!listData.id && !isReadOnly,
-    skipNewBooks: false, // Сохраняем и новые книги тоже!
-  });
+  const { autoSaveStatus, lastSaved, forceSave, cancel, getSavePayload, savePayload } =
+    useTierEditorSave({
+      tierListId,
+      listData,
+      dispatch,
+      isLoading,
+      isReadOnly,
+      setHasUnsavedChanges,
+      logger,
+    });
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Получаем функции из хука действий
@@ -215,7 +146,10 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges(true);
   };
 
-  const updateTierSettingsWithUnsaved = (tierId: string, settings: any) => {
+  const updateTierSettingsWithUnsaved = (
+    tierId: string,
+    settings: Partial<{ title: string; color: string }>,
+  ) => {
     updateTierSettings(tierId, settings);
     setHasUnsavedChanges(true);
   };
@@ -248,143 +182,32 @@ const TierListEditorContent = () => {
     deleteRatingFromServer();
   };
 
-  // Предупреждение при закрытии вкладки
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges || isUpdatingBook) {
-        e.preventDefault();
-        e.returnValue = 'У вас есть несохраненные изменения. Вы уверены, что хотите обновить страницу?';
-      }
-    };
+  // Получаем логику блокировок из хука
+  const { handleMyRatingsClick, handleSaveBeforeLeave, handleConfirmLeave, handleCancelLeave } =
+    useTierEditorBlocker({
+      isReadOnly,
+      ignoreUnsavedBlocker,
+      hasUnsavedChanges,
+      autoSaveStatus,
+      isUpdatingBook,
+      setShowUnsavedModal,
+      setIgnoreUnsavedBlocker,
+      setDeletedTierIds,
+      setIsSavingBeforeLeave,
+      cancel,
+      forceSave,
+      navigate,
+      logger,
+      sileo,
+    });
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [hasUnsavedChanges, isUpdatingBook]);
-
-  // Состояния модальных окон
-  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
-  const [showDeleteRatingModal, setShowDeleteRatingModal] = useState(false);
-  const [ignoreUnsavedBlocker, setIgnoreUnsavedBlocker] = useState(false);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [isSavingBeforeLeave, setIsSavingBeforeLeave] = useState(false);
-
-  const blocker = useBlocker(
-    !isReadOnly &&
-      !ignoreUnsavedBlocker &&
-      (hasUnsavedChanges || autoSaveStatus === 'saving' || isUpdatingBook),
-  );
-
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      setShowUnsavedModal(true);
-    }
-  }, [blocker.state]);
-
-  const handleMyRatingsClick = () => {
-    setDeletedTierIds([]);
-    navigate('/');
-  };
-
-  // Принудительное сохранение перед выходом
-  const handleSaveBeforeLeave = async () => {
-    setIsSavingBeforeLeave(true);
-    try {
-      // Отменяем текущее автосохранение если оно есть
-      cancel();
-      
-      // Принудительно сохраняем всё сразу
-      await forceSave();
-      
-      // Ждём немного чтобы убедиться что сохранение завершилось
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setShowUnsavedModal(false);
-      setIgnoreUnsavedBlocker(true);
-      blocker.proceed?.();
-    } catch (error) {
-      logger.error(error instanceof Error ? error : new Error(String(error)), { action: 'saveBeforeLeave' });
-      sileo.error({ 
-        title: 'Не удалось сохранить', 
-        description: 'Попробуйте выйти без сохранения',
-        duration: 3000 
-      });
-    } finally {
-      setIsSavingBeforeLeave(false);
-    }
-  };
-
-  const handleConfirmLeave = () => {
-    setShowUnsavedModal(false);
-    setIgnoreUnsavedBlocker(true);
-    blocker.proceed?.();
-  };
-
-  const handleCancelLeave = () => {
-    setShowUnsavedModal(false);
-    setDeletedTierIds([]);
-    blocker.reset?.();
-  };
-
-  // D&D состояния
-  const [activeItem, setActiveItem] = useState<Book | Tier | null>(null);
-  const [tierToDelete, setTierToDelete] = useState<string | null>(null);
-  const [bookToDelete, setBookToDelete] = useState<string | null>(null);
-  const [activeTierId, setActiveTierId] = useState<string | null>(null);
-  const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
-  const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
-  const [bookToView, setBookToView] = useState<Book | null>(null);
-  const tierGridRef = useRef<HTMLDivElement>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { 
-      activationConstraint: { distance: 5 },
-      // Блокируем скролл во время драга на desktop
-      preventScroll: true,
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
-      // Блокируем скролл во время драга на mobile
-      preventScroll: true,
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const type = active.data.current?.type;
-    if (type === 'book') setActiveItem(listData.books[active.id] || null);
-    else if (type === 'tier') setActiveItem(listData.tiers[active.id] || null);
-  };
-
-  const handleDragEndAndClear = (event: DragEndEvent) => {
-    handleDragEndWithUnsaved(event);
-    setActiveItem(null);
-  };
-
-  const onDownloadImage = useCallback(async () => {
-    if (tierGridRef.current === null) return;
-    logger.info('Downloading tier list as image', { title: listData.title });
-    try {
-      const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(tierGridRef.current, { cacheBust: true });
-      const link = document.createElement('a');
-      link.download = `${listData.title.replace(/\s+/g, '-')}.png`;
-      link.href = dataUrl;
-      link.click();
-      logger.info('Tier list image downloaded successfully', {
-        title: listData.title,
-      });
-    } catch (err) {
-      logger.error(err instanceof Error ? err : new Error(String(err)), {
-        action: 'downloadImage',
-        title: listData.title,
-      });
-    }
-  }, [tierGridRef, listData.title]);
+  // Получаем D&D логику из хука
+  const { tierGridRef, handleDragStart, handleDragEndAndClear, onDownloadImage } =
+    useTierEditorDrag({
+      listData,
+      setActiveItem,
+      handleDragEndWithUnsaved,
+    });
 
   const handleConfirmDelete = () => {
     if (tierToDelete) removeTierWithUnsaved(tierToDelete);
@@ -409,145 +232,64 @@ const TierListEditorContent = () => {
     setBookToView(book);
   };
 
-  // Рендеринг
-  if (isLoading) {
-    return <EditorLoadingScreen onMyRatingsClick={handleMyRatingsClick} />;
-  }
-
-  if (isError) {
-    return <EditorErrorScreen error={error} onMyRatingsClick={handleMyRatingsClick} />;
-  }
-
-  const unrankedBooks = listData.unrankedBookIds
-    .map((id) => listData.books[id])
-    .filter(Boolean);
-  const activeTierData = activeTierId ? listData.tiers[activeTierId] : null;
+  // Пропсы для EditorHeader
+  const headerProps = {
+    title: listData.title,
+    autoSaveStatus,
+    lastSaved,
+    onSaveRetry: () => savePayload(getSavePayload()),
+    ...(isReadOnly && {
+      author: apiData?.user,
+      likesCount: likesData?.likesCount || 0,
+      likedIdsSet,
+      tierListId,
+      ownerUserId,
+      currentUserId,
+      isReadOnly: true,
+    }),
+  };
 
   return (
-    <>
-      {!isReadOnly && (
-        <DndContext
-          sensors={sensors}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEndAndClear}
-          onDragCancel={() => setActiveItem(null)}
-        >
-          <DashboardLayout
-            onMyRatingsClick={handleMyRatingsClick}
-            onSearch={() => {}}
-            searchValue=""
-            showSearch={false}
-          >
-            <main className="tier-editor-y2k flex-1 overflow-y-auto p-4 text-[#d8f9ff] lg:p-8">
-              <EditorHeader
-                title={listData.title}
-                autoSaveStatus={autoSaveStatus}
-                lastSaved={lastSaved}
-                onSaveRetry={() => savePayload(getSavePayload())}
-              />
-
-              <div className="flex flex-col gap-6 lg:flex-row lg:justify-center">
-                <div className="flex max-w-350 flex-1 flex-col gap-4">
-                  <TierGrid
-                    ref={tierGridRef}
-                    listData={listData}
-                    onDeleteBook={isReadOnly ? undefined : deleteBookWithUnsaved}
-                    onEditBook={isReadOnly ? undefined : (book) => setBookToEdit(book)}
-                    onViewBook={handleViewBook}
-                    activeTierId={activeTierId}
-                    onAddRow={isReadOnly ? undefined : addRowWithUnsaved}
-                    onChangeTierColor={
-                      isReadOnly
-                        ? undefined
-                        : (tierId, color) =>
-                            updateTierSettingsWithUnsaved(tierId, { color })
-                    }
-                    onRenameTier={isReadOnly ? undefined : renameTierWithUnsaved}
-                    onDeleteTier={isReadOnly ? undefined : setTierToDelete}
-                    onSetActiveTier={(id) =>
-                      setActiveTierId((current) => (current === id ? null : id))
-                    }
-                  />
-
-                  <UnrankedItems
-                    books={unrankedBooks}
-                    onUpload={isReadOnly ? undefined : addBooksWithUnsaved}
-                    onDeleteBook={isReadOnly ? undefined : deleteBookWithUnsaved}
-                    onEditBook={isReadOnly ? undefined : (book) => setBookToEdit(book)}
-                    onViewBook={handleViewBook}
-                  />
-                </div>
-
-                {!isReadOnly && (
-                  <div className="shrink-0 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
-                    <SettingsSidebar
-                      key={activeTierData?.id}
-                      activeTier={activeTierData || undefined}
-                      onUpdateTier={
-                        isReadOnly ? undefined : updateTierSettingsWithUnsaved
-                      }
-                      onAddRow={isReadOnly ? undefined : addRowWithUnsaved}
-                      onClearRows={
-                        isReadOnly ? undefined : () => setIsClearAllModalOpen(true)
-                      }
-                      onDownloadImage={onDownloadImage}
-                      onMyRatingsClick={handleMyRatingsClick}
-                      onDeleteRating={
-                        isReadOnly ? undefined : () => setShowDeleteRatingModal(true)
-                      }
-                      isPublic={isPublic}
-                      onTogglePublic={isReadOnly ? undefined : togglePublic}
-                      isTogglingPublic={isTogglingPublic}
-                      onFindBook={
-                        isReadOnly ? undefined : () => setIsSearchModalOpen(true)
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            </main>
-          </DashboardLayout>
-
-          <DragOverlay dropAnimation={null}>
-            {activeItem && 'coverImageUrl' in activeItem ? (
-              <BookCover book={activeItem as Book} />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      )}
-
-      {/* Режим просмотра */}
-      {isReadOnly && (
-        <DashboardLayout
+    <EditorScreens
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      onMyRatingsClick={handleMyRatingsClick}
+    >
+      <EditorLayout
+        activeItem={activeItem}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEndAndClear}
+        onDragCancel={() => setActiveItem(null)}
+        headerProps={headerProps}
+        onMyRatingsClick={handleMyRatingsClick}
+        isReadOnly={isReadOnly}
+      >
+        <EditorMainContent
+          listData={listData}
+          isReadOnly={isReadOnly}
+          tierGridRef={tierGridRef}
+          onDeleteBook={deleteBookWithUnsaved}
+          onEditBook={(book) => setBookToEdit(book)}
+          onViewBook={handleViewBook}
+          activeTierId={activeTierId}
+          onAddRow={addRowWithUnsaved}
+          onChangeTierColor={(tierId, color) => updateTierSettingsWithUnsaved(tierId, { color })}
+          onRenameTier={renameTierWithUnsaved}
+          onDeleteTier={setTierToDelete}
+          onSetActiveTier={(id) => setActiveTierId((current) => (current === id ? null : id))}
+          onUpdateTier={updateTierSettingsWithUnsaved}
+          onClearRows={() => setIsClearAllModalOpen(true)}
+          onDownloadImage={onDownloadImage}
           onMyRatingsClick={handleMyRatingsClick}
-          onSearch={() => {}}
-          searchValue=""
-          showSearch={false}
-        >
-          <main className="tier-editor-y2k flex-1 overflow-y-auto p-4 text-[#d8f9ff] lg:p-8">
-            <EditorHeader
-              title={listData.title}
-              author={apiData?.user}
-              likesCount={likesData?.likesCount || 0}
-              likedIdsSet={likedIdsSet}
-              tierListId={tierListId!}
-              ownerUserId={ownerUserId}
-              currentUserId={currentUserId}
-              autoSaveStatus={autoSaveStatus}
-              lastSaved={lastSaved}
-              onSaveRetry={() => savePayload(getSavePayload())}
-              isReadOnly={isReadOnly}
-            />
-
-            <TierGrid
-              ref={tierGridRef}
-              listData={listData}
-              onViewBook={handleViewBook}
-              activeTierId={null}
-            />
-          </main>
-        </DashboardLayout>
-      )}
+          onDeleteRating={() => setShowDeleteRatingModal(true)}
+          isPublic={isPublic}
+          onTogglePublic={togglePublic}
+          isTogglingPublic={isTogglingPublic}
+          onFindBook={() => setIsSearchModalOpen(true)}
+          onUploadBooks={addBooksWithUnsaved}
+        />
+      </EditorLayout>
 
       {/* Модальные окна */}
       <EditorModals
@@ -580,7 +322,7 @@ const TierListEditorContent = () => {
         isUpdatingBook={isUpdatingBook}
         isSavingBeforeLeave={isSavingBeforeLeave}
       />
-    </>
+    </EditorScreens>
   );
 };
 

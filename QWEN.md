@@ -27,6 +27,21 @@ tiermaker-pro/
 │   ├── hooks/              # Custom React hooks
 │   ├── lib/                # Utilities, API client, logger
 │   ├── pages/              # Route pages
+│   │   └── TierListEditorPage/  # Tier list editor page
+│   │       ├── components/ # Editor-specific components
+│   │       │   ├── EditorLayout.tsx
+│   │       │   ├── EditorMainContent.tsx
+│   │       │   ├── EditorHeader.tsx
+│   │       │   ├── EditorModals.tsx
+│   │       │   ├── EditorScreens.tsx
+│   │       │   └── AutoSaveIndicator.tsx
+│   │       └── hooks/    # Editor-specific hooks
+│   │           ├── useTierEditorState.ts
+│   │           ├── useTierEditorQueries.ts
+│   │           ├── useTierEditorDrag.ts
+│   │           ├── useTierEditorBlocker.ts
+│   │           ├── useTierEditorSave.ts
+│   │           └── useTierEditorActions.ts
 │   ├── state/              # State management
 │   ├── types/              # TypeScript types
 │   └── utils/              # Helper functions
@@ -303,9 +318,20 @@ npm run test:ui
 ```
 
 ### Test File Convention
-- Test files located alongside source files: `*.test.ts` or `*.test.tsx`
-- Frontend tests: `src/test/` setup
-- Backend tests: `backend/src/test/` setup
+- Test files located alongside source files: `*.test.ts`, `*.test.tsx`, `*.spec.ts`, `*.spec.tsx`
+- Frontend tests: `src/test/setup.ts` setup with happy-dom
+- Test files use `/// <reference types="vitest/globals" />` for globals
+- All new hooks must have corresponding `.spec.tsx` test files
+
+### Test Coverage Summary (as of March 2026)
+| Location | Tests | Status |
+|----------|-------|--------|
+| `src/hooks/` | 30 | ✅ |
+| `src/pages/TierListEditorPage/hooks/` | 68 | ✅ |
+| `src/lib/` | 3 | ✅ |
+| `src/utils/` | 17 | ✅ |
+| `src/ui/` | 7 | ✅ |
+| **Total** | **125** | ✅ |
 
 ---
 
@@ -343,15 +369,50 @@ See the following files for improvement recommendations:
 - `TierMaker-Pro-Business-Plan.txt` — business strategy
 - `docs/AVATAR_FEATURE_SPEC.md` — avatar feature specification
 
-### Current Phase: PHASE 1 (Foundation)
-- [ ] Environment variables setup
-- [ ] Input validation (Zod)
-- [ ] Error handling
-- [ ] Logger utility
-- [ ] Rate limiting
-- [ ] CORS security
-- [ ] First unit tests
-- [ ] API documentation (Swagger)
+### Current Phase: PHASE 2 (Refactoring & Testing) ✅ COMPLETED
+
+#### Phase 1 (Foundation) — Completed
+- [x] Environment variables setup
+- [x] Input validation (Zod)
+- [x] Error handling
+- [x] Logger utility
+- [x] Rate limiting
+- [x] CORS security
+- [x] First unit tests
+- [x] API documentation (Swagger)
+
+#### Phase 2 (Refactoring & Testing) — Completed
+- [x] TierListEditorPage refactoring (533 → 332 lines, -38%)
+- [x] Created 5 custom hooks for editor logic
+- [x] Created 6 reusable components
+- [x] Added 82 unit tests for hooks
+- [x] Total test coverage: 125 tests passing
+
+##### New Hooks (src/pages/TierListEditorPage/hooks/)
+| Hook | Purpose | Tests |
+|------|---------|-------|
+| `useTierEditorState` | 14 useState states management | 19 |
+| `useTierEditorQueries` | 3 useQuery data fetching | 11 |
+| `useTierEditorDrag` | Drag-and-drop logic | 12 |
+| `useTierEditorBlocker` | Navigation blocking & beforeunload | 7 |
+| `useTierEditorSave` | Auto-save optimization | 19 |
+
+##### New Components (src/pages/TierListEditorPage/components/)
+| Component | Purpose |
+|-----------|---------|
+| `EditorLayout` | D&D container + layout wrapper |
+| `EditorMainContent` | Tier grid + unranked + sidebar |
+| `EditorHeader` | Title + auto-save indicator |
+| `EditorModals` | All modal dialogs |
+| `EditorScreens` | Loading/error state screens |
+| `AutoSaveIndicator` | Save status indicator |
+
+##### Test Coverage
+```
+Test Files: 11 passed (11)
+Tests: 125 passed (125)
+Duration: ~24s
+```
 
 ---
 
@@ -413,5 +474,5 @@ npm run start
 
 ---
 
-**Last Updated**: 25 февраля 2026 г.
-**Project Status**: Active Development (Phase 1)
+**Last Updated**: 5 марта 2026 г.
+**Project Status**: Active Development (Phase 2 Completed ✅)
