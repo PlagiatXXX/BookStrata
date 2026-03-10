@@ -1,5 +1,11 @@
 import type { TierListShort } from '@/lib/api';
 
+// === Sort options ===
+export type SortOption = 'newest' | 'oldest' | 'title-asc' | 'likes';
+
+// === Filter options ===
+export type FilterOption = 'all' | 'public' | 'private';
+
 // === Modal types ===
 export type ModalType = 'create' | 'rename' | 'delete' | null;
 
@@ -12,6 +18,8 @@ export interface DashboardState {
   tierListToDelete: TierListShort | null;
   renameTitle: string;
   createTitle: string;
+  sortOption: SortOption;
+  filterOption: FilterOption;
 }
 
 // === Dashboard actions ===
@@ -24,6 +32,8 @@ export type DashboardAction =
   | { type: 'CLOSE_MODAL' }
   | { type: 'SET_RENAME_TITLE'; payload: string }
   | { type: 'SET_CREATE_TITLE'; payload: string }
+  | { type: 'SET_SORT_OPTION'; payload: SortOption }
+  | { type: 'SET_FILTER_OPTION'; payload: FilterOption }
   | { type: 'RESET_STATE' };
 
 // === Component props ===

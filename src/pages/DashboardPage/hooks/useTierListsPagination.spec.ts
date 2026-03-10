@@ -42,6 +42,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: mockTierLists,
           searchQuery: '',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -54,6 +56,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: mockTierLists,
           searchQuery: '   ',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -67,6 +71,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: mockTierLists,
           searchQuery: 'Fantasy',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -79,6 +85,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: mockTierLists,
           searchQuery: 'fantasy',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -90,6 +98,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: mockTierLists,
           searchQuery: 'Sci',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -102,6 +112,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: mockTierLists,
           searchQuery: 'NonExistent',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -119,6 +131,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: tierListsWithDuplicates,
           searchQuery: 'Test',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -132,6 +146,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: mockTierLists,
           searchQuery: 'Fantasy',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -145,6 +161,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: [],
           searchQuery: 'test',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 
@@ -161,6 +179,8 @@ describe('useTierListsPagination', () => {
         useTierListsPagination({
           allTierLists: tierListsWithSpecialChars,
           searchQuery: 'Test:',
+          sortOption: 'newest',
+          filterOption: 'all',
         })
       );
 

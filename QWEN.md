@@ -459,9 +459,32 @@ See the following files for improvement recommendations:
 ##### New Hooks (src/pages/DashboardPage/hooks/)
 | Hook | Purpose |
 |------|---------|
-| `useDashboardState` | 9 useState → useReducer |
+| `useDashboardState` | 9 useState → useReducer (добавлены sortOption, filterOption) |
 | `useTierListActions` | CRUD operations |
-| `useTierListsPagination` | Filtering + pagination |
+| `useTierListsPagination` | Filtering (search + public/private) + Sorting (4 options) + Pagination |
+
+##### Dashboard Enhancements (Март 2026)
+
+**Сортировка:**
+- `newest` — Сначала новые (по createdAt)
+- `oldest` — Сначала старые (по createdAt)
+- `title-asc` — По названию (A-Z)
+- `likes` — По популярности (по likesCount)
+
+**Фильтры:**
+- `all` — Все тир-листы
+- `public` — Только публичные
+- `private` — Только приватные
+
+**Комбинированная фильтрация:**
+```
+searchQuery → filterOption → sortOption → displayedTierLists
+```
+
+**UI компоненты:**
+- `.dashboard-controls` — Контейнер
+- `.dashboard-filters` — Tabs кнопки (Все/Публичные/Приватные)
+- `.dashboard-sort__select` — Кастомный select с SVG иконкой
 
 ##### Test Coverage Summary
 | Location | Tests | Status |
@@ -492,6 +515,56 @@ Duration: ~50s
 | `ROADMAP.md` | 5-phase development roadmap |
 | `TierMaker-Pro-Business-Plan.txt` | Business plan for monetization |
 | `docs/AVATAR_FEATURE_SPEC.md` | Avatar feature specification |
+| `doctor.md` | Comprehensive project audit (75/100 score) |
+| `backend/TELEGRAM_SETUP.md` | Telegram error notifications setup guide |
+
+---
+
+## 📡 Error Monitoring (Март 2026)
+
+### Telegram Error Notifications
+
+**Архитектура:**
+```
+Backend (Fastify)
+    ↓ ошибка
+    ├── Logger → /var/log/tiermaker/errors.log (JSON)
+    └── ErrorNotifier → Telegram Bot → Разработчик
+```
+
+**Файлы:**
+- `backend/src/lib/errorNotifier.ts` — Модуль уведомлений
+- `backend/src/lib/logger.ts` — Логирование в файл
+- `backend/src/server.ts` — Интеграция в setErrorHandler
+
+**Настройка:**
+```bash
+# backend/.env
+TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+TELEGRAM_CHAT_ID=987654321
+TELEGRAM_NOTIFICATIONS_ENABLED=true
+LOG_DIR=/var/log/tiermaker
+```
+
+**Формат уведомления:**
+```
+🚨 *Новая ошибка*
+
+*Сообщение:* `Cannot read property 'id' of undefined`
+*URL:* `/api/tier-lists/123`
+*Метод:* `PUT`
+*User ID:* `authenticated`
+
+*Время:* 10.03.2026, 15:30:22
+
+*Stack:*
+```
+TypeError: Cannot read property 'id' of undefined
+    at updateTierList (/app/src/modules/tier-lists/tierList.service.ts:45:12)
+```
+```
+
+**Throttling:** Не чаще 1 раза в 5 секунд
 
 ---
 

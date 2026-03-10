@@ -1,6 +1,6 @@
 import { useReducer, useCallback } from 'react';
 import type { TierListShort } from '@/lib/api';
-import type { DashboardState, DashboardAction } from '../types';
+import type { DashboardState, DashboardAction, SortOption, FilterOption } from '../types';
 
 const initialState: DashboardState = {
   currentPage: 1,
@@ -10,6 +10,8 @@ const initialState: DashboardState = {
   tierListToDelete: null,
   renameTitle: '',
   createTitle: '',
+  sortOption: 'newest',
+  filterOption: 'all',
 };
 
 function dashboardReducer(
@@ -73,6 +75,18 @@ function dashboardReducer(
         createTitle: action.payload,
       };
 
+    case 'SET_SORT_OPTION':
+      return {
+        ...state,
+        sortOption: action.payload,
+      };
+
+    case 'SET_FILTER_OPTION':
+      return {
+        ...state,
+        filterOption: action.payload,
+      };
+
     case 'RESET_STATE':
       return {
         ...initialState,
@@ -93,6 +107,8 @@ interface UseDashboardStateReturn {
   closeModal: () => void;
   setRenameTitle: (title: string) => void;
   setCreateTitle: (title: string) => void;
+  setSortOption: (sort: SortOption) => void;
+  setFilterOption: (filter: FilterOption) => void;
   resetState: () => void;
 }
 
@@ -135,6 +151,14 @@ export function useDashboardState(): UseDashboardStateReturn {
     dispatch({ type: 'SET_CREATE_TITLE', payload: title });
   }, []);
 
+  const setSortOption = useCallback((sort: SortOption) => {
+    dispatch({ type: 'SET_SORT_OPTION', payload: sort });
+  }, []);
+
+  const setFilterOption = useCallback((filter: FilterOption) => {
+    dispatch({ type: 'SET_FILTER_OPTION', payload: filter });
+  }, []);
+
   const resetState = useCallback(() => {
     dispatch({ type: 'RESET_STATE' });
   }, []);
@@ -149,6 +173,8 @@ export function useDashboardState(): UseDashboardStateReturn {
     closeModal,
     setRenameTitle,
     setCreateTitle,
+    setSortOption,
+    setFilterOption,
     resetState,
   };
 }

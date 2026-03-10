@@ -7,10 +7,23 @@
  * authLogger.info('User logged in', { userId: 123 });
  */
 
+import fs from 'fs';
+import path from 'path';
 import type { Logger, LoggerConfig, LogLevel, LoggerContext } from '../types/logger.js';
 
 // Глобальное состояние
 let globalLogLevel: LogLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+
+// Логирование в файл для production
+const isProd = process.env.NODE_ENV === 'production';
+const logDir = process.env.LOG_DIR || '/var/log/tiermaker';
+const errorLogFile = path.join(logDir, 'errors.log');
+const allLogFile = path.join(logDir, 'app.log');
+
+// Создать директорию для логов если нет
+if (isProd && !fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
 
 /**
  * ANSI цвета для терминала
@@ -53,6 +66,35 @@ function shouldLog(messageLevel: LogLevel, configLevel?: LogLevel): boolean {
   const levels: LogLevel[] = ['debug', 'info', 'warn', 'error'];
   const minLevel = configLevel ?? globalLogLevel;
   return levels.indexOf(messageLevel) >= levels.indexOf(minLevel);
+}
+
+/**
+ * Запись лога в файл (production)
+ */
+function writeToFile(level: LogLevel, message: string, context?: LoggerContext, errorStack?: string): void {
+  if (!isProd) return;
+
+  const logEntry = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    context: context || {},
+    errorStack: errorStack || null,
+  };
+
+  const logLine = JSON.stringify(logEntry) + '\n';
+
+  try {
+    // Все логи в app.log
+    fs.appendFileSync(allLogFile, logLine);
+
+    // Ошибки отдельно в errors.log
+    if (level === 'error') {
+      fs.appendFileSync(errorLogFile, logLine);
+    }
+  } catch (err) {
+    console.error('[Logger] Ошибка записи в файл:', err);
+  }
 }
 
 /**
@@ -144,12 +186,14 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
       if (!shouldLog('debug', configLevel)) return;
 
       const formatted = formatMessage(name, 'debug', message, logColor);
-      // eslint-disable-next-line no-console
+
       console.debug(formatted);
       if (context) {
-        // eslint-disable-next-line no-console
         console.debug(serializeContext(context));
       }
+      
+      // Запись в файл
+      writeToFile('debug', `${name}: ${message}`, context);
     },
 
     info: (message: string, context?: LoggerContext) => {
@@ -161,18 +205,23 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
       if (context) {
         console.info(serializeContext(context));
       }
+      
+      // Запись в файл
+      writeToFile('info', `${name}: ${message}`, context);
     },
 
     warn: (message: string, context?: LoggerContext) => {
       if (!shouldLog('warn', configLevel)) return;
 
       const formatted = formatMessage(name, 'warn', message, logColor);
-      // eslint-disable-next-line no-console
+
       console.warn(formatted);
       if (context) {
-        // eslint-disable-next-line no-console
         console.warn(serializeContext(context));
       }
+      
+      // Запись в файл
+      writeToFile('warn', `${name}: ${message}`, context);
     },
 
     error: (error: Error | unknown, context?: LoggerContext) => {
@@ -181,18 +230,18 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
       const errorData = extractError(error);
       const formatted = formatMessage(name, 'error', errorData.message, logColor);
 
-      // eslint-disable-next-line no-console
       console.error(formatted);
 
       if (errorData.stack) {
-        // eslint-disable-next-line no-console
         console.error(ANSI_COLORS.gray + errorData.stack + ANSI_COLORS.reset);
       }
 
       if (context) {
-        // eslint-disable-next-line no-console
         console.error(serializeContext(context));
       }
+      
+      // Запись в файл
+      writeToFile('error', `${name}: ${errorData.message}`, context, errorData.stack);
     },
   };
   

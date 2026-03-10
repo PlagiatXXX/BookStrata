@@ -14,6 +14,7 @@ import { booksRoutes } from '../src/modules/books/books.route.js';
 import templatesPlugin from '../src/modules/templates/templates.plugin.js';
 import logFromFrontend from '../src/plugins/logFromFrontend.js';
 import requestContext from '../src/plugins/requestContext.js';
+import { errorNotifier } from './lib/errorNotifier.js';
 
 const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'CLIENT_URL'];
 for (const envVar of requiredEnvVars) {
@@ -34,6 +35,9 @@ if (!CLIENT_URL) {
   console.error("FATAL: CLIENT_URL is not defined in your .env file");
   process.exit(1);
 }
+
+// Инициализация Telegram уведомлений об ошибках
+errorNotifier.initialize();
 
 // Определяем, режим разработки или нет
 const isDev = process.env.NODE_ENV !== 'production';
@@ -67,6 +71,17 @@ await fastify.register(rateLimit, {
 // <-- ШАГ 4: Добавляем глобальный обработчик ошибок
 fastify.setErrorHandler((error: any, request, reply) => {
   fastify.log.error(error, `Необработанная ошибка запроса: ${request.method} ${request.url}`);
+  
+  // Отправка уведомления в Telegram
+  errorNotifier.notify({
+    message: error.message ?? 'Неизвестная ошибка',
+    stack: error.stack,
+    url: request.url,
+    method: request.method,
+    userId: request.headers.authorization ? 'authenticated' : 'anonymous',
+    timestamp: new Date().toISOString(),
+  }).catch(console.error);
+  
   if (error.statusCode === 429) {
     return reply.code(429).send({ message: 'Слишком много запросов, попробуйте позже.' });
   }

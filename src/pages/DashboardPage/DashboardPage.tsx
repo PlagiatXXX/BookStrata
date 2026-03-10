@@ -2,7 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuthContext';
-import { getUserTierLists, type TierListShort } from '@/lib/api';
+import { getUserTierLists } from '@/lib/api';
+import type { SortOption } from './types';
 import { useDashboardState } from './hooks/useDashboardState';
 import { useTierListActions } from './hooks/useTierListActions';
 import { useTierListsPagination } from './hooks/useTierListsPagination';
@@ -31,9 +32,11 @@ export function DashboardPage() {
     closeModal,
     setRenameTitle,
     setCreateTitle,
+    setSortOption,
+    setFilterOption,
   } = useDashboardState();
 
-  const { currentPage, searchQuery, activeModal, tierListToRename, tierListToDelete, renameTitle, createTitle } = state;
+  const { currentPage, searchQuery, activeModal, tierListToRename, tierListToDelete, renameTitle, createTitle, sortOption, filterOption } = state;
 
   // Data fetching
   const {
@@ -50,7 +53,6 @@ export function DashboardPage() {
     isLoading,
     error,
     refetch,
-    isFetching,
   } = useQuery({
     queryKey: ['userTierLists', currentPage],
     queryFn: () => getUserTierLists(currentPage, PAGE_SIZE),
@@ -71,6 +73,8 @@ export function DashboardPage() {
   const { displayedTierLists } = useTierListsPagination({
     allTierLists: paginatedResponse.data,
     searchQuery,
+    sortOption,
+    filterOption,
   });
 
   const pagination = paginatedResponse.meta;
@@ -123,6 +127,45 @@ export function DashboardPage() {
             onCommunityClick={() => navigate('/community')}
             onLogoutClick={handleLogout}
           />
+
+          {/* Sort Controls */}
+          <div className="dashboard-controls">
+            {/* Filter Tabs */}
+            <div className="dashboard-filters">
+              <button
+                onClick={() => setFilterOption('all')}
+                className={`dashboard-filter-btn ${filterOption === 'all' ? 'dashboard-filter-btn--active' : ''}`}
+              >
+                Все
+              </button>
+              <button
+                onClick={() => setFilterOption('public')}
+                className={`dashboard-filter-btn ${filterOption === 'public' ? 'dashboard-filter-btn--active' : ''}`}
+              >
+                Публичные
+              </button>
+              <button
+                onClick={() => setFilterOption('private')}
+                className={`dashboard-filter-btn ${filterOption === 'private' ? 'dashboard-filter-btn--active' : ''}`}
+              >
+                Приватные
+              </button>
+            </div>
+
+            {/* Sort Select */}
+            <div className="dashboard-sort">
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as SortOption)}
+                className="dashboard-sort__select"
+              >
+                <option value="newest">Сначала новые</option>
+                <option value="oldest">Сначала старые</option>
+                <option value="title-asc">По названию (A-Я)</option>
+                <option value="likes">По популярности</option>
+              </select>
+            </div>
+          </div>
 
           {/* Main content */}
           <EmptyStates
