@@ -94,7 +94,7 @@ BookStrata Pro allows users to create personalized tier lists by organizing book
 ```bash
 # 1. Clone repository
 git clone https://github.com/PlagiatXXX/BookStrata.git
-cd BookStrata
+cd tiermaker-pro
 
 # 2. Install frontend dependencies
 npm install
