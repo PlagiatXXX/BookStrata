@@ -105,28 +105,24 @@ export function useTemplateEditorState({
   }, [templateId]);
 
   // Валидация имён тиров
-  const tierNameErrors = useMemo(() => {
-    return formState.tiers.map((tier) =>
-      tier.name.trim() === "" ? "Название обязательно" : undefined
-    );
-  }, [formState.tiers]);
+  const tierNameErrors = formState.tiers.map((tier) =>
+    tier.name.trim() === "" ? "Название обязательно" : undefined
+  );
 
   // Валидация цветов тиров
-  const tierColorErrors = useMemo(() => {
-    return formState.tiers.map((tier) =>
-      !tier.color || tier.color.trim() === "" ? "Цвет обязателен" : undefined
-    );
-  }, [formState.tiers]);
+  const tierColorErrors = formState.tiers.map((tier) =>
+    !tier.color || tier.color.trim() === "" ? "Цвет обязателен" : undefined
+  );
 
   // Предупреждения
-  const warnings = useMemo(() => {
+  const warnings = (() => {
     const warns: string[] = [];
     if (formState.tiers.length === 0) {
       warns.push("Добавьте хотя бы один тир");
     }
     // Убрали предупреждение о коротком названии — можно от 1 символа
     return warns;
-  }, [formState.tiers.length]);
+  })();
 
   const validateStep = useCallback(
     (step: TemplateEditorStep): boolean => {
@@ -162,31 +158,25 @@ export function useTemplateEditorState({
     warnings,
   };
 
-  const updateFormState = useCallback(
-    (updates: Partial<TemplateEditorFormState>) => {
-      setFormState((prev) => ({ ...prev, ...updates }));
-      setIsDirty(true);
-    },
-    []
-  );
+  const updateFormState = (updates: Partial<TemplateEditorFormState>) => {
+    setFormState((prev) => ({ ...prev, ...updates }));
+    setIsDirty(true);
+  };
 
-  const updateField = useCallback(
-    <K extends keyof TemplateEditorFormState>(
-      field: K,
-      value: TemplateEditorFormState[K]
-    ) => {
-      setFormState((prev) => ({ ...prev, [field]: value }));
-      setIsDirty(true);
-    },
-    []
-  );
+  const updateField = <K extends keyof TemplateEditorFormState>(
+    field: K,
+    value: TemplateEditorFormState[K]
+  ) => {
+    setFormState((prev) => ({ ...prev, [field]: value }));
+    setIsDirty(true);
+  };
 
-  const updateTiers = useCallback((tiers: TierTemplate[]) => {
+  const updateTiers = (tiers: TierTemplate[]) => {
     setFormState((prev) => ({ ...prev, tiers }));
     setIsDirty(true);
-  }, []);
+  };
 
-  const updateTier = useCallback((index: number, updates: Partial<TierTemplate>) => {
+  const updateTier = (index: number, updates: Partial<TierTemplate>) => {
     setFormState((prev) => ({
       ...prev,
       tiers: prev.tiers.map((tier, i) =>
@@ -194,12 +184,12 @@ export function useTemplateEditorState({
       ),
     }));
     setIsDirty(true);
-  }, []);
+  };
 
-  const updateDefaultBooks = useCallback((books: BookTemplate[]) => {
+  const updateDefaultBooks = (books: BookTemplate[]) => {
     setFormState((prev) => ({ ...prev, defaultBooks: books }));
     setIsDirty(true);
-  }, []);
+  };
 
   const addTier = useCallback(() => {
     const newTier: TierTemplate = {
@@ -215,13 +205,13 @@ export function useTemplateEditorState({
     setIsDirty(true);
   }, [formState.tiers.length]);
 
-  const removeTier = useCallback((index: number) => {
+  const removeTier = (index: number) => {
     setFormState((prev) => ({
       ...prev,
       tiers: prev.tiers.filter((_, i) => i !== index),
     }));
     setIsDirty(true);
-  }, []);
+  };
 
   const duplicateTier = useCallback((index: number) => {
     const tierToDuplicate = formState.tiers[index];
@@ -237,7 +227,7 @@ export function useTemplateEditorState({
     setIsDirty(true);
   }, [formState.tiers]);
 
-  const moveTier = useCallback((fromIndex: number, toIndex: number) => {
+  const moveTier = (fromIndex: number, toIndex: number) => {
     setFormState((prev) => {
       const newTiers = [...prev.tiers];
       const [moved] = newTiers.splice(fromIndex, 1);
@@ -248,15 +238,15 @@ export function useTemplateEditorState({
       };
     });
     setIsDirty(true);
-  }, []);
+  };
 
-  const resetToPreset = useCallback(() => {
+  const resetToPreset = () => {
     setFormState((prev) => ({
       ...prev,
       tiers: PRESET_TIERS.map((tier, i) => ({ ...tier, order: i })),
     }));
     setIsDirty(true);
-  }, []);
+  };
 
   const nextStep = useCallback(() => {
     if (validateStep(currentStep)) {
@@ -264,9 +254,9 @@ export function useTemplateEditorState({
     }
   }, [currentStep, validateStep]);
 
-  const prevStep = useCallback(() => {
+  const prevStep = () => {
     setCurrentStep((prev) => (prev > 0 ? (prev - 1) as TemplateEditorStep : prev));
-  }, []);
+  };
 
   const save = useCallback(async () => {
     console.log("[useTemplateEditorState] save вызван, formState:", formState);
@@ -315,14 +305,14 @@ export function useTemplateEditorState({
     setShowRestorePrompt(false);
   }, [templateId]);
 
-  const stayOnPage = useCallback(() => {
+  const stayOnPage = () => {
     setShowLeavePrompt(false);
-  }, []);
+  };
 
-  const confirmLeave = useCallback(() => {
+  const confirmLeave = () => {
     setShowLeavePrompt(false);
     window.history.back();
-  }, []);
+  };
 
   // Сохранение черновика при изменениях
   const saveDraft = useCallback((state: TemplateEditorFormState) => {

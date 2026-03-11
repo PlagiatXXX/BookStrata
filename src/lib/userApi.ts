@@ -1,6 +1,9 @@
 import { getAuthHeader, handleResponse } from './authApi';
 import { API_BASE_URL } from './config';
-import { logger } from './logger';
+import { createLogger } from './logger';
+
+// Логгер для модуля пользователей
+const userLogger = createLogger('UserApi', { color: 'green' });
 
 // ========== TYPES ==========
 
@@ -25,7 +28,7 @@ export interface UserStats {
  * Получить текущего пользователя
  */
 export async function apiGetMe(): Promise<User> {
-  logger.info('Fetching current user profile');
+  userLogger.info('Получение профиля текущего пользователя');
 
   const response = await fetch(`${API_BASE_URL}/users/me`, {
     method: 'GET',
@@ -42,7 +45,7 @@ export async function apiGetMe(): Promise<User> {
  * Обновить аватар
  */
 export async function apiUpdateAvatar(avatarUrl: string): Promise<User> {
-  logger.info('Updating user avatar');
+  userLogger.info('Обновление аватара пользователя');
 
   const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
     method: 'PUT',
@@ -60,7 +63,7 @@ export async function apiUpdateAvatar(avatarUrl: string): Promise<User> {
  * Удалить аватар
  */
 export async function apiDeleteAvatar(): Promise<User> {
-  logger.info('Deleting user avatar');
+  userLogger.info('Удаление аватара пользователя');
 
   const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
     method: 'DELETE',
@@ -77,7 +80,7 @@ export async function apiDeleteAvatar(): Promise<User> {
  * Получить пользователя по ID
  */
 export async function apiGetUserById(id: string): Promise<User> {
-  logger.info('Fetching user by id', { userId: id });
+  userLogger.info('Получение пользователя по ID', { userId: id });
 
   const response = await fetch(`${API_BASE_URL}/users/${id}`, {
     method: 'GET',
@@ -93,7 +96,7 @@ export async function apiGetUserById(id: string): Promise<User> {
  * Получить статистику пользователя
  */
 export async function apiGetUserStats(): Promise<UserStats> {
-  logger.info('Fetching user stats');
+  userLogger.info('Получение статистики пользователя');
 
   const response = await fetch(`${API_BASE_URL}/users/me/stats`, {
     method: 'GET',
@@ -110,7 +113,7 @@ export async function apiGetUserStats(): Promise<UserStats> {
  * Загрузить аватар на Cloudinary
  */
 export async function apiUploadAvatar(base64Image: string): Promise<{ success: boolean; avatarUrl: string; user: User }> {
-  logger.info('Uploading avatar to Cloudinary');
+  userLogger.info('Загрузка аватара на Cloudinary');
 
   const response = await fetch(`${API_BASE_URL}/avatars/upload`, {
     method: 'POST',

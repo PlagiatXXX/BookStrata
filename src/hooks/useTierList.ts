@@ -3,7 +3,10 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { TierListData, Tier, Book } from '@/types';
 import { UNRANKED_AREA_ID } from '@/constants/dnd';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+
+// Логгер для хука useTierList
+const tierListHookLogger = createLogger('UseTierList', { color: 'purple' });
 
 export type Action =
 | { type: 'SET_STATE'; payload: TierListData }
@@ -265,17 +268,16 @@ export const useTierList = (initialData: TierListData, allowSync: boolean = true
       const isSameList = listData?.id === initialData.id;
       const isEmpty = !listData?.id;
       if (isEmpty || isSameList) {
-        logger.info('useTierList: Syncing state from NEW initialData', { listId: initialData.id });
+        tierListHookLogger.info('useTierList: Синхронизация состояния из новых начальных данных', { listId: initialData.id });
         dispatch({ type: 'SET_STATE', payload: initialData });
       } else {
-        logger.warn('useTierList: Data changed, but list ID mismatch. Skip.', { 
-          currentId: listData?.id, 
-          incomingId: initialData.id 
+        tierListHookLogger.warn('useTierList: Данные изменились, но ID списка не совпадает. Пропуск.', {
+          currentId: listData?.id,
+          incomingId: initialData.id
         });
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData.id, allowSync]);
+  }, [initialData.id, initialData, allowSync, dispatch, listData?.id]);
 
   const setTitle = (newTitle: string) => {
     dispatch({ type: 'SET_TITLE', payload: newTitle });
@@ -357,7 +359,7 @@ const renameTier = (tierId: string, newTitle: string) => {
 
   const addBooks = async (files: File[]) => {
     try {
-      logger.info('Processing uploaded files', { fileCount: files.length });
+      tierListHookLogger.info('Обработка загруженных файлов', { fileCount: files.length });
       const newBooks: Book[] = await Promise.all(files.map(async file => {
         const base64 = await new Promise<string>((resolve) => {
           const reader = new FileReader();
@@ -373,16 +375,16 @@ const renameTier = (tierId: string, newTitle: string) => {
       }));
 
       if (newBooks.length > 0) {
-        logger.info('Books created from files', { count: newBooks.length });
+        tierListHookLogger.info('Книги созданы из файлов', { count: newBooks.length });
         dispatch({ type: 'ADD_BOOKS', payload: { newBooks } });
       }
     } catch (err) {
-      logger.error(err instanceof Error ? err : new Error(String(err)), { action: 'addBooks' });
+      tierListHookLogger.error(err instanceof Error ? err : new Error(String(err)), { action: 'addBooks' });
     }
   };
-  
+
   const deleteBook = (bookId: string) => {
-    logger.info('Deleting book', { bookId });
+    tierListHookLogger.info('Удаление книги', { bookId });
     dispatch({ type: 'DELETE_BOOK', payload: { bookId } });
   };
 
@@ -395,7 +397,7 @@ const renameTier = (tierId: string, newTitle: string) => {
   };
 
   const updateBook = (bookId: string, updates: Partial<Book>) => {
-    logger.info('Updating book', { bookId, fields: Object.keys(updates) });
+    tierListHookLogger.info('Обновление книги', { bookId, fields: Object.keys(updates) });
     dispatch({ type: 'UPDATE_BOOK', payload: { bookId, updates } });
   };
 

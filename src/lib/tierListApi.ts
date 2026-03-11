@@ -4,7 +4,10 @@ import type { ApiTierListResponse, ApiBookPlacement } from '@/types/api';
 import { apiClient, buildUrl } from './api-client';
 import { getAuthHeader, handleResponse } from './authApi';
 import { API_BASE_URL } from './config';
-import { logger } from './logger';
+import { createLogger } from './logger';
+
+// Логгер для модуля тир-листов
+const tierListLogger = createLogger('TierListApi', { color: 'magenta' });
 
 // ========== TYPES ==========
 
@@ -55,7 +58,7 @@ export interface SaveTierListPayload {
 // ========== TIER LIST CRUD ==========
 
 export async function createTierList(title: string): Promise<ApiTierListResponse> {
-  logger.info('Создание нового рейтингового списка', { title });
+  tierListLogger.info('Создание нового рейтингового списка', { title });
   const response = await fetch(`${API_BASE_URL}/tier-lists`, {
     method: 'POST',
     headers: {
@@ -65,39 +68,39 @@ export async function createTierList(title: string): Promise<ApiTierListResponse
     body: JSON.stringify({ title }),
   });
   const result = await handleResponse<ApiTierListResponse>(response);
-  logger.info('Успешно создан рейтинговый список', { id: result.id, title });
+  tierListLogger.info('Успешно создан рейтинговый список', { id: result.id, title });
   return result;
 }
 
 export async function getUserTierLists(page = 1, pageSize = 10): Promise<PaginatedTierListsResponse> {
-  logger.info(`Получение списка тир-листов пользователя на странице ${page}`);
+  tierListLogger.info(`Получение списка тир-листов пользователя на странице ${page}`);
   const url = buildUrl('/tier-lists', { page, pageSize });
   const response = await fetch(`${API_BASE_URL}${url}`, {
     headers: getAuthHeader(),
   });
   const result = await handleResponse<PaginatedTierListsResponse>(response);
-  logger.info('Списки тир-листов успешно получены', { count: result.data.length, page: result.meta.currentPage });
+  tierListLogger.info('Списки тир-листов успешно получены', { count: result.data.length, page: result.meta.currentPage });
   return result;
 }
 
 export async function fetchTierList(id: string): Promise<ApiTierListResponse> {
-  logger.info('Получение рейтингового списка', { id });
+  tierListLogger.info('Получение рейтингового списка', { id });
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}`, {
     headers: getAuthHeader(),
   });
   const result = await handleResponse<ApiTierListResponse>(response);
-  logger.info('Успешно получен рейтинговый список', { id, title: result.title, booksCount: result.unrankedBooks.length });
+  tierListLogger.info('Успешно получен рейтинговый список', { id, title: result.title, booksCount: result.unrankedBooks.length });
   return result;
 }
 
 export async function deleteTierList(id: string) {
-  logger.info('Удаление рейтингового списка', { id });
+  tierListLogger.info('Удаление рейтингового списка', { id });
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}`, {
     method: 'DELETE',
     headers: getAuthHeader(),
   });
   const result = await handleResponse(response);
-  logger.info('Рейтинговый список успешно удален', { id });
+  tierListLogger.info('Рейтинговый список успешно удален', { id });
   return result;
 }
 
@@ -106,11 +109,11 @@ export async function getPublicTierLists(
   pageSize = 10,
   sortBy: 'updated_at' | 'likes' | 'created' = 'updated_at'
 ): Promise<PaginatedTierListsResponse> {
-  logger.info('Получение публичных тир-листов', { page });
+  tierListLogger.info('Получение публичных тир-листов', { page });
   const url = buildUrl('/tier-lists/public', { page, pageSize, sortBy });
   const response = await fetch(`${API_BASE_URL}${url}`);
   const result = await handleResponse<PaginatedTierListsResponse>(response);
-  logger.info('Публичные тир-листы успешно получены', { count: result.data.length });
+  tierListLogger.info('Публичные тир-листы успешно получены', { count: result.data.length });
   return result;
 }
 
@@ -120,7 +123,7 @@ export async function saveTierListPlacements(
   id: string,
   placements: { bookId: number; tierId: number | null; rank: number }[]
 ) {
-  logger.info('Сохранение позиций', { id, count: placements.length });
+  tierListLogger.info('Сохранение позиций', { id, count: placements.length });
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}/placements`, {
     method: 'PUT',
     headers: {
@@ -130,7 +133,7 @@ export async function saveTierListPlacements(
     body: JSON.stringify({ placements }),
   });
   const result = await handleResponse(response);
-  logger.info('Позиции сохранены', { id });
+  tierListLogger.info('Позиции сохранены', { id });
   return result;
 }
 
@@ -144,14 +147,14 @@ export async function saveTierListTiers(
   const isDiff = 'added' in (tiers as any);
 
   if (isDiff) {
-    logger.info('Сохранение тиров (diff)', {
+    tierListLogger.info('Сохранение тиров (diff)', {
       id,
       added: (tiers as any).added?.length,
       updated: (tiers as any).updated?.length,
       deleted: deletedTierIds?.length || 0
     });
   } else {
-    logger.info('Сохранение тиров (полный массив)', { id, count: (tiers as Array<any>).length });
+    tierListLogger.info('Сохранение тиров (полный массив)', { id, count: (tiers as Array<any>).length });
   }
 
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}/tiers`, {
@@ -163,7 +166,7 @@ export async function saveTierListTiers(
     body: JSON.stringify(tiers),
   });
   const result = await handleResponse(response);
-  logger.info('Тиры сохранены', { id });
+  tierListLogger.info('Тиры сохранены', { id });
   return result;
 }
 
@@ -171,7 +174,7 @@ export async function addBooksToTierList(
   id: string,
   books: { title: string; author?: string; coverImageUrl: string; description?: string | null; thoughts?: string | null }[]
 ): Promise<any[]> {
-  logger.info('Добавление книг в рейтинговый список', { id, booksCount: books.length });
+  tierListLogger.info('Добавление книг в рейтинговый список', { id, booksCount: books.length });
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}/books`, {
     method: 'POST',
     headers: {
@@ -181,23 +184,23 @@ export async function addBooksToTierList(
     body: JSON.stringify({ books }),
   });
   const result = await handleResponse<any[]>(response);
-  logger.info('Книги успешно добавлены в рейтинговый список', { id, booksCount: books.length, addedCount: result.length });
+  tierListLogger.info('Книги успешно добавлены в рейтинговый список', { id, booksCount: books.length, addedCount: result.length });
   return result;
 }
 
 export async function removeBookFromTierList(id: string, bookId: string) {
-  logger.info('Удаление книги из рейтингового списка', { id, bookId });
+  tierListLogger.info('Удаление книги из рейтингового списка', { id, bookId });
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}/books/${bookId}`, {
     method: 'DELETE',
     headers: getAuthHeader(),
   });
   const result = await handleResponse(response);
-  logger.info('Книга успешно удалена из рейтингового списка', { id, bookId });
+  tierListLogger.info('Книга успешно удалена из рейтингового списка', { id, bookId });
   return result;
 }
 
 export async function updateTierListTitle(id: string, title: string) {
-  logger.info('Обновление названия рейтингового списка', { id, newTitle: title });
+  tierListLogger.info('Обновление названия рейтингового списка', { id, newTitle: title });
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}`, {
     method: 'PUT',
     headers: {
@@ -207,12 +210,12 @@ export async function updateTierListTitle(id: string, title: string) {
     body: JSON.stringify({ title }),
   });
   const result = await handleResponse(response);
-  logger.info('Название рейтингового списка успешно обновлено', { id, newTitle: title });
+  tierListLogger.info('Название рейтингового списка успешно обновлено', { id, newTitle: title });
   return result;
 }
 
 export async function toggleTierListPublic(id: string, isPublic: boolean) {
-  logger.info('Переключение статуса публичности', { id, isPublic });
+  tierListLogger.info('Переключение статуса публичности', { id, isPublic });
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}/public`, {
     method: 'PUT',
     headers: {
@@ -222,7 +225,7 @@ export async function toggleTierListPublic(id: string, isPublic: boolean) {
     body: JSON.stringify({ isPublic }),
   });
   const result = await handleResponse(response);
-  logger.info('Статус публичности успешно изменён', { id, isPublic });
+  tierListLogger.info('Статус публичности успешно изменён', { id, isPublic });
   return result;
 }
 
@@ -236,7 +239,7 @@ export async function uploadBookCover(
   bookId: string,
   file: File
 ): Promise<{ coverImageUrl: string }> {
-  logger.info('Загрузка обложки книги', { tierListId, bookId, fileName: file.name });
+  tierListLogger.info('Загрузка обложки книги', { tierListId, bookId, fileName: file.name });
 
   // Конвертируем файл в base64
   const base64 = await fileToBase64(file);
@@ -251,7 +254,7 @@ export async function uploadBookCover(
   });
 
   const result = await handleResponse<{ coverImageUrl: string }>(response);
-  logger.info('Обложка успешно загружена', { tierListId, bookId });
+  tierListLogger.info('Обложка успешно загружена', { tierListId, bookId });
   return result;
 }
 
@@ -275,7 +278,7 @@ export async function saveTierListWithNewBooks(
   newBooks: Array<{ id: string; title: string; author?: string; coverImageUrl: string; description?: string; thoughts?: string }>,
   listData: TierListData
 ): Promise<Array<{ book: { id: number } }>> {
-  logger.info('saveTierListWithNewBooks: начало', { id, newBooksCount: newBooks.length, placementsLength: placements.length });
+  tierListLogger.info('saveTierListWithNewBooks: начало', { id, newBooksCount: newBooks.length, placementsLength: placements.length });
 
   let results: Array<{ book: { id: number } }> = [];
   if (newBooks.length > 0) {
@@ -287,13 +290,13 @@ export async function saveTierListWithNewBooks(
       thoughts: book.thoughts || null,
     }));
 
-    logger.info('saveTierListWithNewBooks: отправка книг на сервер', { count: bookDataToSend.length });
+    tierListLogger.info('saveTierListWithNewBooks: отправка книг на сервер', { count: bookDataToSend.length });
 
     try {
       results = await addBooksToTierList(id, bookDataToSend);
-      logger.info('saveTierListWithNewBooks: книги добавлены', { resultsLength: results.length, firstResult: JSON.stringify(results[0] ?? null) });
+      tierListLogger.info('saveTierListWithNewBooks: книги добавлены', { resultsLength: results.length, firstResult: JSON.stringify(results[0] ?? null) });
     } catch (err) {
-      logger.error(err instanceof Error ? err : new Error(String(err)), { action: 'saveTierListWithNewBooks', message: 'ошибка добавления книг' });
+      tierListLogger.error(err instanceof Error ? err : new Error(String(err)), { action: 'saveTierListWithNewBooks', message: 'ошибка добавления книг' });
       return [];
     }
   }
@@ -310,7 +313,7 @@ export async function saveTierListWithNewBooks(
     }
 
     if (!realBookId) {
-       logger.warn('saveTierListWithNewBooks: не удалось получить ID книги', { index });
+       tierListLogger.warn('saveTierListWithNewBooks: не удалось получить ID книги', { index });
        return;
     }
 
@@ -333,13 +336,13 @@ export async function saveTierListWithNewBooks(
   });
 
   if (placementsToSave.length > 0) {
-    logger.info('saveTierListWithNewBooks: сохранение placements', { count: placementsToSave.length });
+    tierListLogger.info('saveTierListWithNewBooks: сохранение placements', { count: placementsToSave.length });
     await saveTierListPlacements(id, placementsToSave);
   } else {
-    logger.info('saveTierListWithNewBooks: нет placements для сохранения');
+    tierListLogger.info('saveTierListWithNewBooks: нет placements для сохранения');
   }
 
-  logger.info('saveTierListWithNewBooks: завершено', { returningResults: results.length });
+  tierListLogger.info('saveTierListWithNewBooks: завершено', { returningResults: results.length });
   return results;
 }
 
@@ -356,7 +359,7 @@ export async function saveTierListOptimized(
     if (isDiff) {
       const tiersDiff = payload.tiers as { added: Array<{ title: string; color: string; rank: number }>; updated: Array<{ id: number; title: string; color: string; rank: number }>; deletedIds?: number[] };
       if (tiersDiff.added.length > 0 || tiersDiff.updated.length > 0 || (tiersDiff.deletedIds && tiersDiff.deletedIds.length > 0)) {
-        logger.info('Сохранение tiers (diff)', {
+        tierListLogger.info('Сохранение tiers (diff)', {
           id,
           added: tiersDiff.added.length,
           updated: tiersDiff.updated.length,
@@ -369,7 +372,7 @@ export async function saveTierListOptimized(
     } else {
       const tiersArray = payload.tiers as Array<{ id?: number; title: string; color: string; rank: number }>;
       if (tiersArray.length > 0) {
-        logger.info('Сохранение tiers (full)', { id, count: tiersArray.length });
+        tierListLogger.info('Сохранение tiers (full)', { id, count: tiersArray.length });
         promises.push(
           apiClient.put(`/tier-lists/${id}/tiers`, tiersArray)
         );
@@ -380,7 +383,7 @@ export async function saveTierListOptimized(
   // Сначала сохраняем новые книги (если есть)
   let results: Array<{ book: { id: number } }> = [];
   if (payload.newBooks && payload.newBooks.length > 0) {
-    logger.info('Сохранение новых книг', { id, count: payload.newBooks.length });
+    tierListLogger.info('Сохранение новых книг', { id, count: payload.newBooks.length });
 
     results = await addBooksToTierList(id, payload.newBooks.map(book => ({
       title: book.title,
@@ -412,7 +415,7 @@ export async function saveTierListOptimized(
       const realBookId = result?.book?.id;
 
       if (!realBookId) {
-        logger.warn('saveTierListOptimized: не удалось получить ID книги', { index });
+        tierListLogger.warn('saveTierListOptimized: не удалось получить ID книги', { index });
         return;
       }
 
@@ -448,7 +451,7 @@ export async function saveTierListOptimized(
 
   // Сохраняем placements (если есть что сохранять)
   if (placementsToSend.length > 0) {
-    logger.info('Сохранение placements', { id, count: placementsToSend.length });
+    tierListLogger.info('Сохранение placements', { id, count: placementsToSend.length });
     promises.push(
       apiClient.put(`/tier-lists/${id}/placements`, { placements: placementsToSend })
     );
@@ -457,16 +460,16 @@ export async function saveTierListOptimized(
   if (promises.length > 0) {
     try {
       await Promise.all(promises);
-      logger.info('Оптимизированное сохранение завершено', { id, operations: promises.length });
+      tierListLogger.info('Оптимизированное сохранение завершено', { id, operations: promises.length });
     } catch (error) {
-      logger.error(error instanceof Error ? error : new Error(String(error)), {
+      tierListLogger.error(error instanceof Error ? error : new Error(String(error)), {
         action: 'saveTierListOptimized',
         id
       });
       throw error;
     }
   } else {
-    logger.info('Нет данных для сохранения', { id });
+    tierListLogger.info('Нет данных для сохранения', { id });
   }
 
   return { bookReplacements: bookReplacements.length > 0 ? bookReplacements : undefined };

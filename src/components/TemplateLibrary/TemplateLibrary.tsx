@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useReducer, useMemo } from 'react';
+import React, { useEffect, useRef, useReducer } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { sileo } from 'sileo';
@@ -138,7 +138,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     currentPage: publicPage,
   });
 
-  const likedIdsSet = useMemo(() => new Set(likedTierListIds?.likedIds || []), [likedTierListIds?.likedIds]);
+  const likedIdsSet = new Set(likedTierListIds?.likedIds || []);
   const publicTierLists = publicTierListsData?.data || [];
 
   const handleDeleteConfirm = () => {

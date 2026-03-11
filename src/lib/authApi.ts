@@ -1,7 +1,10 @@
 import type { AuthResponse, ValidateTokenResponse } from '@/types/auth';
 import { API_BASE_URL } from './config';
-import { logger } from './logger';
+import { createLogger } from './logger';
 import { StorageService } from './storage';
+
+// Логгер для модуля аутентификации
+const authLogger = createLogger('AuthApi', { color: 'cyan' });
 
 /**
  * Базовый URL API
@@ -37,7 +40,7 @@ interface LoginPayload {
  * Регистрация нового пользователя
  */
 export async function apiRegister(payload: RegisterPayload): Promise<AuthResponse> {
-  logger.info('Starting user registration', { username: payload.username, email: payload.email });
+  authLogger.info('Регистрация нового пользователя', { username: payload.username, email: payload.email });
 
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
@@ -47,12 +50,12 @@ export async function apiRegister(payload: RegisterPayload): Promise<AuthRespons
 
   if (!response.ok) {
     const error = await response.json();
-    logger.error(new Error(error.error || 'Registration failed'), { username: payload.username });
-    throw new Error(error.error || 'Registration failed');
+    authLogger.error(new Error(error.error || 'Регистрация не удалась'), { username: payload.username });
+    throw new Error(error.error || 'Регистрация не удалась');
   }
 
   const result = await response.json();
-  logger.info('User registration successful', { username: payload.username });
+  authLogger.info('Регистрация пользователя успешна', { username: payload.username });
   return result;
 }
 
@@ -60,7 +63,7 @@ export async function apiRegister(payload: RegisterPayload): Promise<AuthRespons
  * Вход пользователя
  */
 export async function apiLogin(payload: LoginPayload): Promise<AuthResponse> {
-  logger.info('User login attempt', { username: payload.username });
+  authLogger.info('Попытка входа пользователя', { username: payload.username });
 
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
@@ -70,12 +73,12 @@ export async function apiLogin(payload: LoginPayload): Promise<AuthResponse> {
 
   if (!response.ok) {
     const error = await response.json();
-    logger.warn('Login failed', { username: payload.username, reason: error.error });
-    throw new Error(error.error || 'Login failed');
+    authLogger.warn('Вход не удался', { username: payload.username, reason: error.error });
+    throw new Error(error.error || 'Вход не удался');
   }
 
   const result = await response.json();
-  logger.info('User login successful', { username: payload.username });
+  authLogger.info('Вход пользователя успешен', { username: payload.username });
   return result;
 }
 
@@ -83,7 +86,7 @@ export async function apiLogin(payload: LoginPayload): Promise<AuthResponse> {
  * Валидация токена
  */
 export async function apiValidateToken(token: string): Promise<ValidateTokenResponse> {
-  logger.info('Validating authentication token');
+  authLogger.info('Валидация токена аутентификации');
 
   const response = await fetch(`${API_BASE_URL}/auth/validate`, {
     method: 'POST',
@@ -94,9 +97,9 @@ export async function apiValidateToken(token: string): Promise<ValidateTokenResp
   const result = await response.json();
 
   if (!result.valid) {
-    logger.warn('Token validation failed');
+    authLogger.warn('Валидация токена не удалась');
   } else {
-    logger.info('Token validation successful', { userId: result.userId });
+    authLogger.info('Валидация токена успешна', { userId: result.userId });
   }
 
   return result;
@@ -137,7 +140,7 @@ export function getAuthHeader(): Record<string, string> {
  * Обработка 401 ошибки
  */
 export function handleUnauthorized() {
-  logger.warn('Unauthorized access - clearing session and redirecting to login');
+  authLogger.warn('Неавторизованный доступ — очистка сессии и перенаправление на вход');
   removeAuthToken();
   window.dispatchEvent(new CustomEvent('unauthorized'));
   window.location.href = '/auth';
@@ -148,7 +151,7 @@ export function handleUnauthorized() {
  */
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
-    logger.warn('API returned 401 Unauthorized');
+    authLogger.warn('API вернул 401 Unauthorized');
     handleUnauthorized();
     throw new Error('Требуется авторизация. Пожалуйста, войдите в систему.');
   }
@@ -160,7 +163,7 @@ export async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     const errorMessage = errorData.error || `Ошибка: ${response.statusText}`;
-    logger.error(new Error(errorMessage), {
+    authLogger.error(new Error(errorMessage), {
       status: response.status,
       statusText: response.statusText,
       url: response.url

@@ -1,6 +1,9 @@
 import { getAuthHeader, handleResponse } from './authApi';
 import { API_BASE_URL } from './config';
-import { logger } from './logger';
+import { createLogger } from './logger';
+
+// Логгер для модуля поиска книг
+const bookSearchLogger = createLogger('BookSearch', { color: 'yellow' });
 
 // ========== TYPES ==========
 
@@ -24,7 +27,7 @@ export async function searchGoogleBooks(query: string, startIndex = 0): Promise<
   if (!query || query.length < 2) return [];
 
   try {
-    logger.info('Searching books via backend API', { query, startIndex });
+    bookSearchLogger.info('Поиск книг через backend API', { query, startIndex });
 
     const response = await fetch(
       `${API_BASE_URL}/books/search?q=${encodeURIComponent(query)}&startIndex=${startIndex}`,
@@ -35,15 +38,15 @@ export async function searchGoogleBooks(query: string, startIndex = 0): Promise<
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || 'Failed to search books');
+      throw new Error(error.error || 'Не удалось выполнить поиск книг');
     }
 
     const result = await handleResponse<{ books: OpenLibraryBook[] }>(response);
-    logger.info('Books search completed', { count: result.books.length });
+    bookSearchLogger.info('Поиск книг завершён', { count: result.books.length });
     return result.books;
   } catch (err) {
     if (err instanceof Error) {
-      logger.error(err, { action: 'searchGoogleBooks', query });
+      bookSearchLogger.error(err, { action: 'searchGoogleBooks', query });
     }
     throw err;
   }
@@ -57,7 +60,7 @@ export async function addBookFromGoogleBooks(
   book: OpenLibraryBook
 ): Promise<{ id: number; title: string; author: string | null; coverImageUrl: string }> {
   try {
-    logger.info('Adding book from search to tier list', { tierListId, title: book.title });
+    bookSearchLogger.info('Добавление книги из поиска в тир-лист', { tierListId, title: book.title });
 
     const response = await fetch(`${API_BASE_URL}/tier-lists/${tierListId}/books/search`, {
       method: 'POST',
@@ -75,15 +78,15 @@ export async function addBookFromGoogleBooks(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || 'Failed to add book');
+      throw new Error(error.error || 'Не удалось добавить книгу');
     }
 
     const result = await handleResponse<{ book: { id: number; title: string; author: string | null; coverImageUrl: string } }>(response);
-    logger.info('Book added from search', { tierListId, bookId: result.book.id });
+    bookSearchLogger.info('Книга добавлена из поиска', { tierListId, bookId: result.book.id });
     return result.book;
   } catch (err) {
     if (err instanceof Error) {
-      logger.error(err, { action: 'addBookFromGoogleBooks', tierListId, title: book.title });
+      bookSearchLogger.error(err, { action: 'addBookFromGoogleBooks', tierListId, title: book.title });
     }
     throw err;
   }
@@ -98,21 +101,21 @@ export async function searchOpenLibraryBooks(query: string): Promise<OpenLibrary
   if (!query || query.length < 2) return [];
 
   try {
-    logger.info('Searching books in Open Library', { query });
+    bookSearchLogger.info('Поиск книг в Open Library', { query });
     const response = await fetch(`${API_BASE_URL}/books/search?q=${encodeURIComponent(query)}`, {
       headers: getAuthHeader(),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to search books');
+      throw new Error('Не удалось выполнить поиск книг');
     }
 
     const result = await handleResponse<{ books: OpenLibraryBook[] }>(response);
-    logger.info('Open Library search completed', { count: result.books.length });
+    bookSearchLogger.info('Поиск в Open Library завершён', { count: result.books.length });
     return result.books;
   } catch (err) {
     if (err instanceof Error) {
-      logger.error(err, { action: 'searchOpenLibraryBooks', query });
+      bookSearchLogger.error(err, { action: 'searchOpenLibraryBooks', query });
     }
     throw err;
   }
@@ -126,7 +129,7 @@ export async function addBookFromOpenLibrary(
   book: OpenLibraryBook
 ): Promise<{ id: number; title: string; author: string | null; coverImageUrl: string }> {
   try {
-    logger.info('Adding book from Open Library', { tierListId, title: book.title });
+    bookSearchLogger.info('Добавление книги из Open Library', { tierListId, title: book.title });
     const response = await fetch(`${API_BASE_URL}/tier-lists/${tierListId}/books/search`, {
       method: 'POST',
       headers: {
@@ -142,15 +145,15 @@ export async function addBookFromOpenLibrary(
     });
 
     if (!response.ok) {
-      throw new Error('Failed to add book');
+      throw new Error('Не удалось добавить книгу');
     }
 
     const result = await handleResponse<{ book: { id: number; title: string; author: string | null; coverImageUrl: string } }>(response);
-    logger.info('Book added from Open Library', { tierListId, bookId: result.book.id });
+    bookSearchLogger.info('Книга добавлена из Open Library', { tierListId, bookId: result.book.id });
     return result.book;
   } catch (err) {
     if (err instanceof Error) {
-      logger.error(err, { action: 'addBookFromOpenLibrary', tierListId, title: book.title });
+      bookSearchLogger.error(err, { action: 'addBookFromOpenLibrary', tierListId, title: book.title });
     }
     throw err;
   }

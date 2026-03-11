@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -39,7 +38,7 @@ export function TiersStep({
   onMoveTier,
 }: TiersStepProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
-  const tierIds = useMemo(() => tiers.map((tier) => tier.id), [tiers]);
+  const tierIds = tiers.map((tier) => tier.id);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;

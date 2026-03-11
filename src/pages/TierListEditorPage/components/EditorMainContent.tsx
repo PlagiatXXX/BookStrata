@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { TierGrid } from '@/components/TierGrid/TierGrid';
 import { UnrankedItems } from '@/components/UnrankedItems/UnrankedItems';
 import { SettingsSidebar } from '@/components/SettingsSidebar/SettingsSidebar';
@@ -31,7 +32,7 @@ interface EditorMainContentProps {
   onUploadBooks?: (files: File[]) => void;
 }
 
-export const EditorMainContent = ({
+export const EditorMainContent = memo(({
   listData,
   isReadOnly,
   tierGridRef,
@@ -61,6 +62,35 @@ export const EditorMainContent = ({
 
   const activeTierData = activeTierId ? listData.tiers[activeTierId] : null;
 
+  // Стабилизируем обработчики для TierGrid
+  const handleChangeTierColor = useCallback(
+    (tierId: string, color: string) => {
+      onChangeTierColor?.(tierId, color);
+    },
+    [onChangeTierColor]
+  );
+
+  const handleRenameTier = useCallback(
+    (tierId: string, newTitle: string) => {
+      onRenameTier?.(tierId, newTitle);
+    },
+    [onRenameTier]
+  );
+
+  const handleDeleteTier = useCallback(
+    (tierId: string) => {
+      onDeleteTier?.(tierId);
+    },
+    [onDeleteTier]
+  );
+
+  const handleAddRow = useCallback(
+    (title?: string) => {
+      onAddRow?.(title);
+    },
+    [onAddRow]
+  );
+
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:justify-center">
       <div className="flex max-w-350 flex-1 flex-col gap-4">
@@ -71,14 +101,12 @@ export const EditorMainContent = ({
           onEditBook={isReadOnly ? undefined : onEditBook}
           onViewBook={onViewBook}
           activeTierId={activeTierId}
-          onAddRow={isReadOnly ? undefined : onAddRow}
+          onAddRow={isReadOnly ? undefined : handleAddRow}
           onChangeTierColor={
-            isReadOnly
-              ? undefined
-              : (tierId, color) => onChangeTierColor?.(tierId, color)
+            isReadOnly ? undefined : handleChangeTierColor
           }
-          onRenameTier={isReadOnly ? undefined : onRenameTier}
-          onDeleteTier={isReadOnly ? undefined : onDeleteTier}
+          onRenameTier={isReadOnly ? undefined : handleRenameTier}
+          onDeleteTier={isReadOnly ? undefined : handleDeleteTier}
           onSetActiveTier={onSetActiveTier}
         />
 
@@ -111,4 +139,5 @@ export const EditorMainContent = ({
       )}
     </div>
   );
-};
+});
+

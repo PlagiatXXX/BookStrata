@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Heart } from "lucide-react";
 import type { TierListShort } from '@/lib/tierListApi';
@@ -14,9 +14,9 @@ const PublicTierListCards = memo(function PublicTierListCards({
 }: PublicTierListCardsProps) {
   const navigate = useNavigate();
 
-  const handleCardClick = useCallback((id: number) => {
+  const handleCardClick = (id: number) => {
     navigate(`/tier-lists/${id}`);
-  }, [navigate]);
+  };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

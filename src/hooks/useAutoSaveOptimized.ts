@@ -59,6 +59,7 @@ export const useAutoSaveOptimized = ({
   const isSavingRef = useRef(false);
   const payloadRef = useRef<SavePayload | null>(null);
   const forceSaveRequested = useRef(false); // Флаг для принудительного сохранения
+  const executeSaveRef = useRef<((isForceSave?: boolean) => Promise<void>) | null>(null);
 
   // Функция сохранения
   const executeSave = useCallback(async (isForceSave = false) => {
@@ -128,13 +129,13 @@ export const useAutoSaveOptimized = ({
       // Если был запрошен forceSave пока шло сохранение, выполняем его
       if (forceSaveRequested.current) {
         forceSaveRequested.current = false;
-        setTimeout(() => executeSave(true), 100);
+        setTimeout(() => executeSaveRef.current?.(true), 100);
         return;
       }
 
       // Если пока сохраняли, появились новые изменения — сохраняем ещё раз
       if (payloadRef.current) {
-        setTimeout(executeSave, 100);
+        setTimeout(() => executeSaveRef.current?.(), 100);
       }
     } catch (error) {
       retryCount.current += 1;
@@ -143,17 +144,22 @@ export const useAutoSaveOptimized = ({
       if (retryCount.current < maxRetries) {
         logger.warn(`Auto-save failed, retry ${retryCount.current}/${maxRetries}`);
         setStatus('saving');
-        timeoutRef.current = setTimeout(executeSave, 1000);
+        timeoutRef.current = setTimeout(() => executeSaveRef.current?.(), 1000);
       } else {
         setStatus('error');
         retryCount.current = 0;
-        logger.error(error instanceof Error ? error : new Error(String(error)), { 
+        logger.error(error instanceof Error ? error : new Error(String(error)), {
           action: 'auto-save',
           listId,
         });
       }
     }
   }, [listId, enabled, getSavePayload, saveFunction, skipNewBooks]);
+
+  // Сохраняем ссылку на executeSave для рекурсивных вызовов
+  useEffect(() => {
+    executeSaveRef.current = executeSave;
+  }, [executeSave]);
 
   // Debounce эффект
   useEffect(() => {
@@ -163,16 +169,17 @@ export const useAutoSaveOptimized = ({
       clearTimeout(timeoutRef.current);
     }
 
-    setHasPendingChanges(true);
-    timeoutRef.current = setTimeout(executeSave, delay);
+    timeoutRef.current = setTimeout(() => {
+      setHasPendingChanges(true);
+      executeSaveRef.current?.();
+    }, delay);
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listId, delay, enabled, getSavePayload]);
+  }, [listId, delay, enabled, getSavePayload, setHasPendingChanges]);
 
   // Принудительное сохранение
   const forceSave = useCallback(async () => {
@@ -193,7 +200,7 @@ export const useAutoSaveOptimized = ({
   }, [executeSave]);
 
   // Отмена автосохранения
-  const cancel = useCallback(() => {
+  const cancel = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -201,7 +208,7 @@ export const useAutoSaveOptimized = ({
     if (isSavingRef.current) {
       logger.info('Auto-save cancelled');
     }
-  }, []);
+  };
 
   // Очистка при unmount
   useEffect(() => {

@@ -28,6 +28,8 @@ describe('useDashboardState', () => {
         tierListToDelete: null,
         renameTitle: '',
         createTitle: '',
+        filterOption: 'all',
+        sortOption: 'newest',
       });
     });
   });
@@ -178,6 +180,8 @@ describe('useDashboardState', () => {
         tierListToDelete: null,
         renameTitle: '',
         createTitle: '',
+        filterOption: 'all',
+        sortOption: 'newest',
       });
     });
   });

@@ -3,9 +3,12 @@ import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
 import { getAuthToken, removeAuthToken, apiValidateToken } from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
-import { logger } from "@/lib/logger";
+import { createLogger } from "@/lib/logger";
 
 export { AuthContext, type AuthContextType };
+
+// Контекстный логгер для Auth
+const authLogger = createLogger("Auth", { color: "blue" });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -17,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = getAuthToken();
     if (token) {
       try {
-        logger.info("Validating stored auth token");
+        authLogger.info("Validating stored auth token");
         const response = await apiValidateToken(token);
         if (response.valid && response.userId && response.username) {
           // Получаем полные данные пользователя с сервера
@@ -28,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               username: fullUserData.username,
               avatarUrl: fullUserData.avatarUrl,
             });
-            logger.info("User data fetched successfully", {
+            authLogger.info("User data fetched successfully", {
               userId: fullUserData.id,
               username: fullUserData.username,
               hasAvatar: !!fullUserData.avatarUrl,
@@ -38,13 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ userId: response.userId, username: response.username });
           }
         } else {
-          logger.warn("Auth token validation failed - token is invalid");
+          authLogger.warn("Auth token validation failed - token is invalid");
           removeAuthToken();
           setUser(null);
         }
       } catch (err) {
         if (err instanceof Error) {
-          logger.error(err, { action: "token validation" });
+          authLogger.error(err, { action: "token validation" });
         }
         removeAuthToken();
         setUser(null);
@@ -65,6 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUserDataRef.current = refreshUser;
   }, [refreshUser]);
 
+  // Обработчик изменения токена
+  const handleAuthTokenChanged = useCallback(() => {
+    checkToken();
+  }, [checkToken]);
+
   // Проверяем токен при загрузке и слушаем события авторизации
   useEffect(() => {
     let isMounted = true;
@@ -73,10 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isMounted) {
         await checkToken();
       }
-    };
-
-    const handleAuthTokenChanged = () => {
-      checkToken();
     };
 
     // Выполняем первоначальную проверку
@@ -92,11 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("auth-token-changed", handleAuthTokenChanged);
       window.removeEventListener("storage", handleAuthTokenChanged);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [checkToken, handleAuthTokenChanged]);
 
   function logout() {
-    logger.info("User logout");
+    authLogger.info("User logout");
     setUser(null);
     removeAuthToken();
   }

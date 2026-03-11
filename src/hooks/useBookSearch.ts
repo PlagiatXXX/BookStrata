@@ -69,13 +69,13 @@ export function useBookSearch(options: UseBookSearchOptions = {}): UseBookSearch
   const [startIndex, setStartIndex] = useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const clearResults = useCallback(() => {
+  const clearResults = () => {
     setResults([]);
     setCurrentQuery('');
     setStartIndex(0);
     setHasMore(true);
     setTotalResults(0);
-  }, []);
+  };
 
   const search = useCallback(async (query: string) => {
     if (!query.trim() || query.length < 2) return;
