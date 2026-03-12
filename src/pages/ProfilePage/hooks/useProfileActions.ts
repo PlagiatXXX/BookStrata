@@ -3,7 +3,10 @@ import { sileo } from 'sileo';
 import { useAuth } from '@/hooks/useAuthContext';
 import { getAuthToken } from '@/lib/authApi';
 import { API_BASE_URL } from '@/lib/config';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+
+// Логгер для хука действий профиля
+const logger = createLogger('ProfileActions', { color: 'blue' });
 
 interface UseProfileActionsReturn {
   // Username states

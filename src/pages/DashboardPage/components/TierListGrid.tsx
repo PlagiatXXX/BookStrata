@@ -1,4 +1,3 @@
-import type { TierListShort } from '@/lib/api';
 import { TierListCard } from './TierListCard';
 import type { TierListGridProps } from '../types';
 

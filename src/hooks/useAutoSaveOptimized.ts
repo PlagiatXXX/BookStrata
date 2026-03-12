@@ -1,5 +1,8 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+
+// Логгер для хука автосохранения
+const logger = createLogger('AutoSave', { color: 'cyan' });
 
 export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -106,7 +109,7 @@ export const useAutoSaveOptimized = ({
     }
 
     logger.info('Auto-save started', {
-      listId,
+      tierListId: listId,
       placementsCount: savePayload.placements?.length || 0,
       hasTiers: !!savePayload.tiers,
       newBooksCount: savePayload.newBooks?.length || 0,
@@ -123,8 +126,6 @@ export const useAutoSaveOptimized = ({
       isSavingRef.current = false;
       setHasPendingChanges(false);
       payloadRef.current = null;
-
-      logger.info('Auto-save completed', { listId });
 
       // Если был запрошен forceSave пока шло сохранение, выполняем его
       if (forceSaveRequested.current) {
@@ -150,7 +151,7 @@ export const useAutoSaveOptimized = ({
         retryCount.current = 0;
         logger.error(error instanceof Error ? error : new Error(String(error)), {
           action: 'auto-save',
-          listId,
+          tierListId: listId,
         });
       }
     }
@@ -206,7 +207,7 @@ export const useAutoSaveOptimized = ({
       timeoutRef.current = null;
     }
     if (isSavingRef.current) {
-      logger.info('Auto-save cancelled');
+      logger.info('Auto-save cancelled', { tierListId: listId });
     }
   };
 

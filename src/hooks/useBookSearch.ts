@@ -1,7 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { searchGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
 import { StorageService } from '@/lib/storage';
+
+// Логгер для хука поиска книг
+const logger = createLogger('BookSearch', { color: 'yellow' });
 
 // Ключ для localStorage
 const SEARCH_CACHE_KEY = 'book_search_cache';

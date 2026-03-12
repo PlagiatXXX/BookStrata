@@ -4,7 +4,10 @@ import {
   updateTierListTitle,
   deleteTierList,
 } from '@/lib/api';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+
+// Логгер для хука действий тир-листов
+const logger = createLogger('TierListActions', { color: 'magenta' });
 
 interface UseTierListActionsOptions {
   onSuccess?: () => void;

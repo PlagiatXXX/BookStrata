@@ -121,7 +121,27 @@ export default function BookScene({ containerRef }: BookSceneProps) {
             className="frontCover"
             style={{ rotateY: coverRotateY }}
           >
-            <div className="cover-title">BookStrata</div>
+            {/* Золотые декоративные уголки */}
+            <div className="goldCorner goldCorner--tl" />
+            <div className="goldCorner goldCorner--tr" />
+            <div className="goldCorner goldCorner--bl" />
+            <div className="goldCorner goldCorner--br" />
+            
+            {/* Декоративное тиснение на фоне */}
+            <svg
+              className="embossedOrnament"
+              viewBox="0 0 100 100"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="50" cy="50" r="45" stroke="#d4af37" strokeWidth="0.5" opacity="0.4" />
+              <circle cx="50" cy="50" r="35" stroke="#d4af37" strokeWidth="0.5" opacity="0.3" />
+              <circle cx="50" cy="50" r="25" stroke="#d4af37" strokeWidth="0.5" opacity="0.2" />
+              <path d="M50 5 L50 15 M50 85 L50 95 M5 50 L15 50 M85 50 L95 50" stroke="#d4af37" strokeWidth="0.5" opacity="0.3" />
+              <path d="M18 18 L25 25 M75 75 L82 82 M18 82 L25 75 M75 25 L82 18" stroke="#d4af37" strokeWidth="0.5" opacity="0.25" />
+            </svg>
+            
+            <div className="cover-title" data-text="BookStrata">BookStrata</div>
             <div className="cover-subtitle">PRO</div>
           </motion.div>
         </div>

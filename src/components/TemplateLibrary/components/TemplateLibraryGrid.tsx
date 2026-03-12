@@ -1,6 +1,5 @@
 import TemplateCard from '../../TemplateCard/TemplateCard';
 import type { TemplateLibraryGridProps } from '../types';
-import { COVER_HEIGHTS } from '../constants';
 
 export function TemplateLibraryGrid({
   templates,

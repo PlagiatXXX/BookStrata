@@ -4,7 +4,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { useTierList } from '@/hooks/useTierList';
 import type { Action } from '@/hooks/useTierList';
 import { useAuth } from '@/hooks/useAuthContext';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
 import { EditorModals } from './components/EditorModals';
 import { EditorLayout } from './components/EditorLayout';
 import { EditorMainContent } from './components/EditorMainContent';
@@ -17,6 +17,9 @@ import { useTierEditorBlocker } from './hooks/useTierEditorBlocker';
 import { useTierEditorSave } from './hooks/useTierEditorSave';
 import './TierEditorPage.css';
 import type { Book } from '@/types';
+
+// Логгер для страницы редактора
+const logger = createLogger('TierEditorPage', { color: 'green' });
 
 // Внутренний компонент с ключом для автоматического сброса состояния
 const TierListEditorContent = () => {

@@ -6,12 +6,15 @@ import { useUser } from '@/hooks/useUser';
 import { Spinner } from '@/components/Spinner';
 import { ArrowLeft } from 'lucide-react';
 import { sileo } from 'sileo';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
 import { ProfileHeader } from './ProfilePage/components/ProfileHeader';
 import { ProfileActions } from './ProfilePage/components/ProfileActions';
 import { PasswordChangeForm } from './ProfilePage/components/PasswordChangeForm';
 import { StatsCards } from './ProfilePage/components/StatsCards';
 import { useProfileActions } from './ProfilePage/hooks/useProfileActions';
+
+// Логгер для страницы профиля
+const logger = createLogger('ProfilePage', { color: 'blue' });
 
 export function ProfilePage() {
   const navigate = useNavigate();

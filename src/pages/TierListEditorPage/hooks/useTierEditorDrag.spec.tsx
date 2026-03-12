@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useTierEditorDrag } from './useTierEditorDrag';
-import type { TierListData, Book } from '@/types';
+import type { TierListData } from '@/types';
 import type { DragEndEvent } from '@dnd-kit/core';
 
 // Мокаем logger

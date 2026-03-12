@@ -1,11 +1,14 @@
 import { useReducer, useCallback, useState } from "react";
 import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
-import { logger } from "@/lib/logger";
+import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
 import { BookViewModal } from "./BookViewModal";
 import { useBookSearch } from "@/hooks/useBookSearch";
 import { Spinner } from "@/components/Spinner";
+
+// Логгер для компонента поиска книг
+const logger = createLogger('BookSearchModal', { color: 'green' });
 
 interface BookSearchModalProps {
   isOpen: boolean;

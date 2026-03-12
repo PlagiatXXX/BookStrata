@@ -1,5 +1,4 @@
 import { Clock, Edit2, Trash2, Globe, Lock } from 'lucide-react';
-import type { TierListShort } from '@/lib/api';
 import type { TierListCardProps } from '../types';
 import { NEW_TIER_LIST_THRESHOLD_MS, DATE_FORMAT } from '../constants';
 

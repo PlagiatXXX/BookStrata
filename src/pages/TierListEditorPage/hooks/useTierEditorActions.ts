@@ -7,7 +7,10 @@ import type { Book } from '@/types';
 import { deleteTierList, removeBookFromTierList, toggleTierListPublic } from '@/lib/tierListApi';
 import { getAuthHeader, handleResponse } from '@/lib/authApi';
 import { API_BASE_URL } from '@/lib/config';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+
+// Логгер для хука действий редактора
+const logger = createLogger('TierEditorActions', { color: 'purple' });
 
 interface UseTierEditorActionsParams {
   tierListId: string | undefined;

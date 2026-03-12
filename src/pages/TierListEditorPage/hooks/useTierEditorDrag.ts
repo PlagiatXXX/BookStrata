@@ -1,7 +1,10 @@
 import { useRef, useCallback } from 'react';
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import type { Book, Tier, TierListData } from '@/types';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+
+// Логгер для хука drag-and-drop
+const logger = createLogger('TierEditorDrag', { color: 'orange' });
 
 export interface UseTierEditorDragResult {
   tierGridRef: React.RefObject<HTMLDivElement | null>;

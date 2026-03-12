@@ -5,8 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useTierEditorActions } from './useTierEditorActions';
 import * as tierListApi from '@/lib/tierListApi';
-import { logger } from '@/lib/logger';
 import { sileo } from 'sileo';
+import { logger } from '@/lib/logger';
 
 // Моки для внешних зависимостей
 vi.mock('@/lib/tierListApi', () => ({
@@ -15,11 +15,20 @@ vi.mock('@/lib/tierListApi', () => ({
   removeBookFromTierList: vi.fn(),
 }));
 
-vi.mock('@/lib/logger', () => ({
-  logger: {
+vi.mock('@/lib/logger', async () => {
+  const actual = await vi.importActual('@/lib/logger');
+  const mockLogger = {
+    info: vi.fn(),
+    warn: vi.fn(),
     error: vi.fn(),
-  },
-}));
+    debug: vi.fn(),
+  };
+  return {
+    ...(actual as object),
+    logger: mockLogger,
+    createLogger: vi.fn(() => mockLogger),
+  };
+});
 
 vi.mock('sileo', () => ({
   sileo: {

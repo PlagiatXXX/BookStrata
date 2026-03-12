@@ -37,7 +37,7 @@ export function PublicTierListsSection({
   }
 
   if (tierLists.length === 0) {
-    return <EmptyState section="public" hasSearch={false} searchQuery="" />;
+    return <EmptyState section="public" hasSearch={false} />;
   }
 
   return (

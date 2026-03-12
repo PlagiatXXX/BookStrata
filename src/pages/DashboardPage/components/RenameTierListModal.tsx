@@ -9,7 +9,6 @@ export function RenameTierListModal({
   renameTitle,
   onTitleChange,
   isPending,
-  tierListTitle,
 }: RenameModalProps) {
   const handleRename = () => {
     if (!renameTitle.trim()) {

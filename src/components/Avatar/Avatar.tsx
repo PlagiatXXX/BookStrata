@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { getInitials, getInitialsColor } from './presets';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+
+// Логгер для компонента аватара
+const logger = createLogger('Avatar', { color: 'blue' });
 
 interface AvatarProps {
   url?: string | null;

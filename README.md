@@ -220,6 +220,26 @@ npm run dev
 | POST | `/api/avatars/generate` | Generate AI avatar |
 | GET | `/api/avatars/limit` | Get daily limit info |
 
+**AI Model Configuration:**
+
+To change the AI model used for avatar generation, set the `POLLINATIONS_MODEL` environment variable in `backend/.env`:
+
+```env
+POLLINATIONS_MODEL="flux"  # Default: flux
+```
+
+**Available models:**
+- `flux` — **Default** — High-quality general generation
+- `zimage` — Alternative model
+
+**Important:** The new `gen.pollinations.ai` API requires an API key. Get your key from [https://gen.pollinations.ai](https://gen.pollinations.ai) and add it to `backend/.env`:
+
+```env
+POLLINATIONS_API_KEY="sk_your-api-key-here"
+```
+
+See full documentation at [Pollinations.ai API docs](https://enter.pollinations.ai/api/docs).
+
 ---
 
 ## 🧪 Testing

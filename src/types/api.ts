@@ -30,6 +30,8 @@ export interface ApiTierListResponse {
   title: string;
   year: number | null;
   isPublic: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   user?: {
     id: number;
     username: string;

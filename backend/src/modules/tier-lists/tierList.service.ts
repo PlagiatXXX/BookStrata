@@ -283,14 +283,16 @@ export async function saveTiers(
       });
     }
 
-    // 3. Обновляем существующие (последовательно, не Promise.all)
+    // 3. Обновляем существующие (параллельно)
     if (updated.length > 0) {
-      for (const tier of updated) {
-        await tx.tier.update({
-          where: { id: tier.id },
-          data: { title: tier.title, color: tier.color, rank: tier.rank },
-        });
-      }
+      await Promise.all(
+        updated.map((tier) =>
+          tx.tier.update({
+            where: { id: tier.id },
+            data: { title: tier.title, color: tier.color, rank: tier.rank },
+          })
+        )
+      );
     }
 
     // 4. Получаем все тиры для возврата

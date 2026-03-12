@@ -16,13 +16,20 @@ vi.mock('@/lib/api', () => ({
 }));
 
 // Моки logger
-vi.mock('@/lib/logger', () => ({
-  logger: {
+vi.mock('@/lib/logger', async () => {
+  const actual = await vi.importActual('@/lib/logger');
+  const mockLogger = {
     info: vi.fn(),
-    error: vi.fn(),
     warn: vi.fn(),
-  },
-}));
+    error: vi.fn(),
+    debug: vi.fn(),
+  };
+  return {
+    ...(actual as object),
+    logger: mockLogger,
+    createLogger: vi.fn(() => mockLogger),
+  };
+});
 
 // Моки alert
 const mockAlert = vi.fn();
@@ -64,17 +71,20 @@ describe('useTierListActions', () => {
 
   describe('createNewTierList', () => {
     it('должен успешно создавать тир-лист', async () => {
-      const mockCreatedTierList = {
+      const mockCreatedTierList: Awaited<ReturnType<typeof apiModule.createTierList>> = {
         id: 1,
         title: 'New List',
+        year: null,
+        isPublic: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        isPublic: false,
         user: { id: 1, username: 'testuser' },
         likesCount: 0,
+        tiers: [],
+        unrankedBooks: [],
       };
 
-      vi.mocked(apiModule.createTierList).mockResolvedValue(mockCreatedTierList as any);
+      vi.mocked(apiModule.createTierList).mockResolvedValue(mockCreatedTierList);
 
       const onSuccess = vi.fn();
       const onRefetch = vi.fn();
@@ -123,7 +133,7 @@ describe('useTierListActions', () => {
 
   describe('renameTierList', () => {
     it('должен успешно переименовывать тир-лист', async () => {
-      vi.mocked(apiModule.updateTierListTitle).mockResolvedValue({} as any);
+      vi.mocked(apiModule.updateTierListTitle).mockResolvedValue(Promise.resolve({}));
 
       const onSuccess = vi.fn();
       const onRefetch = vi.fn();

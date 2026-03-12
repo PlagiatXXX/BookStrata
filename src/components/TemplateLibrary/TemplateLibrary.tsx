@@ -255,7 +255,6 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                   <EmptyState
                     section={activeSection}
                     hasSearch={searchQuery.trim().length > 0}
-                    searchQuery={searchQuery}
                   />
                 )}
               </div>

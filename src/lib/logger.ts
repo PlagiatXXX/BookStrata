@@ -86,7 +86,6 @@ async function sendLogToServer(payload: LogPayload): Promise<void> {
     }
   } catch (error) {
     // Тихая ошибка — чтобы не зациклить логирование
-    // eslint-disable-next-line no-console
     console.error('[Logger] Failed to send log to server:', error);
   }
 }
@@ -137,7 +136,6 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
       if (!shouldLog('debug', configLevel)) return;
 
       const [formatted, style] = formatMessage(name, 'debug', message, color);
-      // eslint-disable-next-line no-console
       console.debug(formatted, style, context ?? '');
 
       if (sendToServer && context) {
@@ -155,7 +153,6 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
       if (!shouldLog('info', configLevel)) return;
 
       const [formatted, style] = formatMessage(name, 'info', message, color);
-      // eslint-disable-next-line no-console
       console.info(formatted, style, context ?? '');
 
       if (sendToServer && context) {
@@ -173,7 +170,6 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
       if (!shouldLog('warn', configLevel)) return;
 
       const [formatted, style] = formatMessage(name, 'warn', message, color);
-      // eslint-disable-next-line no-console
       console.warn(formatted, style, context ?? '');
 
       if (sendToServer) {
@@ -193,7 +189,6 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
       const errorData = extractError(error);
       const [formatted, style] = formatMessage(name, 'error', errorData.message, color);
 
-      // eslint-disable-next-line no-console
       console.error(formatted, style, errorData.stack ?? '', context ?? '');
 
       if (sendToServer) {

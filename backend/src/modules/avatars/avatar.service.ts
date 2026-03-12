@@ -5,6 +5,7 @@ import { createLogger } from '../../lib/logger.js';
 const logger = createLogger('Avatars', { color: 'yellow' });
 
 const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY;
+const POLLINATIONS_MODEL = process.env.POLLINATIONS_MODEL || 'flux';
 const POLLINATIONS_API_URL = 'https://gen.pollinations.ai';
 const DAILY_AVATAR_LIMIT = 10;
 
@@ -50,16 +51,16 @@ async function checkAvatarLimit(userId: number): Promise<{ allowed: boolean; rem
 }
 
 // Pollinations.ai AI генерация
-export async function generateAvatar(prompt: string, userId: number): Promise<{ 
-  success: boolean; 
-  imageUrl?: string; 
+export async function generateAvatar(prompt: string, userId: number): Promise<{
+  success: boolean;
+  imageUrl?: string;
   error?: string;
   remaining?: number;
 }> {
   try {
     // Проверяем лимит
     const limitCheck = await checkAvatarLimit(userId);
-    
+
     if (!limitCheck.allowed) {
       return { success: false, error: limitCheck.error || 'Limit reached' };
     }
@@ -68,10 +69,14 @@ export async function generateAvatar(prompt: string, userId: number): Promise<{
     const encodedPrompt = encodeURIComponent(fullPrompt);
     const seed = Math.floor(Math.random() * 1000000);
 
-    let imageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=flux&width=512&height=512&seed=${seed}`;
+    // Новый API gen.pollinations.ai использует формат: /image/{prompt}
+    // API ключ ОБЯЗАТЕЛЕН для нового API
+    let imageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=${POLLINATIONS_MODEL || 'flux'}&width=512&height=512&seed=${seed}&nologo=true`;
 
     if (POLLINATIONS_API_KEY) {
       imageUrl += `&key=${POLLINATIONS_API_KEY}`;
+    } else {
+      logger.warn('POLLINATIONS_API_KEY not set - generation will fail');
     }
 
     // Увеличиваем счётчик

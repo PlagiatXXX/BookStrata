@@ -4,7 +4,6 @@ import type { SectionKey } from '../templateLibraryReducer';
 interface EmptyStateProps {
   section: SectionKey;
   hasSearch: boolean;
-  searchQuery: string;
 }
 
 const ICONS: Record<SectionKey, typeof FileText> = {
@@ -21,7 +20,7 @@ const TITLES: Record<SectionKey, string> = {
   archived: 'Нет архивных',
 };
 
-export function EmptyState({ section, hasSearch, searchQuery }: EmptyStateProps) {
+export function EmptyState({ section, hasSearch }: EmptyStateProps) {
   const Icon = ICONS[section];
 
   return (

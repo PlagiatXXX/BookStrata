@@ -3,7 +3,10 @@ import { X } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { Book } from "@/types";
-import { logger } from "@/lib/logger";
+import { createLogger } from "@/lib/logger";
+
+// Логгер для компонента редактирования книги
+const logger = createLogger('BookEditModal', { color: 'cyan' });
 
 interface BookEditModalProps {
   isOpen: boolean;

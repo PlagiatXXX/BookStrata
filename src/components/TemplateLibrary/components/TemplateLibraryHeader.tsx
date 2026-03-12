@@ -3,7 +3,6 @@ import type { TemplateLibraryHeaderProps } from '../types';
 export function TemplateLibraryHeader({
   title,
   description,
-  onBackClick,
 }: TemplateLibraryHeaderProps) {
   return (
     <div className="mb-8">

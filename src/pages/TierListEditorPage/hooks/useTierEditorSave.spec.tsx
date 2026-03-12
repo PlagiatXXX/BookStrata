@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTierEditorSave } from './useTierEditorSave';
 import type { TierListData } from '@/types';
