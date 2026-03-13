@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Users, Folder, X, Menu, Globe } from "lucide-react";
+import { List, Users, Folder, X, Menu, Globe, LogOut } from "lucide-react";
 
 interface NavItem {
   label: string;
@@ -32,7 +32,7 @@ export const Header = ({
   activeItem: activeItemProp,
 }: HeaderProps = {}) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAuthenticated, user: authUser } = useAuth();
+  const { isAuthenticated, user: authUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -58,6 +58,11 @@ export const Header = ({
 
   const handleSearchChange = (query: string) => {
     onSearch?.(query);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/auth", { replace: true });
   };
 
   const navItems: NavItem[] = [
@@ -140,6 +145,17 @@ export const Header = ({
               />
             )}
 
+            {/* Logout Button (Desktop) */}
+            <button
+              onClick={handleLogout}
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer"
+              title="Выйти"
+              aria-label="Выйти"
+            >
+              <LogOut size={16} />
+              <span>Выйти</span>
+            </button>
+
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -219,6 +235,20 @@ export const Header = ({
                     {authUser?.username}
                   </div>
                 </div>
+              </button>
+            )}
+
+            {/* Mobile Logout Button */}
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer text-red-400 hover:text-red-300 hover:bg-slate-800/50 transition-all duration-200 text-sm border-t border-slate-700/50 mt-2 pt-4"
+              >
+                <LogOut size={18} />
+                <div className="font-medium">Выйти</div>
               </button>
             )}
           </nav>

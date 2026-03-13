@@ -7,11 +7,11 @@ import type { SaveTierListPayload } from '@/lib/tierListApi';
 
 // Мокаем logger
 vi.mock('@/lib/logger', () => ({
-  logger: {
+  createLogger: vi.fn(() => ({
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-  },
+  })),
 }));
 
 describe('useAutoSaveOptimized', () => {

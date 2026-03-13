@@ -20,41 +20,38 @@
 
 ```
 tiermaker-pro/
-├── src/                    # Frontend (React 19 + TypeScript)
-│   ├── app/                # App shell, routing
-│   ├── components/         # Reusable UI components
-│   ├── contexts/           # React Context (Auth, Theme)
-│   ├── hooks/              # Custom React hooks
-│   ├── lib/                # Utilities, API client, logger
-│   ├── pages/              # Route pages
-│   │   └── TierListEditorPage/  # Tier list editor page
-│   │       ├── components/ # Editor-specific components
-│   │       │   ├── EditorLayout.tsx
-│   │       │   ├── EditorMainContent.tsx
-│   │       │   ├── EditorHeader.tsx
-│   │       │   ├── EditorModals.tsx
-│   │       │   ├── EditorScreens.tsx
-│   │       │   └── AutoSaveIndicator.tsx
-│   │       └── hooks/    # Editor-specific hooks
-│   │           ├── useTierEditorState.ts
-│   │           ├── useTierEditorQueries.ts
-│   │           ├── useTierEditorDrag.ts
-│   │           ├── useTierEditorBlocker.ts
-│   │           ├── useTierEditorSave.ts
-│   │           └── useTierEditorActions.ts
-│   ├── state/              # State management
-│   ├── types/              # TypeScript types
-│   └── utils/              # Helper functions
-├── backend/                # Backend (Fastify + Prisma)
+├── src/                          # Frontend (React 19 + TypeScript)
+│   ├── app/                      # App shell, routing
+│   ├── components/               # Reusable UI components
+│   │   ├── Avatar/               # Avatar components
+│   │   ├── BookCounter/          # Book counter (20 books limit)
+│   │   ├── HeroSection/          # Hero section (3D book)
+│   │   ├── NewHeroSection/       # New Hero section (Dashboard)
+│   │   ├── TemplateLibrary/      # Template library
+│   │   ├── TierGrid/             # Tier list grid
+│   │   └── UnrankedItems/        # Unranked books panel
+│   ├── contexts/                 # React Context (Auth, Theme)
+│   ├── hooks/                    # Custom React hooks
+│   ├── layouts/                  # Layout components
+│   ├── lib/                      # Utilities, API client, logger
+│   ├── pages/                    # Route pages
+│   │   ├── DashboardPage/        # Dashboard page
+│   │   ├── TierListEditorPage/   # Tier list editor
+│   │   ├── ProfilePage/          # User profile
+│   │   └── AuthPage/             # Authentication
+│   ├── state/                    # State management
+│   ├── types/                    # TypeScript types
+│   └── utils/                    # Helper functions
+├── backend/                      # Backend (Fastify + Prisma)
 │   ├── src/
-│   │   ├── modules/        # Feature modules (auth, tier-lists, templates)
-│   │   ├── plugins/        # Fastify plugins (cors, rate-limit, swagger)
-│   │   └── server.ts       # Server entry point
+│   │   ├── modules/              # Feature modules (auth, tier-lists, templates)
+│   │   ├── plugins/              # Fastify plugins (cors, rate-limit, swagger)
+│   │   └── server.ts             # Server entry point
 │   └── prisma/
-│       ├── schema.prisma   # Database schema
-│       ├── migrations/     # DB migrations
-│       └── seed.ts         # Seed data
-└── docs/                   # Documentation
+│       ├── schema.prisma         # Database schema
+│       ├── migrations/           # DB migrations
+│       └── seed.ts               # Seed data
+└── docs/                         # Documentation
 ```
 
 ---
@@ -463,6 +460,19 @@ See the following files for improvement recommendations:
 | `useTierListActions` | CRUD operations |
 | `useTierListsPagination` | Filtering (search + public/private) + Sorting (4 options) + Pagination |
 
+##### New Components (Март 2026)
+| Component | Purpose |
+|-----------|---------|
+| `BookCounter` | Book limit tracker (20 books max) with progress bar |
+| `QuickStartTemplates` | Quick start templates section (Fiction, Sci-Fi, etc.) |
+| `UserActivityStats` | User activity statistics (Created/Published/Drafts) |
+| `NewHeroSection` | New Dashboard hero section with preview card |
+
+##### New Hooks (Март 2026)
+| Hook | Purpose |
+|------|---------|
+| `useTierListBooksLimit` | Track book limit (20 books) with Pro support |
+
 ##### Dashboard Enhancements (Март 2026)
 
 **Сортировка:**
@@ -486,6 +496,18 @@ searchQuery → filterOption → sortOption → displayedTierLists
 - `.dashboard-filters` — Tabs кнопки (Все/Публичные/Приватные)
 - `.dashboard-sort__select` — Кастомный select с SVG иконкой
 
+**Лимит книг (20 книг):**
+- Прогресс-бар с цветовой индикацией (cyan → amber → red)
+- Счётчик книг с отображением статуса
+- Блокировка добавления при достижении лимита
+- Pro-подготовка (архитектурная готовность)
+
+**Новая Hero секция:**
+- Тёмный фон с изображением библиотеки
+- Превью рейтинга с macOS-style кнопками
+- Статистика активности (Создано/Опубликовано/Черновики)
+- Шаблоны быстрого старта (Fiction, Sci-Fi, Detectives, Non-fiction)
+
 ##### Test Coverage Summary
 | Location | Tests | Status |
 |----------|-------|--------|
@@ -494,14 +516,15 @@ searchQuery → filterOption → sortOption → displayedTierLists
 | `src/pages/DashboardPage/hooks/` | 22 | ✅ |
 | `src/components/TemplateLibrary/hooks/` | 28 | ✅ |
 | `src/components/Avatar/hooks/` | 12 | ✅ |
+| `src/components/BookCounter/` | 11 | ✅ |
 | `src/lib/` | 3 | ✅ |
 | `src/utils/` | 17 | ✅ |
 | `src/ui/` | 7 | ✅ |
-| **Total** | **250+** | ✅ |
+| **Total** | **292** | ✅ |
 
 ```
-Test Files: 20+ passed (20+)
-Tests: 250+ passed (250+)
+Test Files: 23 passed (23)
+Tests: 292 passed (292)
 Duration: ~50s
 ```
 
@@ -615,5 +638,7 @@ npm run start
 
 ---
 
-**Last Updated**: 6 марта 2026 г.
-**Project Status**: Phase 2 Completed ✅ — Ready for Phase 3
+**Last Updated**: 13 марта 2026 г.  
+**Project Status**: Phase 2 Completed ✅ — Ready for Phase 3  
+**Test Coverage**: 292 tests ✅  
+**Build**: Production ready ✅

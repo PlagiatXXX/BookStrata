@@ -1,4 +1,4 @@
-import HeroSection from '@/components/HeroSection/HeroSection';
+import { NewHeroSection } from '@/components/NewHeroSection/NewHeroSection';
 import type { DashboardHeaderProps } from '../types';
 
 export function DashboardHeader({
@@ -8,17 +8,10 @@ export function DashboardHeader({
   onLogoutClick,
 }: DashboardHeaderProps) {
   return (
-    <>
-      <HeroSection
-        username={username}
-        onCreateClick={onCreateClick}
-        onCommunityClick={onCommunityClick}
-        onLogoutClick={onLogoutClick}
-      />
-
-      <div className="dashboard-divider">
-        <span>Ваши рейтинги</span>
-      </div>
-    </>
+    <NewHeroSection
+      username={username}
+      onCreateClick={onCreateClick}
+      onCommunityClick={onCommunityClick}
+    />
   );
 }

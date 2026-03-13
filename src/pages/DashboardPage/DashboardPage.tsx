@@ -3,11 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuthContext';
 import { getUserTierLists } from '@/lib/api';
+import { apiGetUserStats } from '@/lib/userApi';
 import type { SortOption } from './types';
 import { useDashboardState } from './hooks/useDashboardState';
 import { useTierListActions } from './hooks/useTierListActions';
 import { useTierListsPagination } from './hooks/useTierListsPagination';
 import { DashboardHeader } from './components/DashboardHeader';
+import { UserActivityStats } from '@/components/NewHeroSection/components/UserActivityStats';
+import { QuickStartTemplates } from '@/components/NewHeroSection/components/QuickStartTemplates';
 import { TierListGrid } from './components/TierListGrid';
 import { Pagination } from './components/Pagination';
 import { EmptyStates } from './components/EmptyStates';
@@ -38,7 +41,7 @@ export function DashboardPage() {
 
   const { currentPage, searchQuery, activeModal, tierListToRename, tierListToDelete, renameTitle, createTitle, sortOption, filterOption } = state;
 
-  // Data fetching
+  // Data fetching - Tier lists
   const {
     data: paginatedResponse = {
       data: [],
@@ -57,6 +60,19 @@ export function DashboardPage() {
     queryKey: ['userTierLists', currentPage],
     queryFn: () => getUserTierLists(currentPage, PAGE_SIZE),
   });
+
+  // Data fetching - User stats
+  const { data: stats } = useQuery({
+    queryKey: ['userStats'],
+    queryFn: apiGetUserStats,
+    staleTime: 5 * 60 * 1000, // 5 минут
+    retry: 2,
+  });
+
+  // Вычисляем значения для статистики
+  const tierListsCount = stats?.tierListsCount || 0;
+  const publishedCount = stats?.likesCount || 0;
+  const draftsCount = Math.max(0, tierListsCount - publishedCount);
 
   // CRUD операции
   const { createNewTierList, renameTierList, removeTierList, isCreating, isRenaming, isDeleting } =
@@ -120,13 +136,28 @@ export function DashboardPage() {
     >
       <section className="dashboard-home">
         <div className="dashboard-home__container">
-          {/* Header */}
+          {/* Hero Section */}
           <DashboardHeader
             username={user?.username || ''}
             onCreateClick={openCreateModal}
             onCommunityClick={() => navigate('/community')}
             onLogoutClick={handleLogout}
           />
+
+          {/* Stats Section */}
+          <UserActivityStats
+            tierListsCount={tierListsCount}
+            publishedCount={publishedCount}
+            draftsCount={draftsCount}
+          />
+
+          {/* Quick Start Templates */}
+          <QuickStartTemplates />
+
+          {/* Divider */}
+          <div className="dashboard-divider">
+            <span>Ваши рейтинги</span>
+          </div>
 
           {/* Sort Controls */}
           <div className="dashboard-controls">

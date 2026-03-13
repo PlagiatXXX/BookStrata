@@ -23,6 +23,8 @@ export interface TierListShort {
     avatarUrl?: string;
   };
   likesCount?: number;
+  booksCount?: number;
+  coverImages?: string[];
 }
 
 export interface PaginationMeta {

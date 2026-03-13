@@ -1,6 +1,8 @@
-import { Clock, Edit2, Trash2, Globe, Lock } from 'lucide-react';
+import { Clock, Edit2, Trash2, Globe, Lock, CheckCircle2, CircleDashed } from 'lucide-react';
 import type { TierListCardProps } from '../types';
 import { NEW_TIER_LIST_THRESHOLD_MS, DATE_FORMAT } from '../constants';
+
+const MAX_BOOKS = 20;
 
 export function TierListCard({
   tierList,
@@ -13,9 +15,13 @@ export function TierListCard({
     new Date().getTime() - createdDate.getTime() <
     NEW_TIER_LIST_THRESHOLD_MS;
 
+  const booksCount = tierList.booksCount || 0;
+  const progress = Math.min(100, Math.round((booksCount / MAX_BOOKS) * 100));
+  const isComplete = booksCount >= MAX_BOOKS;
+
   return (
     <article className="dashboard-card">
-      {/* Actions */}
+      {/* Actions - top right */}
       <div className="dashboard-card__actions">
         <button
           onClick={() => onRename(tierList)}
@@ -37,24 +43,36 @@ export function TierListCard({
         </button>
       </div>
 
-      {/* Header */}
-      <div className="dashboard-card__head">
-        <h3
-          role="button"
-          tabIndex={0}
-          onClick={() => onOpen(tierList.id)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onOpen(tierList.id);
-            }
-          }}
-          className="dashboard-card__title cursor-pointer"
-        >
-          {tierList.title}
-        </h3>
-        {isNew && <span className="dashboard-badge">Новый</span>}
+      {/* Status Badge - top left */}
+      <div className="dashboard-card__status">
+        {isComplete ? (
+          <span className="dashboard-status-badge dashboard-status-badge--complete">
+            <CheckCircle2 size={10} />
+            Завершен
+          </span>
+        ) : (
+          <span className="dashboard-status-badge dashboard-status-badge--progress">
+            <CircleDashed size={10} />
+            В процессе
+          </span>
+        )}
       </div>
+
+      {/* Title */}
+      <h3
+        role="button"
+        tabIndex={0}
+        onClick={() => onOpen(tierList.id)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen(tierList.id);
+          }
+        }}
+        className="dashboard-card__title cursor-pointer"
+      >
+        {tierList.title}
+      </h3>
 
       {/* Meta */}
       <div className="dashboard-card__meta">
@@ -64,29 +82,43 @@ export function TierListCard({
         </span>
       </div>
 
-      {/* Tags */}
-      <div className="dashboard-card__tags">
-        {tierList.isPublic ? (
-          <span className="dashboard-tag">
-            <Globe size={14} />
-            Публичный
-          </span>
-        ) : (
-          <span className="dashboard-tag">
-            <Lock size={14} />
-            Приватный
-          </span>
-        )}
+      {/* Progress Bar */}
+      <div className="dashboard-card__progress">
+        <div className="dashboard-card__progress-header">
+          <span className="dashboard-card__progress-label">Прогресс заполнения</span>
+          <span className="dashboard-card__progress-value">{progress}%</span>
+        </div>
+        <div className="dashboard-card__progress-bar">
+          <div 
+            className="dashboard-card__progress-fill"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
-      {/* Open button */}
-      <button
-        onClick={() => onOpen(tierList.id)}
-        className="dashboard-btn dashboard-btn--primary dashboard-card__open"
-        type="button"
-      >
-        Открыть
-      </button>
+      {/* Footer with visibility and open button */}
+      <div className="dashboard-card__footer">
+        <div className="dashboard-card__visibility">
+          {tierList.isPublic ? (
+            <span className="dashboard-tag dashboard-tag--public">
+              <Globe size={12} />
+              Публичный
+            </span>
+          ) : (
+            <span className="dashboard-tag dashboard-tag--private">
+              <Lock size={12} />
+              Приватный
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => onOpen(tierList.id)}
+          className="dashboard-btn dashboard-btn--primary dashboard-card__open"
+          type="button"
+        >
+          Открыть
+        </button>
+      </div>
     </article>
   );
 }

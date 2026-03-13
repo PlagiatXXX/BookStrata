@@ -8,3 +8,6 @@ export const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   month: 'short',
   day: 'numeric',
 };
+
+// === Tier List Limits ===
+export const MAX_BOOKS_PER_TIER_LIST = 20;

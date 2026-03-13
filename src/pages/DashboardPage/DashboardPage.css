@@ -5,11 +5,8 @@
   min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(244, 226, 219, 0.42) 0%, rgba(244, 226, 219, 0) 36%),
-    radial-gradient(circle at 88% 20%, rgba(249, 239, 234, 0.7) 0%, rgba(249, 239, 234, 0) 38%),
-    linear-gradient(180deg, #fff8f6 0%, #fffcfa 48%, #fff8f4 100%);
-  color: #3c2f2d;
+  background: linear-gradient(180deg, #0f1e23 0%, #0a1416 100%);
+  color: #e2e8f0;
 }
 
 /* === Controls: Filters & Sort === */
@@ -27,8 +24,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(226, 203, 195, 0.6);
+  background: rgba(15, 30, 50, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 0.35rem;
 }
@@ -38,7 +36,7 @@
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: #6b544d;
+  color: #94a3b8;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
@@ -46,18 +44,18 @@
 }
 
 .dashboard-filter-btn:hover {
-  background: rgba(255, 244, 238, 0.8);
-  color: #3e2d2a;
+  background: rgba(6, 188, 249, 0.1);
+  color: #e2e8f0;
 }
 
 .dashboard-filter-btn--active {
-  background: linear-gradient(145deg, #df9f86 0%, #cb86a2 100%);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(223, 159, 134, 0.35);
+  background: linear-gradient(145deg, #06bcf9 0%, #08a8e0 100%);
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(6, 188, 249, 0.35);
 }
 
 .dashboard-filter-btn--active:hover {
-  box-shadow: 0 6px 16px rgba(223, 159, 134, 0.45);
+  box-shadow: 0 6px 16px rgba(6, 188, 249, 0.45);
 }
 
 .dashboard-sort {
@@ -68,41 +66,42 @@
   appearance: none;
   padding: 0.55rem 2.2rem 0.55rem 0.9rem;
   border-radius: 10px;
-  border: 1px solid rgba(226, 203, 195, 0.7);
-  background: linear-gradient(145deg, rgba(255, 252, 250, 0.95) 0%, rgba(255, 245, 240, 0.97) 100%);
-  color: #3e2d2a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 30, 50, 0.5);
+  backdrop-filter: blur(12px);
+  color: #e2e8f0;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.16s ease;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b544d' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
 }
 
 .dashboard-sort__select:hover {
-  border-color: rgba(214, 157, 138, 0.8);
-  background-color: rgba(255, 249, 245, 0.98);
+  border-color: rgba(6, 188, 249, 0.3);
+  background-color: rgba(15, 30, 50, 0.6);
 }
 
 .dashboard-sort__select:focus {
   outline: none;
-  border-color: rgba(208, 145, 126, 0.9);
-  box-shadow: 0 0 0 3px rgba(223, 159, 134, 0.15);
+  border-color: rgba(6, 188, 249, 0.5);
+  box-shadow: 0 0 0 3px rgba(6, 188, 249, 0.15);
 }
 
 .dashboard-sort__select option {
-  background: #fff8f4;
-  color: #3e2d2a;
+  background: #0f1e23;
+  color: #e2e8f0;
   font-size: 0.82rem;
   padding: 0.5rem;
 }
 
 .dashboard-home__container {
   width: 100%;
-  max-width: 1160px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0.9rem 1rem 2.8rem;
+  padding-bottom: 2.8rem;
 }
 
 .dashboard-divider {
@@ -110,7 +109,7 @@
   align-items: center;
   gap: 0.72rem;
   margin: 1.15rem 0 1rem;
-  color: #9f8781;
+  color: #64748b;
   font-size: 0.67rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -122,7 +121,7 @@
   content: "";
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, transparent, rgba(197, 171, 163, 0.62), transparent);
+  background: linear-gradient(90deg, transparent, rgba(100, 116, 139, 0.5), transparent);
 }
 
 .dashboard-grid {
@@ -133,18 +132,19 @@
 
 .dashboard-card {
   position: relative;
-  border: 1px solid rgba(226, 203, 195, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   padding: 0.9rem;
-  background: linear-gradient(155deg, rgba(255, 252, 250, 0.95) 0%, rgba(255, 245, 240, 0.97) 100%);
-  box-shadow: 0 8px 20px rgba(178, 149, 140, 0.14);
+  background: rgba(15, 30, 50, 0.4);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .dashboard-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(214, 157, 138, 0.88);
-  box-shadow: 0 14px 26px rgba(178, 149, 140, 0.24);
+  border-color: rgba(6, 188, 249, 0.3);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.4);
 }
 
 .dashboard-card__actions {
@@ -160,10 +160,10 @@
 .dashboard-card__delete {
   width: 1.9rem;
   height: 1.9rem;
-  border: 1px solid rgba(222, 196, 187, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  background: rgba(255, 244, 238, 0.95);
-  color: #977065;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -171,29 +171,21 @@
 }
 
 .dashboard-card__rename:hover {
-  border-color: rgba(209, 154, 136, 0.9);
-  color: #774f43;
+  border-color: rgba(6, 188, 249, 0.5);
+  color: #06bcf9;
 }
 
 .dashboard-card__delete:hover {
-  border-color: rgba(203, 139, 150, 0.9);
-  color: #8a4f5c;
-}
-
-.dashboard-card__head {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-  padding-right: 4.4rem;
-  margin-bottom: 0.58rem;
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
 }
 
 .dashboard-card__title {
-  margin: 0;
+  margin: 0.5rem 0 0;
   font-family: "Space Grotesk", "Manrope", sans-serif;
   font-size: 1.02rem;
   line-height: 1.2;
-  color: #3e2d2a;
+  color: #e2e8f0;
   cursor: pointer;
 }
 
@@ -203,7 +195,7 @@
   gap: 0.34rem;
   margin-bottom: 0.68rem;
   font-size: 0.82rem;
-  color: #88685f;
+  color: #94a3b8;
 }
 
 .dashboard-card__tags {
@@ -213,19 +205,106 @@
   margin-bottom: 0.74rem;
 }
 
-.dashboard-card__open {
-  width: 100%;
+/* Status Badge */
+.dashboard-card__status {
+  margin-bottom: 0.75rem;
 }
 
-.dashboard-badge,
+.dashboard-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1875rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.dashboard-status-badge--progress {
+  border: 1px solid rgba(6, 188, 249, 0.5);
+  background: rgba(6, 188, 249, 0.1);
+  color: #06bcf9;
+}
+
+.dashboard-status-badge--complete {
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+/* Progress Bar */
+.dashboard-card__progress {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.5rem;
+}
+
+.dashboard-card__progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-card__progress-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.dashboard-card__progress-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.dashboard-card__progress-bar {
+  width: 100%;
+  height: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dashboard-card__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #06bcf9 0%, #08a8e0 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Footer with visibility badge and open button */
+.dashboard-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-card__visibility {
+  flex-shrink: 0;
+}
+
+.dashboard-card__open {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+}
+
 .dashboard-tag {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(220, 194, 185, 0.74);
-  background: rgba(255, 239, 231, 0.9);
-  color: #86655d;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
   padding: 0.22rem 0.5rem;
   font-size: 0.64rem;
   line-height: 1;
@@ -234,18 +313,24 @@
   text-transform: uppercase;
 }
 
-.dashboard-badge {
-  border-color: rgba(218, 153, 131, 0.82);
-  background: rgba(245, 216, 202, 0.92);
-  color: #825447;
+.dashboard-tag--public {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.dashboard-tag--private {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 .dashboard-state {
-  border: 1px dashed rgba(218, 192, 183, 0.82);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
   border-radius: 12px;
-  background: rgba(255, 248, 244, 0.94);
+  background: rgba(255, 255, 255, 0.03);
   padding: 1.65rem 1rem;
-  color: #7f635a;
+  color: #94a3b8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -261,7 +346,7 @@
 .dashboard-state h2 {
   margin: 0;
   font-size: 1.08rem;
-  color: #3d2d2a;
+  color: #e2e8f0;
 }
 
 .dashboard-state p {
@@ -270,13 +355,13 @@
 }
 
 .dashboard-state__error {
-  color: #dd6c6c;
+  color: #ef4444;
 }
 
 .dashboard-pagination {
   margin-top: 0.95rem;
   padding-top: 0.9rem;
-  border-top: 1px solid rgba(216, 193, 185, 0.72);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -284,13 +369,13 @@
 }
 
 .dashboard-pagination span {
-  color: #7f635a;
+  color: #94a3b8;
   font-size: 0.86rem;
 }
 
 .dashboard-btn {
   border-radius: 12px;
-  border: 1px solid rgba(220, 193, 184, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 0.66rem 1.05rem;
   display: inline-flex;
   align-items: center;
@@ -309,34 +394,34 @@
 }
 
 .dashboard-btn--primary {
-  border-color: rgba(208, 145, 126, 0.9);
-  color: #fff;
-  background: linear-gradient(145deg, #df9f86 0%, #cb86a2 100%);
-  box-shadow: 0 9px 20px rgba(181, 126, 144, 0.3);
+  border-color: rgba(6, 188, 249, 0.5);
+  color: #0f172a;
+  background: linear-gradient(145deg, #06bcf9 0%, #08a8e0 100%);
+  box-shadow: 0 9px 20px rgba(6, 188, 249, 0.3);
 }
 
 .dashboard-btn--ghost {
-  border-color: rgba(220, 193, 184, 0.82);
-  color: #62443d;
-  background: rgba(255, 249, 245, 0.94);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .dashboard-btn--logout {
-  border-color: rgba(215, 172, 182, 0.82);
-  color: #7d5864;
-  background: rgba(251, 241, 245, 0.9);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .dashboard-btn--logout:hover {
-  border-color: rgba(201, 154, 166, 0.86);
-  box-shadow: 0 8px 18px rgba(177, 136, 149, 0.22);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-btn--danger {
-  border-color: rgba(203, 139, 150, 0.92);
+  border-color: rgba(239, 68, 68, 0.5);
   color: #fff;
-  background: linear-gradient(145deg, #cc8698 0%, #b77487 100%);
-  box-shadow: 0 8px 18px rgba(177, 120, 135, 0.26);
+  background: linear-gradient(145deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 8px 18px rgba(239, 68, 68, 0.3);
 }
 
 .dashboard-btn:disabled {
@@ -351,7 +436,7 @@
   flex-direction: column;
   gap: 1rem;
   padding: 2.25rem 1.1rem 1.1rem;
-  color: #e6f9ff;
+  color: #e2e8f0;
 }
 
 .dashboard-modal__close {
@@ -364,54 +449,54 @@
   width: 2rem;
   height: 2rem;
   border-radius: 8px;
-  border: 1px solid rgba(146, 222, 255, 0.42);
-  background: rgba(255, 255, 255, 0.04);
-  color: #d7f7ff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
   cursor: pointer;
   transition: border-color 0.14s ease, color 0.14s ease, background-color 0.14s ease;
 }
 
 .dashboard-modal__close:hover {
-  border-color: rgba(197, 140, 224, 0.72);
-  color: #f1e0fb;
-  background: rgba(197, 140, 224, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .dashboard-modal h2 {
   margin: 0;
   font-family: "Space Grotesk", "Manrope", sans-serif;
   font-size: 1.2rem;
-  color: #effcff;
+  color: #e2e8f0;
   letter-spacing: -0.01em;
 }
 
 .dashboard-modal p {
   margin: 0.32rem 0 0;
-  color: rgba(182, 238, 255, 0.82);
+  color: #94a3b8;
   line-height: 1.45;
 }
 
 .dashboard-modal strong {
-  color: #f5fdff;
+  color: #e2e8f0;
 }
 
 .dashboard-modal__input {
   width: 100%;
-  border: 1px solid rgba(146, 222, 255, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 10px;
   padding: 0.72rem 0.82rem;
-  background: rgba(9, 23, 35, 0.68);
-  color: #effbff;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
 }
 
 .dashboard-modal__input::placeholder {
-  color: rgba(166, 216, 232, 0.75);
+  color: #64748b;
 }
 
 .dashboard-modal__input:focus {
   outline: none;
-  border-color: rgba(197, 140, 224, 0.85);
-  box-shadow: 0 0 0 2px rgba(197, 140, 224, 0.16);
+  border-color: rgba(6, 188, 249, 0.5);
+  box-shadow: 0 0 0 2px rgba(6, 188, 249, 0.15);
 }
 
 .dashboard-modal__actions {
@@ -422,21 +507,21 @@
 }
 
 .dashboard-modal__actions .dashboard-btn--ghost {
-  border-color: rgba(146, 222, 255, 0.42);
-  background: rgba(255, 255, 255, 0.04);
-  color: #d7f7ff;
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
 }
 
 .dashboard-modal__actions .dashboard-btn--primary {
-  border-color: rgba(198, 140, 224, 0.78);
-  background: linear-gradient(145deg, rgba(199, 141, 224, 0.72) 0%, rgba(121, 193, 236, 0.78) 100%);
-  color: #0b1924;
+  border-color: rgba(6, 188, 249, 0.5);
+  background: linear-gradient(145deg, #06bcf9 0%, #08a8e0 100%);
+  color: #0f172a;
   box-shadow: none;
 }
 
 .dashboard-modal__actions .dashboard-btn--danger {
-  border-color: rgba(245, 130, 171, 0.82);
-  background: linear-gradient(145deg, rgba(245, 130, 171, 0.72) 0%, rgba(215, 107, 149, 0.75) 100%);
+  border-color: rgba(239, 68, 68, 0.5);
+  background: linear-gradient(145deg, #ef4444 0%, #dc2626 100%);
   color: #fff;
   box-shadow: none;
 }

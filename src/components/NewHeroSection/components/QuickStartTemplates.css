@@ -1,0 +1,146 @@
+/* QuickStartTemplates - Шаблоны быстрого старта */
+
+.quick-start-templates {
+  padding: 3rem 0;
+  background: transparent;
+}
+
+.quick-start-templates__container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .quick-start-templates__container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .quick-start-templates__container {
+    padding: 0 2rem;
+  }
+}
+
+.quick-start-templates__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.quick-start-templates__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.quick-start-templates__icon {
+  color: #06bcf9;
+}
+
+.quick-start-templates__link {
+  background: transparent;
+  border: none;
+  color: #06bcf9;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.quick-start-templates__link:hover {
+  color: #08a8e0;
+  text-decoration: underline;
+}
+
+.quick-start-templates__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .quick-start-templates__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.quick-start-templates__card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  aspect-ratio: 4/5;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  transition: transform 0.3s ease;
+}
+
+.quick-start-templates__card:hover {
+  transform: translateY(-4px);
+}
+
+.quick-start-templates__card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.5s ease;
+}
+
+.quick-start-templates__card:hover .quick-start-templates__card-image {
+  transform: scale(1.1);
+}
+
+.quick-start-templates__card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.2) 50%, transparent 100%);
+}
+
+.quick-start-templates__card-content {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+.quick-start-templates__card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .quick-start-templates__card-title {
+    font-size: 1.0625rem;
+  }
+}
+
+.quick-start-templates__card-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+@media (min-width: 640px) {
+  .quick-start-templates__card-subtitle {
+    font-size: 0.75rem;
+  }
+}

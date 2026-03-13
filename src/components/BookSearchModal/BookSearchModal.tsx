@@ -298,24 +298,43 @@ export const BookSearchModal = ({
           title: book.title,
         });
 
-        // Проверяем различные форматы ошибок о отсутствии обложки
+        // Проверяем ошибку лимита книг
         const errorMessage = err.message || "";
+        const isLimitError = errorMessage.includes("Превышен лимит книг") || errorMessage.includes("лимит");
+
+        if (isLimitError) {
+          sileo.action({
+            title: "Лимит книг",
+            description: "Достигнуто максимальное количество книг в тир-листе (20). Оформите Pro для неограниченного количества.",
+            duration: 3000,
+            button: {
+              title: "Оформить Pro",
+              onClick: () => {
+                // TODO: Здесь будет переход на страницу оплаты Pro-подписки
+                console.log('Navigate to Pro subscription');
+              },
+            },
+          });
+          break; // Прекращаем добавление
+        }
+
+        // Проверяем различные форматы ошибок о отсутствии обложки
         const isNoCoverError =
           errorMessage.includes("no cover image") ||
           errorMessage.includes("Book has no cover") ||
           errorMessage.includes("cover");
 
         if (isNoCoverError) {
-          sileo.error({ 
-            title: `Нет обложки`, 
+          sileo.error({
+            title: `Нет обложки`,
             description: `У книги "${book.title}" нет обложки`,
-            duration: 3000 
+            duration: 3000
           });
         } else {
-          sileo.error({ 
-            title: `Не удалось добавить книгу`, 
+          sileo.error({
+            title: `Не удалось добавить книгу`,
             description: `Ошибка при добавлении "${book.title}"`,
-            duration: 3000 
+            duration: 3000
           });
         }
       }
@@ -342,8 +361,29 @@ export const BookSearchModal = ({
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(err, { action: "addBookFromView", title: book.title });
 
-      // Проверяем различные форматы ошибок о отсутствии обложки
+      // Проверяем ошибку лимита книг
       const errorMessage = err.message || "";
+      const isLimitError = errorMessage.includes("Превышен лимит книг") || errorMessage.includes("лимит");
+
+      if (isLimitError) {
+        sileo.action({
+          title: "Лимит книг",
+          description: "Достигнуто максимальное количество книг в тир-листе (20). Оформите Pro для неограниченного количества.",
+          duration: 3000,
+          button: {
+            title: "Оформить Pro",
+            onClick: () => {
+              // TODO: Здесь будет переход на страницу оплаты Pro-подписки
+              console.log('Navigate to Pro subscription');
+            },
+          },
+        });
+        setViewBook(null);
+        handleClose();
+        return;
+      }
+
+      // Проверяем различные форматы ошибок о отсутствии обложки
       const isNoCoverError =
         errorMessage.includes("no cover image") ||
         errorMessage.includes("Book has no cover") ||

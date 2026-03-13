@@ -7,6 +7,7 @@ import type { Book, TierListData } from '@/types';
 interface EditorMainContentProps {
   listData: TierListData;
   isReadOnly: boolean;
+  isPro?: boolean;
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   // Обработчики для TierGrid
   onDeleteBook?: (bookId: string) => void;
@@ -35,6 +36,7 @@ interface EditorMainContentProps {
 export const EditorMainContent = memo(({
   listData,
   isReadOnly,
+  isPro = false,
   tierGridRef,
   onDeleteBook,
   onEditBook,
@@ -59,6 +61,9 @@ export const EditorMainContent = memo(({
   const unrankedBooks = listData.unrankedBookIds
     .map((id) => listData.books[id])
     .filter(Boolean);
+
+  // Общее количество книг во всём тир-листе (в тирах + unranked)
+  const totalBooksCount = Object.keys(listData.books).length;
 
   const activeTierData = activeTierId ? listData.tiers[activeTierId] : null;
 
@@ -112,10 +117,12 @@ export const EditorMainContent = memo(({
 
         <UnrankedItems
           books={unrankedBooks}
+          booksCount={totalBooksCount}
           onUpload={isReadOnly ? undefined : onUploadBooks}
           onDeleteBook={isReadOnly ? undefined : onDeleteBook}
           onEditBook={isReadOnly ? undefined : onEditBook}
           onViewBook={onViewBook}
+          isPro={isPro}
         />
       </div>
 

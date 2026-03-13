@@ -46,12 +46,13 @@ const isDev = process.env.NODE_ENV !== 'production';
 const fastify = Fastify({
   logger: {
     level: isDev ? 'debug' : 'info',
-    ...(isDev && { 
-      transport: { 
-        target: 'pino-pretty' 
-      } 
+    ...(isDev && {
+      transport: {
+        target: 'pino-pretty'
+      }
     })
   },
+  bodyLimit: 10 * 1024 * 1024, // 10MB лимит для base64 изображений
 });
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;

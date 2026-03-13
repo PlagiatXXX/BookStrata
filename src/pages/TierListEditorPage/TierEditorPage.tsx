@@ -81,6 +81,9 @@ const TierListEditorContent = () => {
   const ownerUserId = apiData?.user?.id;
   const isOwner = currentUserId === ownerUserId;
   const isReadOnly = !isOwner && isPublic;
+  
+  // TODO: Добавить проверку Pro-подписки из AuthContext или API
+  const isPro = false;
 
   // Получаем функции из хука useTierList
   const {
@@ -271,6 +274,7 @@ const TierListEditorContent = () => {
         <EditorMainContent
           listData={listData}
           isReadOnly={isReadOnly}
+          isPro={isPro}
           tierGridRef={tierGridRef}
           onDeleteBook={deleteBookWithUnsaved}
           onEditBook={(book) => setBookToEdit(book)}

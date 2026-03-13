@@ -1,0 +1,347 @@
+/* NewHeroSection - Hero секция в стиле Dashboard */
+
+.new-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 3rem 0 4rem;
+  background: #0f172a;
+}
+
+.new-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCSnMOpnxXp8j2i-xF_rjvdm7qh-e7tVgNy0O2m4SoVxQbeDF1EbCV6q2zYCBqw9EYGmiaGYHuAYPmosqq_ENs2mmazM5DJCtgsRmYQl65QKqlXOhCxVsLRdXroZjf5wm7iZnEsA-PP0BmIHteyLCCvlPz_k3awimqdJCFqkWUz_mOQc_lUiOpPnFdXQIXuWmHKeGMLr8Gy87w2GKhAhA4CWXxmuHvw9yEjzxKQa4YAB8BhUGwwl60Bjsgv1HxDtegQm7LlWbNCfvj7');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.35;
+  z-index: 0;
+}
+
+.new-hero__container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 10;
+}
+
+@media (min-width: 640px) {
+  .new-hero__container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .new-hero__container {
+    padding: 0 2rem;
+  }
+}
+
+.new-hero__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .new-hero__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+  }
+}
+
+/* Content */
+.new-hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.new-hero__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.new-hero__chip {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #06bcf9;
+}
+
+.new-hero__title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .new-hero__title {
+    font-size: 3.5rem;
+  }
+}
+
+.new-hero__highlight {
+  color: #06bcf9;
+}
+
+.new-hero__subtitle {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.new-hero__description {
+  font-size: 1.125rem;
+  color: #94a3b8;
+  max-width: 32rem;
+  line-height: 1.6;
+}
+
+/* Actions */
+.new-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.new-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.new-hero__btn--primary {
+  background: #06bcf9;
+  color: #0f172a;
+}
+
+.new-hero__btn--primary:hover {
+  background: #08a8e0;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(6, 188, 249, 0.3);
+}
+
+.new-hero__btn--secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.new-hero__btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Preview Card */
+.new-hero__preview {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .new-hero__preview {
+    display: block;
+  }
+}
+
+.new-hero-preview {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transform: rotate(2deg);
+  transition: transform 0.5s ease;
+}
+
+.new-hero-preview:hover {
+  transform: rotate(0deg);
+}
+
+.new-hero-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.new-hero-preview__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: white;
+  font-size: 0.875rem;
+}
+
+/* macOS-style window controls */
+.new-hero-preview__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.new-hero-preview__control {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.new-hero-preview__control--close {
+  background: #ff5f57;
+}
+
+.new-hero-preview__control--minimize {
+  background: #febc2e;
+}
+
+.new-hero-preview__control--maximize {
+  background: #28c840;
+}
+
+.new-hero-preview__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 1rem;
+}
+
+.new-hero-preview__tier {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.new-hero-preview__tier-label {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.new-hero-preview__tier-label--s {
+  background: rgba(239, 68, 68, 0.8);
+}
+
+.new-hero-preview__tier-label--a {
+  background: rgba(249, 115, 22, 0.8);
+}
+
+.new-hero-preview__tier-label--b {
+  background: rgba(234, 179, 8, 0.8);
+}
+
+.new-hero-preview__books {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.new-hero-preview__book {
+  width: 4rem;
+  height: 5rem;
+  border-radius: 0.375rem;
+  background: #334155;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Stats Section */
+.new-hero-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+@media (min-width: 640px) {
+  .new-hero-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.new-hero-stats__item {
+  padding: 1.5rem;
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .new-hero-stats__item {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: #1e293b;
+}
+
+.new-hero-stats__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.new-hero-stats__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.dark .new-hero-stats__label {
+  color: #94a3b8;
+}
+
+.new-hero-stats__value {
+  font-size: 2rem;
+  font-weight: 900;
+  margin-top: 0.25rem;
+  color: #0f172a;
+}
+
+.dark .new-hero-stats__value {
+  color: white;
+}
+
+.new-hero-stats__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-hero-stats__icon--primary {
+  background: rgba(6, 188, 249, 0.1);
+  color: #06bcf9;
+}
+
+.new-hero-stats__icon--success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.new-hero-stats__icon--warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}

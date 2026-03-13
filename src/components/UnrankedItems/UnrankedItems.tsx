@@ -3,19 +3,22 @@ import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import type { Book } from "@/types";
 import { SortableBookCover } from "@/components/SortableBookCover/SortableBookCover";
-import { UNRANKED_AREA_ID } from "@/constants/dnd";
 import { ImageUploader } from "@/components/ImageUploader/ImageUploader";
+import { BookCounter } from "@/components/BookCounter/BookCounter";
+import { UNRANKED_AREA_ID } from "@/constants/dnd";
 
 interface UnrankedItemsProps {
   books: Book[];
+  booksCount?: number;
   onUpload?: (files: File[]) => void;
   onDeleteBook?: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
   onViewBook?: (book: Book) => void;
+  isPro?: boolean;
 }
 
 export const UnrankedItems = memo(
-  ({ books, onUpload, onDeleteBook, onEditBook, onViewBook }: UnrankedItemsProps) => {
+  ({ books, booksCount, onUpload, onDeleteBook, onEditBook, onViewBook, isPro = false }: UnrankedItemsProps) => {
     const { setNodeRef } = useDroppable({
       id: UNRANKED_AREA_ID,
       data: {
@@ -23,6 +26,8 @@ export const UnrankedItems = memo(
         containerId: UNRANKED_AREA_ID,
       },
     });
+
+    const displayBooksCount = booksCount ?? books.length;
 
     return (
       <div
@@ -36,6 +41,11 @@ export const UnrankedItems = memo(
         </div>
 
         <div className="p-6">
+          {/* Book Counter */}
+          <div className="mb-4">
+            <BookCounter booksCount={displayBooksCount} isPro={isPro} />
+          </div>
+
           <SortableContext
             id={UNRANKED_AREA_ID}
             items={books.map((b) => b.id)}
@@ -52,7 +62,7 @@ export const UnrankedItems = memo(
                   containerId={UNRANKED_AREA_ID}
                 />
               ))}
-              <ImageUploader onUpload={onUpload} />
+              <ImageUploader onUpload={onUpload} booksCount={displayBooksCount} isPro={isPro} />
             </div>
           </SortableContext>
         </div>

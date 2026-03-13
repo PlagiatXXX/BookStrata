@@ -21,7 +21,16 @@ export async function getUserTierLists(userId: number, query: GetTierListsQuery)
           select: { id: true, username: true, avatarUrl: true },
         },
         _count: {
-          select: { likes: true },
+          select: { likes: true, placements: true },
+        },
+        placements: {
+          include: {
+            book: {
+              select: { coverImageUrl: true },
+            },
+          },
+          take: 4,
+          orderBy: { rank: 'asc' },
         },
       },
       orderBy: { updatedAt: 'desc' },
@@ -34,11 +43,14 @@ export async function getUserTierLists(userId: number, query: GetTierListsQuery)
   ]);
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  // Добавляем likesCount в ответ
+  // Добавляем likesCount, booksCount и coverImages в ответ
   const data = tierLists.map((tl) => ({
     ...tl,
     user: tl.user,
     likesCount: tl._count.likes,
+    booksCount: tl._count.placements,
+    coverImages: tl.placements.map((p) => p.book.coverImageUrl).filter(Boolean),
+    placements: undefined,
     _count: undefined,
   }));
 
@@ -162,14 +174,23 @@ export async function addBooksToTierList(
   tierListId: number,
   books: { title: string; author?: string | null; coverImageUrl: string; description?: string | null; thoughts?: string | null }[]
 ) {
+  const MAX_BOOKS_PER_TIER_LIST = 20;
 
   if (books.length === 0) return [];
 
+  // Проверка лимита книг
+  const existingBooksCount = await prisma.bookPlacement.count({
+    where: { tierListId },
+  });
+
+  if (existingBooksCount + books.length > MAX_BOOKS_PER_TIER_LIST) {
+    throw new Error(
+      `Превышен лимит книг в тир-листе. Максимум: ${MAX_BOOKS_PER_TIER_LIST}, текущее количество: ${existingBooksCount}, добавляется: ${books.length}`
+    );
+  }
+
   // Используем одну транзакцию для всех операций
   const results = await prisma.$transaction(async (tx) => {
-    const currentCount = await tx.bookPlacement.count({
-      where: { tierListId, tierId: null },
-    });
     const createBookPromises = books.map((bookData) =>
       tx.book.create({
         data: {
@@ -190,7 +211,7 @@ export async function addBooksToTierList(
           tierListId,
           bookId: book.id,
           tierId: null,
-          rank: currentCount + index, // Сохраняем порядок
+          rank: existingBooksCount + index, // Сохраняем порядок
         },
         include: { book: true },
       })
