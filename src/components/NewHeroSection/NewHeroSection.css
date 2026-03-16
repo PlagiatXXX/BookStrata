@@ -11,7 +11,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCSnMOpnxXp8j2i-xF_rjvdm7qh-e7tVgNy0O2m4SoVxQbeDF1EbCV6q2zYCBqw9EYGmiaGYHuAYPmosqq_ENs2mmazM5DJCtgsRmYQl65QKqlXOhCxVsLRdXroZjf5wm7iZnEsA-PP0BmIHteyLCCvlPz_k3awimqdJCFqkWUz_mOQc_lUiOpPnFdXQIXuWmHKeGMLr8Gy87w2GKhAhA4CWXxmuHvw9yEjzxKQa4YAB8BhUGwwl60Bjsgv1HxDtegQm7LlWbNCfvj7');
+  background-image: url("/hero-bg.webp");
   background-size: cover;
   background-position: center;
   opacity: 0.35;

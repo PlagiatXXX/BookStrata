@@ -1,22 +1,22 @@
-import type { AuthResponse, ValidateTokenResponse } from '@/types/auth';
-import { API_BASE_URL } from './config';
-import { createLogger } from './logger';
-import { StorageService } from './storage';
+import type { AuthResponse, ValidateTokenResponse } from "@/types/auth";
+import { API_BASE_URL } from "./config";
+import { createLogger } from "./logger";
+import { StorageService } from "./storage";
 
 // Логгер для модуля аутентификации
-const authLogger = createLogger('AuthApi', { color: 'cyan' });
+const authLogger = createLogger("AuthApi", { color: "cyan" });
 
 /**
  * Базовый URL API
- * 
+ *
  * ⚠️ SECURITY NOTE:
  * VITE_API_URL встраивается в клиентский бандл на этапе сборки и виден пользователям.
  * Это допустимо для публичных API, но не подходит для секретных ключей.
- * 
+ *
  * Риски:
  * - URL бэкенда виден в DevTools
  * - Может быть изменён при модификации бандла
- * 
+ *
  * Митигация:
  * - Валидация токена на сервере
  * - CORS ограничения
@@ -39,23 +39,32 @@ interface LoginPayload {
 /**
  * Регистрация нового пользователя
  */
-export async function apiRegister(payload: RegisterPayload): Promise<AuthResponse> {
-  authLogger.info('Регистрация нового пользователя', { username: payload.username, email: payload.email });
+export async function apiRegister(
+  payload: RegisterPayload,
+): Promise<AuthResponse> {
+  authLogger.info("Регистрация нового пользователя", {
+    username: payload.username,
+    email: payload.email,
+  });
 
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    authLogger.error(new Error(error.error || 'Регистрация не удалась'), { username: payload.username });
-    throw new Error(error.error || 'Регистрация не удалась');
+    authLogger.error(new Error(error.error || "Регистрация не удалась"), {
+      username: payload.username,
+    });
+    throw new Error(error.error || "Регистрация не удалась");
   }
 
   const result = await response.json();
-  authLogger.info('Регистрация пользователя успешна', { username: payload.username });
+  authLogger.info("Регистрация пользователя успешна", {
+    username: payload.username,
+  });
   return result;
 }
 
@@ -63,46 +72,116 @@ export async function apiRegister(payload: RegisterPayload): Promise<AuthRespons
  * Вход пользователя
  */
 export async function apiLogin(payload: LoginPayload): Promise<AuthResponse> {
-  authLogger.info('Попытка входа пользователя', { username: payload.username });
+  authLogger.info("Попытка входа пользователя", { username: payload.username });
 
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    authLogger.warn('Вход не удался', { username: payload.username, reason: error.error });
-    throw new Error(error.error || 'Вход не удался');
+    authLogger.warn("Вход не удался", {
+      username: payload.username,
+      reason: error.error,
+    });
+    throw new Error(error.error || "Вход не удался");
   }
 
   const result = await response.json();
-  authLogger.info('Вход пользователя успешен', { username: payload.username });
+  authLogger.info("Вход пользователя успешен", { username: payload.username });
   return result;
 }
 
 /**
- * Валидация токена
+ * Проверка, является ли ошибка сетевой (можно retry)
  */
-export async function apiValidateToken(token: string): Promise<ValidateTokenResponse> {
-  authLogger.info('Валидация токена аутентификации');
+function isNetworkError(error: unknown): boolean {
+  if (error instanceof TypeError) {
+    // ERR_CONNECTION_REFUSED, ERR_TIMED_OUT, network unreachable
+    return error.message.includes("fetch") || error.message.includes("network");
+  }
+  return false;
+}
 
-  const response = await fetch(`${API_BASE_URL}/auth/validate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
-  });
+/**
+ * Sleep utility для задержек
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  const result = await response.json();
+/**
+ * Валидация токена с retry-логикой
+ *
+ * Стратегия:
+ * - 3 попытки с экспоненциальной задержкой (500ms → 1000ms → 2000ms)
+ * - Retry только при сетевых ошибках (бэкенд недоступен)
+ * - При 401/403 — сразу ошибка (не retry)
+ */
+export async function apiValidateToken(
+  token: string,
+): Promise<ValidateTokenResponse> {
+  authLogger.info("Валидация токена аутентификации");
 
-  if (!result.valid) {
-    authLogger.warn('Валидация токена не удалась');
-  } else {
-    authLogger.info('Валидация токена успешна', { userId: result.userId });
+  const maxRetries = 3;
+  const baseDelay = 500; // 500ms
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      // При 401/403 не делаем retry — сразу возвращаем ошибку
+      if (response.status === 401 || response.status === 403) {
+        authLogger.warn("Валидация токена не удалась", {
+          status: response.status,
+        });
+        return { valid: false, userId: undefined, username: undefined };
+      }
+
+      const result = await response.json();
+
+      if (!result.valid) {
+        authLogger.warn("Валидация токена не удалась");
+      } else {
+        authLogger.info("Валидация токена успешна", { userId: result.userId });
+      }
+
+      return result;
+    } catch (error) {
+      // Если это сетевая ошибка — пробуем снова
+      if (isNetworkError(error) && attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt - 1); // 500, 1000, 2000
+        authLogger.debug(
+          `Попытка ${attempt} не удалась, следующая через ${delay}ms`,
+          {
+            error: error instanceof Error ? error.message : String(error),
+          },
+        );
+        await sleep(delay);
+        continue;
+      }
+
+      // Последняя попытка или не сетевая ошибка — пробрасываем дальше
+      authLogger.error(
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          action: "token validation",
+          attempt,
+          maxRetries,
+        },
+      );
+      throw error;
+    }
   }
 
-  return result;
+  // Должны были выйти выше, но на всякий случай
+  throw new Error("Валидация токена не удалась после всех попыток");
 }
 
 // ========== TOKEN MANAGEMENT ==========
@@ -111,21 +190,21 @@ export async function apiValidateToken(token: string): Promise<ValidateTokenResp
  * Сохранить токен в localStorage
  */
 export function setAuthToken(token: string) {
-  StorageService.setString('authToken', token);
+  StorageService.setString("authToken", token);
 }
 
 /**
  * Получить токен из localStorage
  */
 export function getAuthToken(): string | null {
-  return StorageService.getString('authToken');
+  return StorageService.getString("authToken");
 }
 
 /**
  * Удалить токен из localStorage
  */
 export function removeAuthToken() {
-  StorageService.remove('authToken');
+  StorageService.remove("authToken");
 }
 
 /**
@@ -140,10 +219,12 @@ export function getAuthHeader(): Record<string, string> {
  * Обработка 401 ошибки
  */
 export function handleUnauthorized() {
-  authLogger.warn('Неавторизованный доступ — очистка сессии и перенаправление на вход');
+  authLogger.warn(
+    "Неавторизованный доступ — очистка сессии и перенаправление на вход",
+  );
   removeAuthToken();
-  window.dispatchEvent(new CustomEvent('unauthorized'));
-  window.location.href = '/auth';
+  window.dispatchEvent(new CustomEvent("unauthorized"));
+  window.location.href = "/auth";
 }
 
 /**
@@ -151,9 +232,9 @@ export function handleUnauthorized() {
  */
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
-    authLogger.warn('API вернул 401 Unauthorized');
+    authLogger.warn("API вернул 401 Unauthorized");
     handleUnauthorized();
-    throw new Error('Требуется авторизация. Пожалуйста, войдите в систему.');
+    throw new Error("Требуется авторизация. Пожалуйста, войдите в систему.");
   }
 
   if (response.status === 204) {
@@ -166,7 +247,7 @@ export async function handleResponse<T>(response: Response): Promise<T> {
     authLogger.error(new Error(errorMessage), {
       status: response.status,
       statusText: response.statusText,
-      url: response.url
+      url: response.url,
     });
     throw new Error(errorMessage);
   }
@@ -176,5 +257,5 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 
 // ========== EXPORTS FOR COMPATIBILITY ==========
 // Экспортируем типы для обратной совместимости
-export type { User } from './userApi';
-export type { LikesResponse } from './likesApi';
+export type { User } from "./userApi";
+export type { LikesResponse } from "./likesApi";

@@ -277,6 +277,17 @@ tiermaker-pro/
 
 ## 🌐 API
 
+### Swagger документация
+
+Интерактивная API документация доступна по адресу:
+
+- **Development:** http://localhost:8080/documentation
+- **Production:** https://api.bookstrata.pro/documentation
+
+**Документация:**
+- [backend/SWAGGER_DOCS.md](./backend/SWAGGER_DOCS.md) — полное руководство по API
+- [backend/src/swagger.ts](./backend/src/swagger.ts) — определения схем
+
 ### Аутентификация
 | Метод | Эндпоинт | Описание |
 |-------|----------|----------|
@@ -293,7 +304,7 @@ tiermaker-pro/
 | GET | `/api/tier-lists/:id` | Получить тир-лист по ID |
 | PUT | `/api/tier-lists/:id` | Обновить тир-лист |
 | DELETE | `/api/tier-lists/:id` | Удалить тир-лист |
-| POST | `/api/tier-lists/:id/books` | Добавить книги |
+| POST | `/api/tier-lists/:id/books` | Добавить книги (макс. 20) |
 | PUT | `/api/tier-lists/:id/placements` | Сохранить позиции |
 
 ### Шаблоны
