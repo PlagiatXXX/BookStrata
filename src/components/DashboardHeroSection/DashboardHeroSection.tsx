@@ -1,18 +1,18 @@
-import { PlusCircle, TrendingUp } from 'lucide-react';
-import { HeroPreviewCard } from './components/HeroPreviewCard';
-import './NewHeroSection.css';
+import { PlusCircle, TrendingUp } from "lucide-react";
+import { HeroPreviewCard } from "./components/HeroPreviewCard";
+import "./DashboardHeroSection.css";
 
-interface NewHeroSectionProps {
+interface DashboardHeroSectionProps {
   username: string;
   onCreateClick: () => void;
   onCommunityClick: () => void;
 }
 
-export function NewHeroSection({
+export function DashboardHeroSection({
   username,
   onCreateClick,
   onCommunityClick,
-}: NewHeroSectionProps) {
+}: DashboardHeroSectionProps) {
   return (
     <section className="new-hero">
       <div className="new-hero__container">
@@ -22,12 +22,15 @@ export function NewHeroSection({
             <div className="new-hero__header">
               <span className="new-hero__chip">Панель управления</span>
               <h1 className="new-hero__title">
-                Добро пожаловать, <span className="new-hero__highlight">{username}</span>
+                Добро пожаловать,{" "}
+                <span className="new-hero__highlight">{username}</span>
               </h1>
-              <p className="new-hero__subtitle">Твой уютный уголок для чтения</p>
+              <p className="new-hero__subtitle">
+                Твой уютный уголок для чтения
+              </p>
               <p className="new-hero__description">
-                Создавай свои рейтинги книг в атмосфере тепла и уюта. Делись впечатлениями и находи 
-                вдохновение среди единомышленников.
+                Создавай свои рейтинги книг в атмосфере тепла и уюта. Делись
+                впечатлениями и находи вдохновение среди единомышленников.
               </p>
             </div>
 

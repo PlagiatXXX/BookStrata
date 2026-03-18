@@ -1,52 +1,60 @@
-import React, { useEffect, useRef, useReducer } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { sileo } from 'sileo';
+import React, { useEffect, useRef, useReducer } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useLocation } from "react-router-dom";
+import { sileo } from "sileo";
 
-import { useUserTemplates, useDeleteTemplate } from '../../hooks/useTemplates';
-import { useAuth } from '@/hooks/useAuthContext';
-import { Button } from '@/ui/Button';
-import { DeleteTemplateModal } from './DeleteTemplateModal';
-import { Spinner } from '@/components/Spinner';
-import { getPublicTierLists } from '@/lib/api';
-import type { PaginatedTierListsResponse } from '@/lib/api';
-import { apiGetLikedTierListIds } from '@/lib/likesApi';
-import { Header } from '@/ui/Header';
-import { Footer } from '@/ui/Footer';
-import { EmptyState } from './components/EmptyState';
+import { useUserTemplates, useDeleteTemplate } from "../../hooks/useTemplates";
+import { useAuth } from "@/hooks/useAuthContext";
+import { Button } from "@/ui/Button";
+import { DeleteTemplateModal } from "./DeleteTemplateModal";
+import { Spinner } from "@/components/Spinner";
+import { getPublicTierLists } from "@/lib/api";
+import type { PaginatedTierListsResponse } from "@/lib/api";
+import { apiGetLikedTierListIds } from "@/lib/likesApi";
+import { Header } from "@/ui/Header";
+import { Footer } from "@/ui/Footer";
+import { EmptyState } from "./components/EmptyState";
 import {
   templateLibraryReducer,
   initialState,
   type SectionKey,
   type ViewMode,
-} from './templateLibraryReducer';
-import { useTemplateFilters } from './hooks/useTemplateFilters';
-import { usePublicTierListsPagination } from './hooks/usePublicTierListsPagination';
-import { TemplateLibraryHeader } from './components/TemplateLibraryHeader';
-import { TemplateLibrarySidebar } from './components/TemplateLibrarySidebar';
-import { TemplateLibraryToolbar } from './components/TemplateLibraryToolbar';
-import { TemplateLibraryGrid } from './components/TemplateLibraryGrid';
-import { PublicTierListsSection } from './components/PublicTierListsSection';
-import { COVER_HEIGHTS, PUBLIC_PAGE_SIZE, PUBLIC_TIER_LISTS_STALE_TIME_MS, PUBLIC_TIER_LISTS_GC_TIME_MS } from './constants';
-import type { Template } from '../../types/templates';
+} from "./templateLibraryReducer";
+import { useTemplateFilters } from "./hooks/useTemplateFilters";
+import { usePublicTierListsPagination } from "./hooks/usePublicTierListsPagination";
+import { TemplateLibraryHeader } from "./components/TemplateLibraryHeader";
+import { TemplateLibrarySidebar } from "./components/TemplateLibrarySidebar";
+import { TemplateLibraryToolbar } from "./components/TemplateLibraryToolbar";
+import { TemplateLibraryGrid } from "./components/TemplateLibraryGrid";
+import { PublicTierListsSection } from "./components/PublicTierListsSection";
+import {
+  COVER_HEIGHTS,
+  PUBLIC_PAGE_SIZE,
+  PUBLIC_TIER_LISTS_STALE_TIME_MS,
+  PUBLIC_TIER_LISTS_GC_TIME_MS,
+} from "./constants";
+import type { Template } from "../../types/templates";
 
 interface TemplateLibraryProps {
   searchQuery?: string;
   initialSection?: SectionKey;
 }
 
-const sortBy: 'updated_at' | 'likes' | 'created' = 'likes';
+const sortBy: "updated_at" | "likes" | "created" = "likes";
 
 const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
-  searchQuery: initialSearchQuery = '',
+  searchQuery: initialSearchQuery = "",
   initialSection: initialSectionProp,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   useAuth();
 
-  const locationInitialSection = (location.state as { initialSection?: SectionKey } | null)?.initialSection;
-  const defaultSection: SectionKey = locationInitialSection || initialSectionProp || 'private';
+  const locationInitialSection = (
+    location.state as { initialSection?: SectionKey } | null
+  )?.initialSection;
+  const defaultSection: SectionKey =
+    locationInitialSection || initialSectionProp || "private";
 
   const getInitialState = (): ReturnType<typeof templateLibraryReducer> => ({
     ...initialState,
@@ -54,7 +62,11 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     activeSection: defaultSection,
   });
 
-  const [state, dispatch] = useReducer(templateLibraryReducer, null, getInitialState);
+  const [state, dispatch] = useReducer(
+    templateLibraryReducer,
+    null,
+    getInitialState,
+  );
 
   const {
     searchQuery,
@@ -69,26 +81,36 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
   const deleteIdRef = useRef<string | null>(null);
 
   // Обработчики навигации
-  const handleGoBack = () => navigate('/');
+  const handleGoBack = () => navigate("/");
 
   // Обработчики state
-  const handleSearchChange = (query: string) => dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
-  const handleSectionChange = (section: SectionKey) => dispatch({ type: 'SET_ACTIVE_SECTION', payload: section });
-  const handleCategoryChange = (category: string) => dispatch({ type: 'SET_ACTIVE_CATEGORY', payload: category });
-  const handleViewModeChange = (mode: ViewMode) => dispatch({ type: 'SET_VIEW_MODE', payload: mode });
-  const handlePageChange = (page: number) => dispatch({ type: 'SET_PUBLIC_PAGE', payload: page });
+  const handleSearchChange = (query: string) =>
+    dispatch({ type: "SET_SEARCH_QUERY", payload: query });
+  const handleSectionChange = (section: SectionKey) =>
+    dispatch({ type: "SET_ACTIVE_SECTION", payload: section });
+  const handleCategoryChange = (category: string) =>
+    dispatch({ type: "SET_ACTIVE_CATEGORY", payload: category });
+  const handleViewModeChange = (mode: ViewMode) =>
+    dispatch({ type: "SET_VIEW_MODE", payload: mode });
+  const handlePageChange = (page: number) =>
+    dispatch({ type: "SET_PUBLIC_PAGE", payload: page });
 
   const handleDeleteClick = (template: Template) => {
-    dispatch({ type: 'OPEN_DELETE_MODAL', payload: template });
+    dispatch({ type: "OPEN_DELETE_MODAL", payload: template });
     deleteIdRef.current = template.id;
   };
 
   const handleDeleteModalClose = () => {
-    dispatch({ type: 'CLOSE_DELETE_MODAL' });
+    dispatch({ type: "CLOSE_DELETE_MODAL" });
     deleteIdRef.current = null;
   };
 
-  const { data: templates, isLoading, isError, refetch: refetchTemplates } = useUserTemplates();
+  const {
+    data: templates,
+    isLoading,
+    isError,
+    refetch: refetchTemplates,
+  } = useUserTemplates();
   const { mutate: deleteTemplate, isPending: isDeleting } = useDeleteTemplate();
 
   const {
@@ -97,9 +119,13 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     isFetching: isFetchingPublicTierLists,
     refetch,
   } = useQuery<PaginatedTierListsResponse, Error>({
-    queryKey: ['publicTierListsSorted', sortBy, publicPage, PUBLIC_PAGE_SIZE],
+    queryKey: ["publicTierListsSorted", sortBy, publicPage, PUBLIC_PAGE_SIZE],
     queryFn: async () => {
-      const result = await getPublicTierLists(publicPage, PUBLIC_PAGE_SIZE, sortBy);
+      const result = await getPublicTierLists(
+        publicPage,
+        PUBLIC_PAGE_SIZE,
+        sortBy,
+      );
       return result;
     },
     staleTime: PUBLIC_TIER_LISTS_STALE_TIME_MS,
@@ -113,7 +139,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
   }, [publicPage, refetch]);
 
   const { data: likedTierListIds } = useQuery({
-    queryKey: ['likedTierListIds'],
+    queryKey: ["likedTierListIds"],
     queryFn: () => apiGetLikedTierListIds(),
     refetchOnWindowFocus: true,
   });
@@ -122,7 +148,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     if (locationInitialSection) {
       window.history.replaceState({}, document.title);
     }
-  }, []);
+  }, [locationInitialSection]);
 
   // Хук фильтрации
   const { filteredTemplates, categories } = useTemplateFilters({
@@ -133,10 +159,12 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
   });
 
   // Хук пагинации
-  const { totalPages, hasNextPage, pageNumbers } = usePublicTierListsPagination({
-    meta: publicTierListsData?.meta,
-    currentPage: publicPage,
-  });
+  const { totalPages, hasNextPage, pageNumbers } = usePublicTierListsPagination(
+    {
+      meta: publicTierListsData?.meta,
+      currentPage: publicPage,
+    },
+  );
 
   const likedIdsSet = new Set(likedTierListIds?.likedIds || []);
   const publicTierLists = publicTierListsData?.data || [];
@@ -147,22 +175,23 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
     deleteTemplate(id, {
       onSuccess: () => {
-        sileo.success({ title: 'Шаблон успешно удален', duration: 3000 });
+        sileo.success({ title: "Шаблон успешно удален", duration: 3000 });
         handleDeleteModalClose();
       },
       onError: () => {
         sileo.error({
-          title: 'Не удалось удалить шаблон',
-          description: 'Попробуйте снова позже',
+          title: "Не удалось удалить шаблон",
+          description: "Попробуйте снова позже",
           duration: 3000,
         });
       },
     });
   };
 
-  const handleEdit = (template: Template) => navigate(`/templates/${template.id}/edit`);
+  const handleEdit = (template: Template) =>
+    navigate(`/templates/${template.id}/edit`);
 
-  const handleCreateClick = () => navigate('/templates/new');
+  const handleCreateClick = () => navigate("/templates/new");
 
   if (isLoading) {
     return (
@@ -231,7 +260,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
                 />
 
                 {/* Content */}
-                {activeSection === 'public' ? (
+                {activeSection === "public" ? (
                   <PublicTierListsSection
                     tierLists={publicTierLists}
                     likedIdsSet={likedIdsSet}
@@ -269,7 +298,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
         isOpen={deleteModalOpen}
         onClose={handleDeleteModalClose}
         onConfirm={handleDeleteConfirm}
-        templateTitle={templateToDelete?.title || ''}
+        templateTitle={templateToDelete?.title || ""}
         isDeleting={isDeleting}
       />
     </div>

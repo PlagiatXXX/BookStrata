@@ -1,24 +1,24 @@
-import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
-import { useAuth } from '@/hooks/useAuthContext';
-import { getUserTierLists } from '@/lib/api';
-import { apiGetUserStats } from '@/lib/userApi';
-import type { SortOption } from './types';
-import { useDashboardState } from './hooks/useDashboardState';
-import { useTierListActions } from './hooks/useTierListActions';
-import { useTierListsPagination } from './hooks/useTierListsPagination';
-import { DashboardHeader } from './components/DashboardHeader';
-import { UserActivityStats } from '@/components/NewHeroSection/components/UserActivityStats';
-import { QuickStartTemplates } from '@/components/NewHeroSection/components/QuickStartTemplates';
-import { TierListGrid } from './components/TierListGrid';
-import { Pagination } from './components/Pagination';
-import { EmptyStates } from './components/EmptyStates';
-import { CreateTierListModal } from './components/CreateTierListModal';
-import { RenameTierListModal } from './components/RenameTierListModal';
-import { DeleteTierListModal } from './components/DeleteTierListModal';
-import { PAGE_SIZE } from './constants';
-import './DashboardPage.css';
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
+import { useAuth } from "@/hooks/useAuthContext";
+import { getUserTierLists } from "@/lib/api";
+import { apiGetUserStats } from "@/lib/userApi";
+import type { SortOption } from "./types";
+import { useDashboardState } from "./hooks/useDashboardState";
+import { useTierListActions } from "./hooks/useTierListActions";
+import { useTierListsPagination } from "./hooks/useTierListsPagination";
+import { DashboardHeader } from "./components/DashboardHeader";
+import { UserActivityStats } from "@/components/DashboardHeroSection/components/UserActivityStats";
+import { QuickStartTemplates } from "@/components/DashboardHeroSection/components/QuickStartTemplates";
+import { TierListGrid } from "./components/TierListGrid";
+import { Pagination } from "./components/Pagination";
+import { EmptyStates } from "./components/EmptyStates";
+import { CreateTierListModal } from "./components/CreateTierListModal";
+import { RenameTierListModal } from "./components/RenameTierListModal";
+import { DeleteTierListModal } from "./components/DeleteTierListModal";
+import { PAGE_SIZE } from "./constants";
+import "./DashboardPage.css";
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
@@ -39,7 +39,17 @@ export function DashboardPage() {
     setFilterOption,
   } = useDashboardState();
 
-  const { currentPage, searchQuery, activeModal, tierListToRename, tierListToDelete, renameTitle, createTitle, sortOption, filterOption } = state;
+  const {
+    currentPage,
+    searchQuery,
+    activeModal,
+    tierListToRename,
+    tierListToDelete,
+    renameTitle,
+    createTitle,
+    sortOption,
+    filterOption,
+  } = state;
 
   // Data fetching - Tier lists
   const {
@@ -57,13 +67,13 @@ export function DashboardPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['userTierLists', currentPage],
+    queryKey: ["userTierLists", currentPage],
     queryFn: () => getUserTierLists(currentPage, PAGE_SIZE),
   });
 
   // Data fetching - User stats
   const { data: stats } = useQuery({
-    queryKey: ['userStats'],
+    queryKey: ["userStats"],
     queryFn: apiGetUserStats,
     staleTime: 5 * 60 * 1000, // 5 минут
     retry: 2,
@@ -75,15 +85,21 @@ export function DashboardPage() {
   const draftsCount = Math.max(0, tierListsCount - publishedCount);
 
   // CRUD операции
-  const { createNewTierList, renameTierList, removeTierList, isCreating, isRenaming, isDeleting } =
-    useTierListActions({
-      onSuccess: () => {
-        closeModal();
-      },
-      onRefetch: () => {
-        refetch();
-      },
-    });
+  const {
+    createNewTierList,
+    renameTierList,
+    removeTierList,
+    isCreating,
+    isRenaming,
+    isDeleting,
+  } = useTierListActions({
+    onSuccess: () => {
+      closeModal();
+    },
+    onRefetch: () => {
+      refetch();
+    },
+  });
 
   // Фильтрация и пагинация
   const { displayedTierLists } = useTierListsPagination({
@@ -98,12 +114,12 @@ export function DashboardPage() {
   // Обработчики
   const handleMyRatingsClick = () => {
     setCurrentPage(1);
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleLogout = () => {
     logout();
-    navigate('/auth', { replace: true });
+    navigate("/auth", { replace: true });
   };
 
   const handleOpenTierList = (id: number) => {
@@ -138,9 +154,9 @@ export function DashboardPage() {
         <div className="dashboard-home__container">
           {/* Hero Section */}
           <DashboardHeader
-            username={user?.username || ''}
+            username={user?.username || ""}
             onCreateClick={openCreateModal}
-            onCommunityClick={() => navigate('/community')}
+            onCommunityClick={() => navigate("/community")}
             onLogoutClick={handleLogout}
           />
 
@@ -164,20 +180,20 @@ export function DashboardPage() {
             {/* Filter Tabs */}
             <div className="dashboard-filters">
               <button
-                onClick={() => setFilterOption('all')}
-                className={`dashboard-filter-btn ${filterOption === 'all' ? 'dashboard-filter-btn--active' : ''}`}
+                onClick={() => setFilterOption("all")}
+                className={`dashboard-filter-btn ${filterOption === "all" ? "dashboard-filter-btn--active" : ""}`}
               >
                 Все
               </button>
               <button
-                onClick={() => setFilterOption('public')}
-                className={`dashboard-filter-btn ${filterOption === 'public' ? 'dashboard-filter-btn--active' : ''}`}
+                onClick={() => setFilterOption("public")}
+                className={`dashboard-filter-btn ${filterOption === "public" ? "dashboard-filter-btn--active" : ""}`}
               >
                 Публичные
               </button>
               <button
-                onClick={() => setFilterOption('private')}
-                className={`dashboard-filter-btn ${filterOption === 'private' ? 'dashboard-filter-btn--active' : ''}`}
+                onClick={() => setFilterOption("private")}
+                className={`dashboard-filter-btn ${filterOption === "private" ? "dashboard-filter-btn--active" : ""}`}
               >
                 Приватные
               </button>
@@ -206,7 +222,7 @@ export function DashboardPage() {
             isEmpty={isEmpty && !isLoading}
             onRetry={() => refetch()}
             onCreateClick={openCreateModal}
-            onClearSearch={() => setSearchQuery('')}
+            onClearSearch={() => setSearchQuery("")}
             error={error}
           />
 
@@ -231,7 +247,7 @@ export function DashboardPage() {
 
       {/* Modals */}
       <CreateTierListModal
-        isOpen={activeModal === 'create'}
+        isOpen={activeModal === "create"}
         onClose={closeModal}
         onCreate={handleCreateTierList}
         createTitle={createTitle}
@@ -240,7 +256,7 @@ export function DashboardPage() {
       />
 
       <RenameTierListModal
-        isOpen={activeModal === 'rename'}
+        isOpen={activeModal === "rename"}
         onClose={closeModal}
         onRename={handleRename}
         renameTitle={renameTitle}
@@ -250,7 +266,7 @@ export function DashboardPage() {
       />
 
       <DeleteTierListModal
-        isOpen={activeModal === 'delete'}
+        isOpen={activeModal === "delete"}
         onClose={closeModal}
         onDelete={handleDelete}
         tierListTitle={tierListToDelete?.title}
