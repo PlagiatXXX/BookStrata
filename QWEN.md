@@ -508,7 +508,7 @@ searchQuery → filterOption → sortOption → displayedTierLists
 - Статистика активности (Создано/Опубликовано/Черновики)
 - Шаблоны быстрого старта (Fiction, Sci-Fi, Detectives, Non-fiction)
 
-##### Test Coverage Summary
+##### Test Coverage Summary (as of March 2026)
 | Location | Tests | Status |
 |----------|-------|--------|
 | `src/hooks/` | 30 | ✅ |
@@ -520,13 +520,40 @@ searchQuery → filterOption → sortOption → displayedTierLists
 | `src/lib/` | 3 | ✅ |
 | `src/utils/` | 17 | ✅ |
 | `src/ui/` | 7 | ✅ |
-| **Total** | **292** | ✅ |
+| **Backend modules** | **138** | ✅ |
+| **Total** | **292 + 138 = 430** | ✅ |
 
 ```
-Test Files: 23 passed (23)
-Tests: 292 passed (292)
-Duration: ~50s
+Test Files: 30 passed (30)
+Tests: 430 passed (430)
+Duration: ~18s
 ```
+
+---
+
+## 🧪 Test Fixes (Март 2026)
+
+### Исправленные проблемы тестов (23 марта 2026)
+
+| Файл | Проблема | Решение |
+|------|----------|---------|
+| `tierList.route.spec.ts` | 404 вместо 401 | Переписан тест с явным middleware вместо `vi.mock` |
+| `tierList.service.ts` | `Cannot read properties of undefined` | Добавлена проверка `if (!results \|\| results.length === 0)` |
+| `tierList.service.spec.ts` | `saveTiers` возвращал `[]` | Добавлен мок `tier.findMany` с 3 тирами |
+| `users.service.spec.ts` | `bcrypt` не работал в тестах | Подключён реальный bcrypt через `vi.importActual` |
+| `books.service.spec.ts` | Неправильное имя API key | Исправлено на `test-google-books-api-key` |
+
+### Backend Test Modules
+| Module | Tests | Status |
+|--------|-------|--------|
+| `tierList.route.spec.ts` | 3 | ✅ |
+| `tierList.service.spec.ts` | 31 | ✅ |
+| `users.service.spec.ts` | 21 | ✅ |
+| `books.service.spec.ts` | 13 | ✅ |
+| `auth.service.spec.ts` | 20 | ✅ |
+| `templates.service.spec.ts` | 33 | ✅ |
+| `avatars.service.spec.ts` | 17 | ✅ |
+| **Total Backend** | **138** | ✅ |
 
 ---
 

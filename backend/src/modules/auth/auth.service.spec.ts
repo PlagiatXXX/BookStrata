@@ -1,66 +1,323 @@
-import { describe, it, expect } from 'vitest';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-// Примеры тестов для auth service
-// В реальности нужно мокировать Prisma и bcrypt
+// Моки для Prisma — должны быть ДО импорта сервиса
+vi.mock("../../lib/prisma.js", () => ({
+  prisma: {
+    user: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
+  },
+}));
 
-describe('Auth Service', () => {
-  describe('validateToken', () => {
-    const JWT_SECRET = 'test-secret';
-    
-    it('should validate a valid token', () => {
-      const payload = { userId: 1, username: 'testuser' };
+// Импортируем после vi.mock
+import * as authService from "./auth.service.js";
+import { prisma } from "../../lib/prisma.js";
+
+describe("Auth Service", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  describe("validateToken", () => {
+    const JWT_SECRET = "test-secret-key";
+
+    it("должен валидировать корректный токен", () => {
+      const payload = { userId: 1, username: "testuser" };
       const token = jwt.sign(payload, JWT_SECRET);
-      
+
       const decoded = jwt.verify(token, JWT_SECRET) as typeof payload;
-      
+
       expect(decoded.userId).toBe(1);
-      expect(decoded.username).toBe('testuser');
+      expect(decoded.username).toBe("testuser");
     });
 
-    it('should throw error for invalid token', () => {
-      const invalidToken = 'invalid.token.here';
-      
+    it("должен бросить ошибку для невалидного токена", () => {
+      const invalidToken = "invalid.token.here";
+
       expect(() => {
         jwt.verify(invalidToken, JWT_SECRET);
       }).toThrow();
     });
 
-    it('should throw error for expired token', () => {
-      const payload = { userId: 1, username: 'testuser' };
-      // Token с экспирацией в прошлом
-      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '-1s' });
-      
+    it("должен бросить ошибку для просроченного токена", () => {
+      const payload = { userId: 1, username: "testuser" };
+      const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "-1s" });
+
       expect(() => {
         jwt.verify(token, JWT_SECRET);
       }).toThrow();
     });
+
+    it('должен бросить ошибку с сообщением "Невалидный токен"', () => {
+      expect(() => {
+        authService.validateToken("invalid.token");
+      }).toThrow("Невалидный токен");
+    });
   });
 
-  describe('Password hashing', () => {
-    it('should hash password correctly', async () => {
-      const password = 'mySecurePassword123';
+  describe("Password hashing (bcrypt)", () => {
+    it("должен хешировать пароль корректно", async () => {
+      const password = "mySecurePassword123";
       const hash = await bcrypt.hash(password, 10);
-      
+
       expect(hash).not.toBe(password);
       expect(hash.length).toBeGreaterThan(0);
     });
 
-    it('should verify correct password', async () => {
-      const password = 'mySecurePassword123';
+    it("должен подтверждать корректный пароль", async () => {
+      const password = "mySecurePassword123";
       const hash = await bcrypt.hash(password, 10);
-      
+
       const isValid = await bcrypt.compare(password, hash);
       expect(isValid).toBe(true);
     });
 
-    it('should not verify incorrect password', async () => {
-      const password = 'mySecurePassword123';
+    it("не должен подтверждать некорректный пароль", async () => {
+      const password = "mySecurePassword123";
       const hash = await bcrypt.hash(password, 10);
-      
-      const isValid = await bcrypt.compare('wrongPassword', hash);
+
+      const isValid = await bcrypt.compare("wrongPassword", hash);
       expect(isValid).toBe(false);
+    });
+  });
+
+  describe("register", () => {
+    const mockRegisterPayload = {
+      username: "newuser",
+      email: "newuser@example.com",
+      password: "password123",
+    };
+
+    const mockCreatedUser = {
+      id: 1,
+      username: "newuser",
+      email: "newuser@example.com",
+      passwordHash: "hashed-password",
+    };
+
+    it("должен зарегистрировать нового пользователя", async () => {
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
+
+      const result = await authService.register(mockRegisterPayload);
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { email: mockRegisterPayload.email },
+            { username: mockRegisterPayload.username },
+          ],
+        },
+      });
+
+      expect(prisma.user.create).toHaveBeenCalledWith({
+        data: {
+          username: mockRegisterPayload.username,
+          email: mockRegisterPayload.email,
+          passwordHash: expect.stringMatching(/^\$2[aby]\$/),
+        },
+      });
+
+      expect(result).toMatchObject({
+        userId: 1,
+        username: "newuser",
+      });
+      expect(result.accessToken).toBeDefined();
+    });
+
+    it("должен бросить ошибку если пользователь с email уже существует", async () => {
+      (prisma.user.findFirst as any).mockResolvedValue({
+        id: 999,
+        email: mockRegisterPayload.email,
+      });
+
+      await expect(authService.register(mockRegisterPayload)).rejects.toThrow(
+        "Пользователь с таким именем или email уже зарегистрирован",
+      );
+    });
+
+    it("должен бросить ошибку если пользователь с username уже существует", async () => {
+      (prisma.user.findFirst as any).mockResolvedValue({
+        id: 999,
+        username: mockRegisterPayload.username,
+      });
+
+      await expect(authService.register(mockRegisterPayload)).rejects.toThrow(
+        "Пользователь с таким именем или email уже зарегистрирован",
+      );
+    });
+
+    it("должен захешировать пароль перед сохранением", async () => {
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
+
+      await authService.register(mockRegisterPayload);
+
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            passwordHash: expect.stringMatching(/^\$2[aby]\$/),
+          }),
+        }),
+      );
+    });
+
+    it("должен сгенерировать JWT токен после регистрации", async () => {
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
+
+      const result = await authService.register(mockRegisterPayload);
+
+      expect(result.accessToken).toBeDefined();
+      expect(typeof result.accessToken).toBe("string");
+
+      // Проверяем что токен валидный
+      const decoded = jwt.verify(result.accessToken, "test-secret-key") as any;
+      expect(decoded.userId).toBe(1);
+      expect(decoded.username).toBe("newuser");
+    });
+  });
+
+  describe("login", () => {
+    const mockLoginPayload = {
+      username: "existinguser",
+      password: "password123",
+    };
+
+    const mockUser = {
+      id: 1,
+      username: "existinguser",
+      email: "user@example.com",
+      passwordHash: "",
+    };
+
+    beforeEach(async () => {
+      (mockUser as any).passwordHash = await bcrypt.hash("password123", 10);
+    });
+
+    it("должен войти пользователя с корректными данными", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+
+      const result = await authService.login(mockLoginPayload);
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { username: mockLoginPayload.username },
+      });
+
+      expect(result).toMatchObject({
+        userId: 1,
+        username: "existinguser",
+      });
+      expect(result.accessToken).toBeDefined();
+    });
+
+    it("должен бросить ошибку если пользователь не найден", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(null);
+
+      await expect(authService.login(mockLoginPayload)).rejects.toThrow(
+        "Неверное имя пользователя или пароль",
+      );
+    });
+
+    it("должен бросить ошибку при неверном пароле", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+
+      const wrongPasswordPayload = {
+        ...mockLoginPayload,
+        password: "wrongpassword",
+      };
+
+      await expect(authService.login(wrongPasswordPayload)).rejects.toThrow(
+        "Неверное имя пользователя или пароль",
+      );
+    });
+
+    it("должен сгенерировать JWT токен при успешном входе", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+
+      const result = await authService.login(mockLoginPayload);
+
+      expect(result.accessToken).toBeDefined();
+
+      const decoded = jwt.verify(result.accessToken, "test-secret-key") as any;
+      expect(decoded.userId).toBe(1);
+      expect(decoded.username).toBe("existinguser");
+    });
+
+    it("должен использовать одинаковый формат токена для login и register", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+
+      const loginResult = await authService.login(mockLoginPayload);
+
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      (prisma.user.create as any).mockResolvedValue({ ...mockUser, id: 2 });
+      const registerResult = await authService.register({
+        username: "newuser2",
+        email: "newuser2@example.com",
+        password: "password123",
+      });
+
+      // Оба токена должны валидироваться
+      const loginDecoded = jwt.verify(
+        loginResult.accessToken,
+        "test-secret-key",
+      ) as any;
+      const registerDecoded = jwt.verify(
+        registerResult.accessToken,
+        "test-secret-key",
+      ) as any;
+
+      expect(loginDecoded).toHaveProperty("userId");
+      expect(loginDecoded).toHaveProperty("username");
+      expect(registerDecoded).toHaveProperty("userId");
+      expect(registerDecoded).toHaveProperty("username");
+    });
+  });
+
+  describe("generateToken (internal)", () => {
+    it("должен создать токен с правильным payload", () => {
+      const payload = { userId: 42, username: "testuser" };
+      const token = jwt.sign(payload, "test-secret-key", { expiresIn: "7d" });
+
+      const decoded = jwt.verify(token, "test-secret-key") as any;
+
+      expect(decoded.userId).toBe(42);
+      expect(decoded.username).toBe("testuser");
+      expect(decoded.exp).toBeDefined();
+    });
+
+    it("должен создать токен с экспирацией 7 дней", () => {
+      const payload = { userId: 1, username: "user" };
+      const token = jwt.sign(payload, "test-secret-key", { expiresIn: "7d" });
+      const decoded: any = jwt.verify(token, "test-secret-key");
+
+      const now = Math.floor(Date.now() / 1000);
+      const sevenDaysInSeconds = 7 * 24 * 60 * 60;
+      const expectedExp = now + sevenDaysInSeconds;
+
+      expect(decoded.exp).toBeGreaterThanOrEqual(now);
+      expect(decoded.exp).toBeLessThanOrEqual(expectedExp + 10);
+    });
+  });
+
+  describe("TokenPayload interface", () => {
+    it("должен иметь правильную структуру токена", () => {
+      const payload = { userId: 123, username: "user123" };
+      const token = jwt.sign(payload, "test-secret-key", { expiresIn: "1h" });
+      const decoded = jwt.verify(token, "test-secret-key") as any;
+
+      expect(decoded.userId).toBe(123);
+      expect(decoded.username).toBe("user123");
+      expect(decoded.iat).toBeDefined();
+      expect(decoded.exp).toBeDefined();
     });
   });
 });

@@ -1,15 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from '../../lib/prisma.js';
-import { createLogger } from '../../lib/logger.js';
-import type { GetTierListsQuery } from './tierList.schema.js';
+import { prisma } from "../../lib/prisma.js";
+import { createLogger } from "../../lib/logger.js";
+import type { GetTierListsQuery } from "./tierList.schema.js";
 
 export { prisma };
 
 // Логгер для модуля тир-листов
-const logger = createLogger('TierLists', { color: 'cyan' });
+const logger = createLogger("TierLists", { color: "cyan" });
 
 // Получение списка тир-листов пользователя (краткая информация)
-export async function getUserTierLists(userId: number, query: GetTierListsQuery) {
+export async function getUserTierLists(
+  userId: number,
+  query: GetTierListsQuery,
+) {
   const page = parseInt(query.page, 10);
   const pageSize = parseInt(query.pageSize, 10);
   const skip = (page - 1) * pageSize;
@@ -30,10 +33,10 @@ export async function getUserTierLists(userId: number, query: GetTierListsQuery)
             },
           },
           take: 4,
-          orderBy: { rank: 'asc' },
+          orderBy: { rank: "asc" },
         },
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: "desc" },
       take: pageSize,
       skip: skip,
     }),
@@ -74,23 +77,25 @@ export async function createTierList(userId: number, title: string) {
       isPublic: false,
       tiers: {
         create: [
-          { title: 'S', color: '#FF6B6B', rank: 0 },
-          { title: 'A', color: '#4ECDC4', rank: 1 },
-          { title: 'B', color: '#45B7D1', rank: 2 },
-          { title: 'C', color: '#96CEB4', rank: 3 },
-          { title: 'D', color: '#FFEAA7', rank: 4 },
+          { title: "S", color: "#FF6B6B", rank: 0 },
+          { title: "A", color: "#4ECDC4", rank: 1 },
+          { title: "B", color: "#45B7D1", rank: 2 },
+          { title: "C", color: "#96CEB4", rank: 3 },
+          { title: "D", color: "#FFEAA7", rank: 4 },
         ],
       },
     },
     include: {
       tiers: {
-        orderBy: { rank: 'asc' },
-        include: { items: { orderBy: { rank: 'asc' }, include: { book: true } } },
+        orderBy: { rank: "asc" },
+        include: {
+          items: { orderBy: { rank: "asc" }, include: { book: true } },
+        },
       },
       placements: {
         where: { tierId: null },
         include: { book: true },
-        orderBy: { rank: 'asc' },
+        orderBy: { rank: "asc" },
       },
     },
   });
@@ -105,7 +110,7 @@ export async function assertOwner(tierListId: number, userId: number) {
   });
 
   if (!list || list.userId !== userId) {
-    const error = new Error('Forbidden');
+    const error = new Error("Forbidden");
     (error as any).statusCode = 403;
     throw error;
   }
@@ -120,26 +125,31 @@ export async function getFullTierList(id: number) {
         select: { id: true, username: true, avatarUrl: true },
       },
       tiers: {
-        orderBy: { rank: 'asc' },
-        include: { items: { orderBy: { rank: 'asc' }, include: { book: true } } },
+        orderBy: { rank: "asc" },
+        include: {
+          items: { orderBy: { rank: "asc" }, include: { book: true } },
+        },
       },
       placements: {
         where: { tierId: null },
         include: { book: true },
-        orderBy: { rank: 'asc' },
+        orderBy: { rank: "asc" },
       },
       _count: {
         select: { likes: true },
       },
     },
   });
-  
+
   const { placements: unrankedBooks, _count, ...rest } = tierList;
   return { ...rest, unrankedBooks, likesCount: _count.likes };
 }
 
 // Обновление позиций (оптимизировано - Promise.all)
-export async function updatePlacements(tierListId: number, placements: { bookId: number; tierId: number | null; rank: number }[]) {
+export async function updatePlacements(
+  tierListId: number,
+  placements: { bookId: number; tierId: number | null; rank: number }[],
+) {
   const startTime = Date.now();
 
   if (placements.length === 0) return [];
@@ -155,15 +165,15 @@ export async function updatePlacements(tierListId: number, placements: { bookId:
         tierId: p.tierId,
         rank: p.rank,
       },
-    })
+    }),
   );
 
   const result = await prisma.$transaction(transactions);
 
   const totalTime = Date.now() - startTime;
-  logger.debug('updatePlacements завершено', { 
-    placementsCount: placements.length, 
-    totalTimeMs: totalTime 
+  logger.debug("updatePlacements завершено", {
+    placementsCount: placements.length,
+    totalTimeMs: totalTime,
   });
 
   return result;
@@ -172,7 +182,13 @@ export async function updatePlacements(tierListId: number, placements: { bookId:
 // Добавление новых книг в тир-лист (оптимизировано - bulk insert)
 export async function addBooksToTierList(
   tierListId: number,
-  books: { title: string; author?: string | null; coverImageUrl: string; description?: string | null; thoughts?: string | null }[]
+  books: {
+    title: string;
+    author?: string | null;
+    coverImageUrl: string;
+    description?: string | null;
+    thoughts?: string | null;
+  }[],
 ) {
   const MAX_BOOKS_PER_TIER_LIST = 20;
 
@@ -185,7 +201,7 @@ export async function addBooksToTierList(
 
   if (existingBooksCount + books.length > MAX_BOOKS_PER_TIER_LIST) {
     throw new Error(
-      `Превышен лимит книг в тир-листе. Максимум: ${MAX_BOOKS_PER_TIER_LIST}, текущее количество: ${existingBooksCount}, добавляется: ${books.length}`
+      `Превышен лимит книг в тир-листе. Максимум: ${MAX_BOOKS_PER_TIER_LIST}, текущее количество: ${existingBooksCount}, добавляется: ${books.length}`,
     );
   }
 
@@ -200,7 +216,7 @@ export async function addBooksToTierList(
           description: bookData.description ?? null,
           thoughts: bookData.thoughts ?? null,
         },
-      })
+      }),
     );
 
     const createdBooks = await Promise.all(createBookPromises);
@@ -214,20 +230,28 @@ export async function addBooksToTierList(
           rank: existingBooksCount + index, // Сохраняем порядок
         },
         include: { book: true },
-      })
+      }),
     );
-    
+
     const placements = await Promise.all(createPlacementPromises);
-    
+
     // Возвращаем в формате [{ book: {...} }]
-    return placements.map(placement => ({ book: placement.book }));
+    return placements.map((placement) => ({ book: placement.book }));
   });
-  
+
   return results;
 }
 
 // Обновление книги
-export async function updateBook(bookId: number, data: { title?: string; author?: string | null; description?: string | null; thoughts?: string | null }) {
+export async function updateBook(
+  bookId: number,
+  data: {
+    title?: string;
+    author?: string | null;
+    description?: string | null;
+    thoughts?: string | null;
+  },
+) {
   return prisma.book.update({
     where: { id: bookId },
     data,
@@ -243,7 +267,10 @@ export async function updateBookCover(bookId: number, coverImageUrl: string) {
 }
 
 // Удаление книги из тир-листа
-export async function removeBookFromTierList(tierListId: number, bookId: number) {
+export async function removeBookFromTierList(
+  tierListId: number,
+  bookId: number,
+) {
   return prisma.bookPlacement.delete({
     where: { tierListId_bookId: { tierListId, bookId } },
   });
@@ -260,16 +287,30 @@ export async function deleteTierList(tierListId: number) {
 export async function saveTiers(
   tierListId: number,
   tiers:
-    | { added?: Array<{ title: string; color: string; rank: number }>; updated?: Array<{ id: number; title: string; color: string; rank: number }>; deletedIds?: number[] }
-    | Array<{ id?: number; title: string; color: string; rank: number }>
+    | {
+        added?: Array<{ title: string; color: string; rank: number }>;
+        updated?: Array<{
+          id: number;
+          title: string;
+          color: string;
+          rank: number;
+        }>;
+        deletedIds?: number[];
+      }
+    | Array<{ id?: number; title: string; color: string; rank: number }>,
 ) {
   const startTime = Date.now();
 
   // Определяем формат
-  const isDiff = 'added' in (tiers as any);
+  const isDiff = "added" in (tiers as any);
 
   let added: Array<{ title: string; color: string; rank: number }> = [];
-  let updated: Array<{ id: number; title: string; color: string; rank: number }> = [];
+  let updated: Array<{
+    id: number;
+    title: string;
+    color: string;
+    rank: number;
+  }> = [];
   let deletedIds: number[] = [];
 
   if (isDiff) {
@@ -278,9 +319,23 @@ export async function saveTiers(
     deletedIds = (tiers as any).deletedIds || [];
   } else {
     // Полный массив
-    const tiersArray = tiers as Array<{ id?: number; title: string; color: string; rank: number }>;
-    added = tiersArray.filter((t) => !t.id).map((t) => ({ title: t.title, color: t.color, rank: t.rank }));
-    updated = tiersArray.filter((t) => t.id).map((t) => ({ id: t.id!, title: t.title, color: t.color, rank: t.rank }));
+    const tiersArray = tiers as Array<{
+      id?: number;
+      title: string;
+      color: string;
+      rank: number;
+    }>;
+    added = tiersArray
+      .filter((t) => !t.id)
+      .map((t) => ({ title: t.title, color: t.color, rank: t.rank }));
+    updated = tiersArray
+      .filter((t) => t.id)
+      .map((t) => ({
+        id: t.id!,
+        title: t.title,
+        color: t.color,
+        rank: t.rank,
+      }));
   }
 
   // Одна транзакция для всех операций
@@ -311,33 +366,44 @@ export async function saveTiers(
           tx.tier.update({
             where: { id: tier.id },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
-          })
-        )
+          }),
+        ),
       );
     }
 
     // 4. Получаем все тиры для возврата
     const allTiers = await tx.tier.findMany({
       where: { tierListId },
-      orderBy: { rank: 'asc' },
+      orderBy: { rank: "asc" },
     });
 
     return allTiers;
   });
 
   const totalTime = Date.now() - startTime;
-  logger.debug('saveTiers завершено', {
+  logger.debug("saveTiers завершено", {
     added: added.length,
     updated: updated.length,
     deleted: deletedIds.length,
-    totalTimeMs: totalTime
+    totalTimeMs: totalTime,
   });
 
   // Формируем ответ в старом формате для совместимости
-  const createdTiers = results.filter((t: any) => !updated.some((u: any) => u.id === t.id));
-  const updatedTierList = results.filter((t: any) => updated.some((u: any) => u.id === t.id));
+  if (!results || results.length === 0) {
+    return [];
+  }
 
-  return [...createdTiers.map((t: any) => ({ ...t, isNew: true })), ...updatedTierList.map((t: any) => ({ ...t, isNew: false }))];
+  const createdTiers = results.filter(
+    (t: any) => !updated.some((u: any) => u.id === t.id),
+  );
+  const updatedTierList = results.filter((t: any) =>
+    updated.some((u: any) => u.id === t.id),
+  );
+
+  return [
+    ...createdTiers.map((t: any) => ({ ...t, isNew: true })),
+    ...updatedTierList.map((t: any) => ({ ...t, isNew: false })),
+  ];
 }
 
 // Переключение статуса публичности
@@ -351,33 +417,36 @@ export async function togglePublic(tierListId: number, isPublic: boolean) {
 
 // Получение публичных тир-листов
 export async function getPublicTierLists(query: GetTierListsQuery) {
-  logger.debug('getPublicTierLists вызван', { query });
+  logger.debug("getPublicTierLists вызван", { query });
 
   const page = parseInt(query.page, 10);
   const pageSize = parseInt(query.pageSize, 10);
   const skip = (page - 1) * pageSize;
 
-  logger.debug('Парсинг параметров пагинации', { page, pageSize, skip });
+  logger.debug("Парсинг параметров пагинации", { page, pageSize, skip });
 
   // Преобразуем возможные варианты sortBy в удобный для дальнейшей обработки формат
-  const sortBy = query.sortBy === 'updated_at' ? 'updatedAt' :
-                 query.sortBy === 'created_at' ? 'createdAt' :
-                 query.sortBy || 'updatedAt';
+  const sortBy =
+    query.sortBy === "updated_at"
+      ? "updatedAt"
+      : query.sortBy === "created_at"
+        ? "createdAt"
+        : query.sortBy || "updatedAt";
 
   // Определяем сортировку
-  let orderBy: any = { updatedAt: 'desc' };
+  let orderBy: any = { updatedAt: "desc" };
   let sortByLikes = false;
 
-  if (sortBy === 'likes') {
+  if (sortBy === "likes") {
     sortByLikes = true;
-    orderBy = { updatedAt: 'desc' }; // Временная сортировка, потом отсортируем по лайкам
-  } else if (sortBy === 'createdAt') {
-    orderBy = { createdAt: 'desc' };
+    orderBy = { updatedAt: "desc" }; // Временная сортировка, потом отсортируем по лайкам
+  } else if (sortBy === "createdAt") {
+    orderBy = { createdAt: "desc" };
   }
 
   let tierLists: any[] = [];
   let totalItems = 0;
-  
+
   if (sortByLikes) {
     // Для сортировки по лайкам загружаем все записи, сортируем и применяем пагинацию
     // Это менее эффективно, но необходимо для правильной сортировки
@@ -398,23 +467,25 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
           },
         },
       });
-      
+
       // Добавляем likesCount и сортируем по лайкам
       const allWithLikes = allTierLists.map((tl) => ({
         ...tl,
         likesCount: tl._count.likes,
         _count: undefined,
       }));
-      
+
       // Сортируем по количеству лайков (по убыванию)
       allWithLikes.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
-      
+
       // Применяем пагинацию
       totalItems = allWithLikes.length;
       tierLists = allWithLikes.slice(skip, skip + pageSize);
-
     } catch (err) {
-      logger.error(err as Error, { function: 'getPublicTierLists', sort: 'likes' });
+      logger.error(err as Error, {
+        function: "getPublicTierLists",
+        sort: "likes",
+      });
       throw err;
     }
   } else {
@@ -444,16 +515,18 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
           where: { isPublic: true },
         }),
       ]);
-      
+
       // Добавляем likesCount в ответ
       tierLists = tierLists.map((tl) => ({
         ...tl,
         likesCount: tl._count.likes,
         _count: undefined,
       }));
-
     } catch (err) {
-      logger.error(err as Error, { function: 'getPublicTierLists', step: 'transaction' });
+      logger.error(err as Error, {
+        function: "getPublicTierLists",
+        step: "transaction",
+      });
       throw err;
     }
   }
@@ -469,14 +542,14 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
       currentPage: page,
     },
   };
-  
-  logger.debug('getPublicTierLists завершено', {
+
+  logger.debug("getPublicTierLists завершено", {
     page,
     pageSize,
     totalItems,
     totalPages,
-    returnedCount: tierLists.length
+    returnedCount: tierLists.length,
   });
-  
+
   return responseData;
 }
