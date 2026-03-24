@@ -522,7 +522,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       // Проверяем права
       const tierList = await service.getFullTierList(tierListId);
-      if (tierList.userId !== request.user.userId) {
+      const currentUserId = (request as any).user?.userId;
+      if (!currentUserId || tierList.userId !== currentUserId) {
         return reply.code(403).send({ message: "Forbidden" });
       }
 
@@ -583,11 +584,9 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const tierListId = parseInt(request.params.id, 10);
       const tierList = await service.getFullTierList(tierListId);
       if (tierList.userId !== request.user!.userId) {
-        return reply
-          .code(403)
-          .send({
-            message: "You can only change visibility of your own tier lists",
-          });
+        return reply.code(403).send({
+          message: "You can only change visibility of your own tier lists",
+        });
       }
 
       const updatedTierList = await service.togglePublic(

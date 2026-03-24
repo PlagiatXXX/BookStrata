@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from "fastify";
 import {
   getMe,
   updateAvatar,
@@ -7,64 +7,73 @@ import {
   getUserStats,
   updateUser,
   changePassword,
-} from './users.service.js';
-import { authMiddleware } from '../auth/auth.middleware.js';
+} from "./users.service.js";
+import { authMiddleware } from "../auth/auth.middleware.js";
 
 export async function userRoutes(fastify: FastifyInstance) {
   // GET /api/users/me
   fastify.get(
-    '/me',
+    "/me",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
-      const user = await getMe(request.user.userId);
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+      const user = await getMe(userId);
       return reply.code(200).send(user);
-    }
+    },
   );
 
   // PUT /api/users/me
   fastify.put<{
     Body: { username: string };
   }>(
-    '/me',
+    "/me",
     {
       preHandler: [authMiddleware],
       schema: {
         body: {
-          type: 'object',
-          required: ['username'],
+          type: "object",
+          required: ["username"],
           properties: {
-            username: { type: 'string', minLength: 2, maxLength: 20 },
+            username: { type: "string", minLength: 2, maxLength: 20 },
           },
         },
       },
     },
     async (request, reply) => {
-      const user = await updateUser(
-        request.user.userId,
-        request.body.username
-      );
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+      const user = await updateUser(userId, request.body.username);
       fastify.log.info(
-        { userId: request.user.userId, username: request.body.username },
-        'Username updated'
+        { userId, username: request.body.username },
+        "Username updated",
       );
       return reply.code(200).send(user);
-    }
+    },
   );
 
   // GET /api/users/me/stats
   fastify.get(
-    '/me/stats',
+    "/me/stats",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
-      const stats = await getUserStats(request.user.userId);
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+      const stats = await getUserStats(userId);
       return reply.code(200).send(stats);
-    }
+    },
   );
 
   // GET /api/users/:id
   fastify.get<{
     Params: { id: string };
-  }>('/:id', async (request, reply) => {
+  }>("/:id", async (request, reply) => {
     const user = await getUserById(request.params);
     return reply.code(200).send(user);
   });
@@ -73,74 +82,78 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.put<{
     Body: { avatarUrl: string };
   }>(
-    '/me/avatar',
+    "/me/avatar",
     {
       preHandler: [authMiddleware],
       schema: {
         body: {
-          type: 'object',
-          required: ['avatarUrl'],
+          type: "object",
+          required: ["avatarUrl"],
           properties: {
-            avatarUrl: { type: 'string' },
+            avatarUrl: { type: "string" },
           },
         },
       },
     },
     async (request, reply) => {
-      const user = await updateAvatar(
-      request.user.userId,
-      request.body.avatarUrl ?? null
-    );
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+      const user = await updateAvatar(userId, request.body.avatarUrl);
       fastify.log.info(
-        { userId: request.user.userId, avatar: request.body.avatarUrl },
-        'Avatar updated'
+        { userId, avatar: request.body.avatarUrl },
+        "Avatar updated",
       );
       return reply.code(200).send(user);
-    }
+    },
   );
 
   // DELETE /api/users/me/avatar
   fastify.delete(
-    '/me/avatar',
+    "/me/avatar",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
-      const user = await deleteAvatar(request.user.userId);
-      fastify.log.info(
-        { userId: request.user.userId },
-        'Avatar deleted'
-      );
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+      const user = await deleteAvatar(userId);
+      fastify.log.info({ userId }, "Avatar deleted");
       return reply.code(200).send(user);
-    }
+    },
   );
 
   // PUT /api/users/me/password
   fastify.put<{
     Body: { current_password: string; new_password: string };
   }>(
-    '/me/password',
+    "/me/password",
     {
       preHandler: [authMiddleware],
       schema: {
         body: {
-          type: 'object',
-          required: ['current_password', 'new_password'],
+          type: "object",
+          required: ["current_password", "new_password"],
           properties: {
-            current_password: { type: 'string', minLength: 1 },
-            new_password: { type: 'string', minLength: 4 },
+            current_password: { type: "string", minLength: 1 },
+            new_password: { type: "string", minLength: 6 },
           },
         },
       },
     },
     async (request, reply) => {
-      const result = await changePassword(
-        request.user.userId,
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+      const user = await changePassword(
+        userId,
         request.body.current_password,
-        request.body.new_password);
-      fastify.log.info(
-        { userId: request.user.userId },
-        'Password changed'
+        request.body.new_password,
       );
-      return reply.code(200).send(result);
-    }
+      fastify.log.info({ userId }, "Password changed");
+      return reply.code(200).send(user);
+    },
   );
 }

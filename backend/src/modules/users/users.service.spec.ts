@@ -55,6 +55,9 @@ describe("users.service", () => {
       username: "testuser",
       avatarUrl: "https://example.com/avatar.jpg",
       createdAt: new Date("2024-01-01"),
+      role: {
+        name: "user",
+      },
     };
 
     it("должен вернуть текущего пользователя", async () => {
@@ -69,11 +72,19 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          role: {
+            select: {
+              name: true,
+            },
+          },
           createdAt: true,
         },
       });
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual({
+        ...mockUser,
+        role: "user",
+      });
     });
 
     it("должен бросить ошибку если пользователь не найден", async () => {
@@ -104,6 +115,9 @@ describe("users.service", () => {
       username: mockNewUsername,
       avatarUrl: null,
       createdAt: new Date("2024-01-01"),
+      role: {
+        name: "user",
+      },
     };
 
     it("должен обновить имя пользователя", async () => {

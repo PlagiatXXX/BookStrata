@@ -95,6 +95,23 @@ CREATE TABLE "TemplateLike" (
     CONSTRAINT "TemplateLike_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "news_articles" (
+    "id" SERIAL NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "excerpt" TEXT NOT NULL,
+    "image_url" TEXT,
+    "tags" TEXT[],
+    "author_id" INTEGER,
+    "published_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "is_published" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "news_articles_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -118,6 +135,12 @@ CREATE INDEX "TemplateLike_templateId_idx" ON "TemplateLike"("templateId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "TemplateLike_userId_templateId_key" ON "TemplateLike"("userId", "templateId");
+
+-- CreateIndex
+CREATE INDEX "news_articles_is_published_published_at_idx" ON "news_articles"("is_published", "published_at");
+
+-- CreateIndex
+CREATE INDEX "news_articles_tags_idx" ON "news_articles"("tags");
 
 -- AddForeignKey
 ALTER TABLE "tier_lists" ADD CONSTRAINT "tier_lists_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -148,3 +171,6 @@ ALTER TABLE "TemplateLike" ADD CONSTRAINT "TemplateLike_userId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "TemplateLike" ADD CONSTRAINT "TemplateLike_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "Template"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "news_articles" ADD CONSTRAINT "news_articles_author_id_fkey" FOREIGN KEY ("author_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

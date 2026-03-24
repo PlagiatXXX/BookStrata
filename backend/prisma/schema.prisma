@@ -25,6 +25,9 @@ model User {
   templates            Template[]
   tierListLikes        TierListLike[]
   templateLikes        TemplateLike[]
+  newsArticles         NewsArticle[]
+  role                 Role?      @relation(fields: [roleId], references: [id])
+  roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
   createdAt            DateTime   @default(now()) @map("created_at")
 }
 
@@ -119,4 +122,33 @@ model TemplateLike {
 
   @@unique([userId, templateId])
   @@index([templateId])
+}
+
+// Новости и статьи из мира книг
+model NewsArticle {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String   @db.Text
+  excerpt     String
+  imageUrl    String?  @map("image_url")
+  tags        String[] // ['новинки', 'обзоры', 'события']
+  author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId    Int?     @map("author_id")
+  publishedAt DateTime @default(now()) @map("published_at")
+  isPublished Boolean  @default(false) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([isPublished, publishedAt])
+  @@index([tags])
+  @@map("news_articles")
+}
+
+// Роли пользователей
+model Role {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique // "admin", "moderator", "user"
+  description String?
+  users       User[]
+  createdAt   DateTime   @default(now()) @map("created_at")
 }

@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from "react";
 import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
 import { getAuthToken, removeAuthToken, apiValidateToken } from "@/lib/authApi";
@@ -9,6 +15,18 @@ export { AuthContext, type AuthContextType };
 
 // Контекстный логгер для Auth
 const authLogger = createLogger("Auth", { color: "blue" });
+
+/**
+ * Хук для доступа к контексту аутентификации
+ * @throws Error если используется вне AuthProvider
+ */
+export function useAuth() {
+  const context = React.useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -30,15 +48,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               userId: fullUserData.id,
               username: fullUserData.username,
               avatarUrl: fullUserData.avatarUrl,
+              role: fullUserData.role || response.role,
             });
             authLogger.info("User data fetched successfully", {
               userId: fullUserData.id,
               username: fullUserData.username,
               hasAvatar: !!fullUserData.avatarUrl,
+              role: fullUserData.role || response.role,
             });
           } catch {
             // Если не удалось получить данные, используем минимальные из токена
-            setUser({ userId: response.userId, username: response.username });
+            setUser({
+              userId: response.userId,
+              username: response.username,
+              role: response.role,
+            });
           }
         } else {
           authLogger.warn("Auth token validation failed - token is invalid");

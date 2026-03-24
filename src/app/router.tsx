@@ -1,33 +1,46 @@
 import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminGuard } from "@/components/AdminGuard";
 import AppShell from "./App";
 
 const DashboardPage = lazy(() =>
   import("@/pages/DashboardPage/DashboardPage").then((module) => ({
     default: module.DashboardPage,
-  }))
+  })),
 );
 const AuthPage = lazy(() =>
   import("@/pages/AuthPage").then((module) => ({
     default: module.AuthPage,
-  }))
+  })),
 );
 const ProfilePage = lazy(() =>
   import("@/pages/ProfilePage").then((module) => ({
     default: module.ProfilePage,
-  }))
+  })),
 );
-const TemplateLibrary = lazy(() => import("@/components/TemplateLibrary/TemplateLibrary"));
+const TemplateLibrary = lazy(
+  () => import("@/components/TemplateLibrary/TemplateLibrary"),
+);
 const CreateTemplatePage = lazy(() => import("@/pages/CreateTemplatePage"));
 const EditTemplatePage = lazy(() => import("@/pages/EditTemplatePage"));
 const CommunityPage = lazy(() => import("@/pages/CommunityPage"));
+const NewsPage = lazy(() =>
+  import("@/pages/NewsPage").then((module) => ({
+    default: module.NewsPage,
+  })),
+);
+const AdminNewsPage = lazy(() =>
+  import("@/pages/AdminNewsPage").then((module) => ({
+    default: module.AdminNewsPage,
+  })),
+);
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() =>
   import("@/pages/TierListEditorPage/TierEditorPage").then((module) => ({
     default: module.TierListEditorPage,
-  }))
+  })),
 );
 
 export const router = createBrowserRouter([
@@ -63,7 +76,19 @@ export const router = createBrowserRouter([
             path: "/community",
             element: <CommunityPage />,
           },
+          {
+            path: "/news/:id",
+            element: <NewsPage />,
+          },
         ],
+      },
+      {
+        path: "/admin/news",
+        element: (
+          <AdminGuard>
+            <AdminNewsPage />
+          </AdminGuard>
+        ),
       },
     ],
   },

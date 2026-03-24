@@ -1,30 +1,33 @@
 // backend/src/modules/auth/auth.schema.ts
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 export interface AuthTokenPayload {
   userId: number; // или string
   username: string;
+  role?: string;
   iat: number;
   exp: number;
 }
 
 // Схема для регистрации
 export const registerBodySchema = z.object({
-  username: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
-  email: z.string().email('Некорректный формат email'),
-  password: z.string().min(4, 'Пароль должен содержать минимум 4 символа'),
+  username: z.string().min(2, "Имя должно содержать минимум 2 символа"),
+  email: z.string().email("Некорректный формат email"),
+  password: z.string().min(4, "Пароль должен содержать минимум 4 символа"),
 });
 
 // Схема для логина
 const loginBodySchema = z.object({
-  username: z.string().min(1), 
+  username: z.string().min(1),
   password: z.string().min(1),
 });
 
 // Схема для валидации токена
 const validateBodySchema = z.object({
-  token: z.string().regex(/^[\w-]+\.[\w-]+\.[\w-]+$/, 'Некорректный формат JWT токена'),
+  token: z
+    .string()
+    .regex(/^[\w-]+\.[\w-]+\.[\w-]+$/, "Некорректный формат JWT токена"),
 });
 
 // Экспортируем JSON схемы для Fastify

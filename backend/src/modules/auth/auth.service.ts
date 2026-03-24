@@ -1,9 +1,13 @@
-import { prisma } from '../../lib/prisma.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { prisma } from "../../lib/prisma.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { RolesService } from "../roles/roles.service.js";
+import { createLogger } from "../../lib/logger.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
-const JWT_EXPIRY = '7d';
+const logger = createLogger("Auth", { color: "blue" });
+
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const JWT_EXPIRY = "7d";
 
 export interface AuthToken {
   accessToken: string;
@@ -25,6 +29,7 @@ export interface LoginPayload {
 export interface TokenPayload {
   userId: number;
   username: string;
+  role?: string;
 }
 
 // Регистрация нового пользователя
@@ -37,19 +42,37 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
   });
 
   if (existing) {
-    throw new Error('Пользователь с таким именем или email уже зарегистрирован. Пожалуйста, выберите другое имя пользователя или email.');
+    throw new Error(
+      "Пользователь с таким именем или email уже зарегистрирован. Пожалуйста, выберите другое имя пользователя или email.",
+    );
   }
 
   // Хешируем пароль
   const hashedPassword = await bcrypt.hash(payload.password, 10);
 
-  // Создаем юзера
+  // Получаем роль 'user'
+  const rolesService = new RolesService(prisma);
+  const userRole = await rolesService.getRoleByName("user");
+
+  if (!userRole) {
+    logger.error('Роль "user" не найдена в БД');
+    throw new Error("Системная ошибка: роль пользователя не найдена");
+  }
+
+  // Создаем юзера с ролью 'user'
   const user = await prisma.user.create({
     data: {
       username: payload.username,
       email: payload.email,
       passwordHash: hashedPassword,
+      roleId: userRole.id,
     },
+  });
+
+  logger.info("Пользователь зарегистрирован", {
+    userId: user.id,
+    email: user.email,
+    role: "user",
   });
 
   // Генерируем токен
@@ -66,20 +89,30 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
 export async function login(payload: LoginPayload): Promise<AuthToken> {
   const user = await prisma.user.findUnique({
     where: { username: payload.username },
+    include: {
+      role: true,
+    },
   });
 
   if (!user) {
-    throw new Error('Неверное имя пользователя или пароль');
+    throw new Error("Неверное имя пользователя или пароль");
   }
 
   // Проверяем пароль
-  const isPasswordValid = await bcrypt.compare(payload.password, user.passwordHash);
+  const isPasswordValid = await bcrypt.compare(
+    payload.password,
+    user.passwordHash,
+  );
   if (!isPasswordValid) {
-    throw new Error('Неверное имя пользователя или пароль');
+    throw new Error("Неверное имя пользователя или пароль");
   }
 
-  // Генерируем токен
-  const token = generateToken({ userId: user.id, username: user.username! });
+  // Генерируем токен с ролью
+  const token = generateToken({
+    userId: user.id,
+    username: user.username!,
+    role: user.role?.name || "user",
+  });
 
   return {
     accessToken: token,
@@ -94,7 +127,7 @@ export function validateToken(token: string): TokenPayload {
     const payload = jwt.verify(token, JWT_SECRET) as TokenPayload;
     return payload;
   } catch {
-    throw new Error('Невалидный токен');
+    throw new Error("Невалидный токен");
   }
 }
 

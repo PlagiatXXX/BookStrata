@@ -10,12 +10,16 @@ vi.mock("../../lib/prisma.js", () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    role: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
 // Импортируем после vi.mock
 import * as authService from "./auth.service.js";
 import { prisma } from "../../lib/prisma.js";
+import { RolesService } from "../roles/roles.service.js";
 
 describe("Auth Service", () => {
   beforeEach(() => {
@@ -24,6 +28,16 @@ describe("Auth Service", () => {
 
   afterEach(() => {
     vi.resetAllMocks();
+  });
+
+  // Мок для RolesService.getRoleByName
+  let mockGetRoleByName: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    mockGetRoleByName = vi.fn();
+    vi.spyOn(RolesService.prototype, "getRoleByName").mockImplementation(
+      mockGetRoleByName,
+    );
   });
 
   describe("validateToken", () => {
@@ -103,6 +117,16 @@ describe("Auth Service", () => {
       passwordHash: "hashed-password",
     };
 
+    const mockUserRole = {
+      id: 1,
+      name: "user",
+      description: "Regular user",
+    };
+
+    beforeEach(() => {
+      mockGetRoleByName.mockResolvedValue(mockUserRole);
+    });
+
     it("должен зарегистрировать нового пользователя", async () => {
       (prisma.user.findFirst as any).mockResolvedValue(null);
       (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
@@ -123,6 +147,7 @@ describe("Auth Service", () => {
           username: mockRegisterPayload.username,
           email: mockRegisterPayload.email,
           passwordHash: expect.stringMatching(/^\$2[aby]\$/),
+          roleId: mockUserRole.id,
         },
       });
 
@@ -197,6 +222,9 @@ describe("Auth Service", () => {
       username: "existinguser",
       email: "user@example.com",
       passwordHash: "",
+      role: {
+        name: "user",
+      },
     };
 
     beforeEach(async () => {
@@ -210,6 +238,9 @@ describe("Auth Service", () => {
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { username: mockLoginPayload.username },
+        include: {
+          role: true,
+        },
       });
 
       expect(result).toMatchObject({
@@ -259,6 +290,12 @@ describe("Auth Service", () => {
 
       (prisma.user.findFirst as any).mockResolvedValue(null);
       (prisma.user.create as any).mockResolvedValue({ ...mockUser, id: 2 });
+      mockGetRoleByName.mockResolvedValue({
+        id: 1,
+        name: "user",
+        description: "Regular user",
+      });
+
       const registerResult = await authService.register({
         username: "newuser2",
         email: "newuser2@example.com",

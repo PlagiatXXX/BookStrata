@@ -1406,8 +1406,12 @@ setResults(uniqueBooks);
 
 **Статус тестов (Март 2026)**:
 - ✅ **Test Files: 30 total** (13 spec.ts + 13 spec.tsx + 4 test.ts)
-- ✅ **Tests: ~145 тестов написано** (требуется fix vitest config для запуска)
-- ✅ **Backend test coverage: 7 модулей протестировано**
+- ✅ **Tests: ~145 тестов написано**
+- ⚠️ **Backend**: 7 spec файлов (auth, avatars, books, templates, tier-lists, users)
+- ⚠️ **Frontend**: 23 spec/test файлов (hooks, components, utils, lib)
+- 🔄 **Проблема**: Vitest 4.0.18 не находит тесты при запуске (требует миграции на новый формат)
+
+**Примечание**: Тесты написаны и готовы к запуску. Проблема совместимости с Vitest 4.0.18 требует обновления формата импортов или downgrade до 3.x.
 
 **Исправленные проблемы (Март 2026)**:
 
@@ -1418,12 +1422,12 @@ setResults(uniqueBooks);
 | `tierList.service.spec.ts` | `saveTiers` возвращал `[]` | Добавлен мок `tier.findMany` | ✅ |
 | `users.service.spec.ts` | `bcrypt` не работал в тестах | Подключён реальный bcrypt | ✅ |
 | `books.service.spec.ts` | Неправильное имя API key | Исправлено на `test-google-books-api-key` | ✅ |
-| `vitest.config.ts` | Тесты не запускаются | Требуется fix pool configuration | ⏳ |
+| `vitest 4.0.18` | Не находит тесты | Требуется миграция на новый формат импортов | ⏳ |
 
-**Критичные проблемы**: CI/CD, health check endpoint, VPS настройка, vitest config.
+**Критичные проблемы**: CI/CD, health check endpoint, VPS настройка, совместимость с Vitest 4.
 
 **Следующий шаг**:
-1. ⏳ Fix vitest config для запуска тестов
+1. ⏳ Fix vitest совместимость (мigrating на 4.x или downgrade до 3.x)
 2. Выполнить **НЕДЕЛЮ 1** (CI/CD & Monitoring) для автоматизации деплоя
 3. Исправить дублирование `ProfilePage.tsx` (файл + папка)
 
@@ -1438,10 +1442,10 @@ setResults(uniqueBooks);
 **Error Tracking**: Telegram + File Logging
 **Dashboard Features**: Sort (4) × Filter (3) × Search
 **Architecture Status**: Enhanced ✅ (рефакторинг завершён, -1786 строк)
-**Test Coverage**: 30 test files (~145 tests written, config fix required)
+**Test Coverage**: 30 test files (~145 tests written)
+**Test Runner**: ⏳ Vitest 4.0.18 compatibility fix required
 **Refactoring Summary**:
   - TierEditorPage: 340 lines (-36%)
   - TemplateLibrary: 308 lines (-57%)
   - DashboardPage: 277 lines (-51%)
   - AvatarSelector: 258 lines (-44%)
-**Test Status**: ⏳ Config fix required for test runner

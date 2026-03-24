@@ -1,0 +1,1 @@
+export { AdminNewsPage } from './AdminNewsPage';

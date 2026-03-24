@@ -13,6 +13,7 @@
     "start": "node dist/server.js",
     "migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
+    "seed": "prisma db seed",
     "prisma:migrate:deploy": "prisma migrate deploy"
   },
   "keywords": [],

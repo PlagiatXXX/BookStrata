@@ -1,5 +1,5 @@
-import { prisma } from '../../lib/prisma.js';
-import bcrypt from 'bcryptjs';
+import { prisma } from "../../lib/prisma.js";
+import bcrypt from "bcryptjs";
 
 // Типы для валидации
 export type UpdateAvatarInput = {
@@ -26,20 +26,27 @@ export async function getMe(userId: number) {
       email: true,
       username: true,
       avatarUrl: true,
+      role: {
+        select: {
+          name: true,
+        },
+      },
       createdAt: true,
     },
   });
 
   if (!user) {
-    throw new Error('Пользователь не найден');
+    throw new Error("Пользователь не найден");
   }
 
-  return user;
+  return {
+    ...user,
+    role: user.role?.name || undefined,
+  };
 }
 
 // PUT /api/users/me - обновить профиль пользователя
 export async function updateUser(userId: number, username: string) {
-
   // Проверка на уникальность имени
   const existing = await prisma.user.findFirst({
     where: {
@@ -49,7 +56,7 @@ export async function updateUser(userId: number, username: string) {
   });
 
   if (existing) {
-    throw new Error('Это имя пользователя уже занято');
+    throw new Error("Это имя пользователя уже занято");
   }
 
   return prisma.user.update({
@@ -66,10 +73,7 @@ export async function updateUser(userId: number, username: string) {
 }
 
 // PUT /api/users/me/avatar - обновить аватар
-export async function updateAvatar(
-  userId: number,
-  avatarUrl: string | null
-) {
+export async function updateAvatar(userId: number, avatarUrl: string | null) {
   return prisma.user.update({
     where: { id: userId },
     data: { avatarUrl: avatarUrl },
@@ -100,9 +104,8 @@ export async function deleteAvatar(userId: number) {
 export async function changePassword(
   userId: number,
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
 ) {
-
   // Получаем пользователя с хешем пароля
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -113,15 +116,16 @@ export async function changePassword(
   });
 
   if (!user) {
-    throw new Error('Пользователь не найден');
+    throw new Error("Пользователь не найден");
   }
 
   // Проверяем текущий пароль
   const isValidPassword = await bcrypt.compare(
-    currentPassword, 
-    user.passwordHash);
+    currentPassword,
+    user.passwordHash,
+  );
   if (!isValidPassword) {
-    throw new Error('Неверный текущий пароль');
+    throw new Error("Неверный текущий пароль");
   }
 
   // Хешируем новый пароль
@@ -133,13 +137,13 @@ export async function changePassword(
     data: { passwordHash: newPasswordHash },
   });
 
-  return { success: true, message: 'Пароль успешно изменён' };
+  return { success: true, message: "Пароль успешно изменён" };
 }
 
 // GET /api/users/:id - получить пользователя по ID (публичный профиль)
 export async function getUserById(params: { id: string }) {
   const userId = parseInt(params.id);
-  
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -151,7 +155,7 @@ export async function getUserById(params: { id: string }) {
   });
 
   if (!user) {
-    throw new Error('Пользователь не найден');
+    throw new Error("Пользователь не найден");
   }
 
   return user;
@@ -167,7 +171,6 @@ export interface UserStats {
 
 // GET /api/users/me/stats - получить статистику пользователя
 export async function getUserStats(userId: number) {
-
   // Количество тир-листов
   const tierListsCount = await prisma.tierList.count({
     where: { userId },

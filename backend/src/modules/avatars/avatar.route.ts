@@ -1,7 +1,7 @@
-import type { FastifyInstance } from 'fastify';
-import { generateAvatar, getAvatarLimit } from './avatar.service.js';
-import { updateAvatar as updateUserAvatar } from '../users/users.service.js';
-import { authMiddleware } from '../auth/auth.middleware.js';
+import type { FastifyInstance } from "fastify";
+import { generateAvatar, getAvatarLimit } from "./avatar.service.js";
+import { updateAvatar as updateUserAvatar } from "../users/users.service.js";
+import { authMiddleware } from "../auth/auth.middleware.js";
 
 interface GenerateAvatarBody {
   prompt: string;
@@ -14,16 +14,21 @@ interface UploadAvatarBody {
 export async function avatarRoutes(fastify: FastifyInstance) {
   // Генерация аватара
   fastify.post<{ Body: GenerateAvatarBody }>(
-    '/generate',
+    "/generate",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
       const { prompt } = request.body;
 
       if (!prompt || prompt.trim().length < 2) {
-        return reply.code(400).send({ error: 'Prompt must be at least 2 characters' });
+        return reply
+          .code(400)
+          .send({ error: "Prompt must be at least 2 characters" });
       }
 
-      const userId = request.user.userId;
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
 
       const result = await generateAvatar(prompt.trim(), userId);
 
@@ -39,46 +44,51 @@ export async function avatarRoutes(fastify: FastifyInstance) {
         imageUrl: result.imageUrl,
         remaining: result.remaining,
       });
-    }
+    },
   );
 
   // Загрузка аватара
   fastify.post<{ Body: UploadAvatarBody }>(
-    '/upload',
+    "/upload",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
       const { avatar } = request.body;
 
       if (!avatar) {
-        return reply.code(400).send({ error: 'Avatar is required' });
+        return reply.code(400).send({ error: "Avatar is required" });
       }
 
-      const user = await updateUserAvatar(
-      request.user.userId,
-      avatar
-    );
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+
+      const user = await updateUserAvatar(userId, avatar);
 
       return reply.send({
         success: true,
         avatarUrl: user.avatarUrl,
       });
-    }
+    },
   );
 
   // Лимиты
   fastify.get(
-    '/limit',
+    "/limit",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
-      const userId = request.user.userId;
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
 
       const limitInfo = await getAvatarLimit(userId);
 
       if (!limitInfo) {
-        return reply.code(404).send({ error: 'User not found' });
+        return reply.code(404).send({ error: "User not found" });
       }
 
       return reply.send(limitInfo);
-    }
+    },
   );
 }

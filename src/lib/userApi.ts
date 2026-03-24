@@ -1,9 +1,9 @@
-import { getAuthHeader, handleResponse } from './authApi';
-import { API_BASE_URL } from './config';
-import { createLogger } from './logger';
+import { getAuthHeader, handleResponse } from "./authApi";
+import { API_BASE_URL } from "./config";
+import { createLogger } from "./logger";
 
 // Логгер для модуля пользователей
-const userLogger = createLogger('UserApi', { color: 'green' });
+const userLogger = createLogger("UserApi", { color: "green" });
 
 // ========== TYPES ==========
 
@@ -12,6 +12,7 @@ export interface User {
   email: string;
   username: string;
   avatarUrl: string | null;
+  role?: string;
   createdAt: string;
 }
 
@@ -28,12 +29,12 @@ export interface UserStats {
  * Получить текущего пользователя
  */
 export async function apiGetMe(): Promise<User> {
-  userLogger.info('Получение профиля текущего пользователя');
+  userLogger.info("Получение профиля текущего пользователя");
 
   const response = await fetch(`${API_BASE_URL}/users/me`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...getAuthHeader(),
     },
   });
@@ -45,12 +46,12 @@ export async function apiGetMe(): Promise<User> {
  * Обновить аватар
  */
 export async function apiUpdateAvatar(avatarUrl: string): Promise<User> {
-  userLogger.info('Обновление аватара пользователя');
+  userLogger.info("Обновление аватара пользователя");
 
   const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...getAuthHeader(),
     },
     body: JSON.stringify({ avatarUrl }),
@@ -63,12 +64,12 @@ export async function apiUpdateAvatar(avatarUrl: string): Promise<User> {
  * Удалить аватар
  */
 export async function apiDeleteAvatar(): Promise<User> {
-  userLogger.info('Удаление аватара пользователя');
+  userLogger.info("Удаление аватара пользователя");
 
   const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...getAuthHeader(),
     },
   });
@@ -80,12 +81,12 @@ export async function apiDeleteAvatar(): Promise<User> {
  * Получить пользователя по ID
  */
 export async function apiGetUserById(id: string): Promise<User> {
-  userLogger.info('Получение пользователя по ID', { userId: id });
+  userLogger.info("Получение пользователя по ID", { userId: id });
 
   const response = await fetch(`${API_BASE_URL}/users/${id}`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
@@ -96,12 +97,12 @@ export async function apiGetUserById(id: string): Promise<User> {
  * Получить статистику пользователя
  */
 export async function apiGetUserStats(): Promise<UserStats> {
-  userLogger.info('Получение статистики пользователя');
+  userLogger.info("Получение статистики пользователя");
 
   const response = await fetch(`${API_BASE_URL}/users/me/stats`, {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...getAuthHeader(),
     },
   });
@@ -112,13 +113,15 @@ export async function apiGetUserStats(): Promise<UserStats> {
 /**
  * Загрузить аватар на Cloudinary
  */
-export async function apiUploadAvatar(base64Image: string): Promise<{ success: boolean; avatarUrl: string; user: User }> {
-  userLogger.info('Загрузка аватара на Cloudinary');
+export async function apiUploadAvatar(
+  base64Image: string,
+): Promise<{ success: boolean; avatarUrl: string; user: User }> {
+  userLogger.info("Загрузка аватара на Cloudinary");
 
   const response = await fetch(`${API_BASE_URL}/avatars/upload`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...getAuthHeader(),
     },
     body: JSON.stringify({ avatar: base64Image }),

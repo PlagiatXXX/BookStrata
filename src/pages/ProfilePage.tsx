@@ -1,20 +1,20 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuthContext';
-import { AvatarSelector } from '@/components/Avatar';
-import { useUser } from '@/hooks/useUser';
-import { Spinner } from '@/components/Spinner';
-import { ArrowLeft } from 'lucide-react';
-import { sileo } from 'sileo';
-import { createLogger } from '@/lib/logger';
-import { ProfileHeader } from './ProfilePage/components/ProfileHeader';
-import { ProfileActions } from './ProfilePage/components/ProfileActions';
-import { PasswordChangeForm } from './ProfilePage/components/PasswordChangeForm';
-import { StatsCards } from './ProfilePage/components/StatsCards';
-import { useProfileActions } from './ProfilePage/hooks/useProfileActions';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuthContext";
+import { AvatarSelector } from "@/components/Avatar";
+import { useUser } from "@/hooks/useUser";
+import { Spinner } from "@/components/Spinner";
+import { ArrowLeft } from "lucide-react";
+import { sileo } from "sileo";
+import { createLogger } from "@/lib/logger";
+import { ProfileHeader } from "./ProfilePage/components/ProfileHeader";
+import { ProfileActions } from "./ProfilePage/components/ProfileActions";
+import { PasswordChangeForm } from "./ProfilePage/components/PasswordChangeForm";
+import { StatsCards } from "./ProfilePage/components/StatsCards";
+import { useProfileActions } from "./ProfilePage/hooks/useProfileActions";
 
 // Логгер для страницы профиля
-const logger = createLogger('ProfilePage', { color: 'blue' });
+const logger = createLogger("ProfilePage", { color: "blue" });
 
 export function ProfilePage() {
   const navigate = useNavigate();
@@ -56,15 +56,17 @@ export function ProfilePage() {
       // Последовательное выполнение: сначала загрузка, потом обновление данных
       await uploadAvatar(avatarUrl);
       await refreshUser(); // Зависит от результата uploadAvatar
-      window.dispatchEvent(new CustomEvent('avatar-updated'));
-      window.dispatchEvent(new CustomEvent('auth-token-changed'));
-      sileo.success({ title: 'Аватар обновлен', duration: 3000 });
+      window.dispatchEvent(new CustomEvent("avatar-updated"));
+      window.dispatchEvent(new CustomEvent("auth-token-changed"));
+      sileo.success({ title: "Аватар обновлен", duration: 3000 });
     } catch (error) {
-      logger.error(error instanceof Error ? error : new Error(String(error)), { action: 'handleAvatarSave' });
+      logger.error(error instanceof Error ? error : new Error(String(error)), {
+        action: "handleAvatarSave",
+      });
       sileo.error({
         title: "Ошибка при сохранении аватара",
         description: "Попробуйте загрузить другое изображение",
-        duration: 3000
+        duration: 3000,
       });
     }
   };
@@ -124,7 +126,11 @@ export function ProfilePage() {
         <ProfileActions
           onEditAvatar={() => setShowAvatarSelector(true)}
           onPasswordChange={togglePasswordForm}
-          onSettingsClick={() => sileo.show({ title: 'Настройки скоро появятся', icon: '⚙️' })}
+          onSettingsClick={() =>
+            sileo.show({ title: "Настройки скоро появятся", icon: "⚙️" })
+          }
+          onAdminPanelClick={() => navigate("/admin/news")}
+          userRole={authUser?.role}
         />
 
         {/* Password Change Form */}
