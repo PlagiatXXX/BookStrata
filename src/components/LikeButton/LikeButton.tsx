@@ -149,12 +149,17 @@ export function LikeButton({
     lg: 'text-base',
   };
 
+  const ariaLabel = `${liked ? 'Убрать отметку "Нравится"' : 'Поставить отметку "Нравится"'}. Всего откликов: ${likes}`;
+
   return (
     <button
       onClick={handleLike}
       disabled={!isAuthenticated || isLoading || isOwn}
+      aria-label={ariaLabel}
+      aria-pressed={liked}
       className={`
-        flex items-center gap-2 px-3 py-1.5 rounded-full transition-all
+        flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200
+        active:scale-95 focus-visible:ring-2 focus-visible:ring-pink-500 focus:outline-none
         ${liked
           ? 'bg-pink-500/20 text-pink-500'
           : 'bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 text-gray-400 hover:bg-pink-500/10 hover:text-pink-500'
@@ -162,7 +167,15 @@ export function LikeButton({
         ${!isAuthenticated || isOwn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
         ${isLoading ? 'opacity-50' : ''}
       `}
-      title={!isAuthenticated ? 'Войдите, чтобы лайкнуть' : isOwn ? 'Нельзя лайкнуть своё' : ''}
+      title={
+        !isAuthenticated
+          ? 'Войдите, чтобы лайкнуть'
+          : isOwn
+          ? 'Нельзя лайкнуть свой тир-лист'
+          : liked
+          ? 'Убрать "Нравится"'
+          : 'Поставить "Нравится"'
+      }
     >
       {showLabel && (
         <span className={`${labelClasses[size]} font-medium`}>
