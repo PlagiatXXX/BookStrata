@@ -61,17 +61,29 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
       const tierIdToRemove = action.payload;
       const tierToRemove = state.tiers[tierIdToRemove];
       if (!tierToRemove) return state;
+
       const booksToUnrank = tierToRemove.bookIds;
       const newUnrankedBookIds = Array.from(new Set([...state.unrankedBookIds, ...booksToUnrank]));
       const newTiers = { ...state.tiers };
       delete newTiers[tierIdToRemove];
 
       const newTierOrder = state.tierOrder.filter(id => id !== tierIdToRemove);
+
+      // Отслеживаем удаление реального тира (не временного)
+      const newDeletedTierIds = [...(state.deletedTierIds || [])];
+      if (!tierIdToRemove.startsWith('tier-')) {
+        const numericId = parseInt(tierIdToRemove, 10);
+        if (!isNaN(numericId)) {
+          newDeletedTierIds.push(numericId);
+        }
+      }
+
       return {
         ...state,
         tiers: newTiers,
         tierOrder: newTierOrder,
         unrankedBookIds: newUnrankedBookIds,
+        deletedTierIds: newDeletedTierIds,
       };
     }
 
@@ -246,7 +258,7 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
           if (idx !== -1) newTierOrder[idx] = realId;
         }
       });
-      return { ...state, tiers: newTiers, tierOrder: newTierOrder };
+      return { ...state, tiers: newTiers, tierOrder: newTierOrder, deletedTierIds: [] };
     }
 
     default:

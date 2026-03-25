@@ -290,8 +290,12 @@ export async function saveTierListOptimized(
   id: string,
   payload: SaveTierListPayload,
   listData?: TierListData
-): Promise<{ bookReplacements?: { tempId: string; realId: string }[] }> {
+): Promise<{
+  bookReplacements?: { tempId: string; realId: string }[];
+  tierReplacements?: { tempId: string; realId: string }[];
+}> {
   const bookReplacements: { tempId: string; realId: string }[] = [];
+  const tierReplacements: { tempId: string; realId: string }[] = [];
 
   // 1. Сначала сохраняем tiers (если есть)
   if (payload.tiers) {
@@ -306,7 +310,25 @@ export async function saveTierListOptimized(
           deleted: tiersDiff.deletedIds?.length || 0,
           payload: JSON.stringify(tiersDiff)
         });
-        await apiClient.put(`/tier-lists/${id}/tiers`, tiersDiff);
+        const savedTiers = await apiClient.put<any[]>(`/tier-lists/${id}/tiers`, tiersDiff);
+
+        // Маппинг временных ID тиров на реальные
+        if (savedTiers && Array.isArray(savedTiers)) {
+          // Находим новые тиры в сохраненных
+          const newSavedTiers = savedTiers.filter(t => t.isNew);
+          if (newSavedTiers.length === tiersDiff.added.length && listData) {
+             // Ищем временные ID в listData
+             const tempTierIds = listData.tierOrder.filter(tid => tid.startsWith('tier-'));
+             newSavedTiers.forEach((t, idx) => {
+               if (tempTierIds[idx]) {
+                 tierReplacements.push({
+                   tempId: tempTierIds[idx],
+                   realId: String(t.id)
+                 });
+               }
+             });
+          }
+        }
       }
     } else {
       const tiersArray = payload.tiers as Array<{ id?: number; title: string; color: string; rank: number }>;
@@ -392,7 +414,10 @@ export async function saveTierListOptimized(
   }
 
   tierListLogger.info('Оптимизированное сохранение завершено', { tierListId: id });
-  return { bookReplacements: bookReplacements.length > 0 ? bookReplacements : undefined };
+  return {
+    bookReplacements: bookReplacements.length > 0 ? bookReplacements : undefined,
+    tierReplacements: tierReplacements.length > 0 ? tierReplacements : undefined
+  };
 }
 
 // ========== TRANSFORM FUNCTIONS ==========
@@ -437,6 +462,7 @@ export function transformApiToState(apiData: ApiTierListResponse): TierListData 
     tierOrder,
     unrankedBookIds,
     tierIdToTempIdMap: {},
+    deletedTierIds: [],
   };
 }
 

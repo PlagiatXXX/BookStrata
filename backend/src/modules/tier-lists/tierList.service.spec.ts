@@ -726,19 +726,19 @@ describe("tierList.service", () => {
         id: 1,
         title: "Public List 1",
         isPublic: true,
+        likesCount: 10,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
         user: { id: 1, username: "user1", avatarUrl: null },
-        _count: { likes: 10 },
       },
       {
         id: 2,
         title: "Public List 2",
         isPublic: true,
+        likesCount: 5,
         createdAt: new Date("2024-01-03"),
         updatedAt: new Date("2024-01-04"),
         user: { id: 2, username: "user2", avatarUrl: null },
-        _count: { likes: 5 },
       },
     ];
 
@@ -766,14 +766,13 @@ describe("tierList.service", () => {
           id: i + 1,
           title: `Public List ${i + 1}`,
           isPublic: true,
+          likesCount: 10 - i,
           createdAt: new Date(),
           updatedAt: new Date(),
           user: { id: 1, username: "user", avatarUrl: null },
-          _count: { likes: 10 - i },
         }));
 
-      (prisma.tierList.findMany as any).mockResolvedValue(mockAllLists);
-      (prisma.tierList.count as any).mockResolvedValue(15);
+      (prisma.$transaction as any).mockResolvedValue([mockAllLists, 15]);
 
       const result = await service.getPublicTierLists({
         ...mockQuery,

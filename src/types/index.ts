@@ -24,6 +24,7 @@ export interface TierListData {
   tiers: Record<string, Tier>;
   tierOrder: string[];
   unrankedBookIds: string[];
+  deletedTierIds?: number[];
   isPublic?: boolean;
 }
 

@@ -16,10 +16,17 @@ export async function getUserTierLists(
   const page = parseInt(query.page, 10);
   const pageSize = parseInt(query.pageSize, 10);
   const skip = (page - 1) * pageSize;
+
+  // Оптимизированный запрос: выбираем только нужные поля
   const [tierLists, totalItems] = await prisma.$transaction([
     prisma.tierList.findMany({
       where: { userId },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        updatedAt: true,
+        isPublic: true,
         user: {
           select: { id: true, username: true, avatarUrl: true },
         },
@@ -27,7 +34,7 @@ export async function getUserTierLists(
           select: { likes: true, placements: true },
         },
         placements: {
-          include: {
+          select: {
             book: {
               select: { coverImageUrl: true },
             },
@@ -49,7 +56,6 @@ export async function getUserTierLists(
   // Добавляем likesCount, booksCount и coverImages в ответ
   const data = tierLists.map((tl) => ({
     ...tl,
-    user: tl.user,
     likesCount: tl._count.likes,
     booksCount: tl._count.placements,
     coverImages: tl.placements.map((p) => p.book.coverImageUrl).filter(Boolean),
@@ -426,32 +432,25 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
   logger.debug("Парсинг параметров пагинации", { page, pageSize, skip });
 
   // Преобразуем возможные варианты sortBy в удобный для дальнейшей обработки формат
-  const sortBy =
-    query.sortBy === "updated_at"
+  const sortByField =
+    query.sortBy === "updated_at" || query.sortBy === "updatedAt"
       ? "updatedAt"
-      : query.sortBy === "created_at"
+      : query.sortBy === "created_at" || query.sortBy === "createdAt"
         ? "createdAt"
-        : query.sortBy || "updatedAt";
+        : query.sortBy === "likes"
+          ? "likesCount"
+          : "updatedAt";
 
   // Определяем сортировку
-  let orderBy: any = { updatedAt: "desc" };
-  let sortByLikes = false;
-
-  if (sortBy === "likes") {
-    sortByLikes = true;
-    orderBy = { updatedAt: "desc" }; // Временная сортировка, потом отсортируем по лайкам
-  } else if (sortBy === "createdAt") {
-    orderBy = { createdAt: "desc" };
-  }
+  const orderBy: any = { [sortByField]: "desc" };
 
   let tierLists: any[] = [];
   let totalItems = 0;
 
-  if (sortByLikes) {
-    // Для сортировки по лайкам загружаем все записи, сортируем и применяем пагинацию
-    // Это менее эффективно, но необходимо для правильной сортировки
-    try {
-      const allTierLists = await prisma.tierList.findMany({
+  // Обычная сортировка - используем пагинацию на уровне БД
+  try {
+    [tierLists, totalItems] = await prisma.$transaction([
+      prisma.tierList.findMany({
         where: { isPublic: true },
         select: {
           id: true,
@@ -459,76 +458,25 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
           createdAt: true,
           updatedAt: true,
           isPublic: true,
+          likesCount: true,
           user: {
             select: { id: true, username: true, avatarUrl: true },
           },
-          _count: {
-            select: { likes: true },
-          },
         },
-      });
-
-      // Добавляем likesCount и сортируем по лайкам
-      const allWithLikes = allTierLists.map((tl) => ({
-        ...tl,
-        likesCount: tl._count.likes,
-        _count: undefined,
-      }));
-
-      // Сортируем по количеству лайков (по убыванию)
-      allWithLikes.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
-
-      // Применяем пагинацию
-      totalItems = allWithLikes.length;
-      tierLists = allWithLikes.slice(skip, skip + pageSize);
-    } catch (err) {
-      logger.error(err as Error, {
-        function: "getPublicTierLists",
-        sort: "likes",
-      });
-      throw err;
-    }
-  } else {
-    // Обычная сортировка (по дате) - используем пагинацию на уровне БД
-    try {
-      [tierLists, totalItems] = await prisma.$transaction([
-        prisma.tierList.findMany({
-          where: { isPublic: true },
-          select: {
-            id: true,
-            title: true,
-            createdAt: true,
-            updatedAt: true,
-            isPublic: true,
-            user: {
-              select: { id: true, username: true, avatarUrl: true },
-            },
-            _count: {
-              select: { likes: true },
-            },
-          },
-          orderBy,
-          take: pageSize,
-          skip: skip,
-        }),
-        prisma.tierList.count({
-          where: { isPublic: true },
-        }),
-      ]);
-
-      // Добавляем likesCount в ответ
-      tierLists = tierLists.map((tl) => ({
-        ...tl,
-        likesCount: tl._count.likes,
-        _count: undefined,
-      }));
-    } catch (err) {
-      logger.error(err as Error, {
-        function: "getPublicTierLists",
-        step: "transaction",
-      });
-      throw err;
-    }
+        orderBy,
+        take: pageSize,
+        skip: skip,
+      }),
+      prisma.tierList.count({
+        where: { isPublic: true },
+      }),
+    ]);
+  } catch (err) {
+    logger.error(err as Error, {
+      function: "getPublicTierLists",
+      step: "transaction",
+    });
+    throw err;
   }
 
   const totalPages = Math.ceil(totalItems / pageSize);

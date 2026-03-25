@@ -64,6 +64,11 @@ export function useTierEditorSave({
         dispatch({ type: 'REPLACE_BOOK_IDS', payload: result.bookReplacements });
       }
 
+      // Если были созданы новые тиры, заменяем временные ID на реальные
+      if (result?.tierReplacements && result.tierReplacements.length > 0) {
+        dispatch({ type: 'REPLACE_TIER_IDS', payload: result.tierReplacements });
+      }
+
       // Инвалидируем кэш чтобы загрузить актуальные данные
       queryClient.invalidateQueries({ queryKey: ['tierList', tierListId] });
 
