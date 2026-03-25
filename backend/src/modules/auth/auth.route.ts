@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FastifyInstance } from "fastify";
-import { register, login, validateToken } from "./auth.service.js";
+import {
+  register,
+  login,
+  validateToken,
+  validateRefreshToken,
+  generateTokenPair,
+} from "./auth.service.js";
 import {
   registerSchema,
   loginSchema,
@@ -28,7 +34,22 @@ export async function authRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       try {
         const result = await register(request.body);
-        return reply.code(201).send(result);
+
+        // Устанавливаем refresh токен в cookie
+        reply.setCookie("refreshToken", result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 7 * 24 * 60 * 60, // 7 дней в секундах
+          path: "/",
+        });
+
+        // Возвращаем только access токен
+        return reply.code(201).send({
+          accessToken: result.accessToken,
+          userId: result.userId,
+          username: result.username,
+        });
       } catch (error) {
         if (
           error instanceof Error &&
@@ -53,7 +74,22 @@ export async function authRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       try {
         const result = await login(request.body);
-        return reply.code(200).send(result);
+
+        // Устанавливаем refresh токен в cookie
+        reply.setCookie("refreshToken", result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 7 * 24 * 60 * 60, // 7 дней в секундах
+          path: "/",
+        });
+
+        // Возвращаем только access токен
+        return reply.code(200).send({
+          accessToken: result.accessToken,
+          userId: result.userId,
+          username: result.username,
+        });
       } catch (error) {
         if (
           error instanceof Error &&
@@ -98,4 +134,44 @@ export async function authRoutes(fastify: FastifyInstance) {
       }
     },
   );
+
+  // POST /api/auth/refresh
+  fastify.post("/refresh", async (request, reply) => {
+    try {
+      // Получаем refresh токен из cookie
+      const refreshToken = request.cookies.refreshToken;
+
+      if (!refreshToken) {
+        return reply.code(401).send({ error: "Refresh token not found" });
+      }
+
+      // Валидируем refresh токен
+      const payload = validateRefreshToken(refreshToken);
+
+      // Генерируем новую пару токенов
+      const tokens = generateTokenPair({
+        userId: payload.userId,
+        username: payload.username,
+        role: payload.role || "user",
+      });
+
+      // Устанавливаем новый refresh токен в cookie
+      reply.setCookie("refreshToken", tokens.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60, // 7 дней в секундах
+        path: "/",
+      });
+
+      return reply.code(200).send({
+        accessToken: tokens.accessToken,
+      });
+    } catch (error) {
+      fastify.log.error(error, "Refresh token validation failed");
+      return reply
+        .code(401)
+        .send({ error: "Invalid or expired refresh token" });
+    }
+  });
 }

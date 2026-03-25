@@ -7,10 +7,12 @@ import { createLogger } from "../../lib/logger.js";
 const logger = createLogger("Auth", { color: "blue" });
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
-const JWT_EXPIRY = "7d";
+const ACCESS_TOKEN_EXPIRY = "15m"; // 15 минут для access токена
+const REFRESH_TOKEN_EXPIRY = "7d"; // 7 дней для refresh токена
 
 export interface AuthToken {
   accessToken: string;
+  refreshToken: string;
   userId: number;
   username: string;
 }
@@ -75,11 +77,16 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
     role: "user",
   });
 
-  // Генерируем токен
-  const token = generateToken({ userId: user.id, username: user.username! });
+  // Генерируем пару токенов
+  const tokens = generateTokenPair({
+    userId: user.id,
+    username: user.username!,
+    role: "user",
+  });
 
   return {
-    accessToken: token,
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
     userId: user.id,
     username: user.username!,
   };
@@ -107,15 +114,16 @@ export async function login(payload: LoginPayload): Promise<AuthToken> {
     throw new Error("Неверное имя пользователя или пароль");
   }
 
-  // Генерируем токен с ролью
-  const token = generateToken({
+  // Генерируем пару токенов с ролью
+  const tokens = generateTokenPair({
     userId: user.id,
     username: user.username!,
     role: user.role?.name || "user",
   });
 
   return {
-    accessToken: token,
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
     userId: user.id,
     username: user.username!,
   };
@@ -133,5 +141,30 @@ export function validateToken(token: string): TokenPayload {
 
 // Генерация токена
 function generateToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
+}
+
+// Генерация refresh токена
+function generateRefreshToken(payload: TokenPayload): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+}
+
+// Валидация refresh токена
+export function validateRefreshToken(token: string): TokenPayload {
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as TokenPayload;
+    return payload;
+  } catch {
+    throw new Error("Невалидный refresh токен");
+  }
+}
+
+// Генерация пары токенов
+export function generateTokenPair(payload: TokenPayload): {
+  accessToken: string;
+  refreshToken: string;
+} {
+  const accessToken = generateToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+  return { accessToken, refreshToken };
 }

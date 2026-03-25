@@ -50,6 +50,7 @@ export async function apiRegister(
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include", // Получаем cookie с refresh токеном
     body: JSON.stringify(payload),
   });
 
@@ -62,6 +63,12 @@ export async function apiRegister(
   }
 
   const result = await response.json();
+
+  // Сохраняем access токен
+  if (result.accessToken) {
+    setAuthToken(result.accessToken);
+  }
+
   authLogger.info("Регистрация пользователя успешна", {
     username: payload.username,
   });
@@ -77,6 +84,7 @@ export async function apiLogin(payload: LoginPayload): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include", // Получаем cookie с refresh токеном
     body: JSON.stringify(payload),
   });
 
@@ -90,6 +98,12 @@ export async function apiLogin(payload: LoginPayload): Promise<AuthResponse> {
   }
 
   const result = await response.json();
+
+  // Сохраняем access токен
+  if (result.accessToken) {
+    setAuthToken(result.accessToken);
+  }
+
   authLogger.info("Вход пользователя успешен", { username: payload.username });
   return result;
 }
@@ -228,13 +242,106 @@ export function handleUnauthorized() {
 }
 
 /**
- * Обработка ответа API
+ * Флаг для предотвращения множественных refresh запросов
+ */
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+/**
+ * Подписаться на новый токен после refresh
+ */
+function subscribeTokenRefresh(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
+/**
+ * Уведомить подписчиков о новом токене
+ */
+function onTokenRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+/**
+ * Refresh access токена
+ */
+export async function refreshAccessToken(): Promise<string> {
+  if (isRefreshing) {
+    // Если уже идёт refresh, ждём результата
+    return new Promise((resolve) => {
+      subscribeTokenRefresh((token) => resolve(token));
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    authLogger.info("Refreshing access token");
+
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include", // Отправляем cookie с refresh токеном
+    });
+
+    if (!response.ok) {
+      authLogger.warn("Refresh token failed, redirecting to login");
+      handleUnauthorized();
+      throw new Error("Refresh token failed");
+    }
+
+    const data = await response.json();
+    const newAccessToken = data.accessToken;
+
+    // Сохраняем новый access токен
+    setAuthToken(newAccessToken);
+
+    authLogger.info("Access token refreshed successfully");
+
+    // Уведомляем подписчиков
+    onTokenRefreshed(newAccessToken);
+
+    return newAccessToken;
+  } catch (error) {
+    authLogger.error(
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        action: "refresh access token",
+      },
+    );
+    handleUnauthorized();
+    throw error;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+/**
+ * Обработка ответа API с авто-обновлением токена
  */
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
-    authLogger.warn("API вернул 401 Unauthorized");
-    handleUnauthorized();
-    throw new Error("Требуется авторизация. Пожалуйста, войдите в систему.");
+    authLogger.warn("API вернул 401 Unauthorized, пытаемся refresh");
+
+    // Пытаемся refresh-нуть токен
+    try {
+      const newToken = await refreshAccessToken();
+
+      // Повторяем оригинальный запрос с новым токеном
+      // Для этого нужно сохранить информацию о запросе
+      // Это будет обработано в api-client.ts
+      throw new Error("TOKEN_REFRESHED"); // Специальная ошибка для retry
+    } catch (refreshError) {
+      if (
+        refreshError instanceof Error &&
+        refreshError.message === "TOKEN_REFRESHED"
+      ) {
+        // Токен обновлён, фронтенд должен повторить запрос
+        throw refreshError;
+      }
+      // Refresh не удался — разлогиниваем
+      handleUnauthorized();
+      throw new Error("Требуется авторизация. Пожалуйста, войдите в систему.");
+    }
   }
 
   if (response.status === 204) {

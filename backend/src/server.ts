@@ -2,6 +2,8 @@
 import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
+import cookie from "@fastify/cookie";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
@@ -61,9 +63,23 @@ const fastify = Fastify({
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 
 fastify.register(cors, {
-  origin: CLIENT_URL, // <-- Fastify отлично работает с одной строкой
+  origin: CLIENT_URL,
   methods: ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, // Разрешаем отправку cookie
+});
+
+await fastify.register(helmet, {
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      scriptSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
 });
 
 await fastify.register(rateLimit, {
@@ -139,6 +155,11 @@ await fastify.register(swaggerUi, {
 
 // Регистрируем Prisma как декоратор (доступен через fastify.prisma)
 fastify.decorate("prisma", prisma);
+
+// Регистрируем плагин cookie
+await fastify.register(cookie, {
+  secret: JWT_SECRET, // Для подписи cookie
+});
 
 // Регистрируем все роуты из модулей
 fastify.register(authPlugin); // Плагин аутентификации (декодирует JWT)

@@ -13,7 +13,7 @@ export interface Tier {
   color: string;
   bookIds: string[];
   height?: number;
-  labelSize?: 'xs' | 'sm' | 'md';
+  labelSize?: "xs" | "sm" | "md";
 }
 
 export interface TierListData {
@@ -35,7 +35,7 @@ import type {
   UpdateTemplateData,
   TierTemplate,
   BookTemplate,
-} from './templates';
+} from "./templates";
 export type {
   Template,
   CreateTemplateData,
