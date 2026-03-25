@@ -16,18 +16,6 @@ export { AuthContext, type AuthContextType };
 // Контекстный логгер для Auth
 const authLogger = createLogger("Auth", { color: "blue" });
 
-/**
- * Хук для доступа к контексту аутентификации
- * @throws Error если используется вне AuthProvider
- */
-export function useAuth() {
-  const context = React.useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,0 +1,1 @@
+export { AdminCollectionsPage } from "./AdminCollectionsPage";

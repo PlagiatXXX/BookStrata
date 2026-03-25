@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { 
-  TierTemplate, 
-  BookTemplate 
-} from '../types/templates';
-import type { 
-  ApiTierTemplate, 
-  ApiBook 
-} from '../types/api';
+import type { TierTemplate, BookTemplate } from "../types/templates";
+import type { ApiTierTemplate, ApiBook } from "../types/api";
 
 /**
  * Преобразует API-шаблон в тип Template
@@ -27,6 +21,7 @@ export function transformApiTemplateToState(apiTemplate: any) {
     category: apiTemplate.category || undefined,
     isArchived: Boolean(apiTemplate.isArchived),
     isFavorite: Boolean(apiTemplate.isFavorite),
+    type: apiTemplate.type,
     tiers: apiTemplate.tiers.map(transformApiTierTemplateToState),
     defaultBooks: apiTemplate.defaultBooks?.map(transformApiBookToState),
     isPublic: apiTemplate.isPublic,
@@ -45,7 +40,11 @@ export function transformStateTemplateToApi(stateTemplate: any) {
     title: stateTemplate.title,
     description: stateTemplate.description,
     tiers: stateTemplate.tiers.map(transformStateTierTemplateToApi),
-    defaultBooks: stateTemplate.defaultBooks?.filter((book: BookTemplate) => book.id && !book.id.startsWith?.('book-')).map(transformStateBookToApi),
+    defaultBooks: stateTemplate.defaultBooks
+      ?.filter(
+        (book: BookTemplate) => book.id && !book.id.startsWith?.("book-"),
+      )
+      .map(transformStateBookToApi),
     isPublic: stateTemplate.isPublic,
     authorId: stateTemplate.authorId,
     createdAt: stateTemplate.createdAt,
@@ -68,7 +67,9 @@ function transformApiTierTemplateToState(apiTier: any): TierTemplate {
 /**
  * Преобразует тип TierTemplate в API-тир
  */
-function transformStateTierTemplateToApi(stateTier: TierTemplate): ApiTierTemplate {
+function transformStateTierTemplateToApi(
+  stateTier: TierTemplate,
+): ApiTierTemplate {
   return {
     id: stateTier.id, // Оставляем строкой, т.к. Zod схема ожидает string
     name: stateTier.name,
@@ -85,8 +86,13 @@ function transformApiBookToState(apiBook: any): BookTemplate {
     id: String(apiBook.id),
     title: apiBook.title,
     author: apiBook.author || undefined,
-    cover_image_url: apiBook.coverImageUrl,
+    coverImageUrl: apiBook.coverImageUrl || apiBook.cover_image_url,
     description: apiBook.description || undefined,
+    thoughts: apiBook.thoughts,
+    defaultTierId: apiBook.defaultTierId || apiBook.tierId || "",
+    tierId: apiBook.tierId,
+    rank: apiBook.rank,
+    googleBooksId: apiBook.googleBooksId,
   };
 }
 
@@ -96,13 +102,16 @@ function transformApiBookToState(apiBook: any): BookTemplate {
 function transformStateBookToApi(stateBook: BookTemplate): ApiBook {
   // Если id - строка в формате "book-xxx", значит это новая книга, у которой еще нет ID в базе
   // В таком случае устанавливаем id в 0 или вообще исключаем из запроса
-  const numericId = stateBook.id && !stateBook.id.startsWith?.('book-') ? Number(stateBook.id) : 0;
-  
+  const numericId =
+    stateBook.id && !stateBook.id.startsWith?.("book-")
+      ? Number(stateBook.id)
+      : 0;
+
   return {
     id: numericId,
     title: stateBook.title,
     author: stateBook.author || null,
-    coverImageUrl: stateBook.cover_image_url || '',
+    coverImageUrl: stateBook.coverImageUrl || "",
     description: stateBook.description || null,
     thoughts: null,
     createdAt: new Date().toISOString(),

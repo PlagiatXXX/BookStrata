@@ -1,4 +1,4 @@
-import { COLLECTIONS } from '../../data/mockData';
+import { COLLECTIONS } from "../../data/mockData";
 
 export const CollectionsSection = () => {
   return (
@@ -21,22 +21,38 @@ export const CollectionsSection = () => {
       <div className="community-rule mb-6" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {COLLECTIONS.map((collection) => (
+        {COLLECTIONS.filter((c) => c.isPublished).map((collection) => (
           <div
             key={collection.id}
             className="brutal-card brutal-border p-6 hover-lift cursor-pointer group"
+            onClick={() =>
+              (window.location.href = `/collections/${collection.id}`)
+            }
           >
-            <div className="flex gap-1 mb-4">
-              {collection.coverImages.map((img, idx) => (
-                <div key={`${img}-${idx}`} className="flex-1 h-20 bg-(--bg-0) border border-(--line-soft) rounded-sm overflow-hidden">
-                  <img
-                    alt={`Cover ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                    src={img}
-                  />
-                </div>
-              ))}
-            </div>
+            {collection.bookCovers && collection.bookCovers.length > 0 ? (
+              <div className="flex gap-1 mb-4">
+                {collection.bookCovers.map((img: string, idx: number) => (
+                  <div
+                    key={`${img}-${idx}`}
+                    className="flex-1 h-20 bg-(--bg-0) border border-(--line-soft) rounded-sm overflow-hidden"
+                  >
+                    <img
+                      alt={`Cover ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      src={img}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : collection.coverImageUrl ? (
+              <div className="mb-4 h-20 bg-(--bg-0) border border-(--line-soft) rounded-sm overflow-hidden">
+                <img
+                  alt={collection.title}
+                  className="w-full h-full object-cover"
+                  src={collection.coverImageUrl}
+                />
+              </div>
+            ) : null}
             <h4 className="community-heading text-xl font-bold leading-tight group-hover:text-(--accent-main) transition-colors">
               {collection.title}
             </h4>

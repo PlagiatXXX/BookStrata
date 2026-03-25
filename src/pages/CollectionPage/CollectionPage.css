@@ -1,0 +1,79 @@
+/* CollectionPage styles */
+
+.collection-content h1,
+.collection-content h2,
+.collection-content h3 {
+  color: var(--ink-0);
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 0.75em;
+  line-height: 1.3;
+}
+
+.collection-content h1 {
+  font-size: 2em;
+}
+
+.collection-content h2 {
+  font-size: 1.5em;
+}
+
+.collection-content h3 {
+  font-size: 1.25em;
+}
+
+.collection-content p {
+  margin-bottom: 1.5em;
+}
+
+.collection-content ul,
+.collection-content ol {
+  margin-left: 1.5em;
+  margin-bottom: 1.5em;
+}
+
+.collection-content li {
+  margin-bottom: 0.75em;
+}
+
+.collection-content strong {
+  font-weight: 600;
+  color: var(--ink-0);
+}
+
+.collection-content a {
+  color: var(--accent-main);
+  text-decoration: underline;
+}
+
+.collection-content a:hover {
+  color: var(--accent-main-hover, #60a5fa);
+}
+
+.collection-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5em 0;
+}
+
+.collection-content pre {
+  background: var(--bg-1);
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5em 0;
+}
+
+.collection-content code {
+  background: var(--bg-1);
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.collection-content pre code {
+  background: transparent;
+  padding: 0;
+}

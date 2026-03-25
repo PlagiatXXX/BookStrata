@@ -1,0 +1,150 @@
+.wysiwyg-editor {
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-1);
+}
+
+.tiptap-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px;
+  background: var(--bg-0);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.tiptap-toolbar button {
+  padding: 6px 10px;
+  border: 1px solid var(--line-soft);
+  background: var(--bg-1);
+  color: var(--ink-0);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.tiptap-toolbar button:hover {
+  background: var(--bg-0);
+  border-color: var(--ink-2);
+}
+
+.tiptap-toolbar button.is-active {
+  background: var(--accent-main);
+  color: var(--bg-0);
+  border-color: var(--accent-main);
+}
+
+.tiptap-editor {
+  min-height: 300px;
+  padding: 16px;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-0);
+  background: var(--bg-1);
+}
+
+.tiptap-editor:focus {
+  background: var(--bg-1);
+}
+
+.tiptap-editor p {
+  margin-bottom: 1em;
+  color: var(--ink-1);
+}
+
+.tiptap-editor h1,
+.tiptap-editor h2,
+.tiptap-editor h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  font-weight: 600;
+  color: var(--ink-0);
+}
+
+.tiptap-editor h1 {
+  font-size: 1.75em;
+}
+
+.tiptap-editor h2 {
+  font-size: 1.5em;
+}
+
+.tiptap-editor h3 {
+  font-size: 1.25em;
+}
+
+.tiptap-editor ul,
+.tiptap-editor ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.tiptap-editor li {
+  margin-bottom: 0.5em;
+  color: var(--ink-1);
+}
+
+.tiptap-editor a {
+  color: var(--accent-main);
+  text-decoration: underline;
+}
+
+.tiptap-editor a:hover {
+  color: var(--accent-main-hover, #60a5fa);
+}
+
+.tiptap-editor img {
+  max-width: 100%;
+  height: auto;
+  margin: 1em 0;
+  border-radius: 8px;
+}
+
+.tiptap-editor strong {
+  font-weight: 600;
+  color: var(--ink-0);
+}
+
+.tiptap-editor em {
+  font-style: italic;
+  color: var(--ink-1);
+}
+
+.tiptap-editor s {
+  text-decoration: line-through;
+  color: var(--ink-2);
+}
+
+.tiptap-editor code {
+  background: var(--bg-0);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: var(--ink-1);
+}
+
+.tiptap-editor pre {
+  background: var(--bg-0);
+  color: var(--ink-1);
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.tiptap-editor pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.tiptap-editor blockquote {
+  border-left: 3px solid var(--accent-main);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: var(--ink-1);
+  font-style: italic;
+}

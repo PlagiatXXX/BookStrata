@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Plus,
   Pencil,
@@ -23,7 +23,8 @@ import {
   type CreateNewsInput,
   type UpdateNewsInput,
 } from "@/lib/newsApi";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuthContext";
+import { WysiwygEditor } from "@/pages/AdminCollectionsPage/components/WysiwygEditor";
 import "./AdminNewsPage.css";
 
 interface NewsFormData {
@@ -46,6 +47,7 @@ const emptyFormData: NewsFormData = {
 
 export function AdminNewsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,11 +61,10 @@ export function AdminNewsPage() {
 
   const ITEMS_PER_PAGE = 10;
 
-  useEffect(() => {
-    loadNews();
-  }, [currentPage]);
+  // Проверка на администратора
+  const isAdmin = user?.role === "admin";
 
-  const loadNews = async () => {
+  const loadNews = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getNews(currentPage, ITEMS_PER_PAGE, false);
@@ -79,7 +80,11 @@ export function AdminNewsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage]);
+
+  useEffect(() => {
+    loadNews();
+  }, [loadNews]);
 
   const handleOpenCreate = () => {
     setEditingNews(null);
@@ -217,6 +222,22 @@ export function AdminNewsPage() {
       <div className="admin-news-page">
         <div className="admin-news-header">
           <div>
+            <div className="admin-nav-tabs">
+              <Link
+                to="/admin/news"
+                className={`admin-nav-tab ${location.pathname === "/admin/news" ? "active" : ""}`}
+              >
+                Новости
+              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin/collections"
+                  className={`admin-nav-tab ${location.pathname === "/admin/collections" ? "active" : ""}`}
+                >
+                  Коллекции
+                </Link>
+              )}
+            </div>
             <h1 className="admin-news-title">Управление новостями</h1>
             <p className="admin-news-subtitle">
               Создание, редактирование и публикация новостей
@@ -413,15 +434,11 @@ export function AdminNewsPage() {
 
                 <div className="admin-news-form-group">
                   <label htmlFor="content">Содержание *</label>
-                  <textarea
-                    id="content"
+                  <WysiwygEditor
                     value={formData.content}
-                    onChange={(e) =>
-                      setFormData({ ...formData, content: e.target.value })
+                    onChange={(content) =>
+                      setFormData({ ...formData, content })
                     }
-                    placeholder="Полный текст новости"
-                    required
-                    rows={8}
                   />
                 </div>
 

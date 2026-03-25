@@ -1,72 +1,102 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, TrendingUp } from 'lucide-react';
-import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
-import { sileo } from 'sileo';
-import { createTierList, saveTierListTiers } from '@/lib/api';
-import { CategoryTabs } from '@/components/CommunityComponents/CategoryTabs';
-import { TemplateGrid } from '@/components/CommunityComponents/TemplateGrid';
-import { HeroSection } from '@/components/CommunityComponents/HeroSection';
-import { NewsSection } from '@/components/CommunityComponents/NewsSection';
-import { CollectionsSection } from '@/components/CommunityComponents/CollectionsSection';
-import { type TemplateItem } from '../../data/mockData';
-import './CommunityPage.css';
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Plus, TrendingUp } from "lucide-react";
+import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
+import { sileo } from "sileo";
+import { createTierList, saveTierListTiers } from "@/lib/api";
+import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
+import { TemplateGrid } from "@/components/CommunityComponents/TemplateGrid";
+import { HeroSection } from "@/components/CommunityComponents/HeroSection";
+import { NewsSection } from "@/components/CommunityComponents/NewsSection";
+import { CollectionsSection } from "@/components/CommunityComponents/CollectionsSection";
+import { TemplatePreviewModal } from "@/components/CommunityComponents/TemplatePreviewModal";
+import { type TemplateItem } from "../../data/mockData";
+import "./CommunityPage.css";
 
 export default function CommunityPage() {
-  const [activeCategory, setActiveCategory] = useState('actual');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [applyingTemplateId, setApplyingTemplateId] = useState<number | null>(null);
+  const [activeCategory, setActiveCategory] = useState("actual");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [applyingTemplateId, setApplyingTemplateId] = useState<number | null>(
+    null,
+  );
+  const [previewTemplate, setPreviewTemplate] = useState<TemplateItem | null>(
+    null,
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
-    const elements = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
+    const elements = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-reveal]"),
+    );
     if (elements.length === 0) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('reveal--visible');
+            entry.target.classList.add("reveal--visible");
             observer.unobserve(entry.target);
           }
         });
       },
-      { rootMargin: '0px 0px -10% 0px', threshold: 0.15 }
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.15 },
     );
 
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, [activeCategory]);
 
-  const handleUseTemplate = async (template: TemplateItem) => {
-    try {
-      setApplyingTemplateId(template.id);
-      const createdList = await createTierList(template.templateData.title);
+  const handleUseTemplate = (template: TemplateItem) => {
+    setPreviewTemplate(template);
+  };
 
-      const tiersForApi = template.templateData.tiers.map((tier) => ({
+  const handleConfirmUseTemplate = async () => {
+    if (!previewTemplate) return;
+
+    try {
+      setApplyingTemplateId(previewTemplate.id);
+
+      // 1. Создаём тир-лист
+      const createdList = await createTierList(
+        previewTemplate.templateData.title,
+      );
+
+      // 2. Создаём уровни
+      const tiersForApi = previewTemplate.templateData.tiers.map((tier) => ({
         title: tier.name,
         color: tier.color,
         rank: tier.order,
       }));
 
       await saveTierListTiers(String(createdList.id), tiersForApi);
-      sileo.success({ title: 'Шаблон открыт в рейтингах', duration: 3000 });
+
+      const defaultBooksCount =
+        previewTemplate.templateData.defaultBooks?.length || 0;
+      sileo.success({
+        title: "Шаблон открыт в рейтингах",
+        description:
+          defaultBooksCount > 0
+            ? `${defaultBooksCount} книг будет добавлено в редакторе`
+            : "Шаблон готов к заполнению",
+        duration: 3000,
+      });
       navigate(`/tier-lists/${createdList.id}`);
     } catch (error) {
       console.error(error);
-      sileo.error({ 
-        title: "Не удалось открыть шаблон", 
+      sileo.error({
+        title: "Не удалось открыть шаблон",
         description: "Попробуйте снова позже",
-        duration: 3000 
+        duration: 3000,
       });
     } finally {
       setApplyingTemplateId(null);
+      setPreviewTemplate(null);
     }
   };
 
   return (
     <DashboardLayout
-      onMyRatingsClick={() => navigate('/')}
+      onMyRatingsClick={() => navigate("/")}
       showTemplatesNav={true}
       showSearch={false}
       activeItem="Новости"
@@ -83,7 +113,10 @@ export default function CommunityPage() {
             setActiveCategory={setActiveCategory}
           />
 
-          <div className="flex items-end justify-between mb-6 reveal" data-reveal>
+          <div
+            className="flex items-end justify-between mb-6 reveal"
+            data-reveal
+          >
             <h2 className="community-heading text-2xl md:text-3xl font-black tracking-tight flex items-center gap-2">
               <TrendingUp className="text-(--accent-main)" size={28} />
               Популярное на этой неделе
@@ -101,7 +134,9 @@ export default function CommunityPage() {
 
           <div className="flex items-center gap-4 my-12 reveal" data-reveal>
             <div className="community-rule flex-1" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-(--ink-1)">Далее</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-(--ink-1)">
+              Далее
+            </span>
             <div className="community-rule flex-1" />
           </div>
 
@@ -121,6 +156,15 @@ export default function CommunityPage() {
           Создать шаблон
         </span>
       </Link>
+
+      {/* Модалка предпросмотра шаблона */}
+      <TemplatePreviewModal
+        template={previewTemplate!}
+        isOpen={!!previewTemplate}
+        onClose={() => setPreviewTemplate(null)}
+        onConfirm={handleConfirmUseTemplate}
+        isApplying={applyingTemplateId === previewTemplate?.id}
+      />
     </DashboardLayout>
   );
 }

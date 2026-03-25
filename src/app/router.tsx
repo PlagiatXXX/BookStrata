@@ -35,6 +35,16 @@ const AdminNewsPage = lazy(() =>
     default: module.AdminNewsPage,
   })),
 );
+const AdminCollectionsPage = lazy(() =>
+  import("@/pages/AdminCollectionsPage").then((module) => ({
+    default: module.AdminCollectionsPage,
+  })),
+);
+const CollectionPage = lazy(() =>
+  import("@/pages/CollectionPage").then((module) => ({
+    default: module.CollectionPage,
+  })),
+);
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() =>
@@ -80,6 +90,10 @@ export const router = createBrowserRouter([
             path: "/news/:id",
             element: <NewsPage />,
           },
+          {
+            path: "/collections/:id",
+            element: <CollectionPage />,
+          },
         ],
       },
       {
@@ -87,6 +101,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminNewsPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/collections",
+        element: (
+          <AdminGuard>
+            <AdminCollectionsPage />
           </AdminGuard>
         ),
       },

@@ -64,7 +64,7 @@ export const getPublishedNews = async (limit = 6): Promise<NewsArticle[]> => {
 export const getNewsById = async (id: number): Promise<NewsArticle | null> => {
   try {
     return api.get<NewsArticle>(`/news/${id}`);
-  } catch (error) {
+  } catch {
     return null;
   }
 };

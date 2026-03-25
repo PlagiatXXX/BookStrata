@@ -88,6 +88,7 @@ model Template {
   id            String   @id @default(uuid())
   title         String
   description   String?
+  type          String?  // "starter" | "curated" | "community"
   tiers         Json
   defaultBooks  Json?    @map("default_books")
   isPublic      Boolean  @default(false) @map("is_public")
@@ -96,6 +97,8 @@ model Template {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   likes         TemplateLike[]
+
+  @@index([type])
 }
 
 // Лайки тир-листов
