@@ -50,6 +50,7 @@ model TierList {
   year        Int?
   isTemplate  Boolean         @default(false) @map("is_template")
   isPublic   Boolean         @default(false) @map("is_public")
+  likesCount  Int             @default(0) @map("likes_count")
   tiers       Tier[]
   placements  BookPlacement[]
   likes       TierListLike[]

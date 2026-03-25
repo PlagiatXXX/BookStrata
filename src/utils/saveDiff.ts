@@ -116,7 +116,7 @@ export function getTiersDiff(listData: TierListData): TiersDiff {
   return {
     added,
     updated,
-    deletedIds: [],
+    deletedIds: listData.deletedTierIds || [],
   };
 }
 

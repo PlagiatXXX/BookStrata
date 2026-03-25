@@ -32,33 +32,58 @@ export async function like(tierListId: number, userId: number) {
     return { success: false, message: 'Already liked' };
   }
 
-  await prisma.tierListLike.create({
-    data: {
-      userId,
-      tierListId,
-    },
-  });
+  // Используем транзакцию для атомарного обновления
+  await prisma.$transaction([
+    prisma.tierListLike.create({
+      data: {
+        userId,
+        tierListId,
+      },
+    }),
+    prisma.tierList.update({
+      where: { id: tierListId },
+      data: { likesCount: { increment: 1 } },
+    }),
+  ]);
 
   return { success: true };
 }
 
 // Убрать лайк
 export async function unlike(tierListId: number, userId: number) {
-  await prisma.tierListLike.deleteMany({
+  const existing = await prisma.tierListLike.findFirst({
     where: {
       userId,
       tierListId,
     },
   });
 
+  if (!existing) {
+    return { success: false, message: 'Not liked' };
+  }
+
+  // Используем транзакцию для атомарного обновления
+  await prisma.$transaction([
+    prisma.tierListLike.delete({
+      where: { id: existing.id },
+    }),
+    prisma.tierList.update({
+      where: { id: tierListId },
+      data: { likesCount: { decrement: 1 } },
+    }),
+  ]);
+
   return { success: true };
 }
 
 // Получить лайки и статус лайка для пользователя
 export async function getLikesWithStatus(tierListId: number, userId?: number) {
-  const likesCount = await prisma.tierListLike.count({
-    where: { tierListId },
+  const tierList = await prisma.tierList.findUnique({
+    where: { id: tierListId },
+    select: { likesCount: true },
   });
+
+  const likesCount = tierList?.likesCount || 0;
 
   let isLiked = false;
   if (userId) {

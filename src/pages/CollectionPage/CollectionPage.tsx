@@ -131,7 +131,7 @@ export function CollectionPage() {
               {collection.bookCovers.map((cover, idx) => (
                 <div
                   key={idx}
-                  className="aspect-[2/3] bg-(--bg-0) rounded-sm overflow-hidden border border-(--line-soft)"
+                  className="aspect-2/3 bg-(--bg-0) rounded-sm overflow-hidden border border-(--line-soft)"
                 >
                   <img
                     src={cover}
