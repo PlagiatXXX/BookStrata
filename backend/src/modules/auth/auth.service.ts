@@ -1,12 +1,17 @@
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { jwtPayloadSchema, type AuthTokenPayload } from "./auth.schema.js";
 import { RolesService } from "../roles/roles.service.js";
 import { createLogger } from "../../lib/logger.js";
 
 const logger = createLogger("Auth", { color: "blue" });
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  logger.error("FATAL: JWT_SECRET is not defined in your .env file");
+  process.exit(1);
+}
 const ACCESS_TOKEN_EXPIRY = "15m"; // 15 минут для access токена
 const REFRESH_TOKEN_EXPIRY = "7d"; // 7 дней для refresh токена
 
@@ -26,12 +31,6 @@ export interface RegisterPayload {
 export interface LoginPayload {
   username: string;
   password: string;
-}
-
-export interface TokenPayload {
-  userId: number;
-  username: string;
-  role?: string;
 }
 
 // Регистрация нового пользователя
@@ -130,37 +129,37 @@ export async function login(payload: LoginPayload): Promise<AuthToken> {
 }
 
 // Валидация токена
-export function validateToken(token: string): TokenPayload {
+export function validateToken(token: string): AuthTokenPayload {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as TokenPayload;
-    return payload;
+    const payload = jwt.verify(token, JWT_SECRET);
+    return jwtPayloadSchema.parse(payload);
   } catch {
     throw new Error("Невалидный токен");
   }
 }
 
 // Генерация токена
-function generateToken(payload: TokenPayload): string {
+function generateToken(payload: Partial<AuthTokenPayload>): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
 }
 
 // Генерация refresh токена
-function generateRefreshToken(payload: TokenPayload): string {
+function generateRefreshToken(payload: Partial<AuthTokenPayload>): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
 }
 
 // Валидация refresh токена
-export function validateRefreshToken(token: string): TokenPayload {
+export function validateRefreshToken(token: string): AuthTokenPayload {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as TokenPayload;
-    return payload;
+    const payload = jwt.verify(token, JWT_SECRET);
+    return jwtPayloadSchema.parse(payload);
   } catch {
     throw new Error("Невалидный refresh токен");
   }
 }
 
 // Генерация пары токенов
-export function generateTokenPair(payload: TokenPayload): {
+export function generateTokenPair(payload: Partial<AuthTokenPayload>): {
   accessToken: string;
   refreshToken: string;
 } {

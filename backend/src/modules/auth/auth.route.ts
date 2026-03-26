@@ -17,15 +17,6 @@ import {
   AuthTokenPayload,
 } from "./auth.schema.js";
 
-function isAuthTokenPayload(payload: any): payload is AuthTokenPayload {
-  return (
-    typeof payload === "object" &&
-    payload !== null &&
-    "userId" in payload &&
-    "username" in payload
-  );
-}
-
 export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/register
   fastify.post<{ Body: RegisterInput }>(
@@ -115,17 +106,12 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const payload = validateToken(request.body.token);
 
-        // <-- ШАГ 2: Проверяем структуру payload
-        if (isAuthTokenPayload(payload)) {
-          return reply.code(200).send({
-            valid: true,
-            userId: payload.userId,
-            username: payload.username,
-            role: payload.role || undefined,
-          });
-        } else {
-          throw new Error("Invalid token payload structure");
-        }
+        return reply.code(200).send({
+          valid: true,
+          userId: payload.userId,
+          username: payload.username,
+          role: payload.role || undefined,
+        });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         return reply
