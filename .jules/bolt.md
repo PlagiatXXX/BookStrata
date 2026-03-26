@@ -1,3 +1,3 @@
-## 2025-05-15 - [Memoization of derived state in EditorMainContent]
-**Learning:** Derived values in complex editor components (like `unrankedBooks` and `totalBooksCount`) can trigger redundant calculations on every render, even when their source data (the `listData` object's specific fields) hasn't changed. While these are O(n) operations, they add up when the component re-renders frequently due to unrelated state changes (e.g., `activeTierId` or `isTogglingPublic`).
-**Action:** Always wrap expensive derived data (maps, filters, object keys) in `useMemo` with granular dependencies to ensure they only recalculate when necessary.
+## 2025-05-15 - [Referential integrity in Reducer for React Compiler]
+**Learning:** React Compiler automatically memoizes components and derived data based on object references. If a reducer returns new object references for deep state (like `tiers` or `books`) even when no data has changed, it breaks the compiler's ability to skip re-renders.
+**Action:** In reducers, always check if an actual change occurred before creating and returning a new object reference. Maintain structural sharing by only cloning the specific parts of the state that were modified. This complements React Compiler by providing stable references for unaffected data.
