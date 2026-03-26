@@ -188,23 +188,33 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
     }
 
     case 'DELETE_BOOK': {
+      // Оптимизация: изменяем ссылки на объекты только если книга действительно там была.
+      // Это позволяет React Compiler эффективно пропускать ререндер строк, которые не изменились.
       const { bookId } = action.payload;
       const newBooks = { ...state.books };
       delete newBooks[bookId];
 
       const newTiers = { ...state.tiers };
+      let tiersChanged = false;
       Object.keys(newTiers).forEach(tierId => {
-        newTiers[tierId] = {
-          ...newTiers[tierId],
-          bookIds: newTiers[tierId].bookIds.filter(id => id !== bookId),
-        };
+        const tier = newTiers[tierId];
+        if (tier.bookIds.includes(bookId)) {
+          newTiers[tierId] = {
+            ...tier,
+            bookIds: tier.bookIds.filter(id => id !== bookId),
+          };
+          tiersChanged = true;
+        }
       });
+
       const newUnrankedBookIds = state.unrankedBookIds.filter(id => id !== bookId);
+      const unrankedChanged = newUnrankedBookIds.length !== state.unrankedBookIds.length;
+
       return {
         ...state,
         books: newBooks,
-        tiers: newTiers,
-        unrankedBookIds: newUnrankedBookIds,
+        tiers: tiersChanged ? newTiers : state.tiers,
+        unrankedBookIds: unrankedChanged ? newUnrankedBookIds : state.unrankedBookIds,
       };
     }
 
@@ -221,15 +231,27 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
     }
 
     case 'REPLACE_BOOK_IDS': {
+      // Оптимизация: сохраняем старые ссылки на объекты tiers и unrankedBookIds,
+      // если в них не было заменяемых временных ID.
       const newBooks = { ...state.books };
       const newUnranked = [...state.unrankedBookIds];
       const newTiers = { ...state.tiers };
+      let unrankedChanged = false;
+      let tiersChanged = false;
+      let booksChanged = false;
+
       action.payload.forEach(({ tempId, realId }) => {
         if (newBooks[tempId]) {
           newBooks[realId] = { ...newBooks[tempId], id: realId };
           delete newBooks[tempId];
+          booksChanged = true;
+
           const idx = newUnranked.indexOf(tempId);
-          if (idx !== -1) newUnranked[idx] = realId;
+          if (idx !== -1) {
+            newUnranked[idx] = realId;
+            unrankedChanged = true;
+          }
+
           Object.keys(newTiers).forEach(tierId => {
             const tier = newTiers[tierId];
             const idx = tier.bookIds.indexOf(tempId);
@@ -239,11 +261,18 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
                 bookIds: [...tier.bookIds]
               };
               newTiers[tierId].bookIds[idx] = realId;
+              tiersChanged = true;
             }
           });
         }
       });
-      return { ...state, books: newBooks, unrankedBookIds: newUnranked, tiers: newTiers };
+
+      return {
+        ...state,
+        books: booksChanged ? newBooks : state.books,
+        unrankedBookIds: unrankedChanged ? newUnranked : state.unrankedBookIds,
+        tiers: tiersChanged ? newTiers : state.tiers
+      };
     }
 
     case 'REPLACE_TIER_IDS': {
