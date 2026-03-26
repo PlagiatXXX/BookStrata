@@ -54,6 +54,8 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
      }
 
     case 'SET_TITLE':
+      // Guard: Return current state if title is unchanged to prevent redundant re-renders
+      if (state.title === action.payload) return state;
       return { ...state, title: action.payload };
 
 
@@ -88,7 +90,12 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
     }
 
     case 'REORDER_ITEMS': {
-  const { sourceContainer, destContainer, sourceIndex, destIndex } = action.payload;
+      const { sourceContainer, destContainer, sourceIndex, destIndex } = action.payload;
+
+      // Guard: Return current state if position hasn't changed
+      if (sourceContainer === destContainer && sourceIndex === destIndex) {
+        return state;
+      }
 
   // --- Сценарий 1: Перемещение внутри ОДНОГО контейнера ---
   if (sourceContainer === destContainer) {
@@ -149,21 +156,33 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
 
     case 'UPDATE_TIER_SETTINGS': {
       const { tierId, settings } = action.payload;
-      if (!state.tiers[tierId]) return state;
+      const tier = state.tiers[tierId];
+      if (!tier) return state;
+
+      // Guard: Check if any setting actually changed to maintain referential integrity
+      const hasChanges = Object.entries(settings).some(
+        ([key, value]) => tier[key as keyof Omit<Tier, 'id' | 'bookIds'>] !== value
+      );
+
+      if (!hasChanges) return state;
+
       return {
         ...state,
         tiers: {
           ...state.tiers,
-          [tierId]: { ...state.tiers[tierId], ...settings },
+          [tierId]: { ...tier, ...settings },
         },
       };
     }
 
     case 'REORDER_TIERS': {
       const { activeId, overId } = action.payload;
+      // Guard: Return current state if same tier or indices match
+      if (activeId === overId) return state;
+
       const oldIndex = state.tierOrder.indexOf(activeId);
       const newIndex = state.tierOrder.indexOf(overId);
-      if (oldIndex === -1 || newIndex === -1) {
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
         return state;
       }
       const newTierOrder = arrayMove(state.tierOrder, oldIndex, newIndex);
@@ -220,12 +239,21 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
 
     case 'UPDATE_BOOK': {
       const { bookId, updates } = action.payload;
-      if (!state.books[bookId]) return state;
+      const book = state.books[bookId];
+      if (!book) return state;
+
+      // Guard: Check if any field actually changed to maintain referential integrity
+      const hasChanges = Object.entries(updates).some(
+        ([key, value]) => book[key as keyof Book] !== value
+      );
+
+      if (!hasChanges) return state;
+
       return {
         ...state,
         books: {
           ...state.books,
-          [bookId]: { ...state.books[bookId], ...updates },
+          [bookId]: { ...book, ...updates },
         },
       };
     }
