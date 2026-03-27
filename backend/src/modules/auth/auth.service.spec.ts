@@ -107,7 +107,7 @@ describe("Auth Service", () => {
     const mockRegisterPayload = {
       username: "newuser",
       email: "newuser@example.com",
-      password: "password123",
+      password: "password123", // 11 chars
     };
 
     const mockCreatedUser = {

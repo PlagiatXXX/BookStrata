@@ -3,10 +3,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { RolesService } from "../roles/roles.service.js";
 import { createLogger } from "../../lib/logger.js";
+import { jwtPayloadSchema } from "./auth.schema.js";
 
 const logger = createLogger("Auth", { color: "blue" });
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const JWT_SECRET = process.env.JWT_SECRET!;
 const ACCESS_TOKEN_EXPIRY = "15m"; // 15 минут для access токена
 const REFRESH_TOKEN_EXPIRY = "7d"; // 7 дней для refresh токена
 
@@ -132,8 +133,8 @@ export async function login(payload: LoginPayload): Promise<AuthToken> {
 // Валидация токена
 export function validateToken(token: string): TokenPayload {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as TokenPayload;
-    return payload;
+    const payload = jwt.verify(token, JWT_SECRET);
+    return jwtPayloadSchema.parse(payload) as TokenPayload;
   } catch {
     throw new Error("Невалидный токен");
   }
@@ -152,8 +153,8 @@ function generateRefreshToken(payload: TokenPayload): string {
 // Валидация refresh токена
 export function validateRefreshToken(token: string): TokenPayload {
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as TokenPayload;
-    return payload;
+    const payload = jwt.verify(token, JWT_SECRET);
+    return jwtPayloadSchema.parse(payload) as TokenPayload;
   } catch {
     throw new Error("Невалидный refresh токен");
   }

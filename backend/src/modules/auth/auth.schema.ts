@@ -3,18 +3,26 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 export interface AuthTokenPayload {
-  userId: number; // или string
+  userId: number;
   username: string;
   role?: string;
   iat: number;
   exp: number;
 }
 
+export const jwtPayloadSchema = z.object({
+  userId: z.number(),
+  username: z.string(),
+  role: z.string().optional(),
+  iat: z.number().optional(),
+  exp: z.number().optional(),
+});
+
 // Схема для регистрации
 export const registerBodySchema = z.object({
   username: z.string().min(2, "Имя должно содержать минимум 2 символа"),
   email: z.string().email("Некорректный формат email"),
-  password: z.string().min(4, "Пароль должен содержать минимум 4 символа"),
+  password: z.string().min(8, "Пароль должен содержать минимум 8 символов"),
 });
 
 // Схема для логина

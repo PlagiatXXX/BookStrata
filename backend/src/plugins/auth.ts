@@ -3,10 +3,11 @@ import fp from "fastify-plugin";
 import jwt from "jsonwebtoken";
 import { RolesService } from "../modules/roles/roles.service.js";
 import { createLogger } from "../lib/logger.js";
+import { jwtPayloadSchema } from "../modules/auth/auth.schema.js";
 
 const logger = createLogger("AuthPlugin", { color: "blue" });
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 interface JwtPayload {
   userId: number;
@@ -27,7 +28,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     const token = authHeader.substring(7);
 
     try {
-      const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+      const payload = jwtPayloadSchema.parse(jwt.verify(token, JWT_SECRET));
 
       logger.info("JWT payload получен", {
         userId: payload.userId,

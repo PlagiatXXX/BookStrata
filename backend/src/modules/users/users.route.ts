@@ -137,7 +137,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           required: ["current_password", "new_password"],
           properties: {
             current_password: { type: "string", minLength: 1 },
-            new_password: { type: "string", minLength: 6 },
+            new_password: { type: "string", minLength: 8 },
           },
         },
       },
