@@ -6,7 +6,7 @@ import { createLogger } from "../lib/logger.js";
 
 const logger = createLogger("AuthPlugin", { color: "blue" });
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 interface JwtPayload {
   userId: number;

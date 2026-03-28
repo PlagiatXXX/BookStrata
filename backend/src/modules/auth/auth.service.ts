@@ -6,7 +6,7 @@ import { createLogger } from "../../lib/logger.js";
 
 const logger = createLogger("Auth", { color: "blue" });
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const JWT_SECRET = process.env.JWT_SECRET!;
 const ACCESS_TOKEN_EXPIRY = "15m"; // 15 минут для access токена
 const REFRESH_TOKEN_EXPIRY = "7d"; // 7 дней для refresh токена
 
