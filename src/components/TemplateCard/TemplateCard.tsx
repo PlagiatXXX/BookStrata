@@ -80,7 +80,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
               <div className="flex gap-1">
                 <button
                   type="button"
-                  aria-label="Edit template"
+                  aria-label="Редактировать шаблон"
                   onClick={() => onEdit(template)}
                   className="rounded-md border border-white/35 bg-black/40 p-1.5 text-white transition-colors hover:bg-black/70"
                 >
@@ -88,7 +88,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                 </button>
                 <button
                   type="button"
-                  aria-label="Delete template"
+                  aria-label="Удалить шаблон"
                   onClick={handleDeleteClick}
                   className="rounded-md border border-white/35 bg-black/40 p-1.5 text-white transition-colors hover:bg-red-500/70"
                 >
@@ -182,6 +182,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             <Button
               variant="outline"
               size="sm"
+              aria-label="Редактировать шаблон"
               onClick={() => onEdit(template)}
               className="p-1 text-[#f3efe6] opacity-90 transition-opacity hover:opacity-100"
             >
@@ -190,6 +191,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             <Button
               variant="destructive"
               size="sm"
+              aria-label="Удалить шаблон"
               onClick={handleDeleteClick}
               className="p-1 opacity-90 transition-opacity hover:opacity-100"
             >

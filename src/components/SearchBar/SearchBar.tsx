@@ -19,11 +19,13 @@ export const SearchBar = ({ value, onChange, placeholder = "Поиск..." }: Se
         value={value}
         onChange={handleInputChange}
         placeholder={placeholder}
+        aria-label="Поиск"
         className="bg-transparent text-sm placeholder-gray-500 text-gray-300 focus:outline-none min-w-37.5"
       />
       {value && (
         <button
           onClick={() => onChange('')}
+          aria-label="Очистить поиск"
           className="text-gray-400 hover:text-gray-200 cursor-pointer"
         >
           <X size={14} />

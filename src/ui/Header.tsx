@@ -171,6 +171,7 @@ export const Header = ({
                 onClick={() => navigate("/profile")}
                 className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer"
                 title="Профиль"
+                aria-label="Профиль"
               >
                 <Avatar
                   url={authUser?.avatarUrl}
@@ -223,6 +224,7 @@ export const Header = ({
                   setIsMobileMenuOpen(false);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer text-gray-300 hover:text-white hover:bg-slate-800/50 transition-all duration-200 text-sm"
+                aria-label="Профиль"
               >
                 <Avatar
                   url={authUser?.avatarUrl}
