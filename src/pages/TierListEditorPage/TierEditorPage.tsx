@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { sileo } from 'sileo';
+import { useCallback } from 'react';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useTierList } from '@/hooks/useTierList';
 import type { Action } from '@/hooks/useTierList';
@@ -132,45 +133,45 @@ const TierListEditorContent = () => {
     navigate,
   });
 
-  // Обработчики с установкой hasUnsavedChanges
-  const handleDragEndWithUnsaved = (event: DragEndEvent) => {
+  // Обработчики с установкой hasUnsavedChanges - Мемоизируем для предотвращения ререндеров EditorMainContent
+  const handleDragEndWithUnsaved = useCallback((event: DragEndEvent) => {
     handleDragEnd(event);
     setHasUnsavedChanges(true);
-  };
+  }, [handleDragEnd, setHasUnsavedChanges]);
 
-  const addBooksWithUnsaved = async (files: File[]) => {
+  const addBooksWithUnsaved = useCallback(async (files: File[]) => {
     await addBooks(files);
     setHasUnsavedChanges(true);
-  };
+  }, [addBooks, setHasUnsavedChanges]);
 
-  const deleteBookWithUnsaved = (bookId: string) => {
+  const deleteBookWithUnsaved = useCallback((bookId: string) => {
     setBookToDelete(bookId);
-  };
+  }, [setBookToDelete]);
 
-  const addRowWithUnsaved = (title?: string) => {
+  const addRowWithUnsaved = useCallback((title?: string) => {
     addRow(title);
     setHasUnsavedChanges(true);
-  };
+  }, [addRow, setHasUnsavedChanges]);
 
-  const updateTierSettingsWithUnsaved = (
+  const updateTierSettingsWithUnsaved = useCallback((
     tierId: string,
     settings: Partial<{ title: string; color: string }>,
   ) => {
     updateTierSettings(tierId, settings);
     setHasUnsavedChanges(true);
-  };
+  }, [updateTierSettings, setHasUnsavedChanges]);
 
-  const renameTierWithUnsaved = (tierId: string, newTitle: string) => {
+  const renameTierWithUnsaved = useCallback((tierId: string, newTitle: string) => {
     renameTier(tierId, newTitle);
     setHasUnsavedChanges(true);
-  };
+  }, [renameTier, setHasUnsavedChanges]);
 
-  const clearRowsWithUnsaved = () => {
+  const clearRowsWithUnsaved = useCallback(() => {
     clearRows();
     setHasUnsavedChanges(true);
-  };
+  }, [clearRows, setHasUnsavedChanges]);
 
-  const removeTierWithUnsaved = (tierId: string) => {
+  const removeTierWithUnsaved = useCallback((tierId: string) => {
     if (!tierId.startsWith('tier-')) {
       const numericId = parseInt(tierId, 10);
       if (!isNaN(numericId)) {
@@ -179,14 +180,14 @@ const TierListEditorContent = () => {
     }
     removeTier(tierId);
     setHasUnsavedChanges(true);
-  };
+  }, [removeTier, setHasUnsavedChanges, setDeletedTierIds]);
 
-  const handleConfirmDeleteRating = () => {
+  const handleConfirmDeleteRating = useCallback(() => {
     setShowDeleteRatingModal(false);
     setIgnoreUnsavedBlocker(true);
     setDeletedTierIds([]);
     deleteRatingFromServer();
-  };
+  }, [deleteRatingFromServer, setDeletedTierIds, setIgnoreUnsavedBlocker, setShowDeleteRatingModal]);
 
   // Получаем логику блокировок из хука
   const { handleMyRatingsClick, handleSaveBeforeLeave, handleConfirmLeave, handleCancelLeave } =
@@ -215,28 +216,48 @@ const TierListEditorContent = () => {
       handleDragEndWithUnsaved,
     });
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = useCallback(() => {
     if (tierToDelete) removeTierWithUnsaved(tierToDelete);
     setTierToDelete(null);
-  };
+  }, [tierToDelete, removeTierWithUnsaved, setTierToDelete]);
 
-  const handleConfirmDeleteBook = () => {
+  const handleConfirmDeleteBook = useCallback(() => {
     if (bookToDelete) {
       deleteBook(bookToDelete);
       handleDeleteBook(bookToDelete);
       setHasUnsavedChanges(true);
     }
     setBookToDelete(null);
-  };
+  }, [bookToDelete, deleteBook, handleDeleteBook, setHasUnsavedChanges, setBookToDelete]);
 
-  const handleConfirmClearAll = () => {
+  const handleConfirmClearAll = useCallback(() => {
     clearRowsWithUnsaved();
     setIsClearAllModalOpen(false);
-  };
+  }, [clearRowsWithUnsaved, setIsClearAllModalOpen]);
 
-  const handleViewBook = (book: Book) => {
+  const handleViewBook = useCallback((book: Book) => {
     setBookToView(book);
-  };
+  }, [setBookToView]);
+
+  const handleEditBook = useCallback((book: Book) => {
+    setBookToEdit(book);
+  }, [setBookToEdit]);
+
+  const handleSetActiveTier = useCallback((id: string | null) => {
+    setActiveTierId((current) => (current === id ? null : id));
+  }, [setActiveTierId]);
+
+  const handleOpenClearAllModal = useCallback(() => {
+    setIsClearAllModalOpen(true);
+  }, [setIsClearAllModalOpen]);
+
+  const handleOpenDeleteRatingModal = useCallback(() => {
+    setShowDeleteRatingModal(true);
+  }, [setShowDeleteRatingModal]);
+
+  const handleOpenSearchModal = useCallback(() => {
+    setIsSearchModalOpen(true);
+  }, [setIsSearchModalOpen]);
 
   // Пропсы для EditorHeader
   const headerProps = {
@@ -277,23 +298,23 @@ const TierListEditorContent = () => {
           isPro={isPro}
           tierGridRef={tierGridRef}
           onDeleteBook={deleteBookWithUnsaved}
-          onEditBook={(book) => setBookToEdit(book)}
+          onEditBook={isReadOnly ? undefined : handleEditBook}
           onViewBook={handleViewBook}
           activeTierId={activeTierId}
           onAddRow={addRowWithUnsaved}
-          onChangeTierColor={(tierId, color) => updateTierSettingsWithUnsaved(tierId, { color })}
+          onChangeTierColor={updateTierSettingsWithUnsaved}
           onRenameTier={renameTierWithUnsaved}
           onDeleteTier={setTierToDelete}
-          onSetActiveTier={(id) => setActiveTierId((current) => (current === id ? null : id))}
+          onSetActiveTier={handleSetActiveTier}
           onUpdateTier={updateTierSettingsWithUnsaved}
-          onClearRows={() => setIsClearAllModalOpen(true)}
+          onClearRows={handleOpenClearAllModal}
           onDownloadImage={onDownloadImage}
           onMyRatingsClick={handleMyRatingsClick}
-          onDeleteRating={() => setShowDeleteRatingModal(true)}
+          onDeleteRating={handleOpenDeleteRatingModal}
           isPublic={isPublic}
           onTogglePublic={togglePublic}
           isTogglingPublic={isTogglingPublic}
-          onFindBook={() => setIsSearchModalOpen(true)}
+          onFindBook={handleOpenSearchModal}
           onUploadBooks={addBooksWithUnsaved}
         />
       </EditorLayout>

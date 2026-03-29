@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { TierGrid } from '@/components/TierGrid/TierGrid';
 import { UnrankedItems } from '@/components/UnrankedItems/UnrankedItems';
 import { SettingsSidebar } from '@/components/SettingsSidebar/SettingsSidebar';
@@ -58,14 +58,26 @@ export const EditorMainContent = memo(({
   onFindBook,
   onUploadBooks,
 }: EditorMainContentProps) => {
-  const unrankedBooks = listData.unrankedBookIds
-    .map((id) => listData.books[id])
-    .filter(Boolean);
+  // Memoize unranked books to prevent re-renders of UnrankedItems when listData changes
+  // but unrankedBookIds and books references for those IDs remain the same.
+  const unrankedBooks = useMemo(() =>
+    listData.unrankedBookIds
+      .map((id) => listData.books[id])
+      .filter(Boolean),
+    [listData.unrankedBookIds, listData.books]
+  );
 
-  // Общее количество книг во всём тир-листе (в тирах + unranked)
-  const totalBooksCount = Object.keys(listData.books).length;
+  // Total count is a simple primitive, but we use useMemo to avoid re-calculating Object.keys
+  const totalBooksCount = useMemo(() =>
+    Object.keys(listData.books).length,
+    [listData.books]
+  );
 
-  const activeTierData = activeTierId ? listData.tiers[activeTierId] : null;
+  // Memoize active tier data for SettingsSidebar
+  const activeTierData = useMemo(() =>
+    activeTierId ? listData.tiers[activeTierId] : null,
+    [activeTierId, listData.tiers]
+  );
 
   // Стабилизируем обработчики для TierGrid
   const handleChangeTierColor = useCallback(
