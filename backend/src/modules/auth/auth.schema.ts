@@ -12,9 +12,18 @@ export interface AuthTokenPayload {
 
 // Схема для регистрации
 export const registerBodySchema = z.object({
-  username: z.string().min(2, "Имя должно содержать минимум 2 символа"),
-  email: z.string().email("Некорректный формат email"),
-  password: z.string().min(4, "Пароль должен содержать минимум 4 символа"),
+  username: z
+    .string()
+    .min(2, "Имя должно содержать минимум 2 символа")
+    .max(30, "Имя должно содержать максимум 30 символов"),
+  email: z
+    .string()
+    .email("Некорректный формат email")
+    .max(255, "Email слишком длинный"),
+  password: z
+    .string()
+    .min(8, "Пароль должен содержать минимум 8 символов")
+    .max(100, "Пароль слишком длинный"),
 });
 
 // Схема для логина
