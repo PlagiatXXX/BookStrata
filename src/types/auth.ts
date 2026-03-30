@@ -18,8 +18,27 @@ export interface User {
   username: string;
   avatarUrl?: string | null;
   role?: string;
+  isPro?: boolean;
+  proExpiresAt?: string | null;
 }
 
 export interface AuthError {
   error: string;
+}
+
+// Тип для админки (все пользователи)
+export interface AdminUser {
+  userId: number;
+  email: string;
+  username: string;
+  isPro: boolean;
+  proExpiresAt: string | null;
+  role: string;
+  createdAt: string;
+}
+
+// Тип для Pro подписки
+export interface ProSubscription {
+  isPro: boolean;
+  proExpiresAt: string | null;
 }

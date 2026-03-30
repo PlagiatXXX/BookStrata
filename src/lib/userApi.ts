@@ -13,6 +13,8 @@ export interface User {
   username: string;
   avatarUrl: string | null;
   role?: string;
+  isPro?: boolean;
+  proExpiresAt?: string | null;
   createdAt: string;
 }
 

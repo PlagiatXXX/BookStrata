@@ -1,25 +1,25 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { sileo } from 'sileo';
-import type { DragEndEvent } from '@dnd-kit/core';
-import { useTierList } from '@/hooks/useTierList';
-import type { Action } from '@/hooks/useTierList';
-import { useAuth } from '@/hooks/useAuthContext';
-import { createLogger } from '@/lib/logger';
-import { EditorModals } from './components/EditorModals';
-import { EditorLayout } from './components/EditorLayout';
-import { EditorMainContent } from './components/EditorMainContent';
-import { EditorScreens } from './components/EditorScreens';
-import { useTierEditorActions } from './hooks/useTierEditorActions';
-import { useTierEditorState } from './hooks/useTierEditorState';
-import { useTierEditorQueries } from './hooks/useTierEditorQueries';
-import { useTierEditorDrag } from './hooks/useTierEditorDrag';
-import { useTierEditorBlocker } from './hooks/useTierEditorBlocker';
-import { useTierEditorSave } from './hooks/useTierEditorSave';
-import './TierEditorPage.css';
-import type { Book } from '@/types';
+import { useParams, useNavigate } from "react-router-dom";
+import { sileo } from "sileo";
+import type { DragEndEvent } from "@dnd-kit/core";
+import { useTierList } from "@/hooks/useTierList";
+import type { Action } from "@/hooks/useTierList";
+import { useAuth } from "@/hooks/useAuthContext";
+import { createLogger } from "@/lib/logger";
+import { EditorModals } from "./components/EditorModals";
+import { EditorLayout } from "./components/EditorLayout";
+import { EditorMainContent } from "./components/EditorMainContent";
+import { EditorScreens } from "./components/EditorScreens";
+import { useTierEditorActions } from "./hooks/useTierEditorActions";
+import { useTierEditorState } from "./hooks/useTierEditorState";
+import { useTierEditorQueries } from "./hooks/useTierEditorQueries";
+import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
+import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
+import { useTierEditorSave } from "./hooks/useTierEditorSave";
+import "./TierEditorPage.css";
+import type { Book } from "@/types";
 
 // Логгер для страницы редактора
-const logger = createLogger('TierEditorPage', { color: 'green' });
+const logger = createLogger("TierEditorPage", { color: "green" });
 
 // Внутренний компонент с ключом для автоматического сброса состояния
 const TierListEditorContent = () => {
@@ -81,9 +81,9 @@ const TierListEditorContent = () => {
   const ownerUserId = apiData?.user?.id;
   const isOwner = currentUserId === ownerUserId;
   const isReadOnly = !isOwner && isPublic;
-  
-  // TODO: Добавить проверку Pro-подписки из AuthContext или API
-  const isPro = false;
+
+  // Получаем Pro статус из AuthContext
+  const isPro = authUser?.isPro ?? false;
 
   // Получаем функции из хука useTierList
   const {
@@ -101,16 +101,22 @@ const TierListEditorContent = () => {
   } = useTierList(initialDataForHook, !hasUnsavedChanges);
 
   // ========== ОПТИМИЗИРОВАННОЕ АВТОСОХРАНЕНИЕ ==========
-  const { autoSaveStatus, lastSaved, forceSave, cancel, getSavePayload, savePayload } =
-    useTierEditorSave({
-      tierListId,
-      listData,
-      dispatch,
-      isLoading,
-      isReadOnly,
-      setHasUnsavedChanges,
-      logger,
-    });
+  const {
+    autoSaveStatus,
+    lastSaved,
+    forceSave,
+    cancel,
+    getSavePayload,
+    savePayload,
+  } = useTierEditorSave({
+    tierListId,
+    listData,
+    dispatch,
+    isLoading,
+    isReadOnly,
+    setHasUnsavedChanges,
+    logger,
+  });
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Получаем функции из хука действий
@@ -171,7 +177,7 @@ const TierListEditorContent = () => {
   };
 
   const removeTierWithUnsaved = (tierId: string) => {
-    if (!tierId.startsWith('tier-')) {
+    if (!tierId.startsWith("tier-")) {
       const numericId = parseInt(tierId, 10);
       if (!isNaN(numericId)) {
         setDeletedTierIds((prev) => [...prev, numericId]);
@@ -189,31 +195,39 @@ const TierListEditorContent = () => {
   };
 
   // Получаем логику блокировок из хука
-  const { handleMyRatingsClick, handleSaveBeforeLeave, handleConfirmLeave, handleCancelLeave } =
-    useTierEditorBlocker({
-      isReadOnly,
-      ignoreUnsavedBlocker,
-      hasUnsavedChanges,
-      autoSaveStatus,
-      isUpdatingBook,
-      setShowUnsavedModal,
-      setIgnoreUnsavedBlocker,
-      setDeletedTierIds,
-      setIsSavingBeforeLeave,
-      cancel,
-      forceSave,
-      navigate,
-      logger,
-      sileo,
-    });
+  const {
+    handleMyRatingsClick,
+    handleSaveBeforeLeave,
+    handleConfirmLeave,
+    handleCancelLeave,
+  } = useTierEditorBlocker({
+    isReadOnly,
+    ignoreUnsavedBlocker,
+    hasUnsavedChanges,
+    autoSaveStatus,
+    isUpdatingBook,
+    setShowUnsavedModal,
+    setIgnoreUnsavedBlocker,
+    setDeletedTierIds,
+    setIsSavingBeforeLeave,
+    cancel,
+    forceSave,
+    navigate,
+    logger,
+    sileo,
+  });
 
   // Получаем D&D логику из хука
-  const { tierGridRef, handleDragStart, handleDragEndAndClear, onDownloadImage } =
-    useTierEditorDrag({
-      listData,
-      setActiveItem,
-      handleDragEndWithUnsaved,
-    });
+  const {
+    tierGridRef,
+    handleDragStart,
+    handleDragEndAndClear,
+    onDownloadImage,
+  } = useTierEditorDrag({
+    listData,
+    setActiveItem,
+    handleDragEndWithUnsaved,
+  });
 
   const handleConfirmDelete = () => {
     if (tierToDelete) removeTierWithUnsaved(tierToDelete);
@@ -281,10 +295,14 @@ const TierListEditorContent = () => {
           onViewBook={handleViewBook}
           activeTierId={activeTierId}
           onAddRow={addRowWithUnsaved}
-          onChangeTierColor={(tierId, color) => updateTierSettingsWithUnsaved(tierId, { color })}
+          onChangeTierColor={(tierId, color) =>
+            updateTierSettingsWithUnsaved(tierId, { color })
+          }
           onRenameTier={renameTierWithUnsaved}
           onDeleteTier={setTierToDelete}
-          onSetActiveTier={(id) => setActiveTierId((current) => (current === id ? null : id))}
+          onSetActiveTier={(id) =>
+            setActiveTierId((current) => (current === id ? null : id))
+          }
           onUpdateTier={updateTierSettingsWithUnsaved}
           onClearRows={() => setIsClearAllModalOpen(true)}
           onDownloadImage={onDownloadImage}

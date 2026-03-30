@@ -12,20 +12,21 @@ export const SearchBar = ({ value, onChange, placeholder = "Поиск..." }: Se
   };
 
   return (
-    <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 text-gray-400 border border-slate-700/50">
+    <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 text-gray-400 border border-slate-700/50 transition-all focus-within:ring-2 focus-within:ring-(--accent-main)/50 focus-within:border-(--accent-main)/50">
       <Search size={16} />
       <input
         type="text"
         value={value}
         onChange={handleInputChange}
         placeholder={placeholder}
+        aria-label="Поиск по названию"
         className="bg-transparent text-sm placeholder-gray-500 text-gray-300 focus:outline-none min-w-37.5"
       />
       {value && (
         <button
           onClick={() => onChange('')}
-          className="text-gray-400 hover:text-gray-200 cursor-pointer"
           aria-label="Очистить поиск"
+          className="text-gray-400 hover:text-white transition-colors cursor-pointer"
         >
           <X size={14} />
         </button>

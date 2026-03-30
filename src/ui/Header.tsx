@@ -37,24 +37,21 @@ export const Header = ({
   const location = useLocation();
 
   // Автоматическое определение активной вкладки на основе пути
-  const activeItem = activeItemProp || (() => {
-    const path = location.pathname;
-    if (path === "/community") return "Новости";
-    if (path === "/templates" || path.startsWith("/templates/")) return "Шаблоны";
-    if (path === "/" || path.startsWith("/tier-lists/")) return "Мои Рейтинги";
-    return undefined;
-  })();
+  const activeItem =
+    activeItemProp ||
+    (() => {
+      const path = location.pathname;
+      if (path === "/community") return "Новости";
+      if (path === "/templates" || path.startsWith("/templates/"))
+        return "Шаблоны";
+      if (path === "/" || path.startsWith("/tier-lists/"))
+        return "Мои Рейтинги";
+      return undefined;
+    })();
 
   // Обновлять данные пользователя при изменении аватара
-  useEffect(() => {
-    const handleAvatarUpdate = () => {
-      // Trigger auth context to re-fetch user data
-      window.dispatchEvent(new CustomEvent('auth-token-changed'));
-    };
-
-    window.addEventListener('avatar-updated', handleAvatarUpdate);
-    return () => window.removeEventListener('avatar-updated', handleAvatarUpdate);
-  }, []);
+  // Примечание: удалено, т.к. вызывает дублирование запросов
+  // React Query автоматически обновляет кэш через invalidateQueries
 
   const handleSearchChange = (query: string) => {
     onSearch?.(query);
@@ -160,7 +157,7 @@ export const Header = ({
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer"
-              aria-label="Menu"
+              aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -171,6 +168,7 @@ export const Header = ({
                 onClick={() => navigate("/profile")}
                 className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer"
                 title="Профиль"
+                aria-label="Перейти в профиль"
               >
                 <Avatar
                   url={authUser?.avatarUrl}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FastifyInstance } from "fastify";
 import {
   getMe,
@@ -7,6 +8,7 @@ import {
   getUserStats,
   updateUser,
   changePassword,
+  getAllUsers,
 } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 
@@ -137,7 +139,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           required: ["current_password", "new_password"],
           properties: {
             current_password: { type: "string", minLength: 1 },
-            new_password: { type: "string", minLength: 6 },
+            new_password: { type: "string", minLength: 8 },
           },
         },
       },
@@ -154,6 +156,27 @@ export async function userRoutes(fastify: FastifyInstance) {
       );
       fastify.log.info({ userId }, "Password changed");
       return reply.code(200).send(user);
+    },
+  );
+
+  // GET /api/users/admin/all - получить всех пользователей (только админ)
+  fastify.get(
+    "/admin/all",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
+
+      // Проверка на админа
+      const userRole = (request as any).user?.role;
+      if (userRole !== "admin") {
+        return reply.code(403).send({ error: "Требуется роль администратора" });
+      }
+
+      const users = await getAllUsers();
+      return reply.code(200).send(users);
     },
   );
 }

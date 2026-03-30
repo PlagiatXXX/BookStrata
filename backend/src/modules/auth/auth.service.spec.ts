@@ -34,7 +34,14 @@ describe("Auth Service", () => {
   let mockGetRoleByName: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockGetRoleByName = vi.fn();
+    mockGetRoleByName = vi.fn<
+      (name: string) => Promise<{
+        id: number;
+        name: string;
+        description: string | null;
+      } | null>
+    >();
+    // @ts-expect-error - Vitest mock type inference issue
     vi.spyOn(RolesService.prototype, "getRoleByName").mockImplementation(
       mockGetRoleByName,
     );

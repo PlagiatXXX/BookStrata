@@ -1,8 +1,13 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  // Хешируем пароли для тестовых пользователей
+  const adminPasswordHash = await bcrypt.hash("1234", 10);
+  const userPasswordHash = await bcrypt.hash("1234", 10);
+
   // 1. Создаем роли (если не существуют)
   const adminRole = await prisma.role.upsert({
     where: { name: "admin" },
@@ -57,7 +62,18 @@ async function main() {
     update: { roleId: adminRole.id },
     create: {
       email: "fedor@example.com",
-      passwordHash: "123456",
+      username: "fedor",
+      passwordHash: adminPasswordHash,
+      roleId: adminRole.id,
+    },
+  });
+  const _adminUser = await prisma.user.upsert({
+    where: { email: "admin@example.com" },
+    update: { roleId: adminRole.id },
+    create: {
+      email: "admin@example.com",
+      username: "admin",
+      passwordHash: adminPasswordHash,
       roleId: adminRole.id,
     },
   });
@@ -66,8 +82,94 @@ async function main() {
     update: { roleId: userRole.id },
     create: {
       email: "alina@example.com",
-      passwordHash: "password",
+      passwordHash: userPasswordHash,
       roleId: userRole.id,
+    },
+  });
+
+  // Создаем дополнительных пользователей с разными статусами подписки
+  const _proUser1 = await prisma.user.upsert({
+    where: { email: "pro1@example.com" },
+    update: {
+      roleId: userRole.id,
+      isPro: true,
+      proExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 дней
+      aiAvatarsGenerated: 5,
+    },
+    create: {
+      email: "pro1@example.com",
+      username: "ProUser1",
+      passwordHash: userPasswordHash,
+      roleId: userRole.id,
+      isPro: true,
+      proExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      aiAvatarsGenerated: 5,
+    },
+  });
+
+  const _proUser2 = await prisma.user.upsert({
+    where: { email: "pro2@example.com" },
+    update: {
+      roleId: userRole.id,
+      isPro: true,
+      proExpiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // +5 дней (истекает скоро)
+      aiAvatarsGenerated: 45, // Почти исчерпан лимит
+    },
+    create: {
+      email: "pro2@example.com",
+      username: "ProUser2",
+      passwordHash: userPasswordHash,
+      roleId: userRole.id,
+      isPro: true,
+      proExpiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      aiAvatarsGenerated: 45,
+    },
+  });
+
+  const _lifetimeProUser = await prisma.user.upsert({
+    where: { email: "lifetime@example.com" },
+    update: {
+      roleId: userRole.id,
+      isPro: true,
+      proExpiresAt: null, // Бессрочная подписка
+      aiAvatarsGenerated: 0,
+    },
+    create: {
+      email: "lifetime@example.com",
+      username: "LifetimePro",
+      passwordHash: userPasswordHash,
+      roleId: userRole.id,
+      isPro: true,
+      proExpiresAt: null,
+      aiAvatarsGenerated: 0,
+    },
+  });
+
+  const _freeUser1 = await prisma.user.upsert({
+    where: { email: "free1@example.com" },
+    update: { roleId: userRole.id },
+    create: {
+      email: "free1@example.com",
+      username: "FreeUser1",
+      passwordHash: userPasswordHash,
+      roleId: userRole.id,
+      isPro: false,
+      proExpiresAt: null,
+      aiAvatarsGenerated: 0,
+    },
+  });
+
+  const _freeUser2 = await prisma.user.upsert({
+    where: { email: "free2@example.com" },
+    update: { roleId: userRole.id },
+    create: {
+      email: "free2@example.com",
+      username: "FreeUser2",
+      passwordHash: userPasswordHash,
+      roleId: userRole.id,
+      isPro: false,
+      proExpiresAt: null,
+      aiAvatarsGenerated: 0,
     },
   });
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import jwt from "jsonwebtoken";
@@ -6,7 +7,7 @@ import { createLogger } from "../lib/logger.js";
 
 const logger = createLogger("AuthPlugin", { color: "blue" });
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET!;
 if (!JWT_SECRET) {
   logger.error("FATAL: JWT_SECRET is not defined in your .env file");
   process.exit(1);
@@ -20,7 +21,7 @@ interface JwtPayload {
 
 const authPlugin: FastifyPluginAsync = async (fastify) => {
   // Добавляем хук для автоматической проверки токена
-  fastify.addHook("onRequest", async (request, reply) => {
+  fastify.addHook("onRequest", async (request) => {
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

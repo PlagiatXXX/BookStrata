@@ -1,9 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiGetMe, apiGetUserStats, apiUpdateAvatar, type User, type UserStats } from '@/lib/userApi';
-import { getAuthToken } from '@/lib/authApi';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  apiGetMe,
+  apiGetUserStats,
+  apiUpdateAvatar,
+  type User,
+  type UserStats,
+} from "@/lib/userApi";
+import { getAuthToken } from "@/lib/authApi";
 
-const USER_QUERY_KEY = ['user', 'me'] as const;
-const USER_STATS_QUERY_KEY = ['user', 'stats'] as const;
+const USER_QUERY_KEY = ["user", "me"] as const;
+const USER_STATS_QUERY_KEY = ["user", "stats"] as const;
 
 interface UseUserResult {
   user: User | undefined;
@@ -33,9 +39,12 @@ export function useUser(): UseUserResult {
 
   const uploadAvatarMutation = useMutation({
     mutationFn: (avatarUrl: string) => apiUpdateAvatar(avatarUrl),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: USER_STATS_QUERY_KEY });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: USER_STATS_QUERY_KEY });
+      // Немедленно обновляем данные после инвалидации
+      await userQuery.refetch();
+      await statsQuery.refetch();
     },
   });
 

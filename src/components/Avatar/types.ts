@@ -1,10 +1,10 @@
-import type { LucideIcon } from 'lucide-react';
-import type { PresetStyle, AvatarPreset } from './presets';
+import type { LucideIcon } from "lucide-react";
+import type { PresetStyle, AvatarPreset } from "./presets";
 
 export type { PresetStyle, AvatarPreset };
 
 // === Tab types ===
-export type TabId = 'presets' | 'ai' | 'upload';
+export type TabId = "presets" | "ai" | "upload";
 
 export interface TabConfig {
   id: TabId;
@@ -13,7 +13,7 @@ export interface TabConfig {
 }
 
 // === Preview state ===
-export type PreviewLoadState = 'idle' | 'loading' | 'ready' | 'error';
+export type PreviewLoadState = "idle" | "loading" | "ready" | "error";
 
 export interface PreviewState {
   url: string | null;
@@ -21,8 +21,8 @@ export interface PreviewState {
 }
 
 export type PreviewAction =
-  | { type: 'SET_PREVIEW'; url: string | null; loadState?: PreviewLoadState }
-  | { type: 'SET_LOAD_STATE'; loadState: PreviewLoadState };
+  | { type: "SET_PREVIEW"; url: string | null; loadState?: PreviewLoadState }
+  | { type: "SET_LOAD_STATE"; loadState: PreviewLoadState };
 
 // === Generation state ===
 export interface GenerationState {
@@ -33,18 +33,19 @@ export interface GenerationState {
 }
 
 export type GenerationAction =
-  | { type: 'START_GENERATION'; baseAvatar: string | null }
-  | { type: 'GENERATION_SUCCESS'; imageUrl: string; remaining?: number }
-  | { type: 'GENERATION_ERROR'; error: string }
-  | { type: 'GENERATION_COMPLETE' }
-  | { type: 'TIMEOUT'; error: string }
-  | { type: 'CLEAR_ERROR' };
+  | { type: "START_GENERATION"; baseAvatar: string | null }
+  | { type: "GENERATION_SUCCESS"; imageUrl: string; remaining?: number }
+  | { type: "GENERATION_ERROR"; error: string }
+  | { type: "GENERATION_COMPLETE" }
+  | { type: "TIMEOUT"; error: string }
+  | { type: "CLEAR_ERROR" };
 
 // === Limit info ===
 export interface LimitInfo {
   used: number;
   limit: number;
   remaining: number;
+  isPro?: boolean;
 }
 
 // === Component props ===

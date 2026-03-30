@@ -15,6 +15,7 @@ import { avatarRoutes } from "../src/modules/avatars/avatar.route.js";
 import { booksRoutes } from "../src/modules/books/books.route.js";
 import { newsRoutes } from "../src/modules/news/news.route.js";
 import { rolesRoutes } from "../src/modules/roles/roles.route.js";
+import { subscriptionsRoutes } from "../src/modules/subscriptions/subscriptions.routes.js";
 import templatesPlugin from "../src/modules/templates/templates.plugin.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
 import requestContext from "../src/plugins/requestContext.js";
@@ -172,6 +173,7 @@ fastify.register(booksRoutes, { prefix: "/api/books" });
 fastify.register(tierListRoutes, { prefix: "/api/tier-lists" });
 fastify.register(newsRoutes, { prefix: "/api/news" });
 fastify.register(rolesRoutes, { prefix: "/api" });
+fastify.register(subscriptionsRoutes, { prefix: "/api/subscriptions" });
 
 // Регистрируем контроллер шаблонов с префиксом /api
 fastify.register(templatesPlugin, { prisma, prefix: "/api" });

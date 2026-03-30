@@ -53,11 +53,11 @@ export function ProfilePage() {
 
   const handleAvatarSave = async (avatarUrl: string) => {
     try {
-      // Последовательное выполнение: сначала загрузка, потом обновление данных
+      // uploadAvatar сам инвалидирует кэш и делает refetch
       await uploadAvatar(avatarUrl);
-      await refreshUser(); // Зависит от результата uploadAvatar
       window.dispatchEvent(new CustomEvent("avatar-updated"));
-      window.dispatchEvent(new CustomEvent("auth-token-changed"));
+      // Обновляем AuthContext для немедленного обновления UI
+      await refreshUser();
       sileo.success({ title: "Аватар обновлен", duration: 3000 });
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), {
@@ -129,7 +129,7 @@ export function ProfilePage() {
           onSettingsClick={() =>
             sileo.show({ title: "Настройки скоро появятся", icon: "⚙️" })
           }
-          onAdminPanelClick={() => navigate("/admin/news")}
+          onAdminPanelClick={() => navigate("/admin")}
           userRole={authUser?.role}
         />
 

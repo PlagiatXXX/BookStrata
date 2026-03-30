@@ -21,6 +21,8 @@ model User {
   aiAvatarsGenerated   Int        @default(0)  @map("ai_avatars_generated")
   lastAvatarResetAt    DateTime   @default(now()) @map("last_avatar_reset_at")
   passwordHash         String     @map("password_hash")
+  isPro                Boolean    @default(false) @map("is_pro")
+  proExpiresAt         DateTime?  @map("pro_expires_at")
   tierLists            TierList[]
   templates            Template[]
   tierListLikes        TierListLike[]

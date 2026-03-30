@@ -7,11 +7,12 @@ import { createLogger } from "../../lib/logger.js";
 
 const logger = createLogger("Auth", { color: "blue" });
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET!;
 if (!JWT_SECRET) {
   logger.error("FATAL: JWT_SECRET is not defined in your .env file");
   process.exit(1);
 }
+
 const ACCESS_TOKEN_EXPIRY = "15m"; // 15 минут для access токена
 const REFRESH_TOKEN_EXPIRY = "7d"; // 7 дней для refresh токена
 

@@ -26,6 +26,8 @@ export async function getMe(userId: number) {
       email: true,
       username: true,
       avatarUrl: true,
+      isPro: true,
+      proExpiresAt: true,
       role: {
         select: {
           name: true,
@@ -39,8 +41,14 @@ export async function getMe(userId: number) {
     throw new Error("Пользователь не найден");
   }
 
+  // Проверяем, не истёк ли срок подписки
+  const isExpired = user.proExpiresAt && user.proExpiresAt < new Date();
+  const actualIsPro = user.isPro && !isExpired;
+
   return {
     ...user,
+    isPro: actualIsPro,
+    proExpiresAt: isExpired ? null : user.proExpiresAt,
     role: user.role?.name || undefined,
   };
 }
@@ -203,4 +211,38 @@ export async function getUserStats(userId: number) {
     likesCount,
     likesTodayCount,
   };
+}
+
+/**
+ * Получить всех пользователей (только для администраторов)
+ */
+export async function getAllUsers() {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      isPro: true,
+      proExpiresAt: true,
+      role: {
+        select: {
+          name: true,
+        },
+      },
+      createdAt: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return users.map((user) => ({
+    userId: user.id,
+    email: user.email,
+    username: user.username,
+    isPro: user.isPro,
+    proExpiresAt: user.proExpiresAt?.toISOString() || null,
+    role: user.role?.name || "user",
+    createdAt: user.createdAt.toISOString(),
+  }));
 }

@@ -435,7 +435,8 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
   const sortByField =
     query.sortBy === "updated_at" || query.sortBy === "updatedAt"
       ? "updatedAt"
-      : query.sortBy === "created_at" || query.sortBy === "createdAt"
+      : query.sortBy === "created_at" ||
+          (query.sortBy as string) === "createdAt"
         ? "createdAt"
         : query.sortBy === "likes"
           ? "likesCount"
@@ -500,4 +501,14 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
   });
 
   return responseData;
+}
+
+// Получить количество книг в тир-листе
+export async function getTierListBooksCount(
+  tierListId: number,
+): Promise<number> {
+  const count = await prisma.bookPlacement.count({
+    where: { tierListId },
+  });
+  return count;
 }

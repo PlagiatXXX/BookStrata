@@ -37,12 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               username: fullUserData.username,
               avatarUrl: fullUserData.avatarUrl,
               role: fullUserData.role || response.role,
+              isPro: fullUserData.isPro,
+              proExpiresAt: fullUserData.proExpiresAt,
             });
             authLogger.info("User data fetched successfully", {
               userId: fullUserData.id,
               username: fullUserData.username,
               hasAvatar: !!fullUserData.avatarUrl,
               role: fullUserData.role || response.role,
+              isPro: fullUserData.isPro,
             });
           } catch {
             // Если не удалось получить данные, используем минимальные из токена
@@ -85,6 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkToken();
   }, [checkToken]);
 
+  // Обработчик обновления аватара
+  const handleAvatarUpdated = useCallback(() => {
+    // Обновляем данные пользователя при смене аватара
+    refreshUser();
+  }, [refreshUser]);
+
   // Проверяем токен при загрузке и слушаем события авторизации
   useEffect(() => {
     let isMounted = true;
@@ -101,14 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Подписываемся на события
     window.addEventListener("auth-token-changed", handleAuthTokenChanged);
     window.addEventListener("storage", handleAuthTokenChanged);
+    window.addEventListener("avatar-updated", handleAvatarUpdated);
 
     // Cleanup
     return () => {
       isMounted = false;
       window.removeEventListener("auth-token-changed", handleAuthTokenChanged);
       window.removeEventListener("storage", handleAuthTokenChanged);
+      window.removeEventListener("avatar-updated", handleAvatarUpdated);
     };
-  }, [checkToken, handleAuthTokenChanged]);
+  }, [checkToken, handleAuthTokenChanged, handleAvatarUpdated]);
 
   function logout() {
     authLogger.info("User logout");

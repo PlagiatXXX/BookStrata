@@ -40,6 +40,18 @@ const AdminCollectionsPage = lazy(() =>
     default: module.AdminCollectionsPage,
   })),
 );
+const AdminDashboard = lazy(() =>
+  import("@/pages/AdminDashboard/AdminDashboard").then((module) => ({
+    default: module.default,
+  })),
+);
+const AdminSubscriptionsPage = lazy(() =>
+  import("@/pages/AdminSubscriptionsPage/AdminSubscriptionsPage").then(
+    (module) => ({
+      default: module.default,
+    }),
+  ),
+);
 const CollectionPage = lazy(() =>
   import("@/pages/CollectionPage").then((module) => ({
     default: module.CollectionPage,
@@ -97,6 +109,14 @@ export const router = createBrowserRouter([
         ],
       },
       {
+        path: "/admin",
+        element: (
+          <AdminGuard>
+            <AdminDashboard />
+          </AdminGuard>
+        ),
+      },
+      {
         path: "/admin/news",
         element: (
           <AdminGuard>
@@ -109,6 +129,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminCollectionsPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/subscriptions",
+        element: (
+          <AdminGuard>
+            <AdminSubscriptionsPage />
           </AdminGuard>
         ),
       },

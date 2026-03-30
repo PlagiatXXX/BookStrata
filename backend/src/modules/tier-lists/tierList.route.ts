@@ -4,6 +4,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { validateToken } from "../auth/auth.service.js";
 import { createLogger } from "../../lib/logger.js";
+import { checkProLimit, checkBookLimit } from "../../middleware/proLimit.js";
 import * as service from "./tierList.service.js";
 import * as schema from "./tierList.schema.js";
 import type {
@@ -386,10 +387,27 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/:id/books",
-    { preHandler: [authMiddleware], ...schema.addBooksSchema },
+    { preHandler: [authMiddleware, checkProLimit], ...schema.addBooksSchema },
     async (request, reply) => {
       const tierListId = parseInt(request.params.id, 10);
       await service.assertOwner(tierListId, request.user!.userId);
+
+      // Проверяем лимит книг
+      const currentBooksCount = await service.getTierListBooksCount(tierListId);
+      const booksToAdd = request.body.books.length;
+      const limitCheck = checkBookLimit(
+        currentBooksCount,
+        booksToAdd,
+        request.proLimit,
+      );
+
+      if (!limitCheck.allowed) {
+        return reply.code(403).send({
+          error: "Превышен лимит книг в тир-листе",
+          remaining: limitCheck.remaining,
+          required: request.proLimit?.isPro ? "Pro" : "Free",
+        });
+      }
 
       // === ОБРАБОТКА КАРТИНОК ПЕРЕД СОХРАНЕНИЕМ ===
       const processedBooks = await Promise.all(

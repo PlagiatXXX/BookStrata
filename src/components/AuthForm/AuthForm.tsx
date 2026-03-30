@@ -282,8 +282,10 @@ export function AuthForm() {
                 <button
                   type="button"
                   onClick={() => dispatch({ type: "TOGGLE_PASSWORD" })}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700 cursor-pointer"
-                >
+                  aria-label={state.showPassword ? "Скрыть пароль" : "Показать пароль"}
+                  aria-pressed={state.showPassword}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-500 hover:text-slate-700 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded-sm"
+                  >
                   {state.showPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
                 </button>
                 <span

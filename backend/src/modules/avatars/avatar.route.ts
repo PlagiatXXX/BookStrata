@@ -26,11 +26,13 @@ export async function avatarRoutes(fastify: FastifyInstance) {
       }
 
       const userId = (request as any).user?.userId;
+      const userRole = (request as any).user?.role;
+
       if (!userId) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
 
-      const result = await generateAvatar(prompt.trim(), userId);
+      const result = await generateAvatar(prompt.trim(), userId, userRole);
 
       if (!result.success) {
         return reply.code(429).send({
@@ -78,11 +80,13 @@ export async function avatarRoutes(fastify: FastifyInstance) {
     { preHandler: [authMiddleware] },
     async (request, reply) => {
       const userId = (request as any).user?.userId;
+      const userRole = (request as any).user?.role;
+
       if (!userId) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
 
-      const limitInfo = await getAvatarLimit(userId);
+      const limitInfo = await getAvatarLimit(userId, userRole);
 
       if (!limitInfo) {
         return reply.code(404).send({ error: "User not found" });

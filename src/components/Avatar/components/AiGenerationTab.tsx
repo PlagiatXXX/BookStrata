@@ -1,6 +1,6 @@
-import { Info, Sparkles } from 'lucide-react';
-import { Spinner } from '@/components/Spinner';
-import type { AiGenerationTabProps } from '../types';
+import { Info, Sparkles } from "lucide-react";
+import { Spinner } from "@/components/Spinner";
+import type { AiGenerationTabProps } from "../types";
 
 export function AiGenerationTab({
   aiPrompt,
@@ -15,18 +15,30 @@ export function AiGenerationTab({
   limitInfo,
 }: AiGenerationTabProps) {
   const isDisabled = isBusy || !aiPrompt.trim() || remainingGenerations <= 0;
+  const isPro = limitInfo?.isPro ?? false;
 
   return (
     <div className="space-y-4">
       {/* Информация о лимитах */}
-      <div className="flex items-center gap-2 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
-        <Info size={16} className="text-gray-400 shrink-0" />
-        <span className="text-sm text-gray-400">
-          Осталось генераций сегодня:{' '}
-          <strong className="text-white">{remainingGenerations}</strong>{' '}
-          / {limitInfo?.limit ?? 10}
-        </span>
-      </div>
+      {!isPro ? (
+        <div className="p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
+          <p className="text-sm text-amber-300">
+            <strong>AI генерация доступна только для Pro подписчиков</strong>
+          </p>
+          <p className="text-xs text-amber-400 mt-1">
+            Получите Pro подписку для генерации уникальных аватаров с помощью AI
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
+          <Info size={16} className="text-gray-400 shrink-0" />
+          <span className="text-sm text-gray-400">
+            Осталось генераций сегодня:{" "}
+            <strong className="text-white">{remainingGenerations}</strong> /{" "}
+            {limitInfo?.limit ?? 50}
+          </span>
+        </div>
+      )}
 
       {/* Сообщения о статусах */}
       <StatusMessages
@@ -37,7 +49,10 @@ export function AiGenerationTab({
 
       {/* Textarea для промпта */}
       <div>
-        <label htmlFor="avatar-selector-prompt-input" className="block text-sm font-medium text-gray-300 mb-2">
+        <label
+          htmlFor="avatar-selector-prompt-input"
+          className="block text-sm font-medium text-gray-300 mb-2"
+        >
           Опишите ваш аватар
         </label>
         <textarea
@@ -55,6 +70,7 @@ export function AiGenerationTab({
         disabled={isDisabled}
         isGenerating={isGenerating}
         isWaiting={isWaitingForResult}
+        isPro={isPro}
       />
     </div>
   );
@@ -64,11 +80,15 @@ export function AiGenerationTab({
 
 interface StatusMessagesProps {
   error: string | null;
-  previewLoadState: 'idle' | 'loading' | 'ready' | 'error';
+  previewLoadState: "idle" | "loading" | "ready" | "error";
   isWaitingForResult: boolean;
 }
 
-function StatusMessages({ error, previewLoadState, isWaitingForResult }: StatusMessagesProps) {
+function StatusMessages({
+  error,
+  previewLoadState,
+  isWaitingForResult,
+}: StatusMessagesProps) {
   if (error) {
     return (
       <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
@@ -77,7 +97,7 @@ function StatusMessages({ error, previewLoadState, isWaitingForResult }: StatusM
     );
   }
 
-  if (previewLoadState === 'loading') {
+  if (previewLoadState === "loading") {
     return (
       <div className="p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
         <p className="text-sm text-gray-300">
@@ -87,7 +107,7 @@ function StatusMessages({ error, previewLoadState, isWaitingForResult }: StatusM
     );
   }
 
-  if (previewLoadState === 'error') {
+  if (previewLoadState === "error") {
     return (
       <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
         <p className="text-sm text-red-400">
@@ -101,8 +121,8 @@ function StatusMessages({ error, previewLoadState, isWaitingForResult }: StatusM
     return (
       <div className="p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
         <p className="text-sm text-gray-300">
-          Генерация запущена. Обычно занимает до 40 секунд. Можно
-          закрыть окно — аватар обновится автоматически.
+          Генерация запущена. Обычно занимает до 40 секунд. Можно закрыть окно —
+          аватар обновится автоматически.
         </p>
       </div>
     );
@@ -116,10 +136,31 @@ interface GenerateButtonProps {
   disabled: boolean;
   isGenerating: boolean;
   isWaiting: boolean;
+  isPro: boolean;
 }
 
-function GenerateButton({ onClick, disabled, isGenerating, isWaiting }: GenerateButtonProps) {
+function GenerateButton({
+  onClick,
+  disabled,
+  isGenerating,
+  isWaiting,
+  isPro,
+}: GenerateButtonProps) {
   const isBusy = isGenerating || isWaiting;
+
+  if (!isPro) {
+    return (
+      <button
+        disabled
+        className="relative w-full py-3.5 bg-gray-700 rounded-xl font-semibold text-gray-400 cursor-not-allowed flex items-center justify-center"
+      >
+        <span className="inline-flex items-center gap-2">
+          <Sparkles size={18} />
+          Требуется Pro подписка
+        </span>
+      </button>
+    );
+  }
 
   return (
     <button
@@ -127,7 +168,7 @@ function GenerateButton({ onClick, disabled, isGenerating, isWaiting }: Generate
       disabled={disabled}
       className="relative w-full py-3.5 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-violet-500 hover:to-fuchsia-500 transition-all flex items-center justify-center"
     >
-      <span className={isBusy ? 'opacity-0' : 'opacity-100'}>
+      <span className={isBusy ? "opacity-0" : "opacity-100"}>
         <span className="inline-flex items-center gap-2">
           <Sparkles size={18} />
           Сгенерировать
@@ -135,13 +176,11 @@ function GenerateButton({ onClick, disabled, isGenerating, isWaiting }: Generate
       </span>
       <span
         className={`absolute inset-0 flex items-center justify-center gap-2 transition-opacity ${
-          isBusy ? 'opacity-100' : 'opacity-0'
+          isBusy ? "opacity-100" : "opacity-0"
         }`}
       >
         <Spinner size="lg" className="border-white/90" />
-        <span>
-          {isGenerating ? 'Создаем...' : 'Дождитесь результата...'}
-        </span>
+        <span>{isGenerating ? "Создаем..." : "Дождитесь результата..."}</span>
       </span>
     </button>
   );

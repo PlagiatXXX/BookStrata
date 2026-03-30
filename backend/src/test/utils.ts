@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import jwt from "jsonwebtoken";
+import type { PrismaClient } from "@prisma/client";
 
 // Для тестов используем моки вместо реальной БД
 const mockPrisma = {
@@ -96,7 +97,7 @@ export async function createTestServer() {
   });
 
   // Мокируем prisma для всех модулей
-  fastify.decorate("prisma", mockPrisma);
+  fastify.decorate("prisma", mockPrisma as unknown as PrismaClient);
 
   // Регистрируем роуты с моками
   // Для простоты тестов возвращаем заглушки
