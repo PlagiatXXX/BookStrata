@@ -25,6 +25,7 @@ export const SearchBar = ({ value, onChange, placeholder = "Поиск..." }: Se
         <button
           onClick={() => onChange('')}
           className="text-gray-400 hover:text-gray-200 cursor-pointer"
+          aria-label="Очистить поиск"
         >
           <X size={14} />
         </button>
