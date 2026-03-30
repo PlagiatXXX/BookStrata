@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useState } from "react";
+import { useReducer, useCallback, useState, memo } from "react";
 import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
@@ -46,6 +46,8 @@ const initialSearchState: SearchState = {
 function searchReducer(state: SearchState, action: SearchAction): SearchState {
   switch (action.type) {
     case "SET_QUERY":
+      // Guard: Return current state if query hasn't changed to maintain referential integrity
+      if (state.query === action.query) return state;
       return { ...state, query: action.query };
     case "TOGGLE_BOOK":
       { const newSet = new Set(state.selectedBooks);
@@ -56,6 +58,8 @@ function searchReducer(state: SearchState, action: SearchAction): SearchState {
       }
       return { ...state, selectedBooks: newSet }; }
     case "CLEAR_SELECTION":
+      // Guard: Return current state if selection is already empty
+      if (state.selectedBooks.size === 0) return state;
       return { ...state, selectedBooks: new Set() };
     case "RESET_SEARCH":
       return { query: "", selectedBooks: new Set(), hasSearched: false };
@@ -102,7 +106,7 @@ function BookSkeletonItem() {
 }
 
 // Компонент книги с lazy loading обложки
-function BookItem({
+const BookItem = memo(({
   book,
   isSelected,
   onToggle,
@@ -110,9 +114,9 @@ function BookItem({
 }: {
   book: OpenLibraryBook;
   isSelected: boolean;
-  onToggle: () => void;
-  onView: () => void;
-}) {
+  onToggle: (bookKey: string) => void;
+  onView: (book: OpenLibraryBook) => void;
+}) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -136,13 +140,13 @@ function BookItem({
         className="relative h-24 w-16 shrink-0 overflow-hidden rounded-[10px] border border-cyan-300/40 bg-[rgba(6,12,28,0.9)] transition-transform hover:scale-105 cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
-          onView();
+          onView(book);
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             e.stopPropagation();
-            onView();
+            onView(book);
           }
         }}
       >
@@ -189,7 +193,7 @@ function BookItem({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onView();
+            onView(book);
           }}
           className="cursor-pointer rounded-lg border border-cyan-300/35 p-2 text-cyan-200/75 transition-colors hover:border-fuchsia-300/60 hover:text-fuchsia-200"
           title="Подробнее"
@@ -201,7 +205,7 @@ function BookItem({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onToggle();
+            onToggle(book.openLibraryKey);
           }}
           aria-label={isSelected ? "Убрать из выбранного" : "Добавить в выбранное"}
           className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border transition-colors ${
@@ -231,7 +235,7 @@ function BookItem({
       </div>
     </div>
   );
-}
+});
 
 export const BookSearchModal = ({
   isOpen,
@@ -266,9 +270,14 @@ export const BookSearchModal = ({
     }
   };
 
-  const toggleBookSelection = (key: string) => {
+  // Стабилизируем обработчики для memoized BookItem
+  const handleToggleBookSelection = useCallback((key: string) => {
     dispatch({ type: "TOGGLE_BOOK", bookKey: key });
-  };
+  }, []);
+
+  const handleSetViewBook = useCallback((book: OpenLibraryBook) => {
+    setViewBook(book);
+  }, []);
 
   const handleAddSelectedBooks = async () => {
     if (state.selectedBooks.size === 0) return;
@@ -525,8 +534,8 @@ export const BookSearchModal = ({
                     <BookItem
                       book={book}
                       isSelected={state.selectedBooks.has(book.openLibraryKey)}
-                      onToggle={() => toggleBookSelection(book.openLibraryKey)}
-                      onView={() => setViewBook(book)}
+                      onToggle={handleToggleBookSelection}
+                      onView={handleSetViewBook}
                     />
                   </div>
                 ))}
