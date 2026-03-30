@@ -193,6 +193,7 @@ function BookItem({
           }}
           className="cursor-pointer rounded-lg border border-cyan-300/35 p-2 text-cyan-200/75 transition-colors hover:border-fuchsia-300/60 hover:text-fuchsia-200"
           title="Подробнее"
+          aria-label="Подробнее"
         >
           <Eye className="w-5 h-5" />
         </button>
@@ -202,6 +203,7 @@ function BookItem({
             e.stopPropagation();
             onToggle();
           }}
+          aria-label={isSelected ? "Убрать из выбранного" : "Добавить в выбранное"}
           className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border transition-colors ${
             isSelected
               ? "border-fuchsia-300/70 bg-fuchsia-500/90 text-[#05070e]"
@@ -449,6 +451,7 @@ export const BookSearchModal = ({
             <button
               onClick={handleClose}
               className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 text-cyan-200/80 transition-colors hover:border-fuchsia-300/70 hover:text-fuchsia-200"
+              aria-label="Закрыть"
             >
               <X className="h-4 w-4" />
             </button>
@@ -465,8 +468,18 @@ export const BookSearchModal = ({
                   onChange={(e) => dispatch({ type: "SET_QUERY", query: e.target.value })}
                   onKeyDown={handleKeyDown}
                   placeholder="Введите название книги или автора..."
-                  className="w-full rounded-xl border border-cyan-300/45 bg-[rgba(6,12,28,0.88)] py-3 pl-10 pr-4 text-[#d8f9ff] placeholder:text-cyan-200/45 transition-colors focus:border-fuchsia-300/70 focus:outline-none"
+                  aria-label="Поиск книг"
+                  className="w-full rounded-xl border border-cyan-300/45 bg-[rgba(6,12,28,0.88)] py-3 pl-10 pr-10 text-[#d8f9ff] placeholder:text-cyan-200/45 transition-colors focus:border-fuchsia-300/70 focus:outline-none"
                 />
+                {state.query && (
+                  <button
+                    onClick={() => dispatch({ type: "SET_QUERY", query: "" })}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-200/65 hover:text-fuchsia-300/70 cursor-pointer"
+                    aria-label="Очистить поиск"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
               <button
                 onClick={handleSearch}
