@@ -138,8 +138,8 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: "object",
           required: ["current_password", "new_password"],
           properties: {
-            current_password: { type: "string", minLength: 1 },
-            new_password: { type: "string", minLength: 8 },
+            current_password: { type: "string", minLength: 1, maxLength: 100 },
+            new_password: { type: "string", minLength: 8, maxLength: 100 },
           },
         },
       },

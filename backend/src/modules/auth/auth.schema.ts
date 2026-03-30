@@ -30,8 +30,8 @@ export const registerBodySchema = z.object({
 
 // Схема для логина
 const loginBodySchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1),
+  username: z.string().min(1).max(30),
+  password: z.string().min(1).max(100),
 });
 
 // Схема для валидации токена
