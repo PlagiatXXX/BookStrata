@@ -38,6 +38,7 @@ export interface Template {
   tiers: TierTemplate[];
   defaultBooks?: BookTemplate[];
   isPublic: boolean;
+  isProOnly?: boolean;
   authorId?: string;
   createdAt: string;
   updatedAt: string;

@@ -33,6 +33,10 @@ const mockBookPlacement = {
   create: vi.fn(),
 };
 
+const mockUser = {
+  findUnique: vi.fn(),
+};
+
 const mockPrisma = {
   template: mockTemplate,
   templateLike: mockTemplateLike,
@@ -40,6 +44,7 @@ const mockPrisma = {
   tier: mockTier,
   book: mockBook,
   bookPlacement: mockBookPlacement,
+  user: mockUser,
   $transaction: vi.fn(),
 };
 
@@ -76,6 +81,7 @@ describe("TemplatesService", () => {
       ],
       defaultBooks: [],
       isPublic: true,
+      isProOnly: false,
     };
 
     it("должен валидировать корректные данные", async () => {
@@ -163,6 +169,7 @@ describe("TemplatesService", () => {
 
     it("должен создать шаблон с валидацией", async () => {
       mockTemplate.count.mockResolvedValue(0);
+      mockUser.findUnique.mockResolvedValue({ isPro: false });
       mockTemplate.create.mockResolvedValue(mockCreatedTemplate);
 
       const result = await service.createTemplate(mockInput, "1");
@@ -178,6 +185,7 @@ describe("TemplatesService", () => {
 
     it("должен проверить лимит шаблонов (5 для бесплатных)", async () => {
       mockTemplate.count.mockResolvedValue(5);
+      mockUser.findUnique.mockResolvedValue({ isPro: false });
       await expect(service.createTemplate(mockInput, "1")).rejects.toThrow(
         "Превышен лимит шаблонов",
       );
@@ -185,6 +193,7 @@ describe("TemplatesService", () => {
 
     it("должен создать шаблон без userId (анонимно)", async () => {
       mockTemplate.count.mockResolvedValue(0);
+      mockUser.findUnique.mockResolvedValue({ isPro: false });
       mockTemplate.create.mockResolvedValue(mockCreatedTemplate);
       await service.createTemplate(mockInput, undefined);
       expect(mockTemplate.create).toHaveBeenCalledWith({
@@ -194,6 +203,7 @@ describe("TemplatesService", () => {
 
     it("должен установить isPublic=false по умолчанию", async () => {
       mockTemplate.count.mockResolvedValue(0);
+      mockUser.findUnique.mockResolvedValue({ isPro: false });
       mockTemplate.create.mockResolvedValue(mockCreatedTemplate);
       const { isPublic, ...inputWithoutPublic } = mockInput;
       await service.createTemplate(inputWithoutPublic as any, "1");
@@ -429,6 +439,7 @@ describe("TemplatesService", () => {
 
     it("должен создать тир-лист из шаблона", async () => {
       mockTemplate.findUnique.mockResolvedValue(mockTemplateData);
+      mockUser.findUnique.mockResolvedValue({ isPro: true });
       mockTierList.create.mockResolvedValue(mockCreatedTierList);
       mockTier.createMany.mockResolvedValue({});
       mockBook.create.mockResolvedValue(mockCreatedBook);
@@ -447,6 +458,7 @@ describe("TemplatesService", () => {
 
     it("должен создать тиры из шаблона", async () => {
       mockTemplate.findUnique.mockResolvedValue(mockTemplateData);
+      mockUser.findUnique.mockResolvedValue({ isPro: true });
       mockTierList.create.mockResolvedValue(mockCreatedTierList);
       mockBook.create.mockResolvedValue(mockCreatedBook);
       mockTier.findMany.mockResolvedValue(mockCreatedTiers);
@@ -476,6 +488,7 @@ describe("TemplatesService", () => {
 
     it("должен создать книги из шаблона", async () => {
       mockTemplate.findUnique.mockResolvedValue(mockTemplateData);
+      mockUser.findUnique.mockResolvedValue({ isPro: true });
       mockTierList.create.mockResolvedValue(mockCreatedTierList);
       mockTier.createMany.mockResolvedValue({});
       mockBook.create.mockResolvedValue(mockCreatedBook);

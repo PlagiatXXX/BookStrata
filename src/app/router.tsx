@@ -14,6 +14,16 @@ const AuthPage = lazy(() =>
     default: module.AuthPage,
   })),
 );
+const ForgotPasswordPage = lazy(() =>
+  import("@/pages/ForgotPasswordPage").then((module) => ({
+    default: module.ForgotPasswordPage,
+  })),
+);
+const ResetPasswordPage = lazy(() =>
+  import("@/pages/ResetPasswordPage").then((module) => ({
+    default: module.ResetPasswordPage,
+  })),
+);
 const ProfilePage = lazy(() =>
   import("@/pages/ProfilePage").then((module) => ({
     default: module.ProfilePage,
@@ -70,6 +80,8 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: "/auth", element: <AuthPage /> },
+      { path: "/forgot-password", element: <ForgotPasswordPage /> },
+      { path: "/reset-password", element: <ResetPasswordPage /> },
       {
         element: <ProtectedRoute />,
         children: [

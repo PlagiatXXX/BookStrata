@@ -37,6 +37,7 @@ const createTemplateSchema = z.object({
     )
     .optional(),
   isPublic: z.boolean().optional().default(false),
+  isProOnly: z.boolean().optional().default(false),
 });
 
 const updateTemplateSchema = z.object({
@@ -71,6 +72,7 @@ const updateTemplateSchema = z.object({
     )
     .optional(),
   isPublic: z.boolean().optional(),
+  isProOnly: z.boolean().optional(),
 });
 
 export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
@@ -101,7 +103,8 @@ export class TemplatesService {
         where: { authorId: parseInt(userId) },
       });
 
-      const MAX_TEMPLATES = 5; // Лимит для бесплатной версии
+      const isPro = await this.prisma.user.findUnique({ where: { id: parseInt(userId) }, select: { isPro: true } }).then(u => u?.isPro || false);
+      const MAX_TEMPLATES = isPro ? 100 : 5;
       if (userTemplatesCount >= MAX_TEMPLATES) {
         throw new Error(
           `Превышен лимит шаблонов. Максимальное количество: ${MAX_TEMPLATES}. Оформите Pro-подписку для увеличения лимита.`,
@@ -293,6 +296,13 @@ export class TemplatesService {
     }
 
     // Проверяем права доступа к шаблону
+    // Проверка Pro-лимита для использования Pro-шаблонов
+    if (template.isProOnly) {
+      const user = await this.prisma.user.findUnique({ where: { id: parseInt(userId) }, select: { isPro: true } });
+      if (!user?.isPro) {
+        throw new Error("Этот шаблон доступен только для пользователей с Pro-подпиской.");
+      }
+    }
     if (!template.isPublic && template.authorId !== parseInt(userId)) {
       throw new Error(
         "Unauthorized: Template is not public and does not belong to you",

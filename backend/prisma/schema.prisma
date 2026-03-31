@@ -28,6 +28,7 @@ model User {
   tierListLikes        TierListLike[]
   templateLikes        TemplateLike[]
   newsArticles         NewsArticle[]
+  passwordResetTokens  PasswordResetToken[]
   role                 Role?      @relation(fields: [roleId], references: [id])
   roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
   createdAt            DateTime   @default(now()) @map("created_at")
@@ -95,6 +96,7 @@ model Template {
   tiers         Json
   defaultBooks  Json?    @map("default_books")
   isPublic      Boolean  @default(false) @map("is_public")
+  isProOnly     Boolean  @default(false) @map("is_pro_only")
   author        User?    @relation(fields: [authorId], references: [id])
   authorId      Int?     @map("author_id")
   createdAt     DateTime @default(now()) @map("created_at")
@@ -157,4 +159,15 @@ model Role {
   description String?
   users       User[]
   createdAt   DateTime   @default(now()) @map("created_at")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique @db.VarChar(255)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([token])
 }

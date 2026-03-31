@@ -60,26 +60,22 @@ export const useAutoSaveOptimized = ({
   const retryCount = useRef(0);
   const maxRetries = 3;
   const isSavingRef = useRef(false);
-  const payloadRef = useRef<SavePayload | null>(null);
-  const forceSaveRequested = useRef(false); // Флаг для принудительного сохранения
+  const needsSubsequentSaveRef = useRef(false);
+  const forceSaveRequested = useRef(false);
   const executeSaveRef = useRef<((isForceSave?: boolean) => Promise<void>) | null>(null);
 
   // Функция сохранения
   const executeSave = useCallback(async (isForceSave = false) => {
     if (!listId || !enabled) {
-      setHasPendingChanges(true);
       return;
     }
 
-    // Если уже сохраняется и это не forceSave, откладываем сохранение
-    if (isSavingRef.current && !isForceSave) {
-      setHasPendingChanges(true);
-      return;
-    }
-
-    // Если это forceSave и уже идёт сохранение, ждём завершения
-    if (isSavingRef.current && isForceSave) {
+    // Если уже сохраняется, помечаем, что нужно сохранить еще раз после завершения
+    if (isSavingRef.current) {
+      needsSubsequentSaveRef.current = true;
+      if (isForceSave) {
       forceSaveRequested.current = true;
+      }
       return;
     }
 
@@ -88,12 +84,10 @@ export const useAutoSaveOptimized = ({
 
     const payload = getSavePayload();
 
-    // Если skipNewBooks = true, убираем newBooks из автосохранения
     const savePayload = skipNewBooks 
       ? { ...payload, newBooks: undefined }
       : payload;
 
-    // Проверяем, есть ли что сохранять
     const hasData =
       (savePayload.placements && savePayload.placements.length > 0) ||
       (savePayload.tiers && (
@@ -105,15 +99,12 @@ export const useAutoSaveOptimized = ({
     if (!hasData) {
       isSavingRef.current = false;
       setHasPendingChanges(false);
+      setStatus('idle');
       return;
     }
 
     logger.info('Auto-save started', {
       tierListId: listId,
-      placementsCount: savePayload.placements?.length || 0,
-      hasTiers: !!savePayload.tiers,
-      newBooksCount: savePayload.newBooks?.length || 0,
-      skipNewBooks,
       isForceSave,
     });
 
@@ -125,18 +116,13 @@ export const useAutoSaveOptimized = ({
       retryCount.current = 0;
       isSavingRef.current = false;
       setHasPendingChanges(false);
-      payloadRef.current = null;
 
-      // Если был запрошен forceSave пока шло сохранение, выполняем его
-      if (forceSaveRequested.current) {
+// Если за время сохранения появились новые изменения или был forceSave
+      if (needsSubsequentSaveRef.current || forceSaveRequested.current) {
+        const isNextForce = forceSaveRequested.current;
+        needsSubsequentSaveRef.current = false;
         forceSaveRequested.current = false;
-        setTimeout(() => executeSaveRef.current?.(true), 100);
-        return;
-      }
-
-      // Если пока сохраняли, появились новые изменения — сохраняем ещё раз
-      if (payloadRef.current) {
-        setTimeout(() => executeSaveRef.current?.(), 100);
+        setTimeout(() => executeSaveRef.current?.(isNextForce), 200);
       }
     } catch (error) {
       retryCount.current += 1;
@@ -166,12 +152,13 @@ export const useAutoSaveOptimized = ({
   useEffect(() => {
     if (!enabled || !listId) return;
 
+    setHasPendingChanges(true);
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
     timeoutRef.current = setTimeout(() => {
-      setHasPendingChanges(true);
       executeSaveRef.current?.();
     }, delay);
 
@@ -180,45 +167,23 @@ export const useAutoSaveOptimized = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [listId, delay, enabled, getSavePayload, setHasPendingChanges]);
+  }, [listId, delay, enabled, getSavePayload]);
 
-  // Принудительное сохранение
   const forceSave = useCallback(async () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     
-    // Если уже идёт сохранение, помечаем что нужен forceSave после завершения
-    if (isSavingRef.current) {
-      forceSaveRequested.current = true;
-      // Ждём завершения текущего сохранения
-      while (isSavingRef.current) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    }
-    
     await executeSave(true);
   }, [executeSave]);
 
-  // Отмена автосохранения
   const cancel = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    if (isSavingRef.current) {
-      logger.info('Auto-save cancelled', { tierListId: listId });
-    }
-  };
-
-  // Очистка при unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
     };
-  }, []);
+
 
   return {
     status,

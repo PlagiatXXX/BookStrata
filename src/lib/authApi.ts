@@ -366,3 +366,42 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 // Экспортируем типы для обратной совместимости
 export type { User } from "./userApi";
 export type { LikesResponse } from "./likesApi";
+
+export async function apiForgotPassword(email: string): Promise<{ message: string }> {
+  authLogger.info("Запрос на сброс пароля", { email });
+
+  const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    authLogger.error(new Error(error.error || "Не удалось отправить запрос"), { email });
+    throw new Error(error.error || "Не удалось отправить запрос");
+  }
+
+  return response.json();
+}
+
+/**
+ * Установка нового пароля по токену
+ */
+export async function apiResetPassword(token: string, password: string): Promise<{ message: string }> {
+  authLogger.info("Сброс пароля по токену");
+
+  const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    authLogger.error(new Error(error.error || "Не удалось сбросить пароль"));
+    throw new Error(error.error || "Не удалось сбросить пароль");
+  }
+
+  return response.json();
+}

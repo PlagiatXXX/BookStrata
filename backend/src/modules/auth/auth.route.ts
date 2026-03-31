@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FastifyInstance } from "fastify";
 import {
   register,
@@ -6,6 +5,8 @@ import {
   validateToken,
   validateRefreshToken,
   generateTokenPair,
+  requestPasswordReset,
+  confirmPasswordReset,
 } from "./auth.service.js";
 import {
   registerSchema,
@@ -14,7 +15,6 @@ import {
   RegisterInput,
   LoginInput,
   ValidateInput,
-  AuthTokenPayload,
 } from "./auth.schema.js";
 
 export async function authRoutes(fastify: FastifyInstance) {
@@ -160,4 +160,57 @@ export async function authRoutes(fastify: FastifyInstance) {
         .send({ error: "Invalid or expired refresh token" });
     }
   });
+
+  // POST /api/auth/forgot-password
+  fastify.post<{ Body: { email: string } }>(
+    "/forgot-password",
+    {
+      schema: {
+        body: {
+          type: "object",
+          required: ["email"],
+          properties: {
+            email: { type: "string", format: "email" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { email } = request.body;
+      try {
+        await requestPasswordReset(email);
+        return reply.code(200).send({ message: "Reset link sent" });
+      } catch (error) {
+        fastify.log.error(error, "Forgot password error");
+        return reply.code(400).send({ error: "Failed to process request" });
+      }
+    },
+  );
+
+  // POST /api/auth/reset-password
+  fastify.post<{ Body: { token: string; password: string } }>(
+    "/reset-password",
+    {
+      schema: {
+        body: {
+          type: "object",
+          required: ["token", "password"],
+          properties: {
+            token: { type: "string" },
+            password: { type: "string", minLength: 8 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { token, password } = request.body;
+      try {
+        await confirmPasswordReset(token, password);
+        return reply.code(200).send({ message: "Password reset successful" });
+      } catch (error) {
+        fastify.log.error(error, "Reset password error");
+        return reply.code(400).send({ error: "Invalid token or password" });
+      }
+    },
+  );
 }

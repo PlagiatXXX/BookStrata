@@ -1,61 +1,62 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, Play } from "lucide-react";
-import type { Template } from "../../types";
-import { Button } from "../../ui/Button";
-import { useApplyTemplate } from "../../hooks/useTemplates";
-import { useAuth } from "@/hooks/useAuthContext";
-import { LikeButton } from "../LikeButton";
+import { Edit2, Trash2, Play, Crown } from "lucide-react";
+import { Button } from "@/ui/Button";
 import { Spinner } from "@/components/Spinner";
+import { LikeButton } from "@/components/LikeButton";
+import { useAuth } from "@/hooks/useAuthContext";
+import { useApplyTemplate } from "@/hooks/useTemplates";
 import { sileo } from "sileo";
+import type { Template } from "@/types/templates";
 
 interface TemplateCardProps {
   template: Template;
   onEdit?: (template: Template) => void;
   onDelete?: (template: Template) => void;
-  showEditDelete?: boolean;
   variant?: "default" | "cover";
   coverHeight?: number;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({
+export const TemplateCard: React.FC<TemplateCardProps> = ({
   template,
   onEdit,
   onDelete,
-  showEditDelete = true,
   variant = "default",
   coverHeight,
 }) => {
-  const navigate = useNavigate();
-  const { mutateAsync: applyTemplate, isPending } = useApplyTemplate();
   const { user } = useAuth();
   const currentUserId = user?.userId;
 
-  const handleDeleteClick = () => {
-    onDelete?.(template);
+  const { mutate, isPending } = useApplyTemplate();
+
+  const handleUseTemplate = () => {
+    if (isPending) return;
+
+    // Проверка Pro-статуса для Pro-шаблонов
+    if (template.isProOnly && !user?.isPro && user?.role !== "admin") {
+      sileo.error({
+        title: "Только для PRO",
+        description:
+          "Этот шаблон доступен только пользователям с Pro-подпиской",
+      });
+      return;
+    }
+    mutate({ id: template.id });
   };
 
-  const handleUseTemplate = async () => {
-    try {
-      const result = await applyTemplate({
-        id: template.id,
-        newListTitle: `${template.title} (from template)`,
-      });
-      sileo.success({ title: "Шаблон успешно применен!", duration: 3000 });
-      navigate(`/tier-lists/${result.id}`);
-    } catch {
-      sileo.error({
-        title: "Не удалось применить шаблон",
-        description: "Попробуйте снова позже",
-        duration: 3000,
-      });
+  const handleDeleteClick = () => {
+    if (onDelete) {
+      onDelete(template);
     }
   };
 
-  const previewSrc =
-    template.previewImageUrl || template.defaultBooks?.[0]?.coverImageUrl || "";
+  const showEditDelete =
+    onEdit &&
+    onDelete !== undefined &&
+    (currentUserId === Number(template.authorId) || user?.role === "admin");
 
   if (variant === "cover") {
+    const previewSrc =
+      template.previewImageUrl || template.defaultBooks?.[0]?.coverImageUrl;
     return (
       <article className="group relative mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-[#0b3f52]/90 bg-[#072331] shadow-[0_12px_32px_rgba(0,0,0,0.35)] transition-transform duration-200 hover:-translate-y-1">
         <div
@@ -76,8 +77,14 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,rgba(5,15,23,0.95)_8%,rgba(5,15,23,0.25)_45%,rgba(5,15,23,0.02)_75%)]" />
 
           <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
-            {showEditDelete && onEdit && onDelete && (
-              <div className="flex gap-1">
+            {template.isProOnly && (
+              <div className="flex items-center gap-1 rounded bg-amber-500/20 px-2 py-1 text-[10px] font-bold text-amber-400 border border-amber-500/30 backdrop-blur-sm">
+                <Crown size={12} />
+                <span>PRO</span>
+              </div>
+            )}
+            {showEditDelete && onEdit && onDelete !== undefined && (
+              <div className="flex gap-1 ml-auto">
                 <button
                   type="button"
                   aria-label="Edit template"
@@ -115,7 +122,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                   {template.defaultBooks.slice(0, 3).map((book, idx) => (
                     <div
                       key={book.id || idx}
-                      className="h-8 w-6 flex-shrink-0 overflow-hidden rounded border-2 border-[#072331] shadow-sm"
+                      className="h-8 w-6 shrink-0 overflow-hidden rounded border-2 border-[#072331] shadow-sm"
                       title={book.title}
                     >
                       {book.coverImageUrl ? (
@@ -174,10 +181,19 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
   return (
     <div className="group relative flex h-full flex-col rounded-md border border-white/20 bg-black/45 p-4 backdrop-blur-[2px] transition-transform duration-200 hover:-translate-y-0.5 hover:border-white/40">
       <div className="shrink-0 items-start justify-between sm:flex">
-        <h3 className="truncate pr-2 font-display text-lg font-semibold text-[#f3efe6]">
-          {template.title}
-        </h3>
-        {showEditDelete && onEdit && onDelete && (
+        <div className="flex items-center gap-2 overflow-hidden">
+          <h3 className="truncate font-display text-lg font-semibold text-[#f3efe6]">
+            {template.title}
+          </h3>
+          {template.isProOnly && (
+            <Crown
+              size={16}
+              className="text-amber-400 shrink-0"
+              aria-label="Pro Template"
+            />
+          )}
+        </div>
+        {showEditDelete && onEdit && onDelete !== undefined && (
           <div className="mt-2 flex shrink-0 space-x-1 sm:mt-0">
             <Button
               variant="outline"
@@ -236,7 +252,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
             {template.defaultBooks.slice(0, 5).map((book, idx) => (
               <div
                 key={book.id || idx}
-                className="relative h-16 w-10 flex-shrink-0 overflow-hidden rounded shadow-md"
+                className="relative h-16 w-10 shrink-0 overflow-hidden rounded shadow-md"
                 title={`${book.title} — ${book.author}`}
               >
                 {book.coverImageUrl ? (
@@ -247,12 +263,12 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
                     loading="lazy"
                   />
                 ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-slate-600 to-slate-800" />
+                  <div className="h-full w-full bg-linear-to-br from-slate-600 to-slate-800" />
                 )}
               </div>
             ))}
             {template.defaultBooks.length > 5 && (
-              <div className="flex h-16 w-10 flex-shrink-0 items-center justify-center rounded bg-white/10 text-xs font-medium text-[#b8b1a3]">
+              <div className="flex h-16 w-10 shrink-0 items-center justify-center rounded bg-white/10 text-xs font-medium text-[#b8b1a3]">
                 +{template.defaultBooks.length - 5}
               </div>
             )}

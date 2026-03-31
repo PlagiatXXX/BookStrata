@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
@@ -304,6 +305,13 @@ export function AuthForm() {
                   ease-out
                   peer-focus:scale-x-100"
                 />
+                {mode === "login" && ( 
+                <div className="flex justify-end"> 
+                  <Link to="/forgot-password" title="Забыли пароль?" className="text-xs text-slate-500 hover:text-orange-500 transition-colors"> 
+                    Забыли пароль? 
+                  </Link> 
+                </div> 
+              )}
               </div>
 
               {state.error && (

@@ -512,3 +512,17 @@ export async function getTierListBooksCount(
   });
   return count;
 }
+
+// Дополнительная оптимизация для получения списка
+export async function getTierListMetadata(id: number) {
+  return prisma.tierList.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      userId: true,
+      isPublic: true,
+      updatedAt: true,
+    },
+  });
+}

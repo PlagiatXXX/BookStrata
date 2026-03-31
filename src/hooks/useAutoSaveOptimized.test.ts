@@ -1,12 +1,12 @@
 /// <reference types="vitest/globals" />
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
-import { useAutoSaveOptimized } from './useAutoSaveOptimized';
-import type { SaveTierListPayload } from '@/lib/tierListApi';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { useAutoSaveOptimized } from "./useAutoSaveOptimized";
+import type { SaveTierListPayload } from "@/lib/tierListApi";
 
 // Мокаем logger
-vi.mock('@/lib/logger', () => ({
+vi.mock("@/lib/logger", () => ({
   createLogger: vi.fn(() => ({
     info: vi.fn(),
     warn: vi.fn(),
@@ -14,8 +14,8 @@ vi.mock('@/lib/logger', () => ({
   })),
 }));
 
-describe('useAutoSaveOptimized', () => {
-  const mockListId = 'test-list-123';
+describe("useAutoSaveOptimized", () => {
+  const mockListId = "test-list-123";
   const mockGetSavePayload = vi.fn();
   const mockSaveFunction = vi.fn();
 
@@ -25,57 +25,59 @@ describe('useAutoSaveOptimized', () => {
     mockSaveFunction.mockResolvedValue(undefined);
   });
 
-  describe('Инициализация', () => {
-    it('должен инициализироваться со статусом "idle"', () => {
+  describe("Инициализация", () => {
+    it('должен инициализироваться со статусом "idle"', async () => {
       const { result } = renderHook(() =>
         useAutoSaveOptimized({
           listId: mockListId,
           getSavePayload: mockGetSavePayload,
           saveFunction: mockSaveFunction,
           enabled: true,
-        })
+        }),
       );
 
-      expect(result.current.status).toBe('idle');
+      expect(result.current.status).toBe("idle");
       expect(result.current.lastSaved).toBeNull();
-      // hasPendingChanges = false при инициализации (устанавливается в setTimeout)
-      expect(result.current.hasPendingChanges).toBe(false);
+      // hasPendingChanges = true при инициализации (устанавливается в useEffect)
+      await waitFor(() => {
+        expect(result.current.hasPendingChanges).toBe(true);
+      });
     });
 
-    it('не должен автосохраняться если enabled = false', async () => {
+    it("не должен автосохраняться если enabled = false", async () => {
       renderHook(() =>
         useAutoSaveOptimized({
           listId: mockListId,
           getSavePayload: mockGetSavePayload,
           saveFunction: mockSaveFunction,
           enabled: false,
-        })
+        }),
       );
 
       // Ждём немного
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       expect(mockSaveFunction).not.toHaveBeenCalled();
     });
 
-    it('не должен автосохраняться если listId = null', async () => {
+    it("не должен автосохраняться если listId = null", async () => {
       renderHook(() =>
         useAutoSaveOptimized({
           listId: null,
           getSavePayload: mockGetSavePayload,
           saveFunction: mockSaveFunction,
           enabled: true,
-        })
+        }),
       );
 
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       expect(mockSaveFunction).not.toHaveBeenCalled();
     });
   });
 
-  describe('Сохранение данных', () => {
-    it('должен вызывать saveFunction с payload', async () => {
+  describe("Сохранение данных", () => {
+    it("должен вызывать saveFunction с payload", async () => {
       const mockPayload: SaveTierListPayload = {
         placements: [{ bookId: 1, tierId: 1, rank: 0 }],
       };
@@ -88,15 +90,18 @@ describe('useAutoSaveOptimized', () => {
           saveFunction: mockSaveFunction,
           delay: 100,
           enabled: true,
-        })
+        }),
       );
 
-      await waitFor(() => {
-        expect(mockSaveFunction).toHaveBeenCalledWith(mockPayload);
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          expect(mockSaveFunction).toHaveBeenCalledWith(mockPayload);
+        },
+        { timeout: 5000 },
+      );
     });
 
-    it('не должен сохранять если нет изменений', async () => {
+    it("не должен сохранять если нет изменений", async () => {
       mockGetSavePayload.mockReturnValue({});
 
       renderHook(() =>
@@ -106,16 +111,16 @@ describe('useAutoSaveOptimized', () => {
           saveFunction: mockSaveFunction,
           delay: 100,
           enabled: true,
-        })
+        }),
       );
 
       // Ждём немного больше чем delay
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       expect(mockSaveFunction).not.toHaveBeenCalled();
     });
 
-    it('должен сохранять placements если они есть', async () => {
+    it("должен сохранять placements если они есть", async () => {
       mockGetSavePayload.mockReturnValue({
         placements: [
           { bookId: 1, tierId: 1, rank: 0 },
@@ -130,18 +135,21 @@ describe('useAutoSaveOptimized', () => {
           saveFunction: mockSaveFunction,
           delay: 100,
           enabled: true,
-        })
+        }),
       );
 
-      await waitFor(() => {
-        expect(mockSaveFunction).toHaveBeenCalledTimes(1);
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          expect(mockSaveFunction).toHaveBeenCalledTimes(1);
+        },
+        { timeout: 5000 },
+      );
     });
 
-    it('должен сохранять tiers если они есть', async () => {
+    it("должен сохранять tiers если они есть", async () => {
       mockGetSavePayload.mockReturnValue({
         tiers: {
-          added: [{ title: 'New Tier', color: '#FF0000', rank: 0 }],
+          added: [{ title: "New Tier", color: "#FF0000", rank: 0 }],
           updated: [],
           deletedIds: [],
         },
@@ -154,22 +162,25 @@ describe('useAutoSaveOptimized', () => {
           saveFunction: mockSaveFunction,
           delay: 100,
           enabled: true,
-        })
+        }),
       );
 
-      await waitFor(() => {
-        expect(mockSaveFunction).toHaveBeenCalledTimes(1);
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          expect(mockSaveFunction).toHaveBeenCalledTimes(1);
+        },
+        { timeout: 5000 },
+      );
     });
 
-    it('должен сохранять newBooks если они есть', async () => {
+    it("должен сохранять newBooks если они есть", async () => {
       mockGetSavePayload.mockReturnValue({
         newBooks: [
           {
-            id: 'book-temp-1',
-            title: 'New Book',
-            author: 'Author',
-            coverImageUrl: 'http://example.com/cover.jpg',
+            id: "book-temp-1",
+            title: "New Book",
+            author: "Author",
+            coverImageUrl: "http://example.com/cover.jpg",
           },
         ],
       });
@@ -181,17 +192,20 @@ describe('useAutoSaveOptimized', () => {
           saveFunction: mockSaveFunction,
           delay: 100,
           enabled: true,
-        })
+        }),
       );
 
-      await waitFor(() => {
-        expect(mockSaveFunction).toHaveBeenCalledTimes(1);
-      }, { timeout: 5000 });
+      await waitFor(
+        () => {
+          expect(mockSaveFunction).toHaveBeenCalledTimes(1);
+        },
+        { timeout: 5000 },
+      );
     });
   });
 
-  describe('forceSave', () => {
-    it('должен сохранять немедленно без debounce', async () => {
+  describe("forceSave", () => {
+    it("должен сохранять немедленно без debounce", async () => {
       mockGetSavePayload.mockReturnValue({
         placements: [{ bookId: 1, tierId: 1, rank: 0 }],
       });
@@ -203,7 +217,7 @@ describe('useAutoSaveOptimized', () => {
           saveFunction: mockSaveFunction,
           delay: 5000, // Долгий delay
           enabled: true,
-        })
+        }),
       );
 
       // Вызываем принудительное сохранение
