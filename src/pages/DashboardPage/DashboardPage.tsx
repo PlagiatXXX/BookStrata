@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -24,6 +25,17 @@ import "./DashboardPage.css";
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Отслеживаем изменения пользователя (например, обновление аватара)
+  useEffect(() => {
+    if (user) {
+      console.log("[DashboardPage] User updated:", {
+        username: user.username,
+        hasAvatar: !!user.avatarUrl,
+        avatarUrl: user.avatarUrl?.substring(0, 50) + "...",
+      });
+    }
+  }, [user]);
 
   // State management через reducer
   const {

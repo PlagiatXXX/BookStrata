@@ -18,8 +18,12 @@ const logger = createLogger("ProfilePage", { color: "blue" });
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user: authUser } = useAuth();
-  const { user, stats, isLoading, uploadAvatar, refreshUser } = useUser();
+  const {
+    isAuthenticated,
+    user: authUser,
+    refreshUser: refreshAuthUser,
+  } = useAuth();
+  const { user, stats, isLoading, uploadAvatar } = useUser();
 
   const {
     // Username
@@ -53,11 +57,13 @@ export function ProfilePage() {
 
   const handleAvatarSave = async (avatarUrl: string) => {
     try {
-      // uploadAvatar сам инвалидирует кэш и делает refetch
+      // uploadAvatar инвалидирует кэш React Query
       await uploadAvatar(avatarUrl);
-      window.dispatchEvent(new CustomEvent("avatar-updated"));
-      // Обновляем AuthContext для немедленного обновления UI
-      await refreshUser();
+      // Обновляем AuthContext для немедленного обновления UI во всех компонентах
+      await refreshAuthUser();
+      logger.info("Аватар обновлён, AuthContext обновлён", {
+        newAvatarUrl: avatarUrl.substring(0, 50) + "...",
+      });
       sileo.success({ title: "Аватар обновлен", duration: 3000 });
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), {

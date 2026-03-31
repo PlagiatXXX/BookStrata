@@ -47,6 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               role: fullUserData.role || response.role,
               isPro: fullUserData.isPro,
             });
+            authLogger.info("User data updated via apiGetMe", {
+              userId: fullUserData.id,
+              username: fullUserData.username,
+              hasAvatar: !!fullUserData.avatarUrl,
+              avatarUrl: fullUserData.avatarUrl?.substring(0, 50) + "...",
+            });
           } catch {
             // Если не удалось получить данные, используем минимальные из токена
             setUser({
@@ -75,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Функция для принудительного обновления данных пользователя
   const refreshUser = useCallback(async () => {
+    authLogger.info("Refresh user called from Avatar update");
     await checkToken();
   }, [checkToken]);
 
