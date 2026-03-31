@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { CATEGORIES } from '../../data/mockData';
 
 interface CategoryTabsProps {
@@ -5,7 +6,8 @@ interface CategoryTabsProps {
   setActiveCategory: (id: string) => void;
 }
 
-export const CategoryTabs = ({ activeCategory, setActiveCategory }: CategoryTabsProps) => {
+// Memoize to prevent re-renders when searchQuery or other unrelated state changes
+export const CategoryTabs = memo(({ activeCategory, setActiveCategory }: CategoryTabsProps) => {
   return (
     <section className="mb-12 reveal" data-reveal>
       <div className="flex items-center gap-3 overflow-x-auto pb-4 no-scrollbar">
@@ -26,4 +28,4 @@ export const CategoryTabs = ({ activeCategory, setActiveCategory }: CategoryTabs
       </div>
     </section>
   );
-};
+});

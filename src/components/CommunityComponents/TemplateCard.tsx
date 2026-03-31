@@ -1,5 +1,5 @@
 import { Spinner } from '@/components/Spinner';
-import type { CSSProperties } from 'react';
+import { memo, type CSSProperties } from 'react';
 import type { TemplateItem } from '../../data/mockData';
 
 interface TemplateCardProps {
@@ -18,7 +18,8 @@ const getGridClass = (size: string) => {
   return map[size] || '';
 };
 
-export const TemplateCard = ({ template, isApplying, onUseTemplate }: TemplateCardProps) => {
+// Memoize to skip re-rendering individual cards when the list updates but some cards remain unchanged
+export const TemplateCard = memo(({ template, isApplying, onUseTemplate }: TemplateCardProps) => {
   const borderColorStyle = template.borderColor.startsWith('#')
     ? template.borderColor
     : `var(--${template.borderColor})`;
@@ -69,4 +70,4 @@ export const TemplateCard = ({ template, isApplying, onUseTemplate }: TemplateCa
       </div>
     </div>
   );
-};
+});

@@ -1,5 +1,5 @@
 import { Search as SearchIcon } from "lucide-react";
-import { useRef } from "react";
+import { useRef, memo } from "react";
 import BookScene from "./BookScene/BookScene";
 
 interface HeroSectionProps {
@@ -7,7 +7,7 @@ interface HeroSectionProps {
   setSearchQuery: (query: string) => void;
 }
 
-export const HeroSection = ({
+export const HeroSection = memo(({
   searchQuery,
   setSearchQuery,
 }: HeroSectionProps) => {
@@ -54,4 +54,4 @@ export const HeroSection = ({
       </div>
     </section>
   );
-};
+});
