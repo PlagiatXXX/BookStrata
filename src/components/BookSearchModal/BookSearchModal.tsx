@@ -478,6 +478,7 @@ export const BookSearchModal = ({
                   onKeyDown={handleKeyDown}
                   placeholder="Введите название книги или автора..."
                   aria-label="Поиск книг"
+                  autoFocus
                   className="w-full rounded-xl border border-cyan-300/45 bg-[rgba(6,12,28,0.88)] py-3 pl-10 pr-10 text-[#d8f9ff] placeholder:text-cyan-200/45 transition-colors focus:border-fuchsia-300/70 focus:outline-none"
                 />
                 {state.query && (
