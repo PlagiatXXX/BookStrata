@@ -97,15 +97,12 @@ export function useBookSearch(
         const cached = getCachedResult(query);
         if (cached && cached.length > 0) {
           logger.info("Using cached search results", { query });
-          // Фильтруем только книги с обложками
-          const filtered = cached.filter(
-            (book) => book.coverUrl || book.coverUrlLarge,
-          );
-          setResults(filtered);
-          setTotalResults(filtered.length);
+          // В кэше уже только книги с обложками (фильтруются при сохранении)
+          setResults(cached);
+          setTotalResults(cached.length);
           setHasMore(false);
           setCurrentQuery(query);
-          setStartIndex(filtered.length);
+          setStartIndex(cached.length);
           return;
         }
       }
@@ -180,6 +177,10 @@ export function useBookSearch(
           const newUniqueBooks = uniqueBooks.filter(
             (b) => !existingKeys.has(b.openLibraryKey),
           );
+
+          // Guard: Return current state if no new unique books found
+          if (newUniqueBooks.length === 0) return prev;
+
           return [...prev, ...newUniqueBooks];
         });
         setStartIndex(nextStartIndex + uniqueBooks.length);

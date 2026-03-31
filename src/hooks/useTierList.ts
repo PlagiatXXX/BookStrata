@@ -194,6 +194,9 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
 
     case 'ADD_BOOKS': {
       const { newBooks } = action.payload;
+      // Guard: Return current state if no new books to add to maintain referential integrity
+      if (newBooks.length === 0) return state;
+
       const updatedBooks = { ...state.books };
       newBooks.forEach(book => {
         updatedBooks[book.id] = book;
