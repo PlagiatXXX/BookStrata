@@ -38,6 +38,7 @@ const loginBodySchema = z.object({
 const validateBodySchema = z.object({
   token: z
     .string()
+    .max(2048, "Токен слишком длинный")
     .regex(/^[\w-]+\.[\w-]+\.[\w-]+$/, "Некорректный формат JWT токена"),
 });
 

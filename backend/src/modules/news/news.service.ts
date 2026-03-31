@@ -8,7 +8,7 @@ const logger = createLogger("News", { color: "cyan" });
 // Zod схемы для валидации
 const createNewsSchema = z.object({
   title: z.string().min(1).max(255),
-  content: z.string().min(10),
+  content: z.string().min(10).max(50000),
   excerpt: z.string().max(300),
   imageUrl: z.string().url().optional().or(z.literal("")),
   tags: z.array(z.string()).default([]),
@@ -17,7 +17,7 @@ const createNewsSchema = z.object({
 
 const updateNewsSchema = z.object({
   title: z.string().min(1).max(255).optional(),
-  content: z.string().min(10).optional(),
+  content: z.string().min(10).max(50000).optional(),
   excerpt: z.string().max(300).optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
   tags: z.array(z.string()).optional(),

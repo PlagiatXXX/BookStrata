@@ -9,7 +9,7 @@ export const getTierListsQuerySchema = z.object({
 });
 
 export const createTierListBodySchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+  title: z.string().min(1, 'Title is required').max(100),
 });
 
 export const togglePublicBodySchema = z.object({
@@ -45,7 +45,7 @@ export const createTierListSchema = {
     type: 'object',
     required: ['title'],
     properties: {
-      title: { type: 'string' },
+      title: { type: 'string', minLength: 1, maxLength: 100 },
     },
   },
   response: {
@@ -79,7 +79,7 @@ export const updateTierListSchema = {
     type: 'object',
     required: ['title'],
     properties: {
-      title: { type: 'string' },
+      title: { type: 'string', minLength: 1, maxLength: 100 },
     },
   },
 };
@@ -177,11 +177,11 @@ export const addBooksSchema = {
           type: 'object',
           required: ['title', 'coverImageUrl'],
           properties: {
-            title: { type: 'string' },
-            author: { type: ['string', 'null'] },
-            coverImageUrl: { type: 'string' },
-            description: { type: ['string', 'null'] },
-            thoughts: { type: ['string', 'null'] },
+            title: { type: 'string', minLength: 1, maxLength: 255 },
+            author: { type: ['string', 'null'], maxLength: 255 },
+            coverImageUrl: { type: 'string', maxLength: 2048 },
+            description: { type: ['string', 'null'], maxLength: 1000 },
+            thoughts: { type: ['string', 'null'], maxLength: 2000 },
           },
         },
       },
@@ -203,10 +203,10 @@ export const updateBookSchema = {
   body: {
     type: 'object',
     properties: {
-      title: { type: 'string' },
-      author: { type: 'string' },
-      description: { type: 'string' },
-      thoughts: { type: 'string' },
+      title: { type: 'string', minLength: 1, maxLength: 255 },
+      author: { type: 'string', maxLength: 255 },
+      description: { type: 'string', maxLength: 1000 },
+      thoughts: { type: 'string', maxLength: 2000 },
     },
   },
 };

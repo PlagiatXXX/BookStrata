@@ -170,7 +170,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           type: "object",
           required: ["email"],
           properties: {
-            email: { type: "string", format: "email" },
+            email: { type: "string", format: "email", maxLength: 255 },
           },
         },
       },
@@ -196,8 +196,8 @@ export async function authRoutes(fastify: FastifyInstance) {
           type: "object",
           required: ["token", "password"],
           properties: {
-            token: { type: "string" },
-            password: { type: "string", minLength: 8 },
+            token: { type: "string", maxLength: 1000 },
+            password: { type: "string", minLength: 8, maxLength: 100 },
           },
         },
       },
