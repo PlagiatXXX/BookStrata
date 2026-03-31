@@ -1,5 +1,6 @@
 import { RefreshCw, X, PlusCircle } from 'lucide-react';
 import { Modal } from '@/ui/Modal';
+import { sileo } from 'sileo';
 import type { CreateModalProps } from '../types';
 
 export function CreateTierListModal({
@@ -12,7 +13,11 @@ export function CreateTierListModal({
 }: CreateModalProps) {
   const handleCreate = () => {
     if (!createTitle.trim()) {
-      alert('Пожалуйста, введите название для тир-листа');
+      sileo.error({
+        title: 'Название обязательно',
+        description: 'Пожалуйста, введите название для тир-листа',
+        duration: 3000
+      });
       return;
     }
     onCreate(createTitle);
@@ -35,7 +40,13 @@ export function CreateTierListModal({
           <p>Введите название для вашего нового рейтинга</p>
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="create-tierlist-title" className="text-sm font-medium text-gray-300">
+            Название
+          </label>
+
         <input
+        id="create-tierlist-title"
           type="text"
           value={createTitle}
           onChange={(e) => onTitleChange(e.target.value)}
@@ -45,6 +56,7 @@ export function CreateTierListModal({
           placeholder="Название тир-листа..."
           className="dashboard-modal__input"
         />
+      </div>
 
         <div className="dashboard-modal__actions">
           <button

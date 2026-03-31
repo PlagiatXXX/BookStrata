@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { useAuth } from "@/hooks/useAuthContext";
 import { getUserTierLists } from "@/lib/api";
 import { apiGetUserStats } from "@/lib/userApi";
+import { sileo } from "sileo";
 import type { SortOption } from "./types";
 import { useDashboardState } from "./hooks/useDashboardState";
 import { useTierListActions } from "./hooks/useTierListActions";
@@ -131,8 +132,19 @@ export function DashboardPage() {
   };
 
   const handleRename = () => {
-    if (!renameTitle.trim() || !tierListToRename) return;
-    renameTierList(tierListToRename.id, renameTitle);
+    if (!tierListToRename) return;
+
+    const trimmedTitle = renameTitle.trim();
+    if (!trimmedTitle) {
+      sileo.error({
+        title: "Название обязательно",
+        description: "Введите название для тир-листа",
+        duration: 3000,
+      });
+      return;
+    }
+
+    renameTierList(tierListToRename.id, trimmedTitle);
   };
 
   const handleDelete = () => {

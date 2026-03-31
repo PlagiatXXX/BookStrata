@@ -1,5 +1,6 @@
 import { useState, useReducer, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { sileo } from 'sileo';
 import { getAuthToken } from '@/lib/authApi';
 import { createLogger } from '@/lib/logger';
 import { AvatarSelectorHeader } from './components/AvatarSelectorHeader';
@@ -165,7 +166,11 @@ export function AvatarSelector({
       onClose();
     } catch (error) {
       logger.error(error as Error, { action: 'saveAvatar' });
-      alert('Ошибка при сохранении. Попробуйте ещё раз.');
+      sileo.error({
+        title: 'Название обязательно',
+        description: 'Пожалуйста, введите название для тир-листа',
+        duration: 3000
+      })
     } finally {
       setIsSaving(false);
     }

@@ -54,6 +54,8 @@ describe("users.service", () => {
       email: "user@example.com",
       username: "testuser",
       avatarUrl: "https://example.com/avatar.jpg",
+      isPro: false,
+      proExpiresAt: null,
       createdAt: new Date("2024-01-01"),
       role: {
         name: "user",
@@ -72,6 +74,8 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          isPro: true,
+          proExpiresAt: true,
           role: {
             select: {
               name: true,
