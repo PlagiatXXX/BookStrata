@@ -7,12 +7,21 @@ import type { ReactNode } from 'react';
 import { useTierListActions } from './useTierListActions';
 import * as apiModule from '@/lib/api';
 import { logger } from '@/lib/logger';
+import { sileo } from 'sileo';
 
 // Моки API
 vi.mock('@/lib/api', () => ({
   createTierList: vi.fn(),
   updateTierListTitle: vi.fn(),
   deleteTierList: vi.fn(),
+}));
+
+// Моки sileo
+vi.mock('sileo', () => ({
+  sileo: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
 }));
 
 // Моки logger
@@ -31,14 +40,17 @@ vi.mock('@/lib/logger', async () => {
   };
 });
 
-// Моки alert
-const mockAlert = vi.fn();
-window.alert = mockAlert;
 
 // Подавляем unhandled rejection от мутаций
 const originalConsoleError = console.error;
 beforeAll(() => {
   console.error = vi.fn();
+  // Также подавляем необработанные ошибки для тестов, которые ожидают падения
+  process.on('unhandledRejection', (reason) => {
+    if (reason instanceof Error && (reason.message === 'Failed to rename' || reason.message === 'Failed to delete')) {
+      return;
+    }
+  });
 });
 afterAll(() => {
   console.error = originalConsoleError;
@@ -113,7 +125,7 @@ describe('useTierListActions', () => {
       );
     });
 
-    it('должен показывать ошибку при неудачном создании', async () => {
+    it('должен показывать ошибку при неудачном создании через sileo', async () => {
       vi.mocked(apiModule.createTierList).mockRejectedValue(new Error('Failed to create'));
 
       const { result } = renderHook(
@@ -124,7 +136,10 @@ describe('useTierListActions', () => {
       result.current.createNewTierList('New List');
 
       await vi.waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith('Ошибка: Failed to create');
+        expect(sileo.error).toHaveBeenCalledWith(expect.objectContaining({
+          title: 'Ошибка создания',
+          description: 'Failed to create',
+        }));
       });
 
       expect(logger.error).toHaveBeenCalled();
@@ -156,6 +171,26 @@ describe('useTierListActions', () => {
 
       expect(logger.info).toHaveBeenCalledWith('Tier list renamed successfully');
     });
+
+    it('должен показывать ошибку при неудачном переименовании через sileo', async () => {
+      vi.mocked(apiModule.updateTierListTitle).mockRejectedValue(new Error('Failed to rename'));
+
+      const { result } = renderHook(
+        () => useTierListActions({}),
+        { wrapper: createWrapper() }
+      );
+
+      result.current.renameTierList(1, 'Updated Title');
+
+      await vi.waitFor(() => {
+        expect(sileo.error).toHaveBeenCalledWith(expect.objectContaining({
+          title: 'Ошибка переименования',
+          description: 'Failed to rename',
+        }));
+      });
+
+      expect(logger.error).toHaveBeenCalled();
+    });
   });
 
   describe('removeTierList', () => {
@@ -182,6 +217,26 @@ describe('useTierListActions', () => {
       });
 
       expect(logger.info).toHaveBeenCalledWith('Tier list deleted successfully');
+    });
+
+    it('должен показывать ошибку при неудачном удалении через sileo', async () => {
+      vi.mocked(apiModule.deleteTierList).mockRejectedValue(new Error('Failed to delete'));
+
+      const { result } = renderHook(
+        () => useTierListActions({}),
+        { wrapper: createWrapper() }
+      );
+
+      result.current.removeTierList(1);
+
+      await vi.waitFor(() => {
+        expect(sileo.error).toHaveBeenCalledWith(expect.objectContaining({
+          title: 'Ошибка удаления',
+          description: 'Failed to delete',
+        }));
+      });
+
+      expect(logger.error).toHaveBeenCalled();
     });
   });
 

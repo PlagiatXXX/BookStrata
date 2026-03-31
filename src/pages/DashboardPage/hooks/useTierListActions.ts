@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { sileo } from 'sileo';
 import {
   createTierList,
   updateTierListTitle,
@@ -48,9 +49,11 @@ export function useTierListActions({
           : new Error(String(mutationError)),
         { action: 'createTierList' },
       );
-      alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : 'Unknown error'}`,
-      );
+      sileo.error({
+        title: 'Ошибка создания',
+        description: mutationError instanceof Error ? mutationError.message : 'Не удалось создать тир-лист',
+        duration: 3000
+      });
     },
   });
 
@@ -69,11 +72,12 @@ export function useTierListActions({
           : new Error(String(mutationError)),
         { action: 'renameTierList' },
       );
-      alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : 'Unknown error'}`,
-      );
+      sileo.error({
+        title: 'Ошибка переименования',
+        description: mutationError instanceof Error ? mutationError.message : 'Не удалось переименовать тир-лист',
+        duration: 3000
+      });
     },
-    throwOnError: false, // Не выбрасывать ошибку
   });
 
   const { mutateAsync: deleteMutation, isPending: isDeleting } = useMutation({
@@ -90,11 +94,12 @@ export function useTierListActions({
           : new Error(String(mutationError)),
         { action: 'deleteTierList' },
       );
-      alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : 'Unknown error'}`,
-      );
+      sileo.error({
+        title: 'Ошибка удаления',
+        description: mutationError instanceof Error ? mutationError.message : 'Не удалось удалить тир-лист',
+        duration: 3000
+      });
     },
-    throwOnError: false, // Не выбрасывать ошибку
   });
 
   const renameTierList = (id: number, title: string) => {

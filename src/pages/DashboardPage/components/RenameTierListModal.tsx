@@ -1,5 +1,6 @@
 import { RefreshCw, X, CheckCircle2 } from 'lucide-react';
 import { Modal } from '@/ui/Modal';
+import { sileo } from 'sileo';
 import type { RenameModalProps } from '../types';
 
 export function RenameTierListModal({
@@ -12,7 +13,11 @@ export function RenameTierListModal({
 }: RenameModalProps) {
   const handleRename = () => {
     if (!renameTitle.trim()) {
-      alert('Пожалуйста, введите название для тир-листа');
+      sileo.error({
+        title: 'Название обязательно',
+        description: 'Пожалуйста, введите название для тир-листа',
+        duration: 3000
+      });
       return;
     }
     onRename();
@@ -35,16 +40,22 @@ export function RenameTierListModal({
           <p>Введите новое название для рейтинга</p>
         </div>
 
-        <input
-          type="text"
-          value={renameTitle}
-          onChange={(e) => onTitleChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleRename();
-          }}
-          placeholder="Новое название тир-листа..."
-          className="dashboard-modal__input"
-        />
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="rename-tierlist-title" className="text-sm font-medium text-gray-300">
+            Новое название <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="rename-tierlist-title"
+            type="text"
+            value={renameTitle}
+            onChange={(e) => onTitleChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleRename();
+            }}
+            placeholder="Новое название тир-листа..."
+            className="dashboard-modal__input"
+          />
+        </div>
 
         <div className="dashboard-modal__actions">
           <button
