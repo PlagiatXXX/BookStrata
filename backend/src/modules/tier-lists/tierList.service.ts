@@ -526,3 +526,82 @@ export async function getTierListMetadata(id: number) {
     },
   });
 }
+
+// Создание копии (форка) тир-листа
+export async function forkTierList(id: number, userId: number) {
+  logger.debug("forkTierList вызван", { id, userId });
+
+  // 1. Получаем оригинал со всеми данными
+  const original = await prisma.tierList.findUniqueOrThrow({
+    where: { id },
+    include: {
+      tiers: {
+        orderBy: { rank: "asc" },
+      },
+      placements: {
+        include: { book: true },
+        orderBy: { rank: "asc" },
+      },
+    },
+  });
+
+  // 2. Создаем новый тир-лист в транзакции
+  return prisma.$transaction(async (tx) => {
+    // Создаем заголовок с пометкой о копии
+    const newTitle = `${original.title} (копия)`;
+
+    const newTierList = await tx.tierList.create({
+      data: {
+        userId,
+        title: newTitle,
+        isPublic: false,
+      },
+    });
+
+    // 3. Копируем тиры
+    const tierMap = new Map<number, number>(); // Старый ID -> Новый ID
+
+    for (const tier of original.tiers) {
+      const createdTier = await tx.tier.create({
+        data: {
+          tierListId: newTierList.id,
+          title: tier.title,
+          color: tier.color,
+          rank: tier.rank,
+        },
+      });
+      tierMap.set(tier.id, createdTier.id);
+    }
+
+    // 4. Копируем книги и создаем размещения
+    // Важно: создаем НОВЫЕ записи книг, чтобы пользователь мог редактировать их мысли/описания независимо
+    for (const placement of original.placements) {
+      const newBook = await tx.book.create({
+        data: {
+          title: placement.book.title,
+          author: placement.book.author,
+          coverImageUrl: placement.book.coverImageUrl,
+          description: placement.book.description,
+          thoughts: placement.book.thoughts,
+        },
+      });
+
+      await tx.bookPlacement.create({
+        data: {
+          tierListId: newTierList.id,
+          bookId: newBook.id,
+          tierId: placement.tierId ? tierMap.get(placement.tierId) : null,
+          rank: placement.rank,
+        },
+      });
+    }
+
+    logger.info("Тир-лист успешно скопирован (forked)", {
+      originalId: id,
+      newId: newTierList.id,
+      userId,
+    });
+
+    return newTierList;
+  });
+}

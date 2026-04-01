@@ -493,3 +493,19 @@ export function transformStateToApi(listData: TierListData) {
 
   return placements;
 }
+
+// ========== FORK TIER LIST ==========
+
+/**
+ * Создать копию (форк) существующего тир-листа
+ */
+export async function forkTierList(id: string): Promise<ApiTierListResponse> {
+  tierListLogger.info('Создание копии тир-листа', { tierListId: id });
+  const response = await fetch(`${API_BASE_URL}/tier-lists/${id}/fork`, {
+    method: 'POST',
+    headers: getAuthHeader(),
+  });
+  const result = await handleResponse<ApiTierListResponse>(response);
+  tierListLogger.info('Копия тир-листа успешно создана', { originalId: id, newId: result.id });
+  return result;
+}

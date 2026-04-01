@@ -26,6 +26,7 @@ export {
   saveTierListOptimized,
   transformApiToState,
   transformStateToApi,
+  forkTierList,
 } from './tierListApi';
 
 export type {
