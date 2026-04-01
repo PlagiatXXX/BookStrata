@@ -1,13 +1,9 @@
-import { useMutation } from '@tanstack/react-query';
-import {
-  createTierList,
-  updateTierListTitle,
-  deleteTierList,
-} from '@/lib/api';
-import { createLogger } from '@/lib/logger';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/api";
+import { createLogger } from "@/lib/logger";
 
 // Логгер для хука действий тир-листов
-const logger = createLogger('TierListActions', { color: 'magenta' });
+const logger = createLogger("TierListActions", { color: "magenta" });
 
 interface UseTierListActionsOptions {
   onSuccess?: () => void;
@@ -31,13 +27,17 @@ export function useTierListActions({
   onSuccess,
   onRefetch,
 }: UseTierListActionsOptions): UseTierListActionsReturn {
+  const queryClient = useQueryClient();
+
   const { mutate: createNewTierList, isPending: isCreating } = useMutation({
     mutationFn: (title: string) => createTierList(title),
     onSuccess: (tierList) => {
-      logger.info('New tier list created - navigating to editor', {
+      logger.info("New tier list created - navigating to editor", {
         id: tierList.id,
         title: tierList.title,
       });
+      // Инвалидируем кэш статистики пользователя
+      queryClient.invalidateQueries({ queryKey: ["userStats"] });
       onSuccess?.();
       onRefetch?.();
     },
@@ -46,10 +46,10 @@ export function useTierListActions({
         mutationError instanceof Error
           ? mutationError
           : new Error(String(mutationError)),
-        { action: 'createTierList' },
+        { action: "createTierList" },
       );
       alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : 'Unknown error'}`,
+        `Ошибка: ${mutationError instanceof Error ? mutationError.message : "Unknown error"}`,
       );
     },
   });
@@ -58,7 +58,7 @@ export function useTierListActions({
     mutationFn: ({ id, title }: { id: number; title: string }) =>
       updateTierListTitle(String(id), title),
     onSuccess: () => {
-      logger.info('Tier list renamed successfully');
+      logger.info("Tier list renamed successfully");
       onSuccess?.();
       onRefetch?.();
     },
@@ -67,10 +67,10 @@ export function useTierListActions({
         mutationError instanceof Error
           ? mutationError
           : new Error(String(mutationError)),
-        { action: 'renameTierList' },
+        { action: "renameTierList" },
       );
       alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : 'Unknown error'}`,
+        `Ошибка: ${mutationError instanceof Error ? mutationError.message : "Unknown error"}`,
       );
     },
     throwOnError: false, // Не выбрасывать ошибку
@@ -79,7 +79,9 @@ export function useTierListActions({
   const { mutateAsync: deleteMutation, isPending: isDeleting } = useMutation({
     mutationFn: (id: number) => deleteTierList(String(id)),
     onSuccess: () => {
-      logger.info('Tier list deleted successfully');
+      logger.info("Tier list deleted successfully");
+      // Инвалидируем кэш статистики пользователя
+      queryClient.invalidateQueries({ queryKey: ["userStats"] });
       onSuccess?.();
       onRefetch?.();
     },
@@ -88,10 +90,10 @@ export function useTierListActions({
         mutationError instanceof Error
           ? mutationError
           : new Error(String(mutationError)),
-        { action: 'deleteTierList' },
+        { action: "deleteTierList" },
       );
       alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : 'Unknown error'}`,
+        `Ошибка: ${mutationError instanceof Error ? mutationError.message : "Unknown error"}`,
       );
     },
     throwOnError: false, // Не выбрасывать ошибку

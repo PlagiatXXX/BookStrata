@@ -590,7 +590,9 @@ export async function forkTierList(id: number, userId: number) {
         data: {
           tierListId: newTierList.id,
           bookId: newBook.id,
-          tierId: placement.tierId ? tierMap.get(placement.tierId) : null,
+          tierId: placement.tierId
+            ? (tierMap.get(placement.tierId) ?? null)
+            : null,
           rank: placement.rank,
         },
       });
