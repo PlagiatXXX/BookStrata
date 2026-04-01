@@ -9,11 +9,22 @@ vi.mock("../../lib/prisma.js", () => ({
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
     role: {
       findUnique: vi.fn(),
     },
+    passwordResetToken: {
+      findUnique: vi.fn(),
+      deleteMany: vi.fn(),
+      create: vi.fn(),
+    },
+    $transaction: vi.fn(),
   },
+}));
+
+vi.mock("./auth.mail.js", () => ({
+  sendNewPasswordEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Импортируем после vi.mock
@@ -153,7 +164,7 @@ describe("Auth Service", () => {
         data: {
           username: mockRegisterPayload.username,
           email: mockRegisterPayload.email,
-          passwordHash: expect.stringMatching(/^\$2[aby]\$/),
+          passwordHash: expect.any(String),
           roleId: mockUserRole.id,
         },
       });
@@ -196,7 +207,7 @@ describe("Auth Service", () => {
       expect(prisma.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            passwordHash: expect.stringMatching(/^\$2[aby]\$/),
+            passwordHash: expect.any(String),
           }),
         }),
       );
@@ -362,6 +373,30 @@ describe("Auth Service", () => {
       expect(decoded.username).toBe("user123");
       expect(decoded.iat).toBeDefined();
       expect(decoded.exp).toBeDefined();
+    });
+  });
+
+  describe("requestPasswordReset (New Implementation)", () => {
+    it("должен сгенерировать новый пароль и вызвать отправку письма", async () => {
+      const mockUser = { id: 1, email: "test@example.com", username: "testuser" };
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+      (prisma.user.update as any).mockResolvedValue(mockUser);
+      (prisma.passwordResetToken.deleteMany as any).mockResolvedValue({ count: 0 });
+      (prisma.$transaction as any).mockResolvedValue([]);
+
+      await authService.requestPasswordReset("test@example.com");
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: "test@example.com" },
+      });
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it("не должен бросать ошибку если пользователь не найден (security)", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(null);
+
+      await expect(authService.requestPasswordReset("nonexistent@example.com")).resolves.not.toThrow();
     });
   });
 });

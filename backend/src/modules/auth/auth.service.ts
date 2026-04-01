@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import { jwtPayloadSchema, type AuthTokenPayload } from "./auth.schema.js";
 import { RolesService } from "../roles/roles.service.js";
 import { createLogger } from "../../lib/logger.js";
+import crypto from "crypto";
+import { sendNewPasswordEmail } from "./auth.mail.js";
 
 const logger = createLogger("Auth", { color: "blue" });
 
@@ -169,23 +171,8 @@ export function generateTokenPair(payload: Partial<AuthTokenPayload>): {
   return { accessToken, refreshToken };
 }
 
-import nodemailer from "nodemailer";
-import crypto from "crypto";
-
-// Настройка почтового транспорта (рекомендуется вынести в env)
-const mailConfig = {
-  host: process.env.SMTP_HOST || "smtp.mailtrap.io",
-  port: parseInt(process.env.SMTP_PORT || "2525"),
-  auth: {
-    user: process.env.SMTP_USER || "",
-    pass: process.env.SMTP_PASS || "",
-  },
-};
-
-const transporter = nodemailer.createTransport(mailConfig);
-
 /**
- * Запрос на восстановление пароля
+ * Запрос на восстановление пароля (автогенерация нового)
  */
 export async function requestPasswordReset(email: string): Promise<void> {
   const user = await prisma.user.findUnique({
@@ -193,49 +180,41 @@ export async function requestPasswordReset(email: string): Promise<void> {
   });
 
   if (!user) {
-    // В целях безопасности не говорим, что пользователя нет
+    // В целях безопасности не выдаем статус ошибки, но и ничего не отправляем
     return;
   }
 
-  // Генерируем токен
-  const token = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + 1); // 1 час жизни
+  // Генерируем новый случайный пароль (8 символов)
+  const newPassword = crypto.randomBytes(4).toString("hex").toUpperCase();
 
-  // Сохраняем в БД
-  await prisma.passwordResetToken.create({
-    data: {
-      token,
-      userId: user.id,
-      expiresAt,
-    },
-  });
+  // Хешируем и сохраняем в БД
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  // Отправляем письмо
-  const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: hashedPassword },
+    }),
+    // Чистим старые токены сброса, если они были (теперь не нужны)
+    prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id },
+    }),
+  ]);
 
   try {
-    await transporter.sendMail({
-      from: '"BookStrata Pro" <noreply@bookstrata.pro>',
-      to: email,
-      subject: "Восстановление пароля",
-      html: `
-        <h1>Восстановление пароля</h1>
-        <p>Вы получили это письмо, потому что запросили сброс пароля для вашего аккаунта в BookStrata Pro.</p>
-        <p>Нажмите на ссылку ниже, чтобы установить новый пароль:</p>
-        <a href="${resetLink}">${resetLink}</a>
-        <p>Ссылка действительна в течение 1 часа.</p>
-        <p>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>
-      `,
-    });
-    logger.info("Письмо для сброса пароля отправлено", { userId: user.id });
+    // Отправляем письмо через новый сервис
+    await sendNewPasswordEmail(user.email, user.username || "Пользователь", newPassword);
+    logger.info("Новый пароль успешно отправлен на почту", { userId: user.id });
   } catch (error) {
-    logger.error(error as Error, { action: "sendResetEmail", userId: user.id });
-    throw new Error("Не удалось отправить письмо для восстановления пароля");
+    logger.error("Ошибка при отправке нового пароля", { error: (error as Error).message, userId: user.id });
+    throw new Error("Не удалось отправить письмо с новым паролем. Попробуйте позже.");
   }
 }
 
-
+/**
+ * Подтверждение сброса пароля (Оставлено для совместимости, но теперь логика в requestPasswordReset)
+ * @deprecated
+ */
 export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
   const resetToken = await prisma.passwordResetToken.findUnique({
     where: { token },
@@ -246,10 +225,8 @@ export async function confirmPasswordReset(token: string, newPassword: string): 
     throw new Error("Токен недействителен или истёк");
   }
 
-  // Хешируем новый пароль
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  // Обновляем пароль и удаляем все токены пользователя
   await prisma.$transaction([
     prisma.user.update({
       where: { id: resetToken.userId },
@@ -260,5 +237,5 @@ export async function confirmPasswordReset(token: string, newPassword: string): 
     }),
   ]);
 
-  logger.info("Пароль успешно сброшен", { userId: resetToken.userId });
+  logger.info("Пароль успешно сброшен через токен", { userId: resetToken.userId });
 }
