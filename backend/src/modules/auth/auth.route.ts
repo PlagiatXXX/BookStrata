@@ -179,7 +179,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       const { email } = request.body;
       try {
         await requestPasswordReset(email);
-        return reply.code(200).send({ message: "Reset link sent" });
+        return reply.code(200).send({ message: "Новый пароль отправлен на вашу почту" });
       } catch (error) {
         fastify.log.error(error, "Forgot password error");
         return reply.code(400).send({ error: "Failed to process request" });
