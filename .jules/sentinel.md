@@ -9,3 +9,9 @@
 **Vulnerability:** Missing maximum password length limits on login and profile update endpoints, creating a potential bcrypt-based Denial of Service (DoS) vector.
 **Learning:** While registration had a 100-character limit, other endpoints (login, password change) did not. Bcrypt hashing is computationally expensive and its cost increases with input length, allowing an attacker to exhaust server CPU by sending extremely long strings.
 **Prevention:** Always enforce a reasonable maximum length (e.g., 100 characters) for password fields in all Zod and JSON schemas across all authentication and user management endpoints.
+
+## 2026-03-31 - [Password Recovery Implementation]
+**Vulnerability:** Users had no way to recover lost passwords, potentially leading to permanent account loss.
+**Learning:** Implemented a secure, token-based password reset flow. Tokens are high-entropy (32 bytes), short-lived (1 hour), and linked to a specific user. Password updates are atomic and clear all existing reset tokens.
+**Prevention:** Added `forgot-password` and `reset-password` endpoints and UI pages. Integrated `nodemailer` for delivery.
+
