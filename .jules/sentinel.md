@@ -15,3 +15,7 @@
 **Learning:** Implemented a secure, token-based password reset flow. Tokens are high-entropy (32 bytes), short-lived (1 hour), and linked to a specific user. Password updates are atomic and clear all existing reset tokens.
 **Prevention:** Added `forgot-password` and `reset-password` endpoints and UI pages. Integrated `nodemailer` for delivery.
 
+## 2026-04-01 - Avatar Route Hardening (DoS Protection)
+**Vulnerability:** Missing input validation and length limits on avatar generation and upload routes, allowing for potential resource exhaustion and database bloat.
+**Learning:** Even though manual validation was present in some service layers, the API layer (Fastify) lacked schemas, allowing oversized payloads (like multi-megabyte base64 strings or extremely long AI prompts) to be processed.
+**Prevention:** Use Zod schemas with `zod-to-json-schema` to enforce strict length limits (e.g., 500 chars for prompts, 10MB for base64 avatars) at the routing level. Ensure error messages are consistent with the project's language (English for API errors).

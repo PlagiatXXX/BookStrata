@@ -2,28 +2,25 @@ import type { FastifyInstance } from "fastify";
 import { generateAvatar, getAvatarLimit } from "./avatar.service.js";
 import { updateAvatar as updateUserAvatar } from "../users/users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
-
-interface GenerateAvatarBody {
-  prompt: string;
-}
-
-interface UploadAvatarBody {
-  avatar: string;
-}
+import {
+  generateAvatarSchema,
+  uploadAvatarSchema,
+  GenerateAvatarInput,
+  UploadAvatarInput,
+} from "./avatar.schema.js";
 
 export async function avatarRoutes(fastify: FastifyInstance) {
   // Генерация аватара
-  fastify.post<{ Body: GenerateAvatarBody }>(
+  // We use strict input validation here to protect against oversized prompts
+  // and resource exhaustion on the AI generation service.
+  fastify.post<{ Body: GenerateAvatarInput }>(
     "/generate",
-    { preHandler: [authMiddleware] },
+    {
+      preHandler: [authMiddleware],
+      schema: generateAvatarSchema,
+    },
     async (request, reply) => {
       const { prompt } = request.body;
-
-      if (!prompt || prompt.trim().length < 2) {
-        return reply
-          .code(400)
-          .send({ error: "Prompt must be at least 2 characters" });
-      }
 
       const userId = (request as any).user?.userId;
       const userRole = (request as any).user?.role;
@@ -50,15 +47,16 @@ export async function avatarRoutes(fastify: FastifyInstance) {
   );
 
   // Загрузка аватара
-  fastify.post<{ Body: UploadAvatarBody }>(
+  // Input validation prevents DoS attacks via oversized base64 strings
+  // or URL payloads that could bloat the database or cause memory issues.
+  fastify.post<{ Body: UploadAvatarInput }>(
     "/upload",
-    { preHandler: [authMiddleware] },
+    {
+      preHandler: [authMiddleware],
+      schema: uploadAvatarSchema,
+    },
     async (request, reply) => {
       const { avatar } = request.body;
-
-      if (!avatar) {
-        return reply.code(400).send({ error: "Avatar is required" });
-      }
 
       const userId = (request as any).user?.userId;
       if (!userId) {
