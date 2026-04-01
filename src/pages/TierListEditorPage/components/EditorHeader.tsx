@@ -1,3 +1,8 @@
+import { GitFork } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { forkTierList } from '@/lib/api';
+import { sileo } from 'sileo';
 import { LikeButton } from '@/components/LikeButton';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import type { AutoSaveStatus } from '@/hooks/useAutoSaveOptimized';
@@ -13,6 +18,8 @@ export interface EditorHeaderProps {
   autoSaveStatus: AutoSaveStatus;
   lastSaved: Date | null;
   onSaveRetry: () => void;
+  onFork?: () => void;
+  isForking?: boolean;
   isReadOnly?: boolean;
 }
 
@@ -29,6 +36,30 @@ export const EditorHeader = ({
   onSaveRetry,
   isReadOnly = false,
 }: EditorHeaderProps) => {
+  const navigate = useNavigate();
+  const [isForking, setIsForking] = useState(false);
+
+  const handleFork = async () => {
+    if (!tierListId) return;
+    try {
+      setIsForking(true);
+      const newTierList = await forkTierList(tierListId);
+      sileo.success({
+        title: 'Версия создана',
+        description: 'Теперь вы можете редактировать этот список под себя',
+      });
+      navigate(`/tier-lists/${newTierList.id}`);
+    } catch (error) {
+      console.error(error);
+      sileo.error({
+        title: 'Ошибка копирования',
+        description: 'Не удалось создать вашу версию списка',
+      });
+    } finally {
+      setIsForking(false);
+    }
+  };
+
   return (
     <>
       <AutoSaveIndicator
@@ -49,16 +80,29 @@ export const EditorHeader = ({
               Автор: {author?.username}
             </p>
           </div>
-          <LikeButton
-            id={parseInt(tierListId!)}
-            type="tierlist"
-            initialLikes={likesCount || 0}
-            initialLiked={likedIdsSet?.has(parseInt(tierListId!)) || false}
-            authorId={ownerUserId}
-            currentUserId={currentUserId}
-            size="md"
-            showLabel={true}
-          />
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleFork}
+              disabled={isForking}
+              className={`flex items-center gap-2 rounded-lg bg-[#2a162e] px-4 py-2 text-sm font-semibold text-cyan-400 border border-cyan-400/20 hover:bg-[#341b3a] transition-all ${
+                isForking ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <GitFork size={18} />
+              {isForking ? 'Копирую...' : 'Создать свою версию'}
+            </button>
+            <LikeButton
+              id={parseInt(tierListId!)}
+              type="tierlist"
+              initialLikes={likesCount || 0}
+              initialLiked={likedIdsSet?.has(parseInt(tierListId!)) || false}
+              authorId={ownerUserId}
+              currentUserId={currentUserId}
+              size="md"
+              showLabel={true}
+            />
+          </div>
         </div>
       ) : (
         // Режим редактора (владелец): только название

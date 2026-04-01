@@ -614,4 +614,22 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       return reply.code(200).send(updatedTierList);
     },
   );
+
+  // POST /:id/fork -> Создать копию тир-листа
+  fastify.post<{ Params: { id: string } }>(
+    "/:id/fork",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const tierListId = parseInt(request.params.id, 10);
+      const userId = request.user!.userId;
+
+      try {
+        const newTierList = await service.forkTierList(tierListId, userId);
+        return reply.code(201).send(newTierList);
+      } catch (error) {
+        fastify.log.error(error);
+        return reply.code(500).send({ message: "Failed to fork tier list" });
+      }
+    },
+  );
 }
