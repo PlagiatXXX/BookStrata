@@ -5,7 +5,7 @@ import { jwtPayloadSchema, type AuthTokenPayload } from "./auth.schema.js";
 import { RolesService } from "../roles/roles.service.js";
 import { createLogger } from "../../lib/logger.js";
 import crypto from "crypto";
-import { sendNewPasswordEmail } from "./auth.mail.js";
+import { sendNewPasswordEmail, sendWelcomeEmail } from "./auth.mail.js";
 
 const logger = createLogger("Auth", { color: "blue" });
 
@@ -78,6 +78,18 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
     email: user.email,
     role: "user",
   });
+
+  // Отправляем приветственное письмо
+  try {
+    await sendWelcomeEmail(user.email, user.username || "Пользователь");
+    logger.info("Приветственное письмо отправлено", { userId: user.id });
+  } catch (error) {
+    // Не прерываем регистрацию, если письмо не отправилось, но логируем
+    logger.error("Ошибка при отправке приветственного письма", { 
+      error: (error as Error).message, 
+      userId: user.id 
+    });
+  }
 
   // Генерируем пару токенов
   const tokens = generateTokenPair({

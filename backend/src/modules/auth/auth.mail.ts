@@ -48,3 +48,52 @@ export async function sendNewPasswordEmail(email: string, username: string, newP
     html,
   });
 }
+
+const getWelcomeTemplate = (username: string) => `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 5px solid #10b981; }
+    h1 { color: #059669; margin-top: 0; }
+    .hero-img { width: 100%; border-radius: 4px; margin-bottom: 20px; }
+    .btn { display: inline-block; background-color: #10b981; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
+    .footer { font-size: 12px; color: #64748b; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Добро пожаловать в BookStrata Pro!</h1>
+    <p>Здравствуйте, <strong>${username}</strong>!</p>
+    <p>Мы рады, что вы присоединились к нашему сообществу любителей книг. Теперь у вас есть доступ ко всем инструментам для создания и управления вашими книжными тир-листами.</p>
+    <p>Что вы можете сделать прямо сейчас:</p>
+    <ul>
+      <li>Создать свой первый тир-лист с любимыми книгами</li>
+      <li>Изучить коллекции других пользователей или подборки от сообщества в разделе "Новости"</li>
+      <li>Настроить свой профиль и аватар</li>
+    </ul>
+    <p>Мы работаем на добровольных началах, поэтому Ваш любой вклад (будь то отзыв, критика, предложения по улучшению проекта, моральная и финансовая помощь) неоценима!<p> 
+    <a href="${process.env.CLIENT_URL || '#'}" class="btn">Начать работу</a>
+    <div class="footer">
+      <p>Вы получили это письмо, потому что зарегистрировались в BookStrata Pro.</p>
+      <p>© ${new Date().getFullYear()} BookStrata Pro. Все права защищены.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+export async function sendWelcomeEmail(email: string, username: string): Promise<void> {
+  const html = getWelcomeTemplate(username);
+  const text = `Добро пожаловать в BookStrata Pro, ${username}! Мы рады, что вы с нами.`;
+
+  await sendEmail({
+    to: email,
+    subject: "Добро пожаловать в BookStrata Pro!",
+    text,
+    html,
+  });
+}
+
