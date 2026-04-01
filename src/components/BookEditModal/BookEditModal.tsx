@@ -160,6 +160,7 @@ export const BookEditModal = ({
               type="text"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
+              autoFocus
               className="px-6 py-4 bg-linear-to-r from-surface-dark via-surface-dark to-surface-dark
                          border border-cyan-500/30 rounded-xl text-white text-center text-2xl font-bold
                          shadow-lg shadow-cyan-500/10
