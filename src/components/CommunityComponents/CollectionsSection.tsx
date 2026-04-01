@@ -1,6 +1,7 @@
+import { memo } from "react";
 import { COLLECTIONS } from "../../data/mockData";
 
-export const CollectionsSection = () => {
+export const CollectionsSection = memo(() => {
   return (
     <section className="mt-20 brutal-card brutal-border p-8 reveal" data-reveal>
       <div className="flex items-center justify-between mb-8">
@@ -61,4 +62,4 @@ export const CollectionsSection = () => {
       </div>
     </section>
   );
-};
+});

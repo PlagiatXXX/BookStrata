@@ -13,3 +13,7 @@
 ## 2026-03-31 - [Template Library Monetization]
 **Learning:** Adding Pro-only value to the Template Library increases the incentive for users to upgrade. 
 **Action:** Introduced `isProOnly` flag for templates. Pro users now have a significantly higher template creation limit (100 vs 5). Implemented server-side and client-side checks to restrict premium templates to Pro users.
+
+## 2025-05-25 - [Cohesive Component Memoization in Community Page]
+**Learning:** Performance in pages with high-frequency state updates (like search inputs) is best addressed by "tree-level" memoization. Wrapping all major siblings in `React.memo` prevents the entire component tree from re-rendering on every keystroke, which is more effective than optimizing just the search component itself.
+**Action:** When a page has local state updated on every keystroke (e.g., `searchQuery`), proactively wrap all other large, non-dependent child components in `React.memo` to isolate them from the render churn.

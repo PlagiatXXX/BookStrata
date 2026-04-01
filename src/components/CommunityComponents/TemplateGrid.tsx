@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { TEMPLATES, type TemplateItem } from '../../data/mockData';
 import { TemplateCard } from './TemplateCard';
@@ -8,8 +9,11 @@ interface TemplateGridProps {
   onUseTemplate: (template: TemplateItem) => void;
 }
 
-export const TemplateGrid = ({ activeCategory, applyingTemplateId, onUseTemplate }: TemplateGridProps) => {
-  const filteredTemplates = TEMPLATES.filter((t) => t.categoryId === activeCategory);
+export const TemplateGrid = memo(({ activeCategory, applyingTemplateId, onUseTemplate }: TemplateGridProps) => {
+  const filteredTemplates = useMemo(
+    () => TEMPLATES.filter((t) => t.categoryId === activeCategory),
+    [activeCategory]
+  );
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[180px]">
@@ -37,4 +41,4 @@ export const TemplateGrid = ({ activeCategory, applyingTemplateId, onUseTemplate
       </div>
     </div>
   );
-};
+});
