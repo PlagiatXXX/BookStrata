@@ -23,12 +23,14 @@ model User {
   passwordHash         String     @map("password_hash")
   isPro                Boolean    @default(false) @map("is_pro")
   proExpiresAt         DateTime?  @map("pro_expires_at")
+  xp                   Int        @default(0)
   tierLists            TierList[]
   templates            Template[]
   tierListLikes        TierListLike[]
   templateLikes        TemplateLike[]
   newsArticles         NewsArticle[]
   passwordResetTokens  PasswordResetToken[]
+  achievements         UserAchievement[]
   role                 Role?      @relation(fields: [roleId], references: [id])
   roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
   createdAt            DateTime   @default(now()) @map("created_at")
@@ -170,4 +172,31 @@ model PasswordResetToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([token])
+}
+
+// Достижения
+model Achievement {
+  id          String   @id // Код достижения (например, 'first_tier_list')
+  title       String
+  description String
+  iconUrl     String?  @map("icon_url")
+  xpValue     Int      @default(10) @map("xp_value")
+  isSecret    Boolean  @default(false) @map("is_secret")
+  requirements Json?   // Параметры для проверки ({ count: 1, type: 'tier_list' })
+  users       UserAchievement[]
+
+  @@map("achievements")
+}
+
+// Связь пользователей и достижений
+model UserAchievement {
+  id            Int         @id @default(autoincrement())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        Int
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  achievementId String
+  earnedAt      DateTime    @default(now()) @map("earned_at")
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
 }

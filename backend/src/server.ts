@@ -1,3 +1,4 @@
+import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "dotenv/config";
 import Fastify from "fastify";
@@ -174,6 +175,8 @@ fastify.register(tierListRoutes, { prefix: "/api/tier-lists" });
 fastify.register(newsRoutes, { prefix: "/api/news" });
 fastify.register(rolesRoutes, { prefix: "/api" });
 fastify.register(subscriptionsRoutes, { prefix: "/api/subscriptions" });
+fastify.register(achievementRoutes, { prefix: "/api/achievements" });
+
 
 // Регистрируем контроллер шаблонов с префиксом /api
 fastify.register(templatesPlugin, { prisma, prefix: "/api" });

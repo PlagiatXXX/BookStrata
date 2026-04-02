@@ -1,3 +1,4 @@
+import * as achievementService from "../../achievements/achievements.service.js";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FastifyInstance } from 'fastify';
 import { authMiddleware } from '../../auth/auth.middleware.js';
@@ -35,6 +36,10 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       // Получаем обновлённое количество лайков
       const likes = await getLikesWithStatus(tierListId, userId);
 
+      const tierList = await fastify.prisma.tierList.findUnique({ where: { id: tierListId }, select: { userId: true } });
+      if (tierList) {
+        await achievementService.processAction(tierList.userId, 'get_like');
+      }
       fastify.log.info({ userId, tierListId }, 'Tier list liked');
       return reply.code(200).send(likes);
     }
