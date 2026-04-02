@@ -1,0 +1,83 @@
+/* --- EXPORT THEMES --- */
+
+/* 1. Minimalist Theme */
+.export-theme-minimalist {
+  background: white !important;
+  padding: 40px !important;
+}
+.export-theme-minimalist [role="listitem"] {
+  border: 1px solid #e5e7eb !important;
+  background: white !important;
+  margin-bottom: 8px !important;
+  box-shadow: none !important;
+}
+.export-theme-minimalist .group\/label {
+  border-right: 1px solid #e5e7eb !important;
+}
+.export-theme-minimalist span.font-black {
+  color: #111827 !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 300 !important;
+}
+
+/* 2. Vintage Paper Theme */
+.export-theme-vintage {
+  background-color: #f4ecd8 !important;
+  background-image: url("https://www.transparenttextures.com/patterns/paper-fibers.png") !important;
+  padding: 40px !important;
+  border: 15px solid #5d4037 !important;
+}
+.export-theme-vintage [role="listitem"] {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border: 2px solid #8d6e63 !important;
+  margin-bottom: 12px !important;
+  box-shadow: 3px 3px 0px #5d4037 !important;
+}
+.export-theme-vintage span.font-black {
+  font-family: 'Georgia', serif !important;
+  color: #3e2723 !important;
+  text-transform: uppercase;
+}
+
+/* 3. Cyberpunk Theme */
+.export-theme-cyberpunk {
+  background: #000 !important;
+  padding: 40px !important;
+  border: 4px solid #00ff00 !important;
+}
+.export-theme-cyberpunk [role="listitem"] {
+  background: #111 !important;
+  border-left: 10px solid #ff00ff !important;
+  border-bottom: 2px solid #00ffff !important;
+  margin-bottom: 15px !important;
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.2) !important;
+}
+.export-theme-cyberpunk span.font-black {
+  font-family: 'Space Grotesk', sans-serif !important;
+  color: #00ff00 !important;
+  text-shadow: 0 0 10px #00ff00;
+}
+
+/* Hide editor-only elements during export */
+.is-exporting .group\/label button,
+.is-exporting [role="listitem"] > div:last-child,
+.is-exporting button {
+  display: none !important;
+}
+
+/* Watermark Styles */
+.export-watermark {
+  margin-top: 20px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: bold;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.export-theme-minimalist .export-watermark { color: #9ca3af; }
+.export-theme-vintage .export-watermark { color: #5d4037; font-family: serif; }
+.export-theme-cyberpunk .export-watermark { color: #00ff00; text-transform: uppercase; }

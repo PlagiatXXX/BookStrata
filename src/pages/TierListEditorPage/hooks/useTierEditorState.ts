@@ -19,6 +19,8 @@ export interface TierEditorState {
   setIsSearchModalOpen: (value: boolean) => void;
   isSavingBeforeLeave: boolean;
   setIsSavingBeforeLeave: (value: boolean) => void;
+  isExportModalOpen: boolean;
+  setIsExportModalOpen: (value: boolean) => void;
 
   // D&D состояния
   activeItem: Book | Tier | null;
@@ -48,6 +50,7 @@ export function useTierEditorState(): TierEditorState {
   const [ignoreUnsavedBlocker, setIgnoreUnsavedBlocker] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isSavingBeforeLeave, setIsSavingBeforeLeave] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // D&D состояния
   const [activeItem, setActiveItem] = useState<Book | Tier | null>(null);
@@ -76,6 +79,8 @@ export function useTierEditorState(): TierEditorState {
     setIsSearchModalOpen,
     isSavingBeforeLeave,
     setIsSavingBeforeLeave,
+    isExportModalOpen,
+    setIsExportModalOpen,
 
     // D&D состояния
     activeItem,
