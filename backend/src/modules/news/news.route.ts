@@ -5,6 +5,17 @@ import { requireRole } from "../../middleware/requireRole.js";
 
 const logger = createLogger("NewsRoute", { color: "cyan" });
 
+const getNewsQuerySchema = {
+  querystring: {
+    type: "object",
+    properties: {
+      page: { type: "string", pattern: "^[0-9]+$", default: "1" },
+      limit: { type: "string", pattern: "^[0-9]+$", default: "10" },
+      publishedOnly: { type: "string", enum: ["true", "false"] },
+    },
+  },
+};
+
 export async function newsRoutes(fastify: FastifyInstance) {
   const newsService = new NewsService();
 
@@ -12,21 +23,41 @@ export async function newsRoutes(fastify: FastifyInstance) {
    * GET /api/news
    * Получить все новости (с пагинацией)
    */
-  fastify.get("/", async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const {
-        page = "1",
-        limit = "10",
-        publishedOnly = "false",
-      } = request.query as Record<string, string>;
+  fastify.get(
+    "/",
+    { schema: getNewsQuerySchema },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const {
+          page = "1",
+          limit = "10",
+          publishedOnly: publishedOnlyQuery,
+        } = request.query as Record<string, string>;
 
-      const articles = await newsService.getAllNews({
-        page: parseInt(page, 10),
-        limit: parseInt(limit, 10),
-        publishedOnly: publishedOnly === "true",
-      });
+        const userRole = (request as any).user?.role;
+        const isAdminOrModerator =
+          userRole === "admin" || userRole === "moderator";
 
-      return reply.send(articles);
+        // Security: If not admin/moderator, force publishedOnly to true
+        // If user is admin/moderator, respect their choice, otherwise default to showing all articles for them
+        let publishedOnly = true;
+
+        if (isAdminOrModerator) {
+          publishedOnly = publishedOnlyQuery === "true";
+          if (publishedOnlyQuery === undefined) {
+            publishedOnly = false; // Admins see everything by default
+          }
+        } else {
+          publishedOnly = true; // Non-admins always see only published
+        }
+
+        const articles = await newsService.getAllNews({
+          page: parseInt(page, 10),
+          limit: parseInt(limit, 10),
+          publishedOnly,
+        });
+
+        return reply.send(articles);
     } catch (error) {
       logger.error("Ошибка получения новостей", {
         error,
