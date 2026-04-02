@@ -113,6 +113,15 @@ fastify.setErrorHandler((error: any, request, reply) => {
       .code(429)
       .send({ message: "Слишком много запросов, попробуйте позже." });
   }
+
+  if (
+    error.message === "Невалидный токен" ||
+    error.message === "Unauthorized" ||
+    error.statusCode === 401
+  ) {
+    return reply.code(401).send({ error: error.message || "Unauthorized" });
+  }
+
   if (
     error &&
     typeof error === "object" &&
@@ -123,9 +132,13 @@ fastify.setErrorHandler((error: any, request, reply) => {
       .code(409)
       .send({ message: "Пользователь с таким именем уже существует." });
   }
-  return reply
-    .code(500)
-    .send({ message: "Сервер не был подготовлен для этой цели." });
+
+  // Для отладки в режиме разработки возвращаем сообщение ошибки
+  const isDev = process.env.NODE_ENV !== "production";
+  return reply.code(error.statusCode || 500).send({
+    message: isDev ? error.message : "Сервер не был подготовлен для этой цели.",
+    error: isDev ? error.stack : undefined,
+  });
 });
 
 await fastify.register(swagger, {
@@ -176,7 +189,6 @@ fastify.register(newsRoutes, { prefix: "/api/news" });
 fastify.register(rolesRoutes, { prefix: "/api" });
 fastify.register(subscriptionsRoutes, { prefix: "/api/subscriptions" });
 fastify.register(achievementRoutes, { prefix: "/api/achievements" });
-
 
 // Регистрируем контроллер шаблонов с префиксом /api
 fastify.register(templatesPlugin, { prisma, prefix: "/api" });
