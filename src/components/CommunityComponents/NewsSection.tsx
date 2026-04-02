@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
 import { getPublishedNews, type NewsArticle } from "@/lib/newsApi";
 import { FileText } from "lucide-react";
 
-export const NewsSection = () => {
+export const NewsSection = memo(() => {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -121,4 +121,4 @@ export const NewsSection = () => {
       )}
     </section>
   );
-};
+});

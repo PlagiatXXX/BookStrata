@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -46,11 +46,16 @@ export default function CommunityPage() {
     return () => observer.disconnect();
   }, [activeCategory]);
 
-  const handleUseTemplate = (template: TemplateItem) => {
+  // Оптимизация: стабилизируем колбэки для предотвращения лишних ререндеров TemplateGrid и модалки
+  const handleUseTemplate = useCallback((template: TemplateItem) => {
     setPreviewTemplate(template);
-  };
+  }, []);
 
-  const handleConfirmUseTemplate = async () => {
+  const handleClosePreview = useCallback(() => {
+    setPreviewTemplate(null);
+  }, []);
+
+  const handleConfirmUseTemplate = useCallback(async () => {
     if (!previewTemplate) return;
 
     try {
@@ -92,7 +97,7 @@ export default function CommunityPage() {
       setApplyingTemplateId(null);
       setPreviewTemplate(null);
     }
-  };
+  }, [previewTemplate, navigate]);
 
   return (
     <DashboardLayout
@@ -161,7 +166,7 @@ export default function CommunityPage() {
       <TemplatePreviewModal
         template={previewTemplate!}
         isOpen={!!previewTemplate}
-        onClose={() => setPreviewTemplate(null)}
+        onClose={handleClosePreview}
         onConfirm={handleConfirmUseTemplate}
         isApplying={applyingTemplateId === previewTemplate?.id}
       />

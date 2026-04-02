@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { X, BookOpen, Layers, Tag } from 'lucide-react';
 import type { TemplateItem } from '../../data/mockData';
 
@@ -10,7 +10,7 @@ interface TemplatePreviewModalProps {
   isApplying: boolean;
 }
 
-export const TemplatePreviewModal = ({
+export const TemplatePreviewModal = memo(({
   template,
   isOpen,
   onClose,
@@ -217,4 +217,4 @@ export const TemplatePreviewModal = ({
       </div>
     </div>
   );
-};
+});
