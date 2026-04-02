@@ -1,4 +1,7 @@
+import './ExportThemes.css';
+import { type ExportTheme } from './components/ExportModal';
 import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { sileo } from "sileo";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useTierList } from "@/hooks/useTierList";
@@ -45,6 +48,8 @@ const TierListEditorContent = () => {
     setIsSearchModalOpen,
     isSavingBeforeLeave,
     setIsSavingBeforeLeave,
+    isExportModalOpen,
+    setIsExportModalOpen,
 
     // D&D состояния
     activeItem,
@@ -63,23 +68,27 @@ const TierListEditorContent = () => {
     setBookToView,
   } = useTierEditorState();
 
-  // Получаем данные из query хука
+  // Получаем данные и настройки пользователя
+  const { user: authUser } = useAuth();
+
+  // Получаем данные через React Query
   const {
-    apiData,
     isLoading,
     isError,
     error,
+    apiData,
     likesData,
     likedIdsSet,
-    initialDataForHook,
     isPublic,
+    initialDataForHook,
   } = useTierEditorQueries(tierListId);
 
-  // Проверяем владельца
-  const { user: authUser } = useAuth();
-  const currentUserId = authUser?.userId;
+  // Извлекаем ID владельца и текущего пользователя
   const ownerUserId = apiData?.user?.id;
+  const currentUserId = authUser?.userId;
   const isOwner = currentUserId === ownerUserId;
+
+  // Режим просмотра (если не владелец и список публичный)
   const isReadOnly = !isOwner && isPublic;
 
   // Получаем Pro статус из AuthContext
@@ -111,7 +120,7 @@ const TierListEditorContent = () => {
   } = useTierEditorSave({
     tierListId,
     listData,
-    dispatch,
+    dispatch: dispatch as React.Dispatch<Action>,
     isLoading,
     isReadOnly,
     setHasUnsavedChanges,
@@ -144,24 +153,18 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges(true);
   };
 
-  const addBooksWithUnsaved = async (files: File[]) => {
-    await addBooks(files);
-    setHasUnsavedChanges(true);
-  };
-
   const deleteBookWithUnsaved = (bookId: string) => {
-    setBookToDelete(bookId);
+    deleteBook(bookId);
+    setHasUnsavedChanges(true);
+    handleDeleteBook(bookId);
   };
 
-  const addRowWithUnsaved = (title?: string) => {
-    addRow(title);
+  const addRowWithUnsaved = () => {
+    addRow();
     setHasUnsavedChanges(true);
   };
 
-  const updateTierSettingsWithUnsaved = (
-    tierId: string,
-    settings: Partial<{ title: string; color: string }>,
-  ) => {
+  const updateTierSettingsWithUnsaved = (tierId: string, settings: any) => {
     updateTierSettings(tierId, settings);
     setHasUnsavedChanges(true);
   };
@@ -171,34 +174,43 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges(true);
   };
 
-  const clearRowsWithUnsaved = () => {
-    clearRows();
-    setHasUnsavedChanges(true);
-  };
-
   const removeTierWithUnsaved = (tierId: string) => {
-    if (!tierId.startsWith("tier-")) {
-      const numericId = parseInt(tierId, 10);
-      if (!isNaN(numericId)) {
-        setDeletedTierIds((prev) => [...prev, numericId]);
-      }
-    }
     removeTier(tierId);
     setHasUnsavedChanges(true);
   };
 
-  const handleConfirmDeleteRating = () => {
-    setShowDeleteRatingModal(false);
-    setIgnoreUnsavedBlocker(true);
-    setDeletedTierIds([]);
-    deleteRatingFromServer();
+  const addBooksWithUnsaved = (books: any[]) => {
+    addBooks(books);
+    setHasUnsavedChanges(true);
   };
 
-  // Получаем логику блокировок из хука
+  const handleConfirmClearAll = () => {
+    clearRows();
+    setHasUnsavedChanges(true);
+    setIsClearAllModalOpen(false);
+  };
+
+  const handleConfirmDeleteRating = async () => {
+    await deleteRatingFromServer();
+    setShowDeleteRatingModal(false);
+  };
+
+  const handleMyRatingsClick = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedModal(true);
+    } else {
+      navigate("/");
+    }
+  };
+
+  const handleViewBook = (book: Book) => {
+    setBookToView(book);
+  };
+
+  // Логика блокировщика перехода
   const {
-    handleMyRatingsClick,
-    handleSaveBeforeLeave,
     handleConfirmLeave,
+    handleSaveBeforeLeave,
     handleCancelLeave,
   } = useTierEditorBlocker({
     isReadOnly,
@@ -235,21 +247,8 @@ const TierListEditorContent = () => {
   };
 
   const handleConfirmDeleteBook = () => {
-    if (bookToDelete) {
-      deleteBook(bookToDelete);
-      handleDeleteBook(bookToDelete);
-      setHasUnsavedChanges(true);
-    }
+    if (bookToDelete) deleteBookWithUnsaved(bookToDelete);
     setBookToDelete(null);
-  };
-
-  const handleConfirmClearAll = () => {
-    clearRowsWithUnsaved();
-    setIsClearAllModalOpen(false);
-  };
-
-  const handleViewBook = (book: Book) => {
-    setBookToView(book);
   };
 
   // Пропсы для EditorHeader
@@ -305,7 +304,7 @@ const TierListEditorContent = () => {
           }
           onUpdateTier={updateTierSettingsWithUnsaved}
           onClearRows={() => setIsClearAllModalOpen(true)}
-          onDownloadImage={onDownloadImage}
+          onDownloadImage={() => setIsExportModalOpen(true)}
           onMyRatingsClick={handleMyRatingsClick}
           onDeleteRating={() => setShowDeleteRatingModal(true)}
           isPublic={isPublic}
@@ -345,7 +344,11 @@ const TierListEditorContent = () => {
         onSaveBook={handleSaveBook}
         onBookAdded={handleBookAdded}
         isUpdatingBook={isUpdatingBook}
-        isSavingBeforeLeave={isSavingBeforeLeave}
+        isExportModalOpen={isExportModalOpen}
+        onCloseExport={() => setIsExportModalOpen(false)}
+        onConfirmExport={(theme, showWatermark) => onDownloadImage(theme, showWatermark, authUser?.username)}
+        username={authUser?.username || 'user'}
+        isPro={isPro}
       />
     </EditorScreens>
   );

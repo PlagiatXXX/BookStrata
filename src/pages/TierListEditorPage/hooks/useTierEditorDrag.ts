@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react';
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import type { Book, Tier, TierListData } from '@/types';
 import { createLogger } from '@/lib/logger';
+import type { ExportTheme } from '../components/ExportModal';
 
 // Логгер для хука drag-and-drop
 const logger = createLogger('TierEditorDrag', { color: 'orange' });
@@ -10,7 +11,7 @@ export interface UseTierEditorDragResult {
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   handleDragStart: (event: DragStartEvent) => void;
   handleDragEndAndClear: (event: DragEndEvent) => void;
-  onDownloadImage: () => Promise<void>;
+  onDownloadImage: (theme?: ExportTheme, showWatermark?: boolean, username?: string) => Promise<void>;
 }
 
 interface UseTierEditorDragParams {
@@ -44,20 +45,66 @@ export function useTierEditorDrag({
     [handleDragEndWithUnsaved, setActiveItem],
   );
 
-  const onDownloadImage = useCallback(async () => {
+  const onDownloadImage = useCallback(async (theme: ExportTheme = 'default', showWatermark = true, username = '') => {
     if (tierGridRef.current === null) return;
-    logger.info('Downloading tier list as image', { title: listData.title });
+
+    logger.info('Downloading tier list as image', { title: listData.title, theme, showWatermark });
+
+    const element = tierGridRef.current;
+
     try {
       const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(tierGridRef.current, { cacheBust: true });
+
+      // 1. Применяем стили экспорта
+      element.classList.add('is-exporting');
+      if (theme !== 'default') {
+        element.classList.add(`export-theme-${theme}`);
+      }
+
+      // 2. Добавляем водяной знак если нужно
+      let watermark: HTMLDivElement | null = null;
+      if (showWatermark) {
+        watermark = document.createElement('div');
+        watermark.className = 'export-watermark';
+        watermark.innerHTML = `<span>BookStrata Pro</span> • <span>@${username || 'user'}</span>`;
+        element.appendChild(watermark);
+      }
+
+      // 3. Ждем немного для применения стилей и шрифтов
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 4. Генерируем PNG
+      const dataUrl = await toPng(element, {
+        cacheBust: true,
+        backgroundColor: theme === 'minimalist' ? '#ffffff' : (theme === 'vintage' ? '#f4ecd8' : '#000000'),
+        style: {
+          transform: 'scale(1)',
+        }
+      });
+
+      // 5. Очищаем временные изменения
+      element.classList.remove('is-exporting');
+      if (theme !== 'default') {
+        element.classList.remove(`export-theme-${theme}`);
+      }
+      if (watermark) {
+        element.removeChild(watermark);
+      }
+
+      // 6. Скачиваем файл
       const link = document.createElement('a');
-      link.download = `${listData.title.replace(/\s+/g, '-')}.png`;
+      link.download = `${listData.title.replace(/\s+/g, '-')}-${theme}.png`;
       link.href = dataUrl;
       link.click();
+
       logger.info('Tier list image downloaded successfully', {
         title: listData.title,
       });
     } catch (err) {
+      // Пытаемся очистить в случае ошибки
+      element.classList.remove('is-exporting');
+      element.className = element.className.split(' ').filter(c => !c.startsWith('export-theme-')).join(' ');
+
       logger.error(err instanceof Error ? err : new Error(String(err)), {
         action: 'downloadImage',
         title: listData.title,

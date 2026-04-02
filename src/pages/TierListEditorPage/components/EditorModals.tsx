@@ -1,3 +1,4 @@
+import { ExportModal, type ExportTheme } from './ExportModal';
 import { lazy, Suspense } from 'react';
 import type { Book, TierListData } from '@/types';
 import {
@@ -68,7 +69,11 @@ interface EditorModalsProps {
     coverImageUrl: string;
   } | null) => void;
   isUpdatingBook: boolean;
-  isSavingBeforeLeave: boolean;
+  isExportModalOpen: boolean;
+  onCloseExport: () => void;
+  onConfirmExport: (theme: ExportTheme, showWatermark: boolean) => Promise<void>;
+  username: string;
+  isPro: boolean;
 }
 
 export const EditorModals = ({
@@ -99,7 +104,11 @@ export const EditorModals = ({
   onSaveBook,
   onBookAdded,
   isUpdatingBook,
-  isSavingBeforeLeave,
+  isExportModalOpen,
+  onCloseExport,
+  onConfirmExport,
+  username,
+  isPro,
 }: EditorModalsProps) => {
   return (
     <>
@@ -129,7 +138,7 @@ export const EditorModals = ({
         onConfirm={onConfirmLeave}
         onSaveAndLeave={onSaveAndLeave}
         isUpdatingBook={isUpdatingBook}
-        isSaving={isSavingBeforeLeave}
+        isSaving={false}
       />
 
       <DeleteRatingModal
@@ -159,6 +168,14 @@ export const EditorModals = ({
           onBookAdded={onBookAdded}
         />
       </Suspense>
+
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={onCloseExport}
+        onExport={onConfirmExport}
+        username={username}
+        isPro={isPro}
+      />
     </>
   );
 };
