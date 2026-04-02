@@ -128,6 +128,7 @@ export default function CommunityPage() {
 
           <TemplateGrid
             activeCategory={activeCategory}
+            searchQuery={searchQuery}
             applyingTemplateId={applyingTemplateId}
             onUseTemplate={handleUseTemplate}
           />
