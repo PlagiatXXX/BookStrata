@@ -113,6 +113,32 @@ fastify.setErrorHandler((error: any, request, reply) => {
       .code(429)
       .send({ message: "Слишком много запросов, попробуйте позже." });
   }
+
+  if (error.message === "Невалидный токен" || error.message === "Unauthorized" || error.statusCode === 401) {
+    return reply.code(401).send({ error: error.message || "Unauthorized" });
+  }
+
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    error.code === "P2002"
+  ) {
+    return reply
+      .code(409)
+      .send({ message: "Пользователь с таким именем уже существует." });
+  }
+
+  // Для отладки в режиме разработки возвращаем сообщение ошибки
+  const isDev = process.env.NODE_ENV !== "production";
+  return reply
+    .code(error.statusCode || 500)
+    .send({
+      message: isDev ? error.message : "Сервер не был подготовлен для этой цели.",
+      error: isDev ? error.stack : undefined
+    });
+});
+  }
   if (
     error &&
     typeof error === "object" &&

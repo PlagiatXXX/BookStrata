@@ -203,9 +203,12 @@ export async function apiValidateToken(
 /**
  * Сохранить токен в localStorage
  */
+
 export function setAuthToken(token: string) {
   StorageService.setString("authToken", token);
+  window.dispatchEvent(new Event("auth-token-changed"));
 }
+
 
 /**
  * Получить токен из localStorage
