@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -135,9 +135,12 @@ export function DashboardPage() {
     navigate("/auth", { replace: true });
   };
 
-  const handleOpenTierList = (id: number) => {
-    navigate(`/tier-lists/${id}`);
-  };
+  const handleOpenTierList = useCallback(
+    (id: number) => {
+      navigate(`/tier-lists/${id}`);
+    },
+    [navigate],
+  );
 
   const handleCreateTierList = (title: string) => {
     createNewTierList(title);

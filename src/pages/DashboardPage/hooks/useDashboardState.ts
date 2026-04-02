@@ -26,6 +26,8 @@ function dashboardReducer(
       };
 
     case 'SET_SEARCH_QUERY':
+      // Guard: Return current state if query hasn't changed to maintain referential integrity
+      if (state.searchQuery === action.payload) return state;
       return {
         ...state,
         searchQuery: action.payload,
@@ -76,12 +78,16 @@ function dashboardReducer(
       };
 
     case 'SET_SORT_OPTION':
+      // Guard: Return current state if sort option hasn't changed to maintain referential integrity
+      if (state.sortOption === action.payload) return state;
       return {
         ...state,
         sortOption: action.payload,
       };
 
     case 'SET_FILTER_OPTION':
+      // Guard: Return current state if filter option hasn't changed to maintain referential integrity
+      if (state.filterOption === action.payload) return state;
       return {
         ...state,
         filterOption: action.payload,

@@ -1,12 +1,13 @@
+import { memo } from 'react';
 import { TierListCard } from './TierListCard';
 import type { TierListGridProps } from '../types';
 
-export function TierListGrid({
+export const TierListGrid = memo(({
   tierLists,
   onOpen,
   onRename,
   onDelete,
-}: TierListGridProps) {
+}: TierListGridProps) => {
   return (
     <div className="dashboard-grid">
       {tierLists.map((tierList) => (
@@ -20,4 +21,4 @@ export function TierListGrid({
       ))}
     </div>
   );
-}
+});

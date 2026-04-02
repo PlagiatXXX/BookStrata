@@ -1,3 +1,4 @@
+import { memo } from "react";
 import {
   Clock,
   Edit2,
@@ -12,12 +13,12 @@ import { DATE_FORMAT } from "../constants";
 
 const MAX_BOOKS = 20;
 
-export function TierListCard({
+export const TierListCard = memo(({
   tierList,
   onOpen,
   onRename,
   onDelete,
-}: TierListCardProps) {
+}: TierListCardProps) => {
   const createdDate = new Date(tierList.createdAt);
   const booksCount = tierList.booksCount || 0;
   const progress = Math.min(100, Math.round((booksCount / MAX_BOOKS) * 100));
@@ -124,4 +125,4 @@ export function TierListCard({
       </div>
     </article>
   );
-}
+});

@@ -17,3 +17,7 @@
 ## 2025-05-25 - [Cohesive Component Memoization in Community Page]
 **Learning:** Performance in pages with high-frequency state updates (like search inputs) is best addressed by "tree-level" memoization. Wrapping all major siblings in `React.memo` prevents the entire component tree from re-rendering on every keystroke, which is more effective than optimizing just the search component itself.
 **Action:** When a page has local state updated on every keystroke (e.g., `searchQuery`), proactively wrap all other large, non-dependent child components in `React.memo` to isolate them from the render churn.
+
+## 2025-06-05 - [Reducer-Level Guards for Filter State]
+**Learning:** In pages with multiple filter/sort/search inputs (like `DashboardPage`), the reducer can become a source of unnecessary renders if it doesn't verify if the new state actually differs from the old one. Simple equality checks for primitive filters (`search`, `sort`, `filter`) before returning a new state object prevent the entire hook-dependent tree from re-rendering.
+**Action:** Implement "pre-flight" equality checks in reducers for UI filters to maintain referential integrity of the state object when no logical change occurs.
