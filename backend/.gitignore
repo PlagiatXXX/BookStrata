@@ -28,6 +28,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.qwen
 
 # Prisma
 prisma/migrations/*/migration_lock.toml

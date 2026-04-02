@@ -26,6 +26,7 @@ dist-ssr
 *.sw?
 ROADMAP.md
 doctor.md
+.qwen
 
 # Recovery history folder
 .history/

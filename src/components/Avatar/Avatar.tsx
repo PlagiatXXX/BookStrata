@@ -1,26 +1,31 @@
-import { useState } from 'react';
-import { getInitials, getInitialsColor } from './presets';
-import { createLogger } from '@/lib/logger';
+import { useState } from "react";
+import { getInitials, getInitialsColor } from "./presets";
+import { createLogger } from "@/lib/logger";
 
 // Логгер для компонента аватара
-const logger = createLogger('Avatar', { color: 'blue' });
+const logger = createLogger("Avatar", { color: "blue" });
 
 interface AvatarProps {
   url?: string | null;
   username?: string | null;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
 const sizeClasses = {
-  xs: 'w-6 h-6 text-xs',
-  sm: 'w-8 h-8 text-sm',
-  md: 'w-10 h-10 text-base',
-  lg: 'w-16 h-16 text-xl',
-  xl: 'w-32 h-32 text-3xl',
+  xs: "w-6 h-6 text-xs",
+  sm: "w-8 h-8 text-sm",
+  md: "w-10 h-10 text-base",
+  lg: "w-16 h-16 text-xl",
+  xl: "w-32 h-32 text-3xl",
 };
 
-export function Avatar({ url, username, size = 'md', className = '' }: AvatarProps) {
+export function Avatar({
+  url,
+  username,
+  size = "md",
+  className = "",
+}: AvatarProps) {
   const initials = getInitials(username);
   const initialsColor = getInitialsColor(username);
   const [hasError, setHasError] = useState(false);
@@ -33,11 +38,11 @@ export function Avatar({ url, username, size = 'md', className = '' }: AvatarPro
   };
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    logger.warn('Failed to load avatar', { url });
+    logger.warn("Failed to load avatar", { url });
     setHasError(true);
     setIsLoaded(false);
     // Очищаем src чтобы избежать повторных попыток загрузки
-    (e.target as HTMLImageElement).src = '';
+    (e.target as HTMLImageElement).src = "";
   };
 
   // Если нет URL или произошла ошибка - показываем инициалы
@@ -54,7 +59,7 @@ export function Avatar({ url, username, size = 'md', className = '' }: AvatarPro
   return (
     <img
       src={url}
-      alt={username ? `${username}'s avatar` : 'Avatar'}
+      alt={username ? `${username}'s avatar` : "Avatar"}
       className={`${sizeClasses[size]} rounded-full object-cover ring-2 ring-surface-border bg-surface-light dark:bg-[#200f24] light:bg-gray-100 ${className}`}
       loading="lazy"
       onLoad={handleImageLoad}

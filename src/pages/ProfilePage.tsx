@@ -26,7 +26,11 @@ export function ProfilePage() {
     refreshUser: refreshAuthUser,
   } = useAuth();
   const { user, stats, isLoading, uploadAvatar } = useUser();
-  const { achievements, status: achievementStatus, isLoading: isAchievementsLoading } = useAchievements();
+  const {
+    achievements,
+    status: achievementStatus,
+    isLoading: isAchievementsLoading,
+  } = useAchievements();
 
   const {
     // Username
@@ -107,20 +111,20 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#0f0f1a] py-6 dark:bg-[#0f0f1a] light:bg-gray-100 sm:py-10">
-      <div className="max-w-2xl mx-auto px-4">
+      <div className="mx-auto px-4 w-full max-w-2xl sm:px-6 lg:max-w-4xl">
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 cursor-pointer"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 sm:mb-6 cursor-pointer"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={16} className="sm:size-5" />
           <span>Назад</span>
         </button>
 
         {/* Profile Header */}
-        <div className="mb-4 flex flex-col items-center">
+        <div className="mb-4">
           {achievementStatus?.title && (
-            <div className="mb-2 rounded-full bg-yellow-400/20 px-4 py-1 border border-yellow-400/30">
+            <div className="mb-2 rounded-full bg-yellow-400/20 px-4 py-1 border border-yellow-400/30 inline-block">
               <p className="text-xs font-bold uppercase tracking-widest text-yellow-400">
                 {achievementStatus.title}
               </p>
@@ -177,7 +181,10 @@ export function ProfilePage() {
         <StatsCards stats={stats} />
 
         {/* Achievements Section */}
-        <AchievementsGrid achievements={achievements} isLoading={isAchievementsLoading} />
+        <AchievementsGrid
+          achievements={achievements}
+          isLoading={isAchievementsLoading}
+        />
       </div>
 
       {/* Avatar Selector Modal */}
