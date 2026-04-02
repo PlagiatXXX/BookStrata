@@ -26,7 +26,7 @@ export function BasicInfoStep({
     <section className="space-y-4">
       <div>
         <label htmlFor="template-title-input" className="block text-sm font-medium mb-2 text-[#f3efe6]">
-          Название шаблона *
+          Название шаблона <span className="text-red-500">*</span>
         </label>
         <Input
           id="template-title-input"
@@ -34,6 +34,7 @@ export function BasicInfoStep({
           maxLength={80}
           onChange={(event) => onTitleChange(event.target.value)}
           placeholder="Например, Лучшие фэнтези книги"
+          autoFocus
         />
         {titleError && (
           <p className="text-xs text-red-500 mt-1">{titleError}</p>
