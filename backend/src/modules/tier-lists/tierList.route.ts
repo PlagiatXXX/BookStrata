@@ -1,3 +1,4 @@
+import * as achievementService from "../achievements/achievements.service.js";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // backend/src/modules/tier-lists/tierList.route.ts
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -269,6 +270,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = request.user!.userId;
       const tierList = await service.createTierList(userId, request.body.title);
+      await achievementService.processAction(userId, "create_tier_list");
       return reply.code(201).send(tierList);
     },
   );
@@ -439,7 +441,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         tierListId,
         processedBooks,
       );
-      return reply.code(201).send(results);
+      const newAchievements = await achievementService.processAction(request.user!.userId, "add_book");
+      return reply.code(201).send({ results, newAchievements });
     },
   );
 
@@ -460,6 +463,9 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const bookId = parseInt(request.params.bookId, 10);
       await service.assertOwner(tierListId, request.user!.userId);
       const updatedBook = await service.updateBook(bookId, request.body);
+      if (request.body.thoughts) {
+        await achievementService.processAction(request.user!.userId, "write_review");
+      }
       return reply.code(200).send(updatedBook);
     },
   );
@@ -625,7 +631,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       try {
         const newTierList = await service.forkTierList(tierListId, userId);
-        return reply.code(201).send(newTierList);
+        const newAchievements = await achievementService.processAction(userId, "fork");
+        return reply.code(201).send({ ...newTierList, newAchievements });
       } catch (error) {
         fastify.log.error(error);
         return reply.code(500).send({ message: "Failed to fork tier list" });

@@ -1,3 +1,4 @@
+import { checkResponseForAchievements } from "./achievementApi";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { TierListData } from '@/types';
 import type { ApiTierListResponse, ApiBookPlacement } from '@/types/api';
@@ -70,6 +71,7 @@ export async function createTierList(title: string): Promise<ApiTierListResponse
     body: JSON.stringify({ title }),
   });
   const result = await handleResponse<ApiTierListResponse>(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Успешно создан рейтинговый список', { tierListId: result.id, title });
   return result;
 }
@@ -81,6 +83,7 @@ export async function getUserTierLists(page = 1, pageSize = 10): Promise<Paginat
     headers: getAuthHeader(),
   });
   const result = await handleResponse<PaginatedTierListsResponse>(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Списки тир-листов успешно получены', { count: result.data.length, page: result.meta.currentPage });
   return result;
 }
@@ -91,6 +94,7 @@ export async function fetchTierList(id: string): Promise<ApiTierListResponse> {
     headers: getAuthHeader(),
   });
   const result = await handleResponse<ApiTierListResponse>(response);
+  checkResponseForAchievements(result);
 
   // Считаем общее количество книг (в тирах + unranked)
   const totalBooksCount =
@@ -114,6 +118,7 @@ export async function deleteTierList(id: string) {
     headers: getAuthHeader(),
   });
   const result = await handleResponse(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Рейтинговый список успешно удален', { tierListId: id });
   return result;
 }
@@ -127,6 +132,7 @@ export async function getPublicTierLists(
   const url = buildUrl('/tier-lists/public', { page, pageSize, sortBy });
   const response = await fetch(`${API_BASE_URL}${url}`);
   const result = await handleResponse<PaginatedTierListsResponse>(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Публичные тир-листы успешно получены', { count: result.data.length });
   return result;
 }
@@ -147,6 +153,7 @@ export async function saveTierListPlacements(
     body: JSON.stringify({ placements }),
   });
   const result = await handleResponse(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Позиции сохранены', { tierListId: id, count: placements.length });
   return result;
 }
@@ -180,6 +187,7 @@ export async function saveTierListTiers(
     body: JSON.stringify(tiers),
   });
   const result = await handleResponse(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Тиры сохранены', { tierListId: id });
   return result;
 }
@@ -198,6 +206,7 @@ export async function addBooksToTierList(
     body: JSON.stringify({ books }),
   });
   const result = await handleResponse<any[]>(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Книги успешно добавлены в рейтинговый список', { tierListId: id, booksCount: books.length, addedCount: result.length });
   return result;
 }
@@ -209,6 +218,7 @@ export async function removeBookFromTierList(id: string, bookId: string) {
     headers: getAuthHeader(),
   });
   const result = await handleResponse(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Книга успешно удалена из рейтингового списка', { tierListId: id, bookId });
   return result;
 }
@@ -224,6 +234,7 @@ export async function updateTierListTitle(id: string, title: string) {
     body: JSON.stringify({ title }),
   });
   const result = await handleResponse(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Название рейтингового списка успешно обновлено', { tierListId: id, newTitle: title });
   return result;
 }
@@ -239,6 +250,7 @@ export async function toggleTierListPublic(id: string, isPublic: boolean) {
     body: JSON.stringify({ isPublic }),
   });
   const result = await handleResponse(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Статус публичности успешно изменён', { tierListId: id, isPublic });
   return result;
 }
@@ -268,6 +280,7 @@ export async function uploadBookCover(
   });
 
   const result = await handleResponse<{ coverImageUrl: string }>(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Обложка успешно загружена', { tierListId, bookId });
   return result;
 }
@@ -506,6 +519,7 @@ export async function forkTierList(id: string): Promise<ApiTierListResponse> {
     headers: getAuthHeader(),
   });
   const result = await handleResponse<ApiTierListResponse>(response);
+  checkResponseForAchievements(result);
   tierListLogger.info('Копия тир-листа успешно создана', { originalId: id, newId: result.id });
   return result;
 }

@@ -106,3 +106,14 @@ export {
 export {
   API_BASE_URL,
 } from './config';
+
+// ========== РЕ-ЭКСПОРТЫ: achievementApi ==========
+export {
+  apiGetMyAchievements,
+  apiGetMyAchievementStatus,
+} from './achievementApi';
+
+export type {
+  Achievement,
+  AchievementStatus,
+} from './achievementApi';

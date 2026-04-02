@@ -1,3 +1,5 @@
+import { AchievementsGrid } from "./ProfilePage/components/AchievementsGrid";
+import { useAchievements } from "@/hooks/useAchievements";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
@@ -24,6 +26,7 @@ export function ProfilePage() {
     refreshUser: refreshAuthUser,
   } = useAuth();
   const { user, stats, isLoading, uploadAvatar } = useUser();
+  const { achievements, status: achievementStatus, isLoading: isAchievementsLoading } = useAchievements();
 
   const {
     // Username
@@ -115,18 +118,27 @@ export function ProfilePage() {
         </button>
 
         {/* Profile Header */}
-        <ProfileHeader
-          user={user || undefined}
-          username={username}
-          isEditingUsername={isEditingUsername}
-          newUsername={newUsername}
-          isSavingUsername={isSavingUsername}
-          onEditAvatar={() => setShowAvatarSelector(true)}
-          onStartEditUsername={startEditUsername}
-          onCancelEditUsername={cancelEditUsername}
-          onSaveUsername={saveUsername}
-          onUsernameChange={setNewUsername}
-        />
+        <div className="mb-4 flex flex-col items-center">
+          {achievementStatus?.title && (
+            <div className="mb-2 rounded-full bg-yellow-400/20 px-4 py-1 border border-yellow-400/30">
+              <p className="text-xs font-bold uppercase tracking-widest text-yellow-400">
+                {achievementStatus.title}
+              </p>
+            </div>
+          )}
+          <ProfileHeader
+            user={user || undefined}
+            username={username}
+            isEditingUsername={isEditingUsername}
+            newUsername={newUsername}
+            isSavingUsername={isSavingUsername}
+            onEditAvatar={() => setShowAvatarSelector(true)}
+            onStartEditUsername={startEditUsername}
+            onCancelEditUsername={cancelEditUsername}
+            onSaveUsername={saveUsername}
+            onUsernameChange={setNewUsername}
+          />
+        </div>
 
         {/* Profile Actions */}
         <ProfileActions
@@ -163,6 +175,9 @@ export function ProfilePage() {
 
         {/* Stats Cards */}
         <StatsCards stats={stats} />
+
+        {/* Achievements Section */}
+        <AchievementsGrid achievements={achievements} isLoading={isAchievementsLoading} />
       </div>
 
       {/* Avatar Selector Modal */}
