@@ -1,24 +1,24 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
-// Avatar generation schema - protects against oversized prompts that could abuse AI generation services.
+// Схема для генерации аватара - защищает от слишком длинных промптов, которые могут перегрузить сервис генерации.
 export const generateAvatarBodySchema = z.object({
   prompt: z
     .string()
     .trim()
-    .min(2, "Prompt must be at least 2 characters")
-    .max(500, "Prompt cannot exceed 500 characters"),
+    .min(2, "Промпт должен содержать минимум 2 символа")
+    .max(500, "Промпт не может быть длиннее 500 символов"),
 });
 
-// Avatar upload schema - prevents Denial of Service (DoS) attacks via oversized payloads (e.g. 10MB limit for base64 data).
+// Схема для загрузки аватара - предотвращает DoS-атаки через огромные полезные нагрузки (лимит 10МБ для base64 данных).
 export const uploadAvatarBodySchema = z.object({
   avatar: z
     .string()
-    .min(1, "Avatar is required")
-    .max(10 * 1024 * 1024, "Avatar payload exceeds the 10MB limit"),
+    .min(1, "Аватар обязателен")
+    .max(10 * 1024 * 1024, "Размер аватара превышает лимит 10МБ"),
 });
 
-// JSON schemas for Fastify integration
+// JSON схемы для интеграции с Fastify
 export const generateAvatarSchema = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(generateAvatarBodySchema as any),

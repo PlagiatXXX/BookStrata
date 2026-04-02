@@ -11,8 +11,8 @@ import {
 
 export async function avatarRoutes(fastify: FastifyInstance) {
   // Генерация аватара
-  // We use strict input validation here to protect against oversized prompts
-  // and resource exhaustion on the AI generation service.
+  // Мы используем строгую валидацию входных данных для защиты от слишком длинных промптов
+  // и исчерпания ресурсов сервиса генерации ИИ.
   fastify.post<{ Body: GenerateAvatarInput }>(
     "/generate",
     {
@@ -47,8 +47,8 @@ export async function avatarRoutes(fastify: FastifyInstance) {
   );
 
   // Загрузка аватара
-  // Input validation prevents DoS attacks via oversized base64 strings
-  // or URL payloads that could bloat the database or cause memory issues.
+  // Валидация входных данных предотвращает DoS-атаки через слишком большие строки base64
+  // или полезные нагрузки URL, которые могут раздуть базу данных или вызвать проблемы с памятью.
   fastify.post<{ Body: UploadAvatarInput }>(
     "/upload",
     {
