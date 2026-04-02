@@ -1,4 +1,3 @@
-import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "dotenv/config";
 import Fastify from "fastify";
@@ -9,6 +8,7 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 import { prisma } from "./lib/prisma.js";
+import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
 import { tierListRoutes } from "../src/modules/tier-lists/tierList.route.js";
 import { authRoutes } from "../src/modules/auth/auth.route.js";
 import { userRoutes } from "../src/modules/users/users.route.js";
@@ -89,7 +89,7 @@ await fastify.register(rateLimit, {
   timeWindow: "1 minute",
 });
 
-// <-- ШАГ 4: Добавляем глобальный обработчик ошибок
+// Глобальный обработчик ошибок
 fastify.setErrorHandler((error: any, request, reply) => {
   fastify.log.error(
     error,
