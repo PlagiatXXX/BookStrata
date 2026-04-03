@@ -101,7 +101,7 @@ export const TierRow = memo(
                        gap-3 md:gap-3 sm:gap-2 max-sm:gap-1.5
                        bg-surface-dark/50 
                        p-2 md:p-2 sm:p-1.5 max-sm:p-1
-                       min-h-[140px] md:min-h-[140px] sm:min-h-[110px] max-sm:min-h-[80px]
+                       min-h-35 md:min-h-35 sm:min-h-27.5 max-sm:min-h-20
                        transition-colors group-hover:bg-surface-dark/80 ${droppableActiveClass}`}
           >
             {books.map((book) => (

@@ -29,6 +29,8 @@ dist-ssr
 *.sln
 *.sw?
 .qwen
+.jules
+.Jules
 
 # Prisma
 prisma/migrations/*/migration_lock.toml
