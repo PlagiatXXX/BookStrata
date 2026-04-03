@@ -29,6 +29,7 @@ export function DashboardPage() {
   // Отслеживаем изменения пользователя (например, обновление аватара)
   useEffect(() => {
     if (user) {
+      console.debug("User data updated:", {
         username: user.username,
         hasAvatar: !!user.avatarUrl,
         avatarUrl: user.avatarUrl?.substring(0, 50) + "...",

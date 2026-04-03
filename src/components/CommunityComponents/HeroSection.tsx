@@ -1,5 +1,6 @@
 import { Search as SearchIcon, X } from "lucide-react";
-import { useRef, memo } from "react";
+import { useRef, memo, useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import BookScene from "./BookScene/BookScene";
 
 interface HeroSectionProps {
@@ -7,11 +8,30 @@ interface HeroSectionProps {
   setSearchQuery: (query: string) => void;
 }
 
+/**
+ * HeroSection с оптимизированным поиском.
+ * Использует локальное состояние для мгновенного отклика и дебаунс для обновления родителя,
+ * что предотвращает лишние ререндеры тяжелых компонентов страницы на каждый символ.
+ */
 export const HeroSection = memo(({
   searchQuery,
   setSearchQuery,
 }: HeroSectionProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+  const debouncedQuery = useDebounce(localQuery, 300);
+
+  // Синхронизируем дебаунснутое значение с родителем
+  useEffect(() => {
+    if (debouncedQuery !== searchQuery) {
+      setSearchQuery(debouncedQuery);
+    }
+  }, [debouncedQuery, searchQuery, setSearchQuery]);
+
+  // Синхронизируем локальное состояние, если поиск очищен снаружи
+  useEffect(() => {
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
 
   return (
     <section ref={containerRef} className="py-14 md:py-18 reveal" data-reveal>
@@ -44,15 +64,18 @@ export const HeroSection = memo(({
                   className="w-full bg-transparent border-none rounded-sm py-4 pl-12 pr-10 text-base text-(--ink-0) placeholder:text-(--ink-1) focus:outline-none"
                   placeholder="Поиск вдохновения..."
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={localQuery}
+                  onChange={(e) => setLocalQuery(e.target.value)}
                   autoFocus
                 />
 
-                {searchQuery && (
+                {localQuery && (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery("")}
+                    onClick={() => {
+                      setLocalQuery("");
+                      setSearchQuery("");
+                    }}
                     className="absolute right-2 text-(--ink-1) hover:text-(--ink-0) transition-colors cursor-pointer p-1"
                     aria-label="Очистить поиск"
                   >
