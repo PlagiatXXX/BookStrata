@@ -1,0 +1,15 @@
+version: 1
+meta:
+  environment: node
+  toolchain:
+    name: npm
+    version: 20
+build:
+  steps:
+    - npm install
+    - npm run build
+  artifacts:
+    - dist
+deploy:
+  command: npm start
+  port: 8080
