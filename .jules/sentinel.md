@@ -19,3 +19,8 @@
 **Vulnerability:** Missing input validation and length limits on avatar generation and upload routes, allowing for potential resource exhaustion and database bloat.
 **Learning:** Even though manual validation was present in some service layers, the API layer (Fastify) lacked schemas, allowing oversized payloads (like multi-megabyte base64 strings or extremely long AI prompts) to be processed.
 **Prevention:** Use Zod schemas with `zod-to-json-schema` to enforce strict length limits (e.g., 500 chars for prompts, 10MB for base64 avatars) at the routing level. Ensure error messages and comments follow the project's localization standards (Russian in this case).
+
+## 2026-04-03 - News IDOR Information Disclosure
+**Vulnerability:** Unpublished news articles could be accessed by anyone (including anonymous users) if the numeric ID was known or guessed via `GET /api/news/:id`.
+**Learning:** While the list view (`GET /api/news`) correctly filtered for `isPublished: true`, the detail view relied on Prisma's `findUnique` which didn't include the visibility check, leading to an Insecure Direct Object Reference (IDOR) vulnerability.
+**Prevention:** Implement "Secure by Default" in service layers. Methods like `getById` should default to filtering for published/active content and require an explicit flag to override. Transition from `findUnique` to `findFirst` in Prisma when filtering by both a unique ID and a status field.

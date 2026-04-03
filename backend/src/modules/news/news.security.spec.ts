@@ -9,7 +9,12 @@ vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     newsArticle: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
       count: vi.fn(),
+      update: vi.fn(),
+      create: vi.fn(),
+      delete: vi.fn(),
     },
   },
 }));
@@ -96,6 +101,49 @@ describe("News Security (Vulnerability Reproduction)", () => {
     expect(prisma.newsArticle.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: {}
     }));
+
+    await adminApp.close();
+  });
+
+  it("should hide unpublished news from anonymous users when requested by ID (VULNERABILITY REPRODUCTION)", async () => {
+    // @ts-ignore
+    vi.mocked(prisma.newsArticle.findFirst).mockResolvedValue(null);
+
+    // Act: Requesting specific news by ID as anonymous user
+    const response = await request(app.server).get("/999");
+
+    // Assert: It should return 404 (Not Found) if it's unpublished and we're not admin
+    expect(response.status).toBe(404);
+    expect(prisma.newsArticle.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 999, isPublished: true }
+    }));
+  });
+
+  it("should allow admins to see unpublished news by ID", async () => {
+    const unpublishedArticle = {
+      id: 999,
+      title: "Draft News",
+      isPublished: false,
+      publishedAt: new Date(),
+    };
+
+    // @ts-ignore
+    vi.mocked(prisma.newsArticle.findFirst).mockResolvedValue(unpublishedArticle);
+
+    // Mock an admin user
+    const adminApp = Fastify({ logger: false });
+    adminApp.addHook("onRequest", async (req: any) => {
+      req.user = { userId: 1, role: "admin" };
+    });
+    adminApp.register(newsRoutes);
+    await adminApp.ready();
+
+    // Act: Requesting specific news by ID as admin user
+    const response = await request(adminApp.server).get("/999");
+
+    // Assert: Admins should see it
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe("Draft News");
 
     await adminApp.close();
   });

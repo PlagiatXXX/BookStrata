@@ -117,9 +117,17 @@ export class NewsService {
   /**
    * Получить новость по ID
    */
-  async getNewsById(id: number): Promise<NewsArticle | null> {
-    const article = await prisma.newsArticle.findUnique({
-      where: { id },
+  async getNewsById(
+    id: number,
+    publishedOnly = true,
+  ): Promise<NewsArticle | null> {
+    const where: any = { id };
+    if (publishedOnly) {
+      where.isPublished = true;
+    }
+
+    const article = await prisma.newsArticle.findFirst({
+      where,
       include: {
         author: {
           select: {
