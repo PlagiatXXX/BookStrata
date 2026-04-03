@@ -14,52 +14,10 @@ interface TierLabelProps {
   droppableRef?: React.Ref<HTMLDivElement>;
 }
 
-const sizeClasses: Record<NonNullable<Tier["labelSize"]>, string> = {
-  xs: "text-base md:text-base sm:text-sm max-sm:text-xs",
-  sm: "text-lg md:text-lg sm:text-base max-sm:text-xs",
-  md: "text-xl md:text-xl sm:text-lg max-sm:text-sm",
-};
-
-// Отдельный компонент для умного отображения текста
-interface TierLabelTextProps {
-  title: string;
-  textColor: string;
-  dynamicSizeClass: string;
-}
-
-const TierLabelText = memo(({ title, textColor, dynamicSizeClass }: TierLabelTextProps) => {
-  const words = title.split(/\s+/);
-  const isMultiWord = words.length >= 2;
-
-  if (isMultiWord) {
-    return (
-      <span
-        className={`font-black wrap-break-word ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
-      >
-        {words[0]}
-        <br />
-        {words.slice(1).join(" ")}
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className={`font-black hyphens-auto ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
-      style={{ hyphens: "auto" }}
-    >
-      {title}
-    </span>
-  );
-});
-
-TierLabelText.displayName = "TierLabelText";
-
 export const TierLabel = memo(({
   tierId,
   title,
   color,
-  labelSize = "sm",
   onChangeColor,
   onRename,
   droppableRef,
@@ -83,13 +41,7 @@ export const TierLabel = memo(({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [wrapperRef]);
 
-  const dynamicSizeClass = sizeClasses[labelSize];
   const textColor = getTextColorForBackground(color);
-
-  const handleDoubleClick = () => {
-    setIsEditing(true);
-    setInputValue(title);
-  };
 
   const handleBlur = () => {
     if (inputValue.trim() !== title && inputValue.trim() !== "") {
@@ -108,7 +60,6 @@ export const TierLabel = memo(({
     }
   };
 
-  // Фокусируемся на input, когда он появляется
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
@@ -119,13 +70,8 @@ export const TierLabel = memo(({
     <div
       ref={droppableRef || wrapperRef}
       style={{ backgroundColor: color }}
-      className="group/label relative flex 
-                 w-24 md:w-32 sm:w-24 max-sm:w-16 
-                 shrink-0 items-center justify-center 
-                 border-r border-cyan-300/35 
-                 p-2 md:p-2 sm:p-1.5 max-sm:p-1 
-                 wrap-break-word"
-      onDoubleClick={handleDoubleClick}
+      className="nb-rank-box group/label relative shrink-0 overflow-hidden"
+      onDoubleClick={() => setIsEditing(true)}
     >
       {isEditing ? (
         <input
@@ -134,27 +80,33 @@ export const TierLabel = memo(({
           onChange={(e) => setInputValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className={`w-full bg-transparent text-center outline-none ${
-            textColor === "black" ? "text-black" : "text-white"
-          }`}
-          style={{ fontSize: "inherit", fontWeight: "inherit" }}
+          className="nb-display-lg w-full bg-transparent text-center outline-none border-none"
+          style={{ color: textColor === "black" ? "#000000" : "#ffffff" }}
         />
       ) : (
-        <TierLabelText title={title} textColor={textColor} dynamicSizeClass={dynamicSizeClass} />
+        <span
+          className="nb-display-lg select-none"
+          style={{ color: textColor === "black" ? "#000000" : "#ffffff" }}
+        >
+          {title}
+        </span>
       )}
 
-      <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100 max-md:opacity-100">
+      <div className="absolute bottom-1 right-1 opacity-0 transition-opacity group-hover/label:opacity-100">
         <button
-          onClick={() => setIsPaletteOpen(!isPaletteOpen)}
-          className="flex size-6 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 bg-[rgba(7,12,27,0.82)] text-cyan-100 transition-colors hover:border-fuchsia-300/65 hover:text-fuchsia-100
-                     md:size-6 sm:size-5 max-sm:size-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsPaletteOpen(!isPaletteOpen);
+          }}
+          className="nb-heavy-border flex size-6 items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors"
           title="Изменить цвет"
         >
-          <Palette size={12} className="text-white md:w-3 md:h-3 sm:w-2.5 sm:h-2.5 max-sm:w-2 max-sm:h-2" />
+          <Palette size={12} />
         </button>
       </div>
+
       {isPaletteOpen && (
-        <div className="absolute left-full top-0 z-20 ml-2 flex w-32 flex-wrap gap-1 rounded-[10px] border border-cyan-300/45 bg-[rgba(6,13,30,0.95)] p-2 shadow-[0_12px_28px_rgba(0,0,0,0.55)]">
+        <div className="nb-heavy-border absolute left-full top-0 z-20 ml-2 flex w-32 flex-wrap gap-1 bg-white p-2 shadow-[4px_4px_0_0_#000000]">
           {TIER_COLORS.map((swatchColor) => (
             <div
               key={swatchColor}
@@ -164,20 +116,8 @@ export const TierLabel = memo(({
                 onChangeColor(tierId, swatchColor);
                 setIsPaletteOpen(false);
               }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onChangeColor(tierId, swatchColor);
-                  setIsPaletteOpen(false);
-                }
-              }}
               style={{ backgroundColor: swatchColor }}
-              className={`size-5 cursor-pointer rounded ${
-                // Добавляем стилизацию для выбранного цвета
-                color.toLowerCase() === swatchColor.toLowerCase()
-                  ? "ring-2 ring-cyan-200 ring-offset-2 ring-offset-[#060d1e]"
-                  : ""
-              }`}
+              className="size-5 cursor-pointer nb-heavy-border border-[1px]"
               aria-label={`Выбрать цвет ${swatchColor}`}
             />
           ))}

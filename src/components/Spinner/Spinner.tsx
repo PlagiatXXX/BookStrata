@@ -1,4 +1,3 @@
-
 interface SpinnerProps {
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
@@ -14,7 +13,7 @@ const Spinner = ({ size = "md", className = "" }: SpinnerProps) => {
 
   return (
     <div
-      className={`animate-spin rounded-full ${sizeClasses[size]} border-t-2 border-b-2 border-primary ${className}`}
+      className={`animate-spin ${sizeClasses[size]} nb-heavy-border border-t-black border-b-black border-l-[#c1fffe] border-r-[#c1fffe] ${className}`}
     />
   );
 };

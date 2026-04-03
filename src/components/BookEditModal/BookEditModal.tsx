@@ -138,7 +138,7 @@ export const BookEditModal = ({
         <button
           onClick={handleCancel}
           className="absolute right-4 top-4 z-20 p-2 text-gray-400 hover:text-white
-                     rounded-lg hover:bg-surface-border
+                     nb-heavy-border hover:bg-surface-border
                      transition-all duration-200
                      max-md:right-2 max-md:top-2 max-md:p-1.5"
           title="Закрыть"
@@ -162,12 +162,12 @@ export const BookEditModal = ({
               onChange={(e) => handleTitleChange(e.target.value)}
               autoFocus
               className="px-6 py-4 bg-linear-to-r from-surface-dark via-surface-dark to-surface-dark
-                         border border-cyan-500/30 rounded-xl text-white text-center text-2xl font-bold
-                         shadow-lg shadow-cyan-500/10
-                         focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400
+                         border nb-heavy-border nb-heavy-border text-white text-center text-2xl font-bold
+
+                         focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:nb-heavy-border
                          transition-all duration-200 placeholder:text-gray-600
                          max-md:text-lg max-md:px-4 max-md:py-3
-                         max-sm:text-base max-sm:px-3 max-sm:py-2 max-sm:rounded-lg"
+                         max-sm:text-base max-sm:px-3 max-sm:py-2 max-sm:nb-heavy-border"
               placeholder="Введите название книги"
             />
           </div>
@@ -178,11 +178,11 @@ export const BookEditModal = ({
           {/* Верхняя часть: Обложка слева, Автор и Описание справа */}
           <div className="flex gap-6 max-md:flex-col max-md:gap-4 max-sm:gap-3">
             {/* Обложка книги слева с неоновой рамкой */}
-            <div className="w-40 h-56 shrink-0 rounded-xl overflow-hidden
-                            shadow-lg shadow-purple-500/20
+            <div className="w-40 h-56 shrink-0 nb-heavy-border overflow-hidden
+
                             bg-linear-to-br from-surface-dark to-surface-border
-                            border border-purple-500/30
-                            transition-all duration-200 hover:shadow-purple-500/30
+                            border nb-heavy-border
+                            transition-all duration-200 hover:
                             max-md:w-full max-md:h-64 max-md:mx-auto
                             max-sm:h-48">
               {book?.coverImageUrl ? (
@@ -219,9 +219,9 @@ export const BookEditModal = ({
                   value={author}
                   onChange={(e) => handleAuthorChange(e.target.value)}
                   className="px-4 py-3 bg-surface-dark
-                             border border-purple-500/30 rounded-lg text-white
-                             shadow-md shadow-purple-500/5
-                             focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400
+                             border nb-heavy-border nb-heavy-border text-white
+
+                             focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:nb-heavy-border
                              transition-all duration-200 placeholder:text-gray-600
                              max-sm:px-3 max-sm:py-2 max-sm:text-sm"
                   placeholder="Автор книги"
@@ -240,9 +240,9 @@ export const BookEditModal = ({
                   value={description}
                   onChange={(e) => handleDescriptionChange(e.target.value)}
                   className="px-4 py-3 bg-surface-dark
-                             border border-purple-500/30 rounded-lg text-white resize-none flex-1 min-h-30
-                             shadow-md shadow-purple-500/5
-                             focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400
+                             border nb-heavy-border nb-heavy-border text-white resize-none flex-1 min-h-30
+
+                             focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:nb-heavy-border
                              transition-all duration-200 placeholder:text-gray-600
                              max-sm:px-3 max-sm:py-2 max-sm:text-sm max-sm:min-h-20"
                   placeholder="Краткое описание книги"
@@ -264,9 +264,9 @@ export const BookEditModal = ({
               value={thoughts}
               onChange={(e) => handleThoughtsChange(e.target.value)}
               className="px-4 py-3 bg-surface-dark
-                         border border-pink-500/30 rounded-lg text-white resize-none
-                         shadow-md shadow-pink-500/5
-                         focus:outline-none focus:ring-2 focus:ring-pink-400/50 focus:border-pink-400
+                         border nb-heavy-border nb-heavy-border text-white resize-none
+
+                         focus:outline-none focus:ring-2 focus:ring-pink-400/50 focus:nb-heavy-border
                          transition-all duration-200 placeholder:text-gray-600
                          max-sm:px-3 max-sm:py-2 max-sm:text-sm max-sm:rows-3"
               rows={5}
@@ -276,12 +276,12 @@ export const BookEditModal = ({
         </div>
 
         {/* Кнопки внизу с отступами и неоновым стилем */}
-        <div className="flex justify-end gap-4 shrink-0 pt-6 mt-2 border-t border-surface-border max-md:flex-col-reverse max-md:gap-2 max-md:pt-4 max-sm:pt-3 max-sm:gap-1.5">
+        <div className="flex justify-end gap-4 shrink-0 pt-6 mt-2 nb-heavy-border nb-heavy-border max-md:flex-col-reverse max-md:gap-2 max-md:pt-4 max-sm:pt-3 max-sm:gap-1.5">
           <Button
             variant="ghost"
             onClick={handleCancel}
-            className="px-6 py-2.5 rounded-lg font-medium
-                       border border-gray-600 hover:border-gray-500
+            className="px-6 py-2.5 nb-heavy-border font-medium
+                       border nb-heavy-border hover:nb-heavy-border
                        hover:bg-surface-dark
                        transition-all duration-200
                        max-md:w-full
@@ -292,13 +292,13 @@ export const BookEditModal = ({
           <Button
             variant="primary"
             onClick={handleSave}
-            className="px-6 py-2.5 rounded-lg font-semibold
+            className="px-6 py-2.5 nb-heavy-border font-semibold
                        bg-linear-to-r from-cyan-600 to-blue-600
                        hover:from-cyan-500 hover:to-blue-500
-                       shadow-lg shadow-cyan-500/30
-                       hover:shadow-cyan-500/50
+
+                       hover:
                        transition-all duration-200
-                       border border-cyan-400/30
+                       border nb-heavy-border
                        max-md:w-full
                        max-sm:px-4 max-sm:py-2 max-sm:text-sm"
           >

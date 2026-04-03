@@ -1,7 +1,6 @@
 import './ExportThemes.css';
-import { type ExportTheme } from './components/ExportModal';
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+
 import { sileo } from "sileo";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useTierList } from "@/hooks/useTierList";
@@ -26,7 +25,7 @@ const logger = createLogger("TierEditorPage", { color: "green" });
 
 // Внутренний компонент с ключом для автоматического сброса состояния
 const TierListEditorContent = () => {
-  const { id: tierListId } = useParams<{ id: string }>();
+  const { id: tierListId = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   // Получаем все состояния из хука
@@ -46,7 +45,7 @@ const TierListEditorContent = () => {
     setIgnoreUnsavedBlocker,
     isSearchModalOpen,
     setIsSearchModalOpen,
-    isSavingBeforeLeave,
+
     setIsSavingBeforeLeave,
     isExportModalOpen,
     setIsExportModalOpen,
@@ -164,7 +163,7 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges(true);
   };
 
-  const updateTierSettingsWithUnsaved = (tierId: string, settings: any) => {
+  const updateTierSettingsWithUnsaved = (tierId: string, settings: Partial<Tier>) => {
     updateTierSettings(tierId, settings);
     setHasUnsavedChanges(true);
   };
@@ -179,7 +178,7 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges(true);
   };
 
-  const addBooksWithUnsaved = (books: any[]) => {
+  const addBooksWithUnsaved = (books: Book[]) => {
     addBooks(books);
     setHasUnsavedChanges(true);
   };
@@ -356,6 +355,6 @@ const TierListEditorContent = () => {
 
 // Главный компонент с key для сброса состояния при смене tierListId
 export const TierListEditorPage = () => {
-  const { id: tierListId } = useParams<{ id: string }>();
+  const { id: tierListId = "" } = useParams<{ id: string }>();
   return <TierListEditorContent key={tierListId} />;
 };

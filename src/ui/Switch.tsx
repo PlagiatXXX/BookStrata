@@ -25,14 +25,14 @@ export const Switch: React.FC<SwitchProps> = ({
       onClick={handleChange}
       disabled={disabled}
       aria-checked={checked}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+      className={`relative inline-flex h-6 w-11 items-center nb-heavy-border transition-colors focus:outline-none focus:ring-2 focus:ring-[#c1fffe] focus:ring-offset-2 ${
         checked
-          ? 'bg-blue-600'
+          ? 'bg-[#ff51fa]'
           : 'bg-gray-200 dark:bg-gray-700'
       } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+        className={`inline-block h-4 w-4 transform nb-heavy-border bg-white transition-transform ${
           checked ? 'translate-x-6' : 'translate-x-1'
         }`}
       />

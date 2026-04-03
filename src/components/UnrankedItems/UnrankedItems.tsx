@@ -32,17 +32,16 @@ export const UnrankedItems = memo(
     return (
       <div
         ref={setNodeRef}
-        className="y2k-panel mt-10 flex flex-col text-[#d8f9ff]"
+        className="nb-sidebar mt-10 flex flex-col text-white"
       >
-        <div className="border-b border-cyan-300/35 px-6 py-4">
-          <h3 className="text-lg font-bold tracking-[0.04em] text-[#e8ffff]">
+        <div className="nb-section-header">
+          <h3 className="nb-label-md text-[#c1fffe]">
             Книги без рейтинга
           </h3>
         </div>
 
-        <div className="p-6">
-          {/* Book Counter */}
-          <div className="mb-4">
+        <div className="p-4">
+          <div className="mb-8">
             <BookCounter booksCount={displayBooksCount} isPro={isPro} />
           </div>
 
@@ -51,7 +50,7 @@ export const UnrankedItems = memo(
             items={books.map((b) => b.id)}
             strategy={rectSortingStrategy}
           >
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-3">
+            <div className="flex flex-wrap gap-4">
               {books.map((book) => (
                 <SortableBookCover
                   key={book.id}

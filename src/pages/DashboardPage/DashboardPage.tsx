@@ -28,7 +28,9 @@ export function DashboardPage() {
 
   // Отслеживаем изменения пользователя (например, обновление аватара)
   useEffect(() => {
+  useEffect(() => {
     if (user) {
+      logger.info("Пользователь в панели", {
         username: user.username,
         hasAvatar: !!user.avatarUrl,
         avatarUrl: user.avatarUrl?.substring(0, 50) + "...",

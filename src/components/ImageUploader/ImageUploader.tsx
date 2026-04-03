@@ -60,11 +60,11 @@ export const ImageUploader = ({ onUpload = () => {}, booksCount = 0, isPro = fal
   return (
     <div
       {...getRootProps()}
-      className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed
-                  border-surface-border text-gray-500 transition-colors
-                  hover:border-primary hover:text-primary bg-black/20
+      className={`flex aspect-square cursor-pointer flex-col items-center justify-center nb-heavy-border border-2 border-dashed
+                  border-black text-white transition-colors
+                  hover:border-primary hover:text-primary bg-black
                   ${isDragActive ? 'border-primary bg-primary/10' : ''}
-                  ${isDisabled ? 'cursor-not-allowed opacity-50 hover:border-surface-border hover:text-gray-500' : ''}`}
+                  ${isDisabled ? 'cursor-not-allowed opacity-50 hover:border-black hover:text-white' : ''}`}
     >
       <input {...getInputProps()} />
       <ImagePlus size={24} />

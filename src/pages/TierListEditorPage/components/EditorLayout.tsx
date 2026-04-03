@@ -51,7 +51,7 @@ export const EditorLayout = ({
       searchValue=""
       showSearch={false}
     >
-      <main className="tier-editor-y2k flex-1 overflow-y-auto p-4 text-[#d8f9ff] lg:p-8">
+      <main className="neo-brutalist-editor flex-1 overflow-y-auto p-4  lg:p-8">
         <EditorHeader {...headerProps} />
         {children}
       </main>

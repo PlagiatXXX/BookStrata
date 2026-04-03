@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 interface ModalProps {
   isOpen: boolean;
@@ -15,6 +15,16 @@ export const Modal = ({
   maxWidth = "md",
   titleId,
 }: ModalProps) => {
+  useEffect(() => {
+    if (isOpen) {
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      window.addEventListener('keydown', handleEsc);
+      return () => window.removeEventListener('keydown', handleEsc);
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const maxWidthClass = {
@@ -27,19 +37,13 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-3 backdrop-blur-[2px] animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-none"
       onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          onClose();
-        }
-      }}
       role="presentation"
-      tabIndex={-1}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`w-full ${maxWidthClass} max-h-[calc(100vh-1.5rem)] overflow-y-auto rounded-md border border-white/25 bg-black/80 p-0 text-[#f3efe6] shadow-2xl animate-scale-in sm:max-h-[calc(100vh-2rem)]`}
+        className={`nb-modal w-full ${maxWidthClass} max-h-[90vh] overflow-y-auto`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

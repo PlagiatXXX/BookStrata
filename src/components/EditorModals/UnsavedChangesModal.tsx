@@ -24,14 +24,14 @@ export function UnsavedChangesModal({
       <div className="relative flex flex-col items-center p-6 text-center text-[#d8f9ff]">
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 flex size-8 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 text-cyan-200/80 transition-colors hover:border-fuchsia-300/70 hover:text-fuchsia-200"
+          className="absolute right-6 top-6 flex size-8 cursor-pointer items-center justify-center nb-heavy-border border border-black text-cyan-200/80 transition-colors hover:border-black hover:text-fuchsia-200"
           aria-label="Закрыть"
         >
           <X size={16} />
         </button>
 
         <div className="mb-4 mt-2">
-          <div className="rounded-xl border border-amber-300/45 bg-[rgba(250,204,21,0.12)] p-3">
+          <div className="nb-heavy-border border border-black bg-[#ffbd58] p-3">
             <AlertTriangle size={28} className="text-amber-200" />
           </div>
         </div>
@@ -57,7 +57,7 @@ export function UnsavedChangesModal({
             variant="primary"
             onClick={onSaveAndLeave}
             disabled={isUpdatingBook || isSaving}
-            className="y2k-btn-primary flex-1"
+            className="nb-btn-primary flex-1"
           >
             {isSaving ? (
               <>
@@ -76,7 +76,7 @@ export function UnsavedChangesModal({
               variant="outline"
               onClick={onClose}
               disabled={isUpdatingBook || isSaving}
-              className="y2k-btn-ghost flex-1"
+              className="nb-btn-secondary flex-1"
             >
               Остаться
             </Button>

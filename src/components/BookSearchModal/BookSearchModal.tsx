@@ -77,14 +77,14 @@ function BookSearchSkeleton() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-4 rounded-xl border border-cyan-300/35 bg-[rgba(7,13,30,0.8)] p-3"
+          className="flex items-center gap-4 nb-heavy-border border border-black bg-[rgba(7,13,30,0.8)] p-3"
         >
-          <div className="h-24 w-16 shrink-0 rounded-[10px] bg-cyan-900/30 animate-pulse" />
+          <div className="h-24 w-16 shrink-0 nb-heavy-border bg-cyan-900/30 animate-pulse" />
           <div className="flex-1 min-w-0">
-            <div className="mb-2 h-5 w-3/4 rounded bg-cyan-900/30 animate-pulse" />
-            <div className="h-4 w-1/2 rounded bg-cyan-900/30 animate-pulse" />
+            <div className="mb-2 h-5 w-3/4 nb-heavy-border bg-black animate-pulse" />
+            <div className="h-4 w-1/2 nb-heavy-border bg-black animate-pulse" />
           </div>
-          <div className="h-10 w-10 rounded-[10px] bg-cyan-900/30 animate-pulse" />
+          <div className="h-10 w-10 nb-heavy-border bg-cyan-900/30 animate-pulse" />
         </div>
       ))}
     </div>
@@ -94,13 +94,13 @@ function BookSearchSkeleton() {
 // Skeleton для бесконечного скролла
 function BookSkeletonItem() {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-cyan-300/35 bg-[rgba(7,13,30,0.8)] p-3">
-      <div className="h-24 w-16 shrink-0 rounded-[10px] bg-cyan-900/30 animate-pulse" />
+    <div className="flex items-center gap-4 nb-heavy-border border border-black bg-[rgba(7,13,30,0.8)] p-3">
+      <div className="h-24 w-16 shrink-0 nb-heavy-border bg-cyan-900/30 animate-pulse" />
       <div className="flex-1 min-w-0">
-        <div className="mb-2 h-5 w-3/4 rounded bg-cyan-900/30 animate-pulse" />
-        <div className="h-4 w-1/2 rounded bg-cyan-900/30 animate-pulse" />
+        <div className="mb-2 h-5 w-3/4 nb-heavy-border bg-black animate-pulse" />
+        <div className="h-4 w-1/2 nb-heavy-border bg-black animate-pulse" />
       </div>
-      <div className="h-10 w-10 rounded-[10px] bg-cyan-900/30 animate-pulse" />
+      <div className="h-10 w-10 nb-heavy-border bg-cyan-900/30 animate-pulse" />
     </div>
   );
 }
@@ -126,10 +126,10 @@ const BookItem = memo(({
 
   return (
     <div
-      className={`flex cursor-pointer items-center gap-4 rounded-xl border p-3 transition-colors duration-200 animate-fade-in ${
+      className={`flex cursor-pointer items-center gap-4 nb-heavy-border border p-3 transition-colors duration-200 animate-fade-in ${
         isSelected
           ? "border-fuchsia-300/70 bg-[rgba(255,0,204,0.14)]"
-          : "border-cyan-300/35 bg-[rgba(7,13,30,0.8)] hover:border-fuchsia-300/55 hover:translate-x-1"
+          : "border-black bg-[rgba(7,13,30,0.8)] hover:border-fuchsia-300/55 hover:translate-x-1"
       }`}
     >
       {/* Cover с lazy loading */}
@@ -137,7 +137,7 @@ const BookItem = memo(({
         role="button"
         tabIndex={0}
         aria-label={`Просмотреть информацию о книге ${book.title}`}
-        className="relative h-24 w-16 shrink-0 overflow-hidden rounded-[10px] border border-cyan-300/40 bg-[rgba(6,12,28,0.9)] transition-transform hover:scale-105 cursor-pointer"
+        className="relative h-24 w-16 shrink-0 overflow-hidden nb-heavy-border border border-cyan-300/40 bg-[rgba(6,12,28,0.9)] transition-transform hover:scale-105 cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           onView(book);
@@ -195,7 +195,7 @@ const BookItem = memo(({
             e.stopPropagation();
             onView(book);
           }}
-          className="cursor-pointer rounded-lg border border-cyan-300/35 p-2 text-cyan-200/75 transition-colors hover:border-fuchsia-300/60 hover:text-fuchsia-200"
+          className="cursor-pointer nb-heavy-border border border-black p-2 text-cyan-200/75 transition-colors hover:border-fuchsia-300/60 hover:text-fuchsia-200"
           title="Подробнее"
           aria-label="Подробнее"
         >
@@ -208,10 +208,10 @@ const BookItem = memo(({
             onToggle(book.openLibraryKey);
           }}
           aria-label={isSelected ? "Убрать из выбранного" : "Добавить в выбранное"}
-          className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border transition-colors ${
+          className={`flex h-10 w-10 cursor-pointer items-center justify-center nb-heavy-border border transition-colors ${
             isSelected
               ? "border-fuchsia-300/70 bg-fuchsia-500/90 text-[#05070e]"
-              : "border-cyan-300/45 text-cyan-100 hover:border-fuchsia-300/65 hover:text-fuchsia-100"
+              : "border-black text-cyan-100 hover:border-fuchsia-300/65 hover:text-fuchsia-100"
           }`}
         >
           {isSelected ? (
@@ -444,11 +444,11 @@ export const BookSearchModal = ({
         />
 
         {/* Modal */}
-        <div className="y2k-panel relative mx-4 w-full max-w-2xl overflow-hidden rounded-[14px] text-[#d8f9ff] animate-scale-in">
+        <div className="nb-modal relative mx-4 w-full max-w-2xl overflow-hidden  text-white animate-scale-in">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-cyan-300/35 p-4">
+          <div className="flex items-center justify-between border-b border-black p-4">
             <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-[10px] border border-cyan-300/45 bg-[rgba(7,13,30,0.82)]">
+              <div className="flex size-9 items-center justify-center nb-heavy-border border border-black bg-black">
                 <BookOpen className="h-4 w-4 text-cyan-100" />
               </div>
               <h2 className="text-lg font-semibold tracking-[0.05em] text-[#e8ffff]">
@@ -457,7 +457,7 @@ export const BookSearchModal = ({
             </div>
             <button
               onClick={handleClose}
-              className="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 text-cyan-200/80 transition-colors hover:border-fuchsia-300/70 hover:text-fuchsia-200"
+              className="flex size-8 cursor-pointer items-center justify-center nb-heavy-border border border-black text-cyan-200/80 transition-colors hover:border-fuchsia-300/70 hover:text-fuchsia-200"
               aria-label="Закрыть"
             >
               <X className="h-4 w-4" />
@@ -465,7 +465,7 @@ export const BookSearchModal = ({
           </div>
 
           {/* Search Input */}
-          <div className="border-b border-cyan-300/35 p-4">
+          <div className="border-b border-black p-4">
             <div className="flex gap-2">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-200/65" />
@@ -477,7 +477,7 @@ export const BookSearchModal = ({
                   placeholder="Введите название книги или автора..."
                   aria-label="Поиск книг"
                   autoFocus
-                  className="w-full rounded-xl border border-cyan-300/45 bg-[rgba(6,12,28,0.88)] py-3 pl-10 pr-10 text-[#d8f9ff] placeholder:text-cyan-200/45 transition-colors focus:border-fuchsia-300/70 focus:outline-none"
+                  className="w-full nb-heavy-border border border-black bg-black py-3 pl-10 pr-10 text-white placeholder:text-cyan-200/45 transition-colors focus:border-fuchsia-300/70 focus:outline-none"
                 />
                 {state.query && (
                   <button
@@ -492,7 +492,7 @@ export const BookSearchModal = ({
               <button
                 onClick={handleSearch}
                 disabled={isLoading || state.query.length < 2}
-                className="y2k-btn-primary flex cursor-pointer items-center gap-2 rounded-xl px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                className="nb-btn-primary flex cursor-pointer items-center gap-2 nb-heavy-border px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? <Spinner size="sm" /> : "Найти"}
               </button>
@@ -510,7 +510,7 @@ export const BookSearchModal = ({
                 {state.selectedBooks.size > 0 && (
                   <button
                     onClick={handleAddSelectedBooks}
-                    className="y2k-btn-primary flex cursor-pointer items-center gap-2 rounded-[10px] px-4 py-2 text-sm font-semibold animate-scale-in"
+                    className="nb-btn-primary flex cursor-pointer items-center gap-2 nb-heavy-border px-4 py-2 text-sm font-semibold animate-scale-in"
                   >
                     <Plus className="w-4 h-4" />
                     Добавить выбранные ({state.selectedBooks.size})
@@ -577,10 +577,10 @@ export const BookSearchModal = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 border-t border-cyan-300/35 bg-[rgba(6,10,22,0.75)] p-4">
+          <div className="flex justify-end gap-3 border-t border-black bg-white p-4">
             <button
               onClick={handleClose}
-              className="y2k-btn-ghost cursor-pointer rounded-xl px-5 py-2.5 text-sm font-semibold"
+              className="nb-btn-secondary cursor-pointer nb-heavy-border px-5 py-2.5 text-sm font-semibold"
             >
               Отмена
             </button>

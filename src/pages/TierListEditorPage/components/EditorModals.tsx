@@ -24,7 +24,7 @@ function BookSearchModalLoader() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] animate-fade-in" />
-      <div className="y2k-panel relative flex items-center justify-center rounded-[14px] p-8">
+      <div className="nb-sidebar relative flex items-center justify-center nb-heavy-border p-8">
         <Spinner size="lg" />
       </div>
     </div>
