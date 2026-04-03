@@ -259,9 +259,6 @@ export function useTemplateEditorState({
   };
 
   const save = useCallback(async () => {
-    console.log("[useTemplateEditorState] save вызван, formState:", formState);
-    console.log("[useTemplateEditorState] mode:", mode, "templateId:", templateId);
-    console.log("[useTemplateEditorState] validation.isValid:", validation.isValid);
     
     setIsSubmitting(true);
     setDraftStatus("saving");
@@ -272,7 +269,6 @@ export function useTemplateEditorState({
         ...(mode === "edit" && templateId ? { id: templateId } : {}),
       };
 
-      console.log("[useTemplateEditorState] Отправка templateData:", templateData);
 
       await onSubmit(templateData);
       setDraftStatus("saved");

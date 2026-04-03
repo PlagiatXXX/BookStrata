@@ -8,7 +8,6 @@ interface AdminGuardProps {
 export function AdminGuard({ children }: AdminGuardProps) {
   const { user, isLoading } = useAuth();
 
-  console.log("[AdminGuard] isLoading:", isLoading, "user:", user);
 
   if (isLoading) {
     return (
@@ -19,12 +18,10 @@ export function AdminGuard({ children }: AdminGuardProps) {
   }
 
   if (!user) {
-    console.log("[AdminGuard] No user, redirecting to /auth");
     return <Navigate to="/auth" replace />;
   }
 
   // Проверка роли пользователя (только admin и moderator)
-  console.log("[AdminGuard] user.role:", user.role);
   if (user.role !== "admin" && user.role !== "moderator") {
     return (
       <div className="flex items-center justify-center min-h-screen">

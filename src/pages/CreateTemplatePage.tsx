@@ -16,7 +16,6 @@ const CreateTemplatePage: React.FC = () => {
       ?.prefillTemplate ?? undefined;
 
   const handleSave = async (data: CreateTemplateData | UpdateTemplateData) => {
-    console.log("[CreateTemplatePage] handleSave вызван:", data);
     
     if (!data.title || !data.tiers) {
       console.error("[CreateTemplatePage] Отсутствие обязательных полей:", { 
@@ -40,7 +39,6 @@ const CreateTemplatePage: React.FC = () => {
       isPublic: false, // Шаблоны всегда личные
     };
 
-    console.log("[CreateTemplatePage] Отправка payload:", payload);
 
     try {
       await createTemplate(payload);

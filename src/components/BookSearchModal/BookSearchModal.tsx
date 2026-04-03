@@ -322,7 +322,6 @@ export const BookSearchModal = ({
               title: "Оформить Pro",
               onClick: () => {
                 // TODO: Здесь будет переход на страницу оплаты Pro-подписки
-                console.log('Navigate to Pro subscription');
               },
             },
           });
@@ -385,7 +384,6 @@ export const BookSearchModal = ({
             title: "Оформить Pro",
             onClick: () => {
               // TODO: Здесь будет переход на страницу оплаты Pro-подписки
-              console.log('Navigate to Pro subscription');
             },
           },
         });

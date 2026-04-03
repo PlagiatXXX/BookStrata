@@ -26,7 +26,6 @@ class ErrorNotifier {
     const enabled = process.env.TELEGRAM_NOTIFICATIONS_ENABLED === 'true';
 
     if (!token || !chatId || !enabled) {
-      console.log('[ErrorNotifier] Telegram уведомления не настроены');
       return;
     }
 
@@ -34,7 +33,6 @@ class ErrorNotifier {
       this.bot = new TelegramBot(token);
       this.chatId = chatId;
       this.isEnabled = true;
-      console.log('[ErrorNotifier] Telegram уведомления включены');
     } catch (error) {
       console.error('[ErrorNotifier] Ошибка инициализации:', error);
       this.isEnabled = false;

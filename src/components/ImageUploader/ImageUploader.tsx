@@ -26,7 +26,6 @@ export const ImageUploader = ({ onUpload = () => {}, booksCount = 0, isPro = fal
           title: 'Оформить Pro',
           onClick: () => {
             // TODO: Здесь будет переход на страницу оплаты Pro-подписки
-            console.log('Navigate to Pro subscription');
           },
         },
       });
