@@ -21,13 +21,13 @@ import { RenameTierListModal } from "./components/RenameTierListModal";
 import { DeleteTierListModal } from "./components/DeleteTierListModal";
 import { PAGE_SIZE } from "./constants";
 import "./DashboardPage.css";
+import logger from "@/lib/logger";
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   // Отслеживаем изменения пользователя (например, обновление аватара)
-  useEffect(() => {
   useEffect(() => {
     if (user) {
       logger.info("Пользователь в панели", {

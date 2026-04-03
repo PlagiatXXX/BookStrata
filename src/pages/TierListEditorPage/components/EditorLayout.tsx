@@ -1,13 +1,13 @@
-import { useSensors, useSensor } from '@dnd-kit/core';
-import { PointerSensor, TouchSensor, KeyboardSensor } from '@dnd-kit/core';
-import { DndContext, DragOverlay } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
-import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
-import { BookCover } from '@/ui/BookCover';
-import type { Book, Tier } from '@/types';
-import type { EditorHeaderProps } from './EditorHeader';
-import { EditorHeader } from './EditorHeader';
+import { useSensors, useSensor } from "@dnd-kit/core";
+import { PointerSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
+import { DndContext, DragOverlay } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
+import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
+import { BookCover } from "@/ui/BookCover";
+import type { Book, Tier } from "@/types";
+import type { EditorHeaderProps } from "./EditorHeader";
+import { EditorHeader } from "./EditorHeader";
 
 interface EditorLayoutProps {
   children: React.ReactNode;
@@ -31,13 +31,11 @@ export const EditorLayout = ({
   isReadOnly,
 }: EditorLayoutProps) => {
   const sensors = useSensors(
-    useSensor(PointerSensor, { 
-      activationConstraint: { distance: 5 },
-      preventScroll: true,
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
-      preventScroll: true,
+      activationConstraint: { delay: 150, tolerance: 8 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -63,10 +61,15 @@ export const EditorLayout = ({
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragCancel={onDragCancel}
+    >
       {content}
       <DragOverlay dropAnimation={null}>
-        {activeItem && 'coverImageUrl' in activeItem ? (
+        {activeItem && "coverImageUrl" in activeItem ? (
           <BookCover book={activeItem as Book} />
         ) : null}
       </DragOverlay>

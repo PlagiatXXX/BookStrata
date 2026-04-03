@@ -14,117 +14,129 @@ interface TierLabelProps {
   droppableRef?: React.Ref<HTMLDivElement>;
 }
 
-export const TierLabel = memo(({
-  tierId,
-  title,
-  color,
-  onChangeColor,
-  onRename,
-  droppableRef,
-}: TierLabelProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(title);
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+export const TierLabel = memo(
+  ({
+    tierId,
+    title,
+    color,
+    labelSize,
+    onChangeColor,
+    onRename,
+    droppableRef,
+  }: TierLabelProps) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [inputValue, setInputValue] = useState(title);
+    const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setIsPaletteOpen(false);
+    useEffect(() => {
+      function handleClickOutside(event: MouseEvent) {
+        if (
+          wrapperRef.current &&
+          !wrapperRef.current.contains(event.target as Node)
+        ) {
+          setIsPaletteOpen(false);
+        }
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [wrapperRef]);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }, [wrapperRef]);
 
-  const textColor = getTextColorForBackground(color);
+    const textColor = getTextColorForBackground(color);
 
-  const handleBlur = () => {
-    if (inputValue.trim() !== title && inputValue.trim() !== "") {
-      onRename(tierId, inputValue.trim());
-    }
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleBlur();
-    }
-    if (e.key === "Escape") {
-      setInputValue(title);
+    const handleBlur = () => {
+      if (inputValue.trim() !== title && inputValue.trim() !== "") {
+        onRename(tierId, inputValue.trim());
+      }
       setIsEditing(false);
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isEditing]);
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        handleBlur();
+      }
+      if (e.key === "Escape") {
+        setInputValue(title);
+        setIsEditing(false);
+      }
+    };
 
-  return (
-    <div
-      ref={droppableRef || wrapperRef}
-      style={{ backgroundColor: color }}
-      className="nb-rank-box group/label relative shrink-0 overflow-hidden"
-      onDoubleClick={() => setIsEditing(true)}
-    >
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className="nb-display-lg w-full bg-transparent text-center outline-none border-none"
-          style={{ color: textColor === "black" ? "#000000" : "#ffffff" }}
-        />
-      ) : (
-        <span
-          className="nb-display-lg select-none"
-          style={{ color: textColor === "black" ? "#000000" : "#ffffff" }}
-        >
-          {title}
-        </span>
-      )}
+    useEffect(() => {
+      if (isEditing && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [isEditing]);
 
-      <div className="absolute bottom-1 right-1 opacity-0 transition-opacity group-hover/label:opacity-100">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsPaletteOpen(!isPaletteOpen);
-          }}
-          className="nb-heavy-border flex size-6 items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors"
-          title="Изменить цвет"
-        >
-          <Palette size={12} />
-        </button>
-      </div>
+    const sizeClass =
+      labelSize === "xs"
+        ? "text-sm font-bold"
+        : labelSize === "sm"
+          ? "text-lg font-bold"
+          : labelSize === "md"
+            ? "text-2xl font-bold"
+            : "nb-display-lg";
 
-      {isPaletteOpen && (
-        <div className="nb-heavy-border absolute left-full top-0 z-20 ml-2 flex w-32 flex-wrap gap-1 bg-white p-2 shadow-[4px_4px_0_0_#000000]">
-          {TIER_COLORS.map((swatchColor) => (
-            <div
-              key={swatchColor}
-              role="button"
-              tabIndex={0}
-              onClick={() => {
-                onChangeColor(tierId, swatchColor);
-                setIsPaletteOpen(false);
-              }}
-              style={{ backgroundColor: swatchColor }}
-              className="size-5 cursor-pointer nb-heavy-border border-[1px]"
-              aria-label={`Выбрать цвет ${swatchColor}`}
-            />
-          ))}
+    return (
+      <div
+        ref={droppableRef || wrapperRef}
+        style={{ backgroundColor: color }}
+        className="nb-rank-box group/label relative shrink-0 overflow-visible"
+        onDoubleClick={() => setIsEditing(true)}
+      >
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className={`w-full bg-transparent text-center outline-none border-none ${sizeClass}`}
+            style={{ color: textColor === "black" ? "#000000" : "#ffffff" }}
+          />
+        ) : (
+          <span
+            className={`select-none ${sizeClass}`}
+            style={{ color: textColor === "black" ? "#000000" : "#ffffff" }}
+          >
+            {title}
+          </span>
+        )}
+
+        <div className="absolute bottom-1 right-1 opacity-0 transition-opacity group-hover/label:opacity-100">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsPaletteOpen(!isPaletteOpen);
+            }}
+            className="nb-heavy-border flex size-6 items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors"
+            title="Изменить цвет"
+          >
+            <Palette size={12} />
+          </button>
         </div>
-      )}
-    </div>
-  );
-});
+
+        {isPaletteOpen && (
+          <div className="nb-heavy-border absolute left-full top-0 z-50 ml-2 flex w-32 flex-wrap gap-1 bg-white p-2 shadow-[4px_4px_0_0_#000000]">
+            {TIER_COLORS.map((swatchColor) => (
+              <button
+                key={swatchColor}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChangeColor(tierId, swatchColor);
+                  setIsPaletteOpen(false);
+                }}
+                style={{ backgroundColor: swatchColor }}
+                className="size-5 cursor-pointer border border-black hover:scale-110 transition-transform"
+                aria-label={`Выбрать цвет ${swatchColor}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  },
+);
 
 TierLabel.displayName = "TierLabel";

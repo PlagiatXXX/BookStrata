@@ -37,6 +37,7 @@ export const TierRow = memo(
     onEditBook,
     onViewBook,
   }: TierRowProps) => {
+    /* ---------- SORTABLE ТИР ---------- */
     const {
       attributes,
       listeners,
@@ -51,6 +52,7 @@ export const TierRow = memo(
       },
     });
 
+    /* ---------- DROPPABLE КОНТЕЙНЕР ---------- */
     const { setNodeRef: setDroppableRef, isOver } = useDroppable({
       id: `drop-${tier.id}`,
       data: {
@@ -68,15 +70,15 @@ export const TierRow = memo(
     };
 
     const activeClass = isActive
-      ? "border-cyan-400 !border-opacity-100 shadow-[4px_4px_0_0_#c1fffe]"
-      : "";
-    const droppableActiveClass = isOver ? "bg-[#c1fffe]/10" : "";
+      ? "nb-tier-row-active border-2 border-cyan-400 shadow-lg z-10"
+      : "nb-tier-row border-b";
+    const droppableActiveClass = isOver ? "bg-primary/10" : "";
 
     return (
       <div
         ref={setSortableRef}
         style={style}
-        className={`nb-tier-row group relative flex ${activeClass} nb-snap`}
+        className={`group relative flex ${activeClass}`}
         role="listitem"
       >
         <TierLabel
@@ -95,8 +97,11 @@ export const TierRow = memo(
         >
           <div
             ref={setDroppableRef}
-            className={`nb-book-track relative flex flex-1 flex-wrap content-start items-center
-                       transition-colors ${droppableActiveClass}`}
+            className={`nb-book-track relative flex flex-1 flex-wrap content-start items-center 
+                       gap-3 md:gap-3 sm:gap-2 max-sm:gap-1.5
+                       p-2 md:p-2 sm:p-1.5 max-sm:p-1
+                       min-h-[140px] md:min-h-[140px] sm:min-h-[110px] max-sm:min-h-[80px]
+                       transition-colors group-hover:bg-surface-dark/80 ${droppableActiveClass}`}
           >
             {books.map((book) => (
               <SortableBookCover
@@ -114,28 +119,37 @@ export const TierRow = memo(
           </div>
         </SortableContext>
 
-        <div className="nb-heavy-border absolute -right-14 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-4 bg-black border-l-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute right-0 top-0 bottom-0 z-10 flex w-12 md:w-12 sm:w-10 max-sm:w-9 flex-col items-center justify-center gap-2 md:gap-2 sm:gap-1.5 max-sm:gap-1 border-l border-surface-border bg-[#231028] transition-opacity opacity-0 group-hover:opacity-100">
           <button
             title="Переместить"
-            className="cursor-grab text-white hover:text-[#c1fffe] transition-colors"
+            className="cursor-grab text-gray-400 active:cursor-grabbing hover:text-white"
             {...attributes}
             {...listeners}
           >
-            <GripVertical size={20} />
+            <GripVertical
+              size={20}
+              className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5"
+            />
           </button>
           <button
             onClick={() => onSetActive(tier.id)}
             title="Настройки"
-            className="text-white hover:text-[#c1fffe] cursor-pointer transition-colors"
+            className="text-gray-400 hover:text-white cursor-pointer"
           >
-            <Settings size={18} />
+            <Settings
+              size={18}
+              className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5"
+            />
           </button>
           <button
             onClick={() => onDelete(tier.id)}
             title="Удалить тир"
-            className="text-white hover:text-[#ff51fa] cursor-pointer transition-colors"
+            className="text-gray-400 hover:text-red-400 cursor-pointer"
           >
-            <Trash2 size={18} />
+            <Trash2
+              size={18}
+              className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5"
+            />
           </button>
         </div>
       </div>
