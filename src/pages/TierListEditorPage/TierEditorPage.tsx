@@ -1,4 +1,4 @@
-import './ExportThemes.css';
+import "./ExportThemes.css";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
@@ -18,7 +18,7 @@ import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import "./TierEditorPage.css";
-import type { Book } from "@/types";
+import type { Book, Tier } from "@/types";
 
 // Логгер для страницы редактора
 const logger = createLogger("TierEditorPage", { color: "green" });
@@ -163,7 +163,10 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges(true);
   };
 
-  const updateTierSettingsWithUnsaved = (tierId: string, settings: Partial<Tier>) => {
+  const updateTierSettingsWithUnsaved = (
+    tierId: string,
+    settings: Partial<Tier>,
+  ) => {
     updateTierSettings(tierId, settings);
     setHasUnsavedChanges(true);
   };
@@ -175,11 +178,6 @@ const TierListEditorContent = () => {
 
   const removeTierWithUnsaved = (tierId: string) => {
     removeTier(tierId);
-    setHasUnsavedChanges(true);
-  };
-
-  const addBooksWithUnsaved = (books: Book[]) => {
-    addBooks(books);
     setHasUnsavedChanges(true);
   };
 
@@ -207,31 +205,29 @@ const TierListEditorContent = () => {
   };
 
   // Логика блокировщика перехода
-  const {
-    handleConfirmLeave,
-    handleSaveBeforeLeave,
-    handleCancelLeave,
-  } = useTierEditorBlocker({
-    isReadOnly,
-    ignoreUnsavedBlocker,
-    hasUnsavedChanges,
-    autoSaveStatus,
-    isUpdatingBook,
-    setShowUnsavedModal,
-    setIgnoreUnsavedBlocker,
-    setDeletedTierIds,
-    setIsSavingBeforeLeave,
-    cancel,
-    forceSave,
-    navigate,
-    logger,
-    sileo,
-  });
+  const { handleConfirmLeave, handleSaveBeforeLeave, handleCancelLeave } =
+    useTierEditorBlocker({
+      isReadOnly,
+      ignoreUnsavedBlocker,
+      hasUnsavedChanges,
+      autoSaveStatus,
+      isUpdatingBook,
+      setShowUnsavedModal,
+      setIgnoreUnsavedBlocker,
+      setDeletedTierIds,
+      setIsSavingBeforeLeave,
+      cancel,
+      forceSave,
+      navigate,
+      logger,
+      sileo,
+    });
 
   // Получаем D&D логику из хука
   const {
     tierGridRef,
     handleDragStart,
+    handleDragOver,
     handleDragEndAndClear,
     onDownloadImage,
   } = useTierEditorDrag({
@@ -275,8 +271,9 @@ const TierListEditorContent = () => {
       onMyRatingsClick={handleMyRatingsClick}
     >
       <EditorLayout
-        activeItem={activeItem}
+        activeItem={activeItem as Book | null}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEndAndClear}
         onDragCancel={() => setActiveItem(null)}
         headerProps={headerProps}
@@ -310,7 +307,27 @@ const TierListEditorContent = () => {
           onTogglePublic={togglePublic}
           isTogglingPublic={isTogglingPublic}
           onFindBook={() => setIsSearchModalOpen(true)}
-          onUploadBooks={addBooksWithUnsaved}
+          onUploadBooks={async (files: File[]) => {
+            // Преобразуем файлы в книги и добавляем
+            for (const file of files) {
+              const coverImageUrl = URL.createObjectURL(file);
+              const bookId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+              dispatch({
+                type: "ADD_BOOKS",
+                payload: {
+                  newBooks: [
+                    {
+                      id: bookId,
+                      title: file.name.replace(/\.[^/.]+$/, ""),
+                      author: "Неизвестен",
+                      coverImageUrl,
+                    },
+                  ],
+                },
+              });
+              setHasUnsavedChanges(true);
+            }
+          }}
         />
       </EditorLayout>
 
@@ -345,8 +362,10 @@ const TierListEditorContent = () => {
         isUpdatingBook={isUpdatingBook}
         isExportModalOpen={isExportModalOpen}
         onCloseExport={() => setIsExportModalOpen(false)}
-        onConfirmExport={(theme, showWatermark) => onDownloadImage(theme, showWatermark, authUser?.username)}
-        username={authUser?.username || 'user'}
+        onConfirmExport={(theme, showWatermark) =>
+          onDownloadImage(theme, showWatermark, authUser?.username)
+        }
+        username={authUser?.username || "user"}
         isPro={isPro}
       />
     </EditorScreens>

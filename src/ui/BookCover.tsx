@@ -51,7 +51,6 @@ export const BookCover = memo(
       const handleTouchEnd = (e: React.TouchEvent) => {
         const now = Date.now();
         if (now - lastTapTime.current < 300) {
-          // Второй тап менее чем за 300ms = двойной тап
           handleDoubleClick(e);
         }
         lastTapTime.current = now;
@@ -63,7 +62,6 @@ export const BookCover = memo(
 
         const handleClickOutside = (e: MouseEvent) => {
           const target = e.target as HTMLElement;
-          // Проверяем, был ли клик по ЭТОЙ книге через data-book-id
           const clickedBookId = target
             .closest("[data-book-id]")
             ?.getAttribute("data-book-id");
@@ -72,7 +70,6 @@ export const BookCover = memo(
             return; // Клик по этой книге - не закрываем
           }
 
-          // Клик по другой книге или вне книги - закрываем
           setShowActions(false);
         };
 

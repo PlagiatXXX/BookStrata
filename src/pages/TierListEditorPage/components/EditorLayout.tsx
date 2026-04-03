@@ -1,18 +1,23 @@
 import { useSensors, useSensor } from "@dnd-kit/core";
 import { PointerSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
-import { DndContext, DragOverlay } from "@dnd-kit/core";
+import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import type { DragStartEvent, DragEndEvent } from "@dnd-kit/core";
+import type {
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+} from "@dnd-kit/core";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
-import type { Book, Tier } from "@/types";
+import type { Book } from "@/types";
 import type { EditorHeaderProps } from "./EditorHeader";
 import { EditorHeader } from "./EditorHeader";
 
 interface EditorLayoutProps {
   children: React.ReactNode;
-  activeItem: Book | Tier | null;
+  activeItem: Book | null;
   onDragStart: (event: DragStartEvent) => void;
+  onDragOver: (event: DragOverEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
   onDragCancel: () => void;
   headerProps: EditorHeaderProps;
@@ -24,6 +29,7 @@ export const EditorLayout = ({
   children,
   activeItem,
   onDragStart,
+  onDragOver,
   onDragEnd,
   onDragCancel,
   headerProps,
@@ -32,10 +38,12 @@ export const EditorLayout = ({
 }: EditorLayoutProps) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: { distance: 5 },
+      preventScroll: true,
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 150, tolerance: 8 },
+      activationConstraint: { delay: 250, tolerance: 5 },
+      preventScroll: true,
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -63,14 +71,24 @@ export const EditorLayout = ({
   return (
     <DndContext
       sensors={sensors}
+      collisionDetection={pointerWithin}
       onDragStart={onDragStart}
+      onDragOver={onDragOver}
       onDragEnd={onDragEnd}
       onDragCancel={onDragCancel}
     >
       {content}
       <DragOverlay dropAnimation={null}>
-        {activeItem && "coverImageUrl" in activeItem ? (
-          <BookCover book={activeItem as Book} />
+        {activeItem ? (
+          <div
+            style={{
+              opacity: 0.85,
+              transform: "rotate(2deg) scale(1.05)",
+              pointerEvents: "none",
+            }}
+          >
+            <BookCover book={activeItem} isDraggable={false} />
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>

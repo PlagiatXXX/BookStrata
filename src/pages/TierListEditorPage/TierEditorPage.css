@@ -137,12 +137,20 @@
 .neo-brutalist-editor .nb-tier-row-active {
   display: flex;
   background-color: var(--nb-surface-container-low);
+  border: 2px solid #22d3ee;
   border-radius: 0 !important;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+  z-index: 10;
 }
 
 .neo-brutalist-editor .nb-tier-row:first-child,
 .neo-brutalist-editor .nb-tier-row-active:first-child {
   border-top: var(--nb-border-width) solid var(--nb-border);
+}
+
+/* TIER ACTIONS */
+.neo-brutalist-editor .nb-tier-actions {
+  border-left: var(--nb-border-width) solid var(--nb-border);
 }
 
 .neo-brutalist-editor .nb-rank-box {
@@ -152,6 +160,7 @@
   align-items: center;
   justify-content: center;
   border-right: var(--nb-border-width) solid var(--nb-border);
+  overflow: visible;
 }
 
 .neo-brutalist-editor .nb-book-track {
@@ -160,7 +169,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
-  min-height: 100px;
+  min-height: 120px;
 }
 
 /* BOOK CARD */
