@@ -176,6 +176,11 @@ await fastify.register(cookie, {
   secret: JWT_SECRET, // Для подписи cookie
 });
 
+// Health check endpoint for deployment
+fastify.get("/health", async () => {
+  return { status: "ok", timestamp: new Date().toISOString() };
+});
+
 // Регистрируем все роуты из модулей
 fastify.register(authPlugin); // Плагин аутентификации (декодирует JWT)
 fastify.register(requestContext);
