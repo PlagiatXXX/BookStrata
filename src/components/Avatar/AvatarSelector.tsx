@@ -201,36 +201,57 @@ export function AvatarSelector({
 
         {/* Tab Content */}
         <div className="min-h-75">
-          {activeTab === 'presets' && (
-            <PresetsTab
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              onPresetSelect={handlePresetSelect}
-              selectedPresetUrl={preview.url}
-            />
-          )}
+          <div
+            id="tabpanel-presets"
+            role="tabpanel"
+            aria-labelledby="tab-presets"
+            hidden={activeTab !== 'presets'}
+          >
+            {activeTab === 'presets' && (
+              <PresetsTab
+                activeCategory={activeCategory}
+                onCategoryChange={setActiveCategory}
+                onPresetSelect={handlePresetSelect}
+                selectedPresetUrl={preview.url}
+              />
+            )}
+          </div>
 
-          {activeTab === 'ai' && (
-            <AiGenerationTab
-              aiPrompt={aiPrompt}
-              onPromptChange={setAiPrompt}
-              onGenerate={handleAiGenerate}
-              isBusy={isBusy}
-              isGenerating={generation.isGenerating}
-              isWaitingForResult={generation.isWaitingForResult}
-              error={generation.error}
-              previewLoadState={preview.loadState}
-              remainingGenerations={remainingGenerations}
-              limitInfo={limitInfo}
-            />
-          )}
+          <div
+            id="tabpanel-ai"
+            role="tabpanel"
+            aria-labelledby="tab-ai"
+            hidden={activeTab !== 'ai'}
+          >
+            {activeTab === 'ai' && (
+              <AiGenerationTab
+                aiPrompt={aiPrompt}
+                onPromptChange={setAiPrompt}
+                onGenerate={handleAiGenerate}
+                isBusy={isBusy}
+                isGenerating={generation.isGenerating}
+                isWaitingForResult={generation.isWaitingForResult}
+                error={generation.error}
+                previewLoadState={preview.loadState}
+                remainingGenerations={remainingGenerations}
+                limitInfo={limitInfo}
+              />
+            )}
+          </div>
 
-          {activeTab === 'upload' && (
-            <UploadTab
-              onFileSelect={handleFileSelect}
-              previewLoadState={preview.loadState}
-            />
-          )}
+          <div
+            id="tabpanel-upload"
+            role="tabpanel"
+            aria-labelledby="tab-upload"
+            hidden={activeTab !== 'upload'}
+          >
+            {activeTab === 'upload' && (
+              <UploadTab
+                onFileSelect={handleFileSelect}
+                previewLoadState={preview.loadState}
+              />
+            )}
+          </div>
         </div>
 
         {/* Footer Actions */}

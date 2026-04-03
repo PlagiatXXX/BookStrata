@@ -131,12 +131,26 @@ export default function CommunityPage() {
             </button>
           </div>
 
-          <TemplateGrid
-            activeCategory={activeCategory}
-            searchQuery={searchQuery}
-            applyingTemplateId={applyingTemplateId}
-            onUseTemplate={handleUseTemplate}
-          />
+          <div className="space-y-6">
+            {CATEGORIES.map((category) => (
+              <div
+                key={category.id}
+                id={`panel-${category.id}`}
+                role="tabpanel"
+                aria-labelledby={`tab-${category.id}`}
+                hidden={activeCategory !== category.id}
+              >
+                {activeCategory === category.id && (
+                  <TemplateGrid
+                    activeCategory={activeCategory}
+                    searchQuery={searchQuery}
+                    applyingTemplateId={applyingTemplateId}
+                    onUseTemplate={handleUseTemplate}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
 
           <div className="flex items-center gap-4 my-12 reveal" data-reveal>
             <div className="community-rule flex-1" />
