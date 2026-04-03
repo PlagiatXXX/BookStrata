@@ -59,7 +59,8 @@ export class NewsService {
     limit?: number;
     publishedOnly?: boolean;
   }): Promise<{ articles: NewsArticle[]; total: number }> {
-    const { page = 1, limit = 10, publishedOnly = false } = options || {};
+    // publishedOnly defaults to true for security - unprivileged calls shouldn't see draft content
+    const { page = 1, limit = 10, publishedOnly = true } = options || {};
     const skip = (page - 1) * limit;
 
     const where = publishedOnly ? { isPublished: true } : {};
