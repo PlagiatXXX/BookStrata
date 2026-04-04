@@ -116,10 +116,20 @@ export class NewsService {
 
   /**
    * Получить новость по ID
+   * @param id ID новости
+   * @param publishedOnly Если true, возвращает новость только если она опубликована
    */
-  async getNewsById(id: number): Promise<NewsArticle | null> {
-    const article = await prisma.newsArticle.findUnique({
-      where: { id },
+  async getNewsById(
+    id: number,
+    publishedOnly: boolean = true,
+  ): Promise<NewsArticle | null> {
+    const where: Record<string, unknown> = { id };
+    if (publishedOnly) {
+      where.isPublished = true;
+    }
+
+    const article = await prisma.newsArticle.findFirst({
+      where,
       include: {
         author: {
           select: {

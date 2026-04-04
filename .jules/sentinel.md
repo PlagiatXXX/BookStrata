@@ -19,3 +19,8 @@
 **Vulnerability:** Missing input validation and length limits on avatar generation and upload routes, allowing for potential resource exhaustion and database bloat.
 **Learning:** Even though manual validation was present in some service layers, the API layer (Fastify) lacked schemas, allowing oversized payloads (like multi-megabyte base64 strings or extremely long AI prompts) to be processed.
 **Prevention:** Use Zod schemas with `zod-to-json-schema` to enforce strict length limits (e.g., 500 chars for prompts, 10MB for base64 avatars) at the routing level. Ensure error messages and comments follow the project's localization standards (Russian in this case).
+
+## 2026-04-02 - News Detail Information Disclosure
+**Vulnerability:** ID-based news detail access (`GET /api/news/:id`) bypassed publication status checks, allowing draft content to be viewed if the ID was known.
+**Learning:** While the listing endpoint correctly filtered results based on roles, the single-resource endpoint relied on a simple `findUnique` query without enforcing the `isPublished` constraint for non-privileged users.
+**Prevention:** Always implement role-aware filtering at the service layer for single-resource queries. Use `findFirst` instead of `findUnique` in Prisma when you need to combine a unique identifier with other conditional filters like visibility or ownership.
