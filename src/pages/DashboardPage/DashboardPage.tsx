@@ -26,16 +26,6 @@ export function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Отслеживаем изменения пользователя (например, обновление аватара)
-  useEffect(() => {
-    if (user) {
-        username: user.username,
-        hasAvatar: !!user.avatarUrl,
-        avatarUrl: user.avatarUrl?.substring(0, 50) + "...",
-      });
-    }
-  }, [user]);
-
   // State management через reducer
   const {
     state,
