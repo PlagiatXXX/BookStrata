@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { createLogger } from "@/lib/logger";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { useAuth } from "@/hooks/useAuthContext";
@@ -29,6 +30,7 @@ export function DashboardPage() {
   // Отслеживаем изменения пользователя (например, обновление аватара)
   useEffect(() => {
     if (user) {
+      logger.debug("User data changed", {
         username: user.username,
         hasAvatar: !!user.avatarUrl,
         avatarUrl: user.avatarUrl?.substring(0, 50) + "...",
