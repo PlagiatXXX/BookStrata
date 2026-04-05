@@ -98,7 +98,13 @@ export async function newsRoutes(fastify: FastifyInstance) {
     try {
       const { id } = request.params as { id: string };
 
-      const article = await newsService.getNewsById(parseInt(id, 10));
+      const userRole = (request as any).user?.role;
+      const isAdminOrModerator =
+        userRole === "admin" || userRole === "moderator";
+
+      const article = await newsService.getNewsById(parseInt(id, 10), {
+        publishedOnly: !isAdminOrModerator,
+      });
 
       if (!article) {
         return reply.code(404).send({ error: "Новость не найдена" });
