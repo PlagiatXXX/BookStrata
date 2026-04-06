@@ -21,3 +21,7 @@
 ## 2025-06-05 - [Reducer-Level Guards for Filter State]
 **Learning:** In pages with multiple filter/sort/search inputs (like `DashboardPage`), the reducer can become a source of unnecessary renders if it doesn't verify if the new state actually differs from the old one. Simple equality checks for primitive filters (`search`, `sort`, `filter`) before returning a new state object prevent the entire hook-dependent tree from re-rendering.
 **Action:** Implement "pre-flight" equality checks in reducers for UI filters to maintain referential integrity of the state object when no logical change occurs.
+
+## 2026-04-06 - [Consolidated Likes Retrieval for Templates]
+**Learning:** Using Prisma's `include: { _count: { select: { ... } } }` allows fetching related record counts in a single database query, significantly reducing overhead compared to manual `groupBy` or separate count queries for each item in a list.
+**Action:** Prefer Prisma's native `_count` inclusion for fetching relational counts (likes, items, comments) instead of manual aggregation or separate queries to minimize database roundtrips and application-level mapping logic.
