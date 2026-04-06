@@ -1,18 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Моки для bcryptjs — должны быть ДО импорта
-// Используем реальный bcrypt для хеширования в тестах
-const actualBcrypt = await vi.importActual("bcryptjs");
-vi.mock("bcryptjs", async () => {
-  const actual = await vi.importActual("bcryptjs");
-  return {
-    default: {
-      hash: vi.fn(actual.hash.bind(actual)),
-      compare: vi.fn(actual.compare.bind(actual)),
-    },
-  };
-});
-
 // Моки для Prisma — объявляем внутри factory для vi.mock
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
@@ -21,16 +8,27 @@ vi.mock("../../lib/prisma.js", () => ({
       findFirst: vi.fn(),
       update: vi.fn(),
     },
-    tierList: {
-      count: vi.fn(),
-    },
     template: {
       count: vi.fn(),
     },
     tierListLike: {
       count: vi.fn(),
     },
+    tierList: {
+      count: vi.fn(),
+      aggregate: vi.fn(),
+    },
   },
+}));
+
+// Мокаем bcryptjs ПЕРЕД импортом
+vi.mock("bcryptjs", () => ({
+  default: {
+    hash: vi.fn(async (pw: string) => `hashed_${pw}`),
+    compare: vi.fn(async (pw: string, hash: string) => hash === `hashed_${pw}`),
+  },
+  hash: vi.fn(async (pw: string) => `hashed_${pw}`),
+  compare: vi.fn(async (pw: string, hash: string) => hash === `hashed_${pw}`),
 }));
 
 // Импортируем после vi.mock
@@ -251,15 +249,8 @@ describe("users.service", () => {
 
     const mockUser = {
       id: mockUserId,
-      passwordHash: "",
+      passwordHash: "hashed_oldPassword123",
     };
-
-    beforeEach(async () => {
-      (mockUser as any).passwordHash = await bcrypt.hash(
-        mockCurrentPassword,
-        10,
-      );
-    });
 
     it("должен изменить пароль", async () => {
       (prisma.user.findUnique as any).mockResolvedValue(mockUser);
@@ -282,7 +273,7 @@ describe("users.service", () => {
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: {
-            passwordHash: expect.stringMatching(/^\$2[aby]\$/),
+            passwordHash: "hashed_newPassword456",
           },
         }),
       );
@@ -330,7 +321,7 @@ describe("users.service", () => {
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: {
-            passwordHash: expect.stringMatching(/^\$2[aby]\$/),
+            passwordHash: "hashed_newPassword456",
           },
         }),
       );
@@ -457,7 +448,7 @@ describe("users.service", () => {
       });
     });
 
-    it("должен посчитать лайки только тир-листов пользователя", async () => {
+    it("должен посчитать общие лайки через count по userId", async () => {
       (prisma.tierList.count as any).mockResolvedValue(1);
       (prisma.template.count as any).mockResolvedValue(0);
       (prisma.tierListLike.count as any).mockResolvedValue(5);

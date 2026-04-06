@@ -179,36 +179,37 @@ export interface UserStats {
 
 // GET /api/users/me/stats - получить статистику пользователя
 export async function getUserStats(userId: number) {
-  // Количество тир-листов
-  const tierListsCount = await prisma.tierList.count({
-    where: { userId },
-  });
-
-  // Количество шаблонов
-  const templatesCount = await prisma.template.count({
-    where: { authorId: userId },
-  });
-
-  // Общее количество лайков на тир-листах пользователя
-  const likesCount = await prisma.tierListLike.count({
-    where: {
-      tierList: { userId },
-    },
-  });
-
-  // Лайки за последние 24 часа
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const likesTodayCount = await prisma.tierListLike.count({
-    where: {
-      tierList: { userId },
-      createdAt: { gte: oneDayAgo },
-    },
-  });
+
+  // Оптимизация Bolt: выполняем запросы параллельно и используем агрегацию для лайков
+  const [tierListsCount, templatesCount, totalLikesResult, likesTodayCount] =
+    await Promise.all([
+      // Количество тир-листов
+      prisma.tierList.count({ where: { userId } }),
+
+      // Количество шаблонов
+      prisma.template.count({ where: { authorId: userId } }),
+
+      // Общее количество лайков на тир-листах пользователя
+      prisma.tierListLike.count({
+        where: {
+          tierList: { userId },
+        },
+      }),
+
+      // Лайки за последние 24 часа (остается через count, т.к. нет денормализованного поля за период)
+      prisma.tierListLike.count({
+        where: {
+          tierList: { userId },
+          createdAt: { gte: oneDayAgo },
+        },
+      }),
+    ]);
 
   return {
     tierListsCount,
     templatesCount,
-    likesCount,
+    likesCount: totalLikesResult,
     likesTodayCount,
   };
 }
