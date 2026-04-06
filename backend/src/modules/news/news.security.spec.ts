@@ -10,6 +10,7 @@ vi.mock("../../lib/prisma.js", () => ({
     newsArticle: {
       findMany: vi.fn(),
       count: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -98,5 +99,34 @@ describe("News Security (Vulnerability Reproduction)", () => {
     }));
 
     await adminApp.close();
+  });
+
+  it("should NOT return unpublished news by ID by default (SECURED)", async () => {
+    const unpublishedArticle = { id: 99, isPublished: false, title: "Draft" };
+    (prisma.newsArticle.findFirst as any).mockResolvedValue(unpublishedArticle);
+
+    // This is what we WANT to happen after the fix.
+    // If we call with default (publishedOnly: true), it should either filter in Prisma or we check it manually.
+    // We'll implement Prisma filtering.
+    await newsService.getNewsById(99);
+
+    expect(prisma.newsArticle.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 99, isPublished: true }
+    }));
+  });
+
+  it("should enforce publishedOnly=true in route for GET /:id for unauthenticated users", async () => {
+    (prisma.newsArticle.findFirst as any).mockResolvedValue(null);
+
+    // Act: Calling the route as anonymous user
+    await request(app.server)
+      .get("/99")
+      .expect(404);
+
+    // Assert: Check that service was called with publishedOnly: true (implicit or explicit)
+    // We expect the where clause to have included isPublished: true
+    expect(prisma.newsArticle.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 99, isPublished: true }
+    }));
   });
 });
