@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { NewsService } from "./news.service.js";
 import { createLogger } from "../../lib/logger.js";
