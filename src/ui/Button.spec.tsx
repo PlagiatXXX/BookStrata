@@ -60,4 +60,27 @@ describe("Button Component", () => {
 
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);
   });
+
+  it("should show loading spinner when isLoading is true", () => {
+    render(<Button isLoading>Loading Button</Button>);
+
+    const button = screen.getByRole("button");
+    expect(button).toHaveAttribute("aria-busy", "true");
+    expect(button).toBeDisabled();
+
+    // The text should be hidden with opacity-0 but still in the document
+    const text = screen.getByText(/loading button/i);
+    expect(text).toHaveClass("opacity-0");
+  });
+
+  it("should be disabled when isLoading is true even if disabled is false", () => {
+    render(
+      <Button isLoading disabled={false}>
+        Loading
+      </Button>,
+    );
+
+    const button = screen.getByRole("button");
+    expect(button).toBeDisabled();
+  });
 });

@@ -6,8 +6,6 @@ import { apiLogin, apiRegister, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
-import { Spinner } from "@/components/Spinner";
-
 
 type FormMode = "login" | "register";
 
@@ -322,7 +320,7 @@ export function AuthForm() {
 
               <Button
                 type="submit"
-                disabled={state.loading}
+                isLoading={state.loading}
                 className="w-full 
                 mt-6 
                 rounded-full 
@@ -339,16 +337,7 @@ export function AuthForm() {
                 py-2
                 text-white"
               >
-                {state.loading
-                  ? (
-                    <>
-                      <Spinner size="sm" className="mr-2" />
-                      Загрузка...
-                    </>
-                  )
-                  : mode === "login"
-                    ? "Войти"
-                    : "Зарегистрироваться"}
+                {mode === "login" ? "Войти" : "Зарегистрироваться"}
               </Button>
             </form>
           </div>
