@@ -1,4 +1,5 @@
 import "./ExportThemes.css";
+import { useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
@@ -19,6 +20,15 @@ import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import "./TierEditorPage.css";
 import type { Book, Tier } from "@/types";
+
+type PendingDeletedBook = {
+  book: Book;
+  containerId: string | null;
+  index: number;
+  timeoutId: ReturnType<typeof setTimeout>;
+};
+
+const DELETE_UNDO_DURATION_MS = 3000;
 
 // Логгер для страницы редактора
 const logger = createLogger("TierEditorPage", { color: "green" });
@@ -99,6 +109,7 @@ const TierListEditorContent = () => {
     dispatch,
     handleDragEnd,
     deleteBook,
+    restoreBook,
     addRow,
     updateTierSettings,
     renameTier,
@@ -146,16 +157,104 @@ const TierListEditorContent = () => {
     navigate,
   });
 
+  const pendingDeletedBooksRef = useRef<Map<string, PendingDeletedBook>>(
+    new Map(),
+  );
+
   // Обработчики с установкой hasUnsavedChanges
   const handleDragEndWithUnsaved = (event: DragEndEvent) => {
     handleDragEnd(event);
     setHasUnsavedChanges(true);
   };
 
+  const getBookPlacement = (bookId: string) => {
+    for (const tierId of listData.tierOrder) {
+      const tier = listData.tiers[tierId];
+      const index = tier?.bookIds.indexOf(bookId) ?? -1;
+
+      if (index >= 0) {
+        return {
+          containerId: tierId,
+          index,
+        };
+      }
+    }
+
+    const unrankedIndex = listData.unrankedBookIds.indexOf(bookId);
+    if (unrankedIndex >= 0) {
+      return {
+        containerId: null,
+        index: unrankedIndex,
+      };
+    }
+
+    return {
+      containerId: null,
+      index: listData.unrankedBookIds.length,
+    };
+  };
+
+  const undoDeleteBook = (bookId: string) => {
+    const pendingDeletedBook = pendingDeletedBooksRef.current.get(bookId);
+    if (!pendingDeletedBook) return;
+
+    clearTimeout(pendingDeletedBook.timeoutId);
+    pendingDeletedBooksRef.current.delete(bookId);
+    restoreBook(
+      pendingDeletedBook.book,
+      pendingDeletedBook.containerId,
+      pendingDeletedBook.index,
+    );
+    setHasUnsavedChanges(true);
+
+    sileo.success({
+      title: "Удаление отменено",
+      duration: 2500,
+    });
+  };
+
   const deleteBookWithUnsaved = (bookId: string) => {
+    const book = listData.books[bookId];
+    if (!book) return;
+
+    const placement = getBookPlacement(bookId);
     deleteBook(bookId);
     setHasUnsavedChanges(true);
-    handleDeleteBook(bookId);
+
+    const timeoutId = setTimeout(() => {
+      const pendingDeletedBook = pendingDeletedBooksRef.current.get(bookId);
+      if (!pendingDeletedBook) return;
+
+      pendingDeletedBooksRef.current.delete(bookId);
+      handleDeleteBook(bookId, {
+        showSuccessToast: false,
+        onError: () => {
+          restoreBook(
+            pendingDeletedBook.book,
+            pendingDeletedBook.containerId,
+            pendingDeletedBook.index,
+          );
+          setHasUnsavedChanges(true);
+        },
+      });
+    }, DELETE_UNDO_DURATION_MS);
+
+    pendingDeletedBooksRef.current.set(bookId, {
+      book,
+      containerId: placement.containerId,
+      index: placement.index,
+      timeoutId,
+    });
+
+    sileo.action({
+      title: "Книга удалена",
+      description: `Удалили "${book.title}"`,
+      duration: DELETE_UNDO_DURATION_MS,
+      button: {
+        title: "Отменить",
+        onClick: () => undoDeleteBook(bookId),
+      },
+    });
   };
 
   const addRowWithUnsaved = () => {
@@ -271,7 +370,7 @@ const TierListEditorContent = () => {
       onMyRatingsClick={handleMyRatingsClick}
     >
       <EditorLayout
-        activeItem={activeItem as Book | null}
+        activeItem={activeItem}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEndAndClear}
@@ -285,7 +384,7 @@ const TierListEditorContent = () => {
           isReadOnly={isReadOnly}
           isPro={isPro}
           tierGridRef={tierGridRef}
-          onDeleteBook={deleteBookWithUnsaved}
+          onDeleteBook={setBookToDelete}
           onEditBook={(book) => setBookToEdit(book)}
           onViewBook={handleViewBook}
           activeTierId={activeTierId}

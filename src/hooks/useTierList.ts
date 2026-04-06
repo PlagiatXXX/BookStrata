@@ -33,6 +33,14 @@ export type Action =
     }
   | { type: "ADD_BOOKS"; payload: { newBooks: Book[] } }
   | { type: "DELETE_BOOK"; payload: { bookId: string } }
+  | {
+      type: "RESTORE_BOOK";
+      payload: {
+        book: Book;
+        containerId: string | null;
+        index: number;
+      };
+    }
   | { type: "UPDATE_BOOK"; payload: { bookId: string; updates: Partial<Book> } }
   | { type: "REPLACE_BOOK_IDS"; payload: { tempId: string; realId: string }[] }
   | { type: "REPLACE_TIER_IDS"; payload: { tempId: string; realId: string }[] };
@@ -272,6 +280,47 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
       };
     }
 
+    case "RESTORE_BOOK": {
+      const { book, containerId, index } = action.payload;
+
+      if (state.books[book.id]) return state;
+
+      const restoredBooks = {
+        ...state.books,
+        [book.id]: book,
+      };
+
+      if (containerId && state.tiers[containerId]) {
+        const targetTier = state.tiers[containerId];
+        const targetBookIds = [...targetTier.bookIds];
+        const insertIndex = Math.max(0, Math.min(index, targetBookIds.length));
+
+        targetBookIds.splice(insertIndex, 0, book.id);
+
+        return {
+          ...state,
+          books: restoredBooks,
+          tiers: {
+            ...state.tiers,
+            [containerId]: {
+              ...targetTier,
+              bookIds: targetBookIds,
+            },
+          },
+        };
+      }
+
+      const restoredUnranked = [...state.unrankedBookIds];
+      const insertIndex = Math.max(0, Math.min(index, restoredUnranked.length));
+      restoredUnranked.splice(insertIndex, 0, book.id);
+
+      return {
+        ...state,
+        books: restoredBooks,
+        unrankedBookIds: restoredUnranked,
+      };
+    }
+
     case "UPDATE_BOOK": {
       const { bookId, updates } = action.payload;
       const book = state.books[bookId];
@@ -457,11 +506,29 @@ export const useTierList = (
       if (!sourceContainer || !destContainer) return;
 
       const sourceIndex = active.data.current?.sortable?.index;
+      if (typeof sourceIndex !== "number") return;
+
       let destIndex;
+      const overIndex = over.data.current?.sortable?.index;
+      const activeRect = active.rect.current.translated;
+      const overRect = over.rect;
+      const insertAfter =
+        over.data.current?.type === "book" &&
+        typeof overIndex === "number" &&
+        Boolean(activeRect) &&
+        activeRect.left + activeRect.width / 2 > overRect.left + overRect.width / 2;
 
       // Если over - это книга, используем её индекс
-      if (over.data.current?.type === "book" && over.data.current?.sortable) {
-        destIndex = over.data.current.sortable.index;
+      if (over.data.current?.type === "book" && typeof overIndex === "number") {
+        if (sourceContainer === destContainer) {
+          if (insertAfter) {
+            destIndex = overIndex + (sourceIndex < overIndex ? 0 : 1);
+          } else {
+            destIndex = overIndex + (sourceIndex < overIndex ? -1 : 0);
+          }
+        } else {
+          destIndex = overIndex + (insertAfter ? 1 : 0);
+        }
       } else {
         // Иначе добавляем в конец
         const items =
@@ -471,8 +538,7 @@ export const useTierList = (
         destIndex = items ? items.length : 0;
       }
 
-      if (typeof sourceIndex !== "number" || typeof destIndex !== "number")
-        return;
+      if (typeof destIndex !== "number") return;
 
       dispatch({
         type: "REORDER_ITEMS",
@@ -541,6 +607,22 @@ export const useTierList = (
     dispatch({ type: "DELETE_BOOK", payload: { bookId } });
   };
 
+  const restoreBook = (
+    book: Book,
+    containerId: string | null,
+    index: number,
+  ) => {
+    tierListHookLogger.info("restoreBook", {
+      bookId: book.id,
+      containerId,
+      index,
+    });
+    dispatch({
+      type: "RESTORE_BOOK",
+      payload: { book, containerId, index },
+    });
+  };
+
   const replaceBookIds = (
     replacements: { tempId: string; realId: string }[],
   ) => {
@@ -573,6 +655,7 @@ export const useTierList = (
     renameTier,
     addBooks,
     deleteBook,
+    restoreBook,
     replaceBookIds,
     replaceTierIds,
     updateBook,

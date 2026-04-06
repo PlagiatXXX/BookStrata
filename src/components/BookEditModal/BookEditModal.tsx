@@ -1,12 +1,12 @@
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { Book } from "@/types";
 import { createLogger } from "@/lib/logger";
+import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
 
-// Логгер для компонента редактирования книги
-const logger = createLogger('BookEditModal', { color: 'cyan' });
+const logger = createLogger("BookEditModal", { color: "cyan" });
 
 interface BookEditModalProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ interface BookEditModalProps {
       author?: string;
       description?: string;
       thoughts?: string;
+      coverImageUrl?: string;
     },
   ) => void;
 }
@@ -28,40 +29,49 @@ interface BookFormState {
   author: string;
   description: string;
   thoughts: string;
+  coverImageUrl: string;
 }
 
 type BookFormAction =
-  | { type: 'SET_BOOK'; book: Book }
-  | { type: 'RESET' }
-  | { type: 'SET_TITLE'; title: string }
-  | { type: 'SET_AUTHOR'; author: string }
-  | { type: 'SET_DESCRIPTION'; description: string }
-  | { type: 'SET_THOUGHTS'; thoughts: string };
+  | { type: "SET_BOOK"; book: Book }
+  | { type: "RESET" }
+  | { type: "SET_TITLE"; title: string }
+  | { type: "SET_AUTHOR"; author: string }
+  | { type: "SET_DESCRIPTION"; description: string }
+  | { type: "SET_THOUGHTS"; thoughts: string }
+  | { type: "SET_COVER_IMAGE_URL"; coverImageUrl: string };
 
-function bookFormReducer(state: BookFormState, action: BookFormAction): BookFormState {
+function bookFormReducer(
+  state: BookFormState,
+  action: BookFormAction,
+): BookFormState {
   switch (action.type) {
-    case 'SET_BOOK':
+    case "SET_BOOK":
       return {
         title: action.book.title,
         author: action.book.author,
         description: action.book.description || "",
         thoughts: action.book.thoughts || "",
+        coverImageUrl: action.book.coverImageUrl || "",
       };
-    case 'RESET':
+    case "RESET":
       return {
         title: "",
         author: "",
         description: "",
         thoughts: "",
+        coverImageUrl: "",
       };
-    case 'SET_TITLE':
+    case "SET_TITLE":
       return { ...state, title: action.title };
-    case 'SET_AUTHOR':
+    case "SET_AUTHOR":
       return { ...state, author: action.author };
-    case 'SET_DESCRIPTION':
+    case "SET_DESCRIPTION":
       return { ...state, description: action.description };
-    case 'SET_THOUGHTS':
+    case "SET_THOUGHTS":
       return { ...state, thoughts: action.thoughts };
+    case "SET_COVER_IMAGE_URL":
+      return { ...state, coverImageUrl: action.coverImageUrl };
     default:
       return state;
   }
@@ -72,7 +82,16 @@ const INITIAL_STATE: BookFormState = {
   author: "",
   description: "",
   thoughts: "",
+  coverImageUrl: "",
 };
+
+const sectionTitleClass =
+  "mb-3 block text-[11px] font-bold uppercase tracking-[0.14em] text-[#c1fffe]";
+
+const inputClass =
+  "w-full border-2 border-black bg-[#0a0a0a] px-4 py-3 text-sm text-[#f6f1e8] placeholder:text-[#676767] outline-none transition-colors focus:border-[#c1fffe]";
+
+const textareaClass = `${inputClass} resize-none`;
 
 export const BookEditModal = ({
   isOpen,
@@ -81,231 +100,209 @@ export const BookEditModal = ({
   onSave,
 }: BookEditModalProps) => {
   const [state, dispatch] = useReducer(bookFormReducer, INITIAL_STATE);
-  const { title, author, description, thoughts } = state;
+  const [isCoverDeleteModalOpen, setIsCoverDeleteModalOpen] = useState(false);
+  const { title, author, description, thoughts, coverImageUrl } = state;
 
   useEffect(() => {
     if (book && isOpen) {
-      logger.info("Модальное окно редактирования открыто", {
+      logger.info("Book edit modal opened", {
         bookId: book.id,
-        bookTitle: book.title
+        bookTitle: book.title,
       });
-      dispatch({ type: 'SET_BOOK', book });
+      dispatch({ type: "SET_BOOK", book });
     } else if (!isOpen) {
-      dispatch({ type: 'RESET' });
+      dispatch({ type: "RESET" });
+      setIsCoverDeleteModalOpen(false);
     }
   }, [book, isOpen]);
 
-  const handleTitleChange = (value: string) => {
-    dispatch({ type: 'SET_TITLE', title: value });
-  };
-
-  const handleAuthorChange = (value: string) => {
-    dispatch({ type: 'SET_AUTHOR', author: value });
-  };
-
-  const handleDescriptionChange = (value: string) => {
-    dispatch({ type: 'SET_DESCRIPTION', description: value });
-  };
-
-  const handleThoughtsChange = (value: string) => {
-    dispatch({ type: 'SET_THOUGHTS', thoughts: value });
-  };
-
   const handleSave = () => {
-    logger.info("Пользователь нажал 'Сохранить' в модальном окне", {
+    logger.info("Book edit modal save clicked", {
       bookId: book?.id,
-      newTitle: title.trim(), 
+      newTitle: title.trim(),
     });
-    if (book) {
-      onSave(book.id, {
-        title: title.trim(),
-        author: author.trim(),
-        description: description.trim() || undefined,
-        thoughts: thoughts.trim() || undefined,
-      });
-      onClose();
-    }
-  };
 
-  const handleCancel = () => {
+    if (!book) return;
+
+    onSave(book.id, {
+      title: title.trim(),
+      author: author.trim(),
+      description: description.trim() || undefined,
+      thoughts: thoughts.trim() || undefined,
+      coverImageUrl,
+    });
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleCancel} maxWidth="2xl">
-      <div className="flex flex-col gap-6 w-full max-h-[90vh] p-8 max-md:p-3 max-sm:p-2 max-md:gap-4 max-sm:gap-3 relative">
-        {/* Крестик закрытия в верхнем правом углу */}
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
+      <div className="relative flex max-h-[90vh] w-full flex-col overflow-hidden bg-[#111111] text-[#f6f1e8]">
         <button
-          onClick={handleCancel}
-          className="absolute right-4 top-4 z-20 p-2 text-gray-400 hover:text-white
-                     nb-heavy-border hover:bg-surface-border
-                     transition-all duration-200
-                     max-md:right-2 max-md:top-2 max-md:p-1.5"
+          onClick={onClose}
+          className="absolute right-5 top-5 z-20 flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8]"
           title="Закрыть"
         >
-          <X size={24} className="md:w-6 md:h-6 sm:w-5 sm:h-5" />
+          <X size={18} />
         </button>
 
-        {/* Заголовок с неоновым эффектом */}
-        <div className="shrink-0">
-          <div className="flex flex-col gap-3 max-sm:gap-2">
+        <div className="border-b-2 border-black bg-[#181818] px-6 py-5">
+          <div className="pr-14">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
+              Редактирование книги
+            </p>
             <label
               htmlFor="book-title-input"
-              className="text-xs font-semibold text-cyan-400 uppercase tracking-wider text-center max-sm:text-[10px]"
+              className="mb-3 block text-[11px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
             >
-              Название книги
+              Название
             </label>
             <input
               id="book-title-input"
               type="text"
               value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
+              onChange={(e) =>
+                dispatch({ type: "SET_TITLE", title: e.target.value })
+              }
               autoFocus
-              className="px-6 py-4 bg-linear-to-r from-surface-dark via-surface-dark to-surface-dark
-                         border nb-heavy-border nb-heavy-border text-white text-center text-2xl font-bold
-
-                         focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:nb-heavy-border
-                         transition-all duration-200 placeholder:text-gray-600
-                         max-md:text-lg max-md:px-4 max-md:py-3
-                         max-sm:text-base max-sm:px-3 max-sm:py-2 max-sm:nb-heavy-border"
+              className="w-full border-2 border-black bg-[#0a0a0a] px-5 py-4 text-xl font-black tracking-[-0.03em] text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] max-md:text-lg"
               placeholder="Введите название книги"
             />
           </div>
         </div>
 
-        {/* Основной контент с прокруткой */}
-        <div className="flex-1 overflow-y-auto -mx-2 flex flex-col gap-6 pr-2 max-md:gap-4 max-sm:gap-3 max-md:-mx-1 max-sm:-mx-0.5">
-          {/* Верхняя часть: Обложка слева, Автор и Описание справа */}
-          <div className="flex gap-6 max-md:flex-col max-md:gap-4 max-sm:gap-3">
-            {/* Обложка книги слева с неоновой рамкой */}
-            <div className="w-40 h-56 shrink-0 nb-heavy-border overflow-hidden
-
-                            bg-linear-to-br from-surface-dark to-surface-border
-                            border nb-heavy-border
-                            transition-all duration-200 hover:
-                            max-md:w-full max-md:h-64 max-md:mx-auto
-                            max-sm:h-48">
-              {book?.coverImageUrl ? (
-                <img
-                  src={book.coverImageUrl}
-                  alt={book.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="224"><rect fill="%23333" width="160" height="224"/><text fill="%23666" x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Нет обложки</text></svg>';
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center
-                                bg-linear-to-br from-surface-dark to-surface-border
-                                text-gray-500">
-                  <span className="text-sm">Нет обложки</span>
+        <div className="flex-1 overflow-y-auto bg-[#111111] p-6">
+          <div className="flex flex-col gap-6">
+            <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)]">
+              <section className="border-2 border-black bg-[#171717] p-3">
+                <p className={`${sectionTitleClass} text-center`}>Обложка</p>
+                <div className="mx-auto h-64 w-40 overflow-hidden border-2 border-black bg-[#0a0a0a] max-sm:h-56">
+                  {coverImageUrl ? (
+                    <img
+                      src={coverImageUrl}
+                      alt={book.title}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src =
+                          "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='224'><rect fill='%23333' width='160' height='224'/><text fill='%23666' x='50%' y='50%' text-anchor='middle' dominant-baseline='middle'>Нет обложки</text></svg>";
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[#6b6b6b]">
+                      <span className="text-sm">Нет обложки</span>
+                    </div>
+                  )}
                 </div>
-              )}
+                {coverImageUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsCoverDeleteModalOpen(true)}
+                    className="mt-3 w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#ff9db7] transition-colors hover:border-[#ff5c8a] hover:bg-[#171717] hover:text-[#ffd4df]"
+                  >
+                    Удалить обложку
+                  </button>
+                ) : null}
+              </section>
+
+              <div className="grid gap-6">
+                <section className="border-2 border-black bg-[#171717] p-4">
+                  <label
+                    htmlFor="book-author-input"
+                    className={sectionTitleClass}
+                  >
+                    Автор
+                  </label>
+                  <input
+                    id="book-author-input"
+                    type="text"
+                    value={author}
+                    onChange={(e) =>
+                      dispatch({ type: "SET_AUTHOR", author: e.target.value })
+                    }
+                    className={inputClass}
+                    placeholder="Автор книги"
+                  />
+                </section>
+
+                <section className="border-2 border-black bg-[#171717] p-4">
+                  <label
+                    htmlFor="book-description-input"
+                    className={sectionTitleClass}
+                  >
+                    Описание
+                  </label>
+                  <textarea
+                    id="book-description-input"
+                    value={description}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "SET_DESCRIPTION",
+                        description: e.target.value,
+                      })
+                    }
+                    className={`${textareaClass} min-h-40`}
+                    placeholder="Краткое описание книги"
+                  />
+                </section>
+              </div>
             </div>
 
-            {/* Справа: Автор и Описание */}
-            <div className="flex-1 flex flex-col gap-5 min-w-0 max-md:gap-3 max-sm:gap-2">
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="book-author-input"
-                  className="text-xs font-semibold text-purple-400 uppercase tracking-wider max-sm:text-[10px]"
-                >
-                  Автор
-                </label>
-                <input
-                  id="book-author-input"
-                  type="text"
-                  value={author}
-                  onChange={(e) => handleAuthorChange(e.target.value)}
-                  className="px-4 py-3 bg-surface-dark
-                             border nb-heavy-border nb-heavy-border text-white
-
-                             focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:nb-heavy-border
-                             transition-all duration-200 placeholder:text-gray-600
-                             max-sm:px-3 max-sm:py-2 max-sm:text-sm"
-                  placeholder="Автор книги"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2 flex-1 min-w-0">
-                <label
-                  htmlFor="book-description-input"
-                  className="text-xs font-semibold text-purple-400 uppercase tracking-wider max-sm:text-[10px]"
-                >
-                  Описание
-                </label>
-                <textarea
-                  id="book-description-input"
-                  value={description}
-                  onChange={(e) => handleDescriptionChange(e.target.value)}
-                  className="px-4 py-3 bg-surface-dark
-                             border nb-heavy-border nb-heavy-border text-white resize-none flex-1 min-h-30
-
-                             focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:nb-heavy-border
-                             transition-all duration-200 placeholder:text-gray-600
-                             max-sm:px-3 max-sm:py-2 max-sm:text-sm max-sm:min-h-20"
-                  placeholder="Краткое описание книги"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Нижняя часть: Мои мысли на всю ширину */}
-          <div className="flex flex-col gap-2 max-sm:gap-1.5">
-            <label
-              htmlFor="book-thoughts-input"
-              className="text-xs font-semibold text-pink-400 uppercase tracking-wider max-sm:text-[10px]"
-            >
-              Мои мысли
-            </label>
-            <textarea
-              id="book-thoughts-input"
-              value={thoughts}
-              onChange={(e) => handleThoughtsChange(e.target.value)}
-              className="px-4 py-3 bg-surface-dark
-                         border nb-heavy-border nb-heavy-border text-white resize-none
-
-                         focus:outline-none focus:ring-2 focus:ring-pink-400/50 focus:nb-heavy-border
-                         transition-all duration-200 placeholder:text-gray-600
-                         max-sm:px-3 max-sm:py-2 max-sm:text-sm max-sm:rows-3"
-              rows={5}
-              placeholder="Ваши мысли, заметки и впечатления о книге"
-            />
+            <section className="border-2 border-black bg-[#171717] p-4">
+              <label
+                htmlFor="book-thoughts-input"
+                className={sectionTitleClass}
+              >
+                Мои мысли
+              </label>
+              <textarea
+                id="book-thoughts-input"
+                value={thoughts}
+                onChange={(e) =>
+                  dispatch({ type: "SET_THOUGHTS", thoughts: e.target.value })
+                }
+                className={`${textareaClass} min-h-36`}
+                rows={5}
+                placeholder="Ваши мысли, заметки и впечатления о книге"
+              />
+            </section>
           </div>
         </div>
 
-        {/* Кнопки внизу с отступами и неоновым стилем */}
-        <div className="flex justify-end gap-4 shrink-0 pt-6 mt-2 nb-heavy-border nb-heavy-border max-md:flex-col-reverse max-md:gap-2 max-md:pt-4 max-sm:pt-3 max-sm:gap-1.5">
+        <div className="flex shrink-0 justify-end gap-3 border-t-2 border-black bg-[#0a0a0a] px-6 py-5 max-md:flex-col-reverse">
           <Button
             variant="ghost"
-            onClick={handleCancel}
-            className="px-6 py-2.5 nb-heavy-border font-medium
-                       border nb-heavy-border hover:nb-heavy-border
-                       hover:bg-surface-dark
-                       transition-all duration-200
-                       max-md:w-full
-                       max-sm:px-4 max-sm:py-2 max-sm:text-sm"
+            onClick={onClose}
+            className="border-2 border-black bg-transparent px-6 py-3 font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] max-md:w-full"
           >
             Отмена
           </Button>
           <Button
             variant="primary"
             onClick={handleSave}
-            className="px-6 py-2.5 nb-heavy-border font-semibold
-                       bg-linear-to-r from-cyan-600 to-blue-600
-                       hover:from-cyan-500 hover:to-blue-500
-
-                       hover:
-                       transition-all duration-200
-                       border nb-heavy-border
-                       max-md:w-full
-                       max-sm:px-4 max-sm:py-2 max-sm:text-sm"
+            className="border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black hover:bg-[#9cf5f3] hover:text-black max-md:w-full"
           >
             Сохранить
           </Button>
         </div>
       </div>
+
+      <EditorConfirmModal
+        isOpen={isCoverDeleteModalOpen}
+        onClose={() => setIsCoverDeleteModalOpen(false)}
+        onConfirm={() => {
+          dispatch({ type: "SET_COVER_IMAGE_URL", coverImageUrl: "" });
+          setIsCoverDeleteModalOpen(false);
+        }}
+        title="Удалить обложку?"
+        titleId="delete-cover-title"
+        confirmLabel="Удалить"
+        description={
+          <>
+            <p>Обложка будет удалена из книги после сохранения изменений.</p>
+            <p className="mt-3">Это поможет избежать случайного удаления.</p>
+          </>
+        }
+      />
     </Modal>
   );
 };

@@ -143,6 +143,10 @@
   z-index: 10;
 }
 
+.neo-brutalist-editor .nb-tier-row-drop-target {
+  box-shadow: 0 0 0 2px rgba(193, 255, 254, 0.55);
+}
+
 .neo-brutalist-editor .nb-tier-row:first-child,
 .neo-brutalist-editor .nb-tier-row-active:first-child {
   border-top: var(--nb-border-width) solid var(--nb-border);
@@ -172,28 +176,65 @@
   min-height: 120px;
 }
 
+.neo-brutalist-editor .nb-book-track-drop-target {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(193, 255, 254, 0.12),
+      rgba(193, 255, 254, 0.03)
+    );
+}
+
+.neo-brutalist-editor .nb-book-insert-before::before,
+.neo-brutalist-editor .nb-book-insert-after::after,
+.neo-brutalist-editor .nb-book-track-end-indicator {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 999px;
+  background: #c1fffe;
+  box-shadow:
+    0 0 0 1px #000000,
+    0 0 12px rgba(193, 255, 254, 0.55);
+  pointer-events: none;
+  z-index: 30;
+}
+
+.neo-brutalist-editor .nb-book-insert-before::before {
+  left: -10px;
+}
+
+.neo-brutalist-editor .nb-book-insert-after::after,
+.neo-brutalist-editor .nb-book-track-end-indicator {
+  right: -10px;
+}
+
 /* BOOK CARD */
-.neo-brutalist-editor .nb-book-card {
+.nb-book-card {
   width: 80px;
   aspect-ratio: 2/3;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  border: var(--nb-border-width) solid var(--nb-border);
-  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0 var(--nb-border);
+  border: var(--nb-border-width, 2px) solid var(--nb-border, #000000);
+  box-shadow: var(--nb-shadow-offset, 2px) var(--nb-shadow-offset, 2px) 0 0
+    var(--nb-border, #000000);
   position: relative;
   border-radius: 0 !important;
   transition: transform 100ms cubic-bezier(0, 0, 0.2, 1), border-color 100ms cubic-bezier(0, 0, 0.2, 1), box-shadow 100ms cubic-bezier(0, 0, 0.2, 1);
   overflow: hidden;
 }
 
-.neo-brutalist-editor .nb-book-card:hover {
+.nb-book-card:hover {
   transform: rotate(2deg);
-  border-color: var(--nb-secondary);
-  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0 var(--nb-secondary);
+  border-color: var(--nb-secondary, #ff51fa);
+  box-shadow: var(--nb-shadow-offset, 2px) var(--nb-shadow-offset, 2px) 0 0
+    var(--nb-secondary, #ff51fa);
 }
 
-.neo-brutalist-editor .nb-book-card img {
+.nb-book-card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -206,6 +247,18 @@
   background-color: var(--nb-surface-container-low);
   padding: 1rem;
   border-radius: 0 !important;
+}
+
+.neo-brutalist-editor .nb-sidebar-drop-target {
+  border-color: var(--nb-primary);
+  box-shadow: 0 0 0 2px rgba(193, 255, 254, 0.35);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(193, 255, 254, 0.14),
+      rgba(193, 255, 254, 0.05)
+    ),
+    var(--nb-surface-container-low);
 }
 
 .neo-brutalist-editor .nb-section-header {

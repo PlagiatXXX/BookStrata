@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
-import { useDroppable } from "@dnd-kit/core";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
 import type { Book } from "@/types";
 import { SortableBookCover } from "@/components/SortableBookCover/SortableBookCover";
 import { ImageUploader } from "@/components/ImageUploader/ImageUploader";
@@ -19,7 +19,8 @@ interface UnrankedItemsProps {
 
 export const UnrankedItems = memo(
   ({ books, booksCount, onUpload, onDeleteBook, onEditBook, onViewBook, isPro = false }: UnrankedItemsProps) => {
-    const { setNodeRef } = useDroppable({
+    const { over } = useDndContext();
+    const { setNodeRef, isOver, active } = useDroppable({
       id: UNRANKED_AREA_ID,
       data: {
         type: "book",
@@ -28,11 +29,16 @@ export const UnrankedItems = memo(
     });
 
     const displayBooksCount = booksCount ?? books.length;
+    const isBookDropTarget = isOver && active?.data.current?.type === "book";
+    const showEndInsertIndicator =
+      isBookDropTarget && over?.id === UNRANKED_AREA_ID;
 
     return (
       <div
         ref={setNodeRef}
-        className="nb-sidebar mt-10 flex flex-col text-white"
+        className={`nb-sidebar mt-10 flex flex-col text-white ${
+          isBookDropTarget ? "nb-sidebar-drop-target" : ""
+        }`}
       >
         <div className="nb-section-header">
           <h3 className="nb-label-md text-[#c1fffe]">
@@ -50,7 +56,13 @@ export const UnrankedItems = memo(
             items={books.map((b) => b.id)}
             strategy={rectSortingStrategy}
           >
-            <div className="flex flex-wrap gap-4">
+            <div className="relative flex flex-wrap gap-4">
+              {showEndInsertIndicator ? (
+                <div
+                  className="nb-book-track-end-indicator"
+                  aria-hidden="true"
+                />
+              ) : null}
               {books.map((book) => (
                 <SortableBookCover
                   key={book.id}

@@ -3,6 +3,7 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useDndContext } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Settings, Trash2 } from "lucide-react";
 import type { Tier, Book } from "@/types";
@@ -37,6 +38,7 @@ export const TierRow = memo(
     onViewBook,
   }: TierRowProps) => {
     /* ---------- SORTABLE ТИР ---------- */
+    const { over } = useDndContext();
     const {
       attributes,
       listeners,
@@ -44,6 +46,8 @@ export const TierRow = memo(
       transform,
       transition,
       isDragging,
+      isOver,
+      active,
     } = useSortable({
       id: tier.id,
       data: {
@@ -61,12 +65,16 @@ export const TierRow = memo(
     };
 
     const activeClass = isActive ? "nb-tier-row-active" : "";
+    const isBookDropTarget = isOver && active?.data.current?.type === "book";
+    const showEndInsertIndicator = isBookDropTarget && over?.id === tier.id;
 
     return (
       <div
         ref={setSortableRef}
         style={style}
-        className={`nb-tier-row group relative flex ${activeClass}`}
+        className={`nb-tier-row group relative flex ${activeClass} ${
+          isBookDropTarget ? "nb-tier-row-drop-target" : ""
+        }`}
         role="listitem"
       >
         <TierLabel
@@ -85,8 +93,16 @@ export const TierRow = memo(
         >
           <div
             className={`nb-book-track relative flex flex-1 flex-wrap content-start items-center
-                       transition-colors`}
+                       transition-colors ${
+                         isBookDropTarget ? "nb-book-track-drop-target" : ""
+                       }`}
           >
+            {showEndInsertIndicator ? (
+              <div
+                className="nb-book-track-end-indicator"
+                aria-hidden="true"
+              />
+            ) : null}
             {books.map((book) => (
               <SortableBookCover
                 key={book.id}

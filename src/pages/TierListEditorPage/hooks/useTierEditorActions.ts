@@ -12,6 +12,10 @@ import { createLogger } from '@/lib/logger';
 // Логгер для хука действий редактора
 const logger = createLogger('TierEditorActions', { color: 'purple' });
 
+function isPersistedBookId(bookId: string): boolean {
+  return /^\d+$/.test(bookId);
+}
+
 interface UseTierEditorActionsParams {
   tierListId: string | undefined;
   dispatch: React.Dispatch<Action>;
@@ -73,11 +77,11 @@ export function useTierEditorActions({
   );
 
   const handleSaveBook = useCallback(
-    (bookId: string, data: { title?: string; author?: string; description?: string; thoughts?: string }) => {
+    (bookId: string, data: { title?: string; author?: string; description?: string; thoughts?: string; coverImageUrl?: string }) => {
       updateBook(bookId, data);
       setHasUnsavedChanges(true);
 
-      if (!tierListId || bookId.startsWith('book-')) return;
+      if (!tierListId || !isPersistedBookId(bookId)) return;
 
       void (async () => {
         setIsUpdatingBook(true);
@@ -112,13 +116,37 @@ export function useTierEditorActions({
   );
 
   const handleDeleteBook = useCallback(
-    (bookId: string) => {
-      if (!tierListId || bookId.startsWith('book-')) return;
+    (
+      bookId: string,
+      options?: {
+        showSuccessToast?: boolean;
+        onError?: () => void;
+      },
+    ) => {
+      const shouldShowSuccessToast = options?.showSuccessToast ?? true;
+      if (!isPersistedBookId(bookId)) {
+        if (shouldShowSuccessToast) {
+          sileo.success({
+            title: 'Книга удалена',
+            duration: 2500,
+          });
+        }
+        return;
+      }
+
+      if (!tierListId) return;
 
       void (async () => {
         try {
           await removeBookFromTierList(tierListId, bookId);
+          if (shouldShowSuccessToast) {
+            sileo.success({
+              title: 'Книга удалена',
+              duration: 2500,
+            });
+          }
         } catch (error) {
+          options?.onError?.();
           logger.error(error instanceof Error ? error : new Error(String(error)), {
             action: 'removeBookFromTierList',
             tierListId,

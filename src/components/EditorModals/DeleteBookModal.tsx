@@ -1,6 +1,4 @@
-import { AlertTriangle, X } from "lucide-react";
-import { Modal } from "@/ui/Modal";
-import { Button } from "@/ui/Button";
+import { EditorConfirmModal } from "./EditorConfirmModal";
 
 interface DeleteBookModalProps {
   isOpen: boolean;
@@ -16,52 +14,28 @@ export function DeleteBookModal({
   bookTitle,
 }: DeleteBookModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="sm" titleId="delete-book-title">
-      <div className="relative flex flex-col items-center p-6 text-center text-[#d8f9ff]">
-        <button
-          onClick={onClose}
-          className="absolute right-6 top-6 flex size-8 cursor-pointer items-center justify-center nb-heavy-border border border-black text-cyan-200/80 transition-colors hover:border-black hover:text-fuchsia-200"
-          aria-label="Закрыть"
-        >
-          <X size={16} />
-        </button>
-
-        <div className="mb-4 mt-2">
-          <div className="nb-heavy-border border border-fuchsia-300/45 bg-[#ff51fa] p-3">
-            <AlertTriangle size={28} className="text-fuchsia-200" />
-          </div>
-        </div>
-
-        <h3 id="delete-book-title" className="mb-2 text-xl font-bold tracking-[-0.02em] text-[#e8ffff]">
-          Удалить книгу?
-        </h3>
-
-        <p className="mb-6 text-cyan-200/75">
-          {bookTitle ? (
-            <>
-              Вы уверены, что хотите удалить книгу{" "}
-              <span className="font-semibold text-cyan-100">"{bookTitle}"</span>?
-            </>
-          ) : (
-            "Вы уверены, что хотите удалить эту книгу?"
-          )}
-          <br />
-          Это действие нельзя отменить.
-        </p>
-
-        <div className="flex w-full gap-3">
-          <Button variant="outline" onClick={onClose} className="nb-btn-secondary flex-1">
-            Отмена
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            className="flex-1 nb-heavy-border border border-black nb-btn-primary text-fuchsia-100 hover:bg-[rgba(255,0,204,0.25)]"
-          >
-            Удалить
-          </Button>
-        </div>
-      </div>
-    </Modal>
+    <EditorConfirmModal
+      isOpen={isOpen}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      title="Удалить книгу?"
+      titleId="delete-book-title"
+      confirmLabel="Удалить"
+      description={
+        <>
+          <p>
+            {bookTitle ? (
+              <>
+                Вы уверены, что хотите удалить книгу{" "}
+                <span className="font-bold text-[#f6f1e8]">"{bookTitle}"</span>?
+              </>
+            ) : (
+              "Вы уверены, что хотите удалить эту книгу?"
+            )}
+          </p>
+          <p className="mt-3">Это действие нельзя отменить.</p>
+        </>
+      }
+    />
   );
 }

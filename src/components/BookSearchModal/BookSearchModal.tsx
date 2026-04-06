@@ -77,14 +77,14 @@ function BookSearchSkeleton() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-4 nb-heavy-border border border-black bg-[rgba(7,13,30,0.8)] p-3"
+          className="flex items-center gap-4 border-2 border-black bg-[#171717] p-3 shadow-[4px_4px_0_0_#000000]"
         >
-          <div className="h-24 w-16 shrink-0 nb-heavy-border bg-cyan-900/30 animate-pulse" />
+          <div className="h-24 w-16 shrink-0 border-2 border-black bg-[#232323] animate-pulse" />
           <div className="flex-1 min-w-0">
-            <div className="mb-2 h-5 w-3/4 nb-heavy-border bg-black animate-pulse" />
-            <div className="h-4 w-1/2 nb-heavy-border bg-black animate-pulse" />
+            <div className="mb-2 h-5 w-3/4 border-2 border-black bg-[#232323] animate-pulse" />
+            <div className="h-4 w-1/2 border-2 border-black bg-[#232323] animate-pulse" />
           </div>
-          <div className="h-10 w-10 nb-heavy-border bg-cyan-900/30 animate-pulse" />
+          <div className="h-10 w-10 border-2 border-black bg-[#232323] animate-pulse" />
         </div>
       ))}
     </div>
@@ -94,13 +94,13 @@ function BookSearchSkeleton() {
 // Skeleton для бесконечного скролла
 function BookSkeletonItem() {
   return (
-    <div className="flex items-center gap-4 nb-heavy-border border border-black bg-[rgba(7,13,30,0.8)] p-3">
-      <div className="h-24 w-16 shrink-0 nb-heavy-border bg-cyan-900/30 animate-pulse" />
+    <div className="flex items-center gap-4 border-2 border-black bg-[#171717] p-3 shadow-[4px_4px_0_0_#000000]">
+      <div className="h-24 w-16 shrink-0 border-2 border-black bg-[#232323] animate-pulse" />
       <div className="flex-1 min-w-0">
-        <div className="mb-2 h-5 w-3/4 nb-heavy-border bg-black animate-pulse" />
-        <div className="h-4 w-1/2 nb-heavy-border bg-black animate-pulse" />
+        <div className="mb-2 h-5 w-3/4 border-2 border-black bg-[#232323] animate-pulse" />
+        <div className="h-4 w-1/2 border-2 border-black bg-[#232323] animate-pulse" />
       </div>
-      <div className="h-10 w-10 nb-heavy-border bg-cyan-900/30 animate-pulse" />
+      <div className="h-10 w-10 border-2 border-black bg-[#232323] animate-pulse" />
     </div>
   );
 }
@@ -126,10 +126,10 @@ const BookItem = memo(({
 
   return (
     <div
-      className={`flex cursor-pointer items-center gap-4 nb-heavy-border border p-3 transition-colors duration-200 animate-fade-in ${
+      className={`flex cursor-pointer items-center gap-4 border-2 p-3 shadow-[4px_4px_0_0_#000000] transition-[transform,border-color,background-color,color] duration-150 animate-fade-in ${
         isSelected
-          ? "border-fuchsia-300/70 bg-[rgba(255,0,204,0.14)]"
-          : "border-black bg-[rgba(7,13,30,0.8)] hover:border-fuchsia-300/55 hover:translate-x-1"
+          ? "border-[#c1fffe] bg-[#1d2323]"
+          : "border-black bg-[#171717] hover:-translate-y-0.5 hover:border-[#c1fffe]"
       }`}
     >
       {/* Cover с lazy loading */}
@@ -137,7 +137,7 @@ const BookItem = memo(({
         role="button"
         tabIndex={0}
         aria-label={`Просмотреть информацию о книге ${book.title}`}
-        className="relative h-24 w-16 shrink-0 overflow-hidden nb-heavy-border border border-cyan-300/40 bg-[rgba(6,12,28,0.9)] transition-transform hover:scale-105 cursor-pointer"
+        className="relative h-24 w-16 shrink-0 cursor-pointer overflow-hidden border-2 border-black bg-[#0a0a0a] transition-transform hover:scale-[1.02]"
         onClick={(e) => {
           e.stopPropagation();
           onView(book);
@@ -153,7 +153,7 @@ const BookItem = memo(({
         {hasCover ? (
           <>
             {!imageLoaded && (
-              <div className="h-full w-full bg-cyan-900/30 animate-pulse" />
+              <div className="h-full w-full bg-[#232323] animate-pulse" />
             )}
             <img
               key={coverUrl}
@@ -172,19 +172,19 @@ const BookItem = memo(({
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <BookOpen className="h-6 w-6 text-cyan-200/50" />
+            <BookOpen className="h-6 w-6 text-[#7d8688]" />
           </div>
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="truncate font-semibold text-[#e8ffff]">
+        <h3 className="truncate font-semibold text-[#f6f1e8]">
           {book.title}
         </h3>
-        <p className="truncate text-sm text-cyan-200/75">{book.author}</p>
+        <p className="truncate text-sm text-[#a8abad]">{book.author}</p>
         {book.publishYear && (
-          <p className="mt-1 text-xs text-cyan-200/55">{book.publishYear}</p>
+          <p className="mt-1 text-xs text-[#7d8688]">{book.publishYear}</p>
         )}
       </div>
 
@@ -195,7 +195,7 @@ const BookItem = memo(({
             e.stopPropagation();
             onView(book);
           }}
-          className="cursor-pointer nb-heavy-border border border-black p-2 text-cyan-200/75 transition-colors hover:border-fuchsia-300/60 hover:text-fuchsia-200"
+          className="cursor-pointer border-2 border-black bg-[#0d0d0d] p-2 text-[#a8abad] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8]"
           title="Подробнее"
           aria-label="Подробнее"
         >
@@ -208,10 +208,10 @@ const BookItem = memo(({
             onToggle(book.openLibraryKey);
           }}
           aria-label={isSelected ? "Убрать из выбранного" : "Добавить в выбранное"}
-          className={`flex h-10 w-10 cursor-pointer items-center justify-center nb-heavy-border border transition-colors ${
+          className={`flex h-10 w-10 cursor-pointer items-center justify-center border-2 transition-colors ${
             isSelected
-              ? "border-fuchsia-300/70 bg-fuchsia-500/90 text-[#05070e]"
-              : "border-black text-cyan-100 hover:border-fuchsia-300/65 hover:text-fuchsia-100"
+              ? "border-black bg-[#c1fffe] text-black"
+              : "border-black bg-[#0d0d0d] text-[#f6f1e8] hover:border-[#c1fffe] hover:bg-[#171717]"
           }`}
         >
           {isSelected ? (
@@ -432,7 +432,7 @@ export const BookSearchModal = ({
         <div
           role="button"
           tabIndex={0}
-          className="absolute inset-0 bg-black/60 backdrop-blur-[2px] animate-fade-in cursor-pointer"
+          className="absolute inset-0 cursor-pointer bg-black/75"
           onClick={handleClose}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -444,20 +444,23 @@ export const BookSearchModal = ({
         />
 
         {/* Modal */}
-        <div className="nb-modal relative mx-4 w-full max-w-2xl overflow-hidden  text-white animate-scale-in">
+        <div className="relative mx-4 flex w-full max-w-3xl flex-col overflow-hidden border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-black p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center nb-heavy-border border border-black bg-black">
-                <BookOpen className="h-4 w-4 text-cyan-100" />
+          <div className="flex items-center justify-between border-b-2 border-black bg-[#181818] p-5">
+            <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-0.5">
+              <div className="row-span-2 flex size-10 items-center justify-center border-2 border-black bg-[#c1fffe] text-black">
+                <BookOpen className="h-4 w-4" />
               </div>
-              <h2 className="text-lg font-semibold tracking-[0.05em] text-[#e8ffff]">
+              <p className="col-start-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
+                Библиотека поиска
+              </p>
+              <h2 className="col-start-2 text-xl font-black tracking-[-0.02em] text-[#f6f1e8]">
                 Найти книгу
               </h2>
             </div>
             <button
               onClick={handleClose}
-              className="flex size-8 cursor-pointer items-center justify-center nb-heavy-border border border-black text-cyan-200/80 transition-colors hover:border-fuchsia-300/70 hover:text-fuchsia-200"
+              className="flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8]"
               aria-label="Закрыть"
             >
               <X className="h-4 w-4" />
@@ -465,10 +468,13 @@ export const BookSearchModal = ({
           </div>
 
           {/* Search Input */}
-          <div className="border-b border-black p-4">
+          <div className="border-b-2 border-black bg-[#141414] p-5">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]">
+              Поиск по названию или автору
+            </p>
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-200/65" />
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7d8688]" />
                 <input
                   type="text"
                   value={state.query}
@@ -477,12 +483,12 @@ export const BookSearchModal = ({
                   placeholder="Введите название книги или автора..."
                   aria-label="Поиск книг"
                   autoFocus
-                  className="w-full nb-heavy-border border border-black bg-black py-3 pl-10 pr-10 text-white placeholder:text-cyan-200/45 transition-colors focus:border-fuchsia-300/70 focus:outline-none"
+                  className="w-full border-2 border-black bg-[#0a0a0a] py-3 pl-10 pr-10 text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe]"
                 />
                 {state.query && (
                   <button
                     onClick={() => dispatch({ type: "SET_QUERY", query: "" })}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-200/65 hover:text-fuchsia-300/70 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-[#7d8688] hover:text-[#f6f1e8]"
                     aria-label="Очистить поиск"
                   >
                     <X size={16} />
@@ -492,7 +498,7 @@ export const BookSearchModal = ({
               <button
                 onClick={handleSearch}
                 disabled={isLoading || state.query.length < 2}
-                className="nb-btn-primary flex cursor-pointer items-center gap-2 nb-heavy-border px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100"
               >
                 {isLoading ? <Spinner size="sm" /> : "Найти"}
               </button>
@@ -500,17 +506,17 @@ export const BookSearchModal = ({
           </div>
 
           {/* Results */}
-          <div className="max-h-96 overflow-y-auto p-4">
+          <div className="max-h-[34rem] overflow-y-auto bg-[#111111] p-5">
             {/* Toolbar */}
             {results.length > 0 && (
-              <div className="flex items-center justify-between mb-4 animate-fade-in">
-                <span className="text-sm text-cyan-200/75">
+              <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
+                <span className="text-sm text-[#a8abad]">
                   Найдено: {totalResults}
                 </span>
                 {state.selectedBooks.size > 0 && (
                   <button
                     onClick={handleAddSelectedBooks}
-                    className="nb-btn-primary flex cursor-pointer items-center gap-2 nb-heavy-border px-4 py-2 text-sm font-semibold animate-scale-in"
+                    className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-4 py-2 text-sm font-black text-black animate-scale-in transition-colors hover:bg-[#9cf5f3]"
                   >
                     <Plus className="w-4 h-4" />
                     Добавить выбранные ({state.selectedBooks.size})
@@ -553,10 +559,10 @@ export const BookSearchModal = ({
 
                 {/* Empty State */}
                 {results.length === 0 && !isLoading && state.hasSearched && (
-                  <div className="py-12 text-center">
-                    <BookOpen className="mx-auto mb-3 h-12 w-12 text-cyan-200/50" />
-                    <p className="text-cyan-200/80">Ничего не найдено</p>
-                    <p className="mt-1 text-sm text-cyan-200/55">
+                  <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
+                    <BookOpen className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
+                    <p className="text-[#f6f1e8]">Ничего не найдено</p>
+                    <p className="mt-1 text-sm text-[#8b9092]">
                       Проверьте правильность названия или попробуйте другой
                       запрос
                     </p>
@@ -565,9 +571,9 @@ export const BookSearchModal = ({
 
                 {/* Initial State */}
                 {results.length === 0 && !isLoading && !state.hasSearched && (
-                  <div className="py-12 text-center">
-                    <Search className="mx-auto mb-3 h-12 w-12 text-cyan-200/50" />
-                    <p className="text-cyan-200/80">
+                  <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
+                    <Search className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
+                    <p className="text-[#f6f1e8]">
                       Введите название книги или автора
                     </p>
                   </div>
@@ -577,10 +583,10 @@ export const BookSearchModal = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 border-t border-black bg-white p-4">
+          <div className="flex justify-end gap-3 border-t-2 border-black bg-[#0a0a0a] p-5">
             <button
               onClick={handleClose}
-              className="nb-btn-secondary cursor-pointer nb-heavy-border px-5 py-2.5 text-sm font-semibold"
+              className="cursor-pointer border-2 border-black bg-transparent px-5 py-2.5 text-sm font-semibold text-[#b4b4b4] transition-colors hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8]"
             >
               Отмена
             </button>

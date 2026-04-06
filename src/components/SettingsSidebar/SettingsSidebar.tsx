@@ -12,6 +12,14 @@ import {
 import type { Tier } from "@/types";
 import { Switch } from "@/ui/Switch";
 
+const actionButtonBase =
+  "flex w-full items-center justify-center gap-2";
+
+const primaryActionButtonClass = `nb-btn-primary ${actionButtonBase}`;
+const secondaryActionButtonClass = `nb-btn-secondary ${actionButtonBase}`;
+const dangerActionButtonClass = `${secondaryActionButtonClass} border-[#ff51fa] text-[#ff51fa] hover:bg-[#ff51fa]/10`;
+const actionIconClass = "shrink-0";
+
 interface SettingsSidebarProps {
   activeTier?: Tier;
   onUpdateTier?: (
@@ -71,9 +79,9 @@ export const SettingsSidebar = memo(({
           <h3 className="nb-label-md mb-4 text-[#c1fffe]">Поиск в библиотеке</h3>
           <button
             onClick={onFindBook}
-            className="nb-btn-primary w-full flex items-center justify-center"
+            className={primaryActionButtonClass}
           >
-            <Search size={18} className="mr-2" />
+            <Search size={18} className={actionIconClass} />
             Найти книгу
           </button>
         </div>
@@ -84,16 +92,16 @@ export const SettingsSidebar = memo(({
         <div className="grid grid-cols-1 gap-3">
           <button
             onClick={() => onAddRow()}
-            className="nb-btn-secondary w-full flex items-center justify-center"
+            className={secondaryActionButtonClass}
           >
-            <Plus size={16} className="mr-2" />
+            <Plus size={16} className={actionIconClass} />
             Добавить тир
           </button>
           <button
             onClick={onClearRows}
-            className="nb-btn-secondary w-full flex items-center justify-center border-[#ff51fa] hover:bg-[#ff51fa]/10"
+            className={dangerActionButtonClass}
           >
-            <Trash2 size={16} className="mr-2" />
+            <Trash2 size={16} className={actionIconClass} />
             Очистить тиры
           </button>
         </div>
@@ -161,15 +169,15 @@ export const SettingsSidebar = memo(({
 
         <button
           onClick={onDownloadImage}
-          className="nb-btn-primary w-full flex items-center justify-center"
+          className={primaryActionButtonClass}
         >
-          <ImageDown size={16} className="mr-2" />
+          <ImageDown size={16} className={actionIconClass} />
           Скачать
         </button>
 
         <button
           onClick={onMyRatingsClick}
-          className="nb-btn-secondary w-full"
+          className={secondaryActionButtonClass}
         >
           Мои рейтинги
         </button>
@@ -177,9 +185,9 @@ export const SettingsSidebar = memo(({
         {onDeleteRating && (
           <button
             onClick={onDeleteRating}
-            className="nb-btn-secondary w-full border-[#ff51fa] text-[#ff51fa] hover:bg-[#ff51fa]/10"
+            className={dangerActionButtonClass}
           >
-            <Trash size={16} className="mr-2" />
+            <Trash size={16} className={actionIconClass} />
             Удалить рейтинг
           </button>
         )}

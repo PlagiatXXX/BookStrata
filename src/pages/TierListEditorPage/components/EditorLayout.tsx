@@ -1,6 +1,6 @@
 import { useSensors, useSensor } from "@dnd-kit/core";
 import { PointerSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
-import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
+import { DndContext, DragOverlay, rectIntersection } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type {
   DragStartEvent,
@@ -9,13 +9,13 @@ import type {
 } from "@dnd-kit/core";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
-import type { Book } from "@/types";
+import type { Book, Tier } from "@/types";
 import type { EditorHeaderProps } from "./EditorHeader";
 import { EditorHeader } from "./EditorHeader";
 
 interface EditorLayoutProps {
   children: React.ReactNode;
-  activeItem: Book | null;
+  activeItem: Book | Tier | null;
   onDragStart: (event: DragStartEvent) => void;
   onDragOver: (event: DragOverEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
@@ -36,6 +36,9 @@ export const EditorLayout = ({
   onMyRatingsClick,
   isReadOnly,
 }: EditorLayoutProps) => {
+  const activeBook =
+    activeItem && "coverImageUrl" in activeItem ? activeItem : null;
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
@@ -71,23 +74,22 @@ export const EditorLayout = ({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={rectIntersection}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
       onDragCancel={onDragCancel}
     >
       {content}
-      <DragOverlay dropAnimation={null}>
-        {activeItem ? (
+      <DragOverlay dropAnimation={null} zIndex={10001}>
+        {activeBook ? (
           <div
             style={{
               opacity: 0.85,
               transform: "rotate(2deg) scale(1.05)",
-              pointerEvents: "none",
             }}
           >
-            <BookCover book={activeItem} isDraggable={false} />
+            <BookCover book={activeBook} isDraggable={false} />
           </div>
         ) : null}
       </DragOverlay>
