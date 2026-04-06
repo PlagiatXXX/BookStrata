@@ -179,7 +179,11 @@ export function AuthForm() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="relative group">
+                <label htmlFor="username" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
+                  Логин <span className="text-red-500">*</span>
+                </label>
                 <input
+                id="username"
                   type="text"
                   name="username"
                   placeholder="Логин"
@@ -219,7 +223,11 @@ export function AuthForm() {
 
               {mode === "register" && (
                 <div className="relative group">
+                  <label htmlFor="email" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
+                    Email <span className="text-red-500">*</span>
+                  </label>
                   <input
+                  id="email"
                     type="email"
                     name="email"
                     placeholder="Email"
@@ -259,7 +267,11 @@ export function AuthForm() {
               )}
 
               <div className="relative group">
+                <label htmlFor="password" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
+                  Пароль <span className="text-red-500">*</span>
+                </label>
                 <input
+                id="password"
                   type={state.showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Пароль"

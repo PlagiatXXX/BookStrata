@@ -58,10 +58,16 @@ export function AiGenerationTab({
         <textarea
           id="avatar-selector-prompt-input"
           value={aiPrompt}
+          maxLength={500}
           onChange={(e) => onPromptChange(e.target.value)}
           placeholder="Например: Мужчина с бородой в очках, синий фон, дружелюбная улыбка"
           className="w-full h-28 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl p-4 resize-none text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
         />
+        <div className="flex justify-end mt-1">
+          <span className={`text-xs ${aiPrompt.length >= 500 ? 'text-red-500' : 'text-gray-500'}`}>
+            {aiPrompt.length}/500
+          </span>
+        </div>
       </div>
 
       {/* Кнопка генерации */}

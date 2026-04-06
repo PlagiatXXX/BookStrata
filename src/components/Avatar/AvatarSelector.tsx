@@ -201,6 +201,12 @@ export function AvatarSelector({
 
         {/* Tab Content */}
         <div className="min-h-75">
+          <div
+            id="tabpanel-presets"
+            role="tabpanel"
+            aria-labelledby="tab-presets"
+            hidden={activeTab !== 'presets'}
+          >
           {activeTab === 'presets' && (
             <PresetsTab
               activeCategory={activeCategory}
@@ -209,6 +215,14 @@ export function AvatarSelector({
               selectedPresetUrl={preview.url}
             />
           )}
+           </div>
+
+          <div
+            id="tabpanel-ai"
+            role="tabpanel"
+            aria-labelledby="tab-ai"
+            hidden={activeTab !== 'ai'}
+          >
 
           {activeTab === 'ai' && (
             <AiGenerationTab
@@ -224,6 +238,14 @@ export function AvatarSelector({
               limitInfo={limitInfo}
             />
           )}
+          </div>
+
+          <div
+            id="tabpanel-upload"
+            role="tabpanel"
+            aria-labelledby="tab-upload"
+            hidden={activeTab !== 'upload'}
+          >
 
           {activeTab === 'upload' && (
             <UploadTab
@@ -231,6 +253,7 @@ export function AvatarSelector({
               previewLoadState={preview.loadState}
             />
           )}
+          </div>
         </div>
 
         {/* Footer Actions */}

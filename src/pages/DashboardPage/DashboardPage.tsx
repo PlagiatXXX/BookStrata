@@ -1,4 +1,4 @@
-import { useEffect, useCallback, memo } from "react";
+import { useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
