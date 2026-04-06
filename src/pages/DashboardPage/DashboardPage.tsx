@@ -1,10 +1,11 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { useAuth } from "@/hooks/useAuthContext";
 import { getUserTierLists } from "@/lib/api";
 import { apiGetUserStats } from "@/lib/userApi";
+import { useDebounce } from "@/hooks/useDebounce";
 import { sileo } from "sileo";
 import type { SortOption } from "./types";
 import { useDashboardState } from "./hooks/useDashboardState";
@@ -22,19 +23,16 @@ import { DeleteTierListModal } from "./components/DeleteTierListModal";
 import { PAGE_SIZE } from "./constants";
 import "./DashboardPage.css";
 
+// Мемоизируем компоненты дашборда для предотвращения ререндеров при поиске
+const MemoizedDashboardHeader = memo(DashboardHeader);
+const MemoizedUserActivityStats = memo(UserActivityStats);
+const MemoizedQuickStartTemplates = memo(QuickStartTemplates);
+const MemoizedEmptyStates = memo(EmptyStates);
+const MemoizedPagination = memo(Pagination);
+
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
-  // Отслеживаем изменения пользователя (например, обновление аватара)
-  useEffect(() => {
-    if (user) {
-        username: user.username,
-        hasAvatar: !!user.avatarUrl,
-        avatarUrl: user.avatarUrl?.substring(0, 50) + "...",
-      });
-    }
-  }, [user]);
 
   // State management через reducer
   const {
@@ -62,6 +60,9 @@ export function DashboardPage() {
     sortOption,
     filterOption,
   } = state;
+
+  // Оптимизация: дебаунсим поисковый запрос для фильтрации списка
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
   // Data fetching - Tier lists
   const {
@@ -105,34 +106,30 @@ export function DashboardPage() {
     isRenaming,
     isDeleting,
   } = useTierListActions({
-    onSuccess: () => {
-      closeModal();
-    },
-    onRefetch: () => {
-      refetch();
-    },
+    onSuccess: closeModal,
+    onRefetch: refetch,
   });
 
-  // Фильтрация и пагинация
+  // Фильтрация и пагинация - используем дебаунснутый поиск
   const { displayedTierLists } = useTierListsPagination({
     allTierLists: paginatedResponse.data,
-    searchQuery,
+    searchQuery: debouncedSearchQuery,
     sortOption,
     filterOption,
   });
 
   const pagination = paginatedResponse.meta;
 
-  // Обработчики
-  const handleMyRatingsClick = () => {
+  // Стабилизируем обработчики для предотвращения ререндеров мемоизированных компонентов
+  const handleMyRatingsClick = useCallback(() => {
     setCurrentPage(1);
     setSearchQuery("");
-  };
+  }, [setCurrentPage, setSearchQuery]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate("/auth", { replace: true });
-  };
+  }, [logout, navigate]);
 
   const handleOpenTierList = useCallback(
     (id: number) => {
@@ -141,11 +138,11 @@ export function DashboardPage() {
     [navigate],
   );
 
-  const handleCreateTierList = (title: string) => {
+  const handleCreateTierList = useCallback((title: string) => {
     createNewTierList(title);
-  };
+  }, [createNewTierList]);
 
-  const handleRename = () => {
+  const handleRename = useCallback(() => {
     if (!tierListToRename) return;
 
     const trimmedTitle = renameTitle.trim();
@@ -159,14 +156,23 @@ export function DashboardPage() {
     }
 
     renameTierList(tierListToRename.id, trimmedTitle);
-  };
+  }, [tierListToRename, renameTitle, renameTierList]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (!tierListToDelete) return;
     removeTierList(tierListToDelete.id);
-  };
+  }, [tierListToDelete, removeTierList]);
 
-  const hasSearchQuery = searchQuery.trim().length > 0;
+  const handleSetFilterAll = useCallback(() => setFilterOption("all"), [setFilterOption]);
+  const handleSetFilterPublic = useCallback(() => setFilterOption("public"), [setFilterOption]);
+  const handleSetFilterPrivate = useCallback(() => setFilterOption("private"), [setFilterOption]);
+  const handleSortChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) =>
+    setSortOption(e.target.value as SortOption), [setSortOption]);
+  const handleRetry = useCallback(() => refetch(), [refetch]);
+  const handleClearSearch = useCallback(() => setSearchQuery(""), [setSearchQuery]);
+  const handleCommunityClick = useCallback(() => navigate("/community"), [navigate]);
+
+  const hasSearchQuery = debouncedSearchQuery.trim().length > 0;
   const isEmpty = displayedTierLists.length === 0;
   const hasError = !!error;
 
@@ -179,22 +185,22 @@ export function DashboardPage() {
       <section className="dashboard-home">
         <div className="dashboard-home__container">
           {/* Hero Section */}
-          <DashboardHeader
+          <MemoizedDashboardHeader
             username={user?.username || ""}
             onCreateClick={openCreateModal}
-            onCommunityClick={() => navigate("/community")}
+            onCommunityClick={handleCommunityClick}
             onLogoutClick={handleLogout}
           />
 
           {/* Stats Section */}
-          <UserActivityStats
+          <MemoizedUserActivityStats
             tierListsCount={tierListsCount}
             publishedCount={publishedCount}
             draftsCount={draftsCount}
           />
 
           {/* Quick Start Templates */}
-          <QuickStartTemplates />
+          <MemoizedQuickStartTemplates />
 
           {/* Divider */}
           <div className="dashboard-divider">
@@ -206,19 +212,19 @@ export function DashboardPage() {
             {/* Filter Tabs */}
             <div className="dashboard-filters">
               <button
-                onClick={() => setFilterOption("all")}
+                onClick={handleSetFilterAll}
                 className={`dashboard-filter-btn ${filterOption === "all" ? "dashboard-filter-btn--active" : ""}`}
               >
                 Все
               </button>
               <button
-                onClick={() => setFilterOption("public")}
+                onClick={handleSetFilterPublic}
                 className={`dashboard-filter-btn ${filterOption === "public" ? "dashboard-filter-btn--active" : ""}`}
               >
                 Публичные
               </button>
               <button
-                onClick={() => setFilterOption("private")}
+                onClick={handleSetFilterPrivate}
                 className={`dashboard-filter-btn ${filterOption === "private" ? "dashboard-filter-btn--active" : ""}`}
               >
                 Приватные
@@ -229,7 +235,7 @@ export function DashboardPage() {
             <div className="dashboard-sort">
               <select
                 value={sortOption}
-                onChange={(e) => setSortOption(e.target.value as SortOption)}
+                onChange={handleSortChange}
                 className="dashboard-sort__select"
               >
                 <option value="newest">Сначала новые</option>
@@ -241,14 +247,14 @@ export function DashboardPage() {
           </div>
 
           {/* Main content */}
-          <EmptyStates
+          <MemoizedEmptyStates
             isLoading={isLoading}
             hasError={hasError}
             hasSearchQuery={hasSearchQuery}
             isEmpty={isEmpty && !isLoading}
-            onRetry={() => refetch()}
+            onRetry={handleRetry}
             onCreateClick={openCreateModal}
-            onClearSearch={() => setSearchQuery("")}
+            onClearSearch={handleClearSearch}
             error={error}
           />
 
@@ -261,7 +267,7 @@ export function DashboardPage() {
                 onDelete={openDeleteModal}
               />
 
-              <Pagination
+              <MemoizedPagination
                 currentPage={currentPage}
                 totalPages={pagination.totalPages}
                 onPageChange={setCurrentPage}

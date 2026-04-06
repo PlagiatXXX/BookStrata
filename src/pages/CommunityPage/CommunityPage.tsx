@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -10,8 +10,17 @@ import { HeroSection } from "@/components/CommunityComponents/HeroSection";
 import { NewsSection } from "@/components/CommunityComponents/NewsSection";
 import { CollectionsSection } from "@/components/CommunityComponents/CollectionsSection";
 import { TemplatePreviewModal } from "@/components/CommunityComponents/TemplatePreviewModal";
+import { useDebounce } from "@/hooks/useDebounce";
 import { type TemplateItem } from "../../data/mockData";
+import { memo } from "react";
 import "./CommunityPage.css";
+
+// Мемоизируем компоненты для предотвращения лишних ререндеров
+const MemoizedHeroSection = memo(HeroSection);
+const MemoizedCategoryTabs = memo(CategoryTabs);
+const MemoizedTemplateGrid = memo(TemplateGrid);
+const MemoizedNewsSection = memo(NewsSection);
+const MemoizedCollectionsSection = memo(CollectionsSection);
 
 export default function CommunityPage() {
   const [activeCategory, setActiveCategory] = useState("actual");
@@ -23,6 +32,9 @@ export default function CommunityPage() {
     null,
   );
   const navigate = useNavigate();
+
+  // Оптимизация: дебаунсим поисковый запрос для фильтрации сетки шаблонов
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
   useEffect(() => {
     const elements = Array.from(
@@ -46,7 +58,7 @@ export default function CommunityPage() {
     return () => observer.disconnect();
   }, [activeCategory]);
 
-  // Оптимизация: стабилизируем колбэки для предотвращения лишних ререндеров TemplateGrid и модалки
+  // Стабилизируем колбэки
   const handleUseTemplate = useCallback((template: TemplateItem) => {
     setPreviewTemplate(template);
   }, []);
@@ -99,21 +111,23 @@ export default function CommunityPage() {
     }
   }, [previewTemplate, navigate]);
 
+  const handleMyRatingsClick = useCallback(() => navigate("/"), [navigate]);
+
   return (
     <DashboardLayout
-      onMyRatingsClick={() => navigate("/")}
+      onMyRatingsClick={handleMyRatingsClick}
       showTemplatesNav={true}
       showSearch={false}
       activeItem="Новости"
     >
       <div className="community-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 pb-20 cursor-default text-(--ink-0)">
-          <HeroSection
+          <MemoizedHeroSection
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
           />
 
-          <CategoryTabs
+          <MemoizedCategoryTabs
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
           />
@@ -131,9 +145,9 @@ export default function CommunityPage() {
             </button>
           </div>
 
-          <TemplateGrid
+          <MemoizedTemplateGrid
             activeCategory={activeCategory}
-            searchQuery={searchQuery}
+            searchQuery={debouncedSearchQuery}
             applyingTemplateId={applyingTemplateId}
             onUseTemplate={handleUseTemplate}
           />
@@ -146,9 +160,9 @@ export default function CommunityPage() {
             <div className="community-rule flex-1" />
           </div>
 
-          <NewsSection />
+          <MemoizedNewsSection />
 
-          <CollectionsSection />
+          <MemoizedCollectionsSection />
         </main>
       </div>
 

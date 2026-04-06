@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useRef, useCallback, useEffect, type RefObject } from "react";
+import { useRef, useCallback, useEffect, memo, type RefObject } from "react";
 import { useBookController } from "./useBookController";
 import "./BookScene.css";
 
@@ -7,7 +7,7 @@ interface BookSceneProps {
   containerRef: RefObject<HTMLDivElement | null>;
 }
 
-export default function BookScene({ containerRef }: BookSceneProps) {
+const BookScene = memo(({ containerRef }: BookSceneProps) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -208,4 +208,6 @@ export default function BookScene({ containerRef }: BookSceneProps) {
       </motion.div>
     </div>
   );
-}
+});
+
+export default BookScene;
