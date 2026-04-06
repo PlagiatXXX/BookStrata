@@ -1,18 +1,23 @@
-import { useSensors, useSensor } from '@dnd-kit/core';
-import { PointerSensor, TouchSensor, KeyboardSensor } from '@dnd-kit/core';
-import { DndContext, DragOverlay } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
-import { DashboardLayout } from '@/layouts/DashboardLayout/DashboardLayout';
-import { BookCover } from '@/ui/BookCover';
-import type { Book, Tier } from '@/types';
-import type { EditorHeaderProps } from './EditorHeader';
-import { EditorHeader } from './EditorHeader';
+import { useSensors, useSensor } from "@dnd-kit/core";
+import { PointerSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
+import { DndContext, DragOverlay, rectIntersection } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import type {
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+} from "@dnd-kit/core";
+import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
+import { BookCover } from "@/ui/BookCover";
+import type { Book, Tier } from "@/types";
+import type { EditorHeaderProps } from "./EditorHeader";
+import { EditorHeader } from "./EditorHeader";
 
 interface EditorLayoutProps {
   children: React.ReactNode;
   activeItem: Book | Tier | null;
   onDragStart: (event: DragStartEvent) => void;
+  onDragOver: (event: DragOverEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
   onDragCancel: () => void;
   headerProps: EditorHeaderProps;
@@ -24,14 +29,18 @@ export const EditorLayout = ({
   children,
   activeItem,
   onDragStart,
+  onDragOver,
   onDragEnd,
   onDragCancel,
   headerProps,
   onMyRatingsClick,
   isReadOnly,
 }: EditorLayoutProps) => {
+  const activeBook =
+    activeItem && "coverImageUrl" in activeItem ? activeItem : null;
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { 
+    useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
       preventScroll: true,
     }),
@@ -51,7 +60,7 @@ export const EditorLayout = ({
       searchValue=""
       showSearch={false}
     >
-      <main className="tier-editor-y2k flex-1 overflow-y-auto p-4 text-[#d8f9ff] lg:p-8">
+      <main className="neo-brutalist-editor flex-1 overflow-y-auto p-4  lg:p-8">
         <EditorHeader {...headerProps} />
         {children}
       </main>
@@ -63,11 +72,25 @@ export const EditorLayout = ({
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={rectIntersection}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+      onDragCancel={onDragCancel}
+    >
       {content}
-      <DragOverlay dropAnimation={null}>
-        {activeItem && 'coverImageUrl' in activeItem ? (
-          <BookCover book={activeItem as Book} />
+      <DragOverlay dropAnimation={null} zIndex={10001}>
+        {activeBook ? (
+          <div
+            style={{
+              opacity: 0.85,
+              transform: "rotate(2deg) scale(1.05)",
+            }}
+          >
+            <BookCover book={activeBook} isDraggable={false} />
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>

@@ -36,7 +36,6 @@ export const TierGrid = memo(
     } = props;
     const { tiers, tierOrder, books } = listData;
 
-    // Мемоизируем вычисление книг в тирах
     const tierRows = useMemo(() => {
       return tierOrder.map((tierId) => ({
         tier: tiers[tierId],
@@ -47,7 +46,7 @@ export const TierGrid = memo(
     return (
       <div
         ref={ref}
-        className="y2k-panel flex flex-col overflow-hidden text-[#d8f9ff]"
+        className="flex flex-col gap-8 bg-transparent"
       >
         <SortableContext
           items={tierOrder}
@@ -72,15 +71,10 @@ export const TierGrid = memo(
 
         <button
           onClick={() => onAddRow?.()}
-          className="group flex min-h-15 w-full cursor-pointer items-center justify-center border-t border-cyan-300/40 bg-[rgba(5,10,22,0.68)] transition-colors hover:border-fuchsia-300/55 hover:bg-[rgba(0,255,255,0.08)] focus:outline-none"
+          className="nb-btn-secondary w-full flex min-h-16 items-center justify-center border-dashed opacity-60 hover:opacity-100 transition-opacity"
         >
-          <PlusCircle
-            size={16}
-            className="text-cyan-200 transition-colors group-hover:text-fuchsia-200"
-          />
-          <span className="ml-2 text-sm font-semibold tracking-[0.09em] text-cyan-100 transition-colors group-hover:text-fuchsia-100">
-            Добавить тир
-          </span>
+          <PlusCircle size={20} />
+          <span className="ml-3 nb-label-md">Добавить тир</span>
         </button>
       </div>
     );

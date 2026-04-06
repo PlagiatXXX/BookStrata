@@ -3,7 +3,7 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useDroppable } from "@dnd-kit/core";
+import { useDndContext } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Settings, Trash2 } from "lucide-react";
 import type { Tier, Book } from "@/types";
@@ -38,6 +38,7 @@ export const TierRow = memo(
     onViewBook,
   }: TierRowProps) => {
     /* ---------- SORTABLE ТИР ---------- */
+    const { over } = useDndContext();
     const {
       attributes,
       listeners,
@@ -45,19 +46,13 @@ export const TierRow = memo(
       transform,
       transition,
       isDragging,
+      isOver,
+      active,
     } = useSortable({
       id: tier.id,
       data: {
         type: "tier",
-      },
-    });
-
-    /* ---------- DROPPABLE КОНТЕЙНЕР ---------- */
-    const { setNodeRef: setDroppableRef, isOver } = useDroppable({
-      id: `drop-${tier.id}`,
-      data: {
-        type: "container",
-        containerId: tier.id,
+        tier,
       },
     });
 
@@ -69,16 +64,17 @@ export const TierRow = memo(
       minHeight: tier.height ? `${tier.height}px` : undefined,
     };
 
-    const activeClass = isActive
-      ? "border-2 border-cyan-400 shadow-lg z-10"
-      : "border-b";
-    const droppableActiveClass = isOver ? "bg-primary/10" : "";
+    const activeClass = isActive ? "nb-tier-row-active" : "";
+    const isBookDropTarget = isOver && active?.data.current?.type === "book";
+    const showEndInsertIndicator = isBookDropTarget && over?.id === tier.id;
 
     return (
       <div
         ref={setSortableRef}
         style={style}
-        className={`group relative flex ${activeClass}`}
+        className={`nb-tier-row group relative flex ${activeClass} ${
+          isBookDropTarget ? "nb-tier-row-drop-target" : ""
+        }`}
         role="listitem"
       >
         <TierLabel
@@ -96,14 +92,17 @@ export const TierRow = memo(
           strategy={horizontalListSortingStrategy}
         >
           <div
-            ref={setDroppableRef}
-            className={`relative flex flex-1 flex-wrap content-start items-center 
-                       gap-3 md:gap-3 sm:gap-2 max-sm:gap-1.5
-                       bg-surface-dark/50 
-                       p-2 md:p-2 sm:p-1.5 max-sm:p-1
-                       min-h-35 md:min-h-35 sm:min-h-27.5 max-sm:min-h-20
-                       transition-colors group-hover:bg-surface-dark/80 ${droppableActiveClass}`}
+            className={`nb-book-track relative flex flex-1 flex-wrap content-start items-center
+                       transition-colors ${
+                         isBookDropTarget ? "nb-book-track-drop-target" : ""
+                       }`}
           >
+            {showEndInsertIndicator ? (
+              <div
+                className="nb-book-track-end-indicator"
+                aria-hidden="true"
+              />
+            ) : null}
             {books.map((book) => (
               <SortableBookCover
                 key={book.id}
@@ -120,28 +119,28 @@ export const TierRow = memo(
           </div>
         </SortableContext>
 
-        <div className="absolute right-0 top-0 bottom-0 z-10 flex w-12 md:w-12 sm:w-10 max-sm:w-9 flex-col items-center justify-center gap-2 md:gap-2 sm:gap-1.5 max-sm:gap-1 border-l border-surface-border bg-[#231028] transition-opacity">
+        <div className="nb-tier-actions absolute right-0 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-2 border-l-2 border-black bg-[#0e0e0e] transition-opacity opacity-0 group-hover:opacity-100">
           <button
             title="Переместить"
-            className="cursor-grab text-gray-400 active:cursor-grabbing hover:text-white"
+            className="cursor-grab text-gray-400 active:cursor-grabbing hover:text-[#c1fffe] transition-colors"
             {...attributes}
             {...listeners}
           >
-            <GripVertical size={20} className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5" />
+            <GripVertical size={20} />
           </button>
           <button
             onClick={() => onSetActive(tier.id)}
             title="Настройки"
-            className="text-gray-400 hover:text-white cursor-pointer"
+            className="text-gray-400 hover:text-[#c1fffe] cursor-pointer transition-colors"
           >
-            <Settings size={18} className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5" />
+            <Settings size={18} />
           </button>
           <button
             onClick={() => onDelete(tier.id)}
             title="Удалить тир"
-            className="text-gray-400 hover:text-red-400 cursor-pointer"
+            className="text-gray-400 hover:text-[#ff51fa] cursor-pointer transition-colors"
           >
-            <Trash2 size={18} className="md:w-5 md:h-5 sm:w-4 sm:h-4 max-sm:w-3.5 max-sm:h-3.5" />
+            <Trash2 size={18} />
           </button>
         </div>
       </div>

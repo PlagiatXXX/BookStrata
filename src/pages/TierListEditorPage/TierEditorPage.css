@@ -1,69 +1,3 @@
-.tier-editor-y2k {
-  position: relative;
-  background:
-    radial-gradient(120% 80% at 20% 0%, rgba(0, 255, 255, 0.16) 0%, rgba(0, 255, 255, 0) 45%),
-    radial-gradient(90% 80% at 100% 10%, rgba(255, 0, 204, 0.2) 0%, rgba(255, 0, 204, 0) 50%),
-    linear-gradient(180deg, #120025 0%, #060912 100%);
-}
-
-.tier-editor-y2k::before {
-  content: "";
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  opacity: 0.2;
-  background-image: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.06) 1px,
-    transparent 1px
-  );
-  background-size: 100% 3px;
-}
-
-.y2k-panel {
-  border: 1px solid rgba(115, 245, 255, 0.5);
-  border-radius: 14px;
-  background: linear-gradient(
-    145deg,
-    rgba(16, 13, 39, 0.94) 0%,
-    rgba(12, 23, 45, 0.92) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 0 0 1px rgba(255, 0, 204, 0.2),
-    0 10px 34px rgba(0, 0, 0, 0.45);
-}
-
-.y2k-btn-primary {
-  border: 1px solid #7df9ff;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #1effd5 0%, #00a8ff 100%);
-  color: #03050b;
-  font-weight: 700;
-  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
-}
-
-.y2k-btn-primary:hover {
-  transform: translateY(-1px);
-  filter: saturate(1.08);
-  box-shadow: 0 0 18px rgba(0, 255, 255, 0.35);
-}
-
-.y2k-btn-ghost {
-  border: 1px solid rgba(125, 249, 255, 0.45);
-  border-radius: 12px;
-  background: rgba(9, 16, 35, 0.7);
-  color: #d8f9ff;
-  transition: border-color 0.15s ease, transform 0.15s ease, color 0.15s ease;
-}
-
-.y2k-btn-ghost:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 0, 204, 0.65);
-  color: #ffd6f8;
-}
-
-@media (prefers-reduced-motion: reduce) {
   .y2k-btn-primary,
   .y2k-btn-ghost {
     transition: none;
@@ -74,4 +8,300 @@
     transform: none;
     box-shadow: none;
   }
+
+/* NEO-BRUTALIST DESIGN TOKENS */
+.neo-brutalist-editor {
+  --nb-bg: #0e0e0e;
+  --nb-primary: #c1fffe;    /* S-Tier / Cyan */
+  --nb-secondary: #ff51fa;  /* A-Tier / Pink */
+  --nb-tertiary: #ffbd58;   /* B-Tier / Orange */
+  --nb-on-background: #ffffff;
+
+  --nb-border: #000000;
+  --nb-border-width: 2px;
+  --nb-shadow-offset: 2px;
+
+  --nb-font-display: 'Space Grotesk', sans-serif;
+  --nb-font-body: 'Manrope', sans-serif;
+
+  --nb-surface-container-lowest: #000000;
+  --nb-surface-container-low: #1a1a1a;
+  --nb-surface-container-highest: #3a3a3a;
+  --nb-surface-bright: #ffffff;
+
+  font-family: var(--nb-font-body);
+  background-color: var(--nb-bg);
+  color: var(--nb-on-background);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* NOISE TEXTURE */
+.neo-brutalist-editor::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* UTILITIES */
+.nb-heavy-border {
+  border: var(--nb-border-width) solid var(--nb-border) !important;
+  border-radius: 0 !important;
+}
+
+.nb-card-shadow {
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0 var(--nb-border) !important;
+}
+
+.nb-display-lg {
+  font-family: var(--nb-font-display);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.nb-headline-lg {
+  font-family: var(--nb-font-display);
+  font-weight: 500;
+  font-size: 1.5rem;
+}
+
+.nb-label-md {
+  font-family: var(--nb-font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* SNAP TRANSITIONS */
+.nb-snap {
+  transition: all 100ms cubic-bezier(0, 0, 0.2, 1) !important;
+}
+
+/* INDUSTRIAL BUTTON */
+.nb-btn-primary {
+  background-color: var(--nb-primary);
+  color: var(--nb-border);
+  border: var(--nb-border-width) solid var(--nb-border);
+  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0 var(--nb-border);
+  padding: 0.4em 1em;
+  font-family: var(--nb-font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  transition: transform 100ms cubic-bezier(0, 0, 0.2, 1), box-shadow 100ms cubic-bezier(0, 0, 0.2, 1);
+  border-radius: 0 !important;
+  cursor: pointer;
+}
+
+.nb-btn-primary:hover {
+  transform: translate(var(--nb-shadow-offset), var(--nb-shadow-offset));
+  box-shadow: 0 0 0 0 var(--nb-border);
+}
+
+.nb-btn-secondary {
+  background-color: transparent;
+  color: var(--nb-on-background);
+  border: var(--nb-border-width) solid var(--nb-primary);
+  padding: 0.4em 1em;
+  font-family: var(--nb-font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  border-radius: 0 !important;
+  cursor: pointer;
+  transition: background-color 100ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.nb-btn-secondary:hover {
+  background-color: rgba(193, 255, 254, 0.1);
+}
+
+/* TIER ROW & CONTAINER */
+.neo-brutalist-editor .nb-tier-row {
+  display: flex;
+  background-color: var(--nb-surface-container-low);
+  border-bottom: var(--nb-border-width) solid var(--nb-border);
+  border-radius: 0 !important;
+}
+
+.neo-brutalist-editor .nb-tier-row-active {
+  display: flex;
+  background-color: var(--nb-surface-container-low);
+  border: 2px solid #22d3ee;
+  border-radius: 0 !important;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
+  z-index: 10;
+}
+
+.neo-brutalist-editor .nb-tier-row-drop-target {
+  box-shadow: 0 0 0 2px rgba(193, 255, 254, 0.55);
+}
+
+.neo-brutalist-editor .nb-tier-row:first-child,
+.neo-brutalist-editor .nb-tier-row-active:first-child {
+  border-top: var(--nb-border-width) solid var(--nb-border);
+}
+
+/* TIER ACTIONS */
+.neo-brutalist-editor .nb-tier-actions {
+  border-left: var(--nb-border-width) solid var(--nb-border);
+}
+
+.neo-brutalist-editor .nb-rank-box {
+  width: 130px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: var(--nb-border-width) solid var(--nb-border);
+  overflow: visible;
+}
+
+.neo-brutalist-editor .nb-book-track {
+  flex-grow: 1;
+  padding: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  min-height: 120px;
+}
+
+.neo-brutalist-editor .nb-book-track-drop-target {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(193, 255, 254, 0.12),
+      rgba(193, 255, 254, 0.03)
+    );
+}
+
+.neo-brutalist-editor .nb-book-insert-before::before,
+.neo-brutalist-editor .nb-book-insert-after::after,
+.neo-brutalist-editor .nb-book-track-end-indicator {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 999px;
+  background: #c1fffe;
+  box-shadow:
+    0 0 0 1px #000000,
+    0 0 12px rgba(193, 255, 254, 0.55);
+  pointer-events: none;
+  z-index: 30;
+}
+
+.neo-brutalist-editor .nb-book-insert-before::before {
+  left: -10px;
+}
+
+.neo-brutalist-editor .nb-book-insert-after::after,
+.neo-brutalist-editor .nb-book-track-end-indicator {
+  right: -10px;
+}
+
+/* BOOK CARD */
+.nb-book-card {
+  width: 80px;
+  aspect-ratio: 2/3;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: var(--nb-border-width, 2px) solid var(--nb-border, #000000);
+  box-shadow: var(--nb-shadow-offset, 2px) var(--nb-shadow-offset, 2px) 0 0
+    var(--nb-border, #000000);
+  position: relative;
+  border-radius: 0 !important;
+  transition: transform 100ms cubic-bezier(0, 0, 0.2, 1), border-color 100ms cubic-bezier(0, 0, 0.2, 1), box-shadow 100ms cubic-bezier(0, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.nb-book-card:hover {
+  transform: rotate(2deg);
+  border-color: var(--nb-secondary, #ff51fa);
+  box-shadow: var(--nb-shadow-offset, 2px) var(--nb-shadow-offset, 2px) 0 0
+    var(--nb-secondary, #ff51fa);
+}
+
+.nb-book-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* SIDEBAR & CONTAINERS */
+.neo-brutalist-editor .nb-sidebar {
+  border: var(--nb-border-width) solid var(--nb-border);
+  background-color: var(--nb-surface-container-low);
+  padding: 1rem;
+  border-radius: 0 !important;
+}
+
+.neo-brutalist-editor .nb-sidebar-drop-target {
+  border-color: var(--nb-primary);
+  box-shadow: 0 0 0 2px rgba(193, 255, 254, 0.35);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(193, 255, 254, 0.14),
+      rgba(193, 255, 254, 0.05)
+    ),
+    var(--nb-surface-container-low);
+}
+
+.neo-brutalist-editor .nb-section-header {
+  border-bottom: var(--nb-border-width) solid var(--nb-border);
+  padding-bottom: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+/* INPUTS */
+.neo-brutalist-editor .nb-input-container {
+  margin-bottom: 1rem;
+}
+
+.neo-brutalist-editor .nb-input-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--nb-font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.neo-brutalist-editor .nb-input {
+  width: 100%;
+  background-color: var(--nb-surface-container-lowest);
+  border: var(--nb-border-width) solid var(--nb-border);
+  color: #ffffff;
+  padding: 0.5rem;
+  outline: none;
+  border-radius: 0 !important;
+  font-size: 0.875rem;
+}
+
+.neo-brutalist-editor .nb-input:focus {
+  border-color: var(--nb-primary);
+}
+
+/* MODALS */
+.neo-brutalist-editor .nb-modal {
+  background-color: var(--nb-surface-bright);
+  color: #000000;
+  border: var(--nb-border-width) solid var(--nb-border);
+  box-shadow: 4px 4px 0 0 var(--nb-border);
+  border-radius: 0 !important;
+  padding: 1rem;
 }

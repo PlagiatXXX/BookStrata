@@ -34,17 +34,19 @@ interface NewBookDiff {
   thoughts?: string;
 }
 
+function toNumericId(id: string): number | null {
+  if (!/^\d+$/.test(id)) return null;
+
+  const parsed = Number.parseInt(id, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 function isTempBookId(id: string): boolean {
-  return id.startsWith('book-');
+  return toNumericId(id) === null;
 }
 
 function isTempTierId(id: string): boolean {
-  return id.startsWith('tier-');
-}
-
-function toNumericId(id: string): number | null {
-  const parsed = Number.parseInt(id, 10);
-  return Number.isNaN(parsed) ? null : parsed;
+  return toNumericId(id) === null;
 }
 
 export function getPlacementsDiff(listData: TierListData): PlacementDiff[] {

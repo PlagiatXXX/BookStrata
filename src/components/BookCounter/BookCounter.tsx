@@ -14,22 +14,22 @@ export function BookCounter({ booksCount, isPro = false }: BookCounterProps) {
   const progressPercent = isPro ? 100 : Math.min(100, Math.round((booksCount / maxBooks) * 100));
 
   return (
-    <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-4">
+    <div className="nb-heavy-border border border-black bg-black p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Book size={18} className="text-cyan-400" />
-          <span className="text-sm font-medium text-slate-200">
+          <span className="text-sm font-medium text-white">
             Книги в тир-листе
           </span>
           {isPro && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
+            <span className="inline-flex items-center gap-1 nb-heavy-border bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
               <Crown size={12} />
               Pro
             </span>
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-lg font-bold text-slate-100">
+          <span className="text-lg font-bold text-white">
             {isPro ? '∞' : booksCount}
           </span>
           {!isPro && (
@@ -39,7 +39,7 @@ export function BookCounter({ booksCount, isPro = false }: BookCounterProps) {
       </div>
 
       {/* Progress Bar */}
-      <div className="relative h-2 overflow-hidden rounded-full bg-slate-700">
+      <div className="relative h-2 overflow-hidden nb-heavy-border bg-gray-900">
         <div
           className={`h-full transition-all duration-300 ${
             isAtLimit

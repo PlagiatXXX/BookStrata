@@ -20,75 +20,80 @@ export function UnsavedChangesModal({
   isSaving,
 }: UnsavedChangesModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="sm" titleId="unsaved-changes-title">
-      <div className="relative flex flex-col items-center p-6 text-center text-[#d8f9ff]">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="sm"
+      titleId="unsaved-changes-title"
+    >
+      <div className="relative flex w-full flex-col overflow-hidden bg-[#111111] text-[#f6f1e8]">
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 flex size-8 cursor-pointer items-center justify-center rounded-lg border border-cyan-300/45 text-cyan-200/80 transition-colors hover:border-fuchsia-300/70 hover:text-fuchsia-200"
+          className="absolute right-5 top-5 z-20 flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8]"
           aria-label="Закрыть"
         >
-          <X size={16} />
+          <X size={18} />
         </button>
 
-        <div className="mb-4 mt-2">
-          <div className="rounded-xl border border-amber-300/45 bg-[rgba(250,204,21,0.12)] p-3">
-            <AlertTriangle size={28} className="text-amber-200" />
+        <div className="border-b-2 border-black bg-[#181818] px-6 py-5">
+          <div className="pr-14">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
+              Несохраненные изменения
+            </p>
+            <h3
+              id="unsaved-changes-title"
+              className="text-2xl font-black tracking-[-0.03em] text-[#f6f1e8]"
+            >
+              Сохранить перед выходом?
+            </h3>
           </div>
         </div>
 
-        <h3 id="unsaved-changes-title" className="mb-2 text-xl font-bold tracking-[-0.02em] text-[#e8ffff]">
-          Есть несохраненные изменения
-        </h3>
+        <div className="p-6">
+          <div className="border-2 border-black bg-[#171717] p-4">
+            <div className="mb-4 flex size-12 items-center justify-center border-2 border-black bg-[#ffbd58] text-black">
+              <AlertTriangle size={24} />
+            </div>
+            <div className="text-sm leading-6 text-[#b1b5b6]">
+              {isUpdatingBook ? (
+                <p>Идет сохранение книги...</p>
+              ) : (
+                <>
+                  <p>Вы уверены, что хотите уйти?</p>
+                  <p className="mt-3">
+                    Изменения будут потеряны, если не сохранить их сейчас.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
-        <p className="mb-6 text-cyan-200/75">
-          {isUpdatingBook ? (
-            "Идет сохранение книги..."
-          ) : (
-            <>
-              Вы уверены, что хотите уйти?
-              <br />
-              Изменения будут потеряны, если не сохранить.
-            </>
-          )}
-        </p>
-
-        <div className="flex w-full flex-col gap-3">
+        <div className="flex flex-col gap-3 border-t-2 border-black bg-[#0a0a0a] px-6 py-5">
           <Button
             variant="primary"
             onClick={onSaveAndLeave}
             disabled={isUpdatingBook || isSaving}
-            className="y2k-btn-primary flex-1"
+            className="border-2 border-black bg-[#c1fffe] px-5 py-3 font-black text-black hover:bg-[#9cf5f3] hover:text-black"
           >
-            {isSaving ? (
-              <>
-                <span className="mr-2 animate-spin">⏳</span>
-                Сохранение...
-              </>
-            ) : (
-              <>
-                <span className="mr-2">💾</span>
-                Сохранить и выйти
-              </>
-            )}
+            {isSaving ? "Сохранение..." : "Сохранить и выйти"}
           </Button>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isUpdatingBook || isSaving}
-              className="y2k-btn-ghost flex-1"
-            >
-              Остаться
-            </Button>
-            <Button
-              variant="outline"
-              onClick={onConfirm}
-              disabled={isUpdatingBook || isSaving}
-              className="y2k-btn-outline flex-1"
-            >
-              Уйти без сохранения
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            onClick={onConfirm}
+            disabled={isUpdatingBook || isSaving}
+            className="border-2 border-black bg-transparent px-5 py-3 font-semibold text-[#f6f1e8] hover:border-[#ff5c8a] hover:bg-[#171717]"
+          >
+            Выйти без сохранения
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            disabled={isUpdatingBook || isSaving}
+            className="border-2 border-black bg-transparent px-5 py-3 font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8]"
+          >
+            Остаться
+          </Button>
         </div>
       </div>
     </Modal>

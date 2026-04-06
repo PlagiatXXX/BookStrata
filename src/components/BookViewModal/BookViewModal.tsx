@@ -24,7 +24,7 @@ export const BookViewModal = ({
       <div className="relative flex max-h-[90vh] w-full flex-col gap-5 bg-(--bg-1) p-6 text-(--ink-0)">
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 flex size-8 cursor-pointer items-center justify-center rounded-sm border border-(--line-soft) text-(--ink-1) transition-colors hover:border-(--line-strong) hover:text-(--ink-0)"
+          className="absolute right-5 top-5 flex size-8 cursor-pointer items-center justify-center nb-heavy-border border border-black text-(--ink-1) transition-colors hover:border-(--line-strong) hover:text-(--ink-0)"
           aria-label="Закрыть"
         >
           <X size={16} />
@@ -39,7 +39,7 @@ export const BookViewModal = ({
         <div className="flex-1 overflow-y-auto pr-1">
           <div className="flex flex-col gap-6 md:flex-row">
             <div
-              className="h-56 w-40 shrink-0 rounded-md border-2 border-(--line-soft) bg-cover bg-center bg-no-repeat"
+              className="h-56 w-40 shrink-0 nb-heavy-border nb-heavy-border border-black bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${book.coverImageUrl})` }}
             />
 
@@ -63,7 +63,7 @@ export const BookViewModal = ({
           </div>
 
           {book.thoughts && book.thoughts.trim() && (
-            <div className="mt-6 flex min-w-0 flex-col gap-2 border-t border-(--line-soft) pt-5">
+            <div className="mt-6 flex min-w-0 flex-col gap-2 nb-heavy-border border-black pt-5">
               <span className={labelClass}>Мои мысли</span>
               <p className="whitespace-pre-wrap wrap-break-word text-sm text-(--ink-0)">
                 {book.thoughts}
@@ -72,8 +72,8 @@ export const BookViewModal = ({
           )}
         </div>
 
-        <div className="flex shrink-0 justify-end border-t border-(--line-soft) pt-4">
-          <Button variant="primary" onClick={onClose} className="rounded-md">
+        <div className="flex shrink-0 justify-end nb-heavy-border border-black pt-4">
+          <Button variant="primary" onClick={onClose} className="nb-heavy-border">
             Закрыть
           </Button>
         </div>

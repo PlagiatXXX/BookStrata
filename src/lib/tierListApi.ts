@@ -482,23 +482,35 @@ export function transformApiToState(apiData: ApiTierListResponse): TierListData 
 export function transformStateToApi(listData: TierListData) {
   const placements: { bookId: number; tierId: number | null; rank: number }[] = [];
 
+  const toNumericId = (id: string): number | null => {
+    if (!/^\d+$/.test(id)) return null;
+
+    const parsed = Number.parseInt(id, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
   listData.tierOrder.forEach(tierId => {
+    const numericTierId = toNumericId(tierId);
+    if (numericTierId === null) return;
+
     listData.tiers[tierId].bookIds.forEach((bookId, index) => {
-      if (bookId.startsWith('book-')) return;
+      const numericBookId = toNumericId(bookId);
+      if (numericBookId === null) return;
 
       placements.push({
-        bookId: parseInt(bookId),
-        tierId: parseInt(tierId),
+        bookId: numericBookId,
+        tierId: numericTierId,
         rank: index,
       });
     });
   });
 
   listData.unrankedBookIds.forEach((bookId, index) => {
-    if (bookId.startsWith('book-')) return;
+    const numericBookId = toNumericId(bookId);
+    if (numericBookId === null) return;
 
     placements.push({
-      bookId: parseInt(bookId),
+      bookId: numericBookId,
       tierId: null,
       rank: index,
     });

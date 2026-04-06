@@ -28,17 +28,17 @@ export const BookCover = memo(
         if (window.innerWidth >= 768) return;
 
         // На мобильных: сначала скрываем кнопки на всех других книгах
-        const allBooks = document.querySelectorAll('[data-book-id]');
-        allBooks.forEach(bookEl => {
-          if (bookEl.getAttribute('data-book-id') !== book.id) {
-            bookEl.setAttribute('data-book-actions', 'hidden');
+        const allBooks = document.querySelectorAll("[data-book-id]");
+        allBooks.forEach((bookEl) => {
+          if (bookEl.getAttribute("data-book-id") !== book.id) {
+            bookEl.setAttribute("data-book-actions", "hidden");
           }
         });
-        
+
         // Toggle на этой книге
         e.preventDefault();
         e.stopPropagation();
-        setShowActions(prev => !prev);
+        setShowActions((prev) => !prev);
       };
 
       const handleDoubleClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -51,7 +51,6 @@ export const BookCover = memo(
       const handleTouchEnd = (e: React.TouchEvent) => {
         const now = Date.now();
         if (now - lastTapTime.current < 300) {
-          // Второй тап менее чем за 300ms = двойной тап
           handleDoubleClick(e);
         }
         lastTapTime.current = now;
@@ -63,14 +62,14 @@ export const BookCover = memo(
 
         const handleClickOutside = (e: MouseEvent) => {
           const target = e.target as HTMLElement;
-          // Проверяем, был ли клик по ЭТОЙ книге через data-book-id
-          const clickedBookId = target.closest('[data-book-id]')?.getAttribute('data-book-id');
-          
+          const clickedBookId = target
+            .closest("[data-book-id]")
+            ?.getAttribute("data-book-id");
+
           if (clickedBookId === book.id) {
             return; // Клик по этой книге - не закрываем
           }
-          
-          // Клик по другой книге или вне книги - закрываем
+
           setShowActions(false);
         };
 
@@ -83,8 +82,8 @@ export const BookCover = memo(
         const element = innerRef.current;
         if (element) {
           element.setAttribute(
-            'data-book-actions',
-            showActions ? 'visible' : 'hidden'
+            "data-book-actions",
+            showActions ? "visible" : "hidden",
           );
         }
       }, [showActions]);
@@ -93,7 +92,7 @@ export const BookCover = memo(
         <div
           ref={(node) => {
             innerRef.current = node;
-            if (typeof ref === 'function') {
+            if (typeof ref === "function") {
               ref(node);
             } else if (ref) {
               ref.current = node;
@@ -103,27 +102,15 @@ export const BookCover = memo(
           onClick={handleClick}
           onTouchEnd={handleTouchEnd}
           data-book-id={book.id}
-          data-book-actions={showActions ? 'visible' : 'hidden'}
-          className={`group relative aspect-2/3
-                     w-20
-                     md:w-20
-                     sm:w-16
-                     max-sm:w-12
-                     overflow-hidden rounded-xl
-                     border border-cyan-300/50
-                     bg-cover bg-center bg-no-repeat
-                     transition-[transform,border-color,box-shadow] duration-150
-                     hover:-translate-y-0.5 hover:border-fuchsia-300/80 hover:shadow-[0_0_18px_rgba(255,0,204,0.35)]
-                     focus-within:border-cyan-200 ${cursorClass}`}
+          data-book-actions={showActions ? "visible" : "hidden"}
+          className={`nb-book-card group relative ${cursorClass}`}
           role="img"
           aria-label={label}
           title={label}
           onDoubleClick={() => onView?.(book)}
         >
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-[#060912]/85 to-transparent opacity-95" />
-
           {hasActions && (
-            <div className="pointer-events-none absolute inset-0 border border-cyan-100/15" />
+            <div className="pointer-events-none absolute inset-0 border border-[#c1fffe]/15" />
           )}
 
           {onDelete && (
@@ -133,27 +120,20 @@ export const BookCover = memo(
                 setShowActions(false);
                 onDelete(book.id);
               }}
-              className="absolute right-0 top-0 z-10 flex items-center justify-center
-                         bg-fuchsia-500 text-[#05070e]
-                         border border-fuchsia-300/70
+              className="absolute right-0 top-0 z-10 flex size-6 items-center justify-center
+                         bg-[#ff51fa] text-black
+                         nb-heavy-border border-b-0 border-r-0
                          transition-all duration-200
                          opacity-0
                          group-hover:opacity-100
                          focus-visible:opacity-100
-                         max-md:opacity-0
                          data-[visible=true]:opacity-100
                          hover:scale-105
-                         max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto
-                         md:h-5 md:min-w-5 md:px-0.5
-                         sm:h-4 sm:min-w-4 sm:px-0.5
-                         max-sm:h-3.5 max-sm:min-w-3.5 max-sm:px-0"
+                         max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
               data-visible={showActions}
               title={`Удалить "${book.title}"`}
             >
-              <X
-                size={8}
-                className="md:w-2.5 md:h-2.5 sm:w-2 sm:h-2 max-sm:w-1.5 max-sm:h-1.5"
-              />
+              <X size={12} />
             </button>
           )}
 
@@ -164,27 +144,20 @@ export const BookCover = memo(
                 setShowActions(false);
                 onEdit(book);
               }}
-              className="absolute right-0 bottom-0 z-10 flex items-center justify-center
-                         bg-cyan-300 text-[#05070e]
-                         border border-cyan-200/80
+              className="absolute right-0 bottom-0 z-10 flex size-6 items-center justify-center
+                         bg-[#c1fffe] text-black
+                         nb-heavy-border border-t-0 border-r-0
                          transition-all duration-200
                          opacity-0
                          group-hover:opacity-100
                          focus-visible:opacity-100
-                         max-md:opacity-0
                          data-[visible=true]:opacity-100
                          hover:scale-105
-                         max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto
-                         md:h-5 md:min-w-5 md:px-0.5
-                         sm:h-4 sm:min-w-4 sm:px-0.5
-                         max-sm:h-3.5 max-sm:min-w-3.5 max-sm:px-0"
+                         max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
               data-visible={showActions}
               title={`Редактировать "${book.title}"`}
             >
-              <Edit2
-                size={8}
-                className="md:w-2.5 md:h-2.5 sm:w-2 sm:h-2 max-sm:w-1.5 max-sm:h-1.5"
-              />
+              <Edit2 size={12} />
             </button>
           )}
         </div>

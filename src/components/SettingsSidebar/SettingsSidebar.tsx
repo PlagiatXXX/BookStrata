@@ -12,6 +12,14 @@ import {
 import type { Tier } from "@/types";
 import { Switch } from "@/ui/Switch";
 
+const actionButtonBase =
+  "flex w-full items-center justify-center gap-2";
+
+const primaryActionButtonClass = `nb-btn-primary ${actionButtonBase}`;
+const secondaryActionButtonClass = `nb-btn-secondary ${actionButtonBase}`;
+const dangerActionButtonClass = `${secondaryActionButtonClass} border-[#ff51fa] text-[#ff51fa] hover:bg-[#ff51fa]/10`;
+const actionIconClass = "shrink-0";
+
 interface SettingsSidebarProps {
   activeTier?: Tier;
   onUpdateTier?: (
@@ -29,11 +37,6 @@ interface SettingsSidebarProps {
   onFindBook?: () => void;
 }
 
-const sectionTitleClass =
-  "mb-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-200/80";
-const panelButtonClass =
-  "flex h-11 w-full cursor-pointer items-center justify-center rounded-[12px] border text-sm font-semibold transition-colors";
-
 export const SettingsSidebar = memo(({
   activeTier,
   onUpdateTier,
@@ -47,7 +50,6 @@ export const SettingsSidebar = memo(({
   isTogglingPublic = false,
   onFindBook,
 }: SettingsSidebarProps) => {
-  // Вычисляемые значения вместо useState + useEffect синхронизации
   const height = activeTier?.height || 130;
   const labelSize = activeTier?.labelSize || "sm";
 
@@ -71,76 +73,57 @@ export const SettingsSidebar = memo(({
   };
 
   return (
-    <aside className="y2k-panel flex w-full flex-col overflow-y-auto text-[#d8f9ff] lg:w-80">
+    <aside className="nb-sidebar flex w-full flex-col text-white lg:w-80">
       {onFindBook && (
-        <div className="border-b border-cyan-300/35 p-6">
-          <h3 className={sectionTitleClass}>Поиск в библиотеке</h3>
+        <div className="nb-section-header">
+          <h3 className="nb-label-md mb-4 text-[#c1fffe]">Поиск в библиотеке</h3>
           <button
             onClick={onFindBook}
-            className={`${panelButtonClass} y2k-btn-ghost hover:-translate-y-px`}
+            className={primaryActionButtonClass}
           >
-            <Search size={18} className="mr-2" />
+            <Search size={18} className={actionIconClass} />
             Найти книгу
           </button>
         </div>
       )}
 
-      <div className="border-b border-cyan-300/35 p-6">
-        <h3 className={sectionTitleClass}>Управление тирами</h3>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="nb-section-header">
+        <h3 className="nb-label-md mb-4 text-[#c1fffe]">Управление тирами</h3>
+        <div className="grid grid-cols-1 gap-3">
           <button
             onClick={() => onAddRow()}
-            className="group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-cyan-300/45 bg-[rgba(8,16,35,0.75)] p-3 transition-transform hover:-translate-y-px hover:border-fuchsia-300/65"
+            className={secondaryActionButtonClass}
           >
-            <Plus
-              size={16}
-              className="text-cyan-200/80 transition-colors group-hover:text-fuchsia-200"
-            />
-            <span className="text-sm font-semibold text-cyan-100">
-              Добавить тир
-            </span>
+            <Plus size={16} className={actionIconClass} />
+            Добавить тир
           </button>
           <button
             onClick={onClearRows}
-            className="group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-cyan-300/45 bg-[rgba(8,16,35,0.75)] p-3 transition-transform hover:-translate-y-px hover:border-fuchsia-300/65"
+            className={dangerActionButtonClass}
           >
-            <Trash2
-              size={14}
-              className="text-cyan-200/80 transition-colors group-hover:text-fuchsia-200"
-            />
-            <span className="text-sm font-semibold text-cyan-100">
-              Очистить тиры
-            </span>
+            <Trash2 size={16} className={actionIconClass} />
+            Очистить тиры
           </button>
         </div>
       </div>
 
       {activeTier && (
-        <div className="border-b border-cyan-300/35 p-6">
-          <h3 className={sectionTitleClass}>Настройки тира "{activeTier.title}"</h3>
-          <div className="flex flex-col gap-4">
+        <div className="nb-section-header">
+          <h3 className="nb-label-md mb-4 text-[#ffbd58]">Настройки: {activeTier.title}</h3>
+          <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-cyan-100">
-                Высота строки
-              </span>
-              <div className="flex items-center gap-2 rounded-[10px] border border-cyan-300/45 bg-[rgba(8,16,35,0.85)] p-1">
+              <span className="nb-label-md">Высота строки</span>
+              <div className="flex items-center gap-2 nb-heavy-border bg-black p-1">
                 <button
                   onClick={() => handleHeightChange("decrease")}
-                  className="flex size-7 items-center justify-center rounded-lg text-cyan-200/75 transition-colors hover:bg-cyan-300/15 hover:text-fuchsia-200"
-                  aria-label="Уменьшить высоту строки"
+                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors"
                 >
                   <Minus size={14} />
                 </button>
-                <span
-                  className="w-8 text-center text-xs font-semibold text-cyan-100"
-                  aria-live="polite"
-                >
-                  {height}
-                </span>
+                <span className="w-8 text-center nb-label-md">{height}</span>
                 <button
                   onClick={() => handleHeightChange("increase")}
-                  className="flex size-7 items-center justify-center rounded-lg text-cyan-200/75 transition-colors hover:bg-cyan-300/15 hover:text-fuchsia-200"
-                  aria-label="Увеличить высоту строки"
+                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors"
                 >
                   <Plus size={14} />
                 </button>
@@ -148,27 +131,18 @@ export const SettingsSidebar = memo(({
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-cyan-100">
-                Размер шрифта
-              </span>
-              <div className="flex items-center gap-2 rounded-[10px] border border-cyan-300/45 bg-[rgba(8,16,35,0.85)] p-1">
+              <span className="nb-label-md">Шрифт</span>
+              <div className="flex items-center gap-2 nb-heavy-border bg-black p-1">
                 <button
                   onClick={() => handleLabelSizeChange("decrease")}
-                  className="flex size-7 items-center justify-center rounded-lg text-cyan-200/75 transition-colors hover:bg-cyan-300/15 hover:text-fuchsia-200"
-                  aria-label="Уменьшить размер шрифта"
+                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors"
                 >
                   <Type size={14} className="rotate-180" />
                 </button>
-                <span
-                  className="w-8 text-center text-xs font-semibold uppercase text-cyan-100"
-                  aria-live="polite"
-                >
-                  {labelSize}
-                </span>
+                <span className="w-8 text-center nb-label-md uppercase">{labelSize}</span>
                 <button
                   onClick={() => handleLabelSizeChange("increase")}
-                  className="flex size-7 items-center justify-center rounded-lg text-cyan-200/75 transition-colors hover:bg-cyan-300/15 hover:text-fuchsia-200"
-                  aria-label="Увеличить размер шрифта"
+                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors"
                 >
                   <Type size={14} />
                 </button>
@@ -178,51 +152,46 @@ export const SettingsSidebar = memo(({
         </div>
       )}
 
-      <div className="mt-auto border-t border-cyan-300/35 bg-[rgba(5,10,22,0.7)] p-6">
-        <div className="flex flex-col gap-3 rounded-xl border border-cyan-300/45 bg-[rgba(8,16,35,0.82)] p-4">
-          {onTogglePublic && (
-            <div className="flex items-center justify-between border-b border-cyan-300/35 py-2">
-              <div className="flex items-center gap-2">
-                <Globe size={16} className="text-cyan-200/80" />
-                <span className="text-sm font-medium text-cyan-100">
-                  Публичный доступ
-                </span>
-              </div>
-              <Switch
-                checked={isPublic}
-                onCheckedChange={onTogglePublic}
-                disabled={isTogglingPublic}
-              />
+      <div className="mt-auto flex flex-col gap-4">
+        {onTogglePublic && (
+          <div className="flex items-center justify-between nb-heavy-border bg-black p-4">
+            <div className="flex items-center gap-2">
+              <Globe size={16} className="text-[#c1fffe]" />
+              <span className="nb-label-md">Публичный доступ</span>
             </div>
-          )}
+            <Switch
+              checked={isPublic}
+              onCheckedChange={onTogglePublic}
+              disabled={isTogglingPublic}
+            />
+          </div>
+        )}
 
+        <button
+          onClick={onDownloadImage}
+          className={primaryActionButtonClass}
+        >
+          <ImageDown size={16} className={actionIconClass} />
+          Скачать
+        </button>
+
+        <button
+          onClick={onMyRatingsClick}
+          className={secondaryActionButtonClass}
+        >
+          Мои рейтинги
+        </button>
+
+        {onDeleteRating && (
           <button
-            onClick={onDownloadImage}
-            className={`${panelButtonClass} y2k-btn-ghost hover:-translate-y-px`}
+            onClick={onDeleteRating}
+            className={dangerActionButtonClass}
           >
-            <ImageDown size={16} className="mr-2" />
-            Скачать изображение
+            <Trash size={16} className={actionIconClass} />
+            Удалить рейтинг
           </button>
-
-          <button
-            onClick={onMyRatingsClick}
-            className={`${panelButtonClass} y2k-btn-ghost hover:-translate-y-px`}
-          >
-            Мои рейтинги
-          </button>
-
-          {onDeleteRating && (
-            <button
-              onClick={onDeleteRating}
-              className={`${panelButtonClass} border-fuchsia-300/70 bg-[rgba(255,0,204,0.12)] text-fuchsia-100 hover:-translate-y-px hover:border-fuchsia-300`}
-            >
-              <Trash size={16} className="mr-2" />
-              Удалить рейтинг
-            </button>
-          )}
-        </div>
+        )}
       </div>
-      <div className="flex-1 border-b border-cyan-300/35 p-6" />
     </aside>
   );
 });

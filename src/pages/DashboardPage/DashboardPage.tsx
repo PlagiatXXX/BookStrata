@@ -1,4 +1,4 @@
-import { useCallback, memo } from "react";
+import { useEffect, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -22,6 +22,8 @@ import { RenameTierListModal } from "./components/RenameTierListModal";
 import { DeleteTierListModal } from "./components/DeleteTierListModal";
 import { PAGE_SIZE } from "./constants";
 import "./DashboardPage.css";
+import logger from "@/lib/logger";
+
 
 // Мемоизируем компоненты дашборда для предотвращения ререндеров при поиске
 const MemoizedDashboardHeader = memo(DashboardHeader);
@@ -30,9 +32,21 @@ const MemoizedQuickStartTemplates = memo(QuickStartTemplates);
 const MemoizedEmptyStates = memo(EmptyStates);
 const MemoizedPagination = memo(Pagination);
 
+
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Отслеживаем изменения пользователя (например, обновление аватара)
+ useEffect(() => {
+    if (user) {
+      logger.info("Пользователь в панели", {
+        username: user.username,
+        hasAvatar: !!user.avatarUrl,
+        avatarUrl: user.avatarUrl?.substring(0, 50) + "...",
+      });
+    }
+  }, [user]);
 
   // State management через reducer
   const {

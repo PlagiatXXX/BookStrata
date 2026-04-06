@@ -461,6 +461,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const tierListId = parseInt(request.params.id, 10);
       const bookId = parseInt(request.params.bookId, 10);
+
+      if (Number.isNaN(bookId)) {
+        return reply.code(400).send({ error: "Invalid bookId" });
+      }
+
       await service.assertOwner(tierListId, request.user!.userId);
       const updatedBook = await service.updateBook(bookId, request.body);
       if (request.body.thoughts) {
@@ -477,6 +482,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const tierListId = parseInt(request.params.id, 10);
       const bookId = parseInt(request.params.bookId, 10);
+
+      if (Number.isNaN(bookId)) {
+        return reply.code(400).send({ error: "Invalid bookId" });
+      }
+
       await service.assertOwner(tierListId, request.user!.userId);
       await service.removeBookFromTierList(tierListId, bookId);
       return reply.code(200).send({ message: "Book removed" });
@@ -494,6 +504,10 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const tierListId = parseInt(request.params.id, 10);
       const bookId = parseInt(request.params.bookId, 10);
       const { coverImageUrl } = request.body;
+
+      if (Number.isNaN(bookId)) {
+        return reply.code(400).send({ error: "Invalid bookId" });
+      }
 
       await service.assertOwner(tierListId, request.user!.userId);
 
