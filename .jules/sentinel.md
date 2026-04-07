@@ -24,3 +24,8 @@
 **Vulnerability:** Insecure Direct Object Reference (IDOR) in news articles where draft/unpublished content was accessible by ID to anyone.
 **Learning:** While the list endpoint (`GET /api/news`) correctly filtered unpublished content, the detail endpoint (`GET /api/news/:id`) did not, allowing unauthenticated users to view sensitive upcoming announcements.
 **Prevention:** Always implement "secure-by-default" patterns in service methods (e.g., passing `publishedOnly: true` as a default option) and enforce role-based checks in the routing layer for all detail views. When using Prisma, use `findFirst` instead of `findUnique` to allow combined filtering by ID and visibility status.
+
+## 2026-04-06 - Sensitive Endpoint Rate Limiting
+**Vulnerability:** Lack of specific rate limiting on authentication and password recovery endpoints, potentially allowing brute-force or email flooding attacks.
+**Learning:** While a global rate limit was present, it was too permissive (100 req/min) for sensitive operations like registration or password resets. Fastify's `@fastify/rate-limit` plugin allows for granular route-level configuration via the `config` object.
+**Prevention:** Always apply stricter, specific rate limits to endpoints that involve expensive computations (bcrypt) or external resource usage (email sending).

@@ -21,7 +21,15 @@ export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/register
   fastify.post<{ Body: RegisterInput }>(
     "/register",
-    { schema: registerSchema },
+    {
+      schema: registerSchema,
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 hour",
+        },
+      },
+    },
     async (request, reply) => {
       try {
         const result = await register(request.body);
@@ -61,7 +69,15 @@ export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/login
   fastify.post<{ Body: LoginInput }>(
     "/login",
-    { schema: loginSchema },
+    {
+      schema: loginSchema,
+      config: {
+        rateLimit: {
+          max: 20,
+          timeWindow: "1 minute",
+        },
+      },
+    },
     async (request, reply) => {
       try {
         const result = await login(request.body);
@@ -172,6 +188,12 @@ export async function authRoutes(fastify: FastifyInstance) {
           properties: {
             email: { type: "string", format: "email", maxLength: 255 },
           },
+        },
+      },
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: "1 hour",
         },
       },
     },
