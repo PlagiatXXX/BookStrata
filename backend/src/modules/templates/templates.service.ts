@@ -147,14 +147,24 @@ export class TemplatesService {
         id,
         OR: conditions,
       },
+      include: {
+        _count: {
+          select: { likes: true },
+        },
+      },
     });
 
+    if (!template) return null;
+
     // Проверяем, что JSON-поля корректно десериализованы
-    if (template && template.tiers === null) {
+    if (template.tiers === null) {
       (template as any).tiers = [];
     }
 
-    return template;
+    return {
+      ...template,
+      likesCount: (template as any)._count.likes,
+    };
   }
 
   async getUserTemplates(userId: string) {
@@ -165,6 +175,11 @@ export class TemplatesService {
 
     const templates = await this.prisma.template.findMany({
       where: { authorId: parseInt(userId) },
+      include: {
+        _count: {
+          select: { likes: true },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -173,7 +188,10 @@ export class TemplatesService {
       if (template.tiers === null) {
         (template as any).tiers = [];
       }
-      return template;
+      return {
+        ...template,
+        likesCount: (template as any)._count.likes,
+      };
     });
   }
 
@@ -189,25 +207,17 @@ export class TemplatesService {
       where: {
         OR: conditions,
       },
+      include: {
+        _count: {
+          select: { likes: true },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    // Получаем количество лайков для каждого шаблона отдельным запросом
-    const templateIds = templates.map((t) => t.id);
-    const likesCounts = await this.prisma.templateLike.groupBy({
-      by: ["templateId"],
-      _count: { templateId: true },
-      where: { templateId: { in: templateIds } },
-    });
-
-    // Создаём Map для быстрого поиска количества лайков
-    const likesMap = new Map(
-      likesCounts.map((l) => [l.templateId, l._count.templateId]),
-    );
-
     return templates.map((template) => ({
       ...template,
-      likesCount: likesMap.get(template.id) || 0,
+      likesCount: (template as any)._count.likes,
     }));
   }
 

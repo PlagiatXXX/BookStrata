@@ -54,9 +54,10 @@ vi.mock("@prisma/client", () => ({
 }));
 
 // Импортируем после vi.mock
-import { TemplatesService } from "./templates.service.js";
+import { TemplatesService, type CreateTemplateInput } from "./templates.service.js";
+import type { PrismaClient } from "@prisma/client";
 
-const mockPrismaClient = mockPrisma as any;
+const mockPrismaClient = mockPrisma as unknown as PrismaClient;
 
 describe("TemplatesService", () => {
   let service: TemplatesService;
@@ -205,8 +206,14 @@ describe("TemplatesService", () => {
       mockTemplate.count.mockResolvedValue(0);
       mockUser.findUnique.mockResolvedValue({ isPro: false });
       mockTemplate.create.mockResolvedValue(mockCreatedTemplate);
-      const { isPublic, ...inputWithoutPublic } = mockInput;
-      await service.createTemplate(inputWithoutPublic as any, "1");
+      const inputWithoutPublic: CreateTemplateInput = {
+        title: mockInput.title,
+        description: mockInput.description,
+        coverImageUrl: mockInput.coverImageUrl,
+        tiers: mockInput.tiers,
+        defaultBooks: mockInput.defaultBooks,
+      };
+      await service.createTemplate(inputWithoutPublic, "1");
       expect(mockTemplate.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ isPublic: false }),
       });
@@ -219,6 +226,7 @@ describe("TemplatesService", () => {
       title: "Public Template",
       isPublic: true,
       tiers: [{ id: "1", name: "S", color: "#FF6B6B", order: 0 }],
+      _count: { likes: 5 },
     };
 
     it("должен вернуть публичный шаблон", async () => {
@@ -226,8 +234,9 @@ describe("TemplatesService", () => {
       const result = await service.getTemplateById("uuid-123", "1");
       expect(mockTemplate.findFirst).toHaveBeenCalledWith({
         where: { id: "uuid-123", OR: [{ isPublic: true }, { authorId: 1 }] },
+        include: { _count: { select: { likes: true } } },
       });
-      expect(result).toEqual(mockTemplateData);
+      expect(result).toEqual({ ...mockTemplateData, likesCount: 5 });
     });
 
     it("должен вернуть шаблон пользователя если он приватный", async () => {
@@ -238,7 +247,7 @@ describe("TemplatesService", () => {
       };
       mockTemplate.findFirst.mockResolvedValue(privateTemplate);
       const result = await service.getTemplateById("uuid-123", "1");
-      expect(result).toEqual(privateTemplate);
+      expect(result).toEqual({ ...privateTemplate, likesCount: 5 });
     });
 
     it("должен вернуть null для чужого приватного шаблона", async () => {
@@ -250,8 +259,8 @@ describe("TemplatesService", () => {
     it("должен обработать null tiers", async () => {
       const templateWithNullTiers = { ...mockTemplateData, tiers: null };
       mockTemplate.findFirst.mockResolvedValue(templateWithNullTiers);
-      const result: any = await service.getTemplateById("uuid-123", "1");
-      expect(result.tiers).toEqual([]);
+      const result = await service.getTemplateById("uuid-123", "1");
+      expect(result?.tiers).toEqual([]);
     });
 
     it("должен работать без userId", async () => {
@@ -259,18 +268,26 @@ describe("TemplatesService", () => {
       await service.getTemplateById("uuid-123", undefined);
       expect(mockTemplate.findFirst).toHaveBeenCalledWith({
         where: { id: "uuid-123", OR: [{ isPublic: true }] },
+        include: { _count: { select: { likes: true } } },
       });
     });
   });
 
   describe("getUserTemplates", () => {
     const mockTemplates = [
-      { id: "1", title: "Template 1", tiers: null, createdAt: new Date() },
+      {
+        id: "1",
+        title: "Template 1",
+        tiers: null,
+        createdAt: new Date(),
+        _count: { likes: 0 },
+      },
       {
         id: "2",
         title: "Template 2",
         tiers: [{ id: "1", name: "S" }],
         createdAt: new Date(),
+        _count: { likes: 10 },
       },
     ];
 
@@ -279,10 +296,13 @@ describe("TemplatesService", () => {
       const result = await service.getUserTemplates("1");
       expect(mockTemplate.findMany).toHaveBeenCalledWith({
         where: { authorId: 1 },
+        include: { _count: { select: { likes: true } } },
         orderBy: { createdAt: "desc" },
       });
       expect(result).toHaveLength(2);
       expect(result?.[0].tiers).toEqual([]);
+      expect(result?.[0].likesCount).toBe(0);
+      expect(result?.[1].likesCount).toBe(10);
     });
 
     it("должен бросить ошибку при невалидном userId", async () => {
@@ -300,38 +320,56 @@ describe("TemplatesService", () => {
 
   describe("getAllTemplates", () => {
     const mockTemplates = [
-      { id: "1", title: "Public Template 1", isPublic: true },
-      { id: "2", title: "Public Template 2", isPublic: true },
+      {
+        id: "1",
+        title: "Public Template 1",
+        isPublic: true,
+        _count: { likes: 5 },
+      },
+      {
+        id: "2",
+        title: "Public Template 2",
+        isPublic: true,
+        _count: { likes: 3 },
+      },
     ];
 
     it("должен вернуть все публичные шаблоны", async () => {
       mockTemplate.findMany.mockResolvedValue(mockTemplates);
-      mockTemplateLike.groupBy.mockResolvedValue([]);
       const result = await service.getAllTemplates("1");
       expect(mockTemplate.findMany).toHaveBeenCalledWith({
         where: { OR: [{ isPublic: true }, { authorId: 1 }] },
+        include: { _count: { select: { likes: true } } },
         orderBy: { createdAt: "desc" },
       });
       expect(result).toHaveLength(2);
+      expect(result?.[0].likesCount).toBe(5);
+      expect(result?.[1].likesCount).toBe(3);
     });
 
     it("должен вернуть публичные + шаблоны пользователя", async () => {
       const allTemplates = [
         ...mockTemplates,
-        { id: "3", title: "My Private Template", isPublic: false, authorId: 1 },
+        {
+          id: "3",
+          title: "My Private Template",
+          isPublic: false,
+          authorId: 1,
+          _count: { likes: 0 },
+        },
       ];
       mockTemplate.findMany.mockResolvedValue(allTemplates);
-      mockTemplateLike.groupBy.mockResolvedValue([]);
       const result = await service.getAllTemplates("1");
       expect(result).toHaveLength(3);
+      expect(result?.[2].likesCount).toBe(0);
     });
 
     it("должен работать без userId", async () => {
       mockTemplate.findMany.mockResolvedValue(mockTemplates);
-      mockTemplateLike.groupBy.mockResolvedValue([]);
       await service.getAllTemplates(undefined);
       expect(mockTemplate.findMany).toHaveBeenCalledWith({
         where: { OR: [{ isPublic: true }] },
+        include: { _count: { select: { likes: true } } },
         orderBy: { createdAt: "desc" },
       });
     });
