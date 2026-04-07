@@ -25,3 +25,7 @@
 ## 2026-04-06 - [Consolidated Likes Retrieval for Templates]
 **Learning:** Using Prisma's `include: { _count: { select: { ... } } }` allows fetching related record counts in a single database query, significantly reducing overhead compared to manual `groupBy` or separate count queries for each item in a list.
 **Action:** Prefer Prisma's native `_count` inclusion for fetching relational counts (likes, items, comments) instead of manual aggregation or separate queries to minimize database roundtrips and application-level mapping logic.
+
+## 2026-04-06 - [Prisma Aggregation for User Statistics]
+**Learning:** Combining multiple statistics (counts, sums) into a single `prisma.aggregate` call significantly reduces database roundtrips and application-level overhead. Using denormalized fields (like `likesCount`) in these aggregations further avoids expensive joins on high-traffic tables like `TierListLike`.
+**Action:** When fetching multiple metrics for the same model, use `prisma.model.aggregate` to bundle counts and sums into one query. Ensure the application handles potential `null` results for sums correctly (e.g., using `|| 0`).

@@ -390,10 +390,12 @@ describe("users.service", () => {
     const mockUserId = 1;
 
     it("должен вернуть статистику пользователя", async () => {
-      (prisma.tierList.count as any).mockResolvedValue(5);
+      (prisma.tierList.aggregate as any).mockResolvedValue({
+        _count: { id: 5 },
+        _sum: { likesCount: 10 },
+      });
       (prisma.template.count as any).mockResolvedValue(3);
-      (prisma.tierListLike.count as any).mockResolvedValueOnce(10); // total likes
-      (prisma.tierListLike.count as any).mockResolvedValueOnce(2); // today likes
+      (prisma.tierListLike.count as any).mockResolvedValue(2); // today likes
 
       const result = await userService.getUserStats(mockUserId);
 
@@ -406,7 +408,10 @@ describe("users.service", () => {
     });
 
     it("должен посчитать likesToday за последние 24 часа", async () => {
-      (prisma.tierList.count as any).mockResolvedValue(0);
+      (prisma.tierList.aggregate as any).mockResolvedValue({
+        _count: { id: 0 },
+        _sum: { likesCount: 0 },
+      });
       (prisma.template.count as any).mockResolvedValue(0);
       (prisma.tierListLike.count as any).mockResolvedValue(0);
 
@@ -434,7 +439,10 @@ describe("users.service", () => {
     });
 
     it("должен вернуть нули если нет данных", async () => {
-      (prisma.tierList.count as any).mockResolvedValue(0);
+      (prisma.tierList.aggregate as any).mockResolvedValue({
+        _count: { id: 0 },
+        _sum: { likesCount: null },
+      });
       (prisma.template.count as any).mockResolvedValue(0);
       (prisma.tierListLike.count as any).mockResolvedValue(0);
 
@@ -448,18 +456,21 @@ describe("users.service", () => {
       });
     });
 
-    it("должен посчитать общие лайки через count по userId", async () => {
-      (prisma.tierList.count as any).mockResolvedValue(1);
+    it("должен использовать aggregate для общего количества тир-листов и лайков", async () => {
+      (prisma.tierList.aggregate as any).mockResolvedValue({
+        _count: { id: 1 },
+        _sum: { likesCount: 5 },
+      });
       (prisma.template.count as any).mockResolvedValue(0);
-      (prisma.tierListLike.count as any).mockResolvedValue(5);
+      (prisma.tierListLike.count as any).mockResolvedValue(0);
 
       await userService.getUserStats(mockUserId);
 
-      expect(prisma.tierListLike.count).toHaveBeenCalledWith(
+      expect(prisma.tierList.aggregate).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {
-            tierList: { userId: mockUserId },
-          },
+          where: { userId: mockUserId },
+          _count: { id: true },
+          _sum: { likesCount: true },
         }),
       );
     });
