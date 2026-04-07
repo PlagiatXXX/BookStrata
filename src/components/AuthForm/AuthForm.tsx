@@ -123,7 +123,7 @@ export function AuthForm() {
         <Card className="w-full max-w-md bg-white/25 backdrop-blur-xs shadow-[0_20px_60px_rgba(0,0,0,0.25)] border border-white/30">
           <div className="p-8">
             <div className="mb-8 text-center">
-  <h1 className="text-xl font-medium tracking-wides text-slate-800 uppercase">
+  <h1 className="text-xl font-medium tracking-widest text-slate-800 uppercase">
   Добро пожаловать
 </h1>
 

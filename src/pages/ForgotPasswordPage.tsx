@@ -61,22 +61,38 @@ export function ForgotPasswordPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="relative group">
+                  <label htmlFor="email" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
+                    Email <span className="text-red-500">*</span>
+                  </label>
                   <input
+                    id="email"
                     type="email"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 focus:outline-none focus:border-orange-500 transition-colors"
+                    className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 focus:outline-none placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 transition-colors"
+                  />
+                  <span
+                    className="
+                      pointer-events-none
+                      absolute left-0 -bottom-px
+                      h-0.5 w-full
+                      origin-left
+                      scale-x-0
+                      bg-orange-500
+                      transition-transform duration-300 ease-out
+                      peer-focus:scale-x-100
+                    "
                   />
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={loading}
+                  isLoading={loading}
                   className="w-full rounded-full bg-orange-500/80 hover:bg-orange-500 text-white py-2"
                 >
-                  {loading ? "Отправка..." : "Отправить ссылку"}
+                  Отправить ссылку
                 </Button>
 
                 <div className="text-center">
