@@ -57,8 +57,9 @@ describe("tierList.service", () => {
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
         isPublic: true,
+        likesCount: 5,
         user: { id: mockUserId, username: "testuser", avatarUrl: null },
-        _count: { likes: 5, placements: 10 },
+        _count: { placements: 10 },
         placements: [
           { book: { coverImageUrl: "cover1.jpg" } },
           { book: { coverImageUrl: "cover2.jpg" } },
@@ -71,8 +72,9 @@ describe("tierList.service", () => {
         createdAt: new Date("2024-01-03"),
         updatedAt: new Date("2024-01-04"),
         isPublic: false,
+        likesCount: 3,
         user: { id: mockUserId, username: "testuser", avatarUrl: null },
-        _count: { likes: 3, placements: 5 },
+        _count: { placements: 5 },
         placements: [{ book: { coverImageUrl: "cover3.jpg" } }],
       },
     ];

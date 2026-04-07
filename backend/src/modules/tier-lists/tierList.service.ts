@@ -30,8 +30,9 @@ export async function getUserTierLists(
         user: {
           select: { id: true, username: true, avatarUrl: true },
         },
+        likesCount: true, // Оптимизация Bolt: используем денормализованное поле вместо _count.likes
         _count: {
-          select: { likes: true, placements: true },
+          select: { placements: true },
         },
         placements: {
           select: {
@@ -53,10 +54,9 @@ export async function getUserTierLists(
   ]);
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  // Добавляем likesCount, booksCount и coverImages в ответ
+  // Добавляем booksCount и coverImages в ответ
   const data = tierLists.map((tl) => ({
     ...tl,
-    likesCount: tl._count.likes,
     booksCount: tl._count.placements,
     coverImages: tl.placements.map((p) => p.book.coverImageUrl).filter(Boolean),
     placements: undefined,
