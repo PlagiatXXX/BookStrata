@@ -122,7 +122,7 @@ export const TierLabel = memo(
       <div
         ref={droppableRef || wrapperRef}
         style={{ backgroundColor: color }}
-        className="nb-rank-box group/label relative flex shrink-0 items-center justify-center"
+        className="nb-rank-box group/label relative flex shrink-0 items-center justify-center focus-within:opacity-100"
         onDoubleClick={handleDoubleClick}
       >
         {isEditing ? (
@@ -145,13 +145,14 @@ export const TierLabel = memo(
           />
         )}
 
-        <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100 max-md:opacity-100">
+        <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100 focus-within:opacity-100 max-md:opacity-100">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setIsPaletteOpen(!isPaletteOpen);
             }}
-            className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors"
+            aria-label="Изменить цвет уровня"
+            className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none rounded-sm"
             title="Изменить цвет"
           >
             <Palette size={12} />
