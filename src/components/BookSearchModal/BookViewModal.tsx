@@ -24,7 +24,7 @@ export const BookViewModal = ({
   if (!isOpen || !book) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+    <div className="fixed inset-0 z-60 flex items-center justify-center">
       <div
         role="button"
         tabIndex={0}

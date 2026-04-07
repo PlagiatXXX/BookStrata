@@ -31,6 +31,10 @@ dist-ssr
 .qwen
 .jules
 .Jules
+.qwen
+.history
+.vscode
+
 
 # Prisma
 prisma/migrations/*/migration_lock.toml
