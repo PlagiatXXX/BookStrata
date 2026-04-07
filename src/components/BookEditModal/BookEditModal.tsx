@@ -179,7 +179,7 @@ export const BookEditModal = ({
                   {coverImageUrl ? (
                     <img
                       src={coverImageUrl}
-                      alt={book.title}
+                      alt={(book?.title ?? title) || "Обложка книги"}
                       className="h-full w-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;

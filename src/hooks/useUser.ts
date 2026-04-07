@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   apiGetMe,
   apiGetUserStats,
-  apiUpdateAvatar,
+  apiUploadAvatar,
   type User,
   type UserStats,
 } from "@/lib/userApi";
@@ -38,7 +38,7 @@ export function useUser(): UseUserResult {
   });
 
   const uploadAvatarMutation = useMutation({
-    mutationFn: (avatarUrl: string) => apiUpdateAvatar(avatarUrl),
+    mutationFn: (avatarUrl: string) => apiUploadAvatar(avatarUrl),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
       await queryClient.invalidateQueries({ queryKey: USER_STATS_QUERY_KEY });

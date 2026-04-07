@@ -13,6 +13,70 @@ const DAILY_AVATAR_LIMIT_PRO = 50; // Pro пользователи: 50 в ден
 
 const subscriptionsService = new SubscriptionsService();
 
+function looksLikeHumanSubject(prompt: string): boolean {
+  const normalizedPrompt = prompt.toLowerCase();
+
+  const humanKeywords = [
+    "человек",
+    "мужчина",
+    "женщина",
+    "парень",
+    "девушка",
+    "мальчик",
+    "девочка",
+    "юноша",
+    "дедушка",
+    "бабушка",
+    "мужик",
+    "леди",
+    "джентльмен",
+    "person",
+    "man",
+    "woman",
+    "boy",
+    "girl",
+    "guy",
+    "lady",
+    "gentleman",
+    "human",
+  ];
+
+  return humanKeywords.some((keyword) => normalizedPrompt.includes(keyword));
+}
+
+function buildAvatarPrompt(prompt: string): string {
+  const commonParts = [
+    "avatar style",
+    "single centered subject",
+    "square composition",
+    "clean simple background",
+    "high detail",
+    "sharp focus",
+    "no text",
+    "no watermark",
+    "no extra subjects",
+  ];
+
+  if (looksLikeHumanSubject(prompt)) {
+    return [
+      prompt,
+      "portrait avatar",
+      "head and shoulders",
+      "centered face",
+      "clear facial features",
+      ...commonParts,
+    ].join(", ");
+  }
+
+  return [
+    prompt,
+    "avatar illustration",
+    "full main subject visible",
+    "clear recognizable silhouette",
+    ...commonParts,
+  ].join(", ");
+}
+
 // Проверка и обновление лимита пользователя
 async function checkAvatarLimit(
   userId: number,
@@ -89,7 +153,16 @@ export async function generateAvatar(
       return { success: false, error: limitCheck.error || "Limit reached" };
     }
 
-    const fullPrompt = `${prompt}, portrait, face, square format, avatar, high quality`;
+    const fullPrompt = [
+      prompt,
+      "avatar",
+      "single subject",
+      "square composition",
+      "clean background",
+      "high detail",
+      "no text",
+      "no watermark",
+    ].join(", ");
     const encodedPrompt = encodeURIComponent(fullPrompt);
     const seed = Math.floor(Math.random() * 1000000);
 

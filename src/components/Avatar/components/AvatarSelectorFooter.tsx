@@ -35,7 +35,7 @@ export function AvatarSelectorFooter({
             isSaving ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <Spinner size="lg" className="border-white/90" />
+          <Spinner size="sm" className="border-white/25 border-t-white border-l-white" />
           <span>Сохраняем...</span>
         </span>
       </button>

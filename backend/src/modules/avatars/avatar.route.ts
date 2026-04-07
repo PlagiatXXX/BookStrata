@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { generateAvatar, getAvatarLimit } from "./avatar.service.js";
 import { updateAvatar as updateUserAvatar } from "../users/users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
+import { uploadBase64, uploadFromUrl } from "../../lib/cloudinary.js";
 import {
   generateAvatarSchema,
   uploadAvatarSchema,
@@ -63,11 +64,16 @@ export async function avatarRoutes(fastify: FastifyInstance) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
 
-      const user = await updateUserAvatar(userId, avatar);
+      const uploadResult = avatar.startsWith("data:")
+        ? await uploadBase64(avatar, "tiermaker-pro/avatars")
+        : await uploadFromUrl(avatar, "tiermaker-pro/avatars");
+
+      const user = await updateUserAvatar(userId, uploadResult.url);
 
       return reply.send({
         success: true,
         avatarUrl: user.avatarUrl,
+        user,
       });
     },
   );

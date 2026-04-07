@@ -515,7 +515,7 @@ export const useTierList = (
       const insertAfter =
         over.data.current?.type === "book" &&
         typeof overIndex === "number" &&
-        Boolean(activeRect) &&
+        activeRect !== null &&
         activeRect.left + activeRect.width / 2 > overRect.left + overRect.width / 2;
 
       // Если over - это книга, используем её индекс

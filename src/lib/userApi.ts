@@ -117,7 +117,7 @@ export async function apiGetUserStats(): Promise<UserStats> {
  */
 export async function apiUploadAvatar(
   base64Image: string,
-): Promise<{ success: boolean; avatarUrl: string; user: User }> {
+): Promise<User> {
   userLogger.info("Загрузка аватара на Cloudinary");
 
   const response = await fetch(`${API_BASE_URL}/avatars/upload`, {
@@ -129,5 +129,11 @@ export async function apiUploadAvatar(
     body: JSON.stringify({ avatar: base64Image }),
   });
 
-  return handleResponse(response);
+  const result = await handleResponse<{
+    success: boolean;
+    avatarUrl: string;
+    user: User;
+  }>(response);
+
+  return result.user;
 }

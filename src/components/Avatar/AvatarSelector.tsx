@@ -1,4 +1,4 @@
-import { useState, useReducer, useEffect } from 'react';
+import { useState, useReducer } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sileo } from 'sileo';
 import { getAuthToken } from '@/lib/authApi';
@@ -11,7 +11,6 @@ import { AiGenerationTab } from './components/AiGenerationTab';
 import { UploadTab } from './components/UploadTab';
 import { AvatarSelectorFooter } from './components/AvatarSelectorFooter';
 import { useAvatarPreview } from './hooks/useAvatarPreview';
-import { useAvatarGeneration } from './hooks/useAvatarGeneration';
 import { allPresets } from './presets';
 import type { AvatarSelectorProps, LimitInfo, PresetStyle, TabId } from './types';
 import { QUERY_STALE_TIME_MS, QUERY_GC_TIME_MS } from './constants';
@@ -49,16 +48,17 @@ export function AvatarSelector({
     error: null,
   });
 
-  // Хук генерации с кастомной логикой
-  const { startGeneration, completeGeneration, clearError, handleError } =
-    useAvatarGeneration({
-      currentAvatar,
-      onGenerationComplete: () => {
-        dispatchGeneration({ type: 'GENERATION_COMPLETE' });
-        setPreviewUrl(currentAvatar ?? null);
-        setLoadState('ready');
-      },
-    });
+  const startGeneration = (baseAvatar: string | null) => {
+    dispatchGeneration({ type: 'START_GENERATION', baseAvatar });
+  };
+
+  const clearError = () => {
+    dispatchGeneration({ type: 'CLEAR_ERROR' });
+  };
+
+  const handleError = (error: string) => {
+    dispatchGeneration({ type: 'GENERATION_ERROR', error });
+  };
 
   // Вычисляемые значения
   const currentUrl =
@@ -68,6 +68,13 @@ export function AvatarSelector({
     generation.isGenerating ||
     generation.isWaitingForResult ||
     preview.loadState === 'loading';
+  const busyLabel = isSaving
+    ? 'Сохраняем...'
+    : generation.isGenerating
+      ? 'Создаем...'
+      : generation.isWaitingForResult || preview.loadState === 'loading'
+        ? 'Загружаем...'
+        : undefined;
 
   // Загружаем информацию о лимитах через useQuery
   const { data: limitData } = useQuery({
@@ -80,23 +87,6 @@ export function AvatarSelector({
 
   const limitInfo = limitData ?? null;
   const remainingGenerations = limitInfo?.remaining ?? 0;
-
-  // Проверка: если аватар обновился во время ожидания генерации (legacy)
-  useEffect(() => {
-    if (!generation.isWaitingForResult) return;
-    if (currentAvatar && currentAvatar !== generation.generationBaseAvatar) {
-      completeGeneration();
-      setPreviewUrl(currentAvatar ?? null);
-      setLoadState('ready');
-    }
-  }, [
-    currentAvatar,
-    generation.isWaitingForResult,
-    generation.generationBaseAvatar,
-    completeGeneration,
-    setPreviewUrl,
-    setLoadState,
-  ]);
 
   // Обработчики
   const handlePresetSelect = (preset: (typeof allPresets)[0]) => {
@@ -193,7 +183,8 @@ export function AvatarSelector({
           currentUrl={currentUrl}
           username={username}
           hasSelection={hasSelection}
-          isBusy={isBusy}
+          isBusy={isBusy || isSaving}
+          busyLabel={busyLabel}
         />
 
         {/* Tabs */}

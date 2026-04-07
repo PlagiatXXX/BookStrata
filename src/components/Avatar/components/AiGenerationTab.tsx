@@ -44,6 +44,7 @@ export function AiGenerationTab({
       <StatusMessages
         error={error}
         previewLoadState={previewLoadState}
+        isGenerating={isGenerating}
         isWaitingForResult={isWaitingForResult}
       />
 
@@ -74,6 +75,7 @@ export function AiGenerationTab({
       <GenerateButton
         onClick={onGenerate}
         disabled={isDisabled}
+        isBusy={isBusy}
         isGenerating={isGenerating}
         isWaiting={isWaitingForResult}
         isPro={isPro}
@@ -87,12 +89,14 @@ export function AiGenerationTab({
 interface StatusMessagesProps {
   error: string | null;
   previewLoadState: "idle" | "loading" | "ready" | "error";
+  isGenerating: boolean;
   isWaitingForResult: boolean;
 }
 
 function StatusMessages({
   error,
   previewLoadState,
+  isGenerating,
   isWaitingForResult,
 }: StatusMessagesProps) {
   if (error) {
@@ -103,9 +107,21 @@ function StatusMessages({
     );
   }
 
+  if (isGenerating) {
+    return (
+      <div className="flex items-center gap-3 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
+        <Spinner size="sm" className="border-white/25 border-t-white border-l-white shrink-0" />
+        <p className="text-sm text-gray-300">
+          Отправляем запрос на генерацию аватара.
+        </p>
+      </div>
+    );
+  }
+
   if (previewLoadState === "loading") {
     return (
-      <div className="p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
+      <div className="flex items-center gap-3 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
+        <Spinner size="sm" className="border-white/25 border-t-white border-l-white shrink-0" />
         <p className="text-sm text-gray-300">
           Загружаем изображение. Это может занять немного времени.
         </p>
@@ -125,7 +141,8 @@ function StatusMessages({
 
   if (isWaitingForResult) {
     return (
-      <div className="p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
+      <div className="flex items-center gap-3 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
+        <Spinner size="sm" className="border-white/25 border-t-white border-l-white shrink-0" />
         <p className="text-sm text-gray-300">
           Генерация запущена. Обычно занимает до 40 секунд. Можно закрыть окно —
           аватар обновится автоматически.
@@ -140,6 +157,7 @@ function StatusMessages({
 interface GenerateButtonProps {
   onClick: () => void;
   disabled: boolean;
+  isBusy: boolean;
   isGenerating: boolean;
   isWaiting: boolean;
   isPro: boolean;
@@ -148,11 +166,16 @@ interface GenerateButtonProps {
 function GenerateButton({
   onClick,
   disabled,
+  isBusy,
   isGenerating,
   isWaiting,
   isPro,
 }: GenerateButtonProps) {
-  const isBusy = isGenerating || isWaiting;
+  const busyLabel = isGenerating
+    ? "Создаем..."
+    : isWaiting
+      ? "Дождитесь результата..."
+      : "Загружаем...";
 
   if (!isPro) {
     return (
@@ -185,8 +208,8 @@ function GenerateButton({
           isBusy ? "opacity-100" : "opacity-0"
         }`}
       >
-        <Spinner size="lg" className="border-white/90" />
-        <span>{isGenerating ? "Создаем..." : "Дождитесь результата..."}</span>
+        <Spinner size="sm" className="border-white/25 border-t-white border-l-white" />
+        <span>{busyLabel}</span>
       </span>
     </button>
   );

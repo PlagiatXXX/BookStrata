@@ -1,5 +1,5 @@
-import { Avatar } from '../Avatar';
 import { Spinner } from '@/components/Spinner';
+import { Avatar } from '../Avatar';
 import { Check } from 'lucide-react';
 import type { AvatarPreviewProps } from '../types';
 
@@ -8,6 +8,7 @@ export function AvatarPreview({
   username,
   hasSelection,
   isBusy,
+  busyLabel = "Загружаем...",
 }: AvatarPreviewProps) {
   const showLoading = isBusy;
 
@@ -20,7 +21,10 @@ export function AvatarPreview({
         <Avatar url={avatarUrl} username={username} size="xl" />
         {showLoading && (
           <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
-            <Spinner size="lg" />
+            <div className="flex flex-col items-center gap-2">
+              <Spinner size="lg" className="border-white/25 border-t-white border-l-white" />
+              <span className="text-xs font-medium text-white">{busyLabel}</span>
+            </div>
           </div>
         )}
         {hasSelection && (

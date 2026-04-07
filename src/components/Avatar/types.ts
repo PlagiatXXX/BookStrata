@@ -65,6 +65,7 @@ export interface AvatarPreviewProps {
   username?: string;
   hasSelection: boolean;
   isBusy: boolean;
+  busyLabel?: string;
 }
 
 export interface TabNavigationProps {
