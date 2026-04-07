@@ -98,10 +98,7 @@ export const TierRow = memo(
                        }`}
           >
             {showEndInsertIndicator ? (
-              <div
-                className="nb-book-track-end-indicator"
-                aria-hidden="true"
-              />
+              <div className="nb-book-track-end-indicator" aria-hidden="true" />
             ) : null}
             {books.map((book) => (
               <SortableBookCover
@@ -119,10 +116,11 @@ export const TierRow = memo(
           </div>
         </SortableContext>
 
-        <div className="nb-tier-actions absolute right-0 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-2 border-l-2 border-black bg-[#0e0e0e] transition-opacity opacity-0 group-hover:opacity-100">
+        <div className="nb-tier-actions absolute right-0 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-2 border-l-2 border-black bg-[#0e0e0e] transition-opacity opacity-0 group-hover:opacity-100 focus-within:opacity-100">
           <button
             title="Переместить"
-            className="cursor-grab text-gray-400 active:cursor-grabbing hover:text-[#c1fffe] transition-colors"
+            aria-label="Переместить тир"
+            className="cursor-grab text-gray-400 active:cursor-grabbing hover:text-[#c1fffe] transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none"
             {...attributes}
             {...listeners}
           >
@@ -131,14 +129,16 @@ export const TierRow = memo(
           <button
             onClick={() => onSetActive(tier.id)}
             title="Настройки"
-            className="text-gray-400 hover:text-[#c1fffe] cursor-pointer transition-colors"
+            aria-label="Настройки тира"
+            className="text-gray-400 hover:text-[#c1fffe] cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none"
           >
             <Settings size={18} />
           </button>
           <button
             onClick={() => onDelete(tier.id)}
             title="Удалить тир"
-            className="text-gray-400 hover:text-[#ff51fa] cursor-pointer transition-colors"
+            aria-label="Удалить тир"
+            className="text-gray-400 hover:text-[#ff51fa] cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-fuchsia-500 outline-none"
           >
             <Trash2 size={18} />
           </button>

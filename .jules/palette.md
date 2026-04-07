@@ -1,0 +1,3 @@
+## 2025-05-15 - [Hidden-on-hover accessibility pattern]
+**Learning:** In a Neo-Brutalist design where actions are often hidden by default (`opacity-0`) and revealed on hover to reduce visual noise, keyboard-only users and screen readers are effectively locked out of these features. Relying solely on `group-hover:opacity-100` is insufficient for accessibility.
+**Action:** Always complement `group-hover:opacity-100` with `focus-within:opacity-100` on the parent container (e.g., `TierRow`, `TierLabel`, `BookCover`) and ensure child buttons have `focus-visible` ring indicators. This preserves the clean "hover-only" visual aesthetic for mouse users while ensuring full discoverability and interaction for keyboard navigation.
