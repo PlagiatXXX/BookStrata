@@ -1,3 +1,4 @@
+import type { Book as SharedBook, BookPlacement as SharedBookPlacement, Tier as SharedTier, TierList as SharedTierList } from "../../shared/types";
 // Описывает одну книгу, как она приходит из Prisma
 export interface ApiBook {
   id: number;

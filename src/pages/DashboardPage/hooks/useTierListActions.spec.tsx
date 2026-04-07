@@ -5,11 +5,11 @@ import { renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useTierListActions } from './useTierListActions';
-import * as apiModule from '@/lib/api';
+import * as apiModule from '@/lib/tierListApi';
 import { logger } from '@/lib/logger';
 
 // Моки API
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/tierListApi', () => ({
   createTierList: vi.fn(),
   updateTierListTitle: vi.fn(),
   deleteTierList: vi.fn(),

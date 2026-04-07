@@ -1,7 +1,7 @@
 import { GitFork } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { forkTierList } from '@/lib/api';
+import { forkTierList } from '@/lib/tierListApi';
 import { sileo } from 'sileo';
 import { LikeButton } from '@/components/LikeButton';
 import { AutoSaveIndicator } from './AutoSaveIndicator';

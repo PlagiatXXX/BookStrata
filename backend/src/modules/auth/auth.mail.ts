@@ -97,3 +97,48 @@ export async function sendWelcomeEmail(email: string, username: string): Promise
   });
 }
 
+
+/**
+ * HTML Template for Password Reset Link (Russian)
+ */
+const getResetLinkTemplate = (username: string, resetLink: string) => `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 5px solid #f59e0b; }
+    h1 { color: #d97706; margin-top: 0; }
+    .btn { display: inline-block; background-color: #f59e0b; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
+    .footer { font-size: 12px; color: #64748b; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Сброс пароля</h1>
+    <p>Здравствуйте, <strong>${username}</strong>!</p>
+    <p>Мы получили запрос на сброс пароля для вашей учетной записи в BookStrata Pro.</p>
+    <p>Для установки нового пароля нажмите на кнопку ниже:</p>
+    <a href="${resetLink}" class="btn">Сбросить пароль</a>
+    <p>Эта ссылка действительна в течение 1 часа. Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>
+    <div class="footer">
+      <p>© ${new Date().getFullYear()} BookStrata Pro. Все права защищены.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+export async function sendPasswordResetEmail(email: string, username: string, resetToken: string): Promise<void> {
+  const resetLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+  const html = getResetLinkTemplate(username, resetLink);
+  const text = `Здравствуйте, ${username}! Перейдите по ссылке для сброса пароля: ${resetLink}`;
+
+  await sendEmail({
+    to: email,
+    subject: "Сброс пароля в BookStrata Pro",
+    text,
+    html,
+  });
+}

@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useDashboardState } from './useDashboardState';
-import type { TierListShort } from '@/lib/api';
+import type { TierListShort } from '@/lib/tierListApi';
 
 const mockTierList: TierListShort = {
   id: 1,

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { useAuth } from "@/hooks/useAuthContext";
-import { getUserTierLists } from "@/lib/api";
+import { getUserTierLists } from "@/lib/tierListApi";
 import { apiGetUserStats } from "@/lib/userApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { sileo } from "sileo";

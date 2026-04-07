@@ -1,11 +1,11 @@
+import crypto from "node:crypto";
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { jwtPayloadSchema, type AuthTokenPayload } from "./auth.schema.js";
 import { RolesService } from "../roles/roles.service.js";
 import { createLogger } from "../../lib/logger.js";
-import crypto from "crypto";
-import { sendNewPasswordEmail, sendWelcomeEmail } from "./auth.mail.js";
+import { sendNewPasswordEmail, sendPasswordResetEmail, sendWelcomeEmail } from "./auth.mail.js";
 
 const logger = createLogger("Auth", { color: "blue" });
 
@@ -186,46 +186,40 @@ export function generateTokenPair(payload: Partial<AuthTokenPayload>): {
 /**
  * Запрос на восстановление пароля (автогенерация нового)
  */
+
 export async function requestPasswordReset(email: string): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { email },
   });
 
   if (!user) {
-    // В целях безопасности не выдаем статус ошибки, но и ничего не отправляем
     return;
   }
 
-  // Генерируем новый случайный пароль (8 символов)
-  const newPassword = crypto.randomBytes(4).toString("hex").toUpperCase();
+  // Generate a secure token
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 3600000); // 1 hour
 
-  // Хешируем и сохраняем в БД
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: hashedPassword },
-    }),
-    // Чистим старые токены сброса, если они были (теперь не нужны)
-    prisma.passwordResetToken.deleteMany({
-      where: { userId: user.id },
-    }),
-  ]);
+  await prisma.passwordResetToken.create({
+    data: {
+      token,
+      userId: user.id,
+      expiresAt,
+    },
+  });
 
   try {
-    // Отправляем письмо через новый сервис
-    await sendNewPasswordEmail(user.email, user.username || "Пользователь", newPassword);
-    logger.info("Новый пароль успешно отправлен на почту", { userId: user.id });
+    await sendPasswordResetEmail(user.email, user.username || "Пользователь", token);
+    logger.info("Ссылка для сброса пароля отправлена", { userId: user.id });
   } catch (error) {
-    logger.error("Ошибка при отправке нового пароля", { error: (error as Error).message, userId: user.id });
-    throw new Error("Не удалось отправить письмо с новым паролем. Попробуйте позже.");
+    logger.error("Ошибка при отправке письма сброса", { error: (error as Error).message, userId: user.id });
+    throw new Error("Не удалось отправить письмо. Попробуйте позже.");
   }
 }
 
 /**
- * Подтверждение сброса пароля (Оставлено для совместимости, но теперь логика в requestPasswordReset)
- * @deprecated
+ * Подтверждение сброса пароля
+ *
  */
 export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
   const resetToken = await prisma.passwordResetToken.findUnique({

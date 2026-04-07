@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/api";
+import type { ApiTierListResponse } from "@/types/api";
+import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/tierListApi";
 import { createLogger } from "@/lib/logger";
 
 // Логгер для хука действий тир-листов
@@ -31,7 +32,7 @@ export function useTierListActions({
 
   const { mutate: createNewTierList, isPending: isCreating } = useMutation({
     mutationFn: (title: string) => createTierList(title),
-    onSuccess: (tierList) => {
+    onSuccess: (tierList: ApiTierListResponse) => {
       logger.info("New tier list created - navigating to editor", {
         id: tierList.id,
         title: tierList.title,

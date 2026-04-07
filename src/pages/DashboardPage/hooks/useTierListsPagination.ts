@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { TierListShort } from '@/lib/api';
+import type { TierListShort } from '@/lib/tierListApi';
 import type { SortOption, FilterOption } from '../types';
 
 interface UseTierListsPaginationOptions {
