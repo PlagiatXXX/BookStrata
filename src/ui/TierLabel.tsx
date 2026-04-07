@@ -152,7 +152,7 @@ export const TierLabel = memo(
               setIsPaletteOpen(!isPaletteOpen);
             }}
             aria-label="Изменить цвет уровня"
-            className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none rounded-sm"
+            className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400"
             title="Изменить цвет"
           >
             <Palette size={12} />

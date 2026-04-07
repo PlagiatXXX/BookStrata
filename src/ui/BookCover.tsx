@@ -127,11 +127,13 @@ export const BookCover = memo(
                          opacity-0
                          group-hover:opacity-100
                          focus-visible:opacity-100
+                         focus-within:opacity-100
                          data-[visible=true]:opacity-100
                          hover:scale-105
                          max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
               data-visible={showActions}
               title={`Удалить "${book.title}"`}
+              aria-label={`Удалить "${book.title}"`}
             >
               <X size={12} />
             </button>
@@ -151,11 +153,13 @@ export const BookCover = memo(
                          opacity-0
                          group-hover:opacity-100
                          focus-visible:opacity-100
+                         focus-within:opacity-100
                          data-[visible=true]:opacity-100
                          hover:scale-105
                          max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
               data-visible={showActions}
               title={`Редактировать "${book.title}"`}
+              aria-label={`Редактировать "${book.title}"`}
             >
               <Edit2 size={12} />
             </button>

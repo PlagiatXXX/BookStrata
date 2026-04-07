@@ -1,5 +1,5 @@
-import { Book, AlertCircle, CheckCircle2, Crown } from 'lucide-react';
-import { MAX_BOOKS_PER_TIER_LIST } from '@/pages/DashboardPage/constants';
+import { Book, AlertCircle, CheckCircle2, Crown } from "lucide-react";
+import { MAX_BOOKS_PER_TIER_LIST } from "@/pages/DashboardPage/constants";
 
 interface BookCounterProps {
   booksCount: number;
@@ -11,7 +11,9 @@ export function BookCounter({ booksCount, isPro = false }: BookCounterProps) {
   const remainingBooks = isPro ? Infinity : Math.max(0, maxBooks - booksCount);
   const isAtLimit = isPro ? false : booksCount >= maxBooks;
   const isNearLimit = isPro ? false : booksCount >= maxBooks - 3;
-  const progressPercent = isPro ? 100 : Math.min(100, Math.round((booksCount / maxBooks) * 100));
+  const progressPercent = isPro
+    ? 100
+    : Math.min(100, Math.round((booksCount / maxBooks) * 100));
 
   return (
     <div className="nb-heavy-border border border-black bg-black p-4">
@@ -39,7 +41,14 @@ export function BookCounter({ booksCount, isPro = false }: BookCounterProps) {
       </div>
 
       {/* Progress Bar */}
-      <div className="relative h-2 overflow-hidden nb-heavy-border bg-gray-900">
+            <div
+        className="relative h-2 overflow-hidden nb-heavy-border bg-gray-900"
+        role="progressbar"
+        aria-valuenow={isPro ? 100 : booksCount}
+        aria-valuemin={0}
+        aria-valuemax={isPro ? 100 : maxBooks}
+        aria-label="Прогресс заполнения тир-листа"
+      >
         <div
           className={`h-full transition-all duration-300 ${
             isAtLimit
