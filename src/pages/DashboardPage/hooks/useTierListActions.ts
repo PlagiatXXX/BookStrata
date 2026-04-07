@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/api";
+import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/tierListApi";
 import { createLogger } from "@/lib/logger";
 
 // Логгер для хука действий тир-листов

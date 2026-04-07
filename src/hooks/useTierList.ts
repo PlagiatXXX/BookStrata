@@ -484,22 +484,13 @@ export const useTierList = (
     const activeIsBook = active.data.current?.type === "book";
     if (activeIsBook) {
       const sourceContainer = active.data.current?.containerId;
-
-      // Определяем целевой контейнер
       let destContainer: string | undefined;
 
-      // Если over - это книга, используем её контейнер
       if (over.data.current?.type === "book") {
         destContainer = over.data.current?.containerId;
-      }
-
-      // Если over - это тир (SortableContext), используем его ID
-      if (!destContainer && listData.tiers[String(over.id)]) {
+      } else if (listData.tiers[String(over.id)]) {
         destContainer = String(over.id);
-      }
-
-      // Если over - это unranked area
-      if (!destContainer && String(over.id) === UNRANKED_AREA_ID) {
+      } else if (String(over.id) === UNRANKED_AREA_ID) {
         destContainer = UNRANKED_AREA_ID;
       }
 
@@ -508,37 +499,34 @@ export const useTierList = (
       const sourceIndex = active.data.current?.sortable?.index;
       if (typeof sourceIndex !== "number") return;
 
-      let destIndex;
+      let destIndex: number;
       const overIndex = over.data.current?.sortable?.index;
-      const activeRect = active.rect.current.translated;
-      const overRect = over.rect;
-      const insertAfter =
-        over.data.current?.type === "book" &&
-        typeof overIndex === "number" &&
-        activeRect !== null &&
-        activeRect.left + activeRect.width / 2 > overRect.left + overRect.width / 2;
+      const activeRect = active.rect?.current?.translated || null;
+      const overRect = over.rect || null;
 
-      // Если over - это книга, используем её индекс
       if (over.data.current?.type === "book" && typeof overIndex === "number") {
         if (sourceContainer === destContainer) {
-          if (insertAfter) {
-            destIndex = overIndex + (sourceIndex < overIndex ? 0 : 1);
+          if (activeRect && overRect) {
+            const insertAfter = (activeRect.left + activeRect.width / 2) > (overRect.left + overRect.width / 2);
+            destIndex = overIndex + (sourceIndex < overIndex ? (insertAfter ? 0 : -1) : (insertAfter ? 1 : 0));
           } else {
-            destIndex = overIndex + (sourceIndex < overIndex ? -1 : 0);
+            destIndex = overIndex;
           }
         } else {
-          destIndex = overIndex + (insertAfter ? 1 : 0);
+          if (activeRect && overRect) {
+            const insertAfter = (activeRect.left + activeRect.width / 2) > (overRect.left + overRect.width / 2);
+            destIndex = overIndex + (insertAfter ? 1 : 0);
+          } else {
+            destIndex = overIndex;
+          }
         }
       } else {
-        // Иначе добавляем в конец
         const items =
           destContainer === UNRANKED_AREA_ID
             ? listData.unrankedBookIds
             : listData.tiers[destContainer]?.bookIds;
         destIndex = items ? items.length : 0;
       }
-
-      if (typeof destIndex !== "number") return;
 
       dispatch({
         type: "REORDER_ITEMS",

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Plus, TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
-import { createTierList, saveTierListTiers } from "@/lib/api";
+import { createTierList, saveTierListTiers } from "@/lib/tierListApi";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { TemplateGrid } from "@/components/CommunityComponents/TemplateGrid";
 import { HeroSection } from "@/components/CommunityComponents/HeroSection";

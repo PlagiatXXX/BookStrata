@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-client";
 import type { AdminUser } from "@/types/auth";
 import { sileo } from "sileo";
 import { Users, Crown, Clock, Shield } from "lucide-react";

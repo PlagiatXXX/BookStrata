@@ -3,7 +3,7 @@ import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
-import { BookViewModal } from "./BookViewModal";
+import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { useBookSearch } from "@/hooks/useBookSearch";
 import { Spinner } from "@/components/Spinner";
 
@@ -596,7 +596,7 @@ export const BookSearchModal = ({
 
       {/* Book View Modal */}
       <BookViewModal
-        book={viewBook}
+        book={viewBook as any}
         isOpen={!!viewBook}
         onClose={() => setViewBook(null)}
         onAdd={handleAddBookFromView}

@@ -1,5 +1,5 @@
 import { useReducer, useCallback } from 'react';
-import type { TierListShort } from '@/lib/api';
+import type { TierListShort } from '@/lib/tierListApi';
 import type { DashboardState, DashboardAction, SortOption, FilterOption } from '../types';
 
 const initialState: DashboardState = {

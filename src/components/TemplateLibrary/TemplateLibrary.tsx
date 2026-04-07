@@ -8,8 +8,8 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { Button } from "@/ui/Button";
 import { DeleteTemplateModal } from "./DeleteTemplateModal";
 import { Spinner } from "@/components/Spinner";
-import { getPublicTierLists } from "@/lib/api";
-import type { PaginatedTierListsResponse } from "@/lib/api";
+import { getPublicTierLists } from "@/lib/tierListApi";
+import type { PaginatedTierListsResponse } from "@/lib/tierListApi";
 import { apiGetLikedTierListIds } from "@/lib/likesApi";
 import { Header } from "@/ui/Header";
 import { Footer } from "@/ui/Footer";
@@ -32,7 +32,7 @@ import {
   PUBLIC_PAGE_SIZE,
   PUBLIC_TIER_LISTS_STALE_TIME_MS,
   PUBLIC_TIER_LISTS_GC_TIME_MS,
-} from "./constants";
+} from "@/constants/pagination";
 import type { Template } from "../../types/templates";
 
 interface TemplateLibraryProps {
