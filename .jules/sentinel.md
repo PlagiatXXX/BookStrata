@@ -29,3 +29,8 @@
 **Vulnerability:** Lack of specific rate limiting on authentication and password recovery endpoints, potentially allowing brute-force or email flooding attacks.
 **Learning:** While a global rate limit was present, it was too permissive (100 req/min) for sensitive operations like registration or password resets. Fastify's `@fastify/rate-limit` plugin allows for granular route-level configuration via the `config` object.
 **Prevention:** Always apply stricter, specific rate limits to endpoints that involve expensive computations (bcrypt) or external resource usage (email sending).
+
+## 2026-04-07 - Secure Password Reset Restoration & Hardening
+**Vulnerability:** Insecure password recovery mechanism that immediately reset user passwords to a temporary plain-text value sent via email, potentially allowing unauthorized account locking or exposure if the email is intercepted.
+**Learning:** Reverted from an insecure instant-reset method to a secure, high-entropy token-based confirmation link flow. This ensures passwords are only changed when the user explicitly clicks a short-lived, single-use link. Also addressed email enumeration by using generic success messages in the `forgot-password` route.
+**Prevention:** Always use high-entropy (e.g., 32-byte) tokens for sensitive flows like password resets. Avoid revealing account existence in response messages for public endpoints like `forgot-password`. Apply strict rate limits (e.g., 5/hr) to all components of the auth recovery flow.
