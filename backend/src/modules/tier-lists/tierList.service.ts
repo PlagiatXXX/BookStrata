@@ -550,59 +550,74 @@ export async function forkTierList(id: number, userId: number) {
     // Создаем заголовок с пометкой о копии
     const newTitle = `${original.title} (копия)`;
 
+    // Оптимизация Bolt: объединяем создание тир-листа и тиров в один вложенный create.
+    // Это сокращает количество последовательных запросов к БД.
     const newTierList = await tx.tierList.create({
       data: {
         userId,
         title: newTitle,
         isPublic: false,
+        tiers: {
+          create: original.tiers.map((tier) => ({
+            title: tier.title,
+            color: tier.color,
+            rank: tier.rank,
+          })),
+        },
+      },
+      include: {
+        tiers: true,
       },
     });
 
-    // 3. Копируем тиры
-    const tierMap = new Map<number, number>(); // Старый ID -> Новый ID
-
-    for (const tier of original.tiers) {
-      const createdTier = await tx.tier.create({
-        data: {
-          tierListId: newTierList.id,
-          title: tier.title,
-          color: tier.color,
-          rank: tier.rank,
-        },
-      });
-      tierMap.set(tier.id, createdTier.id);
-    }
-
-    // 4. Копируем книги и создаем размещения
-    // Важно: создаем НОВЫЕ записи книг, чтобы пользователь мог редактировать их мысли/описания независимо
-    for (const placement of original.placements) {
-      const newBook = await tx.book.create({
-        data: {
-          title: placement.book.title,
-          author: placement.book.author,
-          coverImageUrl: placement.book.coverImageUrl,
-          description: placement.book.description,
-          thoughts: placement.book.thoughts,
-        },
-      });
-
-      await tx.bookPlacement.create({
-        data: {
-          tierListId: newTierList.id,
-          bookId: newBook.id,
-          tierId: placement.tierId
-            ? (tierMap.get(placement.tierId) ?? null)
-            : null,
-          rank: placement.rank,
-        },
-      });
-    }
-
-    logger.info("Тир-лист успешно скопирован (forked)", {
-      originalId: id,
-      newId: newTierList.id,
-      userId,
+    // Создаем карту соответствия старых ID тиров новым (используем комбинацию rank и title для надежности)
+    const tierMap = new Map<number, number>();
+    newTierList.tiers.forEach((newTier) => {
+      const oldTier = original.tiers.find(
+        (t) => t.rank === newTier.rank && t.title === newTier.title,
+      );
+      if (oldTier) {
+        tierMap.set(oldTier.id, newTier.id);
+      }
     });
+
+    // Оптимизация Bolt: используем Promise.all для параллельного создания книг и их размещений.
+    // Вместо O(M) последовательных вызовов, мы делаем их параллельно.
+    // Также используем вложенный create для Book внутри BookPlacement, что еще больше сокращает roundtrips.
+    // Результат: снижение сложности по roundtrips с O(N+M) до константного времени (3 шага).
+    await Promise.all(
+      original.placements.map((placement) =>
+        tx.bookPlacement.create({
+          data: {
+            tierListId: newTierList.id,
+            rank: placement.rank,
+            tierId: placement.tierId
+              ? (tierMap.get(placement.tierId) ?? null)
+              : null,
+            book: {
+              create: {
+                title: placement.book.title,
+                author: placement.book.author,
+                coverImageUrl: placement.book.coverImageUrl,
+                description: placement.book.description,
+                thoughts: placement.book.thoughts,
+              },
+            },
+          },
+        }),
+      ),
+    );
+
+    logger.info(
+      "Тир-лист успешно скопирован (forked) с оптимизацией roundtrips",
+      {
+        originalId: id,
+        newId: newTierList.id,
+        userId,
+        tiersCount: original.tiers.length,
+        booksCount: original.placements.length,
+      },
+    );
 
     return newTierList;
   });

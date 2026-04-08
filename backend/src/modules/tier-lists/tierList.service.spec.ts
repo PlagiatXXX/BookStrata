@@ -815,4 +815,94 @@ describe("tierList.service", () => {
       expect(result.meta.totalPages).toBe(4); // ceil(35/10) = 4
     });
   });
+
+  describe("forkTierList", () => {
+    const mockId = 1;
+    const mockUserId = 2;
+    const mockOriginal = {
+      id: mockId,
+      title: "Original",
+      tiers: [
+        { id: 10, title: "S", color: "red", rank: 0 },
+        { id: 11, title: "A", color: "blue", rank: 1 },
+      ],
+      placements: [
+        {
+          rank: 0,
+          tierId: 10,
+          book: {
+            title: "Book 1",
+            author: "Author 1",
+            coverImageUrl: "img1",
+            description: "desc1",
+            thoughts: "thought1",
+          },
+        },
+      ],
+    };
+
+    it("должен создать копию тир-листа с оптимизированными запросами", async () => {
+      (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue(
+        mockOriginal,
+      );
+      (prisma.$transaction as any).mockImplementation(async (fn: any) =>
+        fn(prisma),
+      );
+
+      const mockNewTierList = {
+        id: 2,
+        title: "Original (копия)",
+        tiers: [
+          { id: 20, title: "S", rank: 0 },
+          { id: 21, title: "A", rank: 1 },
+        ],
+      };
+
+      (prisma.tierList.create as any).mockResolvedValue(mockNewTierList);
+      (prisma.bookPlacement.create as any).mockResolvedValue({});
+
+      const result = await service.forkTierList(mockId, mockUserId);
+
+      expect(prisma.tierList.findUniqueOrThrow).toHaveBeenCalledWith({
+        where: { id: mockId },
+        include: expect.objectContaining({
+          tiers: { orderBy: { rank: "asc" } },
+          placements: { include: { book: true }, orderBy: { rank: "asc" } },
+        }),
+      });
+
+      expect(prisma.tierList.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: mockUserId,
+          title: "Original (копия)",
+          tiers: {
+            create: [
+              { title: "S", color: "red", rank: 0 },
+              { title: "A", color: "blue", rank: 1 },
+            ],
+          },
+        }),
+        include: { tiers: true },
+      });
+
+      expect(prisma.bookPlacement.create).toHaveBeenCalledWith({
+        data: {
+          tierListId: 2,
+          rank: 0,
+          tierId: 20,
+          book: {
+            create: {
+              title: "Book 1",
+              author: "Author 1",
+              coverImageUrl: "img1",
+              description: "desc1",
+              thoughts: "thought1",
+            },
+          },
+        },
+      });
+
+      expect(result).toEqual(mockNewTierList);
+    });
+  });
 });
