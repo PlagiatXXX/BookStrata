@@ -13,6 +13,7 @@ import type { PaginatedTierListsResponse } from "@/lib/tierListApi";
 import { apiGetLikedTierListIds } from "@/lib/likesApi";
 import { Header } from "@/ui/Header";
 import { Footer } from "@/ui/Footer";
+
 import { EmptyState } from "./components/EmptyState";
 import {
   templateLibraryReducer,
@@ -291,8 +292,9 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
           </div>
         </div>
       </section>
-
       <Footer />
+
+
 
       <DeleteTemplateModal
         isOpen={deleteModalOpen}
