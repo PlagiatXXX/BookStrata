@@ -11,8 +11,11 @@ export function CreateTierListModal({
   onTitleChange,
   isPending,
 }: CreateModalProps) {
+  const trimmedTitle = createTitle.trim();
+  const isCreateDisabled = !trimmedTitle || isPending;
+
   const handleCreate = () => {
-    if (!createTitle.trim()) {
+    if (!trimmedTitle) {
       sileo.error({
         title: 'Название обязательно',
         description: 'Пожалуйста, введите название для тир-листа',
@@ -23,6 +26,13 @@ export function CreateTierListModal({
     onCreate(createTitle);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isCreateDisabled) {
+      e.preventDefault();
+      handleCreate();
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <div className="dashboard-modal">
@@ -31,6 +41,7 @@ export function CreateTierListModal({
           className="dashboard-modal__close"
           type="button"
           aria-label="Закрыть"
+          disabled={isPending}
         >
           <X size={16} />
         </button>
@@ -45,30 +56,36 @@ export function CreateTierListModal({
             Название
           </label>
 
-        <input
-        id="create-tierlist-title"
-          type="text"
-          value={createTitle}
-          onChange={(e) => onTitleChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleCreate();
-          }}
-          placeholder="Название тир-листа..."
-          className="dashboard-modal__input"
-        />
-      </div>
+          <input
+            id="create-tierlist-title"
+            type="text"
+            value={createTitle}
+            onChange={(e) => onTitleChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Название тир-листа..."
+            className="dashboard-modal__input"
+            maxLength={100}
+            autoFocus
+            disabled={isPending}
+            aria-label="Название тир-листа"
+          />
+          <span className="text-xs text-gray-500 text-right">
+            {createTitle.length}/100
+          </span>
+        </div>
 
         <div className="dashboard-modal__actions">
           <button
             onClick={onClose}
             className="dashboard-btn dashboard-btn--ghost"
             type="button"
+            disabled={isPending}
           >
             Отмена
           </button>
           <button
             onClick={handleCreate}
-            disabled={isPending}
+            disabled={isCreateDisabled}
             className="dashboard-btn dashboard-btn--primary"
             type="button"
           >
