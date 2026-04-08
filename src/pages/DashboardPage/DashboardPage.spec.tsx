@@ -5,12 +5,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { DashboardPage } from './DashboardPage';
-import * as apiModule from '@/lib/api';
+import * as apiModule from '@/lib/tierListApi';
 import type { ApiTierListResponse } from '@/types/api';
 import * as authContextModule from '@/hooks/useAuthContext';
 
 // Моки для хуков
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/tierListApi', () => ({
   getUserTierLists: vi.fn(),
   createTierList: vi.fn(),
   updateTierListTitle: vi.fn(),

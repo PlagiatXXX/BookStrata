@@ -1,6 +1,6 @@
 import { Spinner } from '@/components/Spinner';
 import PublicTierListCards from '../PublicTierListCards';
-import { Pagination } from './Pagination';
+import { Pagination } from '@/ui/Pagination';
 import { EmptyState } from './EmptyState';
 import type { TierListShort } from '@/lib/tierListApi';
 

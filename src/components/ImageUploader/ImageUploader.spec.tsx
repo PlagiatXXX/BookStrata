@@ -20,19 +20,19 @@ describe("ImageUploader", () => {
   it("должен отображать компонент корректно", () => {
     render(<ImageUploader onUpload={mockOnUpload} />);
 
-    expect(screen.getByText("Перетащите или выберите")).toBeInTheDocument();
+    expect(screen.getByText("Загрузить")).toBeInTheDocument();
   });
 
   it("должен отображать текст Лимит книг при достижении лимита", () => {
     render(<ImageUploader onUpload={mockOnUpload} booksCount={20} />);
 
-    expect(screen.getByText("Лимит книг")).toBeInTheDocument();
+    expect(screen.getByText("Лимит")).toBeInTheDocument();
   });
 
   it("должен быть отключен при достижении лимита", () => {
     render(<ImageUploader onUpload={mockOnUpload} booksCount={20} />);
 
-    const dropzone = screen.getByText("Лимит книг").parentElement;
+    const dropzone = screen.getByText("Лимит").parentElement;
     expect(dropzone).toHaveClass("cursor-not-allowed");
     expect(dropzone).toHaveClass("opacity-50");
   });
@@ -40,7 +40,7 @@ describe("ImageUploader", () => {
   it("должен быть активен когда есть место", () => {
     render(<ImageUploader onUpload={mockOnUpload} booksCount={10} />);
 
-    const dropzone = screen.getByText("Перетащите или выберите").parentElement;
+    const dropzone = screen.getByText("Загрузить").parentElement;
     expect(dropzone).not.toHaveClass("cursor-not-allowed");
     expect(dropzone).not.toHaveClass("opacity-50");
   });
@@ -50,7 +50,7 @@ describe("ImageUploader", () => {
       <ImageUploader onUpload={mockOnUpload} booksCount={20} isPro={true} />,
     );
 
-    const dropzone = screen.getByText("Перетащите или выберите").parentElement;
+    const dropzone = screen.getByText("Загрузить").parentElement;
     expect(dropzone).not.toHaveClass("cursor-not-allowed");
     expect(dropzone).not.toHaveClass("opacity-50");
   });

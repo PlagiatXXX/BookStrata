@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { MAX_BOOKS_PER_TIER_LIST } from '@/pages/DashboardPage/constants';
+import { MAX_BOOKS_PER_TIER_LIST } from '@/constants/limits';
 
 interface UseTierListBooksLimitProps {
   booksCount: number;

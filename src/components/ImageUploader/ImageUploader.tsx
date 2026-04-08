@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { ImagePlus } from "lucide-react";
 import { sileo } from "sileo";
-import { MAX_BOOKS_PER_TIER_LIST } from "@/pages/DashboardPage/constants";
+import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 
 interface ImageUploaderProps {
   onUpload?: (files: File[]) => void;

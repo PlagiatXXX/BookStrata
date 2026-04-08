@@ -1,23 +1,31 @@
 /// <reference types="vitest/globals" />
 
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
-import { useTierListActions } from './useTierListActions';
-import * as apiModule from '@/lib/api';
-import { logger } from '@/lib/logger';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  afterAll,
+} from "vitest";
+import { renderHook } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
+import { useTierListActions } from "./useTierListActions";
+import * as apiModule from "@/lib/tierListApi";
+import { logger } from "@/lib/logger";
 
 // Моки API
-vi.mock('@/lib/api', () => ({
+vi.mock("@/lib/tierListApi", () => ({
   createTierList: vi.fn(),
   updateTierListTitle: vi.fn(),
   deleteTierList: vi.fn(),
 }));
 
 // Моки logger
-vi.mock('@/lib/logger', async () => {
-  const actual = await vi.importActual('@/lib/logger');
+vi.mock("@/lib/logger", async () => {
+  const actual = await vi.importActual("@/lib/logger");
   const mockLogger = {
     info: vi.fn(),
     warn: vi.fn(),
@@ -64,40 +72,44 @@ const createWrapper = () => {
   );
 };
 
-describe('useTierListActions', () => {
+describe("useTierListActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('createNewTierList', () => {
-    it('должен успешно создавать тир-лист', async () => {
-      const mockCreatedTierList: Awaited<ReturnType<typeof apiModule.createTierList>> = {
+  describe("createNewTierList", () => {
+    it("должен успешно создавать тир-лист", async () => {
+      const mockCreatedTierList: Awaited<
+        ReturnType<typeof apiModule.createTierList>
+      > = {
         id: 1,
-        title: 'New List',
+        title: "New List",
         year: null,
         isPublic: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        user: { id: 1, username: 'testuser' },
+        user: { id: 1, username: "testuser" },
         likesCount: 0,
         tiers: [],
         unrankedBooks: [],
       };
 
-      vi.mocked(apiModule.createTierList).mockResolvedValue(mockCreatedTierList);
+      vi.mocked(apiModule.createTierList).mockResolvedValue(
+        mockCreatedTierList,
+      );
 
       const onSuccess = vi.fn();
       const onRefetch = vi.fn();
 
       const { result } = renderHook(
         () => useTierListActions({ onSuccess, onRefetch }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
-      result.current.createNewTierList('New List');
+      result.current.createNewTierList("New List");
 
       await vi.waitFor(() => {
-        expect(apiModule.createTierList).toHaveBeenCalledWith('New List');
+        expect(apiModule.createTierList).toHaveBeenCalledWith("New List");
       });
 
       await vi.waitFor(() => {
@@ -106,47 +118,53 @@ describe('useTierListActions', () => {
       });
 
       expect(logger.info).toHaveBeenCalledWith(
-        'New tier list created - navigating to editor',
+        "New tier list created - navigating to editor",
         expect.objectContaining({
-          title: 'New List',
-        })
+          title: "New List",
+        }),
       );
     });
 
-    it('должен показывать ошибку при неудачном создании', async () => {
-      vi.mocked(apiModule.createTierList).mockRejectedValue(new Error('Failed to create'));
-
-      const { result } = renderHook(
-        () => useTierListActions({}),
-        { wrapper: createWrapper() }
+    it("должен показывать ошибку при неудачном создании", async () => {
+      vi.mocked(apiModule.createTierList).mockRejectedValue(
+        new Error("Failed to create"),
       );
 
-      result.current.createNewTierList('New List');
+      const { result } = renderHook(() => useTierListActions({}), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.createNewTierList("New List");
 
       await vi.waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith('Ошибка: Failed to create');
+        expect(mockAlert).toHaveBeenCalledWith("Ошибка: Failed to create");
       });
 
       expect(logger.error).toHaveBeenCalled();
     });
   });
 
-  describe('renameTierList', () => {
-    it('должен успешно переименовывать тир-лист', async () => {
-      vi.mocked(apiModule.updateTierListTitle).mockResolvedValue(Promise.resolve({}));
+  describe("renameTierList", () => {
+    it("должен успешно переименовывать тир-лист", async () => {
+      vi.mocked(apiModule.updateTierListTitle).mockResolvedValue(
+        Promise.resolve({}),
+      );
 
       const onSuccess = vi.fn();
       const onRefetch = vi.fn();
 
       const { result } = renderHook(
         () => useTierListActions({ onSuccess, onRefetch }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
-      result.current.renameTierList(1, 'Updated Title');
+      result.current.renameTierList(1, "Updated Title");
 
       await vi.waitFor(() => {
-        expect(apiModule.updateTierListTitle).toHaveBeenCalledWith('1', 'Updated Title');
+        expect(apiModule.updateTierListTitle).toHaveBeenCalledWith(
+          "1",
+          "Updated Title",
+        );
       });
 
       await vi.waitFor(() => {
@@ -154,12 +172,14 @@ describe('useTierListActions', () => {
         expect(onRefetch).toHaveBeenCalled();
       });
 
-      expect(logger.info).toHaveBeenCalledWith('Tier list renamed successfully');
+      expect(logger.info).toHaveBeenCalledWith(
+        "Tier list renamed successfully",
+      );
     });
   });
 
-  describe('removeTierList', () => {
-    it('должен успешно удалять тир-лист', async () => {
+  describe("removeTierList", () => {
+    it("должен успешно удалять тир-лист", async () => {
       vi.mocked(apiModule.deleteTierList).mockResolvedValue(undefined);
 
       const onSuccess = vi.fn();
@@ -167,13 +187,13 @@ describe('useTierListActions', () => {
 
       const { result } = renderHook(
         () => useTierListActions({ onSuccess, onRefetch }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       result.current.removeTierList(1);
 
       await vi.waitFor(() => {
-        expect(apiModule.deleteTierList).toHaveBeenCalledWith('1');
+        expect(apiModule.deleteTierList).toHaveBeenCalledWith("1");
       });
 
       await vi.waitFor(() => {
@@ -181,34 +201,33 @@ describe('useTierListActions', () => {
         expect(onRefetch).toHaveBeenCalled();
       });
 
-      expect(logger.info).toHaveBeenCalledWith('Tier list deleted successfully');
+      expect(logger.info).toHaveBeenCalledWith(
+        "Tier list deleted successfully",
+      );
     });
   });
 
-  describe('состояния загрузки', () => {
-    it('должен возвращать isCreating=false изначально', () => {
-      const { result } = renderHook(
-        () => useTierListActions({}),
-        { wrapper: createWrapper() }
-      );
+  describe("состояния загрузки", () => {
+    it("должен возвращать isCreating=false изначально", () => {
+      const { result } = renderHook(() => useTierListActions({}), {
+        wrapper: createWrapper(),
+      });
 
       expect(result.current.isCreating).toBe(false);
     });
 
-    it('должен возвращать isRenaming=false изначально', () => {
-      const { result } = renderHook(
-        () => useTierListActions({}),
-        { wrapper: createWrapper() }
-      );
+    it("должен возвращать isRenaming=false изначально", () => {
+      const { result } = renderHook(() => useTierListActions({}), {
+        wrapper: createWrapper(),
+      });
 
       expect(result.current.isRenaming).toBe(false);
     });
 
-    it('должен возвращать isDeleting=false изначально', () => {
-      const { result } = renderHook(
-        () => useTierListActions({}),
-        { wrapper: createWrapper() }
-      );
+    it("должен возвращать isDeleting=false изначально", () => {
+      const { result } = renderHook(() => useTierListActions({}), {
+        wrapper: createWrapper(),
+      });
 
       expect(result.current.isDeleting).toBe(false);
     });

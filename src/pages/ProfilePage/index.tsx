@@ -1,4 +1,4 @@
-import { AchievementsGrid } from "./ProfilePage/components/AchievementsGrid";
+import { AchievementsGrid } from "./components/AchievementsGrid";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -9,11 +9,11 @@ import { Spinner } from "@/components/Spinner";
 import { ArrowLeft } from "lucide-react";
 import { sileo } from "sileo";
 import { createLogger } from "@/lib/logger";
-import { ProfileHeader } from "./ProfilePage/components/ProfileHeader";
-import { ProfileActions } from "./ProfilePage/components/ProfileActions";
-import { PasswordChangeForm } from "./ProfilePage/components/PasswordChangeForm";
-import { StatsCards } from "./ProfilePage/components/StatsCards";
-import { useProfileActions } from "./ProfilePage/hooks/useProfileActions";
+import { ProfileHeader } from "./components/ProfileHeader";
+import { ProfileActions } from "./components/ProfileActions";
+import { PasswordChangeForm } from "./components/PasswordChangeForm";
+import { StatsCards } from "./components/StatsCards";
+import { useProfileActions } from "./hooks/useProfileActions";
 
 // Логгер для страницы профиля
 const logger = createLogger("ProfilePage", { color: "blue" });

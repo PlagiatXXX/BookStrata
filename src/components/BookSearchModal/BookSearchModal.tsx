@@ -3,7 +3,7 @@ import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
-import { BookViewModal } from "./BookViewModal";
+import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { useBookSearch } from "@/hooks/useBookSearch";
 import { Spinner } from "@/components/Spinner";
 
@@ -506,7 +506,7 @@ export const BookSearchModal = ({
           </div>
 
           {/* Results */}
-          <div className="max-h-[34rem] overflow-y-auto bg-[#111111] p-5">
+          <div className="max-h-136 overflow-y-auto bg-[#111111] p-5">
             {/* Toolbar */}
             {results.length > 0 && (
               <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
@@ -596,7 +596,8 @@ export const BookSearchModal = ({
 
       {/* Book View Modal */}
       <BookViewModal
-        book={viewBook}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        book={viewBook as any}
         isOpen={!!viewBook}
         onClose={() => setViewBook(null)}
         onAdd={handleAddBookFromView}

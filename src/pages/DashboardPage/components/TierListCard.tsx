@@ -9,9 +9,8 @@ import {
   CircleDashed,
 } from "lucide-react";
 import type { TierListCardProps } from "../types";
-import { DATE_FORMAT } from "../constants";
 
-const MAX_BOOKS = 20;
+const MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST = 20;
 
 export const TierListCard = memo(({
   tierList,
@@ -21,8 +20,8 @@ export const TierListCard = memo(({
 }: TierListCardProps) => {
   const createdDate = new Date(tierList.createdAt);
   const booksCount = tierList.booksCount || 0;
-  const progress = Math.min(100, Math.round((booksCount / MAX_BOOKS) * 100));
-  const isComplete = booksCount >= MAX_BOOKS;
+  const progress = Math.min(100, Math.round((booksCount / MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST) * 100));
+  const isComplete = booksCount >= MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST;
 
   return (
     <article className="dashboard-card">
@@ -81,7 +80,7 @@ export const TierListCard = memo(({
       {/* Meta */}
       <div className="dashboard-card__meta">
         <Clock size={15} />
-        <span>{createdDate.toLocaleDateString("ru-RU", DATE_FORMAT)}</span>
+       <span>{createdDate.toLocaleDateString("ru-RU")}</span>
       </div>
 
       {/* Progress Bar */}

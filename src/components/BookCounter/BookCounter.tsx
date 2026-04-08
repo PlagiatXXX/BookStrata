@@ -1,5 +1,5 @@
 import { Book, AlertCircle, CheckCircle2, Crown } from "lucide-react";
-import { MAX_BOOKS_PER_TIER_LIST } from "@/pages/DashboardPage/constants";
+import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 
 interface BookCounterProps {
   booksCount: number;

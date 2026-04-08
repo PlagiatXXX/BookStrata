@@ -1,7 +1,7 @@
 import { GitFork } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { forkTierList } from '@/lib/api';
+import { forkTierList } from '@/lib/tierListApi';
 import { sileo } from 'sileo';
 import { LikeButton } from '@/components/LikeButton';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
@@ -91,7 +91,7 @@ export const EditorHeader = ({
                 <GitFork size={18} />
                 {isForking ? 'Копирую...' : 'Своя версия'}
               </button>
-              <div className="nb-heavy-border bg-black p-2 h-[52px] flex items-center justify-center">
+              <div className="nb-heavy-border bg-black p-2 h-13 flex items-center justify-center">
                 <LikeButton
                   id={parseInt(tierListId!)}
                   type="tierlist"

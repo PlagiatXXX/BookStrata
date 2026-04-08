@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useTierListsPagination } from './useTierListsPagination';
-import type { TierListShort } from '@/lib/api';
+import type { TierListShort } from '@/lib/tierListApi';
 
 const mockTierLists: TierListShort[] = [
   {

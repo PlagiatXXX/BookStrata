@@ -6,11 +6,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import TemplateLibrary from './TemplateLibrary';
 import * as useTemplatesModule from '../../hooks/useTemplates';
-import * as tierListApiModule from '@/lib/api';
+import * as tierListApiModule from '@/lib/tierListApi';
 import * as likesApiModule from '@/lib/likesApi';
 import * as authContextModule from '../../hooks/useAuthContext';
 import type { Template } from '../../types/templates';
-import type { PaginatedTierListsResponse } from '@/lib/api';
+import type { PaginatedTierListsResponse } from '@/lib/tierListApi';
 
 // Вспомогательная функция для создания мока useUserTemplates
 const createUseUserTemplatesMock = (
@@ -61,7 +61,7 @@ vi.mock('../../hooks/useTemplates', async (importOriginal) => {
   };
 });
 
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/tierListApi', () => ({
   getPublicTierLists: vi.fn(),
 }));
 

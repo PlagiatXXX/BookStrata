@@ -1,81 +1,65 @@
-import { X } from "lucide-react";
-import { Modal } from "@/ui/Modal";
-import { Button } from "@/ui/Button";
-import type { Book } from "@/types";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React from 'react';
+import { Modal } from '@/ui/Modal';
+import { Button } from '@/ui/Button';
+import { X } from 'lucide-react';
 
-interface BookViewModalProps {
+export interface BookViewModalProps {
+  book: any | null;
   isOpen: boolean;
   onClose: () => void;
-  book: Book | null;
+  onAdd?: (book: any) => void;
+  isAdding?: boolean;
 }
-
-const labelClass =
-  "text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--ink-1)]";
-
-export const BookViewModal = ({
+  
+export const BookViewModal: React.FC<BookViewModalProps> = ({
+  book,
   isOpen,
   onClose,
-  book,
-}: BookViewModalProps) => {
+  onAdd,
+  isAdding = false
+}) => {
   if (!book) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl" titleId="book-details-title">
-      <div className="relative flex max-h-[90vh] w-full flex-col gap-5 bg-(--bg-1) p-6 text-(--ink-0)">
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="relative p-6">
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 flex size-8 cursor-pointer items-center justify-center nb-heavy-border border border-black text-(--ink-1) transition-colors hover:border-(--line-strong) hover:text-(--ink-0)"
+           className="absolute right-4 top-4 opacity-50 hover:opacity-100"
           aria-label="Закрыть"
         >
-          <X size={16} />
+          <X size={20} />
         </button>
 
-        <div className="pr-12">
-          <h2 id="book-details-title" className="text-2xl font-bold tracking-[-0.02em] text-(--ink-0)">
-            {book.title}
-          </h2>
-        </div>
-
-        <div className="flex-1 overflow-y-auto pr-1">
-          <div className="flex flex-col gap-6 md:flex-row">
-            <div
-              className="h-56 w-40 shrink-0 nb-heavy-border nb-heavy-border border-black bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${book.coverImageUrl})` }}
-            />
-
-            <div className="flex min-w-0 flex-1 flex-col gap-5">
-              <div className="flex min-w-0 flex-col gap-2">
-                <span className={labelClass}>Автор</span>
-                <p className="wrap-break-word text-sm text-(--ink-0)">
-                  {book.author}
-                </p>
-              </div>
-
-              {book.description && book.description.trim() && (
-                <div className="flex min-w-0 flex-col gap-2">
-                  <span className={labelClass}>Описание</span>
-                  <p className="whitespace-pre-wrap wrap-break-word text-sm text-(--ink-0)">
+        <div className="flex flex-col md:flex-row gap-6">
+          <img 
+            src={book.coverImageUrl || book.image_url || '/images/books/placeholder.svg'} 
+            alt={book.title}
+            className="w-full md:w-40 aspect-2/3 object-cover brutal-border shadow-lg" 
+          />
+          <div className="flex flex-col gap-3">
+            <h3 className="text-2xl font-bold leading-tight">{book.title}</h3>
+            <p className="text-sm font-medium opacity-70">
+              {book.author || book.author_name || 'Автор неизвестен'}
+            </p>
+            {book.description && (
+              <p className="text-sm leading-relaxed opacity-80 mt-2 line-clamp-8">
                     {book.description}
                   </p>
-                </div>
+            )}
+            <div className="flex justify-end gap-3 mt-6">
+              {onAdd && (
+                <Button 
+                  isLoading={isAdding} 
+                  onClick={() => onAdd(book)}
+                >
+                  Добавить
+                </Button>
               )}
+              <Button variant="ghost" onClick={onClose}>Закрыть</Button>
             </div>
           </div>
-
-          {book.thoughts && book.thoughts.trim() && (
-            <div className="mt-6 flex min-w-0 flex-col gap-2 nb-heavy-border border-black pt-5">
-              <span className={labelClass}>Мои мысли</span>
-              <p className="whitespace-pre-wrap wrap-break-word text-sm text-(--ink-0)">
-                {book.thoughts}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex shrink-0 justify-end nb-heavy-border border-black pt-4">
-          <Button variant="primary" onClick={onClose} className="nb-heavy-border">
-            Закрыть
-          </Button>
         </div>
       </div>
     </Modal>

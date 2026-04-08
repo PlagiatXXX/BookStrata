@@ -1,4 +1,4 @@
-import type { TierListShort } from '@/lib/api';
+import type { TierListShort } from '@/lib/tierListApi';
 
 // === Sort options ===
 export type SortOption = 'newest' | 'oldest' | 'title-asc' | 'likes';

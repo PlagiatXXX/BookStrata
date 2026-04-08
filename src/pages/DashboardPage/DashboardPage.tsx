@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { useAuth } from "@/hooks/useAuthContext";
-import { getUserTierLists } from "@/lib/api";
+import { getUserTierLists } from "@/lib/tierListApi";
 import { apiGetUserStats } from "@/lib/userApi";
 import { useDebounce } from "@/hooks/useDebounce";
 import { sileo } from "sileo";
@@ -15,12 +15,12 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { UserActivityStats } from "@/components/DashboardHeroSection/components/UserActivityStats";
 import { QuickStartTemplates } from "@/components/DashboardHeroSection/components/QuickStartTemplates";
 import { TierListGrid } from "./components/TierListGrid";
-import { Pagination } from "./components/Pagination";
+import { Pagination } from "@/ui/Pagination";
 import { EmptyStates } from "./components/EmptyStates";
 import { CreateTierListModal } from "./components/CreateTierListModal";
 import { RenameTierListModal } from "./components/RenameTierListModal";
 import { DeleteTierListModal } from "./components/DeleteTierListModal";
-import { PAGE_SIZE } from "./constants";
+import { DEFAULT_PAGE_SIZE } from "@/constants/pagination";
 import "./DashboardPage.css";
 import logger from "@/lib/logger";
 
@@ -95,7 +95,7 @@ export function DashboardPage() {
     refetch,
   } = useQuery({
     queryKey: ["userTierLists", currentPage],
-    queryFn: () => getUserTierLists(currentPage, PAGE_SIZE),
+    queryFn: () => getUserTierLists(currentPage, DEFAULT_PAGE_SIZE),
   });
 
   // Data fetching - User stats

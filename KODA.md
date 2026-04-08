@@ -59,7 +59,7 @@
 │   │   ├── DashboardPage/     # Главная страница пользователя
 │   │   ├── TierListEditorPage/# Редактор tier-листов (drag-and-drop)
 │   │   ├── CommunityPage/     # Публичные списки сообщества
-│   │   ├── ProfilePage/       # Профиль пользователя
+│   │   ├── ProfilePage/       # Профиль пользователя (index.tsx + components)
 │   │   ├── CollectionPage/    # Коллекции книг
 │   │   ├── NewsPage/          # Новости
 │   │   ├── AdminDashboard/    # Админ-панель
@@ -71,7 +71,7 @@
 │   ├── lib/             # Утилиты и API-клиенты
 │   ├── types/           # TypeScript-типы для фронтенда
 │   ├── utils/           # Вспомогательные функции
-│   ├── constants/       # Константы приложения
+│   ├── constants/       # Централизованные лимиты и настройки
 │   ├── ui/              # Базовые UI-компоненты
 │   ├── layouts/         # Layout-компоненты
 │   └── styles/          # Глобальные стили
@@ -201,7 +201,7 @@ npm run doctor
 
 ### Работа с API
 
-- API-клиент: `src/lib/api.ts` (использует TanStack Query)
+- API-клиент: Модульные клиенты в `src/lib/` (`authApi`, `tierListApi` и др.) (использует TanStack Query)
 - Типы API: `src/types/api.ts`
 - Все запросы проходят через `/api` прокси Vite на бэкенд
 
