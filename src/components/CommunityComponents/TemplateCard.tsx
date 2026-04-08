@@ -49,11 +49,12 @@ export const TemplateCard = memo(({ template, isApplying, onUseTemplate }: Templ
         </p>
       </div>
 
-      <div className="absolute inset-0 bg-[rgba(18,18,18,0.62)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+      <div className="absolute inset-0 bg-[rgba(18,18,18,0.62)] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
         <button
           className={`brutal-cta px-6 py-3 text-xs font-semibold uppercase tracking-widest ${
             isApplying ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
           }`}
+          aria-label={`Использовать шаблон: ${template.title}`}
           disabled={isApplying}
           onClick={() => onUseTemplate(template)}
         >
