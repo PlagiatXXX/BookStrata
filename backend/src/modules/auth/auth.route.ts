@@ -201,7 +201,8 @@ export async function authRoutes(fastify: FastifyInstance) {
       const { email } = request.body;
       try {
         await requestPasswordReset(email);
-        return reply.code(200).send({ message: "Новый пароль отправлен на вашу почту" });
+        // Generic message for security (prevents email enumeration)
+        return reply.code(200).send({ message: "Если аккаунт с таким email существует, мы отправили ссылку для сброса пароля." });
       } catch (error) {
         fastify.log.error(error, "Forgot password error");
         return reply.code(400).send({ error: "Failed to process request" });
@@ -221,6 +222,12 @@ export async function authRoutes(fastify: FastifyInstance) {
             token: { type: "string", maxLength: 1000 },
             password: { type: "string", minLength: 8, maxLength: 100 },
           },
+        },
+      },
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: "1 hour",
         },
       },
     },
