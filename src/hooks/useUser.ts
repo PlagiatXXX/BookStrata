@@ -39,12 +39,9 @@ export function useUser(): UseUserResult {
 
   const uploadAvatarMutation = useMutation({
     mutationFn: (avatarUrl: string) => apiUploadAvatar(avatarUrl),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: USER_QUERY_KEY });
-      await queryClient.invalidateQueries({ queryKey: USER_STATS_QUERY_KEY });
-      // Немедленно обновляем данные после инвалидации
-      await userQuery.refetch();
-      await statsQuery.refetch();
+    onSuccess: async (updatedUser) => {
+      queryClient.setQueryData(USER_QUERY_KEY, updatedUser);
+      window.dispatchEvent(new Event("avatar-updated"));
     },
   });
 

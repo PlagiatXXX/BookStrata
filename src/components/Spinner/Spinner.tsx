@@ -5,15 +5,22 @@ interface SpinnerProps {
 
 const Spinner = ({ size = "md", className = "" }: SpinnerProps) => {
   const sizeClasses = {
-    sm: "h-6 w-6",
-    md: "h-8 w-8",
-    lg: "h-12 w-12",
-    xl: "h-16 w-16",
+    sm: "h-4 w-4 border-[1.5px]",
+    md: "h-6 w-6 border-2",
+    lg: "h-9 w-9 border-2",
+    xl: "h-12 w-12 border-[3px]",
   };
 
   return (
     <div
-      className={`animate-spin ${sizeClasses[size]} nb-heavy-border border-t-black border-b-black border-l-[#c1fffe] border-r-[#c1fffe] ${className}`}
+      aria-hidden="true"
+      className={`animate-spin rounded-full border-solid border-t-transparent text-(--accent-main) ${sizeClasses[size]} ${className}`}
+      style={{
+        animationDuration: "0.9s",
+        borderColor: "currentColor",
+        borderTopColor: "transparent",
+        boxShadow: "0 0 10px color-mix(in srgb, var(--accent-main) 45%, transparent)",
+      }}
     />
   );
 };

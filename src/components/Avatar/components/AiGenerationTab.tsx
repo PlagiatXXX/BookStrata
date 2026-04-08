@@ -8,7 +8,6 @@ export function AiGenerationTab({
   onGenerate,
   isBusy,
   isGenerating,
-  isWaitingForResult,
   error,
   previewLoadState,
   remainingGenerations,
@@ -19,7 +18,6 @@ export function AiGenerationTab({
 
   return (
     <div className="space-y-4">
-      {/* Информация о лимитах */}
       {!isPro ? (
         <div className="p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
           <p className="text-sm text-amber-300">
@@ -40,15 +38,12 @@ export function AiGenerationTab({
         </div>
       )}
 
-      {/* Сообщения о статусах */}
       <StatusMessages
         error={error}
         previewLoadState={previewLoadState}
         isGenerating={isGenerating}
-        isWaitingForResult={isWaitingForResult}
       />
 
-      {/* Textarea для промпта */}
       <div>
         <label
           htmlFor="avatar-selector-prompt-input"
@@ -60,44 +55,40 @@ export function AiGenerationTab({
           id="avatar-selector-prompt-input"
           value={aiPrompt}
           maxLength={500}
-          onChange={(e) => onPromptChange(e.target.value)}
-          placeholder="Например: Мужчина с бородой в очках, синий фон, дружелюбная улыбка"
+          onChange={(event) => onPromptChange(event.target.value)}
+          placeholder="Например: мужчина с бородой в очках, синий фон, дружелюбная улыбка"
           className="w-full h-28 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl p-4 resize-none text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <div className="flex justify-end mt-1">
-          <span className={`text-xs ${aiPrompt.length >= 500 ? 'text-red-500' : 'text-gray-500'}`}>
+          <span
+            className={`text-xs ${aiPrompt.length >= 500 ? "text-red-500" : "text-gray-500"}`}
+          >
             {aiPrompt.length}/500
           </span>
         </div>
       </div>
 
-      {/* Кнопка генерации */}
       <GenerateButton
         onClick={onGenerate}
         disabled={isDisabled}
         isBusy={isBusy}
         isGenerating={isGenerating}
-        isWaiting={isWaitingForResult}
         isPro={isPro}
       />
     </div>
   );
 }
 
-// === Sub-components ===
-
 interface StatusMessagesProps {
   error: string | null;
   previewLoadState: "idle" | "loading" | "ready" | "error";
   isGenerating: boolean;
-  isWaitingForResult: boolean;
 }
 
 function StatusMessages({
   error,
   previewLoadState,
   isGenerating,
-  isWaitingForResult,
 }: StatusMessagesProps) {
   if (error) {
     return (
@@ -110,7 +101,10 @@ function StatusMessages({
   if (isGenerating) {
     return (
       <div className="flex items-center gap-3 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
-        <Spinner size="sm" className="border-white/25 border-t-white border-l-white shrink-0" />
+        <Spinner
+          size="sm"
+          className="border-white/25 border-t-white border-l-white shrink-0"
+        />
         <p className="text-sm text-gray-300">
           Отправляем запрос на генерацию аватара.
         </p>
@@ -121,7 +115,10 @@ function StatusMessages({
   if (previewLoadState === "loading") {
     return (
       <div className="flex items-center gap-3 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
-        <Spinner size="sm" className="border-white/25 border-t-white border-l-white shrink-0" />
+        <Spinner
+          size="sm"
+          className="border-white/25 border-t-white border-l-white shrink-0"
+        />
         <p className="text-sm text-gray-300">
           Загружаем изображение. Это может занять немного времени.
         </p>
@@ -139,18 +136,6 @@ function StatusMessages({
     );
   }
 
-  if (isWaitingForResult) {
-    return (
-      <div className="flex items-center gap-3 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
-        <Spinner size="sm" className="border-white/25 border-t-white border-l-white shrink-0" />
-        <p className="text-sm text-gray-300">
-          Генерация запущена. Обычно занимает до 40 секунд. Можно закрыть окно —
-          аватар обновится автоматически.
-        </p>
-      </div>
-    );
-  }
-
   return null;
 }
 
@@ -159,7 +144,6 @@ interface GenerateButtonProps {
   disabled: boolean;
   isBusy: boolean;
   isGenerating: boolean;
-  isWaiting: boolean;
   isPro: boolean;
 }
 
@@ -168,14 +152,9 @@ function GenerateButton({
   disabled,
   isBusy,
   isGenerating,
-  isWaiting,
   isPro,
 }: GenerateButtonProps) {
-  const busyLabel = isGenerating
-    ? "Создаем..."
-    : isWaiting
-      ? "Дождитесь результата..."
-      : "Загружаем...";
+  const busyLabel = isGenerating ? "Генерируем..." : "Загружаем...";
 
   if (!isPro) {
     return (

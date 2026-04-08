@@ -1,9 +1,9 @@
 import type { LucideIcon } from "lucide-react";
+import type { AvatarLimitInfo } from "@/lib/avatarApi";
 import type { PresetStyle, AvatarPreset } from "./presets";
 
 export type { PresetStyle, AvatarPreset };
 
-// === Tab types ===
 export type TabId = "presets" | "ai" | "upload";
 
 export interface TabConfig {
@@ -12,7 +12,6 @@ export interface TabConfig {
   icon: LucideIcon;
 }
 
-// === Preview state ===
 export type PreviewLoadState = "idle" | "loading" | "ready" | "error";
 
 export interface PreviewState {
@@ -24,7 +23,6 @@ export type PreviewAction =
   | { type: "SET_PREVIEW"; url: string | null; loadState?: PreviewLoadState }
   | { type: "SET_LOAD_STATE"; loadState: PreviewLoadState };
 
-// === Generation state ===
 export interface GenerationState {
   isGenerating: boolean;
   isWaitingForResult: boolean;
@@ -40,15 +38,8 @@ export type GenerationAction =
   | { type: "TIMEOUT"; error: string }
   | { type: "CLEAR_ERROR" };
 
-// === Limit info ===
-export interface LimitInfo {
-  used: number;
-  limit: number;
-  remaining: number;
-  isPro?: boolean;
-}
+export type LimitInfo = AvatarLimitInfo;
 
-// === Component props ===
 export interface AvatarSelectorProps {
   currentAvatar?: string | null;
   username?: string;
@@ -78,6 +69,7 @@ export interface PresetsTabProps {
   onCategoryChange: (category: PresetStyle) => void;
   onPresetSelect: (preset: AvatarPreset) => void;
   selectedPresetUrl: string | null;
+  isBusy?: boolean;
 }
 
 export interface AiGenerationTabProps {
@@ -86,7 +78,6 @@ export interface AiGenerationTabProps {
   onGenerate: () => void;
   isBusy: boolean;
   isGenerating: boolean;
-  isWaitingForResult: boolean;
   error: string | null;
   previewLoadState: PreviewLoadState;
   remainingGenerations: number;
@@ -96,6 +87,8 @@ export interface AiGenerationTabProps {
 export interface UploadTabProps {
   onFileSelect: (base64: string) => void;
   previewLoadState: PreviewLoadState;
+  error?: string | null;
+  isBusy?: boolean;
 }
 
 export interface AvatarSelectorFooterProps {

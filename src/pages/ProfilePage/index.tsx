@@ -1,30 +1,25 @@
-import { AchievementsGrid } from "./components/AchievementsGrid";
-import { useAchievements } from "@/hooks/useAchievements";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuthContext";
-import { AvatarSelector } from "@/components/Avatar";
-import { useUser } from "@/hooks/useUser";
-import { Spinner } from "@/components/Spinner";
 import { ArrowLeft } from "lucide-react";
 import { sileo } from "sileo";
-import { createLogger } from "@/lib/logger";
+import { AchievementsGrid } from "./components/AchievementsGrid";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileActions } from "./components/ProfileActions";
 import { PasswordChangeForm } from "./components/PasswordChangeForm";
 import { StatsCards } from "./components/StatsCards";
 import { useProfileActions } from "./hooks/useProfileActions";
+import { useAchievements } from "@/hooks/useAchievements";
+import { useAuth } from "@/hooks/useAuthContext";
+import { useUser } from "@/hooks/useUser";
+import { AvatarSelector } from "@/components/Avatar";
+import { Spinner } from "@/components/Spinner";
+import { createLogger } from "@/lib/logger";
 
-// Логгер для страницы профиля
 const logger = createLogger("ProfilePage", { color: "blue" });
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const {
-    isAuthenticated,
-    user: authUser,
-    refreshUser: refreshAuthUser,
-  } = useAuth();
+  const { isAuthenticated, user: authUser } = useAuth();
   const { user, stats, isLoading, uploadAvatar } = useUser();
   const {
     achievements,
@@ -33,7 +28,6 @@ export function ProfilePage() {
   } = useAchievements();
 
   const {
-    // Username
     isEditingUsername,
     newUsername,
     isSavingUsername,
@@ -41,8 +35,6 @@ export function ProfilePage() {
     cancelEditUsername,
     saveUsername,
     setNewUsername,
-
-    // Password
     showPasswordForm,
     currentPassword,
     newPassword,
@@ -58,17 +50,14 @@ export function ProfilePage() {
     setShowPasswords,
   } = useProfileActions();
 
-  const username = authUser?.username || user?.username;
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
 
-  // Данные загружаются автоматически через useUser (useQuery с enabled: hasToken)
+  const username = authUser?.username || user?.username;
 
   const handleAvatarSave = async (avatarUrl: string) => {
     try {
-      // uploadAvatar инвалидирует кэш React Query
       await uploadAvatar(avatarUrl);
-      // Обновляем AuthContext для немедленного обновления UI во всех компонентах
-      await refreshAuthUser();
-      logger.info("Аватар обновлён, AuthContext обновлён", {
+      logger.info("Avatar updated", {
         newAvatarUrl: avatarUrl.substring(0, 50) + "...",
       });
       sileo.success({ title: "Аватар обновлен", duration: 3000 });
@@ -81,10 +70,9 @@ export function ProfilePage() {
         description: "Попробуйте загрузить другое изображение",
         duration: 3000,
       });
+      throw error;
     }
   };
-
-  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
 
   if (!isAuthenticated) {
     return (
@@ -112,7 +100,6 @@ export function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#0f0f1a] py-6 dark:bg-[#0f0f1a] light:bg-gray-100 sm:py-10">
       <div className="mx-auto px-4 w-full max-w-2xl sm:px-6 lg:max-w-4xl">
-        {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 sm:mb-6 cursor-pointer"
@@ -121,7 +108,6 @@ export function ProfilePage() {
           <span>Назад</span>
         </button>
 
-        {/* Profile Header */}
         <div className="mb-4">
           {achievementStatus?.title && (
             <div className="mb-2 rounded-full bg-yellow-400/20 px-4 py-1 border border-yellow-400/30 inline-block">
@@ -144,7 +130,6 @@ export function ProfilePage() {
           />
         </div>
 
-        {/* Profile Actions */}
         <ProfileActions
           onEditAvatar={() => setShowAvatarSelector(true)}
           onPasswordChange={togglePasswordForm}
@@ -155,7 +140,6 @@ export function ProfilePage() {
           userRole={authUser?.role}
         />
 
-        {/* Password Change Form */}
         {showPasswordForm && (
           <PasswordChangeForm
             currentPassword={currentPassword}
@@ -177,17 +161,14 @@ export function ProfilePage() {
           />
         )}
 
-        {/* Stats Cards */}
         <StatsCards stats={stats} />
 
-        {/* Achievements Section */}
         <AchievementsGrid
           achievements={achievements}
           isLoading={isAchievementsLoading}
         />
       </div>
 
-      {/* Avatar Selector Modal */}
       {showAvatarSelector && (
         <AvatarSelector
           currentAvatar={user?.avatarUrl}

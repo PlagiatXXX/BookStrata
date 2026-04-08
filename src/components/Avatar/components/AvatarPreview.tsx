@@ -1,7 +1,7 @@
-import { Spinner } from '@/components/Spinner';
-import { Avatar } from '../Avatar';
-import { Check } from 'lucide-react';
-import type { AvatarPreviewProps } from '../types';
+import { Check } from "lucide-react";
+import { Spinner } from "@/components/Spinner";
+import { Avatar } from "../Avatar";
+import type { AvatarPreviewProps } from "../types";
 
 export function AvatarPreview({
   currentUrl,
@@ -10,19 +10,19 @@ export function AvatarPreview({
   isBusy,
   busyLabel = "Загружаем...",
 }: AvatarPreviewProps) {
-  const showLoading = isBusy;
-
-  // currentUrl может быть undefined, приводим к string | null
   const avatarUrl: string | null = currentUrl ?? null;
 
   return (
     <div className="flex justify-center mb-6">
       <div className="relative">
         <Avatar url={avatarUrl} username={username} size="xl" />
-        {showLoading && (
+        {isBusy && (
           <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
             <div className="flex flex-col items-center gap-2">
-              <Spinner size="lg" className="border-white/25 border-t-white border-l-white" />
+              <Spinner
+                size="lg"
+                className="border-white/25 border-t-white border-l-white"
+              />
               <span className="text-xs font-medium text-white">{busyLabel}</span>
             </div>
           </div>

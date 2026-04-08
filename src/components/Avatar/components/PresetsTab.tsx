@@ -1,43 +1,46 @@
-import { Check } from 'lucide-react';
-import { presetCategories, getInitials, type AvatarPreset } from '../presets';
-import type { PresetsTabProps } from '../types';
+import { Check } from "lucide-react";
+import { presetCategories, getInitials, type AvatarPreset } from "../presets";
+import type { PresetsTabProps } from "../types";
 
 export function PresetsTab({
   activeCategory,
   onCategoryChange,
   onPresetSelect,
   selectedPresetUrl,
+  isBusy = false,
 }: PresetsTabProps) {
   return (
     <div className="space-y-4">
-      {/* Категории */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {Object.entries(presetCategories).map(([key, category]) => (
           <button
             key={key}
-            onClick={() => onCategoryChange(key as PresetsTabProps['activeCategory'])}
+            onClick={() =>
+              onCategoryChange(key as PresetsTabProps["activeCategory"])
+            }
+            disabled={isBusy}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
               activeCategory === key
-                ? 'bg-primary text-white'
-                : 'bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 text-gray-400 hover:text-white'
-            }`}
+                ? "bg-primary text-white"
+                : "bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 text-gray-400 hover:text-white"
+            } ${isBusy ? "cursor-not-allowed opacity-70" : ""}`}
           >
             {category.name}
           </button>
         ))}
       </div>
 
-      {/* Сетка пресетов */}
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
         {presetCategories[activeCategory].presets.map((preset: AvatarPreset) => (
           <button
             key={preset.id}
             onClick={() => onPresetSelect(preset)}
-            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 ${
+            disabled={isBusy}
+            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
               selectedPresetUrl === preset.full
-                ? 'border-primary ring-2 ring-primary/50'
-                : 'border-transparent hover:border-gray-400'
-            }`}
+                ? "border-primary ring-2 ring-primary/50"
+                : "border-transparent hover:border-gray-400"
+            } ${isBusy ? "cursor-not-allowed opacity-70" : "hover:scale-105"}`}
           >
             <PresetImage preset={preset} />
             {selectedPresetUrl === preset.full && (
@@ -66,20 +69,20 @@ function PresetImage({ preset }: PresetImageProps) {
       src={preset.full}
       alt={preset.name}
       className="w-full h-full object-cover"
-      onError={(e) => {
-        const target = e.target as HTMLImageElement;
-        target.style.display = 'none';
+      onError={(event) => {
+        const target = event.target as HTMLImageElement;
+        target.style.display = "none";
         const parent = target.parentElement;
-        if (parent && !parent.querySelector('.avatar-fallback')) {
+        if (parent && !parent.querySelector(".avatar-fallback")) {
           parent.classList.add(
-            'flex',
-            'items-center',
-            'justify-center',
-            'bg-surface-light',
-            'dark:bg-[#2d2d44]',
+            "flex",
+            "items-center",
+            "justify-center",
+            "bg-surface-light",
+            "dark:bg-[#2d2d44]",
           );
-          const fallback = document.createElement('span');
-          fallback.className = 'avatar-fallback text-xs font-bold text-gray-400';
+          const fallback = document.createElement("span");
+          fallback.className = "avatar-fallback text-xs font-bold text-gray-400";
           fallback.textContent = getInitials(preset.name);
           parent.appendChild(fallback);
         }

@@ -1,5 +1,5 @@
-import { X } from 'lucide-react';
-import type { AvatarSelectorHeaderProps } from '../types';
+import { X } from "lucide-react";
+import type { AvatarSelectorHeaderProps } from "../types";
 
 export function AvatarSelectorHeader({ onClose }: AvatarSelectorHeaderProps) {
   return (

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FastifyInstance } from "fastify";
 import { generateAvatar, getAvatarLimit } from "./avatar.service.js";
 import { updateAvatar as updateUserAvatar } from "../users/users.service.js";
@@ -33,7 +34,9 @@ export async function avatarRoutes(fastify: FastifyInstance) {
       const result = await generateAvatar(prompt.trim(), userId, userRole);
 
       if (!result.success) {
-        return reply.code(429).send({
+        const statusCode = result.remaining === 0 ? 429 : 500;
+
+        return reply.code(statusCode).send({
           error: result.error,
           remaining: result.remaining,
         });

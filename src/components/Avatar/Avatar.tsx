@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getInitials, getInitialsColor } from "./presets";
 import { createLogger } from "@/lib/logger";
 
-// Логгер для компонента аватара
 const logger = createLogger("Avatar", { color: "blue" });
 
 interface AvatarProps {
@@ -31,7 +30,11 @@ export function Avatar({
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Сбрасываем состояние при изменении URL
+  useEffect(() => {
+    setHasError(false);
+    setIsLoaded(false);
+  }, [url]);
+
   const handleImageLoad = () => {
     setIsLoaded(true);
     setHasError(false);
@@ -41,11 +44,9 @@ export function Avatar({
     logger.warn("Failed to load avatar", { url });
     setHasError(true);
     setIsLoaded(false);
-    // Очищаем src чтобы избежать повторных попыток загрузки
     (e.target as HTMLImageElement).src = "";
   };
 
-  // Если нет URL или произошла ошибка - показываем инициалы
   if (!url || hasError) {
     return (
       <div

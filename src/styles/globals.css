@@ -132,6 +132,43 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+@keyframes rain {
+  0% {
+    transform: translateY(-120%) rotate(15deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(100vh) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+.animate-rain {
+  animation: rain linear infinite;
+}
+
+@keyframes shimmerEffect {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmerEffect 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rain, .animate-shimmer, .animate-shimmer-fast {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 /* ========== End Animations ========== */
 
 *,

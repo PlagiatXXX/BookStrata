@@ -1,23 +1,28 @@
-import { useState, useReducer } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { sileo } from 'sileo';
-import { getAuthToken } from '@/lib/authApi';
-import { createLogger } from '@/lib/logger';
-import { AvatarSelectorHeader } from './components/AvatarSelectorHeader';
-import { AvatarPreview } from './components/AvatarPreview';
-import { TabNavigation } from './components/TabNavigation';
-import { PresetsTab } from './components/PresetsTab';
-import { AiGenerationTab } from './components/AiGenerationTab';
-import { UploadTab } from './components/UploadTab';
-import { AvatarSelectorFooter } from './components/AvatarSelectorFooter';
-import { useAvatarPreview } from './hooks/useAvatarPreview';
-import { allPresets } from './presets';
-import type { AvatarSelectorProps, LimitInfo, PresetStyle, TabId } from './types';
-import { QUERY_STALE_TIME_MS, QUERY_GC_TIME_MS } from './constants';
-import { generationReducer } from './generationReducer';
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createLogger } from "@/lib/logger";
+import {
+  apiGenerateAvatar,
+  apiGetAvatarLimit,
+  type AvatarLimitInfo,
+} from "@/lib/avatarApi";
+import { AvatarSelectorHeader } from "./components/AvatarSelectorHeader";
+import { AvatarPreview } from "./components/AvatarPreview";
+import { TabNavigation } from "./components/TabNavigation";
+import { PresetsTab } from "./components/PresetsTab";
+import { AiGenerationTab } from "./components/AiGenerationTab";
+import { UploadTab } from "./components/UploadTab";
+import { AvatarSelectorFooter } from "./components/AvatarSelectorFooter";
+import { useAvatarPreview } from "./hooks/useAvatarPreview";
+import type {
+  AvatarPreset,
+  AvatarSelectorProps,
+  PresetStyle,
+  TabId,
+} from "./types";
+import { QUERY_GC_TIME_MS, QUERY_STALE_TIME_MS } from "./constants";
 
-// Логгер для компонента AvatarSelector
-const logger = createLogger('AvatarSelector', { color: 'purple' });
+const logger = createLogger("AvatarSelector", { color: "purple" });
 
 export function AvatarSelector({
   currentAvatar,
@@ -26,228 +31,186 @@ export function AvatarSelector({
   onClose,
 }: AvatarSelectorProps) {
   const queryClient = useQueryClient();
-
-  // Простые состояния через useState
-  const [activeTab, setActiveTab] = useState<TabId>('presets');
-  const [aiPrompt, setAiPrompt] = useState('');
+  const [activeTab, setActiveTab] = useState<TabId>("presets");
+  const [activeCategory, setActiveCategory] = useState<PresetStyle>("cartoon");
+  const [aiPrompt, setAiPrompt] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<PresetStyle>('cartoon');
+  const [error, setError] = useState<string | null>(null);
 
-  // Сложные состояния через useReducer + хуки
-  const {
-    preview,
-    setPreviewUrl,
-    setLoadState,
-  } = useAvatarPreview();
+  const { preview, setPreviewUrl } = useAvatarPreview();
 
-  // Для совместимости с legacy кодом используем reducer напрямую
-  const [generation, dispatchGeneration] = useReducer(generationReducer, {
-    isGenerating: false,
-    isWaitingForResult: false,
-    generationBaseAvatar: null,
-    error: null,
-  });
-
-  const startGeneration = (baseAvatar: string | null) => {
-    dispatchGeneration({ type: 'START_GENERATION', baseAvatar });
-  };
-
-  const clearError = () => {
-    dispatchGeneration({ type: 'CLEAR_ERROR' });
-  };
-
-  const handleError = (error: string) => {
-    dispatchGeneration({ type: 'GENERATION_ERROR', error });
-  };
-
-  // Вычисляемые значения
-  const currentUrl =
-    preview.loadState === 'ready' && preview.url ? preview.url : currentAvatar;
-  const hasSelection = preview.url !== null && preview.loadState === 'ready';
-  const isBusy =
-    generation.isGenerating ||
-    generation.isWaitingForResult ||
-    preview.loadState === 'loading';
-  const busyLabel = isSaving
-    ? 'Сохраняем...'
-    : generation.isGenerating
-      ? 'Создаем...'
-      : generation.isWaitingForResult || preview.loadState === 'loading'
-        ? 'Загружаем...'
-        : undefined;
-
-  // Загружаем информацию о лимитах через useQuery
   const { data: limitData } = useQuery({
-    queryKey: ['avatarLimit'],
-    queryFn: fetchAvatarLimit,
-    enabled: activeTab === 'ai',
+    queryKey: ["avatarLimit"],
+    queryFn: apiGetAvatarLimit,
+    enabled: activeTab === "ai",
     staleTime: QUERY_STALE_TIME_MS,
     gcTime: QUERY_GC_TIME_MS,
   });
 
+  const generateAvatarMutation = useMutation({
+    mutationFn: (prompt: string) => apiGenerateAvatar(prompt),
+    onMutate: () => {
+      setError(null);
+    },
+    onSuccess: (data) => {
+      setPreviewUrl(data.imageUrl);
+      queryClient.setQueryData(
+        ["avatarLimit"],
+        (previous: AvatarLimitInfo | undefined) => {
+          if (!previous) {
+            return previous;
+          }
+
+          return {
+            ...previous,
+            remaining: data.remaining,
+            used: Math.max(0, previous.limit - data.remaining),
+          };
+        },
+      );
+    },
+    onError: (mutationError) => {
+      setError(
+        mutationError instanceof Error
+          ? mutationError.message
+          : "Не удалось сгенерировать аватар",
+      );
+    },
+  });
+
+  const currentUrl = preview.url ?? currentAvatar ?? null;
+  const hasSelection = preview.url !== null && preview.loadState === "ready";
+  const isPreviewLoading = preview.loadState === "loading";
+  const isGenerating = generateAvatarMutation.isPending;
+  const isBusy = isGenerating || isPreviewLoading || isSaving;
+  const busyLabel = isSaving
+    ? "Сохраняем..."
+    : isGenerating
+      ? "Генерируем..."
+      : isPreviewLoading
+        ? "Загружаем..."
+        : undefined;
   const limitInfo = limitData ?? null;
   const remainingGenerations = limitInfo?.remaining ?? 0;
 
-  // Обработчики
-  const handlePresetSelect = (preset: (typeof allPresets)[0]) => {
+  const handlePresetSelect = (preset: AvatarPreset) => {
+    setError(null);
     setPreviewUrl(preset.full);
-    setLoadState('ready');
-    clearError();
   };
 
   const handleAiGenerate = async () => {
-    if (!aiPrompt.trim()) return;
+    const prompt = aiPrompt.trim();
 
-    startGeneration(currentAvatar ?? null);
-
-    try {
-      const token = getAuthToken();
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/avatars/generate`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ prompt: aiPrompt.trim() }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          handleError(data.error || 'Дневной лимит исчерпан');
-          queryClient.setQueryData(['avatarLimit'], (prev: LimitInfo | null) =>
-            prev ? { ...prev, remaining: 0 } : null,
-          );
-        } else {
-          handleError(data.error || 'Ошибка генерации');
-        }
-        return;
-      }
-
-      if (data.imageUrl) {
-        setPreviewUrl(data.imageUrl);
-        setLoadState('loading');
-        dispatchGeneration({
-          type: 'GENERATION_SUCCESS',
-          imageUrl: data.imageUrl,
-          remaining: data.remaining,
-        });
-        if (data.remaining !== undefined) {
-          queryClient.setQueryData(['avatarLimit'], (prev: LimitInfo | null) =>
-            prev ? { ...prev, remaining: data.remaining } : null,
-          );
-        }
-      }
-    } catch {
-      handleError('Ошибка соединения. Попробуйте ещё раз.');
+    if (!prompt || isGenerating) {
+      return;
     }
+
+    await generateAvatarMutation.mutateAsync(prompt);
+  };
+
+  const handleFileSelect = (fileDataUrl: string) => {
+    setError(null);
+    setPreviewUrl(fileDataUrl);
   };
 
   const handleSave = async () => {
-    if (!currentUrl) return;
+    if (!preview.url || preview.loadState !== "ready") {
+      return;
+    }
 
+    setError(null);
     setIsSaving(true);
+
     try {
-      await onSave(currentUrl);
+      await onSave(preview.url);
       onClose();
-    } catch (error) {
-      logger.error(error as Error, { action: 'saveAvatar' });
-      sileo.error({
-        title: 'Название обязательно',
-        description: 'Пожалуйста, введите название для тир-листа',
-        duration: 3000
-      })
+    } catch (saveError) {
+      const message =
+        saveError instanceof Error
+          ? saveError.message
+          : "Не удалось сохранить аватар";
+
+      logger.error(
+        saveError instanceof Error ? saveError : new Error(String(saveError)),
+        { action: "saveAvatar" },
+      );
+      setError(message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleFileSelect = (base64: string) => {
-    setPreviewUrl(base64);
-    setLoadState('loading');
-    clearError();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-lg rounded-2xl bg-[#1a1a2e] dark:bg-[#1a1a2e] light:bg-white p-6 shadow-2xl animate-scale-in">
-        {/* Header */}
         <AvatarSelectorHeader onClose={onClose} />
 
-        {/* Preview */}
         <AvatarPreview
           currentUrl={currentUrl}
           username={username}
           hasSelection={hasSelection}
-          isBusy={isBusy || isSaving}
+          isBusy={isBusy}
           busyLabel={busyLabel}
         />
 
-        {/* Tabs */}
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Tab Content */}
         <div className="min-h-75">
           <div
             id="tabpanel-presets"
             role="tabpanel"
             aria-labelledby="tab-presets"
-            hidden={activeTab !== 'presets'}
+            hidden={activeTab !== "presets"}
           >
-          {activeTab === 'presets' && (
-            <PresetsTab
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              onPresetSelect={handlePresetSelect}
-              selectedPresetUrl={preview.url}
-            />
-          )}
-           </div>
+            {activeTab === "presets" && (
+              <PresetsTab
+                activeCategory={activeCategory}
+                onCategoryChange={setActiveCategory}
+                onPresetSelect={handlePresetSelect}
+                selectedPresetUrl={preview.url}
+                isBusy={isBusy}
+              />
+            )}
+          </div>
 
           <div
             id="tabpanel-ai"
             role="tabpanel"
             aria-labelledby="tab-ai"
-            hidden={activeTab !== 'ai'}
+            hidden={activeTab !== "ai"}
           >
-
-          {activeTab === 'ai' && (
-            <AiGenerationTab
-              aiPrompt={aiPrompt}
-              onPromptChange={setAiPrompt}
-              onGenerate={handleAiGenerate}
-              isBusy={isBusy}
-              isGenerating={generation.isGenerating}
-              isWaitingForResult={generation.isWaitingForResult}
-              error={generation.error}
-              previewLoadState={preview.loadState}
-              remainingGenerations={remainingGenerations}
-              limitInfo={limitInfo}
-            />
-          )}
+            {activeTab === "ai" && (
+              <AiGenerationTab
+                aiPrompt={aiPrompt}
+                onPromptChange={setAiPrompt}
+                onGenerate={handleAiGenerate}
+                isBusy={isBusy}
+                isGenerating={isGenerating}
+                error={error}
+                previewLoadState={preview.loadState}
+                remainingGenerations={remainingGenerations}
+                limitInfo={limitInfo}
+              />
+            )}
           </div>
 
           <div
             id="tabpanel-upload"
             role="tabpanel"
             aria-labelledby="tab-upload"
-            hidden={activeTab !== 'upload'}
+            hidden={activeTab !== "upload"}
           >
-
-          {activeTab === 'upload' && (
-            <UploadTab
-              onFileSelect={handleFileSelect}
-              previewLoadState={preview.loadState}
-            />
-          )}
+            {activeTab === "upload" && (
+              <UploadTab
+                onFileSelect={handleFileSelect}
+                previewLoadState={preview.loadState}
+                error={error}
+                isBusy={isBusy}
+              />
+            )}
           </div>
         </div>
 
-        {/* Footer Actions */}
         <AvatarSelectorFooter
           hasSelection={hasSelection}
           isSaving={isSaving}
@@ -258,20 +221,4 @@ export function AvatarSelector({
       </div>
     </div>
   );
-}
-
-// === Helper functions ===
-
-async function fetchAvatarLimit(): Promise<LimitInfo> {
-  const token = getAuthToken();
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL}/api/avatars/limit`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
-  if (!response.ok) {
-    throw new Error('Failed to fetch avatar limit');
-  }
-  return response.json();
 }

@@ -1,5 +1,5 @@
-import { Spinner } from '@/components/Spinner';
-import type { AvatarSelectorFooterProps } from '../types';
+import { Spinner } from "@/components/Spinner";
+import type { AvatarSelectorFooterProps } from "../types";
 
 export function AvatarSelectorFooter({
   hasSelection,
@@ -23,16 +23,16 @@ export function AvatarSelectorFooter({
         disabled={disabled}
         className={`relative flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center ${
           hasSelection
-            ? 'bg-primary text-white hover:bg-primary/90'
-            : 'bg-primary/20 text-primary/50 cursor-not-allowed'
+            ? "bg-primary text-white hover:bg-primary/90"
+            : "bg-primary/20 text-primary/50 cursor-not-allowed"
         }`}
       >
-        <span className={isSaving ? 'opacity-0' : 'opacity-100'}>
+        <span className={isSaving ? "opacity-0" : "opacity-100"}>
           Сохранить
         </span>
         <span
           className={`absolute inset-0 flex items-center justify-center gap-2 transition-opacity ${
-            isSaving ? 'opacity-100' : 'opacity-0'
+            isSaving ? "opacity-100" : "opacity-0"
           }`}
         >
           <Spinner size="sm" className="border-white/25 border-t-white border-l-white" />
