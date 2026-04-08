@@ -13,6 +13,7 @@ vi.mock("../../lib/prisma.js", () => ({
       delete: vi.fn(),
     },
     tier: {
+      create: vi.fn(),
       createMany: vi.fn(),
       update: vi.fn(),
       deleteMany: vi.fn(),
@@ -813,6 +814,77 @@ describe("tierList.service", () => {
       });
 
       expect(result.meta.totalPages).toBe(4); // ceil(35/10) = 4
+    });
+  });
+
+  describe("forkTierList", () => {
+    const mockUserId = 2;
+    const mockOriginalId = 1;
+
+    const mockOriginal = {
+      id: mockOriginalId,
+      title: "Original List",
+      userId: 1,
+      tiers: [
+        { id: 10, title: "S", color: "#FF6B6B", rank: 0 },
+        { id: 11, title: "A", color: "#4ECDC4", rank: 1 },
+      ],
+      placements: [
+        {
+          bookId: 100,
+          tierId: 10,
+          rank: 0,
+          book: {
+            id: 100,
+            title: "Book 1",
+            author: "Author 1",
+            coverImageUrl: "cover1.jpg",
+            description: "Desc 1",
+            thoughts: "Thoughts 1",
+          },
+        },
+      ],
+    };
+
+    it("должен создать копию тир-листа со всеми тирами и книгами", async () => {
+      (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue(mockOriginal);
+
+      (prisma.$transaction as any).mockImplementation(async (fn: any) => {
+        return fn(prisma);
+      });
+
+      (prisma.tierList.create as any).mockResolvedValue({
+        id: 2,
+        title: "Original List (копия)",
+        userId: mockUserId,
+        tiers: [
+          { id: 20, title: "S", rank: 0 },
+          { id: 21, title: "A", rank: 1 },
+        ],
+      });
+
+      (prisma.tier.create as any)
+        .mockResolvedValueOnce({ id: 20, title: "S", rank: 0 })
+        .mockResolvedValueOnce({ id: 21, title: "A", rank: 1 });
+
+      (prisma.book.create as any).mockResolvedValue({ id: 200, title: "Book 1" });
+      (prisma.bookPlacement.create as any).mockResolvedValue({});
+
+      const result = await service.forkTierList(mockOriginalId, mockUserId);
+
+      expect(prisma.tierList.findUniqueOrThrow).toHaveBeenCalledWith({
+        where: { id: mockOriginalId },
+        include: {
+          tiers: { orderBy: { rank: "asc" } },
+          placements: { include: { book: true }, orderBy: { rank: "asc" } },
+        },
+      });
+
+      expect(prisma.tierList.create).toHaveBeenCalled();
+      expect(prisma.bookPlacement.create).toHaveBeenCalled();
+
+      expect(result.title).toBe("Original List (копия)");
+      expect(result.userId).toBe(mockUserId);
     });
   });
 });
