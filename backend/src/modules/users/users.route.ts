@@ -11,6 +11,7 @@ import {
   getAllUsers,
 } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
+import { requireRole } from "../../middleware/requireRole.js";
 
 export async function userRoutes(fastify: FastifyInstance) {
   // GET /api/users/me
@@ -162,19 +163,8 @@ export async function userRoutes(fastify: FastifyInstance) {
   // GET /api/users/admin/all - получить всех пользователей (только админ)
   fastify.get(
     "/admin/all",
-    { preHandler: [authMiddleware] },
+    { preHandler: [authMiddleware, requireRole("admin")] },
     async (request, reply) => {
-      const userId = (request as any).user?.userId;
-      if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
-      }
-
-      // Проверка на админа
-      const userRole = (request as any).user?.role;
-      if (userRole !== "admin") {
-        return reply.code(403).send({ error: "Требуется роль администратора" });
-      }
-
       const users = await getAllUsers();
       return reply.code(200).send(users);
     },
