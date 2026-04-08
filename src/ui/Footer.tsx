@@ -176,10 +176,10 @@ export const Footer = () => {
 
                 <div
                   id="donate-menu"
-                  className={`absolute bottom-full mb-3 right-0 z-10 w-[min(92vw,320px)] origin-bottom-right overflow-hidden rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 ${
+                  className={`absolute top-full mt-3 right-0 z-10 w-[min(92vw,320px)] origin-top-right overflow-hidden rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 ${
                     isDonateOpen
                       ? "pointer-events-auto scale-100 border-amber-500/40 opacity-100 shadow-[0_20px_50px_rgba(249,115,22,0.3)]"
-                      : "pointer-events-none scale-95 border-amber-500/10 opacity-0 translate-y-4"
+                      : "pointer-events-none scale-95 border-amber-500/10 opacity-0 -translate-y-4"
                   }`}
                 >
                   <div className="relative p-5">

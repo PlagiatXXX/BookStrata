@@ -18,8 +18,8 @@ export const RainEffect: React.FC = () => {
       id: i,
       left: `${Math.random() * 100}%`,
       animationDelay: `${Math.random() * 2}s`,
-      animationDuration: `${0.5 + Math.random() * 0.5}s`,
-      opacity: 0.1 + Math.random() * 0.2,
+      animationDuration: `${1.5 + Math.random() * 1.5}s`,
+      opacity: 0.3 + Math.random() * 0.3,
     }));
   }, [prefersReducedMotion]);
 
@@ -30,7 +30,7 @@ export const RainEffect: React.FC = () => {
       {drops.map((drop) => (
         <div
           key={drop.id}
-          className="animate-rain absolute top-0 h-4 w-[1px] bg-cyan-200/40"
+          className="animate-rain absolute top-0 h-4 w-[1px] bg-cyan-100/60 shadow-[0_0_8px_rgba(103,232,249,0.3)]"
           style={{
             left: drop.left,
             animationDelay: drop.animationDelay,
