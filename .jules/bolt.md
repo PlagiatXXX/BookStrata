@@ -29,3 +29,7 @@
 ## 2026-04-07 - [Optimizing User Stats with Aggregation and Denormalization]
 **Learning:** Combining multiple `count` and `sum` operations into a single `prisma.aggregate` call significantly reduces database roundtrips. Using denormalized fields (like `likesCount` on `TierList`) for these aggregations avoids expensive join-based counts on large relational tables.
 **Action:** When fetching multiple aggregate statistics for an entity (like user stats), prioritize `prisma.aggregate` using denormalized fields to minimize query count and database load.
+
+## 2026-04-08 - [Parallelizing Relational Inserts in Prisma Transactions]
+**Learning:** Sequential `await` calls for record creation within a Prisma transaction create unnecessary roundtrip overhead. When creating a parent and its children, or cloning multiple independent records (like books during a fork), combining operations into nested `create` calls or using `Promise.all` with individual `create` calls significantly improves throughput.
+**Action:** Replace sequential `for...of` loops that perform database writes with `Promise.all` or nested relational `create` operations to collapse O(N) sequential operations into O(1) database steps.

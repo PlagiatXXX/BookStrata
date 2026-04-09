@@ -545,58 +545,58 @@ export async function forkTierList(id: number, userId: number) {
     },
   });
 
-  // 2. Создаем новый тир-лист в транзакции
+  // 2. Создаем новый тир-лист с тирами в одном запросе
   return prisma.$transaction(async (tx) => {
-    // Создаем заголовок с пометкой о копии
-    const newTitle = `${original.title} (копия)`;
-
     const newTierList = await tx.tierList.create({
       data: {
         userId,
-        title: newTitle,
+        title: `${original.title} (копия)`,
         isPublic: false,
+        tiers: {
+          create: original.tiers.map((tier) => ({
+            title: tier.title,
+            color: tier.color,
+            rank: tier.rank,
+          })),
+        },
+      },
+      include: {
+        tiers: {
+          orderBy: { rank: "asc" },
+        },
       },
     });
 
-    // 3. Копируем тиры
     const tierMap = new Map<number, number>(); // Старый ID -> Новый ID
+    original.tiers.forEach((oldTier, index) => {
+      tierMap.set(oldTier.id, newTierList.tiers[index].id);
+    });
 
-    for (const tier of original.tiers) {
-      const createdTier = await tx.tier.create({
-        data: {
-          tierListId: newTierList.id,
-          title: tier.title,
-          color: tier.color,
-          rank: tier.rank,
-        },
-      });
-      tierMap.set(tier.id, createdTier.id);
-    }
-
-    // 4. Копируем книги и создаем размещения
-    // Важно: создаем НОВЫЕ записи книг, чтобы пользователь мог редактировать их мысли/описания независимо
-    for (const placement of original.placements) {
-      const newBook = await tx.book.create({
-        data: {
-          title: placement.book.title,
-          author: placement.book.author,
-          coverImageUrl: placement.book.coverImageUrl,
-          description: placement.book.description,
-          thoughts: placement.book.thoughts,
-        },
-      });
-
-      await tx.bookPlacement.create({
-        data: {
-          tierListId: newTierList.id,
-          bookId: newBook.id,
-          tierId: placement.tierId
-            ? (tierMap.get(placement.tierId) ?? null)
-            : null,
-          rank: placement.rank,
-        },
-      });
-    }
+    // 4. Копируем книги и создаем размещения (параллельно)
+    // Оптимизация Bolt: используем Promise.all и вложенный create для сокращения roundtrip-ов.
+    // Это сокращает количество последовательных запросов с O(B*2) до O(1).
+    await Promise.all(
+      original.placements.map((placement) =>
+        tx.bookPlacement.create({
+          data: {
+            tierListId: newTierList.id,
+            tierId: placement.tierId
+              ? (tierMap.get(placement.tierId) ?? null)
+              : null,
+            rank: placement.rank,
+            book: {
+              create: {
+                title: placement.book.title,
+                author: placement.book.author,
+                coverImageUrl: placement.book.coverImageUrl,
+                description: placement.book.description,
+                thoughts: placement.book.thoughts,
+              },
+            },
+          },
+        }),
+      ),
+    );
 
     logger.info("Тир-лист успешно скопирован (forked)", {
       originalId: id,
