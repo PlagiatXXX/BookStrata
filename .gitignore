@@ -13,8 +13,6 @@ dist-ssr
 *.local
 .env
 .env.production
-
-# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -26,7 +24,8 @@ dist-ssr
 *.sw?
 ROADMAP.md
 doctor.md
+.Jules
 .qwen
-
 # Recovery history folder
 .history/
+.tmp
