@@ -82,9 +82,19 @@ export const TierLabel = memo(
           setIsPaletteOpen(false);
         }
       }
+
+      function handleKeyDown(event: KeyboardEvent) {
+        if (event.key === "Escape") {
+          setIsPaletteOpen(false);
+        }
+      }
+
       document.addEventListener("mousedown", handleClickOutside);
-      return () =>
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
         document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+      };
     }, [wrapperRef]);
 
     const dynamicSizeClass = sizeClasses[labelSize];
@@ -122,8 +132,9 @@ export const TierLabel = memo(
       <div
         ref={droppableRef || wrapperRef}
         style={{ backgroundColor: color }}
-        className="nb-rank-box group/label relative flex shrink-0 items-center justify-center focus-within:opacity-100"
+        className="nb-rank-box group/label relative flex shrink-0 items-center justify-center focus-within:opacity-100 tier-label"
         onDoubleClick={handleDoubleClick}
+        title="Двойной клик для переименования"
       >
         {isEditing ? (
           <input
@@ -152,14 +163,20 @@ export const TierLabel = memo(
               setIsPaletteOpen(!isPaletteOpen);
             }}
             aria-label="Изменить цвет уровня"
-            className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400"
+            aria-expanded={isPaletteOpen}
+            aria-haspopup="true"
+            className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 palette-toggle"
             title="Изменить цвет"
           >
-            <Palette size={12} />
+            <Palette size={12} aria-hidden="true" />
           </button>
         </div>
         {isPaletteOpen && (
-          <div className="nb-heavy-border absolute left-full top-0 z-50 ml-2 flex w-32 flex-wrap gap-1 bg-white p-2 shadow-[4px_4px_0_0_#000000]">
+          <div
+            role="group"
+            aria-label="Цветовая палитра"
+            className="nb-heavy-border absolute left-full top-0 z-50 ml-2 flex w-32 flex-wrap gap-1 bg-white p-2 shadow-[4px_4px_0_0_#000000]"
+          >
             {TIER_COLORS.map((swatchColor) => (
               <button
                 key={swatchColor}
