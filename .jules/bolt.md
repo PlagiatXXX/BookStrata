@@ -33,3 +33,7 @@
 ## 2026-04-08 - [Parallelizing Relational Inserts in Prisma Transactions]
 **Learning:** Sequential `await` calls for record creation within a Prisma transaction create unnecessary roundtrip overhead. When creating a parent and its children, or cloning multiple independent records (like books during a fork), combining operations into nested `create` calls or using `Promise.all` with individual `create` calls significantly improves throughput.
 **Action:** Replace sequential `for...of` loops that perform database writes with `Promise.all` or nested relational `create` operations to collapse O(N) sequential operations into O(1) database steps.
+
+## 2026-04-09 - [Atomic Relational Returns with Nested Includes]
+**Learning:** Using `include` directly within a `prisma.create` call allows retrieving the newly generated IDs and state of children in the same roundtrip. This eliminates the need for a follow-up `findMany` query to map old identifiers to new ones, reducing database load and improving response times in complex creation workflows like template instantiation.
+**Action:** Leverage Prisma's `include` property during record creation to fetch related data (like tiers or placements) immediately, avoiding redundant post-creation retrieval queries.

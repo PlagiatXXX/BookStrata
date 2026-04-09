@@ -45,7 +45,12 @@ const mockPrisma = {
   book: mockBook,
   bookPlacement: mockBookPlacement,
   user: mockUser,
-  $transaction: vi.fn(),
+  $transaction: vi.fn((arg) => {
+    if (typeof arg === "function") {
+      return arg(mockPrisma);
+    }
+    return Promise.all(arg);
+  }),
 };
 
 // Мок PrismaClient
@@ -478,10 +483,11 @@ describe("TemplatesService", () => {
     it("должен создать тир-лист из шаблона", async () => {
       mockTemplate.findUnique.mockResolvedValue(mockTemplateData);
       mockUser.findUnique.mockResolvedValue({ isPro: true });
-      mockTierList.create.mockResolvedValue(mockCreatedTierList);
-      mockTier.createMany.mockResolvedValue({});
+      mockTierList.create.mockResolvedValue({
+        ...mockCreatedTierList,
+        tiers: mockCreatedTiers,
+      });
       mockBook.create.mockResolvedValue(mockCreatedBook);
-      mockTier.findMany.mockResolvedValue(mockCreatedTiers);
       mockBookPlacement.create.mockResolvedValue({});
       const result = await service.useTemplate(
         mockTemplateId,
@@ -490,16 +496,22 @@ describe("TemplatesService", () => {
       );
       expect(mockTierList.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ title: mockNewListTitle, userId: 1 }),
+        include: { tiers: { orderBy: { rank: "asc" } } },
       });
-      expect(result).toEqual(mockCreatedTierList);
+      expect(result).toEqual({
+        ...mockCreatedTierList,
+        tiers: mockCreatedTiers,
+      });
     });
 
     it("должен создать тиры из шаблона", async () => {
       mockTemplate.findUnique.mockResolvedValue(mockTemplateData);
       mockUser.findUnique.mockResolvedValue({ isPro: true });
-      mockTierList.create.mockResolvedValue(mockCreatedTierList);
+      mockTierList.create.mockResolvedValue({
+        ...mockCreatedTierList,
+        tiers: mockCreatedTiers,
+      });
       mockBook.create.mockResolvedValue(mockCreatedBook);
-      mockTier.findMany.mockResolvedValue(mockCreatedTiers);
       mockBookPlacement.create.mockResolvedValue({});
       await service.useTemplate(mockTemplateId, mockUserId, mockNewListTitle);
       expect(mockTierList.create).toHaveBeenCalledWith({
@@ -521,16 +533,18 @@ describe("TemplatesService", () => {
             ]),
           },
         }),
+        include: { tiers: { orderBy: { rank: "asc" } } },
       });
     });
 
     it("должен создать книги из шаблона", async () => {
       mockTemplate.findUnique.mockResolvedValue(mockTemplateData);
       mockUser.findUnique.mockResolvedValue({ isPro: true });
-      mockTierList.create.mockResolvedValue(mockCreatedTierList);
-      mockTier.createMany.mockResolvedValue({});
+      mockTierList.create.mockResolvedValue({
+        ...mockCreatedTierList,
+        tiers: mockCreatedTiers,
+      });
       mockBook.create.mockResolvedValue(mockCreatedBook);
-      mockTier.findMany.mockResolvedValue(mockCreatedTiers);
       mockBookPlacement.create.mockResolvedValue({});
       await service.useTemplate(mockTemplateId, mockUserId, mockNewListTitle);
       expect(mockBook.create).toHaveBeenCalledWith({
