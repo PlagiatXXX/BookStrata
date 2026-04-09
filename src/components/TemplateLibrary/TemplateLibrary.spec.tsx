@@ -1,21 +1,23 @@
 /// <reference types="vitest/globals" />
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
-import TemplateLibrary from './TemplateLibrary';
-import * as useTemplatesModule from '../../hooks/useTemplates';
-import * as tierListApiModule from '@/lib/tierListApi';
-import * as likesApiModule from '@/lib/likesApi';
-import * as authContextModule from '../../hooks/useAuthContext';
-import type { Template } from '../../types/templates';
-import type { PaginatedTierListsResponse } from '@/lib/tierListApi';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import TemplateLibrary from "./TemplateLibrary";
+import * as useTemplatesModule from "../../hooks/useTemplates";
+import * as tierListApiModule from "@/lib/tierListApi";
+import * as likesApiModule from "@/lib/likesApi";
+import * as authContextModule from "../../hooks/useAuthContext";
+import type { Template } from "../../types/templates";
+import type { PaginatedTierListsResponse } from "@/lib/tierListApi";
 
 // Вспомогательная функция для создания мока useUserTemplates
 const createUseUserTemplatesMock = (
   data: Template[] = [mockTemplate],
-  overrides: Partial<ReturnType<typeof useTemplatesModule.useUserTemplates>> = {}
+  overrides: Partial<
+    ReturnType<typeof useTemplatesModule.useUserTemplates>
+  > = {},
 ) => {
   const base = {
     data,
@@ -38,7 +40,7 @@ const createUseUserTemplatesMock = (
     fetchPreviousPage: vi.fn(),
     hasNextPage: false,
     hasPreviousPage: false,
-    status: 'success' as const,
+    status: "success" as const,
     error: null,
     dataUpdatedAt: 0,
     errorUpdatedAt: 0,
@@ -46,13 +48,16 @@ const createUseUserTemplatesMock = (
     failureReason: null,
     errorUpdateCount: 0,
   };
-  
-  return Object.assign(base, overrides) as ReturnType<typeof useTemplatesModule.useUserTemplates>;
+
+  return Object.assign(base, overrides) as ReturnType<
+    typeof useTemplatesModule.useUserTemplates
+  >;
 };
 
 // Моки для хуков
-vi.mock('../../hooks/useTemplates', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../hooks/useTemplates')>();
+vi.mock("../../hooks/useTemplates", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../hooks/useTemplates")>();
   return {
     ...actual,
     useUserTemplates: vi.fn(),
@@ -61,56 +66,110 @@ vi.mock('../../hooks/useTemplates', async (importOriginal) => {
   };
 });
 
-vi.mock('@/lib/tierListApi', () => ({
+vi.mock("@/lib/tierListApi", () => ({
   getPublicTierLists: vi.fn(),
 }));
 
-vi.mock('@/lib/likesApi', () => ({
+vi.mock("@/lib/likesApi", () => ({
   apiGetLikedTierListIds: vi.fn(),
 }));
 
-vi.mock('sileo', () => ({
+vi.mock("sileo", () => ({
   sileo: {
     success: vi.fn(),
     error: vi.fn(),
   },
 }));
 
-vi.mock('../../hooks/useAuthContext', () => ({
+vi.mock("../../hooks/useAuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
 const mockTemplate: Template = {
-  id: 'template-1',
-  title: 'Test Template',
-  description: 'Test Description',
-  tiers: [{ id: 'tier-1', name: 'S', color: '#ff0000', order: 0 }],
+  id: "template-1",
+  title: "Test Template",
+  description: "Test Description",
+  tiers: [{ id: "tier-1", name: "S", color: "#ff0000", order: 0 }],
   defaultBooks: [],
-  category: 'Fantasy',
+  category: "Fantasy",
   isPublic: true,
   isFavorite: false,
   isArchived: false,
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z',
+  createdAt: "2024-01-01T00:00:00Z",
+  updatedAt: "2024-01-01T00:00:00Z",
 };
 
 const mockPublicTierLists: PaginatedTierListsResponse = {
   data: [
     {
       id: 1,
-      title: 'Public Tier List 1',
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
+      title: "Public Tier List 1",
+      createdAt: "2024-01-01T00:00:00Z",
+      updatedAt: "2024-01-01T00:00:00Z",
       isPublic: true,
-      user: { id: 1, username: 'user1' },
+      user: { id: 1, username: "user1" },
       likesCount: 5,
+    },
+    {
+      id: 2,
+      title: "Public Tier List 2",
+      createdAt: "2024-01-02T00:00:00Z",
+      updatedAt: "2024-01-02T00:00:00Z",
+      isPublic: true,
+      user: { id: 2, username: "user2" },
+      likesCount: 10,
+    },
+    {
+      id: 3,
+      title: "Public Tier List 3",
+      createdAt: "2024-01-03T00:00:00Z",
+      updatedAt: "2024-01-03T00:00:00Z",
+      isPublic: true,
+      user: { id: 3, username: "user3" },
+      likesCount: 3,
+    },
+    {
+      id: 4,
+      title: "Public Tier List 4",
+      createdAt: "2024-01-04T00:00:00Z",
+      updatedAt: "2024-01-04T00:00:00Z",
+      isPublic: true,
+      user: { id: 4, username: "user4" },
+      likesCount: 7,
+    },
+    {
+      id: 5,
+      title: "Public Tier List 5",
+      createdAt: "2024-01-05T00:00:00Z",
+      updatedAt: "2024-01-05T00:00:00Z",
+      isPublic: true,
+      user: { id: 5, username: "user5" },
+      likesCount: 12,
+    },
+    {
+      id: 6,
+      title: "Public Tier List 6",
+      createdAt: "2024-01-06T00:00:00Z",
+      updatedAt: "2024-01-06T00:00:00Z",
+      isPublic: true,
+      user: { id: 6, username: "user6" },
+      likesCount: 8,
+    },
+    {
+      id: 7,
+      title: "Public Tier List 7",
+      createdAt: "2024-01-07T00:00:00Z",
+      updatedAt: "2024-01-07T00:00:00Z",
+      isPublic: true,
+      user: { id: 7, username: "user7" },
+      likesCount: 15,
     },
   ],
   meta: {
-    totalItems: 1,
-    itemCount: 1,
+    totalItems: 13,
+    itemCount: 7,
     itemsPerPage: 6,
-    totalPages: 1,
+    totalPages: 3,
     currentPage: 1,
   },
 };
@@ -131,7 +190,7 @@ const createWrapper = () => {
   );
 };
 
-describe('TemplateLibrary', () => {
+describe("TemplateLibrary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -139,7 +198,7 @@ describe('TemplateLibrary', () => {
     vi.mocked(authContextModule.useAuth).mockReturnValue({
       user: {
         userId: 1,
-        username: 'testuser',
+        username: "testuser",
         avatarUrl: null,
       },
       isLoading: false,
@@ -150,7 +209,7 @@ describe('TemplateLibrary', () => {
 
     // Моки по умолчанию
     vi.mocked(useTemplatesModule.useUserTemplates).mockReturnValue(
-      createUseUserTemplatesMock()
+      createUseUserTemplatesMock(),
     );
 
     vi.mocked(useTemplatesModule.useDeleteTemplate).mockReturnValue({
@@ -161,7 +220,7 @@ describe('TemplateLibrary', () => {
       isSuccess: false,
       isError: false,
       isIdle: true,
-      status: 'idle',
+      status: "idle",
       failureCount: 0,
       failureReason: null,
       reset: vi.fn(),
@@ -182,7 +241,7 @@ describe('TemplateLibrary', () => {
       isSuccess: false,
       isError: false,
       isIdle: true,
-      status: 'idle',
+      status: "idle",
       failureCount: 0,
       failureReason: null,
       reset: vi.fn(),
@@ -196,7 +255,7 @@ describe('TemplateLibrary', () => {
     } as unknown as ReturnType<typeof useTemplatesModule.useApplyTemplate>);
 
     vi.mocked(tierListApiModule.getPublicTierLists).mockResolvedValue(
-      mockPublicTierLists
+      mockPublicTierLists,
     );
 
     vi.mocked(likesApiModule.apiGetLikedTierListIds).mockResolvedValue({
@@ -204,187 +263,221 @@ describe('TemplateLibrary', () => {
     });
   });
 
-  it('должен рендериться с заголовком', () => {
+  it("должен рендериться с заголовком", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    expect(screen.getByText('Библиотека шаблонов')).toBeInTheDocument();
+    expect(screen.getByText("Библиотека шаблонов")).toBeInTheDocument();
   });
 
-  it('должен показывать навигацию по секциям', () => {
+  it("должен показывать навигацию по секциям", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
     // Используем getAllByText чтобы найти все элементы
-    const privateLinks = screen.getAllByText('Личные шаблоны');
+    const privateLinks = screen.getAllByText("Личные шаблоны");
     expect(privateLinks.length).toBeGreaterThan(0);
-    
-    const publicLinks = screen.getAllByText('Публичные тир-листы');
+
+    const publicLinks = screen.getAllByText("Публичные тир-листы");
     expect(publicLinks.length).toBeGreaterThan(0);
-    
-    const favoritesLinks = screen.getAllByText('Избранное');
+
+    const favoritesLinks = screen.getAllByText("Избранное");
     expect(favoritesLinks.length).toBeGreaterThan(0);
-    
-    const archivedLinks = screen.getAllByText('Архив');
+
+    const archivedLinks = screen.getAllByText("Архив");
     expect(archivedLinks.length).toBeGreaterThan(0);
   });
 
-  it('должен переключать секции', async () => {
+  it("должен переключать секции", async () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
     // Находим кнопку в сайдбаре по aria-label или типу кнопки
-    const publicButton = screen.getAllByRole('button').find(btn =>
-      btn.textContent?.includes('Публичные тир-листы') &&
-      btn.parentElement?.classList.contains('border-b')
-    );
-    
+    const publicButton = screen
+      .getAllByRole("button")
+      .find(
+        (btn) =>
+          btn.textContent?.includes("Публичные тир-листы") &&
+          btn.parentElement?.classList.contains("border-b"),
+      );
+
     if (publicButton) {
       fireEvent.click(publicButton);
     }
 
     // Просто проверяем что компонент не упал
     await waitFor(() => {
-      expect(screen.getAllByText('Публичные тир-листы').length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Публичные тир-листы").length).toBeGreaterThan(
+        0,
+      );
     });
   });
 
-  it('должен отображать шаблоны в режиме личных', () => {
+  it("должен отображать шаблоны в режиме личных", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    expect(screen.getByText('Test Template')).toBeInTheDocument();
+    expect(screen.getByText("Test Template")).toBeInTheDocument();
   });
 
-  it('должен фильтровать шаблоны по категории', async () => {
+  it("должен фильтровать шаблоны по категории", async () => {
     vi.mocked(useTemplatesModule.useUserTemplates).mockReturnValue(
       createUseUserTemplatesMock([
-        { ...mockTemplate, category: 'Fantasy' },
-        { ...mockTemplate, id: 'template-2', category: 'Sci-Fi' },
-      ])
+        { ...mockTemplate, category: "Fantasy" },
+        { ...mockTemplate, id: "template-2", category: "Sci-Fi" },
+      ]),
     );
 
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
     // Нажимаем на категорию Fantasy
-    const fantasyButton = screen.getByText('FANTASY');
+    const fantasyButton = screen.getByText("FANTASY");
     fireEvent.click(fantasyButton);
 
     // Должен остаться только один шаблон
-    expect(screen.getAllByText('Test Template').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Test Template").length).toBeGreaterThanOrEqual(
+      1,
+    );
   });
 
-  it('должен переключать режим просмотра', () => {
+  it("должен переключать режим просмотра", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    const compactButton = screen.getByLabelText('Компактный вид');
+    const compactButton = screen.getByLabelText("Компактный вид");
     fireEvent.click(compactButton);
 
     // Режим переключился (проверяем что кнопка активна)
-    expect(compactButton.className).toContain('bg-cyan-500/25');
+    expect(compactButton.className).toContain("bg-cyan-500/25");
   });
 
-  it('должен показывать загрузку при isLoading', () => {
+  it("должен показывать загрузку при isLoading", () => {
     vi.mocked(useTemplatesModule.useUserTemplates).mockReturnValue(
-      createUseUserTemplatesMock([], { isLoading: true })
+      createUseUserTemplatesMock([], { isLoading: true }),
     );
 
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
     // Проверяем наличие Spinner по классу анимации
-    const spinner = document.querySelector('.animate-spin');
+    const spinner = document.querySelector(".animate-spin");
     expect(spinner).toBeInTheDocument();
   });
 
-  it('должен показывать ошибку при isError', () => {
+  it("должен показывать ошибку при isError", () => {
     vi.mocked(useTemplatesModule.useUserTemplates).mockReturnValue(
-      createUseUserTemplatesMock([], { isError: true })
+      createUseUserTemplatesMock([], { isError: true }),
     );
 
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    expect(screen.getByText('Ошибка загрузки шаблонов. Пожалуйста, попробуйте снова.')).toBeInTheDocument();
-    expect(screen.getByText('Повторить')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Ошибка загрузки шаблонов. Пожалуйста, попробуйте снова.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Повторить")).toBeInTheDocument();
   });
 
-  it('должен показывать сообщение когда ничего не найдено', () => {
+  it("должен показывать сообщение когда ничего не найдено", () => {
     vi.mocked(useTemplatesModule.useUserTemplates).mockReturnValue(
-      createUseUserTemplatesMock([])
+      createUseUserTemplatesMock([]),
     );
 
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
     // По умолчанию секция private, поэтому текст "Нет шаблонов"
-    expect(screen.getByText('Нет шаблонов')).toBeInTheDocument();
+    expect(screen.getByText("Нет шаблонов")).toBeInTheDocument();
   });
 
-  it('должен принимать initialSearchQuery как prop', () => {
-    render(<TemplateLibrary searchQuery="Harry Potter" />, { wrapper: createWrapper() });
+  it("должен принимать initialSearchQuery как prop", () => {
+    render(<TemplateLibrary searchQuery="Harry Potter" />, {
+      wrapper: createWrapper(),
+    });
 
     // Поиск должен быть установлен
-    const searchInput = screen.getByPlaceholderText(/поиск/i) as HTMLInputElement;
-    expect(searchInput.value).toBe('Harry Potter');
+    const searchInput = screen.getByPlaceholderText(
+      /поиск/i,
+    ) as HTMLInputElement;
+    expect(searchInput.value).toBe("Harry Potter");
   });
 
-  it('должен принимать initialSection как prop', () => {
-    render(<TemplateLibrary initialSection="favorites" />, { wrapper: createWrapper() });
+  it("должен принимать initialSection как prop", () => {
+    render(<TemplateLibrary initialSection="favorites" />, {
+      wrapper: createWrapper(),
+    });
 
     // Секция должна быть установлена - ищем кнопку в сайдбаре
-    const favoritesButtons = screen.getAllByText('Избранное');
+    const favoritesButtons = screen.getAllByText("Избранное");
     // Первый элемент - это кнопка в сайдбаре
-    expect(favoritesButtons[0].closest('button')?.className).toContain('bg-cyan-500/25');
+    expect(favoritesButtons[0].closest("button")?.className).toContain(
+      "bg-cyan-500/25",
+    );
   });
 
-  describe('пагинация публичных тир-листов', () => {
-    it('должен показывать пагинацию когда есть данные', async () => {
+  describe("пагинация публичных тир-листов", () => {
+    it("должен показывать пагинацию когда есть данные", async () => {
       render(<TemplateLibrary />, { wrapper: createWrapper() });
 
       // Переключаемся на публичные - находим кнопку в сайдбаре
-      const sidebarButtons = screen.getAllByRole('button').filter(btn =>
-        btn.textContent?.includes('Публичные тир-листы')
-      );
-      
+      const sidebarButtons = screen
+        .getAllByRole("button")
+        .filter((btn) => btn.textContent?.includes("Публичные тир-листы"));
+
       if (sidebarButtons.length > 0) {
         fireEvent.click(sidebarButtons[0]);
       }
 
       await waitFor(() => {
-        expect(screen.getByText('Public Tier List 1')).toBeInTheDocument();
+        expect(screen.getByText("Public Tier List 1")).toBeInTheDocument();
       });
 
       // Проверяем наличие кнопок пагинации
-      const paginationButtons = screen.getAllByRole('button').filter(btn =>
-        btn.getAttribute('aria-label')?.includes('страница')
-      );
-      
+      const paginationButtons = screen
+        .getAllByRole("button")
+        .filter((btn) => btn.getAttribute("aria-label")?.includes("страница"));
+
       expect(paginationButtons.length).toBeGreaterThan(0);
     });
 
-    it('должен позволять переключать страницы', async () => {
+    it("должен позволять переключать страницы", async () => {
       const mockPage2Data: PaginatedTierListsResponse = {
         ...mockPublicTierLists,
         meta: {
           ...mockPublicTierLists.meta,
           currentPage: 2,
-          totalPages: 2,
         },
+        data: [
+          {
+            id: 8,
+            title: "Public Tier List 8",
+            createdAt: "2024-01-08T00:00:00Z",
+            updatedAt: "2024-01-08T00:00:00Z",
+            isPublic: true,
+            user: { id: 8, username: "user8" },
+            likesCount: 20,
+          },
+        ],
       };
 
-      vi.mocked(tierListApiModule.getPublicTierLists).mockResolvedValueOnce(
-        mockPublicTierLists
-      ).mockResolvedValueOnce(mockPage2Data);
+      vi.mocked(tierListApiModule.getPublicTierLists)
+        .mockResolvedValueOnce(mockPublicTierLists)
+        .mockResolvedValueOnce(mockPage2Data);
 
       render(<TemplateLibrary />, { wrapper: createWrapper() });
 
       // Переключаемся на публичные
-      const publicButton = screen.getByText('Публичные тир-листы');
+      const publicButton = screen.getByText("Публичные тир-листы");
       fireEvent.click(publicButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Public Tier List 1')).toBeInTheDocument();
+        expect(screen.getByText("Public Tier List 1")).toBeInTheDocument();
       });
 
       // Нажимаем "вперёд"
-      const nextButton = screen.getByLabelText('Следующая страница');
-      if (!nextButton.hasAttribute('disabled')) {
+      const nextButton = screen.getByLabelText("Следующая страница");
+      if (!nextButton.hasAttribute("disabled")) {
         fireEvent.click(nextButton);
       }
+
+      // Ждём загрузку второй страницы
+      await waitFor(() => {
+        expect(screen.getByText("Public Tier List 8")).toBeInTheDocument();
+      });
     });
   });
 });

@@ -57,7 +57,11 @@ describe("AvatarSelector", () => {
 
   it("shows loading states for generation and saving", async () => {
     let resolveGenerate:
-      | ((value: { success: boolean; imageUrl: string; remaining: number }) => void)
+      | ((value: {
+          success: boolean;
+          imageUrl: string;
+          remaining: number;
+        }) => void)
       | undefined;
     let resolveSave: (() => void) | undefined;
 
@@ -76,22 +80,54 @@ describe("AvatarSelector", () => {
     );
     const onClose = vi.fn();
 
-    render(
-      <AvatarSelector
-        username="tester"
-        onSave={onSave}
-        onClose={onClose}
-      />,
-      { wrapper: createWrapper() },
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    // Предзаполняем кэш чтобы isPro был доступен сразу
+    queryClient.setQueryData(["avatarLimit"], {
+      used: 0,
+      limit: 50,
+      remaining: 50,
+      isPro: true,
+    });
+
+    const AvatarSelectorWrapper = ({
+      children,
+    }: {
+      children: React.ReactNode;
+    }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
+    render(
+      <AvatarSelector username="tester" onSave={onSave} onClose={onClose} />,
+      { wrapper: AvatarSelectorWrapper },
+    );
+
+    // Переключаемся на AI tab
     fireEvent.click(screen.getByRole("tab", { name: /ai генерация/i }));
+
+    // Вводим промпт
     fireEvent.change(screen.getByLabelText(/опишите ваш аватар/i), {
       target: { value: "neon fox" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /сгенерировать/i }));
 
-    expect(avatarApi.apiGenerateAvatar).toHaveBeenCalledWith("neon fox");
+    // Находим кнопку "Сгенерировать" — она должна быть доступна т.к. isPro = true
+    const generateButton = screen.getByRole("button", {
+      name: /сгенерировать/i,
+    });
+    expect(generateButton).toBeEnabled();
+    fireEvent.click(generateButton);
+
+    // Ждём вызова API (fireEvent.click синхронен, но mutation может быть асинхронной)
+    await waitFor(() => {
+      expect(avatarApi.apiGenerateAvatar).toHaveBeenCalledWith("neon fox");
+    });
+
     expect(screen.getAllByText("Генерируем...").length).toBeGreaterThan(0);
 
     resolveGenerate?.({
