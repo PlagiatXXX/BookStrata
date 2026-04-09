@@ -24,6 +24,38 @@ interface TierRowProps {
   onViewBook?: (book: Book) => void;
 }
 
+const TierDropIndicator = memo(({ tierId }: { tierId: string }) => {
+  const { over, active } = useDndContext();
+  const isBookDropTarget = over?.id === tierId && active?.data.current?.type === "book";
+
+  if (!isBookDropTarget) return null;
+
+  return (
+    <div
+      className="nb-book-track-end-indicator"
+      aria-hidden="true"
+    />
+  );
+});
+
+TierDropIndicator.displayName = "TierDropIndicator";
+
+const TierDropTargetOverlay = memo(({ tierId }: { tierId: string }) => {
+  const { over, active } = useDndContext();
+  const isBookDropTarget = over?.id === tierId && active?.data.current?.type === "book";
+
+  if (!isBookDropTarget) return null;
+
+  return (
+    <div
+      className="absolute inset-0 nb-tier-row-drop-target pointer-events-none"
+      aria-hidden="true"
+    />
+  );
+});
+
+TierDropTargetOverlay.displayName = "TierDropTargetOverlay";
+
 export const TierRow = memo(
   ({
     tier,
@@ -37,8 +69,6 @@ export const TierRow = memo(
     onEditBook,
     onViewBook,
   }: TierRowProps) => {
-    /* ---------- SORTABLE ТИР ---------- */
-    const { over } = useDndContext();
     const {
       attributes,
       listeners,
@@ -46,8 +76,6 @@ export const TierRow = memo(
       transform,
       transition,
       isDragging,
-      isOver,
-      active,
     } = useSortable({
       id: tier.id,
       data: {
@@ -65,18 +93,16 @@ export const TierRow = memo(
     };
 
     const activeClass = isActive ? "nb-tier-row-active" : "";
-    const isBookDropTarget = isOver && active?.data.current?.type === "book";
-    const showEndInsertIndicator = isBookDropTarget && over?.id === tier.id;
 
     return (
       <div
         ref={setSortableRef}
         style={style}
-        className={`nb-tier-row group relative flex ${activeClass} ${
-          isBookDropTarget ? "nb-tier-row-drop-target" : ""
-        }`}
+        className={`nb-tier-row group relative flex ${activeClass}`}
         role="listitem"
       >
+        <TierDropTargetOverlay tierId={tier.id} />
+
         <TierLabel
           tierId={tier.id}
           title={tier.title}
@@ -92,17 +118,9 @@ export const TierRow = memo(
           strategy={horizontalListSortingStrategy}
         >
           <div
-            className={`nb-book-track relative flex flex-1 flex-wrap content-start items-center
-                       transition-colors ${
-                         isBookDropTarget ? "nb-book-track-drop-target" : ""
-                       }`}
+            className="nb-book-track relative flex flex-1 flex-wrap content-start items-center transition-colors"
           >
-            {showEndInsertIndicator ? (
-              <div
-                className="nb-book-track-end-indicator"
-                aria-hidden="true"
-              />
-            ) : null}
+            <TierDropIndicator tierId={tier.id} />
             {books.map((book) => (
               <SortableBookCover
                 key={book.id}
@@ -150,3 +168,5 @@ export const TierRow = memo(
     );
   },
 );
+
+TierRow.displayName = "TierRow";

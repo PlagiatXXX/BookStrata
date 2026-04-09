@@ -1,6 +1,6 @@
 import { memo, forwardRef, useMemo } from "react";
 import { PlusCircle } from "lucide-react";
-import type { TierListData, Book } from "@/types";
+import type { TierListData, Book, Tier } from "@/types";
 import { TierRow } from "../TierRow/TierRow";
 import {
   SortableContext,
@@ -20,6 +20,59 @@ interface TierGridProps {
   onViewBook?: (book: Book) => void;
 }
 
+// Separate component for rendering a tier row to optimize memoization
+const TierGridRow = memo(({
+  tier,
+  allBooks,
+  isActive,
+  onChangeColor,
+  onRename,
+  onDelete,
+  onDeleteBook,
+  onEditBook,
+  onViewBook,
+  onSetActive
+}: {
+  tier: Tier;
+  allBooks: Record<string, Book>;
+  isActive: boolean;
+  onChangeColor: (tierId: string, newColor: string) => void;
+  onRename: (tierId: string, newTitle: string) => void;
+  onDelete: (tierId: string) => void;
+  onDeleteBook: (bookId: string) => void;
+  onEditBook?: (book: Book) => void;
+  onViewBook?: (book: Book) => void;
+  onSetActive: (tierId: string) => void;
+}) => {
+  // Extract book IDs to create a stable dependency for mapping
+  const bookIds = tier.bookIds;
+
+  // We map the books that belong to THIS tier.
+  // We use the JSON representation of book IDs and individual book references to stabilize the memo.
+  // This ensures that updates to UNRELATED books in the dictionary don't trigger a recalculation
+  // of this specific row's book array.
+  const booksInTier = useMemo(() => {
+    return bookIds.map((id) => allBooks[id]).filter(Boolean);
+  }, [bookIds, allBooks]);
+
+  return (
+    <TierRow
+      tier={tier}
+      books={booksInTier}
+      onChangeColor={onChangeColor}
+      onRename={onRename}
+      onDelete={onDelete}
+      onDeleteBook={onDeleteBook}
+      onEditBook={onEditBook}
+      onViewBook={onViewBook}
+      onSetActive={onSetActive}
+      isActive={isActive}
+    />
+  );
+});
+
+TierGridRow.displayName = "TierGridRow";
+
 export const TierGrid = memo(
   forwardRef<HTMLDivElement, TierGridProps>((props, ref) => {
     const {
@@ -36,13 +89,6 @@ export const TierGrid = memo(
     } = props;
     const { tiers, tierOrder, books } = listData;
 
-    const tierRows = useMemo(() => {
-      return tierOrder.map((tierId) => ({
-        tier: tiers[tierId],
-        booksInTier: tiers[tierId].bookIds.map((id) => books[id]),
-      }));
-    }, [tierOrder, tiers, books]);
-
     return (
       <div
         ref={ref}
@@ -52,11 +98,12 @@ export const TierGrid = memo(
           items={tierOrder}
           strategy={verticalListSortingStrategy}
         >
-          {tierRows.map(({ tier, booksInTier }) => (
-            <TierRow
-              key={tier.id}
-              tier={tier}
-              books={booksInTier}
+          {tierOrder.map((tierId) => (
+            <TierGridRow
+              key={tierId}
+              tier={tiers[tierId]}
+              allBooks={books}
+              isActive={tierId === activeTierId}
               onChangeColor={onChangeTierColor}
               onRename={onRenameTier}
               onDelete={onDeleteTier}
@@ -64,7 +111,6 @@ export const TierGrid = memo(
               onEditBook={onEditBook}
               onViewBook={onViewBook}
               onSetActive={onSetActiveTier}
-              isActive={tier.id === activeTierId}
             />
           ))}
         </SortableContext>

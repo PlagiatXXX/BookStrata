@@ -33,3 +33,11 @@
 ## 2026-04-08 - [Parallelizing Relational Inserts in Prisma Transactions]
 **Learning:** Sequential `await` calls for record creation within a Prisma transaction create unnecessary roundtrip overhead. When creating a parent and its children, or cloning multiple independent records (like books during a fork), combining operations into nested `create` calls or using `Promise.all` with individual `create` calls significantly improves throughput.
 **Action:** Replace sequential `for...of` loops that perform database writes with `Promise.all` or nested relational `create` operations to collapse O(N) sequential operations into O(1) database steps.
+
+## 2026-04-09 - [Isolating dnd-kit Context for Drag Performance]
+**Learning:** Consuming `useDndContext` in high-level components (like `TierRow` or `SortableBookCover`) causes the entire component tree to re-render on every mouse movement during a drag operation. This creates a massive performance bottleneck as the number of items grows.
+**Action:** Extract drag-dependent logic (like insertion indicators or drop target styles) into small, specialized sub-components that consume `useDndContext` independently. This keeps the parent components stable and limits re-renders to only the affected visual indicators.
+
+## 2026-04-09 - [Fine-grained Row Memoization in Grids]
+**Learning:** In a grid where rows depend on a global dictionary of items, a simple `useMemo` depending on the whole dictionary will trigger re-renders for every row whenever *any* item in the dictionary changes.
+**Action:** Implement row-level wrappers that memoize their own item lists. By spreading individual item references into the dependency array (or using a stable selector), you ensure that a row only re-renders if its specific items are updated, maintaining referential stability for the rest of the grid.
