@@ -24,18 +24,11 @@ import { addBooksToTierList } from "./tierList.service.js";
 // Логгер для роутов тир-листов
 const logger = createLogger("TierListsRoutes", { color: "cyan" });
 
-// Опциональный middleware - проверяет токен если есть, но не требует
-async function optionalAuthMiddleware(request: FastifyRequest) {
-  const authHeader = request.headers.authorization;
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7);
-    try {
-      const userPayload = validateToken(token);
-      (request as any).user = userPayload;
-    } catch {
-      /* empty */
-    }
-  }
+// Опциональный middleware - ничего не делает, так как request.user
+// уже заполняется глобальным плагином authPlugin, если токен верный.
+// Оставляем для совместимости с текущими определениями роутов.
+async function optionalAuthMiddleware(_request: FastifyRequest) {
+  // Ничего не делаем
 }
 
 export async function tierListRoutes(fastify: FastifyInstance) {
