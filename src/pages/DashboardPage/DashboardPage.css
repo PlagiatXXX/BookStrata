@@ -48,6 +48,11 @@
   color: #e2e8f0;
 }
 
+.dashboard-filter-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(6, 188, 249, 0.5);
+}
+
 .dashboard-filter-btn--active {
   background: linear-gradient(145deg, #06bcf9 0%, #08a8e0 100%);
   color: #0f172a;
@@ -175,9 +180,21 @@
   color: #06bcf9;
 }
 
+.dashboard-card__rename:focus-visible {
+  outline: none;
+  border-color: #06bcf9;
+  box-shadow: 0 0 0 2px rgba(6, 188, 249, 0.3);
+}
+
 .dashboard-card__delete:hover {
   border-color: rgba(239, 68, 68, 0.5);
   color: #ef4444;
+}
+
+.dashboard-card__delete:focus-visible {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
 
 .dashboard-card__title {
@@ -187,6 +204,12 @@
   line-height: 1.2;
   color: #e2e8f0;
   cursor: pointer;
+  border-radius: 4px;
+}
+
+.dashboard-card__title:focus-visible {
+  outline: 2px solid #06bcf9;
+  outline-offset: 4px;
 }
 
 .dashboard-card__meta {
@@ -393,6 +416,11 @@
   transform: translateY(-1px);
 }
 
+.dashboard-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #06bcf9, 0 0 0 4px rgba(6, 188, 249, 0.2);
+}
+
 .dashboard-btn--primary {
   border-color: rgba(6, 188, 249, 0.5);
   color: #0f172a;
@@ -460,6 +488,12 @@
   border-color: rgba(239, 68, 68, 0.5);
   color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
+}
+
+.dashboard-modal__close:focus-visible {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
 
 .dashboard-modal h2 {

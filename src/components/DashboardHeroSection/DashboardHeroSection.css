@@ -136,6 +136,11 @@
   box-shadow: 0 10px 25px rgba(6, 188, 249, 0.3);
 }
 
+.new-hero__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #0f172a, 0 0 0 4px #06bcf9;
+}
+
 .new-hero__btn--secondary {
   background: rgba(255, 255, 255, 0.1);
   color: white;
