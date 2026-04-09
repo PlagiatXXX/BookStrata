@@ -250,6 +250,7 @@ export async function addBooksToTierList(
 
 // Обновление книги
 export async function updateBook(
+  tierListId: number,
   bookId: number,
   data: {
     title?: string;
@@ -258,6 +259,11 @@ export async function updateBook(
     thoughts?: string | null;
   },
 ) {
+  // Security check: ensure the book belongs to the tier list
+  await prisma.bookPlacement.findUniqueOrThrow({
+    where: { tierListId_bookId: { tierListId, bookId } },
+  });
+
   return prisma.book.update({
     where: { id: bookId },
     data,
@@ -265,7 +271,16 @@ export async function updateBook(
 }
 
 // Обновление обложки книги
-export async function updateBookCover(bookId: number, coverImageUrl: string) {
+export async function updateBookCover(
+  tierListId: number,
+  bookId: number,
+  coverImageUrl: string,
+) {
+  // Security check: ensure the book belongs to the tier list
+  await prisma.bookPlacement.findUniqueOrThrow({
+    where: { tierListId_bookId: { tierListId, bookId } },
+  });
+
   return prisma.book.update({
     where: { id: bookId },
     data: { coverImageUrl },
