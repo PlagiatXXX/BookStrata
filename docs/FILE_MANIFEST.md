@@ -1,0 +1,485 @@
+# Справочник файлов BookStrata Pro
+
+Этот документ содержит краткое описание каждого файла. Как опытный разработчик, я настоятельно рекомендую ознакомиться с ним перед внесением изменений.
+
+## Корневые файлы конфигурации
+
+- `DEEP_AUDIT_REPORT.md`: Результаты глубокого аудита и проведенного рефакторинга.
+- `DEPLOY_GUIDE.md`: Файл .md в проекте.
+- `KODA.md`: Файл .md в проекте.
+- `LICENSE`: Файл  в проекте.
+- `QWEN.md`: Файл .md в проекте.
+- `README.md`: Общее описание проекта и инструкции по запуску.
+- `ROADMAP.md`: Файл .md в проекте.
+- `TierMaker-Pro-Business-Plan.txt`: Файл .txt в проекте.
+- `doctor.md`: Отчет о здоровье проекта и прохождении тестов.
+- `eslint.config.js`: Правила линтинга кода.
+- `index.html`: Файл .html в проекте.
+- `package-lock.json`: Файл .json в проекте.
+- `package.json`: Управление зависимостями и сценариями Node.js.
+- `tailwind.config.ts`: Конфигурация стилей TailwindCSS v4.
+- `tsconfig.app.json`: Файл .json в проекте.
+- `tsconfig.json`: Главная конфигурация компилятора TypeScript.
+- `tsconfig.node.json`: Файл .json в проекте.
+- `vite.config.ts`: Настройка сборщика Vite (плагины, алиасы, прокси).
+- `vitest.config.ts`: Настройка среды тестирования для фронтенда и бэкенда.
+
+## Директория src
+
+- **src/**
+  - `index.css`: Файл .css в проекте.
+  - **test/**
+    - `setup.ts`: Файл .ts в проекте.
+  - **components/**
+    - **TierRow/**
+      - `TierRow.tsx`: Функциональный React-компонент для TierRow.
+    - **Avatar/**
+      - `Avatar.tsx`: Функциональный React-компонент для Avatar.
+      - `AvatarSelector.spec.tsx`: Функциональный React-компонент для Avatar.
+      - `AvatarSelector.tsx`: Функциональный React-компонент для Avatar.
+      - `constants.ts`: Функциональный React-компонент для Avatar.
+      - `generationReducer.ts`: Функциональный React-компонент для Avatar.
+      - `index.ts`: Функциональный React-компонент для Avatar.
+      - `presets.ts`: Функциональный React-компонент для Avatar.
+      - `previewReducer.ts`: Функциональный React-компонент для Avatar.
+      - `types.ts`: Функциональный React-компонент для Avatar.
+      - **components/**
+        - `AiGenerationTab.tsx`: Функциональный React-компонент для components.
+        - `AvatarPreview.tsx`: Функциональный React-компонент для components.
+        - `AvatarSelectorFooter.tsx`: Функциональный React-компонент для components.
+        - `AvatarSelectorHeader.tsx`: Функциональный React-компонент для components.
+        - `PresetsTab.tsx`: Функциональный React-компонент для components.
+        - `TabNavigation.tsx`: Функциональный React-компонент для components.
+        - `UploadTab.tsx`: Функциональный React-компонент для components.
+      - **hooks/**
+        - `useAvatarGeneration.ts`: Функциональный React-компонент для hooks.
+        - `useAvatarPreview.ts`: Функциональный React-компонент для hooks.
+    - **CommunityComponents/**
+      - `CategoryTabs.tsx`: Функциональный React-компонент для CommunityComponents.
+      - `CollectionsSection.tsx`: Функциональный React-компонент для CommunityComponents.
+      - `HeroSection.tsx`: Функциональный React-компонент для CommunityComponents.
+      - `NewsSection.tsx`: Функциональный React-компонент для CommunityComponents.
+      - `TemplateCard.tsx`: Функциональный React-компонент для CommunityComponents.
+      - `TemplateGrid.tsx`: Функциональный React-компонент для CommunityComponents.
+      - `TemplatePreviewModal.tsx`: Функциональный React-компонент для CommunityComponents.
+      - **BookScene/**
+        - `BookScene.css`: Функциональный React-компонент для BookScene.
+        - `BookScene.tsx`: Функциональный React-компонент для BookScene.
+        - `useBookController.ts`: Функциональный React-компонент для BookScene.
+    - **SortableBookCover/**
+      - `SortableBookCover.tsx`: Функциональный React-компонент для SortableBookCover.
+    - **BookEditModal/**
+      - `BookEditModal.tsx`: Функциональный React-компонент для BookEditModal.
+    - **AdminGuard/**
+      - `AdminGuard.tsx`: Функциональный React-компонент для AdminGuard.
+      - `index.ts`: Функциональный React-компонент для AdminGuard.
+    - **TemplateBuilder/**
+      - `TemplateBuilder.tsx`: Функциональный React-компонент для TemplateBuilder.
+    - **TemplateLibrary/**
+      - `DeleteTemplateModal.tsx`: Функциональный React-компонент для TemplateLibrary.
+      - `PublicTierListCards.tsx`: Функциональный React-компонент для TemplateLibrary.
+      - `TemplateLibrary.spec.tsx`: Функциональный React-компонент для TemplateLibrary.
+      - `TemplateLibrary.tsx`: Функциональный React-компонент для TemplateLibrary.
+      - `constants.ts`: Функциональный React-компонент для TemplateLibrary.
+      - `templateLibraryReducer.spec.ts`: Функциональный React-компонент для TemplateLibrary.
+      - `templateLibraryReducer.ts`: Функциональный React-компонент для TemplateLibrary.
+      - `types.ts`: Функциональный React-компонент для TemplateLibrary.
+      - **components/**
+        - `EmptyState.tsx`: Функциональный React-компонент для components.
+        - `PublicTierListsSection.tsx`: Функциональный React-компонент для components.
+        - `TemplateLibraryGrid.tsx`: Функциональный React-компонент для components.
+        - `TemplateLibraryHeader.tsx`: Функциональный React-компонент для components.
+        - `TemplateLibrarySidebar.tsx`: Функциональный React-компонент для components.
+        - `TemplateLibraryToolbar.tsx`: Функциональный React-компонент для components.
+      - **hooks/**
+        - `usePublicTierListsPagination.spec.ts`: Функциональный React-компонент для hooks.
+        - `usePublicTierListsPagination.ts`: Функциональный React-компонент для hooks.
+        - `useTemplateFilters.spec.ts`: Функциональный React-компонент для hooks.
+        - `useTemplateFilters.ts`: Функциональный React-компонент для hooks.
+    - **ImageUploader/**
+      - `ImageUploader.spec.tsx`: Функциональный React-компонент для ImageUploader.
+      - `ImageUploader.tsx`: Функциональный React-компонент для ImageUploader.
+    - **BookViewModal/**
+      - `BookViewModal.tsx`: Функциональный React-компонент для BookViewModal.
+    - **LikeButton/**
+      - `LikeButton.tsx`: Функциональный React-компонент для LikeButton.
+      - `index.ts`: Функциональный React-компонент для LikeButton.
+    - **DashboardHeroSection/**
+      - `DashboardHeroSection.css`: Функциональный React-компонент для DashboardHeroSection.
+      - `DashboardHeroSection.tsx`: Функциональный React-компонент для DashboardHeroSection.
+      - **components/**
+        - `HeroPreviewCard.tsx`: Функциональный React-компонент для components.
+        - `QuickStartTemplates.css`: Функциональный React-компонент для components.
+        - `QuickStartTemplates.tsx`: Функциональный React-компонент для components.
+        - `UserActivityStats.css`: Функциональный React-компонент для components.
+        - `UserActivityStats.tsx`: Функциональный React-компонент для components.
+    - **AchievementNotification/**
+      - `AchievementNotification.tsx`: Функциональный React-компонент для AchievementNotification.
+    - **SearchBar/**
+      - `SearchBar.tsx`: Функциональный React-компонент для SearchBar.
+    - **Spinner/**
+      - `Spinner.tsx`: Функциональный React-компонент для Spinner.
+      - `index.ts`: Функциональный React-компонент для Spinner.
+    - **UnrankedItems/**
+      - `UnrankedItems.tsx`: Функциональный React-компонент для UnrankedItems.
+    - **BookSearchModal/**
+      - `BookSearchModal.tsx`: Функциональный React-компонент для BookSearchModal.
+    - **EditorScreens/**
+      - `EditorErrorScreen.tsx`: Функциональный React-компонент для EditorScreens.
+      - `EditorLoadingScreen.tsx`: Функциональный React-компонент для EditorScreens.
+      - `index.ts`: Функциональный React-компонент для EditorScreens.
+    - **TierGrid/**
+      - `TierGrid.tsx`: Функциональный React-компонент для TierGrid.
+    - **TemplateEditor/**
+      - `TemplateEditorWizard.tsx`: Функциональный React-компонент для TemplateEditor.
+      - **components/**
+        - `BasicInfoStep.tsx`: Функциональный React-компонент для components.
+        - `ReviewStep.tsx`: Функциональный React-компонент для components.
+        - `StepsHeader.tsx`: Функциональный React-компонент для components.
+        - `TierRow.tsx`: Функциональный React-компонент для components.
+        - `TiersStep.tsx`: Функциональный React-компонент для components.
+    - **EditorModals/**
+      - `ClearAllModal.tsx`: Функциональный React-компонент для EditorModals.
+      - `DeleteBookModal.tsx`: Функциональный React-компонент для EditorModals.
+      - `DeleteRatingModal.tsx`: Функциональный React-компонент для EditorModals.
+      - `DeleteTierModal.tsx`: Функциональный React-компонент для EditorModals.
+      - `EditorConfirmModal.tsx`: Функциональный React-компонент для EditorModals.
+      - `UnsavedChangesModal.tsx`: Функциональный React-компонент для EditorModals.
+      - `index.ts`: Функциональный React-компонент для EditorModals.
+    - **SettingsSidebar/**
+      - `SettingsSidebar.tsx`: Функциональный React-компонент для SettingsSidebar.
+    - **BookCounter/**
+      - `BookCounter.spec.tsx`: Функциональный React-компонент для BookCounter.
+      - `BookCounter.tsx`: Функциональный React-компонент для BookCounter.
+    - **TemplateCard/**
+      - `TemplateCard.tsx`: Функциональный React-компонент для TemplateCard.
+    - **ProtectedRoute/**
+      - `ProtectedRoute.tsx`: Функциональный React-компонент для ProtectedRoute.
+      - `index.ts`: Функциональный React-компонент для ProtectedRoute.
+    - **AuthForm/**
+      - `AuthForm.tsx`: Функциональный React-компонент для AuthForm.
+  - **app/**
+    - `App.tsx`: Файл .tsx в проекте.
+    - `main.tsx`: Файл .tsx в проекте.
+    - `router.tsx`: Файл .tsx в проекте.
+  - **hooks/**
+    - `useAchievementNotifications.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useAchievements.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useAuthContext.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useAutoSaveOptimized.test.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useAutoSaveOptimized.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useBookSearch.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useDebounce.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useTemplateEditorState.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useTemplates.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useTierList.referential.test.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useTierList.test.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useTierList.ts`: Кастомный React-хук для инкапсуляции логики.
+    - `useUser.ts`: Кастомный React-хук для инкапсуляции логики.
+  - **utils/**
+    - `colorUtils.ts`: Файл .ts в проекте.
+    - `id.test.ts`: Файл автоматизированных тестов (Vitest).
+    - `id.ts`: Файл .ts в проекте.
+    - `saveDiff.test.ts`: Файл .ts в проекте.
+    - `saveDiff.ts`: Файл .ts в проекте.
+  - **contexts/**
+    - `AuthContext.tsx`: Файл .tsx в проекте.
+    - `auth.context.ts`: Файл .ts в проекте.
+  - **pages/**
+    - `AuthPage.tsx`: Страница приложения: AuthPage.
+    - `CreateTemplatePage.tsx`: Страница приложения: CreateTemplatePage.
+    - `EditTemplatePage.tsx`: Страница приложения: EditTemplatePage.
+    - `ForgotPasswordPage.tsx`: Страница приложения: ForgotPasswordPage.
+    - `ResetPasswordPage.tsx`: Страница приложения: ResetPasswordPage.
+    - **CommunityPage/**
+      - `CommunityPage.css`: Страница приложения: CommunityPage.
+      - `CommunityPage.tsx`: Страница приложения: CommunityPage.
+      - `index.ts`: Страница приложения: index.
+    - **AdminCollectionsPage/**
+      - `AdminCollectionsPage.css`: Страница приложения: AdminCollectionsPage.
+      - `AdminCollectionsPage.tsx`: Страница приложения: AdminCollectionsPage.
+      - `index.ts`: Страница приложения: index.
+      - **components/**
+        - `WysiwygEditor.css`: Функциональный React-компонент для components.
+        - `WysiwygEditor.tsx`: Функциональный React-компонент для components.
+    - **AdminNewsPage/**
+      - `AdminNewsPage.css`: Страница приложения: AdminNewsPage.
+      - `AdminNewsPage.tsx`: Страница приложения: AdminNewsPage.
+      - `index.ts`: Страница приложения: index.
+    - **AdminDashboard/**
+      - `AdminDashboard.tsx`: Страница приложения: AdminDashboard.
+    - **CollectionPage/**
+      - `CollectionPage.css`: Страница приложения: CollectionPage.
+      - `CollectionPage.tsx`: Страница приложения: CollectionPage.
+      - `index.ts`: Страница приложения: index.
+    - **AdminSubscriptionsPage/**
+      - `AdminSubscriptionsPage.tsx`: Страница приложения: AdminSubscriptionsPage.
+    - **ProfilePage/**
+      - `index.tsx`: Страница приложения: index.
+      - **components/**
+        - `AchievementsGrid.tsx`: Функциональный React-компонент для components.
+        - `PasswordChangeForm.tsx`: Функциональный React-компонент для components.
+        - `ProfileActions.tsx`: Функциональный React-компонент для components.
+        - `ProfileHeader.tsx`: Функциональный React-компонент для components.
+        - `StatsCards.tsx`: Функциональный React-компонент для components.
+      - **hooks/**
+        - `useProfileActions.ts`: Кастомный React-хук для инкапсуляции логики.
+    - **DashboardPage/**
+      - `DashboardPage.css`: Страница приложения: DashboardPage.
+      - `DashboardPage.spec.tsx`: Страница приложения: DashboardPage.
+      - `DashboardPage.tsx`: Страница приложения: DashboardPage.
+      - `types.ts`: Страница приложения: types.
+      - **components/**
+        - `CreateTierListModal.tsx`: Функциональный React-компонент для components.
+        - `DashboardHeader.tsx`: Функциональный React-компонент для components.
+        - `DeleteTierListModal.tsx`: Функциональный React-компонент для components.
+        - `EmptyStates.tsx`: Функциональный React-компонент для components.
+        - `RenameTierListModal.spec.tsx`: Функциональный React-компонент для components.
+        - `RenameTierListModal.tsx`: Функциональный React-компонент для components.
+        - `TierListCard.tsx`: Функциональный React-компонент для components.
+        - `TierListGrid.tsx`: Функциональный React-компонент для components.
+      - **hooks/**
+        - `useDashboardState.spec.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useDashboardState.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierListActions.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierListActions.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierListsPagination.spec.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierListsPagination.ts`: Кастомный React-хук для инкапсуляции логики.
+    - **NewsPage/**
+      - `NewsPage.css`: Страница приложения: NewsPage.
+      - `NewsPage.tsx`: Страница приложения: NewsPage.
+      - `index.ts`: Страница приложения: index.
+    - **TierListEditorPage/**
+      - `ExportThemes.css`: Страница приложения: ExportThemes.
+      - `TierEditorPage.css`: Страница приложения: TierEditorPage.
+      - `TierEditorPage.tsx`: Страница приложения: TierEditorPage.
+      - `_initialData.ts`: Страница приложения: _initialData.
+      - **components/**
+        - `AutoSaveIndicator.tsx`: Функциональный React-компонент для components.
+        - `EditorHeader.tsx`: Функциональный React-компонент для components.
+        - `EditorLayout.tsx`: Функциональный React-компонент для components.
+        - `EditorMainContent.tsx`: Функциональный React-компонент для components.
+        - `EditorModals.tsx`: Функциональный React-компонент для components.
+        - `EditorScreens.tsx`: Функциональный React-компонент для components.
+        - `ExportModal.tsx`: Функциональный React-компонент для components.
+      - **hooks/**
+        - `useTierEditorActions.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorActions.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorBlocker.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorBlocker.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorDrag.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorDrag.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorQueries.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorQueries.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorSave.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorSave.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorState.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierEditorState.ts`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierListBooksLimit.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
+        - `useTierListBooksLimit.ts`: Кастомный React-хук для инкапсуляции логики.
+  - **data/**
+    - `mockData.ts`: Файл .ts в проекте.
+  - **layouts/**
+    - **DashboardLayout/**
+      - `DashboardLayout.tsx`: Файл .tsx в проекте.
+  - **ui/**
+    - `BookCover.tsx`: Атомарный UI-компонент (BookCover).
+    - `Button.spec.tsx`: Атомарный UI-компонент (Button).
+    - `Button.tsx`: Атомарный UI-компонент (Button).
+    - `Card.tsx`: Атомарный UI-компонент (Card).
+    - `Footer.tsx`: Атомарный UI-компонент (Footer).
+    - `Header.tsx`: Атомарный UI-компонент (Header).
+    - `Input.tsx`: Атомарный UI-компонент (Input).
+    - `Logo.tsx`: Атомарный UI-компонент (Logo).
+    - `Modal.tsx`: Атомарный UI-компонент (Modal).
+    - `Pagination.tsx`: Атомарный UI-компонент (Pagination).
+    - `RainEffect.tsx`: Атомарный UI-компонент (RainEffect).
+    - `Skeleton.tsx`: Атомарный UI-компонент (Skeleton).
+    - `Switch.tsx`: Атомарный UI-компонент (Switch).
+    - `Textarea.tsx`: Атомарный UI-компонент (Textarea).
+    - `TierLabel.tsx`: Атомарный UI-компонент (TierLabel).
+  - **styles/**
+    - `globals.css`: Файл .css в проекте.
+    - `sileo-custom.css`: Файл .css в проекте.
+  - **assets/**
+    - **avatars/**
+      - `README.md`: Общее описание проекта и инструкции по запуску.
+  - **lib/**
+    - `achievementApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `api-client.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `authApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `avatarApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `bookSearchApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `collectionsApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `config.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `likesApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `logger.spec.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `logger.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `newsApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `storage.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `templateTransformer.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `tierListApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `userApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+  - **constants/**
+    - `colors.ts`: Файл .ts в проекте.
+    - `dnd.ts`: Файл .ts в проекте.
+    - `limits.ts`: Файл .ts в проекте.
+    - `pagination.ts`: Файл .ts в проекте.
+  - **types/**
+    - `api.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+    - `auth.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+    - `index.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+    - `logger.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+    - `templateEditor.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+    - `templates.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+
+## Директория backend/src
+
+- **src/**
+  - `server.ts`: Файл .ts в проекте.
+  - `swagger.ts`: Файл .ts в проекте.
+  - **test/**
+    - `utils.ts`: Файл .ts в проекте.
+  - **modules/**
+    - **templates/**
+      - `templates.controller.ts`: Файл .ts в проекте.
+      - `templates.plugin.ts`: Файл .ts в проекте.
+      - `templates.service.spec.ts`: Тесты функциональности бэкенда.
+      - `templates.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+      - **likes/**
+        - `likes.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+        - `likes.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **achievements/**
+      - `achievements.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+      - `achievements.service.spec.ts`: Тесты функциональности бэкенда.
+      - `achievements.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **subscriptions/**
+      - `subscriptions.routes.ts`: Файл .ts в проекте.
+      - `subscriptions.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **books/**
+      - `books.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+      - `books.schema.ts`: Zod-схема для валидации входных и выходных данных.
+      - `books.service.spec.ts`: Тесты функциональности бэкенда.
+      - `books.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **avatars/**
+      - `avatar.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+      - `avatar.schema.ts`: Zod-схема для валидации входных и выходных данных.
+      - `avatar.service.spec.ts`: Тесты функциональности бэкенда.
+      - `avatar.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **news/**
+      - `news.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+      - `news.security.spec.ts`: Тесты функциональности бэкенда.
+      - `news.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **tier-lists/**
+      - `tierList.route.spec.ts`: Тесты функциональности бэкенда.
+      - `tierList.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+      - `tierList.schema.ts`: Zod-схема для валидации входных и выходных данных.
+      - `tierList.service.spec.ts`: Тесты функциональности бэкенда.
+      - `tierList.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+      - **likes/**
+        - `likes.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+        - `likes.service.spec.ts`: Тесты функциональности бэкенда.
+        - `likes.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **users/**
+      - `users.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+      - `users.service.spec.ts`: Тесты функциональности бэкенда.
+      - `users.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **roles/**
+      - `roles.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+      - `roles.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+    - **auth/**
+      - `auth.mail.ts`: Файл .ts в проекте.
+      - `auth.middleware.ts`: Файл .ts в проекте.
+      - `auth.route.ts`: Определение эндпоинтов API и связывание с сервисами.
+      - `auth.schema.ts`: Zod-схема для валидации входных и выходных данных.
+      - `auth.service.spec.ts`: Тесты функциональности бэкенда.
+      - `auth.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
+  - **plugins/**
+    - `auth.ts`: Плагин Fastify для расширения функционала сервера.
+    - `logFromFrontend.ts`: Плагин Fastify для расширения функционала сервера.
+    - `requestContext.ts`: Плагин Fastify для расширения функционала сервера.
+  - **middleware/**
+    - `proLimit.ts`: Файл .ts в проекте.
+    - `requireRole.ts`: Файл .ts в проекте.
+  - **scripts/**
+    - `debug-welcome.ts`: Файл .ts в проекте.
+    - `test-smtp.ts`: Файл .ts в проекте.
+  - **lib/**
+    - `cloudinary.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `errorNotifier.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `logger.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `mailer.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+    - `prisma.ts`: Утилитарная библиотека или клиент для внешних сервисов.
+  - **types/**
+    - `fastify.d.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+    - `logger.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+
+## Директория shared
+
+- **shared/**
+  - `types.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+
+## Директория public
+
+- **public/**
+  - `Book.glb`: 3D модель в формате GLB.
+  - `fon.jpg`: Статический медиа-актив (изображение/иконка).
+  - `fon.webp`: Статический медиа-актив (изображение/иконка).
+  - `hero-bg.webp`: Статический медиа-актив (изображение/иконка).
+  - `library.png`: Статический медиа-актив (изображение/иконка).
+  - `library.svg`: Статический медиа-актив (изображение/иконка).
+  - `library.webp`: Статический медиа-актив (изображение/иконка).
+  - `logo-animation.svg`: Статический медиа-актив (изображение/иконка).
+  - `logo.svg`: Статический медиа-актив (изображение/иконка).
+  - `screen.png`: Статический медиа-актив (изображение/иконка).
+  - `templates.webp`: Статический медиа-актив (изображение/иконка).
+  - **textures/**
+    - `leather.webp`: Статический медиа-актив (изображение/иконка).
+    - `paper.svg`: Статический медиа-актив (изображение/иконка).
+    - `screen.png  WPS Photos.jpg`: Статический медиа-актив (изображение/иконка).
+  - **images/**
+    - **templates/**
+      - `2026.webp`: Статический медиа-актив (изображение/иконка).
+      - `Brain.webp`: Статический медиа-актив (изображение/иконка).
+      - `Bussines.webp`: Статический медиа-актив (изображение/иконка).
+      - `Classics.webp`: Статический медиа-актив (изображение/иконка).
+      - `Cofe.webp`: Статический медиа-актив (изображение/иконка).
+      - `CosmOpera.webp`: Статический медиа-актив (изображение/иконка).
+      - `Cyberpank.webp`: Статический медиа-актив (изображение/иконка).
+      - `DarkFantasy.webp`: Статический медиа-актив (изображение/иконка).
+      - `Popular.webp`: Статический медиа-актив (изображение/иконка).
+      - `Romantic.webp`: Статический медиа-актив (изображение/иконка).
+      - `Rpg.webp`: Статический медиа-актив (изображение/иконка).
+      - `bestseller.webp`: Статический медиа-актив (изображение/иконка).
+      - `detectiv.webp`: Статический медиа-актив (изображение/иконка).
+      - `fantasy.webp`: Статический медиа-актив (изображение/иконка).
+      - `fantasy2.webp`: Статический медиа-актив (изображение/иконка).
+    - **books/**
+      - `BOOKS_FULL_LIST.md`: Статический файл в публичной директории.
+      - `COVERS_GUIDE.md`: Статический файл в публичной директории.
+      - `README.md`: Общее описание проекта и инструкции по запуску.
+      - `bunin-large.webp`: Статический медиа-актив (изображение/иконка).
+      - `bunin-medium.webp`: Статический медиа-актив (изображение/иконка).
+      - `bunin-small.webp`: Статический медиа-актив (изображение/иконка).
+      - `bunin.webp`: Статический медиа-актив (изображение/иконка).
+      - `pasternak-large.webp`: Статический медиа-актив (изображение/иконка).
+      - `pasternak-medium.webp`: Статический медиа-актив (изображение/иконка).
+      - `pasternak-small.webp`: Статический медиа-актив (изображение/иконка).
+      - `pasternak.webp`: Статический медиа-актив (изображение/иконка).
+      - `placeholder.svg`: Статический медиа-актив (изображение/иконка).
+      - `prosa-large.webp`: Статический медиа-актив (изображение/иконка).
+      - `prosa-medium.webp`: Статический медиа-актив (изображение/иконка).
+      - `prosa-small.webp`: Статический медиа-актив (изображение/иконка).
+      - `prosa.webp`: Статический медиа-актив (изображение/иконка).
+      - `prosa3-large.webp`: Статический медиа-актив (изображение/иконка).
+      - `prosa3-medium.webp`: Статический медиа-актив (изображение/иконка).
+      - `prosa3-small.webp`: Статический медиа-актив (изображение/иконка).
+      - `prosa3.webp`: Статический медиа-актив (изображение/иконка).
+      - `sholohov-large.webp`: Статический медиа-актив (изображение/иконка).
+      - `sholohov-medium.webp`: Статический медиа-актив (изображение/иконка).
+      - `sholohov-small.webp`: Статический медиа-актив (изображение/иконка).
+      - `sholohov.webp`: Статический медиа-актив (изображение/иконка).
+    - **collections/**
+      - `2026-hero.webp`: Статический медиа-актив (изображение/иконка).
+      - `nobel-prize.webp`: Статический медиа-актив (изображение/иконка).
+      - `prosa-hero.webp`: Статический медиа-актив (изображение/иконка).
