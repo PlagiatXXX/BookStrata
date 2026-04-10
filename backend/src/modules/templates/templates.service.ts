@@ -99,11 +99,19 @@ export class TemplatesService {
 
     // Проверка лимита шаблонов (5 для бесплатной версии)
     if (userId) {
-      const userTemplatesCount = await this.prisma.template.count({
-        where: { authorId: parseInt(userId) },
-      });
+      const uId = parseInt(userId);
+      // Оптимизация Bolt: параллельный запрос количества шаблонов и статуса Pro
+      const [userTemplatesCount, user] = await Promise.all([
+        this.prisma.template.count({
+          where: { authorId: uId },
+        }),
+        this.prisma.user.findUnique({
+          where: { id: uId },
+          select: { isPro: true },
+        }),
+      ]);
 
-      const isPro = await this.prisma.user.findUnique({ where: { id: parseInt(userId) }, select: { isPro: true } }).then(u => u?.isPro || false);
+      const isPro = user?.isPro || false;
       const MAX_TEMPLATES = isPro ? 100 : 5;
       if (userTemplatesCount >= MAX_TEMPLATES) {
         throw new Error(
@@ -291,8 +299,9 @@ export class TemplatesService {
   }
 
   async useTemplate(templateId: string, userId: string, newListTitle?: string) {
+    const uId = parseInt(userId);
     // Проверяем, что userId может быть преобразован в число
-    if (!userId || isNaN(parseInt(userId))) {
+    if (!userId || isNaN(uId)) {
       throw new Error("Invalid user ID provided");
     }
 
@@ -308,12 +317,17 @@ export class TemplatesService {
     // Проверяем права доступа к шаблону
     // Проверка Pro-лимита для использования Pro-шаблонов
     if (template.isProOnly) {
-      const user = await this.prisma.user.findUnique({ where: { id: parseInt(userId) }, select: { isPro: true } });
+      const user = await this.prisma.user.findUnique({
+        where: { id: uId },
+        select: { isPro: true },
+      });
       if (!user?.isPro) {
-        throw new Error("Этот шаблон доступен только для пользователей с Pro-подпиской.");
+        throw new Error(
+          "Этот шаблон доступен только для пользователей с Pro-подпиской.",
+        );
       }
     }
-    if (!template.isPublic && template.authorId !== parseInt(userId)) {
+    if (!template.isPublic && template.authorId !== uId) {
       throw new Error(
         "Unauthorized: Template is not public and does not belong to you",
       );
@@ -324,97 +338,103 @@ export class TemplatesService {
       ? (template.tiers as any[])
       : [];
 
-    // Создаем новый тир-лист на основе шаблона
-    const newList = await this.prisma.tierList.create({
-      data: {
-        title: newListTitle || `${template.title}`,
-        userId: parseInt(userId),
-        isTemplate: false, // Это не шаблон, а обычный тир-лист
-        tiers: {
-          create: templateTiers.map((tier: any, index: number) => ({
-            title:
-              typeof tier.name === "string" ? tier.name : String(tier.name),
-            color:
-              typeof tier.color === "string" ? tier.color : String(tier.color),
-            rank: typeof tier.order === "number" ? tier.order : index,
-          })),
-        },
-      },
-    });
-
-    // Получаем созданные тиры для маппинга
-    const createdTiers = await this.prisma.tier.findMany({
-      where: { tierListId: newList.id },
-      orderBy: { rank: "asc" },
-    });
-
-    // Создаём мапу oldTierId → newTierId
-    const tierMap = new Map<string, number>();
-    templateTiers.forEach((tier: any, index: number) => {
-      if (createdTiers[index]) {
-        tierMap.set(String(tier.id), createdTiers[index].id);
-      }
-    });
-
-    // Если в шаблоне есть книги по умолчанию, добавляем их
-    if (
-      template.defaultBooks &&
-      Array.isArray(template.defaultBooks) &&
-      template.defaultBooks.length > 0
-    ) {
-      for (const bookData of template.defaultBooks) {
-        // Проверяем, что bookData является объектом и имеет необходимые свойства
-        if (bookData && typeof bookData === "object" && "title" in bookData) {
-          // Определяем tierId из defaultTierId (новый формат) или tierId (старый формат)
-          const oldTierId = bookData.defaultTierId || bookData.tierId;
-
-          // Находим соответствующий новый тир
-          const newTierId = tierMap.get(String(oldTierId));
-
-          // Создаем книгу с размещением
-          await this.prisma.book.create({
-            data: {
+    // Оптимизация Bolt: использование транзакции и вложенного include для исключения findMany
+    return this.prisma.$transaction(async (tx) => {
+      // Создаем новый тир-лист на основе шаблона
+      const newList = await tx.tierList.create({
+        data: {
+          title: newListTitle || `${template.title}`,
+          userId: uId,
+          isTemplate: false, // Это не шаблон, а обычный тир-лист
+          tiers: {
+            create: templateTiers.map((tier: any, index: number) => ({
               title:
-                typeof bookData.title === "string"
-                  ? bookData.title
-                  : bookData.title
-                    ? String(bookData.title)
-                    : "Untitled",
-              author:
-                typeof bookData.author === "string"
-                  ? bookData.author
-                  : bookData.author
-                    ? String(bookData.author)
+                typeof tier.name === "string" ? tier.name : String(tier.name),
+              color:
+                typeof tier.color === "string"
+                  ? tier.color
+                  : String(tier.color),
+              rank: typeof tier.order === "number" ? tier.order : index,
+            })),
+          },
+        },
+
+        include: {
+          tiers: { orderBy: { rank: "asc" } },
+        },
+      });
+      const createdTiers = newList.tiers;
+
+      // Создаём мапу oldTierId → newTierId
+      const tierMap = new Map<string, number>();
+      templateTiers.forEach((tier: any, index: number) => {
+        if (createdTiers[index]) {
+          tierMap.set(String(tier.id), createdTiers[index].id);
+        }
+      });
+
+      // Если в шаблоне есть книги по умолчанию, добавляем их
+      if (
+        template.defaultBooks &&
+        Array.isArray(template.defaultBooks) &&
+        template.defaultBooks.length > 0
+      ) {
+        // Оптимизация Bolt: параллельное создание книг и их размещений (O(1) roundtrip)
+        const bookPromises = template.defaultBooks.map((bookData) => {
+          if (bookData && typeof bookData === "object" && "title" in bookData) {
+            // Определяем tierId из defaultTierId (новый формат) или tierId (старый формат)
+            const oldTierId = bookData.defaultTierId || bookData.tierId;
+
+            // Находим соответствующий новый тир
+            const newTierId = tierMap.get(String(oldTierId));
+
+            // Создаем книгу с размещением
+            return tx.book.create({
+              data: {
+                title:
+                  typeof bookData.title === "string"
+                    ? bookData.title
+                    : bookData.title
+                      ? String(bookData.title)
+                      : "Untitled",
+                author:
+                  typeof bookData.author === "string"
+                    ? bookData.author
+                    : bookData.author
+                      ? String(bookData.author)
+                      : null,
+                coverImageUrl:
+                  typeof bookData.coverImageUrl === "string"
+                    ? bookData.coverImageUrl
+                    : bookData.cover_image_url
+                      ? String(bookData.cover_image_url)
+                      : "",
+                description:
+                  typeof bookData.description === "string"
+                    ? bookData.description
+                    : bookData.description
+                      ? String(bookData.description)
+                      : null,
+                thoughts:
+                  typeof bookData.thoughts === "string"
+                    ? bookData.thoughts
                     : null,
-              coverImageUrl:
-                typeof bookData.coverImageUrl === "string"
-                  ? bookData.coverImageUrl
-                  : bookData.cover_image_url
-                    ? String(bookData.cover_image_url)
-                    : "",
-              description:
-                typeof bookData.description === "string"
-                  ? bookData.description
-                  : bookData.description
-                    ? String(bookData.description)
-                    : null,
-              thoughts:
-                typeof bookData.thoughts === "string"
-                  ? bookData.thoughts
-                  : null,
-              placements: {
-                create: {
-                  tierListId: newList.id,
-                  tierId: newTierId || null,
-                  rank: typeof bookData.rank === "number" ? bookData.rank : 0,
+                placements: {
+                  create: {
+                    tierListId: newList.id,
+                    tierId: newTierId || null,
+                    rank: typeof bookData.rank === "number" ? bookData.rank : 0,
+                  },
                 },
               },
-            },
-          });
-        }
-      }
-    }
+            });
+          }
+          return null;
+        });
 
-    return newList;
+        await Promise.all(bookPromises.filter(Boolean));
+      }
+      return newList;
+    });
   }
 }
