@@ -1,0 +1,16 @@
+🎨 Palette: [UX improvement] multi-touch accessibility and validation polish
+
+💡 What:
+- TierLabel: Added keyboard accessibility (Enter/Space to rename), focus indicators, and translated ARIA labels for the color palette.
+- LikeButton: Added a subtle pulse animation using Framer Motion when clicking.
+- Modals: Improved validation in Create/Rename modals with a "shake" effect and red border on empty input instead of just disabling the button.
+
+🎯 Why:
+- Makes tiers accessible to keyboard users who couldn't rename them before.
+- Provides better visual feedback for likes and invalid form states.
+- Aligns ARIA labels with the interface language (Russian) for better screen reader support.
+
+♿ Accessibility:
+- Added role="button", tabIndex, and keyboard handlers to TierLabel.
+- Replaced HEX ARIA labels with human-readable color names.
+- Improved focus visibility in the editor.

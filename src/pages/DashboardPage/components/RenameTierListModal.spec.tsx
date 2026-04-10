@@ -95,18 +95,18 @@ describe("RenameTierListModal", () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('должен отключать кнопку "Сохранить" с пустым названием', () => {
+  it('не должен отключать кнопку "Сохранить" с пустым названием (валидация при клике)', () => {
     render(<RenameTierListModal {...defaultProps} renameTitle="" />);
 
     const saveButton = screen.getByRole("button", { name: /сохранить/i });
-    expect(saveButton).toBeDisabled();
+    expect(saveButton).toBeEnabled();
   });
 
-  it('должен отключать кнопку "Сохранить" с пробелами', () => {
+  it('не должен отключать кнопку "Сохранить" с пробелами (валидация при клике)', () => {
     render(<RenameTierListModal {...defaultProps} renameTitle="   " />);
 
     const saveButton = screen.getByRole("button", { name: /сохранить/i });
-    expect(saveButton).toBeDisabled();
+    expect(saveButton).toBeEnabled();
   });
 
   it('должен отключать кнопку "Сохранить" во время сохранения', () => {

@@ -15,3 +15,11 @@
 ## 2026-04-18 - [Dashboard Keyboard Navigation Visibility]
 **Learning:** Custom-styled dashboard components (filters, card titles with `role="button"`, and action icons) often lose their default browser focus indicators. On dark, gradient, or glass backgrounds, standard focus rings are hard to see.
 **Action:** Implement high-contrast `focus-visible` indicators using a theme-consistent color (e.g., cyan `#06bcf9`) with a 2px offset. For interactive text/titles, ensure `border-radius` is applied to the element so the focus outline follows the expected shape.
+
+## 2026-04-10 - [Accessible Keyboard Interaction for Tiers]
+**Learning:** Custom interactive elements like tier labels in a grid often miss native accessibility features. Simply adding  is not enough; users need specific key handlers (Enter/Space) and translated ARIA labels to understand the purpose of hidden interactions like color picking.
+**Action:** Always provide  handlers for custom role="button" elements, ensure  for items with background colors, and translate ARIA labels to the user's interface language for screen reader clarity.
+
+## 2026-04-10 - [Accessible Keyboard Interaction for Tiers]
+**Learning:** Custom interactive elements like tier labels in a grid often miss native accessibility features. Simply adding tabIndex is not enough; users need specific key handlers (Enter/Space) and translated ARIA labels to understand the purpose of hidden interactions like color picking.
+**Action:** Always provide onKeyDown handlers for custom role="button" elements, ensure focus-visible:ring-inset for items with background colors, and translate ARIA labels to the user's interface language for screen reader clarity.

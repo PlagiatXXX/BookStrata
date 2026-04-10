@@ -4,6 +4,29 @@ import { TIER_COLORS } from "@/constants/colors";
 import type { Tier } from "@/types";
 import { getTextColorForBackground } from "@/utils/colorUtils";
 
+const COLOR_NAMES: Record<string, string> = {
+  '#FFC0CB': 'Розовый',
+  '#DB7093': 'Бледно-фиолетово-красный',
+  '#FF69B4': 'Ярко-розовый',
+  '#FF00FF': 'Маджента',
+  '#FF1493': 'Глубокий розовый',
+  '#C71585': 'Средний фиолетово-красный',
+  '#800080': 'Пурпурный',
+  '#ff0000': 'Красный',
+  '#800000': 'Темно-бордовый',
+  '#00FFFF': 'Голубой',
+  '#008080': 'Бирюзовый',
+  '#0000FF': 'Синий',
+  '#008000': 'Зеленый',
+  '#00FF00': 'Лаймовый',
+  '#808000': 'Оливковый',
+  '#FFD700': 'Золотистый',
+  '#8B4513': 'Коричневый',
+  '#C0C0C0': 'Серебристый',
+  '#FFFFFF': 'Белый',
+  '#000000': 'Черный',
+};
+
 interface TierLabelProps {
   tierId: string;
   title: string;
@@ -128,13 +151,25 @@ export const TierLabel = memo(
       }
     }, [isEditing]);
 
+    const handleKeyDownContainer = (e: React.KeyboardEvent) => {
+      if (isEditing) return;
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleDoubleClick();
+      }
+    };
+
     return (
       <div
         ref={droppableRef || wrapperRef}
         style={{ backgroundColor: color }}
-        className="nb-rank-box group/label relative flex shrink-0 items-center justify-center focus-within:opacity-100 tier-label"
+        className="nb-rank-box group/label relative flex shrink-0 items-center justify-center focus-within:opacity-100 tier-label cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset"
         onDoubleClick={handleDoubleClick}
-        title="Двойной клик для переименования"
+        onKeyDown={handleKeyDownContainer}
+        tabIndex={isEditing ? -1 : 0}
+        role="button"
+        aria-label={`Уровень ${title}. Нажмите Enter для переименования`}
+        title="Двойной клик или Enter для переименования"
       >
         {isEditing ? (
           <input
@@ -177,23 +212,30 @@ export const TierLabel = memo(
             aria-label="Цветовая палитра"
             className="nb-heavy-border absolute left-full top-0 z-50 ml-2 flex w-32 flex-wrap gap-1 bg-white p-2 shadow-[4px_4px_0_0_#000000]"
           >
-            {TIER_COLORS.map((swatchColor) => (
-              <button
-                key={swatchColor}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChangeColor(tierId, swatchColor);
-                  setIsPaletteOpen(false);
-                }}
-                style={{ backgroundColor: swatchColor }}
-                className={`size-5 cursor-pointer border border-black hover:scale-110 transition-transform ${
-                  color.toLowerCase() === swatchColor.toLowerCase()
-                    ? "ring-2 ring-cyan-200 ring-offset-2"
-                    : ""
-                }`}
-                aria-label={`Выбрать цвет ${swatchColor}`}
-              />
-            ))}
+            {TIER_COLORS.map((swatchColor) => {
+              const colorName = COLOR_NAMES[swatchColor as keyof typeof COLOR_NAMES] ||
+                               COLOR_NAMES[swatchColor.toUpperCase() as keyof typeof COLOR_NAMES] ||
+                               COLOR_NAMES[swatchColor.toLowerCase() as keyof typeof COLOR_NAMES] ||
+                               swatchColor;
+              return (
+                <button
+                  key={swatchColor}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChangeColor(tierId, swatchColor);
+                    setIsPaletteOpen(false);
+                  }}
+                  style={{ backgroundColor: swatchColor }}
+                  className={`size-5 cursor-pointer border border-black hover:scale-110 transition-transform focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1 outline-none ${
+                    color.toLowerCase() === swatchColor.toLowerCase()
+                      ? "ring-2 ring-cyan-200 ring-offset-2"
+                      : ""
+                  }`}
+                  aria-label={`Выбрать цвет: ${colorName}`}
+                  title={colorName}
+                />
+              );
+            })}
           </div>
         )}
       </div>

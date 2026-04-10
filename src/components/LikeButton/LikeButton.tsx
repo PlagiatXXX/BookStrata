@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { createLogger } from '@/lib/logger';
 import {
   apiLikeTierList,
@@ -182,13 +183,18 @@ export function LikeButton({
           {label}
         </span>
       )}
-      <Heart
-        className={`
-          ${sizeClasses[size]}
-          transition-all duration-300
-          ${liked ? 'fill-current scale-110' : ''}
-        `}
-      />
+      <motion.div
+        animate={liked ? { scale: [1, 1.25, 1.1] } : { scale: 1 }}
+        transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 15 }}
+      >
+        <Heart
+          className={`
+            ${sizeClasses[size]}
+            transition-all duration-300
+            ${liked ? 'fill-current' : ''}
+          `}
+        />
+      </motion.div>
       {showCount && (
         <span className={`${countSizeClasses[size]} font-medium`}>
           {likes}

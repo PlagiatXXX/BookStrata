@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { RefreshCw, X, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { Modal } from "@/ui/Modal";
 import type { RenameModalProps } from "../types";
 
@@ -11,13 +13,23 @@ export function RenameTierListModal({
   isPending,
   tierListTitle,
 }: RenameModalProps) {
+  const [showError, setShowError] = useState(false);
   const trimmedTitle = renameTitle.trim();
-  const isSaveDisabled = !trimmedTitle || isPending;
+  const isSaveDisabled = isPending;
+
+  const handleRenameClick = () => {
+    if (!trimmedTitle) {
+      setShowError(true);
+      setTimeout(() => setShowError(false), 500);
+      return;
+    }
+    onRename();
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !isSaveDisabled) {
       e.preventDefault();
-      onRename();
+      handleRenameClick();
     }
     if (e.key === "Escape") {
       e.preventDefault();
@@ -49,7 +61,11 @@ export function RenameTierListModal({
           )}
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <motion.div
+          className="flex flex-col gap-1.5"
+          animate={showError ? { x: [-4, 4, -4, 4, 0] } : { x: 0 }}
+          transition={{ duration: 0.4 }}
+        >
           <label
             htmlFor="rename-tierlist-title"
             className="text-sm font-medium text-gray-300"
@@ -64,7 +80,7 @@ export function RenameTierListModal({
             onChange={(e) => onTitleChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Введите новое название..."
-            className="dashboard-modal__input"
+            className={`dashboard-modal__input transition-colors ${showError ? "border-red-500! ring-2 ring-red-500/20" : ""}`}
             maxLength={100}
             autoFocus
             disabled={isPending}
@@ -73,7 +89,7 @@ export function RenameTierListModal({
           <span className="text-xs text-gray-500 text-right">
             {renameTitle.length}/100
           </span>
-        </div>
+        </motion.div>
 
         <div className="dashboard-modal__actions">
           <button
@@ -85,7 +101,7 @@ export function RenameTierListModal({
             Отмена
           </button>
           <button
-            onClick={onRename}
+            onClick={handleRenameClick}
             disabled={isSaveDisabled}
             className="dashboard-btn dashboard-btn--primary"
             type="button"
