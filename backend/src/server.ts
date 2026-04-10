@@ -7,7 +7,7 @@ import cookie from "@fastify/cookie";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
-import { prisma } from "./lib/prisma.js";
+import { prisma, waitForDatabase } from "./lib/prisma.js";
 import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
 import { tierListRoutes } from "../src/modules/tier-lists/tierList.route.js";
 import { authRoutes } from "../src/modules/auth/auth.route.js";
@@ -178,7 +178,14 @@ await fastify.register(cookie, {
 
 // Health check endpoint for deployment
 fastify.get("/health", async () => {
-  return { status: "ok", timestamp: new Date().toISOString() };
+  const { checkDatabaseConnection } = await import("./lib/prisma.js");
+  const isDbConnected = await checkDatabaseConnection();
+
+  return {
+    status: isDbConnected ? "ok" : "degraded",
+    database: isDbConnected ? "connected" : "disconnected",
+    timestamp: new Date().toISOString(),
+  };
 });
 
 // Регистрируем все роуты из модулей
@@ -200,6 +207,13 @@ fastify.register(templatesPlugin, { prisma, prefix: "/api" });
 
 const start = async () => {
   try {
+    // Ждём доступности БД перед стартом сервера (макс. 30 секунд)
+    const isDbReady = await waitForDatabase(30000);
+    if (!isDbReady) {
+      fastify.log.error("Не удалось подключиться к БД. Сервер не запущен.");
+      process.exit(1);
+    }
+
     await fastify.listen({ port: PORT, host: "0.0.0.0" });
     fastify.log.info(`Server listening on port ${PORT}`);
   } catch (err) {

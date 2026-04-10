@@ -19,10 +19,10 @@ const EditTemplatePage: React.FC = () => {
       sileo.success({ title: "Шаблон успешно обновлен!", duration: 3000 });
       navigate("/templates");
     } catch {
-      sileo.error({ 
-        title: "Не удалось обновить шаблон", 
+      sileo.error({
+        title: "Не удалось обновить шаблон",
         description: "Попробуйте снова позже",
-        duration: 3000 
+        duration: 3000,
       });
     }
   };
@@ -37,43 +37,27 @@ const EditTemplatePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout
-        onMyRatingsClick={handleMyRatingsClick}
-        showTemplatesNav={false}
-        showSearch={false}
-      >
-        <main className="flex-1 overflow-y-auto bg-linear-to-br from-purple-900/40 via-background-dark to-cyan-900/40">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
-          </div>
-        </main>
-      </DashboardLayout>
+      <div className="flex min-h-screen items-center justify-center bg-background-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+      </div>
     );
   }
 
   if (isError || !template) {
     return (
-      <DashboardLayout
-        onMyRatingsClick={handleMyRatingsClick}
-        showTemplatesNav={false}
-        showSearch={false}
-      >
-        <main className="flex-1 overflow-y-auto bg-linear-to-br from-purple-900/40 via-background-dark to-cyan-900/40">
-          <div className="container mx-auto px-4 py-8">
-            <div className="text-center py-8">
-              <p className="text-red-400 mb-4">
-                Ошибка загрузки шаблона или шаблон не найден.
-              </p>
-              <button
-                onClick={() => navigate("/templates")}
-                className="px-4 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600"
-              >
-                Вернуться к шаблонам
-              </button>
-            </div>
-          </div>
-        </main>
-      </DashboardLayout>
+      <div className="flex min-h-screen items-center justify-center bg-background-dark">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">
+            Ошибка загрузки шаблона или шаблон не найден.
+          </p>
+          <button
+            onClick={() => navigate("/templates")}
+            className="px-4 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600"
+          >
+            Вернуться к шаблонам
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -99,14 +83,20 @@ const EditTemplatePage: React.FC = () => {
                 onClick={handleCancel}
                 className="group flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-400/50 rounded-lg text-gray-300 hover:text-cyan-300 transition-all duration-300"
               >
-                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                <ArrowLeft
+                  size={18}
+                  className="group-hover:-translate-x-1 transition-transform"
+                />
                 <span className="text-sm font-medium">К шаблонам</span>
               </button>
               <button
                 onClick={handleMyRatingsClick}
                 className="group flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-400/50 rounded-lg text-gray-300 hover:text-cyan-300 transition-all duration-300"
               >
-                <Home size={18} className="group-hover:-translate-x-1 transition-transform" />
+                <Home
+                  size={18}
+                  className="group-hover:-translate-x-1 transition-transform"
+                />
                 <span className="text-sm font-medium">На главную</span>
               </button>
             </div>

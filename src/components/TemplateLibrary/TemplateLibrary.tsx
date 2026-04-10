@@ -195,7 +195,7 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background-dark">
         <Spinner size="lg" />
       </div>
     );
@@ -203,13 +203,15 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
 
   if (isError) {
     return (
-      <div className="rounded-md border border-white/20 bg-black/35 py-8 text-center">
-        <p className="mb-4 text-red-300">
-          Ошибка загрузки шаблонов. Пожалуйста, попробуйте снова.
-        </p>
-        <Button onClick={() => refetchTemplates()} variant="primary">
-          Повторить
-        </Button>
+      <div className="flex min-h-screen items-center justify-center bg-background-dark">
+        <div className="rounded-md border border-white/20 bg-black/35 py-8 text-center">
+          <p className="mb-4 text-red-300">
+            Ошибка загрузки шаблонов. Пожалуйста, попробуйте снова.
+          </p>
+          <Button onClick={() => refetchTemplates()} variant="primary">
+            Повторить
+          </Button>
+        </div>
       </div>
     );
   }
