@@ -44,8 +44,9 @@ export const AutoSaveIndicator = ({
       <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 nb-heavy-border bg-[#ff51fa] px-4 py-2 text-sm text-black shadow-[4px_4px_0_0_#000000]">
         <span className="nb-label-md">⚠️ Ошибка</span>
         <button
+          type="button"
           onClick={onSaveRetry}
-          className="ml-2 nb-heavy-border border-[1px] bg-white px-2 py-1 text-xs hover:bg-black hover:text-white cursor-pointer transition-colors"
+          className="ml-2 nb-heavy-border border-[1px] bg-white px-2 py-1 text-xs hover:bg-black hover:text-white cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-black focus:outline-none"
         >
           Повторить
         </button>

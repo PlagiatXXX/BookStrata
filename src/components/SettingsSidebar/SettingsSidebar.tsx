@@ -115,15 +115,19 @@ export const SettingsSidebar = memo(({
               <span className="nb-label-md">Высота строки</span>
               <div className="flex items-center gap-2 nb-heavy-border bg-black p-1">
                 <button
+                  type="button"
                   onClick={() => handleHeightChange("decrease")}
-                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors"
+                  aria-label="Уменьшить высоту строки"
+                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                 >
                   <Minus size={14} />
                 </button>
                 <span className="w-8 text-center nb-label-md">{height}</span>
                 <button
+                  type="button"
                   onClick={() => handleHeightChange("increase")}
-                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors"
+                  aria-label="Увеличить высоту строки"
+                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                 >
                   <Plus size={14} />
                 </button>
@@ -134,15 +138,19 @@ export const SettingsSidebar = memo(({
               <span className="nb-label-md">Шрифт</span>
               <div className="flex items-center gap-2 nb-heavy-border bg-black p-1">
                 <button
+                  type="button"
                   onClick={() => handleLabelSizeChange("decrease")}
-                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors"
+                  aria-label="Уменьшить размер шрифта"
+                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                 >
                   <Type size={14} className="rotate-180" />
                 </button>
                 <span className="w-8 text-center nb-label-md uppercase">{labelSize}</span>
                 <button
+                  type="button"
                   onClick={() => handleLabelSizeChange("increase")}
-                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors"
+                  aria-label="Увеличить размер шрифта"
+                  className="flex size-8 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                 >
                   <Type size={14} />
                 </button>
