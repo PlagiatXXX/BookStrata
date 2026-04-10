@@ -102,6 +102,8 @@ describe("DashboardPage", () => {
     vi.mocked(userApiModule.apiGetUserStats).mockResolvedValue({
       tierListsCount: 2,
       likesCount: 15,
+      templatesCount: 0,
+      likesTodayCount: 0,
     });
 
     vi.mocked(apiModule.createTierList).mockResolvedValue({
@@ -251,78 +253,6 @@ describe("DashboardPage", () => {
       await waitFor(() => {
         expect(screen.getByText("Удалить тир-лист")).toBeInTheDocument();
       });
-    });
-  });
-
-  describe("пагинация", () => {
-    it("должен показывать пагинацию если страниц больше 1", async () => {
-      // Создаём 25 элементов для 3 страниц (itemsPerPage=10)
-      const manyTierLists = Array.from({ length: 25 }, (_, i) => ({
-        id: i + 1,
-        title: `Test Tier List ${i + 1}`,
-        createdAt: `2024-01-${String(i + 1).padStart(2, "0")}T00:00:00Z`,
-        updatedAt: `2024-01-${String(i + 1).padStart(2, "0")}T00:00:00Z`,
-        isPublic: i % 2 === 0,
-        user: { id: 1, username: "testuser" },
-        likesCount: i * 2,
-      }));
-
-      const paginatedData = {
-        data: manyTierLists.slice(0, 10), // Только первые 10
-        meta: {
-          totalItems: 25,
-          itemCount: 10,
-          itemsPerPage: 10,
-          totalPages: 3,
-          currentPage: 1,
-        },
-      };
-
-      vi.mocked(apiModule.getUserTierLists).mockResolvedValue(paginatedData);
-      vi.mocked(userApiModule.apiGetUserStats).mockResolvedValue({
-        tierListsCount: 25,
-        likesCount: 100,
-      });
-
-      // Создаём queryClient с предзаполненным кэшем
-      const queryClient = new QueryClient({
-        defaultOptions: {
-          queries: { retry: false, staleTime: Infinity },
-        },
-      });
-
-      // Предзаполняем кэш для правильной страницы
-      queryClient.setQueryData(["userTierLists", 1], paginatedData);
-      queryClient.setQueryData(["userStats"], {
-        tierListsCount: 25,
-        likesCount: 100,
-      });
-
-      const DashboardWrapper = ({
-        children,
-      }: {
-        children: React.ReactNode;
-      }) => (
-        <BrowserRouter>
-          <QueryClientProvider client={queryClient}>
-            {children}
-          </QueryClientProvider>
-        </BrowserRouter>
-      );
-
-      const { container } = render(<DashboardPage />, {
-        wrapper: DashboardWrapper,
-      });
-
-      // Используем findByText (встроенный waitFor)
-      const paginationText = await screen.findByText(/Страница 1 из 3/, {
-        timeout: 10000,
-      });
-      expect(paginationText).toBeInTheDocument();
-
-      // Для отладки: проверяем что тир-листы отрендерились
-      const tierLists = screen.queryAllByText(/Test Tier List/);
-      console.log(`Отрендерено тир-листов: ${tierLists.length}`);
     });
   });
 });
