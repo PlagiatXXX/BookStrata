@@ -80,11 +80,11 @@ describe("CreateTierListModal", () => {
     expect(mockOnCreate).not.toHaveBeenCalled();
   });
 
-  it('должен отключать кнопку "Создать" с пустым названием', () => {
+  it('не должен отключать кнопку "Создать" с пустым названием (валидация при клике)', () => {
     render(<CreateTierListModal {...defaultProps} createTitle="" />);
 
     const createButton = screen.getByRole("button", { name: /создать/i });
-    expect(createButton).toBeDisabled();
+    expect(createButton).toBeEnabled();
   });
 
   it('должен отключать кнопку "Создать" во время создания', () => {

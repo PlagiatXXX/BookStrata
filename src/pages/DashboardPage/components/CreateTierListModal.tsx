@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { RefreshCw, X, PlusCircle } from 'lucide-react';
+import { motion } from "framer-motion";
 import { Modal } from '@/ui/Modal';
-import { sileo } from 'sileo';
+
 import type { CreateModalProps } from '../types';
 
 export function CreateTierListModal({
@@ -11,16 +13,14 @@ export function CreateTierListModal({
   onTitleChange,
   isPending,
 }: CreateModalProps) {
+  const [showError, setShowError] = useState(false);
   const trimmedTitle = createTitle.trim();
-  const isCreateDisabled = !trimmedTitle || isPending;
+  const isCreateDisabled = isPending;
 
   const handleCreate = () => {
     if (!trimmedTitle) {
-      sileo.error({
-        title: 'Название обязательно',
-        description: 'Пожалуйста, введите название для тир-листа',
-        duration: 3000
-      });
+      setShowError(true);
+      setTimeout(() => setShowError(false), 500);
       return;
     }
     onCreate(createTitle);
@@ -51,7 +51,11 @@ export function CreateTierListModal({
           <p>Введите название для вашего нового рейтинга</p>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <motion.div
+          className="flex flex-col gap-1.5"
+          animate={showError ? { x: [-4, 4, -4, 4, 0] } : { x: 0 }}
+          transition={{ duration: 0.4 }}
+        >
           <label htmlFor="create-tierlist-title" className="text-sm font-medium text-gray-300">
             Название
           </label>
@@ -63,7 +67,7 @@ export function CreateTierListModal({
             onChange={(e) => onTitleChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Название тир-листа..."
-            className="dashboard-modal__input"
+            className={`dashboard-modal__input transition-colors ${showError ? "border-red-500! ring-2 ring-red-500/20" : ""}`}
             maxLength={100}
             autoFocus
             disabled={isPending}
@@ -72,7 +76,7 @@ export function CreateTierListModal({
           <span className="text-xs text-gray-500 text-right">
             {createTitle.length}/100
           </span>
-        </div>
+        </motion.div>
 
         <div className="dashboard-modal__actions">
           <button
