@@ -78,6 +78,8 @@ export async function templatesController(
         Body: {
           title: string;
           description?: string;
+          coverImageUrl?: string;
+          type?: "starter" | "curated" | "community";
           tiers: { id: string; name: string; color: string; order: number }[];
           defaultBooks?: any[];
           isPublic?: boolean;
