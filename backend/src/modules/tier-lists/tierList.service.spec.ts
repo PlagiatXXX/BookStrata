@@ -291,7 +291,7 @@ describe("tierList.service", () => {
           rank: 0,
         },
       ],
-      _count: { likes: 10 },
+      likesCount: 10,
     };
 
     it("должен вернуть полный тир-лист с тирами и книгами", async () => {
@@ -316,7 +316,6 @@ describe("tierList.service", () => {
             include: { book: true },
             orderBy: { rank: "asc" },
           },
-          _count: { select: { likes: true } },
         },
       });
 
