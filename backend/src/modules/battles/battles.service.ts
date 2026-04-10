@@ -1,0 +1,199 @@
+import { prisma } from "../../lib/prisma.js";
+import { createLogger } from "../../lib/logger.js";
+import { processAction } from "../achievements/achievements.service.js";
+
+const logger = createLogger("Battles", { color: "magenta" });
+
+export interface CreateBattleInput {
+  templateId: string;
+  title: string;
+  description?: string | null;
+  type: "weekly" | "monthly";
+  endTime: Date;
+  participantTierListIds: number[];
+}
+
+export async function createBattle(data: CreateBattleInput) {
+  logger.info("Creating new battle", { title: data.title, type: data.type });
+
+  return prisma.battle.create({
+    data: {
+      templateId: data.templateId,
+      title: data.title,
+      description: data.description ?? null,
+      type: data.type,
+      endTime: data.endTime,
+      participants: {
+        create: data.participantTierListIds.map((id) => ({
+          tierListId: id,
+        })),
+      },
+    },
+    include: {
+      participants: true,
+    },
+  });
+}
+
+export async function getActiveBattles() {
+  return prisma.battle.findMany({
+    where: {
+      status: "active",
+      endTime: {
+        gt: new Date(),
+      },
+    },
+    include: {
+      template: {
+        select: { title: true },
+      },
+      participants: {
+        include: {
+          tierList: {
+            select: {
+              id: true,
+              title: true,
+              userId: true,
+              user: {
+                select: { username: true, avatarUrl: true },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { endTime: "asc" },
+  });
+}
+
+export async function getBattleById(id: number) {
+  return prisma.battle.findUnique({
+    where: { id },
+    include: {
+      template: true,
+      participants: {
+        include: {
+          tierList: {
+            include: {
+              user: {
+                select: { id: true, username: true, avatarUrl: true },
+              },
+              tiers: {
+                orderBy: { rank: "asc" },
+              },
+              placements: {
+                include: {
+                  book: true,
+                },
+                orderBy: { rank: "asc" },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function voteInBattle(userId: number, battleId: number, tierListId: number) {
+  logger.info("User voting in battle", { userId, battleId, tierListId });
+
+  // Проверяем, существует ли битва и активна ли она
+  const battle = await prisma.battle.findUnique({
+    where: { id: battleId },
+  });
+
+  if (!battle || battle.status !== "active" || battle.endTime < new Date()) {
+    throw new Error("Battle is not active or has ended");
+  }
+
+  // Проверяем, является ли тир-лист участником битвы
+  const participant = await prisma.battleParticipant.findUnique({
+    where: {
+      battleId_tierListId: {
+        battleId,
+        tierListId,
+      },
+    },
+  });
+
+  if (!participant) {
+    throw new Error("Tier list is not a participant in this battle");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    // Создаем голос (уникальность по [userId, battleId] в БД гарантирует один голос)
+    await tx.battleVote.create({
+      data: {
+        userId,
+        battleId,
+        tierListId,
+      },
+    });
+
+    // Увеличиваем счетчик голосов участника
+    await tx.battleParticipant.update({
+      where: { id: participant.id },
+      data: {
+        votesCount: { increment: 1 },
+      },
+    });
+
+    return { success: true };
+  });
+}
+
+export async function closeBattle(battleId: number) {
+  logger.info("Closing battle", { battleId });
+
+  const battle = await getBattleById(battleId);
+  if (!battle) throw new Error("Battle not found");
+  if (battle.status === "completed") throw new Error("Battle already completed");
+
+  if (battle.participants.length === 0) {
+     return prisma.battle.update({
+       where: { id: battleId },
+       data: { status: "completed" }
+     });
+  }
+
+  // Находим победителя (участник с макс. голосов)
+  const winner = battle.participants.reduce((prev, curr) =>
+    (curr.votesCount > prev.votesCount) ? curr : prev
+  );
+
+  return prisma.$transaction(async (tx) => {
+    // 1. Обновляем статус битвы
+    const updatedBattle = await tx.battle.update({
+      where: { id: battleId },
+      data: {
+        status: "completed",
+        winnerId: winner.tierListId,
+      },
+    });
+
+    // 2. Начисляем XP и ачивки участникам и победителю
+    // Всем участникам по 50 XP
+    for (const p of battle.participants) {
+       await tx.user.update({
+         where: { id: p.tierList.userId },
+         data: { xp: { increment: 50 } }
+       });
+
+       // Выдаем ачивку за участие
+       await processAction(p.tierList.userId, 'participate_battle');
+    }
+
+    // Победителю еще 200 XP
+    if (winner && winner.tierList) {
+      await tx.user.update({
+        where: { id: winner.tierList.userId },
+        data: { xp: { increment: 200 } }
+      });
+
+      await processAction(winner.tierList.userId, 'win_battle');
+    }
+
+    return updatedBattle;
+  });
+}

@@ -9,7 +9,9 @@ export type AchievementId =
   | 'bibliophile_50'
   | 'popular_author_10'
   | 'explorer'
-  | 'critic';
+  | 'critic'
+  | 'battle_participant'
+  | 'battle_winner';
 
 /**
  * Получить все достижения пользователя (включая невыполненные)
@@ -87,7 +89,7 @@ export async function checkAndGrantAchievement(userId: number, achievementId: Ac
 /**
  * Логика проверки условий для разных действий
  */
-export async function processAction(userId: number, action: 'create_tier_list' | 'add_book' | 'get_like' | 'fork' | 'write_review') {
+export async function processAction(userId: number, action: 'create_tier_list' | 'add_book' | 'get_like' | 'fork' | 'write_review' | 'participate_battle' | 'win_battle') {
   const newAchievements = [];
 
   switch (action) {
@@ -127,6 +129,16 @@ export async function processAction(userId: number, action: 'create_tier_list' |
          const a = await checkAndGrantAchievement(userId, 'popular_author_10');
          if (a) newAchievements.push(a);
        }
+       break;
+    }
+    case 'participate_battle': {
+       const a = await checkAndGrantAchievement(userId, 'battle_participant');
+       if (a) newAchievements.push(a);
+       break;
+    }
+    case 'win_battle': {
+       const a = await checkAndGrantAchievement(userId, 'battle_winner');
+       if (a) newAchievements.push(a);
        break;
     }
   }
