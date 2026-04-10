@@ -43,6 +43,12 @@
   transition: all 0.18s ease;
 }
 
+.dashboard-filter-btn:focus-visible {
+  outline: 2px solid #06bcf9;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(6, 188, 249, 0.2);
+}
+
 .dashboard-filter-btn:hover {
   background: rgba(6, 188, 249, 0.1);
   color: #e2e8f0;
@@ -170,6 +176,13 @@
   cursor: pointer;
 }
 
+.dashboard-card__rename:focus-visible,
+.dashboard-card__delete:focus-visible {
+  outline: 2px solid #06bcf9;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(6, 188, 249, 0.2);
+}
+
 .dashboard-card__rename:hover {
   border-color: rgba(6, 188, 249, 0.5);
   color: #06bcf9;
@@ -187,6 +200,12 @@
   line-height: 1.2;
   color: #e2e8f0;
   cursor: pointer;
+  border-radius: 4px;
+}
+
+.dashboard-card__title:focus-visible {
+  outline: 2px solid #06bcf9;
+  outline-offset: 4px;
 }
 
 .dashboard-card__meta {
@@ -389,6 +408,12 @@
   transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
 }
 
+.dashboard-btn:focus-visible {
+  outline: 2px solid #06bcf9;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(6, 188, 249, 0.2);
+}
+
 .dashboard-btn:hover {
   transform: translateY(-1px);
 }
@@ -454,6 +479,12 @@
   color: #e2e8f0;
   cursor: pointer;
   transition: border-color 0.14s ease, color 0.14s ease, background-color 0.14s ease;
+}
+
+.dashboard-modal__close:focus-visible {
+  outline: 2px solid #06bcf9;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(6, 188, 249, 0.2);
 }
 
 .dashboard-modal__close:hover {
