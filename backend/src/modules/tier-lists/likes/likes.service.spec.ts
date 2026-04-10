@@ -4,7 +4,7 @@ vi.mock('../../../lib/prisma.js', () => ({
   prisma: {
     tierListLike: {
       count: vi.fn(),
-      findFirst: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
       delete: vi.fn(),
       deleteMany: vi.fn(),
@@ -27,7 +27,7 @@ describe('likes.service', () => {
 
   describe('like', () => {
     it('should create a like and increment likesCount', async () => {
-      (prisma.tierListLike.findFirst as any).mockResolvedValue(null);
+      (prisma.tierListLike.findUnique as any).mockResolvedValue(null);
 
       await service.like(1, 1);
 
@@ -39,7 +39,7 @@ describe('likes.service', () => {
     });
 
     it('should return error if already liked', async () => {
-      (prisma.tierListLike.findFirst as any).mockResolvedValue({ id: 1 });
+      (prisma.tierListLike.findUnique as any).mockResolvedValue({ id: 1 });
 
       const result = await service.like(1, 1);
 
@@ -50,11 +50,13 @@ describe('likes.service', () => {
 
   describe('unlike', () => {
     it('should delete a like and decrement likesCount', async () => {
-      (prisma.tierListLike.findFirst as any).mockResolvedValue({ id: 10, userId: 1, tierListId: 1 });
+      (prisma.tierListLike.findUnique as any).mockResolvedValue({ id: 10, userId: 1, tierListId: 1 });
 
       await service.unlike(1, 1);
 
-      expect(prisma.tierListLike.delete).toHaveBeenCalledWith({ where: { id: 10 } });
+      expect(prisma.tierListLike.delete).toHaveBeenCalledWith({
+        where: { userId_tierListId: { userId: 1, tierListId: 1 } },
+      });
       expect(prisma.tierList.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { likesCount: { decrement: 1 } },
@@ -62,7 +64,7 @@ describe('likes.service', () => {
     });
 
     it('should return error if not liked', async () => {
-      (prisma.tierListLike.findFirst as any).mockResolvedValue(null);
+      (prisma.tierListLike.findUnique as any).mockResolvedValue(null);
 
       const result = await service.unlike(1, 1);
 

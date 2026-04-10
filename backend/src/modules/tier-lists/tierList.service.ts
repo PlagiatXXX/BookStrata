@@ -141,14 +141,12 @@ export async function getFullTierList(id: number) {
         include: { book: true },
         orderBy: { rank: "asc" },
       },
-      _count: {
-        select: { likes: true },
-      },
     },
   });
 
-  const { placements: unrankedBooks, _count, ...rest } = tierList;
-  return { ...rest, unrankedBooks, likesCount: _count.likes };
+  // Оптимизация Bolt: используем денормализованное поле likesCount вместо _count.likes
+  const { placements: unrankedBooks, ...rest } = tierList;
+  return { ...rest, unrankedBooks };
 }
 
 // Обновление позиций (оптимизировано - Promise.all)
