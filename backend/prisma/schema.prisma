@@ -31,6 +31,7 @@ model User {
   newsArticles         NewsArticle[]
   passwordResetTokens  PasswordResetToken[]
   achievements         UserAchievement[]
+  battleVotes          BattleVote[]
   role                 Role?      @relation(fields: [roleId], references: [id])
   roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
   createdAt            DateTime   @default(now()) @map("created_at")
@@ -59,6 +60,7 @@ model TierList {
   tiers       Tier[]
   placements  BookPlacement[]
   likes       TierListLike[]
+  battleParticipants BattleParticipant[]
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
 
@@ -104,8 +106,53 @@ model Template {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   likes         TemplateLike[]
+  battles       Battle[]
 
   @@index([type])
+}
+
+model Battle {
+  id           Int                 @id @default(autoincrement())
+  template     Template            @relation(fields: [templateId], references: [id])
+  templateId   String              @map("template_id")
+  title        String
+  description  String?
+  type         String              @default("weekly") // "weekly", "monthly"
+  status       String              @default("active") // "active", "completed"
+  startTime    DateTime            @default(now()) @map("start_time")
+  endTime      DateTime            @map("end_time")
+  winnerId     Int?                @map("winner_id")
+  participants BattleParticipant[]
+  votes        BattleVote[]
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  @@map("battles")
+}
+
+model BattleParticipant {
+  id         Int      @id @default(autoincrement())
+  battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  battleId   Int      @map("battle_id")
+  tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+  tierListId Int      @map("tier_list_id")
+  votesCount Int      @default(0) @map("votes_count")
+
+  @@unique([battleId, tierListId])
+  @@map("battle_participants")
+}
+
+model BattleVote {
+  id         Int      @id @default(autoincrement())
+  battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  battleId   Int      @map("battle_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int      @map("user_id")
+  tierListId Int      @map("tier_list_id") // ID тир-листа за который проголосовали
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, battleId])
+  @@map("battle_votes")
 }
 
 // Лайки тир-листов

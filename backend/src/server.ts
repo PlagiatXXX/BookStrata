@@ -9,6 +9,7 @@ import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 import { prisma, waitForDatabase } from "./lib/prisma.js";
 import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
+import { battleRoutes } from "../src/modules/battles/battles.route.js";
 import { tierListRoutes } from "../src/modules/tier-lists/tierList.route.js";
 import { authRoutes } from "../src/modules/auth/auth.route.js";
 import { userRoutes } from "../src/modules/users/users.route.js";
@@ -201,6 +202,7 @@ fastify.register(newsRoutes, { prefix: "/api/news" });
 fastify.register(rolesRoutes, { prefix: "/api" });
 fastify.register(subscriptionsRoutes, { prefix: "/api/subscriptions" });
 fastify.register(achievementRoutes, { prefix: "/api/achievements" });
+fastify.register(battleRoutes, { prefix: "/api/battles" });
 
 // Регистрируем контроллер шаблонов с префиксом /api
 fastify.register(templatesPlugin, { prisma, prefix: "/api" });
