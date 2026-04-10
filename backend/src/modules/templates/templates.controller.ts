@@ -5,7 +5,10 @@ import {
   type FastifyReply,
 } from "fastify";
 import { PrismaClient } from "@prisma/client";
-import { TemplatesService } from "./templates.service.js";
+import {
+  TemplatesService,
+  type CreateTemplateInput,
+} from "./templates.service.js";
 import { templateLikesRoutes } from "./likes/likes.route.js";
 
 // Тип для Headers с authorization
@@ -99,8 +102,13 @@ export async function templatesController(
         );
 
         // Установим значения по умолчанию для isPublic и isProOnly, если они не предоставлены
-        const bodyWithDefaults = {
-          ...req.body,
+        const bodyWithDefaults: CreateTemplateInput = {
+          title: req.body.title,
+          description: req.body.description,
+          coverImageUrl: req.body.coverImageUrl,
+          type: req.body.type,
+          tiers: req.body.tiers,
+          defaultBooks: req.body.defaultBooks,
           isPublic: req.body.isPublic ?? false,
           isProOnly: req.body.isProOnly ?? false,
         };

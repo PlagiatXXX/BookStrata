@@ -24,7 +24,8 @@ vi.mock("../../lib/prisma.js", () => ({
 }));
 
 vi.mock("./auth.mail.js", () => ({
-  sendNewPasswordEmail: vi.fn().mockResolvedValue(undefined),
+  sendResetPasswordEmail: vi.fn().mockResolvedValue(undefined),
+  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Импортируем после vi.mock
@@ -378,10 +379,16 @@ describe("Auth Service", () => {
 
   describe("requestPasswordReset (New Implementation)", () => {
     it("должен сгенерировать новый пароль и вызвать отправку письма", async () => {
-      const mockUser = { id: 1, email: "test@example.com", username: "testuser" };
+      const mockUser = {
+        id: 1,
+        email: "test@example.com",
+        username: "testuser",
+      };
       (prisma.user.findUnique as any).mockResolvedValue(mockUser);
       (prisma.user.update as any).mockResolvedValue(mockUser);
-      (prisma.passwordResetToken.deleteMany as any).mockResolvedValue({ count: 0 });
+      (prisma.passwordResetToken.deleteMany as any).mockResolvedValue({
+        count: 0,
+      });
       (prisma.$transaction as any).mockResolvedValue([]);
 
       await authService.requestPasswordReset("test@example.com");
@@ -396,7 +403,9 @@ describe("Auth Service", () => {
     it("не должен бросать ошибку если пользователь не найден (security)", async () => {
       (prisma.user.findUnique as any).mockResolvedValue(null);
 
-      await expect(authService.requestPasswordReset("nonexistent@example.com")).resolves.not.toThrow();
+      await expect(
+        authService.requestPasswordReset("nonexistent@example.com"),
+      ).resolves.not.toThrow();
     });
   });
 });

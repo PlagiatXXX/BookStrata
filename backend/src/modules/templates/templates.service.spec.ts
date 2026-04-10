@@ -166,6 +166,7 @@ describe("TemplatesService", () => {
       tiers: [{ id: "1", name: "S", color: "#FF6B6B", order: 0 }],
       defaultBooks: [],
       isPublic: true,
+      isProOnly: false,
     };
 
     const mockCreatedTemplate = {
@@ -221,7 +222,7 @@ describe("TemplatesService", () => {
         tiers: mockInput.tiers,
         defaultBooks: mockInput.defaultBooks,
         isPublic: false,
-        isProOnly: false
+        isProOnly: false,
       };
       await service.createTemplate(inputWithoutPublic, "1");
       expect(mockTemplate.create).toHaveBeenCalledWith({

@@ -584,33 +584,39 @@ export async function forkTierList(id: number, userId: number) {
 
     const tierMap = new Map<number, number>(); // Старый ID -> Новый ID
     original.tiers.forEach((oldTier, index) => {
-      tierMap.set(oldTier.id, newTierList.tiers[index].id);
+      const newTier = newTierList.tiers[index];
+      if (!newTier) return;
+      tierMap.set(oldTier.id, newTier.id);
     });
 
     // 4. Копируем книги и создаем размещения (параллельно)
     // Оптимизация Bolt: используем Promise.all и вложенный create для сокращения roundtrip-ов.
     // Это сокращает количество последовательных запросов с O(B*2) до O(1).
     await Promise.all(
-      original.placements.map((placement) =>
-        tx.bookPlacement.create({
+      original.placements.map(async (placement) => {
+        // Сначала создаём книгу
+        const newBook = await tx.book.create({
+          data: {
+            title: placement.book.title,
+            author: placement.book.author,
+            coverImageUrl: placement.book.coverImageUrl,
+            description: placement.book.description,
+            thoughts: placement.book.thoughts,
+          },
+        });
+
+        // Затем создаём размещение с bookId
+        return tx.bookPlacement.create({
           data: {
             tierListId: newTierList.id,
             tierId: placement.tierId
               ? (tierMap.get(placement.tierId) ?? null)
               : null,
             rank: placement.rank,
-            book: {
-              create: {
-                title: placement.book.title,
-                author: placement.book.author,
-                coverImageUrl: placement.book.coverImageUrl,
-                description: placement.book.description,
-                thoughts: placement.book.thoughts,
-              },
-            },
+            bookId: newBook.id,
           },
-        }),
-      ),
+        });
+      }),
     );
 
     logger.info("Тир-лист успешно скопирован (forked)", {
