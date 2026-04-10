@@ -24,6 +24,7 @@ vi.mock("../../lib/prisma.js", () => ({
       create: vi.fn(),
       delete: vi.fn(),
       count: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
     },
     book: {
       create: vi.fn(),
@@ -503,9 +504,14 @@ describe("tierList.service", () => {
 
     it("должен обновить книгу", async () => {
       const mockUpdatedBook = { id: mockBookId, ...mockUpdateData };
+      (prisma.bookPlacement.findUniqueOrThrow as any).mockResolvedValue({});
       (prisma.book.update as any).mockResolvedValue(mockUpdatedBook);
 
-      const result = await service.updateBook(mockBookId, mockUpdateData);
+      const result = await service.updateBook(1, mockBookId, mockUpdateData);
+
+      expect(prisma.bookPlacement.findUniqueOrThrow).toHaveBeenCalledWith({
+        where: { tierListId_bookId: { tierListId: 1, bookId: mockBookId } },
+      });
 
       expect(prisma.book.update).toHaveBeenCalledWith({
         where: { id: mockBookId },
@@ -521,12 +527,17 @@ describe("tierList.service", () => {
     const mockCoverUrl = "https://example.com/new-cover.jpg";
 
     it("должен обновить обложку книги", async () => {
+      (prisma.bookPlacement.findUniqueOrThrow as any).mockResolvedValue({});
       (prisma.book.update as any).mockResolvedValue({
         id: mockBookId,
         coverImageUrl: mockCoverUrl,
       });
 
-      const result = await service.updateBookCover(mockBookId, mockCoverUrl);
+      const result = await service.updateBookCover(1, mockBookId, mockCoverUrl);
+
+      expect(prisma.bookPlacement.findUniqueOrThrow).toHaveBeenCalledWith({
+        where: { tierListId_bookId: { tierListId: 1, bookId: mockBookId } },
+      });
 
       expect(prisma.book.update).toHaveBeenCalledWith({
         where: { id: mockBookId },

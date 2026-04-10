@@ -460,7 +460,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       }
 
       await service.assertOwner(tierListId, request.user!.userId);
-      const updatedBook = await service.updateBook(bookId, request.body);
+      const updatedBook = await service.updateBook(
+        tierListId,
+        bookId,
+        request.body,
+      );
       if (request.body.thoughts) {
         await achievementService.processAction(request.user!.userId, "write_review");
       }
@@ -517,7 +521,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         );
 
         // Обновляем обложку в базе данных
-        await service.updateBookCover(bookId, uploadResult.url);
+        await service.updateBookCover(tierListId, bookId, uploadResult.url);
 
         fastify.log.info(
           { bookId, coverUrl: uploadResult.url },
