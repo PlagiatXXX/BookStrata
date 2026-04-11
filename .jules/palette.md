@@ -24,6 +24,6 @@
 **Learning:** Custom interactive elements like tier labels in a grid often miss native accessibility features. Simply adding tabIndex is not enough; users need specific key handlers (Enter/Space) and translated ARIA labels to understand the purpose of hidden interactions like color picking.
 **Action:** Always provide onKeyDown handlers for custom role="button" elements, ensure focus-visible:ring-inset for items with background colors, and translate ARIA labels to the user's interface language for screen reader clarity.
 
-## 2026-04-10 - [Localized ARIA and Progress Feedback]
-**Learning:** For interactive components with dynamic counts (like progress bars or book counters), `aria-valuenow` alone is insufficient for many screen reader users. Providing `aria-valuetext` with a localized string (e.g., "5 из 20 книг") provides immediate, understandable context without requiring the user to calculate the meaning of raw numbers.
-**Action:** Always supplement progress indicators with `aria-valuetext` containing a human-readable summary of the state. Ensure all icon-only adjustment buttons have localized `aria-label` attributes and explicit `type="button"` to avoid unexpected form behavior.
+## 2025-05-20 - [Enhanced Modal Accessibility & Keyboard UX]
+**Learning:** Large forms within modals (like the Book Edit modal) benefit significantly from `Ctrl/Cmd + Enter` shortcuts and clear ARIA labeling. Standard focus rings often clash with dark Neo-Brutalist themes, necessitating custom `focus-visible` styles for discoverability.
+**Action:** Implement `Ctrl + Enter` for primary modal actions, link titles with `aria-labelledby`, and use high-contrast `focus-visible:ring` (e.g., cyan/pink) on all interactive form elements to ensure accessibility without sacrificing the design aesthetic.

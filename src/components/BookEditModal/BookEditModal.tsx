@@ -103,6 +103,12 @@ export const BookEditModal = ({
   const [isCoverDeleteModalOpen, setIsCoverDeleteModalOpen] = useState(false);
   const { title, author, description, thoughts, coverImageUrl } = state;
 
+  const handleClose = () => {
+    dispatch({ type: "RESET" });
+    setIsCoverDeleteModalOpen(false);
+    onClose();
+  };
+
   useEffect(() => {
     if (book && isOpen) {
       logger.info("Book edit modal opened", {
@@ -110,9 +116,6 @@ export const BookEditModal = ({
         bookTitle: book.title,
       });
       dispatch({ type: "SET_BOOK", book });
-    } else if (!isOpen) {
-      dispatch({ type: "RESET" });
-      setIsCoverDeleteModalOpen(false);
     }
   }, [book, isOpen]);
 
@@ -134,20 +137,39 @@ export const BookEditModal = ({
     onClose();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
-      <div className="relative flex max-h-[90vh] w-full flex-col overflow-hidden bg-[#111111] text-[#f6f1e8]">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      maxWidth="2xl"
+      titleId="book-edit-title"
+    >
+      <div
+        className="relative flex max-h-[90vh] w-full flex-col overflow-hidden bg-[#111111] text-[#f6f1e8]"
+        onKeyDown={handleKeyDown}
+      >
         <button
-          onClick={onClose}
-          className="absolute right-5 top-5 z-20 flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8]"
+          onClick={handleClose}
+          className="absolute right-5 top-5 z-20 flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-fuchsia-500 outline-none"
           title="Закрыть"
+          aria-label="Закрыть модальное окно"
         >
           <X size={18} />
         </button>
 
         <div className="border-b-2 border-black bg-[#181818] px-6 py-5">
           <div className="pr-14">
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
+            <p
+              id="book-edit-title"
+              className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]"
+            >
               Редактирование книги
             </p>
             <label
@@ -164,8 +186,9 @@ export const BookEditModal = ({
                 dispatch({ type: "SET_TITLE", title: e.target.value })
               }
               autoFocus
-              className="w-full border-2 border-black bg-[#0a0a0a] px-5 py-4 text-xl font-black tracking-[-0.03em] text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] max-md:text-lg"
+              className="w-full border-2 border-black bg-[#0a0a0a] px-5 py-4 text-xl font-black tracking-[-0.03em] text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-lg"
               placeholder="Введите название книги"
+              aria-label="Название книги"
             />
           </div>
         </div>
@@ -197,7 +220,8 @@ export const BookEditModal = ({
                   <button
                     type="button"
                     onClick={() => setIsCoverDeleteModalOpen(true)}
-                    className="mt-3 w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#ff9db7] transition-colors hover:border-[#ff5c8a] hover:bg-[#171717] hover:text-[#ffd4df]"
+                    className="mt-3 w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#ff9db7] transition-colors hover:border-[#ff5c8a] hover:bg-[#171717] hover:text-[#ffd4df] focus-visible:ring-2 focus-visible:ring-pink-500 outline-none"
+                    aria-label="Удалить текущую обложку"
                   >
                     Удалить обложку
                   </button>
@@ -219,8 +243,9 @@ export const BookEditModal = ({
                     onChange={(e) =>
                       dispatch({ type: "SET_AUTHOR", author: e.target.value })
                     }
-                    className={inputClass}
+                    className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
                     placeholder="Автор книги"
+                    aria-label="Автор книги"
                   />
                 </section>
 
@@ -240,8 +265,9 @@ export const BookEditModal = ({
                         description: e.target.value,
                       })
                     }
-                    className={`${textareaClass} min-h-40`}
+                    className={`${textareaClass} min-h-40 focus-visible:ring-2 focus-visible:ring-cyan-400`}
                     placeholder="Краткое описание книги"
+                    aria-label="Описание книги"
                   />
                 </section>
               </div>
@@ -260,9 +286,10 @@ export const BookEditModal = ({
                 onChange={(e) =>
                   dispatch({ type: "SET_THOUGHTS", thoughts: e.target.value })
                 }
-                className={`${textareaClass} min-h-36`}
+                className={`${textareaClass} min-h-36 focus-visible:ring-2 focus-visible:ring-cyan-400`}
                 rows={5}
                 placeholder="Ваши мысли, заметки и впечатления о книге"
+                aria-label="Ваши мысли о книге"
               />
             </section>
           </div>
@@ -271,15 +298,18 @@ export const BookEditModal = ({
         <div className="flex shrink-0 justify-end gap-3 border-t-2 border-black bg-[#0a0a0a] px-6 py-5 max-md:flex-col-reverse">
           <Button
             variant="ghost"
-            onClick={onClose}
-            className="border-2 border-black bg-transparent px-6 py-3 font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] max-md:w-full"
+            onClick={handleClose}
+            className="border-2 border-black bg-transparent px-6 py-3 font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] max-md:w-full focus-visible:ring-2 focus-visible:ring-pink-500"
+            aria-label="Отменить изменения и закрыть"
           >
             Отмена
           </Button>
           <Button
             variant="primary"
             onClick={handleSave}
-            className="border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black hover:bg-[#9cf5f3] hover:text-black max-md:w-full"
+            className="border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black hover:bg-[#9cf5f3] hover:text-black max-md:w-full focus-visible:ring-2 focus-visible:ring-cyan-600"
+            title="Ctrl + Enter"
+            aria-label="Сохранить изменения"
           >
             Сохранить
           </Button>
