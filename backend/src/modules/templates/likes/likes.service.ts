@@ -62,25 +62,29 @@ export async function unlike(templateId: string, userId: number) {
 
 // Получить лайки и статус лайка для пользователя
 export async function getLikesWithStatus(templateId: string, userId?: number) {
-  const likesCount = await prisma.templateLike.count({
-    where: { templateId },
-  });
-
-  let isLiked = false;
-  if (userId) {
-    const like = await prisma.templateLike.findUnique({
-      where: {
-        userId_templateId: {
-          userId,
-          templateId,
-        },
+  const template = await prisma.template.findUnique({
+    where: { id: templateId },
+    select: {
+      _count: {
+        select: { likes: true },
+      },
+      likes: userId
+        ? {
+            where: { userId },
+            select: { id: true },
+          }
+        : false,
       },
     });
-    isLiked = !!like;
+    if (!template) {
+    return {
+      likesCount: 0,
+      isLiked: false,
+    };
   }
 
   return {
-    likesCount,
-    isLiked,
+    likesCount: template._count.likes,
+    isLiked: !!(template as unknown as { likes: { id: number }[] }).likes?.length,
   };
 }

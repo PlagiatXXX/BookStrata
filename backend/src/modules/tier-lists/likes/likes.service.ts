@@ -10,10 +10,9 @@ export async function getLikes(tierListId: number) {
 
 // Проверить, лайкнул ли пользователь
 export async function isLikedByUser(tierListId: number, userId: number) {
-  const like = await prisma.tierListLike.findFirst({
+  const like = await prisma.tierListLike.findUnique({
     where: {
-      userId,
-      tierListId,
+      userId_tierListId: { userId, tierListId },
     },
   });
   return !!like;
@@ -21,10 +20,9 @@ export async function isLikedByUser(tierListId: number, userId: number) {
 
 // Поставить лайк
 export async function like(tierListId: number, userId: number) {
-  const existing = await prisma.tierListLike.findFirst({
+  const existing = await prisma.tierListLike.findUnique({
     where: {
-      userId,
-      tierListId,
+      userId_tierListId: { userId, tierListId },
     },
   });
 
@@ -51,10 +49,10 @@ export async function like(tierListId: number, userId: number) {
 
 // Убрать лайк
 export async function unlike(tierListId: number, userId: number) {
-  const existing = await prisma.tierListLike.findFirst({
+  // Оптимизация Bolt: используем findUnique для поиска по составному индексу
+  const existing = await prisma.tierListLike.findUnique({
     where: {
-      userId,
-      tierListId,
+      userId_tierListId: { userId, tierListId },
     },
   });
 
@@ -65,7 +63,7 @@ export async function unlike(tierListId: number, userId: number) {
   // Используем транзакцию для атомарного обновления
   await prisma.$transaction([
     prisma.tierListLike.delete({
-      where: { id: existing.id },
+      where: { userId_tierListId: { userId, tierListId } },
     }),
     prisma.tierList.update({
       where: { id: tierListId },
@@ -86,16 +84,22 @@ export async function getLikesWithStatus(tierListId: number, userId?: number) {
       likes: userId
         ? {
             where: { userId },
-            take: 1,
             select: { id: true },
           }
         : false,
     },
   });
 
+  if (!tierList) {
+    return {
+      likesCount: 0,
+      isLiked: false,
+    };
+  }
+
   return {
-    likesCount: tierList?.likesCount || 0,
-    isLiked: !!(tierList as any)?.likes?.length,
+    likesCount: tierList.likesCount,
+    isLiked: !!(tierList as unknown as { likes: { id: number }[] }).likes?.length,
   };
 }
 
