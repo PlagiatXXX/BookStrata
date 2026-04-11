@@ -23,3 +23,7 @@
 ## 2026-04-10 - [Accessible Keyboard Interaction for Tiers]
 **Learning:** Custom interactive elements like tier labels in a grid often miss native accessibility features. Simply adding tabIndex is not enough; users need specific key handlers (Enter/Space) and translated ARIA labels to understand the purpose of hidden interactions like color picking.
 **Action:** Always provide onKeyDown handlers for custom role="button" elements, ensure focus-visible:ring-inset for items with background colors, and translate ARIA labels to the user's interface language for screen reader clarity.
+
+## 2025-05-20 - [Enhanced Modal Accessibility & Keyboard UX]
+**Learning:** Large forms within modals (like the Book Edit modal) benefit significantly from `Ctrl/Cmd + Enter` shortcuts and clear ARIA labeling. Standard focus rings often clash with dark Neo-Brutalist themes, necessitating custom `focus-visible` styles for discoverability.
+**Action:** Implement `Ctrl + Enter` for primary modal actions, link titles with `aria-labelledby`, and use high-contrast `focus-visible:ring` (e.g., cyan/pink) on all interactive form elements to ensure accessibility without sacrificing the design aesthetic.
