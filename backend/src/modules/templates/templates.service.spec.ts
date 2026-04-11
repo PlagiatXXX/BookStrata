@@ -17,6 +17,7 @@ const mockTemplateLike = {
 
 const mockTierList = {
   create: vi.fn(),
+  update: vi.fn(),
 };
 
 const mockTier = {
@@ -550,15 +551,26 @@ describe("TemplatesService", () => {
         ...mockCreatedTierList,
         tiers: mockCreatedTiers,
       });
-      mockBook.create.mockResolvedValue(mockCreatedBook);
-      mockBookPlacement.create.mockResolvedValue({});
+      mockTierList.update.mockResolvedValue({});
       await service.useTemplate(mockTemplateId, mockUserId, mockNewListTitle);
-      expect(mockBook.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          title: "Default Book 1",
-          author: "Author 1",
+      expect(mockTierList.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            placements: expect.objectContaining({
+              create: expect.arrayContaining([
+                expect.objectContaining({
+                  book: expect.objectContaining({
+                    create: expect.objectContaining({
+                      title: "Default Book 1",
+                      author: "Author 1",
+                    }),
+                  }),
+                }),
+              ]),
+            }),
+          }),
         }),
-      });
+      );
     });
 
     it("должен бросить ошибку если шаблон не найден", async () => {
