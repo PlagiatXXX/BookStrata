@@ -41,3 +41,7 @@
 ## 2026-04-09 - [Fine-grained Row Memoization in Grids]
 **Learning:** In a grid where rows depend on a global dictionary of items, a simple `useMemo` depending on the whole dictionary will trigger re-renders for every row whenever *any* item in the dictionary changes.
 **Action:** Implement row-level wrappers that memoize their own item lists. By spreading individual item references into the dependency array (or using a stable selector), you ensure that a row only re-renders if its specific items are updated, maintaining referential stability for the rest of the grid.
+
+## 2026-04-10 - [Consolidated Relational Selects for Activity Status]
+**Learning:** Checking existence of a relation (like 'isLiked') while fetching the entity's own data can be done in a single query using Prisma's `select` or `include` with a filtered relation. This avoids sequential DB roundtrips and application-level merging of results.
+**Action:** When fetching an entity and a per-user status (like 'isLiked', 'isFollowing'), use a single Prisma query with a filtered relational select (`take: 1`) to minimize latency and database load.

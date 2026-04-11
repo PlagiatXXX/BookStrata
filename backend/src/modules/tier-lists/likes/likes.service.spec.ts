@@ -72,13 +72,46 @@ describe('likes.service', () => {
   });
 
   describe('getLikesWithStatus', () => {
-    it('should return likesCount from tierList table', async () => {
-      (prisma.tierList.findUnique as any).mockResolvedValue({ likesCount: 42 });
+    it('should return likesCount and isLiked status in one query', async () => {
+      (prisma.tierList.findUnique as any).mockResolvedValue({
+        likesCount: 42,
+        likes: [{ id: 1 }]
+      });
+
+      const result = await service.getLikesWithStatus(1, 1);
+
+      expect(result.likesCount).toBe(42);
+      expect(result.isLiked).toBe(true);
+      expect(prisma.tierList.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        select: {
+          likesCount: true,
+          likes: {
+            where: { userId: 1 },
+            take: 1,
+            select: { id: true }
+          }
+        }
+      });
+    });
+
+    it('should handle missing userId and return isLiked as false', async () => {
+      (prisma.tierList.findUnique as any).mockResolvedValue({
+        likesCount: 10,
+        likes: []
+      });
 
       const result = await service.getLikesWithStatus(1);
 
-      expect(result.likesCount).toBe(42);
-      expect(prisma.tierList.findUnique).toHaveBeenCalled();
+      expect(result.likesCount).toBe(10);
+      expect(result.isLiked).toBe(false);
+      expect(prisma.tierList.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        select: {
+          likesCount: true,
+          likes: false
+        }
+      });
     });
   });
 });

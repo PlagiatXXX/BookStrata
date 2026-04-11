@@ -78,27 +78,24 @@ export async function unlike(tierListId: number, userId: number) {
 
 // Получить лайки и статус лайка для пользователя
 export async function getLikesWithStatus(tierListId: number, userId?: number) {
+  // Оптимизация Bolt: получаем количество лайков и статус в одном запросе
   const tierList = await prisma.tierList.findUnique({
     where: { id: tierListId },
-    select: { likesCount: true },
+    select: {
+      likesCount: true,
+      likes: userId
+        ? {
+            where: { userId },
+            take: 1,
+            select: { id: true },
+          }
+        : false,
+    },
   });
 
-  const likesCount = tierList?.likesCount || 0;
-
-  let isLiked = false;
-  if (userId) {
-    const like = await prisma.tierListLike.findFirst({
-      where: {
-        userId,
-        tierListId,
-      },
-    });
-    isLiked = !!like;
-  }
-
   return {
-    likesCount,
-    isLiked,
+    likesCount: tierList?.likesCount || 0,
+    isLiked: !!(tierList as any)?.likes?.length,
   };
 }
 
