@@ -557,6 +557,18 @@ export async function forkTierList(id: number, userId: number) {
     },
   });
 
+  // Security Check (BOLA): Ensure the list is public OR owned by the user
+  if (!original.isPublic && original.userId !== userId) {
+    logger.warn("Security Alert: Attempt to fork private tier list", {
+      originalId: id,
+      requesterUserId: userId,
+      ownerUserId: original.userId,
+    });
+    const error = new Error("Forbidden");
+    (error as any).statusCode = 403;
+    throw error;
+  }
+
   // 2. Создаем новый тир-лист с тирами в одном запросе
   return prisma.$transaction(async (tx) => {
     const newTierList = await tx.tierList.create({

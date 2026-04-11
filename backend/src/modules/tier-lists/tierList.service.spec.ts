@@ -835,6 +835,7 @@ describe("tierList.service", () => {
       id: mockOriginalId,
       title: "Original List",
       userId: 1,
+      isPublic: true,
       tiers: [
         { id: 10, title: "S", color: "#FF6B6B", rank: 0 },
         { id: 11, title: "A", color: "#4ECDC4", rank: 1 },
