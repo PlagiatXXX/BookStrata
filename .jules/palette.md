@@ -27,3 +27,7 @@
 ## 2025-05-20 - [Enhanced Modal Accessibility & Keyboard UX]
 **Learning:** Large forms within modals (like the Book Edit modal) benefit significantly from `Ctrl/Cmd + Enter` shortcuts and clear ARIA labeling. Standard focus rings often clash with dark Neo-Brutalist themes, necessitating custom `focus-visible` styles for discoverability.
 **Action:** Implement `Ctrl + Enter` for primary modal actions, link titles with `aria-labelledby`, and use high-contrast `focus-visible:ring` (e.g., cyan/pink) on all interactive form elements to ensure accessibility without sacrificing the design aesthetic.
+
+## 2025-05-21 - [Global Shortcut Discovery & Color-Variant Accessibility]
+**Learning:** Global shortcuts (like "/" for search) require visual hints (<kbd>) for discoverability and aria-keyshortcuts for screen readers. They must also ignore triggers when any text entry field is active. Additionally, component color variants (e.g., "Cyan" or "Secondary") often miss custom focus-visible styles that match their unique background/border themes, leading to invisible focus states for keyboard users.
+**Action:** Always pair global shortcuts with conditional <kbd> hints. For component libraries with multiple color variants, ensure every interactive state (hover, active, focus) is explicitly defined for each variant to maintain accessibility across the entire design system.
