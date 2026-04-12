@@ -9,6 +9,7 @@ vi.mock("../../lib/prisma.js", () => ({
     bookPlacement: {
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
+      update: vi.fn(),
     },
     book: {
       update: vi.fn(),
@@ -29,8 +30,8 @@ describe("Tier List BOLA Security Tests", () => {
       const attackerTierListId = 100;
       const victimBookId = 999;
 
-      // Book placement NOT found
-      (prisma.bookPlacement.findUniqueOrThrow as any).mockImplementation(() => {
+      // Book placement NOT found during update
+      (prisma.bookPlacement.update as any).mockImplementation(() => {
         throw new Error("Record not found");
       });
 
@@ -38,21 +39,26 @@ describe("Tier List BOLA Security Tests", () => {
       await expect(
         service.updateBook(attackerTierListId, victimBookId, { title: "Hacked" }),
       ).rejects.toThrow("Record not found");
-
-      expect(prisma.book.update).not.toHaveBeenCalled();
     });
 
     it("should allow updating a book if it belongs to the tier list", async () => {
       const tierListId = 100;
       const bookId = 999;
 
-      (prisma.bookPlacement.findUniqueOrThrow as any).mockResolvedValue({});
-      (prisma.book.update as any).mockResolvedValue({ id: bookId, title: "Updated" });
+      (prisma.bookPlacement.update as any).mockResolvedValue({
+        book: { id: bookId, title: "Updated" },
+      });
 
-      const result = await service.updateBook(tierListId, bookId, { title: "Updated" });
+      const result = await service.updateBook(tierListId, bookId, {
+        title: "Updated",
+      });
 
       expect(result.title).toBe("Updated");
-      expect(prisma.book.update).toHaveBeenCalled();
+      expect(prisma.bookPlacement.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tierListId_bookId: { tierListId, bookId } },
+        }),
+      );
     });
   });
 
@@ -62,15 +68,17 @@ describe("Tier List BOLA Security Tests", () => {
       const victimBookId = 999;
 
       // Book placement NOT found
-      (prisma.bookPlacement.findUniqueOrThrow as any).mockImplementation(() => {
+      (prisma.bookPlacement.update as any).mockImplementation(() => {
         throw new Error("Record not found");
       });
 
       await expect(
-        service.updateBookCover(attackerTierListId, victimBookId, "new-cover.jpg"),
+        service.updateBookCover(
+          attackerTierListId,
+          victimBookId,
+          "new-cover.jpg",
+        ),
       ).rejects.toThrow("Record not found");
-
-      expect(prisma.book.update).not.toHaveBeenCalled();
     });
   });
 });

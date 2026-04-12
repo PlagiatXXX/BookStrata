@@ -208,44 +208,41 @@ export async function addBooksToTierList(
     );
   }
 
-  // Используем одну транзакцию для всех операций
-  const results = await prisma.$transaction(async (tx) => {
-    const createBookPromises = books.map((bookData) =>
-      tx.book.create({
-        data: {
-          title: bookData.title,
-          author: bookData.author ?? null,
-          coverImageUrl: bookData.coverImageUrl,
-          description: bookData.description ?? null,
-          thoughts: bookData.thoughts ?? null,
-        },
-      }),
-    );
-
-    const createdBooks = await Promise.all(createBookPromises);
-
-    const createPlacementPromises = createdBooks.map((book, index) =>
-      tx.bookPlacement.create({
-        data: {
-          tierListId,
-          bookId: book.id,
-          tierId: null,
-          rank: existingBooksCount + index, // Сохраняем порядок
-        },
+  // Оптимизация Bolt: используем вложенный create в одном update для O(1) БД-раундтрипа.
+  // Это значительно быстрее, чем создавать каждую книгу и размещение по отдельности.
+  const updatedTierList = await prisma.tierList.update({
+    where: { id: tierListId },
+    data: {
+      placements: {
+        create: books.map((book, index) => ({
+          rank: existingBooksCount + index,
+          book: {
+            create: {
+              title: book.title,
+              author: book.author ?? null,
+              coverImageUrl: book.coverImageUrl,
+              description: book.description ?? null,
+              thoughts: book.thoughts ?? null,
+            },
+          },
+        })),
+      },
+    },
+    include: {
+      placements: {
         include: { book: true },
-      }),
-    );
-
-    const placements = await Promise.all(createPlacementPromises);
-
-    // Возвращаем в формате [{ book: {...} }]
-    return placements.map((placement) => ({ book: placement.book }));
+        // Оптимизация Bolt: запрашиваем только последние N добавленных записей
+        orderBy: { bookId: "desc" },
+        take: books.length,
+      },
+    },
   });
 
-  return results;
+  // Возвращаем новые книги в правильном порядке
+  return updatedTierList.placements.reverse().map((p) => ({ book: p.book }));
 }
 
-// Обновление книги
+// Обновление книги (оптимизировано Bolt - O(1) roundtrip)
 export async function updateBook(
   tierListId: number,
   bookId: number,
@@ -256,32 +253,34 @@ export async function updateBook(
     thoughts?: string | null;
   },
 ) {
-  // Security check: ensure the book belongs to the tier list
-  await prisma.bookPlacement.findUniqueOrThrow({
+  // Оптимизация Bolt: объединяем проверку прав и обновление в один вложенный запрос.
+  // Если запись в bookPlacement не найдена, Prisma выбросит исключение P2025.
+  const placement = await prisma.bookPlacement.update({
     where: { tierListId_bookId: { tierListId, bookId } },
+    data: {
+      book: { update: data },
+    },
+    include: { book: true },
   });
 
-  return prisma.book.update({
-    where: { id: bookId },
-    data,
-  });
+  return placement.book;
 }
 
-// Обновление обложки книги
+// Обновление обложки книги (оптимизировано Bolt - O(1) roundtrip)
 export async function updateBookCover(
   tierListId: number,
   bookId: number,
   coverImageUrl: string,
 ) {
-  // Security check: ensure the book belongs to the tier list
-  await prisma.bookPlacement.findUniqueOrThrow({
+  const placement = await prisma.bookPlacement.update({
     where: { tierListId_bookId: { tierListId, bookId } },
+    data: {
+      book: { update: { coverImageUrl } },
+    },
+    include: { book: true },
   });
 
-  return prisma.book.update({
-    where: { id: bookId },
-    data: { coverImageUrl },
-  });
+  return placement.book;
 }
 
 // Удаление книги из тир-листа
@@ -598,35 +597,30 @@ export async function forkTierList(id: number, userId: number) {
       tierMap.set(oldTier.id, newTier.id);
     });
 
-    // 4. Копируем книги и создаем размещения (параллельно)
-    // Оптимизация Bolt: используем Promise.all и вложенный create для сокращения roundtrip-ов.
-    // Это сокращает количество последовательных запросов с O(B*2) до O(1).
-    await Promise.all(
-      original.placements.map(async (placement) => {
-        // Сначала создаём книгу
-        const newBook = await tx.book.create({
-          data: {
-            title: placement.book.title,
-            author: placement.book.author,
-            coverImageUrl: placement.book.coverImageUrl,
-            description: placement.book.description,
-            thoughts: placement.book.thoughts,
-          },
-        });
-
-        // Затем создаём размещение с bookId
-        return tx.bookPlacement.create({
-          data: {
-            tierListId: newTierList.id,
+    // 4. Копируем книги и создаем размещения в одном вложенном запросе (O(1) БД-раундтрип)
+    // Оптимизация Bolt: используем вложенный create в одном update для всего списка книг.
+    await tx.tierList.update({
+      where: { id: newTierList.id },
+      data: {
+        placements: {
+          create: original.placements.map((placement) => ({
             tierId: placement.tierId
               ? (tierMap.get(placement.tierId) ?? null)
               : null,
             rank: placement.rank,
-            bookId: newBook.id,
-          },
-        });
-      }),
-    );
+            book: {
+              create: {
+                title: placement.book.title,
+                author: placement.book.author,
+                coverImageUrl: placement.book.coverImageUrl,
+                description: placement.book.description,
+                thoughts: placement.book.thoughts,
+              },
+            },
+          })),
+        },
+      },
+    });
 
     logger.info("Тир-лист успешно скопирован (forked)", {
       originalId: id,

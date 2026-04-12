@@ -85,6 +85,7 @@ export async function getLikesWithStatus(tierListId: number, userId?: number) {
         ? {
             where: { userId },
             select: { id: true },
+            take: 1,
           }
         : false,
     },

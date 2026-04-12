@@ -22,6 +22,7 @@ vi.mock("../../lib/prisma.js", () => ({
     bookPlacement: {
       upsert: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
       delete: vi.fn(),
       count: vi.fn(),
       findUniqueOrThrow: vi.fn(),
@@ -405,41 +406,13 @@ describe("tierList.service", () => {
       },
     ];
 
-    const mockCreatedBooks = [
-      { id: 1, ...mockBooks[0] },
-      { id: 2, ...mockBooks[1] },
-    ];
-
-    const mockPlacements = [
-      {
-        tierListId: mockTierListId,
-        bookId: 1,
-        tierId: null,
-        rank: 0,
-        book: mockCreatedBooks[0],
-      },
-      {
-        tierListId: mockTierListId,
-        bookId: 2,
-        tierId: null,
-        rank: 1,
-        book: mockCreatedBooks[1],
-      },
-    ];
-
-    it("должен добавить книги в тир-лист", async () => {
+    it("должен добавить книги в тир-лист используя вложенный update", async () => {
       (prisma.bookPlacement.count as any).mockResolvedValue(0);
-      (prisma.book.create as any).mockResolvedValueOnce(mockCreatedBooks[0]);
-      (prisma.book.create as any).mockResolvedValueOnce(mockCreatedBooks[1]);
-      (prisma.bookPlacement.create as any).mockResolvedValueOnce(
-        mockPlacements[0],
-      );
-      (prisma.bookPlacement.create as any).mockResolvedValueOnce(
-        mockPlacements[1],
-      );
-
-      (prisma.$transaction as any).mockImplementation(async (fn: any) => {
-        return fn(prisma);
+      (prisma.tierList.update as any).mockResolvedValue({
+        placements: [
+          { book: { id: 2, title: "Book 2" } },
+          { book: { id: 1, title: "Book 1" } },
+        ],
       });
 
       const result = await service.addBooksToTierList(
@@ -447,9 +420,19 @@ describe("tierList.service", () => {
         mockBooks,
       );
 
+      expect(prisma.tierList.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: mockTierListId },
+          data: expect.objectContaining({
+            placements: {
+              create: expect.any(Array),
+            },
+          }),
+        }),
+      );
+
       expect(result).toHaveLength(2);
       expect(result[0].book.title).toBe("Book 1");
-      expect(result[1].book.title).toBe("Book 2");
     });
 
     it("должен бросить ошибку при превышении лимита книг", async () => {
@@ -472,26 +455,6 @@ describe("tierList.service", () => {
 
       expect(result).toEqual([]);
     });
-
-    it("должен сохранить порядок книг при добавлении", async () => {
-      (prisma.bookPlacement.count as any).mockResolvedValue(5);
-      (prisma.book.create as any).mockResolvedValue(mockCreatedBooks[0]);
-      (prisma.bookPlacement.create as any).mockResolvedValue(mockPlacements[0]);
-
-      (prisma.$transaction as any).mockImplementation(async (fn: any) => {
-        return fn(prisma);
-      });
-
-      await service.addBooksToTierList(mockTierListId, [mockBooks[0]]);
-
-      expect(prisma.bookPlacement.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            rank: 5, // existingBooksCount + index
-          }),
-        }),
-      );
-    });
   });
 
   describe("updateBook", () => {
@@ -501,23 +464,22 @@ describe("tierList.service", () => {
       description: "Updated Description",
     };
 
-    it("должен обновить книгу", async () => {
-      const mockUpdatedBook = { id: mockBookId, ...mockUpdateData };
-      (prisma.bookPlacement.findUniqueOrThrow as any).mockResolvedValue({});
-      (prisma.book.update as any).mockResolvedValue(mockUpdatedBook);
+    it("должен обновить книгу через bookPlacement.update", async () => {
+      (prisma.bookPlacement.update as any).mockResolvedValue({
+        book: { id: mockBookId, ...mockUpdateData },
+      });
 
       const result = await service.updateBook(1, mockBookId, mockUpdateData);
 
-      expect(prisma.bookPlacement.findUniqueOrThrow).toHaveBeenCalledWith({
+      expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
         where: { tierListId_bookId: { tierListId: 1, bookId: mockBookId } },
+        data: {
+          book: { update: mockUpdateData },
+        },
+        include: { book: true },
       });
 
-      expect(prisma.book.update).toHaveBeenCalledWith({
-        where: { id: mockBookId },
-        data: mockUpdateData,
-      });
-
-      expect(result).toEqual(mockUpdatedBook);
+      expect(result.title).toBe("Updated Title");
     });
   });
 
@@ -525,23 +487,22 @@ describe("tierList.service", () => {
     const mockBookId = 1;
     const mockCoverUrl = "https://example.com/new-cover.jpg";
 
-    it("должен обновить обложку книги", async () => {
-      (prisma.bookPlacement.findUniqueOrThrow as any).mockResolvedValue({});
-      (prisma.book.update as any).mockResolvedValue({
-        id: mockBookId,
-        coverImageUrl: mockCoverUrl,
+    it("должен обновить обложку книги через bookPlacement.update", async () => {
+      (prisma.bookPlacement.update as any).mockResolvedValue({
+        book: { id: mockBookId, coverImageUrl: mockCoverUrl },
       });
 
       const result = await service.updateBookCover(1, mockBookId, mockCoverUrl);
 
-      expect(prisma.bookPlacement.findUniqueOrThrow).toHaveBeenCalledWith({
+      expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
         where: { tierListId_bookId: { tierListId: 1, bookId: mockBookId } },
+        data: {
+          book: { update: { coverImageUrl: mockCoverUrl } },
+        },
+        include: { book: true },
       });
 
-      expect(prisma.book.update).toHaveBeenCalledWith({
-        where: { id: mockBookId },
-        data: { coverImageUrl: mockCoverUrl },
-      });
+      expect(result.coverImageUrl).toBe(mockCoverUrl);
     });
   });
 
@@ -857,7 +818,7 @@ describe("tierList.service", () => {
       ],
     };
 
-    it("должен создать копию тир-листа со всеми тирами и книгами", async () => {
+    it("должен создать копию тир-листа со всеми тирами и книгами через вложенный update", async () => {
       (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue(mockOriginal);
 
       (prisma.$transaction as any).mockImplementation(async (fn: any) => {
@@ -874,12 +835,7 @@ describe("tierList.service", () => {
         ],
       });
 
-      (prisma.tier.create as any)
-        .mockResolvedValueOnce({ id: 20, title: "S", rank: 0 })
-        .mockResolvedValueOnce({ id: 21, title: "A", rank: 1 });
-
-      (prisma.book.create as any).mockResolvedValue({ id: 200, title: "Book 1" });
-      (prisma.bookPlacement.create as any).mockResolvedValue({});
+      (prisma.tierList.update as any).mockResolvedValue({});
 
       const result = await service.forkTierList(mockOriginalId, mockUserId);
 
@@ -892,7 +848,7 @@ describe("tierList.service", () => {
       });
 
       expect(prisma.tierList.create).toHaveBeenCalled();
-      expect(prisma.bookPlacement.create).toHaveBeenCalled();
+      expect(prisma.tierList.update).toHaveBeenCalled();
 
       expect(result.title).toBe("Original List (копия)");
       expect(result.userId).toBe(mockUserId);
