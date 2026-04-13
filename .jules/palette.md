@@ -27,3 +27,7 @@
 ## 2025-05-20 - [Enhanced Modal Accessibility & Keyboard UX]
 **Learning:** Large forms within modals (like the Book Edit modal) benefit significantly from `Ctrl/Cmd + Enter` shortcuts and clear ARIA labeling. Standard focus rings often clash with dark Neo-Brutalist themes, necessitating custom `focus-visible` styles for discoverability.
 **Action:** Implement `Ctrl + Enter` for primary modal actions, link titles with `aria-labelledby`, and use high-contrast `focus-visible:ring` (e.g., cyan/pink) on all interactive form elements to ensure accessibility without sacrificing the design aesthetic.
+
+## 2025-05-22 - [Safe Global Keyboard Shortcuts]
+**Learning:** Global keyboard shortcuts (e.g., '/' for search focus) can easily conflict with user text entry. Checking if the `activeElement` is an `INPUT`, `TEXTAREA`, or has `isContentEditable` set is essential to prevent "stealing" focus while the user is already typing.
+**Action:** Always wrap global keydown listeners in a safety check: `const isTyping = ['INPUT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable`.
