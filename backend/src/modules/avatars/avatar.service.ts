@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
 import { SubscriptionsService } from "../subscriptions/subscriptions.service.js";
+import { uploadFromUrl } from "../../lib/cloudinary.js";
 
 const logger = createLogger("Avatars", { color: "yellow" });
 
@@ -95,6 +96,10 @@ export async function generateAvatar(
       logger.warn("POLLINATIONS_API_KEY not set - generation will fail");
     }
 
+    // Security: Upload the generated image to Cloudinary to hide the external API key
+    // This ensures the client never sees the POLLINATIONS_API_KEY in the response
+    const uploadResult = await uploadFromUrl(imageUrl, "tiermaker-pro/generated-avatars");
+
     await prisma.user.update({
       where: { id: userId },
       data: { aiAvatarsGenerated: { increment: 1 } },
@@ -102,7 +107,7 @@ export async function generateAvatar(
 
     return {
       success: true,
-      imageUrl,
+      imageUrl: uploadResult.url,
       remaining: limitCheck.remaining - 1,
     };
   } catch (error) {

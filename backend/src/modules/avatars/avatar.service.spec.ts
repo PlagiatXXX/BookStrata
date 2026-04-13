@@ -9,7 +9,12 @@ vi.mock("../../lib/prisma.js", () => ({
   },
 }));
 
+vi.mock("../../lib/cloudinary.js", () => ({
+  uploadFromUrl: vi.fn(),
+}));
+
 import * as avatarService from "./avatar.service.js";
+import { uploadFromUrl } from "../../lib/cloudinary.js";
 import { prisma } from "../../lib/prisma.js";
 
 process.env.POLLINATIONS_API_KEY = "test-pollinations-key";
@@ -20,6 +25,10 @@ describe("avatar.service", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(uploadFromUrl).mockResolvedValue({
+      url: "https://res.cloudinary.com/test/image.webp",
+      public_id: "test_id",
+    });
   });
 
   afterEach(() => {
@@ -112,8 +121,9 @@ describe("avatar.service", () => {
       );
     });
 
-    it("builds the Pollinations URL from the raw user prompt", async () => {
+    it("proxies the Pollinations URL through Cloudinary to hide the API key", async () => {
       const prompt = "cyberpunk portrait with neon glasses";
+      const mockCloudinaryUrl = "https://res.cloudinary.com/demo/image/upload/v1/generated.webp";
 
       const { SubscriptionsService } =
         await import("../subscriptions/subscriptions.service.js");
@@ -127,26 +137,23 @@ describe("avatar.service", () => {
         lastAvatarResetAt: new Date(),
       } as never);
       vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+      vi.mocked(uploadFromUrl).mockResolvedValue({ url: mockCloudinaryUrl, public_id: "test" });
 
       const result = await avatarService.generateAvatar(prompt, mockUserId);
 
       expect(result.success).toBe(true);
-      expect(result.imageUrl).toContain("https://gen.pollinations.ai/image/");
-      expect(result.imageUrl).toContain("model=zimage");
-      expect(result.imageUrl).toContain("width=512");
-      expect(result.imageUrl).toContain("height=512");
-      expect(result.imageUrl).toContain("seed=");
-      expect(result.imageUrl).toContain("nologo=true");
+      expect(result.imageUrl).toBe(mockCloudinaryUrl);
 
-      const [baseUrl] = (result.imageUrl ?? "").split("?");
-      expect(baseUrl).toBe(
-        `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}`,
+      // Verify that uploadFromUrl was called with the correct Pollinations URL (including key)
+      expect(uploadFromUrl).toHaveBeenCalledWith(
+        expect.stringContaining("https://gen.pollinations.ai/image/"),
+        "tiermaker-pro/generated-avatars"
       );
-      expect(decodeURIComponent(baseUrl)).not.toContain(", avatar");
-      expect(decodeURIComponent(baseUrl)).not.toContain(", single subject");
+      const callUrl = vi.mocked(uploadFromUrl).mock.calls[0][0];
+      expect(callUrl).toContain(`key=test-pollinations-key`);
     });
 
-    it("adds the API key when configured", async () => {
+    it("does not increment the counter if Cloudinary upload fails", async () => {
       const { SubscriptionsService } =
         await import("../subscriptions/subscriptions.service.js");
       vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
@@ -158,11 +165,18 @@ describe("avatar.service", () => {
         aiAvatarsGenerated: 5,
         lastAvatarResetAt: new Date(),
       } as never);
-      vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+      vi.mocked(uploadFromUrl).mockRejectedValue(new Error("Cloudinary error"));
 
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 
-      expect(result.imageUrl).toContain("key=test-pollinations-key");
+      expect(result.success).toBe(false);
+      expect(prisma.user.update).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            aiAvatarsGenerated: { increment: 1 },
+          }),
+        }),
+      );
     });
 
     it("increments the generated avatar counter", async () => {
@@ -204,11 +218,16 @@ describe("avatar.service", () => {
       } as never);
       vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
-      const first = await avatarService.generateAvatar("test prompt", mockUserId);
-      const second = await avatarService.generateAvatar("test prompt", mockUserId);
+      await avatarService.generateAvatar("test prompt", mockUserId);
+      await avatarService.generateAvatar("test prompt", mockUserId);
 
-      const seedOne = first.imageUrl?.match(/seed=(\d+)/)?.[1];
-      const seedTwo = second.imageUrl?.match(/seed=(\d+)/)?.[1];
+      expect(uploadFromUrl).toHaveBeenCalledTimes(2);
+
+      const firstUrl = vi.mocked(uploadFromUrl).mock.calls[0][0];
+      const secondUrl = vi.mocked(uploadFromUrl).mock.calls[1][0];
+
+      const seedOne = firstUrl.match(/seed=(\d+)/)?.[1];
+      const seedTwo = secondUrl.match(/seed=(\d+)/)?.[1];
 
       expect(seedOne).toBeDefined();
       expect(seedTwo).toBeDefined();

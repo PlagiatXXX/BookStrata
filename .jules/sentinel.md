@@ -12,3 +12,8 @@
 **Vulnerability:** Broken Object Level Authorization (BOLA) in the `forkTierList` function allowed any authenticated user to create a copy of any other user's private tier list by simply providing its ID.
 **Learning:** While `findUniqueOrThrow` ensures the record exists, it doesn't inherently enforce ownership or visibility rules unless combined with a `where` clause that includes those constraints or a manual check after fetching. In this case, the `fork` operation missed a check to ensure the source list was either public or owned by the requester.
 **Prevention:** Always implement explicit authorization checks in "copy" or "fork" operations. The target resource must be validated for visibility (e.g., `isPublic`) or ownership before proceeding with the duplication logic.
+
+## 2026-04-11 - Sensitive API Key Leakage via Client-Side URLs
+**Vulnerability:** External AI provider API keys (Pollinations) were being leaked to end-users because the backend generated a direct URL containing the secret and sent it to the client's browser.
+**Learning:** Returning URLs that contain sensitive parameters (like API keys) directly to the client is a security risk. Even if intended for transient usage, these secrets can be intercepted, logged by the browser, or extracted from the DOM. Additionally, insecure fallbacks in upload utilities (like returning the original URL on error) can bypass security measures.
+**Prevention:** Always proxy external media generation through the backend. Fetch the resource on the server, upload it to a secure storage (like Cloudinary), and only return the safe storage URL to the client. Ensure that failure modes (like rate limiting) do not fall back to exposing the original sensitive URL.

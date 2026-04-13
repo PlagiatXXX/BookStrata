@@ -100,17 +100,6 @@ export async function uploadFromUrl(
       public_id: result.public_id,
     };
   } catch (error: unknown) {
-    // Если ошибка 429 (Too Many Requests) от внешнего API, возвращаем оригинальный URL
-    const errorObj = error as { http_code?: number; message?: string };
-    if (errorObj.http_code === 429 || errorObj.message?.includes('429')) {
-      console.warn('Rate limit exceeded for external image, using original URL');
-      // Генерируем fake public_id для совместимости
-      const publicId = `external_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      return {
-        url: url,
-        public_id: publicId,
-      };
-    }
     throw error;
   }
 }
