@@ -17,3 +17,8 @@
 **Vulnerability:** Malicious scripts could be injected into news article content and executed on the client-side because the frontend used `dangerouslySetInnerHTML` without backend-side HTML sanitization.
 **Learning:** Even internal admin-only tools require input sanitization if the resulting data is rendered as raw HTML. Relying on "trusted users" is not a substitute for defense-in-depth.
 **Prevention:** Always sanitize HTML content on the backend before saving to the database using a robust library like `sanitize-html`. Ensure the allowed tags list explicitly includes necessary media tags like `img` but excludes sensitive attributes like `id` (to prevent DOM clobbering).
+
+## 2026-04-13 - Lockfile Integrity and Environment Constraints
+**Vulnerability:** Inadvertent introduction of multiple lockfiles (`pnpm-lock.yaml` and `package-lock.json`) can lead to version drift and inconsistent builds across environments.
+**Learning:** Even if memory says "pnpm exclusively", always verify the current state of the repo (presence of `package-lock.json`). In monorepos with inconsistent tool usage, respect the existing lockfile format to avoid breaking local development workflows.
+**Prevention:** Before running install commands, check for existing lockfiles. If the project uses `npm`, use `npm install` to maintain the `package-lock.json`. Avoid using `pnpm` if the root contains a valid `package-lock.json`, unless explicitly migrating.
