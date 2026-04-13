@@ -21,51 +21,52 @@ interface TierGridProps {
 }
 
 // Separate component for rendering a tier row to optimize memoization
-const TierGridRow = memo(({
-  tier,
-  allBooks,
-  isActive,
-  onChangeColor,
-  onRename,
-  onDelete,
-  onDeleteBook,
-  onEditBook,
-  onViewBook,
-  onSetActive,
-}: {
-  tier: Tier;
-  allBooks: Record<string, Book>;
-  isActive: boolean;
-  onChangeColor: (tierId: string, newColor: string) => void;
-  onRename: (tierId: string, newTitle: string) => void;
-  onDelete: (tierId: string) => void;
-  onDeleteBook: (bookId: string) => void;
-  onEditBook?: (book: Book) => void;
-  onViewBook?: (book: Book) => void;
-  onSetActive: (tierId: string) => void;
-}) => {
-  // Extract book IDs to create a stable dependency for mapping
-  const bookIds = tier.bookIds;
+const TierGridRow = memo(
+  ({
+    tier,
+    allBooks,
+    isActive,
+    onChangeColor,
+    onRename,
+    onDelete,
+    onDeleteBook,
+    onEditBook,
+    onViewBook,
+    onSetActive,
+  }: {
+    tier: Tier;
+    allBooks: Record<string, Book>;
+    isActive: boolean;
+    onChangeColor: (tierId: string, newColor: string) => void;
+    onRename: (tierId: string, newTitle: string) => void;
+    onDelete: (tierId: string) => void;
+    onDeleteBook: (bookId: string) => void;
+    onEditBook?: (book: Book) => void;
+    onViewBook?: (book: Book) => void;
+    onSetActive: (tierId: string) => void;
+  }) => {
+    // Extract book IDs to create a stable dependency for mapping
+    const bookIds = tier.bookIds;
 
-  const booksInTier = useMemo(() => {
-    return bookIds.map((id) => allBooks[id]).filter(Boolean);
-  }, [bookIds, allBooks]);
+    const booksInTier = useMemo(() => {
+      return bookIds.map((id) => allBooks[id]).filter(Boolean);
+    }, [bookIds, allBooks]);
 
-  return (
-    <TierRow
-      tier={tier}
-      books={booksInTier}
-      onChangeColor={onChangeColor}
-      onRename={onRename}
-      onDelete={onDelete}
-      onDeleteBook={onDeleteBook}
-      onEditBook={onEditBook}
-      onViewBook={onViewBook}
-      onSetActive={onSetActive}
-      isActive={isActive}
-    />
-  );
-
+    return (
+      <TierRow
+        tier={tier}
+        books={booksInTier}
+        onChangeColor={onChangeColor}
+        onRename={onRename}
+        onDelete={onDelete}
+        onDeleteBook={onDeleteBook}
+        onEditBook={onEditBook}
+        onViewBook={onViewBook}
+        onSetActive={onSetActive}
+        isActive={isActive}
+      />
+    );
+  },
   (prevProps, nextProps) => {
     // Проверяем основные пропсы на равенство
     if (prevProps.isActive !== nextProps.isActive) return false;
@@ -88,7 +89,10 @@ const TierGridRow = memo(({
     for (let i = 0; i < prevIds.length; i++) {
       const id = prevIds[i];
       // Если ID разные или сам объект книги изменился
-      if (prevIds[i] !== nextIds[i] || prevProps.allBooks[id] !== nextProps.allBooks[id]) {
+      if (
+        prevIds[i] !== nextIds[i] ||
+        prevProps.allBooks[id] !== nextProps.allBooks[id]
+      ) {
         return false;
       }
     }
@@ -116,10 +120,7 @@ export const TierGrid = memo(
     const { tiers, tierOrder, books } = listData;
 
     return (
-      <div
-        ref={ref}
-        className="flex flex-col gap-8 bg-transparent"
-      >
+      <div ref={ref} className="flex flex-col gap-8 bg-transparent">
         <SortableContext
           items={tierOrder}
           strategy={verticalListSortingStrategy}

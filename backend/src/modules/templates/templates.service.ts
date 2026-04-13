@@ -421,7 +421,9 @@ export class TemplatesService {
                   }
                   return null;
                 })
-                .filter(Boolean),
+                .filter(
+                  (item): item is NonNullable<typeof item> => item !== null,
+                ),
             },
           },
         });
