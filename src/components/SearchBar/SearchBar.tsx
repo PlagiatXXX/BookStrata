@@ -13,7 +13,6 @@ export const SearchBar = ({ value, onChange, placeholder = "Поиск..." }: Se
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Shortcut is '/'
       if (e.key === "/" && !isFocused) {
         const target = e.target as HTMLElement;
         const isInput =
