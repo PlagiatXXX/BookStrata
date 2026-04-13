@@ -91,7 +91,6 @@ describe('likes.service', () => {
           likesCount: true,
           likes: {
             where: { userId: 1 },
-            take: 1,
             select: { id: true }
           }
         }

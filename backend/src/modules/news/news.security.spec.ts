@@ -11,6 +11,7 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
       findFirst: vi.fn(),
+      create: vi.fn(),
     },
   },
 }));
@@ -127,6 +128,31 @@ describe("News Security (Vulnerability Reproduction)", () => {
     // We expect the where clause to have included isPublished: true
     expect(prisma.newsArticle.findFirst).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 99, isPublished: true }
+    }));
+  });
+
+  it("should sanitize content and strip malicious scripts (Stored XSS Prevention)", async () => {
+    const maliciousInput = {
+      title: "Malicious News",
+      content: "Hello <script>alert('xss')</script><img src=x onerror=alert('xss')><b>World</b>",
+      excerpt: "Checking XSS"
+    };
+
+    (prisma.newsArticle.create as any).mockResolvedValue({
+      id: 1,
+      ...maliciousInput,
+      content: "Hello <b>World</b>", // Expected result after sanitization
+      author: { username: "admin" }
+    });
+
+    // Act
+    await newsService.createNews(maliciousInput as any, 1);
+
+    // Assert
+    expect(prisma.newsArticle.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        content: "Hello <img src=\"x\" /><b>World</b>"
+      })
     }));
   });
 });

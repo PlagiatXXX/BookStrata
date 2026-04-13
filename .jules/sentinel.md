@@ -12,3 +12,8 @@
 **Vulnerability:** Broken Object Level Authorization (BOLA) in the `forkTierList` function allowed any authenticated user to create a copy of any other user's private tier list by simply providing its ID.
 **Learning:** While `findUniqueOrThrow` ensures the record exists, it doesn't inherently enforce ownership or visibility rules unless combined with a `where` clause that includes those constraints or a manual check after fetching. In this case, the `fork` operation missed a check to ensure the source list was either public or owned by the requester.
 **Prevention:** Always implement explicit authorization checks in "copy" or "fork" operations. The target resource must be validated for visibility (e.g., `isPublic`) or ownership before proceeding with the duplication logic.
+
+## 2026-04-13 - Stored XSS in News/Collections
+**Vulnerability:** Malicious scripts could be injected into news article content and executed on the client-side because the frontend used `dangerouslySetInnerHTML` without backend-side HTML sanitization.
+**Learning:** Even internal admin-only tools require input sanitization if the resulting data is rendered as raw HTML. Relying on "trusted users" is not a substitute for defense-in-depth.
+**Prevention:** Always sanitize HTML content on the backend before saving to the database using a robust library like `sanitize-html`. Ensure the allowed tags list explicitly includes necessary media tags like `img` but excludes sensitive attributes like `id` (to prevent DOM clobbering).
