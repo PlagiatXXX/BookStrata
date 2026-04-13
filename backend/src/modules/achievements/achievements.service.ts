@@ -17,29 +17,37 @@ export type AchievementId =
  * Получить все достижения пользователя (включая невыполненные)
  */
 export async function getUserAchievements(userId: number) {
+  // Оптимизация Bolt: получаем все достижения и статус их получения пользователем в одном запросе
+  // Это сокращает количество roundtrip-ов к БД с 2 до 1.
   const allAchievements = await prisma.achievement.findMany({
-    orderBy: { xpValue: 'asc' }
+    include: {
+      users: {
+        where: { userId },
+        select: { earnedAt: true },
+      },
+    },
+    orderBy: { xpValue: "asc" },
   });
 
-  const userEarned = await prisma.userAchievement.findMany({
-    where: { userId },
-    select: { achievementId: true, earnedAt: true }
+  return allAchievements.map((achievement) => {
+    const userEarned = achievement.users[0];
+    const isEarned = !!userEarned;
+    const earnedAt = userEarned?.earnedAt || null;
+
+    const { users, ...rest } = achievement;
+
+    return {
+      ...rest,
+      title:
+        achievement.isSecret && !isEarned
+          ? "Секретное достижение"
+          : achievement.title,
+      description:
+        achievement.isSecret && !isEarned ? "???" : achievement.description,
+      isEarned,
+      earnedAt,
+    };
   });
-
-  const earnedMap = new Map(userEarned.map(ua => [ua.achievementId, ua.earnedAt]));
-
-  return allAchievements.map(achievement => ({
-    ...achievement,
-    isEarned: earnedMap.has(achievement.id),
-    earnedAt: earnedMap.get(achievement.id) || null,
-    // Скрываем описание для секретных ачивок, если они еще не получены
-    description: (achievement.isSecret && !earnedMap.has(achievement.id))
-      ? '???'
-      : achievement.description,
-    title: (achievement.isSecret && !earnedMap.has(achievement.id))
-      ? 'Секретное достижение'
-      : achievement.title
-  }));
 }
 
 /**

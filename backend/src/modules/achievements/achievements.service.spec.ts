@@ -35,6 +35,46 @@ describe('achievements.service', () => {
     vi.clearAllMocks();
   });
 
+  it('should fetch all achievements with user status in one query', async () => {
+    const userId = 1;
+    const mockAchievements = [
+      {
+        id: 'a1',
+        title: 'Title 1',
+        description: 'Desc 1',
+        isSecret: false,
+        xpValue: 10,
+        users: [{ earnedAt: new Date() }]
+      },
+      {
+        id: 'a2',
+        title: 'Secret',
+        description: 'Secret Desc',
+        isSecret: true,
+        xpValue: 20,
+        users: []
+      }
+    ];
+
+    (prisma.achievement.findMany as any).mockResolvedValue(mockAchievements);
+
+    const result = await service.getUserAchievements(userId);
+
+    expect(prisma.achievement.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      include: {
+        users: {
+          where: { userId },
+          select: { earnedAt: true }
+        }
+      }
+    }));
+
+    expect(result[0].isEarned).toBe(true);
+    expect(result[1].isEarned).toBe(false);
+    expect(result[1].title).toBe('Секретное достижение');
+    expect(result[1].description).toBe('???');
+  });
+
   it('should grant achievement and update XP', async () => {
     const userId = 1;
     const achievementId = 'first_tier_list' as any;
