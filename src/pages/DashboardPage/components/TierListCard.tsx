@@ -8,9 +8,8 @@ import {
   CheckCircle2,
   CircleDashed,
 } from "lucide-react";
+import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 import type { TierListCardProps } from "../types";
-
-const MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST = 20;
 
 export const TierListCard = memo(({
   tierList,
@@ -20,8 +19,8 @@ export const TierListCard = memo(({
 }: TierListCardProps) => {
   const createdDate = new Date(tierList.createdAt);
   const booksCount = tierList.booksCount || 0;
-  const progress = Math.min(100, Math.round((booksCount / MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST) * 100));
-  const isComplete = booksCount >= MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST;
+  const progress = Math.min(100, Math.round((booksCount / MAX_BOOKS_PER_TIER_LIST) * 100));
+  const isComplete = booksCount >= MAX_BOOKS_PER_TIER_LIST;
 
   return (
     <article className="dashboard-card">
@@ -91,7 +90,15 @@ export const TierListCard = memo(({
           </span>
           <span className="dashboard-card__progress-value">{progress}%</span>
         </div>
-        <div className="dashboard-card__progress-bar">
+        <div
+          className="dashboard-card__progress-bar"
+          role="progressbar"
+          aria-valuenow={booksCount}
+          aria-valuemin={0}
+          aria-valuemax={MAX_BOOKS_PER_TIER_LIST}
+          aria-valuetext={`${booksCount} из ${MAX_BOOKS_PER_TIER_LIST} книг`}
+          aria-label="Прогресс заполнения тир-листа"
+        >
           <div
             className="dashboard-card__progress-fill"
             style={{ width: `${progress}%` }}

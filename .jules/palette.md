@@ -27,3 +27,7 @@
 ## 2025-05-20 - [Enhanced Modal Accessibility & Keyboard UX]
 **Learning:** Large forms within modals (like the Book Edit modal) benefit significantly from `Ctrl/Cmd + Enter` shortcuts and clear ARIA labeling. Standard focus rings often clash with dark Neo-Brutalist themes, necessitating custom `focus-visible` styles for discoverability.
 **Action:** Implement `Ctrl + Enter` for primary modal actions, link titles with `aria-labelledby`, and use high-contrast `focus-visible:ring` (e.g., cyan/pink) on all interactive form elements to ensure accessibility without sacrificing the design aesthetic.
+
+## 2026-04-20 - [Inconsistent UI Limits and Inaccessible Progress Bars]
+**Learning:** Hardcoding limit values (like "10 books") in the UI leads to misleading user feedback when the system-wide constants differ (e.g., 20). Additionally, visual-only progress bars are non-perceivable by screen reader users without explicit ARIA roles.
+**Action:** Always derive UI labels and progress logic from centralized `constants` to ensure consistency. Use `role="progressbar"` with `aria-valuenow`, `aria-valuemax`, and `aria-valuetext` (e.g., "5 из 20 книг") to provide semantic context for assistive technologies.
