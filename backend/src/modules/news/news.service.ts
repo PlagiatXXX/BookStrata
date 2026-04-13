@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import { z } from "zod";
 import { createLogger } from "../../lib/logger.js";
+import {sanitize} from "../../lib/sanitizer.js"
 
 // Логгер для сервиса новостей
 const logger = createLogger("News", { color: "cyan" });
@@ -157,9 +158,13 @@ export class NewsService {
       authorId,
     });
 
+    // Безопасность: Очистка контента от XSS перед сохранением
+    const sanitizedContent = sanitize(validated.content);
+
     const article = await prisma.newsArticle.create({
       data: {
         ...validated,
+        content: sanitizedContent,
         authorId: authorId || null,
         imageUrl: validated.imageUrl || null,
       },
@@ -194,7 +199,10 @@ export class NewsService {
     const data: Record<string, unknown> = {};
 
     if (validated.title !== undefined) data.title = validated.title;
-    if (validated.content !== undefined) data.content = validated.content;
+    if (validated.content !== undefined) {
+      // Безопасность: Очистка контента от XSS перед обновлением
+      data.content = sanitize(validated.content);
+    }
     if (validated.excerpt !== undefined) data.excerpt = validated.excerpt;
     if (validated.tags !== undefined) data.tags = validated.tags;
     if (validated.isPublished !== undefined)
