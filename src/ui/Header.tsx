@@ -69,13 +69,13 @@ export const Header = ({
     {
       label: "Новости",
       onClick: () => navigate("/community"),
-      icon: <Users size={18} />,
+      icon: <Globe size={18} />,
       description: "Новости сообщества",
     },
     {
       label: "Сообщество",
       onClick: () => navigate("/forum"),
-      icon: <Globe size={18} />,
+      icon: <Users size={18} />,
       description: "Сообщество пользователей",
     },
     ...(showTemplatesNav

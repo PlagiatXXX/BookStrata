@@ -115,9 +115,7 @@ export async function apiGetUserStats(): Promise<UserStats> {
 /**
  * Загрузить аватар на Cloudinary
  */
-export async function apiUploadAvatar(
-  base64Image: string,
-): Promise<User> {
+export async function apiUploadAvatar(base64Image: string): Promise<User> {
   userLogger.info("Загрузка аватара на Cloudinary");
 
   const response = await fetch(`${API_BASE_URL}/avatars/upload`, {

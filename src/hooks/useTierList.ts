@@ -226,15 +226,30 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
 
     case "ADD_BOOKS": {
       const { newBooks } = action.payload;
-      // Guard: Return current state if no new books to add to maintain referential integrity
       if (newBooks.length === 0) return state;
 
+      // Дедупликация: фильтруем книги, которых ещё нет по (title + author)
+      const existingKeys = new Set(
+        Object.values(state.books).map(
+          (b) => `${b.title.toLowerCase()}|${(b.author || "").toLowerCase()}`,
+        ),
+      );
+
+      const uniqueNewBooks = newBooks.filter(
+        (book) =>
+          !existingKeys.has(
+            `${book.title.toLowerCase()}|${(book.author || "").toLowerCase()}`,
+          ),
+      );
+
+      if (uniqueNewBooks.length === 0) return state;
+
       const updatedBooks = { ...state.books };
-      newBooks.forEach((book) => {
+      uniqueNewBooks.forEach((book) => {
         updatedBooks[book.id] = book;
       });
       const updatedUnrankedIds = [
-        ...newBooks.map((b) => b.id),
+        ...uniqueNewBooks.map((b) => b.id),
         ...state.unrankedBookIds,
       ];
       return {
@@ -507,14 +522,26 @@ export const useTierList = (
       if (over.data.current?.type === "book" && typeof overIndex === "number") {
         if (sourceContainer === destContainer) {
           if (activeRect && overRect) {
-            const insertAfter = (activeRect.left + activeRect.width / 2) > (overRect.left + overRect.width / 2);
-            destIndex = overIndex + (sourceIndex < overIndex ? (insertAfter ? 0 : -1) : (insertAfter ? 1 : 0));
+            const insertAfter =
+              activeRect.left + activeRect.width / 2 >
+              overRect.left + overRect.width / 2;
+            destIndex =
+              overIndex +
+              (sourceIndex < overIndex
+                ? insertAfter
+                  ? 0
+                  : -1
+                : insertAfter
+                  ? 1
+                  : 0);
           } else {
             destIndex = overIndex;
           }
         } else {
           if (activeRect && overRect) {
-            const insertAfter = (activeRect.left + activeRect.width / 2) > (overRect.left + overRect.width / 2);
+            const insertAfter =
+              activeRect.left + activeRect.width / 2 >
+              overRect.left + overRect.width / 2;
             destIndex = overIndex + (insertAfter ? 1 : 0);
           } else {
             destIndex = overIndex;

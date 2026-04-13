@@ -1,28 +1,27 @@
-import { useState, useEffect, memo } from "react";
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { getPublishedNews, type NewsArticle } from "@/lib/newsApi";
 import { FileText } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+
+const fetchNews = async (): Promise<NewsArticle[]> => {
+  return getPublishedNews(6);
+};
 
 export const NewsSection = memo(() => {
-  const [news, setNews] = useState<NewsArticle[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: news,
+    isLoading,
+    error,
+  } = useQuery<NewsArticle[]>({
+    queryKey: ["news", "published"],
+    queryFn: fetchNews,
+    staleTime: 5 * 60 * 1000, // 5 минут — данные считаются свежими
+    gcTime: 30 * 60 * 1000, // 30 минут — хранение в кеше
+    refetchOnWindowFocus: false, // Не рефетчить при фокусе окна
+  });
 
-  useEffect(() => {
-    const loadNews = async () => {
-      try {
-        const articles = await getPublishedNews(6);
-        setNews(articles);
-      } catch (error) {
-        console.error("Failed to load news:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadNews();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="mb-12 reveal" data-reveal>
         <div className="flex items-end justify-between mb-6">
@@ -54,7 +53,7 @@ export const NewsSection = memo(() => {
     );
   }
 
-  if (news.length === 0) {
+  if (error || !news || news.length === 0) {
     return null;
   }
 

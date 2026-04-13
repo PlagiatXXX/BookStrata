@@ -409,7 +409,12 @@ const TierListEditorContent = () => {
           onUploadBooks={async (files: File[]) => {
             // Преобразуем файлы в книги и добавляем
             for (const file of files) {
-              const coverImageUrl = URL.createObjectURL(file);
+              // Конвертируем в base64 data URL — persist после перезагрузки
+              const coverImageUrl = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.readAsDataURL(file);
+              });
               const bookId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
               dispatch({
                 type: "ADD_BOOKS",

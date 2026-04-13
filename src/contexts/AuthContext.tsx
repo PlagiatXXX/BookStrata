@@ -1,13 +1,7 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  type ReactNode,
-} from "react";
+import React, { useState, useCallback, useRef, type ReactNode } from "react";
 import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
-import { getAuthToken, removeAuthToken, apiValidateToken } from "@/lib/authApi";
+import { getAuthToken, removeAuthToken } from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
 import { createLogger } from "@/lib/logger";
 
@@ -21,93 +15,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const refreshUserDataRef = useRef<(() => void) | null>(null);
 
-  // Функция для проверки токена и получения полных данных пользователя
-  const checkToken = useCallback(async () => {
+  // Функция для получения данных пользователя по токену
+  // Оптимизация: сразу вызываем getMe вместо validate + getMe (2 запроса → 1)
+  const fetchUser = useCallback(async () => {
     const token = getAuthToken();
-    if (token) {
-      try {
-        authLogger.info("Validating stored auth token");
-        const response = await apiValidateToken(token);
-        if (response.valid && response.userId && response.username) {
-          // Получаем полные данные пользователя с сервера
-          try {
-            const fullUserData = await apiGetMe();
-            setUser({
-              userId: fullUserData.id,
-              username: fullUserData.username,
-              avatarUrl: fullUserData.avatarUrl,
-              role: fullUserData.role || response.role,
-              isPro: fullUserData.isPro,
-              proExpiresAt: fullUserData.proExpiresAt,
-            });
-            authLogger.info("User data fetched successfully", {
-              userId: fullUserData.id,
-              username: fullUserData.username,
-              hasAvatar: !!fullUserData.avatarUrl,
-              role: fullUserData.role || response.role,
-              isPro: fullUserData.isPro,
-            });
-            authLogger.info("User data updated via apiGetMe", {
-              userId: fullUserData.id,
-              username: fullUserData.username,
-              hasAvatar: !!fullUserData.avatarUrl,
-              avatarUrl: fullUserData.avatarUrl?.substring(0, 50) + "...",
-            });
-          } catch {
-            // Если не удалось получить данные, используем минимальные из токена
-            setUser({
-              userId: response.userId,
-              username: response.username,
-              role: response.role,
-            });
-          }
-        } else {
-          authLogger.warn("Auth token validation failed - token is invalid");
-          removeAuthToken();
-          setUser(null);
-        }
-      } catch (err) {
-        if (err instanceof Error) {
-          authLogger.error(err, { action: "token validation" });
-        }
-        removeAuthToken();
-        setUser(null);
-      }
-    } else {
+    if (!token) {
       setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      authLogger.info("Fetching user profile");
+      const fullUserData = await apiGetMe();
+      setUser({
+        userId: fullUserData.id,
+        username: fullUserData.username,
+        avatarUrl: fullUserData.avatarUrl,
+        role: fullUserData.role || "user",
+        isPro: fullUserData.isPro,
+        proExpiresAt: fullUserData.proExpiresAt,
+      });
+      authLogger.info("User data fetched successfully", {
+        userId: fullUserData.id,
+        username: fullUserData.username,
+        hasAvatar: !!fullUserData.avatarUrl,
+        role: fullUserData.role,
+        isPro: fullUserData.isPro,
+      });
+    } catch (err) {
+      // Если getMe вернул 401, handleResponse уже вызвал refreshAccessToken
+      // Если refresh тоже не удался — значит пользователь не авторизован
+      authLogger.warn("Failed to fetch user profile", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      setUser(null);
+      removeAuthToken();
     }
     setIsLoading(false);
   }, []);
 
   // Функция для принудительного обновления данных пользователя
   const refreshUser = useCallback(async () => {
-    authLogger.info("Refresh user called from Avatar update");
-    await checkToken();
-  }, [checkToken]);
+    authLogger.info("Refresh user called");
+    setIsLoading(true);
+    await fetchUser();
+  }, [fetchUser]);
 
   // Сохраняем ссылку на refreshUser для доступа извне
-  useEffect(() => {
+  React.useEffect(() => {
     refreshUserDataRef.current = refreshUser;
   }, [refreshUser]);
 
   // Обработчик изменения токена
   const handleAuthTokenChanged = useCallback(() => {
-    checkToken();
-  }, [checkToken]);
+    fetchUser();
+  }, [fetchUser]);
 
   // Обработчик обновления аватара
   const handleAvatarUpdated = useCallback(() => {
-    // Обновляем данные пользователя при смене аватара
     refreshUser();
   }, [refreshUser]);
 
   // Проверяем токен при загрузке и слушаем события авторизации
-  useEffect(() => {
+  React.useEffect(() => {
     let isMounted = true;
 
     const performCheck = async () => {
       if (isMounted) {
-        await checkToken();
+        await fetchUser();
       }
     };
 
@@ -126,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("storage", handleAuthTokenChanged);
       window.removeEventListener("avatar-updated", handleAvatarUpdated);
     };
-  }, [checkToken, handleAuthTokenChanged, handleAvatarUpdated]);
+  }, [fetchUser, handleAuthTokenChanged, handleAvatarUpdated]);
 
   function logout() {
     authLogger.info("User logout");
