@@ -35,6 +35,7 @@ const TemplateLibrary = lazy(
 const CreateTemplatePage = lazy(() => import("@/pages/CreateTemplatePage"));
 const EditTemplatePage = lazy(() => import("@/pages/EditTemplatePage"));
 const CommunityPage = lazy(() => import("@/pages/CommunityPage"));
+const ForumPage = lazy(() => import("@/pages/ForumPage"));
 const NewsPage = lazy(() =>
   import("@/pages/NewsPage").then((module) => ({
     default: module.NewsPage,
@@ -109,6 +110,10 @@ export const router = createBrowserRouter([
           {
             path: "/community",
             element: <CommunityPage />,
+          },
+          {
+            path: "/forum",
+            element: <ForumPage />,
           },
           {
             path: "/news/:id",

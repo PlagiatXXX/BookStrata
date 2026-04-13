@@ -1,0 +1,82 @@
+.forum-shell {
+  color: var(--ink-0);
+  background: var(--bg-0);
+}
+
+.forum-stat-card {
+  transition: transform 0.2s ease;
+}
+
+.forum-stat-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-main);
+}
+
+.forum-tab.active {
+  color: var(--ink-0);
+}
+
+.brutal-shadow-sm {
+  box-shadow: 2px 2px 0px var(--line-strong);
+}
+
+/* Re-using some community styles for consistency */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-main);
+}
+
+.community-heading {
+  font-family: "Space Grotesk", "Manrope", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.community-rule {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--line-soft) 35%, var(--line-strong) 50%, var(--line-soft) 65%, transparent 100%);
+}
+
+.brutal-border {
+  border: 1.5px solid var(--line-soft);
+}
+
+.brutal-card {
+  border-radius: 4px;
+  background: var(--bg-1);
+}
+
+.brutal-cta {
+  border: 1.5px solid var(--line-strong);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.brutal-label {
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .hover-lift, .brutal-cta {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
+}

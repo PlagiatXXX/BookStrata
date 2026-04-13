@@ -1,9 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, TrendingUp, Lock } from "lucide-react";
+import { Plus, TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
-import { useUser } from "@/hooks/useUser";
-import { sileo } from "sileo";
 import { createTierList, saveTierListTiers } from "@/lib/tierListApi";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { TemplateGrid } from "@/components/CommunityComponents/TemplateGrid";
@@ -13,6 +11,7 @@ import { CollectionsSection } from "@/components/CommunityComponents/Collections
 import { TemplatePreviewModal } from "@/components/CommunityComponents/TemplatePreviewModal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { type TemplateItem } from "../../data/mockData";
+import { sileo } from "sileo";
 import { memo } from "react";
 import "./CommunityPage.css";
 
@@ -24,9 +23,6 @@ const MemoizedNewsSection = memo(NewsSection);
 const MemoizedCollectionsSection = memo(CollectionsSection);
 
 export default function CommunityPage() {
-  const { user, isLoading: isUserLoading } = useUser();
-  const isAdmin = user?.role === "admin" || user?.role === "moderator";
-
   const [activeCategory, setActiveCategory] = useState("actual");
   const [searchQuery, setSearchQuery] = useState("");
   const [applyingTemplateId, setApplyingTemplateId] = useState<number | null>(
@@ -125,21 +121,7 @@ export default function CommunityPage() {
       activeItem="Новости"
     >
       <div className="community-shell min-h-screen">
-        {!isAdmin && !isUserLoading ? (
-          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
-            <div className="w-20 h-20 bg-(--accent-main) rounded-full flex items-center justify-center mb-6 brutal-shadow">
-              <Lock size={40} className="text-(--bg-0)" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter uppercase italic">
-              Скоро в эфире
-            </h1>
-            <p className="text-(--ink-1) max-w-md text-sm leading-relaxed font-medium uppercase tracking-wider">
-              Раздел сообщества с битвами тир-листов и голосованием находится в разработке.
-              <br />Загляните позже!
-            </p>
-          </div>
-        ) : (
-          <main className="max-w-7xl mx-auto px-6 pb-20 cursor-default text-(--ink-0)">
+        <main className="max-w-7xl mx-auto px-6 pb-20 cursor-default text-(--ink-0)">
           <MemoizedHeroSection
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -178,11 +160,10 @@ export default function CommunityPage() {
             <div className="community-rule flex-1" />
           </div>
 
-            <MemoizedNewsSection />
+          <MemoizedNewsSection />
 
-            <MemoizedCollectionsSection />
-          </main>
-        )}
+          <MemoizedCollectionsSection />
+        </main>
       </div>
 
       <Link

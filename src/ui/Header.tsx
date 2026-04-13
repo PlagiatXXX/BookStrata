@@ -42,16 +42,13 @@ export const Header = ({
     (() => {
       const path = location.pathname;
       if (path === "/community") return "Новости";
+      if (path === "/forum") return "Сообщество";
       if (path === "/templates" || path.startsWith("/templates/"))
         return "Шаблоны";
       if (path === "/" || path.startsWith("/tier-lists/"))
         return "Мои Рейтинги";
       return undefined;
     })();
-
-  // Обновлять данные пользователя при изменении аватара
-  // Примечание: удалено, т.к. вызывает дублирование запросов
-  // React Query автоматически обновляет кэш через invalidateQueries
 
   const handleSearchChange = (query: string) => {
     onSearch?.(query);
@@ -77,10 +74,9 @@ export const Header = ({
     },
     {
       label: "Сообщество",
-      onClick: () => navigate("/community"),
+      onClick: () => navigate("/forum"),
       icon: <Globe size={18} />,
       description: "Сообщество пользователей",
-      badge: "Скоро",
     },
     ...(showTemplatesNav
       ? [
@@ -109,12 +105,11 @@ export const Header = ({
               <button
                 key={item.label}
                 onClick={item.onClick}
-                disabled={!!item.badge}
                 className={`group relative px-4 py-2 rounded-lg cursor-pointer ${
                   activeItem === item.label
                     ? "text-cyan-400"
                     : "text-gray-300 hover:text-white"
-                } transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed`}
+                } transition-all duration-300`}
               >
                 <div className="flex items-center gap-2">
                   {item.icon}
@@ -191,12 +186,11 @@ export const Header = ({
                   item.onClick?.();
                   setIsMobileMenuOpen(false);
                 }}
-                disabled={!!item.badge}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer ${
                   activeItem === item.label
                     ? "text-cyan-400"
                     : "text-gray-300 hover:text-white"
-                } hover:bg-slate-800/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm`}
+                } hover:bg-slate-800/50 transition-all duration-200 text-sm`}
               >
                 {item.icon}
                 <div className="text-left flex-1">
