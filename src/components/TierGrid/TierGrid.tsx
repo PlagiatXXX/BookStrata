@@ -20,56 +20,84 @@ interface TierGridProps {
   onViewBook?: (book: Book) => void;
 }
 
-// Separate component for rendering a tier row to optimize memoization
-const TierGridRow = memo(({
-  tier,
-  allBooks,
-  isActive,
-  onChangeColor,
-  onRename,
-  onDelete,
-  onDeleteBook,
-  onEditBook,
-  onViewBook,
-  onSetActive
-}: {
-  tier: Tier;
-  allBooks: Record<string, Book>;
-  isActive: boolean;
-  onChangeColor: (tierId: string, newColor: string) => void;
-  onRename: (tierId: string, newTitle: string) => void;
-  onDelete: (tierId: string) => void;
-  onDeleteBook: (bookId: string) => void;
-  onEditBook?: (book: Book) => void;
-  onViewBook?: (book: Book) => void;
-  onSetActive: (tierId: string) => void;
-}) => {
-  // Extract book IDs to create a stable dependency for mapping
-  const bookIds = tier.bookIds;
+// Separate component for rendering a tier row to optimize memoization.
+// Оптимизация Bolt: используем кастомную функцию сравнения для React.memo,
+// чтобы избежать ререндеров, если изменились книги, не относящиеся к этому тиру.
+const TierGridRow = memo(
+  ({
+    tier,
+    allBooks,
+    isActive,
+    onChangeColor,
+    onRename,
+    onDelete,
+    onDeleteBook,
+    onEditBook,
+    onViewBook,
+    onSetActive,
+  }: {
+    tier: Tier;
+    allBooks: Record<string, Book>;
+    isActive: boolean;
+    onChangeColor: (tierId: string, newColor: string) => void;
+    onRename: (tierId: string, newTitle: string) => void;
+    onDelete: (tierId: string) => void;
+    onDeleteBook: (bookId: string) => void;
+    onEditBook?: (book: Book) => void;
+    onViewBook?: (book: Book) => void;
+    onSetActive: (tierId: string) => void;
+  }) => {
+    const bookIds = tier.bookIds;
 
-  // We map the books that belong to THIS tier.
-  // We use the JSON representation of book IDs and individual book references to stabilize the memo.
-  // This ensures that updates to UNRELATED books in the dictionary don't trigger a recalculation
-  // of this specific row's book array.
-  const booksInTier = useMemo(() => {
-    return bookIds.map((id) => allBooks[id]).filter(Boolean);
-  }, [bookIds, allBooks]);
+    const booksInTier = useMemo(() => {
+      return bookIds.map((id) => allBooks[id]).filter(Boolean);
+    }, [bookIds, allBooks]);
 
-  return (
-    <TierRow
-      tier={tier}
-      books={booksInTier}
-      onChangeColor={onChangeColor}
-      onRename={onRename}
-      onDelete={onDelete}
-      onDeleteBook={onDeleteBook}
-      onEditBook={onEditBook}
-      onViewBook={onViewBook}
-      onSetActive={onSetActive}
-      isActive={isActive}
-    />
-  );
-});
+    return (
+      <TierRow
+        tier={tier}
+        books={booksInTier}
+        onChangeColor={onChangeColor}
+        onRename={onRename}
+        onDelete={onDelete}
+        onDeleteBook={onDeleteBook}
+        onEditBook={onEditBook}
+        onViewBook={onViewBook}
+        onSetActive={onSetActive}
+        isActive={isActive}
+      />
+    );
+  },
+  (prevProps, nextProps) => {
+    // Проверяем основные пропсы на равенство
+    if (prevProps.isActive !== nextProps.isActive) return false;
+    if (prevProps.tier !== nextProps.tier) return false;
+    if (prevProps.onChangeColor !== nextProps.onChangeColor) return false;
+    if (prevProps.onRename !== nextProps.onRename) return false;
+    if (prevProps.onDelete !== nextProps.onDelete) return false;
+    if (prevProps.onDeleteBook !== nextProps.onDeleteBook) return false;
+    if (prevProps.onEditBook !== nextProps.onEditBook) return false;
+    if (prevProps.onViewBook !== nextProps.onViewBook) return false;
+    if (prevProps.onSetActive !== nextProps.onSetActive) return false;
+
+    // Оптимизация Bolt: проверяем только книги, которые находятся в этом тире.
+    // Если в глобальном словаре allBooks изменились другие книги, мы не будем ререндерить этот ряд.
+    const prevIds = prevProps.tier.bookIds;
+    const nextIds = nextProps.tier.bookIds;
+
+    if (prevIds.length !== nextIds.length) return false;
+
+    for (let i = 0; i < prevIds.length; i++) {
+      const id = prevIds[i];
+      // Если ID разные или сам объект книги изменился
+      if (prevIds[i] !== nextIds[i] || prevProps.allBooks[id] !== nextProps.allBooks[id]) {
+        return false;
+      }
+    }
+
+    return true;
+  },
+);
 
 TierGridRow.displayName = "TierGridRow";
 

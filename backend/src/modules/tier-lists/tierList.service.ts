@@ -208,41 +208,38 @@ export async function addBooksToTierList(
     );
   }
 
-  // Используем одну транзакцию для всех операций
-  const results = await prisma.$transaction(async (tx) => {
-    const createBookPromises = books.map((bookData) =>
-      tx.book.create({
-        data: {
-          title: bookData.title,
-          author: bookData.author ?? null,
-          coverImageUrl: bookData.coverImageUrl,
-          description: bookData.description ?? null,
-          thoughts: bookData.thoughts ?? null,
-        },
-      }),
-    );
-
-    const createdBooks = await Promise.all(createBookPromises);
-
-    const createPlacementPromises = createdBooks.map((book, index) =>
-      tx.bookPlacement.create({
-        data: {
-          tierListId,
-          bookId: book.id,
-          tierId: null,
-          rank: existingBooksCount + index, // Сохраняем порядок
-        },
+  // Оптимизация Bolt: использование вложенного create в одном update для O(1) roundtrip.
+  // Мы создаем и книгу, и ее размещение одним запросом к Prisma.
+  const updatedTierList = await prisma.tierList.update({
+    where: { id: tierListId },
+    data: {
+      placements: {
+        create: books.map((bookData, index) => ({
+          rank: existingBooksCount + index,
+          book: {
+            create: {
+              title: bookData.title,
+              author: bookData.author ?? null,
+              coverImageUrl: bookData.coverImageUrl,
+              description: bookData.description ?? null,
+              thoughts: bookData.thoughts ?? null,
+            },
+          },
+        })),
+      },
+    },
+    include: {
+      placements: {
         include: { book: true },
-      }),
-    );
-
-    const placements = await Promise.all(createPlacementPromises);
-
-    // Возвращаем в формате [{ book: {...} }]
-    return placements.map((placement) => ({ book: placement.book }));
+        orderBy: { rank: "asc" },
+      },
+    },
   });
 
-  return results;
+  // Возвращаем только новые добавленные книги (они в конце списка согласно rank)
+  return updatedTierList.placements
+    .slice(-books.length)
+    .map((p) => ({ book: p.book }));
 }
 
 // Обновление книги
@@ -598,35 +595,32 @@ export async function forkTierList(id: number, userId: number) {
       tierMap.set(oldTier.id, newTier.id);
     });
 
-    // 4. Копируем книги и создаем размещения (параллельно)
-    // Оптимизация Bolt: используем Promise.all и вложенный create для сокращения roundtrip-ов.
-    // Это сокращает количество последовательных запросов с O(B*2) до O(1).
-    await Promise.all(
-      original.placements.map(async (placement) => {
-        // Сначала создаём книгу
-        const newBook = await tx.book.create({
-          data: {
-            title: placement.book.title,
-            author: placement.book.author,
-            coverImageUrl: placement.book.coverImageUrl,
-            description: placement.book.description,
-            thoughts: placement.book.thoughts,
+    // 4. Копируем книги и создаем размещения одним запросом (O(1) roundtrip)
+    // Оптимизация Bolt: использование вложенного create в одном update для истинного O(1).
+    if (original.placements.length > 0) {
+      await tx.tierList.update({
+        where: { id: newTierList.id },
+        data: {
+          placements: {
+            create: original.placements.map((placement) => ({
+              rank: placement.rank,
+              tierId: placement.tierId
+                ? (tierMap.get(placement.tierId) ?? null)
+                : null,
+              book: {
+                create: {
+                  title: placement.book.title,
+                  author: placement.book.author,
+                  coverImageUrl: placement.book.coverImageUrl,
+                  description: placement.book.description,
+                  thoughts: placement.book.thoughts,
+                },
+              },
+            })),
           },
-        });
-
-        // Затем создаём размещение с bookId
-        return tx.bookPlacement.create({
-          data: {
-            tierListId: newTierList.id,
-            tierId: placement.tierId
-              ? (tierMap.get(placement.tierId) ?? null)
-              : null,
-            rank: placement.rank,
-            bookId: newBook.id,
-          },
-        });
-      }),
-    );
+        },
+      });
+    }
 
     logger.info("Тир-лист успешно скопирован (forked)", {
       originalId: id,
