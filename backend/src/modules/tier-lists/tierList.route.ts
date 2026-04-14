@@ -8,6 +8,7 @@ import { createLogger } from "../../lib/logger.js";
 import { checkProLimit, checkBookLimit } from "../../middleware/proLimit.js";
 import * as service from "./tierList.service.js";
 import * as schema from "./tierList.schema.js";
+import { uploadBase64, uploadFromUrl } from "../../lib/cloudinary.js";
 import type {
   GetTierListsQuery,
   CreateTierListBody,
@@ -18,7 +19,6 @@ import {
   getLikesWithStatus,
   getLikedTierListIds,
 } from "./likes/likes.service.js";
-import { uploadBase64, uploadFromUrl } from "../../lib/cloudinary.js";
 import { addBooksToTierList } from "./tierList.service.js";
 
 // Логгер для роутов тир-листов
@@ -649,5 +649,50 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         return reply.code(500).send({ message: "Failed to fork tier list" });
       }
     },
+  );
+
+  // PUT /:id/save-all -> Атомарное сохранение всего (тиры, книги, позиции)
+  fastify.put<{
+    Params: { id: string };
+    Body: any;
+  }>(
+    "/:id/save-all",
+    { preHandler: [authMiddleware], schema: schema.saveAllSchema },
+    async (request, reply) => {
+      const tierListId = parseInt(request.params.id, 10);
+      await service.assertOwner(tierListId, request.user!.userId);
+
+      const body = request.body as any;
+      // Процессим картинки для новых книг, если они в base64
+      if (body.newBooks?.length) {
+        body.newBooks = await Promise.all(
+          body.newBooks.map(async (book: any) => {
+            if (book.coverImageUrl && book.coverImageUrl.startsWith("data:")) {
+              try {
+                const uploadResult = await uploadBase64(
+                  book.coverImageUrl,
+                  "tiermaker-pro/book-covers"
+                );
+                return { ...book, coverImageUrl: uploadResult.url };
+              } catch (error) {
+                return { ...book, coverImageUrl: "" };
+              }
+            }
+            return book;
+          })
+        );
+      }
+
+      const result = await service.saveAll(
+        tierListId,
+        request.user!.userId,
+        body
+      );
+
+      return reply.code(200).send({
+        message: "Saved successfully",
+        ...result,
+      });
+    }
   );
 }

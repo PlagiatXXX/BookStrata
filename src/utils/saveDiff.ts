@@ -1,32 +1,33 @@
 import type { TierListData } from '@/types';
 
-interface PlacementDiff {
-  bookId: number;
-  tierId: number | null;
+export interface AtomicPlacement {
+  bookId: string | number;
+  tierId: string | number | null;
   rank: number;
 }
 
-interface TierAddDiff {
+export interface AtomicTierAdd {
+  tempId: string;
   title: string;
   color: string;
   rank: number;
 }
 
-interface TierUpdateDiff {
+export interface AtomicTierUpdate {
   id: number;
   title: string;
   color: string;
   rank: number;
 }
 
-interface TiersDiff {
-  added: TierAddDiff[];
-  updated: TierUpdateDiff[];
+export interface AtomicTiersDiff {
+  added: AtomicTierAdd[];
+  updated: AtomicTierUpdate[];
   deletedIds: number[];
 }
 
-interface NewBookDiff {
-  id: string;
+export interface AtomicNewBook {
+  tempId: string;
   title: string;
   author?: string;
   coverImageUrl: string;
@@ -34,117 +35,96 @@ interface NewBookDiff {
   thoughts?: string;
 }
 
+export interface AtomicSavePayload {
+  tiers: AtomicTiersDiff;
+  newBooks: AtomicNewBook[];
+  placements: AtomicPlacement[];
+}
+
 function toNumericId(id: string): number | null {
   if (!/^\d+$/.test(id)) return null;
-
   const parsed = Number.parseInt(id, 10);
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-function isTempBookId(id: string): boolean {
-  return toNumericId(id) === null;
-}
+export function getAtomicSavePayload(listData: TierListData): AtomicSavePayload {
+  const addedTiers: AtomicTierAdd[] = [];
+  const updatedTiers: AtomicTierUpdate[] = [];
+  const placements: AtomicPlacement[] = [];
 
-function isTempTierId(id: string): boolean {
-  return toNumericId(id) === null;
-}
-
-export function getPlacementsDiff(listData: TierListData): PlacementDiff[] {
-  const placements: PlacementDiff[] = [];
-
-  listData.tierOrder.forEach((tierId) => {
-    const numericTierId = toNumericId(tierId);
-    if (numericTierId === null) return;
-
+  // Собираем тиры и их позиции
+  listData.tierOrder.forEach((tierId, rank) => {
     const tier = listData.tiers[tierId];
     if (!tier) return;
 
-    tier.bookIds.forEach((bookId, rank) => {
-      if (isTempBookId(bookId)) return;
-      const numericBookId = toNumericId(bookId);
-      if (numericBookId === null) return;
-
-      placements.push({
-        bookId: numericBookId,
-        tierId: numericTierId,
+    const numericTierId = toNumericId(tierId);
+    if (numericTierId === null) {
+      addedTiers.push({
+        tempId: tierId,
+        title: tier.title,
+        color: tier.color,
         rank,
+      });
+    } else {
+      updatedTiers.push({
+        id: numericTierId,
+        title: tier.title,
+        color: tier.color,
+        rank,
+      });
+    }
+
+    // Собираем позиции книг в этом тире
+    tier.bookIds.forEach((bookId, bookRank) => {
+      const numericBookId = toNumericId(bookId);
+      placements.push({
+        bookId: numericBookId ?? bookId,
+        tierId: numericTierId ?? tierId,
+        rank: bookRank,
       });
     });
   });
 
+  // Собираем позиции unranked книг
   listData.unrankedBookIds.forEach((bookId, rank) => {
-    if (isTempBookId(bookId)) return;
     const numericBookId = toNumericId(bookId);
-    if (numericBookId === null) return;
-
     placements.push({
-      bookId: numericBookId,
+      bookId: numericBookId ?? bookId,
       tierId: null,
       rank,
     });
   });
 
-  return placements;
-}
-
-export function getTiersDiff(listData: TierListData): TiersDiff {
-  const added: TierAddDiff[] = [];
-  const updated: TierUpdateDiff[] = [];
-
-  listData.tierOrder.forEach((tierId, rank) => {
-    const tier = listData.tiers[tierId];
-    if (!tier) return;
-
-    if (isTempTierId(tierId)) {
-      added.push({
-        title: tier.title,
-        color: tier.color,
-        rank,
-      });
-      return;
-    }
-
-    const numericTierId = toNumericId(tierId);
-    if (numericTierId === null) return;
-
-    updated.push({
-      id: numericTierId,
-      title: tier.title,
-      color: tier.color,
-      rank,
-    });
-  });
-
-  return {
-    added,
-    updated,
-    deletedIds: listData.deletedTierIds || [],
-  };
-}
-
-export function getNewBooks(listData: TierListData): NewBookDiff[] {
-  return Object.values(listData.books)
-    .filter((book) => isTempBookId(book.id))
+  // Собираем новые книги
+  const newBooks = Object.values(listData.books)
+    .filter((book) => toNumericId(book.id) === null)
     .map((book) => ({
-      id: book.id,
+      tempId: book.id,
       title: book.title,
       author: book.author,
       coverImageUrl: book.coverImageUrl,
       description: book.description,
       thoughts: book.thoughts,
     }));
+
+  return {
+    tiers: {
+      added: addedTiers,
+      updated: updatedTiers,
+      deletedIds: listData.deletedTierIds || [],
+    },
+    newBooks,
+    placements,
+  };
 }
 
 export function hasChangesToSave(listData: TierListData): boolean {
-  const placements = getPlacementsDiff(listData);
-  const tiers = getTiersDiff(listData);
-  const newBooks = getNewBooks(listData);
-
+  const payload = getAtomicSavePayload(listData);
   return (
-    placements.length > 0 ||
-    tiers.added.length > 0 ||
-    tiers.updated.length > 0 ||
-    tiers.deletedIds.length > 0 ||
-    newBooks.length > 0
+    payload.tiers.added.length > 0 ||
+    payload.tiers.updated.length > 0 ||
+    payload.tiers.deletedIds.length > 0 ||
+    payload.newBooks.length > 0 ||
+    payload.placements.length > 0 // На самом деле placements всегда есть, если есть книги
   );
 }

@@ -1,5 +1,5 @@
 import "./ExportThemes.css";
-import { useRef } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
@@ -18,6 +18,7 @@ import { useTierEditorQueries } from "./hooks/useTierEditorQueries";
 import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
+import { useTierEditorDraft } from "./hooks/useTierEditorDraft";
 import "./TierEditorPage.css";
 import type { Book, Tier } from "@/types";
 
@@ -121,12 +122,10 @@ const TierListEditorContent = () => {
 
   // ========== ОПТИМИЗИРОВАННОЕ АВТОСОХРАНЕНИЕ ==========
   const {
-    autoSaveStatus,
+    saveStatus,
     lastSaved,
-    forceSave,
-    cancel,
+    handleSave,
     getSavePayload,
-    savePayload,
   } = useTierEditorSave({
     tierListId,
     listData,
@@ -136,6 +135,19 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges,
     logger,
   });
+
+  const { checkAndRestoreDraft } = useTierEditorDraft({
+    tierListId,
+    listData,
+    hasUnsavedChanges,
+    dispatch: dispatch as React.Dispatch<Action>,
+    setHasUnsavedChanges,
+    sileo,
+  });
+
+  useEffect(() => {
+    checkAndRestoreDraft();
+  }, [tierListId]);
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Получаем функции из хука действий
@@ -309,14 +321,14 @@ const TierListEditorContent = () => {
       isReadOnly,
       ignoreUnsavedBlocker,
       hasUnsavedChanges,
-      autoSaveStatus,
+      saveStatus,
       isUpdatingBook,
       setShowUnsavedModal,
       setIgnoreUnsavedBlocker,
       setDeletedTierIds,
       setIsSavingBeforeLeave,
-      cancel,
-      forceSave,
+      cancel: () => {},
+      forceSave: handleSave,
       navigate,
       logger,
       sileo,
@@ -348,9 +360,10 @@ const TierListEditorContent = () => {
   // Пропсы для EditorHeader
   const headerProps = {
     title: listData.title,
-    autoSaveStatus,
+    saveStatus,
     lastSaved,
-    onSaveRetry: () => savePayload(getSavePayload()),
+    hasUnsavedChanges,
+    onSave: handleSave,
     ...(isReadOnly && {
       author: apiData?.user,
       likesCount: likesData?.likesCount || 0,

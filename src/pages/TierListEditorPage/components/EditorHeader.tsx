@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { forkTierList } from '@/lib/tierListApi';
 import { sileo } from 'sileo';
 import { LikeButton } from '@/components/LikeButton';
-import { AutoSaveIndicator } from './AutoSaveIndicator';
-import type { AutoSaveStatus } from '@/hooks/useAutoSaveOptimized';
+import { SaveButton } from './SaveButton';
+import type { SaveStatus } from '../hooks/useTierEditorSave';
 
 export interface EditorHeaderProps {
   title: string;
@@ -15,11 +15,10 @@ export interface EditorHeaderProps {
   tierListId?: string;
   ownerUserId?: number;
   currentUserId?: number;
-  autoSaveStatus: AutoSaveStatus;
+  saveStatus: SaveStatus;
   lastSaved: Date | null;
-  onSaveRetry: () => void;
-  onFork?: () => void;
-  isForking?: boolean;
+  hasUnsavedChanges: boolean;
+  onSave: () => void;
   isReadOnly?: boolean;
 }
 
@@ -31,9 +30,10 @@ export const EditorHeader = ({
   tierListId,
   ownerUserId,
   currentUserId,
-  autoSaveStatus,
+  saveStatus,
   lastSaved,
-  onSaveRetry,
+  hasUnsavedChanges,
+  onSave,
   isReadOnly = false,
 }: EditorHeaderProps) => {
   const navigate = useNavigate();
@@ -61,52 +61,53 @@ export const EditorHeader = ({
   };
 
   return (
-    <>
-      <AutoSaveIndicator
-        autoSaveStatus={autoSaveStatus}
-        lastSaved={lastSaved}
-        onSaveRetry={onSaveRetry}
-      />
-
-      <div className="mb-8 flex items-end justify-between border-b-4 border-black pb-4">
-        <div>
-          <h1 className="nb-display-lg text-white">
-            {title}
-          </h1>
-          {isReadOnly && (
-            <p className="nb-label-md mt-2 text-[#c1fffe]">
-              Автор: {author?.username}
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
-          {isReadOnly && (
-            <>
-              <button
-                onClick={handleFork}
-                disabled={isForking}
-                className="nb-btn-primary flex items-center gap-2"
-              >
-                <GitFork size={18} />
-                {isForking ? 'Копирую...' : 'Своя версия'}
-              </button>
-              <div className="nb-heavy-border bg-black p-2 h-13 flex items-center justify-center">
-                <LikeButton
-                  id={parseInt(tierListId!)}
-                  type="tierlist"
-                  initialLikes={likesCount || 0}
-                  initialLiked={likedIdsSet?.has(parseInt(tierListId!)) || false}
-                  authorId={ownerUserId}
-                  currentUserId={currentUserId}
-                  size="md"
-                  showLabel={true}
-                />
-              </div>
-            </>
-          )}
-        </div>
+    <div className="mb-8 flex items-end justify-between border-b-4 border-black pb-4">
+      <div>
+        <h1 className="nb-display-lg text-white">
+          {title}
+        </h1>
+        {isReadOnly && (
+          <p className="nb-label-md mt-2 text-[#c1fffe]">
+            Автор: {author?.username}
+          </p>
+        )}
       </div>
-    </>
+
+      <div className="flex items-center gap-4">
+        {!isReadOnly && (
+          <SaveButton
+            status={saveStatus}
+            lastSaved={lastSaved}
+            hasUnsavedChanges={hasUnsavedChanges}
+            onSave={onSave}
+          />
+        )}
+
+        {isReadOnly && (
+          <>
+            <button
+              onClick={handleFork}
+              disabled={isForking}
+              className="nb-btn-primary flex items-center gap-2"
+            >
+              <GitFork size={18} />
+              {isForking ? 'Копирую...' : 'Своя версия'}
+            </button>
+            <div className="nb-heavy-border bg-black p-2 h-13 flex items-center justify-center">
+              <LikeButton
+                id={parseInt(tierListId!)}
+                type="tierlist"
+                initialLikes={likesCount || 0}
+                initialLiked={likedIdsSet?.has(parseInt(tierListId!)) || false}
+                authorId={ownerUserId}
+                currentUserId={currentUserId}
+                size="md"
+                showLabel={true}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 };

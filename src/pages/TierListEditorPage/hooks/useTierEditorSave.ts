@@ -1,21 +1,19 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAutoSaveOptimized } from "@/hooks/useAutoSaveOptimized";
 import {
-  saveTierListOptimized,
-  type SaveTierListPayload,
+  saveTierListAtomic,
 } from "@/lib/tierListApi";
-import { getPlacementsDiff, getTiersDiff, getNewBooks } from "@/utils/saveDiff";
+import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
 import type { TierListData } from "@/types";
 import type { Action } from "@/hooks/useTierList";
 
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 export interface UseTierEditorSaveResult {
-  autoSaveStatus: ReturnType<typeof useAutoSaveOptimized>["status"];
-  lastSaved: ReturnType<typeof useAutoSaveOptimized>["lastSaved"];
-  forceSave: ReturnType<typeof useAutoSaveOptimized>["forceSave"];
-  cancel: ReturnType<typeof useAutoSaveOptimized>["cancel"];
-  getSavePayload: () => SaveTierListPayload;
-  savePayload: (payload: SaveTierListPayload) => Promise<void>;
+  saveStatus: SaveStatus;
+  lastSaved: Date | null;
+  handleSave: () => Promise<void>;
+  getSavePayload: () => AtomicSavePayload;
 }
 
 interface UseTierEditorSaveParams {
@@ -27,6 +25,7 @@ interface UseTierEditorSaveParams {
   setHasUnsavedChanges: (value: boolean) => void;
   logger: {
     info: (message: string, context: { tierListId: string }) => void;
+    error: (error: Error, context: { tierListId: string; action: string }) => void;
   };
 }
 
@@ -40,100 +39,72 @@ export function useTierEditorSave({
   logger,
 }: UseTierEditorSaveParams): UseTierEditorSaveResult {
   const queryClient = useQueryClient();
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  const getSavePayload = useCallback((): SaveTierListPayload => {
-    if (!listData.id) return {};
-
-    const placements = getPlacementsDiff(listData);
-    const tiers = getTiersDiff(listData);
-    const newBooks = getNewBooks(listData);
-
-    return {
-      placements: placements.length > 0 ? placements : undefined,
-      tiers:
-        tiers.added.length > 0 || tiers.updated.length > 0 ? tiers : undefined,
-      newBooks: newBooks.length > 0 ? newBooks : undefined,
-    };
+  const getSavePayload = useCallback((): AtomicSavePayload => {
+    return getAtomicSavePayload(listData);
   }, [listData]);
 
-  const savePayload = useCallback(
-    async (payload: SaveTierListPayload) => {
-      if (!tierListId) return;
+  const handleSave = useCallback(async () => {
+    if (!tierListId || isLoading || isReadOnly) return;
 
-      const result = await saveTierListOptimized(tierListId, payload, listData);
+    setSaveStatus("saving");
+    try {
+      const payload = getSavePayload();
+      const result = await saveTierListAtomic(tierListId, payload);
+
       setHasUnsavedChanges(false);
+      setSaveStatus("saved");
+      setLastSaved(new Date());
 
-      // Если были созданы новые книги, заменяем временные ID на реальные
-      if (result?.bookReplacements && result.bookReplacements.length > 0) {
+      // Заменяем временные ID на реальные (атомарно)
+      if (result?.bookReplacements?.length) {
         dispatch({
           type: "REPLACE_BOOK_IDS",
           payload: result.bookReplacements,
         });
       }
 
-      // Если были созданы новые тиры, заменяем временные ID на реальные
-      if (result?.tierReplacements && result.tierReplacements.length > 0) {
+      if (result?.tierReplacements?.length) {
         dispatch({
           type: "REPLACE_TIER_IDS",
           payload: result.tierReplacements,
         });
       }
 
-      // Обновляем кэш оптимистично без лишнего GET-запроса
-      // Это убирает избыточный запрос GET /api/tier-lists/:id после сохранения
+      // Очищаем черновик после успешного сохранения
+      localStorage.removeItem(`tier-list-draft-${tierListId}`);
+
+      // Обновляем кэш React Query
       queryClient.setQueryData(
         ["tierList", tierListId],
         (old: TierListData | undefined) => {
           if (!old) return old;
-
-          // Собираем bookIds из тиров для восстановления unrankedBookIds
-          const booksInTiers = new Set<string>();
-          if (old.tiers) {
-            Object.values(old.tiers).forEach((tier) => {
-              if (tier.bookIds) {
-                tier.bookIds.forEach((bookId) => booksInTiers.add(bookId));
-              }
-            });
-          }
-
-          // Вычисляем unranked книги (те, что были в unrankedBookIds, но не попали в тиры)
-          const newUnrankedBookIds = (old.unrankedBookIds || []).filter(
-            (bookId) => !booksInTiers.has(bookId),
-          );
-
           return {
             ...old,
-            unrankedBookIds: newUnrankedBookIds,
             updatedAt: new Date().toISOString(),
           };
         },
       );
 
       logger.info("Сохранение успешно", { tierListId });
-    },
-    [tierListId, queryClient, dispatch, listData, setHasUnsavedChanges, logger],
-  );
 
-  const {
-    status: autoSaveStatus,
-    lastSaved,
-    forceSave,
-    cancel,
-  } = useAutoSaveOptimized({
-    listId: tierListId || null,
-    getSavePayload,
-    saveFunction: savePayload,
-    delay: 3000, // 3 секунды
-    enabled: !isLoading && !!listData.id && !isReadOnly,
-    skipNewBooks: false, // Сохраняем и новые книги тоже!
-  });
+      // Через 3 секунды возвращаем статус в idle
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch (error) {
+      setSaveStatus("error");
+      logger.error(error instanceof Error ? error : new Error(String(error)), {
+        tierListId,
+        action: "manual-save",
+      });
+    }
+  }, [tierListId, isLoading, isReadOnly, getSavePayload, setHasUnsavedChanges, dispatch, queryClient, logger]);
 
   return {
-    autoSaveStatus,
+    saveStatus,
     lastSaved,
-    forceSave,
-    cancel,
+    handleSave,
     getSavePayload,
-    savePayload,
   };
 }

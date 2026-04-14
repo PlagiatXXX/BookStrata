@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useBlocker } from 'react-router-dom';
-import type { AutoSaveStatus } from '@/hooks/useAutoSaveOptimized';
+import type { SaveStatus } from './useTierEditorSave';
 
 export interface UseTierEditorBlockerResult {
   blocker: ReturnType<typeof useBlocker>;
@@ -14,7 +14,7 @@ interface UseTierEditorBlockerParams {
   isReadOnly: boolean;
   ignoreUnsavedBlocker: boolean;
   hasUnsavedChanges: boolean;
-  autoSaveStatus: AutoSaveStatus;
+  saveStatus: SaveStatus;
   isUpdatingBook: boolean;
   setShowUnsavedModal: (value: boolean) => void;
   setIgnoreUnsavedBlocker: (value: boolean) => void;
@@ -35,7 +35,7 @@ export function useTierEditorBlocker({
   isReadOnly,
   ignoreUnsavedBlocker,
   hasUnsavedChanges,
-  autoSaveStatus,
+  saveStatus,
   isUpdatingBook,
   setShowUnsavedModal,
   setIgnoreUnsavedBlocker,
@@ -65,7 +65,7 @@ export function useTierEditorBlocker({
   const blocker = useBlocker(
     !isReadOnly &&
       !ignoreUnsavedBlocker &&
-      (hasUnsavedChanges || autoSaveStatus === 'saving' || isUpdatingBook),
+      (hasUnsavedChanges || saveStatus === 'saving' || isUpdatingBook),
   );
 
   useEffect(() => {

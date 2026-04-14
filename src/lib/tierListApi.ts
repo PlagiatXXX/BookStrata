@@ -299,138 +299,18 @@ function fileToBase64(file: File): Promise<string> {
 
 // ========== OPTIMIZED SAVE ==========
 
-export async function saveTierListOptimized(
+// ========== ATOMIC SAVE ==========
+
+export async function saveTierListAtomic(
   id: string,
-  payload: SaveTierListPayload,
-  listData?: TierListData
+  payload: any
 ): Promise<{
   bookReplacements?: { tempId: string; realId: string }[];
   tierReplacements?: { tempId: string; realId: string }[];
 }> {
-  const bookReplacements: { tempId: string; realId: string }[] = [];
-  const tierReplacements: { tempId: string; realId: string }[] = [];
-
-  // 1. Сначала сохраняем tiers (если есть)
-  if (payload.tiers) {
-    const isDiff = 'added' in payload.tiers;
-    if (isDiff) {
-      const tiersDiff = payload.tiers as { added: Array<{ title: string; color: string; rank: number }>; updated: Array<{ id: number; title: string; color: string; rank: number }>; deletedIds?: number[] };
-      if (tiersDiff.added.length > 0 || tiersDiff.updated.length > 0 || (tiersDiff.deletedIds && tiersDiff.deletedIds.length > 0)) {
-        tierListLogger.info('Сохранение tiers (diff)', {
-          tierListId: id,
-          added: tiersDiff.added.length,
-          updated: tiersDiff.updated.length,
-          deleted: tiersDiff.deletedIds?.length || 0,
-          payload: JSON.stringify(tiersDiff)
-        });
-        const savedTiers = await apiClient.put<any[]>(`/tier-lists/${id}/tiers`, tiersDiff);
-
-        // Маппинг временных ID тиров на реальные
-        if (savedTiers && Array.isArray(savedTiers)) {
-          // Находим новые тиры в сохраненных
-          const newSavedTiers = savedTiers.filter(t => t.isNew);
-          if (newSavedTiers.length === tiersDiff.added.length && listData) {
-             // Ищем временные ID в listData
-             const tempTierIds = listData.tierOrder.filter(tid => tid.startsWith('tier-'));
-             newSavedTiers.forEach((t, idx) => {
-               if (tempTierIds[idx]) {
-                 tierReplacements.push({
-                   tempId: tempTierIds[idx],
-                   realId: String(t.id)
-                 });
-               }
-             });
-          }
-        }
-      }
-    } else {
-      const tiersArray = payload.tiers as Array<{ id?: number; title: string; color: string; rank: number }>;
-      if (tiersArray.length > 0) {
-        tierListLogger.info('Сохранение tiers (full)', { tierListId: id, count: tiersArray.length });
-        await apiClient.put(`/tier-lists/${id}/tiers`, tiersArray);
-      }
-    }
-  }
-
-  // 2. Затем сохраняем новые книги (если есть)
-  let results: Array<{ book: { id: number } }> = [];
-  if (payload.newBooks && payload.newBooks.length > 0) {
-    tierListLogger.info('Сохранение новых книг', { tierListId: id, count: payload.newBooks.length });
-
-    results = await addBooksToTierList(id, payload.newBooks.map(book => ({
-      title: book.title,
-      author: book.author || 'Неизвестен',
-      coverImageUrl: book.coverImageUrl,
-      description: book.description || null,
-      thoughts: book.thoughts || null,
-    })));
-
-    // Создаём mapping tempId -> realId
-    payload.newBooks.forEach((book, index) => {
-      if (results[index]?.book?.id) {
-        bookReplacements.push({
-          tempId: book.id,
-          realId: String(results[index].book.id),
-        });
-      }
-    });
-  }
-
-  // 3. Формируем placements для отправки
-  const placementsToSend = payload.placements || [];
-
-  if (payload.newBooks && payload.newBooks.length > 0 && listData) {
-    // Добавляем placements для новых книг
-    payload.newBooks.forEach((book, index) => {
-      const result = results[index];
-      const realBookId = result?.book?.id;
-
-      if (!realBookId) {
-        tierListLogger.warn('saveTierListOptimized: не удалось получить ID книги', { tierListId: id, index });
-        return;
-      }
-
-      // Ищем книгу в тирах
-      let found = false;
-      for (const tierId in listData.tiers) {
-        const tier = listData.tiers[tierId];
-        const idx = tier.bookIds.indexOf(book.id);
-        if (idx !== -1) {
-          placementsToSend.push({
-            bookId: realBookId,
-            tierId: parseInt(tierId, 10),
-            rank: idx,
-          });
-          found = true;
-          break;
-        }
-      }
-
-      // Если не нашли в тирах, проверяем unranked
-      if (!found) {
-        const idx = listData.unrankedBookIds.indexOf(book.id);
-        if (idx !== -1) {
-          placementsToSend.push({
-            bookId: realBookId,
-            tierId: null,
-            rank: idx,
-          });
-        }
-      }
-    });
-  }
-
-  // 4. Сохраняем placements (если есть что сохранять)
-  if (placementsToSend.length > 0) {
-    tierListLogger.info('Сохранение placements', { tierListId: id, count: placementsToSend.length });
-    await apiClient.put(`/tier-lists/${id}/placements`, { placements: placementsToSend });
-  }
-
-  tierListLogger.info('Оптимизированное сохранение завершено', { tierListId: id });
-  return {
-    bookReplacements: bookReplacements.length > 0 ? bookReplacements : undefined,
-    tierReplacements: tierReplacements.length > 0 ? tierReplacements : undefined
-  };
+  tierListLogger.info("Атомарное сохранение тир-листа", { tierListId: id });
+  const result = await apiClient.put<any>(`/tier-lists/${id}/save-all`, payload);
+  return result;
 }
 
 // ========== TRANSFORM FUNCTIONS ==========

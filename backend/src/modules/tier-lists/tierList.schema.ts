@@ -307,3 +307,110 @@ export const getPublicTierListsSchema = {
 export type GetTierListsQuery = z.infer<typeof getTierListsQuerySchema>;
 export type CreateTierListBody = z.infer<typeof createTierListBodySchema>;
 export type TogglePublicBody = z.infer<typeof togglePublicBodySchema>;
+
+export const saveAllSchema = {
+  description: 'Atomic save for all tier list changes (tiers, books, placements)',
+  tags: ['Tier Lists'],
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' },
+    },
+  },
+  body: {
+    type: 'object',
+    properties: {
+      tiers: {
+        type: 'object',
+        properties: {
+          added: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['tempId', 'title', 'color', 'rank'],
+              properties: {
+                tempId: { type: 'string' },
+                title: { type: 'string' },
+                color: { type: 'string' },
+                rank: { type: 'number' },
+              },
+            },
+          },
+          updated: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['id', 'title', 'color', 'rank'],
+              properties: {
+                id: { type: 'number' },
+                title: { type: 'string' },
+                color: { type: 'string' },
+                rank: { type: 'number' },
+              },
+            },
+          },
+          deletedIds: {
+            type: 'array',
+            items: { type: 'number' },
+          },
+        },
+      },
+      newBooks: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['tempId', 'title', 'coverImageUrl'],
+          properties: {
+            tempId: { type: 'string' },
+            title: { type: 'string' },
+            author: { type: ['string', 'null'] },
+            coverImageUrl: { type: 'string' },
+            description: { type: ['string', 'null'] },
+            thoughts: { type: ['string', 'null'] },
+          },
+        },
+      },
+      placements: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['bookId', 'tierId', 'rank'],
+          properties: {
+            bookId: { type: ['number', 'string'] },
+            tierId: { type: ['number', 'string', 'null'] },
+            rank: { type: 'number' },
+          },
+        },
+      },
+    },
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        bookReplacements: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tempId: { type: 'string' },
+              realId: { type: 'string' },
+            },
+          },
+        },
+        tierReplacements: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tempId: { type: 'string' },
+              realId: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  },
+};
