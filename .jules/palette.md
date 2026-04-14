@@ -31,3 +31,7 @@
 ## 2026-04-20 - [Inconsistent UI Limits and Inaccessible Progress Bars]
 **Learning:** Hardcoding limit values (like "10 books") in the UI leads to misleading user feedback when the system-wide constants differ (e.g., 20). Additionally, visual-only progress bars are non-perceivable by screen reader users without explicit ARIA roles.
 **Action:** Always derive UI labels and progress logic from centralized `constants` to ensure consistency. Use `role="progressbar"` with `aria-valuenow`, `aria-valuemax`, and `aria-valuetext` (e.g., "5 из 20 книг") to provide semantic context for assistive technologies.
+
+## 2026-04-21 - [Modal Accessibility & Focus Pattern]
+**Learning:** For modal components, linking the `aria-labelledby` (via `titleId` prop) to the main heading's `id` ensures screen readers announce the modal's purpose immediately. Furthermore, using `autoFocus` on the primary action button within the modal provides instant keyboard interactivity and allows the default 'Enter' key behavior to work without needing complex global key listeners.
+**Action:** Always establish `aria-labelledby` relationships in modals and use `autoFocus` on the most likely primary action to improve accessibility and keyboard efficiency.

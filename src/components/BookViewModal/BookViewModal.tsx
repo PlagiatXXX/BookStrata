@@ -29,19 +29,27 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   const coverUrl = book.coverImageUrl || book.image_url || book.cover_image_url;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="2xl"
+      titleId="book-view-title"
+    >
       <div className="max-h-[90vh] overflow-y-auto border-2 border-black bg-[#111111] text-[#f6f1e8]">
         {/* HEADER */}
         <div className="relative border-b-2 border-black p-6">
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-sm border-2 border-black bg-[#1a1a1a] p-1 text-[#f6f1e8] transition-colors hover:border-[#c1fffe] hover:text-[#c1fffe] focus-visible:ring-2 focus-visible:ring-pink-500"
+            className="absolute right-4 top-4 rounded-sm border-2 border-black bg-[#1a1a1a] p-1 text-[#f6f1e8] transition-colors hover:border-[#c1fffe] hover:text-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
             aria-label="Закрыть"
           >
             <X size={18} />
           </button>
 
-          <h3 className="text-xl font-black leading-tight md:text-2xl">
+          <h3
+            id="book-view-title"
+            className="text-xl font-black leading-tight md:text-2xl"
+          >
             {book.title}
           </h3>
           <p className="mt-1 text-sm font-medium text-[#a0a0a0]">
@@ -107,14 +115,20 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
 
         {/* FOOTER */}
         <div className="flex items-center justify-end gap-3 border-t-2 border-black p-4 max-md:flex-col-reverse">
-          <Button variant="ghost" onClick={onClose}>
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="focus-visible:ring-2 focus-visible:ring-cyan-400"
+          >
             Закрыть
           </Button>
           {onAdd && (
             <Button
               isLoading={isAdding}
               onClick={() => onAdd(book)}
-              className="bg-[#c1fffe] text-black hover:bg-[#a0f0f0]"
+              className="bg-[#c1fffe] text-black hover:bg-[#a0f0f0] focus-visible:ring-2 focus-visible:ring-cyan-600"
+              autoFocus
+              aria-label="Добавить в тир-лист"
             >
               Добавить
             </Button>
