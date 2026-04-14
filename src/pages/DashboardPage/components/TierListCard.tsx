@@ -9,8 +9,7 @@ import {
   CircleDashed,
 } from "lucide-react";
 import type { TierListCardProps } from "../types";
-
-const MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST = 20;
+import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 
 export const TierListCard = memo(({
   tierList,
@@ -20,8 +19,11 @@ export const TierListCard = memo(({
 }: TierListCardProps) => {
   const createdDate = new Date(tierList.createdAt);
   const booksCount = tierList.booksCount || 0;
-  const progress = Math.min(100, Math.round((booksCount / MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST) * 100));
-  const isComplete = booksCount >= MAX_BOOKS_PER_TIER_LIST_PER_TIER_LIST;
+  const progress = Math.min(
+      100,
+      Math.round((booksCount / MAX_BOOKS_PER_TIER_LIST) * 100),
+    );
+    const isComplete = booksCount >= MAX_BOOKS_PER_TIER_LIST;
 
   return (
     <article className="dashboard-card">
@@ -30,18 +32,18 @@ export const TierListCard = memo(({
         <button
           onClick={() => onRename(tierList)}
           className="dashboard-card__rename"
-          title="Переименовать"
+          title={`Переименовать "${tierList.title}"`}
           type="button"
-          aria-label="Переименовать"
+          aria-label={`Переименовать "${tierList.title}"`}
         >
           <Edit2 size={14} />
         </button>
         <button
           onClick={() => onDelete(tierList)}
           className="dashboard-card__delete"
-          title="Удалить"
+          title={`Удалить "${tierList.title}"`}
           type="button"
-          aria-label="Удалить"
+          aria-label={`Удалить "${tierList.title}"`}
         >
           <Trash2 size={14} />
         </button>
@@ -73,6 +75,8 @@ export const TierListCard = memo(({
           }
         }}
         className="dashboard-card__title cursor-pointer"
+        title={`Открыть "${tierList.title}"`}
+          aria-label={`Открыть тир-лист: ${tierList.title}`}
       >
         {tierList.title}
       </h3>
@@ -91,7 +95,14 @@ export const TierListCard = memo(({
           </span>
           <span className="dashboard-card__progress-value">{progress}%</span>
         </div>
-        <div className="dashboard-card__progress-bar">
+             <div
+            className="dashboard-card__progress-bar"
+            role="progressbar"
+            aria-valuenow={booksCount}
+            aria-valuemin={0}
+            aria-valuemax={MAX_BOOKS_PER_TIER_LIST}
+            aria-valuetext={`${booksCount} из ${MAX_BOOKS_PER_TIER_LIST} книг`}
+          >
           <div
             className="dashboard-card__progress-fill"
             style={{ width: `${progress}%` }}
@@ -124,4 +135,5 @@ export const TierListCard = memo(({
       </div>
     </article>
   );
-});
+},
+);

@@ -18,10 +18,10 @@ export const Modal = ({
   useEffect(() => {
     if (isOpen) {
       const handleEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
+        if (e.key === "Escape") onClose();
       };
-      window.addEventListener('keydown', handleEsc);
-      return () => window.removeEventListener('keydown', handleEsc);
+      window.addEventListener("keydown", handleEsc);
+      return () => window.removeEventListener("keydown", handleEsc);
     }
   }, [isOpen, onClose]);
 
@@ -37,7 +37,7 @@ export const Modal = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-none"
+      className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-none"
       onClick={onClose}
       role="presentation"
     >
