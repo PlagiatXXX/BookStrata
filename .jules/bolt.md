@@ -45,3 +45,7 @@
 ## 2026-04-10 - [Consolidated Relational Selects for Activity Status]
 **Learning:** Checking existence of a relation (like 'isLiked') while fetching the entity's own data can be done in a single query using Prisma's `select` or `include` with a filtered relation. This avoids sequential DB roundtrips and application-level merging of results.
 **Action:** When fetching an entity and a per-user status (like 'isLiked', 'isFollowing'), use a single Prisma query with a filtered relational select (`take: 1`) to minimize latency and database load.
+
+## 2026-04-14 - [Batching Sequential Writes in Transactions]
+**Learning:** Sequential 'await' calls for individual record updates and creations within a Prisma transaction create unnecessary database roundtrip overhead. Parallelizing these operations with 'Promise.all' within the transaction scope significantly improves throughput by allowing the database to process independent operations concurrently.
+**Action:** Replace 'for...of' loops that perform independent database writes within a transaction with 'Promise.all'. Combine this with 'Map'-based lookups for any relational ID mapping to maintain O(N) algorithmic complexity while achieving O(1) sequential database wait time.
