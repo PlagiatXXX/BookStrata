@@ -672,8 +672,9 @@ export async function saveAll(
     // const tl = await tx.tierList.findUniqueOrThrow({ where: { id: tierListId } });
     // if (tl.userId !== userId) throw new Error("Forbidden");
 
-    const tierReplacements: { tempId: string; realId: string }[] = [];
-    const bookReplacements: { tempId: string; realId: string }[] = [];
+    // Оптимизация Bolt: Используем Map для O(1) поиска временных ID
+    const tierReplacements = new Map<string, string>();
+    const bookReplacements = new Map<string, string>();
 
     // 2. Обработка тиров
     if (payload.tiers) {
@@ -683,45 +684,57 @@ export async function saveAll(
           where: { id: { in: payload.tiers.deletedIds }, tierListId },
         });
       }
-      // Обновление существующих
+      // Обновление существующих (Оптимизация Bolt: параллельное выполнение)
       if (payload.tiers.updated?.length) {
-        for (const tier of payload.tiers.updated) {
-          await tx.tier.update({
-            where: { id: tier.id },
-            data: { title: tier.title, color: tier.color, rank: tier.rank },
-          });
-        }
+        await Promise.all(
+          payload.tiers.updated.map((tier) =>
+            tx.tier.update({
+              where: { id: tier.id },
+              data: { title: tier.title, color: tier.color, rank: tier.rank },
+            }),
+          ),
+        );
       }
-      // Добавление новых
+      // Добавление новых (Оптимизация Bolt: параллельное выполнение)
       if (payload.tiers.added?.length) {
-        for (const tier of payload.tiers.added) {
-          const created = await tx.tier.create({
-            data: {
-              tierListId,
-              title: tier.title,
-              color: tier.color,
-              rank: tier.rank,
-            },
-          });
-          tierReplacements.push({ tempId: tier.tempId, realId: String(created.id) });
-        }
+        const createdTiers = await Promise.all(
+          payload.tiers.added.map((tier) =>
+            tx.tier.create({
+              data: {
+                tierListId,
+                title: tier.title,
+                color: tier.color,
+                rank: tier.rank,
+              },
+            }),
+          ),
+        );
+
+        payload.tiers.added.forEach((tier, index) => {
+          tierReplacements.set(tier.tempId, String(createdTiers[index].id));
+        });
       }
     }
 
-    // 3. Обработка книг
+    // 3. Обработка книг (Оптимизация Bolt: параллельное выполнение)
     if (payload.newBooks?.length) {
-      for (const bookData of payload.newBooks) {
-        const created = await tx.book.create({
-          data: {
-            title: bookData.title,
-            author: bookData.author ?? null,
-            coverImageUrl: bookData.coverImageUrl,
-            description: bookData.description ?? null,
-            thoughts: bookData.thoughts ?? null,
-          },
-        });
-        bookReplacements.push({ tempId: bookData.tempId, realId: String(created.id) });
-      }
+      const createdBooks = await Promise.all(
+        payload.newBooks.map((bookData) =>
+          tx.book.create({
+            data: {
+              title: bookData.title,
+              author: bookData.author ?? null,
+              coverImageUrl: bookData.coverImageUrl,
+              description: bookData.description ?? null,
+              thoughts: bookData.thoughts ?? null,
+            },
+          }),
+        ),
+      );
+
+      payload.newBooks.forEach((bookData, index) => {
+        bookReplacements.set(bookData.tempId, String(createdBooks[index].id));
+      });
     }
 
     // 4. Обновление позиций (Placements)
@@ -736,10 +749,10 @@ export async function saveAll(
       const placementData = payload.placements.map((p) => {
         let finalBookId: number;
         if (typeof p.bookId === 'string' && p.bookId.includes('-')) {
-          // Это временный ID, ищем в заменах
-          const found = bookReplacements.find((r) => r.tempId === p.bookId);
-          if (!found) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
-          finalBookId = parseInt(found.realId, 10);
+          // Это временный ID, ищем в заменах (Оптимизация Bolt: O(1) Map lookup)
+          const realId = bookReplacements.get(p.bookId);
+          if (!realId) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
+          finalBookId = parseInt(realId, 10);
         } else {
           finalBookId = typeof p.bookId === 'string' ? parseInt(p.bookId, 10) : p.bookId;
         }
@@ -747,9 +760,10 @@ export async function saveAll(
         let finalTierId: number | null = null;
         if (p.tierId !== null) {
           if (typeof p.tierId === 'string' && p.tierId.includes('-')) {
-            const found = tierReplacements.find((r) => r.tempId === p.tierId);
-            if (!found) throw new Error(`Real ID not found for temp tier ID: ${p.tierId}`);
-            finalTierId = parseInt(found.realId, 10);
+            // Оптимизация Bolt: O(1) Map lookup
+            const realId = tierReplacements.get(p.tierId);
+            if (!realId) throw new Error(`Real ID not found for temp tier ID: ${p.tierId}`);
+            finalTierId = parseInt(realId, 10);
           } else {
             finalTierId = typeof p.tierId === 'string' ? parseInt(p.tierId, 10) : p.tierId;
           }
@@ -775,8 +789,8 @@ export async function saveAll(
     });
 
     return {
-      bookReplacements,
-      tierReplacements,
+      bookReplacements: Array.from(bookReplacements.entries()).map(([tempId, realId]) => ({ tempId, realId })),
+      tierReplacements: Array.from(tierReplacements.entries()).map(([tempId, realId]) => ({ tempId, realId })),
     };
   });
 }
