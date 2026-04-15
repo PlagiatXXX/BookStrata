@@ -8,6 +8,36 @@ export { prisma };
 // Логгер для модуля тир-листов
 const logger = createLogger("TierLists", { color: "cyan" });
 
+/**
+ * Validates that provided book and tier IDs belong to the specified tier list (BOLA protection).
+ */
+async function validateBOLA(
+  tx: any,
+  tierListId: number,
+  items: Array<{ bookId: string | number; tierId?: string | number | null }>,
+  excludeTempIds: boolean = false
+) {
+  const [placements, tiers] = await Promise.all([
+    tx.bookPlacement.findMany({ where: { tierListId }, select: { bookId: true } }),
+    tx.tier.findMany({ where: { tierListId }, select: { id: true } }),
+  ]);
+  const validBooks = new Set(placements.map((p: any) => p.bookId));
+  const validTiers = new Set(tiers.map((t: any) => t.id));
+
+  for (const item of items) {
+    const bId = typeof item.bookId === 'string' ? parseInt(item.bookId, 10) : item.bookId;
+    if ((!excludeTempIds || !String(item.bookId).includes('-')) && !validBooks.has(bId)) {
+      throw Object.assign(new Error(`Forbidden: Book ${item.bookId} not in list ${tierListId}`), { statusCode: 403 });
+    }
+    if (item.tierId !== undefined && item.tierId !== null) {
+      const tId = typeof item.tierId === 'string' ? parseInt(item.tierId, 10) : item.tierId;
+      if ((!excludeTempIds || !String(item.tierId).includes('-')) && !validTiers.has(tId)) {
+        throw Object.assign(new Error(`Forbidden: Tier ${item.tierId} not in list ${tierListId}`), { statusCode: 403 });
+      }
+    }
+  }
+}
+
 // Получение списка тир-листов пользователя (краткая информация)
 export async function getUserTierLists(
   userId: number,
@@ -156,6 +186,9 @@ export async function updatePlacements(
   const startTime = Date.now();
 
   if (placements.length === 0) return [];
+
+  // Security Check (BOLA)
+  await validateBOLA(prisma, tierListId, placements);
 
   // Используем upsert вместо update, чтобы создавать записи если их нет
   const transactions = placements.map((p) =>
@@ -726,8 +759,10 @@ export async function saveAll(
 
     // 4. Обновление позиций (Placements)
     if (payload.placements?.length) {
+      // Security Check (BOLA)
+      await validateBOLA(tx, tierListId, payload.placements, true);
+
       // Сначала удаляем все старые позиции для этого тир-листа (атомарная перезапись)
-      // ВАЖНО: Мы удаляем только связи, а не сами книги
       await tx.bookPlacement.deleteMany({
         where: { tierListId },
       });
@@ -736,7 +771,6 @@ export async function saveAll(
       const placementData = payload.placements.map((p) => {
         let finalBookId: number;
         if (typeof p.bookId === 'string' && p.bookId.includes('-')) {
-          // Это временный ID, ищем в заменах
           const found = bookReplacements.find((r) => r.tempId === p.bookId);
           if (!found) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
           finalBookId = parseInt(found.realId, 10);

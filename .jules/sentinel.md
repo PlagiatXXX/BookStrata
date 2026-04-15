@@ -27,3 +27,8 @@
 **Vulnerability:** Inadvertent introduction of multiple lockfiles (`pnpm-lock.yaml` and `package-lock.json`) can lead to version drift and inconsistent builds across environments.
 **Learning:** Even if memory says "pnpm exclusively", always verify the current state of the repo (presence of `package-lock.json`). In monorepos with inconsistent tool usage, respect the existing lockfile format to avoid breaking local development workflows.
 **Prevention:** Before running install commands, check for existing lockfiles. If the project uses `npm`, use `npm install` to maintain the `package-lock.json`. Avoid using `pnpm` if the root contains a valid `package-lock.json`, unless explicitly migrating.
+
+## 2026-04-15 - BOLA in Atomic Save (saveAll) and updatePlacements
+**Vulnerability:** Broken Object Level Authorization (BOLA) in the `saveAll` and `updatePlacements` functions allowed any authenticated user to link any `bookId` or `tierId` to their tier list by simply providing those IDs in the request body.
+**Learning:** Even if the parent resource (`tierListId`) is authorized for the user, the child resources (`bookId`, `tierId`) must also be verified for membership in that specific parent. Without this, an attacker could "steal" books or tiers from other users' lists, potentially leading to data modification across different tier lists and unauthorized data disclosure.
+**Prevention:** In functions that perform bulk or atomic updates, always fetch the authorized sub-resource IDs for the target parent first and validate that every ID provided in the payload belongs to that set before proceeding with any database writes.
