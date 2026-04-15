@@ -34,7 +34,7 @@ export const TierListCard = memo(({
           className="dashboard-card__rename"
           title={`Переименовать "${tierList.title}"`}
           type="button"
-          aria-label={`Переименовать "${tierList.title}"`}
+          aria-label="Переименовать"
         >
           <Edit2 size={14} />
         </button>
@@ -43,7 +43,7 @@ export const TierListCard = memo(({
           className="dashboard-card__delete"
           title={`Удалить "${tierList.title}"`}
           type="button"
-          aria-label={`Удалить "${tierList.title}"`}
+          aria-label="Удалить"
         >
           <Trash2 size={14} />
         </button>
@@ -102,6 +102,7 @@ export const TierListCard = memo(({
             aria-valuemin={0}
             aria-valuemax={MAX_BOOKS_PER_TIER_LIST}
             aria-valuetext={`${booksCount} из ${MAX_BOOKS_PER_TIER_LIST} книг`}
+            aria-label="Прогресс заполнения тир-листа"
           >
           <div
             className="dashboard-card__progress-fill"
