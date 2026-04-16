@@ -45,3 +45,11 @@
 ## 2026-04-10 - [Consolidated Relational Selects for Activity Status]
 **Learning:** Checking existence of a relation (like 'isLiked') while fetching the entity's own data can be done in a single query using Prisma's `select` or `include` with a filtered relation. This avoids sequential DB roundtrips and application-level merging of results.
 **Action:** When fetching an entity and a per-user status (like 'isLiked', 'isFollowing'), use a single Prisma query with a filtered relational select (`take: 1`) to minimize latency and database load.
+
+## 2026-04-11 - [Parallelizing Independent Writes in Complex Transactions]
+**Learning:** In complex transaction methods (like `saveAll`), sequential `await` calls for independent record creations or updates (tiers, books) create unnecessary latency. Parallelizing these operations with `Promise.all` significantly reduces the transaction duration.
+**Action:** Identify independent database writes within transactions and execute them concurrently using `Promise.all` to optimize total I/O wait time.
+
+## 2026-04-11 - [O(N) Complexity for Temporary ID Mapping]
+**Learning:** Using `.find()` lookups on arrays to resolve temporary IDs during bulk persistence operations leads to O(N*M) algorithmic complexity.
+**Action:** Always use a `Map` for O(1) lookups when resolving temporary-to-real ID mappings during bulk operations to ensure O(N+M) total complexity.
