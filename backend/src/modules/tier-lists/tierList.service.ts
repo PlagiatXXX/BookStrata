@@ -672,8 +672,9 @@ export async function saveAll(
     // const tl = await tx.tierList.findUniqueOrThrow({ where: { id: tierListId } });
     // if (tl.userId !== userId) throw new Error("Forbidden");
 
-    const tierReplacements: { tempId: string; realId: string }[] = [];
-    const bookReplacements: { tempId: string; realId: string }[] = [];
+    // Оптимизация Bolt: использование Map для O(1) поиска при маппинге ID
+    const tierMap = new Map<string, string>();
+    const bookMap = new Map<string, string>();
 
     // 2. Обработка тиров
     if (payload.tiers) {
@@ -683,51 +684,72 @@ export async function saveAll(
           where: { id: { in: payload.tiers.deletedIds }, tierListId },
         });
       }
-      // Обновление существующих
-      if (payload.tiers.updated?.length) {
-        for (const tier of payload.tiers.updated) {
-          await tx.tier.update({
-            where: { id: tier.id },
-            data: { title: tier.title, color: tier.color, rank: tier.rank },
-          });
-        }
-      }
-      // Добавление новых
-      if (payload.tiers.added?.length) {
-        for (const tier of payload.tiers.added) {
-          const created = await tx.tier.create({
-            data: {
-              tierListId,
-              title: tier.title,
-              color: tier.color,
-              rank: tier.rank,
-            },
-          });
-          tierReplacements.push({ tempId: tier.tempId, realId: String(created.id) });
-        }
+
+      // Оптимизация Bolt: параллельное обновление и создание тиров (Promise.all)
+      // Сокращает последовательные roundtrip-ы к БД до O(1)
+      const updatePromises = (payload.tiers.updated || []).map((tier) =>
+        tx.tier.update({
+          where: { id: tier.id },
+          data: { title: tier.title, color: tier.color, rank: tier.rank },
+        })
+      );
+
+      const addPromises = (payload.tiers.added || []).map((tier) =>
+        tx.tier.create({
+          data: {
+            tierListId,
+            title: tier.title,
+            color: tier.color,
+            rank: tier.rank,
+          },
+        })
+      );
+
+      const [_, createdTiers] = await Promise.all([
+        Promise.all(updatePromises),
+        Promise.all(addPromises),
+      ]);
+
+      // Заполняем маппинг новыми ID
+      if (payload.tiers.added) {
+        createdTiers.forEach((created, index) => {
+          const addedTiers = payload.tiers?.added;
+          if (!addedTiers) return;
+          const tempId = addedTiers[index].tempId;
+          const realId = String(created.id);
+          tierMap.set(tempId, realId);
+        });
       }
     }
 
     // 3. Обработка книг
     if (payload.newBooks?.length) {
-      for (const bookData of payload.newBooks) {
-        const created = await tx.book.create({
-          data: {
-            title: bookData.title,
-            author: bookData.author ?? null,
-            coverImageUrl: bookData.coverImageUrl,
-            description: bookData.description ?? null,
-            thoughts: bookData.thoughts ?? null,
-          },
-        });
-        bookReplacements.push({ tempId: bookData.tempId, realId: String(created.id) });
-      }
+      const newBooks = payload.newBooks;
+      // Оптимизация Bolt: параллельное создание книг
+      const createdBooks = await Promise.all(
+        newBooks.map((bookData) =>
+          tx.book.create({
+            data: {
+              title: bookData.title,
+              author: bookData.author ?? null,
+              coverImageUrl: bookData.coverImageUrl,
+              description: bookData.description ?? null,
+              thoughts: bookData.thoughts ?? null,
+            },
+          })
+        )
+      );
+
+      createdBooks.forEach((created, index) => {
+        const tempId = newBooks[index].tempId;
+        const realId = String(created.id);
+        bookMap.set(tempId, realId);
+      });
     }
 
     // 4. Обновление позиций (Placements)
     if (payload.placements?.length) {
       // Сначала удаляем все старые позиции для этого тир-листа (атомарная перезапись)
-      // ВАЖНО: Мы удаляем только связи, а не сами книги
       await tx.bookPlacement.deleteMany({
         where: { tierListId },
       });
@@ -736,10 +758,10 @@ export async function saveAll(
       const placementData = payload.placements.map((p) => {
         let finalBookId: number;
         if (typeof p.bookId === 'string' && p.bookId.includes('-')) {
-          // Это временный ID, ищем в заменах
-          const found = bookReplacements.find((r) => r.tempId === p.bookId);
-          if (!found) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
-          finalBookId = parseInt(found.realId, 10);
+          // Оптимизация Bolt: O(1) поиск в Map вместо O(N) в массиве
+          const realId = bookMap.get(p.bookId);
+          if (!realId) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
+          finalBookId = parseInt(realId, 10);
         } else {
           finalBookId = typeof p.bookId === 'string' ? parseInt(p.bookId, 10) : p.bookId;
         }
@@ -747,9 +769,10 @@ export async function saveAll(
         let finalTierId: number | null = null;
         if (p.tierId !== null) {
           if (typeof p.tierId === 'string' && p.tierId.includes('-')) {
-            const found = tierReplacements.find((r) => r.tempId === p.tierId);
-            if (!found) throw new Error(`Real ID not found for temp tier ID: ${p.tierId}`);
-            finalTierId = parseInt(found.realId, 10);
+            // Оптимизация Bolt: O(1) поиск в Map
+            const realId = tierMap.get(p.tierId);
+            if (!realId) throw new Error(`Real ID not found for temp tier ID: ${p.tierId}`);
+            finalTierId = parseInt(realId, 10);
           } else {
             finalTierId = typeof p.tierId === 'string' ? parseInt(p.tierId, 10) : p.tierId;
           }
@@ -775,8 +798,8 @@ export async function saveAll(
     });
 
     return {
-      bookReplacements,
-      tierReplacements,
+      bookReplacements: Array.from(bookMap.entries()).map(([tempId, realId]) => ({ tempId, realId })),
+      tierReplacements: Array.from(tierMap.entries()).map(([tempId, realId]) => ({ tempId, realId })),
     };
   });
 }
