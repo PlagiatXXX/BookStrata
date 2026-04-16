@@ -157,6 +157,40 @@ export async function updatePlacements(
 
   if (placements.length === 0) return [];
 
+  // Security Check (BOLA): Ensure all books and tiers belong to this tier list
+  const bookIds = [...new Set(placements.map((p) => p.bookId))];
+  const tierIds = [
+    ...new Set(
+      placements
+        .map((p) => p.tierId)
+        .filter((tid): tid is number => tid !== null),
+    ),
+  ];
+
+  const [validPlacements, validTiers] = await Promise.all([
+    prisma.bookPlacement.findMany({
+      where: { tierListId, bookId: { in: bookIds } },
+      select: { bookId: true },
+    }),
+    tierIds.length > 0
+      ? prisma.tier.findMany({
+          where: { tierListId, id: { in: tierIds } },
+          select: { id: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  // We only allow updates for books that are already in the list.
+  // If the user wants to add new books, they should use addBooksToTierList first.
+  if (
+    validPlacements.length !== bookIds.length ||
+    validTiers.length !== tierIds.length
+  ) {
+    const error = new Error("Forbidden: Access denied to some books or tiers");
+    (error as any).statusCode = 403;
+    throw error;
+  }
+
   // Используем upsert вместо update, чтобы создавать записи если их нет
   const transactions = placements.map((p) =>
     prisma.bookPlacement.upsert({
@@ -388,7 +422,8 @@ export async function saveTiers(
       await Promise.all(
         updated.map((tier) =>
           tx.tier.update({
-            where: { id: tier.id },
+            // Security: Enforce tierListId to prevent BOLA
+            where: { id: tier.id, tierListId },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
           }),
         ),
@@ -687,7 +722,8 @@ export async function saveAll(
       if (payload.tiers.updated?.length) {
         for (const tier of payload.tiers.updated) {
           await tx.tier.update({
-            where: { id: tier.id },
+            // Security: Enforce tierListId to prevent BOLA
+            where: { id: tier.id, tierListId },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
           });
         }
@@ -726,6 +762,44 @@ export async function saveAll(
 
     // 4. Обновление позиций (Placements)
     if (payload.placements?.length) {
+      // Security Check (BOLA): Ensure existing (numeric) bookIds and tierIds belong to this list
+      const existingBookIds = payload.placements
+        .map((p) => (typeof p.bookId === "string" ? parseInt(p.bookId, 10) : p.bookId))
+        .filter((id): id is number => !isNaN(id) && (id > 0) && (payload.newBooks?.every(nb => nb.tempId !== String(id)) ?? true));
+
+      // We need to be careful: the frontend might send numeric IDs that are actually temp IDs
+      // but usually temp IDs are UUIDs (strings with hyphens).
+      // Based on the code below, temp IDs for books and tiers contain hyphens.
+      const bookIdsToCheck = payload.placements
+        .filter(p => typeof p.bookId === 'number' || (typeof p.bookId === 'string' && !p.bookId.includes('-')))
+        .map(p => typeof p.bookId === 'number' ? p.bookId : parseInt(p.bookId, 10));
+
+      const tierIdsToCheck = payload.placements
+        .filter(p => p.tierId !== null && (typeof p.tierId === 'number' || (typeof p.tierId === 'string' && !p.tierId.includes('-'))))
+        .map(p => typeof p.tierId === 'number' ? p.tierId! : parseInt(p.tierId as string, 10));
+
+      const [validPlacements, validTiers] = await Promise.all([
+        bookIdsToCheck.length > 0
+          ? tx.bookPlacement.findMany({
+              where: { tierListId, bookId: { in: bookIdsToCheck } },
+              select: { bookId: true },
+            })
+          : Promise.resolve([]),
+        tierIdsToCheck.length > 0
+          ? tx.tier.findMany({
+              where: { tierListId, id: { in: tierIdsToCheck } },
+              select: { id: true },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      if (
+        validPlacements.length !== bookIdsToCheck.length ||
+        validTiers.length !== tierIdsToCheck.length
+      ) {
+        throw new Error("Forbidden: Access denied to some books or tiers");
+      }
+
       // Сначала удаляем все старые позиции для этого тир-листа (атомарная перезапись)
       // ВАЖНО: Мы удаляем только связи, а не сами книги
       await tx.bookPlacement.deleteMany({

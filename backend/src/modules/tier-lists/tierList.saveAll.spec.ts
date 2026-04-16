@@ -9,6 +9,7 @@ vi.mock('../../lib/prisma.js', () => ({
       deleteMany: vi.fn(),
       update: vi.fn(),
       create: vi.fn().mockResolvedValue({ id: 101 }),
+      findMany: vi.fn(),
     },
     book: {
       create: vi.fn().mockResolvedValue({ id: 201 }),
@@ -16,6 +17,7 @@ vi.mock('../../lib/prisma.js', () => ({
     bookPlacement: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),
+      findMany: vi.fn(),
     },
     tierList: {
       update: vi.fn(),
@@ -46,6 +48,9 @@ describe('tierList.service.saveAll', () => {
         { bookId: 200, tierId: 10, rank: 1 }
       ]
     };
+
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([{ bookId: 200 }]);
+    (prisma.tier.findMany as any).mockResolvedValue([{ id: 10 }]);
 
     const result = await service.saveAll(tierListId, userId, payload);
 
