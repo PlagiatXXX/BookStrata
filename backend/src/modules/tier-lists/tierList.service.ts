@@ -685,47 +685,72 @@ export async function saveAll(
       }
       // Обновление существующих
       if (payload.tiers.updated?.length) {
-        for (const tier of payload.tiers.updated) {
-          await tx.tier.update({
-            where: { id: tier.id },
-            data: { title: tier.title, color: tier.color, rank: tier.rank },
-          });
-        }
+        // Оптимизация Bolt: параллельное выполнение обновлений тиров (O(1) logical step)
+        await Promise.all(
+          payload.tiers.updated.map((tier) =>
+            tx.tier.update({
+              where: { id: tier.id },
+              data: { title: tier.title, color: tier.color, rank: tier.rank },
+            })
+          )
+        );
       }
       // Добавление новых
       if (payload.tiers.added?.length) {
-        for (const tier of payload.tiers.added) {
-          const created = await tx.tier.create({
-            data: {
-              tierListId,
-              title: tier.title,
-              color: tier.color,
-              rank: tier.rank,
-            },
+        // Оптимизация Bolt: параллельное выполнение создания тиров (O(1) logical step)
+        const addedTiers = payload.tiers.added;
+        const createdTiers = await Promise.all(
+          addedTiers.map((tier) =>
+            tx.tier.create({
+              data: {
+                tierListId,
+                title: tier.title,
+                color: tier.color,
+                rank: tier.rank,
+              },
+            })
+          )
+        );
+        createdTiers.forEach((created, index) => {
+          tierReplacements.push({
+            tempId: addedTiers[index].tempId,
+            realId: String(created.id),
           });
-          tierReplacements.push({ tempId: tier.tempId, realId: String(created.id) });
-        }
+        });
       }
     }
 
     // 3. Обработка книг
     if (payload.newBooks?.length) {
-      for (const bookData of payload.newBooks) {
-        const created = await tx.book.create({
-          data: {
-            title: bookData.title,
-            author: bookData.author ?? null,
-            coverImageUrl: bookData.coverImageUrl,
-            description: bookData.description ?? null,
-            thoughts: bookData.thoughts ?? null,
-          },
+      // Оптимизация Bolt: параллельное выполнение создания книг (O(1) logical step)
+      const newBooksData = payload.newBooks;
+      const createdBooks = await Promise.all(
+        newBooksData.map((bookData) =>
+          tx.book.create({
+            data: {
+              title: bookData.title,
+              author: bookData.author ?? null,
+              coverImageUrl: bookData.coverImageUrl,
+              description: bookData.description ?? null,
+              thoughts: bookData.thoughts ?? null,
+            },
+          })
+        )
+      );
+      createdBooks.forEach((created, index) => {
+        bookReplacements.push({
+          tempId: newBooksData[index].tempId,
+          realId: String(created.id),
         });
-        bookReplacements.push({ tempId: bookData.tempId, realId: String(created.id) });
-      }
+      });
     }
 
     // 4. Обновление позиций (Placements)
     if (payload.placements?.length) {
+      // Оптимизация Bolt: используем Map для O(1) поиска замен ID вместо O(N) поиска в массиве
+      const bookReplacementMap = new Map(bookReplacements.map((r) => [r.tempId, r.realId]));
+      const tierReplacementMap = new Map(tierReplacements.map((r) => [r.tempId, r.realId]));
+
       // Сначала удаляем все старые позиции для этого тир-листа (атомарная перезапись)
       // ВАЖНО: Мы удаляем только связи, а не сами книги
       await tx.bookPlacement.deleteMany({
@@ -735,23 +760,24 @@ export async function saveAll(
       // Создаем новые позиции
       const placementData = payload.placements.map((p) => {
         let finalBookId: number;
-        if (typeof p.bookId === 'string' && p.bookId.includes('-')) {
-          // Это временный ID, ищем в заменах
-          const found = bookReplacements.find((r) => r.tempId === p.bookId);
-          if (!found) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
-          finalBookId = parseInt(found.realId, 10);
+        if (typeof p.bookId === "string" && p.bookId.includes("-")) {
+          // Это временный ID, ищем в Map (O(1))
+          const realId = bookReplacementMap.get(p.bookId);
+          if (!realId) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
+          finalBookId = parseInt(realId, 10);
         } else {
-          finalBookId = typeof p.bookId === 'string' ? parseInt(p.bookId, 10) : p.bookId;
+          finalBookId = typeof p.bookId === "string" ? parseInt(p.bookId, 10) : p.bookId;
         }
 
         let finalTierId: number | null = null;
         if (p.tierId !== null) {
-          if (typeof p.tierId === 'string' && p.tierId.includes('-')) {
-            const found = tierReplacements.find((r) => r.tempId === p.tierId);
-            if (!found) throw new Error(`Real ID not found for temp tier ID: ${p.tierId}`);
-            finalTierId = parseInt(found.realId, 10);
+          if (typeof p.tierId === "string" && p.tierId.includes("-")) {
+            // Ищем в Map (O(1))
+            const realId = tierReplacementMap.get(p.tierId);
+            if (!realId) throw new Error(`Real ID not found for temp tier ID: ${p.tierId}`);
+            finalTierId = parseInt(realId, 10);
           } else {
-            finalTierId = typeof p.tierId === 'string' ? parseInt(p.tierId, 10) : p.tierId;
+            finalTierId = typeof p.tierId === "string" ? parseInt(p.tierId, 10) : p.tierId;
           }
         }
 
