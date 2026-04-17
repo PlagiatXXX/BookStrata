@@ -148,6 +148,20 @@ const TierListEditorContent = () => {
   useEffect(() => {
     checkAndRestoreDraft();
   }, [tierListId]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        if (!isReadOnly && !isLoading) {
+          e.preventDefault();
+          handleSave();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [handleSave, isReadOnly, isLoading]);
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Получаем функции из хука действий
