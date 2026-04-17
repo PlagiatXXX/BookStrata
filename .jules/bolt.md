@@ -45,3 +45,7 @@
 ## 2026-04-10 - [Consolidated Relational Selects for Activity Status]
 **Learning:** Checking existence of a relation (like 'isLiked') while fetching the entity's own data can be done in a single query using Prisma's `select` or `include` with a filtered relation. This avoids sequential DB roundtrips and application-level merging of results.
 **Action:** When fetching an entity and a per-user status (like 'isLiked', 'isFollowing'), use a single Prisma query with a filtered relational select (`take: 1`) to minimize latency and database load.
+
+## 2026-04-17 - [O(N) Complexity in Batch Save ID Mapping]
+**Learning:** Batch save operations (like `saveAll`) that generate temporary IDs on the client and replace them with database IDs on the server can easily fall into O(N^2) or O(N*M) complexity if using `.find()` inside mapping loops.
+**Action:** Always use a `Map` to store temporary-to-real ID mappings during batch processing. This ensures O(1) lookups and maintains O(N) total complexity for the entire save operation regardless of the number of items.
