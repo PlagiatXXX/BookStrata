@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useState, memo } from "react";
+import { useReducer, useCallback, useState, memo, useEffect } from "react";
 import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
@@ -191,11 +191,12 @@ const BookItem = memo(({
       {/* Actions */}
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onView(book);
           }}
-          className="cursor-pointer border-2 border-black bg-[#0d0d0d] p-2 text-[#a8abad] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8]"
+          className="cursor-pointer border-2 border-black bg-[#0d0d0d] p-2 text-[#a8abad] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
           title="Подробнее"
           aria-label="Подробнее"
         >
@@ -203,12 +204,13 @@ const BookItem = memo(({
         </button>
 
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onToggle(book.openLibraryKey);
           }}
           aria-label={isSelected ? "Убрать из выбранного" : "Добавить в выбранное"}
-          className={`flex h-10 w-10 cursor-pointer items-center justify-center border-2 transition-colors ${
+          className={`flex h-10 w-10 cursor-pointer items-center justify-center border-2 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none ${
             isSelected
               ? "border-black bg-[#c1fffe] text-black"
               : "border-black bg-[#0d0d0d] text-[#f6f1e8] hover:border-[#c1fffe] hover:bg-[#171717]"
@@ -256,6 +258,24 @@ export const BookSearchModal = ({
     totalResults,
     clearResults,
   } = useBookSearch({ cacheEnabled: true });
+
+  const handleClose = useCallback(() => {
+    // Очищаем состояние перед закрытием
+    dispatch({ type: "RESET_SEARCH" });
+    clearResults();
+    onClose();
+  }, [clearResults, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [isOpen, handleClose]);
 
   const handleSearch = useCallback(async () => {
     if (!state.query.trim() || state.query.length < 2) return;
@@ -416,13 +436,6 @@ export const BookSearchModal = ({
     }
   };
 
-  const handleClose = () => {
-    // Очищаем состояние перед закрытием
-    dispatch({ type: "RESET_SEARCH" });
-    clearResults();
-    onClose();
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -430,17 +443,9 @@ export const BookSearchModal = ({
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         {/* Overlay */}
         <div
-          role="button"
-          tabIndex={0}
           className="absolute inset-0 cursor-pointer bg-black/75"
           onClick={handleClose}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleClose();
-            }
-          }}
-          aria-label="Закрыть модальное окно"
+          aria-hidden="true"
         />
 
         {/* Modal */}
@@ -459,8 +464,9 @@ export const BookSearchModal = ({
               </h2>
             </div>
             <button
+              type="button"
               onClick={handleClose}
-              className="flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8]"
+              className="flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
               aria-label="Закрыть"
             >
               <X className="h-4 w-4" />
@@ -483,12 +489,13 @@ export const BookSearchModal = ({
                   placeholder="Введите название книги или автора..."
                   aria-label="Поиск книг"
                   autoFocus
-                  className="w-full border-2 border-black bg-[#0a0a0a] py-3 pl-10 pr-10 text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe]"
+                  className="w-full border-2 border-black bg-[#0a0a0a] py-3 pl-10 pr-10 text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
                 />
                 {state.query && (
                   <button
+                    type="button"
                     onClick={() => dispatch({ type: "SET_QUERY", query: "" })}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-[#7d8688] hover:text-[#f6f1e8]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-[#7d8688] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                     aria-label="Очистить поиск"
                   >
                     <X size={16} />
@@ -496,9 +503,10 @@ export const BookSearchModal = ({
                 )}
               </div>
               <button
+                type="button"
                 onClick={handleSearch}
                 disabled={isLoading || state.query.length < 2}
-                className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100"
+                className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
               >
                 {isLoading ? <Spinner size="sm" /> : "Найти"}
               </button>
@@ -515,8 +523,9 @@ export const BookSearchModal = ({
                 </span>
                 {state.selectedBooks.size > 0 && (
                   <button
+                    type="button"
                     onClick={handleAddSelectedBooks}
-                    className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-4 py-2 text-sm font-black text-black animate-scale-in transition-colors hover:bg-[#9cf5f3]"
+                    className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-4 py-2 text-sm font-black text-black animate-scale-in transition-colors hover:bg-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                   >
                     <Plus className="w-4 h-4" />
                     Добавить выбранные ({state.selectedBooks.size})
@@ -585,8 +594,9 @@ export const BookSearchModal = ({
           {/* Footer */}
           <div className="flex justify-end gap-3 border-t-2 border-black bg-[#0a0a0a] p-5">
             <button
+              type="button"
               onClick={handleClose}
-              className="cursor-pointer border-2 border-black bg-transparent px-5 py-2.5 text-sm font-semibold text-[#b4b4b4] transition-colors hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8]"
+              className="cursor-pointer border-2 border-black bg-transparent px-5 py-2.5 text-sm font-semibold text-[#b4b4b4] transition-colors hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
             >
               Отмена
             </button>
