@@ -148,6 +148,21 @@ const TierListEditorContent = () => {
   useEffect(() => {
     checkAndRestoreDraft();
   }, [tierListId]);
+
+  // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!isReadOnly && (hasUnsavedChanges || saveStatus === 'error')) {
+          handleSave();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave, isReadOnly, hasUnsavedChanges, saveStatus]);
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Получаем функции из хука действий

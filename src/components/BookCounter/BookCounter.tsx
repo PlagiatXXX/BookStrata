@@ -65,7 +65,7 @@ export function BookCounter({ booksCount, isPro = false }: BookCounterProps) {
       </div>
 
       {/* Status Message */}
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2" aria-live="polite">
         {isPro ? (
           <>
             <Crown size={14} className="text-amber-400" />
