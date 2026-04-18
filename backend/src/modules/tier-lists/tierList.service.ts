@@ -157,6 +157,26 @@ export async function updatePlacements(
 
   if (placements.length === 0) return [];
 
+  // Security check: ensure all tierIds belong to this tierList
+  const requestedTierIds = [...new Set(placements
+    .map((p) => p.tierId)
+    .filter((id): id is number => id !== null))];
+
+  if (requestedTierIds.length > 0) {
+    const validTiers = await prisma.tier.findMany({
+      where: { id: { in: requestedTierIds }, tierListId },
+      select: { id: true },
+    });
+    const validTierIds = new Set(validTiers.map((t) => t.id));
+    for (const tierId of requestedTierIds) {
+      if (!validTierIds.has(tierId)) {
+        const error = new Error(`Tier ${tierId} does not belong to tier list ${tierListId}`);
+        (error as any).statusCode = 403;
+        throw error;
+      }
+    }
+  }
+
   // Используем upsert вместо update, чтобы создавать записи если их нет
   const transactions = placements.map((p) =>
     prisma.bookPlacement.upsert({
@@ -384,11 +404,12 @@ export async function saveTiers(
     }
 
     // 3. Обновляем существующие (параллельно)
+    // Security check: ensure the tier belongs to the tier list using updateMany with tierListId
     if (updated.length > 0) {
       await Promise.all(
         updated.map((tier) =>
-          tx.tier.update({
-            where: { id: tier.id },
+          tx.tier.updateMany({
+            where: { id: tier.id, tierListId },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
           }),
         ),
@@ -686,8 +707,9 @@ export async function saveAll(
       // Обновление существующих
       if (payload.tiers.updated?.length) {
         for (const tier of payload.tiers.updated) {
-          await tx.tier.update({
-            where: { id: tier.id },
+          // Security check: ensure the tier belongs to the tier list using updateMany with tierListId
+          await tx.tier.updateMany({
+            where: { id: tier.id, tierListId },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
           });
         }
@@ -726,6 +748,33 @@ export async function saveAll(
 
     // 4. Обновление позиций (Placements)
     if (payload.placements?.length) {
+      // Security check: ensure all tierIds (that are not tempIds) belong to this tierList
+      const requestedTierIds = [
+        ...new Set(
+          payload.placements
+            .map((p) => p.tierId)
+            .filter(
+              (id): id is number =>
+                id !== null && typeof id === "number"
+            )
+        ),
+      ];
+
+      if (requestedTierIds.length > 0) {
+        const validTiers = await tx.tier.findMany({
+          where: { id: { in: requestedTierIds }, tierListId },
+          select: { id: true },
+        });
+        const validTierIds = new Set(validTiers.map((t) => t.id));
+        for (const tierId of requestedTierIds) {
+          if (!validTierIds.has(tierId)) {
+            throw new Error(
+              `Tier ${tierId} does not belong to tier list ${tierListId}`
+            );
+          }
+        }
+      }
+
       // Сначала удаляем все старые позиции для этого тир-листа (атомарная перезапись)
       // ВАЖНО: Мы удаляем только связи, а не сами книги
       await tx.bookPlacement.deleteMany({

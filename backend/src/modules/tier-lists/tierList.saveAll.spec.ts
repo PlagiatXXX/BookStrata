@@ -8,7 +8,9 @@ vi.mock('../../lib/prisma.js', () => ({
     tier: {
       deleteMany: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       create: vi.fn().mockResolvedValue({ id: 101 }),
+      findMany: vi.fn().mockResolvedValue([{ id: 10 }]),
     },
     book: {
       create: vi.fn().mockResolvedValue({ id: 201 }),
@@ -53,7 +55,7 @@ describe('tierList.service.saveAll', () => {
     expect(prisma.tier.deleteMany).toHaveBeenCalledWith({
       where: { id: { in: [11] }, tierListId }
     });
-    expect(prisma.tier.update).toHaveBeenCalled();
+    expect(prisma.tier.updateMany).toHaveBeenCalled();
     expect(prisma.tier.create).toHaveBeenCalled();
     expect(prisma.book.create).toHaveBeenCalled();
     expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledWith({ where: { tierListId } });

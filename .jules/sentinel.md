@@ -27,3 +27,8 @@
 **Vulnerability:** Inadvertent introduction of multiple lockfiles (`pnpm-lock.yaml` and `package-lock.json`) can lead to version drift and inconsistent builds across environments.
 **Learning:** Even if memory says "pnpm exclusively", always verify the current state of the repo (presence of `package-lock.json`). In monorepos with inconsistent tool usage, respect the existing lockfile format to avoid breaking local development workflows.
 **Prevention:** Before running install commands, check for existing lockfiles. If the project uses `npm`, use `npm install` to maintain the `package-lock.json`. Avoid using `pnpm` if the root contains a valid `package-lock.json`, unless explicitly migrating.
+
+## 2026-04-18 - Broken Object Level Authorization (BOLA) in Tier/Placement Updates
+**Vulnerability:** Broken Object Level Authorization (BOLA) in `updatePlacements`, `saveTiers`, and `saveAll` allowed users to modify tiers or assign books to tiers belonging to other users' tier lists by providing their IDs.
+**Learning:** Checking ownership of the parent resource (TierList) is insufficient if the operation modifies sub-resources (Tiers, Placements) using their own IDs. Without scoping sub-resource modifications to the authorized parent, the system is vulnerable to IDOR/BOLA attacks.
+**Prevention:** Enforce relationship constraints in all database writes. For updates, use `updateMany` with a `where` clause that includes both the sub-resource ID and the parent resource ID. For complex assignments (like placements), validate that all provided sub-resource IDs belong to the authorized parent before proceeding with the transaction.

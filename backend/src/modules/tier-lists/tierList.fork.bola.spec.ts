@@ -20,6 +20,7 @@ vi.mock("../../lib/prisma.js", () => ({
 const prismaMock = {
   tierList: {
     create: vi.fn(),
+    update: vi.fn(),
   },
   book: {
     create: vi.fn(),
