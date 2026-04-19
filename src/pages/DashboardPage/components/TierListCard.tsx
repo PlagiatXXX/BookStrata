@@ -102,6 +102,7 @@ export const TierListCard = memo(({
             aria-valuemin={0}
             aria-valuemax={MAX_BOOKS_PER_TIER_LIST}
             aria-valuetext={`${booksCount} из ${MAX_BOOKS_PER_TIER_LIST} книг`}
+            aria-label="Прогресс заполнения тир-листа"
           >
           <div
             className="dashboard-card__progress-fill"

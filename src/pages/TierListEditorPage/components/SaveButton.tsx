@@ -18,6 +18,8 @@ export const SaveButton = ({
 }: SaveButtonProps) => {
   if (isReadOnly) return null;
 
+  const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+
   const getButtonContent = () => {
     switch (status) {
       case 'saving':
@@ -32,12 +34,19 @@ export const SaveButton = ({
       case 'error':
         return <span>⚠️ Ошибка (Повторить)</span>;
       default:
-        return <span>Сохранить</span>;
+        return (
+          <>
+            <span>Сохранить</span>
+            <kbd className="ml-1 hidden h-5 select-none items-center gap-1 rounded border border-black/20 bg-black/5 px-1.5 font-mono text-[10px] font-medium text-black/60 md:inline-flex">
+              {isMac ? '⌘' : 'Ctrl'}+S
+            </kbd>
+          </>
+        );
     }
   };
 
   const getButtonClass = () => {
-    const base = "flex items-center gap-2 nb-heavy-border px-4 py-2 text-sm font-bold transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-black";
+    const base = "flex items-center gap-2 nb-heavy-border px-4 py-2 text-sm font-bold transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c1fffe] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0e0e0e]";
 
     if (status === 'saving') return `${base} bg-white text-black opacity-80 cursor-wait shadow-none`;
     if (status === 'saved') return `${base} bg-[#c1fffe] text-black shadow-[4px_4px_0_0_#000000]`;
@@ -54,6 +63,7 @@ export const SaveButton = ({
         onClick={onSave}
         disabled={status === 'saving'}
         className={getButtonClass()}
+        aria-keyshortcuts={isMac ? "Meta+s" : "Control+s"}
       >
         {getButtonContent()}
       </button>
