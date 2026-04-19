@@ -383,12 +383,12 @@ export async function saveTiers(
       });
     }
 
-    // 3. Обновляем существующие (параллельно)
+    // 3. Обновляем существующие (параллельно, с проверкой владения)
     if (updated.length > 0) {
       await Promise.all(
         updated.map((tier) =>
-          tx.tier.update({
-            where: { id: tier.id },
+          tx.tier.updateMany({
+            where: { id: tier.id, tierListId },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
           }),
         ),
@@ -683,13 +683,13 @@ export async function saveAll(
           where: { id: { in: payload.tiers.deletedIds }, tierListId },
         });
       }
-      // Обновление существующих
+      // Обновление существующих (с проверкой владения)
       if (payload.tiers.updated?.length) {
         // Оптимизация Bolt: параллельное выполнение обновлений тиров (O(1) logical step)
         await Promise.all(
           payload.tiers.updated.map((tier) =>
-            tx.tier.update({
-              where: { id: tier.id },
+            tx.tier.updateMany({
+              where: { id: tier.id, tierListId },
               data: { title: tier.title, color: tier.color, rank: tier.rank },
             })
           )
@@ -756,6 +756,24 @@ export async function saveAll(
       // Оптимизация Bolt: используем Map для O(1) поиска замен ID вместо O(N) поиска в массиве
       const bookReplacementMap = new Map(bookReplacements.map((r) => [r.tempId, r.realId]));
       const tierReplacementMap = new Map(tierReplacements.map((r) => [r.tempId, r.realId]));
+
+      // Security check (BOLA): Ensure that all non-temporary bookIds belong to this tier list
+      const existingBookIds = Array.from(new Set(payload.placements
+        .filter((p) => typeof p.bookId !== "string" || !p.bookId.includes("-"))
+        .map((p) => (typeof p.bookId === "string" ? parseInt(p.bookId, 10) : p.bookId))));
+
+      if (existingBookIds.length > 0) {
+        const count = await tx.bookPlacement.count({
+          where: {
+            tierListId,
+            bookId: { in: existingBookIds },
+          },
+        });
+
+        if (count !== existingBookIds.length) {
+          throw new Error("One or more books do not belong to this tier list");
+        }
+      }
 
       // Сначала удаляем все старые позиции для этого тир-листа (атомарная перезапись)
       // ВАЖНО: Мы удаляем только связи, а не сами книги
