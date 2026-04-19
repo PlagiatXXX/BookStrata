@@ -31,3 +31,7 @@
 ## 2026-04-20 - [Inconsistent UI Limits and Inaccessible Progress Bars]
 **Learning:** Hardcoding limit values (like "10 books") in the UI leads to misleading user feedback when the system-wide constants differ (e.g., 20). Additionally, visual-only progress bars are non-perceivable by screen reader users without explicit ARIA roles.
 **Action:** Always derive UI labels and progress logic from centralized `constants` to ensure consistency. Use `role="progressbar"` with `aria-valuenow`, `aria-valuemax`, and `aria-valuetext` (e.g., "5 из 20 книг") to provide semantic context for assistive technologies.
+
+## 2026-04-21 - [Discoverable Keyboard Shortcuts for Data Safety]
+**Learning:** Global keyboard shortcuts (e.g., `Ctrl+S`) provide a "pro" feel and protect against data loss, but they are invisible unless communicated via UI hints. Platform-specific hints (⌘S vs Ctrl+S) and `aria-keyshortcuts` ensure these efficiency gains are discoverable and accessible to both mouse and keyboard/screen reader users.
+**Action:** Always accompany global shortcuts with platform-aware visual hints (using `<kbd>`) and `aria-keyshortcuts` on the associated trigger element to maximize discoverability and accessibility.
