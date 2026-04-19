@@ -45,3 +45,7 @@
 ## 2026-04-10 - [Consolidated Relational Selects for Activity Status]
 **Learning:** Checking existence of a relation (like 'isLiked') while fetching the entity's own data can be done in a single query using Prisma's `select` or `include` with a filtered relation. This avoids sequential DB roundtrips and application-level merging of results.
 **Action:** When fetching an entity and a per-user status (like 'isLiked', 'isFollowing'), use a single Prisma query with a filtered relational select (`take: 1`) to minimize latency and database load.
+
+## 2026-04-19 - [Omission of Unused Relational Selections in List Queries]
+**Learning:** Fetching related records (like cover images from placements) and user metadata in list queries (e.g., `getUserTierLists`) significantly increases database join overhead and payload size. When the target UI (Dashboard) doesn't display these previews or author names, omitting them from the Prisma `select` improves performance without functional loss.
+**Action:** Always verify if all relational data in "Short" or "Summary" API responses is actually rendered by the consuming frontend components. Proactively prune unused selections to minimize latency and memory footprint.
