@@ -217,7 +217,7 @@ describe("DashboardPage", () => {
       });
 
       // Находим кнопку переименования по aria-label
-      const renameButtons = screen.getAllByLabelText("Переименовать");
+      const renameButtons = screen.getAllByLabelText(/Переименовать/);
       if (renameButtons.length > 0) {
         fireEvent.click(renameButtons[0]);
       } else {
@@ -240,7 +240,7 @@ describe("DashboardPage", () => {
       });
 
       // Находим кнопку удаления по aria-label
-      const deleteButtons = screen.getAllByLabelText("Удалить");
+      const deleteButtons = screen.getAllByLabelText(/Удалить/);
       if (deleteButtons.length > 0) {
         fireEvent.click(deleteButtons[0]);
       } else {
