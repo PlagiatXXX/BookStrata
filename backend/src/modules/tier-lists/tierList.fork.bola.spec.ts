@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Prisma
@@ -20,6 +21,7 @@ vi.mock("../../lib/prisma.js", () => ({
 const prismaMock = {
   tierList: {
     create: vi.fn(),
+    update: vi.fn(),
   },
   book: {
     create: vi.fn(),

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Моки для Prisma — объявляем внутри factory для vi.mock
@@ -22,7 +23,9 @@ vi.mock("../../lib/prisma.js", () => ({
     bookPlacement: {
       upsert: vi.fn(),
       create: vi.fn(),
+      createMany: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
       count: vi.fn(),
       findUniqueOrThrow: vi.fn(),
     },
@@ -37,6 +40,8 @@ vi.mock("../../lib/prisma.js", () => ({
 // Импортируем после vi.mock
 import { prisma } from "../../lib/prisma.js";
 import * as service from "./tierList.service.js";
+import { PrismaClient, Prisma } from "@prisma/client";
+import { DefaultArgs } from "@prisma/client/runtime/index.js";
 
 describe("tierList.service", () => {
   beforeEach(() => {
@@ -49,7 +54,7 @@ describe("tierList.service", () => {
 
   describe("getUserTierLists", () => {
     const mockUserId = 1;
-    const mockQuery = { page: "1", pageSize: "10" };
+    const mockQuery = { page: "1", pageSize: "10", sortBy: "updated_at" as const };
 
     const mockTierLists = [
       {
@@ -118,6 +123,7 @@ describe("tierList.service", () => {
       const result = await service.getUserTierLists(mockUserId, {
         page: "1",
         pageSize: "10",
+        sortBy: "updated_at" as const,
       });
 
       expect(result.meta.totalPages).toBe(3); // ceil(25/10) = 3
@@ -544,7 +550,7 @@ describe("tierList.service", () => {
         coverImageUrl: mockCoverUrl,
       });
 
-      const result = await service.updateBookCover(1, mockBookId, mockCoverUrl);
+      await service.updateBookCover(1, mockBookId, mockCoverUrl);
 
       expect(prisma.bookPlacement.findUniqueOrThrow).toHaveBeenCalledWith({
         where: { tierListId_bookId: { tierListId: 1, bookId: mockBookId } },
@@ -614,7 +620,7 @@ describe("tierList.service", () => {
     });
 
     it("должен сохранить тиры в формате diff (added)", async () => {
-      (prisma.$transaction as any).mockImplementation(async (fn) => {
+      (prisma.$transaction as any).mockImplementation(async (fn: (arg0: PrismaClient<Prisma.PrismaClientOptions, never, Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined, DefaultArgs>) => any) => {
         // Вызываем функцию транзакции с моками
         return fn(prisma);
       });
@@ -669,7 +675,7 @@ describe("tierList.service", () => {
     });
 
     it("должен сохранить тиры в формате diff (updated)", async () => {
-      (prisma.$transaction as any).mockImplementation(async (fn) => {
+      (prisma.$transaction as any).mockImplementation(async (fn: (arg0: PrismaClient<Prisma.PrismaClientOptions, never, Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined, DefaultArgs>) => any) => {
         return fn(prisma);
       });
 
@@ -690,7 +696,7 @@ describe("tierList.service", () => {
     });
 
     it("должен сохранить тиры в формате diff (deleted)", async () => {
-      (prisma.$transaction as any).mockImplementation(async (fn) => {
+      (prisma.$transaction as any).mockImplementation(async (fn: (arg0: PrismaClient<Prisma.PrismaClientOptions, never, Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined, DefaultArgs>) => any) => {
         return fn(prisma);
       });
 
@@ -744,7 +750,7 @@ describe("tierList.service", () => {
   });
 
   describe("getPublicTierLists", () => {
-    const mockQuery = { page: "1", pageSize: "10", sortBy: "updated_at" };
+    const mockQuery = { page: "1", pageSize: "10", sortBy: "updated_at" as const };
 
     const mockPublicTierLists = [
       {
@@ -913,6 +919,82 @@ describe("tierList.service", () => {
 
       expect(result.title).toBe("Original List (копия)");
       expect(result.userId).toBe(mockUserId);
+    });
+  });
+
+   describe("saveAll", () => {
+    const mockTierListId = 1;
+    const mockUserId = 1;
+
+    it("должен атомарно сохранить все изменения (оптимизировано Bolt)", async () => {
+      (prisma.$transaction as any).mockImplementation(async (fn: any) => {
+        return fn(prisma);
+      });
+
+      // Моки для тиров
+      (prisma.tier.deleteMany as any).mockResolvedValue({ count: 1 });
+      (prisma.tier.update as any).mockResolvedValue({});
+      (prisma.tier.create as any).mockResolvedValue({ id: 100 });
+
+      // Моки для книг
+      (prisma.book.create as any).mockResolvedValue({ id: 200 });
+
+      // Моки для размещений
+      (prisma.bookPlacement.deleteMany as any).mockResolvedValue({ count: 5 });
+      (prisma.bookPlacement.createMany as any).mockResolvedValue({ count: 2 });
+
+      // Мок для обновления тир-листа
+      (prisma.tierList.update as any).mockResolvedValue({});
+
+      const payload = {
+        tiers: {
+          added: [{ tempId: "temp-tier-1", title: "New Tier", color: "#000", rank: 10 }],
+          updated: [{ id: 1, title: "Updated Tier", color: "#fff", rank: 0 }],
+          deletedIds: [2],
+        },
+        newBooks: [
+          { tempId: "temp-book-1", title: "New Book", coverImageUrl: "img.jpg" },
+        ],
+        placements: [
+          { bookId: "temp-book-1", tierId: "temp-tier-1", rank: 0 },
+          { bookId: 10, tierId: 1, rank: 1 },
+        ],
+      };
+
+      const result = await service.saveAll(mockTierListId, mockUserId, payload);
+// Проверка параллельного выполнения через вызовы Prisma
+      expect(prisma.tier.deleteMany).toHaveBeenCalled();
+      expect(prisma.tier.update).toHaveBeenCalled();
+      expect(prisma.tier.create).toHaveBeenCalled();
+      expect(prisma.book.create).toHaveBeenCalled();
+      expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledWith({
+        where: { tierListId: mockTierListId },
+      });
+      expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
+        data: [
+          { tierListId: mockTierListId, bookId: 200, tierId: 100, rank: 0 },
+          { tierListId: mockTierListId, bookId: 10, tierId: 1, rank: 1 },
+        ],
+      });
+
+      expect(result.bookReplacements).toContainEqual({ tempId: "temp-book-1", realId: "200" });
+      expect(result.tierReplacements).toContainEqual({ tempId: "temp-tier-1", realId: "100" });
+    });
+
+    it("должен бросить ошибку если Real ID не найден для временного ID", async () => {
+      (prisma.$transaction as any).mockImplementation(async (fn: any) => {
+        return fn(prisma);
+      });
+
+      const payload = {
+        placements: [
+          { bookId: "missing-temp-id", tierId: null, rank: 0 },
+        ],
+      };
+
+      await expect(service.saveAll(mockTierListId, mockUserId, payload)).rejects.toThrow(
+        "Real ID not found for temp book ID: missing-temp-id"
+      );
     });
   });
 });
