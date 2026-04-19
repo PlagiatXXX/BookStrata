@@ -31,3 +31,7 @@
 ## 2026-04-20 - [Inconsistent UI Limits and Inaccessible Progress Bars]
 **Learning:** Hardcoding limit values (like "10 books") in the UI leads to misleading user feedback when the system-wide constants differ (e.g., 20). Additionally, visual-only progress bars are non-perceivable by screen reader users without explicit ARIA roles.
 **Action:** Always derive UI labels and progress logic from centralized `constants` to ensure consistency. Use `role="progressbar"` with `aria-valuenow`, `aria-valuemax`, and `aria-valuetext` (e.g., "5 из 20 книг") to provide semantic context for assistive technologies.
+
+## 2025-05-20 - [Shortcut Discoverability & Test Stability]
+**Learning:** Adding keyboard shortcuts (like Ctrl+S for saving) significantly improves expert-user UX, but they must be accompanied by visual hints (<kbd>) for discoverability. Additionally, using dynamic accessibility labels (e.g., "Delete [Name]") in test-heavy components can lead to fragile test suites if the test assertions expect static strings.
+**Action:** Always include a <kbd> hint and aria-keyshortcuts when adding keyboard shortcuts. Prioritize static, localized accessibility labels (e.g., "Удалить") over dynamic ones when component-level testing relies on exact label matching, while using 'title' attributes for dynamic contextual information.

@@ -47,6 +47,9 @@ export const SaveButton = ({
     return `${base} bg-white text-black shadow-[4px_4px_0_0_#000000] opacity-60 hover:opacity-100`;
   };
 
+  const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+  const shortcutText = isMac ? '⌘S' : 'Ctrl+S';
+
   return (
     <div className="flex flex-col items-end gap-1">
       <button
@@ -54,8 +57,14 @@ export const SaveButton = ({
         onClick={onSave}
         disabled={status === 'saving'}
         className={getButtonClass()}
+        aria-keyshortcuts="Control+s"
       >
         {getButtonContent()}
+        {status !== 'saving' && (
+          <kbd className="hidden sm:inline-flex ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-black/10 rounded border border-black/20">
+            {shortcutText}
+          </kbd>
+        )}
       </button>
       {lastSaved && status !== 'saving' && (
         <span className="text-[10px] text-gray-500 uppercase font-bold">

@@ -1,5 +1,5 @@
 import "./ExportThemes.css";
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
@@ -125,7 +125,6 @@ const TierListEditorContent = () => {
     saveStatus,
     lastSaved,
     handleSave,
-    getSavePayload,
   } = useTierEditorSave({
     tierListId,
     listData,
@@ -148,6 +147,29 @@ const TierListEditorContent = () => {
   useEffect(() => {
     checkAndRestoreDraft();
   }, [tierListId]);
+
+  // Глобальный слушатель для Ctrl+S / Cmd+S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        // Игнорируем, если фокус в поле ввода
+        const target = e.target as HTMLElement;
+        if (
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+
+        e.preventDefault();
+        handleSave();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave]);
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Получаем функции из хука действий
