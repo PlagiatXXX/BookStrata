@@ -157,6 +157,28 @@ export async function updatePlacements(
 
   if (placements.length === 0) return [];
 
+  // BOLA Protection: Проверяем, что все переданные tierId принадлежат этому тир-листу
+  const tierIds = placements
+    .map((p) => p.tierId)
+    .filter((id): id is number => id !== null);
+
+  if (tierIds.length > 0) {
+    const validTiersCount = await prisma.tier.count({
+      where: {
+        id: { in: tierIds },
+        tierListId,
+      },
+    });
+
+    // Извлекаем уникальные ID для точной проверки
+    const uniqueTierIds = new Set(tierIds);
+    if (validTiersCount !== uniqueTierIds.size) {
+      const error = new Error("Forbidden: One or more tiers do not belong to this tier list");
+      (error as any).statusCode = 403;
+      throw error;
+    }
+  }
+
   // Используем upsert вместо update, чтобы создавать записи если их нет
   const transactions = placements.map((p) =>
     prisma.bookPlacement.upsert({
@@ -383,12 +405,12 @@ export async function saveTiers(
       });
     }
 
-    // 3. Обновляем существующие (параллельно)
+    // 3. Обновляем существующие (параллельно) - с проверкой принадлежности к тир-листу (BOLA Protection)
     if (updated.length > 0) {
       await Promise.all(
         updated.map((tier) =>
-          tx.tier.update({
-            where: { id: tier.id },
+          tx.tier.updateMany({
+            where: { id: tier.id, tierListId },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
           }),
         ),
@@ -683,13 +705,13 @@ export async function saveAll(
           where: { id: { in: payload.tiers.deletedIds }, tierListId },
         });
       }
-      // Обновление существующих
+      // Обновление существующих - с проверкой принадлежности (BOLA Protection)
       if (payload.tiers.updated?.length) {
         // Оптимизация Bolt: параллельное выполнение обновлений тиров (O(1) logical step)
         await Promise.all(
           payload.tiers.updated.map((tier) =>
-            tx.tier.update({
-              where: { id: tier.id },
+            tx.tier.updateMany({
+              where: { id: tier.id, tierListId },
               data: { title: tier.title, color: tier.color, rank: tier.rank },
             })
           )
@@ -756,6 +778,41 @@ export async function saveAll(
       // Оптимизация Bolt: используем Map для O(1) поиска замен ID вместо O(N) поиска в массиве
       const bookReplacementMap = new Map(bookReplacements.map((r) => [r.tempId, r.realId]));
       const tierReplacementMap = new Map(tierReplacements.map((r) => [r.tempId, r.realId]));
+
+      // BOLA Protection: Проверяем, что все существующие bookId и tierId принадлежат этому тир-листу
+      const existingBookIds = payload.placements
+        .map((p) => p.bookId)
+        .filter((id): id is number => typeof id === "number" || (typeof id === "string" && !id.includes("-")))
+        .map((id) => (typeof id === "string" ? parseInt(id, 10) : id));
+
+      const existingTierIds = payload.placements
+        .map((p) => p.tierId)
+        .filter((id): id is number => id !== null && (typeof id === "number" || (typeof id === "string" && !id.includes("-"))))
+        .map((id) => (typeof id === "string" ? parseInt(id, 10) : id));
+
+      if (existingBookIds.length > 0) {
+        const validBooksCount = await tx.bookPlacement.count({
+          where: {
+            bookId: { in: [...new Set(existingBookIds)] },
+            tierListId,
+          },
+        });
+        if (validBooksCount !== new Set(existingBookIds).size) {
+          throw new Error("Forbidden: One or more books do not belong to this tier list");
+        }
+      }
+
+      if (existingTierIds.length > 0) {
+        const validTiersCount = await tx.tier.count({
+          where: {
+            id: { in: [...new Set(existingTierIds)] },
+            tierListId,
+          },
+        });
+        if (validTiersCount !== new Set(existingTierIds).size) {
+          throw new Error("Forbidden: One or more tiers do not belong to this tier list");
+        }
+      }
 
       // Сначала удаляем все старые позиции для этого тир-листа (атомарная перезапись)
       // ВАЖНО: Мы удаляем только связи, а не сами книги

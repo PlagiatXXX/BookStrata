@@ -27,3 +27,8 @@
 **Vulnerability:** Inadvertent introduction of multiple lockfiles (`pnpm-lock.yaml` and `package-lock.json`) can lead to version drift and inconsistent builds across environments.
 **Learning:** Even if memory says "pnpm exclusively", always verify the current state of the repo (presence of `package-lock.json`). In monorepos with inconsistent tool usage, respect the existing lockfile format to avoid breaking local development workflows.
 **Prevention:** Before running install commands, check for existing lockfiles. If the project uses `npm`, use `npm install` to maintain the `package-lock.json`. Avoid using `pnpm` if the root contains a valid `package-lock.json`, unless explicitly migrating.
+
+## 2026-04-20 - Atomic BOLA Protection in Bulk Operations
+**Vulnerability:** Bulk update operations (like `saveAll` or `updatePlacements`) were vulnerable to BOLA where users could link books or tiers from other users' lists to their own by providing malicious IDs in the payload.
+**Learning:** Checking ownership of the parent resource (the tier list) is insufficient if sub-resources (tiers, books) can be re-linked or updated without verifying their relationship to that parent.
+**Prevention:** Use Prisma's `updateMany` with a compound `where` clause including the parent ID for individual updates. For many-to-many relationship changes, pre-validate the ownership of all IDs in the payload against the parent resource using `count` or `findMany` before committing any changes.

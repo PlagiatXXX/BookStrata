@@ -8,6 +8,8 @@ vi.mock('../../lib/prisma.js', () => ({
     tier: {
       deleteMany: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
       create: vi.fn().mockResolvedValue({ id: 101 }),
     },
     book: {
@@ -16,6 +18,7 @@ vi.mock('../../lib/prisma.js', () => ({
     bookPlacement: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),
+      count: vi.fn(),
     },
     tierList: {
       update: vi.fn(),
@@ -32,6 +35,9 @@ describe('tierList.service.saveAll', () => {
   });
 
   it('should save all changes in a transaction', async () => {
+    (prisma.tier.count as any).mockResolvedValue(1);
+    (prisma.bookPlacement.count as any).mockResolvedValue(1);
+
     const payload = {
       tiers: {
         added: [{ tempId: 'tier-1', title: 'New Tier', color: '#ff0000', rank: 5 }],
@@ -53,7 +59,7 @@ describe('tierList.service.saveAll', () => {
     expect(prisma.tier.deleteMany).toHaveBeenCalledWith({
       where: { id: { in: [11] }, tierListId }
     });
-    expect(prisma.tier.update).toHaveBeenCalled();
+    expect(prisma.tier.updateMany).toHaveBeenCalled();
     expect(prisma.tier.create).toHaveBeenCalled();
     expect(prisma.book.create).toHaveBeenCalled();
     expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledWith({ where: { tierListId } });
