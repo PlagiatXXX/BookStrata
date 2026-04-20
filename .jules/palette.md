@@ -35,3 +35,7 @@
 ## 2026-04-21 - [Modal Accessibility & Focus Pattern]
 **Learning:** For modal components, linking the `aria-labelledby` (via `titleId` prop) to the main heading's `id` ensures screen readers announce the modal's purpose immediately. Furthermore, using `autoFocus` on the primary action button within the modal provides instant keyboard interactivity and allows the default 'Enter' key behavior to work without needing complex global key listeners.
 **Action:** Always establish `aria-labelledby` relationships in modals and use `autoFocus` on the most likely primary action to improve accessibility and keyboard efficiency.
+
+## 2026-05-22 - [Shortcut Visibility & ARIA Alignment]
+**Learning:** Adding a hidden shortcut to a modal button is only half the battle; without a visual cue, users won't know it exists, and without `aria-keyshortcuts`, assistive technologies can't communicate it.
+**Action:** Always pair `aria-keyshortcuts` and updated `aria-label` with a visual `<kbd>` hint (hidden on mobile) to ensure both power users and screen reader users can benefit from keyboard efficiencies.

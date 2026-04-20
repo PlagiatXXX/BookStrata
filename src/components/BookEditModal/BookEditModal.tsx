@@ -157,7 +157,7 @@ export const BookEditModal = ({
       >
         <button
           onClick={handleClose}
-          className="absolute right-5 top-5 z-20 flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-fuchsia-500 outline-none"
+          className="absolute right-5 top-5 z-20 flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-pink-500 outline-none"
           title="Закрыть"
           aria-label="Закрыть модальное окно"
         >
@@ -176,7 +176,7 @@ export const BookEditModal = ({
               htmlFor="book-title-input"
               className="mb-3 block text-[11px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
             >
-              Название
+              Название <span className="text-pink-500" aria-hidden="true">*</span>
             </label>
             <input
               id="book-title-input"
@@ -309,9 +309,13 @@ export const BookEditModal = ({
             onClick={handleSave}
             className="border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black hover:bg-[#9cf5f3] hover:text-black max-md:w-full focus-visible:ring-2 focus-visible:ring-cyan-600"
             title="Ctrl + Enter"
-            aria-label="Сохранить изменения"
+            aria-label="Сохранить изменения (Ctrl + Enter)"
+            aria-keyshortcuts="Control+Enter"
           >
-            Сохранить
+            <span>Сохранить</span>
+            <kbd className="ml-2 hidden text-[10px] font-normal opacity-60 lg:inline-block">
+              Ctrl + Enter
+            </kbd>
           </Button>
         </div>
       </div>
