@@ -17,8 +17,9 @@ export async function getUserTierLists(
   const pageSize = parseInt(query.pageSize, 10);
   const skip = (page - 1) * pageSize;
 
-  // Оптимизированный запрос: выбираем только нужные поля
-  const [tierLists, totalItems] = await prisma.$transaction([
+  // Оптимизация Bolt: используем Promise.all вместо транзакции для параллельного выполнения.
+  // Это позволяет Prisma выполнять запросы через свободные соединения в пуле.
+  const [tierLists, totalItems] = await Promise.all([
     prisma.tierList.findMany({
       where: { userId },
       select: {
@@ -30,7 +31,7 @@ export async function getUserTierLists(
         user: {
           select: { id: true, username: true, avatarUrl: true },
         },
-        likesCount: true, // Оптимизация Bolt: используем денормализованное поле вместо _count.likes
+        likesCount: true, // Используем денормализованное поле
         _count: {
           select: { placements: true },
         },
@@ -54,13 +55,17 @@ export async function getUserTierLists(
   ]);
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  // Добавляем booksCount и coverImages в ответ
+  // Формируем чистый ответ, сохраняя обратную совместимость
   const data = tierLists.map((tl) => ({
-    ...tl,
+    id: tl.id,
+    title: tl.title,
+    createdAt: tl.createdAt,
+    updatedAt: tl.updatedAt,
+    isPublic: tl.isPublic,
+    user: tl.user,
+    likesCount: tl.likesCount,
     booksCount: tl._count.placements,
     coverImages: tl.placements.map((p) => p.book.coverImageUrl).filter(Boolean),
-    placements: undefined,
-    _count: undefined,
   }));
 
   return {
@@ -466,9 +471,9 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
   let tierLists: any[] = [];
   let totalItems = 0;
 
-  // Обычная сортировка - используем пагинацию на уровне БД
+  // Оптимизация Bolt: используем Promise.all для параллельного выполнения независимых запросов
   try {
-    [tierLists, totalItems] = await prisma.$transaction([
+    [tierLists, totalItems] = await Promise.all([
       prisma.tierList.findMany({
         where: { isPublic: true },
         select: {

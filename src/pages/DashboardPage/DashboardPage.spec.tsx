@@ -216,16 +216,9 @@ describe("DashboardPage", () => {
         expect(screen.getByText("Test Tier List 1")).toBeInTheDocument();
       });
 
-      // Находим кнопку переименования по aria-label
-      const renameButtons = screen.getAllByLabelText("Переименовать");
-      if (renameButtons.length > 0) {
-        fireEvent.click(renameButtons[0]);
-      } else {
-        // Альтернативно: ищем по классу
-        const buttons = screen.getAllByRole("button");
-        const renameButton = buttons.find((b) => b.title === "Переименовать");
-        if (renameButton) fireEvent.click(renameButton);
-      }
+      // Находим кнопку переименования по aria-label (используем регулярное выражение, так как лейбл содержит название)
+      const renameButtons = screen.getAllByLabelText(/Переименовать/);
+      fireEvent.click(renameButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText("Переименовать тир-лист")).toBeInTheDocument();
@@ -239,16 +232,9 @@ describe("DashboardPage", () => {
         expect(screen.getByText("Test Tier List 1")).toBeInTheDocument();
       });
 
-      // Находим кнопку удаления по aria-label
-      const deleteButtons = screen.getAllByLabelText("Удалить");
-      if (deleteButtons.length > 0) {
-        fireEvent.click(deleteButtons[0]);
-      } else {
-        // Альтернативно: ищем по классу
-        const buttons = screen.getAllByRole("button");
-        const deleteButton = buttons.find((b) => b.title === "Удалить");
-        if (deleteButton) fireEvent.click(deleteButton);
-      }
+      // Находим кнопку удаления по aria-label (используем регулярное выражение, так как лейбл содержит название)
+      const deleteButtons = screen.getAllByLabelText(/Удалить/);
+      fireEvent.click(deleteButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText("Удалить тир-лист")).toBeInTheDocument();
