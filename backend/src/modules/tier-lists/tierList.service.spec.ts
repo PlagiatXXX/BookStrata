@@ -65,12 +65,7 @@ describe("tierList.service", () => {
         updatedAt: new Date("2024-01-02"),
         isPublic: true,
         likesCount: 5,
-        user: { id: mockUserId, username: "testuser", avatarUrl: null },
         _count: { placements: 10 },
-        placements: [
-          { book: { coverImageUrl: "cover1.jpg" } },
-          { book: { coverImageUrl: "cover2.jpg" } },
-        ],
       },
       {
         id: 2,
@@ -80,9 +75,7 @@ describe("tierList.service", () => {
         updatedAt: new Date("2024-01-04"),
         isPublic: false,
         likesCount: 3,
-        user: { id: mockUserId, username: "testuser", avatarUrl: null },
         _count: { placements: 5 },
-        placements: [{ book: { coverImageUrl: "cover3.jpg" } }],
       },
     ];
 
@@ -98,7 +91,6 @@ describe("tierList.service", () => {
         title: "Test List 1",
         likesCount: 5,
         booksCount: 10,
-        coverImages: ["cover1.jpg", "cover2.jpg"],
       });
       expect(result.meta).toMatchObject({
         totalItems: 2,

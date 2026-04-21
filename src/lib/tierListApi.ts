@@ -25,7 +25,6 @@ export interface TierListShort {
   };
   likesCount?: number;
   booksCount?: number;
-  coverImages?: string[];
 }
 
 export interface PaginationMeta {
