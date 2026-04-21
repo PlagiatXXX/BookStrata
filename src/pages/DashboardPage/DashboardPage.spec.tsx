@@ -216,8 +216,8 @@ describe("DashboardPage", () => {
         expect(screen.getByText("Test Tier List 1")).toBeInTheDocument();
       });
 
-      // Находим кнопку переименования по aria-label
-      const renameButtons = screen.getAllByLabelText("Переименовать");
+      // Находим кнопку переименования по aria-label (используем regex для учета динамического названия)
+      const renameButtons = screen.getAllByLabelText(/Переименовать/);
       if (renameButtons.length > 0) {
         fireEvent.click(renameButtons[0]);
       } else {
@@ -239,8 +239,8 @@ describe("DashboardPage", () => {
         expect(screen.getByText("Test Tier List 1")).toBeInTheDocument();
       });
 
-      // Находим кнопку удаления по aria-label
-      const deleteButtons = screen.getAllByLabelText("Удалить");
+      // Находим кнопку удаления по aria-label (используем regex для учета динамического названия)
+      const deleteButtons = screen.getAllByLabelText(/Удалить/);
       if (deleteButtons.length > 0) {
         fireEvent.click(deleteButtons[0]);
       } else {
