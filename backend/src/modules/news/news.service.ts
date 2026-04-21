@@ -31,7 +31,7 @@ export type UpdateNewsInput = z.infer<typeof updateNewsSchema>;
 export type NewsArticle = {
   id: number;
   title: string;
-  content: string;
+  content?: string; // Оптимизация Bolt: поле контента опционально для списков
   excerpt: string;
   imageUrl: string | null;
   tags: string[];
@@ -96,11 +96,22 @@ export class NewsService {
    * Получить опубликованные новости для главной страницы
    */
   async getPublishedNews(limit: number = 6): Promise<NewsArticle[]> {
+    // Оптимизация Bolt: исключаем тяжелое поле content для списка новостей
     const articles = await prisma.newsArticle.findMany({
       where: { isPublished: true },
       take: limit,
       orderBy: { publishedAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        excerpt: true,
+        imageUrl: true,
+        tags: true,
+        authorId: true,
+        publishedAt: true,
+        isPublished: true,
+        createdAt: true,
+        updatedAt: true,
         author: {
           select: {
             username: true,

@@ -49,3 +49,7 @@
 ## 2026-04-19 - [Omission of Unused Relational Selections in List Queries]
 **Learning:** Fetching related records (like cover images from placements) and user metadata in list queries (e.g., `getUserTierLists`) significantly increases database join overhead and payload size. When the target UI (Dashboard) doesn't display these previews or author names, omitting them from the Prisma `select` improves performance without functional loss.
 **Action:** Always verify if all relational data in "Short" or "Summary" API responses is actually rendered by the consuming frontend components. Proactively prune unused selections to minimize latency and memory footprint.
+
+## 2026-04-21 - [Excluding Heavy Fields in List Queries]
+**Learning:** Fetching large text fields (like `content` in news articles) in list queries significantly increases database load and network payload. Using Prisma's `select` to exclude these fields in list-specific service methods is a high-impact, low-risk optimization.
+**Action:** Always verify if list/summary queries include large blob or text fields. Use Prisma `select` to project only necessary fields and update the corresponding TypeScript types (making the heavy field optional) to ensure full-stack type safety.

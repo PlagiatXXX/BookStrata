@@ -3,7 +3,7 @@ import { api } from "./api-client";
 export interface NewsArticle {
   id: number;
   title: string;
-  content: string;
+  content?: string; // Оптимизация Bolt: контент опционален для списков
   excerpt: string;
   imageUrl: string | null;
   tags: string[];
