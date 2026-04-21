@@ -18,7 +18,6 @@ export const SaveButton = ({
 }: SaveButtonProps) => {
   if (isReadOnly) return null;
 
-  const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
   const getButtonContent = () => {
     switch (status) {
@@ -34,14 +33,7 @@ export const SaveButton = ({
       case 'error':
         return <span>⚠️ Ошибка (Повторить)</span>;
       default:
-        return (
-          <>
-            <span>Сохранить</span>
-            <kbd className="ml-1 hidden h-5 select-none items-center gap-1 rounded border border-black/20 bg-black/5 px-1.5 font-mono text-[10px] font-medium text-black/60 md:inline-flex">
-              {isMac ? '⌘' : 'Ctrl'}+S
-            </kbd>
-          </>
-        );
+        return <span>Сохранить</span>
     }
   };
 
@@ -56,6 +48,9 @@ export const SaveButton = ({
     return `${base} bg-white text-black shadow-[4px_4px_0_0_#000000] opacity-60 hover:opacity-100`;
   };
 
+  const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+  const shortcutHint = isMac ? '⌘S' : 'Ctrl+S';
+
   return (
     <div className="flex flex-col items-end gap-1">
       <button
@@ -65,7 +60,14 @@ export const SaveButton = ({
         className={getButtonClass()}
         aria-keyshortcuts={isMac ? "Meta+s" : "Control+s"}
       >
+        <div className="flex items-center gap-2">
         {getButtonContent()}
+        {!isReadOnly && status !== 'saving' && (
+            <kbd className="hidden sm:inline-flex items-center justify-center min-w-10 px-1.5 py-0.5 text-[10px] font-mono font-bold bg-black/5 rounded border border-black/10">
+              {shortcutHint}
+            </kbd>
+          )}
+        </div>
       </button>
       {lastSaved && status !== 'saving' && (
         <span className="text-[10px] text-gray-500 uppercase font-bold">

@@ -6,7 +6,7 @@ export const Logo = ({ onClick }: LogoProps) => {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 cursor-pointer"
+      className="flex items-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-lg"
       aria-label="BookStrata Pro - Рейтинг всего"
     >
       <svg

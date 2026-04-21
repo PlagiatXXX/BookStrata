@@ -105,11 +105,12 @@ export const Header = ({
               <button
                 key={item.label}
                 onClick={item.onClick}
-                className={`group relative px-4 py-2 rounded-lg cursor-pointer ${
+                aria-current={activeItem === item.label ? "page" : undefined}
+                className={`group relative px-4 py-2 rounded-lg cursor-pointer transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                   activeItem === item.label
                     ? "text-cyan-400"
                     : "text-gray-300 hover:text-white"
-                } transition-all duration-300`}
+                }`}
               >
                 <div className="flex items-center gap-2">
                   {item.icon}
@@ -140,7 +141,7 @@ export const Header = ({
             {/* Logout Button (Desktop) */}
             <button
               onClick={handleLogout}
-              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer"
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
               title="Выйти"
               aria-label="Выйти"
             >
@@ -151,7 +152,7 @@ export const Header = ({
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="md:hidden p-2 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
               aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -161,7 +162,7 @@ export const Header = ({
             {isAuthenticated && (
               <button
                 onClick={() => navigate("/profile")}
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer"
+                className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 title="Профиль"
                 aria-label="Перейти в профиль"
               >

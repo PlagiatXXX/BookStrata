@@ -1,5 +1,5 @@
 import "./ExportThemes.css";
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
@@ -114,7 +114,6 @@ const TierListEditorContent = () => {
     addRow,
     updateTierSettings,
     renameTier,
-    addBooks,
     clearRows,
     removeTier,
     updateBook,
@@ -125,7 +124,6 @@ const TierListEditorContent = () => {
     saveStatus,
     lastSaved,
     handleSave,
-    getSavePayload,
   } = useTierEditorSave({
     tierListId,
     listData,
@@ -147,21 +145,26 @@ const TierListEditorContent = () => {
 
   useEffect(() => {
     checkAndRestoreDraft();
-  }, [tierListId]);
+  }, [tierListId, checkAndRestoreDraft]);
 
+  // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
   useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        if (!isReadOnly && !isLoading) {
-          e.preventDefault();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if Ctrl (Windows/Linux) or Meta (Mac) is pressed along with 's'
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        // Prevent browser's default "Save Page" dialog
+        e.preventDefault();
+
+        // Only save if there are changes and we're not already saving/readonly
+        if (!isReadOnly && hasUnsavedChanges && saveStatus !== "saving") {
           handleSave();
         }
       }
     };
 
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [handleSave, isReadOnly, isLoading]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave, isReadOnly, hasUnsavedChanges, saveStatus]);
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Получаем функции из хука действий
