@@ -21,10 +21,14 @@ describe("RenameTierListModal", () => {
     vi.clearAllMocks();
   });
 
-  it("должен рендерить заголовок и текущее название", () => {
+  it("должен рендерить заголовок и текущее название с правильным accessibility", () => {
     render(<RenameTierListModal {...defaultProps} />);
 
-    expect(screen.getByText("Переименовать тир-лист")).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog");
+    const title = screen.getByText("Переименовать тир-лист");
+    expect(title).toBeInTheDocument();
+    expect(title.id).toBe("rename-modal-title");
+    expect(dialog).toHaveAttribute("aria-labelledby", "rename-modal-title");
     expect(screen.getByText("Текущее название:")).toBeInTheDocument();
     expect(screen.getByText("Old Title")).toBeInTheDocument();
   });

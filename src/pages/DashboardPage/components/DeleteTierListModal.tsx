@@ -10,7 +10,7 @@ export function DeleteTierListModal({
   isPending,
 }: DeleteModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} titleId="delete-modal-title">
       <div className="dashboard-modal">
         <button
           onClick={onClose}
@@ -22,7 +22,7 @@ export function DeleteTierListModal({
         </button>
 
         <div>
-          <h2>Удалить тир-лист</h2>
+          <h2 id="delete-modal-title">Удалить тир-лист</h2>
           <p>
             Это действие нельзя отменить. Рейтинг{' '}
             <strong>{tierListTitle}</strong> будет удален навсегда.
@@ -35,6 +35,7 @@ export function DeleteTierListModal({
             className="dashboard-btn dashboard-btn--ghost"
             type="button"
             disabled={isPending}
+            autoFocus
           >
             Отмена
           </button>

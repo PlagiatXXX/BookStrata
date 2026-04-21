@@ -34,7 +34,7 @@ export function CreateTierListModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} titleId="create-modal-title">
       <div className="dashboard-modal">
         <button
           onClick={onClose}
@@ -47,7 +47,7 @@ export function CreateTierListModal({
         </button>
 
         <div>
-          <h2>Создать новый тир-лист</h2>
+          <h2 id="create-modal-title">Создать новый тир-лист</h2>
           <p>Введите название для вашего нового рейтинга</p>
         </div>
 
