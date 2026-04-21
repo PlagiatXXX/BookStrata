@@ -17,6 +17,7 @@ vi.mock("../../lib/prisma.js", () => ({
       create: vi.fn(),
       createMany: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       deleteMany: vi.fn(),
       findMany: vi.fn(),
     },
@@ -671,7 +672,7 @@ describe("tierList.service", () => {
         return fn(prisma);
       });
 
-      (prisma.tier.update as any).mockResolvedValue({});
+      (prisma.tier.updateMany as any).mockResolvedValue({ count: 1 });
 
       const diffTiers = {
         added: [],
@@ -681,8 +682,8 @@ describe("tierList.service", () => {
 
       await service.saveTiers(mockTierListId, diffTiers);
 
-      expect(prisma.tier.update).toHaveBeenCalledWith({
-        where: { id: 1 },
+      expect(prisma.tier.updateMany).toHaveBeenCalledWith({
+        where: { id: 1, tierListId: mockTierListId },
         data: { title: "S+", color: "#FF0000", rank: 0 },
       });
     });
@@ -925,8 +926,10 @@ describe("tierList.service", () => {
 
       // Моки для тиров
       (prisma.tier.deleteMany as any).mockResolvedValue({ count: 1 });
-      (prisma.tier.update as any).mockResolvedValue({});
+      (prisma.tier.updateMany as any).mockResolvedValue({ count: 1 });
       (prisma.tier.create as any).mockResolvedValue({ id: 100 });
+
+      (prisma.bookPlacement.count as any).mockResolvedValue(1);
 
       // Моки для книг
       (prisma.book.create as any).mockResolvedValue({ id: 200 });
@@ -956,7 +959,7 @@ describe("tierList.service", () => {
       const result = await service.saveAll(mockTierListId, mockUserId, payload);
 // Проверка параллельного выполнения через вызовы Prisma
       expect(prisma.tier.deleteMany).toHaveBeenCalled();
-      expect(prisma.tier.update).toHaveBeenCalled();
+      expect(prisma.tier.updateMany).toHaveBeenCalled();
       expect(prisma.tier.create).toHaveBeenCalled();
       expect(prisma.book.create).toHaveBeenCalled();
       expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledWith({

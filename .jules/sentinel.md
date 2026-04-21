@@ -27,3 +27,8 @@
 **Vulnerability:** Inadvertent introduction of multiple lockfiles (`pnpm-lock.yaml` and `package-lock.json`) can lead to version drift and inconsistent builds across environments.
 **Learning:** Even if memory says "pnpm exclusively", always verify the current state of the repo (presence of `package-lock.json`). In monorepos with inconsistent tool usage, respect the existing lockfile format to avoid breaking local development workflows.
 **Prevention:** Before running install commands, check for existing lockfiles. If the project uses `npm`, use `npm install` to maintain the `package-lock.json`. Avoid using `pnpm` if the root contains a valid `package-lock.json`, unless explicitly migrating.
+
+## 2026-04-19 - BOLA in Bulk Operations (saveTiers/saveAll)
+**Vulnerability:** Broken Object Level Authorization (BOLA) in bulk save operations allowed users to update tiers and place books belonging to other users' tier lists.
+**Learning:** Atomic bulk operations (like `saveAll` or `saveTiers` using `update`) often overlook individual resource ownership if they rely solely on primary keys. Even if an operation is wrapped in a transaction, it must explicitly scope every update and creation to the authorized parent resource.
+**Prevention:** Use `updateMany` instead of `update` when the parent ID (e.g., `tierListId`) is available, adding it to the `where` clause. For operations involving related entities (like `BookPlacement`), perform a preliminary `count` or `findMany` check to ensure all provided IDs belong to the authorized context before proceeding with the write.
