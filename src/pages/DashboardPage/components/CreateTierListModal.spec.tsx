@@ -20,10 +20,14 @@ describe("CreateTierListModal", () => {
     vi.clearAllMocks();
   });
 
-  it("должен рендерить заголовок и описание", () => {
+  it("должен рендерить заголовок и описание с правильным accessibility", () => {
     render(<CreateTierListModal {...defaultProps} />);
 
-    expect(screen.getByText("Создать новый тир-лист")).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog");
+    const title = screen.getByText("Создать новый тир-лист");
+    expect(title).toBeInTheDocument();
+    expect(title.id).toBe("create-modal-title");
+    expect(dialog).toHaveAttribute("aria-labelledby", "create-modal-title");
     expect(screen.getByText("Введите название для вашего нового рейтинга")).toBeInTheDocument();
   });
 

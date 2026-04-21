@@ -39,7 +39,7 @@ export function RenameTierListModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} titleId="rename-modal-title">
       <div className="dashboard-modal">
         <button
           onClick={onClose}
@@ -52,7 +52,7 @@ export function RenameTierListModal({
         </button>
 
         <div>
-          <h2>Переименовать тир-лист</h2>
+          <h2 id="rename-modal-title">Переименовать тир-лист</h2>
           {tierListTitle && (
             <p className="text-sm text-gray-400 mt-1">
               Текущее название:{" "}

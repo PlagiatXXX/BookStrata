@@ -35,3 +35,7 @@
 ## 2026-04-21 - [Modal Accessibility & Focus Pattern]
 **Learning:** For modal components, linking the `aria-labelledby` (via `titleId` prop) to the main heading's `id` ensures screen readers announce the modal's purpose immediately. Furthermore, using `autoFocus` on the primary action button within the modal provides instant keyboard interactivity and allows the default 'Enter' key behavior to work without needing complex global key listeners.
 **Action:** Always establish `aria-labelledby` relationships in modals and use `autoFocus` on the most likely primary action to improve accessibility and keyboard efficiency.
+
+## 2026-05-20 - [Dashboard Modal Accessibility & Safety Focus]
+**Learning:** Linking modal titles to the container via `aria-labelledby` ensures screen readers announce the purpose immediately. For destructive actions (like deletion), applying `autoFocus` to the "Cancel" button instead of the "Delete" button provides a safety buffer against accidental "Enter" key presses.
+**Action:** Use `titleId` on modals linked to heading `id`s, and prioritize safety by focusing the non-destructive action in confirmation dialogs.
