@@ -12,6 +12,10 @@
 **Learning:** For glassmorphism-style inputs without native borders, a sibling `span` with `peer-focus:scale-x-100` provides a high-contrast, accessible focus indicator that meets accessibility standards while maintaining the aesthetic.
 **Action:** Use the `peer` class on inputs with an absolute sibling `span` for focus states in all glass-style forms to ensure keyboard users have clear visual feedback.
 
+## 2026-05-20 - [Dynamic Status Accessibility]
+**Learning:** Dynamic status indicators (like book counters) are often missed by screen readers when they update. Users relying on assistive technology may not realize they are approaching a system limit until an error occurs.
+**Action:** Apply `aria-live="polite"` to containers holding dynamic count or status information to ensure updates are announced automatically.
+
 ## 2026-04-18 - [Dashboard Keyboard Navigation Visibility]
 **Learning:** Custom-styled dashboard components (filters, card titles with `role="button"`, and action icons) often lose their default browser focus indicators. On dark, gradient, or glass backgrounds, standard focus rings are hard to see.
 **Action:** Implement high-contrast `focus-visible` indicators using a theme-consistent color (e.g., cyan `#06bcf9`) with a 2px offset. For interactive text/titles, ensure `border-radius` is applied to the element so the focus outline follows the expected shape.
