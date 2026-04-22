@@ -49,3 +49,7 @@
 ## 2026-04-19 - [Omission of Unused Relational Selections in List Queries]
 **Learning:** Fetching related records (like cover images from placements) and user metadata in list queries (e.g., `getUserTierLists`) significantly increases database join overhead and payload size. When the target UI (Dashboard) doesn't display these previews or author names, omitting them from the Prisma `select` improves performance without functional loss.
 **Action:** Always verify if all relational data in "Short" or "Summary" API responses is actually rendered by the consuming frontend components. Proactively prune unused selections to minimize latency and memory footprint.
+
+## 2026-04-22 - [Parallelizing Independent Read Queries in Prisma]
+**Learning:** Prisma's `$transaction` with an array executes queries sequentially on the database. For independent read operations, such as fetching a data list and its total count for pagination, this adds unnecessary latency.
+**Action:** Replace `$transaction` with `Promise.all` for independent database reads. This allows the database to process queries concurrently, significantly reducing API response times for list-based endpoints.
