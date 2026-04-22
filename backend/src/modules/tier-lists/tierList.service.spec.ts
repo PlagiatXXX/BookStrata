@@ -20,6 +20,12 @@ vi.mock("../../lib/prisma.js", () => ({
       updateMany: vi.fn(),
       deleteMany: vi.fn(),
       findMany: vi.fn(),
+      count: vi.fn().mockImplementation((args) => {
+        if (args?.where?.id?.in) {
+          return Promise.resolve(args.where.id.in.length);
+        }
+        return Promise.resolve(1);
+      }),
     },
     bookPlacement: {
       upsert: vi.fn(),
@@ -355,6 +361,7 @@ describe("tierList.service", () => {
 
     it("должен обновить позиции книг используя upsert", async () => {
       (prisma.bookPlacement.upsert as any).mockResolvedValue({});
+      (prisma.tier.count as any).mockResolvedValue(2);
 
       await service.updatePlacements(mockTierListId, mockPlacements);
 
@@ -380,6 +387,7 @@ describe("tierList.service", () => {
 
     it("должен использовать транзакцию для всех обновлений", async () => {
       (prisma.$transaction as any).mockResolvedValue([{}, {}, {}]);
+      (prisma.tier.count as any).mockResolvedValue(2);
 
       await service.updatePlacements(mockTierListId, mockPlacements);
 
@@ -928,6 +936,7 @@ describe("tierList.service", () => {
       (prisma.tier.deleteMany as any).mockResolvedValue({ count: 1 });
       (prisma.tier.updateMany as any).mockResolvedValue({ count: 1 });
       (prisma.tier.create as any).mockResolvedValue({ id: 100 });
+      (prisma.tier.count as any).mockResolvedValue(1);
 
       (prisma.bookPlacement.count as any).mockResolvedValue(1);
 
