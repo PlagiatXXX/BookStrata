@@ -186,10 +186,14 @@ export const BookEditModal = ({
                 dispatch({ type: "SET_TITLE", title: e.target.value })
               }
               autoFocus
+              maxLength={100}
               className="w-full border-2 border-black bg-[#0a0a0a] px-5 py-4 text-xl font-black tracking-[-0.03em] text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-lg"
               placeholder="Введите название книги"
               aria-label="Название книги"
             />
+            <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              {title.length}/100
+            </span>
           </div>
         </div>
 
@@ -243,10 +247,14 @@ export const BookEditModal = ({
                     onChange={(e) =>
                       dispatch({ type: "SET_AUTHOR", author: e.target.value })
                     }
+                    maxLength={100}
                     className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
                     placeholder="Автор книги"
                     aria-label="Автор книги"
                   />
+                  <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    {author.length}/100
+                  </span>
                 </section>
 
                 <section className="border-2 border-black bg-[#171717] p-4">

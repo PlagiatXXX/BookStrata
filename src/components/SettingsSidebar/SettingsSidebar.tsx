@@ -163,11 +163,15 @@ export const SettingsSidebar = memo(({
       <div className="mt-auto flex flex-col gap-4">
         {onTogglePublic && (
           <div className="flex items-center justify-between nb-heavy-border bg-black p-4">
-            <div className="flex items-center gap-2">
+            <label
+              htmlFor="public-access-switch"
+              className="flex cursor-pointer items-center gap-2"
+            >
               <Globe size={16} className="text-[#c1fffe]" />
               <span className="nb-label-md">Публичный доступ</span>
-            </div>
+            </label>
             <Switch
+              id="public-access-switch"
               checked={isPublic}
               onCheckedChange={onTogglePublic}
               disabled={isTogglingPublic}
