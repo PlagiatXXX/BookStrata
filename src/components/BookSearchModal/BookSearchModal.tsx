@@ -6,6 +6,7 @@ import { sileo } from 'sileo';
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { useBookSearch } from "@/hooks/useBookSearch";
 import { Spinner } from "@/components/Spinner";
+import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 
 // Логгер для компонента поиска книг
 const logger = createLogger('BookSearchModal', { color: 'green' });
@@ -336,7 +337,7 @@ export const BookSearchModal = ({
         if (isLimitError) {
           sileo.action({
             title: "Лимит книг",
-            description: "Достигнуто максимальное количество книг в тир-листе (20). Оформите Pro для неограниченного количества.",
+            description: `Достигнуто максимальное количество книг в тир-листе (${MAX_BOOKS_PER_TIER_LIST}). Оформите Pro для неограниченного количества.`,
             duration: 3000,
             button: {
               title: "Оформить Pro",
@@ -398,7 +399,7 @@ export const BookSearchModal = ({
       if (isLimitError) {
         sileo.action({
           title: "Лимит книг",
-          description: "Достигнуто максимальное количество книг в тир-листе (20). Оформите Pro для неограниченного количества.",
+          description: `Достигнуто максимальное количество книг в тир-листе (${MAX_BOOKS_PER_TIER_LIST}). Оформите Pro для неограниченного количества.`,
           duration: 3000,
           button: {
             title: "Оформить Pro",
