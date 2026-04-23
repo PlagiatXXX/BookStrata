@@ -18,7 +18,8 @@ export async function getUserTierLists(
   const skip = (page - 1) * pageSize;
 
   // Оптимизированный запрос: выбираем только нужные поля
-  const [tierLists, totalItems] = await prisma.$transaction([
+  // Оптимизация Bolt: используем Promise.all вместо $transaction для параллельного выполнения независимых чтений
+  const [tierLists, totalItems] = await Promise.all([
     prisma.tierList.findMany({
       where: { userId },
       select: {
@@ -453,8 +454,9 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
   let totalItems = 0;
 
   // Обычная сортировка - используем пагинацию на уровне БД
+  // Оптимизация Bolt: используем Promise.all вместо $transaction для параллельного выполнения независимых чтений
   try {
-    [tierLists, totalItems] = await prisma.$transaction([
+    [tierLists, totalItems] = await Promise.all([
       prisma.tierList.findMany({
         where: { isPublic: true },
         select: {

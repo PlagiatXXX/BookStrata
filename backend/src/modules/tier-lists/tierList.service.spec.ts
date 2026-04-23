@@ -81,11 +81,13 @@ describe("tierList.service", () => {
     ];
 
     it("должен вернуть список тир-листов пользователя с пагинацией", async () => {
-      (prisma.$transaction as any).mockResolvedValue([mockTierLists, 2]);
+      (prisma.tierList.findMany as any).mockResolvedValue(mockTierLists);
+      (prisma.tierList.count as any).mockResolvedValue(2);
 
       const result = await service.getUserTierLists(mockUserId, mockQuery);
 
-      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(prisma.tierList.findMany).toHaveBeenCalled();
+      expect(prisma.tierList.count).toHaveBeenCalled();
       expect(result.data).toHaveLength(2);
       expect(result.data[0]).toMatchObject({
         id: 1,
@@ -111,7 +113,8 @@ describe("tierList.service", () => {
           title: `List ${i + 1}`,
         }));
 
-      (prisma.$transaction as any).mockResolvedValue([largeList, 25]);
+      (prisma.tierList.findMany as any).mockResolvedValue(largeList);
+      (prisma.tierList.count as any).mockResolvedValue(25);
 
       const result = await service.getUserTierLists(mockUserId, {
         page: "1",
@@ -123,7 +126,8 @@ describe("tierList.service", () => {
     });
 
     it("должен вернуть пустой массив если нет тир-листов", async () => {
-      (prisma.$transaction as any).mockResolvedValue([[], 0]);
+      (prisma.tierList.findMany as any).mockResolvedValue([]);
+      (prisma.tierList.count as any).mockResolvedValue(0);
 
       const result = await service.getUserTierLists(mockUserId, mockQuery);
 
@@ -767,7 +771,8 @@ describe("tierList.service", () => {
     ];
 
     it("должен вернуть публичные тир-листы с пагинацией", async () => {
-      (prisma.$transaction as any).mockResolvedValue([mockPublicTierLists, 2]);
+      (prisma.tierList.findMany as any).mockResolvedValue(mockPublicTierLists);
+      (prisma.tierList.count as any).mockResolvedValue(2);
 
       const result = await service.getPublicTierLists(mockQuery);
 
@@ -796,7 +801,8 @@ describe("tierList.service", () => {
           user: { id: 1, username: "user", avatarUrl: null },
         }));
 
-      (prisma.$transaction as any).mockResolvedValue([mockAllLists, 15]);
+      (prisma.tierList.findMany as any).mockResolvedValue(mockAllLists);
+      (prisma.tierList.count as any).mockResolvedValue(15);
 
       const result = await service.getPublicTierLists({
         ...mockQuery,
@@ -810,7 +816,8 @@ describe("tierList.service", () => {
     });
 
     it("должен вернуть пустой массив если нет публичных тир-листов", async () => {
-      (prisma.$transaction as any).mockResolvedValue([[], 0]);
+      (prisma.tierList.findMany as any).mockResolvedValue([]);
+      (prisma.tierList.count as any).mockResolvedValue(0);
 
       const result = await service.getPublicTierLists(mockQuery);
 
@@ -826,7 +833,8 @@ describe("tierList.service", () => {
           id: i + 1,
         }));
 
-      (prisma.$transaction as any).mockResolvedValue([largeList, 35]);
+      (prisma.tierList.findMany as any).mockResolvedValue(largeList);
+      (prisma.tierList.count as any).mockResolvedValue(35);
 
       const result = await service.getPublicTierLists({
         page: "1",
