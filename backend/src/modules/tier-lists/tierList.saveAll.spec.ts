@@ -10,6 +10,7 @@ vi.mock('../../lib/prisma.js', () => ({
       update: vi.fn(),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       create: vi.fn().mockResolvedValue({ id: 101 }),
+      count: vi.fn().mockResolvedValue(1),
     },
     book: {
       create: vi.fn().mockResolvedValue({ id: 201 }),

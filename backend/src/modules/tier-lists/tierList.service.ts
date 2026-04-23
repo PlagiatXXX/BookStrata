@@ -144,6 +144,28 @@ export async function updatePlacements(
 
   if (placements.length === 0) return [];
 
+  // Security check (BOLA): Ensure that all non-null tierIds belong to this tier list
+  const tierIds = Array.from(
+    new Set(
+      placements
+        .filter((p) => p.tierId !== null)
+        .map((p) => p.tierId as number),
+    ),
+  );
+
+  if (tierIds.length > 0) {
+    const tierCount = await prisma.tier.count({
+      where: {
+        id: { in: tierIds },
+        tierListId,
+      },
+    });
+
+    if (tierCount !== tierIds.length) {
+      throw new Error("One or more tiers do not belong to this tier list");
+    }
+  }
+
   // Используем upsert вместо update, чтобы создавать записи если их нет
   const transactions = placements.map((p) =>
     prisma.bookPlacement.upsert({
@@ -760,6 +782,34 @@ export async function saveAll(
 
         if (count !== existingBookIds.length) {
           throw new Error("One or more books do not belong to this tier list");
+        }
+      }
+
+      // Security check (BOLA): Ensure that all non-temporary tierIds belong to this tier list
+      const existingTierIds = Array.from(
+        new Set(
+          payload.placements
+            .filter(
+              (p) =>
+                p.tierId !== null &&
+                (typeof p.tierId !== "string" || !p.tierId.includes("-")),
+            )
+            .map((p) =>
+              typeof p.tierId === "string" ? parseInt(p.tierId, 10) : p.tierId!,
+            ),
+        ),
+      );
+
+      if (existingTierIds.length > 0) {
+        const tierCount = await tx.tier.count({
+          where: {
+            id: { in: existingTierIds },
+            tierListId,
+          },
+        });
+
+        if (tierCount !== existingTierIds.length) {
+          throw new Error("One or more tiers do not belong to this tier list");
         }
       }
 
