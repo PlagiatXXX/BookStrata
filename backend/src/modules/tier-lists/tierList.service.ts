@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
+import { sanitize } from "../../lib/sanitizer.js";
 import type { GetTierListsQuery } from "./tierList.schema.js";
 
 export { prisma };
@@ -231,8 +232,8 @@ export async function addBooksToTierList(
                 title: bookData.title,
                 author: bookData.author ?? null,
                 coverImageUrl: bookData.coverImageUrl,
-                description: bookData.description ?? null,
-                thoughts: bookData.thoughts ?? null,
+                description: bookData.description ? sanitize(bookData.description) : null,
+                thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
               },
             },
           })),
@@ -276,9 +277,13 @@ export async function updateBook(
     where: { tierListId_bookId: { tierListId, bookId } },
   });
 
+  const sanitizedData = { ...data };
+  if (sanitizedData.description) sanitizedData.description = sanitize(sanitizedData.description);
+  if (sanitizedData.thoughts) sanitizedData.thoughts = sanitize(sanitizedData.thoughts);
+
   return prisma.book.update({
     where: { id: bookId },
-    data,
+    data: sanitizedData,
   });
 }
 
@@ -631,8 +636,8 @@ export async function forkTierList(id: number, userId: number) {
                 title: placement.book.title,
                 author: placement.book.author,
                 coverImageUrl: placement.book.coverImageUrl,
-                description: placement.book.description,
-                thoughts: placement.book.thoughts,
+                description: placement.book.description ? sanitize(placement.book.description) : null,
+                thoughts: placement.book.thoughts ? sanitize(placement.book.thoughts) : null,
               },
             },
           })),
@@ -744,8 +749,8 @@ export async function saveAll(
               title: bookData.title,
               author: bookData.author ?? null,
               coverImageUrl: bookData.coverImageUrl,
-              description: bookData.description ?? null,
-              thoughts: bookData.thoughts ?? null,
+              description: bookData.description ? sanitize(bookData.description) : null,
+              thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
             },
           })
         )

@@ -2,6 +2,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { createLogger } from "../../lib/logger.js";
+import { sanitize } from "../../lib/sanitizer.js";
 
 // Логгер для сервиса шаблонов
 const logger = createLogger("Templates", { color: "magenta" });
@@ -120,12 +121,19 @@ export class TemplatesService {
       }
     }
 
+    // Безопасность: Очистка контента книг в шаблоне
+    const sanitizedDefaultBooks = validatedInput.defaultBooks?.map((book: any) => ({
+      ...book,
+      description: book.description ? sanitize(book.description) : book.description,
+      thoughts: book.thoughts ? sanitize(book.thoughts) : book.thoughts,
+    }));
+
     const templateData: any = {
       title: validatedInput.title,
       description: validatedInput.description,
       coverImageUrl: validatedInput.coverImageUrl,
       tiers: validatedInput.tiers as any, // Приведение к типу any для JSON поля
-      defaultBooks: validatedInput.defaultBooks as any, // Приведение к типу any для JSON поля
+      defaultBooks: (sanitizedDefaultBooks || []) as any,
       isPublic: validatedInput.isPublic,
     };
 
@@ -250,6 +258,16 @@ export class TemplatesService {
       throw new Error("Unauthorized: You can only update your own templates");
     }
 
+    // defaultBooks включаем только если он явно передан и не null
+    let sanitizedDefaultBooks = undefined;
+    if (validatedInput.defaultBooks) {
+      sanitizedDefaultBooks = validatedInput.defaultBooks.map((book: any) => ({
+        ...book,
+        description: book.description ? sanitize(book.description) : book.description,
+        thoughts: book.thoughts ? sanitize(book.thoughts) : book.thoughts,
+      }));
+    }
+
     // Создаем объект с данными для обновления, включая поля только если они были переданы
     const updateData: any = {
       title: validatedInput.title ?? template.title,
@@ -258,12 +276,8 @@ export class TemplatesService {
       isPublic: validatedInput.isPublic ?? template.isPublic,
     };
 
-    // defaultBooks включаем только если он явно передан и не null
-    if (
-      validatedInput.defaultBooks !== undefined &&
-      validatedInput.defaultBooks !== null
-    ) {
-      updateData.defaultBooks = validatedInput.defaultBooks as any;
+    if (sanitizedDefaultBooks !== undefined) {
+      updateData.defaultBooks = sanitizedDefaultBooks as any;
     } else if (template.defaultBooks !== null) {
       updateData.defaultBooks = template.defaultBooks;
     }
@@ -340,6 +354,7 @@ export class TemplatesService {
 
     // Оптимизация Bolt: использование транзакции и вложенного include для исключения findMany
     return this.prisma.$transaction(async (tx) => {
+
       // Создаем новый тир-лист на основе шаблона
       const newList = await tx.tierList.create({
         data: {
