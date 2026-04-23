@@ -307,7 +307,7 @@ export const BookEditModal = ({
           <Button
             variant="primary"
             onClick={handleSave}
-            className="border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black hover:bg-[#9cf5f3] hover:text-black max-md:w-full focus-visible:ring-2 focus-visible:ring-cyan-600"
+            className="border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black hover:bg-[#9cf5f3] hover:text-black max-md:w-full focus-visible:ring-2 focus-visible:ring-pink-500"
             title="Ctrl + Enter"
             aria-label="Сохранить изменения (Ctrl + Enter)"
             aria-keyshortcuts="Control+Enter"

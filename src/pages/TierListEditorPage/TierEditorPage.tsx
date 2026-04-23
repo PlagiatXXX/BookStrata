@@ -152,12 +152,21 @@ const TierListEditorContent = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check if Ctrl (Windows/Linux) or Meta (Mac) is pressed along with 's'
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        // Prevent browser's default "Save Page" dialog
+        // ALWAYS prevent browser's default "Save Page" dialog/screenshot
         e.preventDefault();
 
         // Only save if there are changes and we're not already saving/readonly
         if (!isReadOnly && hasUnsavedChanges && saveStatus !== "saving") {
           handleSave();
+        } else if (isReadOnly) {
+          // User is viewing (read-only mode) - just prevent default
+          logger.info("Ctrl+S pressed in read-only mode, prevented default");
+        } else if (saveStatus === "saving") {
+          // Already saving - just prevent default
+          logger.info("Ctrl+S pressed while saving, prevented default");
+        } else if (!hasUnsavedChanges) {
+          // No unsaved changes - just prevent default
+          logger.info("Ctrl+S pressed with no unsaved changes, prevented default");
         }
       }
     };
