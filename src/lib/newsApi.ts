@@ -3,7 +3,7 @@ import { api } from "./api-client";
 export interface NewsArticle {
   id: number;
   title: string;
-  content: string;
+  content?: string;
   excerpt: string;
   imageUrl: string | null;
   tags: string[];
@@ -17,7 +17,7 @@ export interface NewsArticle {
 
 export interface CreateNewsInput {
   title: string;
-  content: string;
+  content?: string;
   excerpt: string;
   imageUrl?: string;
   tags?: string[];

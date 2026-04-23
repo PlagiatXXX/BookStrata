@@ -31,7 +31,7 @@ export type UpdateNewsInput = z.infer<typeof updateNewsSchema>;
 export type NewsArticle = {
   id: number;
   title: string;
-  content: string;
+  content?: string;
   excerpt: string;
   imageUrl: string | null;
   tags: string[];
@@ -100,7 +100,17 @@ export class NewsService {
       where: { isPublished: true },
       take: limit,
       orderBy: { publishedAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        excerpt: true,
+        imageUrl: true,
+        tags: true,
+        authorId: true,
+        publishedAt: true,
+        isPublished: true,
+        createdAt: true,
+        updatedAt: true,
         author: {
           select: {
             username: true,
