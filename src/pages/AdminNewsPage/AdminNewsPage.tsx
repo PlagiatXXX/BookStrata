@@ -15,6 +15,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
 import {
   getNews,
+  getNewsById,
   createNews,
   updateNews,
   deleteNews,
@@ -92,17 +93,39 @@ export function AdminNewsPage() {
     setShowModal(true);
   };
 
-  const handleOpenEdit = (article: NewsArticle) => {
-    setEditingNews(article);
-    setFormData({
-      title: article.title,
-      content: article.content,
-      excerpt: article.excerpt,
-      imageUrl: article.imageUrl || "",
-      tags: article.tags.join(", "),
-      isPublished: article.isPublished,
-    });
-    setShowModal(true);
+  const handleOpenEdit = async (article: NewsArticle) => {
+    try {
+      setFormLoading(true);
+      // Оптимизация Bolt: ленивая загрузка контента новости только при открытии редактора
+      const fullArticle = await getNewsById(article.id);
+
+      if (!fullArticle) {
+        sileo.error({
+          title: "Ошибка",
+          description: "Не удалось загрузить содержимое новости",
+        });
+        return;
+      }
+
+      setEditingNews(fullArticle);
+      setFormData({
+        title: fullArticle.title,
+        content: fullArticle.content || "",
+        excerpt: fullArticle.excerpt,
+        imageUrl: fullArticle.imageUrl || "",
+        tags: fullArticle.tags.join(", "),
+        isPublished: fullArticle.isPublished,
+      });
+      setShowModal(true);
+    } catch (error) {
+      console.error("Failed to fetch full news article:", error);
+      sileo.error({
+        title: "Ошибка",
+        description: "Произошла ошибка при загрузке новости",
+      });
+    } finally {
+      setFormLoading(false);
+    }
   };
 
   const handleCloseModal = () => {
