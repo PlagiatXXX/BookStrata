@@ -2,6 +2,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { createLogger } from "../../lib/logger.js";
+import { sanitize } from "../../lib/sanitizer.js";
 
 // Логгер для сервиса шаблонов
 const logger = createLogger("Templates", { color: "magenta" });
@@ -121,11 +122,24 @@ export class TemplatesService {
     }
 
     const templateData: any = {
-      title: validatedInput.title,
-      description: validatedInput.description,
+      title: sanitize(validatedInput.title),
+      description: validatedInput.description
+        ? sanitize(validatedInput.description)
+        : undefined,
       coverImageUrl: validatedInput.coverImageUrl,
-      tiers: validatedInput.tiers as any, // Приведение к типу any для JSON поля
-      defaultBooks: validatedInput.defaultBooks as any, // Приведение к типу any для JSON поля
+      tiers: (validatedInput.tiers as any[])?.map((tier) => ({
+        ...tier,
+        name: sanitize(tier.name),
+      })) as any, // Приведение к типу any для JSON поля
+      defaultBooks: (validatedInput.defaultBooks as any[])?.map((book) => ({
+        ...book,
+        title: sanitize(book.title),
+        author: book.author ? sanitize(book.author) : book.author,
+        description: book.description
+          ? sanitize(book.description)
+          : book.description,
+        thoughts: book.thoughts ? sanitize(book.thoughts) : book.thoughts,
+      })),
       isPublic: validatedInput.isPublic,
     };
 
@@ -252,9 +266,21 @@ export class TemplatesService {
 
     // Создаем объект с данными для обновления, включая поля только если они были переданы
     const updateData: any = {
-      title: validatedInput.title ?? template.title,
-      description: validatedInput.description ?? template.description,
-      tiers: (validatedInput.tiers ?? template.tiers) as any,
+      title: validatedInput.title
+        ? sanitize(validatedInput.title)
+        : template.title,
+      description:
+        validatedInput.description !== undefined
+          ? validatedInput.description
+            ? sanitize(validatedInput.description)
+            : null
+          : template.description,
+      tiers: (
+        (validatedInput.tiers as any[]) ?? (template.tiers as any[])
+      )?.map((tier) => ({
+        ...tier,
+        name: sanitize(tier.name),
+      })) as any,
       isPublic: validatedInput.isPublic ?? template.isPublic,
     };
 
@@ -263,7 +289,17 @@ export class TemplatesService {
       validatedInput.defaultBooks !== undefined &&
       validatedInput.defaultBooks !== null
     ) {
-      updateData.defaultBooks = validatedInput.defaultBooks as any;
+      updateData.defaultBooks = (validatedInput.defaultBooks as any[])?.map(
+        (book) => ({
+          ...book,
+          title: sanitize(book.title),
+          author: book.author ? sanitize(book.author) : book.author,
+          description: book.description
+            ? sanitize(book.description)
+            : book.description,
+          thoughts: book.thoughts ? sanitize(book.thoughts) : book.thoughts,
+        }),
+      );
     } else if (template.defaultBooks !== null) {
       updateData.defaultBooks = template.defaultBooks;
     }
