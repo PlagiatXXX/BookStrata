@@ -35,6 +35,17 @@ export const SearchBar = ({ value, onChange, placeholder = "Поиск..." }: Se
     onChange(e.target.value);
   };
 
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      if (value) {
+        e.preventDefault();
+        onChange("");
+      } else {
+        inputRef.current?.blur();
+      }
+    }
+  };
+
   return (
     <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 text-gray-400 border border-slate-700/50 transition-all focus-within:ring-2 focus-within:ring-(--accent-main)/50 focus-within:border-(--accent-main)/50">
       <Search size={16} />
@@ -43,6 +54,7 @@ export const SearchBar = ({ value, onChange, placeholder = "Поиск..." }: Se
         type="text"
         value={value}
         onChange={handleInputChange}
+        onKeyDown={handleInputKeyDown}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
@@ -57,9 +69,9 @@ export const SearchBar = ({ value, onChange, placeholder = "Поиск..." }: Se
       )}
       {value && (
         <button
-          onClick={() => onChange('')}
+          onClick={() => onChange("")}
           aria-label="Очистить поиск"
-          className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+          className="text-gray-400 hover:text-white transition-colors cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent-main)/50"
         >
           <X size={14} />
         </button>

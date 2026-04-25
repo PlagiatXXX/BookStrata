@@ -43,3 +43,7 @@
 ## 2026-05-20 - [Dashboard Modal Accessibility & Safety Focus]
 **Learning:** Linking modal titles to the container via `aria-labelledby` ensures screen readers announce the purpose immediately. For destructive actions (like deletion), applying `autoFocus` to the "Cancel" button instead of the "Delete" button provides a safety buffer against accidental "Enter" key presses.
 **Action:** Use `titleId` on modals linked to heading `id`s, and prioritize safety by focusing the non-destructive action in confirmation dialogs.
+
+## 2026-06-10 - [Consistent Keyboard Search Patterns]
+**Learning:** For application-wide search bars, users expect standard keyboard patterns such as `Escape` to clear current input or dismiss focus. Additionally, keyboard shortcut hints (like `<kbd>/`</kbd>) are only helpful if the component remains accessible via keyboard after the shortcut is triggered.
+**Action:** Always implement `Escape` key handling in search components to clear or blur, and ensure any icon-only actions (like "Clear Search") have explicit `focus-visible` styles to maintain a clear focus path for keyboard users.
