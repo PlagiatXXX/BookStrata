@@ -37,3 +37,8 @@
 **Vulnerability:** Broken Object Level Authorization (BOLA) in the `updatePlacements` function allowed users to associate books with tiers belonging to other users' tier lists by providing an unauthorized `tierId`.
 **Learning:** Protecting the primary record (the book placement) with a composite key (`tierListId_bookId`) prevents unauthorized modifications to other lists' books, but it does not automatically protect relationships (like `tierId`). If the service uses `upsert` or `update` without validating the referenced relation IDs, an attacker can "inject" books into other users' tiers or vice versa.
 **Prevention:** In functions that update multiple relationships, always perform a preliminary count or validation check to ensure all referenced sub-resource IDs (e.g., `tierId`) are owned by or associated with the authorized parent context (e.g., `tierListId`) before proceeding with the write.
+
+## 2026-04-26 - DOM XSS in Tier List Export Watermark
+**Vulnerability:** A DOM-based XSS vulnerability existed in the `useTierEditorDrag` hook where the `username` variable was directly injected into the DOM using `.innerHTML` during the image export process.
+**Learning:** Even utility functions that perform transient DOM manipulations (like creating a watermark for an image export) are susceptible to XSS if they use unsafe sinks like `innerHTML` with user-controlled data.
+**Prevention:** Always use safe DOM APIs like `textContent`, `createElement`, and `append()` instead of `innerHTML` when constructing DOM elements with dynamic content, even for temporary elements that are immediately removed.
