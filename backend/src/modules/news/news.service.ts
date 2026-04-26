@@ -72,7 +72,17 @@ export class NewsService {
         skip,
         take: limit,
         orderBy: { publishedAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          excerpt: true,
+          imageUrl: true,
+          tags: true,
+          authorId: true,
+          publishedAt: true,
+          isPublished: true,
+          createdAt: true,
+          updatedAt: true,
           author: {
             select: {
               username: true,

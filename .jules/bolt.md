@@ -53,3 +53,7 @@
 ## 2026-04-22 - [Parallelizing Independent Read Queries in Prisma]
 **Learning:** Prisma's `$transaction` with an array executes queries sequentially on the database. For independent read operations, such as fetching a data list and its total count for pagination, this adds unnecessary latency.
 **Action:** Replace `$transaction` with `Promise.all` for independent database reads. This allows the database to process queries concurrently, significantly reducing API response times for list-based endpoints.
+
+## 2026-04-26 - [Lazy-loading Large Content Fields for Lists]
+**Learning:** Including large '@db.Text' or blob fields (like article 'content') in list queries causes significant database overhead and increases API payload size, even if they are only needed for specific actions like editing.
+**Action:** Use Prisma's 'select' to exclude large fields from list-based service methods. Implement lazy-loading on the frontend by fetching the full record by ID only when the user performs an action that requires the heavy data, and provide clear UI feedback (spinners/animations) during the asynchronous fetch.

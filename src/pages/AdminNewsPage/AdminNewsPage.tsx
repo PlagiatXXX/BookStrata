@@ -15,6 +15,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
 import {
   getNews,
+  getNewsById,
   createNews,
   updateNews,
   deleteNews,
@@ -58,6 +59,7 @@ export function AdminNewsPage() {
   const [editingNews, setEditingNews] = useState<NewsArticle | null>(null);
   const [formData, setFormData] = useState<NewsFormData>(emptyFormData);
   const [formLoading, setFormLoading] = useState(false);
+  const [isFetchingFullContent, setIsFetchingFullContent] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -92,17 +94,38 @@ export function AdminNewsPage() {
     setShowModal(true);
   };
 
-  const handleOpenEdit = (article: NewsArticle) => {
-    setEditingNews(article);
-    setFormData({
-      title: article.title,
-      content: article.content,
-      excerpt: article.excerpt,
-      imageUrl: article.imageUrl || "",
-      tags: article.tags.join(", "),
-      isPublished: article.isPublished,
-    });
-    setShowModal(true);
+  const handleOpenEdit = async (article: NewsArticle) => {
+    try {
+      setIsFetchingFullContent(true);
+      setEditingNews(article);
+
+      // Оптимизация Bolt: ленивая загрузка полного контента статьи (включая тяжелое поле content)
+      // только при открытии формы редактирования.
+      const fullArticle = await getNewsById(article.id);
+
+      if (!fullArticle) {
+        throw new Error("Article not found");
+      }
+
+      setFormData({
+        title: fullArticle.title,
+        content: fullArticle.content || "",
+        excerpt: fullArticle.excerpt,
+        imageUrl: fullArticle.imageUrl || "",
+        tags: fullArticle.tags.join(", "),
+        isPublished: fullArticle.isPublished,
+      });
+      setShowModal(true);
+    } catch (error) {
+      console.error("Failed to fetch full article content:", error);
+      sileo.error({
+        title: "Ошибка",
+        description: "Не удалось загрузить полное содержимое новости",
+        duration: 3000,
+      });
+    } finally {
+      setIsFetchingFullContent(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -340,11 +363,16 @@ export function AdminNewsPage() {
                     </td>
                     <td className="admin-news-actions">
                       <button
-                        className="admin-news-action-btn"
+                        className={`admin-news-action-btn ${isFetchingFullContent && editingNews?.id === article.id ? "animate-pulse opacity-70" : ""}`}
                         onClick={() => handleOpenEdit(article)}
+                        disabled={isFetchingFullContent}
                         title="Редактировать"
                       >
-                        <Pencil size={16} />
+                        {isFetchingFullContent && editingNews?.id === article.id ? (
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Pencil size={16} />
+                        )}
                       </button>
                       <button
                         className="admin-news-action-btn delete"
