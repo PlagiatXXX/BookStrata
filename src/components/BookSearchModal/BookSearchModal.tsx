@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useState, memo, useEffect } from "react";
+import { useReducer, useCallback, useState, memo, useEffect, useRef } from "react";
 import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
@@ -249,6 +249,7 @@ export const BookSearchModal = ({
   const [state, dispatch] = useReducer(searchReducer, initialSearchState);
   const [viewBook, setViewBook] = useState<OpenLibraryBook | null>(null);
   const [isViewAdding, setIsViewAdding] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const {
     search,
@@ -288,6 +289,11 @@ export const BookSearchModal = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSearch();
+    } else if (e.key === "Escape" && state.query) {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch({ type: "SET_QUERY", query: "" });
+      inputRef.current?.focus();
     }
   };
 
@@ -460,7 +466,10 @@ export const BookSearchModal = ({
               <p className="col-start-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
                 Библиотека поиска
               </p>
-              <h2 className="col-start-2 text-xl font-black tracking-[-0.02em] text-[#f6f1e8]">
+              <h2
+                id="book-search-title"
+                className="col-start-2 text-xl font-black tracking-[-0.02em] text-[#f6f1e8]"
+              >
                 Найти книгу
               </h2>
             </div>
@@ -483,9 +492,12 @@ export const BookSearchModal = ({
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7d8688]" />
                 <input
+                  ref={inputRef}
                   type="text"
                   value={state.query}
-                  onChange={(e) => dispatch({ type: "SET_QUERY", query: e.target.value })}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_QUERY", query: e.target.value })
+                  }
                   onKeyDown={handleKeyDown}
                   placeholder="Введите название книги или автора..."
                   aria-label="Поиск книг"
@@ -495,7 +507,10 @@ export const BookSearchModal = ({
                 {state.query && (
                   <button
                     type="button"
-                    onClick={() => dispatch({ type: "SET_QUERY", query: "" })}
+                    onClick={() => {
+                      dispatch({ type: "SET_QUERY", query: "" });
+                      inputRef.current?.focus();
+                    }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-[#7d8688] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                     aria-label="Очистить поиск"
                   >
@@ -519,7 +534,7 @@ export const BookSearchModal = ({
             {/* Toolbar */}
             {results.length > 0 && (
               <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
-                <span className="text-sm text-[#a8abad]">
+                <span className="text-sm text-[#a8abad]" aria-live="polite">
                   Найдено: {totalResults}
                 </span>
                 {state.selectedBooks.size > 0 && (
@@ -540,11 +555,12 @@ export const BookSearchModal = ({
 
             {/* Results List */}
             {!isLoading && (
-              <div className="space-y-2">
+              <div className="space-y-2" role="list">
                 {results.map((book, index) => (
                   <div
                     key={book.openLibraryKey}
                     style={{ animationDelay: `${index * 30}ms` }}
+                    role="listitem"
                   >
                     <BookItem
                       book={book}
