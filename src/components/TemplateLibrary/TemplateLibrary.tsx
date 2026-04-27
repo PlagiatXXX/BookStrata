@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useReducer } from "react";
+import React, { useEffect, useRef, useReducer, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { sileo } from "sileo";
@@ -81,29 +81,41 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
   const deleteIdRef = useRef<string | null>(null);
 
   // Обработчики навигации
-  const handleGoBack = () => navigate("/");
+  const handleGoBack = useCallback(() => navigate("/"), [navigate]);
 
   // Обработчики state
-  const handleSearchChange = (query: string) =>
-    dispatch({ type: "SET_SEARCH_QUERY", payload: query });
-  const handleSectionChange = (section: SectionKey) =>
-    dispatch({ type: "SET_ACTIVE_SECTION", payload: section });
-  const handleCategoryChange = (category: string) =>
-    dispatch({ type: "SET_ACTIVE_CATEGORY", payload: category });
-  const handleViewModeChange = (mode: ViewMode) =>
-    dispatch({ type: "SET_VIEW_MODE", payload: mode });
-  const handlePageChange = (page: number) =>
-    dispatch({ type: "SET_PUBLIC_PAGE", payload: page });
+  const handleSearchChange = useCallback(
+    (query: string) => dispatch({ type: "SET_SEARCH_QUERY", payload: query }),
+    [],
+  );
+  const handleSectionChange = useCallback(
+    (section: SectionKey) =>
+      dispatch({ type: "SET_ACTIVE_SECTION", payload: section }),
+    [],
+  );
+  const handleCategoryChange = useCallback(
+    (category: string) =>
+      dispatch({ type: "SET_ACTIVE_CATEGORY", payload: category }),
+    [],
+  );
+  const handleViewModeChange = useCallback(
+    (mode: ViewMode) => dispatch({ type: "SET_VIEW_MODE", payload: mode }),
+    [],
+  );
+  const handlePageChange = useCallback(
+    (page: number) => dispatch({ type: "SET_PUBLIC_PAGE", payload: page }),
+    [],
+  );
 
-  const handleDeleteClick = (template: Template) => {
+  const handleDeleteClick = useCallback((template: Template) => {
     dispatch({ type: "OPEN_DELETE_MODAL", payload: template });
     deleteIdRef.current = template.id;
-  };
+  }, []);
 
-  const handleDeleteModalClose = () => {
+  const handleDeleteModalClose = useCallback(() => {
     dispatch({ type: "CLOSE_DELETE_MODAL" });
     deleteIdRef.current = null;
-  };
+  }, []);
 
   const {
     data: templates,
@@ -117,7 +129,6 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     data: publicTierListsData,
     isLoading: isLoadingPublicTierLists,
     isFetching: isFetchingPublicTierLists,
-    refetch,
   } = useQuery<PaginatedTierListsResponse, Error>({
     queryKey: ["publicTierListsSorted", sortBy, publicPage, PUBLIC_PAGE_SIZE],
     queryFn: async () => {
@@ -130,13 +141,8 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     },
     staleTime: PUBLIC_TIER_LISTS_STALE_TIME_MS,
     gcTime: PUBLIC_TIER_LISTS_GC_TIME_MS,
+    enabled: activeSection === "public",
   });
-
-  useEffect(() => {
-    if (publicPage > 1) {
-      refetch();
-    }
-  }, [publicPage, refetch]);
 
   const { data: likedTierListIds } = useQuery({
     queryKey: ["likedTierListIds"],
@@ -166,10 +172,14 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
     },
   );
 
-  const likedIdsSet = new Set(likedTierListIds?.likedIds || []);
+  // Оптимизация Bolt: мемоизируем Set для предотвращения лишних ре-рендеров дочерних компонентов
+  const likedIdsSet = React.useMemo(
+    () => new Set(likedTierListIds?.likedIds || []),
+    [likedTierListIds],
+  );
   const publicTierLists = publicTierListsData?.data || [];
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = useCallback(() => {
     const id = deleteIdRef.current;
     if (!id) return;
 
@@ -186,12 +196,17 @@ const TemplateLibrary: React.FC<TemplateLibraryProps> = ({
         });
       },
     });
-  };
+  }, [deleteTemplate, handleDeleteModalClose]);
 
-  const handleEdit = (template: Template) =>
-    navigate(`/templates/${template.id}/edit`);
+  const handleEdit = useCallback(
+    (template: Template) => navigate(`/templates/${template.id}/edit`),
+    [navigate],
+  );
 
-  const handleCreateClick = () => navigate("/templates/new");
+  const handleCreateClick = useCallback(
+    () => navigate("/templates/new"),
+    [navigate],
+  );
 
   if (isLoading) {
     return (

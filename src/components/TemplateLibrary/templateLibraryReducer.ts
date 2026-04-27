@@ -43,6 +43,7 @@ export function templateLibraryReducer(
 ): TemplateLibraryState {
   switch (action.type) {
     case 'SET_SEARCH_QUERY':
+      if (state.searchQuery === action.payload) return state;
       return {
         ...state,
         searchQuery: action.payload,
@@ -63,6 +64,7 @@ export function templateLibraryReducer(
       };
 
     case 'SET_ACTIVE_SECTION':
+      if (state.activeSection === action.payload) return state;
       return {
         ...state,
         activeSection: action.payload,
@@ -71,18 +73,21 @@ export function templateLibraryReducer(
       };
 
     case 'SET_ACTIVE_CATEGORY':
+      if (state.activeCategory === action.payload) return state;
       return {
         ...state,
         activeCategory: action.payload,
       };
 
     case 'SET_VIEW_MODE':
+      if (state.viewMode === action.payload) return state;
       return {
         ...state,
         viewMode: action.payload,
       };
 
     case 'SET_PUBLIC_PAGE':
+      if (state.publicPage === action.payload) return state;
       return {
         ...state,
         publicPage: action.payload,
