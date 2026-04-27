@@ -881,6 +881,19 @@ describe("tierList.service", () => {
             thoughts: "Thoughts 1",
           },
         },
+        {
+          bookId: 101,
+          tierId: null,
+          rank: 1,
+          book: {
+            id: 101,
+            title: "Book 2",
+            author: null,
+            coverImageUrl: "cover2.jpg",
+            description: null,
+            thoughts: null,
+          },
+        },
       ],
     };
 
@@ -915,7 +928,9 @@ describe("tierList.service", () => {
       });
 
       expect(prisma.tierList.create).toHaveBeenCalled();
-      expect(prisma.tierList.update).toHaveBeenCalledWith(
+      const updateCall = (prisma.tierList.update as any).mock.calls[0][0];
+
+      expect(updateCall).toEqual(
         expect.objectContaining({
           where: { id: 2 },
           data: expect.objectContaining({
@@ -925,9 +940,60 @@ describe("tierList.service", () => {
           }),
         }),
       );
+      expect(updateCall.data.placements.create).toEqual([
+        {
+          rank: 0,
+          tier: {
+            connect: { id: 20 },
+          },
+          book: {
+            create: {
+              title: "Book 1",
+              author: "Author 1",
+              coverImageUrl: "cover1.jpg",
+              description: "Desc 1",
+              thoughts: "Thoughts 1",
+            },
+          },
+        },
+        {
+          rank: 1,
+          book: {
+            create: {
+              title: "Book 2",
+              author: null,
+              coverImageUrl: "cover2.jpg",
+              description: null,
+              thoughts: null,
+            },
+          },
+        },
+      ]);
+      expect(updateCall.data.placements.create[1]).not.toHaveProperty("tierId");
+      expect(updateCall.data.placements.create[1]).not.toHaveProperty("tier");
 
       expect(result.title).toBe("Original List (копия)");
       expect(result.userId).toBe(mockUserId);
+    });
+
+    it("should throw if tier mapping is missing for a ranked placement", async () => {
+      (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue(mockOriginal);
+
+      (prisma.$transaction as any).mockImplementation(async (fn: any) => {
+        return fn(prisma);
+      });
+
+      (prisma.tierList.create as any).mockResolvedValue({
+        id: 2,
+        title: "Original List (копия)",
+        userId: mockUserId,
+        tiers: [{ id: 20, title: "S", rank: 0 }],
+      });
+
+      await expect(service.forkTierList(mockOriginalId, mockUserId)).rejects.toThrow(
+        "Mapped tier ID not found for source tier ID: 10",
+      );
+      expect(prisma.tierList.update).not.toHaveBeenCalled();
     });
   });
 

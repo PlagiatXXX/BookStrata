@@ -617,25 +617,42 @@ export async function forkTierList(id: number, userId: number) {
     // 4. Копируем книги и создаем размещения (Оптимизировано Bolt: O(1) roundtrip)
     // Используем вложенный create в update для создания всех книг и их размещений за один запрос к БД.
     // Это сокращает количество последовательных roundtrip-ов с O(N) до O(1).
+    const placementCreates = original.placements.map((placement) => {
+      const mappedTierId =
+        placement.tierId === null ? null : tierMap.get(placement.tierId);
+
+      if (placement.tierId !== null && mappedTierId === undefined) {
+        throw new Error(
+          `Mapped tier ID not found for source tier ID: ${placement.tierId}`,
+        );
+      }
+
+      return {
+        rank: placement.rank,
+        ...(mappedTierId !== null && mappedTierId !== undefined
+          ? {
+              tier: {
+                connect: { id: mappedTierId },
+              },
+            }
+          : {}),
+        book: {
+          create: {
+            title: placement.book.title,
+            author: placement.book.author,
+            coverImageUrl: placement.book.coverImageUrl,
+            description: placement.book.description,
+            thoughts: placement.book.thoughts,
+          },
+        },
+      };
+    });
+
     await tx.tierList.update({
       where: { id: newTierList.id },
       data: {
         placements: {
-          create: original.placements.map((placement) => ({
-            rank: placement.rank,
-            tierId: placement.tierId
-              ? (tierMap.get(placement.tierId) ?? null)
-              : null,
-            book: {
-              create: {
-                title: placement.book.title,
-                author: placement.book.author,
-                coverImageUrl: placement.book.coverImageUrl,
-                description: placement.book.description,
-                thoughts: placement.book.thoughts,
-              },
-            },
-          })),
+          create: placementCreates,
         },
       },
     });

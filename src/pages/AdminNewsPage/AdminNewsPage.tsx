@@ -22,6 +22,7 @@ import {
   type NewsArticle,
   type CreateNewsInput,
   type UpdateNewsInput,
+  getNewsById,
 } from "@/lib/newsApi";
 import { useAuth } from "@/hooks/useAuthContext";
 import { WysiwygEditor } from "@/pages/AdminCollectionsPage/components/WysiwygEditor";
@@ -92,15 +93,35 @@ export function AdminNewsPage() {
     setShowModal(true);
   };
 
-  const handleOpenEdit = (article: NewsArticle) => {
-    setEditingNews(article);
+  const handleOpenEdit = async (article: NewsArticle) => {
+    let fullArticle = article;
+
+    // Если контент не загружен (оптимизация Bolt), подгружаем полную версию
+    if (article.content === undefined) {
+      try {
+        const data = await getNewsById(article.id);
+        if (data) {
+          fullArticle = data;
+        }
+      } catch (error) {
+        console.error("Failed to load full news content:", error);
+        sileo.error({
+          title: "Ошибка",
+          description: "Не удалось загрузить полный контент новости",
+          duration: 3000,
+        });
+        return;
+      }
+    }
+
+    setEditingNews(fullArticle);
     setFormData({
-      title: article.title,
-      content: article.content,
-      excerpt: article.excerpt,
-      imageUrl: article.imageUrl || "",
-      tags: article.tags.join(", "),
-      isPublished: article.isPublished,
+      title: fullArticle.title,
+      content: fullArticle.content || "",
+      excerpt: fullArticle.excerpt,
+      imageUrl: fullArticle.imageUrl || "",
+      tags: fullArticle.tags.join(", "),
+      isPublished: fullArticle.isPublished,
     });
     setShowModal(true);
   };
