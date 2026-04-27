@@ -92,7 +92,16 @@ export function useTierEditorDrag({
         if (showWatermark) {
           watermark = document.createElement("div");
           watermark.className = "export-watermark";
-          watermark.innerHTML = `<span>BookStrata Pro</span> • <span>@${username || "user"}</span>`;
+
+          const brandSpan = document.createElement("span");
+          brandSpan.textContent = "BookStrata Pro";
+
+          const separator = document.createTextNode(" • ");
+
+          const userSpan = document.createElement("span");
+          userSpan.textContent = `@${username || "user"}`;
+
+          watermark.append(brandSpan, separator, userSpan);
           element.appendChild(watermark);
         }
 
