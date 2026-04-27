@@ -450,7 +450,12 @@ export const BookSearchModal = ({
         />
 
         {/* Modal */}
-        <div className="relative mx-4 flex w-full max-w-3xl flex-col overflow-hidden border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="book-search-modal-title"
+          className="relative mx-4 flex w-full max-w-3xl flex-col overflow-hidden border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in"
+        >
           {/* Header */}
           <div className="flex items-center justify-between border-b-2 border-black bg-[#181818] p-5">
             <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-0.5">
@@ -460,7 +465,10 @@ export const BookSearchModal = ({
               <p className="col-start-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
                 Библиотека поиска
               </p>
-              <h2 className="col-start-2 text-xl font-black tracking-[-0.02em] text-[#f6f1e8]">
+              <h2
+                id="book-search-modal-title"
+                className="col-start-2 text-xl font-black tracking-[-0.02em] text-[#f6f1e8]"
+              >
                 Найти книгу
               </h2>
             </div>

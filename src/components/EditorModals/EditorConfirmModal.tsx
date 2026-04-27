@@ -74,6 +74,7 @@ export function EditorConfirmModal({
             variant="ghost"
             onClick={onClose}
             disabled={isProcessing}
+            autoFocus={confirmVariant === "destructive"}
             className="border-2 border-black bg-transparent px-5 py-3 font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] max-sm:w-full"
           >
             {cancelLabel}
@@ -82,6 +83,7 @@ export function EditorConfirmModal({
             variant={confirmVariant === "destructive" ? "destructive" : "primary"}
             onClick={onConfirm}
             disabled={isProcessing}
+            autoFocus={confirmVariant !== "destructive"}
             className={`${confirmClassName} max-sm:w-full`}
           >
             {isProcessing ? processingLabel || confirmLabel : confirmLabel}

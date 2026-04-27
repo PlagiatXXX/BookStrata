@@ -90,6 +90,7 @@ export function UnsavedChangesModal({
             variant="ghost"
             onClick={onClose}
             disabled={isUpdatingBook || isSaving}
+            autoFocus
             className="border-2 border-black bg-transparent px-5 py-3 font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8]"
           >
             Остаться

@@ -118,6 +118,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
           <Button
             variant="ghost"
             onClick={onClose}
+            autoFocus={!onAdd}
             className="focus-visible:ring-2 focus-visible:ring-cyan-400"
           >
             Закрыть
