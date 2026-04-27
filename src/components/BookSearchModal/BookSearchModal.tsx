@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useState, memo, useEffect } from "react";
+import { useReducer, useCallback, useState, memo, useEffect, useRef } from "react";
 import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
 import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
@@ -249,6 +249,7 @@ export const BookSearchModal = ({
   const [state, dispatch] = useReducer(searchReducer, initialSearchState);
   const [viewBook, setViewBook] = useState<OpenLibraryBook | null>(null);
   const [isViewAdding, setIsViewAdding] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const {
     search,
@@ -271,12 +272,20 @@ export const BookSearchModal = ({
     if (!isOpen) return;
 
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
+      if (e.key === "Escape") {
+        if (state.query) {
+          e.stopPropagation();
+          dispatch({ type: "SET_QUERY", query: "" });
+          inputRef.current?.focus();
+        } else {
+          handleClose();
+        }
+      }
     };
 
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [isOpen, handleClose]);
+  }, [isOpen, handleClose, state.query]);
 
   const handleSearch = useCallback(async () => {
     if (!state.query.trim() || state.query.length < 2) return;
@@ -491,6 +500,7 @@ export const BookSearchModal = ({
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7d8688]" />
                 <input
+                  ref={inputRef}
                   type="text"
                   value={state.query}
                   onChange={(e) => dispatch({ type: "SET_QUERY", query: e.target.value })}
@@ -503,7 +513,10 @@ export const BookSearchModal = ({
                 {state.query && (
                   <button
                     type="button"
-                    onClick={() => dispatch({ type: "SET_QUERY", query: "" })}
+                    onClick={() => {
+                      dispatch({ type: "SET_QUERY", query: "" });
+                      inputRef.current?.focus();
+                    }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-[#7d8688] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                     aria-label="Очистить поиск"
                   >
@@ -523,7 +536,11 @@ export const BookSearchModal = ({
           </div>
 
           {/* Results */}
-          <div className="max-h-136 overflow-y-auto bg-[#111111] p-5">
+          <div
+            className="max-h-136 overflow-y-auto bg-[#111111] p-5"
+            aria-busy={isLoading}
+            aria-live="polite"
+          >
             {/* Toolbar */}
             {results.length > 0 && (
               <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
@@ -548,9 +565,9 @@ export const BookSearchModal = ({
 
             {/* Results List */}
             {!isLoading && (
-              <div className="space-y-2">
+              <ul className="space-y-2">
                 {results.map((book, index) => (
-                  <div
+                  <li
                     key={book.openLibraryKey}
                     style={{ animationDelay: `${index * 30}ms` }}
                   >
@@ -560,7 +577,7 @@ export const BookSearchModal = ({
                       onToggle={handleToggleBookSelection}
                       onView={handleSetViewBook}
                     />
-                  </div>
+                  </li>
                 ))}
 
                 {/* Loading More */}
@@ -596,7 +613,7 @@ export const BookSearchModal = ({
                     </p>
                   </div>
                 )}
-              </div>
+              </ul>
             )}
           </div>
 

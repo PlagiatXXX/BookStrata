@@ -47,3 +47,7 @@
 ## 2025-05-20 - [Standardized Safety Focus Patterns]
 **Learning:** In modal dialogs, default focus should prioritize user safety. For destructive actions (e.g., Delete), focusing 'Cancel' prevents accidental execution via the 'Enter' key. For data loss warnings (e.g., Unsaved Changes), focusing 'Stay' protects progress. For non-destructive actions, focusing 'Confirm' enhances efficiency.
 **Action:** Use conditional `autoFocus` in confirmation modals to steer keyboard focus toward the safest or most likely action based on the operation's risk level.
+
+## 2025-05-21 - [Tiered Escape Key Pattern for Search Modals]
+**Learning:** In search-focused modals, users expect the Escape key to act as a "clear" action for the input before it acts as a "close" action for the modal. This tiered interaction prevents accidental closures and improves the speed of refining searches. Maintaining focus on the input after clearing is crucial for a seamless keyboard-driven experience.
+**Action:** Always implement tiered Escape key logic in search components: first press clears input and refocuses, second press closes the container. Pair this with `aria-live="polite"` on results to provide immediate feedback when the search is cleared.
