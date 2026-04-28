@@ -1,14 +1,15 @@
+import { memo } from 'react';
 import { LayoutGrid, Plus, Rows3 } from 'lucide-react';
 import { Button } from '@/ui/Button';
 import type { TemplateLibraryToolbarProps } from '../types';
 import { SECTION_LABELS, SECTION_DESCRIPTIONS, VIEW_MODE_LABELS } from '../constants';
 
-export function TemplateLibraryToolbar({
+export const TemplateLibraryToolbar = memo(({
   activeSection,
   viewMode,
   onViewModeChange,
   onCreateClick,
-}: TemplateLibraryToolbarProps) {
+}: TemplateLibraryToolbarProps) => {
   const isPublicSection = activeSection === 'public';
 
   return (
@@ -55,4 +56,4 @@ export function TemplateLibraryToolbar({
       )}
     </div>
   );
-}
+});

@@ -1,15 +1,16 @@
+import { memo } from 'react';
 import { Archive, Globe, Lock, Star } from 'lucide-react';
 import { Button } from '@/ui/Button';
 import type { TemplateLibrarySidebarProps } from '../types';
 import { SECTION_LABELS } from '../constants';
 
-export function TemplateLibrarySidebar({
+export const TemplateLibrarySidebar = memo(({
   activeSection,
   activeCategory,
   categories,
   onSectionChange,
   onCategoryChange,
-}: TemplateLibrarySidebarProps) {
+}: TemplateLibrarySidebarProps) => {
   const sections: Array<{ key: TemplateLibrarySidebarProps['activeSection']; icon: typeof Lock }> = [
     { key: 'private', icon: Lock },
     { key: 'public', icon: Globe },
@@ -87,4 +88,4 @@ export function TemplateLibrarySidebar({
       </div>
     </aside>
   );
-}
+});

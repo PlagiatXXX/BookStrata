@@ -1,13 +1,14 @@
+import { memo } from 'react';
 import TemplateCard from '../../TemplateCard/TemplateCard';
 import type { TemplateLibraryGridProps } from '../types';
 
-export function TemplateLibraryGrid({
+export const TemplateLibraryGrid = memo(({
   templates,
   viewMode,
   onEdit,
   onDelete,
   coverHeights,
-}: TemplateLibraryGridProps) {
+}: TemplateLibraryGridProps) => {
   if (viewMode === 'masonry') {
     return (
       <div className="w-full columns-1 gap-4 sm:columns-2 xl:columns-4">
@@ -39,4 +40,4 @@ export function TemplateLibraryGrid({
       ))}
     </div>
   );
-}
+});
