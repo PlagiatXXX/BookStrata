@@ -267,17 +267,6 @@ export const BookSearchModal = ({
     onClose();
   }, [clearResults, onClose]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
-    };
-
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [isOpen, handleClose]);
-
   const handleSearch = useCallback(async () => {
     if (!state.query.trim() || state.query.length < 2) return;
 
@@ -300,7 +289,7 @@ export const BookSearchModal = ({
     setViewBook(book);
   }, []);
 
-  const handleAddSelectedBooks = async () => {
+  const handleAddSelectedBooks = useCallback(async () => {
     if (state.selectedBooks.size === 0) return;
 
     const booksToAdd = results.filter((book) =>
@@ -378,7 +367,24 @@ export const BookSearchModal = ({
     }
 
     dispatch({ type: "CLEAR_SELECTION" });
-  };
+  }, [state.selectedBooks, results, tierListId, onBookAdded, handleClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleAddSelectedBooks();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, handleClose, handleAddSelectedBooks]);
 
   const handleAddBookFromView = async (book: OpenLibraryBook) => {
     setIsViewAdding(true);
@@ -534,10 +540,14 @@ export const BookSearchModal = ({
                   <button
                     type="button"
                     onClick={handleAddSelectedBooks}
+                    aria-keyshortcuts="Control+Enter"
                     className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-4 py-2 text-sm font-black text-black animate-scale-in transition-colors hover:bg-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                   >
                     <Plus className="w-4 h-4" />
                     Добавить выбранные ({state.selectedBooks.size})
+                    <kbd className="ml-2 hidden text-[10px] font-normal opacity-60 lg:inline-block">
+                      Ctrl + Enter
+                    </kbd>
                   </button>
                 )}
               </div>
