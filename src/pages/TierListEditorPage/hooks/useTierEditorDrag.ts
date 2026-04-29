@@ -51,6 +51,7 @@ export function useTierEditorDrag({
   );
 
   const handleDragOver = useCallback((_event: DragOverEvent) => {
+     void _event;
     // Intentionally empty — dnd-kit handles droppable detection internally
   }, []);
 

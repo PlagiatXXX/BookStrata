@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getInitials, getInitialsColor } from "./presets";
 import { createLogger } from "@/lib/logger";
 
@@ -27,23 +27,20 @@ export function Avatar({
 }: AvatarProps) {
   const initials = getInitials(username);
   const initialsColor = getInitialsColor(username);
-  const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    setHasError(false);
-    setIsLoaded(false);
-  }, [url]);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  const hasError = !!url && failedUrl === url;
+  const isLoaded = !!url && loadedUrl === url;
 
   const handleImageLoad = () => {
-    setIsLoaded(true);
-    setHasError(false);
+    setLoadedUrl(url ?? null);
+    setFailedUrl(null);
   };
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     logger.warn("Failed to load avatar", { url });
-    setHasError(true);
-    setIsLoaded(false);
+    setFailedUrl(url ?? null);
+    setLoadedUrl(null);
     (e.target as HTMLImageElement).src = "";
   };
 

@@ -14,13 +14,14 @@ interface AchievementNotificationProps {
 }
 
 export function AchievementNotification({ achievement, onClose }: AchievementNotificationProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [dismissedAchievement, setDismissedAchievement] =
+    useState<Achievement | null>(null);
+  const isVisible = !!achievement && achievement !== dismissedAchievement;
 
   useEffect(() => {
     if (achievement) {
-      setIsVisible(true);
       const timer = setTimeout(() => {
-        setIsVisible(false);
+        setDismissedAchievement(achievement);
       }, 5000);
       return () => clearTimeout(timer);
     }
@@ -57,7 +58,7 @@ export function AchievementNotification({ achievement, onClose }: AchievementNot
           </div>
 
           <button
-            onClick={() => setIsVisible(false)}
+            onClick={() => setDismissedAchievement(achievement)}
             className="absolute top-2 right-2 text-gray-500 hover:text-white cursor-pointer"
             aria-label="Закрыть уведомление"
           >

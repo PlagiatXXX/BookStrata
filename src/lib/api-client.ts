@@ -1,4 +1,4 @@
-import { getAuthHeader, handleResponse, refreshAccessToken } from "./authApi";
+import { getAuthHeader, handleResponse } from "./authApi";
 import { API_BASE_URL } from "./config";
 
 type QueryValue = string | number | boolean | null | undefined;

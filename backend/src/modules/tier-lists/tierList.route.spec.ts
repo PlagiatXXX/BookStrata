@@ -2,20 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import request from "supertest";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "test-secret";
-
-// Функция для создания тестового JWT токена
-function createTestToken(userId: number, username: string) {
-  return jwt.sign({ userId, username }, JWT_SECRET, { expiresIn: "1h" });
-}
 
 describe("Tier List Routes (E2E)", () => {
   let app: ReturnType<typeof Fastify>;
-  let authToken: string;
 
-  const TEST_USER_ID = 99999;
 
   beforeEach(async () => {
     app = Fastify({ logger: false });
@@ -55,7 +45,6 @@ describe("Tier List Routes (E2E)", () => {
 
     await app.ready();
 
-    authToken = createTestToken(TEST_USER_ID, "testuser");
   });
 
   afterEach(async () => {

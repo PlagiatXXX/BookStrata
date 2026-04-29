@@ -34,7 +34,8 @@ export async function getUserAchievements(userId: number) {
     const isEarned = !!userEarned;
     const earnedAt = userEarned?.earnedAt || null;
 
-    const { users, ...rest } = achievement;
+    const { users: _users, ...rest } = achievement;
+    void _users;
 
     return {
       ...rest,

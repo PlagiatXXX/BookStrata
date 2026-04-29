@@ -82,24 +82,37 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
+type PrismaCallable = (...args: unknown[]) => unknown;
+
 // Экспортируем прокси-объект с автоматическим retry для всех методов
 export const prismaWithRetry = new Proxy(prisma, {
-  get(target, prop) {
-    const original = (target as any)[prop];
+  get(target, prop, receiver) {
+    const original = Reflect.get(target, prop, receiver) as unknown;
 
     // Если это функция — оборачиваем с retry
     if (typeof original === "function") {
-      return (...args: any[]) => withRetry(() => original.apply(target, args));
+      return (...args: unknown[]) =>
+        withRetry(() =>
+          Promise.resolve((original as PrismaCallable).apply(target, args)),
+        );
     }
 
     // Если это модель (user, tierList и т.д.) — оборачиваем все методы модели
     if (original && typeof original === "object") {
       return new Proxy(original, {
-        get(modelTarget, modelProp) {
-          const modelMethod = (modelTarget as any)[modelProp];
+        get(modelTarget, modelProp, modelReceiver) {
+          const modelMethod = Reflect.get(
+            modelTarget,
+            modelProp,
+            modelReceiver,
+          ) as unknown;
           if (typeof modelMethod === "function") {
-            return (...args: any[]) =>
-              withRetry(() => modelMethod.apply(modelTarget, args));
+            return (...args: unknown[]) =>
+              withRetry(() =>
+                Promise.resolve(
+                  (modelMethod as PrismaCallable).apply(modelTarget, args),
+                ),
+              );
           }
           return modelMethod;
         },

@@ -15,7 +15,7 @@ export function requireRole(...allowedRoles: RoleName[]) {
     reply: FastifyReply,
   ): Promise<void> {
     // Проверка авторизации
-    const user = (request as any).user;
+    const user = request.user;
 
     if (!user) {
       logger.warn("Попытка доступа без авторизации", {
@@ -64,7 +64,7 @@ export async function requireAdminOrModerator(
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<void> {
-  const user = (request as any).user;
+  const user = request.user;
 
   if (!user) {
     return reply.code(401).send({ error: "Требуется авторизация" });

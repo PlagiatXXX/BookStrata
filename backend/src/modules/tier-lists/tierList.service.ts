@@ -608,11 +608,13 @@ export async function forkTierList(id: number, userId: number) {
     });
 
     const tierMap = new Map<number, number>(); // Старый ID -> Новый ID
-    original.tiers.forEach((oldTier, index) => {
-      const newTier = newTierList.tiers[index];
-      if (!newTier) return;
-      tierMap.set(oldTier.id, newTier.id);
-    });
+    if (newTierList.tiers.length === original.tiers.length) {
+      original.tiers.forEach((oldTier, index) => {
+        const newTier = newTierList.tiers[index];
+        if (!newTier) return;
+        tierMap.set(oldTier.id, newTier.id);
+      });
+    }
 
     // 4. Копируем книги и создаем размещения (Оптимизировано Bolt: O(1) roundtrip)
     // Используем вложенный create в update для создания всех книг и их размещений за один запрос к БД.

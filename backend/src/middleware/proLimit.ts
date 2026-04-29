@@ -26,9 +26,8 @@ declare module "fastify" {
  */
 export const checkProLimit = async (
   request: FastifyRequest,
-  reply: FastifyReply,
 ) => {
-  const user = (request as any).user;
+  const user = request.user;
 
   if (!user) {
     // Неавторизованный пользователь — стандартные лимиты
@@ -43,7 +42,7 @@ export const checkProLimit = async (
 
   try {
     // Администраторы и модераторы имеют Pro функции автоматически
-    const userRole = (request as any).user?.role;
+    const userRole = request.user?.role;
     const hasAdminRole = userRole === "admin" || userRole === "moderator";
 
     const isPro =
@@ -86,7 +85,7 @@ export const requirePro = async (
   request: FastifyRequest,
   reply: FastifyReply,
 ) => {
-  await checkProLimit(request, reply);
+  await checkProLimit(request);
 
   if (!request.proLimit?.isPro) {
     return reply.code(403).send({

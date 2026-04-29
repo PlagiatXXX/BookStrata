@@ -67,7 +67,7 @@ async function main() {
       roleId: adminRole.id,
     },
   });
-  const _adminUser = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "admin@example.com" },
     update: { roleId: adminRole.id },
     create: {
@@ -88,7 +88,7 @@ async function main() {
   });
 
   // Создаем дополнительных пользователей с разными статусами подписки
-  const _proUser1 = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "pro1@example.com" },
     update: {
       roleId: userRole.id,
@@ -107,7 +107,7 @@ async function main() {
     },
   });
 
-  const _proUser2 = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "pro2@example.com" },
     update: {
       roleId: userRole.id,
@@ -126,7 +126,7 @@ async function main() {
     },
   });
 
-  const _lifetimeProUser = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "lifetime@example.com" },
     update: {
       roleId: userRole.id,
@@ -145,7 +145,7 @@ async function main() {
     },
   });
 
-  const _freeUser1 = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "free1@example.com" },
     update: { roleId: userRole.id },
     create: {
@@ -159,7 +159,7 @@ async function main() {
     },
   });
 
-  const _freeUser2 = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "free2@example.com" },
     update: { roleId: userRole.id },
     create: {

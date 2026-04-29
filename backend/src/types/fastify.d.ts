@@ -11,6 +11,6 @@ declare module "fastify" {
       userId: number;
       username: string;
       role?: string;
-    };
+    } | null;
   }
 }

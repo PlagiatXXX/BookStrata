@@ -55,9 +55,6 @@ const deactivateProResponseSchema = z.object({
   proExpiresAt: z.null(),
 });
 
-const adminOnlyError = {
-  error: "Требуется роль администратора",
-};
 
 export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
   const subscriptionsService = new SubscriptionsService();
@@ -74,7 +71,7 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
         },
       },
     },
-    async (request, reply) => {
+    async () => {
       return subscriptionsService.getSubscriptionStats();
     },
   );
@@ -100,6 +97,9 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
+      if (!request.user) {
+        return reply.code(401).send({ error: "Требуется авторизация" });
+      }
       const userId = Number((request.params as { userId: string }).userId);
       const subscription = await subscriptionsService.getUserSubscription(userId);
 
@@ -266,9 +266,13 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
       },
     },
     async (request, reply) => {
-      const subscription = await subscriptionsService.getUserSubscription(
-        request.user.userId,
-      );
+      const user = request.user;
+      if (!user) {
+        return reply.code(401).send({ error: "Требуется авторизация" });
+      }
+
+      const userId = user.userId;
+      const subscription = await subscriptionsService.getUserSubscription(userId)
 
       if (!subscription) {
         return reply

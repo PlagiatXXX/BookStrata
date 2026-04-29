@@ -43,7 +43,7 @@ export async function battleRoutes(fastify: FastifyInstance) {
       schema: schema.voteInBattleSchema,
     },
     async (request) => {
-      const userId = (request.user as any).userId;
+      const userId = request.user!.userId;
       const battleId = parseInt(request.params.id);
       return service.voteInBattle(userId, battleId, request.body.tierListId);
     }

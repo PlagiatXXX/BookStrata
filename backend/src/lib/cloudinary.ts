@@ -86,20 +86,16 @@ export async function uploadFromUrl(
   url: string,
   folder: string = 'tiermaker-pro/uploads'
 ): Promise<UploadResult> {
-  try {
-    const result = await cloudinary.uploader.upload(url, {
-      folder,
-      transformation: [
-        { width: 512, height: 512, crop: 'limit' },
-        { format: 'webp', quality: 'auto' },
-      ],
-    });
+  const result = await cloudinary.uploader.upload(url, {
+    folder,
+    transformation: [
+      { width: 512, height: 512, crop: 'limit' },
+      { format: 'webp', quality: 'auto' },
+    ],
+  });
 
     return {
-      url: result.secure_url,
-      public_id: result.public_id,
-    };
-  } catch (error: unknown) {
-    throw error;
-  }
+    url: result.secure_url,
+    public_id: result.public_id,
+  };
 }

@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Sword, Users, Calendar } from "lucide-react";
-import { type Battle } from "@/types/battles";
+import { type Battle, type BattleParticipant } from "@/types/battles";
 import { Link } from "react-router-dom";
 
 interface BattleCardProps {
@@ -19,7 +19,7 @@ export const BattleCard = memo(({ battle }: BattleCardProps) => {
   );
 
   // Helper to get a cover image from a tier list
-  const getTierListCover = (participant: any) => {
+  const getTierListCover = (participant: BattleParticipant) => {
     // Try to find the first book with an image in the tiers
     for (const tier of participant.tierList.tiers || []) {
       if (tier.items && tier.items.length > 0) {

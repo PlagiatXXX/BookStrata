@@ -281,7 +281,7 @@ export function useTemplateEditorState({
     } finally {
       setIsSubmitting(false);
     }
-  }, [formState, mode, templateId, onSubmit, validation.isValid]);
+  }, [formState, mode, templateId, onSubmit]);
 
   const discardDraft = useCallback(() => {
     localStorage.removeItem(`template-draft-${templateId || "new"}`);

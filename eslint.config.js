@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'backend/dist', 'node_modules', '.history']),
+  globalIgnores(['dist', 'backend/dist', 'node_modules', '.history', 'coverage', 'backend/coverage']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -25,6 +25,12 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+    },
+  },
+  {
+    files: ['**/*.{spec,test}.{ts,tsx}', 'backend/src/test/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ])

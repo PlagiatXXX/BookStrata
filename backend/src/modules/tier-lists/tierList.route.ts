@@ -3,7 +3,6 @@ import * as achievementService from "../achievements/achievements.service.js";
 // backend/src/modules/tier-lists/tierList.route.ts
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
-import { validateToken } from "../auth/auth.service.js";
 import { createLogger } from "../../lib/logger.js";
 import { checkProLimit, checkBookLimit } from "../../middleware/proLimit.js";
 import * as service from "./tierList.service.js";
@@ -28,6 +27,7 @@ const logger = createLogger("TierListsRoutes", { color: "cyan" });
 // уже заполняется глобальным плагином authPlugin, если токен верный.
 // Оставляем для совместимости с текущими определениями роутов.
 async function optionalAuthMiddleware(_request: FastifyRequest) {
+  void _request;
   // Ничего не делаем
 }
 
@@ -683,7 +683,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
                   "tiermaker-pro/book-covers"
                 );
                 return { ...book, coverImageUrl: uploadResult.url };
-              } catch (error) {
+              } catch {
                 return { ...book, coverImageUrl: "" };
               }
             }

@@ -11,19 +11,6 @@ vi.mock("@/lib/avatarApi", () => ({
   apiGetAvatarLimit: vi.fn(),
 }));
 
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
-}
-
 describe("AvatarSelector", () => {
   const originalImage = globalThis.Image;
 

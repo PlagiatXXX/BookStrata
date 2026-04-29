@@ -3,7 +3,6 @@ import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTierList } from './useTierList';
 import type { TierListData } from '@/types';
-import { UNRANKED_AREA_ID } from '@/constants/dnd';
 
 const createMockTierListData = (): TierListData => ({
   id: 'test-list-1',

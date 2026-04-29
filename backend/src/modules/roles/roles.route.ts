@@ -6,7 +6,7 @@ import { createLogger } from "../../lib/logger.js";
 const logger = createLogger("RolesRoute", { color: "yellow" });
 
 export async function rolesRoutes(fastify: FastifyInstance) {
-  const rolesService = new RolesService((fastify as any).prisma);
+  const rolesService = new RolesService(fastify.prisma);
 
   /**
    * GET /api/roles

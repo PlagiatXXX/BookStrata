@@ -327,7 +327,7 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 
     // Пытаемся refresh-нуть токен
     try {
-      const newToken = await refreshAccessToken();
+      await refreshAccessToken();
 
       // Повторяем оригинальный запрос с новым токеном
       // Для этого нужно сохранить информацию о запросе

@@ -2,7 +2,7 @@
  * Telegram уведомления об ошибках
  */
 
-import TelegramBot from 'node-telegram-bot-api';
+import { request } from 'undici';
 
 interface ErrorReport {
   message: string;
@@ -14,7 +14,7 @@ interface ErrorReport {
 }
 
 class ErrorNotifier {
-  private bot: TelegramBot | null = null;
+  private token: string | null = null;
   private chatId: string | null = null;
   private isEnabled: boolean = false;
   private lastNotificationTime: number = 0;
@@ -30,7 +30,7 @@ class ErrorNotifier {
     }
 
     try {
-      this.bot = new TelegramBot(token);
+      this.token = token;
       this.chatId = chatId;
       this.isEnabled = true;
     } catch (error) {
@@ -40,7 +40,7 @@ class ErrorNotifier {
   }
 
   async notify(error: ErrorReport): Promise<void> {
-    if (!this.isEnabled || !this.bot || !this.chatId) return;
+    if (!this.isEnabled || !this.token || !this.chatId) return;
 
     const now = Date.now();
     if (now - this.lastNotificationTime < this.notificationThrottle) return;
@@ -49,9 +49,15 @@ class ErrorNotifier {
     const message = this.formatError(error);
 
     try {
-      await this.bot.sendMessage(this.chatId, message, {
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true,
+      await request(`https://api.telegram.org/bot${this.token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: this.chatId,
+          text: message,
+          parse_mode: 'Markdown',
+          disable_web_page_preview: true,
+        }),
       });
     } catch (err) {
       console.error('[ErrorNotifier] Ошибка отправки в Telegram:', err);
