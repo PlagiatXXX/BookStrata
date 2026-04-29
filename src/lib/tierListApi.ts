@@ -1,9 +1,9 @@
-import { checkResponseForAchievements } from "./achievementApi";
+import { handleAchievementResponse } from "./achievementApi";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { TierListData } from '@/types';
 import type { ApiTierListResponse, ApiBookPlacement } from '@/types/api';
 import { apiClient, buildUrl } from './api-client';
-import { getAuthHeader, handleResponse } from './authApi';
+import { getAuthHeader } from './authApi';
 import { API_BASE_URL } from './config';
 import { createLogger } from './logger';
 
@@ -69,8 +69,7 @@ export async function createTierList(title: string): Promise<ApiTierListResponse
     },
     body: JSON.stringify({ title }),
   });
-  const result = await handleResponse<ApiTierListResponse>(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse<ApiTierListResponse>(response);
   tierListLogger.info('Успешно создан рейтинговый список', { tierListId: result.id, title });
   return result;
 }
@@ -81,8 +80,7 @@ export async function getUserTierLists(page = 1, pageSize = 10): Promise<Paginat
   const response = await fetch(`${API_BASE_URL}${url}`, {
     headers: getAuthHeader(),
   });
-  const result = await handleResponse<PaginatedTierListsResponse>(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse<PaginatedTierListsResponse>(response);
   tierListLogger.info('Списки тир-листов успешно получены', { count: result.data.length, page: result.meta.currentPage });
   return result;
 }
@@ -92,8 +90,7 @@ export async function fetchTierList(id: string): Promise<ApiTierListResponse> {
   const response = await fetch(`${API_BASE_URL}/tier-lists/${id}`, {
     headers: getAuthHeader(),
   });
-  const result = await handleResponse<ApiTierListResponse>(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse<ApiTierListResponse>(response);
 
   // Считаем общее количество книг (в тирах + unranked)
   const totalBooksCount =
@@ -116,8 +113,7 @@ export async function deleteTierList(id: string) {
     method: 'DELETE',
     headers: getAuthHeader(),
   });
-  const result = await handleResponse(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse(response);
   tierListLogger.info('Рейтинговый список успешно удален', { tierListId: id });
   return result;
 }
@@ -130,8 +126,7 @@ export async function getPublicTierLists(
   tierListLogger.info('Получение публичных тир-листов', { page });
   const url = buildUrl('/tier-lists/public', { page, pageSize, sortBy });
   const response = await fetch(`${API_BASE_URL}${url}`);
-  const result = await handleResponse<PaginatedTierListsResponse>(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse<PaginatedTierListsResponse>(response);
   tierListLogger.info('Публичные тир-листы успешно получены', { count: result.data.length });
   return result;
 }
@@ -151,8 +146,7 @@ export async function saveTierListPlacements(
     },
     body: JSON.stringify({ placements }),
   });
-  const result = await handleResponse(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse(response);
   tierListLogger.info('Позиции сохранены', { tierListId: id, count: placements.length });
   return result;
 }
@@ -185,8 +179,7 @@ export async function saveTierListTiers(
     },
     body: JSON.stringify(tiers),
   });
-  const result = await handleResponse(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse(response);
   tierListLogger.info('Тиры сохранены', { tierListId: id });
   return result;
 }
@@ -204,8 +197,7 @@ export async function addBooksToTierList(
     },
     body: JSON.stringify({ books }),
   });
-  const result = await handleResponse<any[]>(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse<any[]>(response);
   tierListLogger.info('Книги успешно добавлены в рейтинговый список', { tierListId: id, booksCount: books.length, addedCount: result.length });
   return result;
 }
@@ -216,8 +208,7 @@ export async function removeBookFromTierList(id: string, bookId: string) {
     method: 'DELETE',
     headers: getAuthHeader(),
   });
-  const result = await handleResponse(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse(response);
   tierListLogger.info('Книга успешно удалена из рейтингового списка', { tierListId: id, bookId });
   return result;
 }
@@ -232,8 +223,7 @@ export async function updateTierListTitle(id: string, title: string) {
     },
     body: JSON.stringify({ title }),
   });
-  const result = await handleResponse(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse(response);
   tierListLogger.info('Название рейтингового списка успешно обновлено', { tierListId: id, newTitle: title });
   return result;
 }
@@ -248,8 +238,7 @@ export async function toggleTierListPublic(id: string, isPublic: boolean) {
     },
     body: JSON.stringify({ isPublic }),
   });
-  const result = await handleResponse(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse(response);
   tierListLogger.info('Статус публичности успешно изменён', { tierListId: id, isPublic });
   return result;
 }
@@ -278,8 +267,7 @@ export async function uploadBookCover(
     body: JSON.stringify({ coverImageUrl: base64 }),
   });
 
-  const result = await handleResponse<{ coverImageUrl: string }>(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse<{ coverImageUrl: string }>(response);
   tierListLogger.info('Обложка успешно загружена', { tierListId, bookId });
   return result;
 }
@@ -409,8 +397,7 @@ export async function forkTierList(id: string): Promise<ApiTierListResponse> {
     method: 'POST',
     headers: getAuthHeader(),
   });
-  const result = await handleResponse<ApiTierListResponse>(response);
-  checkResponseForAchievements(result);
+  const result = await handleAchievementResponse<ApiTierListResponse>(response);
   tierListLogger.info('Копия тир-листа успешно создана', { originalId: id, newId: result.id });
   return result;
 }

@@ -29,3 +29,6 @@ doctor.md
 # Recovery history folder
 .history/
 .tmp
+.github/*
+!.github/copilot-instructions.md
+!.github/workflows/

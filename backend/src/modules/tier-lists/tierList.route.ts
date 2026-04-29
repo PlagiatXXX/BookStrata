@@ -263,8 +263,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = request.user!.userId;
       const tierList = await service.createTierList(userId, request.body.title);
-      await achievementService.processAction(userId, "create_tier_list");
-      return reply.code(201).send(tierList);
+      const newAchievements = await achievementService.processAction(
+        userId,
+        "create_tier_list",
+      );
+      return reply.code(201).send({ ...tierList, newAchievements });
     },
   );
 
@@ -465,10 +468,16 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         bookId,
         request.body,
       );
+      let newAchievements: Awaited<
+        ReturnType<typeof achievementService.processAction>
+      > = [];
       if (request.body.thoughts) {
-        await achievementService.processAction(request.user!.userId, "write_review");
+        newAchievements = await achievementService.processAction(
+          request.user!.userId,
+          "write_review",
+        );
       }
-      return reply.code(200).send(updatedBook);
+      return reply.code(200).send({ ...updatedBook, newAchievements });
     },
   );
 

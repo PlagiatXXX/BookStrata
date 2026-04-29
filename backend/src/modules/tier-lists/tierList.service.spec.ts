@@ -977,7 +977,16 @@ describe("tierList.service", () => {
     });
 
     it("should throw if tier mapping is missing for a ranked placement", async () => {
-      (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue(mockOriginal);
+      (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue({
+        ...mockOriginal,
+        placements: [
+          {
+            ...mockOriginal.placements[0],
+            tierId: 11,
+          },
+          mockOriginal.placements[1],
+        ],
+      });
 
       (prisma.$transaction as any).mockImplementation(async (fn: any) => {
         return fn(prisma);
@@ -991,7 +1000,7 @@ describe("tierList.service", () => {
       });
 
       await expect(service.forkTierList(mockOriginalId, mockUserId)).rejects.toThrow(
-        "Mapped tier ID not found for source tier ID: 10",
+        "Mapped tier ID not found for source tier ID: 11",
       );
       expect(prisma.tierList.update).not.toHaveBeenCalled();
     });

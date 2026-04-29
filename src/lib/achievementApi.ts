@@ -47,9 +47,21 @@ export async function apiGetMyAchievementStatus(): Promise<AchievementStatus> {
  * Проверить ответ на наличие новых достижений
  */
 export function checkResponseForAchievements(data: any) {
-  if (data && data.newAchievements && Array.isArray(data.newAchievements)) {
-    data.newAchievements.forEach((achievement: any) => {
-      triggerAchievementNotification(achievement);
-    });
-  }
+  const achievements = Array.isArray(data?.newAchievements)
+    ? data.newAchievements
+    : Array.isArray(data?.data?.newAchievements)
+      ? data.data.newAchievements
+      : [];
+
+  achievements.forEach((achievement: any) => {
+    triggerAchievementNotification(achievement);
+  });
+}
+
+export async function handleAchievementResponse<T>(
+  response: Response,
+): Promise<T> {
+  const result = await handleResponse<T>(response);
+  checkResponseForAchievements(result);
+  return result;
 }

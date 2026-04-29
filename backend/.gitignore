@@ -34,6 +34,7 @@ dist-ssr
 .qwen
 .history
 .vscode
+.github
 
 
 # Prisma

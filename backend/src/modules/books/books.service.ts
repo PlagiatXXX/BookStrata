@@ -26,7 +26,9 @@ export async function searchBooks(
   query: string,
   startIndex = 0,
 ): Promise<BookSearchResult[]> {
-  if (!query || query.length < 2) {
+  const normalizedQuery = query.trim();
+
+  if (!normalizedQuery || normalizedQuery.length < 2) {
     return [];
   }
 
@@ -36,7 +38,7 @@ export async function searchBooks(
 
   try {
     const url = new URL(GOOGLE_BOOKS_API_URL);
-    url.searchParams.append("q", `intitle:${query}`);
+    url.searchParams.append("q", `intitle:${normalizedQuery}`);
     url.searchParams.append("key", GOOGLE_BOOKS_API_KEY);
     url.searchParams.append("maxResults", "20");
     url.searchParams.append("startIndex", startIndex.toString());

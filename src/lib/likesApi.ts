@@ -1,4 +1,4 @@
-import { checkResponseForAchievements } from "./achievementApi";
+import { handleAchievementResponse } from "./achievementApi";
 import { getAuthHeader, handleResponse } from './authApi';
 import { API_BASE_URL } from './config';
 
@@ -22,7 +22,7 @@ export async function apiGetTierListLikes(tierListId: number): Promise<LikesResp
     },
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -32,12 +32,13 @@ export async function apiLikeTierList(tierListId: number): Promise<LikesResponse
   const response = await fetch(`${API_BASE_URL}/tier-lists/${tierListId}/like`, {
     method: 'POST',
     headers: {
+      'Content-Type': 'application/json',
       ...getAuthHeader(),
     },
     body: JSON.stringify({}),
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -51,7 +52,7 @@ export async function apiUnlikeTierList(tierListId: number): Promise<LikesRespon
     },
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -81,7 +82,7 @@ export async function apiGetTemplateLikes(templateId: string): Promise<LikesResp
     },
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -91,12 +92,13 @@ export async function apiLikeTemplate(templateId: string): Promise<LikesResponse
   const response = await fetch(`${API_BASE_URL}/templates/${templateId}/like`, {
     method: 'POST',
     headers: {
+      'Content-Type': 'application/json',
       ...getAuthHeader(),
     },
     body: JSON.stringify({}),
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -110,5 +112,5 @@ export async function apiUnlikeTemplate(templateId: string): Promise<LikesRespon
     },
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
