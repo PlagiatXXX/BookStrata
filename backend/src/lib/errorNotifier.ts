@@ -2,8 +2,6 @@
  * Telegram уведомления об ошибках
  */
 
-import { request } from 'undici';
-
 interface ErrorReport {
   message: string;
   stack?: string;
@@ -29,14 +27,9 @@ class ErrorNotifier {
       return;
     }
 
-    try {
-      this.token = token;
-      this.chatId = chatId;
-      this.isEnabled = true;
-    } catch (error) {
-      console.error('[ErrorNotifier] Ошибка инициализации:', error);
-      this.isEnabled = false;
-    }
+    this.token = token;
+    this.chatId = chatId;
+    this.isEnabled = true;
   }
 
   async notify(error: ErrorReport): Promise<void> {
@@ -49,16 +42,24 @@ class ErrorNotifier {
     const message = this.formatError(error);
 
     try {
-      await request(`https://api.telegram.org/bot${this.token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: this.chatId,
-          text: message,
-          parse_mode: 'Markdown',
-          disable_web_page_preview: true,
-        }),
-      });
+      const response = await fetch(
+        `https://api.telegram.org/bot${this.token}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: this.chatId,
+            text: message,
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('[ErrorNotifier] Telegram API ответил ошибкой:', response.status, text);
+      }
     } catch (err) {
       console.error('[ErrorNotifier] Ошибка отправки в Telegram:', err);
     }
