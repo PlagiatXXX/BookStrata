@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { TierListShort } from '@/lib/tierListApi';
 import type { SortOption, FilterOption } from '../types';
+import { useTierListSorting } from './useTierListSorting';
 
 interface UseTierListsPaginationOptions {
   allTierLists: TierListShort[];
@@ -45,34 +46,13 @@ export function useTierListsPagination({
     return result;
   }, [allTierLists, searchQuery, filterOption]);
 
-  // Сортировка
-  const displayedTierLists = useMemo(() => {
-    const sorted = [...filteredTierLists];
-
-    switch (sortOption) {
-      case 'newest':
-        return sorted.sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      case 'oldest':
-        return sorted.sort((a, b) => 
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-      case 'title-asc':
-        return sorted.sort((a, b) => 
-          a.title.localeCompare(b.title)
-        );
-      case 'likes':
-        return sorted.sort((a, b) => 
-          (b.likesCount || 0) - (a.likesCount || 0)
-        );
-      default:
-        return sorted;
-    }
-  }, [filteredTierLists, sortOption]);
+ const { sortedTierLists } = useTierListSorting({
+    tierLists: filteredTierLists,
+    sortOption,
+  });
 
   return {
     filteredTierLists,
-    displayedTierLists,
+    displayedTierLists: sortedTierLists,
   };
 }
