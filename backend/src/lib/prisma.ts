@@ -75,9 +75,26 @@ export async function waitForDatabase(maxWaitMs = 30000): Promise<boolean> {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error"] : [],
+    log:
+      process.env.NODE_ENV === "development"
+        ? [
+            { emit: "event", level: "query" },
+            { emit: "stdout", level: "error" },
+            { emit: "stdout", level: "warn" },
+          ]
+        : [{ emit: "stdout", level: "error" }],
   });
-
+// Логирование медленных запросов в dev (>100мс)
+if (process.env.NODE_ENV === "development") {
+  // @ts-expect-error — типы Prisma для $on('query') требуют generic-конфига логов
+  prisma.$on("query", (e: { duration: number; query: string }) => {
+    if (e.duration > 100) {
+      console.warn(
+        `🐌 SLOW QUERY (${e.duration}ms): ${e.query.substring(0, 200)}`,
+      );
+    }
+  });
+}
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }

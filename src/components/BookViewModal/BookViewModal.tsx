@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
-import { X, BookOpen, ImageOff } from "lucide-react";
+import { X, BookOpen, ImageOff, FileText, Calendar } from "lucide-react";
 
 export interface BookViewModalProps {
   book: any | null;
@@ -26,7 +26,17 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
 
   if (!book) return null;
 
-  const coverUrl = book.coverImageUrl || book.image_url || book.cover_image_url;
+  const isSearchPreview = !!onAdd;
+
+  const coverUrl =
+    book.coverImageUrl ||
+    book.image_url ||
+    book.cover_image_url ||
+    book.coverUrlLarge ||
+    book.coverUrl;
+
+  const pages = book.numberOfPages ?? book.number_of_pages ?? book.pageCount;
+  const year = book.publishYear ?? book.publish_year;
 
   return (
     <Modal
@@ -37,48 +47,78 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
     >
       <div className="max-h-[90vh] overflow-y-auto border-2 border-black bg-[#111111] text-[#f6f1e8]">
         {/* HEADER */}
-        <div className="relative border-b-2 border-black p-6">
+        <div className="relative border-b-2 border-black p-4 sm:p-6">
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-sm border-2 border-black bg-[#1a1a1a] p-1 text-[#f6f1e8] transition-colors hover:border-[#c1fffe] hover:text-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+            className="absolute right-3 top-3 rounded-sm border-2 border-black bg-[#1a1a1a] p-1 text-[#f6f1e8] transition-colors hover:border-[#c1fffe] hover:text-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none sm:right-4 sm:top-4"
             aria-label="Закрыть"
           >
             <X size={18} />
           </button>
-
           <h3
             id="book-view-title"
-            className="text-xl font-black leading-tight md:text-2xl"
+            className="pr-10 text-base font-black leading-tight sm:pr-12 sm:text-xl md:text-2xl"
           >
             {book.title}
           </h3>
-          <p className="mt-1 text-sm font-medium text-[#a0a0a0]">
+          <p className="mt-1 text-xs font-medium text-[#a0a0a0] sm:text-sm">
             {book.author || book.author_name || "Автор неизвестен"}
           </p>
         </div>
 
         {/* CONTENT */}
-        <div className="p-6">
-          <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)]">
+        <div className="p-4 sm:p-6">
+          <div className="grid gap-4 sm:gap-6 sm:grid-cols-[140px_minmax(0,1fr)] lg:grid-cols-[180px_minmax(0,1fr)]">
             {/* Cover */}
-            <div className="flex flex-col items-center gap-3">
-              <span className={sectionTitleClass}>Обложка</span>
+            <div className="flex flex-col items-center gap-2 sm:gap-3">
+              <span className={`${sectionTitleClass} mb-1 sm:mb-3`}>Обложка</span>
               {coverUrl && !imageError ? (
                 <img
                   src={coverUrl}
                   alt={book.title}
                   onError={() => setImageError(true)}
-                  className="w-full aspect-2/3 border-2 border-black object-cover shadow-lg"
+                  className="w-32 sm:w-full aspect-2/3 border-2 border-black object-cover shadow-lg"
                 />
               ) : (
-                <div className="flex w-full aspect-2/3 items-center justify-center border-2 border-[#2a2a2a] bg-[#0a0a0a]">
+                <div className="flex w-32 sm:w-full aspect-2/3 items-center justify-center border-2 border-[#2a2a2a] bg-[#0a0a0a]">
                   <ImageOff size={32} className="text-[#444]" />
                 </div>
               )}
             </div>
-
             {/* Info */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 sm:gap-6">
+              {isSearchPreview ? (
+                /* === Режим превью книги из поиска === */
+                <div className="flex flex-col gap-4">
+                  {pages != null && (
+                    <div className="flex items-center gap-3 border-2 border-black bg-[#0d0d0d] p-2.5 sm:p-3">
+                      <FileText size={16} className="shrink-0 text-[#c1fffe] sm:size-4.5" />
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3] sm:text-[11px]">
+                          Количество страниц
+                        </div>
+                        <div className="text-sm font-semibold text-[#f6f1e8] sm:text-base">
+                          {pages}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {year != null && (
+                    <div className="flex items-center gap-3 border-2 border-black bg-[#0d0d0d] p-2.5 sm:p-3">
+                      <Calendar size={16} className="shrink-0 text-[#c1fffe] sm:size-4.5" />
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3] sm:text-[11px]">
+                          Год издания
+                        </div>
+                        <div className="text-sm font-semibold text-[#f6f1e8] sm:text-base">
+                          {year}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
               {book.description && (
                 <div>
                   <span className={sectionTitleClass}>Описание</span>
@@ -109,12 +149,14 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
                   Нет описания и мыслей
                 </div>
               )}
+              </>
+              )}
             </div>
           </div>
         </div>
 
         {/* FOOTER */}
-        <div className="flex items-center justify-end gap-3 border-t-2 border-black p-4 max-md:flex-col-reverse">
+        <div className="flex items-center justify-end gap-2 border-t-2 border-black p-3 sm:gap-3 sm:p-4 max-sm:flex-col-reverse max-sm:[&>button]:w-full">
           <Button
             variant="ghost"
             onClick={onClose}

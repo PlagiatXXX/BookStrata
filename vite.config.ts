@@ -18,12 +18,33 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
-  server: {
+    server: {
     proxy: {
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
       },
     },
+  },
+  build: {
+    minify: "esbuild",
+    target: "esnext",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "query-vendor": ["@tanstack/react-query"],
+          "dnd-vendor": [
+            "@dnd-kit/core",
+            "@dnd-kit/sortable",
+            "@dnd-kit/utilities",
+          ],
+          "three-vendor": ["three", "@react-three/fiber", "@react-three/drei"],
+          "motion-vendor": ["framer-motion"],
+          "tiptap-vendor": ["@tiptap/react", "@tiptap/starter-kit"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 500,
   },
 });

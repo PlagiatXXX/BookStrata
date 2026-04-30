@@ -35,6 +35,8 @@ model User {
   role                 Role?      @relation(fields: [roleId], references: [id])
   roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
   createdAt            DateTime   @default(now()) @map("created_at")
+
+  @@index([xp])
 }
 
 model Book {
@@ -64,6 +66,10 @@ model TierList {
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
 
+  @@index([userId])
+  @@index([userId, isPublic])
+  @@index([createdAt])
+  @@index([likesCount])
   @@map("tier_lists")
 }
 
@@ -90,6 +96,7 @@ model BookPlacement {
 
   @@id([tierListId, bookId])
   @@index([tierId, rank])
+  @@index([bookId])
 }
 
 model Template {
