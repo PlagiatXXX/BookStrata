@@ -1,12 +1,36 @@
 // backend/src/modules/books/books.service.ts
-
 import { createLogger } from "../../lib/logger.js";
+import { getFromCache, setToCache } from "../../lib/cache.js";
 
 // Логгер для сервиса книг
 const logger = createLogger("Books", { color: "green" });
 
+const SEARCH_CACHE_TTL = 60 * 60 * 24;
+const SEARCH_CACHE_TTL_EMPTY = 60 * 5;
+
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
+
+async function fetchWithRetry(
+  url: string,
+  maxAttempts = 3,
+): Promise<Response> {
+  let lastResponse: Response | null = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const response = await fetch(url);
+    // Успех или клиентская ошибка (4xx, кроме 429) — возвращаем сразу
+    if (response.ok || (response.status >= 400 && response.status < 500 && response.status !== 429)) {
+      return response;
+    }
+    lastResponse = response;
+    // Если ещё есть попытки — ждём с экспоненциальным бэкоффом: 300 → 900 → 2700 ms
+    if (attempt < maxAttempts) {
+      const delay = 300 * Math.pow(3, attempt - 1);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  return lastResponse!;
+}
 
 export interface BookSearchResult {
   openLibraryKey: string;
@@ -36,6 +60,13 @@ export async function searchBooks(
     throw new Error("Google Books API key not configured");
   }
 
+  const cacheKey = `gbooks:search:${normalizedQuery.toLowerCase()}:${startIndex}`;
+  const cached = await getFromCache<BookSearchResult[]>(cacheKey);
+  if (cached) {
+    logger.info(`Cache HIT for "${normalizedQuery}" (offset ${startIndex}): ${cached.length} books`);
+    return cached;
+  }
+
   try {
     const url = new URL(GOOGLE_BOOKS_API_URL);
     url.searchParams.append("q", `intitle:${normalizedQuery}`);
@@ -43,14 +74,17 @@ export async function searchBooks(
     url.searchParams.append("maxResults", "20");
     url.searchParams.append("startIndex", startIndex.toString());
 
-    const response = await fetch(url.toString());
-
+    
+    const response = await fetchWithRetry(url.toString(), 3);
     if (!response.ok) {
-      throw new Error(
-        `Google Books API error: ${response.status} ${response.statusText}`,
+      // Финальный фейл после ретраев. Логируем как warn, не как error,
+      // потому что это проблема стороннего API, а не нашей.
+      logger.warn(
+        `Google Books API недоступен после ретраев: ${response.status} ${response.statusText}`,
       );
+      // Не кешируем фейл и возвращаем пустой массив — фронт сам покажет "ничего не найдено"
+      return [];
     }
-
     const data = (await response.json()) as {
       items?: GoogleBookResponse[];
       totalItems?: number;
@@ -95,8 +129,11 @@ export async function searchBooks(
     );
 
     logger.info(
-      `Found ${uniqueBooks.length} unique books (from ${books.length} total)`,
+      `Cache MISS — fetched ${uniqueBooks.length} unique books from Google Books (from ${books.length} total)`,
     );
+
+    const ttl = uniqueBooks.length > 0 ? SEARCH_CACHE_TTL : SEARCH_CACHE_TTL_EMPTY;
+    await setToCache(cacheKey, uniqueBooks, ttl);
 
     return uniqueBooks;
   } catch (error) {

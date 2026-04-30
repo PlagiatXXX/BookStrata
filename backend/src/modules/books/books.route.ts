@@ -33,13 +33,17 @@ export async function booksRoutes(fastify: FastifyInstance) {
         return reply.code(200).send({ books });
       } catch (error) {
         if (error instanceof Error) {
-          fastify.log.error(error, 'Error searching books');
-          
+          // Не настроенный ключ — это наша проблема, серверная ошибка
           if (error.message.includes('Google Books API key')) {
+            fastify.log.error(error, 'Google Books API key not configured');
             return reply.code(500).send({ error: 'Google Books API не настроен на сервере' });
           }
-          
-          return reply.code(500).send({ error: error.message });
+          // Прочие ошибки (сеть, парсинг и т.п.) — логируем как warn, отдаём 502 (Bad Gateway)
+          fastify.log.warn(error, 'Books search failed (upstream issue)');
+          return reply.code(502).send({
+            error: 'Сервис поиска временно недоступен, попробуйте позже',
+            books: [],
+          });
         }
         throw error;
       }
