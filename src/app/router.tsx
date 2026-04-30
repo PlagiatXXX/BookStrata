@@ -68,6 +68,11 @@ const CollectionPage = lazy(() =>
     default: module.CollectionPage,
   })),
 );
+const LibraryPage = lazy(() =>
+  import("@/pages/LibraryPage").then((module) => ({
+    default: module.LibraryPage,
+  })),
+);
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() =>
@@ -122,6 +127,10 @@ export const router = createBrowserRouter([
           {
             path: "/collections/:id",
             element: <CollectionPage />,
+          },
+          {
+            path: "/library",
+            element: <LibraryPage />,
           },
         ],
       },

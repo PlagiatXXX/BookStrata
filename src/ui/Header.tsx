@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Users, Folder, X, Menu, Globe, LogOut } from "lucide-react";
+import { List, Users, Folder, X, Menu, Globe, LogOut, Library } from "lucide-react";
 
 interface NavItem {
   label: string;
@@ -47,6 +47,7 @@ export const Header = ({
         return "Шаблоны";
       if (path === "/" || path.startsWith("/tier-lists/"))
         return "Мои Рейтинги";
+      if (path === "/library") return "Библиотека";
       return undefined;
     })();
 
@@ -62,9 +63,15 @@ export const Header = ({
   const navItems: NavItem[] = [
     {
       label: "Мои Рейтинги",
-      onClick: onMyRatingsClick,
+      onClick: onMyRatingsClick || (() => navigate("/")),
       icon: <List size={18} />,
       description: "Управление рейтингами",
+    },
+    {
+      label: "Библиотека",
+      onClick: () => navigate("/library"),
+      icon: <Library size={18} />,
+      description: "Ваша цифровая библиотека",
     },
     {
       label: "Новости",
