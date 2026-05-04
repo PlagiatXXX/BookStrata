@@ -6,6 +6,34 @@ const globalForPrisma = globalThis as unknown as {
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
+const DEFAULT_SLOW_QUERY_THRESHOLD_MS = 500;
+const IGNORED_DEV_QUERIES = new Set([
+  "BEGIN",
+  "COMMIT",
+  "ROLLBACK",
+  "DEALLOCATE ALL",
+  "SELECT 1",
+]);
+
+function getSlowQueryThresholdMs(): number {
+  const rawValue = process.env.PRISMA_SLOW_QUERY_THRESHOLD_MS;
+  const parsedValue = Number(rawValue);
+
+  if (!rawValue || Number.isNaN(parsedValue) || parsedValue < 0) {
+    return DEFAULT_SLOW_QUERY_THRESHOLD_MS;
+  }
+
+  return parsedValue;
+}
+
+function shouldLogSlowQuery(query: string, duration: number): boolean {
+  if (duration < getSlowQueryThresholdMs()) {
+    return false;
+  }
+
+  const normalizedQuery = query.trim().toUpperCase();
+  return !IGNORED_DEV_QUERIES.has(normalizedQuery);
+}
 
 /**
  * Обёртка с retry-логикой для Prisma-клиента.
@@ -88,7 +116,7 @@ export const prisma =
 if (process.env.NODE_ENV === "development") {
   // @ts-expect-error — типы Prisma для $on('query') требуют generic-конфига логов
   prisma.$on("query", (e: { duration: number; query: string }) => {
-    if (e.duration > 100) {
+    if (shouldLogSlowQuery(e.query, e.duration)) {
       console.warn(
         `🐌 SLOW QUERY (${e.duration}ms): ${e.query.substring(0, 200)}`,
       );

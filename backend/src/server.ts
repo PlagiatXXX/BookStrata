@@ -52,6 +52,11 @@ const isDev = process.env.NODE_ENV !== "production";
 
 // 2. ЗАМЕНЯЕМ КОНФИГУРАЦИЮ ЛОГГЕРА НА БОЛЕЕ ПРОДВИНУТУЮ
 const fastify = Fastify({
+  ajv: {
+    customOptions: {
+      allowUnionTypes: true,
+    },
+  },
   logger: {
     level: isDev ? "debug" : "info",
     ...(isDev && {

@@ -2,10 +2,8 @@ import { getAuthHeader, handleResponse } from "./authApi";
 import { API_BASE_URL } from "./config";
 import { createLogger } from "./logger";
 
-// Логгер для модуля пользователей
 const userLogger = createLogger("UserApi", { color: "green" });
-
-// ========== TYPES ==========
+let inFlightMeRequest: Promise<User> | null = null;
 
 export interface User {
   id: number;
@@ -25,23 +23,40 @@ export interface UserStats {
   likesTodayCount: number;
 }
 
-// ========== USER PROFILE ==========
-
 /**
- * Получить текущего пользователя
+ * Получить текущего пользователя.
+ * Повторно используем тот же Promise, если профиль уже запрашивается,
+ * чтобы в dev не плодить одинаковые GET /users/me из-за StrictMode и событий.
  */
 export async function apiGetMe(): Promise<User> {
+  if (inFlightMeRequest) {
+    userLogger.debug("Используем уже выполняющийся запрос профиля");
+    return inFlightMeRequest;
+  }
+
   userLogger.info("Получение профиля текущего пользователя");
 
-  const response = await fetch(`${API_BASE_URL}/users/me`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
-  });
+  const request = (async () => {
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeader(),
+      },
+    });
 
-  return handleResponse<User>(response);
+    return handleResponse<User>(response);
+  })();
+
+  inFlightMeRequest = request;
+
+  try {
+    return await request;
+  } finally {
+    if (inFlightMeRequest === request) {
+      inFlightMeRequest = null;
+    }
+  }
 }
 
 /**

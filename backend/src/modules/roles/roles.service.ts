@@ -43,21 +43,22 @@ export class RolesService {
   async getUserRole(userId: number): Promise<UserRoleInfo | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        role: true,
+      select: {
+        createdAt: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
       },
     });
 
-    if (!user?.roleId) return null;
-
-    const role = await this.prisma.role.findUnique({
-      where: { id: user.roleId },
-    });
-
-    if (!role) return null;
+    if (!user?.role) return null;
 
     return {
-      ...role,
+      ...user.role,
       grantedAt: user.createdAt, // Приблизительно, т.к. нет отдельного поля grantedAt
       grantedBy: null,
     };

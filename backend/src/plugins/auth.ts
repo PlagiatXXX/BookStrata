@@ -5,7 +5,10 @@ import jwt from "jsonwebtoken";
 import { RolesService } from "../modules/roles/roles.service.js";
 import { createLogger } from "../lib/logger.js";
 
-const logger = createLogger("AuthPlugin", { color: "blue" });
+const logger = createLogger("AuthPlugin", {
+  color: "blue",
+  level: process.env.NODE_ENV === "development" ? "warn" : "info",
+});
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 if (!JWT_SECRET) {
