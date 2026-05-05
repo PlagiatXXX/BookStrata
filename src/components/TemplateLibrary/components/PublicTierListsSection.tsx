@@ -6,7 +6,7 @@ import type { TierListShort } from '@/lib/tierListApi';
 
 interface PublicTierListsSectionProps {
   tierLists: TierListShort[];
-  likedIdsSet: Set<number>;
+  likedIdsSet: Set<string>;
   isLoading: boolean;
   isFetching: boolean;
   currentPage: number;

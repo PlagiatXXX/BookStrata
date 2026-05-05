@@ -70,7 +70,7 @@ describe('useTierEditorQueries', () => {
 
     it('должен возвращать isLoading = false после загрузки', async () => {
       vi.mocked(fetchTierList).mockResolvedValue({
-        id: 1,
+        id: "1",
         title: 'Test List',
         year: null,
         isPublic: false,
@@ -106,7 +106,7 @@ describe('useTierEditorQueries', () => {
   describe('Загрузка данных тир-листа', () => {
     it('должен загружать данные тир-листа', async () => {
       const mockData = {
-        id: 1,
+        id: "1",
         title: 'Test List',
         year: null,
         isPublic: false,
@@ -141,7 +141,7 @@ describe('useTierEditorQueries', () => {
 
     it('должен извлекать isPublic из apiData', async () => {
       vi.mocked(fetchTierList).mockResolvedValue({
-        id: 1,
+        id: "1",
         title: 'Test List',
         year: null,
         isPublic: true,
@@ -164,7 +164,7 @@ describe('useTierEditorQueries', () => {
   describe('Загрузка лайков', () => {
     it('должен загружать количество лайков', async () => {
       vi.mocked(fetchTierList).mockResolvedValue({
-        id: 1,
+        id: "1",
         title: 'Test List',
         year: null,
         isPublic: false,
@@ -184,7 +184,7 @@ describe('useTierEditorQueries', () => {
         expect(result.current.likesData).toBeDefined();
       });
 
-      expect(apiGetTierListLikes).toHaveBeenCalledWith(123);
+      expect(apiGetTierListLikes).toHaveBeenCalledWith("123");
     });
 
     it('не должен загружать лайки если tierListId не передан', () => {
@@ -197,7 +197,7 @@ describe('useTierEditorQueries', () => {
     });
 
     it('должен загружать список лайкнутых тир-листов', async () => {
-      vi.mocked(apiGetLikedTierListIds).mockResolvedValue({ likedIds: [1, 2, 3] });
+      vi.mocked(apiGetLikedTierListIds).mockResolvedValue({ likedIds: ["1", "2", "3"] });
 
       const { result } = renderHook(
         () => useTierEditorQueries('test-list-1'),
@@ -212,7 +212,7 @@ describe('useTierEditorQueries', () => {
     });
 
     it('должен создавать Set из likedIds', async () => {
-      vi.mocked(apiGetLikedTierListIds).mockResolvedValue({ likedIds: [1, 2, 3] });
+      vi.mocked(apiGetLikedTierListIds).mockResolvedValue({ likedIds: ["1", "2", "3"] });
 
       const { result } = renderHook(
         () => useTierEditorQueries('test-list-1'),
@@ -221,9 +221,9 @@ describe('useTierEditorQueries', () => {
 
       await waitFor(() => {
         expect(result.current.likedIdsSet).toBeInstanceOf(Set);
-        expect(result.current.likedIdsSet.has(1)).toBe(true);
-        expect(result.current.likedIdsSet.has(2)).toBe(true);
-        expect(result.current.likedIdsSet.has(3)).toBe(true);
+        expect(result.current.likedIdsSet.has("1")).toBe(true);
+        expect(result.current.likedIdsSet.has("2")).toBe(true);
+        expect(result.current.likedIdsSet.has("3")).toBe(true);
       });
     });
   });

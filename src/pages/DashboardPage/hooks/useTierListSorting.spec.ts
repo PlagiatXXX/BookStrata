@@ -4,7 +4,7 @@ import { useTierListSorting } from './useTierListSorting';
 
 const mockTierLists: TierListShort[] = [
   {
-    id: 1,
+    id: "1",
     title: 'Zebra Animals',
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: "string",
@@ -12,7 +12,7 @@ const mockTierLists: TierListShort[] = [
     likesCount: 5,
   },
   {
-    id: 2,
+    id: "2",
     title: 'Alpha Books',
     createdAt: '2024-01-10T10:00:00Z',
     updatedAt: "string",
@@ -20,7 +20,7 @@ const mockTierLists: TierListShort[] = [
     likesCount: 10,
   },
   {
-    id: 3,
+    id: "3",
     title: 'Beta Movies',
     createdAt: '2024-01-20T10:00:00Z',
     updatedAt: "string",
@@ -36,9 +36,9 @@ describe('useTierListSorting', () => {
     );
 
     expect(result.current.sortedTierLists).toHaveLength(3);
-    expect(result.current.sortedTierLists[0].id).toBe(3); // 2024-01-20
-    expect(result.current.sortedTierLists[1].id).toBe(1); // 2024-01-15
-    expect(result.current.sortedTierLists[2].id).toBe(2); // 2024-01-10
+    expect(result.current.sortedTierLists[0].id).toBe("3"); // 2024-01-20
+    expect(result.current.sortedTierLists[1].id).toBe("1"); // 2024-01-15
+    expect(result.current.sortedTierLists[2].id).toBe("2"); // 2024-01-10
   });
 
   it('should return tier lists sorted by oldest first', () => {
@@ -47,9 +47,9 @@ describe('useTierListSorting', () => {
     );
 
     expect(result.current.sortedTierLists).toHaveLength(3);
-    expect(result.current.sortedTierLists[0].id).toBe(2); // 2024-01-10
-    expect(result.current.sortedTierLists[1].id).toBe(1); // 2024-01-15
-    expect(result.current.sortedTierLists[2].id).toBe(3); // 2024-01-20
+    expect(result.current.sortedTierLists[0].id).toBe("2"); // 2024-01-10
+    expect(result.current.sortedTierLists[1].id).toBe("1"); // 2024-01-15
+    expect(result.current.sortedTierLists[2].id).toBe("3"); // 2024-01-20
   });
 
   it('should return tier lists sorted by title ascending', () => {
@@ -69,9 +69,9 @@ describe('useTierListSorting', () => {
     );
 
     expect(result.current.sortedTierLists).toHaveLength(3);
-    expect(result.current.sortedTierLists[0].id).toBe(2); // 10 likes
-    expect(result.current.sortedTierLists[1].id).toBe(1); // 5 likes
-    expect(result.current.sortedTierLists[2].id).toBe(3); // 3 likes
+    expect(result.current.sortedTierLists[0].id).toBe("2"); // 10 likes
+    expect(result.current.sortedTierLists[1].id).toBe("1"); // 5 likes
+    expect(result.current.sortedTierLists[2].id).toBe("3"); // 3 likes
   });
 
   it('should handle empty array', () => {
@@ -95,14 +95,14 @@ describe('useTierListSorting', () => {
   it('should handle undefined likesCount gracefully', () => {
     const tierListsUndefinedLikes: TierListShort[] = [
       {
-        id: 1,
+        id: "1",
         title: 'Test 1',
         createdAt: '2024-01-15T10:00:00Z',
         updatedAt: "string",
         isPublic: true,
       },
       {
-        id: 2,
+        id: "2",
         title: 'Test 2',
         createdAt: '2024-01-10T10:00:00Z',
         updatedAt: "string",
@@ -116,7 +116,7 @@ describe('useTierListSorting', () => {
     );
 
     // Item with likesCount should come first
-    expect(result.current.sortedTierLists[0].id).toBe(2);
-    expect(result.current.sortedTierLists[1].id).toBe(1);
+    expect(result.current.sortedTierLists[0].id).toBe("2");
+    expect(result.current.sortedTierLists[1].id).toBe("1");
   });
 });

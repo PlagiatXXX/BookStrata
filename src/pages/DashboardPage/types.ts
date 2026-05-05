@@ -46,14 +46,14 @@ export interface DashboardHeaderProps {
 
 export interface TierListCardProps {
   tierList: TierListShort;
-  onOpen: (id: number) => void;
+  onOpen: (id: string) => void;
   onRename: (tierList: TierListShort) => void;
   onDelete: (tierList: TierListShort) => void;
 }
 
 export interface TierListGridProps {
   tierLists: TierListShort[];
-  onOpen: (id: number) => void;
+  onOpen: (id: string) => void;
   onRename: (tierList: TierListShort) => void;
   onDelete: (tierList: TierListShort) => void;
 }

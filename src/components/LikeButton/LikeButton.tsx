@@ -45,6 +45,7 @@ export function LikeButton({
   const [liked, setLiked] = useState(initialLiked);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+  const idStr = String(id);
 
   // Синхронизируем состояние с props при смене тир-листа/шаблона
   useEffect(() => {
@@ -74,15 +75,15 @@ export function LikeButton({
 
       if (type === 'tierlist') {
         if (liked) {
-          response = await apiUnlikeTierList(id as number);
+          response = await apiUnlikeTierList(idStr);
         } else {
-          response = await apiLikeTierList(id as number);
+          response = await apiLikeTierList(idStr);
         }
       } else {
         if (liked) {
-          response = await apiUnlikeTemplate(id as string);
+          response = await apiUnlikeTemplate(idStr);
         } else {
-          response = await apiLikeTemplate(id as string);
+          response = await apiLikeTemplate(idStr);
         }
       }
 
@@ -92,11 +93,11 @@ export function LikeButton({
       onLikeChange?.(response.likesCount, response.isLiked);
 
       // Обновляем кэш likedTierListIds напрямую через setQueryData
-      const currentCache = queryClient.getQueryData<{ likedIds: number[] }>(['likedTierListIds']);
+      const currentCache = queryClient.getQueryData<{ likedIds: string[] }>(['likedTierListIds']);
       if (currentCache) {
         const newLikedIds = newLiked
-          ? [...currentCache.likedIds, Number(id)]
-          : currentCache.likedIds.filter((lid) => lid !== Number(id));
+          ? [...currentCache.likedIds, idStr]
+          : currentCache.likedIds.filter((lid) => lid !== idStr);
         queryClient.setQueryData(['likedTierListIds'], { likedIds: newLikedIds });
       }
 
@@ -118,9 +119,9 @@ export function LikeButton({
         try {
           let likesResponse: LikesResponse;
           if (type === 'tierlist') {
-            likesResponse = await apiGetTierListLikes(id as number);
+            likesResponse = await apiGetTierListLikes(idStr);
           } else {
-            likesResponse = await apiGetTemplateLikes(id as string);
+            likesResponse = await apiGetTemplateLikes(idStr);
           }
           setLikes(likesResponse.likesCount);
         } catch {

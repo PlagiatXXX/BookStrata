@@ -7,7 +7,7 @@ import type { TierListShort } from '@/lib/tierListApi';
 
 const mockTierLists: TierListShort[] = [
   {
-    id: 1,
+    id: "1",
     title: 'Fantasy Books',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
@@ -16,7 +16,7 @@ const mockTierLists: TierListShort[] = [
     likesCount: 5,
   },
   {
-    id: 2,
+    id: "2",
     title: 'Sci-Fi Collection',
     createdAt: '2024-01-02T00:00:00Z',
     updatedAt: '2024-01-02T00:00:00Z',
@@ -25,7 +25,7 @@ const mockTierLists: TierListShort[] = [
     likesCount: 10,
   },
   {
-    id: 3,
+    id: "3",
     title: 'Mystery Novels',
     createdAt: '2024-01-03T00:00:00Z',
     updatedAt: '2024-01-03T00:00:00Z',

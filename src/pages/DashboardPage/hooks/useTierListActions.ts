@@ -12,8 +12,8 @@ interface UseTierListActionsOptions {
 
 interface UseTierListActionsReturn {
   createNewTierList: (title: string) => void;
-  renameTierList: (id: number, title: string) => void;
-  removeTierList: (id: number) => void;
+  renameTierList: (id: string, title: string) => void;
+  removeTierList: (id: string) => void;
   isCreating: boolean;
   isRenaming: boolean;
   isDeleting: boolean;
@@ -55,8 +55,8 @@ export function useTierListActions({
   });
 
   const { mutateAsync: renameMutation, isPending: isRenaming } = useMutation({
-    mutationFn: ({ id, title }: { id: number; title: string }) =>
-      updateTierListTitle(String(id), title),
+    mutationFn: ({ id, title }: { id: string; title: string }) =>
+      updateTierListTitle(id, title),
     onSuccess: () => {
       logger.info("Tier list renamed successfully");
       onSuccess?.();
@@ -77,7 +77,7 @@ export function useTierListActions({
   });
 
   const { mutateAsync: deleteMutation, isPending: isDeleting } = useMutation({
-    mutationFn: (id: number) => deleteTierList(String(id)),
+    mutationFn: (id: string) => deleteTierList(id),
     onSuccess: () => {
       logger.info("Tier list deleted successfully");
       // Инвалидируем кэш статистики пользователя
@@ -99,11 +99,11 @@ export function useTierListActions({
     throwOnError: false, // Не выбрасывать ошибку
   });
 
-  const renameTierList = (id: number, title: string) => {
+  const renameTierList = (id: string, title: string) => {
     renameMutation({ id, title });
   };
 
-  const removeTierList = (id: number) => {
+  const removeTierList = (id: string) => {
     deleteMutation(id);
   };
 

@@ -6,7 +6,7 @@ import { useDashboardState } from './useDashboardState';
 import type { TierListShort } from '@/lib/tierListApi';
 
 const mockTierList: TierListShort = {
-  id: 1,
+  id: "1",
   title: 'Test Tier List',
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',

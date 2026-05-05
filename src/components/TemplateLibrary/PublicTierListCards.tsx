@@ -5,7 +5,7 @@ import type { TierListShort } from '@/lib/tierListApi';
 
 interface PublicTierListCardsProps {
   tierLists: TierListShort[];
-  likedIdsSet: Set<number>;
+  likedIdsSet: Set<string>;
 }
 
 const PublicTierListCards = memo(function PublicTierListCards({
@@ -14,7 +14,7 @@ const PublicTierListCards = memo(function PublicTierListCards({
 }: PublicTierListCardsProps) {
   const navigate = useNavigate();
 
-  const handleCardClick = (id: number) => {
+  const handleCardClick = (id: string) => {
     navigate(`/tier-lists/${id}`);
   };
 
