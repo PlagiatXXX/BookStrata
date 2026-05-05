@@ -10,11 +10,23 @@ export interface CreateBattleInput {
   description?: string | null;
   type: "weekly" | "monthly";
   endTime: Date;
-  participantTierListIds: number[];
+  participantTierListIds: string[];
 }
 
 export async function createBattle(data: CreateBattleInput) {
   logger.info("Creating new battle", { title: data.title, type: data.type });
+
+  // Проверяем, что все тир-листы существуют и публичны
+  const tierLists = await prisma.tierList.findMany({
+    where: {
+      id: { in: data.participantTierListIds },
+      isPublic: true,
+    },
+  });
+
+  if (tierLists.length !== data.participantTierListIds.length) {
+    throw new Error("One or more tier lists are not found or not public");
+  }
 
   return prisma.battle.create({
     data: {
@@ -66,7 +78,7 @@ export async function getActiveBattles() {
   });
 }
 
-export async function getBattleById(id: number) {
+export async function getBattleById(id: string) {
   return prisma.battle.findUnique({
     where: { id },
     include: {
@@ -95,7 +107,7 @@ export async function getBattleById(id: number) {
   });
 }
 
-export async function voteInBattle(userId: number, battleId: number, tierListId: number) {
+export async function voteInBattle(userId: number, battleId: string, tierListId: string) {
   logger.info("User voting in battle", { userId, battleId, tierListId });
 
   // Проверяем, существует ли битва и активна ли она
@@ -143,7 +155,7 @@ export async function voteInBattle(userId: number, battleId: number, tierListId:
   });
 }
 
-export async function closeBattle(battleId: number) {
+export async function closeBattle(battleId: string) {
   logger.info("Closing battle", { battleId });
 
   const battle = await getBattleById(battleId);

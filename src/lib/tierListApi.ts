@@ -13,7 +13,7 @@ const tierListLogger = createLogger('TierListApi', { color: 'magenta' });
 // ========== TYPES ==========
 
 export interface TierListShort {
-  id: number;
+  id: string;
   title: string;
   createdAt: string;
   updatedAt: string;

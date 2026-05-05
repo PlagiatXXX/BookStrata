@@ -13,7 +13,7 @@ export async function battleRoutes(fastify: FastifyInstance) {
 
   // GET /api/battles/:id - получить конкретную битву
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
-    const battle = await service.getBattleById(parseInt(request.params.id));
+    const battle = await service.getBattleById(request.params.id);
     if (!battle) return reply.code(404).send({ error: "Battle not found" });
     return battle;
   });
@@ -44,7 +44,7 @@ export async function battleRoutes(fastify: FastifyInstance) {
     },
     async (request) => {
       const userId = request.user!.userId;
-      const battleId = parseInt(request.params.id);
+      const battleId = request.params.id;
       return service.voteInBattle(userId, battleId, request.body.tierListId);
     }
   );
@@ -57,7 +57,7 @@ export async function battleRoutes(fastify: FastifyInstance) {
       schema: schema.closeBattleSchema,
     },
     async (request) => {
-      const battleId = parseInt(request.params.id);
+      const battleId = request.params.id;
       return service.closeBattle(battleId);
     }
   );

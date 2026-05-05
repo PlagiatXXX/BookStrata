@@ -40,7 +40,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { requestId } = request.context;
       const userId = request.user?.userId;
-      const tierListId = parseInt(request.params.id);
+      const tierListId = request.params.id;
 
       const likes = await getLikesWithStatus(tierListId, userId);
       fastify.log.info({ requestId, userId, tierListId }, "Likes fetched");
@@ -57,7 +57,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request: any, reply) => {
       const { requestId } = request.context;
       const userId = request.user?.userId;
-      const tierListId = parseInt(request.params.id);
+      const tierListId = request.params.id;
 
       const result = await like(tierListId, userId);
 
@@ -80,7 +80,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request: any, reply) => {
       const { requestId } = request.context;
       const userId = request.user?.userId;
-      const tierListId = parseInt(request.params.id);
+      const tierListId = request.params.id;
 
       await unlike(tierListId, userId);
 
@@ -276,7 +276,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id",
     { preHandler: [optionalAuthMiddleware], ...schema.getTierListByIdSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       const tierList = await service.getFullTierList(tierListId);
 
       const isOwner = request.user?.userId === tierList.userId;
@@ -292,7 +292,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id",
     { preHandler: [authMiddleware], ...schema.updateTierListSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       const tierList = await service.getFullTierList(tierListId);
       if (tierList.userId !== request.user!.userId) {
         return reply
@@ -313,7 +313,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id",
     { preHandler: [authMiddleware], ...schema.deleteTierListSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       const tierList = await service.prisma.tierList.findUnique({
         where: { id: tierListId },
         select: { id: true, userId: true },
@@ -344,7 +344,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/placements",
     { preHandler: [authMiddleware], ...schema.updatePlacementsSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       await service.assertOwner(tierListId, request.user!.userId);
       await service.updatePlacements(tierListId, request.body.placements);
       return reply.code(200).send({ message: "Placements updated" });
@@ -365,7 +365,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       deletedIds?: number[];
     };
   }>("/:id/tiers", { preHandler: [authMiddleware] }, async (request, reply) => {
-    const tierListId = parseInt(request.params.id, 10);
+    const tierListId = request.params.id;
     await service.assertOwner(tierListId, request.user!.userId);
     const savedTiers = await service.saveTiers(tierListId, request.body);
     return reply.code(200).send(savedTiers);
@@ -387,7 +387,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/books",
     { preHandler: [authMiddleware, checkProLimit], ...schema.addBooksSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       await service.assertOwner(tierListId, request.user!.userId);
 
       // Проверяем лимит книг
@@ -455,7 +455,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/books/:bookId",
     { preHandler: [authMiddleware], ...schema.updateBookSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       const bookId = parseInt(request.params.bookId, 10);
 
       if (Number.isNaN(bookId)) {
@@ -486,7 +486,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/books/:bookId",
     { preHandler: [authMiddleware], ...schema.deleteBookSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       const bookId = parseInt(request.params.bookId, 10);
 
       if (Number.isNaN(bookId)) {
@@ -507,7 +507,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/books/:bookId/cover",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       const bookId = parseInt(request.params.bookId, 10);
       const { coverImageUrl } = request.body;
 
@@ -560,7 +560,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/books/search",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id);
+      const tierListId = request.params.id;
       const { requestId, userId } = request.context;
       const { title, author, coverUrl } = request.body;
 
@@ -625,7 +625,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/public",
     { preHandler: [authMiddleware], ...schema.togglePublicSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       const tierList = await service.getFullTierList(tierListId);
       if (tierList.userId !== request.user!.userId) {
         return reply.code(403).send({
@@ -646,7 +646,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/fork",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       const userId = request.user!.userId;
 
       try {
@@ -668,7 +668,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/save-all",
     { preHandler: [authMiddleware], schema: schema.saveAllSchema },
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id, 10);
+      const tierListId = request.params.id;
       await service.assertOwner(tierListId, request.user!.userId);
 
       const body = request.body as any;

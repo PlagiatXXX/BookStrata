@@ -103,7 +103,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
       const isAdminOrModerator =
         userRole === "admin" || userRole === "moderator";
 
-      const article = await newsService.getNewsById(parseInt(id, 10), {
+      const article = await newsService.getNewsById(id, {
         publishedOnly: !isAdminOrModerator,
       });
 
@@ -163,7 +163,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
         const validated = await newsService.validateUpdateNews(body);
 
         const article = await newsService.updateNews(
-          parseInt(id, 10),
+          id,
           validated,
         );
 
@@ -195,7 +195,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
       try {
         const { id } = request.params as { id: string };
 
-        await newsService.deleteNews(parseInt(id, 10));
+        await newsService.deleteNews(id);
 
         return reply.send({ message: "Новость удалена" });
       } catch (error) {
@@ -218,7 +218,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
         const { isPublished } = request.body as { isPublished: boolean };
 
         const article = await newsService.togglePublish(
-          parseInt(id, 10),
+          id,
           isPublished,
         );
 

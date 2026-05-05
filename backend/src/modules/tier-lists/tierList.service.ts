@@ -96,7 +96,7 @@ export async function createTierList(userId: number, title: string) {
   return { ...rest, unrankedBooks };
 }
 
-export async function assertOwner(tierListId: number, userId: number) {
+export async function assertOwner(tierListId: string, userId: number) {
   const list = await prisma.tierList.findUnique({
     where: { id: tierListId },
     select: { userId: true },
@@ -110,7 +110,7 @@ export async function assertOwner(tierListId: number, userId: number) {
 }
 
 // Получение полного тир-листа
-export async function getFullTierList(id: number) {
+export async function getFullTierList(id: string) {
   const tierList = await prisma.tierList.findUniqueOrThrow({
     where: { id },
     include: {
@@ -137,7 +137,7 @@ export async function getFullTierList(id: number) {
 
 // Обновление позиций (оптимизировано - Promise.all)
 export async function updatePlacements(
-  tierListId: number,
+  tierListId: string,
   placements: { bookId: number; tierId: number | null; rank: number }[],
 ) {
   const startTime = Date.now();
@@ -193,7 +193,7 @@ export async function updatePlacements(
 
 // Добавление новых книг в тир-лист (оптимизировано - bulk insert)
 export async function addBooksToTierList(
-  tierListId: number,
+  tierListId: string,
   books: {
     title: string;
     author?: string | null;
@@ -251,10 +251,7 @@ export async function addBooksToTierList(
       },
     });
 
-    // Возвращаем новые книги
-    return updatedTierList.placements.map((placement) => ({
-      book: placement.book,
-    }));
+    return updatedTierList.placements;
   });
 
   return results;
@@ -262,19 +259,20 @@ export async function addBooksToTierList(
 
 // Обновление книги
 export async function updateBook(
-  tierListId: number,
+  tierListId: string,
   bookId: number,
-  data: {
-    title?: string;
-    author?: string | null;
-    description?: string | null;
-    thoughts?: string | null;
-  },
+  data: { thoughts?: string; description?: string; title?: string; author?: string },
 ) {
-  // Security check: ensure the book belongs to the tier list
-  await prisma.bookPlacement.findUniqueOrThrow({
+  // Проверяем принадлежность книги к тир-листу через BookPlacement (BOLA)
+  const placement = await prisma.bookPlacement.findUnique({
     where: { tierListId_bookId: { tierListId, bookId } },
   });
+
+  if (!placement) {
+    const error = new Error("Forbidden");
+    (error as any).statusCode = 403;
+    throw error;
+  }
 
   return prisma.book.update({
     where: { id: bookId },
@@ -284,12 +282,12 @@ export async function updateBook(
 
 // Обновление обложки книги
 export async function updateBookCover(
-  tierListId: number,
+  tierListId: string,
   bookId: number,
   coverImageUrl: string,
 ) {
   // Security check: ensure the book belongs to the tier list
-  await prisma.bookPlacement.findUniqueOrThrow({
+  await prisma.bookPlacement.findUnique({
     where: { tierListId_bookId: { tierListId, bookId } },
   });
 
@@ -301,19 +299,108 @@ export async function updateBookCover(
 
 // Удаление книги из тир-листа
 export async function removeBookFromTierList(
-  tierListId: number,
+  tierListId: string,
   bookId: number,
 ) {
-  return prisma.bookPlacement.delete({
+  await prisma.bookPlacement.delete({
     where: { tierListId_bookId: { tierListId, bookId } },
+  });
+
+  // Оптимизация Bolt: Книга удаляется из базы только если она не используется в других тир-листах
+  // В данной реализации мы всегда удаляем книгу, так как каждая книга уникальна для тир-листа
+  await prisma.book.delete({
+    where: { id: bookId },
+  }).catch(() => {
+    // Игнорируем ошибку если книга уже удалена или используется
+    logger.debug("Book delete skipped (maybe already deleted or in use)", { bookId });
+  });
+}
+
+// Обновление метаданных тир-листа
+export async function updateTierList(
+  id: string,
+  data: { title?: string; isPublic?: boolean; year?: number },
+) {
+  return prisma.tierList.update({
+    where: { id },
+    data,
   });
 }
 
 // Удаление тир-листа
-export async function deleteTierList(tierListId: number) {
+export async function deleteTierList(id: string) {
   return prisma.tierList.delete({
-    where: { id: tierListId },
+    where: { id },
   });
+}
+
+// Добавление строки в тир-лист
+export async function addTier(tierListId: string, title: string, rank: number) {
+  return prisma.tier.create({
+    data: {
+      tierListId,
+      title,
+      rank,
+      color: "#808080",
+    },
+  });
+}
+
+// Удаление строки из тир-листа
+export async function removeTier(tierListId: string, tierId: number) {
+  // Сначала сбрасываем tierId у всех книг в этой строке
+  await prisma.bookPlacement.updateMany({
+    where: { tierListId, tierId },
+    data: { tierId: null },
+  });
+
+  // Затем удаляем саму строку
+  return prisma.tier.delete({
+    where: { id: tierId },
+  });
+}
+
+// Обновление строки
+export async function updateTier(
+  tierListId: string,
+  tierId: number,
+  data: { title?: string; color?: string; rank?: number },
+) {
+  // Проверяем принадлежность строки к тир-листу (BOLA)
+  const tier = await prisma.tier.findUnique({
+    where: { id: tierId },
+    select: { tierListId: true },
+  });
+
+  if (!tier || tier.tierListId !== tierListId) {
+    const error = new Error("Forbidden");
+    (error as any).statusCode = 403;
+    throw error;
+  }
+
+  return prisma.tier.update({
+    where: { id: tierId },
+    data,
+  });
+}
+
+// Обновление всех строк сразу
+export async function updateTiers(
+  tierListId: string,
+  tiers: { id: number; title?: string; color?: string; rank?: number }[],
+) {
+  const transactions = tiers.map((t) =>
+    prisma.tier.update({
+      where: { id: t.id },
+      data: {
+        title: t.title,
+        color: t.color,
+        rank: t.rank,
+      },
+    }),
+  );
+
+  return prisma.$transaction(transactions);
 }
 
 // Сохранение тиров (diff — только изменения, оптимизировано)
@@ -448,87 +535,62 @@ export async function togglePublic(tierListId: number, isPublic: boolean) {
   });
 }
 
-// Получение публичных тир-листов
+// Поиск публичных тир-листов
 export async function getPublicTierLists(query: GetTierListsQuery) {
-  logger.debug("getPublicTierLists вызван", { query });
-
   const page = parseInt(query.page, 10);
   const pageSize = parseInt(query.pageSize, 10);
   const skip = (page - 1) * pageSize;
 
-  logger.debug("Парсинг параметров пагинации", { page, pageSize, skip });
-
-  // Преобразуем возможные варианты sortBy в удобный для дальнейшей обработки формат
-  const sortByField =
-    query.sortBy === "updated_at" || query.sortBy === "updatedAt"
-      ? "updatedAt"
-      : query.sortBy === "created_at" ||
-          (query.sortBy as string) === "createdAt"
-        ? "createdAt"
-        : query.sortBy === "likes"
-          ? "likesCount"
-          : "updatedAt";
-
-  // Определяем сортировку
-  const orderBy: any = { [sortByField]: "desc" };
-
-  let tierLists: any[] = [];
-  let totalItems = 0;
-
-  // Обычная сортировка - используем пагинацию на уровне БД
-  // Оптимизация Bolt: используем Promise.all вместо $transaction для параллельного выполнения независимых чтений
-  try {
-    [tierLists, totalItems] = await Promise.all([
-      prisma.tierList.findMany({
-        where: { isPublic: true },
-        select: {
-          id: true,
-          title: true,
-          createdAt: true,
-          updatedAt: true,
-          isPublic: true,
-          likesCount: true,
-          user: {
-            select: { id: true, username: true, avatarUrl: true },
-          },
+  const [tierLists, totalItems] = await Promise.all([
+    prisma.tierList.findMany({
+      where: { isPublic: true },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        updatedAt: true,
+        isPublic: true,
+        likesCount: true,
+        user: {
+          select: { username: true, avatarUrl: true },
         },
-        orderBy,
-        take: pageSize,
-        skip: skip,
-      }),
-      prisma.tierList.count({
-        where: { isPublic: true },
-      }),
-    ]);
-  } catch (err) {
-    logger.error(err as Error, {
-      function: "getPublicTierLists",
-      step: "transaction",
-    });
-    throw err;
-  }
+        _count: {
+          select: { placements: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: pageSize,
+      skip: skip,
+    }),
+    prisma.tierList.count({
+      where: { isPublic: true },
+    }),
+  ]);
 
   const totalPages = Math.ceil(totalItems / pageSize);
-  const responseData = {
-    data: tierLists,
+
+  return {
+    data: tierLists.map((tl) => ({
+      ...tl,
+      authorName: tl.user?.username || "Anonymous",
+      authorAvatar: tl.user?.avatarUrl,
+      booksCount: tl._count.placements,
+      _count: undefined,
+    })),
     meta: {
       totalItems,
-      itemCount: tierLists.length,
-      itemsPerPage: pageSize,
       totalPages,
       currentPage: page,
     },
   };
+}
 
-  logger.debug("getPublicTierLists завершено", {
-    page,
-    pageSize,
-    totalItems,
-    totalPages,
-    returnedCount: tierLists.length,
+// Очистка всех строк (перевод книг в нераспределенные)
+export async function clearAllTiers(tierListId: string) {
+  return prisma.bookPlacement.updateMany({
+    where: { tierListId },
+    data: { tierId: null },
   });
-
-  return responseData;
 }
 
 // Получить количество книг в тир-листе

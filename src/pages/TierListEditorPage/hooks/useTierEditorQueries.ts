@@ -26,7 +26,7 @@ export interface TierEditorQueriesResult {
   // Лайки
   likesData: Awaited<ReturnType<typeof apiGetTierListLikes>> | null | undefined;
   likedTierListIds: Awaited<ReturnType<typeof apiGetLikedTierListIds>> | undefined;
-  likedIdsSet: Set<number>;
+  likedIdsSet: Set<string>;
 
   // Начальные данные для useTierList
   initialDataForHook: TierListData;
@@ -54,7 +54,7 @@ export function useTierEditorQueries(
   // Получаем количество лайков
   const { data: likesData } = useQuery({
     queryKey: ['tierListLikes', tierListId],
-    queryFn: () => (tierListId ? apiGetTierListLikes(parseInt(tierListId)) : null),
+    queryFn: () => (tierListId ? apiGetTierListLikes(tierListId) : null),
     enabled: !!tierListId,
   });
 

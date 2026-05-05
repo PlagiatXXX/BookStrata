@@ -17,7 +17,7 @@ export function NewsPage() {
       if (!id) return;
       
       try {
-        const data = await getNewsById(parseInt(id, 10));
+        const data = await getNewsById(id);
         if (!data) {
           sileo.error({
             title: "Новость не найдена",

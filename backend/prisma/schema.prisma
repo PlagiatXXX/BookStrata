@@ -51,7 +51,7 @@ model Book {
 }
 
 model TierList {
-  id          Int             @id @default(autoincrement())
+  id          String          @id @default(uuid())
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
   title       String
@@ -76,7 +76,7 @@ model TierList {
 model Tier {
   id         Int             @id @default(autoincrement())
   tierList   TierList        @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-  tierListId Int
+  tierListId String
   title      String
   color      String          @default("#808080")
   rank       Int
@@ -87,7 +87,7 @@ model Tier {
 
 model BookPlacement {
   tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-  tierListId Int
+  tierListId String
   book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   bookId     Int
   tier       Tier?    @relation(fields: [tierId], references: [id], onDelete: SetNull)
@@ -119,7 +119,7 @@ model Template {
 }
 
 model Battle {
-  id           Int                 @id @default(autoincrement())
+  id           String              @id @default(uuid())
   template     Template            @relation(fields: [templateId], references: [id])
   templateId   String              @map("template_id")
   title        String
@@ -140,9 +140,9 @@ model Battle {
 model BattleParticipant {
   id         Int      @id @default(autoincrement())
   battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
-  battleId   Int      @map("battle_id")
+  battleId   String   @map("battle_id")
   tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-  tierListId Int      @map("tier_list_id")
+  tierListId String   @map("tier_list_id")
   votesCount Int      @default(0) @map("votes_count")
 
   @@unique([battleId, tierListId])
@@ -152,10 +152,10 @@ model BattleParticipant {
 model BattleVote {
   id         Int      @id @default(autoincrement())
   battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
-  battleId   Int      @map("battle_id")
+  battleId   String   @map("battle_id")
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int      @map("user_id")
-  tierListId Int      @map("tier_list_id") // ID тир-листа за который проголосовали
+  tierListId String   @map("tier_list_id") // ID тир-листа за который проголосовали
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@unique([userId, battleId])
@@ -168,7 +168,7 @@ model TierListLike {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int
   tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-  tierListId Int
+  tierListId String
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@unique([userId, tierListId])
@@ -190,7 +190,7 @@ model TemplateLike {
 
 // Новости и статьи из мира книг
 model NewsArticle {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   title       String
   content     String   @db.Text
   excerpt     String

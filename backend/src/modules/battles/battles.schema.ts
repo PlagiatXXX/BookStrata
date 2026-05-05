@@ -6,11 +6,11 @@ export const createBattleBodySchema = z.object({
   description: z.string().optional(),
   type: z.enum(['weekly', 'monthly']),
   endTime: z.string().datetime(),
-  participantTierListIds: z.array(z.number()).min(2),
+  participantTierListIds: z.array(z.string()).min(2),
 });
 
 export const voteInBattleBodySchema = z.object({
-  tierListId: z.number(),
+  tierListId: z.string(),
 });
 
 export const createBattleSchema = {
@@ -25,7 +25,7 @@ export const createBattleSchema = {
       description: { type: 'string' },
       type: { type: 'string', enum: ['weekly', 'monthly'] },
       endTime: { type: 'string', format: 'date-time' },
-      participantTierListIds: { type: 'array', items: { type: 'number' }, minItems: 2 },
+      participantTierListIds: { type: 'array', items: { type: 'string' }, minItems: 2 },
     },
   },
 };
@@ -37,14 +37,14 @@ export const voteInBattleSchema = {
     type: 'object',
     required: ['id'],
     properties: {
-      id: { type: 'number' },
+      id: { type: 'string' },
     },
   },
   body: {
     type: 'object',
     required: ['tierListId'],
     properties: {
-      tierListId: { type: 'number' },
+      tierListId: { type: 'string' },
     },
   },
 };
@@ -56,7 +56,7 @@ export const closeBattleSchema = {
     type: 'object',
     required: ['id'],
     properties: {
-      id: { type: 'number' },
+      id: { type: 'string' },
     },
   },
 };
