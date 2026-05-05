@@ -128,7 +128,7 @@ model Battle {
   status       String              @default("active") // "active", "completed"
   startTime    DateTime            @default(now()) @map("start_time")
   endTime      DateTime            @map("end_time")
-  winnerId     Int?                @map("winner_id")
+  winnerId     String?             @map("winner_id")
   participants BattleParticipant[]
   votes        BattleVote[]
   createdAt    DateTime            @default(now()) @map("created_at")

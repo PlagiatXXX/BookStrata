@@ -261,7 +261,12 @@ export async function addBooksToTierList(
 export async function updateBook(
   tierListId: string,
   bookId: number,
-  data: { thoughts?: string; description?: string; title?: string; author?: string },
+  data: {
+    thoughts?: string | null;
+    description?: string | null;
+    title?: string;
+    author?: string | null;
+  },
 ) {
   // Проверяем принадлежность книги к тир-листу через BookPlacement (BOLA)
   const placement = await prisma.bookPlacement.findUnique({
@@ -393,9 +398,9 @@ export async function updateTiers(
     prisma.tier.update({
       where: { id: t.id },
       data: {
-        title: t.title,
-        color: t.color,
-        rank: t.rank,
+        ...(t.title !== undefined ? { title: t.title } : {}),
+        ...(t.color !== undefined ? { color: t.color } : {}),
+        ...(t.rank !== undefined ? { rank: t.rank } : {}),
       },
     }),
   );
@@ -405,7 +410,7 @@ export async function updateTiers(
 
 // Сохранение тиров (diff — только изменения, оптимизировано)
 export async function saveTiers(
-  tierListId: number,
+  tierListId: string,
   tiers:
     | {
         added?: Array<{ title: string; color: string; rank: number }>;
@@ -527,7 +532,7 @@ export async function saveTiers(
 }
 
 // Переключение статуса публичности
-export async function togglePublic(tierListId: number, isPublic: boolean) {
+export async function togglePublic(tierListId: string, isPublic: boolean) {
   return prisma.tierList.update({
     where: { id: tierListId },
     data: { isPublic },
@@ -595,7 +600,7 @@ export async function clearAllTiers(tierListId: string) {
 
 // Получить количество книг в тир-листе
 export async function getTierListBooksCount(
-  tierListId: number,
+  tierListId: string,
 ): Promise<number> {
   const count = await prisma.bookPlacement.count({
     where: { tierListId },
@@ -604,7 +609,7 @@ export async function getTierListBooksCount(
 }
 
 // Дополнительная оптимизация для получения списка
-export async function getTierListMetadata(id: number) {
+export async function getTierListMetadata(id: string) {
   return prisma.tierList.findUnique({
     where: { id },
     select: {
@@ -618,7 +623,7 @@ export async function getTierListMetadata(id: number) {
 }
 
 // Создание копии (форка) тир-листа
-export async function forkTierList(id: number, userId: number) {
+export async function forkTierList(id: string, userId: number) {
   logger.debug("forkTierList вызван", { id, userId });
 
   // 1. Получаем оригинал со всеми данными
@@ -735,7 +740,7 @@ export async function forkTierList(id: number, userId: number) {
  * Атомарное сохранение всех изменений в тир-листе
  */
 export async function saveAll(
-  tierListId: number,
+  tierListId: string,
   userId: number,
   payload: {
     tiers?: {
