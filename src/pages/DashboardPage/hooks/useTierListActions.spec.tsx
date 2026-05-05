@@ -82,7 +82,7 @@ describe("useTierListActions", () => {
       const mockCreatedTierList: Awaited<
         ReturnType<typeof apiModule.createTierList>
       > = {
-        id: 1,
+        id: "1",
         title: "New List",
         year: null,
         isPublic: false,
@@ -158,7 +158,7 @@ describe("useTierListActions", () => {
         { wrapper: createWrapper() },
       );
 
-      result.current.renameTierList(1, "Updated Title");
+      result.current.renameTierList("1", "Updated Title");
 
       await vi.waitFor(() => {
         expect(apiModule.updateTierListTitle).toHaveBeenCalledWith(
@@ -190,7 +190,7 @@ describe("useTierListActions", () => {
         { wrapper: createWrapper() },
       );
 
-      result.current.removeTierList(1);
+      result.current.removeTierList("1");
 
       await vi.waitFor(() => {
         expect(apiModule.deleteTierList).toHaveBeenCalledWith("1");

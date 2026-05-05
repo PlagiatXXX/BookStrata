@@ -1,7 +1,7 @@
 import { api } from "./api-client";
 
 export interface NewsArticle {
-  id: number;
+  id: string;
   title: string;
   content?: string;
   excerpt: string;
@@ -61,7 +61,7 @@ export const getPublishedNews = async (limit = 6): Promise<NewsArticle[]> => {
 /**
  * Получить новость по ID
  */
-export const getNewsById = async (id: number): Promise<NewsArticle | null> => {
+export const getNewsById = async (id: string): Promise<NewsArticle | null> => {
   try {
     return api.get<NewsArticle>(`/news/${id}`);
   } catch {
@@ -82,7 +82,7 @@ export const createNews = async (
  * Обновить новость (требуется авторизация)
  */
 export const updateNews = async (
-  id: number,
+  id: string,
   input: UpdateNewsInput,
 ): Promise<{ message: string; article: NewsArticle }> => {
   return api.put<{ message: string; article: NewsArticle }>(
@@ -94,7 +94,7 @@ export const updateNews = async (
 /**
  * Удалить новость (требуется авторизация)
  */
-export const deleteNews = async (id: number): Promise<{ message: string }> => {
+export const deleteNews = async (id: string): Promise<{ message: string }> => {
   return api.delete<{ message: string }>(`/news/${id}`);
 };
 
@@ -102,7 +102,7 @@ export const deleteNews = async (id: number): Promise<{ message: string }> => {
  * Опубликовать/снять с публикации новость (требуется авторизация)
  */
 export const togglePublish = async (
-  id: number,
+  id: string,
   isPublished: boolean,
 ): Promise<{ message: string; article: NewsArticle }> => {
   return api.post<{ message: string; article: NewsArticle }>(

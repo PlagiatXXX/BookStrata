@@ -5,7 +5,7 @@ import { MAX_BOOKS_PER_TIER_LIST } from '@/constants/limits';
 
 describe('TierListCard', () => {
   const mockTierList = {
-    id: 1,
+    id: "1",
     title: 'Test Tier List',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

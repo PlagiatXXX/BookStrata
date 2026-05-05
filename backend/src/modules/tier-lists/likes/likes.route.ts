@@ -9,7 +9,7 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string } }>(
     '/:id/likes',
     async (request, reply) => {
-      const tierListId = parseInt(request.params.id);
+      const tierListId = request.params.id;
       const userId = (request as any).user?.userId;
 
       const likes = await getLikesWithStatus(tierListId, userId);
@@ -24,7 +24,7 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       preHandler: [authMiddleware],
     },
     async (request: any, reply) => {
-      const tierListId = parseInt(request.params.id);
+      const tierListId = request.params.id;
       const userId = request.user.userId;
 
       const result = await like(tierListId, userId);
@@ -52,7 +52,7 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       preHandler: [authMiddleware],
     },
     async (request: any, reply) => {
-      const tierListId = parseInt(request.params.id);
+      const tierListId = request.params.id;
       const userId = request.user.userId;
 
       await unlike(tierListId, userId);

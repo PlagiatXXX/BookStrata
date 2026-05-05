@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
+import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
 import { getCollectionById } from "@/lib/collectionsApi";
@@ -44,6 +45,11 @@ export function CollectionPage() {
 
     loadCollection();
   }, [id, navigate]);
+
+  const sanitizedContent = useMemo(() => {
+if (!collection?.content) return "";
+return DOMPurify.sanitize(collection.content);
+}, [collection?.content]);
 
   if (loading) {
     return (
@@ -157,7 +163,7 @@ export function CollectionPage() {
         <div className="prose prose-invert max-w-none">
           <div
             className="collection-content text-(--ink-1) text-base leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: collection.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           />
         </div>
 

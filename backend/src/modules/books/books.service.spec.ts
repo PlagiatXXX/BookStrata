@@ -8,12 +8,20 @@ process.env.GOOGLE_BOOKS_API_KEY = "test-google-books-api-key";
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+vi.mock("../../lib/cache.js", () => ({
+  getFromCache: vi.fn(),
+  setToCache: vi.fn(),
+}));
+
 // Импортируем после установки env переменных
 import * as booksService from "./books.service.js";
+import { getFromCache, setToCache } from "../../lib/cache.js";
 
 describe("books.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (getFromCache as any).mockResolvedValue(null);
+    (setToCache as any).mockResolvedValue(undefined);
   });
 
   afterEach(() => {

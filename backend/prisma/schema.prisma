@@ -1,256 +1,256 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+ 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+ 
 generator client {
-  provider = "prisma-client-js"
+provider = "prisma-client-js"
 }
-
+ 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+provider = "postgresql"
+url      = env("DATABASE_URL")
 }
-
+ 
 model User {
-  id                   Int        @id @default(autoincrement())
-  email                String     @unique
-  username             String?    @unique
-  avatarUrl            String?    @map("avatar_url")
-  aiAvatarsGenerated   Int        @default(0)  @map("ai_avatars_generated")
-  lastAvatarResetAt    DateTime   @default(now()) @map("last_avatar_reset_at")
-  passwordHash         String     @map("password_hash")
-  isPro                Boolean    @default(false) @map("is_pro")
-  proExpiresAt         DateTime?  @map("pro_expires_at")
-  xp                   Int        @default(0)
-  tierLists            TierList[]
-  templates            Template[]
-  tierListLikes        TierListLike[]
-  templateLikes        TemplateLike[]
-  newsArticles         NewsArticle[]
-  passwordResetTokens  PasswordResetToken[]
-  achievements         UserAchievement[]
-  battleVotes          BattleVote[]
-  role                 Role?      @relation(fields: [roleId], references: [id])
-  roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
-  createdAt            DateTime   @default(now()) @map("created_at")
-
-  @@index([xp])
+id                   Int        @id @default(autoincrement())
+email                String     @unique
+username             String?    @unique
+avatarUrl            String?    @map("avatar_url")
+aiAvatarsGenerated   Int        @default(0)  @map("ai_avatars_generated")
+lastAvatarResetAt    DateTime   @default(now()) @map("last_avatar_reset_at")
+passwordHash         String     @map("password_hash")
+isPro                Boolean    @default(false) @map("is_pro")
+proExpiresAt         DateTime?  @map("pro_expires_at")
+xp                   Int        @default(0)
+tierLists            TierList[]
+templates            Template[]
+tierListLikes        TierListLike[]
+templateLikes        TemplateLike[]
+newsArticles         NewsArticle[]
+passwordResetTokens  PasswordResetToken[]
+achievements         UserAchievement[]
+battleVotes          BattleVote[]
+role                 Role?      @relation(fields: [roleId], references: [id])
+roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
+createdAt            DateTime   @default(now()) @map("created_at")
+ 
+@@index([xp])
 }
-
+ 
 model Book {
-  id              Int             @id @default(autoincrement())
-  title           String
-  author          String?
-  coverImageUrl   String          @map("cover_image_url")
-  description     String?
-  thoughts        String?
-  placements      BookPlacement[]
-  createdAt       DateTime        @default(now()) @map("created_at")
+id              Int             @id @default(autoincrement())
+title           String
+author          String?
+coverImageUrl   String          @map("cover_image_url")
+description     String?
+thoughts        String?
+placements      BookPlacement[]
+createdAt       DateTime        @default(now()) @map("created_at")
 }
-
+ 
 model TierList {
-  id          Int             @id @default(autoincrement())
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      Int
-  title       String
-  year        Int?
-  isTemplate  Boolean         @default(false) @map("is_template")
-  isPublic   Boolean         @default(false) @map("is_public")
-  likesCount  Int             @default(0) @map("likes_count")
-  tiers       Tier[]
-  placements  BookPlacement[]
-  likes       TierListLike[]
-  battleParticipants BattleParticipant[]
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
-
-  @@index([userId])
-  @@index([userId, isPublic])
-  @@index([createdAt])
-  @@index([likesCount])
-  @@map("tier_lists")
+id          String          @id @default(uuid())
+user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+userId      Int
+title       String
+year        Int?
+isTemplate  Boolean         @default(false) @map("is_template")
+isPublic   Boolean         @default(false) @map("is_public")
+likesCount  Int             @default(0) @map("likes_count")
+tiers       Tier[]
+placements  BookPlacement[]
+likes       TierListLike[]
+battleParticipants BattleParticipant[]
+createdAt   DateTime        @default(now()) @map("created_at")
+updatedAt   DateTime        @updatedAt @map("updated_at")
+ 
+@@index([userId])
+@@index([userId, isPublic])
+@@index([createdAt])
+@@index([likesCount])
+@@map("tier_lists")
 }
-
+ 
 model Tier {
-  id         Int             @id @default(autoincrement())
-  tierList   TierList        @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-  tierListId Int
-  title      String
-  color      String          @default("#808080")
-  rank       Int
-  items      BookPlacement[]
-
-  @@index([tierListId, rank])
+id         Int             @id @default(autoincrement())
+tierList   TierList        @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+tierListId String
+title      String
+color      String          @default("#808080")
+rank       Int
+items      BookPlacement[]
+ 
+@@index([tierListId, rank])
 }
-
+ 
 model BookPlacement {
-  tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-  tierListId Int
-  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  bookId     Int
-  tier       Tier?    @relation(fields: [tierId], references: [id], onDelete: SetNull)
-  tierId     Int?
-  rank       Int
-
-  @@id([tierListId, bookId])
-  @@index([tierId, rank])
-  @@index([bookId])
+tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+tierListId String
+book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+bookId     Int
+tier       Tier?    @relation(fields: [tierId], references: [id], onDelete: SetNull)
+tierId     Int?
+rank       Int
+ 
+@@id([tierListId, bookId])
+@@index([tierId, rank])
+@@index([bookId])
 }
-
+ 
 model Template {
-  id            String   @id @default(uuid())
-  title         String
-  description   String?
-  type          String?  // "starter" | "curated" | "community"
-  tiers         Json
-  defaultBooks  Json?    @map("default_books")
-  isPublic      Boolean  @default(false) @map("is_public")
-  isProOnly     Boolean  @default(false) @map("is_pro_only")
-  author        User?    @relation(fields: [authorId], references: [id])
-  authorId      Int?     @map("author_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  likes         TemplateLike[]
-  battles       Battle[]
-
-  @@index([type])
+id            String   @id @default(uuid())
+title         String
+description   String?
+type          String?  // "starter" | "curated" | "community"
+tiers         Json
+defaultBooks  Json?    @map("default_books")
+isPublic      Boolean  @default(false) @map("is_public")
+isProOnly     Boolean  @default(false) @map("is_pro_only")
+author        User?    @relation(fields: [authorId], references: [id])
+authorId      Int?     @map("author_id")
+createdAt     DateTime @default(now()) @map("created_at")
+updatedAt     DateTime @updatedAt @map("updated_at")
+likes         TemplateLike[]
+battles       Battle[]
+ 
+@@index([type])
 }
-
+ 
 model Battle {
-  id           Int                 @id @default(autoincrement())
-  template     Template            @relation(fields: [templateId], references: [id])
-  templateId   String              @map("template_id")
-  title        String
-  description  String?
-  type         String              @default("weekly") // "weekly", "monthly"
-  status       String              @default("active") // "active", "completed"
-  startTime    DateTime            @default(now()) @map("start_time")
-  endTime      DateTime            @map("end_time")
-  winnerId     Int?                @map("winner_id")
-  participants BattleParticipant[]
-  votes        BattleVote[]
-  createdAt    DateTime            @default(now()) @map("created_at")
-  updatedAt    DateTime            @updatedAt @map("updated_at")
-
-  @@map("battles")
+id           String              @id @default(uuid())
+template     Template            @relation(fields: [templateId], references: [id])
+templateId   String              @map("template_id")
+title        String
+description  String?
+type         String              @default("weekly") // "weekly", "monthly"
+status       String              @default("active") // "active", "completed"
+startTime    DateTime            @default(now()) @map("start_time")
+endTime      DateTime            @map("end_time")
+winnerId     String?                @map("winner_id")
+participants BattleParticipant[]
+votes        BattleVote[]
+createdAt    DateTime            @default(now()) @map("created_at")
+updatedAt    DateTime            @updatedAt @map("updated_at")
+ 
+@@map("battles")
 }
-
+ 
 model BattleParticipant {
-  id         Int      @id @default(autoincrement())
-  battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
-  battleId   Int      @map("battle_id")
-  tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-  tierListId Int      @map("tier_list_id")
-  votesCount Int      @default(0) @map("votes_count")
-
-  @@unique([battleId, tierListId])
-  @@map("battle_participants")
+id         Int      @id @default(autoincrement())
+battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+battleId   String   @map("battle_id")
+tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+tierListId String   @map("tier_list_id")
+votesCount Int      @default(0) @map("votes_count")
+ 
+@@unique([battleId, tierListId])
+@@map("battle_participants")
 }
-
+ 
 model BattleVote {
-  id         Int      @id @default(autoincrement())
-  battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
-  battleId   Int      @map("battle_id")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     Int      @map("user_id")
-  tierListId Int      @map("tier_list_id") // ID тир-листа за который проголосовали
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@unique([userId, battleId])
-  @@map("battle_votes")
+id         Int      @id @default(autoincrement())
+battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+battleId   String   @map("battle_id")
+user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+userId     Int      @map("user_id")
+tierListId String   @map("tier_list_id") // ID тир-листа за который проголосовали
+createdAt  DateTime @default(now()) @map("created_at")
+ 
+@@unique([userId, battleId])
+@@map("battle_votes")
 }
-
+ 
 // Лайки тир-листов
 model TierListLike {
-  id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     Int
-  tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-  tierListId Int
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@unique([userId, tierListId])
-  @@index([tierListId])
+id         Int      @id @default(autoincrement())
+user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+userId     Int
+tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+tierListId String
+createdAt  DateTime @default(now()) @map("created_at")
+ 
+@@unique([userId, tierListId])
+@@index([tierListId])
 }
-
+ 
 // Лайки шаблонов
 model TemplateLike {
-  id         Int      @id @default(autoincrement())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     Int
-  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  templateId String
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@unique([userId, templateId])
-  @@index([templateId])
+id         Int      @id @default(autoincrement())
+user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+userId     Int
+template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+templateId String
+createdAt  DateTime @default(now()) @map("created_at")
+ 
+@@unique([userId, templateId])
+@@index([templateId])
 }
-
+ 
 // Новости и статьи из мира книг
 model NewsArticle {
-  id          Int      @id @default(autoincrement())
-  title       String
-  content     String   @db.Text
-  excerpt     String
-  imageUrl    String?  @map("image_url")
-  tags        String[] // ['новинки', 'обзоры', 'события']
-  author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  authorId    Int?     @map("author_id")
-  publishedAt DateTime @default(now()) @map("published_at")
-  isPublished Boolean  @default(false) @map("is_published")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@index([isPublished, publishedAt])
-  @@index([tags])
-  @@map("news_articles")
+id          String   @id @default(uuid())
+title       String
+content     String   @db.Text
+excerpt     String
+imageUrl    String?  @map("image_url")
+tags        String[] // ['новинки', 'обзоры', 'события']
+author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+authorId    Int?     @map("author_id")
+publishedAt DateTime @default(now()) @map("published_at")
+isPublished Boolean  @default(false) @map("is_published")
+createdAt   DateTime @default(now()) @map("created_at")
+updatedAt   DateTime @updatedAt @map("updated_at")
+ 
+@@index([isPublished, publishedAt])
+@@index([tags])
+@@map("news_articles")
 }
-
+ 
 // Роли пользователей
 model Role {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique // "admin", "moderator", "user"
-  description String?
-  users       User[]
-  createdAt   DateTime   @default(now()) @map("created_at")
+id          Int        @id @default(autoincrement())
+name        String     @unique // "admin", "moderator", "user"
+description String?
+users       User[]
+createdAt   DateTime   @default(now()) @map("created_at")
 }
-
+ 
 model PasswordResetToken {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique @db.VarChar(255)
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@index([token])
+id        Int      @id @default(autoincrement())
+token     String   @unique @db.VarChar(255)
+userId    Int
+user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+expiresAt DateTime @map("expires_at")
+createdAt DateTime @default(now()) @map("created_at")
+ 
+@@index([token])
 }
-
+ 
 // Достижения
 model Achievement {
-  id          String   @id // Код достижения (например, 'first_tier_list')
-  title       String
-  description String
-  iconUrl     String?  @map("icon_url")
-  xpValue     Int      @default(10) @map("xp_value")
-  isSecret    Boolean  @default(false) @map("is_secret")
-  requirements Json?   // Параметры для проверки ({ count: 1, type: 'tier_list' })
-  users       UserAchievement[]
-
-  @@map("achievements")
+id          String   @id // Код достижения (например, 'first_tier_list')
+title       String
+description String
+iconUrl     String?  @map("icon_url")
+xpValue     Int      @default(10) @map("xp_value")
+isSecret    Boolean  @default(false) @map("is_secret")
+requirements Json?   // Параметры для проверки ({ count: 1, type: 'tier_list' })
+users       UserAchievement[]
+ 
+@@map("achievements")
 }
-
+ 
 // Связь пользователей и достижений
 model UserAchievement {
-  id            Int         @id @default(autoincrement())
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        Int
-  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  achievementId String
-  earnedAt      DateTime    @default(now()) @map("earned_at")
-
-  @@unique([userId, achievementId])
-  @@map("user_achievements")
+id            Int         @id @default(autoincrement())
+user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+userId        Int
+achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+achievementId String
+earnedAt      DateTime    @default(now()) @map("earned_at")
+ 
+@@unique([userId, achievementId])
+@@map("user_achievements")
 }

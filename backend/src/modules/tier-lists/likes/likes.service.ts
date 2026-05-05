@@ -1,7 +1,7 @@
 import { prisma } from '../../../lib/prisma.js';
 
 // Получить лайки тир-листа
-export async function getLikes(tierListId: number) {
+export async function getLikes(tierListId: string) {
   const likes = await prisma.tierListLike.count({
     where: { tierListId },
   });
@@ -9,7 +9,7 @@ export async function getLikes(tierListId: number) {
 }
 
 // Проверить, лайкнул ли пользователь
-export async function isLikedByUser(tierListId: number, userId: number) {
+export async function isLikedByUser(tierListId: string, userId: number) {
   const like = await prisma.tierListLike.findUnique({
     where: {
       userId_tierListId: { userId, tierListId },
@@ -19,7 +19,7 @@ export async function isLikedByUser(tierListId: number, userId: number) {
 }
 
 // Поставить лайк
-export async function like(tierListId: number, userId: number) {
+export async function like(tierListId: string, userId: number) {
   const existing = await prisma.tierListLike.findUnique({
     where: {
       userId_tierListId: { userId, tierListId },
@@ -48,7 +48,7 @@ export async function like(tierListId: number, userId: number) {
 }
 
 // Убрать лайк
-export async function unlike(tierListId: number, userId: number) {
+export async function unlike(tierListId: string, userId: number) {
   // Оптимизация Bolt: используем findUnique для поиска по составному индексу
   const existing = await prisma.tierListLike.findUnique({
     where: {
@@ -75,7 +75,7 @@ export async function unlike(tierListId: number, userId: number) {
 }
 
 // Получить лайки и статус лайка для пользователя
-export async function getLikesWithStatus(tierListId: number, userId?: number) {
+export async function getLikesWithStatus(tierListId: string, userId?: number) {
   // Оптимизация Bolt: получаем количество лайков и статус в одном запросе
   const tierList = await prisma.tierList.findUnique({
     where: { id: tierListId },

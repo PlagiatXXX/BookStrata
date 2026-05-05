@@ -29,7 +29,7 @@ export type CreateNewsInput = z.infer<typeof createNewsSchema>;
 export type UpdateNewsInput = z.infer<typeof updateNewsSchema>;
 
 export type NewsArticle = {
-  id: number;
+  id: string;
   title: string;
   content?: string;
   excerpt: string;
@@ -139,7 +139,7 @@ export class NewsService {
    * Получить новость по ID
    */
   async getNewsById(
-    id: number,
+    id: string,
     options?: { publishedOnly?: boolean },
   ): Promise<NewsArticle | null> {
     const { publishedOnly = true } = options || {};
@@ -209,7 +209,7 @@ export class NewsService {
    * Обновить новость
    */
   async updateNews(
-    id: number,
+    id: string,
     input: UpdateNewsInput,
   ): Promise<NewsArticle | null> {
     const validated = await this.validateUpdateNews(input);
@@ -255,7 +255,7 @@ export class NewsService {
   /**
    * Удалить новость
    */
-  async deleteNews(id: number): Promise<void> {
+  async deleteNews(id: string): Promise<void> {
     logger.info("Удаление новости", { id });
 
     await prisma.newsArticle.delete({
@@ -269,7 +269,7 @@ export class NewsService {
    * Опубликовать/снять с публикации новость
    */
   async togglePublish(
-    id: number,
+    id: string,
     isPublished: boolean,
   ): Promise<NewsArticle | null> {
     logger.info("Публикация новости", { id, isPublished });

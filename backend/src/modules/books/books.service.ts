@@ -83,7 +83,9 @@ export async function searchBooks(
         `Google Books API недоступен после ретраев: ${response.status} ${response.statusText}`,
       );
       // Не кешируем фейл и возвращаем пустой массив — фронт сам покажет "ничего не найдено"
-      return [];
+      throw new Error(
+        `Google Books API error: ${response.status} ${response.statusText}`,
+      );
     }
     const data = (await response.json()) as {
       items?: GoogleBookResponse[];

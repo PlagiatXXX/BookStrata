@@ -26,7 +26,7 @@ export interface ApiTier {
 
 // Описывает полный ответ от нашего GET /api/tier-lists/:id
 export interface ApiTierListResponse {
-  id: number;
+  id: string;
   title: string;
   year: number | null;
   isPublic: boolean;
@@ -44,7 +44,7 @@ export interface ApiTierListResponse {
 
 // Описывает тир-шаблон, как он приходит из API
 export interface ApiTemplate {
-  id: number;  // Prisma возвращает number для auto-increment полей
+  id: string;
   title: string;
   description?: string;
   tiers: ApiTierTemplate[];

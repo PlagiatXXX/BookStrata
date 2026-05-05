@@ -146,7 +146,7 @@ export function DashboardPage() {
   }, [logout, navigate]);
 
   const handleOpenTierList = useCallback(
-    (id: number) => {
+    (id: string) => {
       navigate(`/tier-lists/${id}`);
     },
     [navigate],

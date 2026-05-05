@@ -11,7 +11,7 @@ export interface EditorHeaderProps {
   title: string;
   author?: { username: string };
   likesCount?: number;
-  likedIdsSet?: Set<number>;
+  likedIdsSet?: Set<string>;
   tierListId?: string;
   ownerUserId?: number;
   currentUserId?: number;
@@ -95,10 +95,10 @@ export const EditorHeader = ({
             </button>
             <div className="nb-heavy-border bg-black p-2 h-13 flex items-center justify-center">
               <LikeButton
-                id={parseInt(tierListId!)}
+                id={tierListId!}
                 type="tierlist"
                 initialLikes={likesCount || 0}
-                initialLiked={likedIdsSet?.has(parseInt(tierListId!)) || false}
+                initialLiked={likedIdsSet?.has(tierListId!) || false}
                 authorId={ownerUserId}
                 currentUserId={currentUserId}
                 size="md"

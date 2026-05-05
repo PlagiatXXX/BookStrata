@@ -127,7 +127,7 @@ describe("News Security (Vulnerability Reproduction)", () => {
     // Assert: Check that service was called with publishedOnly: true (implicit or explicit)
     // We expect the where clause to have included isPublished: true
     expect(prisma.newsArticle.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 99, isPublished: true }
+      where: { id: "99", isPublished: true }
     }));
   });
 

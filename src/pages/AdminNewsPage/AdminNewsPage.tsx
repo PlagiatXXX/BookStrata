@@ -179,7 +179,7 @@ export function AdminNewsPage() {
     }
   };
 
-  const handleDelete = async (id: number, title: string) => {
+  const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Вы уверены, что хотите удалить новость "${title}"?`)) {
       return;
     }
@@ -203,7 +203,7 @@ export function AdminNewsPage() {
   };
 
   const handleTogglePublish = async (
-    id: number,
+    id: string,
     isPublished: boolean,
     title: string,
   ) => {

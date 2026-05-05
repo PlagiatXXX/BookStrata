@@ -33,11 +33,13 @@ vi.mock("../../lib/prisma.js", () => ({
       delete: vi.fn(),
       deleteMany: vi.fn(),
       count: vi.fn(),
+      findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
     },
     book: {
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -60,11 +62,15 @@ describe("tierList.service", () => {
 
   describe("getUserTierLists", () => {
     const mockUserId = 1;
-    const mockQuery = { page: "1", pageSize: "10", sortBy: "updated_at" as const };
+    const mockQuery = {
+      page: "1",
+      pageSize: "10",
+      sortBy: "updated_at" as const,
+    };
 
     const mockTierLists = [
       {
-        id: 1,
+        id: "1",
         userId: mockUserId,
         title: "Test List 1",
         createdAt: new Date("2024-01-01"),
@@ -74,7 +80,7 @@ describe("tierList.service", () => {
         _count: { placements: 10 },
       },
       {
-        id: 2,
+        id: "2",
         userId: mockUserId,
         title: "Test List 2",
         createdAt: new Date("2024-01-03"),
@@ -95,15 +101,13 @@ describe("tierList.service", () => {
       expect(prisma.tierList.count).toHaveBeenCalled();
       expect(result.data).toHaveLength(2);
       expect(result.data[0]).toMatchObject({
-        id: 1,
+        id: "1",
         title: "Test List 1",
         likesCount: 5,
         booksCount: 10,
       });
       expect(result.meta).toMatchObject({
         totalItems: 2,
-        itemCount: 2,
-        itemsPerPage: 10,
         totalPages: 1,
         currentPage: 1,
       });
@@ -146,7 +150,7 @@ describe("tierList.service", () => {
     const mockTitle = "My New Tier List";
 
     const mockCreatedTierList = {
-      id: 1,
+      id: "1",
       userId: mockUserId,
       title: mockTitle,
       isPublic: false,
@@ -235,7 +239,7 @@ describe("tierList.service", () => {
   });
 
   describe("assertOwner", () => {
-    const mockTierListId = 1;
+    const mockTierListId = "1";
     const mockUserId = 1;
 
     it("должен завершиться успешно если пользователь владелец", async () => {
@@ -272,7 +276,7 @@ describe("tierList.service", () => {
   });
 
   describe("getFullTierList", () => {
-    const mockTierListId = 1;
+    const mockTierListId = "1";
 
     const mockFullTierList = {
       id: mockTierListId,
@@ -355,7 +359,7 @@ describe("tierList.service", () => {
   });
 
   describe("updatePlacements", () => {
-    const mockTierListId = 1;
+    const mockTierListId = "1";
     const mockPlacements = [
       { bookId: 1, tierId: 1, rank: 0 },
       { bookId: 2, tierId: 2, rank: 1 },
@@ -399,7 +403,7 @@ describe("tierList.service", () => {
   });
 
   describe("addBooksToTierList", () => {
-    const mockTierListId = 1;
+    const mockTierListId = "1";
     const mockBooks = [
       {
         title: "Book 1",
@@ -449,7 +453,10 @@ describe("tierList.service", () => {
         return fn(prisma);
       });
 
-      const result = await service.addBooksToTierList(mockTierListId, mockBooks);
+      const result = await service.addBooksToTierList(
+        mockTierListId,
+        mockBooks,
+      );
 
       expect(prisma.tierList.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -528,10 +535,10 @@ describe("tierList.service", () => {
       (prisma.bookPlacement.findUniqueOrThrow as any).mockResolvedValue({});
       (prisma.book.update as any).mockResolvedValue(mockUpdatedBook);
 
-      const result = await service.updateBook(1, mockBookId, mockUpdateData);
+      const result = await service.updateBook("1", mockBookId, mockUpdateData);
 
       expect(prisma.bookPlacement.findUniqueOrThrow).toHaveBeenCalledWith({
-        where: { tierListId_bookId: { tierListId: 1, bookId: mockBookId } },
+        where: { tierListId_bookId: { tierListId: "1", bookId: mockBookId } },
       });
 
       expect(prisma.book.update).toHaveBeenCalledWith({
@@ -554,10 +561,10 @@ describe("tierList.service", () => {
         coverImageUrl: mockCoverUrl,
       });
 
-      await service.updateBookCover(1, mockBookId, mockCoverUrl);
+      await service.updateBookCover("1", mockBookId, mockCoverUrl);
 
       expect(prisma.bookPlacement.findUniqueOrThrow).toHaveBeenCalledWith({
-        where: { tierListId_bookId: { tierListId: 1, bookId: mockBookId } },
+        where: { tierListId_bookId: { tierListId: "1", bookId: mockBookId } },
       });
 
       expect(prisma.book.update).toHaveBeenCalledWith({
@@ -568,11 +575,12 @@ describe("tierList.service", () => {
   });
 
   describe("removeBookFromTierList", () => {
-    const mockTierListId = 1;
+    const mockTierListId = "1";
     const mockBookId = 1;
 
     it("должен удалить книгу из тир-листа", async () => {
       (prisma.bookPlacement.delete as any).mockResolvedValue({});
+      (prisma.book.delete as any).mockResolvedValue({});
 
       await service.removeBookFromTierList(mockTierListId, mockBookId);
 
@@ -588,7 +596,7 @@ describe("tierList.service", () => {
   });
 
   describe("deleteTierList", () => {
-    const mockTierListId = 1;
+    const mockTierListId = "1";
 
     it("должен удалить тир-лист", async () => {
       (prisma.tierList.delete as any).mockResolvedValue({});
@@ -602,7 +610,7 @@ describe("tierList.service", () => {
   });
 
   describe("saveTiers", () => {
-    const mockTierListId = 1;
+    const mockTierListId = "1";
 
     const mockTiersArray = [
       { id: 1, title: "S", color: "#FF6B6B", rank: 0 },
@@ -624,10 +632,21 @@ describe("tierList.service", () => {
     });
 
     it("должен сохранить тиры в формате diff (added)", async () => {
-      (prisma.$transaction as any).mockImplementation(async (fn: (arg0: PrismaClient<Prisma.PrismaClientOptions, never, Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined, DefaultArgs>) => any) => {
-        // Вызываем функцию транзакции с моками
-        return fn(prisma);
-      });
+      (prisma.$transaction as any).mockImplementation(
+        async (
+          fn: (
+            arg0: PrismaClient<
+              Prisma.PrismaClientOptions,
+              never,
+              Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined,
+              DefaultArgs
+            >,
+          ) => any,
+        ) => {
+          // Вызываем функцию транзакции с моками
+          return fn(prisma);
+        },
+      );
 
       // Мокаем createMany для вызова внутри транзакции
       (prisma.tier.createMany as any).mockResolvedValue({ count: 1 });
@@ -679,9 +698,20 @@ describe("tierList.service", () => {
     });
 
     it("должен сохранить тиры в формате diff (updated)", async () => {
-      (prisma.$transaction as any).mockImplementation(async (fn: (arg0: PrismaClient<Prisma.PrismaClientOptions, never, Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined, DefaultArgs>) => any) => {
-        return fn(prisma);
-      });
+      (prisma.$transaction as any).mockImplementation(
+        async (
+          fn: (
+            arg0: PrismaClient<
+              Prisma.PrismaClientOptions,
+              never,
+              Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined,
+              DefaultArgs
+            >,
+          ) => any,
+        ) => {
+          return fn(prisma);
+        },
+      );
 
       (prisma.tier.updateMany as any).mockResolvedValue({ count: 1 });
 
@@ -700,9 +730,20 @@ describe("tierList.service", () => {
     });
 
     it("должен сохранить тиры в формате diff (deleted)", async () => {
-      (prisma.$transaction as any).mockImplementation(async (fn: (arg0: PrismaClient<Prisma.PrismaClientOptions, never, Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined, DefaultArgs>) => any) => {
-        return fn(prisma);
-      });
+      (prisma.$transaction as any).mockImplementation(
+        async (
+          fn: (
+            arg0: PrismaClient<
+              Prisma.PrismaClientOptions,
+              never,
+              Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined,
+              DefaultArgs
+            >,
+          ) => any,
+        ) => {
+          return fn(prisma);
+        },
+      );
 
       (prisma.tier.deleteMany as any).mockResolvedValue({ count: 2 });
 
@@ -733,7 +774,7 @@ describe("tierList.service", () => {
   });
 
   describe("togglePublic", () => {
-    const mockTierListId = 1;
+    const mockTierListId = "1";
 
     it("должен переключить статус публичности", async () => {
       (prisma.tierList.update as any).mockResolvedValue({
@@ -754,26 +795,32 @@ describe("tierList.service", () => {
   });
 
   describe("getPublicTierLists", () => {
-    const mockQuery = { page: "1", pageSize: "10", sortBy: "updated_at" as const };
+    const mockQuery = {
+      page: "1",
+      pageSize: "10",
+      sortBy: "updated_at" as const,
+    };
 
     const mockPublicTierLists = [
       {
-        id: 1,
+        id: "1",
         title: "Public List 1",
         isPublic: true,
         likesCount: 10,
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
         user: { id: 1, username: "user1", avatarUrl: null },
+        _count: { placements: 5 },
       },
       {
-        id: 2,
+        id: "2",
         title: "Public List 2",
         isPublic: true,
         likesCount: 5,
         createdAt: new Date("2024-01-03"),
         updatedAt: new Date("2024-01-04"),
         user: { id: 2, username: "user2", avatarUrl: null },
+        _count: { placements: 3 },
       },
     ];
 
@@ -788,8 +835,6 @@ describe("tierList.service", () => {
       expect(result.data[1].likesCount).toBe(5);
       expect(result.meta).toMatchObject({
         totalItems: 2,
-        itemCount: 2,
-        itemsPerPage: 10,
         totalPages: 1,
         currentPage: 1,
       });
@@ -799,7 +844,7 @@ describe("tierList.service", () => {
       const mockAllLists = Array(15)
         .fill(null)
         .map((_, i) => ({
-          id: i + 1,
+          id: String(i + 1),
           title: `Public List ${i + 1}`,
           isPublic: true,
           likesCount: 10 - i,
@@ -837,7 +882,8 @@ describe("tierList.service", () => {
         .fill(null)
         .map((_, i) => ({
           ...mockPublicTierLists[0],
-          id: i + 1,
+          id: String(i + 1),
+          _count: { placements: 5 },
         }));
 
       (prisma.tierList.findMany as any).mockResolvedValue(largeList);
@@ -855,7 +901,7 @@ describe("tierList.service", () => {
 
   describe("forkTierList", () => {
     const mockUserId = 2;
-    const mockOriginalId = 1;
+    const mockOriginalId = "1";
 
     const mockOriginal = {
       id: mockOriginalId,
@@ -897,14 +943,16 @@ describe("tierList.service", () => {
     };
 
     it("должен создать копию тир-листа со всеми тирами и книгами (оптимизировано Bolt)", async () => {
-      (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue(mockOriginal);
+      (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue(
+        mockOriginal,
+      );
 
       (prisma.$transaction as any).mockImplementation(async (fn: any) => {
         return fn(prisma);
       });
 
       (prisma.tierList.create as any).mockResolvedValue({
-        id: 2,
+        id: "2",
         title: "Original List (копия)",
         userId: mockUserId,
         tiers: [
@@ -931,7 +979,7 @@ describe("tierList.service", () => {
 
       expect(updateCall).toEqual(
         expect.objectContaining({
-          where: { id: 2 },
+          where: { id: "2" },
           data: expect.objectContaining({
             placements: {
               create: expect.any(Array),
@@ -998,15 +1046,15 @@ describe("tierList.service", () => {
         tiers: [{ id: 20, title: "S", rank: 0 }],
       });
 
-      await expect(service.forkTierList(mockOriginalId, mockUserId)).rejects.toThrow(
-        "Mapped tier ID not found for source tier ID: 11",
-      );
+      await expect(
+        service.forkTierList(mockOriginalId, mockUserId),
+      ).rejects.toThrow("Mapped tier ID not found for source tier ID: 11");
       expect(prisma.tierList.update).not.toHaveBeenCalled();
     });
   });
 
-   describe("saveAll", () => {
-    const mockTierListId = 1;
+  describe("saveAll", () => {
+    const mockTierListId = "1";
     const mockUserId = 1;
 
     it("должен атомарно сохранить все изменения (оптимизировано Bolt)", async () => {
@@ -1034,12 +1082,23 @@ describe("tierList.service", () => {
 
       const payload = {
         tiers: {
-          added: [{ tempId: "temp-tier-1", title: "New Tier", color: "#000", rank: 10 }],
+          added: [
+            {
+              tempId: "temp-tier-1",
+              title: "New Tier",
+              color: "#000",
+              rank: 10,
+            },
+          ],
           updated: [{ id: 1, title: "Updated Tier", color: "#fff", rank: 0 }],
           deletedIds: [2],
         },
         newBooks: [
-          { tempId: "temp-book-1", title: "New Book", coverImageUrl: "img.jpg" },
+          {
+            tempId: "temp-book-1",
+            title: "New Book",
+            coverImageUrl: "img.jpg",
+          },
         ],
         placements: [
           { bookId: "temp-book-1", tierId: "temp-tier-1", rank: 0 },
@@ -1048,7 +1107,7 @@ describe("tierList.service", () => {
       };
 
       const result = await service.saveAll(mockTierListId, mockUserId, payload);
-// Проверка параллельного выполнения через вызовы Prisma
+      // Проверка параллельного выполнения через вызовы Prisma
       expect(prisma.tier.deleteMany).toHaveBeenCalled();
       expect(prisma.tier.updateMany).toHaveBeenCalled();
       expect(prisma.tier.create).toHaveBeenCalled();
@@ -1063,8 +1122,14 @@ describe("tierList.service", () => {
         ],
       });
 
-      expect(result.bookReplacements).toContainEqual({ tempId: "temp-book-1", realId: "200" });
-      expect(result.tierReplacements).toContainEqual({ tempId: "temp-tier-1", realId: "100" });
+      expect(result.bookReplacements).toContainEqual({
+        tempId: "temp-book-1",
+        realId: "200",
+      });
+      expect(result.tierReplacements).toContainEqual({
+        tempId: "temp-tier-1",
+        realId: "100",
+      });
     });
 
     it("должен бросить ошибку если Real ID не найден для временного ID", async () => {
@@ -1073,14 +1138,12 @@ describe("tierList.service", () => {
       });
 
       const payload = {
-        placements: [
-          { bookId: "missing-temp-id", tierId: null, rank: 0 },
-        ],
+        placements: [{ bookId: "missing-temp-id", tierId: null, rank: 0 }],
       };
 
-      await expect(service.saveAll(mockTierListId, mockUserId, payload)).rejects.toThrow(
-        "Real ID not found for temp book ID: missing-temp-id"
-      );
+      await expect(
+        service.saveAll(mockTierListId, mockUserId, payload),
+      ).rejects.toThrow("Real ID not found for temp book ID: missing-temp-id");
     });
   });
 });

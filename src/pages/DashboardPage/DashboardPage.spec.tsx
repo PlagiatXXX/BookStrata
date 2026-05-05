@@ -35,7 +35,7 @@ vi.mock("sileo", () => ({
 
 const mockTierLists = [
   {
-    id: 1,
+    id: "1",
     title: "Test Tier List 1",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
@@ -44,7 +44,7 @@ const mockTierLists = [
     likesCount: 5,
   },
   {
-    id: 2,
+    id: "2",
     title: "Test Tier List 2",
     createdAt: "2024-01-02T00:00:00Z",
     updatedAt: "2024-01-02T00:00:00Z",
@@ -107,7 +107,7 @@ describe("DashboardPage", () => {
     });
 
     vi.mocked(apiModule.createTierList).mockResolvedValue({
-      id: 3,
+      id: "3",
       title: "New Tier List",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

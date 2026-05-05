@@ -102,7 +102,7 @@ const mockTemplate: Template = {
 const mockPublicTierLists: PaginatedTierListsResponse = {
   data: [
     {
-      id: 1,
+      id: "1",
       title: "Public Tier List 1",
       createdAt: "2024-01-01T00:00:00Z",
       updatedAt: "2024-01-01T00:00:00Z",
@@ -111,7 +111,7 @@ const mockPublicTierLists: PaginatedTierListsResponse = {
       likesCount: 5,
     },
     {
-      id: 2,
+      id: "2",
       title: "Public Tier List 2",
       createdAt: "2024-01-02T00:00:00Z",
       updatedAt: "2024-01-02T00:00:00Z",
@@ -120,7 +120,7 @@ const mockPublicTierLists: PaginatedTierListsResponse = {
       likesCount: 10,
     },
     {
-      id: 3,
+      id: "3",
       title: "Public Tier List 3",
       createdAt: "2024-01-03T00:00:00Z",
       updatedAt: "2024-01-03T00:00:00Z",
@@ -129,7 +129,7 @@ const mockPublicTierLists: PaginatedTierListsResponse = {
       likesCount: 3,
     },
     {
-      id: 4,
+      id: "4",
       title: "Public Tier List 4",
       createdAt: "2024-01-04T00:00:00Z",
       updatedAt: "2024-01-04T00:00:00Z",
@@ -138,7 +138,7 @@ const mockPublicTierLists: PaginatedTierListsResponse = {
       likesCount: 7,
     },
     {
-      id: 5,
+      id: "5",
       title: "Public Tier List 5",
       createdAt: "2024-01-05T00:00:00Z",
       updatedAt: "2024-01-05T00:00:00Z",
@@ -147,7 +147,7 @@ const mockPublicTierLists: PaginatedTierListsResponse = {
       likesCount: 12,
     },
     {
-      id: 6,
+      id: "6",
       title: "Public Tier List 6",
       createdAt: "2024-01-06T00:00:00Z",
       updatedAt: "2024-01-06T00:00:00Z",
@@ -156,7 +156,7 @@ const mockPublicTierLists: PaginatedTierListsResponse = {
       likesCount: 8,
     },
     {
-      id: 7,
+      id: "7",
       title: "Public Tier List 7",
       createdAt: "2024-01-07T00:00:00Z",
       updatedAt: "2024-01-07T00:00:00Z",
@@ -443,7 +443,7 @@ describe("TemplateLibrary", () => {
         },
         data: [
           {
-            id: 8,
+            id: "8",
             title: "Public Tier List 8",
             createdAt: "2024-01-08T00:00:00Z",
             updatedAt: "2024-01-08T00:00:00Z",
