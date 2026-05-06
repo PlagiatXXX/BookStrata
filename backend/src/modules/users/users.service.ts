@@ -33,6 +33,8 @@ export async function getMe(userId: number) {
           name: true,
         },
       },
+      xp: true,
+      title: true,
       createdAt: true,
     },
   });
@@ -75,6 +77,8 @@ export async function updateUser(userId: number, username: string) {
       email: true,
       username: true,
       avatarUrl: true,
+      xp: true,
+      title: true,
       createdAt: true,
     },
   });
@@ -158,6 +162,8 @@ export async function getUserById(params: { id: string }) {
       id: true,
       username: true,
       avatarUrl: true,
+      xp: true,
+      title: true,
       createdAt: true,
     },
   });
@@ -227,6 +233,8 @@ export async function getAllUsers() {
           name: true,
         },
       },
+      xp: true,
+      title: true,
       createdAt: true,
     },
     orderBy: {

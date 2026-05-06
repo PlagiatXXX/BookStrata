@@ -13,6 +13,8 @@ export interface User {
   avatarUrl: string | null;
   role?: string;
   isPro?: boolean;
+  xp: number;
+  title: string;
   proExpiresAt?: string | null;
   createdAt: string;
 }

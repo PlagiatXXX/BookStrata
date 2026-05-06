@@ -13,6 +13,8 @@ interface ProfileHeaderProps {
     avatarUrl: string | null;
     email: string;
     createdAt: string;
+    xp?: number;
+    title?: string;
   };
   username?: string;
   isEditingUsername: boolean;
@@ -110,6 +112,24 @@ export function ProfileHeader({
             <p className="break-all text-gray-400 mt-1 text-sm">
               {user?.email}
             </p>
+          </div>
+
+          {/* XP Progress Bar */}
+          <div className="mb-6 max-w-md mx-auto sm:mx-0">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold text-yellow-400 uppercase tracking-wider">
+                {user?.title || "Новичок"}
+              </span>
+              <span className="text-xs font-bold text-gray-400">
+                {user?.xp || 0} XP
+              </span>
+            </div>
+            <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
+              <div
+                className="h-full bg-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.3)] transition-all duration-500"
+                style={{ width: `${Math.min(((user?.xp || 0) / 100) * 100, 100)}%` }}
+              />
+            </div>
           </div>
 
           {/* User Info Cards - Stacked on mobile, 2 columns on desktop */}
