@@ -288,11 +288,12 @@ export async function processAction(userId: number, action: 'create_tier_list' |
  */
 export function getTitleByXP(xp: number) {
   for (let i = USER_TITLES.length - 1; i >= 0; i--) {
-    if (xp >= USER_TITLES[i].minXP) {
-      return USER_TITLES[i].title;
+    const titleEntry = USER_TITLES[i];
+    if (titleEntry && xp >= titleEntry.minXP) {
+      return titleEntry.title;
     }
   }
-  return USER_TITLES[0].title;
+  return USER_TITLES[0]?.title || 'Новичок';
 }
 
 /**

@@ -1,5 +1,5 @@
-import * as achievementService from "../../achievements/achievements.service.js";
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import * as achievementService from "../../achievements/achievements.service.js";
 import type { FastifyInstance } from 'fastify';
 import { authMiddleware } from '../../auth/auth.middleware.js';
 import { like, unlike, getLikesWithStatus } from './likes.service.js';
@@ -13,6 +13,7 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       const userId = (request as any).user?.userId;
 
       const likes = await getLikesWithStatus(tierListId, userId);
+      const newAchievements: any[] = [];
       return reply.code(200).send({ ...likes, newAchievements });
     }
   );
@@ -37,7 +38,7 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       const likes = await getLikesWithStatus(tierListId, userId);
 
       const tierList = await fastify.prisma.tierList.findUnique({ where: { id: tierListId }, select: { userId: true } });
-      let newAchievements = [];
+      let newAchievements: any[] = [];
       if (tierList) {
         newAchievements = await achievementService.processAction(tierList.userId, 'get_like');
       }
@@ -62,6 +63,7 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       const likes = await getLikesWithStatus(tierListId, userId);
 
       fastify.log.info({ userId, tierListId }, 'Tier list unliked');
+      const newAchievements: any[] = [];
       return reply.code(200).send({ ...likes, newAchievements });
     }
   );

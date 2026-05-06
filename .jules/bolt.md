@@ -53,3 +53,7 @@
 ## 2026-04-22 - [Parallelizing Independent Read Queries in Prisma]
 **Learning:** Prisma's `$transaction` with an array executes queries sequentially on the database. For independent read operations, such as fetching a data list and its total count for pagination, this adds unnecessary latency.
 **Action:** Replace `$transaction` with `Promise.all` for independent database reads. This allows the database to process queries concurrently, significantly reducing API response times for list-based endpoints.
+
+## 2026-05-06 - [TypeScript Fixes in Achievements and Likes]
+**Learning:** When adding new return fields like `newAchievements` to existing routes, ensure they are defined in all HTTP handlers (GET, POST, DELETE) to avoid runtime and compile-time errors. 
+**Action:** Always verify all route handlers in a file when modifying the expected response structure.
