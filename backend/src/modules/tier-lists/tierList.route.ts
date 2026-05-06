@@ -347,7 +347,8 @@ async (request, reply) => {
 const tierListId = request.params.id;
 await service.assertOwner(tierListId, request.user!.userId);
 await service.updatePlacements(tierListId, request.body.placements);
-return reply.code(200).send({ message: "Placements updated" });
+const newAchievements = await achievementService.processAction(request.user!.userId, "add_book");
+return reply.code(200).send({ message: "Placements updated", newAchievements });
 },
 );
  
@@ -698,9 +699,19 @@ tierListId,
 request.user!.userId,
 body
 );
+
+const newAchievements = [];
+if (body.newBooks?.length) {
+  const achs = await achievementService.processAction(request.user!.userId, "add_book");
+  newAchievements.push(...achs);
+}
+if (body.placements?.some((p: any) => p.thoughts)) {
+  const achs = await achievementService.processAction(request.user!.userId, "write_review");
+  newAchievements.push(...achs);
+}
  
 return reply.code(200).send({
-message: "Saved successfully",
+message: "Saved successfully", newAchievements,
 ...result,
 });
 }

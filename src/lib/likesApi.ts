@@ -1,3 +1,4 @@
+import { handleAchievementResponse } from "./achievementApi";
 import { getAuthHeader, handleResponse } from './authApi';
 import { API_BASE_URL } from './config';
 
@@ -21,7 +22,7 @@ export async function apiGetTierListLikes(tierListId: string): Promise<LikesResp
     },
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -37,7 +38,7 @@ export async function apiLikeTierList(tierListId: string): Promise<LikesResponse
     body: JSON.stringify({}),
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -51,7 +52,7 @@ export async function apiUnlikeTierList(tierListId: string): Promise<LikesRespon
     },
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -81,7 +82,7 @@ export async function apiGetTemplateLikes(templateId: string): Promise<LikesResp
     },
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -97,7 +98,7 @@ export async function apiLikeTemplate(templateId: string): Promise<LikesResponse
     body: JSON.stringify({}),
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
 
 /**
@@ -111,5 +112,5 @@ export async function apiUnlikeTemplate(templateId: string): Promise<LikesRespon
     },
   });
 
-  return handleResponse<LikesResponse>(response);
+  return handleAchievementResponse<LikesResponse>(response);
 }
