@@ -85,8 +85,11 @@ export function useTierEditorSave({
             ...old,
             updatedAt: new Date().toISOString(),
           };
-        },
+        }
       );
+
+      // Инвалидируем список на дашборде, чтобы там обновилась дата
+      await queryClient.invalidateQueries({ queryKey: ["userTierLists"] });
 
       logger.info("Сохранение успешно", { tierListId });
 

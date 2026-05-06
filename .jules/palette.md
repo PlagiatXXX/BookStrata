@@ -47,3 +47,7 @@
 ## 2025-05-20 - [Standardized Safety Focus Patterns]
 **Learning:** In modal dialogs, default focus should prioritize user safety. For destructive actions (e.g., Delete), focusing 'Cancel' prevents accidental execution via the 'Enter' key. For data loss warnings (e.g., Unsaved Changes), focusing 'Stay' protects progress. For non-destructive actions, focusing 'Confirm' enhances efficiency.
 **Action:** Use conditional `autoFocus` in confirmation modals to steer keyboard focus toward the safest or most likely action based on the operation's risk level.
+
+## 2026-05-06 - Dynamic Sync & Backend Optimization
+**Learning:** Inconsistent React Query keys (e.g., 'userStats' vs ['user', 'stats']) and heavy pre-flight DB fetches in routes cause perceived sluggishness and "stale" UI states. Optimistic updates in hooks like useTierListActions significantly improve the Neo-Brutalist UX feel.
+**Action:** Always unify query keys in a shared constants file or standard pattern. Use assertOwner (ID-only check) instead of fetching full entities for metadata-only updates.

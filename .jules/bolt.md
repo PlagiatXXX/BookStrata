@@ -57,3 +57,7 @@
 ## 2026-05-06 - [TypeScript Fixes in Achievements and Likes]
 **Learning:** When adding new return fields like `newAchievements` to existing routes, ensure they are defined in all HTTP handlers (GET, POST, DELETE) to avoid runtime and compile-time errors. 
 **Action:** Always verify all route handlers in a file when modifying the expected response structure.
+
+## 2026-05-06 - Atomic Save & Dashboard Sync
+**Learning:** Atomic save (saveAll) must be followed by an explicit invalidation of paginated list queries to ensure "Last Updated" timestamps and counts are fresh on the Dashboard.
+**Action:** Call queryClient.invalidateQueries({ queryKey: ['userTierLists'] }) after successful saveTierListAtomic to maintain full-stack consistency.

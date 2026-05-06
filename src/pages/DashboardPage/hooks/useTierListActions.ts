@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/tierListApi";
+import { createTierList, updateTierListTitle, deleteTierList, type PaginatedTierListsResponse } from "@/lib/tierListApi";
 import { createLogger } from "@/lib/logger";
 
 // Логгер для хука действий тир-листов
@@ -31,13 +31,16 @@ export function useTierListActions({
 
   const { mutate: createNewTierList, isPending: isCreating } = useMutation({
     mutationFn: (title: string) => createTierList(title),
-    onSuccess: (tierList) => {
+    onSuccess: async (tierList) => {
       logger.info("New tier list created - navigating to editor", {
         id: tierList.id,
         title: tierList.title,
       });
       // Инвалидируем кэш статистики пользователя
-      queryClient.invalidateQueries({ queryKey: ["userStats"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["user", "stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["userTierLists"] })
+      ]);
       onSuccess?.();
       onRefetch?.();
     },
@@ -57,46 +60,90 @@ export function useTierListActions({
   const { mutateAsync: renameMutation, isPending: isRenaming } = useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) =>
       updateTierListTitle(id, title),
-    onSuccess: () => {
+    onMutate: async ({ id, title }) => {
+      // Отменяем исходящие рефетчи, чтобы они не перетерли оптимистичное обновление
+      await queryClient.cancelQueries({ queryKey: ["userTierLists"] });
+
+      // Сохраняем текущее состояние для отката
+      const previousTierLists = queryClient.getQueryData(["userTierLists"]);
+
+      // Оптимистично обновляем название в кэше
+      queryClient.setQueriesData({ queryKey: ["userTierLists"] }, (old: any) => {
+        if (!old || !old.data) return old;
+        return {
+          ...old,
+          data: old.data.map((item: any) =>
+            String(item.id) === String(id) ? { ...item, title } : item
+          )
+        };
+      });
+
+      return { previousTierLists };
+    },
+    onSuccess: async () => {
       logger.info("Tier list renamed successfully");
       onSuccess?.();
-      onRefetch?.();
     },
-    onError: (mutationError) => {
+    onError: (mutationError, variables, context) => {
+      // Откат при ошибке
+      if (context?.previousTierLists) {
+        queryClient.setQueryData(["userTierLists"], context.previousTierLists);
+      }
+
       logger.error(
         mutationError instanceof Error
           ? mutationError
           : new Error(String(mutationError)),
         { action: "renameTierList" },
       );
-      alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : "Unknown error"}`,
-      );
     },
-    throwOnError: false, // Не выбрасывать ошибку
+    onSettled: () => {
+      // Синхронизируем с сервером в любом случае
+      queryClient.invalidateQueries({ queryKey: ["userTierLists"] });
+      onRefetch?.();
+    },
+    throwOnError: false,
   });
 
   const { mutateAsync: deleteMutation, isPending: isDeleting } = useMutation({
     mutationFn: (id: string) => deleteTierList(id),
-    onSuccess: () => {
-      logger.info("Tier list deleted successfully");
-      // Инвалидируем кэш статистики пользователя
-      queryClient.invalidateQueries({ queryKey: ["userStats"] });
-      onSuccess?.();
-      onRefetch?.();
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["userTierLists"] });
+      const previousTierLists = queryClient.getQueryData(["userTierLists"]);
+
+      // Оптимистично удаляем из списка
+      queryClient.setQueriesData({ queryKey: ["userTierLists"] }, (old: any) => {
+        if (!old || !old.data) return old;
+        return {
+          ...old,
+          data: old.data.filter((item: any) => String(item.id) !== String(id))
+        };
+      });
+
+      return { previousTierLists };
     },
-    onError: (mutationError) => {
+    onSuccess: async () => {
+      logger.info("Tier list deleted successfully");
+      onSuccess?.();
+    },
+    onError: (mutationError, id, context) => {
+      if (context?.previousTierLists) {
+        queryClient.setQueryData(["userTierLists"], context.previousTierLists);
+      }
+
       logger.error(
         mutationError instanceof Error
           ? mutationError
           : new Error(String(mutationError)),
         { action: "deleteTierList" },
       );
-      alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : "Unknown error"}`,
-      );
     },
-    throwOnError: false, // Не выбрасывать ошибку
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", "stats"] });
+      queryClient.invalidateQueries({ queryKey: ["userTierLists"] });
+      onRefetch?.();
+    },
+    throwOnError: false,
   });
 
   const renameTierList = (id: string, title: string) => {

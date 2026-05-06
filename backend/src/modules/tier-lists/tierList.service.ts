@@ -740,6 +740,7 @@ return newTierList;
 * Атомарное сохранение всех изменений в тир-листе
 */
 export async function saveAll(
+
 tierListId: string,
 userId: number,
 payload: {

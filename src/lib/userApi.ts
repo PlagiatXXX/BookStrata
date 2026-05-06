@@ -29,7 +29,8 @@ export interface UserStats {
  * Повторно используем тот же Promise, если профиль уже запрашивается,
  * чтобы в dev не плодить одинаковые GET /users/me из-за StrictMode и событий.
  */
-export async function apiGetMe(): Promise<User> {
+export async function apiGetMe(forceRefresh = false): Promise<User> {
+  if (forceRefresh) inFlightMeRequest = null;
   if (inFlightMeRequest) {
     userLogger.debug("Используем уже выполняющийся запрос профиля");
     return inFlightMeRequest;

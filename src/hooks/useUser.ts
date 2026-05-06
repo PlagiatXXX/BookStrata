@@ -25,7 +25,7 @@ export function useUser(): UseUserResult {
 
   const userQuery = useQuery({
     queryKey: USER_QUERY_KEY,
-    queryFn: apiGetMe,
+    queryFn: () => apiGetMe(),
     enabled: hasToken,
     retry: false,
   });
@@ -41,7 +41,7 @@ export function useUser(): UseUserResult {
     mutationFn: (avatarUrl: string) => apiUploadAvatar(avatarUrl),
     onSuccess: async (updatedUser) => {
       queryClient.setQueryData(USER_QUERY_KEY, updatedUser);
-      window.dispatchEvent(new Event("avatar-updated"));
+      window.dispatchEvent(new CustomEvent("avatar-updated", { detail: updatedUser }));
     },
   });
 
