@@ -1,6 +1,7 @@
 import { getAuthHeader, handleResponse } from "./authApi";
 import { API_BASE_URL } from "./config";
 import { createLogger } from "./logger";
+import { apiClient } from "./api-client";
 
 const userLogger = createLogger("UserApi", { color: "green" });
 let inFlightMeRequest: Promise<User> | null = null;
@@ -132,21 +133,9 @@ export async function apiGetUserStats(): Promise<UserStats> {
  */
 export async function apiUploadAvatar(base64Image: string): Promise<User> {
   userLogger.info("Загрузка аватара на Cloudinary");
-
-  const response = await fetch(`${API_BASE_URL}/avatars/upload`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
-    body: JSON.stringify({ avatar: base64Image }),
-  });
-
-  const result = await handleResponse<{
-    success: boolean;
-    avatarUrl: string;
-    user: User;
-  }>(response);
-
+  const result = await apiClient.post<{ success: boolean; avatarUrl: string; user: User; }>(
+    "/avatars/upload",
+    { avatar: base64Image }
+  );
   return result.user;
 }

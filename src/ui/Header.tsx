@@ -5,6 +5,7 @@ import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
 import { List, Users, Folder, X, Menu, Globe, LogOut } from "lucide-react";
+import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
   label: string;
@@ -32,6 +33,7 @@ export const Header = ({
   activeItem: activeItemProp,
 }: HeaderProps = {}) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { isAuthenticated, user: authUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,8 +57,17 @@ export const Header = ({
   };
 
   const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setIsLogoutModalOpen(false);
     logout();
     navigate("/auth", { replace: true });
+  };
+
+  const cancelLogout = () => {
+    setIsLogoutModalOpen(false);
   };
 
   const navItems: NavItem[] = [
@@ -91,6 +102,7 @@ export const Header = ({
   ];
 
   return (
+    <>
     <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-6xl bg-background-dark/90 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/40 border border-slate-700/50">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -248,5 +260,17 @@ export const Header = ({
         )}
       </div>
     </header>
+
+    
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={cancelLogout}
+        onConfirm={confirmLogout}
+        title="Вы пытаетесь выйти?"
+        description={<>До скорой встречи, <span className="font-bold text-[#de7eeb]">{authUser?.username}</span>!</>}
+        confirmText="Выйти"
+        cancelText="Отмена"
+      />
+    </>
   );
 };
