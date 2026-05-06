@@ -24,6 +24,7 @@ passwordHash         String     @map("password_hash")
 isPro                Boolean    @default(false) @map("is_pro")
 proExpiresAt         DateTime?  @map("pro_expires_at")
 xp                   Int        @default(0)
+  title                String?    @default("Новичок")
 tierLists            TierList[]
 templates            Template[]
 tierListLikes        TierListLike[]
