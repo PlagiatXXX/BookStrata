@@ -1,0 +1,3 @@
+src/plugins/auth.ts(3,16): error TS2307: Cannot find module 'fastify-plugin' or its corresponding type declarations.
+src/plugins/logFromFrontend.ts(3,16): error TS2307: Cannot find module 'fastify-plugin' or its corresponding type declarations.
+src/plugins/requestContext.ts(4,16): error TS2307: Cannot find module 'fastify-plugin' or its corresponding type declarations.
