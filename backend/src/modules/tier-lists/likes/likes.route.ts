@@ -13,7 +13,7 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       const userId = (request as any).user?.userId;
 
       const likes = await getLikesWithStatus(tierListId, userId);
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ ...likes, newAchievements });
     }
   );
 
@@ -37,11 +37,12 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       const likes = await getLikesWithStatus(tierListId, userId);
 
       const tierList = await fastify.prisma.tierList.findUnique({ where: { id: tierListId }, select: { userId: true } });
+      let newAchievements = [];
       if (tierList) {
-        await achievementService.processAction(tierList.userId, 'get_like');
+        newAchievements = await achievementService.processAction(tierList.userId, 'get_like');
       }
       fastify.log.info({ userId, tierListId }, 'Tier list liked');
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ ...likes, newAchievements });
     }
   );
 
@@ -61,7 +62,7 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
       const likes = await getLikesWithStatus(tierListId, userId);
 
       fastify.log.info({ userId, tierListId }, 'Tier list unliked');
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ ...likes, newAchievements });
     }
   );
 }

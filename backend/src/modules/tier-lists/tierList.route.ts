@@ -593,6 +593,7 @@ description: null,
 thoughts: null,
 },
 ]);
+const newAchievements = await achievementService.processAction(currentUserId, "add_book");
  
 const createdBook = results[0]?.book;
 if (!createdBook) {
@@ -609,7 +610,7 @@ coverUrl: uploadResult.url,
 },
 "Book added from Open Library",
 );
-return reply.code(201).send({ book: createdBook });
+return reply.code(201).send({ book: createdBook, newAchievements });
 } catch (error) {
 fastify.log.error(
 { requestId, userId, error: String(error) },

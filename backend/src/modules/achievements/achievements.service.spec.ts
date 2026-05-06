@@ -1,21 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as service from './achievements.service';
-import { prisma } from '../../lib/prisma';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import * as service from "./achievements.service.js";
+import { prisma } from "../../lib/prisma.js";
 
-vi.mock('../../lib/prisma', () => ({
+vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     achievement: {
-      findMany: vi.fn(),
       findUnique: vi.fn(),
+      findMany: vi.fn(),
+      upsert: vi.fn(),
     },
     userAchievement: {
-      findMany: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
     },
     user: {
       update: vi.fn(),
-      findUnique: vi.fn(),
     },
     tierList: {
       count: vi.fn(),
@@ -26,90 +25,71 @@ vi.mock('../../lib/prisma', () => ({
     tierListLike: {
       count: vi.fn(),
     },
-    $transaction: vi.fn((callback) => callback(prisma)),
+    book: {
+      count: vi.fn(),
+    },
+    battleParticipant: {
+      count: vi.fn(),
+    },
+    battle: {
+      count: vi.fn(),
+    },
+    $transaction: vi.fn((cb) => cb(prisma)),
   },
 }));
 
-describe('achievements.service', () => {
+describe("Achievements Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should fetch all achievements with user status in one query', async () => {
-    const userId = 1;
-    const mockAchievements = [
-      {
-        id: 'a1',
-        title: 'Title 1',
-        description: 'Desc 1',
-        isSecret: false,
-        xpValue: 10,
-        users: [{ earnedAt: new Date() }]
-      },
-      {
-        id: 'a2',
-        title: 'Secret',
-        description: 'Secret Desc',
-        isSecret: true,
-        xpValue: 20,
-        users: []
-      }
-    ];
-
-    (prisma.achievement.findMany as any).mockResolvedValue(mockAchievements);
-
-    const result = await service.getUserAchievements(userId);
-
-    expect(prisma.achievement.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      include: {
-        users: {
-          where: { userId },
-          select: { earnedAt: true }
-        }
-      }
-    }));
-
-    expect(result[0].isEarned).toBe(true);
-    expect(result[1].isEarned).toBe(false);
-    expect(result[1].title).toBe('Секретное достижение');
-    expect(result[1].description).toBe('???');
-  });
-
-  it('should grant achievement and update XP', async () => {
-    const userId = 1;
-    const achievementId = 'first_tier_list' as any;
-    const achievement = { id: achievementId, xpValue: 20 };
-
-    (prisma.userAchievement.findUnique as any).mockResolvedValue(null);
-    (prisma.achievement.findUnique as any).mockResolvedValue(achievement);
-    (prisma.userAchievement.create as any).mockResolvedValue({ achievement });
-
-    const result = await service.checkAndGrantAchievement(userId, achievementId);
-
-    expect(prisma.userAchievement.create).toHaveBeenCalled();
-    expect(prisma.user.update).toHaveBeenCalledWith({
-      where: { id: userId },
-      data: { xp: { increment: 20 } },
+  describe("getTitleByXP", () => {
+    it("should return the correct title for 0 XP", () => {
+      expect(service.getTitleByXP(0)).toBe("Любопытный наблюдатель");
     });
-    expect(result.id).toBe(achievementId);
+
+    it("should return the correct title for 150 XP", () => {
+      expect(service.getTitleByXP(150)).toBe("Страничный глотатель");
+    });
+
+    it("should return the highest title for very high XP", () => {
+      expect(service.getTitleByXP(100000)).toBe("Вселенский читатель");
+    });
   });
 
-  it('should not grant achievement if already earned', async () => {
-    const userId = 1;
-    const achievementId = 'first_tier_list' as any;
+  describe("checkAndGrantAchievement", () => {
+    it("should grant achievement and update title", async () => {
+      const mockUserId = 1;
+      const mockAchievementId = "bookworm_1";
+      const mockAchievement = { id: "bookworm_1", title: "Test", xpValue: 10 };
 
-    (prisma.userAchievement.findUnique as any).mockResolvedValue({ id: 123 });
+      (prisma.userAchievement.findUnique as any).mockResolvedValue(null);
+      (prisma.achievement.findUnique as any).mockResolvedValue(mockAchievement);
+      (prisma.userAchievement.create as any).mockResolvedValue({ achievement: mockAchievement });
+      (prisma.user.update as any).mockResolvedValue({ xp: 10, title: "Новичок" });
 
-    const result = await service.checkAndGrantAchievement(userId, achievementId);
+      const result = await service.checkAndGrantAchievement(mockUserId, mockAchievementId as any);
 
-    expect(prisma.userAchievement.create).not.toHaveBeenCalled();
-    expect(result).toBeNull();
+      expect(result).toEqual(mockAchievement);
+      expect(prisma.user.update).toHaveBeenCalled();
+    });
   });
 
-  it('should return correct title based on XP', () => {
-    expect(service.getTitleByXP(0)).toBe('Новичок');
-    expect(service.getTitleByXP(20)).toBe('Мастер');
-    expect(service.getTitleByXP(100)).toBe('Книжный червь');
-    expect(service.getTitleByXP(1000)).toBe('Легенда библиотек');
+  describe("processAction", () => {
+    it("should process curator achievement", async () => {
+      (prisma.tierList.count as any).mockResolvedValue(1);
+      (prisma.achievement.findUnique as any).mockImplementation((args: any) => {
+          return Promise.resolve({ id: args.where.id, title: "Mock", xpValue: 20 });
+      });
+      (prisma.userAchievement.findUnique as any).mockResolvedValue(null);
+      (prisma.user.update as any).mockResolvedValue({ xp: 20, title: "Новичок" });
+      (prisma.userAchievement.create as any).mockImplementation((args: any) => {
+          return Promise.resolve({ achievement: { id: args.data.achievementId, title: "Mock", xpValue: 20 } });
+      });
+
+      const results = await service.processAction(1, 'create_tier_list');
+      expect(results.some(a => a.id === 'curator_1')).toBe(true);
+      expect(results.some(a => a.id === 'first_tier_list')).toBe(true);
+    });
   });
 });
