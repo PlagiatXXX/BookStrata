@@ -1,4 +1,5 @@
-import { getAuthHeader, handleResponse } from "./authApi";
+import { getAuthHeader } from "./authApi";
+import { handleAchievementResponse } from "./achievementApi";
 import { API_BASE_URL } from "./config";
 
 type QueryValue = string | number | boolean | null | undefined;
@@ -33,7 +34,7 @@ async function request<T>(
   });
 
   try {
-    return await handleResponse<T>(response);
+    return await handleAchievementResponse<T>(response);
   } catch (error) {
     // Если токен был обновлён, повторяем запрос один раз
     if (
