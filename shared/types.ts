@@ -3,7 +3,8 @@
  */
 
 export interface User {
-  id: number;
+  id: string;
+  slug?: string | null;
   username: string;
   avatarUrl?: string | null;
   role?: string;
@@ -12,7 +13,8 @@ export interface User {
 }
 
 export interface Book {
-  id: number;
+  id: string;
+  slug?: string | null;
   title: string;
   author: string | null;
   coverImageUrl: string;
@@ -22,7 +24,8 @@ export interface Book {
 }
 
 export interface Tier {
-  id: number;
+  id: string;
+  slug?: string | null;
   title: string;
   color: string;
   rank: number;
@@ -35,7 +38,8 @@ export interface BookPlacement {
 }
 
 export interface TierList {
-  id: number;
+  id: string;
+  slug?: string | null;
   title: string;
   year?: number | null;
   isPublic: boolean;
@@ -50,6 +54,7 @@ export interface TierList {
 
 export interface Achievement {
   id: string;
+  slug?: string | null;
   name: string;
   description: string;
   icon?: string | null;
@@ -57,13 +62,15 @@ export interface Achievement {
 }
 
 export interface TierListShort {
-  id: number;
+  id: string;
+  slug?: string | null;
   title: string;
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
   user: {
-    id: number;
+    id: string;
+  slug?: string | null;
     username: string;
     avatarUrl?: string | null;
   };

@@ -67,11 +67,11 @@ export const TierListCard = memo(({
       <h3
         role="button"
         tabIndex={0}
-        onClick={() => onOpen(tierList.id)}
+        onClick={() => onOpen(tierList.slug || tierList.id)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            onOpen(tierList.id);
+            onOpen(tierList.slug || tierList.id);
           }
         }}
         className="dashboard-card__title cursor-pointer"
@@ -127,7 +127,7 @@ export const TierListCard = memo(({
           )}
         </div>
         <button
-          onClick={() => onOpen(tierList.id)}
+          onClick={() => onOpen(tierList.slug || tierList.id)}
           className="dashboard-btn dashboard-btn--primary dashboard-card__open"
           type="button"
         >

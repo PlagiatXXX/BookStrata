@@ -72,6 +72,7 @@ describe("tierList.service", () => {
       {
         id: "1",
         userId: mockUserId,
+          slug: expect.any(String),
         title: "Test List 1",
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-02"),
@@ -82,6 +83,7 @@ describe("tierList.service", () => {
       {
         id: "2",
         userId: mockUserId,
+          slug: expect.any(String),
         title: "Test List 2",
         createdAt: new Date("2024-01-03"),
         updatedAt: new Date("2024-01-04"),
@@ -152,6 +154,7 @@ describe("tierList.service", () => {
     const mockCreatedTierList = {
       id: "1",
       userId: mockUserId,
+          slug: expect.any(String),
       title: mockTitle,
       isPublic: false,
       createdAt: new Date(),
@@ -175,6 +178,7 @@ describe("tierList.service", () => {
       expect(prisma.tierList.create).toHaveBeenCalledWith({
         data: {
           userId: mockUserId,
+          slug: expect.any(String),
           title: mockTitle,
           isPublic: false,
           tiers: {
@@ -245,6 +249,7 @@ describe("tierList.service", () => {
     it("должен завершиться успешно если пользователь владелец", async () => {
       (prisma.tierList.findUnique as any).mockResolvedValue({
         userId: mockUserId,
+          slug: expect.any(String),
       });
 
       await expect(
@@ -955,6 +960,7 @@ describe("tierList.service", () => {
         id: "2",
         title: "Original List (копия)",
         userId: mockUserId,
+          slug: expect.any(String),
         tiers: [
           { id: 20, title: "S", rank: 0 },
           { id: 21, title: "A", rank: 1 },
@@ -1043,6 +1049,7 @@ describe("tierList.service", () => {
         id: 2,
         title: "Original List (копия)",
         userId: mockUserId,
+          slug: expect.any(String),
         tiers: [{ id: 20, title: "S", rank: 0 }],
       });
 

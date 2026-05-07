@@ -14,6 +14,7 @@ const tierListLogger = createLogger('TierListApi', { color: 'magenta' });
 
 export interface TierListShort {
   id: string;
+  slug?: string | null;
   title: string;
   createdAt: string;
   updatedAt: string;
@@ -49,6 +50,7 @@ export interface SaveTierListPayload {
   };
   newBooks?: Array<{
     id: string;
+  slug?: string | null;
     title: string;
     author?: string;
     coverImageUrl: string;
