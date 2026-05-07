@@ -11,91 +11,87 @@ import {
 import type { TierListCardProps } from "../types";
 import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 
-export const TierListCard = memo(({
-  tierList,
-  onOpen,
-  onRename,
-  onDelete,
-}: TierListCardProps) => {
-  const createdDate = new Date(tierList.createdAt);
-  const booksCount = tierList.booksCount || 0;
-  const progress = Math.min(
+export const TierListCard = memo(
+  ({ tierList, onOpen, onRename, onDelete }: TierListCardProps) => {
+    const createdDate = new Date(tierList.createdAt);
+    const booksCount = tierList.booksCount || 0;
+    const progress = Math.min(
       100,
       Math.round((booksCount / MAX_BOOKS_PER_TIER_LIST) * 100),
     );
     const isComplete = booksCount >= MAX_BOOKS_PER_TIER_LIST;
 
-  return (
-    <article className="dashboard-card">
-      {/* Actions - top right */}
-      <div className="dashboard-card__actions">
-        <button
-          onClick={() => onRename(tierList)}
-          className="dashboard-card__rename"
-          title={`Переименовать "${tierList.title}"`}
-          type="button"
-          aria-label={`Переименовать "${tierList.title}"`}
-        >
-          <Edit2 size={14} />
-        </button>
-        <button
-          onClick={() => onDelete(tierList)}
-          className="dashboard-card__delete"
-          title={`Удалить "${tierList.title}"`}
-          type="button"
-          aria-label={`Удалить "${tierList.title}"`}
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
-
-      {/* Status Badge - top left */}
-      <div className="dashboard-card__status">
-        {isComplete ? (
-          <span className="dashboard-status-badge dashboard-status-badge--complete">
-            <CheckCircle2 size={10} />
-            Завершен
-          </span>
-        ) : (
-          <span className="dashboard-status-badge dashboard-status-badge--progress">
-            <CircleDashed size={10} />В процессе
-          </span>
-        )}
-      </div>
-
-      {/* Title */}
-      <h3
-        role="button"
-        tabIndex={0}
-        onClick={() => onOpen(tierList.id)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onOpen(tierList.id);
-          }
-        }}
-        className="dashboard-card__title cursor-pointer"
-        title={`Открыть "${tierList.title}"`}
-          aria-label={`Открыть тир-лист: ${tierList.title}`}
-      >
-        {tierList.title}
-      </h3>
-
-      {/* Meta */}
-      <div className="dashboard-card__meta">
-        <Clock size={15} />
-       <span>{createdDate.toLocaleDateString("ru-RU")}</span>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="dashboard-card__progress">
-        <div className="dashboard-card__progress-header">
-          <span className="dashboard-card__progress-label">
-            Прогресс заполнения
-          </span>
-          <span className="dashboard-card__progress-value">{progress}%</span>
+    return (
+      <article className="dashboard-card">
+        {/* Actions - top right */}
+        <div className="dashboard-card__actions">
+          <button
+            onClick={() => onRename(tierList)}
+            className="dashboard-card__rename"
+            title={`Переименовать "${tierList.title}"`}
+            type="button"
+            aria-label={`Переименовать "${tierList.title}"`}
+          >
+            <Edit2 size={14} />
+          </button>
+          <button
+            onClick={() => onDelete(tierList)}
+            className="dashboard-card__delete"
+            title={`Удалить "${tierList.title}"`}
+            type="button"
+            aria-label={`Удалить "${tierList.title}"`}
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
-             <div
+
+        {/* Status Badge - top left */}
+        <div className="dashboard-card__status">
+          {isComplete ? (
+            <span className="dashboard-status-badge dashboard-status-badge--complete">
+              <CheckCircle2 size={10} />
+              Завершен
+            </span>
+          ) : (
+            <span className="dashboard-status-badge dashboard-status-badge--progress">
+              <CircleDashed size={10} />В процессе
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <h3
+          role="button"
+          tabIndex={0}
+          onClick={() => onOpen(tierList.slug || tierList.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpen(tierList.slug || tierList.id);
+            }
+          }}
+          className="dashboard-card__title cursor-pointer"
+          title={`Открыть "${tierList.title}"`}
+          aria-label={`Открыть тир-лист: ${tierList.title}`}
+        >
+          {tierList.title}
+        </h3>
+
+        {/* Meta */}
+        <div className="dashboard-card__meta">
+          <Clock size={15} />
+          <span>{createdDate.toLocaleDateString("ru-RU")}</span>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="dashboard-card__progress">
+          <div className="dashboard-card__progress-header">
+            <span className="dashboard-card__progress-label">
+              Прогресс заполнения
+            </span>
+            <span className="dashboard-card__progress-value">{progress}%</span>
+          </div>
+          <div
             className="dashboard-card__progress-bar"
             role="progressbar"
             aria-valuenow={booksCount}
@@ -104,37 +100,37 @@ export const TierListCard = memo(({
             aria-valuetext={`${booksCount} из ${MAX_BOOKS_PER_TIER_LIST} книг`}
             aria-label="Прогресс заполнения тир-листа"
           >
-          <div
-            className="dashboard-card__progress-fill"
-            style={{ width: `${progress}%` }}
-          />
+            <div
+              className="dashboard-card__progress-fill"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Footer with visibility and open button */}
-      <div className="dashboard-card__footer">
-        <div className="dashboard-card__visibility">
-          {tierList.isPublic ? (
-            <span className="dashboard-tag dashboard-tag--public">
-              <Globe size={12} />
-              Публичный
-            </span>
-          ) : (
-            <span className="dashboard-tag dashboard-tag--private">
-              <Lock size={12} />
-              Приватный
-            </span>
-          )}
+        {/* Footer with visibility and open button */}
+        <div className="dashboard-card__footer">
+          <div className="dashboard-card__visibility">
+            {tierList.isPublic ? (
+              <span className="dashboard-tag dashboard-tag--public">
+                <Globe size={12} />
+                Публичный
+              </span>
+            ) : (
+              <span className="dashboard-tag dashboard-tag--private">
+                <Lock size={12} />
+                Приватный
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => onOpen(tierList.slug || tierList.id)}
+            className="dashboard-btn dashboard-btn--primary dashboard-card__open"
+            type="button"
+          >
+            Открыть
+          </button>
         </div>
-        <button
-          onClick={() => onOpen(tierList.id)}
-          className="dashboard-btn dashboard-btn--primary dashboard-card__open"
-          type="button"
-        >
-          Открыть
-        </button>
-      </div>
-    </article>
-  );
-},
+      </article>
+    );
+  },
 );

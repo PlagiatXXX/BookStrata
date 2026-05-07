@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { generateUniqueSlug } from '../../utils/slugify.js';
 import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
 import type { GetTierListsQuery } from "./tierList.schema.js";
@@ -28,7 +29,7 @@ title: true,
 createdAt: true,
 updatedAt: true,
 isPublic: true,
-likesCount: true, // Оптимизация Bolt: используем денормализованное поле вместо _count.likes
+likesCount: true, slug: true, // Оптимизация Bolt: используем денормализованное поле вместо _count.likes
 _count: {
 select: { placements: true },
 },
@@ -63,10 +64,13 @@ currentPage: page,
 }
 // Создание нового тир-листа
 export async function createTierList(userId: number, title: string) {
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  const slug = generateUniqueSlug(title, randomSuffix);
 const tierList = await prisma.tierList.create({
 data: {
 userId,
 title,
+slug,
 isPublic: false,
 tiers: {
 create: [
@@ -98,7 +102,7 @@ return { ...rest, unrankedBooks };
  
 export async function assertOwner(tierListId: string, userId: number) {
 const list = await prisma.tierList.findUnique({
-where: { id: tierListId },
+where: (tierListId.length === 36 || /^\d+$/.test(tierListId)) ? { id: tierListId } : { slug: tierListId },
 select: { userId: true },
 });
  
@@ -221,7 +225,7 @@ throw new Error(
 // Это сокращает количество запросов с O(N) до O(1) за счет использования возможностей Prisma по вложенному созданию.
 const results = await prisma.$transaction(async (tx) => {
 const updatedTierList = await tx.tierList.update({
-where: { id: tierListId },
+where: (tierListId.length === 36 || /^\d+$/.test(tierListId)) ? { id: tierListId } : { slug: tierListId },
 data: {
 placements: {
 create: books.map((bookData, index) => ({
@@ -321,7 +325,7 @@ id: string,
 data: { title?: string; isPublic?: boolean; year?: number },
 ) {
 return prisma.tierList.update({
-where: { id },
+where: (id.length === 36 || /^\d+$/.test(id)) ? { id } : { slug: id },
 data,
 });
 }
@@ -329,7 +333,7 @@ data,
 // Удаление тир-листа
 export async function deleteTierList(id: string) {
 return prisma.tierList.delete({
-where: { id },
+where: (id.length === 36 || /^\d+$/.test(id)) ? { id } : { slug: id },
 });
 }
  
@@ -528,7 +532,7 @@ return [
 // Переключение статуса публичности
 export async function togglePublic(tierListId: string, isPublic: boolean) {
 return prisma.tierList.update({
-where: { id: tierListId },
+where: (tierListId.length === 36 || /^\d+$/.test(tierListId)) ? { id: tierListId } : { slug: tierListId },
 data: { isPublic },
 select: { id: true, isPublic },
 });
@@ -555,7 +559,7 @@ title: true,
 createdAt: true,
 updatedAt: true,
 isPublic: true,
-likesCount: true,
+likesCount: true, slug: true,
 user: {
 select: { username: true, avatarUrl: true },
 },
@@ -611,7 +615,7 @@ return count;
 // Дополнительная оптимизация для получения списка
 export async function getTierListMetadata(id: string) {
 return prisma.tierList.findUnique({
-where: { id },
+where: (id.length === 36 || /^\d+$/.test(id)) ? { id } : { slug: id },
 select: {
 id: true,
 title: true,
@@ -628,7 +632,7 @@ logger.debug("forkTierList вызван", { id, userId });
  
 // 1. Получаем оригинал со всеми данными
 const original = await prisma.tierList.findUniqueOrThrow({
-where: { id },
+where: (id.length === 36 || /^\d+$/.test(id)) ? { id } : { slug: id },
 include: {
 tiers: {
 orderBy: { rank: "asc" },
@@ -944,7 +948,7 @@ data: placementData,
  
 // Обновляем updatedAt тир-листа
 await tx.tierList.update({
-where: { id: tierListId },
+where: (tierListId.length === 36 || /^\d+$/.test(tierListId)) ? { id: tierListId } : { slug: tierListId },
 data: { updatedAt: new Date() },
 });
  
