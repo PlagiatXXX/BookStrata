@@ -15,9 +15,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const refreshUserDataRef = useRef<(() => void) | null>(null);
 
-  // Функция для получения данных пользователя по токену
-  // Оптимизация: сразу вызываем getMe вместо validate + getMe (2 запроса → 1)
-  const fetchUser = useCallback(async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapApiUserToAuthUser = (fullUserData: any): User => ({
+    userId: fullUserData.id,
+    username: fullUserData.username,
+    avatarUrl: fullUserData.avatarUrl,
+    role: fullUserData.role || "user",
+    isPro: fullUserData.isPro,
+    proExpiresAt: fullUserData.proExpiresAt,
+  });
+
+  const fetchUser = useCallback(async (force = false) => {
     const token = getAuthToken();
     if (!token) {
       setUser(null);
@@ -26,26 +34,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      authLogger.info("Fetching user profile");
-      const fullUserData = await apiGetMe();
-      setUser({
-        userId: fullUserData.id,
-        username: fullUserData.username,
-        avatarUrl: fullUserData.avatarUrl,
-        role: fullUserData.role || "user",
-        isPro: fullUserData.isPro,
-        proExpiresAt: fullUserData.proExpiresAt,
-      });
+      authLogger.info("Fetching user profile", { force });
+      const fullUserData = await apiGetMe(force);
+      setUser(mapApiUserToAuthUser(fullUserData));
       authLogger.info("User data fetched successfully", {
         userId: fullUserData.id,
         username: fullUserData.username,
-        hasAvatar: !!fullUserData.avatarUrl,
-        role: fullUserData.role,
-        isPro: fullUserData.isPro,
       });
     } catch (err) {
-      // Если getMe вернул 401, handleResponse уже вызвал refreshAccessToken
-      // Если refresh тоже не удался — значит пользователь не авторизован
       authLogger.warn("Failed to fetch user profile", {
         error: err instanceof Error ? err.message : String(err),
       });
@@ -55,29 +51,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  // Функция для принудительного обновления данных пользователя
   const refreshUser = useCallback(async () => {
     authLogger.info("Refresh user called");
     setIsLoading(true);
-    await fetchUser();
+    await fetchUser(true);
   }, [fetchUser]);
 
-  // Сохраняем ссылку на refreshUser для доступа извне
   React.useEffect(() => {
     refreshUserDataRef.current = refreshUser;
   }, [refreshUser]);
 
-  // Обработчик изменения токена
   const handleAuthTokenChanged = useCallback(() => {
-    fetchUser();
+    fetchUser(true);
   }, [fetchUser]);
 
-  // Обработчик обновления аватара
-  const handleAvatarUpdated = useCallback(() => {
+  const handleAvatarUpdated = useCallback((event: Event) => {
+    const customEvent = event as CustomEvent;
+    if (customEvent.detail) {
+      authLogger.info("Avatar updated event received with data, updating state immediately");
+      setUser(mapApiUserToAuthUser(customEvent.detail));
+    } else {
     refreshUser();
+    }
   }, [refreshUser]);
 
-  // Проверяем токен при загрузке и слушаем события авторизации
   React.useEffect(() => {
     let isMounted = true;
 
@@ -87,20 +84,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Выполняем первоначальную проверку
     performCheck();
 
-    // Подписываемся на события
     window.addEventListener("auth-token-changed", handleAuthTokenChanged);
     window.addEventListener("storage", handleAuthTokenChanged);
-    window.addEventListener("avatar-updated", handleAvatarUpdated);
+    window.addEventListener("avatar-updated", handleAvatarUpdated as EventListener);
 
-    // Cleanup
     return () => {
       isMounted = false;
       window.removeEventListener("auth-token-changed", handleAuthTokenChanged);
       window.removeEventListener("storage", handleAuthTokenChanged);
-      window.removeEventListener("avatar-updated", handleAvatarUpdated);
+      window.removeEventListener("avatar-updated", handleAvatarUpdated as EventListener);
     };
   }, [fetchUser, handleAuthTokenChanged, handleAvatarUpdated]);
 

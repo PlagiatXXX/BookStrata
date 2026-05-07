@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { sileo } from 'sileo';
 import type { NavigateFunction } from 'react-router-dom';
 import type { Action } from '@/hooks/useTierList';
-import type { Book } from '@/types';
+import type { Book, TierListData } from '@/types';
 import { deleteTierList, removeBookFromTierList, toggleTierListPublic } from '@/lib/tierListApi';
 import { getAuthHeader, handleResponse } from '@/lib/authApi';
 import { API_BASE_URL } from '@/lib/config';
@@ -48,18 +49,33 @@ export function useTierEditorActions({
   const togglePublic = useCallback(
     async (isPublic: boolean) => {
       if (!tierListId) return;
+
+      // Optimistic update
+      const queryKey = ['tierList', tierListId];
+      const previousData = queryClient.getQueryData(queryKey);
+      
+      // Обновляем локальный кэш сразу (оптимистично)
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        return { ...old, isPublic };
+      });
       setIsTogglingPublic(true);
       try {
         await toggleTierListPublic(tierListId, isPublic);
-        // Инвалидируем кэш для обновления данных тир-листа
-        await queryClient.invalidateQueries({
-          queryKey: ['tierList', tierListId],
-        });
+        // Инвалидируем кэш для синхронизации (Stats важны, так как там счетчик публичных)
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['userTierLists'] }),
+          queryClient.invalidateQueries({ queryKey: ['user', 'stats'] })
+        ]); 
         sileo.success({
           title: isPublic ? 'Тир-лист опубликован' : 'Тир-лист скрыт',
           duration: 3000,
         });
       } catch (error) {
+        // Откат при ошибке
+        if (previousData) {
+          queryClient.setQueryData(queryKey, previousData);
+        }
         logger.error(error instanceof Error ? error : new Error(String(error)), {
           action: 'toggleTierListPublic',
           tierListId,
@@ -188,6 +204,7 @@ export function useTierEditorActions({
     try {
       await deleteTierList(tierListId);
       setDeletedTierIds([]);
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ["userTierLists"] }), queryClient.invalidateQueries({ queryKey: ["user", "stats"] })]);
       navigate('/');
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), {

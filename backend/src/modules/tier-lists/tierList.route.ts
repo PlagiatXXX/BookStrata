@@ -628,12 +628,7 @@ fastify.put<{ Params: { id: string }; Body: { isPublic: boolean } }>(
 { preHandler: [authMiddleware], ...schema.togglePublicSchema },
 async (request, reply) => {
 const tierListId = request.params.id;
-const tierList = await service.getFullTierList(tierListId);
-if (tierList.userId !== request.user!.userId) {
-return reply.code(403).send({
-message: "You can only change visibility of your own tier lists",
-});
-}
+await service.assertOwner(tierListId, request.user!.userId);
  
 const updatedTierList = await service.togglePublic(
 tierListId,

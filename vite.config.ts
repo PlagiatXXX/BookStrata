@@ -39,7 +39,6 @@ export default defineConfig({
             "@dnd-kit/sortable",
             "@dnd-kit/utilities",
           ],
-          "three-vendor": ["three", "@react-three/fiber", "@react-three/drei"],
           "motion-vendor": ["framer-motion"],
           "tiptap-vendor": ["@tiptap/react", "@tiptap/starter-kit"],
         },

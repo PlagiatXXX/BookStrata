@@ -107,6 +107,8 @@ export function LikeButton({
       queryClient.invalidateQueries({ queryKey: ['publicTierListsSorted'] });
       queryClient.invalidateQueries({ queryKey: ['likedTierListIds'] });
       queryClient.invalidateQueries({ queryKey: ['tierListLikes'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['userTierLists'] });
     } catch (error) {
       // При ошибке откатываем состояние
       setLiked(previousLiked);

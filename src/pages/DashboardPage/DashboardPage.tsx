@@ -100,7 +100,7 @@ export function DashboardPage() {
 
   // Data fetching - User stats
   const { data: stats } = useQuery({
-    queryKey: ["userStats"],
+    queryKey: ["user", "stats"],
     queryFn: apiGetUserStats,
     staleTime: 5 * 60 * 1000, // 5 минут
     retry: 2,
