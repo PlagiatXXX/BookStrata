@@ -59,7 +59,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "happy-dom": "^20.3.9",
-    "prisma": "^4.16.2",
+    "prisma": "4.16.2",
     "rollup-plugin-visualizer": "^7.0.1",
     "svgo": "^4.0.1",
     "typescript": "~5.9.3",
