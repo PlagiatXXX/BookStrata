@@ -118,13 +118,4 @@ export function getAtomicSavePayload(listData: TierListData): AtomicSavePayload 
   };
 }
 
-export function hasChangesToSave(listData: TierListData): boolean {
-  const payload = getAtomicSavePayload(listData);
-  return (
-    payload.tiers.added.length > 0 ||
-    payload.tiers.updated.length > 0 ||
-    payload.tiers.deletedIds.length > 0 ||
-    payload.newBooks.length > 0 ||
-    payload.placements.length > 0 // На самом деле placements всегда есть, если есть книги
-  );
-}
+

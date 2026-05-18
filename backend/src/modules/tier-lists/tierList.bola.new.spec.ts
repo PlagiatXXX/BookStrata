@@ -22,6 +22,8 @@ vi.mock("../../lib/prisma.js", () => ({
     },
     tierList: {
       update: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([{ id: 1 }]),
+      findUnique: vi.fn().mockResolvedValue({ id: 1 }),
     },
   },
 }));
@@ -79,7 +81,7 @@ describe("Tier List BOLA Security Tests - New", () => {
         ]
       };
 
-      await expect(service.saveAll(myTierListId, 1, payload)).rejects.toThrow("One or more books do not belong to this tier list");
+      await expect(service.saveAll(myTierListId, 1, payload)).rejects.toThrow("One or more books do not belong to this user");
 
       expect(prisma.bookPlacement.createMany).not.toHaveBeenCalled();
     });

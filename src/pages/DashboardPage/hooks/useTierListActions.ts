@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTierList, updateTierListTitle, deleteTierList, type PaginatedTierListsResponse } from "@/lib/tierListApi";
+import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/tierListApi";
 import { createLogger } from "@/lib/logger";
 
 // Логгер для хука действий тир-листов

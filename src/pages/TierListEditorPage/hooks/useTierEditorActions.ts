@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { sileo } from 'sileo';
 import type { NavigateFunction } from 'react-router-dom';
 import type { Action } from '@/hooks/useTierList';
-import type { Book, TierListData } from '@/types';
+import type { Book } from '@/types';
 import { deleteTierList, removeBookFromTierList, toggleTierListPublic } from '@/lib/tierListApi';
 import { getAuthHeader, handleResponse } from '@/lib/authApi';
 import { API_BASE_URL } from '@/lib/config';

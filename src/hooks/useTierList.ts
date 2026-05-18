@@ -432,34 +432,20 @@ export const useTierList = (
   allowSync: boolean = true,
 ) => {
   const [listData, dispatch] = useReducer(tierListReducer, initialData);
-  const prevInitialDataRef = useRef<TierListData | null>(null);
+  const syncedTierListIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!initialData) return;
+    if (!initialData?.id || !allowSync) return;
 
-    const dataChanged = prevInitialDataRef.current?.id !== initialData.id;
-    prevInitialDataRef.current = initialData;
-
-    if (allowSync && dataChanged) {
-      const isSameList = listData?.id === initialData.id;
-      const isEmpty = !listData?.id;
-      if (isEmpty || isSameList) {
-        tierListHookLogger.info(
-          "useTierList: Синхронизация состояния из новых начальных данных",
-          { listId: initialData.id },
-        );
-        dispatch({ type: "SET_STATE", payload: initialData });
-      } else {
-        tierListHookLogger.warn(
-          "useTierList: Данные изменились, но ID списка не совпадает. Пропуск.",
-          {
-            currentId: listData?.id,
-            incomingId: initialData.id,
-          },
-        );
-      }
+    if (syncedTierListIdRef.current !== initialData.id) {
+      syncedTierListIdRef.current = initialData.id;
+      tierListHookLogger.info(
+        "useTierList: Инициализация нового тир-листа",
+        { listId: initialData.id },
+      );
+      dispatch({ type: "SET_STATE", payload: initialData });
     }
-  }, [initialData.id, initialData, allowSync, dispatch, listData?.id]);
+  }, [initialData, allowSync]);
 
   const setTitle = (newTitle: string) => {
     dispatch({ type: "SET_TITLE", payload: newTitle });

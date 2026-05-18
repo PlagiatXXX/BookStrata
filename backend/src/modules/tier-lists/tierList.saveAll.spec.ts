@@ -22,6 +22,8 @@ vi.mock('../../lib/prisma.js', () => ({
     },
     tierList: {
       update: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([{ id: 123 }]),
+      findUnique: vi.fn().mockResolvedValue({ id: 123 }),
     },
   },
 }));

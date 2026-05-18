@@ -14,8 +14,22 @@ const isUuid = (value: string) =>
     value,
   );
 
-const getTierListWhereClause = (tierListId: string) =>
-  isUuid(tierListId) ? { id: tierListId } : { slug: tierListId };
+const getTierListWhereClause = (tierListId: string) => {
+  if (isUuid(tierListId)) return { id: tierListId };
+  if (/^\d+$/.test(tierListId)) return { id: tierListId };
+  return { slug: tierListId };
+};
+
+async function resolveTierListId(tierListId: string): Promise<string> {
+  const tierList = await prisma.tierList.findUnique({
+    where: getTierListWhereClause(tierListId),
+    select: { id: true },
+  });
+  if (!tierList) {
+    throw new Error("Tier list not found");
+  }
+  return tierList.id;
+}
 
 // Получение списка тир-листов пользователя (краткая информация)
 export async function getUserTierLists(
@@ -159,6 +173,8 @@ export async function updatePlacements(
 
   if (placements.length === 0) return [];
 
+  const realTierListId = await resolveTierListId(tierListId);
+
   // Security check (BOLA): Ensure that all non-null tierIds belong to this tier list
   const tierIds = Array.from(
     new Set(
@@ -172,7 +188,7 @@ export async function updatePlacements(
     const tierCount = await prisma.tier.count({
       where: {
         id: { in: tierIds },
-        tierListId,
+        tierListId: realTierListId,
       },
     });
 
@@ -184,10 +200,10 @@ export async function updatePlacements(
   // Используем upsert вместо update, чтобы создавать записи если их нет
   const transactions = placements.map((p) =>
     prisma.bookPlacement.upsert({
-      where: { tierListId_bookId: { tierListId, bookId: p.bookId } },
+      where: { tierListId_bookId: { tierListId: realTierListId, bookId: p.bookId } },
       update: { tierId: p.tierId, rank: p.rank },
       create: {
-        tierListId,
+        tierListId: realTierListId,
         bookId: p.bookId,
         tierId: p.tierId,
         rank: p.rank,
@@ -221,9 +237,11 @@ export async function addBooksToTierList(
 
   if (books.length === 0) return [];
 
+  const realTierListId = await resolveTierListId(tierListId);
+
   // Проверка лимита книг
   const existingBooksCount = await prisma.bookPlacement.count({
-    where: { tierListId },
+    where: { tierListId: realTierListId },
   });
 
   if (existingBooksCount + books.length > MAX_BOOKS_PER_TIER_LIST) {
@@ -236,7 +254,7 @@ export async function addBooksToTierList(
   // Это сокращает количество запросов с O(N) до O(1) за счет использования возможностей Prisma по вложенному созданию.
   const results = await prisma.$transaction(async (tx) => {
     const updatedTierList = await tx.tierList.update({
-      where: getTierListWhereClause(tierListId),
+      where: { id: realTierListId },
       data: {
         placements: {
           create: books.map((bookData, index) => ({
@@ -283,10 +301,27 @@ export async function updateBook(
     author?: string | null;
   },
 ) {
-  // Проверяем принадлежность книги к тир-листу через BookPlacement (BOLA)
-  await prisma.bookPlacement.findUniqueOrThrow({
-    where: { tierListId_bookId: { tierListId, bookId } },
+  const whereClause = getTierListWhereClause(tierListId);
+  const tierList = await prisma.tierList.findUnique({
+    where: whereClause,
+    select: { id: true },
   });
+
+  if (!tierList) {
+    const error = new Error("Tier list not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
+  const bookPlacement = await prisma.bookPlacement.findUnique({
+    where: { tierListId_bookId: { tierListId: tierList.id, bookId } },
+  });
+
+  if (!bookPlacement) {
+    const error = new Error("Book does not belong to this tier list");
+    (error as any).statusCode = 404;
+    throw error;
+  }
 
   return prisma.book.update({
     where: { id: bookId },
@@ -300,10 +335,26 @@ export async function updateBookCover(
   bookId: number,
   coverImageUrl: string,
 ) {
-  // Security check: ensure the book belongs to the tier list
-  await prisma.bookPlacement.findUniqueOrThrow({
-    where: { tierListId_bookId: { tierListId, bookId } },
+  const tierList = await prisma.tierList.findUnique({
+    where: getTierListWhereClause(tierListId),
+    select: { id: true },
   });
+
+  if (!tierList) {
+    const error = new Error("Tier list not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
+  const bookPlacement = await prisma.bookPlacement.findUnique({
+    where: { tierListId_bookId: { tierListId: tierList.id, bookId } },
+  });
+
+  if (!bookPlacement) {
+    const error = new Error("Book does not belong to this tier list");
+    (error as any).statusCode = 404;
+    throw error;
+  }
 
   return prisma.book.update({
     where: { id: bookId },
@@ -316,8 +367,15 @@ export async function removeBookFromTierList(
   tierListId: string,
   bookId: number,
 ) {
-  await prisma.bookPlacement.delete({
-    where: { tierListId_bookId: { tierListId, bookId } },
+  const tierList = await prisma.tierList.findUnique({
+    where: getTierListWhereClause(tierListId),
+    select: { id: true },
+  });
+
+  if (!tierList) return;
+
+  await prisma.bookPlacement.deleteMany({
+    where: { tierListId: tierList.id, bookId },
   });
 
   // Оптимизация Bolt: Книга удаляется из базы только если она не используется в других тир-листах
@@ -366,9 +424,11 @@ export async function addTier(tierListId: string, title: string, rank: number) {
 
 // Удаление строки из тир-листа
 export async function removeTier(tierListId: string, tierId: number) {
+  const realTierListId = await resolveTierListId(tierListId);
+
   // Сначала сбрасываем tierId у всех книг в этой строке
   await prisma.bookPlacement.updateMany({
-    where: { tierListId, tierId },
+    where: { tierListId: realTierListId, tierId },
     data: { tierId: null },
   });
 
@@ -384,13 +444,15 @@ export async function updateTier(
   tierId: number,
   data: { title?: string; color?: string; rank?: number },
 ) {
+  const realTierListId = await resolveTierListId(tierListId);
+
   // Проверяем принадлежность строки к тир-листу (BOLA)
   const tier = await prisma.tier.findUnique({
     where: { id: tierId },
     select: { tierListId: true },
   });
 
-  if (!tier || tier.tierListId !== tierListId) {
+  if (!tier || tier.tierListId !== realTierListId) {
     const error = new Error("Forbidden");
     (error as any).statusCode = 403;
     throw error;
@@ -407,9 +469,11 @@ export async function updateTiers(
   tierListId: string,
   tiers: { id: number; title?: string; color?: string; rank?: number }[],
 ) {
+  const realTierListId = await resolveTierListId(tierListId);
+
   const transactions = tiers.map((t) =>
-    prisma.tier.update({
-      where: { id: t.id },
+    prisma.tier.updateMany({
+      where: { id: t.id, tierListId: realTierListId },
       data: {
         ...(t.title !== undefined ? { title: t.title } : {}),
         ...(t.color !== undefined ? { color: t.color } : {}),
@@ -438,6 +502,7 @@ export async function saveTiers(
     | Array<{ id?: number; title: string; color: string; rank: number }>,
 ) {
   const startTime = Date.now();
+  const realTierListId = await resolveTierListId(tierListId);
 
   // Определяем формат
   const isDiff = "added" in (tiers as any);
@@ -481,7 +546,7 @@ export async function saveTiers(
     // 1. Удаляем
     if (deletedIds.length > 0) {
       await tx.tier.deleteMany({
-        where: { id: { in: deletedIds }, tierListId },
+        where: { id: { in: deletedIds }, tierListId: realTierListId },
       });
     }
 
@@ -489,7 +554,7 @@ export async function saveTiers(
     if (added.length > 0) {
       await tx.tier.createMany({
         data: added.map((tier) => ({
-          tierListId,
+          tierListId: realTierListId,
           title: tier.title,
           color: tier.color,
           rank: tier.rank,
@@ -502,7 +567,7 @@ export async function saveTiers(
       await Promise.all(
         updated.map((tier) =>
           tx.tier.updateMany({
-            where: { id: tier.id, tierListId },
+            where: { id: tier.id, tierListId: realTierListId },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
           }),
         ),
@@ -511,7 +576,7 @@ export async function saveTiers(
 
     // 4. Получаем все тиры для возврата
     const allTiers = await tx.tier.findMany({
-      where: { tierListId },
+      where: { tierListId: realTierListId },
       orderBy: { rank: "asc" },
     });
 
@@ -612,8 +677,9 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
 
 // Очистка всех строк (перевод книг в нераспределенные)
 export async function clearAllTiers(tierListId: string) {
+  const realTierListId = await resolveTierListId(tierListId);
   return prisma.bookPlacement.updateMany({
-    where: { tierListId },
+    where: { tierListId: realTierListId },
     data: { tierId: null },
   });
 }
@@ -622,8 +688,9 @@ export async function clearAllTiers(tierListId: string) {
 export async function getTierListBooksCount(
   tierListId: string,
 ): Promise<number> {
+  const realTierListId = await resolveTierListId(tierListId);
   const count = await prisma.bookPlacement.count({
-    where: { tierListId },
+    where: { tierListId: realTierListId },
   });
   return count;
 }
@@ -794,26 +861,61 @@ export async function saveAll(
   },
 ) {
   return await prisma.$transaction(async (tx) => {
-    // 1. Проверяем владельца (уже сделано в роуте через assertOwner, но для надежности здесь тоже можно)
-    // const tl = await tx.tierList.findUniqueOrThrow({ where: { id: tierListId } });
-    // if (tl.userId !== userId) throw new Error("Forbidden");
+    const MAX_BOOKS_PER_TIER_LIST = 20;
 
+    // Получаем реальный UUID тир-листа (slug может быть передан из URL)
+    const tierList = await tx.tierList.findUnique({
+      where: getTierListWhereClause(tierListId),
+      select: { id: true },
+    });
+
+    if (!tierList) {
+      throw new Error("Tier list not found");
+    }
+
+    const realTierListId = tierList.id;
+
+    // 1. Проверка лимита книг
+    const newBooksCount = payload.newBooks?.length || 0;
+    const existingBookIdsInPlacements = new Set<number>();
+
+    if (payload.placements?.length) {
+      for (const p of payload.placements) {
+        if (typeof p.bookId === "number") {
+          existingBookIdsInPlacements.add(p.bookId);
+        } else if (typeof p.bookId === "string" && !p.bookId.includes("-")) {
+          const parsed = parseInt(p.bookId, 10);
+          if (!isNaN(parsed)) {
+            existingBookIdsInPlacements.add(parsed);
+          }
+        }
+      }
+    }
+
+    const totalBooksCount = existingBookIdsInPlacements.size + newBooksCount;
+
+    if (totalBooksCount > MAX_BOOKS_PER_TIER_LIST) {
+      throw new Error(
+        `Превышен лимит книг в тир-листе. Максимум: ${MAX_BOOKS_PER_TIER_LIST}, запрошено: ${totalBooksCount}`
+      );
+    }
+
+    // 2. Обработка тиров
     const tierReplacements: { tempId: string; realId: string }[] = [];
     const bookReplacements: { tempId: string; realId: string }[] = [];
 
-    // 2. Обработка тиров
     if (payload.tiers) {
       // Удаление
       if (payload.tiers.deletedIds?.length) {
         await tx.tier.deleteMany({
-          where: { id: { in: payload.tiers.deletedIds }, tierListId },
+          where: { id: { in: payload.tiers.deletedIds }, tierListId: realTierListId },
         });
       }
       // Обновление существующих (с проверкой владения)
       if (payload.tiers.updated?.length) {
         for (const tier of payload.tiers.updated) {
           await tx.tier.updateMany({
-            where: { id: tier.id, tierListId },
+            where: { id: tier.id, tierListId: realTierListId },
             data: { title: tier.title, color: tier.color, rank: tier.rank },
           });
         }
@@ -824,7 +926,7 @@ export async function saveAll(
         for (const tier of addedTiers) {
           const created = await tx.tier.create({
             data: {
-              tierListId,
+              tierListId: realTierListId,
               title: tier.title,
               color: tier.color,
               rank: tier.rank,
@@ -884,15 +986,21 @@ export async function saveAll(
       );
 
       if (existingBookIds.length > 0) {
+        const userTierLists = await tx.tierList.findMany({
+          where: { userId },
+          select: { id: true },
+        });
+        const userTierListIds = userTierLists.map((tl) => tl.id);
+
         const count = await tx.bookPlacement.count({
           where: {
-            tierListId,
             bookId: { in: existingBookIds },
+            tierListId: { in: userTierListIds },
           },
         });
 
         if (count !== existingBookIds.length) {
-          throw new Error("One or more books do not belong to this tier list");
+          throw new Error("One or more books do not belong to this user");
         }
       }
 
@@ -915,7 +1023,7 @@ export async function saveAll(
         const tierCount = await tx.tier.count({
           where: {
             id: { in: existingTierIds },
-            tierListId,
+            tierListId: realTierListId,
           },
         });
 
@@ -927,7 +1035,7 @@ export async function saveAll(
       // Сначала удаляем все старые позиции для этого тир-листа (атомарная перезапись)
       // ВАЖНО: Мы удаляем только связи, а не сами книги
       await tx.bookPlacement.deleteMany({
-        where: { tierListId },
+        where: { tierListId: realTierListId },
       });
 
       // Создаем новые позиции
@@ -961,7 +1069,7 @@ export async function saveAll(
         }
 
         return {
-          tierListId,
+          tierListId: realTierListId,
           bookId: finalBookId,
           tierId: finalTierId,
           rank: p.rank,

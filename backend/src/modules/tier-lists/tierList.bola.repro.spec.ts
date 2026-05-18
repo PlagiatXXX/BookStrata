@@ -5,6 +5,9 @@ import * as service from "./tierList.service.js";
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     $transaction: vi.fn((promises) => Promise.all(promises)),
+    tierList: {
+      findUnique: vi.fn().mockResolvedValue({ id: 1 }),
+    },
     bookPlacement: {
       upsert: vi.fn(),
       count: vi.fn(),

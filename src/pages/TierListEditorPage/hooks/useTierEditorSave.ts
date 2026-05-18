@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   saveTierListAtomic,
@@ -14,6 +14,23 @@ export interface UseTierEditorSaveResult {
   lastSaved: Date | null;
   handleSave: () => Promise<void>;
   getSavePayload: () => AtomicSavePayload;
+  hasChangesToSave: () => boolean;
+}
+
+function serializePayload(payload: AtomicSavePayload): string {
+  return JSON.stringify({
+    tiers: {
+      added: payload.tiers.added.sort((a, b) => a.tempId.localeCompare(b.tempId)),
+      updated: payload.tiers.updated.sort((a, b) => a.id - b.id),
+      deletedIds: payload.tiers.deletedIds.sort((a, b) => a - b),
+    },
+    newBooks: payload.newBooks.sort((a, b) => a.tempId.localeCompare(b.tempId)),
+    placements: payload.placements.sort((a, b) => {
+      const aKey = `${a.bookId}-${a.tierId}-${a.rank}`;
+      const bKey = `${b.bookId}-${b.tierId}-${b.rank}`;
+      return aKey.localeCompare(bKey);
+    }),
+  });
 }
 
 interface UseTierEditorSaveParams {
@@ -41,9 +58,39 @@ export function useTierEditorSave({
   const queryClient = useQueryClient();
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const savedSnapshotRef = useRef<string | null>(null);
+  const initializedRef = useRef(false);
 
   const getSavePayload = useCallback((): AtomicSavePayload => {
     return getAtomicSavePayload(listData);
+  }, [listData]);
+
+  // Инициализируем snapshot при первой загрузке данных
+  useEffect(() => {
+    if (!isLoading && !initializedRef.current && listData.id) {
+      const payload = getAtomicSavePayload(listData);
+      savedSnapshotRef.current = serializePayload(payload);
+      initializedRef.current = true;
+    }
+  }, [isLoading, listData.id, listData, getSavePayload]);
+
+  // Сбрасываем snapshot при смене тир-листа
+  useEffect(() => {
+    initializedRef.current = false;
+    savedSnapshotRef.current = null;
+  }, [tierListId]);
+
+  
+
+  const hasChangesToSave = useCallback((): boolean => {
+    const currentPayload = getAtomicSavePayload(listData);
+    const currentSerialized = serializePayload(currentPayload);
+
+    if (savedSnapshotRef.current === null) {
+      return currentPayload.placements.length > 0;
+    }
+
+    return savedSnapshotRef.current !== currentSerialized;
   }, [listData]);
 
   const handleSave = useCallback(async () => {
@@ -76,17 +123,13 @@ export function useTierEditorSave({
       // Очищаем черновик после успешного сохранения
       localStorage.removeItem(`tier-list-draft-${tierListId}`);
 
-      // Обновляем кэш React Query
-      queryClient.setQueryData(
-        ["tierList", tierListId],
-        (old: TierListData | undefined) => {
-          if (!old) return old;
-          return {
-            ...old,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-      );
+      // Сохраняем snapshot для последующего сравнения
+      savedSnapshotRef.current = serializePayload(payload);
+
+      // Обновляем кэш React Query — инвалидируем чтобы данные перезапросились
+      await queryClient.invalidateQueries({
+        queryKey: ["tierList", tierListId],
+      });
       // Инвалидируем список на дашборде, чтобы там обновилась дата
       await queryClient.invalidateQueries({ queryKey: ["userTierLists"] });
 
@@ -108,5 +151,6 @@ export function useTierEditorSave({
     lastSaved,
     handleSave,
     getSavePayload,
+    hasChangesToSave,
   };
 }

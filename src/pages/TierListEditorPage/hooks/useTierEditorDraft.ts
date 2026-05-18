@@ -33,10 +33,17 @@ export function useTierEditorDraft({
     if (!tierListId || !hasUnsavedChanges) return;
 
     const saveDraft = () => {
-      localStorage.setItem(draftKey, JSON.stringify({
-        data: listData,
-        timestamp: Date.now(),
-      }));
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({
+          data: listData,
+          timestamp: Date.now(),
+        }));
+      } catch (e) {
+        // QuotaExceededError — черновик слишком большой (обычно из-за base64 картинок)
+        if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+          localStorage.removeItem(draftKey);
+        }
+      }
     };
 
     const timeoutId = setTimeout(saveDraft, 1000);

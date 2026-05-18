@@ -29,15 +29,15 @@ describe("Tier List BOLA Security Tests", () => {
       const attackerTierListId = 100;
       const victimBookId = 999;
 
+      // Tier list found
+      (prisma.tierList.findUnique as any).mockResolvedValue({ id: attackerTierListId });
       // Book placement NOT found
-      (prisma.bookPlacement.findUniqueOrThrow as any).mockImplementation(() => {
-        throw new Error("Record not found");
-      });
+      (prisma.bookPlacement.findUnique as any).mockResolvedValue(null);
 
       // Service call should fail
       await expect(
         service.updateBook(attackerTierListId, victimBookId, { title: "Hacked" }),
-      ).rejects.toThrow("Record not found");
+      ).rejects.toThrow("Book does not belong to this tier list");
 
       expect(prisma.book.update).not.toHaveBeenCalled();
     });
@@ -46,7 +46,8 @@ describe("Tier List BOLA Security Tests", () => {
       const tierListId = 100;
       const bookId = 999;
 
-      (prisma.bookPlacement.findUniqueOrThrow as any).mockResolvedValue({});
+      (prisma.tierList.findUnique as any).mockResolvedValue({ id: tierListId });
+      (prisma.bookPlacement.findUnique as any).mockResolvedValue({ tierListId, bookId });
       (prisma.book.update as any).mockResolvedValue({ id: bookId, title: "Updated" });
 
       const result = await service.updateBook(tierListId, bookId, { title: "Updated" });
@@ -61,14 +62,14 @@ describe("Tier List BOLA Security Tests", () => {
       const attackerTierListId = 100;
       const victimBookId = 999;
 
+      // Tier list found
+      (prisma.tierList.findUnique as any).mockResolvedValue({ id: attackerTierListId });
       // Book placement NOT found
-      (prisma.bookPlacement.findUniqueOrThrow as any).mockImplementation(() => {
-        throw new Error("Record not found");
-      });
+      (prisma.bookPlacement.findUnique as any).mockResolvedValue(null);
 
       await expect(
         service.updateBookCover(attackerTierListId, victimBookId, "new-cover.jpg"),
-      ).rejects.toThrow("Record not found");
+      ).rejects.toThrow("Book does not belong to this tier list");
 
       expect(prisma.book.update).not.toHaveBeenCalled();
     });
