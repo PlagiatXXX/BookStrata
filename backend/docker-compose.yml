@@ -1,4 +1,17 @@
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: bookstrata-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bookstrata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   redis:
     image: redis:7
     container_name: bookstrata-redis
@@ -9,4 +22,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  postgres-data:
   redis-data:
