@@ -1,70 +1,37 @@
-# Backend Docker / Redis Setup
+# Backend Setup & Docker
 
-Этот проект уже настроен на работу с Redis для кеширования. На macOS дополнительная настройка Docker обычно не требуется — достаточно запустить сервис Redis из папки `backend`.
+Этот проект использует PostgreSQL и Redis. Для удобства локальной разработки настроен Docker Compose.
 
-## Что уже сделано
-
-- В `backend/docker-compose.yml` добавлен сервис `redis`.
-- В `backend/.env` уже указано:
-
-```env
-REDIS_URL=redis://localhost:6379
-```
-
-- В `backend/src/lib/redis.ts` приложение использует `ioredis` и подключается по `REDIS_URL`.
-
-## Запуск Redis
+## Запуск инфраструктуры
 
 Открой терминал и перейди в папку backend:
 
 ```bash
-cd /Users/fedor/Bookstrata/BookStrata/backend
-```
-
-Запусти Redis через Docker Compose:
-
-```bash
+cd backend
 docker compose up -d
 ```
 
-Сервис будет доступен на `localhost:6379`.
+Это запустит:
+- **PostgreSQL** на порту 5432 (User: user, Password: password, DB: bookstrata)
+- **Redis** на порту 6379
 
-## Проверка
+## Настройка окружения (.env)
 
-После запуска backend должен вывести в консоль:
+Убедитесь, что в backend/.env прописаны правильные URL:
 
-```text
-✅ Redis connected
-```
+DATABASE_URL="postgresql://user:password@localhost:5432/bookstrata?schema=public"
+REDIS_URL="redis://localhost:6379"
 
-Если ты запускаешь backend в режиме разработки:
+## Инициализация БД
 
-```bash
-npm run dev
-```
+После запуска контейнеров выполните миграции и сидирование:
 
-## Остановка Redis
+npm run migrate
+npm run seed
 
-```bash
-docker compose down
-```
+## Запуск приложения
 
-## Альтернатива без docker-compose
-
-Если хочешь просто запустить контейнер Redis вручную:
-
-```bash
-docker run -d --name bookstrata-redis -p 6379:6379 redis:7
-```
-
-## Права доступа / настройки
-
-На macOS с Docker Desktop специальных дополнительных настроек не требуется. Если порт `6379` занят, можно изменить публикацию порта в `docker-compose.yml` или в команде `docker run`.
-
-## Если Redis недоступен
-
-Код кеша написан так, чтобы при ошибках Redis приложение продолжало работать. Это означает, что если Redis не стартует, функционал не сломается — просто кеширование будет пропущено.
+Запустите сервер в режиме разработки: npm run dev
 
 ---
-
-Если хочешь, могу дополнительно добавить раздел в корневой `README.md` или настроить `docker compose` для всего проекта.
+*Примечание для macOS: Убедитесь, что Docker Desktop запущен.*
