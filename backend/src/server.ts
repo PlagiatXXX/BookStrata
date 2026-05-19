@@ -8,6 +8,7 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 import { prisma, waitForDatabase } from "./lib/prisma.js";
+import { ErrorCodes, createApiError } from "./lib/api-response.js";
 import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
 import { battleRoutes } from "../src/modules/battles/battles.route.js";
 import { tierListRoutes } from "../src/modules/tier-lists/tierList.route.js";
@@ -117,7 +118,7 @@ fastify.setErrorHandler((error: any, request, reply) => {
   if (error.statusCode === 429) {
     return reply
       .code(429)
-      .send({ message: "Слишком много запросов, попробуйте позже." });
+      .send(createApiError(ErrorCodes.RATE_LIMIT_EXCEEDED, "Слишком много запросов, попробуйте позже."));
   }
 
   if (
@@ -125,7 +126,7 @@ fastify.setErrorHandler((error: any, request, reply) => {
     error.message === "Unauthorized" ||
     error.statusCode === 401
   ) {
-    return reply.code(401).send({ error: error.message || "Unauthorized" });
+    return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, error.message || "Unauthorized"));
   }
 
   if (
@@ -136,25 +137,70 @@ fastify.setErrorHandler((error: any, request, reply) => {
   ) {
     return reply
       .code(409)
-      .send({ message: "Пользователь с таким именем уже существует." });
+      .send(createApiError(ErrorCodes.USERNAME_TAKEN, "Пользователь с таким именем уже существует."));
   }
 
   // Для отладки в режиме разработки возвращаем сообщение ошибки
   const isDev = process.env.NODE_ENV !== "production";
-  return reply.code(error.statusCode || 500).send({
-    message: isDev ? error.message : "Сервер не был подготовлен для этой цели.",
-    error: isDev ? error.stack : undefined,
-  });
+  return reply.code(error.statusCode || 500).send(
+    createApiError(
+      ErrorCodes.INTERNAL_ERROR,
+      isDev ? error.message : "Сервер не был подготовлен для этой цели.",
+      isDev ? { stack: error.stack } : undefined,
+    ),
+  );
 });
 
 await fastify.register(swagger, {
   swagger: {
     info: {
       title: "BookStrata Pro API",
-      description: "API Documentation for the BookStrata Pro application.",
-      version: "1.0.0",
+      description: `
+## API Documentation for BookStrata Pro
+
+### Error Response Format
+All errors follow a standardized format:
+\`\`\`json
+{
+  "error": {
+    "code": "error_code",
+    "message": "Human readable message",
+    "details": {} // optional
+  }
+}
+\`\`\`
+
+### Error Codes
+| Code | Description |
+|------|-------------|
+| validation_error | Request validation failed |
+| unauthorized | Authentication required |
+| token_invalid | JWT token is invalid |
+| refresh_token_expired | Refresh token expired |
+| forbidden | Insufficient permissions |
+| not_found | Resource not found |
+| conflict | Resource already exists |
+| rate_limit_exceeded | Too many requests |
+| internal_error | Server error |
+
+### Pagination
+List endpoints return pagination metadata and links:
+\`\`\`json
+{
+  "data": [...],
+  "meta": { "totalItems": 100, "totalPages": 10, "currentPage": 1 },
+  "links": { "self": "...", "next": "...", "prev": "...", "last": "..." }
+}
+\`\`\`
+
+### Authentication
+All protected endpoints require Bearer token in Authorization header.
+      `.trim(),
+      version: "1.1.0",
     },
-    // Указываем, что API защищено JWT токенами
+    schemes: ["http", "https"],
+    produces: ["application/json"],
+    consumes: ["application/json"],
     securityDefinitions: {
       bearerAuth: {
         type: "apiKey",
@@ -163,6 +209,17 @@ await fastify.register(swagger, {
         description: "Enter your bearer token in the format 'Bearer <token>'",
       },
     },
+    tags: [
+      { name: "Auth", description: "Authentication endpoints" },
+      { name: "Users", description: "User management" },
+      { name: "Tier Lists", description: "Tier list CRUD operations" },
+      { name: "News", description: "News articles" },
+      { name: "Battles", description: "Battles and voting" },
+      { name: "Achievements", description: "User achievements" },
+      { name: "Avatars", description: "Avatar generation" },
+      { name: "Books", description: "Book search" },
+      { name: "Subscriptions", description: "Subscription management" },
+    ],
   },
 });
 

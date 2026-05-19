@@ -4,6 +4,7 @@ import { requireAdminOrModerator } from "../../middleware/requireRole.js";
 import * as service from "./battles.service.js";
 import * as schema from "./battles.schema.js";
 import type { CreateBattleBody, VoteInBattleBody } from "./battles.schema.js";
+import { ErrorCodes, createApiError } from "../../lib/api-response.js";
 
 export async function battleRoutes(fastify: FastifyInstance) {
   // GET /api/battles - получить активные битвы
@@ -14,7 +15,7 @@ export async function battleRoutes(fastify: FastifyInstance) {
   // GET /api/battles/:id - получить конкретную битву
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
     const battle = await service.getBattleById(request.params.id);
-    if (!battle) return reply.code(404).send({ error: "Battle not found" });
+    if (!battle) return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Battle not found"));
     return battle;
   });
 
@@ -31,7 +32,7 @@ export async function battleRoutes(fastify: FastifyInstance) {
         description: request.body.description ?? null,
         endTime: new Date(request.body.endTime),
       });
-      return reply.code(201).send(battle);
+      return reply.code(201).header("Location", `/api/battles/${battle.id}`).send(battle);
     }
   );
 

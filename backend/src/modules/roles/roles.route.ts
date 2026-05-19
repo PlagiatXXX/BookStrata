@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { RolesService, type RoleName } from "./roles.service.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { createLogger } from "../../lib/logger.js";
+import { ErrorCodes, createApiError } from "../../lib/api-response.js";
 
 const logger = createLogger("RolesRoute", { color: "yellow" });
 
@@ -21,7 +22,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         return reply.send(roles);
       } catch (error) {
         logger.error("Ошибка получения ролей", { error });
-        return reply.code(500).send({ error: "Ошибка при получении ролей" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при получении ролей"));
       }
     },
   );
@@ -35,7 +36,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         if (!request.user) {
-          return reply.code(401).send({ error: "Требуется авторизация" });
+          return reply.code(401).send(createApiError(ErrorCodes.AUTHENTICATION_REQUIRED, "Требуется авторизация"));
         }
 
         const role = await rolesService.getUserRole(request.user.userId);
@@ -47,7 +48,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         return reply.send({ role });
       } catch (error) {
         logger.error("Ошибка получения роли пользователя", { error });
-        return reply.code(500).send({ error: "Ошибка при получении роли" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при получении роли"));
       }
     },
   );
@@ -64,7 +65,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         const { roleName } = request.params as { roleName: string };
 
         if (!["admin", "moderator", "user"].includes(roleName)) {
-          return reply.code(400).send({ error: "Неверное имя роли" });
+          return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, "Неверное имя роли"));
         }
 
         const users = await rolesService.getUsersByRole(roleName as RoleName);
@@ -73,7 +74,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         logger.error("Ошибка получения пользователей по роли", { error });
         return reply
           .code(500)
-          .send({ error: "Ошибка при получении пользователей" });
+          .send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при получении пользователей"));
       }
     },
   );
@@ -113,7 +114,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         );
 
         if (!result) {
-          return reply.code(404).send({ error: "Роль не найдена" });
+          return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Роль не найдена"));
         }
 
         logger.info("Роль назначена", {
@@ -128,7 +129,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         });
       } catch (error) {
         logger.error("Ошибка назначения роли", { error });
-        return reply.code(500).send({ error: "Ошибка при назначении роли" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при назначении роли"));
       }
     },
   );
@@ -151,7 +152,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         return reply.send({ success: true });
       } catch (error) {
         logger.error("Ошибка снятия роли", { error });
-        return reply.code(500).send({ error: "Ошибка при снятии роли" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при снятии роли"));
       }
     },
   );

@@ -3,6 +3,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { NewsService } from "./news.service.js";
 import { createLogger } from "../../lib/logger.js";
 import { requireRole } from "../../middleware/requireRole.js";
+import { ErrorCodes, createApiError } from "../../lib/api-response.js";
 
 const logger = createLogger("NewsRoute", { color: "cyan" });
 
@@ -52,20 +53,20 @@ export async function newsRoutes(fastify: FastifyInstance) {
           publishedOnly = true; // Non-admins always see only published
         }
 
-        const articles = await newsService.getAllNews({
+        const result = await newsService.getAllNews({
           page: parseInt(page, 10),
           limit: parseInt(limit, 10),
           publishedOnly,
         });
 
-        return reply.send(articles);
+        return reply.send(result);
     } catch (error) {
       logger.error("Ошибка получения новостей", {
         error,
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      return reply.code(500).send({ error: "Ошибка при получении новостей" });
+      return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при получении новостей"));
     }
   });
 
@@ -86,7 +87,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
         return reply.send(articles);
       } catch (error) {
         logger.error("Ошибка получения опубликованных новостей", { error });
-        return reply.code(500).send({ error: "Ошибка при получении новостей" });
+return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при получении новостей"));
       }
     },
   );
@@ -108,13 +109,13 @@ export async function newsRoutes(fastify: FastifyInstance) {
       });
 
       if (!article) {
-        return reply.code(404).send({ error: "Новость не найдена" });
+        return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Новость не найдена"));
       }
 
       return reply.send(article);
     } catch (error) {
       logger.error("Ошибка получения новости", { error });
-      return reply.code(500).send({ error: "Ошибка при получении новости" });
+      return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при получении новости"));
     }
   });
 
@@ -132,17 +133,17 @@ export async function newsRoutes(fastify: FastifyInstance) {
         // Валидация данных
         const validated = await newsService.validateCreateNews(body);
 
-        await newsService.createNews(validated, request.user!.userId);
+        const article = await newsService.createNews(validated, request.user!.userId);
 
-        return reply.code(201).send({ message: "Новость создана" });
+        return reply.code(201).header("Location", `/api/news/${article.id}`).send({ message: "Новость создана" });
       } catch (error) {
         logger.error("Ошибка создания новости", { error });
 
         if (error instanceof Error && error.name === "ZodError") {
-          return reply.code(400).send({ error: "Неверный формат данных" });
+          return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Неверный формат данных"));
         }
 
-        return reply.code(500).send({ error: "Ошибка при создании новости" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при создании новости"));
       }
     },
   );
@@ -168,7 +169,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
         );
 
         if (!article) {
-          return reply.code(404).send({ error: "Новость не найдена" });
+          return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Новость не найдена"));
         }
 
         return reply.send({ message: "Новость обновлена", article });
@@ -176,10 +177,10 @@ export async function newsRoutes(fastify: FastifyInstance) {
         logger.error("Ошибка обновления новости", { error });
 
         if (error instanceof Error && error.name === "ZodError") {
-          return reply.code(400).send({ error: "Неверный формат данных" });
+          return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Неверный формат данных"));
         }
 
-        return reply.code(500).send({ error: "Ошибка при обновлении новости" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при обновлении новости"));
       }
     },
   );
@@ -200,7 +201,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
         return reply.send({ message: "Новость удалена" });
       } catch (error) {
         logger.error("Ошибка удаления новости", { error });
-        return reply.code(500).send({ error: "Ошибка при удалении новости" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при удалении новости"));
       }
     },
   );
@@ -223,7 +224,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
         );
 
         if (!article) {
-          return reply.code(404).send({ error: "Новость не найдена" });
+          return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Новость не найдена"));
         }
 
         return reply.send({ message: "Статус публикации изменён", article });
@@ -231,7 +232,7 @@ export async function newsRoutes(fastify: FastifyInstance) {
         logger.error("Ошибка изменения статуса публикации", { error });
         return reply
           .code(500)
-          .send({ error: "Ошибка при изменении статуса публикации" });
+          .send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при изменении статуса публикации"));
       }
     },
   );

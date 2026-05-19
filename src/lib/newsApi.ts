@@ -34,8 +34,19 @@ export interface UpdateNewsInput {
 }
 
 export interface NewsListResponse {
-  articles: NewsArticle[];
-  total: number;
+  data: NewsArticle[];
+  meta: {
+    total: number;
+    currentPage: number;
+    totalPages: number;
+    itemsPerPage: number;
+  };
+  links: {
+    self: string;
+    next?: string;
+    prev?: string;
+    last: string;
+  };
 }
 
 /**

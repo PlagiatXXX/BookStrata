@@ -1,0 +1,81 @@
+{
+  "evals": [
+    {
+      "name": "setup-local-dev-compose",
+      "prompt": "Design Docker Compose for a Node.js + Postgres + Redis stack with hot reload, health checks, and proper volume isolation.",
+      "expected": [
+        "Multi-stage Dockerfile with dev stage",
+        "Bind mount for source code with anonymous volume for node_modules",
+        "Health check for Postgres (pg_isready)",
+        "Depends on with condition: service_healthy",
+        "Named volumes for persistent data (pgdata, redisdata)",
+        "Environment variables for DATABASE_URL, REDIS_URL"
+      ],
+      "category": "basic",
+      "tags": ["compose", "local-dev", "healthcheck"]
+    },
+    {
+      "name": "create-secure-dockerfile",
+      "prompt": "Create a production Dockerfile for a Node.js application that follows security best practices.",
+      "expected": [
+        "Uses specific version tag (not :latest)",
+        "Multi-stage build with deps stage",
+        "Non-root user (addgroup/adduser)",
+        "USER directive before CMD",
+        "COPY with --chown for proper ownership",
+        "No secrets in ENV or image layers"
+      ],
+      "category": "basic",
+      "tags": ["dockerfile", "security", "production"]
+    },
+    {
+      "name": "debug-container-networking",
+      "prompt": "Container 'app' cannot connect to 'db' container. Debug steps to check DNS resolution and connectivity.",
+      "expected": [
+        "nslookup or ping to test DNS resolution",
+        "wget/curl to test HTTP connectivity",
+        "docker network inspect for network verification",
+        "Service name resolution explanation (db:5432)"
+      ],
+      "category": "edge-case",
+      "tags": ["networking", "debugging", "dns"]
+    },
+    {
+      "name": "configure-secrets",
+      "prompt": "Configure secret management for database password and API keys in Docker Compose. What are the safe and unsafe approaches?",
+      "expected": [
+        "Safe: .env file (gitignored) or Docker secrets",
+        "Unsafe: hardcoded in docker-compose.yml or ENV in Dockerfile",
+        "env_file directive for .env",
+        "Docker secrets for Swarm mode (file-based)"
+      ],
+      "category": "basic",
+      "tags": ["secrets", "security", "compose"]
+    },
+    {
+      "name": "volume-strategies",
+      "prompt": "Explain volume strategies for: 1) database persistence, 2) hot reload source code, 3) protecting node_modules from host.",
+      "expected": [
+        "Named volumes for database (pgdata)",
+        "Bind mount for source code (: /app)",
+        "Anonymous volume for node_modules (/app/node_modules)",
+        "Named volume vs bind mount distinction"
+      ],
+      "category": "basic",
+      "tags": ["volumes", "persistence", "hot-reload"]
+    },
+    {
+      "name": "production-multi-container",
+      "prompt": "Container 'app' needs to be accessible from frontend on frontend-net but database should only be reachable from app, not frontend. Design the network setup.",
+      "expected": [
+        "Custom networks (frontend-net, backend-net)",
+        "Frontend on frontend-net only",
+        "App on both frontend-net and backend-net",
+        "DB on backend-net only",
+        "No direct DB access from frontend"
+      ],
+      "category": "edge-case",
+      "tags": ["networking", "security", "multi-container"]
+    }
+  ]
+}

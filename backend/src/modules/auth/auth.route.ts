@@ -16,6 +16,7 @@ import {
   LoginInput,
   ValidateInput,
 } from "./auth.schema.js";
+import { ErrorCodes, createApiError } from "../../lib/api-response.js";
 
 export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/register
@@ -34,17 +35,15 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const result = await register(request.body);
 
-        // Устанавливаем refresh токен в cookie
         reply.setCookie("refreshToken", result.refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60, // 7 дней в секундах
+          maxAge: 7 * 24 * 60 * 60,
           path: "/",
         });
 
-        // Возвращаем только access токен
-        return reply.code(201).send({
+        return reply.code(201).header("Location", `/api/users/${result.userId}`).send({
           accessToken: result.accessToken,
           userId: result.userId,
           username: result.username,
@@ -58,10 +57,10 @@ export async function authRoutes(fastify: FastifyInstance) {
             { username: request.body.username, email: request.body.email },
             error.message,
           );
-          return reply.code(409).send({ error: error.message });
+          return reply.code(409).send(createApiError(ErrorCodes.CONFLICT, error.message));
         }
         fastify.log.error(error, "Unexpected error during registration");
-        throw error; // Для других ошибок Fastify вернет 500
+        throw error;
       }
     },
   );
@@ -82,16 +81,14 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const result = await login(request.body);
 
-        // Устанавливаем refresh токен в cookie
         reply.setCookie("refreshToken", result.refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60, // 7 дней в секундах
+          maxAge: 7 * 24 * 60 * 60,
           path: "/",
         });
 
-        // Возвращаем только access токен
         return reply.code(200).send({
           accessToken: result.accessToken,
           userId: result.userId,
@@ -106,7 +103,7 @@ export async function authRoutes(fastify: FastifyInstance) {
             { username: request.body.username },
             "Failed login attempt",
           );
-          return reply.code(401).send({ error: error.message });
+          return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, error.message));
         }
         fastify.log.error(error, "Unexpected error during login");
         throw error;
@@ -128,11 +125,10 @@ export async function authRoutes(fastify: FastifyInstance) {
           username: payload.username,
           role: payload.role || undefined,
         });
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
+      } catch {
         return reply
           .code(401)
-          .send({ error: "Invalid or expired token", valid: false });
+          .send(createApiError(ErrorCodes.TOKEN_INVALID, "Invalid or expired token", { valid: false }));
       }
     },
   );
@@ -140,29 +136,25 @@ export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/refresh
   fastify.post("/refresh", async (request, reply) => {
     try {
-      // Получаем refresh токен из cookie
       const refreshToken = request.cookies.refreshToken;
 
       if (!refreshToken) {
-        return reply.code(401).send({ error: "Refresh token not found" });
+        return reply.code(401).send(createApiError(ErrorCodes.AUTHENTICATION_REQUIRED, "Refresh token not found"));
       }
 
-      // Валидируем refresh токен
       const payload = validateRefreshToken(refreshToken);
 
-      // Генерируем новую пару токенов
       const tokens = generateTokenPair({
         userId: payload.userId,
         username: payload.username,
         role: payload.role || "user",
       });
 
-      // Устанавливаем новый refresh токен в cookie
       reply.setCookie("refreshToken", tokens.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60, // 7 дней в секундах
+        maxAge: 7 * 24 * 60 * 60,
         path: "/",
       });
 
@@ -173,7 +165,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       fastify.log.error(error, "Refresh token validation failed");
       return reply
         .code(401)
-        .send({ error: "Invalid or expired refresh token" });
+        .send(createApiError(ErrorCodes.REFRESH_TOKEN_EXPIRED, "Invalid or expired refresh token"));
     }
   });
 
@@ -201,11 +193,10 @@ export async function authRoutes(fastify: FastifyInstance) {
       const { email } = request.body;
       try {
         await requestPasswordReset(email);
-        // Generic message for security (prevents email enumeration)
         return reply.code(200).send({ message: "Если аккаунт с таким email существует, мы отправили ссылку для сброса пароля." });
       } catch (error) {
         fastify.log.error(error, "Forgot password error");
-        return reply.code(400).send({ error: "Failed to process request" });
+        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Failed to process request"));
       }
     },
   );
@@ -238,7 +229,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         return reply.code(200).send({ message: "Password reset successful" });
       } catch (error) {
         fastify.log.error(error, "Reset password error");
-        return reply.code(400).send({ error: "Invalid token or password" });
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, "Invalid token or password"));
       }
     },
   );

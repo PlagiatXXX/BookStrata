@@ -257,9 +257,9 @@ export const getPublicTierListsSchema = {
   querystring: {
     type: 'object',
     properties: {
-      page: { type: 'string', default: '1' },
-      pageSize: { type: 'string', default: '10' },
-      sortBy: { type: 'string', enum: ['updatedAt', 'updated_at', 'likes', 'created', 'created_at'], default: 'updatedAt' },
+      page: { type: 'string', default: '1', description: 'Page number' },
+      pageSize: { type: 'string', default: '10', description: 'Items per page' },
+      sortBy: { type: 'string', enum: ['updatedAt', 'updated_at', 'likes', 'created', 'created_at'], default: 'updatedAt', description: 'Sort field' },
     },
   },
   response: {
@@ -271,31 +271,45 @@ export const getPublicTierListsSchema = {
           items: {
             type: 'object',
             properties: {
-              id: { type: 'number' },
-              title: { type: 'string' },
-              createdAt: { type: 'string' },
-              updatedAt: { type: 'string' },
+              id: { type: 'number', description: 'Tier list ID' },
+              title: { type: 'string', description: 'Tier list title' },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
               isPublic: { type: 'boolean' },
-              user: {
-                type: 'object',
-                properties: {
-                  id: { type: 'number' },
-                  username: { type: 'string' },
-                  avatarUrl: { type: 'string' },
-                },
-              },
-              likesCount: { type: 'number' },
+              authorName: { type: 'string', description: 'Author username' },
+              authorAvatar: { type: 'string', description: 'Author avatar URL' },
+              booksCount: { type: 'number', description: 'Number of books' },
+              likesCount: { type: 'number', description: 'Number of likes' },
             },
           },
         },
         meta: {
           type: 'object',
           properties: {
-            totalItems: { type: 'number' },
-            itemCount: { type: 'number' },
-            itemsPerPage: { type: 'number' },
-            totalPages: { type: 'number' },
-            currentPage: { type: 'number' },
+            totalItems: { type: 'number', description: 'Total tier lists' },
+            totalPages: { type: 'number', description: 'Total pages' },
+            currentPage: { type: 'number', description: 'Current page' },
+          },
+        },
+        links: {
+          type: 'object',
+          properties: {
+            self: { type: 'string', description: 'Current page URL' },
+            next: { type: 'string', description: 'Next page URL' },
+            prev: { type: 'string', description: 'Previous page URL' },
+            last: { type: 'string', description: 'Last page URL' },
+          },
+        },
+      },
+    },
+    401: {
+      type: 'object',
+      properties: {
+        error: {
+          type: 'object',
+          properties: {
+            code: { type: 'string', enum: ['unauthorized', 'token_invalid'] },
+            message: { type: 'string' },
           },
         },
       },

@@ -74,6 +74,18 @@ export async function getUserTierLists(
     _count: undefined,
   }));
 
+  const baseUrl = "/api/tier-lists";
+  const links: Record<string, string> = {
+    self: `${baseUrl}?page=${page}&pageSize=${pageSize}`,
+  };
+  if (page < totalPages) {
+    links.next = `${baseUrl}?page=${page + 1}&pageSize=${pageSize}`;
+  }
+  if (page > 1) {
+    links.prev = `${baseUrl}?page=${page - 1}&pageSize=${pageSize}`;
+  }
+  links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}`;
+
   return {
     data,
     meta: {
@@ -83,6 +95,7 @@ export async function getUserTierLists(
       totalPages,
       currentPage: page,
     },
+    links,
   };
 }
 // Создание нового тир-листа
@@ -659,6 +672,18 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
 
   const totalPages = Math.ceil(totalItems / pageSize);
 
+  const baseUrl = "/api/tier-lists/public";
+  const links: Record<string, string> = {
+    self: `${baseUrl}?page=${page}&pageSize=${pageSize}&sortBy=${query.sortBy || "updated_at"}`,
+  };
+  if (page < totalPages) {
+    links.next = `${baseUrl}?page=${page + 1}&pageSize=${pageSize}&sortBy=${query.sortBy || "updated_at"}`;
+  }
+  if (page > 1) {
+    links.prev = `${baseUrl}?page=${page - 1}&pageSize=${pageSize}&sortBy=${query.sortBy || "updated_at"}`;
+  }
+  links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}&sortBy=${query.sortBy || "updated_at"}`;
+
   return {
     data: tierLists.map((tl) => ({
       ...tl,
@@ -672,6 +697,7 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
       totalPages,
       currentPage: page,
     },
+    links,
   };
 }
 

@@ -1,6 +1,9 @@
 # Docker Patterns
-
-Docker and Docker Compose best practices for containerized development.
+---
+name: docker-patterns
+description: |
+  Docker and Docker Compose best practices for containerized development.
+---
 
 ## When to Activate
 

@@ -1,6 +1,23 @@
-// backend/src/modules/auth/auth.schema.ts
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+
+// Вспомогательная функция для стандартного формата ошибок
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const makeErrorSchema = (description: string): any => ({
+  description,
+  type: 'object',
+  properties: {
+    error: {
+      type: 'object',
+      properties: {
+        code: { type: 'string' },
+        message: { type: 'string' },
+      },
+      required: ['code', 'message'],
+    },
+  },
+  required: ['error'],
+});
 
 export const jwtPayloadSchema = z.object({
   userId: z.number(),
@@ -42,20 +59,65 @@ const validateBodySchema = z.object({
     .regex(/^[\w-]+\.[\w-]+\.[\w-]+$/, "Некорректный формат JWT токена"),
 });
 
-// Экспортируем JSON схемы для Fastify
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const registerSchema = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  description: 'Register a new user account',
+  tags: ['Auth'],
   body: zodToJsonSchema(registerBodySchema as any),
+  response: {
+    201: {
+      description: 'User registered successfully',
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string', description: 'JWT access token' },
+        userId: { type: 'number', description: 'Created user ID' },
+        username: { type: 'string', description: 'Username' },
+      },
+      headers: {
+        Location: { type: 'string', description: 'URL of created user resource' },
+      },
+    },
+    409: makeErrorSchema('Username or email already exists'),
+  },
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const loginSchema = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  description: 'Login with username and password',
+  tags: ['Auth'],
   body: zodToJsonSchema(loginBodySchema as any),
+  response: {
+    200: {
+      description: 'Login successful',
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string', description: 'JWT access token' },
+        userId: { type: 'number', description: 'User ID' },
+        username: { type: 'string', description: 'Username' },
+      },
+    },
+    401: makeErrorSchema('Invalid credentials'),
+  },
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const validateSchema = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  description: 'Validate JWT token',
+  tags: ['Auth'],
   body: zodToJsonSchema(validateBodySchema as any),
+  response: {
+    200: {
+      description: 'Token is valid',
+      type: 'object',
+      properties: {
+        valid: { type: 'boolean', description: 'Always true on success' },
+        userId: { type: 'number', description: 'User ID from token' },
+        username: { type: 'string', description: 'Username' },
+        role: { type: 'string', description: 'User role' },
+      },
+    },
+    401: makeErrorSchema('Token is invalid or expired'),
+  },
 };
 
 export type RegisterInput = z.infer<typeof registerBodySchema>;

@@ -5,6 +5,7 @@ import { createLogger } from "../../lib/logger.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { SubscriptionsService } from "./subscriptions.service.js";
+import { ErrorCodes, createApiError } from "../../lib/api-response.js";
 
 const logger = createLogger("Subscriptions", { color: "cyan" });
 
@@ -98,7 +99,7 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
     },
     async (request, reply) => {
       if (!request.user) {
-        return reply.code(401).send({ error: "Требуется авторизация" });
+        return reply.code(401).send(createApiError(ErrorCodes.AUTHENTICATION_REQUIRED, "Требуется авторизация"));
       }
       const userId = Number((request.params as { userId: string }).userId);
       const subscription = await subscriptionsService.getUserSubscription(userId);
@@ -106,7 +107,7 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
       if (!subscription) {
         return reply
           .code(404)
-          .send({ error: "Пользователь не найден" });
+          .send(createApiError(ErrorCodes.USER_NOT_FOUND, "Пользователь не найден"));
       }
 
       return {
@@ -268,7 +269,7 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const user = request.user;
       if (!user) {
-        return reply.code(401).send({ error: "Требуется авторизация" });
+        return reply.code(401).send(createApiError(ErrorCodes.AUTHENTICATION_REQUIRED, "Требуется авторизация"));
       }
 
       const userId = user.userId;
@@ -277,7 +278,7 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
       if (!subscription) {
         return reply
           .code(404)
-          .send({ error: "Пользователь не найден" });
+          .send(createApiError(ErrorCodes.USER_NOT_FOUND, "Пользователь не найден"));
       }
 
       return {

@@ -69,8 +69,8 @@ export function AdminNewsPage() {
     try {
       setLoading(true);
       const response = await getNews(currentPage, ITEMS_PER_PAGE, false);
-      setNews(response.articles);
-      setTotal(response.total);
+      setNews(response.data);
+      setTotal(response.meta.total);
     } catch (error) {
       console.error("Failed to load news:", error);
       sileo.error({

@@ -19,6 +19,7 @@ import {
   getLikedTierListIds,
 } from "./likes/likes.service.js";
 import { addBooksToTierList } from "./tierList.service.js";
+import { ErrorCodes, createApiError } from "../../lib/api-response.js";
 
 // Логгер для роутов тир-листов
 const logger = createLogger("TierListsRoutes", { color: "cyan" });
@@ -62,7 +63,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const result = await like(tierListId, userId);
 
       if (!result.success) {
-        return reply.code(400).send({ error: result.message });
+        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, result.message || "Like failed"));
       }
 
       const likes = await getLikesWithStatus(tierListId, userId);
@@ -267,7 +268,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         userId,
         "create_tier_list",
       );
-      return reply.code(201).send({ ...tierList, newAchievements });
+      return reply.code(201).header("Location", `/api/tier-lists/${tierList.id}`).send({ ...tierList, newAchievements });
     },
   );
 
@@ -281,7 +282,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       const isOwner = request.user?.userId === tierList.userId;
       if (!tierList.isPublic && !isOwner) {
-        return reply.code(403).send({ message: "Access denied" });
+        return reply.code(403).send(createApiError(ErrorCodes.ACCESS_DENIED, "Access denied"));
       }
       return tierList;
     },
@@ -297,7 +298,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       if (tierList.userId !== request.user!.userId) {
         return reply
           .code(403)
-          .send({ message: "You can only edit your own tier lists" });
+          .send(createApiError(ErrorCodes.FORBIDDEN, "You can only edit your own tier lists"));
       }
 
       const updatedTierList = await service.prisma.tierList.update({
@@ -319,12 +320,12 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         select: { id: true, userId: true },
       });
       if (!tierList) {
-        return reply.code(404).send({ message: "Tier list not found" });
+        return reply.code(404).send(createApiError(ErrorCodes.TIER_LIST_NOT_FOUND, "Tier list not found"));
       }
       if (tierList.userId !== request.user!.userId) {
         return reply
           .code(403)
-          .send({ message: "You can only delete your own tier lists" });
+          .send(createApiError(ErrorCodes.FORBIDDEN, "You can only delete your own tier lists"));
       }
 
       await service.deleteTierList(tierListId);
@@ -406,11 +407,12 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       );
 
       if (!limitCheck.allowed) {
-        return reply.code(403).send({
-          error: "Превышен лимит книг в тир-листе",
-          remaining: limitCheck.remaining,
-          required: request.proLimit?.isPro ? "Pro" : "Free",
-        });
+        return reply.code(403).send(
+          createApiError(ErrorCodes.LIMIT_EXCEEDED, "Превышен лимит книг в тир-листе", {
+            remaining: limitCheck.remaining,
+            required: request.proLimit?.isPro ? "Pro" : "Free",
+          }),
+        );
       }
 
       // === ОБРАБОТКА КАРТИНОК ПЕРЕД СОХРАНЕНИЕМ ===
@@ -468,7 +470,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const bookId = parseInt(request.params.bookId, 10);
 
       if (Number.isNaN(bookId)) {
-        return reply.code(400).send({ error: "Invalid bookId" });
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_ID, "Invalid bookId"));
       }
 
       await service.assertOwner(tierListId, request.user!.userId);
@@ -499,7 +501,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const bookId = parseInt(request.params.bookId, 10);
 
       if (Number.isNaN(bookId)) {
-        return reply.code(400).send({ error: "Invalid bookId" });
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_ID, "Invalid bookId"));
       }
 
       await service.assertOwner(tierListId, request.user!.userId);
@@ -521,14 +523,14 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const { coverImageUrl } = request.body;
 
       if (Number.isNaN(bookId)) {
-        return reply.code(400).send({ error: "Invalid bookId" });
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_ID, "Invalid bookId"));
       }
 
       await service.assertOwner(tierListId, request.user!.userId);
 
       // Проверяем, что это data URL
       if (!coverImageUrl || !coverImageUrl.startsWith("data:")) {
-        return reply.code(400).send({ error: "Invalid image format" });
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Invalid image format"));
       }
 
       try {
@@ -555,7 +557,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           { error: String(error) },
           "Failed to upload cover image",
         );
-        return reply.code(500).send({ error: "Failed to upload image" });
+        return reply.code(500).send(createApiError(ErrorCodes.UPLOAD_FAILED, "Failed to upload image"));
       }
     },
   );
@@ -581,7 +583,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       // Проверяем наличие обложки
       if (!coverUrl) {
-        return reply.code(400).send({ error: "Book has no cover image" });
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, "Book has no cover image"));
       }
 
       try {

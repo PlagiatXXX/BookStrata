@@ -12,6 +12,7 @@ import {
 } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
+import { ErrorCodes, createApiError } from "../../lib/api-response.js";
 
 export async function userRoutes(fastify: FastifyInstance) {
   // GET /api/users/me
@@ -21,7 +22,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = (request as any).user?.userId;
       if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       const user = await getMe(userId);
       return reply.code(200).send(user);
@@ -48,7 +49,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = (request as any).user?.userId;
       if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       const user = await updateUser(userId, request.body.username);
       fastify.log.info(
@@ -66,7 +67,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = (request as any).user?.userId;
       if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       const stats = await getUserStats(userId);
       return reply.code(200).send(stats);
@@ -101,7 +102,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = (request as any).user?.userId;
       if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       const user = await updateAvatar(userId, request.body.avatarUrl);
       fastify.log.info(
@@ -119,7 +120,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = (request as any).user?.userId;
       if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       const user = await deleteAvatar(userId);
       fastify.log.info({ userId }, "Avatar deleted");
@@ -148,7 +149,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = (request as any).user?.userId;
       if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       const user = await changePassword(
         userId,

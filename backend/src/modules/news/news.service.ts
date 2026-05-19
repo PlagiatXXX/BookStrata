@@ -59,8 +59,11 @@ export class NewsService {
     page?: number;
     limit?: number;
     publishedOnly?: boolean;
-  }): Promise<{ articles: NewsArticle[]; total: number }> {
-    // publishedOnly defaults to true for security - unprivileged calls shouldn't see draft content
+  }): Promise<{
+    data: NewsArticle[];
+    meta: { total: number; currentPage: number; totalPages: number; itemsPerPage: number };
+    links: Record<string, string>;
+  }> {
     const { page = 1, limit = 10, publishedOnly = true } = options || {};
     const skip = (page - 1) * limit;
 
@@ -93,12 +96,31 @@ export class NewsService {
       prisma.newsArticle.count({ where }),
     ]);
 
+    const totalPages = Math.ceil(total / limit);
+    const baseUrl = "/api/news";
+    const links: Record<string, string> = {
+      self: `${baseUrl}?page=${page}&limit=${limit}`,
+    };
+    if (page < totalPages) {
+      links.next = `${baseUrl}?page=${page + 1}&limit=${limit}`;
+    }
+    if (page > 1) {
+      links.prev = `${baseUrl}?page=${page - 1}&limit=${limit}`;
+    }
+    links.last = `${baseUrl}?page=${totalPages}&limit=${limit}`;
+
     return {
-      articles: articles.map((article) => ({
+      data: articles.map((article) => ({
         ...article,
         authorName: article.author?.username || null,
       })),
-      total,
+      meta: {
+        total,
+        currentPage: page,
+        totalPages,
+        itemsPerPage: limit,
+      },
+      links,
     };
   }
 
