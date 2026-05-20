@@ -393,7 +393,7 @@ const TierListEditorContent = () => {
     ...(isReadOnly && {
       author: apiData?.user,
       likesCount: likesData?.likesCount || 0,
-      likedIdsSet,
+      initialLiked: likesData?.isLiked || false,
       tierListId,
       ownerUserId,
       currentUserId,

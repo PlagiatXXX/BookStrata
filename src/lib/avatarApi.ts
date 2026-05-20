@@ -12,9 +12,11 @@ export interface AvatarLimitInfo {
 }
 
 export interface GenerateAvatarResult {
-  success: boolean;
-  imageUrl: string;
-  remaining: number;
+  data: {
+    success: boolean;
+    imageUrl: string;
+    remaining: number;
+  };
 }
 
 export async function apiGenerateAvatar(

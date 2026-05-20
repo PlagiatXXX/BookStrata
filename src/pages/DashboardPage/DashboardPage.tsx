@@ -126,7 +126,7 @@ export function DashboardPage() {
 
   // Фильтрация и пагинация - используем дебаунснутый поиск
   const { displayedTierLists } = useTierListsPagination({
-    allTierLists: paginatedResponse.data,
+    allTierLists: (paginatedResponse as any)?.data ?? [],
     searchQuery: debouncedSearchQuery,
     sortOption,
     filterOption,

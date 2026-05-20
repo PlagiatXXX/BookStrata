@@ -73,8 +73,9 @@
  *       type: object
  *       properties:
  *         id:
- *           type: integer
- *         title:
+ *           type: string
+ *           description: UUID или integer ID тир-листа
+ *         slug:
  *           type: string
  *         createdAt:
  *           type: string

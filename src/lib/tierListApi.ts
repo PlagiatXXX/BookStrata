@@ -115,9 +115,9 @@ export async function deleteTierList(id: string) {
     method: 'DELETE',
     headers: getAuthHeader(),
   });
-  const result = await handleAchievementResponse(response);
+  const result = await handleAchievementResponse<{ data: { message: string } }>(response);
   tierListLogger.info('Рейтинговый список успешно удален', { tierListId: id });
-  return result;
+  return result.data;
 }
 
 export async function getPublicTierLists(

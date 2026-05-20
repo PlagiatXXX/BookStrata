@@ -55,11 +55,14 @@ export async function apiRegister(
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    authLogger.error(new Error(error.error || "Регистрация не удалась"), {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData?.error?.message 
+      || errorData?.message 
+      || (typeof errorData?.error === 'string' ? errorData.error : `Ошибка: ${response.statusText}`);
+    authLogger.error(new Error(errorMessage), {
       username: payload.username,
     });
-    throw new Error(error.error || "Регистрация не удалась");
+    throw new Error(errorMessage);
   }
 
   const result = await response.json();
@@ -89,12 +92,15 @@ export async function apiLogin(payload: LoginPayload): Promise<AuthResponse> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData?.error?.message 
+      || errorData?.message 
+      || (typeof errorData?.error === 'string' ? errorData.error : `Ошибка: ${response.statusText}`);
     authLogger.warn("Вход не удался", {
       username: payload.username,
-      reason: error.error,
+      reason: errorMessage,
     });
-    throw new Error(error.error || "Вход не удался");
+    throw new Error(errorMessage);
   }
 
   const result = await response.json();
@@ -353,7 +359,9 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error || `Ошибка: ${response.statusText}`;
+    const errorMessage = errorData?.error?.message 
+      || errorData?.message 
+      || (typeof errorData?.error === 'string' ? errorData.error : `Ошибка: ${response.statusText}`);
     authLogger.error(new Error(errorMessage), {
       status: response.status,
       statusText: response.statusText,
@@ -380,9 +388,12 @@ export async function apiForgotPassword(email: string): Promise<{ message: strin
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    authLogger.error(new Error(error.error || "Не удалось отправить запрос"), { email });
-    throw new Error(error.error || "Не удалось отправить запрос");
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData?.error?.message 
+      || errorData?.message 
+      || (typeof errorData?.error === 'string' ? errorData.error : `Ошибка: ${response.statusText}`);
+    authLogger.error(new Error(errorMessage), { email });
+    throw new Error(errorMessage);
   }
 
   return response.json();
@@ -401,9 +412,12 @@ export async function apiResetPassword(token: string, password: string): Promise
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    authLogger.error(new Error(error.error || "Не удалось сбросить пароль"));
-    throw new Error(error.error || "Не удалось сбросить пароль");
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData?.error?.message 
+      || errorData?.message 
+      || (typeof errorData?.error === 'string' ? errorData.error : `Ошибка: ${response.statusText}`);
+    authLogger.error(new Error(errorMessage));
+    throw new Error(errorMessage);
   }
 
   return response.json();

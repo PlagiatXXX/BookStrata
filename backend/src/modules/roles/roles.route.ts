@@ -19,7 +19,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const roles = await rolesService.getAllRoles();
-        return reply.send(roles);
+        return reply.send({ data: roles });
       } catch (error) {
         logger.error("Ошибка получения ролей", { error });
         return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при получении ролей"));
@@ -42,10 +42,10 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         const role = await rolesService.getUserRole(request.user.userId);
 
         if (!role) {
-          return reply.send({ role: null });
+          return reply.send({ data: null });
         }
 
-        return reply.send({ role });
+        return reply.send({ data: role });
       } catch (error) {
         logger.error("Ошибка получения роли пользователя", { error });
         return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при получении роли"));
@@ -69,7 +69,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         }
 
         const users = await rolesService.getUsersByRole(roleName as RoleName);
-        return reply.send(users);
+        return reply.send({ data: users });
       } catch (error) {
         logger.error("Ошибка получения пользователей по роли", { error });
         return reply
@@ -124,8 +124,10 @@ export async function rolesRoutes(fastify: FastifyInstance) {
         });
 
         return reply.send({
-          success: true,
-          role: result,
+          data: {
+            success: true,
+            role: result,
+          },
         });
       } catch (error) {
         logger.error("Ошибка назначения роли", { error });
@@ -149,7 +151,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
 
         logger.info("Роль снята", { userId });
 
-        return reply.send({ success: true });
+        return reply.send({ data: { success: true } });
       } catch (error) {
         logger.error("Ошибка снятия роли", { error });
         return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при снятии роли"));

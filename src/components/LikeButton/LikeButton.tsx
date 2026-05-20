@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -45,13 +45,17 @@ export function LikeButton({
   const [liked, setLiked] = useState(initialLiked);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
-  const idStr = String (id);
+  const idStr = String(id);
 
-  // Синхронизируем состояние с props при смене тир-листа/шаблона
+  // Refs to track confirmed server state (prevents stale closure issues)
+  const confirmedLikedRef = useRef(initialLiked);
+  const confirmedLikesRef = useRef(initialLikes);
+
+  // Sync refs when initialLiked/initialLikes change
   useEffect(() => {
-    setLikes(initialLikes);
-    setLiked(initialLiked);
-  }, [id, initialLikes, initialLiked]);
+    confirmedLikedRef.current = initialLiked;
+    confirmedLikesRef.current = initialLikes;
+  }, [initialLiked, initialLikes]);
 
   const isOwn = authorId !== undefined && currentUserId !== undefined && authorId === currentUserId;
   const isAuthenticated = !!currentUserId;
@@ -59,65 +63,66 @@ export function LikeButton({
 
   const handleLike = async () => {
     if (!isAuthenticated || isLoading) return;
-    if (isOwn) return; // Нельзя лайкать своё
+    if (isOwn) return;
 
+    if (isLoading) return;
     setIsLoading(true);
 
-    // Optimistic update - сразу обновляем локальное состояние
-    const previousLiked = liked;
-    const previousLikes = likes;
-    const newLiked = !liked;
-    setLiked(newLiked);
-    setLikes(liked ? likes - 1 : likes + 1);
+    // Always read from server-ground-truth: we track the actual server state in ref
+    const serverLiked = confirmedLikedRef.current;
+    const serverLikes = confirmedLikesRef.current;
+    const optimisticLiked = !serverLiked;
+    const optimisticLikes = serverLiked ? serverLikes - 1 : serverLikes + 1;
+    console.log('[LikeButton] Click: serverLiked=', serverLiked, 'optimisticLiked=', optimisticLiked);
+
+    setLiked(optimisticLiked);
+    setLikes(optimisticLikes);
 
     try {
       let response: LikesResponse;
-
       if (type === 'tierlist') {
-        if (liked) {
+        if (serverLiked) {
           response = await apiUnlikeTierList(idStr);
         } else {
           response = await apiLikeTierList(idStr);
         }
       } else {
-        if (liked) {
+        if (serverLiked) {
           response = await apiUnlikeTemplate(idStr);
         } else {
           response = await apiLikeTemplate(idStr);
         }
       }
 
-      // Обновляем локальное состояние данными с сервера
-      setLikes(response.likesCount);
+      confirmedLikedRef.current = response.isLiked;
+      confirmedLikesRef.current = response.likesCount;
       setLiked(response.isLiked);
+      setLikes(response.likesCount);
       onLikeChange?.(response.likesCount, response.isLiked);
 
       // Обновляем кэш likedTierListIds напрямую через setQueryData
       const currentCache = queryClient.getQueryData<{ likedIds: string[] }>(['likedTierListIds']);
-      if (currentCache) {
-        const newLikedIds = newLiked
+      if (Array.isArray(currentCache?.likedIds)) {
+        const newLikedIds = optimisticLiked
           ? [...currentCache.likedIds, idStr]
           : currentCache.likedIds.filter((lid) => lid !== idStr);
         queryClient.setQueryData(['likedTierListIds'], { likedIds: newLikedIds });
       }
 
-      // Также обновляем кэш publicTierLists напрямую
-      // Инвалидируем для синхронизации с сервером
       queryClient.invalidateQueries({ queryKey: ['publicTierLists'] });
       queryClient.invalidateQueries({ queryKey: ['publicTierListsSorted'] });
       queryClient.invalidateQueries({ queryKey: ['likedTierListIds'] });
-      queryClient.invalidateQueries({ queryKey: ['tierListLikes'] });
+      queryClient.invalidateQueries({ queryKey: ['tierListLikes', idStr] });
+      queryClient.invalidateQueries({ queryKey: ['templateLikes', idStr] });
       queryClient.invalidateQueries({ queryKey: ['user', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['userTierLists'] });
     } catch (error) {
-      // При ошибке откатываем состояние
-      setLiked(previousLiked);
-      setLikes(previousLikes);
-      logger.error(error as Error, { action: 'like/unlike', type, id });
-      // При ошибке "Already liked" обновляем состояние
+      setLiked(confirmedLikedRef.current);
+      setLikes(confirmedLikesRef.current);
+      logger.error(error instanceof Error ? error : new Error(String(error)), { action: 'like/unlike', type, id });
       if (error instanceof Error && error.message.includes('Already liked')) {
         setLiked(true);
-        // Запрашиваем актуальное количество лайков
+        confirmedLikedRef.current = true;
         try {
           let likesResponse: LikesResponse;
           if (type === 'tierlist') {
@@ -126,8 +131,9 @@ export function LikeButton({
             likesResponse = await apiGetTemplateLikes(idStr);
           }
           setLikes(likesResponse.likesCount);
-        } catch {
-          // Игнорируем ошибку при повторном запросе
+          confirmedLikesRef.current = likesResponse.likesCount;
+        } catch (e) {
+          console.error('[LikeButton] Failed to fetch likes after Already liked error:', e);
         }
       }
     } finally {

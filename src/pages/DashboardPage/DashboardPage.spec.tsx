@@ -121,7 +121,7 @@ describe("DashboardPage", () => {
       title: "Updated Title",
     });
 
-    vi.mocked(apiModule.deleteTierList).mockResolvedValue(undefined);
+    vi.mocked(apiModule.deleteTierList).mockResolvedValue({ message: "Tier list deleted successfully" });
   });
 
   it("должен рендериться с заголовком", () => {

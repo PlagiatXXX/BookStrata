@@ -30,10 +30,6 @@ export async function tierListLikesRoutes(fastify: FastifyInstance) {
 
       const result = await like(tierListId, userId);
 
-      if (!result.success) {
-        return reply.code(400).send({ error: result.message });
-      }
-
       // Получаем обновлённое количество лайков
       const likes = await getLikesWithStatus(tierListId, userId);
 

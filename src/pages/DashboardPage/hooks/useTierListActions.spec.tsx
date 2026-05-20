@@ -180,7 +180,7 @@ describe("useTierListActions", () => {
 
   describe("removeTierList", () => {
     it("должен успешно удалять тир-лист", async () => {
-      vi.mocked(apiModule.deleteTierList).mockResolvedValue(undefined);
+      vi.mocked(apiModule.deleteTierList).mockResolvedValue({ message: "Tier list deleted successfully" });
 
       const onSuccess = vi.fn();
       const onRefetch = vi.fn();

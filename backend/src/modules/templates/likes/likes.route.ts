@@ -9,10 +9,10 @@ export async function templateLikesRoutes(fastify: FastifyInstance) {
     '/:id/likes',
     async (request, reply) => {
       const templateId = request.params.id;
-      const userId = request.user!.userId;
+      const userId = request.user?.userId;
 
       const likes = await getLikesWithStatus(templateId, userId);
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ data: likes });
     }
   );
 
@@ -28,15 +28,11 @@ export async function templateLikesRoutes(fastify: FastifyInstance) {
 
       const result = await like(templateId, userId);
 
-      if (!result.success) {
-        return reply.code(400).send({ error: result.message });
-      }
-
       // Получаем обновлённое количество лайков
       const likes = await getLikesWithStatus(templateId, userId);
 
       fastify.log.info({ userId, templateId }, 'Template liked');
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ data: likes });
     }
   );
 
@@ -50,13 +46,17 @@ export async function templateLikesRoutes(fastify: FastifyInstance) {
       const templateId = request.params.id;
       const userId = request.user.userId;
 
-      await unlike(templateId, userId);
+      const result = await unlike(templateId, userId);
+
+      if (!result.success) {
+        return reply.code(400).send({ error: result.message || 'Not liked' });
+      }
 
       // Получаем обновлённое количество лайков
       const likes = await getLikesWithStatus(templateId, userId);
 
       fastify.log.info({ userId, templateId }, 'Template unliked');
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ data: likes });
     }
   );
 }

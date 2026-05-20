@@ -26,7 +26,7 @@ export function useTierListsPagination({
 }: UseTierListsPaginationOptions): UseTierListsPaginationReturn {
   // Фильтрация по поиску и публичности
   const filteredTierLists = useMemo(() => {
-    let result = allTierLists;
+    let result = allTierLists || [];
 
     // Фильтрация по поиску
     if (searchQuery.trim()) {

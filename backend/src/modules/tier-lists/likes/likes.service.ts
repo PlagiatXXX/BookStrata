@@ -18,7 +18,7 @@ export async function isLikedByUser(tierListId: string, userId: number) {
   return !!like;
 }
 
-// Поставить лайк
+// Поставить лайк (идемпотентный — если уже лайкнул, просто возвращает success)
 export async function like(tierListId: string, userId: number) {
   const existing = await prisma.tierListLike.findUnique({
     where: {
@@ -27,7 +27,7 @@ export async function like(tierListId: string, userId: number) {
   });
 
   if (existing) {
-    return { success: false, message: 'Already liked' };
+    return { success: true };
   }
 
   // Используем транзакцию для атомарного обновления

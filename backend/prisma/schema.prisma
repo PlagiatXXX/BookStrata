@@ -65,6 +65,7 @@ tiers       Tier[]
 placements  BookPlacement[]
 likes       TierListLike[]
 battleParticipants BattleParticipant[]
+originalTierListId String? @map("original_tier_list_id")
 createdAt   DateTime        @default(now()) @map("created_at")
 updatedAt   DateTime        @updatedAt @map("updated_at")
  

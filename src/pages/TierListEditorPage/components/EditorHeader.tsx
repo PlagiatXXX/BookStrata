@@ -11,7 +11,7 @@ export interface EditorHeaderProps {
   title: string;
   author?: { username: string };
   likesCount?: number;
-  likedIdsSet?: Set<string>;
+  initialLiked?: boolean;
   tierListId?: string;
   ownerUserId?: number;
   currentUserId?: number;
@@ -26,7 +26,7 @@ export const EditorHeader = ({
   title,
   author,
   likesCount,
-  likedIdsSet,
+  initialLiked,
   tierListId,
   ownerUserId,
   currentUserId,
@@ -98,7 +98,7 @@ export const EditorHeader = ({
                 id={tierListId!}
                 type="tierlist"
                 initialLikes={likesCount || 0}
-                initialLiked={likedIdsSet?.has(tierListId!) || false}
+                initialLiked={initialLiked || false}
                 authorId={ownerUserId}
                 currentUserId={currentUserId}
                 size="md"

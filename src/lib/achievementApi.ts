@@ -61,7 +61,15 @@ export function checkResponseForAchievements(data: any) {
 export async function handleAchievementResponse<T>(
   response: Response,
 ): Promise<T> {
-  const result = await handleResponse<T>(response);
+  const result = await handleResponse<{ data: T; meta?: unknown; links?: unknown } | T>(response);
+
+  // Extract .data if the response follows the envelope pattern
+  // Don't unwrap paginated responses that have meta/links (they're full response objects)
+  if (result && typeof result === "object" && "data" in result && !("meta" in result) && !("links" in result)) {
+    checkResponseForAchievements(result);
+    return (result as { data: T }).data;
+  }
+
   checkResponseForAchievements(result);
-  return result;
+  return result as T;
 }

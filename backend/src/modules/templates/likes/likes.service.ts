@@ -21,7 +21,7 @@ export async function isLikedByUser(templateId: string, userId: number) {
   return !!like;
 }
 
-// Поставить лайк
+// Поставить лайк (идемпотентный — если уже лайкнул, просто возвращает success)
 export async function like(templateId: string, userId: number) {
   const existing = await prisma.templateLike.findUnique({
     where: {
@@ -33,7 +33,7 @@ export async function like(templateId: string, userId: number) {
   });
 
   if (existing) {
-    return { success: false, message: 'Already liked' };
+    return { success: true };
   }
 
   await prisma.templateLike.create({
@@ -48,6 +48,19 @@ export async function like(templateId: string, userId: number) {
 
 // Убрать лайк
 export async function unlike(templateId: string, userId: number) {
+  const existing = await prisma.templateLike.findUnique({
+    where: {
+      userId_templateId: {
+        userId,
+        templateId,
+      },
+    },
+  });
+
+  if (!existing) {
+    return { success: false, message: 'Not liked' };
+  }
+
   await prisma.templateLike.delete({
     where: {
       userId_templateId: {

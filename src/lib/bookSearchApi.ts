@@ -81,9 +81,11 @@ export async function addBookFromGoogleBooks(
       throw new Error(error.error || 'Не удалось добавить книгу');
     }
 
-    const result = await handleResponse<{ book: { id: number; title: string; author: string | null; coverImageUrl: string } }>(response);
-    bookSearchLogger.info('Книга добавлена из поиска', { tierListId, bookId: result.book.id });
-    return result.book;
+    const result = await handleResponse<{ data: { book: { id: number; title: string; author: string | null; coverImageUrl: string } } }>(response);
+    const addedBook = result.data?.book;
+    if (!addedBook) throw new Error("Book was not returned from server");
+    bookSearchLogger.info('Книга добавлена из поиска', { tierListId, bookId: addedBook.id });
+    return addedBook;
   } catch (err) {
     if (err instanceof Error) {
       bookSearchLogger.error(err, { action: 'addBookFromGoogleBooks', tierListId, title: book.title });

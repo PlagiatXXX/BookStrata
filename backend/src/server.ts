@@ -7,6 +7,7 @@ import cookie from "@fastify/cookie";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
+import { redisStore } from "./lib/redis.js";
 import { prisma, waitForDatabase } from "./lib/prisma.js";
 import { ErrorCodes, createApiError } from "./lib/api-response.js";
 import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
@@ -92,8 +93,21 @@ await fastify.register(helmet, {
 });
 
 await fastify.register(rateLimit, {
+  global: true,
   max: 100,
   timeWindow: "1 minute",
+  store: redisStore,
+  addHeadersOnExceeding: {
+    "x-ratelimit-limit": true,
+    "x-ratelimit-remaining": true,
+    "x-ratelimit-reset": true,
+  },
+  addHeaders: {
+    "x-ratelimit-limit": true,
+    "x-ratelimit-remaining": true,
+    "x-ratelimit-reset": true,
+    "retry-after": true,
+  },
 });
 
 // Глобальный обработчик ошибок

@@ -240,14 +240,15 @@ export async function processAction(userId: number, action: 'create_tier_list' |
       break;
     }
     case 'participate_battle': {
-      const a = await checkAndGrantAchievement(userId, 'fighter_1');
-      if (a) newAchievements.push(a);
-      const aL = await checkAndGrantAchievement(userId, 'battle_participant');
-      if (aL) newAchievements.push(aL);
-
       const battleCount = await prisma.battleParticipant.count({
         where: { tierList: { userId } }
       });
+      if (battleCount >= 1) {
+        const a = await checkAndGrantAchievement(userId, 'fighter_1');
+        if (a) newAchievements.push(a);
+        const aL = await checkAndGrantAchievement(userId, 'battle_participant');
+        if (aL) newAchievements.push(aL);
+      }
       if (battleCount >= 10) {
         const a2 = await checkAndGrantAchievement(userId, 'fighter_2');
         if (a2) newAchievements.push(a2);
@@ -255,11 +256,6 @@ export async function processAction(userId: number, action: 'create_tier_list' |
       break;
     }
     case 'win_battle': {
-      const a = await checkAndGrantAchievement(userId, 'fighter_3');
-      if (a) newAchievements.push(a);
-      const aL = await checkAndGrantAchievement(userId, 'battle_winner');
-      if (aL) newAchievements.push(aL);
-
       const userTierListIds = (await prisma.tierList.findMany({
         where: { userId },
         select: { id: true }
@@ -268,6 +264,12 @@ export async function processAction(userId: number, action: 'create_tier_list' |
       const winCount = await prisma.battle.count({
         where: { winnerId: { in: userTierListIds } }
       });
+      if (winCount >= 1) {
+        const a = await checkAndGrantAchievement(userId, 'fighter_3');
+        if (a) newAchievements.push(a);
+        const aL = await checkAndGrantAchievement(userId, 'battle_winner');
+        if (aL) newAchievements.push(aL);
+      }
       if (winCount >= 20) {
         const a2 = await checkAndGrantAchievement(userId, 'fighter_4');
         if (a2) newAchievements.push(a2);
@@ -275,8 +277,13 @@ export async function processAction(userId: number, action: 'create_tier_list' |
       break;
     }
     case 'fork': {
-       const a = await checkAndGrantAchievement(userId, 'explorer');
-       if (a) newAchievements.push(a);
+       const forkedCount = await prisma.tierList.count({
+         where: { userId, originalTierListId: { not: null } }
+       });
+       if (forkedCount >= 1) {
+         const a = await checkAndGrantAchievement(userId, 'explorer');
+         if (a) newAchievements.push(a);
+       }
        break;
     }
   }

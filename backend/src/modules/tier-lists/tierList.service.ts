@@ -772,6 +772,7 @@ export async function forkTierList(id: string, userId: number) {
         userId,
         title: `${original.title} (копия)`,
         isPublic: false,
+        originalTierListId: original.id,
         tiers: {
           create: original.tiers.map((tier) => ({
             title: tier.title,

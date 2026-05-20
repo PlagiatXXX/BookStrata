@@ -45,7 +45,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       const likes = await getLikesWithStatus(tierListId, userId);
       fastify.log.info({ requestId, userId, tierListId }, "Likes fetched");
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ data: likes });
     },
   );
 
@@ -60,15 +60,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const userId = request.user?.userId;
       const tierListId = request.params.id;
 
-      const result = await like(tierListId, userId);
-
-      if (!result.success) {
-        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, result.message || "Like failed"));
-      }
+      await like(tierListId, userId);
 
       const likes = await getLikesWithStatus(tierListId, userId);
       fastify.log.info({ requestId, userId, tierListId }, "Tier list liked");
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ data: likes });
     },
   );
 
@@ -87,7 +83,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       const likes = await getLikesWithStatus(tierListId, userId);
       fastify.log.info({ requestId, userId, tierListId }, "Tier list unliked");
-      return reply.code(200).send(likes);
+      return reply.code(200).send({ data: likes });
     },
   );
 
@@ -100,7 +96,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request: any, reply) => {
       const userId = request.user.userId;
       const likedIds = await getLikedTierListIds(userId);
-      return reply.code(200).send({ likedIds });
+      return reply.code(200).send({ data: { likedIds } });
     },
   );
 
@@ -268,7 +264,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         userId,
         "create_tier_list",
       );
-      return reply.code(201).header("Location", `/api/tier-lists/${tierList.id}`).send({ ...tierList, newAchievements });
+      return reply.code(201).header("Location", `/api/tier-lists/${tierList.id}`).send({ data: { ...tierList, newAchievements } });
     },
   );
 
@@ -305,7 +301,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         where: { id: tierListId },
         data: { title: request.body.title.trim() },
       });
-      return reply.code(200).send(updatedTierList);
+      return reply.code(200).send({ data: updatedTierList });
     },
   );
 
@@ -354,7 +350,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       );
       return reply
         .code(200)
-        .send({ message: "Placements updated", newAchievements });
+        .send({ data: { message: "Placements updated", newAchievements } });
     },
   );
 
@@ -375,7 +371,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     const tierListId = request.params.id;
     await service.assertOwner(tierListId, request.user!.userId);
     const savedTiers = await service.saveTiers(tierListId, request.body);
-    return reply.code(200).send(savedTiers);
+    return reply.code(200).send({ data: savedTiers });
   });
 
   // POST /:id/books -> Добавить книги
@@ -449,7 +445,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         request.user!.userId,
         "add_book",
       );
-      return reply.code(201).send({ results, newAchievements });
+      return reply.code(201).send({ data: { results, newAchievements } });
     },
   );
 
@@ -488,7 +484,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           "write_review",
         );
       }
-      return reply.code(200).send({ ...updatedBook, newAchievements });
+      return reply.code(200).send({ data: { ...updatedBook, newAchievements } });
     },
   );
 
@@ -506,7 +502,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       await service.assertOwner(tierListId, request.user!.userId);
       await service.removeBookFromTierList(tierListId, bookId);
-      return reply.code(200).send({ message: "Book removed" });
+      return reply.code(200).send({ data: { message: "Book removed" } });
     },
   );
 
@@ -547,10 +543,10 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           { bookId, coverUrl: uploadResult.url },
           "Book cover updated",
         );
-        return reply.code(200).send({ coverImageUrl: uploadResult.url });
+        return reply.code(200).send({ data: { coverImageUrl: uploadResult.url } });
       } catch (error: any) {
         if (error?.statusCode) {
-          return reply.code(error.statusCode).send({ error: error.message });
+          return reply.code(error.statusCode).send(createApiError(ErrorCodes.INTERNAL_ERROR, error.message));
         }
 
         fastify.log.error(
@@ -623,13 +619,13 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           },
           "Book added from Open Library",
         );
-        return reply.code(201).send({ book: createdBook, newAchievements });
+        return reply.code(201).send({ data: { book: createdBook, newAchievements } });
       } catch (error) {
         fastify.log.error(
           { requestId, userId, error: String(error) },
           "Failed to add book from Open Library",
         );
-        return reply.code(500).send({ error: "Failed to add book" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Failed to add book"));
       }
     },
   );
@@ -646,7 +642,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         tierListId,
         request.body.isPublic,
       );
-      return reply.code(200).send(updatedTierList);
+      return reply.code(200).send({ data: updatedTierList });
     },
   );
 
@@ -664,10 +660,10 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           userId,
           "fork",
         );
-        return reply.code(201).send({ ...newTierList, newAchievements });
+        return reply.code(201).send({ data: { ...newTierList, newAchievements } });
       } catch (error) {
         fastify.log.error(error);
-        return reply.code(500).send({ message: "Failed to fork tier list" });
+        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Failed to fork tier list"));
       }
     },
   );
@@ -726,11 +722,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         newAchievements.push(...achs);
       }
 
-      return reply.code(200).send({
+      return reply.code(200).send({ data: {
         message: "Saved successfully",
         newAchievements,
         ...result,
-      });
+      } });
     },
   );
 }

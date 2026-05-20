@@ -271,7 +271,7 @@ export const getPublicTierListsSchema = {
           items: {
             type: 'object',
             properties: {
-              id: { type: 'number', description: 'Tier list ID' },
+              id: { type: 'string', description: 'Tier list ID (UUID or integer)' },
               title: { type: 'string', description: 'Tier list title' },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },

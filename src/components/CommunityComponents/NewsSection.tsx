@@ -53,7 +53,7 @@ export const NewsSection = memo(() => {
     );
   }
 
-  if (error || !news || news.length === 0) {
+  if (error || !news || !Array.isArray(news) || news.length === 0) {
     return null;
   }
 

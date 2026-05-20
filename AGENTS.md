@@ -84,6 +84,83 @@ PostgreSQL 14+ required. Redis via `backend/docker-compose.yml`.
 - Services contain business logic; routes are thin controllers
 - Frontend API clients in `src/lib/{domain}Api.ts` using `apiClient`
 
+## API Standards (2025-05-19)
+
+### Error Response Format
+
+```typescript
+// Все ошибки возвращаются в формате:
+{ error: { code: string, message: string, details?: unknown } }
+```
+
+См. `backend/src/lib/api-response.ts` — ErrorCodes enum + createApiError helper.
+
+### Error Codes
+
+| Code | HTTP Status | Описание |
+|------|-------------|----------|
+| validation_error | 400 | Ошибка валидации запроса |
+| invalid_input | 400 | Невалидные входные данные |
+| unauthorized | 401 | Требуется авторизация |
+| token_invalid | 401 | JWT токен невалиден |
+| refresh_token_expired | 401 | Refresh токен истёк |
+| forbidden | 403 | Нет прав доступа |
+| access_denied | 403 | Доступ запрещён |
+| not_found | 404 | Ресурс не найден |
+| conflict | 409 | Конфликт (дубликат) |
+| rate_limit_exceeded | 429 | Превышен лимит запросов |
+| internal_error | 500 | Серверная ошибка |
+
+### Pagination Response Format
+
+```typescript
+// Все list endpoints возвращают:
+{
+  data: [...],
+  meta: { totalItems, totalPages, currentPage, itemCount, itemsPerPage },
+  links: { self, next?, prev?, last }
+}
+```
+
+См. `backend/src/lib/api-response.ts` — createSuccessResponse.
+
+### REST Conventions
+
+- 201 Created всегда возвращает `Location` header
+- GET для чтения, POST для создания, PUT/PATCH для обновления, DELETE для удаления
+- Использовать plural nouns в URL: `/api/tier-lists` не `/api/tierlist`
+- kebab-case для URL параметров: `/api/team-members`
+
+### Swagger Documentation
+
+Документация доступна по `/documentation` при запущенном сервере.
+Описание API включает таблицу error codes и примеры pagination.
+
+### Response Envelope
+
+Все endpoints используют `{ data: ... }` envelope:
+```typescript
+// Простой ответ
+{ data: [...] }
+
+// Сложный ответ с meta
+{ data: { success, ... }, meta?: {...} }
+
+// Пагинированный ответ
+{ data: [...], meta: {...}, links: {...} }
+```
+
+**Важно:** `handleAchievementResponse` auto-unwraps `.data` для non-paginated responses.
+Для paginated responses (с meta/links) — возвращает объект целиком.
+
+### Rate Limiting
+
+Redis-backed rate limiting с headers:
+- `x-ratelimit-limit` — общий лимит
+- `x-ratelimit-remaining` — оставшиеся запросы
+- `x-ratelimit-reset` — когда лимит сбросится (timestamp)
+- `retry-after` — только при 429 (секунды до retry)
+
 ## Gotchas
 
 - `npm install` must be run separately in root AND `backend/` — no workspace root install
@@ -142,3 +219,17 @@ The user asks questions about the following coding languages:
   - Use the imperative mood in the subject line.
   - Use the body to explain what and why you have done something. In most cases, you can leave out details about how a change has been made.
   - The commit message should be structured as follows: `<type>[optional scope]: <description>`
+
+## Skills (OpenCode)
+
+Skills located in `.opencode/skills/`:
+- `api-design/` — REST API design patterns (resource naming, status codes, pagination, error responses)
+- `docker-patterns/` — Docker and Docker Compose best practices
+- `skill-creator/` — Tool for creating new skills (in `~/.config/opencode/skills/`)
+
+Hybrid skill architecture:
+- Skills use single SKILL.md with evals/ directory
+- references/, scripts/, templates/ are optional (for larger skills)
+- See skill-specific evals for testing patterns
+
+See `.opencode/skills/*/evals/evals.json` for eval tests.

@@ -43,9 +43,11 @@ export async function avatarRoutes(fastify: FastifyInstance) {
       }
 
       return reply.send({
-        success: true,
-        imageUrl: result.imageUrl,
-        remaining: result.remaining,
+        data: {
+          success: true,
+          imageUrl: result.imageUrl,
+          remaining: result.remaining,
+        },
       });
     },
   );
@@ -67,16 +69,22 @@ export async function avatarRoutes(fastify: FastifyInstance) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
 
-      const uploadResult = avatar.startsWith("data:")
-        ? await uploadBase64(avatar, "tiermaker-pro/avatars")
-        : await uploadFromUrl(avatar, "tiermaker-pro/avatars");
+      // Если это локальный preset (относительный путь), сохраняем напрямую в БД
+      const isLocalPreset = avatar.startsWith("/avatars/");
+      const finalAvatarUrl = isLocalPreset
+        ? avatar
+        : avatar.startsWith("data:")
+          ? (await uploadBase64(avatar, "tiermaker-pro/avatars")).url
+          : (await uploadFromUrl(avatar, "tiermaker-pro/avatars")).url;
 
-      const user = await updateUserAvatar(userId, uploadResult.url);
+      const user = await updateUserAvatar(userId, finalAvatarUrl);
 
       return reply.send({
-        success: true,
-        avatarUrl: user.avatarUrl,
-        user,
+        data: {
+          success: true,
+          avatarUrl: user.avatarUrl,
+          user,
+        },
       });
     },
   );
@@ -99,7 +107,7 @@ export async function avatarRoutes(fastify: FastifyInstance) {
         return reply.code(404).send({ error: "User not found" });
       }
 
-      return reply.send(limitInfo);
+      return reply.send({ data: limitInfo });
     },
   );
 }

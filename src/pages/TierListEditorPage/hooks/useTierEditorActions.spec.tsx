@@ -358,7 +358,7 @@ describe('useTierEditorActions', () => {
 
   describe('deleteRatingFromServer', () => {
     it('должен удалять тир-лист и перенаправлять на главную', async () => {
-      vi.mocked(tierListApi.deleteTierList).mockResolvedValue(undefined);
+      vi.mocked(tierListApi.deleteTierList).mockResolvedValue({ message: "Tier list deleted successfully" });
 
       const { result } = renderHook(
         () => useTierEditorActions({
