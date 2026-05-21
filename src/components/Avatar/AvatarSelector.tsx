@@ -53,7 +53,7 @@ export function AvatarSelector({
       setError(null);
     },
     onSuccess: (data) => {
-      setPreviewUrl(data.data.imageUrl);
+      setPreviewUrl(data.imageUrl);
       queryClient.setQueryData(
         ["avatarLimit"],
         (previous: AvatarLimitInfo | undefined) => {
@@ -63,8 +63,8 @@ export function AvatarSelector({
 
           return {
             ...previous,
-            remaining: data.data.remaining,
-            used: Math.max(0, previous.limit - data.data.remaining),
+            remaining: data.remaining,
+            used: Math.max(0, previous.limit - data.remaining),
           };
         },
       );

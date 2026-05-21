@@ -6,8 +6,7 @@ import type { NavigateFunction } from 'react-router-dom';
 import type { Action } from '@/hooks/useTierList';
 import type { Book } from '@/types';
 import { deleteTierList, removeBookFromTierList, toggleTierListPublic } from '@/lib/tierListApi';
-import { getAuthHeader, handleResponse } from '@/lib/authApi';
-import { API_BASE_URL } from '@/lib/config';
+import { apiClient } from '@/lib/api-client';
 import { createLogger } from '@/lib/logger';
 
 // Логгер для хука действий редактора
@@ -102,16 +101,7 @@ export function useTierEditorActions({
       void (async () => {
         setIsUpdatingBook(true);
         try {
-          const response = await fetch(`${API_BASE_URL}/tier-lists/${tierListId}/books/${bookId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              ...getAuthHeader(),
-            },
-            body: JSON.stringify(data),
-          });
-
-          await handleResponse(response);
+          await apiClient.put(`/tier-lists/${tierListId}/books/${bookId}`, data);
         } catch (error) {
           logger.error(error instanceof Error ? error : new Error(String(error)), {
             action: 'updateBook',
@@ -179,20 +169,18 @@ export function useTierEditorActions({
     [tierListId]
   );
 
-  const handleBookAdded = useCallback((book: AddedBookPayload | null) => {
-    if (!book) return;
+  const handleBookAdded = useCallback((books: AddedBookPayload[] | null) => {
+    if (!books || books.length === 0) return;
 
     dispatch({
       type: 'ADD_BOOKS',
       payload: {
-        newBooks: [
-          {
-            id: String(book.id),
-            title: book.title,
-            author: book.author || 'Неизвестен',
-            coverImageUrl: book.coverImageUrl,
-          },
-        ],
+        newBooks: books.map((book) => ({
+          id: String(book.id),
+          title: book.title,
+          author: book.author || 'Неизвестен',
+          coverImageUrl: book.coverImageUrl,
+        })),
       },
     });
     setHasUnsavedChanges(true);
@@ -217,7 +205,7 @@ export function useTierEditorActions({
         duration: 3000 
       });
     }
-  }, [navigate, setDeletedTierIds, tierListId]);
+  }, [navigate, queryClient, setDeletedTierIds, tierListId]);
 
   return {
     togglePublic,

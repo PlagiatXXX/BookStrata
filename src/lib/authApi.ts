@@ -7,6 +7,16 @@ import { StorageService } from "./storage";
 const authLogger = createLogger("AuthApi", { color: "cyan" });
 
 /**
+ * Разворачивает { data: ... } из ответа API (безопасно, без циклических импортов)
+ */
+function unwrapData<T>(json: unknown): T {
+  if (json && typeof json === "object" && "data" in (json as Record<string, unknown>)) {
+    return (json as Record<string, unknown>).data as T;
+  }
+  return json as T;
+}
+
+/**
  * Базовый URL API
  *
  * ⚠️ SECURITY NOTE:
@@ -65,7 +75,7 @@ export async function apiRegister(
     throw new Error(errorMessage);
   }
 
-  const result = await response.json();
+  const result = unwrapData<AuthResponse>(await response.json());
 
   // Сохраняем access токен
   if (result.accessToken) {
@@ -103,7 +113,7 @@ export async function apiLogin(payload: LoginPayload): Promise<AuthResponse> {
     throw new Error(errorMessage);
   }
 
-  const result = await response.json();
+  const result = unwrapData<AuthResponse>(await response.json());
 
   // Сохраняем access токен
   if (result.accessToken) {
@@ -164,7 +174,7 @@ export async function apiValidateToken(
         return { valid: false, userId: undefined, username: undefined };
       }
 
-      const result = await response.json();
+      const result = unwrapData<ValidateTokenResponse>(await response.json());
 
       if (!result.valid) {
         authLogger.warn("Валидация токена не удалась");
@@ -298,7 +308,7 @@ export async function refreshAccessToken(): Promise<string> {
       throw new Error("Refresh token failed");
     }
 
-    const data = await response.json();
+    const data = unwrapData<{ accessToken: string }>(await response.json());
     const newAccessToken = data.accessToken;
 
     // Сохраняем новый access токен
@@ -373,11 +383,6 @@ export async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
-// ========== EXPORTS FOR COMPATIBILITY ==========
-// Экспортируем типы для обратной совместимости
-export type { User } from "./userApi";
-export type { LikesResponse } from "./likesApi";
-
 export async function apiForgotPassword(email: string): Promise<{ message: string }> {
   authLogger.info("Запрос на сброс пароля", { email });
 
@@ -396,7 +401,7 @@ export async function apiForgotPassword(email: string): Promise<{ message: strin
     throw new Error(errorMessage);
   }
 
-  return response.json();
+  return unwrapData<{ message: string }>(await response.json());
 }
 
 /**
@@ -420,5 +425,5 @@ export async function apiResetPassword(token: string, password: string): Promise
     throw new Error(errorMessage);
   }
 
-  return response.json();
+  return unwrapData<{ message: string }>(await response.json());
 }

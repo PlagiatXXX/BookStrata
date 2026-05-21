@@ -62,12 +62,12 @@ interface EditorModalsProps {
   onConfirmLeave: () => void;
   onSaveAndLeave: () => void;
   onSaveBook: (bookId: string, data: { title?: string; author?: string; description?: string; thoughts?: string; coverImageUrl?: string }) => void;
-  onBookAdded: (book: {
+  onBookAdded: (books: Array<{
     id: number;
     title: string;
     author: string | null;
     coverImageUrl: string;
-  } | null) => void;
+  }> | null) => void;
   isUpdatingBook: boolean;
   isExportModalOpen: boolean;
   onCloseExport: () => void;

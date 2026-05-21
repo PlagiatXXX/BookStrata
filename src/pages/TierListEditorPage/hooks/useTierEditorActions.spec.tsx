@@ -317,7 +317,7 @@ describe('useTierEditorActions', () => {
         coverImageUrl: 'https://example.com/cover.jpg',
       };
 
-      result.current.handleBookAdded(book);
+      result.current.handleBookAdded([book]);
 
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'ADD_BOOKS',

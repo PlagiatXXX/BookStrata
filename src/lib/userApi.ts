@@ -1,10 +1,7 @@
-import { getAuthHeader, handleResponse } from "./authApi";
-import { API_BASE_URL } from "./config";
-import { createLogger } from "./logger";
 import { apiClient } from "./api-client";
+import { createLogger } from "./logger";
 
 const userLogger = createLogger("UserApi", { color: "green" });
-let inFlightMeRequest: Promise<User> | null = null;
 
 export interface User {
   id: number;
@@ -24,117 +21,34 @@ export interface UserStats {
   likesTodayCount: number;
 }
 
-/**
- * Получить текущего пользователя.
- * Повторно используем тот же Promise, если профиль уже запрашивается,
- * чтобы в dev не плодить одинаковые GET /users/me из-за StrictMode и событий.
- */
-export async function apiGetMe(forceRefresh = false): Promise<User> {
-  if (forceRefresh) inFlightMeRequest = null;
-  if (inFlightMeRequest) {
-    userLogger.debug("Используем уже выполняющийся запрос профиля");
-    return inFlightMeRequest;
-  }
-
+export async function apiGetMe(): Promise<User> {
   userLogger.info("Получение профиля текущего пользователя");
-
-  const request = (async () => {
-    const response = await fetch(`${API_BASE_URL}/users/me`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeader(),
-      },
-    });
-
-    return handleResponse<User>(response);
-  })();
-
-  inFlightMeRequest = request;
-
-  try {
-    return await request;
-  } finally {
-    if (inFlightMeRequest === request) {
-      inFlightMeRequest = null;
-    }
-  }
+  return apiClient.get<User>("/users/me");
 }
 
-/**
- * Обновить аватар
- */
 export async function apiUpdateAvatar(avatarUrl: string): Promise<User> {
   userLogger.info("Обновление аватара пользователя");
-
-  const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
-    body: JSON.stringify({ avatarUrl }),
-  });
-
-  return handleResponse<User>(response);
+  return apiClient.put<User>("/users/me/avatar", { avatarUrl });
 }
 
-/**
- * Удалить аватар
- */
 export async function apiDeleteAvatar(): Promise<User> {
   userLogger.info("Удаление аватара пользователя");
-
-  const response = await fetch(`${API_BASE_URL}/users/me/avatar`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
-  });
-
-  return handleResponse<User>(response);
+  return apiClient.delete<User>("/users/me/avatar");
 }
 
-/**
- * Получить пользователя по ID
- */
 export async function apiGetUserById(id: string): Promise<User> {
   userLogger.info("Получение пользователя по ID", { userId: id });
-
-  const response = await fetch(`${API_BASE_URL}/users/${id}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  return handleResponse<User>(response);
+  return apiClient.get<User>(`/users/${id}`);
 }
 
-/**
- * Получить статистику пользователя
- */
 export async function apiGetUserStats(): Promise<UserStats> {
   userLogger.info("Получение статистики пользователя");
-
-  const response = await fetch(`${API_BASE_URL}/users/me/stats`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
-  });
-
-  return handleResponse<UserStats>(response);
+  return apiClient.get<UserStats>("/users/me/stats");
 }
 
-/**
- * Загрузить аватар на Cloudinary
- */
 export async function apiUploadAvatar(base64Image: string): Promise<User> {
   userLogger.info("Загрузка аватара на Cloudinary");
-  const result = await apiClient.post<{ success: boolean; avatarUrl: string; user: User; }>(
+  const result = await apiClient.post<{ success: boolean; avatarUrl: string; user: User }>(
     "/avatars/upload",
     { avatar: base64Image }
   );

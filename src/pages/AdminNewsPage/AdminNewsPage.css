@@ -100,6 +100,24 @@
   color: var(--ink-2);
 }
 
+.admin-news-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--ink-1);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.admin-news-search-clear:hover {
+  color: var(--ink-0);
+  background: var(--bg-1);
+}
+
 /* Table */
 .admin-news-table-wrapper {
   background: var(--bg-0);

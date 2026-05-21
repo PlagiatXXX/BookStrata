@@ -9,7 +9,6 @@ import { HeroSection } from "@/components/CommunityComponents/HeroSection";
 import { NewsSection } from "@/components/CommunityComponents/NewsSection";
 import { CollectionsSection } from "@/components/CommunityComponents/CollectionsSection";
 import { TemplatePreviewModal } from "@/components/CommunityComponents/TemplatePreviewModal";
-import { useDebounce } from "@/hooks/useDebounce";
 import { type TemplateItem } from "../../data/mockData";
 import { sileo } from "sileo";
 import { memo } from "react";
@@ -33,9 +32,6 @@ export default function CommunityPage() {
   );
   const navigate = useNavigate();
 
-  // Оптимизация: дебаунсим поисковый запрос для фильтрации сетки шаблонов
-  const debouncedSearchQuery = useDebounce(searchQuery, 400);
-
   useEffect(() => {
     const elements = Array.from(
       document.querySelectorAll<HTMLElement>("[data-reveal]"),
@@ -56,7 +52,7 @@ export default function CommunityPage() {
 
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [activeCategory]);
+  }, [activeCategory, searchQuery]);
 
   // Стабилизируем колбэки
   const handleUseTemplate = useCallback((template: TemplateItem) => {
@@ -147,7 +143,7 @@ export default function CommunityPage() {
 
           <MemoizedTemplateGrid
             activeCategory={activeCategory}
-            searchQuery={debouncedSearchQuery}
+            searchQuery={searchQuery}
             applyingTemplateId={applyingTemplateId}
             onUseTemplate={handleUseTemplate}
           />
@@ -160,7 +156,7 @@ export default function CommunityPage() {
             <div className="community-rule flex-1" />
           </div>
 
-          <MemoizedNewsSection />
+          <MemoizedNewsSection searchQuery={searchQuery} />
 
           <MemoizedCollectionsSection />
         </main>

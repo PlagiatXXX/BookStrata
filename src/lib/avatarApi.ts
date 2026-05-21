@@ -1,5 +1,4 @@
-import { getAuthHeader, handleResponse } from "./authApi";
-import { API_BASE_URL } from "./config";
+import { apiClient } from "./api-client";
 import { createLogger } from "./logger";
 
 const avatarLogger = createLogger("AvatarApi", { color: "yellow" });
@@ -12,37 +11,19 @@ export interface AvatarLimitInfo {
 }
 
 export interface GenerateAvatarResult {
-  data: {
-    success: boolean;
-    imageUrl: string;
-    remaining: number;
-  };
+  success: boolean;
+  imageUrl: string;
+  remaining: number;
 }
 
 export async function apiGenerateAvatar(
   prompt: string,
 ): Promise<GenerateAvatarResult> {
   avatarLogger.info("Generating avatar from user prompt");
-
-  const response = await fetch(`${API_BASE_URL}/avatars/generate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeader(),
-    },
-    body: JSON.stringify({ prompt }),
-  });
-
-  return handleResponse<GenerateAvatarResult>(response);
+  return apiClient.post<GenerateAvatarResult>("/avatars/generate", { prompt });
 }
 
 export async function apiGetAvatarLimit(): Promise<AvatarLimitInfo> {
   avatarLogger.info("Fetching avatar generation limit");
-
-  const response = await fetch(`${API_BASE_URL}/avatars/limit`, {
-    method: "GET",
-    headers: getAuthHeader(),
-  });
-
-  return handleResponse<AvatarLimitInfo>(response);
+  return apiClient.get<AvatarLimitInfo>("/avatars/limit");
 }

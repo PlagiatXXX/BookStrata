@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getAuthHeader, handleResponse } from "./authApi";
-import { API_BASE_URL } from "./config";
+import { apiClient } from "./api-client";
+import { handleResponse } from "./authApi";
 import { createLogger } from "./logger";
 import { triggerAchievementNotification } from "@/hooks/useAchievementNotifications";
 
@@ -22,30 +22,15 @@ export interface AchievementStatus {
   title: string;
 }
 
-/**
- * Получить достижения текущего пользователя
- */
 export async function apiGetMyAchievements(): Promise<Achievement[]> {
   achievementLogger.info("Получение достижений пользователя");
-  const response = await fetch(`${API_BASE_URL}/achievements/me`, {
-    headers: getAuthHeader(),
-  });
-  return handleResponse<Achievement[]>(response);
+  return apiClient.get<Achievement[]>("/achievements/me");
 }
 
-/**
- * Получить XP статус пользователя
- */
 export async function apiGetMyAchievementStatus(): Promise<AchievementStatus> {
-  const response = await fetch(`${API_BASE_URL}/achievements/status`, {
-    headers: getAuthHeader(),
-  });
-  return handleResponse<AchievementStatus>(response);
+  return apiClient.get<AchievementStatus>("/achievements/status");
 }
 
-/**
- * Проверить ответ на наличие новых достижений
- */
 export function checkResponseForAchievements(data: any) {
   const achievements = Array.isArray(data?.newAchievements)
     ? data.newAchievements
@@ -58,18 +43,22 @@ export function checkResponseForAchievements(data: any) {
   });
 }
 
+/**
+ * Обрабатывает ответ API: разворачивает { data: ... }
+ * и проверяет новые достижения.
+ * Используется как прослойка для файлов, которые ещё не переведены на apiClient.
+ */
 export async function handleAchievementResponse<T>(
   response: Response,
 ): Promise<T> {
-  const result = await handleResponse<{ data: T; meta?: unknown; links?: unknown } | T>(response);
+  const result = await handleResponse<unknown>(response);
 
-  // Extract .data if the response follows the envelope pattern
-  // Don't unwrap paginated responses that have meta/links (they're full response objects)
-  if (result && typeof result === "object" && "data" in result && !("meta" in result) && !("links" in result)) {
-    checkResponseForAchievements(result);
-    return (result as { data: T }).data;
+  if (result && typeof result === "object" && "data" in (result as Record<string, unknown>)) {
+    const obj = result as Record<string, unknown>;
+    if (!("meta" in obj) && !("links" in obj)) {
+      return obj.data as T;
+    }
   }
 
-  checkResponseForAchievements(result);
   return result as T;
 }

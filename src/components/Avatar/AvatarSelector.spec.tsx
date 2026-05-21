@@ -45,11 +45,9 @@ describe("AvatarSelector", () => {
   it("shows loading states for generation and saving", async () => {
     let resolveGenerate:
       | ((value: {
-          data: {
-            success: boolean;
-            imageUrl: string;
-            remaining: number;
-          };
+          success: boolean;
+          imageUrl: string;
+          remaining: number;
         }) => void)
       | undefined;
     let resolveSave: (() => void) | undefined;
@@ -120,11 +118,9 @@ describe("AvatarSelector", () => {
     expect(screen.getAllByText("Генерируем...").length).toBeGreaterThan(0);
 
     resolveGenerate?.({
-      data: {
-        success: true,
-        imageUrl: "https://example.com/avatar.png",
-        remaining: 9,
-      },
+      success: true,
+      imageUrl: "https://example.com/avatar.png",
+      remaining: 9,
     });
 
     await waitFor(() => {

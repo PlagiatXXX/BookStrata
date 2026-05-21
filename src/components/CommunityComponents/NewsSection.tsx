@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getPublishedNews, type NewsArticle } from "@/lib/newsApi";
 import { FileText } from "lucide-react";
@@ -8,7 +8,11 @@ const fetchNews = async (): Promise<NewsArticle[]> => {
   return getPublishedNews(6);
 };
 
-export const NewsSection = memo(() => {
+interface NewsSectionProps {
+  searchQuery?: string;
+}
+
+export const NewsSection = memo(({ searchQuery = "" }: NewsSectionProps) => {
   const {
     data: news,
     isLoading,
@@ -16,10 +20,22 @@ export const NewsSection = memo(() => {
   } = useQuery<NewsArticle[]>({
     queryKey: ["news", "published"],
     queryFn: fetchNews,
-    staleTime: 5 * 60 * 1000, // 5 минут — данные считаются свежими
-    gcTime: 30 * 60 * 1000, // 30 минут — хранение в кеше
-    refetchOnWindowFocus: false, // Не рефетчить при фокусе окна
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
+
+  const filteredNews = useMemo(() => {
+    if (!news || !Array.isArray(news)) return [];
+    if (!searchQuery.trim()) return news;
+    const query = searchQuery.toLowerCase().trim();
+    return news.filter(
+      (article) =>
+        article.title.toLowerCase().includes(query) ||
+        article.excerpt.toLowerCase().includes(query) ||
+        article.tags.some((tag) => tag.toLowerCase().includes(query)),
+    );
+  }, [news, searchQuery]);
 
   if (isLoading) {
     return (
@@ -54,6 +70,10 @@ export const NewsSection = memo(() => {
   }
 
   if (error || !news || !Array.isArray(news) || news.length === 0) {
+    if (!searchQuery.trim()) return null;
+  }
+
+  if (filteredNews.length === 0 && searchQuery.trim()) {
     return null;
   }
 
@@ -79,7 +99,7 @@ export const NewsSection = memo(() => {
       <div className="community-rule mb-6" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {news.map((article) => (
+        {filteredNews.map((article) => (
           <article
             key={article.id}
             className="brutal-card brutal-border p-6 hover-lift cursor-pointer"
@@ -112,7 +132,7 @@ export const NewsSection = memo(() => {
         ))}
       </div>
 
-      {news.length === 0 && (
+      {filteredNews.length === 0 && !searchQuery.trim() && (
         <div className="text-center py-12 text-(--ink-1)">
           <FileText size={48} className="mx-auto mb-4 opacity-50" />
           <p>Новостей пока нет</p>

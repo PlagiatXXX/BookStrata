@@ -7,6 +7,7 @@ import {
   Eye,
   EyeOff,
   Search,
+  X,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -86,6 +87,11 @@ export function AdminNewsPage() {
   useEffect(() => {
     loadNews();
   }, [loadNews]);
+
+  // Сбрасываем на первую страницу при изменении поиска
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const handleOpenCreate = () => {
     setEditingNews(null);
@@ -279,6 +285,16 @@ export function AdminNewsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="admin-news-search-clear"
+                aria-label="Очистить поиск"
+              >
+                <X size={18} />
+              </button>
+            )}
           </div>
         </div>
 

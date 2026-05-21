@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       authLogger.info("Fetching user profile", { force });
-      const fullUserData = await apiGetMe(force);
+      const fullUserData = await apiGetMe();
       setUser(mapApiUserToAuthUser(fullUserData));
       authLogger.info("User data fetched successfully", {
         userId: fullUserData.id,

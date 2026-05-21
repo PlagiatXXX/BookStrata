@@ -88,7 +88,6 @@ const TierListEditorContent = () => {
     error,
     apiData,
     likesData,
-    likedIdsSet,
     isPublic,
     initialDataForHook,
   } = useTierEditorQueries(tierListId);

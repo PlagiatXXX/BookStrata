@@ -55,7 +55,7 @@ PostgreSQL 14+ required. Redis via `backend/docker-compose.yml`.
 - `app/router.tsx` — React Router setup
 - `hooks/useTierList.ts` — redux-like reducer for tier editor (~15 action types), optimistic updates, ~2s debounce autosave
 - `contexts/AuthContext.tsx` — JWT in localStorage, Bearer header, auto-refresh on 401
-- `lib/api-client.ts` — base HTTP client with retry logic
+- `lib/api-client.ts` — HTTP client: auto-unwrap `{ data: ... }`, normalize errors, 401 → refresh token + retry once, auto-check achievements in responses
 - Vite proxies `/api` → `http://localhost:8080`
 - Uses `babel-plugin-react-compiler` (enforced by eslint-plugin-react-compiler as error)
 
@@ -150,7 +150,7 @@ PostgreSQL 14+ required. Redis via `backend/docker-compose.yml`.
 { data: [...], meta: {...}, links: {...} }
 ```
 
-**Важно:** `handleAchievementResponse` auto-unwraps `.data` для non-paginated responses.
+**Важно:** `apiClient` (`lib/api-client.ts`) auto-unwraps `.data` для non-paginated responses.
 Для paginated responses (с meta/links) — возвращает объект целиком.
 
 ### Rate Limiting

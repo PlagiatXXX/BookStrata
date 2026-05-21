@@ -1,6 +1,6 @@
 import { useReducer, useCallback, useState, memo, useEffect } from "react";
 import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
-import { addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
+import { batchAddBooksFromSearch, addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
@@ -16,12 +16,12 @@ interface BookSearchModalProps {
   onClose: () => void;
   tierListId: string;
   onBookAdded?: (
-    book: {
+    books: Array<{
       id: number;
       title: string;
       author: string | null;
       coverImageUrl: string;
-    } | null,
+    }> | null,
   ) => void;
 }
 
@@ -312,74 +312,45 @@ export const BookSearchModal = ({
       state.selectedBooks.has(book.openLibraryKey),
     );
 
-    let successCount = 0;
-    let lastAddedBook: {
-      id: number;
-      title: string;
-      author: string | null;
-      coverImageUrl: string;
-    } | null = null;
+    try {
+      const addedBooks = await batchAddBooksFromSearch(tierListId, booksToAdd);
 
-    for (const book of booksToAdd) {
-      try {
-        const result = await addBookFromGoogleBooks(tierListId, book);
-        successCount++;
-        if (result && typeof result === "object") {
-          lastAddedBook = result;
-        }
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        logger.error(err, {
-          action: "addBookFromGoogleBooks",
-          title: book.title,
+      dispatch({ type: "CLEAR_SELECTION" });
+      setIsAddingBooks(false);
+
+      if (addedBooks.length > 0) {
+        sileo.success({
+          title: `Добавлено ${addedBooks.length} ${addedBooks.length === 1 ? "книга" : addedBooks.length < 5 ? "книги" : "книг"}`,
+          duration: 3000,
         });
-
-        const errorMessage = err.message || "";
-        const isLimitError = errorMessage.includes("Превышен лимит книг") || errorMessage.includes("лимит");
-
-        if (isLimitError) {
-          sileo.action({
-            title: "Лимит книг",
-            description: `Достигнуто максимальное количество книг в тир-листе (${MAX_BOOKS_PER_TIER_LIST}). Оформите Pro для неограниченного количества.`,
-            duration: 3000,
-            button: {
-              title: "Оформить Pro",
-              onClick: () => {
-                // TODO: Здесь будет переход на страницу оплаты Pro-подписки
-              },
-            },
-          });
-          break;
-        }
-
-        const isNoCoverError =
-          errorMessage.includes("no cover image") ||
-          errorMessage.includes("Book has no cover") ||
-          errorMessage.includes("cover");
-
-        if (isNoCoverError) {
-          sileo.error({
-            title: `Нет обложки`,
-            description: `У книги "${book.title}" нет обложки`,
-            duration: 3000
-          });
-        } else {
-          sileo.error({
-            title: `Не удалось добавить книгу`,
-            description: `Ошибка при добавлении "${book.title}"`,
-            duration: 3000
-          });
-        }
+        onBookAdded?.(addedBooks);
+        handleClose();
       }
-    }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(err, { action: "batchAddBooksFromSearch" });
 
-    dispatch({ type: "CLEAR_SELECTION" });
-    setIsAddingBooks(false);
+      dispatch({ type: "CLEAR_SELECTION" });
+      setIsAddingBooks(false);
 
-    if (successCount > 0) {
-      sileo.success({ title: `Добавлено ${successCount} ${successCount === 1 ? "книга" : successCount < 5 ? "книги" : "книг"}`, duration: 3000 });
-      onBookAdded?.(lastAddedBook);
-      handleClose();
+      const errorMessage = err.message || "";
+      if (errorMessage.includes("Превышен лимит книг") || errorMessage.includes("лимит")) {
+        sileo.action({
+          title: "Лимит книг",
+          description: `Достигнуто максимальное количество книг в тир-листе (${MAX_BOOKS_PER_TIER_LIST}). Оформите Pro для неограниченного количества.`,
+          duration: 3000,
+          button: {
+            title: "Оформить Pro",
+            onClick: () => {},
+          },
+        });
+      } else {
+        sileo.error({
+          title: "Не удалось добавить книги",
+          description: "Попробуйте снова позже",
+          duration: 3000,
+        });
+      }
     }
   };
 
@@ -388,7 +359,7 @@ export const BookSearchModal = ({
     try {
       const result = await addBookFromGoogleBooks(tierListId, book);
       sileo.success({ title: "Книга добавлена", duration: 3000 });
-      onBookAdded?.(result);
+      onBookAdded?.(result ? [result] : null);
       setViewBook(null);
       handleClose();
     } catch (error) {
