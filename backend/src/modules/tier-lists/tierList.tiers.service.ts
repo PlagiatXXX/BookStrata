@@ -40,9 +40,7 @@ export async function updateTier(
   });
 
   if (!tier || tier.tierListId !== realTierListId) {
-    const error = new Error("Forbidden");
-    (error as any).statusCode = 403;
-    throw error;
+    throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
   }
 
   return prisma.tier.update({
@@ -89,7 +87,7 @@ export async function saveTiers(
   const startTime = Date.now();
   const realTierListId = await resolveTierListId(tierListId);
 
-  const isDiff = "added" in (tiers as any);
+  const isDiff = "added" in tiers;
 
   let added: Array<{ title: string; color: string; rank: number }> = [];
   let updated: Array<{
@@ -101,9 +99,14 @@ export async function saveTiers(
   let deletedIds: number[] = [];
 
   if (isDiff) {
-    added = (tiers as any).added || [];
-    updated = (tiers as any).updated || [];
-    deletedIds = (tiers as any).deletedIds || [];
+    const diff = tiers as {
+      added?: Array<{ title: string; color: string; rank: number }>;
+      updated?: Array<{ id: number; title: string; color: string; rank: number }>;
+      deletedIds?: number[];
+    };
+    added = diff.added || [];
+    updated = diff.updated || [];
+    deletedIds = diff.deletedIds || [];
   } else {
     const tiersArray = tiers as Array<{
       id?: number;
@@ -173,15 +176,16 @@ export async function saveTiers(
     return [];
   }
 
+  interface TierResult { id: number; title: string; color: string; rank: number }
   const createdTiers = results.filter(
-    (t: any) => !updated.some((u: any) => u.id === t.id),
+    (t: TierResult) => !updated.some((u) => u.id === t.id),
   );
-  const updatedTierList = results.filter((t: any) =>
-    updated.some((u: any) => u.id === t.id),
+  const updatedTierList = results.filter((t: TierResult) =>
+    updated.some((u) => u.id === t.id),
   );
 
   return [
-    ...createdTiers.map((t: any) => ({ ...t, isNew: true })),
-    ...updatedTierList.map((t: any) => ({ ...t, isNew: false })),
+    ...createdTiers.map((t) => ({ ...t, isNew: true })),
+    ...updatedTierList.map((t) => ({ ...t, isNew: false })),
   ];
 }

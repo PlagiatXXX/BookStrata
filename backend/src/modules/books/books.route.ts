@@ -2,6 +2,7 @@
 import type { FastifyInstance } from 'fastify';
 import { searchBooks } from './books.service.js';
 import { authMiddleware } from '../auth/auth.middleware.js';
+import { ErrorCodes, createApiError, createSuccessResponse } from '../../lib/api-response.js';
 
 export async function booksRoutes(fastify: FastifyInstance) {
   // GET /api/books/search?q=<query>
@@ -30,20 +31,17 @@ export async function booksRoutes(fastify: FastifyInstance) {
         
         fastify.log.info({ count: books.length }, 'Books search completed');
         
-        return reply.code(200).send({ books });
+        return reply.code(200).send(createSuccessResponse({ books }));
       } catch (error) {
         if (error instanceof Error) {
           // Не настроенный ключ — это наша проблема, серверная ошибка
           if (error.message.includes('Google Books API key')) {
             fastify.log.error(error, 'Google Books API key not configured');
-            return reply.code(500).send({ error: 'Google Books API не настроен на сервере' });
+            return reply.code(500).send(createApiError(ErrorCodes.EXTERNAL_SERVICE_ERROR, 'Google Books API не настроен на сервере'));
           }
           // Прочие ошибки (сеть, парсинг и т.п.) — логируем как warn, отдаём 502 (Bad Gateway)
           fastify.log.warn(error, 'Books search failed (upstream issue)');
-          return reply.code(502).send({
-            error: 'Сервис поиска временно недоступен, попробуйте позже',
-            books: [],
-          });
+          return reply.code(502).send(createApiError(ErrorCodes.SERVICE_UNAVAILABLE, 'Сервис поиска временно недоступен, попробуйте позже'));
         }
         throw error;
       }

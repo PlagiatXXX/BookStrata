@@ -75,4 +75,43 @@ export function createApiError(
   };
 }
 
+// ========== SUCCESS RESPONSE ==========
+
+export interface PaginationMeta {
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  itemCount: number;
+  itemsPerPage: number;
+}
+
+export interface PaginationLinks {
+  self: string;
+  next?: string;
+  prev?: string;
+  last?: string;
+}
+
+export interface ApiSuccessResponse<T> {
+  data: T;
+}
+
+export interface ApiPaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+  links: PaginationLinks;
+}
+
+export function createSuccessResponse<T>(data: T): ApiSuccessResponse<T> {
+  return { data };
+}
+
+export function createPaginatedResponse<T>(
+  data: T[],
+  meta: PaginationMeta,
+  links: PaginationLinks,
+): ApiPaginatedResponse<T> {
+  return { data, meta, links };
+}
+
 

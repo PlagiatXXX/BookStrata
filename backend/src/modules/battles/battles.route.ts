@@ -4,19 +4,19 @@ import { requireAdminOrModerator } from "../../middleware/requireRole.js";
 import * as service from "./battles.service.js";
 import * as schema from "./battles.schema.js";
 import type { CreateBattleBody, VoteInBattleBody } from "./battles.schema.js";
-import { ErrorCodes, createApiError } from "../../lib/api-response.js";
+import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 export async function battleRoutes(fastify: FastifyInstance) {
   // GET /api/battles - получить активные битвы
-  fastify.get("/", async () => {
-    return service.getActiveBattles();
+  fastify.get("/", async (request, reply) => {
+    return reply.send(createSuccessResponse(await service.getActiveBattles()));
   });
 
   // GET /api/battles/:id - получить конкретную битву
   fastify.get<{ Params: { id: string } }>("/:id", async (request, reply) => {
     const battle = await service.getBattleById(request.params.id);
     if (!battle) return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Battle not found"));
-    return battle;
+    return reply.send(createSuccessResponse(battle));
   });
 
   // POST /api/battles - создать битву (Admin/Moderator)
@@ -38,7 +38,7 @@ export async function battleRoutes(fastify: FastifyInstance) {
         description: request.body.description ?? null,
         endTime: new Date(request.body.endTime),
       });
-      return reply.code(201).header("Location", `/api/battles/${battle.id}`).send(battle);
+      return reply.code(201).header("Location", `/api/battles/${battle.id}`).send(createSuccessResponse(battle));
     }
   );
 
@@ -55,10 +55,10 @@ export async function battleRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    async (request) => {
+    async (request, reply) => {
       const userId = request.user!.userId;
       const battleId = request.params.id;
-      return service.voteInBattle(userId, battleId, request.body.tierListId);
+      return reply.send(createSuccessResponse(await service.voteInBattle(userId, battleId, request.body.tierListId)));
     }
   );
 
@@ -69,9 +69,9 @@ export async function battleRoutes(fastify: FastifyInstance) {
       preHandler: [authMiddleware, requireAdminOrModerator],
       schema: schema.closeBattleSchema,
     },
-    async (request) => {
+    async (request, reply) => {
       const battleId = request.params.id;
-      return service.closeBattle(battleId);
+      return reply.send(createSuccessResponse(await service.closeBattle(battleId)));
     }
   );
 }

@@ -5,7 +5,7 @@ import { createLogger } from "../../lib/logger.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { SubscriptionsService } from "./subscriptions.service.js";
-import { ErrorCodes, createApiError } from "../../lib/api-response.js";
+import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 const logger = createLogger("Subscriptions", { color: "cyan" });
 
@@ -72,8 +72,8 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
         },
       },
     },
-    async () => {
-      return subscriptionsService.getSubscriptionStats();
+    async (_request, reply) => {
+      return reply.send(createSuccessResponse(await subscriptionsService.getSubscriptionStats()));
     },
   );
 
@@ -110,11 +110,11 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
           .send(createApiError(ErrorCodes.USER_NOT_FOUND, "Пользователь не найден"));
       }
 
-      return {
+      return reply.send(createSuccessResponse({
         userId: subscription.userId,
         isPro: subscription.isPro,
         proExpiresAt: subscription.proExpiresAt?.toISOString() ?? null,
-      };
+      }));
     },
   );
 
@@ -143,14 +143,14 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
           expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
         });
 
-        return {
+        return reply.send(createSuccessResponse({
           userId: result.userId,
           isPro: result.isPro,
           proExpiresAt: result.proExpiresAt?.toISOString() ?? null,
-        };
+        }));
       } catch (error) {
         if (error instanceof Error && error.message.includes('не найден')) {
-          return reply.code(404).send({ error: error.message });
+          return reply.code(404).send(createApiError(ErrorCodes.USER_NOT_FOUND, error.message));
         }
 
         logger.error(
@@ -160,7 +160,7 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
 
         return reply
           .code(400)
-          .send({ error: "Ошибка при обновлении статуса" });
+          .send(createApiError(ErrorCodes.INVALID_INPUT, "Ошибка при обновлении статуса"));
       }
     },
   );
@@ -189,14 +189,14 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
           body.durationDays,
         );
 
-        return {
+        return reply.send(createSuccessResponse({
           userId: result.userId,
           isPro: result.isPro,
           proExpiresAt: result.proExpiresAt!.toISOString(),
-        };
+        }));
       } catch (error) {
         if (error instanceof Error && error.message.includes("не найден")) {
-          return reply.code(404).send({ error: error.message });
+          return reply.code(404).send(createApiError(ErrorCodes.USER_NOT_FOUND, error.message));
         }
 
         logger.error(
@@ -206,7 +206,7 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
 
         return reply
           .code(400)
-          .send({ error: "Ошибка при активации подписки" });
+          .send(createApiError(ErrorCodes.INVALID_INPUT, "Ошибка при активации подписки"));
       }
     },
   );
@@ -232,14 +232,14 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
       try {
         const result = await subscriptionsService.deactivatePro(body.userId);
 
-        return {
+        return reply.send(createSuccessResponse({
           userId: result.userId,
           isPro: result.isPro,
           proExpiresAt: null,
-        };
+        }));
       } catch (error) {
         if (error instanceof Error && error.message.includes("не найден")) {
-          return reply.code(404).send({ error: error.message });
+          return reply.code(404).send(createApiError(ErrorCodes.USER_NOT_FOUND, error.message));
         }
 
         logger.error(
@@ -249,7 +249,7 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
 
         return reply
           .code(400)
-          .send({ error: "Ошибка при активации подписки" });
+          .send(createApiError(ErrorCodes.INVALID_INPUT, "Ошибка при деактивации подписки"));
       }
     },
   );
@@ -281,10 +281,10 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
           .send(createApiError(ErrorCodes.USER_NOT_FOUND, "Пользователь не найден"));
       }
 
-      return {
+      return reply.send(createSuccessResponse({
         isPro: subscription.isPro,
         proExpiresAt: subscription.proExpiresAt?.toISOString() ?? null,
-      };
+      }));
     },
   );
 };

@@ -2,8 +2,7 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 // Вспомогательная функция для стандартного формата ошибок
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const makeErrorSchema = (description: string): any => ({
+const makeErrorSchema = (description: string): Record<string, unknown> => ({
   description,
   type: 'object',
   properties: {
@@ -59,10 +58,10 @@ const validateBodySchema = z.object({
     .regex(/^[\w-]+\.[\w-]+\.[\w-]+$/, "Некорректный формат JWT токена"),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const registerSchema = {
   description: 'Register a new user account',
   tags: ['Auth'],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(registerBodySchema as any),
   response: {
     201: {
@@ -81,10 +80,10 @@ export const registerSchema = {
   },
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const loginSchema = {
   description: 'Login with username and password',
   tags: ['Auth'],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(loginBodySchema as any),
   response: {
     200: {
@@ -100,10 +99,10 @@ export const loginSchema = {
   },
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const validateSchema = {
   description: 'Validate JWT token',
   tags: ['Auth'],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(validateBodySchema as any),
   response: {
     200: {

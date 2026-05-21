@@ -16,7 +16,7 @@ import {
   LoginInput,
   ValidateInput,
 } from "./auth.schema.js";
-import { ErrorCodes, createApiError } from "../../lib/api-response.js";
+import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/register
@@ -43,11 +43,11 @@ export async function authRoutes(fastify: FastifyInstance) {
           path: "/",
         });
 
-        return reply.code(201).header("Location", `/api/users/${result.userId}`).send({
+        return reply.code(201).header("Location", `/api/users/${result.userId}`).send(createSuccessResponse({
           accessToken: result.accessToken,
           userId: result.userId,
           username: result.username,
-        });
+        }));
       } catch (error) {
         if (
           error instanceof Error &&
@@ -89,11 +89,11 @@ export async function authRoutes(fastify: FastifyInstance) {
           path: "/",
         });
 
-        return reply.code(200).send({
+        return reply.code(200).send(createSuccessResponse({
           accessToken: result.accessToken,
           userId: result.userId,
           username: result.username,
-        });
+        }));
       } catch (error) {
         if (
           error instanceof Error &&
@@ -119,12 +119,12 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const payload = validateToken(request.body.token);
 
-        return reply.code(200).send({
+        return reply.code(200).send(createSuccessResponse({
           valid: true,
           userId: payload.userId,
           username: payload.username,
           role: payload.role || undefined,
-        });
+        }));
       } catch {
         return reply
           .code(401)
@@ -158,9 +158,9 @@ export async function authRoutes(fastify: FastifyInstance) {
         path: "/",
       });
 
-      return reply.code(200).send({
+      return reply.code(200).send(createSuccessResponse({
         accessToken: tokens.accessToken,
-      });
+      }));
     } catch (error) {
       fastify.log.error(error, "Refresh token validation failed");
       return reply
@@ -193,7 +193,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       const { email } = request.body;
       try {
         await requestPasswordReset(email);
-        return reply.code(200).send({ message: "Если аккаунт с таким email существует, мы отправили ссылку для сброса пароля." });
+        return reply.code(200).send(createSuccessResponse({ message: "Если аккаунт с таким email существует, мы отправили ссылку для сброса пароля." }));
       } catch (error) {
         fastify.log.error(error, "Forgot password error");
         return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Failed to process request"));
@@ -226,7 +226,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       const { token, password } = request.body;
       try {
         await confirmPasswordReset(token, password);
-        return reply.code(200).send({ message: "Password reset successful" });
+        return reply.code(200).send(createSuccessResponse({ message: "Password reset successful" }));
       } catch (error) {
         fastify.log.error(error, "Reset password error");
         return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, "Invalid token or password"));

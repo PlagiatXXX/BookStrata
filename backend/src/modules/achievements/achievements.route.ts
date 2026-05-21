@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import * as service from "./achievements.service.js";
+import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 export async function achievementRoutes(fastify: FastifyInstance) {
   // GET /api/achievements/me
@@ -14,7 +15,7 @@ export async function achievementRoutes(fastify: FastifyInstance) {
       await service.syncUserAchievements(userId);
 
       const achievements = await service.getUserAchievements(userId);
-      return reply.code(200).send(achievements);
+      return reply.code(200).send(createSuccessResponse(achievements));
     }
   );
 
@@ -30,9 +31,9 @@ export async function achievementRoutes(fastify: FastifyInstance) {
          select: { xp: true, title: true }
        });
 
-       if (!user) return reply.code(404).send({ message: "User not found" });
+       if (!user) return reply.code(404).send(createApiError(ErrorCodes.USER_NOT_FOUND, "User not found"));
 
-       return reply.code(200).send({ xp: user.xp, title: user.title });
+       return reply.code(200).send(createSuccessResponse({ xp: user.xp, title: user.title }));
     }
   );
 
@@ -41,7 +42,7 @@ export async function achievementRoutes(fastify: FastifyInstance) {
     "/seed",
     async (request, reply) => {
       await service.seedAchievements();
-      return reply.code(200).send({ message: "Achievements seeded" });
+      return reply.code(200).send(createSuccessResponse({ message: "Achievements seeded" }));
     }
   );
 }

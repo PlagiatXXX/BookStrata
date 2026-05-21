@@ -19,7 +19,7 @@ import {
   getLikedTierListIds,
 } from "./likes/likes.service.js";
 import { addBooksToTierList } from "./tierList.service.js";
-import { ErrorCodes, createApiError } from "../../lib/api-response.js";
+import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 // Логгер для роутов тир-листов
 const logger = createLogger("TierListsRoutes", { color: "cyan" });
@@ -298,7 +298,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       if (!tierList.isPublic && !isOwner) {
         return reply.code(403).send(createApiError(ErrorCodes.ACCESS_DENIED, "Access denied"));
       }
-      return tierList;
+      return reply.send(createSuccessResponse(tierList));
     },
   );
 
@@ -345,7 +345,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       await service.deleteTierList(tierListId);
       return reply
         .code(200)
-        .send({ message: "Tier list deleted successfully" });
+        .send(createSuccessResponse({ message: "Tier list deleted successfully" }));
     },
   );
 

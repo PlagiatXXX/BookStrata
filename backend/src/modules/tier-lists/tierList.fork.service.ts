@@ -14,9 +14,7 @@ export async function forkTierList(id: string, userId: number) {
       requesterUserId: userId,
       ownerUserId: original.userId,
     });
-    const error = new Error("Forbidden");
-    (error as any).statusCode = 403;
-    throw error;
+    throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
   }
 
   return prisma.$transaction(async (tx) => {

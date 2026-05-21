@@ -12,7 +12,7 @@ import {
 } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
-import { ErrorCodes, createApiError } from "../../lib/api-response.js";
+import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 export async function userRoutes(fastify: FastifyInstance) {
   // GET /api/users/me
@@ -25,7 +25,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       const user = await getMe(userId);
-      return reply.code(200).send(user);
+      return reply.code(200).send(createSuccessResponse(user));
     },
   );
 
@@ -56,7 +56,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         { userId, username: request.body.username },
         "Username updated",
       );
-      return reply.code(200).send(user);
+      return reply.code(200).send(createSuccessResponse(user));
     },
   );
 
@@ -70,7 +70,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       const stats = await getUserStats(userId);
-      return reply.code(200).send(stats);
+      return reply.code(200).send(createSuccessResponse(stats));
     },
   );
 
@@ -79,7 +79,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     Params: { id: string };
   }>("/:id", async (request, reply) => {
     const user = await getUserById(request.params);
-    return reply.code(200).send(user);
+    return reply.code(200).send(createSuccessResponse(user));
   });
 
   // PUT /api/users/me/avatar
@@ -109,7 +109,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         { userId, avatar: request.body.avatarUrl },
         "Avatar updated",
       );
-      return reply.code(200).send(user);
+      return reply.code(200).send(createSuccessResponse(user));
     },
   );
 
@@ -124,7 +124,7 @@ export async function userRoutes(fastify: FastifyInstance) {
       }
       const user = await deleteAvatar(userId);
       fastify.log.info({ userId }, "Avatar deleted");
-      return reply.code(200).send(user);
+      return reply.code(200).send(createSuccessResponse(user));
     },
   );
 
@@ -157,7 +157,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         request.body.new_password,
       );
       fastify.log.info({ userId }, "Password changed");
-      return reply.code(200).send(user);
+      return reply.code(200).send(createSuccessResponse(user));
     },
   );
 
@@ -167,7 +167,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     { preHandler: [authMiddleware, requireRole("admin")] },
     async (request, reply) => {
       const users = await getAllUsers();
-      return reply.code(200).send(users);
+      return reply.code(200).send(createSuccessResponse(users));
     },
   );
 }

@@ -6,6 +6,9 @@ import { prisma } from "./tierList.utils.js";
 import { generateUniqueSlug } from "../../utils/slugify.js";
 import type { GetTierListsQuery } from "./tierList.schema.js";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface TierListWithCount { _count?: any; [key: string]: unknown }
+
 export async function getUserTierLists(
   userId: number,
   query: GetTierListsQuery,
@@ -19,9 +22,9 @@ export async function getUserTierLists(
   });
   const totalPages = Math.ceil(totalItems / pageSize);
 
-  const data = tierLists.map((tl) => ({
+  const data = tierLists.map((tl: TierListWithCount) => ({
     ...tl,
-    booksCount: (tl as any)._count?.placements ?? 0,
+    booksCount: tl._count?.placements ?? 0,
     _count: undefined,
   }));
 
@@ -78,7 +81,7 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
   links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}&sortBy=${query.sortBy || "updated_at"}`;
 
   return {
-    data: tierLists.map((tl: any) => ({
+    data: tierLists.map((tl) => ({
       ...tl,
       authorName: tl.user?.username || "Anonymous",
       authorAvatar: tl.user?.avatarUrl,
