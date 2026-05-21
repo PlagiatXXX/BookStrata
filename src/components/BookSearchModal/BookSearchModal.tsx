@@ -249,6 +249,7 @@ export const BookSearchModal = ({
   const [state, dispatch] = useReducer(searchReducer, initialSearchState);
   const [viewBook, setViewBook] = useState<OpenLibraryBook | null>(null);
   const [isViewAdding, setIsViewAdding] = useState(false);
+  const [isAddingBooks, setIsAddingBooks] = useState(false);
 
   const {
     search,
@@ -261,9 +262,11 @@ export const BookSearchModal = ({
   } = useBookSearch({ cacheEnabled: true });
 
   const handleClose = useCallback(() => {
-    // Очищаем состояние перед закрытием
     dispatch({ type: "RESET_SEARCH" });
     clearResults();
+    setIsAddingBooks(false);
+    setIsViewAdding(false);
+    setViewBook(null);
     onClose();
   }, [clearResults, onClose]);
 
@@ -303,6 +306,8 @@ export const BookSearchModal = ({
   const handleAddSelectedBooks = async () => {
     if (state.selectedBooks.size === 0) return;
 
+    setIsAddingBooks(true);
+
     const booksToAdd = results.filter((book) =>
       state.selectedBooks.has(book.openLibraryKey),
     );
@@ -319,7 +324,6 @@ export const BookSearchModal = ({
       try {
         const result = await addBookFromGoogleBooks(tierListId, book);
         successCount++;
-        // result имеет формат { id, title, author, coverImageUrl }
         if (result && typeof result === "object") {
           lastAddedBook = result;
         }
@@ -330,7 +334,6 @@ export const BookSearchModal = ({
           title: book.title,
         });
 
-        // Проверяем ошибку лимита книг
         const errorMessage = err.message || "";
         const isLimitError = errorMessage.includes("Превышен лимит книг") || errorMessage.includes("лимит");
 
@@ -346,10 +349,9 @@ export const BookSearchModal = ({
               },
             },
           });
-          break; // Прекращаем добавление
+          break;
         }
 
-        // Проверяем различные форматы ошибок о отсутствии обложки
         const isNoCoverError =
           errorMessage.includes("no cover image") ||
           errorMessage.includes("Book has no cover") ||
@@ -371,13 +373,14 @@ export const BookSearchModal = ({
       }
     }
 
+    dispatch({ type: "CLEAR_SELECTION" });
+    setIsAddingBooks(false);
+
     if (successCount > 0) {
       sileo.success({ title: `Добавлено ${successCount} ${successCount === 1 ? "книга" : successCount < 5 ? "книги" : "книг"}`, duration: 3000 });
       onBookAdded?.(lastAddedBook);
       handleClose();
     }
-
-    dispatch({ type: "CLEAR_SELECTION" });
   };
 
   const handleAddBookFromView = async (book: OpenLibraryBook) => {
@@ -514,7 +517,7 @@ export const BookSearchModal = ({
               <button
                 type="button"
                 onClick={handleSearch}
-                disabled={isLoading || state.query.length < 2}
+                disabled={isLoading || isAddingBooks || state.query.length < 2}
                 className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
               >
                 {isLoading ? <Spinner size="sm" /> : "Найти"}
@@ -534,10 +537,15 @@ export const BookSearchModal = ({
                   <button
                     type="button"
                     onClick={handleAddSelectedBooks}
-                    className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-4 py-2 text-sm font-black text-black animate-scale-in transition-colors hover:bg-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                    disabled={isAddingBooks}
+                    className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-4 py-2 text-sm font-black text-black animate-scale-in transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
                   >
-                    <Plus className="w-4 h-4" />
-                    Добавить выбранные ({state.selectedBooks.size})
+                    {isAddingBooks ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    {isAddingBooks ? "Добавление..." : `Добавить выбранные (${state.selectedBooks.size})`}
                   </button>
                 )}
               </div>

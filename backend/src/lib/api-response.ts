@@ -75,13 +75,4 @@ export function createApiError(
   };
 }
 
-export function createSuccessResponse<T>(
-  data: T,
-  location?: string,
-): { data: T; headers?: Record<string, string> } {
-  const headers: Record<string, string> = {};
-  if (location) {
-    headers["Location"] = location;
-  }
-  return headers.Location ? { data, headers } : { data };
-}
+

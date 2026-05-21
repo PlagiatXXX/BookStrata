@@ -38,12 +38,12 @@ describe('likes.service', () => {
       });
     });
 
-    it('should return error if already liked', async () => {
+    it('should return success if already liked (idempotent)', async () => {
       (prisma.tierListLike.findUnique as any).mockResolvedValue({ id: 1 });
 
       const result = await service.like(1, 1);
 
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
       expect(prisma.tierListLike.create).not.toHaveBeenCalled();
     });
   });

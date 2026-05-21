@@ -155,11 +155,39 @@ PostgreSQL 14+ required. Redis via `backend/docker-compose.yml`.
 
 ### Rate Limiting
 
-Redis-backed rate limiting с headers:
+Redis-backed rate limiting (fallback на in-memory при недоступности Redis) с `@fastify/rate-limit`.
+
+Store: `backend/src/lib/redis.ts` — `RedisRateLimitStore` (кастомный, с LUA-free increment'ом через ioredis).
+
+**Глобальные лимиты:**
+| Тип | Лимит | Window | Ключ |
+|-----|-------|--------|------|
+| Анонимные | 30 req/min | 1 min | `ip:{ip}` |
+| Авторизованные | 200 req/min | 1 min | `user:{userId}` |
+
+**Per-route лимиты:**
+| Эндпоинт | Лимит | Window |
+|----------|-------|--------|
+| POST /api/auth/register | 10 | 1 hour |
+| POST /api/auth/login | 20 | 1 min |
+| POST /api/auth/forgot-password | 5 | 1 hour |
+| POST /api/auth/reset-password | 5 | 1 hour |
+| POST /api/tier-lists | 10 | 1 hour |
+| POST /api/tier-lists/:id/like | 100 | 1 min |
+| DELETE /api/tier-lists/:id/like | 100 | 1 min |
+| POST /api/battles | 10 | 1 hour |
+| POST /api/battles/:id/vote | 30 | 1 min |
+
+**Headers:**
 - `x-ratelimit-limit` — общий лимит
 - `x-ratelimit-remaining` — оставшиеся запросы
 - `x-ratelimit-reset` — когда лимит сбросится (timestamp)
 - `retry-after` — только при 429 (секунды до retry)
+
+**Error response при 429:**
+```json
+{ "error": { "code": "rate_limit_exceeded", "message": "Слишком много запросов, попробуйте позже." } }
+```
 
 ## Gotchas
 

@@ -26,7 +26,7 @@ export async function templateLikesRoutes(fastify: FastifyInstance) {
       const templateId = request.params.id;
       const userId = request.user.userId;
 
-      const result = await like(templateId, userId);
+      await like(templateId, userId);
 
       // Получаем обновлённое количество лайков
       const likes = await getLikesWithStatus(templateId, userId);

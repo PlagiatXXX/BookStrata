@@ -3,8 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 // Моки для Prisma — должны быть ДО импорта сервиса
-vi.mock("../../lib/prisma.js", () => ({
-  prisma: {
+vi.mock("../../lib/prisma.js", () => {
+  const tx = {
     user: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
@@ -19,9 +19,10 @@ vi.mock("../../lib/prisma.js", () => ({
       deleteMany: vi.fn(),
       create: vi.fn(),
     },
-    $transaction: vi.fn(),
-  },
-}));
+    $transaction: vi.fn((cb: any) => cb(tx)),
+  };
+  return { prisma: tx };
+});
 
 vi.mock("./auth.mail.js", () => ({
   sendResetPasswordEmail: vi.fn().mockResolvedValue(undefined),

@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
+import { tierListRepository } from "../../repositories/index.js";
 
 const logger = createLogger("Achievements", { color: "yellow" });
 
@@ -128,7 +129,7 @@ export async function processAction(userId: number, action: 'create_tier_list' |
 
   switch (action) {
     case 'create_tier_list': {
-      const count = await prisma.tierList.count({ where: { userId } });
+      const count = await tierListRepository.countByUser(userId);
       if (count >= 1) {
         const a = await checkAndGrantAchievement(userId, 'curator_1');
         if (a) newAchievements.push(a);
@@ -256,15 +257,12 @@ export async function processAction(userId: number, action: 'create_tier_list' |
       break;
     }
     case 'win_battle': {
-      const userTierListIds = (await prisma.tierList.findMany({
-        where: { userId },
-        select: { id: true }
-      })).map(tl => tl.id);
+      const userTierListIds = await tierListRepository.findUserTierListIds(userId);
 
       const winCount = await prisma.battle.count({
         where: { winnerId: { in: userTierListIds } }
       });
-      if (winCount >= 1) {
+      if (winCount >= 5) {
         const a = await checkAndGrantAchievement(userId, 'fighter_3');
         if (a) newAchievements.push(a);
         const aL = await checkAndGrantAchievement(userId, 'battle_winner');
@@ -277,9 +275,7 @@ export async function processAction(userId: number, action: 'create_tier_list' |
       break;
     }
     case 'fork': {
-       const forkedCount = await prisma.tierList.count({
-         where: { userId, originalTierListId: { not: null } }
-       });
+       const forkedCount = await tierListRepository.countUserForks(userId);
        if (forkedCount >= 1) {
          const a = await checkAndGrantAchievement(userId, 'explorer');
          if (a) newAchievements.push(a);

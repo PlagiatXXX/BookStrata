@@ -1,4 +1,5 @@
 import { prisma } from '../../../lib/prisma.js';
+import { tierListRepository } from "../../../repositories/index.js";
 
 // Получить лайки тир-листа
 export async function getLikes(tierListId: string) {
@@ -77,8 +78,7 @@ export async function unlike(tierListId: string, userId: number) {
 // Получить лайки и статус лайка для пользователя
 export async function getLikesWithStatus(tierListId: string, userId?: number) {
   // Оптимизация Bolt: получаем количество лайков и статус в одном запросе
-  const tierList = await prisma.tierList.findUnique({
-    where: { id: tierListId },
+  const tierList = await tierListRepository.findById(tierListId, {
     select: {
       likesCount: true,
       likes: userId

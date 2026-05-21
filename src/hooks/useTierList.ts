@@ -285,6 +285,11 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
       const unrankedChanged =
         newUnrankedBookIds.length !== state.unrankedBookIds.length;
 
+      const newDeletedBookIds = [...(state.deletedBookIds || [])];
+      if (/^\d+$/.test(bookId)) {
+        newDeletedBookIds.push(parseInt(bookId, 10));
+      }
+
       return {
         ...state,
         books: newBooks,
@@ -292,6 +297,7 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
         unrankedBookIds: unrankedChanged
           ? newUnrankedBookIds
           : state.unrankedBookIds,
+        deletedBookIds: newDeletedBookIds,
       };
     }
 

@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
-import { processAction } from "../achievements/achievements.service.js";
+import { eventBus } from "../../lib/event-emitter.js";
+import { tierListRepository } from "../../repositories/index.js";
 
 const logger = createLogger("Battles", { color: "magenta" });
 
@@ -17,12 +18,7 @@ export async function createBattle(data: CreateBattleInput) {
   logger.info("Creating new battle", { title: data.title, type: data.type });
 
 // Проверяем, что все тир-листы существуют и публичны
-const tierLists = await prisma.tierList.findMany({
-where: {
-id: { in: data.participantTierListIds },
-isPublic: true,
-},
-});
+const tierLists = await tierListRepository.findByIds(data.participantTierListIds);
  
 if (tierLists.length !== data.participantTierListIds.length) {
 throw new Error("One or more tier lists are not found or not public");
@@ -193,7 +189,7 @@ export async function closeBattle(battleId: string) {
        });
 
        // Выдаем ачивку за участие
-       await processAction(p.tierList.userId, 'participate_battle');
+       await eventBus.emit("battle:participated", { userId: p.tierList.userId });
     }
 
     // Победителю еще 200 XP
@@ -203,7 +199,7 @@ export async function closeBattle(battleId: string) {
         data: { xp: { increment: 200 } }
       });
 
-      await processAction(winner.tierList.userId, 'win_battle');
+      await eventBus.emit("battle:won", { userId: winner.tierList.userId });
     }
 
     return updatedBattle;

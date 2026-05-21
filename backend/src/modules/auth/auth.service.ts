@@ -38,23 +38,10 @@ export interface LoginPayload {
 
 // Регистрация нового пользователя
 export async function register(payload: RegisterPayload): Promise<AuthToken> {
-  // Проверка дублей
-  const existing = await prisma.user.findFirst({
-    where: {
-      OR: [{ email: payload.email }, { username: payload.username }],
-    },
-  });
-
-  if (existing) {
-    throw new Error(
-      "Пользователь с таким именем или email уже зарегистрирован. Пожалуйста, выберите другое имя пользователя или email.",
-    );
-  }
-
-  // Хешируем пароль
+  // Хешируем пароль до транзакции (bcrypt — CPU-bound, не блокирует БД)
   const hashedPassword = await bcrypt.hash(payload.password, 10);
 
-  // Получаем роль 'user'
+  // Получаем роль 'user' до транзакции (read-only, не подвержено race condition)
   const rolesService = new RolesService(prisma);
   const userRole = await rolesService.getRoleByName("user");
 
@@ -63,14 +50,28 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
     throw new Error("Системная ошибка: роль пользователя не найдена");
   }
 
-  // Создаем юзера с ролью 'user'
-  const user = await prisma.user.create({
-    data: {
-      username: payload.username,
-      email: payload.email,
-      passwordHash: hashedPassword,
-      roleId: userRole.id,
-    },
+  // Атомарная проверка + создание в одной транзакции (предотвращает race condition)
+  const user = await prisma.$transaction(async (tx) => {
+    const existing = await tx.user.findFirst({
+      where: {
+        OR: [{ email: payload.email }, { username: payload.username }],
+      },
+    });
+
+    if (existing) {
+      throw new Error(
+        "Пользователь с таким именем или email уже зарегистрирован. Пожалуйста, выберите другое имя пользователя или email.",
+      );
+    }
+
+    return tx.user.create({
+      data: {
+        username: payload.username,
+        email: payload.email,
+        passwordHash: hashedPassword,
+        roleId: userRole.id,
+      },
+    });
   });
 
   logger.info("Пользователь зарегистрирован", {

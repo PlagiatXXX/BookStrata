@@ -39,6 +39,7 @@ export interface AtomicSavePayload {
   tiers: AtomicTiersDiff;
   newBooks: AtomicNewBook[];
   placements: AtomicPlacement[];
+  deletedBookIds: number[];
 }
 
 function toNumericId(id: string): number | null {
@@ -115,6 +116,7 @@ export function getAtomicSavePayload(listData: TierListData): AtomicSavePayload 
     },
     newBooks,
     placements,
+    deletedBookIds: listData.deletedBookIds || [],
   };
 }
 

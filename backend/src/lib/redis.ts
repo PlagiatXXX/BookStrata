@@ -15,44 +15,63 @@ redis.on('error', (err) => {
   console.error('❌ Redis error:', err.message);
 });
 
-export interface RateLimitOptions {
-  max: number;
-  timeWindow: number;
+type RateLimitCallback = (error: Error | null, result?: { current: number; ttl: number }) => void;
+
+interface ChildRouteOptions {
+  continueExceeding?: boolean;
+  exponentialBackoff?: boolean;
   cache?: number;
-  store?: FastifyRateLimitStore;
+  routeInfo?: { method?: string; url?: string };
 }
 
-export interface FastifyRateLimitStore {
-  incr(key: string, cb: (error: Error | null, result?: { current: number; ttl: number }) => void): void;
-  child(routeOptions: { path: string; prefix?: string }): FastifyRateLimitStore;
-}
+// Redis-backed rate limit store для @fastify/rate-limit
+export class RedisRateLimitStore {
+  private continueExceeding: boolean;
+  private exponentialBackoff: boolean;
+  private key: string;
 
-class RedisRateLimitStore implements FastifyRateLimitStore {
-  incr(key: string, cb: (error: Error | null, result?: { current: number; ttl: number }) => void): void {
-    const cacheKey = `rl:${key}`;
-    const ttlMs = 60 * 1000;
+  constructor(options: { continueExceeding?: boolean; exponentialBackoff?: boolean; key?: string } = {}) {
+    this.continueExceeding = options.continueExceeding ?? false;
+    this.exponentialBackoff = options.exponentialBackoff ?? false;
+    this.key = options.key ?? 'rl:';
+  }
 
-    redis.get(cacheKey)
-      .then((val) => {
-        const current = val ? parseInt(val, 10) : 0;
-        redis.set(cacheKey, current + 1, 'PX', ttlMs)
-          .then(() => {
-            redis.pttl(cacheKey)
-              .then((ttl) => {
-                cb(null, { current: current + 1, ttl: ttl > 0 ? ttl : ttlMs });
-              })
-              .catch(() => cb(null, { current: current + 1, ttl: ttlMs }));
-          })
-          .catch(() => cb(null, { current: current + 1, ttl: ttlMs }));
+  incr(key: string, cb: RateLimitCallback, timeWindow = 60000, max = 0): void {
+    const cacheKey = `${this.key}${key}`;
+
+    redis.incr(cacheKey)
+      .then((current) => {
+        if (current === 1 || (this.continueExceeding && current > max)) {
+          return redis.pexpire(cacheKey, timeWindow).then(() => {
+            redis.pttl(cacheKey).then((ttl) => {
+              cb(null, { current, ttl: ttl > 0 ? ttl : timeWindow });
+            });
+          });
+        }
+        if (this.exponentialBackoff && current > max) {
+          const backoffExponent = current - max - 1;
+          const ttl = Math.min(timeWindow * Math.pow(2, backoffExponent), Number.MAX_SAFE_INTEGER);
+          return redis.pexpire(cacheKey, ttl).then(() => {
+            cb(null, { current, ttl });
+          });
+        }
+        return redis.pttl(cacheKey).then((ttl) => {
+          cb(null, { current, ttl: ttl > 0 ? ttl : timeWindow });
+        });
       })
-      .catch(() => cb(new Error('Redis error'), undefined));
+      .catch((err) => cb(err, undefined));
   }
 
-  child(): FastifyRateLimitStore {
-    return this;
+  child(routeOptions: ChildRouteOptions): RedisRateLimitStore {
+    const prefix = routeOptions.routeInfo
+      ? `${this.key}${routeOptions.routeInfo.method}:${routeOptions.routeInfo.url}:`
+      : this.key;
+    return new RedisRateLimitStore({
+      continueExceeding: routeOptions.continueExceeding ?? this.continueExceeding,
+      exponentialBackoff: routeOptions.exponentialBackoff ?? this.exponentialBackoff,
+      key: prefix,
+    });
   }
 }
-
-export const redisStore = RedisRateLimitStore;
 
 export default redis;

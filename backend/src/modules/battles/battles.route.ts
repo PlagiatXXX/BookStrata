@@ -25,6 +25,12 @@ export async function battleRoutes(fastify: FastifyInstance) {
     {
       preHandler: [authMiddleware, requireAdminOrModerator],
       schema: schema.createBattleSchema,
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 hour",
+        },
+      },
     },
     async (request, reply) => {
       const battle = await service.createBattle({
@@ -42,6 +48,12 @@ export async function battleRoutes(fastify: FastifyInstance) {
     {
       preHandler: [authMiddleware],
       schema: schema.voteInBattleSchema,
+      config: {
+        rateLimit: {
+          max: 30,
+          timeWindow: "1 minute",
+        },
+      },
     },
     async (request) => {
       const userId = request.user!.userId;

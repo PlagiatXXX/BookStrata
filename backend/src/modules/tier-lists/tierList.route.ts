@@ -1,7 +1,7 @@
-import * as achievementService from "../achievements/achievements.service.js";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // backend/src/modules/tier-lists/tierList.route.ts
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import { eventBus } from "../../lib/event-emitter.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { createLogger } from "../../lib/logger.js";
 import { checkProLimit, checkBookLimit } from "../../middleware/proLimit.js";
@@ -54,6 +54,12 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/like",
     {
       preHandler: [authMiddleware],
+      config: {
+        rateLimit: {
+          max: 100,
+          timeWindow: "1 minute",
+        },
+      },
     },
     async (request: any, reply) => {
       const { requestId } = request.context;
@@ -73,6 +79,12 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/:id/like",
     {
       preHandler: [authMiddleware],
+      config: {
+        rateLimit: {
+          max: 100,
+          timeWindow: "1 minute",
+        },
+      },
     },
     async (request: any, reply) => {
       const { requestId } = request.context;
@@ -256,14 +268,20 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   // POST / -> Создать новый тир-лист
   fastify.post<{ Body: CreateTierListBody }>(
     "/",
-    { preHandler: [authMiddleware], ...schema.createTierListSchema },
+    {
+      preHandler: [authMiddleware],
+      ...schema.createTierListSchema,
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 hour",
+        },
+      },
+    },
     async (request, reply) => {
       const userId = request.user!.userId;
       const tierList = await service.createTierList(userId, request.body.title);
-      const newAchievements = await achievementService.processAction(
-        userId,
-        "create_tier_list",
-      );
+      const newAchievements = await eventBus.emit("tier-list:created", { userId });
       return reply.code(201).header("Location", `/api/tier-lists/${tierList.id}`).send({ data: { ...tierList, newAchievements } });
     },
   );
@@ -344,10 +362,9 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const tierListId = request.params.id;
       await service.assertOwner(tierListId, request.user!.userId);
       await service.updatePlacements(tierListId, request.body.placements);
-      const newAchievements = await achievementService.processAction(
-        request.user!.userId,
-        "add_book",
-      );
+      const newAchievements = await eventBus.emit("tier-list:book-added", {
+        userId: request.user!.userId,
+      });
       return reply
         .code(200)
         .send({ data: { message: "Placements updated", newAchievements } });
@@ -441,10 +458,9 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         tierListId,
         processedBooks,
       );
-      const newAchievements = await achievementService.processAction(
-        request.user!.userId,
-        "add_book",
-      );
+      const newAchievements = await eventBus.emit("tier-list:book-added", {
+        userId: request.user!.userId,
+      });
       return reply.code(201).send({ data: { results, newAchievements } });
     },
   );
@@ -475,14 +491,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         bookId,
         request.body,
       );
-      let newAchievements: Awaited<
-        ReturnType<typeof achievementService.processAction>
-      > = [];
+      let newAchievements: unknown[] = [];
       if (request.body.thoughts) {
-        newAchievements = await achievementService.processAction(
-          request.user!.userId,
-          "write_review",
-        );
+        newAchievements = await eventBus.emit("review:written", {
+          userId: request.user!.userId,
+        });
       }
       return reply.code(200).send({ data: { ...updatedBook, newAchievements } });
     },
@@ -599,10 +612,9 @@ export async function tierListRoutes(fastify: FastifyInstance) {
             thoughts: null,
           },
         ]);
-        const newAchievements = await achievementService.processAction(
-          currentUserId,
-          "add_book",
-        );
+        const newAchievements = await eventBus.emit("tier-list:book-added", {
+          userId: currentUserId,
+        });
 
         const createdBook = results[0]?.book;
         if (!createdBook) {
@@ -656,10 +668,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       try {
         const newTierList = await service.forkTierList(tierListId, userId);
-        const newAchievements = await achievementService.processAction(
-          userId,
-          "fork",
-        );
+        const newAchievements = await eventBus.emit("tier-list:forked", { userId });
         return reply.code(201).send({ data: { ...newTierList, newAchievements } });
       } catch (error) {
         fastify.log.error(error);
@@ -706,19 +715,17 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         body,
       );
 
-      const newAchievements = [];
+      const newAchievements: unknown[] = [];
       if (body.newBooks?.length) {
-        const achs = await achievementService.processAction(
-          request.user!.userId,
-          "add_book",
-        );
+        const achs = await eventBus.emit("tier-list:book-added", {
+          userId: request.user!.userId,
+        });
         newAchievements.push(...achs);
       }
       if (body.placements?.some((p: any) => p.thoughts)) {
-        const achs = await achievementService.processAction(
-          request.user!.userId,
-          "write_review",
-        );
+        const achs = await eventBus.emit("review:written", {
+          userId: request.user!.userId,
+        });
         newAchievements.push(...achs);
       }
 

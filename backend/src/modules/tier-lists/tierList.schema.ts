@@ -397,6 +397,10 @@ export const saveAllSchema = {
           },
         },
       },
+      deletedBookIds: {
+        type: 'array',
+        items: { type: 'number' },
+      },
     },
   },
   response: {

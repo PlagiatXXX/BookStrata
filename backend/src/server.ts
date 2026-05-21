@@ -7,7 +7,8 @@ import cookie from "@fastify/cookie";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
-import { redisStore } from "./lib/redis.js";
+import { redis, RedisRateLimitStore } from "./lib/redis.js";
+import LocalStore from "@fastify/rate-limit/store/LocalStore.js";
 import { prisma, waitForDatabase } from "./lib/prisma.js";
 import { ErrorCodes, createApiError } from "./lib/api-response.js";
 import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
@@ -25,6 +26,7 @@ import logFromFrontend from "../src/plugins/logFromFrontend.js";
 import requestContext from "../src/plugins/requestContext.js";
 import authPlugin from "../src/plugins/auth.js";
 import { errorNotifier } from "./lib/errorNotifier.js";
+import { registerAchievementSubscriptions } from "./lib/event-subscriptions.js";
 
 const requiredEnvVars = ["DATABASE_URL", "JWT_SECRET", "CLIENT_URL"];
 for (const envVar of requiredEnvVars) {
@@ -92,11 +94,51 @@ await fastify.register(helmet, {
   },
 });
 
+// Регистрируем Prisma как декоратор (доступен через fastify.prisma)
+fastify.decorate("prisma", prisma);
+
+// Регистрируем плагин cookie
+await fastify.register(cookie, {
+  secret: JWT_SECRET, // Для подписи cookie
+});
+
+// Health check endpoint for deployment
+fastify.get("/health", async () => {
+  const { checkDatabaseConnection } = await import("./lib/prisma.js");
+  const isDbConnected = await checkDatabaseConnection();
+
+  return {
+    status: isDbConnected ? "ok" : "degraded",
+    database: isDbConnected ? "connected" : "disconnected",
+    timestamp: new Date().toISOString(),
+  };
+});
+
+// Аутентификация ДО rate limit чтобы request.user был доступен
+fastify.register(authPlugin);
+fastify.register(requestContext);
+fastify.register(logFromFrontend);
+
+let StoreClass: typeof RedisRateLimitStore | typeof LocalStore = RedisRateLimitStore;
+try {
+  await redis.ping();
+  console.log('✅ Redis rate limit store ready');
+} catch {
+  console.warn('⚠️ Redis unavailable, using in-memory rate limit store');
+  StoreClass = LocalStore;
+}
+
 await fastify.register(rateLimit, {
   global: true,
-  max: 100,
+  max: (req) => {
+    return (req as any).user?.userId ? 200 : 30;
+  },
   timeWindow: "1 minute",
-  store: redisStore,
+  store: StoreClass as any,
+  keyGenerator: (req) => {
+    const userId = (req as any).user?.userId;
+    return userId ? `user:${userId}` : `ip:${req.ip}`;
+  },
   addHeadersOnExceeding: {
     "x-ratelimit-limit": true,
     "x-ratelimit-remaining": true,
@@ -245,30 +287,7 @@ await fastify.register(swaggerUi, {
   },
 });
 
-// Регистрируем Prisma как декоратор (доступен через fastify.prisma)
-fastify.decorate("prisma", prisma);
-
-// Регистрируем плагин cookie
-await fastify.register(cookie, {
-  secret: JWT_SECRET, // Для подписи cookie
-});
-
-// Health check endpoint for deployment
-fastify.get("/health", async () => {
-  const { checkDatabaseConnection } = await import("./lib/prisma.js");
-  const isDbConnected = await checkDatabaseConnection();
-
-  return {
-    status: isDbConnected ? "ok" : "degraded",
-    database: isDbConnected ? "connected" : "disconnected",
-    timestamp: new Date().toISOString(),
-  };
-});
-
 // Регистрируем все роуты из модулей
-fastify.register(authPlugin); // Плагин аутентификации (декодирует JWT)
-fastify.register(requestContext);
-fastify.register(logFromFrontend);
 fastify.register(authRoutes, { prefix: "/api/auth" });
 fastify.register(userRoutes, { prefix: "/api/users" });
 fastify.register(avatarRoutes, { prefix: "/api/avatars" });
@@ -282,6 +301,9 @@ fastify.register(battleRoutes, { prefix: "/api/battles" });
 
 // Регистрируем контроллер шаблонов с префиксом /api
 fastify.register(templatesPlugin, { prisma, prefix: "/api" });
+
+// Инициализация подписок на события
+registerAchievementSubscriptions();
 
 const start = async () => {
   try {

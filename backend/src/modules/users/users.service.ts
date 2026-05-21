@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcryptjs";
+import { tierListRepository } from "../../repositories/index.js";
 
 // Типы для валидации
 export type UpdateAvatarInput = {
@@ -185,11 +186,7 @@ export async function getUserStats(userId: number) {
   // Это сокращает количество запросов и избегает тяжелых join-ов на таблице лайков
   const [tierListStats, templatesCount, likesTodayCount] = await Promise.all([
     // Количество тир-листов и общая сумма лайков через агрегацию
-    prisma.tierList.aggregate({
-      where: { userId },
-      _count: { _all: true },
-      _sum: { likesCount: true },
-    }),
+    tierListRepository.aggregateUserStats(userId),
 
     // Количество шаблонов
     prisma.template.count({ where: { authorId: userId } }),
