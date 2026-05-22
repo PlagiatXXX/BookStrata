@@ -37,9 +37,9 @@ const TierGridRow = memo(
     tier: Tier;
     allBooks: Record<string, Book>;
     isActive: boolean;
-    onChangeColor: (tierId: string, newColor: string) => void;
-    onRename: (tierId: string, newTitle: string) => void;
-    onDelete: (tierId: string) => void;
+    onChangeColor?: (tierId: string, newColor: string) => void;
+    onRename?: (tierId: string, newTitle: string) => void;
+    onDelete?: (tierId: string) => void;
     onDeleteBook: (bookId: string) => void;
     onEditBook?: (book: Book) => void;
     onViewBook?: (book: Book) => void;
@@ -109,9 +109,9 @@ export const TierGrid = memo(
       listData,
       activeTierId,
       onAddRow,
-      onChangeTierColor = () => {},
-      onRenameTier = () => {},
-      onDeleteTier = () => {},
+      onChangeTierColor,
+      onRenameTier,
+      onDeleteTier,
       onDeleteBook = () => {},
       onEditBook,
       onViewBook,
@@ -120,7 +120,7 @@ export const TierGrid = memo(
     const { tiers, tierOrder, books } = listData;
 
     return (
-      <div ref={ref} className="flex flex-col gap-8 bg-transparent">
+      <div ref={ref} className="flex flex-col gap-2 bg-transparent">
         <SortableContext
           items={tierOrder}
           strategy={verticalListSortingStrategy}
@@ -142,13 +142,15 @@ export const TierGrid = memo(
           ))}
         </SortableContext>
 
-        <button
-          onClick={() => onAddRow?.()}
-          className="nb-btn-secondary w-full flex min-h-16 items-center justify-center border-dashed opacity-60 hover:opacity-100 transition-opacity"
-        >
-          <PlusCircle size={20} />
-          <span className="ml-3 nb-label-md">Добавить тир</span>
-        </button>
+        {onAddRow && (
+          <button
+            onClick={() => onAddRow()}
+            className="nb-btn-secondary w-full flex min-h-16 items-center justify-center border-dashed opacity-60 hover:opacity-100 transition-opacity"
+          >
+            <PlusCircle size={20} />
+            <span className="ml-3 nb-label-md">Добавить тир</span>
+          </button>
+        )}
       </div>
     );
   }),

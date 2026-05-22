@@ -25,9 +25,11 @@ dist-ssr
 ROADMAP.md
 doctor.md
 .Jules
+.jules
 .qwen
 # Recovery history folder
 .history/
+.codegraph/*
 .tmp
 .github/*
 !.github/copilot-instructions.md

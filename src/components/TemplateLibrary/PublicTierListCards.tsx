@@ -42,7 +42,7 @@ const PublicTierListCards = memo(function PublicTierListCards({
             </h3>
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-[#b8b1a3] truncate">
-                {tierList.user?.username || "Неизвестный автор"}
+                {tierList.authorName || tierList.user?.username || "Неизвестный автор"}
               </span>
               <div className="flex items-center gap-1 text-xs">
                 <Heart

@@ -32,8 +32,8 @@ interface TierLabelProps {
   title: string;
   color: string;
   labelSize?: Tier["labelSize"];
-  onChangeColor: (tierId: string, newColor: string) => void;
-  onRename: (tierId: string, newTitle: string) => void;
+  onChangeColor?: (tierId: string, newColor: string) => void;
+  onRename?: (tierId: string, newTitle: string) => void;
   droppableRef?: React.Ref<HTMLDivElement>;
 }
 
@@ -124,13 +124,14 @@ export const TierLabel = memo(
     const textColor = getTextColorForBackground(color);
 
     const handleDoubleClick = () => {
+      if (!onRename) return;
       setIsEditing(true);
       setInputValue(title);
     };
 
     const handleBlur = () => {
       if (inputValue.trim() !== title && inputValue.trim() !== "") {
-        onRename(tierId, inputValue.trim());
+        onRename?.(tierId, inputValue.trim());
       }
       setIsEditing(false);
     };
@@ -191,22 +192,24 @@ export const TierLabel = memo(
           />
         )}
 
-        <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100 focus-within:opacity-100 max-md:opacity-100">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsPaletteOpen(!isPaletteOpen);
-            }}
-            aria-label="Изменить цвет уровня"
-            aria-expanded={isPaletteOpen}
-            aria-haspopup="true"
-            className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 palette-toggle"
-            title="Изменить цвет"
-          >
-            <Palette size={12} aria-hidden="true" />
-          </button>
-        </div>
-        {isPaletteOpen && (
+        {onChangeColor && (
+          <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100 focus-within:opacity-100 max-md:opacity-100">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsPaletteOpen(!isPaletteOpen);
+              }}
+              aria-label="Изменить цвет уровня"
+              aria-expanded={isPaletteOpen}
+              aria-haspopup="true"
+              className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 palette-toggle"
+              title="Изменить цвет"
+            >
+              <Palette size={12} aria-hidden="true" />
+            </button>
+          </div>
+        )}
+        {onChangeColor && isPaletteOpen && (
           <div
             role="group"
             aria-label="Цветовая палитра"

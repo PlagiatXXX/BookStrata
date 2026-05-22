@@ -73,7 +73,7 @@ export const UnrankedItems = memo(
                   containerId={UNRANKED_AREA_ID}
                 />
               ))}
-              <ImageUploader onUpload={onUpload} booksCount={displayBooksCount} isPro={isPro} />
+              {onUpload && <ImageUploader onUpload={onUpload} booksCount={displayBooksCount} isPro={isPro} />}
             </div>
           </SortableContext>
         </div>

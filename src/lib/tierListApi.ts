@@ -18,6 +18,8 @@ export interface TierListShort {
     username: string;
     avatarUrl?: string;
   };
+  authorName?: string;
+  authorAvatar?: string;
   likesCount?: number;
   booksCount?: number;
 }
