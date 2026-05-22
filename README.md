@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-612_passed-brightgreen)](./doctor.md)
+[![Tests](https://img.shields.io/badge/Tests-620_passed-brightgreen)](./doctor.md)
 [![React Doctor](https://www.react.doctor/share/badge?p=tiermaker-pro&s=97&w=179&f=96)](https://www.react.doctor/share?p=tiermaker-pro&s=97&w=179&f=96)
 
 ---
@@ -41,6 +41,9 @@
 ### 📊 Dashboard и Сообщество
 - **Умная фильтрация** — Сортировка по дате, популярности и алфавиту.
 - **Публичные рейтинги** — Система лайков и возможность просмотра чужих списков.
+- **Совпадение вкусов** — При просмотре чужого тир-листа показывает процент пересечения книг с вашими списками.
+- **Библиотека** — Разделы «Личные», «Популярные» и «Избранное» с реальными данными и сохранением фокуса через URL.
+- **Баттлы** — Центр активностей с реальной статистикой участников и активных битв.
 - **Шаблоны** — Быстрый старт с предустановленными наборами (Fiction, Sci-Fi и др.).
 - **Счётчик лимитов** — Прогресс-бар заполнения тир-листа (лимит 20 книг для бесплатных аккаунтов).
 
@@ -112,12 +115,13 @@ cd backend && npm run dev # Backend на http://localhost:8080
 - **Frontend:** Разделение на `pages/`, `components/`, `hooks/`, `contexts/`. Логика редактора вынесена в специализированные хуки (`useTierEditorState`, `useTierEditorSave` и др.).
 - **Backend:** Модульный подход (`modules/`). Каждый модуль (auth, books, tier-lists) содержит свои роуты, схемы (Zod) и сервисы (Prisma).
 - **API:** RESTful API с автоматической Swagger-документацией на `/documentation`.
+- **Forum Stats:** Публичный эндпоинт `GET /api/forum/stats` — количество участников и активных битв.
 
 ---
 
 ## 🧪 Тестирование
 
-Проект покрыт **612 тестами** (345 фронтенд + 267 бэкенд) — Vitest + React Testing Library + Supertest.
+Проект покрыт **620 тестами** (347 фронтенд + 273 бэкенд) — Vitest + React Testing Library + Supertest.
 
 ```bash
 # Запуск тестов фронтенда
@@ -126,7 +130,7 @@ npm test
 # Запуск тестов бэкенда
 cd backend && npm test
 ```
-*Статус: **612/612** тестов проходят успешно ✅*
+*Статус: **620/620** тестов проходят успешно ✅*
 
 ---
 
@@ -160,6 +164,6 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 ---
 
 **Последнее обновление:** 22 мая 2026 г.
-**Статус:** Phase 2 Completed ✅ — Full test coverage (612 тестов)
+**Статус:** Phase 2 Completed ✅ — Full test coverage (620 тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)
 **Аудит и рефакторинг:** Jules (Senior Fullstack AI)

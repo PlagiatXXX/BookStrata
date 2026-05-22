@@ -94,6 +94,13 @@ export async function deleteTierList(id: string) {
   return result;
 }
 
+export async function getLikedTierLists(page = 1, pageSize = 10): Promise<PaginatedTierListsResponse> {
+  tierListLogger.info(`Получение лайкнутых тир-листов на странице ${page}`);
+  const result = await apiClient.get<PaginatedTierListsResponse>('/tier-lists/liked', { page, pageSize });
+  tierListLogger.info('Лайкнутые тир-листы успешно получены', { count: result.data.length });
+  return result;
+}
+
 export async function getPublicTierLists(
   page = 1,
   pageSize = 10,

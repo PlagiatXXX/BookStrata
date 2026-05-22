@@ -27,6 +27,7 @@ import {
   applyGeneral,
   getApplications,
   reviewApplication,
+  getForumStats,
 } from "./battlesApi"
 
 function mockResponse(data: unknown, status = 200) {
@@ -237,6 +238,35 @@ describe("battlesApi", () => {
         }),
       )
       expect(result).toEqual({ success: true })
+    })
+  })
+
+  describe("getForumStats", () => {
+    it("должен получать статистику форума", async () => {
+      const mockStats = { totalUsers: 100, activeBattles: 5 }
+      mockFetch.mockResolvedValue(mockResponse(mockStats))
+
+      const result = await getForumStats()
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:8080/api/forum/stats",
+        expect.objectContaining({ method: "GET" }),
+      )
+      expect(result).toEqual(mockStats)
+    })
+
+    it("должен работать при нулевых значениях", async () => {
+      mockFetch.mockResolvedValue(mockResponse({ totalUsers: 0, activeBattles: 0 }))
+
+      const result = await getForumStats()
+
+      expect(result).toEqual({ totalUsers: 0, activeBattles: 0 })
+    })
+
+    it("должен обрабатывать ошибку сервера", async () => {
+      mockFetch.mockResolvedValue(mockResponse(null, 500))
+
+      await expect(getForumStats()).rejects.toThrow()
     })
   })
 })

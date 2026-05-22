@@ -8,18 +8,16 @@ export const PUBLIC_TIER_LISTS_GC_TIME_MS = 300000;
 
 // === Section labels ===
 export const SECTION_LABELS: Record<string, string> = {
-  private: 'Личные шаблоны',
+  private: 'Личные тир-листы',
   public: 'Публичные тир-листы',
   favorites: 'Избранное',
-  archived: 'Архив',
 };
 
 // === Section descriptions ===
 export const SECTION_DESCRIPTIONS: Record<string, string> = {
-  private: 'Управляйте личной коллекцией шаблонов для рейтингов.',
+  private: 'Ваши персональные тир-листы с книгами.',
   public: 'Подборка публичных рейтингов от сообщества.',
-  favorites: 'Ваши избранные шаблоны.',
-  archived: 'Архивированные шаблоны.',
+  favorites: 'Тир-листы, которые вы лайкнули.',
 };
 
 // === View mode labels ===

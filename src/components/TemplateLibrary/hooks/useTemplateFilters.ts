@@ -43,7 +43,6 @@ export function useTemplateFilters({
         if (template.isArchived) return false;
       }
       if (activeSection === 'favorites' && !template.isFavorite) return false;
-      if (activeSection === 'archived' && !template.isArchived) return false;
       if (activeSection === 'public') return false;
 
       // Фильтрация по категории

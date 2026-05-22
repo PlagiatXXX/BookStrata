@@ -81,6 +81,7 @@ export class TierListRepository {
           isPublic: true,
           likesCount: true,
           slug: true,
+          user: { select: { username: true, avatarUrl: true } },
           _count: { select: { placements: true } },
         },
         orderBy: { updatedAt: "desc" },
@@ -120,6 +121,42 @@ export class TierListRepository {
       }),
       this.db.tierList.count({ where: { isPublic: true } }),
     ]);
+  }
+
+  async findLikedByUser(userId: number, pagination: { page: number; pageSize: number }) {
+    const skip = (pagination.page - 1) * pagination.pageSize;
+    const [likes, totalItems] = await Promise.all([
+      this.db.tierListLike.findMany({
+        where: { userId },
+        include: {
+          tierList: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              createdAt: true,
+              updatedAt: true,
+              isPublic: true,
+              likesCount: true,
+              user: { select: { username: true, avatarUrl: true } },
+              _count: { select: { placements: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: pagination.pageSize,
+        skip,
+      }),
+      this.db.tierListLike.count({ where: { userId } }),
+    ]);
+
+    const data = likes.map((l) => ({
+      ...l.tierList,
+      booksCount: (l.tierList as unknown as { _count: { placements: number } })._count?.placements ?? 0,
+      _count: undefined,
+    }));
+
+    return [data, totalItems] as const;
   }
 
   async findByIds(ids: string[]) {

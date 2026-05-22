@@ -62,6 +62,15 @@ export async function applyGeneral(
   return apiClient.post<BattleApplication>('/battles/apply', { tierListId, message });
 }
 
+export interface ForumStats {
+  totalUsers: number;
+  activeBattles: number;
+}
+
+export async function getForumStats(): Promise<ForumStats> {
+  return apiClient.get<ForumStats>('/forum/stats');
+}
+
 export async function getApplications(battleId: string): Promise<BattleApplication[]> {
   return apiClient.get<BattleApplication[]>(`/battles/${battleId}/applications`);
 }

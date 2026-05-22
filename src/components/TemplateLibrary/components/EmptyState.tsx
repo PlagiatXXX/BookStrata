@@ -1,4 +1,4 @@
-import { Archive, FileText, Globe, Star } from 'lucide-react';
+import { FileText, Globe, Star } from 'lucide-react';
 import type { SectionKey } from '../templateLibraryReducer';
 
 interface EmptyStateProps {
@@ -10,14 +10,12 @@ const ICONS: Record<SectionKey, typeof FileText> = {
   private: FileText,
   public: Globe,
   favorites: Star,
-  archived: Archive,
 };
 
 const TITLES: Record<SectionKey, string> = {
-  private: 'Нет шаблонов',
+  private: 'Нет тир-листов',
   public: 'Нет публичных тир-листов',
   favorites: 'Нет избранных',
-  archived: 'Нет архивных',
 };
 
 export function EmptyState({ section, hasSearch }: EmptyStateProps) {

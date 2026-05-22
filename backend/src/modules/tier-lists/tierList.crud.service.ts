@@ -24,6 +24,8 @@ export async function getUserTierLists(
 
   const data = tierLists.map((tl: TierListWithCount) => ({
     ...tl,
+    authorName: (tl.user as Record<string, unknown>)?.username || "Anonymous",
+    authorAvatar: (tl.user as Record<string, unknown>)?.avatarUrl,
     booksCount: tl._count?.placements ?? 0,
     _count: undefined,
   }));
@@ -90,6 +92,49 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
     })),
     meta: {
       totalItems,
+      totalPages,
+      currentPage: page,
+    },
+    links,
+  };
+}
+
+export async function getLikedTierLists(
+  userId: number,
+  query: GetTierListsQuery,
+) {
+  const page = parseInt(query.page, 10);
+  const pageSize = parseInt(query.pageSize, 10);
+
+  const [data, totalItems] = await tierListRepository.findLikedByUser(userId, {
+    page,
+    pageSize,
+  });
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  const baseUrl = "/api/tier-lists/liked";
+  const links: Record<string, string> = {
+    self: `${baseUrl}?page=${page}&pageSize=${pageSize}`,
+  };
+  if (page < totalPages) {
+    links.next = `${baseUrl}?page=${page + 1}&pageSize=${pageSize}`;
+  }
+  if (page > 1) {
+    links.prev = `${baseUrl}?page=${page - 1}&pageSize=${pageSize}`;
+  }
+  links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}`;
+
+  return {
+    data: data.map((tl: Record<string, unknown>) => ({
+      ...tl,
+      authorName: (tl.user as Record<string, unknown>)?.username || "Anonymous",
+      authorAvatar: (tl.user as Record<string, unknown>)?.avatarUrl,
+      _count: undefined,
+    })),
+    meta: {
+      totalItems,
+      itemCount: data.length,
+      itemsPerPage: pageSize,
       totalPages,
       currentPage: page,
     },

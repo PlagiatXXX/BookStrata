@@ -1,9 +1,12 @@
 import { useEffect, memo, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Users, LayoutGrid, MessageSquare } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BattleList } from "./components/BattleList";
 import { CuratorApplyModal } from "@/components/CuratorApplyModal/CuratorApplyModal";
+import { getForumStats } from "@/lib/battlesApi";
+import { Spinner } from "@/components/Spinner";
 import "./ForumPage.css";
 
 const MemoizedBattleList = memo(BattleList);
@@ -33,6 +36,20 @@ export default function ForumPage() {
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
+
+  const { data: forumStats, isLoading: statsLoading } = useQuery({
+    queryKey: ["forumStats"],
+    queryFn: getForumStats,
+    refetchOnWindowFocus: true,
+    staleTime: 60_000,
+  });
+
+  const formatCount = (count: number): string => {
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+    }
+    return String(count);
+  };
 
   const handleMyRatingsClick = useCallback(() => navigate("/"), [navigate]);
 
@@ -64,11 +81,15 @@ export default function ForumPage() {
 
               <div className="flex gap-4">
                 <div className="forum-stat-card brutal-card brutal-border p-4 min-w-[120px]">
-                  <div className="text-2xl font-black mb-1">2.4k</div>
+                  <div className="text-2xl font-black mb-1">
+                    {statsLoading ? <Spinner size="sm" /> : formatCount(forumStats?.totalUsers ?? 0)}
+                  </div>
                   <div className="text-[10px] font-bold uppercase tracking-widest text-(--ink-1)">Участников</div>
                 </div>
                 <div className="forum-stat-card brutal-card brutal-border p-4 min-w-[120px]">
-                  <div className="text-2xl font-black mb-1">15</div>
+                  <div className="text-2xl font-black mb-1">
+                    {statsLoading ? <Spinner size="sm" /> : forumStats?.activeBattles ?? 0}
+                  </div>
                   <div className="text-[10px] font-bold uppercase tracking-widest text-(--ink-1)">Активных битв</div>
                 </div>
               </div>

@@ -124,20 +124,6 @@ describe('useTemplateFilters', () => {
       expect(result.current.filteredTemplates[0].id).toBe('template-2');
     });
 
-    it('должен показывать только архивные в секции archived', () => {
-      const { result } = renderHook(() =>
-        useTemplateFilters({
-          templates: mockTemplates,
-          activeSection: 'archived',
-          activeCategory: 'all',
-          searchQuery: '',
-        })
-      );
-
-      expect(result.current.filteredTemplates).toHaveLength(1);
-      expect(result.current.filteredTemplates[0].id).toBe('template-3');
-    });
-
     it('должен возвращать пустой массив для секции public', () => {
       const { result } = renderHook(() =>
         useTemplateFilters({

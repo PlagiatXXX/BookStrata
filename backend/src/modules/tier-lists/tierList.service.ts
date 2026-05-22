@@ -11,6 +11,7 @@ export {
   getUserTierLists,
   getFullTierList,
   getPublicTierLists,
+  getLikedTierLists,
   createTierList,
   updateTierList,
   deleteTierList,

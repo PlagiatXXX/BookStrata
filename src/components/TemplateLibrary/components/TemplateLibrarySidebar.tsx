@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Archive, Globe, Lock, Star } from 'lucide-react';
+import { Globe, Lock, Star } from 'lucide-react';
 import { Button } from '@/ui/Button';
 import type { TemplateLibrarySidebarProps } from '../types';
 import { SECTION_LABELS } from '../constants';
@@ -15,7 +15,6 @@ export const TemplateLibrarySidebar = memo(({
     { key: 'private', icon: Lock },
     { key: 'public', icon: Globe },
     { key: 'favorites', icon: Star },
-    { key: 'archived', icon: Archive },
   ];
 
   return (

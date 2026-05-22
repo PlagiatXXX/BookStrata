@@ -16,7 +16,6 @@ import {
   like,
   unlike,
   getLikesWithStatus,
-  getLikedTierListIds,
 } from "./likes/likes.service.js";
 import { addBooksToTierList } from "./tierList.service.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
@@ -99,16 +98,17 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
   );
 
-  // GET /api/tier-lists/liked - получить все лайкнутые тир-листы пользователя
-  fastify.get(
+  // GET /api/tier-lists/liked - получить лайкнутые тир-листы пользователя с пагинацией
+  fastify.get<{ Querystring: GetTierListsQuery }>(
     "/liked",
     {
       preHandler: [authMiddleware],
+      ...schema.getTierListsSchema,
     },
-    async (request: any, reply) => {
-      const userId = request.user.userId;
-      const likedIds = await getLikedTierListIds(userId);
-      return reply.code(200).send({ data: { likedIds } });
+    async (request, reply) => {
+      const userId = request.user!.userId;
+      const tierLists = await service.getLikedTierLists(userId, request.query);
+      return reply.send(tierLists);
     },
   );
 
