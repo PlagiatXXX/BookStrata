@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Newspaper, BookOpen, Users, Crown, ArrowLeft } from 'lucide-react';
+import { Newspaper, BookOpen, Users, Crown, Sword, ArrowLeft } from 'lucide-react';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -41,6 +41,15 @@ export default function AdminDashboard() {
       color: 'from-amber-500/20 to-amber-500/5',
       borderColor: 'border-amber-500/30',
       textColor: 'text-amber-500',
+    },
+    {
+      title: 'Битвы',
+      description: 'Управление битвами и заявками',
+      icon: Sword,
+      path: '/admin/battles',
+      color: 'from-red-500/20 to-red-500/5',
+      borderColor: 'border-red-500/30',
+      textColor: 'text-red-500',
     },
   ];
 

@@ -32,8 +32,9 @@ templateLikes        TemplateLike[]
 newsArticles         NewsArticle[]
 passwordResetTokens  PasswordResetToken[]
 achievements         UserAchievement[]
-battleVotes          BattleVote[]
-role                 Role?      @relation(fields: [roleId], references: [id])
+  battleVotes          BattleVote[]
+  battleApplications   BattleApplication[]
+  role                 Role?      @relation(fields: [roleId], references: [id])
 roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
 createdAt            DateTime   @default(now()) @map("created_at")
  
@@ -64,8 +65,9 @@ likesCount  Int             @default(0) @map("likes_count")
 tiers       Tier[]
 placements  BookPlacement[]
 likes       TierListLike[]
-battleParticipants BattleParticipant[]
-originalTierListId String? @map("original_tier_list_id")
+  battleParticipants BattleParticipant[]
+  battleApplications BattleApplication[]
+  originalTierListId String? @map("original_tier_list_id")
 createdAt   DateTime        @default(now()) @map("created_at")
 updatedAt   DateTime        @updatedAt @map("updated_at")
  
@@ -123,8 +125,8 @@ battles       Battle[]
  
 model Battle {
 id           String              @id @default(uuid())
-template     Template            @relation(fields: [templateId], references: [id])
-templateId   String              @map("template_id")
+template     Template?           @relation(fields: [templateId], references: [id])
+templateId   String?             @map("template_id")
 title        String
 description  String?
 type         String              @default("weekly") // "weekly", "monthly"
@@ -132,9 +134,10 @@ status       String              @default("active") // "active", "completed"
 startTime    DateTime            @default(now()) @map("start_time")
 endTime      DateTime            @map("end_time")
 winnerId     String?                @map("winner_id")
-participants BattleParticipant[]
-votes        BattleVote[]
-createdAt    DateTime            @default(now()) @map("created_at")
+  participants BattleParticipant[]
+  votes        BattleVote[]
+  applications BattleApplication[]
+  createdAt    DateTime            @default(now()) @map("created_at")
 updatedAt    DateTime            @updatedAt @map("updated_at")
  
 @@map("battles")
@@ -153,18 +156,38 @@ votesCount Int      @default(0) @map("votes_count")
 }
  
 model BattleVote {
-id         Int      @id @default(autoincrement())
-battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
-battleId   String   @map("battle_id")
-user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-userId     Int      @map("user_id")
-tierListId String   @map("tier_list_id") // ID тир-листа за который проголосовали
-createdAt  DateTime @default(now()) @map("created_at")
- 
-@@unique([userId, battleId])
-@@map("battle_votes")
+  id         Int      @id @default(autoincrement())
+  battle     Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  battleId   String   @map("battle_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int      @map("user_id")
+  tierListId String   @map("tier_list_id") // ID тир-листа за который проголосовали
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, battleId])
+  @@map("battle_votes")
 }
- 
+
+// Заявки на участие в битвах
+// battleId может быть null — это общая заявка "хочу участвовать в будущих битвах"
+model BattleApplication {
+  id         Int      @id @default(autoincrement())
+  battle     Battle?  @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  battleId   String?  @map("battle_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int      @map("user_id")
+  tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+  tierListId String   @map("tier_list_id")
+  message    String?  // Комментарий от пользователя
+  status     String   @default("pending") // "pending" | "approved" | "rejected"
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([battleId, status])
+  @@index([userId, status])
+  @@map("battle_applications")
+}
+
 // Лайки тир-листов
 model TierListLike {
 id         Int      @id @default(autoincrement())

@@ -1,36 +1,71 @@
-import type { ApiTierListResponse } from './api';
+import type { ApiTier } from './api';
 
 export interface BattleParticipant {
   id: number;
-  battleId: number;
-  tierListId: number;
+  battleId: string;
+  tierListId: string;
   votesCount: number;
-  tierList: ApiTierListResponse;
+  tierList: BattleTierList;
+}
+
+export interface BattleTierList {
+  id: string;
+  title: string;
+  userId?: number;
+  user?: {
+    id?: number;
+    username: string;
+    avatarUrl?: string | null;
+  };
+  tiers?: ApiTier[];
+  placements?: Array<{
+    rank: number;
+    book: {
+      id: number;
+      title: string;
+      author: string | null;
+      coverImageUrl: string;
+      description: string | null;
+      thoughts: string | null;
+    };
+  }>;
+  unrankedBooks?: Array<{
+    rank: number;
+    book: {
+      id: number;
+      title: string;
+      author: string | null;
+      coverImageUrl: string;
+      description: string | null;
+      thoughts: string | null;
+    };
+  }>;
 }
 
 export interface Battle {
-  id: number;
-  templateId: string;
+  id: string;
+  templateId: string | null;
   title: string;
   description: string | null;
   type: 'weekly' | 'monthly';
   status: 'active' | 'completed';
   startTime: string;
   endTime: string;
-  winnerId: number | null;
+  winnerId: string | null;
   participants: BattleParticipant[];
   createdAt: string;
   updatedAt: string;
   template?: {
+    id?: string;
     title: string;
-  };
+  } | null;
 }
 
 export interface CreateBattleRequest {
-  templateId: string;
+  templateId?: string;
   title: string;
   description?: string;
   type: 'weekly' | 'monthly';
   endTime: string;
-  participantTierListIds: number[];
+  participantTierListIds: string[];
 }

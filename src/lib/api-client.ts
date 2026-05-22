@@ -35,7 +35,7 @@ function unwrapResponse<T>(json: unknown): T {
 }
 
 async function request<T>(
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   path: string,
   data?: unknown,
   retryCount = 0,
@@ -103,6 +103,7 @@ export const apiClient = {
     request<T>("GET", buildUrl(path, params)),
   post: <T>(path: string, data?: unknown) => request<T>("POST", path, data),
   put: <T>(path: string, data?: unknown) => request<T>("PUT", path, data),
+  patch: <T>(path: string, data?: unknown) => request<T>("PATCH", path, data),
   delete: <T>(path: string) => request<T>("DELETE", path),
 };
 

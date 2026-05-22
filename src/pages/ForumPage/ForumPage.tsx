@@ -1,14 +1,16 @@
-import { useEffect, memo, useCallback } from "react";
+import { useEffect, memo, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, LayoutGrid, MessageSquare } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BattleList } from "./components/BattleList";
+import { CuratorApplyModal } from "@/components/CuratorApplyModal/CuratorApplyModal";
 import "./ForumPage.css";
 
 const MemoizedBattleList = memo(BattleList);
 
 export default function ForumPage() {
   const navigate = useNavigate();
+  const [showCuratorModal, setShowCuratorModal] = useState(false);
 
   useEffect(() => {
     const elements = Array.from(
@@ -99,9 +101,12 @@ export default function ForumPage() {
                    Станьте куратором сообщества и организуйте соревнование по своему любимому шаблону.
                    Лучшие битвы получают охваты и уникальные награды.
                  </p>
-                 <button className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)">
-                   Подать заявку
-                 </button>
+                  <button
+                    onClick={() => setShowCuratorModal(true)}
+                    className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
+                  >
+                    Подать заявку
+                  </button>
                </div>
 
                <div className="absolute top-1/2 right-[-5%] -translate-y-1/2 opacity-10 pointer-events-none hidden lg:block">
@@ -109,6 +114,13 @@ export default function ForumPage() {
                </div>
             </div>
           </section>
+
+          {showCuratorModal && (
+            <CuratorApplyModal
+              onClose={() => setShowCuratorModal(false)}
+              onSuccess={() => setShowCuratorModal(false)}
+            />
+          )}
         </main>
       </div>
     </DashboardLayout>

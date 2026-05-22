@@ -30,6 +30,7 @@
     "html-to-image": "^1.11.13",
     "ioredis": "^5.10.1",
     "lucide-react": "^0.562.0",
+    "metal-fx": "^1.0.4",
     "react": "^19.2.0",
     "react-doctor": "^0.0.29",
     "react-dom": "^19.2.0",

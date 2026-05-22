@@ -6,7 +6,7 @@ import { tierListRepository } from "../../repositories/index.js";
 const logger = createLogger("Battles", { color: "magenta" });
 
 export interface CreateBattleInput {
-  templateId: string;
+  templateId?: string;
   title: string;
   description?: string | null;
   type: "weekly" | "monthly";
@@ -26,7 +26,7 @@ throw new Error("One or more tier lists are not found or not public");
 
   return prisma.battle.create({
     data: {
-      templateId: data.templateId,
+      ...(data.templateId ? { templateId: data.templateId } : {}),
       title: data.title,
       description: data.description ?? null,
       type: data.type,
@@ -203,5 +203,143 @@ export async function closeBattle(battleId: string) {
     }
 
     return updatedBattle;
+  });
+}
+
+// Заявки на участие
+export async function applyToBattle(userId: number, battleId: string, tierListId: string, message?: string) {
+  logger.info("User applying to battle", { userId, battleId, tierListId });
+
+  // Проверяем существование и активность битвы
+  const battle = await prisma.battle.findUnique({
+    where: { id: battleId },
+    select: { id: true, status: true, endTime: true },
+  });
+
+  if (!battle || battle.status !== "active" || battle.endTime < new Date()) {
+    throw new Error("Battle is not active or has ended");
+  }
+
+  // Проверяем, что тир-лист существует и принадлежит пользователю
+  const tierList = await prisma.tierList.findFirst({
+    where: { id: tierListId, userId, isPublic: true },
+  });
+
+  if (!tierList) {
+    throw new Error("Tier list not found or not public");
+  }
+
+  // Проверяем, не участвует ли уже этот тир-лист в битве
+  const existingParticipant = await prisma.battleParticipant.findUnique({
+    where: { battleId_tierListId: { battleId, tierListId } },
+  });
+
+  if (existingParticipant) {
+    throw new Error("This tier list is already participating in the battle");
+  }
+
+  return prisma.battleApplication.create({
+    data: { battleId, userId, tierListId, message: message ?? null },
+  });
+}
+
+// Общая заявка — без привязки к конкретной битве
+export async function applyGeneral(userId: number, tierListId: string, message?: string) {
+  logger.info("User submitting general application", { userId, tierListId });
+
+  const tierList = await prisma.tierList.findFirst({
+    where: { id: tierListId, userId, isPublic: true },
+  });
+
+  if (!tierList) {
+    throw new Error("Tier list not found or not public");
+  }
+
+  return prisma.battleApplication.create({
+    data: { battleId: null, userId, tierListId, message: message ?? null },
+  });
+}
+
+export async function getApplications(battleId: string) {
+  return prisma.battleApplication.findMany({
+    where: { battleId },
+    include: {
+      user: { select: { id: true, username: true, avatarUrl: true } },
+      tierList: { select: { id: true, title: true, isPublic: true } },
+      battle: { select: { id: true, title: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getPendingApplications() {
+  return prisma.battleApplication.findMany({
+    where: { status: "pending" },
+    include: {
+      user: { select: { id: true, username: true, avatarUrl: true } },
+      tierList: { select: { id: true, title: true, isPublic: true } },
+      battle: { select: { id: true, title: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getApprovedApplications() {
+  return prisma.battleApplication.findMany({
+    where: { status: "approved", battleId: null },
+    include: {
+      user: { select: { id: true, username: true, avatarUrl: true } },
+      tierList: { select: { id: true, title: true, isPublic: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function reviewApplication(battleId: string | null, applicationId: number, status: "approved" | "rejected") {
+  logger.info("Reviewing battle application", { battleId, applicationId, status });
+
+  const where = battleId
+    ? { id: applicationId, battleId }
+    : { id: applicationId, battleId: null };
+
+  const application = await prisma.battleApplication.findFirst({ where });
+
+  if (!application) {
+    throw new Error("Application not found");
+  }
+
+  if (application.status !== "pending") {
+    throw new Error("Application already reviewed");
+  }
+
+  if (status === "rejected") {
+    return prisma.battleApplication.update({
+      where: { id: applicationId },
+      data: { status: "rejected" },
+    });
+  }
+
+  // Одобрение — если заявка на конкретную битву, добавляем участника
+  if (!battleId) {
+    return prisma.battleApplication.update({
+      where: { id: applicationId },
+      data: { status: "approved" },
+    });
+  }
+
+  return prisma.$transaction(async (tx) => {
+    await tx.battleApplication.update({
+      where: { id: applicationId },
+      data: { status: "approved" },
+    });
+
+    await tx.battleParticipant.create({
+      data: {
+        battleId,
+        tierListId: application.tierListId,
+      },
+    });
+
+    return { success: true };
   });
 }

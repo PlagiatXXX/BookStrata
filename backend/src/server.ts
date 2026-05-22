@@ -76,7 +76,7 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
 
 fastify.register(cors, {
   origin: CLIENT_URL,
-  methods: ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"],
+  methods: ["GET", "HEAD", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // Разрешаем отправку cookie
 });
@@ -191,9 +191,15 @@ fastify.setErrorHandler((error: any, request, reply) => {
     "code" in error &&
     error.code === "P2002"
   ) {
+    const target = (error.meta as { target?: string[] })?.target ?? [];
+    if (target.includes("username")) {
+      return reply
+        .code(409)
+        .send(createApiError(ErrorCodes.USERNAME_TAKEN, "Пользователь с таким именем уже существует."));
+    }
     return reply
       .code(409)
-      .send(createApiError(ErrorCodes.USERNAME_TAKEN, "Пользователь с таким именем уже существует."));
+      .send(createApiError(ErrorCodes.CONFLICT, "Конфликт данных."));
   }
 
   // Для отладки в режиме разработки возвращаем сообщение ошибки

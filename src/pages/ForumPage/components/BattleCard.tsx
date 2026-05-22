@@ -20,18 +20,25 @@ export const BattleCard = memo(({ battle }: BattleCardProps) => {
 
   // Helper to get a cover image from a tier list
   const getTierListCover = (participant: BattleParticipant) => {
-    // Try to find the first book with an image in the tiers
-    for (const tier of participant.tierList.tiers || []) {
-      if (tier.items && tier.items.length > 0) {
-        const book = tier.items[0].book;
-        if (book && book.coverImageUrl) return book.coverImageUrl;
+    const tl = participant.tierList;
+    // In list view, tiers/placements may not be loaded — use user avatar as fallback
+    if (tl?.tiers) {
+      for (const tier of tl.tiers) {
+        if (tier.items && tier.items.length > 0) {
+          const book = tier.items[0].book;
+          if (book?.coverImageUrl) return book.coverImageUrl;
+        }
       }
     }
-    // Fallback to unranked books
-    if (participant.tierList.unrankedBooks && participant.tierList.unrankedBooks.length > 0) {
-      const book = participant.tierList.unrankedBooks[0].book;
-      if (book && book.coverImageUrl) return book.coverImageUrl;
+    if (tl?.placements && tl.placements.length > 0) {
+      const book = tl.placements[0].book;
+      if (book?.coverImageUrl) return book.coverImageUrl;
     }
+    if (tl?.unrankedBooks && tl.unrankedBooks.length > 0) {
+      const book = tl.unrankedBooks[0].book;
+      if (book?.coverImageUrl) return book.coverImageUrl;
+    }
+    if (tl?.user?.avatarUrl) return tl.user.avatarUrl;
     return "/placeholder-book.png";
   };
 

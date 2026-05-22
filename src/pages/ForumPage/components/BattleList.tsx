@@ -1,30 +1,16 @@
-import { useEffect, useState, memo } from "react";
-import { Sword, Loader2, AlertCircle } from "lucide-react";
-import { getActiveBattles } from "@/lib/battlesApi";
-import { type Battle } from "@/types/battles";
-import { BattleCard } from "./BattleCard";
+import { memo } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Sword, Loader2, AlertCircle } from "lucide-react"
+import { getActiveBattles } from "@/lib/battlesApi"
+import { type Battle } from "@/types/battles"
+import { BattleCard } from "./BattleCard"
 
 export const BattleList = memo(() => {
-  const [battles, setBattles] = useState<Battle[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchBattles = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getActiveBattles();
-        setBattles(data);
-      } catch (err) {
-        console.error("Failed to fetch battles:", err);
-        setError("Не удалось загрузить битвы. Попробуйте позже.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBattles();
-  }, []);
+  const { data: battles = [], isLoading, error, refetch } = useQuery<Battle[]>({
+    queryKey: ["active-battles"],
+    queryFn: getActiveBattles,
+    refetchInterval: 15000,
+  })
 
   if (isLoading) {
     return (
@@ -34,22 +20,22 @@ export const BattleList = memo(() => {
           Загрузка битв...
         </p>
       </div>
-    );
+    )
   }
 
   if (error) {
     return (
       <div className="brutal-card brutal-border p-12 text-center bg-red-500/5 reveal" data-reveal>
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <p className="text-(--ink-0) font-bold mb-2">{error}</p>
+        <p className="text-(--ink-0) font-bold mb-2">Не удалось загрузить битвы. Попробуйте позже.</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => refetch()}
           className="text-xs font-bold uppercase tracking-widest border-b border-red-500/30 hover:border-red-500"
         >
-          Обновить страницу
+          Повторить
         </button>
       </div>
-    );
+    )
   }
 
   return (
@@ -68,9 +54,6 @@ export const BattleList = memo(() => {
             Голосуйте за лучшие тир-листы сообщества
           </p>
         </div>
-        <button className="hidden md:block text-(--ink-0) text-[10px] font-bold uppercase tracking-[0.2em] border-b-2 border-(--line-soft) hover:border-(--accent-main) transition-colors pb-1">
-          Все битвы
-        </button>
       </div>
 
       <div className="community-rule mb-10" />
@@ -93,5 +76,5 @@ export const BattleList = memo(() => {
         </div>
       )}
     </section>
-  );
-});
+  )
+})

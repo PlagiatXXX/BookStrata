@@ -1,0 +1,201 @@
+.battle-shell {
+  color: var(--ink-0);
+  background: var(--bg-0);
+}
+
+/* ===== УНИКАЛЬНЫЙ СТИЛЬ КНОПОК ДЛЯ БИТВ ===== */
+
+.battle-vote-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-0);
+  background: transparent;
+  position: relative;
+  /* Шиммер бегущей полоски — видимая анимация */
+  overflow: hidden;
+}
+
+.battle-vote-btn::after {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent 0deg,
+    transparent 45deg,
+    rgba(217, 79, 43, 0.10) 90deg,
+    rgba(169, 143, 255, 0.08) 135deg,
+    rgba(100, 200, 255, 0.08) 180deg,
+    rgba(217, 79, 43, 0.10) 225deg,
+    transparent 270deg,
+    transparent 360deg
+  );
+  animation: battle-shimmer 12s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes battle-shimmer {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.battle-vote-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.battle-vote-btn:disabled::after {
+  animation: none;
+}
+
+/* Participant card — lighter, glass-like */
+.participant-card {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #1e1e28 0%, #181820 100%) !important;
+  border: 1px solid rgba(243, 239, 230, 0.08);
+  border-radius: 8px;
+  padding: 20px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.participant-card:hover {
+  border-color: rgba(243, 239, 230, 0.18);
+  transform: translateY(-2px);
+}
+.participant-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(243, 239, 230, 0.03) 0%,
+    transparent 50%
+  );
+}
+.participant-card .vote-section {
+  margin-top: auto;
+}
+
+/* Vote bar */
+.vote-bar-track {
+  background: #2a2a36;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+.vote-bar-fill {
+  border-radius: 999px;
+  height: 100%;
+  transition: width 0.5s ease;
+}
+
+/* Voted state badge */
+.voted-badge {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 6px;
+  padding: 12px;
+  color: #4ade80;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-main);
+}
+
+.community-heading {
+  font-family: "Space Grotesk", "Manrope", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.community-rule {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--line-soft) 35%, var(--line-strong) 50%, var(--line-soft) 65%, transparent 100%);
+}
+
+.brutal-border {
+  border: 1.5px solid var(--line-soft);
+}
+
+.brutal-card {
+  border-radius: 4px;
+  background: var(--bg-1);
+}
+
+.brutal-cta {
+  border: 1.5px solid var(--line-strong);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.brutal-cta:hover {
+  background: var(--accent-main);
+  color: var(--bg-0);
+  border-color: var(--accent-main);
+}
+
+.brutal-label {
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+.forum-stat-card {
+  transition: transform 0.2s ease;
+}
+
+.forum-stat-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-main);
+}
+
+.brutal-shadow-sm {
+  box-shadow: 2px 2px 0px var(--line-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .hover-lift, .brutal-cta {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
+}

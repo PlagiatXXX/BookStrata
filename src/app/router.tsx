@@ -36,6 +36,7 @@ const CreateTemplatePage = lazy(() => import("@/pages/CreateTemplatePage"));
 const EditTemplatePage = lazy(() => import("@/pages/EditTemplatePage"));
 const CommunityPage = lazy(() => import("@/pages/CommunityPage"));
 const ForumPage = lazy(() => import("@/pages/ForumPage"));
+const BattleDetailPage = lazy(() => import("@/pages/BattleDetailPage"));
 const NewsPage = lazy(() =>
   import("@/pages/NewsPage").then((module) => ({
     default: module.NewsPage,
@@ -58,6 +59,13 @@ const AdminDashboard = lazy(() =>
 );
 const AdminSubscriptionsPage = lazy(() =>
   import("@/pages/AdminSubscriptionsPage/AdminSubscriptionsPage").then(
+    (module) => ({
+      default: module.default,
+    }),
+  ),
+);
+const AdminBattlesPage = lazy(() =>
+  import("@/pages/AdminBattlesPage/AdminBattlesPage").then(
     (module) => ({
       default: module.default,
     }),
@@ -116,6 +124,10 @@ export const router = createBrowserRouter([
             element: <ForumPage />,
           },
           {
+            path: "/forum/battles/:id",
+            element: <BattleDetailPage />,
+          },
+          {
             path: "/news/:id",
             element: <NewsPage />,
           },
@@ -154,6 +166,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminSubscriptionsPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/battles",
+        element: (
+          <AdminGuard>
+            <AdminBattlesPage />
           </AdminGuard>
         ),
       },
