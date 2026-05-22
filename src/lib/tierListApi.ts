@@ -6,6 +6,29 @@ import { createLogger } from './logger';
 
 const tierListLogger = createLogger('TierListApi', { color: 'magenta' });
 
+export type TierListTheme = 'default' | 'midnight' | 'sunset' | 'forest' | 'ocean' | 'cyberpunk'
+
+export const PRO_THEMES: TierListTheme[] = ['midnight', 'sunset', 'forest', 'ocean', 'cyberpunk']
+export const FREE_THEMES: TierListTheme[] = ['default']
+
+export const THEME_LABELS: Record<TierListTheme, string> = {
+  default: 'Классическая',
+  midnight: 'Полночь',
+  sunset: 'Закат',
+  forest: 'Лес',
+  ocean: 'Океан',
+  cyberpunk: 'Киберпанк',
+}
+
+export const THEME_COLORS: Record<TierListTheme, { bg: string; tier: string; text: string }> = {
+  default: { bg: '#0e0e0e', tier: '#c1fffe', text: '#ffffff' },
+  midnight: { bg: '#0f172a', tier: '#818cf8', text: '#e2e8f0' },
+  sunset: { bg: '#1c0f0a', tier: '#fb923c', text: '#ffedd5' },
+  forest: { bg: '#0a1f0f', tier: '#4ade80', text: '#dcfce7' },
+  ocean: { bg: '#0a1628', tier: '#38bdf8', text: '#e0f2fe' },
+  cyberpunk: { bg: '#0a0a1a', tier: '#ff51fa', text: '#f0f0ff' },
+}
+
 export interface TierListShort {
   id: string;
   slug?: string | null;
@@ -13,6 +36,8 @@ export interface TierListShort {
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
+  theme?: string;
+  coverImageUrl?: string | null;
   user?: {
     id: number;
     username: string;
@@ -171,6 +196,21 @@ export async function toggleTierListPublic(id: string, isPublic: boolean) {
   tierListLogger.info('Переключение статуса публичности', { tierListId: id, isPublic });
   const result = await apiClient.put(`/tier-lists/${id}/public`, { isPublic });
   tierListLogger.info('Статус публичности успешно изменён', { tierListId: id, isPublic });
+  return result;
+}
+
+export async function uploadTierListCover(
+  tierListId: string,
+  file: File
+): Promise<{ coverImageUrl: string }> {
+  tierListLogger.info('Загрузка обложки тир-листа', { tierListId, fileName: file.name });
+
+  const base64 = await fileToBase64(file);
+  const result = await apiClient.put<{ coverImageUrl: string }>(
+    `/tier-lists/${tierListId}/cover`,
+    { coverImageUrl: base64 }
+  );
+  tierListLogger.info('Обложка тир-листа успешно загружена', { tierListId });
   return result;
 }
 

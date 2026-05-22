@@ -3,6 +3,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // Моки для Prisma — объявляем внутри factory для vi.mock
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
+    user: {
+      findUnique: vi.fn(),
+    },
     tierList: {
       findMany: vi.fn(),
       create: vi.fn(),
@@ -55,6 +58,7 @@ describe("tierList.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (prisma.tierList.findUnique as any).mockResolvedValue({ id: "1" });
+    (prisma.user.findUnique as any).mockResolvedValue({ isPro: false });
   });
 
   afterEach(() => {

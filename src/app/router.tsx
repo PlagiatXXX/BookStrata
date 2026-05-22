@@ -76,6 +76,8 @@ const AdminUsersPage = lazy(() =>
     default: module.AdminUsersPage,
   })),
 );
+const ContactPage = lazy(() => import("@/pages/ContactPage"))
+const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"))
 const CollectionPage = lazy(() =>
   import("@/pages/CollectionPage").then((module) => ({
     default: module.CollectionPage,
@@ -96,6 +98,8 @@ export const router = createBrowserRouter([
       { path: "/auth", element: <AuthPage /> },
       { path: "/forgot-password", element: <ForgotPasswordPage /> },
       { path: "/reset-password", element: <ResetPasswordPage /> },
+      { path: "/contact", element: <ContactPage /> },
+      { path: "/pricing", element: <PricingPage /> },
       {
         element: <ProtectedRoute />,
         children: [

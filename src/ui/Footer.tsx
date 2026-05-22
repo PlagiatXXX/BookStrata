@@ -154,17 +154,15 @@ export const Footer = () => {
                 </li>
               ))}
               <li>
-                <button
-                  type="button"
-                  disabled
-                  className="group flex items-center gap-2 text-sm text-[#b8b1a3]/40 cursor-not-allowed"
-                  title="В разработке"
+                <Link
+                  to="/contact"
+                  className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
                 >
-                  <span className="text-[#b8b1a3]/30">
+                  <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
                     <HelpCircle size={14} />
                   </span>
-                  FAQ (скоро)
-                </button>
+                  Контакты
+                </Link>
               </li>
             </ul>
           </nav>

@@ -81,6 +81,7 @@ export class TierListRepository {
           isPublic: true,
           likesCount: true,
           slug: true,
+          coverImageUrl: true,
           user: { select: { username: true, avatarUrl: true } },
           _count: { select: { placements: true } },
         },
@@ -112,6 +113,7 @@ export class TierListRepository {
           isPublic: true,
           likesCount: true,
           slug: true,
+          coverImageUrl: true,
           user: { select: { username: true, avatarUrl: true } },
           _count: { select: { placements: true } },
         },
@@ -138,6 +140,7 @@ export class TierListRepository {
               updatedAt: true,
               isPublic: true,
               likesCount: true,
+              coverImageUrl: true,
               user: { select: { username: true, avatarUrl: true } },
               _count: { select: { placements: true } },
             },
@@ -237,7 +240,7 @@ export class TierListRepository {
     });
   }
 
-  async update(id: string, data: { title?: string; isPublic?: boolean; year?: number }) {
+  async update(id: string, data: { title?: string; isPublic?: boolean; year?: number; theme?: string; coverImageUrl?: string }) {
     return this.db.tierList.update({
       where: getWhereClause(id),
       data,

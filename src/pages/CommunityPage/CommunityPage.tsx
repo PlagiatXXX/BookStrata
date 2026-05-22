@@ -7,6 +7,7 @@ import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { TemplateGrid } from "@/components/CommunityComponents/TemplateGrid";
 import { HeroSection } from "@/components/CommunityComponents/HeroSection";
 import { NewsSection } from "@/components/CommunityComponents/NewsSection";
+import { ExternalNewsSection } from "@/components/CommunityComponents/ExternalNewsSection";
 import { CollectionsSection } from "@/components/CommunityComponents/CollectionsSection";
 import { TemplatePreviewModal } from "@/components/CommunityComponents/TemplatePreviewModal";
 import { type TemplateItem } from "../../data/mockData";
@@ -19,6 +20,7 @@ const MemoizedHeroSection = memo(HeroSection);
 const MemoizedCategoryTabs = memo(CategoryTabs);
 const MemoizedTemplateGrid = memo(TemplateGrid);
 const MemoizedNewsSection = memo(NewsSection);
+const MemoizedExternalNewsSection = memo(ExternalNewsSection);
 const MemoizedCollectionsSection = memo(CollectionsSection);
 
 export default function CommunityPage() {
@@ -157,6 +159,8 @@ export default function CommunityPage() {
           </div>
 
           <MemoizedNewsSection searchQuery={searchQuery} />
+
+          <MemoizedExternalNewsSection />
 
           <MemoizedCollectionsSection />
         </main>

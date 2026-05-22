@@ -12,6 +12,8 @@ import { BookCover } from "@/ui/BookCover";
 import type { Book, Tier } from "@/types";
 import type { EditorHeaderProps } from "./EditorHeader";
 import { EditorHeader } from "./EditorHeader";
+import { TierListCoverEditor } from "./TierListCoverEditor";
+import { ThemePicker } from "./ThemePicker";
 
 interface EditorLayoutProps {
   children: React.ReactNode;
@@ -23,6 +25,13 @@ interface EditorLayoutProps {
   headerProps: EditorHeaderProps;
   onMyRatingsClick: () => void;
   isReadOnly: boolean;
+  isPro: boolean;
+  tierListId?: string;
+  coverImageUrl?: string | null;
+  theme?: string;
+  booksCount: number;
+  onCoverUpdated?: (url: string) => void;
+  onThemeChanged?: (theme: string) => void;
 }
 
 export const EditorLayout = ({
@@ -35,6 +44,13 @@ export const EditorLayout = ({
   headerProps,
   onMyRatingsClick,
   isReadOnly,
+  isPro = false,
+  tierListId,
+  coverImageUrl,
+  theme = "default",
+  booksCount = 0,
+  onCoverUpdated,
+  onThemeChanged,
 }: EditorLayoutProps) => {
   const activeBook =
     activeItem && "coverImageUrl" in activeItem ? activeItem : null;
@@ -60,9 +76,28 @@ export const EditorLayout = ({
       searchValue=""
       showSearch={false}
     >
-      <main className="neo-brutalist-editor flex-1 overflow-y-auto p-4  lg:p-8">
+      <main className="neo-brutalist-editor flex-1 overflow-y-auto p-4  lg:p-8" data-theme={theme}>
         <EditorHeader {...headerProps} />
+        {tierListId && !isReadOnly && (
+          <TierListCoverEditor
+            tierListId={tierListId}
+            coverImageUrl={coverImageUrl}
+            title={headerProps.title}
+            booksCount={booksCount}
+            isPro={isPro}
+            isReadOnly={isReadOnly}
+            onCoverUpdated={(url) => onCoverUpdated?.(url)}
+          />
+        )}
         {children}
+        {tierListId && !isReadOnly && (
+          <ThemePicker
+            tierListId={tierListId}
+            currentTheme={theme}
+            isPro={isPro}
+            onThemeChanged={(t) => onThemeChanged?.(t)}
+          />
+        )}
       </main>
     </DashboardLayout>
   );

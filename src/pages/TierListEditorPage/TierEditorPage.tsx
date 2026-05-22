@@ -1,5 +1,5 @@
 import "./ExportThemes.css";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
@@ -92,6 +92,18 @@ const TierListEditorContent = () => {
     isPublic,
     initialDataForHook,
   } = useTierEditorQueries(tierListId);
+
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(apiData?.coverImageUrl ?? null)
+  const [theme, setTheme] = useState<string>(apiData?.theme ?? "default")
+
+  useEffect(() => {
+    if (apiData?.coverImageUrl) {
+      setCoverImageUrl(apiData.coverImageUrl)
+    }
+    if (apiData?.theme) {
+      setTheme(apiData.theme)
+    }
+  }, [apiData?.coverImageUrl, apiData?.theme])
 
   // Извлекаем ID владельца и текущего пользователя
   const ownerUserId = apiData?.user?.id;
@@ -417,6 +429,13 @@ const TierListEditorContent = () => {
         headerProps={headerProps}
         onMyRatingsClick={handleMyRatingsClick}
         isReadOnly={isReadOnly}
+        isPro={isPro}
+        tierListId={tierListId}
+        coverImageUrl={coverImageUrl}
+        theme={theme}
+        booksCount={Object.keys(listData.books).length}
+        onCoverUpdated={setCoverImageUrl}
+        onThemeChanged={setTheme}
       >
         <TasteMatchBanner
           apiData={apiData}

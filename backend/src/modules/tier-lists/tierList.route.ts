@@ -302,8 +302,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
   );
 
-  // PUT /:id -> Обновить тир-лист (например, название)
-  fastify.put<{ Params: { id: string }; Body: CreateTierListBody }>(
+  // PUT /:id -> Обновить тир-лист (название или тему)
+  fastify.put<{ Params: { id: string }; Body: { title?: string; theme?: string } }>(
     "/:id",
     { preHandler: [authMiddleware], ...schema.updateTierListSchema },
     async (request, reply) => {
@@ -315,9 +315,17 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           .send(createApiError(ErrorCodes.FORBIDDEN, "You can only edit your own tier lists"));
       }
 
+      const updateData: Record<string, string> = {};
+      if (request.body.title) updateData.title = request.body.title.trim();
+      if (request.body.theme) updateData.theme = request.body.theme;
+
+      if (!Object.keys(updateData).length) {
+        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "No fields to update"));
+      }
+
       const updatedTierList = await service.prisma.tierList.update({
-        where: { id: tierListId },
-        data: { title: request.body.title.trim() },
+        where: { id: tierList.id },
+        data: updateData,
       });
       return reply.code(200).send({ data: updatedTierList });
     },
@@ -566,6 +574,42 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           { error: String(error) },
           "Failed to upload cover image",
         );
+        return reply.code(500).send(createApiError(ErrorCodes.UPLOAD_FAILED, "Failed to upload image"));
+      }
+    },
+  );
+
+  // PUT /:id/cover -> Обновить обложку тир-листа
+  fastify.put<{
+    Params: { id: string };
+    Body: { coverImageUrl: string };
+  }>(
+    "/:id/cover",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const tierListId = request.params.id;
+      const { coverImageUrl } = request.body;
+
+      await service.assertOwner(tierListId, request.user!.userId);
+
+      if (!coverImageUrl || !coverImageUrl.startsWith("data:")) {
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Invalid image format"));
+      }
+
+      try {
+        const uploadResult = await uploadBase64(
+          coverImageUrl,
+          "tiermaker-pro/tier-list-covers",
+        );
+
+        await service.updateTierListCover(tierListId, uploadResult.url);
+
+        return reply.code(200).send({ data: { coverImageUrl: uploadResult.url } });
+      } catch (error: any) {
+        if (error?.statusCode) {
+          return reply.code(error.statusCode).send(createApiError(ErrorCodes.INTERNAL_ERROR, error.message));
+        }
+        fastify.log.error({ error: String(error) }, "Failed to upload tier list cover");
         return reply.code(500).send(createApiError(ErrorCodes.UPLOAD_FAILED, "Failed to upload image"));
       }
     },

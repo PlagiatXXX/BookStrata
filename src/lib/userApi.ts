@@ -16,9 +16,12 @@ export interface User {
 
 export interface UserStats {
   tierListsCount: number;
+  publishedCount: number;
   templatesCount: number;
   likesCount: number;
   likesTodayCount: number;
+  totalBooks: number;
+  lastActivity: string | null;
 }
 
 export async function apiGetMe(): Promise<User> {

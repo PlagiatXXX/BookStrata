@@ -131,3 +131,24 @@
   background: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
 }
+
+.user-activity-stats__icon--info {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+}
+
+.user-activity-stats__icon--like {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.user-activity-stats__icon--neutral {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+
+@media (min-width: 640px) {
+  .user-activity-stats__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

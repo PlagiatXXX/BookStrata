@@ -89,6 +89,12 @@ export const Header = ({
       icon: <Swords size={18} />,
       description: "Баттлы пользователей",
     },
+    {
+      label: "Pro",
+      onClick: () => navigate("/pricing"),
+      icon: <span className="text-yellow-400 text-sm font-bold">$</span>,
+      description: "Премиум-возможности",
+    },
     ...(showTemplatesNav
       ? [
           {
@@ -183,6 +189,7 @@ export const Header = ({
                   username={authUser?.username}
                   size="sm"
                   className="w-8 h-8 sm:w-8 sm:h-8 max-sm:w-6 max-sm:h-6"
+                  isPro={authUser?.isPro}
                 />
               </button>
             )}
@@ -233,6 +240,7 @@ export const Header = ({
                   url={authUser?.avatarUrl}
                   username={authUser?.username}
                   size="sm"
+                  isPro={authUser?.isPro}
                 />
                 <div className="text-left flex-1">
                   <div className="font-medium">Профиль</div>

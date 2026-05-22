@@ -30,6 +30,8 @@ export interface ApiTierListResponse {
   title: string;
   year: number | null;
   isPublic: boolean;
+  coverImageUrl?: string | null;
+  theme?: string;
   createdAt?: string;
   updatedAt?: string;
   user?: {

@@ -13,8 +13,8 @@ export async function getUserTierLists(
   userId: number,
   query: GetTierListsQuery,
 ) {
-  const page = parseInt(query.page, 10);
-  const pageSize = parseInt(query.pageSize, 10);
+  const page = parseInt(query.page || "1", 10);
+  const pageSize = parseInt(query.pageSize || "10", 10);
 
   const [tierLists, totalItems] = await tierListRepository.findByUser(userId, {
     page,
@@ -60,8 +60,8 @@ export async function getFullTierList(id: string) {
 }
 
 export async function getPublicTierLists(query: GetTierListsQuery) {
-  const page = parseInt(query.page, 10);
-  const pageSize = parseInt(query.pageSize, 10);
+  const page = parseInt(query.page || "1", 10);
+  const pageSize = parseInt(query.pageSize || "10", 10);
 
   const [tierLists, totalItems] = await tierListRepository.findPublic({
     page,
@@ -103,8 +103,8 @@ export async function getLikedTierLists(
   userId: number,
   query: GetTierListsQuery,
 ) {
-  const page = parseInt(query.page, 10);
-  const pageSize = parseInt(query.pageSize, 10);
+  const page = parseInt(query.page || "1", 10);
+  const pageSize = parseInt(query.pageSize || "10", 10);
 
   const [data, totalItems] = await tierListRepository.findLikedByUser(userId, {
     page,
@@ -142,7 +142,21 @@ export async function getLikedTierLists(
   };
 }
 
+const MAX_FREE_TIER_LISTS = 5;
+
 export async function createTierList(userId: number, title: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { isPro: true } });
+  const isPro = user?.isPro ?? false;
+
+  if (!isPro) {
+    const count = await tierListRepository.countByUser(userId);
+    if (count >= MAX_FREE_TIER_LISTS) {
+      const err = new Error(`Достигнут лимит тир-листов (${MAX_FREE_TIER_LISTS}). Оформите Pro для неограниченного количества.`);
+      (err as any).statusCode = 403;
+      throw err;
+    }
+  }
+
   const randomSuffix = Math.random().toString(36).substring(2, 8);
   const slug = generateUniqueSlug(title, randomSuffix);
   const tierList = await tierListRepository.create(userId, { title, slug });
@@ -152,9 +166,13 @@ export async function createTierList(userId: number, title: string) {
 
 export async function updateTierList(
   id: string,
-  data: { title?: string; isPublic?: boolean; year?: number },
+  data: { title?: string; isPublic?: boolean; year?: number; theme?: string },
 ) {
   return tierListRepository.update(id, data);
+}
+
+export async function updateTierListCover(id: string, coverImageUrl: string) {
+  return tierListRepository.update(id, { coverImageUrl });
 }
 
 export async function deleteTierList(id: string) {

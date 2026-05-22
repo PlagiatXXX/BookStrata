@@ -66,7 +66,7 @@ export const getTierListByIdSchema = {
 };
 
 export const updateTierListSchema = {
-  description: 'Update tier list title',
+  description: 'Update tier list title or theme',
   tags: ['Tier Lists'],
   params: {
     type: 'object',
@@ -77,9 +77,9 @@ export const updateTierListSchema = {
   },
   body: {
     type: 'object',
-    required: ['title'],
     properties: {
       title: { type: 'string', minLength: 1, maxLength: 100 },
+      theme: { type: 'string' },
     },
   },
 };

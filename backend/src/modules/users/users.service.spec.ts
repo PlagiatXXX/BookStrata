@@ -17,6 +17,10 @@ vi.mock("../../lib/prisma.js", () => ({
     tierList: {
       count: vi.fn(),
       aggregate: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    bookPlacement: {
+      count: vi.fn(),
     },
   },
 }));
@@ -396,14 +400,20 @@ describe("users.service", () => {
       });
       (prisma.template.count as any).mockResolvedValue(3);
       (prisma.tierListLike.count as any).mockResolvedValue(2); // today likes
+      (prisma.tierList.count as any).mockResolvedValue(4);
+      (prisma.bookPlacement.count as any).mockResolvedValue(20);
+      (prisma.tierList.findFirst as any).mockResolvedValue({ updatedAt: new Date() });
 
       const result = await userService.getUserStats(mockUserId);
 
       expect(result).toEqual({
         tierListsCount: 5,
+        publishedCount: 4,
         templatesCount: 3,
         likesCount: 10,
         likesTodayCount: 2,
+        totalBooks: 20,
+        lastActivity: expect.any(String),
       });
 
       expect(prisma.tierList.aggregate).toHaveBeenCalledWith({
@@ -420,6 +430,9 @@ describe("users.service", () => {
       });
       (prisma.template.count as any).mockResolvedValue(0);
       (prisma.tierListLike.count as any).mockResolvedValue(0);
+      (prisma.tierList.count as any).mockResolvedValue(0);
+      (prisma.bookPlacement.count as any).mockResolvedValue(0);
+      (prisma.tierList.findFirst as any).mockResolvedValue(null);
 
       await userService.getUserStats(mockUserId);
 
@@ -451,14 +464,20 @@ describe("users.service", () => {
       });
       (prisma.template.count as any).mockResolvedValue(0);
       (prisma.tierListLike.count as any).mockResolvedValue(0);
+      (prisma.tierList.count as any).mockResolvedValue(0);
+      (prisma.bookPlacement.count as any).mockResolvedValue(0);
+      (prisma.tierList.findFirst as any).mockResolvedValue(null);
 
       const result = await userService.getUserStats(mockUserId);
 
       expect(result).toEqual({
         tierListsCount: 0,
+        publishedCount: 0,
         templatesCount: 0,
         likesCount: 0,
         likesTodayCount: 0,
+        totalBooks: 0,
+        lastActivity: null,
       });
     });
   });

@@ -101,9 +101,12 @@ describe("DashboardPage", () => {
 
     vi.mocked(userApiModule.apiGetUserStats).mockResolvedValue({
       tierListsCount: 2,
+      publishedCount: 1,
       likesCount: 15,
       templatesCount: 0,
       likesTodayCount: 0,
+      totalBooks: 10,
+      lastActivity: new Date().toISOString(),
     });
 
     vi.mocked(apiModule.createTierList).mockResolvedValue({

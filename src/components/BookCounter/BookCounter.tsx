@@ -1,5 +1,6 @@
 import { Book, AlertCircle, CheckCircle2, Crown } from "lucide-react";
 import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
+import { booksCountText, pluralize } from "@/lib/plural";
 
 interface BookCounterProps {
   booksCount: number;
@@ -47,7 +48,7 @@ export function BookCounter({ booksCount, isPro = false }: BookCounterProps) {
         aria-valuenow={isPro ? 100 : booksCount}
         aria-valuemin={0}
         aria-valuemax={isPro ? 100 : maxBooks}
-        aria-valuetext={isPro ? `${booksCount} книг` : `${booksCount} из ${maxBooks} книг`}
+        aria-valuetext={isPro ? booksCountText(booksCount) : `${booksCount} из ${maxBooks} ${pluralize(maxBooks, ["книги", "книг", "книг"])}`}
         aria-label="Прогресс заполнения тир-листа"
       >
         <div

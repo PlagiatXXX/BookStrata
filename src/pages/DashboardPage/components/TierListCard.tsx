@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { TierListCardProps } from "../types";
 import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
+import { TierListCover } from "@/components/DashboardHeroSection/components/TierListCover";
 
 export const TierListCard = memo(
   ({ tierList, onOpen, onRename, onDelete }: TierListCardProps) => {
@@ -23,6 +24,25 @@ export const TierListCard = memo(
 
     return (
       <article className="dashboard-card">
+        {/* Cover */}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onOpen(tierList.slug || tierList.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpen(tierList.slug || tierList.id);
+            }
+          }}
+        >
+          <TierListCover
+            coverImageUrl={tierList.coverImageUrl}
+            title={tierList.title}
+            booksCount={booksCount}
+          />
+        </div>
+
         {/* Actions - top right */}
         <div className="dashboard-card__actions">
           <button

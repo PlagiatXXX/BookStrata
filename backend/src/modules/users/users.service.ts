@@ -173,38 +173,48 @@ export async function getUserById(params: { id: string }) {
 // Статистика пользователя
 export interface UserStats {
   tierListsCount: number;
+  publishedCount: number;
   templatesCount: number;
   likesCount: number;
   likesTodayCount: number;
+  totalBooks: number;
+  lastActivity: string | null;
 }
 
 // GET /api/users/me/stats - получить статистику пользователя
 export async function getUserStats(userId: number) {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-  // Оптимизация Bolt: объединяем запросы и используем денормализованные поля
-  // Это сокращает количество запросов и избегает тяжелых join-ов на таблице лайков
-  const [tierListStats, templatesCount, likesTodayCount] = await Promise.all([
-    // Количество тир-листов и общая сумма лайков через агрегацию
+  const [tierListStats, templatesCount, likesTodayCount, publishedCount, placementCount, lastUpdated] = await Promise.all([
     tierListRepository.aggregateUserStats(userId),
-
-    // Количество шаблонов
     prisma.template.count({ where: { authorId: userId } }),
-
-    // Лайки за последние 24 часа (остается через count, т.к. нет денормализованного поля за период)
     prisma.tierListLike.count({
       where: {
         tierList: { userId },
         createdAt: { gte: oneDayAgo },
       },
     }),
+    prisma.tierList.count({
+      where: { userId, isPublic: true },
+    }),
+    prisma.bookPlacement.count({
+      where: { tierList: { userId } },
+    }),
+    prisma.tierList.findFirst({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+      select: { updatedAt: true },
+    }),
   ]);
 
   return {
     tierListsCount: tierListStats._count._all,
+    publishedCount,
     templatesCount,
     likesCount: tierListStats._sum.likesCount || 0,
     likesTodayCount,
+    totalBooks: placementCount,
+    lastActivity: lastUpdated?.updatedAt.toISOString() ?? null,
   };
 }
 

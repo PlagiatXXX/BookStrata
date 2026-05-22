@@ -66,8 +66,7 @@ export const getNews = async (
  * Получить опубликованные новости
  */
 export const getPublishedNews = async (limit = 6): Promise<NewsArticle[]> => {
-  const result = await api.get<{ data: NewsArticle[] }>(`/news/published?limit=${limit}`);
-  return result.data;
+  return api.get<NewsArticle[]>(`/news/published?limit=${limit}`);
 };
 
 /**
@@ -75,8 +74,7 @@ export const getPublishedNews = async (limit = 6): Promise<NewsArticle[]> => {
  */
 export const getNewsById = async (id: string): Promise<NewsArticle | null> => {
   try {
-    const result = await api.get<{ data: NewsArticle }>(`/news/${id}`);
-    return result.data;
+    return await api.get<NewsArticle>(`/news/${id}`);
   } catch {
     return null;
   }
@@ -88,8 +86,7 @@ export const getNewsById = async (id: string): Promise<NewsArticle | null> => {
 export const createNews = async (
   input: CreateNewsInput,
 ): Promise<{ message: string }> => {
-  const result = await api.post<{ data: { message: string } }>("/news", input);
-  return { message: result.data.message };
+  return api.post<{ message: string }>("/news", input);
 };
 
 /**
@@ -99,19 +96,17 @@ export const updateNews = async (
   id: string,
   input: UpdateNewsInput,
 ): Promise<{ message: string; article: NewsArticle }> => {
-  const result = await api.put<{ data: { message: string; article: NewsArticle } }>(
+  return api.put<{ message: string; article: NewsArticle }>(
     `/news/${id}`,
     input,
   );
-  return result.data;
 };
 
 /**
  * Удалить новость (требуется авторизация)
  */
 export const deleteNews = async (id: string): Promise<{ message: string }> => {
-  const result = await api.delete<{ data: { message: string } }>(`/news/${id}`);
-  return { message: result.data.message };
+  return api.delete<{ message: string }>(`/news/${id}`);
 };
 
 /**
@@ -121,9 +116,8 @@ export const togglePublish = async (
   id: string,
   isPublished: boolean,
 ): Promise<{ message: string; article: NewsArticle }> => {
-  const result = await api.post<{ data: { message: string; article: NewsArticle } }>(
+  return api.post<{ message: string; article: NewsArticle }>(
     `/news/${id}/publish`,
     { isPublished },
   );
-  return result.data;
 };

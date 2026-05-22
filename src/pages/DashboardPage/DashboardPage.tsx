@@ -14,6 +14,8 @@ import { useTierListsPagination } from "./hooks/useTierListsPagination";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { UserActivityStats } from "@/components/DashboardHeroSection/components/UserActivityStats";
 import { RecentPublicTierLists } from "@/components/DashboardHeroSection/components/RecentPublicTierLists";
+import { TrendingNow } from "@/components/DashboardHeroSection/components/TrendingNow";
+import { DashboardAchievements } from "@/components/DashboardHeroSection/components/DashboardAchievements";
 import { TierListGrid } from "./components/TierListGrid";
 import { Pagination } from "@/ui/Pagination";
 import { EmptyStates } from "./components/EmptyStates";
@@ -108,8 +110,11 @@ export function DashboardPage() {
 
   // Вычисляем значения для статистики
   const tierListsCount = stats?.tierListsCount || 0;
-  const publishedCount = stats?.likesCount || 0;
+  const publishedCount = stats?.publishedCount || 0;
   const draftsCount = Math.max(0, tierListsCount - publishedCount);
+  const totalBooks = stats?.totalBooks || 0;
+  const likesCount = stats?.likesCount || 0;
+  const lastActivity = stats?.lastActivity || null;
 
   // CRUD операции
   const {
@@ -206,16 +211,6 @@ export function DashboardPage() {
             onLogoutClick={handleLogout}
           />
 
-          {/* Stats Section */}
-          <MemoizedUserActivityStats
-            tierListsCount={tierListsCount}
-            publishedCount={publishedCount}
-            draftsCount={draftsCount}
-          />
-
-          {/* Recent Public Tier Lists */}
-          <MemoizedRecentPublicTierLists />
-
           {/* Divider */}
           <div className="dashboard-divider">
             <span>Ваши рейтинги</span>
@@ -288,6 +283,25 @@ export function DashboardPage() {
               />
             </>
           )}
+
+          {/* Stats Section */}
+          <MemoizedUserActivityStats
+            tierListsCount={tierListsCount}
+            publishedCount={publishedCount}
+            draftsCount={draftsCount}
+            totalBooks={totalBooks}
+            likesCount={likesCount}
+            lastActivity={lastActivity}
+          />
+
+          {/* Recent Public Tier Lists */}
+          <MemoizedRecentPublicTierLists />
+
+          {/* Achievements & XP */}
+          <DashboardAchievements />
+
+          {/* Trending Now */}
+          <TrendingNow />
         </div>
       </section>
 

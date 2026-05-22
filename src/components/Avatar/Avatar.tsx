@@ -9,6 +9,7 @@ interface AvatarProps {
   username?: string | null;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
+  isPro?: boolean;
 }
 
 const sizeClasses = {
@@ -19,11 +20,36 @@ const sizeClasses = {
   xl: "w-32 h-32 text-3xl",
 };
 
+const crownSizes: Record<string, string> = {
+  xs: "w-3.5 h-3.5 -top-1 -right-1",
+  sm: "w-4 h-4 -top-1 -right-1",
+  md: "w-5 h-5 -top-1.5 -right-1.5",
+  lg: "w-6 h-6 -top-1.5 -right-1.5",
+  xl: "w-8 h-8 -top-2 -right-2",
+};
+
+function CrownIcon({ className }: { className: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.4))" }}
+    >
+      <path
+        d="M2 19h20v-2H2v2zm1.5-4l3.5-9 4.5 5.5L16 6l3.5 9H3.5z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export function Avatar({
   url,
   username,
   size = "md",
   className = "",
+  isPro = false,
 }: AvatarProps) {
   const initials = getInitials(username);
   const initialsColor = getInitialsColor(username);
@@ -44,17 +70,13 @@ export function Avatar({
     (e.target as HTMLImageElement).src = "";
   };
 
-  if (!url || hasError) {
-    return (
-      <div
-        className={`${sizeClasses[size]} rounded-full bg-linear-to-br ${initialsColor} flex items-center justify-center font-bold text-white shadow-inner ${className}`}
-      >
-        {initials}
-      </div>
-    );
-  }
-
-  return (
+  const avatarEl = !url || hasError ? (
+    <div
+      className={`${sizeClasses[size]} rounded-full bg-linear-to-br ${initialsColor} flex items-center justify-center font-bold text-white shadow-inner ${className}`}
+    >
+      {initials}
+    </div>
+  ) : (
     <img
       src={url}
       alt={username ? `${username}'s avatar` : "Avatar"}
@@ -64,5 +86,16 @@ export function Avatar({
       onError={handleImageError}
       style={{ opacity: isLoaded || hasError ? 1 : 0 }}
     />
+  );
+
+  if (!isPro) return avatarEl;
+
+  return (
+    <div className="relative inline-flex">
+      {avatarEl}
+      <CrownIcon
+        className={`absolute ${crownSizes[size]} text-yellow-400 -rotate-12`}
+      />
+    </div>
   );
 }

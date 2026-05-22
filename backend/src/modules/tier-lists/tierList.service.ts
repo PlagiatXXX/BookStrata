@@ -14,6 +14,7 @@ export {
   getLikedTierLists,
   createTierList,
   updateTierList,
+  updateTierListCover,
   deleteTierList,
   togglePublic,
   clearAllTiers,

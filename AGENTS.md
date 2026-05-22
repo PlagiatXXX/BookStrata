@@ -200,6 +200,7 @@ Store: `backend/src/lib/redis.ts` — `RedisRateLimitStore` (кастомный,
 - `noUnusedLocals` and `noUnusedParameters` are explicitly **disabled** in frontend tsconfig
 - Fastify response schema + `createSuccessResponse` mismatch: не добавляй response schema для эндпоинтов, которые возвращают `{ data: ... }` через `createSuccessResponse` — Fastify будет искать поля на корневом уровне, а не внутри `data`. Либо делай схему под обёрнутый ответ, либо не указывай response schema вовсе.
 - `AdminDashboardStats` лежит в `shared/types.ts`; бэкенд использует свой интерфейс в `admin-stats.service.ts` — синхронизируй оба при изменениях.
+- **Slug/UUID resolution (`getWhereClause`):** URL параметр `:id` может быть UUID, integer ID или slug. Всегда используй `tierListRepository.update(id, data)` или резолвь через `getFullTierList(id)` и бери `tierList.id` (UUID). НЕ пиши `prisma.tierList.update({ where: { id: rawParam } })` — `rawParam` может быть slug'ом, а `id` в Prisma ожидает UUID.
 
 ## Role
 
