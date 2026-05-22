@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-292_passed-brightgreen)](./doctor.md)
+[![Tests](https://img.shields.io/badge/Tests-612_passed-brightgreen)](./doctor.md)
 [![React Doctor](https://www.react.doctor/share/badge?p=tiermaker-pro&s=97&w=179&f=96)](https://www.react.doctor/share?p=tiermaker-pro&s=97&w=179&f=96)
 
 ---
@@ -62,6 +62,11 @@
 - **JWT + bcryptjs** (безопасная аутентификация и хранение паролей).
 - **Cloudinary** (обработка и хостинг изображений).
 
+### Инфраструктура
+- **Docker** (контейнеризация, docker-compose для PostgreSQL и Redis).
+- **Redis** (кэширование, rate limiting с fallback на in-memory).
+- **PostgreSQL 14+** (основная база данных через Prisma ORM).
+
 ---
 
 ## 🚀 Быстрый старт
@@ -112,7 +117,7 @@ cd backend && npm run dev # Backend на http://localhost:8080
 
 ## 🧪 Тестирование
 
-Проект покрыт более чем 292 тестами (Vitest + React Testing Library).
+Проект покрыт **612 тестами** (345 фронтенд + 267 бэкенд) — Vitest + React Testing Library + Supertest.
 
 ```bash
 # Запуск тестов фронтенда
@@ -121,7 +126,7 @@ npm test
 # Запуск тестов бэкенда
 cd backend && npm test
 ```
-*Статус: **292/292** тестов проходят успешно ✅*
+*Статус: **612/612** тестов проходят успешно ✅*
 
 ---
 
@@ -154,7 +159,7 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 24 марта 2026 г.
-**Статус:** Phase 2 Completed ✅ — Ready for Phase 3 (DevOps)
+**Последнее обновление:** 22 мая 2026 г.
+**Статус:** Phase 2 Completed ✅ — Full test coverage (612 тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)
 **Аудит и рефакторинг:** Jules (Senior Fullstack AI)

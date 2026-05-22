@@ -102,11 +102,9 @@ export default function AdminDashboard() {
             return (
               <button
                 key={section.path}
-                onClick={() => !section.comingSoon && navigate(section.path)}
-                disabled={section.comingSoon}
+                onClick={() => navigate(section.path)}
                 className={`group flex flex-col items-start gap-4 p-6 rounded-xl bg-linear-to-br ${section.color} 
-                  ${section.borderColor} border hover:border-opacity-60 transition-all cursor-pointer
-                  ${section.comingSoon ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02]'}
+                  ${section.borderColor} border hover:border-opacity-60 transition-all cursor-pointer hover:scale-[1.02]
                   text-left w-full`}
               >
                 <div className={`p-3 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors`}>
@@ -117,11 +115,7 @@ export default function AdminDashboard() {
                     <h3 className={`text-lg font-semibold ${section.textColor}`}>
                       {section.title}
                     </h3>
-                    {section.comingSoon && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-gray-500/20 text-gray-400">
-                        Скоро
-                      </span>
-                    )}
+
                   </div>
                   <p className="text-sm text-gray-400 mt-1">
                     {section.description}

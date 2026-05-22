@@ -66,6 +66,48 @@ const mockPrisma = {
     deleteMany: async () => ({}),
     count: async () => 0,
   },
+  battle: {
+    create: async () => ({}),
+    findUnique: async () => null,
+    findMany: async () => [],
+    update: async () => ({}),
+    count: async () => 0,
+  },
+  battleParticipant: {
+    create: async () => ({}),
+    findUnique: async () => null,
+    findMany: async () => [],
+    update: async () => ({}),
+    count: async () => 0,
+    delete: async () => ({}),
+  },
+  battleVote: {
+    create: async () => ({}),
+    findUnique: async () => null,
+    findMany: async () => [],
+  },
+  battleApplication: {
+    create: async () => ({}),
+    findUnique: async () => null,
+    findFirst: async () => null,
+    findMany: async () => [],
+    update: async () => ({}),
+    count: async () => 0,
+  },
+  newsArticle: {
+    create: async () => ({}),
+    findUnique: async () => null,
+    findFirst: async () => null,
+    findMany: async () => [],
+    update: async () => ({}),
+    delete: async () => ({}),
+    count: async () => 0,
+  },
+  role: {
+    findUnique: async () => null,
+    findMany: async () => [],
+    create: async () => ({}),
+  },
   $transaction: async (fn: any) => {
     if (typeof fn === "function") {
       return fn(mockPrisma);
