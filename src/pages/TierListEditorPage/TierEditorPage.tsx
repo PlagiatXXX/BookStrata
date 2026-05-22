@@ -19,6 +19,7 @@ import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import { useTierEditorDraft } from "./hooks/useTierEditorDraft";
+import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
 import "./TierEditorPage.css";
 import type { Book, Tier } from "@/types";
 
@@ -417,6 +418,11 @@ const TierListEditorContent = () => {
         onMyRatingsClick={handleMyRatingsClick}
         isReadOnly={isReadOnly}
       >
+        <TasteMatchBanner
+          apiData={apiData}
+          isReadOnly={isReadOnly}
+          authorUsername={apiData?.user?.username}
+        />
         <EditorMainContent
           listData={listData}
           isReadOnly={isReadOnly}

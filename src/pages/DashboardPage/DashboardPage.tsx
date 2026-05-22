@@ -13,7 +13,7 @@ import { useTierListActions } from "./hooks/useTierListActions";
 import { useTierListsPagination } from "./hooks/useTierListsPagination";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { UserActivityStats } from "@/components/DashboardHeroSection/components/UserActivityStats";
-import { QuickStartTemplates } from "@/components/DashboardHeroSection/components/QuickStartTemplates";
+import { RecentPublicTierLists } from "@/components/DashboardHeroSection/components/RecentPublicTierLists";
 import { TierListGrid } from "./components/TierListGrid";
 import { Pagination } from "@/ui/Pagination";
 import { EmptyStates } from "./components/EmptyStates";
@@ -28,7 +28,7 @@ import logger from "@/lib/logger";
 // Мемоизируем компоненты дашборда для предотвращения ререндеров при поиске
 const MemoizedDashboardHeader = memo(DashboardHeader);
 const MemoizedUserActivityStats = memo(UserActivityStats);
-const MemoizedQuickStartTemplates = memo(QuickStartTemplates);
+const MemoizedRecentPublicTierLists = memo(RecentPublicTierLists);
 const MemoizedEmptyStates = memo(EmptyStates);
 const MemoizedPagination = memo(Pagination);
 
@@ -213,8 +213,8 @@ export function DashboardPage() {
             draftsCount={draftsCount}
           />
 
-          {/* Quick Start Templates */}
-          <MemoizedQuickStartTemplates />
+          {/* Recent Public Tier Lists */}
+          <MemoizedRecentPublicTierLists />
 
           {/* Divider */}
           <div className="dashboard-divider">

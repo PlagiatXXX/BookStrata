@@ -34,3 +34,5 @@ doctor.md
 .github/*
 !.github/copilot-instructions.md
 !.github/workflows/
+
+testsprite_tests/tmp/config.json
