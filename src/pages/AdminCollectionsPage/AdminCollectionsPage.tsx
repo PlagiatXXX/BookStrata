@@ -7,6 +7,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  ArrowLeft,
 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
@@ -226,6 +227,13 @@ export function AdminCollectionsPage() {
       activeItem="Коллекции"
     >
       <div className="admin-collections-page">
+        <button
+          onClick={() => navigate("/admin")}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 cursor-pointer"
+        >
+          <ArrowLeft size={18} />
+          <span className="text-sm">Назад в админку</span>
+        </button>
         <div className="admin-collections-header">
           <div>
             <div className="admin-nav-tabs">

@@ -79,6 +79,13 @@ export interface TierListShort {
   previewCovers?: string[];
 }
 
+export interface AdminDashboardStats {
+  totalUsers: number
+  proUsers: number
+  activeNews: number
+  tierLists: number
+}
+
 export interface PaginationMeta {
   totalItems: number;
   itemCount: number;

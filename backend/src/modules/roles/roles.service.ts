@@ -71,12 +71,21 @@ export class RolesService {
     userId: number,
     roleName: RoleName,
     grantedBy?: number,
+    adminPassword?: string,
   ): Promise<UserRoleInfo | null> {
     const role = await this.getRoleByName(roleName);
 
     if (!role) {
       logger.error("Роль не найдена", { roleName });
       return null;
+    }
+
+    // Проверяем секретный пароль для смены роли
+    const secret = process.env.ADMIN_ROLE_CHANGE_SECRET;
+    if (secret) {
+      if (!adminPassword || adminPassword !== secret) {
+        throw new Error("Неверный пароль для смены роли");
+      }
     }
 
     logger.info("Назначение роли", { userId, roleName, grantedBy });

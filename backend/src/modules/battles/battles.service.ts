@@ -87,6 +87,12 @@ export async function getBattleById(id: string) {
                 select: { id: true, username: true, avatarUrl: true },
               },
               tiers: {
+                include: {
+                  items: {
+                    include: { book: true },
+                    orderBy: { rank: "asc" },
+                  },
+                },
                 orderBy: { rank: "asc" },
               },
               placements: {

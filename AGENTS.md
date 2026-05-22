@@ -62,12 +62,13 @@ PostgreSQL 14+ required. Redis via `backend/docker-compose.yml`.
 **Backend (`backend/src/`):**
 - `@/` alias → `src/` (backend tsconfig.json)
 - Module pattern: `modules/{feature}/{feature}.route.ts`, `.service.ts`, `.schema.ts`
-- 11 modules: auth, users, avatars, books, tier-lists, news, roles, subscriptions, achievements, battles, templates
+- 12 modules: auth, users, avatars, books, tier-lists, news, roles, subscriptions, achievements, battles, templates, admin-stats
 - `server.ts` — all route registration, plugins (auth, request-context, log-from-frontend, error-notifier)
 - Swagger UI at `/documentation` when running
 - `bodyLimit: 10MB` (for base64 image uploads)
 - Prisma client decorated on fastify instance: `fastify.prisma`
 - Error notifier sends critical errors to Telegram (configurable)
+- `admin-stats` module: `GET /api/admin/stats` — 4 parallel Prisma counts (users, pro users, active news, tier lists), admin-only via `requireRole("admin")`. No response schema to avoid Fastify serialization mismatch with `{ data: ... }` wrapper.
 
 ## Testing
 
@@ -197,6 +198,8 @@ Store: `backend/src/lib/redis.ts` — `RedisRateLimitStore` (кастомный,
 - Cascade delete on TierList removes all Tiers and BookPlacements — verify ownership first
 - Google Books API has ~1000 req/day quota — requests go through backend proxy with caching
 - `noUnusedLocals` and `noUnusedParameters` are explicitly **disabled** in frontend tsconfig
+- Fastify response schema + `createSuccessResponse` mismatch: не добавляй response schema для эндпоинтов, которые возвращают `{ data: ... }` через `createSuccessResponse` — Fastify будет искать поля на корневом уровне, а не внутри `data`. Либо делай схему под обёрнутый ответ, либо не указывай response schema вовсе.
+- `AdminDashboardStats` лежит в `shared/types.ts`; бэкенд использует свой интерфейс в `admin-stats.service.ts` — синхронизируй оба при изменениях.
 
 ## Role
 

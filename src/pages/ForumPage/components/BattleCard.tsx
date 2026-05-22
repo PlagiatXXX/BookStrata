@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Sword, Users, Calendar } from "lucide-react";
-import { type Battle, type BattleParticipant } from "@/types/battles";
+import { type Battle } from "@/types/battles";
 import { Link } from "react-router-dom";
 
 interface BattleCardProps {
@@ -17,30 +17,6 @@ export const BattleCard = memo(({ battle }: BattleCardProps) => {
     (acc, p) => acc + (p.votesCount || 0),
     0,
   );
-
-  // Helper to get a cover image from a tier list
-  const getTierListCover = (participant: BattleParticipant) => {
-    const tl = participant.tierList;
-    // In list view, tiers/placements may not be loaded — use user avatar as fallback
-    if (tl?.tiers) {
-      for (const tier of tl.tiers) {
-        if (tier.items && tier.items.length > 0) {
-          const book = tier.items[0].book;
-          if (book?.coverImageUrl) return book.coverImageUrl;
-        }
-      }
-    }
-    if (tl?.placements && tl.placements.length > 0) {
-      const book = tl.placements[0].book;
-      if (book?.coverImageUrl) return book.coverImageUrl;
-    }
-    if (tl?.unrankedBooks && tl.unrankedBooks.length > 0) {
-      const book = tl.unrankedBooks[0].book;
-      if (book?.coverImageUrl) return book.coverImageUrl;
-    }
-    if (tl?.user?.avatarUrl) return tl.user.avatarUrl;
-    return "/placeholder-book.png";
-  };
 
   return (
     <div className="brutal-card brutal-border p-6 hover-lift bg-(--bg-1) relative overflow-hidden group">
@@ -70,19 +46,28 @@ export const BattleCard = memo(({ battle }: BattleCardProps) => {
 
       <div className="flex items-center gap-4 mb-6">
         <div className="flex -space-x-2">
-          {battle.participants.slice(0, 4).map((p) => (
-            <div
-              key={p.id}
-              className="w-10 h-10 rounded-full border-2 border-(--bg-0) bg-(--bg-2) overflow-hidden brutal-shadow-sm transition-transform hover:scale-110 hover:z-10"
-              title={p.tierList.title}
-            >
-              <img
-                src={getTierListCover(p)}
-                alt={p.tierList.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
+          {battle.participants.slice(0, 4).map((p) => {
+            const user = p.tierList?.user
+            return (
+              <div
+                key={p.id}
+                className="w-10 h-10 rounded-full border-2 border-(--bg-0) bg-(--bg-2) overflow-hidden brutal-shadow-sm transition-transform hover:scale-110 hover:z-10"
+                title={p.tierList.title}
+              >
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={p.tierList.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-(--ink-1) text-[10px] font-bold">
+                    {user?.username?.[0]?.toUpperCase() || "?"}
+                  </div>
+                )}
+              </div>
+            )
+          })}
           {battle.participants.length > 4 && (
             <div className="w-10 h-10 rounded-full border-2 border-(--bg-0) bg-(--ink-0) text-(--bg-0) flex items-center justify-center text-[10px] font-bold z-0">
               +{battle.participants.length - 4}

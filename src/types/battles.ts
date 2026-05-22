@@ -8,6 +8,22 @@ export interface BattleParticipant {
   tierList: BattleTierList;
 }
 
+export interface BattlePlacementBook {
+  id: number;
+  title: string;
+  author: string | null;
+  coverImageUrl: string;
+  description: string | null;
+  thoughts: string | null;
+}
+
+export interface BattlePlacement {
+  rank: number;
+  book: BattlePlacementBook;
+  tierId: number | null;
+  tierListId: string;
+}
+
 export interface BattleTierList {
   id: string;
   title: string;
@@ -18,28 +34,7 @@ export interface BattleTierList {
     avatarUrl?: string | null;
   };
   tiers?: ApiTier[];
-  placements?: Array<{
-    rank: number;
-    book: {
-      id: number;
-      title: string;
-      author: string | null;
-      coverImageUrl: string;
-      description: string | null;
-      thoughts: string | null;
-    };
-  }>;
-  unrankedBooks?: Array<{
-    rank: number;
-    book: {
-      id: number;
-      title: string;
-      author: string | null;
-      coverImageUrl: string;
-      description: string | null;
-      thoughts: string | null;
-    };
-  }>;
+  placements?: BattlePlacement[];
 }
 
 export interface Battle {

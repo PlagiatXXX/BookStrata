@@ -13,6 +13,7 @@ import { prisma, waitForDatabase } from "./lib/prisma.js";
 import { ErrorCodes, createApiError } from "./lib/api-response.js";
 import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
 import { battleRoutes } from "../src/modules/battles/battles.route.js";
+import { adminStatsRoutes } from "../src/modules/admin-stats/admin-stats.route.js";
 import { tierListRoutes } from "../src/modules/tier-lists/tierList.route.js";
 import { authRoutes } from "../src/modules/auth/auth.route.js";
 import { userRoutes } from "../src/modules/users/users.route.js";
@@ -294,6 +295,7 @@ await fastify.register(swaggerUi, {
 });
 
 // Регистрируем все роуты из модулей
+fastify.register(adminStatsRoutes, { prefix: "/api/admin" });
 fastify.register(authRoutes, { prefix: "/api/auth" });
 fastify.register(userRoutes, { prefix: "/api/users" });
 fastify.register(avatarRoutes, { prefix: "/api/avatars" });

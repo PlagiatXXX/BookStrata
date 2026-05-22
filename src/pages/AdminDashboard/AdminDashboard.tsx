@@ -1,8 +1,31 @@
-import { useNavigate } from 'react-router-dom';
-import { Newspaper, BookOpen, Users, Crown, Sword, ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Newspaper, BookOpen, Users, Crown, Sword, ArrowLeft } from 'lucide-react'
+import { apiClient } from '@/lib/api-client'
+import type { AdminDashboardStats } from '../../../shared/types'
 
 export default function AdminDashboard() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const [stats, setStats] = useState<AdminDashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    apiClient.get<AdminDashboardStats>('/admin/stats')
+      .then((data) => {
+        if (!cancelled) setStats(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   const adminSections = [
     {
@@ -25,13 +48,12 @@ export default function AdminDashboard() {
     },
     {
       title: 'Пользователи',
-      description: 'Управление пользователями и ролями',
+      description: 'Управление ролями и пользователями',
       icon: Users,
       path: '/admin/users',
       color: 'from-purple-500/20 to-purple-500/5',
       borderColor: 'border-purple-500/30',
       textColor: 'text-purple-500',
-      comingSoon: true,
     },
     {
       title: 'Подписки',
@@ -56,13 +78,13 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-[#0f0f1a] py-6 dark:bg-[#0f0f1a] light:bg-gray-100 sm:py-10">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Back Button */}
+        {/* Back to Home */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/")}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 cursor-pointer"
         >
           <ArrowLeft size={20} />
-          <span>Назад</span>
+          <span>На главную</span>
         </button>
 
         {/* Header */}
@@ -118,24 +140,32 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-400">Всего пользователей</p>
-              <p className="text-2xl font-bold text-white mt-1">—</p>
+              <p className="text-2xl font-bold text-white mt-1">
+                {loading ? '…' : error ? '—' : stats?.totalUsers}
+              </p>
             </div>
             <div>
               <p className="text-gray-400">Pro пользователей</p>
-              <p className="text-2xl font-bold text-amber-500 mt-1">—</p>
+              <p className="text-2xl font-bold text-amber-500 mt-1">
+                {loading ? '…' : error ? '—' : stats?.proUsers}
+              </p>
             </div>
             <div>
               <p className="text-gray-400">Активных новостей</p>
-              <p className="text-2xl font-bold text-blue-500 mt-1">—</p>
+              <p className="text-2xl font-bold text-blue-500 mt-1">
+                {loading ? '…' : error ? '—' : stats?.activeNews}
+              </p>
             </div>
             <div>
               <p className="text-gray-400">Коллекций</p>
-              <p className="text-2xl font-bold text-green-500 mt-1">—</p>
+              <p className="text-2xl font-bold text-green-500 mt-1">
+                {loading ? '…' : error ? '—' : stats?.tierLists}
+              </p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-4">
-            * Статистика скоро появится
-          </p>
+          {error && (
+            <p className="text-xs text-red-400 mt-4">Ошибка загрузки: {error}</p>
+          )}
         </div>
       </div>
     </div>

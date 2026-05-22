@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  ArrowLeft,
 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
@@ -247,6 +248,13 @@ export function AdminNewsPage() {
       activeItem="Админка"
     >
       <div className="admin-news-page">
+        <button
+          onClick={() => navigate("/admin")}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 cursor-pointer"
+        >
+          <ArrowLeft size={18} />
+          <span className="text-sm">Назад в админку</span>
+        </button>
         <div className="admin-news-header">
           <div>
             <div className="admin-nav-tabs">

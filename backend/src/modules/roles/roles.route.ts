@@ -90,11 +90,15 @@ export async function rolesRoutes(fastify: FastifyInstance) {
       schema: {
         body: {
           type: "object",
-          required: ["role"],
+          required: ["role", "password"],
           properties: {
             role: {
               type: "string",
               enum: ["admin", "moderator", "user"],
+            },
+            password: {
+              type: "string",
+              minLength: 1,
             },
           },
         },
@@ -103,7 +107,10 @@ export async function rolesRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { userId } = request.params as { userId: string };
-        const { role } = request.body as { role: RoleName };
+        const { role, password } = request.body as {
+          role: RoleName;
+          password: string;
+        };
 
         const adminId = request.user?.userId;
 
@@ -111,6 +118,7 @@ export async function rolesRoutes(fastify: FastifyInstance) {
           parseInt(userId, 10),
           role,
           adminId,
+          password,
         );
 
         if (!result) {

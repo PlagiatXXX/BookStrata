@@ -25,7 +25,7 @@ export const BattleList = memo(() => {
 
   if (error) {
     return (
-      <div className="brutal-card brutal-border p-12 text-center bg-red-500/5 reveal" data-reveal>
+      <div className="brutal-card brutal-border p-12 text-center bg-red-500/5">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <p className="text-(--ink-0) font-bold mb-2">Не удалось загрузить битвы. Попробуйте позже.</p>
         <button
@@ -39,7 +39,7 @@ export const BattleList = memo(() => {
   }
 
   return (
-    <section className="reveal" data-reveal>
+    <section>
       <div className="flex items-end justify-between mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -65,7 +65,7 @@ export const BattleList = memo(() => {
           ))}
         </div>
       ) : (
-        <div className="brutal-card brutal-border p-16 text-center reveal" data-reveal>
+        <div className="brutal-card brutal-border p-16 text-center">
           <div className="w-16 h-16 bg-(--bg-2) rounded-full flex items-center justify-center mx-auto mb-6 opacity-50">
             <Sword size={32} className="text-(--ink-1)" />
           </div>

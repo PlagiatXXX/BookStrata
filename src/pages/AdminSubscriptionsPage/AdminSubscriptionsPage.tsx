@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type { AdminUser } from "@/types/auth";
 import { sileo } from "sileo";
-import { Users, Crown, Clock, Shield } from "lucide-react";
+import { Users, Crown, Clock, Shield, ArrowLeft } from "lucide-react";
 
 // Убираем дублирующий интерфейс — используем AdminUser из types/auth
 interface SubscriptionStats {
@@ -30,6 +31,7 @@ interface ActivateProResponse {
 }
 
 export default function AdminSubscriptionsPage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "pro" | "free">("all");
   const queryClient = useQueryClient();
@@ -180,6 +182,13 @@ export default function AdminSubscriptionsPage() {
       <div className="mx-auto max-w-7xl">
         {/* Заголовок */}
         <div className="mb-8">
+          <button
+            onClick={() => navigate("/admin")}
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-4 cursor-pointer"
+          >
+            <ArrowLeft size={18} />
+            <span className="text-sm">Назад в админку</span>
+          </button>
           <h1 className="text-3xl font-bold text-gray-900">
             Управление подписками
           </h1>
