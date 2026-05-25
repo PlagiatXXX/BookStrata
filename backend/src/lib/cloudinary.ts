@@ -70,7 +70,7 @@ export async function uploadBase64(
   const result = await cloudinary.uploader.upload(base64Data, {
     folder,
     transformation: [
-      { width: 512, height: 512, crop: 'limit' },
+      { width: 512, height: 512, crop: 'fill', gravity: 'auto' },
       { format: 'webp', quality: 'auto' },
     ],
   });
@@ -89,7 +89,7 @@ export async function uploadFromUrl(
   const result = await cloudinary.uploader.upload(url, {
     folder,
     transformation: [
-      { width: 512, height: 512, crop: 'limit' },
+      { width: 512, height: 512, crop: 'fill', gravity: 'auto' },
       { format: 'webp', quality: 'auto' },
     ],
   });

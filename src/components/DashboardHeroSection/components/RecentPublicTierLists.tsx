@@ -32,14 +32,21 @@ function TierListCard({ tierList }: { tierList: TierListShort }) {
       onClick={() => navigate(`/tier-lists/${tierList.id}`)}
       type="button"
     >
-      <div
-        className="recent-tier-card__bg"
-        style={{ background: gradient }}
-      >
-        <span className="recent-tier-card__initial">
-          {tierList.title.charAt(0).toUpperCase()}
-        </span>
-      </div>
+      {tierList.coverImageUrl ? (
+        <div
+          className="recent-tier-card__bg recent-tier-card__bg--cover"
+          style={{ backgroundImage: `url(${tierList.coverImageUrl})` }}
+        />
+      ) : (
+        <div
+          className="recent-tier-card__bg"
+          style={{ background: gradient }}
+        >
+          <span className="recent-tier-card__initial">
+            {tierList.title.charAt(0).toUpperCase()}
+          </span>
+        </div>
+      )}
       <div className="recent-tier-card__overlay" />
       <div className="recent-tier-card__content">
         <p className="recent-tier-card__title">{tierList.title}</p>

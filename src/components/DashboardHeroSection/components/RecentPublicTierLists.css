@@ -98,6 +98,13 @@
   transition: transform 0.5s ease;
 }
 
+.recent-tier-card__bg--cover {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: block;
+}
+
 .recent-tier-card:hover .recent-tier-card__bg {
   transform: scale(1.1);
 }
@@ -111,7 +118,7 @@
 }
 
 @media (min-width: 640px) {
-  .recent-tier-card__initial {
+.recent-tier-card__initial {
     font-size: 5rem;
   }
 }

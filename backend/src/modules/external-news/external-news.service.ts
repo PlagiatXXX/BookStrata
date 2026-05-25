@@ -1,5 +1,6 @@
 import { parseStringPromise } from "xml2js"
 import { createLogger } from "../../lib/logger.js"
+import { getFromCache, setToCache } from "../../lib/cache.js"
 
 const logger = createLogger("ExternalNews", { color: "cyan" })
 
@@ -119,8 +120,17 @@ function interleave(arrays: ExternalNewsItem[][]): ExternalNewsItem[] {
   return result
 }
 
+const CACHE_KEY = "external-news:books"
+const CACHE_TTL = 15 * 60 // 15 минут
+
 export class ExternalNewsService {
   async getBooksNews(limit = 6): Promise<ExternalNewsItem[]> {
+    const cached = await getFromCache<ExternalNewsItem[]>(CACHE_KEY)
+    if (cached) {
+      logger.info("Возвращаем кешированные RSS-новости", { count: cached.length })
+      return cached.slice(0, limit)
+    }
+
     const results = await Promise.allSettled(
       RSS_FEEDS.map((cfg) => fetchFeed(cfg)),
     )
@@ -130,6 +140,13 @@ export class ExternalNewsService {
     )
 
     const mixed = interleave(items)
-    return mixed.slice(0, limit)
+    const allNews = mixed.slice(0, limit)
+
+    // Не блокируем ответ ожиданием записи в кеш
+    setToCache(CACHE_KEY, allNews, CACHE_TTL)
+      .then(() => logger.info("RSS-новости закешированы", { count: allNews.length }))
+      .catch((err) => logger.error("Ошибка записи кеша RSS-новостей", { error: err }))
+
+    return allNews
   }
 }

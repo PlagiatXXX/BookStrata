@@ -276,6 +276,8 @@ export const getPublicTierListsSchema = {
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
               isPublic: { type: 'boolean' },
+              slug: { type: 'string', description: 'Tier list slug' },
+              coverImageUrl: { type: 'string', description: 'Custom cover image URL' },
               authorName: { type: 'string', description: 'Author username' },
               authorAvatar: { type: 'string', description: 'Author avatar URL' },
               booksCount: { type: 'number', description: 'Number of books' },

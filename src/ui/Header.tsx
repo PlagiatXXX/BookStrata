@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Folder, X, Menu, Globe, LogOut, Swords } from "lucide-react";
+import { List, Folder, X, Menu, Globe, LogOut, Swords, Crown } from "lucide-react";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -92,7 +92,7 @@ export const Header = ({
     {
       label: "Pro",
       onClick: () => navigate("/pricing"),
-      icon: <span className="text-yellow-400 text-sm font-bold">$</span>,
+      icon: <Crown size={16} className="text-yellow-400" />,
       description: "Премиум-возможности",
     },
     ...(showTemplatesNav

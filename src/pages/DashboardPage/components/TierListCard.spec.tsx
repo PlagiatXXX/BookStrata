@@ -3,6 +3,10 @@ import { render, screen } from '@testing-library/react';
 import { TierListCard } from './TierListCard';
 import { MAX_BOOKS_PER_TIER_LIST } from '@/constants/limits';
 
+vi.mock('@/hooks/useAuthContext', () => ({
+  useAuth: () => ({ user: { isPro: false } }),
+}));
+
 describe('TierListCard', () => {
   const mockTierList = {
     id: "1",

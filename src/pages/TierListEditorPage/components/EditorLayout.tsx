@@ -78,7 +78,7 @@ export const EditorLayout = ({
     >
       <main className="neo-brutalist-editor flex-1 overflow-y-auto p-4  lg:p-8" data-theme={theme}>
         <EditorHeader {...headerProps} />
-        {tierListId && !isReadOnly && (
+        {tierListId && (
           <TierListCoverEditor
             tierListId={tierListId}
             coverImageUrl={coverImageUrl}

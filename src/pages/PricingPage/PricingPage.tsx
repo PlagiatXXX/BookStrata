@@ -1,3 +1,4 @@
+import { ArrowLeft, Crown } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthContext"
 import { useNavigate } from "react-router-dom"
 import "./PricingPage.css"
@@ -24,8 +25,8 @@ const plans = [
     highlighted: false,
   },
   {
-    name: "Bookworm",
-    price: "5",
+    name: "Pro",
+    price: "300",
     period: "в месяц",
     description: "Для тех, кто живёт книгами и хочет больше возможностей",
     features: [
@@ -57,12 +58,21 @@ export default function PricingPage() {
     navigate(isAuthenticated ? "/pricing" : "/auth")
   }
 
-  const currentPlan = user?.isPro ? "Bookworm" : "Free"
+  const currentPlan = user?.isPro ? "Pro" : "Free"
 
   return (
     <div className="pricing-page">
       <div className="pricing-page__container">
         <div className="pricing-page__header">
+          <button
+            onClick={() => navigate("/")}
+            className="pricing-page__back"
+            type="button"
+            aria-label="На главную"
+          >
+            <ArrowLeft size={20} />
+            На главную
+          </button>
           <h1 className="pricing-page__title">Выберите свой план</h1>
           <p className="pricing-page__subtitle">
             Создавайте, сравнивайте и делитесь книжными рейтингами —
@@ -82,10 +92,13 @@ export default function PricingPage() {
               )}
 
               <div className="pricing-card__body">
-                <h2 className="pricing-card__name">{plan.name}</h2>
+                <h2 className="pricing-card__name">
+                  {plan.highlighted && <Crown size={18} className="pricing-card__crown" />}
+                  {plan.name}
+                </h2>
 
                 <div className="pricing-card__price">
-                  <span className="pricing-card__amount">${plan.price}</span>
+                  <span className="pricing-card__amount">{plan.price} ₽</span>
                   <span className="pricing-card__period">/{plan.period}</span>
                 </div>
 

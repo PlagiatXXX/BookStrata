@@ -26,8 +26,6 @@ export function TierListCoverEditor({
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
 
-  if (isReadOnly) return null
-
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -62,37 +60,41 @@ export function TierListCoverEditor({
   return (
     <div className="tier-list-cover-editor">
       <TierListCover coverImageUrl={coverImageUrl} title={title} booksCount={booksCount} />
-      {coverImageUrl ? (
-        <div className="tier-list-cover-editor__actions">
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="tier-list-cover-editor__btn"
-            type="button"
-            disabled={uploading}
-          >
-            <ImagePlus size={14} />
-            {uploading ? "Загрузка..." : "Изменить обложку"}
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => inputRef.current?.click()}
-          className="tier-list-cover-editor__btn tier-list-cover-editor__btn--add"
-          type="button"
-          disabled={uploading}
-        >
-          <ImagePlus size={14} />
-          {uploading ? "Загрузка..." : "Добавить обложку"}
-          {!isPro && <span className="tier-list-cover-editor__pro-badge">Pro</span>}
-        </button>
+      {!isReadOnly && (
+        <>
+          {coverImageUrl ? (
+            <div className="tier-list-cover-editor__actions">
+              <button
+                onClick={() => inputRef.current?.click()}
+                className="tier-list-cover-editor__btn"
+                type="button"
+                disabled={uploading}
+              >
+                <ImagePlus size={14} />
+                {uploading ? "Загрузка..." : "Изменить обложку"}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => inputRef.current?.click()}
+              className="tier-list-cover-editor__btn tier-list-cover-editor__btn--add"
+              type="button"
+              disabled={uploading}
+            >
+              <ImagePlus size={14} />
+              {uploading ? "Загрузка..." : "Добавить обложку"}
+              {!isPro && <span className="tier-list-cover-editor__pro-badge">Pro</span>}
+            </button>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleFile}
+            style={{ display: "none" }}
+          />
+        </>
       )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        onChange={handleFile}
-        style={{ display: "none" }}
-      />
     </div>
   )
 }

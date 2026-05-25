@@ -1,6 +1,4 @@
-import { PlusCircle, TrendingUp, Crown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuthContext";
+import { PlusCircle, TrendingUp } from "lucide-react";
 import { HeroPreviewCard } from "./components/HeroPreviewCard";
 import "./DashboardHeroSection.css";
 
@@ -15,9 +13,6 @@ export function DashboardHeroSection({
   onCreateClick,
   onCommunityClick,
 }: DashboardHeroSectionProps) {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const isPro = user?.isPro ?? false
   return (
     <section className="new-hero">
       <div className="new-hero__container">
@@ -33,21 +28,6 @@ export function DashboardHeroSection({
               <p className="new-hero__subtitle">
                 Твой уютный уголок для чтения
               </p>
-              {isPro ? (
-                <div className="new-hero__pro-badge">
-                  <Crown size={14} />
-                  <span>Bookworm Pro</span>
-                </div>
-              ) : (
-                <button
-                  onClick={() => navigate("/pricing")}
-                  className="new-hero__pro-link"
-                  type="button"
-                >
-                  <Crown size={14} />
-                  <span>Перейти на Pro →</span>
-                </button>
-              )}
               <p className="new-hero__description">
                 Создавай свои рейтинги книг в атмосфере тепла и уюта. Делись
                 впечатлениями и находи вдохновение среди единомышленников.

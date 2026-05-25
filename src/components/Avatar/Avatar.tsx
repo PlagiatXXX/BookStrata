@@ -21,25 +21,35 @@ const sizeClasses = {
 };
 
 const crownSizes: Record<string, string> = {
-  xs: "w-3.5 h-3.5 -top-1 -right-1",
-  sm: "w-4 h-4 -top-1 -right-1",
-  md: "w-5 h-5 -top-1.5 -right-1.5",
-  lg: "w-6 h-6 -top-1.5 -right-1.5",
-  xl: "w-8 h-8 -top-2 -right-2",
+  xs: "w-[14px] h-[14px] -top-1 -right-1",
+  sm: "w-[18px] h-[18px] -top-1 -right-1",
+  md: "w-[22px] h-[22px] -top-1.5 -right-1.5",
+  lg: "w-[32px] h-[32px] -top-2 -right-2",
+  xl: "w-[72px] h-[72px] -top-4 -right-4",
 };
 
 function CrownIcon({ className }: { className: string }) {
   return (
     <svg
-      viewBox="0 0 24 24"
-      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 120 120"
       className={className}
       style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.4))" }}
     >
-      <path
-        d="M2 19h20v-2H2v2zm1.5-4l3.5-9 4.5 5.5L16 6l3.5 9H3.5z"
-        fill="currentColor"
-      />
+      <defs>
+        <linearGradient id="crown-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFE07D" />
+          <stop offset="50%" stopColor="#F1A80A" />
+          <stop offset="100%" stopColor="#935500" />
+        </linearGradient>
+      </defs>
+      <g transform="rotate(12, 60, 65)">
+        <path d="M 25,75 Q 60,83 95,75 L 92,65 Q 60,73 28,65 Z" fill="url(#crown-gold)" />
+        <path d="M 28,65 L 20,35 L 42,52 L 60,20 L 78,52 L 100,35 L 92,65 Q 60,73 28,65 Z" fill="url(#crown-gold)" />
+        <circle cx="20" cy="35" r="3.5" fill="url(#crown-gold)" />
+        <circle cx="60" cy="20" r="4.5" fill="url(#crown-gold)" />
+        <circle cx="100" cy="35" r="3.5" fill="url(#crown-gold)" />
+      </g>
     </svg>
   );
 }
@@ -94,7 +104,7 @@ export function Avatar({
     <div className="relative inline-flex">
       {avatarEl}
       <CrownIcon
-        className={`absolute ${crownSizes[size]} text-yellow-400 -rotate-12`}
+        className={`absolute ${crownSizes[size]}`}
       />
     </div>
   );

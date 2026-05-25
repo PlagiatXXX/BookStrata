@@ -9,18 +9,21 @@ import {
   CircleDashed,
 } from "lucide-react";
 import type { TierListCardProps } from "../types";
+import { useAuth } from "@/hooks/useAuthContext";
 import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 import { TierListCover } from "@/components/DashboardHeroSection/components/TierListCover";
 
 export const TierListCard = memo(
   ({ tierList, onOpen, onRename, onDelete }: TierListCardProps) => {
+    const { user } = useAuth()
+    const isPro = user?.isPro ?? false
     const createdDate = new Date(tierList.createdAt);
     const booksCount = tierList.booksCount || 0;
     const progress = Math.min(
       100,
       Math.round((booksCount / MAX_BOOKS_PER_TIER_LIST) * 100),
     );
-    const isComplete = booksCount >= MAX_BOOKS_PER_TIER_LIST;
+    const isComplete = !isPro && booksCount >= MAX_BOOKS_PER_TIER_LIST;
 
     return (
       <article className="dashboard-card">
@@ -40,6 +43,7 @@ export const TierListCard = memo(
             coverImageUrl={tierList.coverImageUrl}
             title={tierList.title}
             booksCount={booksCount}
+            className={isPro ? "tier-list-cover--pro" : ""}
           />
         </div>
 
@@ -66,18 +70,20 @@ export const TierListCard = memo(
         </div>
 
         {/* Status Badge - top left */}
-        <div className="dashboard-card__status">
-          {isComplete ? (
-            <span className="dashboard-status-badge dashboard-status-badge--complete">
-              <CheckCircle2 size={10} />
-              Завершен
-            </span>
-          ) : (
-            <span className="dashboard-status-badge dashboard-status-badge--progress">
-              <CircleDashed size={10} />В процессе
-            </span>
-          )}
-        </div>
+        {!isPro && (
+          <div className="dashboard-card__status">
+            {isComplete ? (
+              <span className="dashboard-status-badge dashboard-status-badge--complete">
+                <CheckCircle2 size={10} />
+                Завершен
+              </span>
+            ) : (
+              <span className="dashboard-status-badge dashboard-status-badge--progress">
+                <CircleDashed size={10} />В процессе
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Title */}
         <h3
@@ -103,29 +109,31 @@ export const TierListCard = memo(
           <span>{createdDate.toLocaleDateString("ru-RU")}</span>
         </div>
 
-        {/* Progress Bar */}
-        <div className="dashboard-card__progress">
-          <div className="dashboard-card__progress-header">
-            <span className="dashboard-card__progress-label">
-              Прогресс заполнения
-            </span>
-            <span className="dashboard-card__progress-value">{progress}%</span>
-          </div>
-          <div
-            className="dashboard-card__progress-bar"
-            role="progressbar"
-            aria-valuenow={booksCount}
-            aria-valuemin={0}
-            aria-valuemax={MAX_BOOKS_PER_TIER_LIST}
-            aria-valuetext={`${booksCount} из ${MAX_BOOKS_PER_TIER_LIST} книг`}
-            aria-label="Прогресс заполнения тир-листа"
-          >
+        {/* Progress Bar — только для бесплатных */}
+        {!isPro && (
+          <div className="dashboard-card__progress">
+            <div className="dashboard-card__progress-header">
+              <span className="dashboard-card__progress-label">
+                Прогресс заполнения
+              </span>
+              <span className="dashboard-card__progress-value">{progress}%</span>
+            </div>
             <div
-              className="dashboard-card__progress-fill"
-              style={{ width: `${progress}%` }}
-            />
+              className="dashboard-card__progress-bar"
+              role="progressbar"
+              aria-valuenow={booksCount}
+              aria-valuemin={0}
+              aria-valuemax={MAX_BOOKS_PER_TIER_LIST}
+              aria-valuetext={`${booksCount} из ${MAX_BOOKS_PER_TIER_LIST} книг`}
+              aria-label="Прогресс заполнения тир-листа"
+            >
+              <div
+                className="dashboard-card__progress-fill"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Footer with visibility and open button */}
         <div className="dashboard-card__footer">
