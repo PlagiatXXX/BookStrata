@@ -1,4 +1,4 @@
-import { useEffect, useCallback, memo } from "react";
+import { useEffect, useCallback, memo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -25,6 +25,8 @@ import { DeleteTierListModal } from "./components/DeleteTierListModal";
 import { DEFAULT_PAGE_SIZE } from "@/constants/pagination";
 import "./DashboardPage.css";
 import logger from "@/lib/logger";
+import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
+import { Sparkles, Crown } from "lucide-react";
 
 
 // Мемоизируем компоненты дашборда для предотвращения ререндеров при поиске
@@ -76,6 +78,8 @@ export function DashboardPage() {
     sortOption,
     filterOption,
   } = state;
+
+  const [isAiLibrarianOpen, setAiLibrarianOpen] = useState(false);
 
   // Оптимизация: дебаунсим поисковый запрос для фильтрации списка
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
@@ -190,6 +194,8 @@ export function DashboardPage() {
   const handleRetry = useCallback(() => refetch(), [refetch]);
   const handleClearSearch = useCallback(() => setSearchQuery(""), [setSearchQuery]);
   const handleCommunityClick = useCallback(() => navigate("/community"), [navigate]);
+  const handleAiLibrarianOpen = useCallback(() => setAiLibrarianOpen(true), []);
+  const handleAiLibrarianClose = useCallback(() => setAiLibrarianOpen(false), []);
 
   const hasSearchQuery = debouncedSearchQuery.trim().length > 0;
   const isEmpty = displayedTierLists.length === 0;
@@ -210,6 +216,35 @@ export function DashboardPage() {
             onCommunityClick={handleCommunityClick}
             onLogoutClick={handleLogout}
           />
+
+          {/* AI Librarian Button — сразу после hero */}
+          <div className="flex justify-center my-10">
+            {user?.isPro ? (
+              <button
+                onClick={handleAiLibrarianOpen}
+                className="group flex cursor-pointer items-center gap-3 border-2 border-black bg-gradient-to-r from-[#1d2323] to-[#111] px-8 py-4 font-bold text-[#f6f1e8] shadow-[6px_6px_0_0_#000000] transition-all hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#000000]"
+                type="button"
+              >
+                <Sparkles className="h-5 w-5 text-[#c1fffe] transition-transform group-hover:scale-110" />
+                <span>Спросить ИИ-библиотекаря</span>
+                <span className="rounded border border-[#c1fffe]/30 bg-[#c1fffe]/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-[#c1fffe]">
+                  AI
+                </span>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/pricing")}
+                className="group flex cursor-pointer items-center gap-3 border-2 border-[#554422] bg-gradient-to-r from-[#1a1510] to-[#111] px-8 py-4 font-bold text-[#887744] shadow-[6px_6px_0_0_#000000] transition-all hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#000000]"
+                type="button"
+              >
+                <Crown className="h-5 w-5 text-[#887744]" />
+                <span>ИИ-библиотекарь — только Pro</span>
+                <span className="rounded border border-[#887744]/30 bg-[#887744]/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-[#887744]">
+                  PRO
+                </span>
+              </button>
+            )}
+          </div>
 
           {/* Divider */}
           <div className="dashboard-divider">
@@ -331,6 +366,11 @@ export function DashboardPage() {
         onDelete={handleDelete}
         tierListTitle={tierListToDelete?.title}
         isPending={isDeleting}
+      />
+
+      <AiLibrarianModal
+        isOpen={isAiLibrarianOpen}
+        onClose={handleAiLibrarianClose}
       />
     </DashboardLayout>
   );

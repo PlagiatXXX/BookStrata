@@ -24,6 +24,7 @@ import { booksRoutes } from "../src/modules/books/books.route.js";
 import { newsRoutes } from "../src/modules/news/news.route.js";
 import { rolesRoutes } from "../src/modules/roles/roles.route.js";
 import { subscriptionsRoutes } from "../src/modules/subscriptions/subscriptions.routes.js";
+import { aiLibrarianRoutes } from "../src/modules/ai-librarian/ai-librarian.route.js";
 import templatesPlugin from "../src/modules/templates/templates.plugin.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
 import requestContext from "../src/plugins/requestContext.js";
@@ -313,6 +314,9 @@ fastify.register(externalNewsRoutes, { prefix: "/api/external-news" });
 
 // Регистрируем контроллер шаблонов с префиксом /api
 fastify.register(templatesPlugin, { prisma, prefix: "/api" });
+
+// AI Librarian
+fastify.register(aiLibrarianRoutes, { prefix: "/api/ai" });
 
 // Инициализация подписок на события
 registerAchievementSubscriptions();

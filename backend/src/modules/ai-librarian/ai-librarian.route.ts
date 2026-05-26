@@ -1,0 +1,162 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { FastifyInstance } from 'fastify'
+import { authMiddleware } from '../auth/auth.middleware.js'
+import { requirePro } from '../../middleware/proLimit.js'
+import { ErrorCodes, createApiError } from '../../lib/api-response.js'
+import { ChatRequestSchema } from './ai-librarian.schema.js'
+import { getUserTasteProfile, buildSystemPrompt, streamAiResponse, checkAiStatus } from './ai-librarian.service.js'
+import { createLogger } from '../../lib/logger.js'
+
+const logger = createLogger('AiLibrarianRoute', { color: 'cyan' })
+
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'
+
+export async function aiLibrarianRoutes(fastify: FastifyInstance) {
+  fastify.get(
+    '/librarian/status',
+    { preHandler: [authMiddleware, requirePro] },
+    async (_request, reply) => {
+      const status = await checkAiStatus()
+      return reply.code(200).send({ data: status })
+    },
+  )
+
+
+  fastify.post(
+    '/librarian/chat',
+    {
+      preHandler: [authMiddleware, requirePro],
+      schema: {
+        body: {
+          type: 'object',
+          required: ['messages'],
+          properties: {
+            messages: {
+              type: 'array',
+              minItems: 1,
+              items: {
+                type: 'object',
+                required: ['role', 'content'],
+                properties: {
+                  role: { type: 'string', enum: ['user', 'assistant', 'system'] },
+                  content: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const user = (request as any).user
+      const body = request.body as { messages: Array<{ role: string; content: string }> }
+
+      const parsed = ChatRequestSchema.safeParse(body)
+      if (!parsed.success) {
+        return reply.code(400).send(
+          createApiError(ErrorCodes.VALIDATION_ERROR, 'Неверный формат запроса', parsed.error.issues),
+        )
+      }
+
+      let tasteProfile
+      try {
+        tasteProfile = await getUserTasteProfile(user.userId, fastify.prisma)
+      } catch (err) {
+        logger.error(err instanceof Error ? err : new Error(String(err)), {
+          context: 'getUserTasteProfile',
+        })
+        return reply.code(500).send(
+          createApiError(ErrorCodes.INTERNAL_ERROR, 'Ошибка при загрузке профиля пользователя'),
+        )
+      }
+
+      const systemPrompt = buildSystemPrompt(tasteProfile, user.username)
+
+      logger.info('Starting AI stream', {
+        userId: user.userId,
+        tasteBooks: tasteProfile.totalBooks,
+        tierLists: tasteProfile.totalTierLists,
+      })
+
+      // Берём управление ответом на себя для SSE
+      reply.hijack()
+
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'Access-Control-Allow-Origin': CLIENT_URL,
+        'Access-Control-Allow-Credentials': 'true',
+      })
+
+      let aborted = false
+      const abortController = new AbortController()
+      let keepaliveTimer: ReturnType<typeof setInterval> | undefined
+
+      const cleanup = () => {
+        aborted = true
+        try {
+          abortController.abort()
+        } catch { /* noop */ }
+        if (keepaliveTimer) {
+          clearInterval(keepaliveTimer)
+          keepaliveTimer = undefined
+        }
+      }
+
+      request.raw.on('close', cleanup)
+
+      try {
+        const timeoutSignal = AbortSignal.timeout(60_000)
+        const combinedSignal = AbortSignal.any([abortController.signal, timeoutSignal])
+
+        const stream = streamAiResponse(parsed.data.messages, systemPrompt, combinedSignal)
+
+        // SSE keepalive — комментарий каждые 10s, чтобы не оборвало соединение
+        keepaliveTimer = setInterval(() => {
+          if (!aborted) {
+            try {
+              reply.raw.write(': keepalive\n\n')
+            } catch { /* noop */ }
+          }
+        }, 10_000)
+
+        for await (const chunk of stream) {
+          if (aborted) break
+
+          try {
+            if (chunk.done) {
+              reply.raw.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
+            } else {
+              reply.raw.write(`data: ${JSON.stringify({ type: 'token', content: chunk.content })}\n\n`)
+            }
+          } catch { /* SSE write error, connection likely dead */ }
+        }
+      } catch (err) {
+        if (aborted) return
+
+        logger.error(err instanceof Error ? err : new Error(String(err)), {
+          context: 'AI API stream',
+        })
+
+        let message: string
+        if ((err as any)?.cause?.code === 'ECONNREFUSED') {
+          message = 'AI-библиотекарь недоступен. Проверьте API-ключ Groq.'
+        } else if (err instanceof DOMException && err.name === 'AbortError') {
+          message = 'AI-библиотекарь не ответил вовремя. Попробуйте позже.'
+        } else {
+          message = 'Не удалось получить ответ от AI. Попробуйте позже.'
+        }
+
+        try {
+          reply.raw.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`)
+        } catch { /* noop */ }
+      } finally {
+        cleanup()
+        try {
+          reply.raw.end()
+        } catch { /* noop */ }
+      }
+    },
+  )
+}
