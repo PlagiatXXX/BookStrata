@@ -244,9 +244,16 @@ export async function saveAll(
       await tx.bookPlacement.deleteMany({
         where: { bookId: { in: payload.deletedBookIds }, tierListId: realTierListId },
       });
-      await tx.book.deleteMany({
-        where: { id: { in: payload.deletedBookIds } },
+
+      const remainingPlacements = await tx.bookPlacement.count({
+        where: { bookId: { in: payload.deletedBookIds } },
       });
+
+      if (remainingPlacements === 0) {
+        await tx.book.deleteMany({
+          where: { id: { in: payload.deletedBookIds } },
+        });
+      }
     }
 
     await tx.tierList.update({

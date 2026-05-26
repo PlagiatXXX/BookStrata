@@ -127,7 +127,10 @@ export async function saveTiers(
       }));
   }
 
-  const results = await prisma.$transaction(async (tx) => {
+  const createdTiers: Array<{ id: number; title: string; color: string; rank: number }> = [];
+  const updatedTiers: Array<{ id: number; title: string; color: string; rank: number }> = [];
+
+  await prisma.$transaction(async (tx) => {
     if (deletedIds.length > 0) {
       await tx.tier.deleteMany({
         where: { id: { in: deletedIds }, tierListId: realTierListId },
@@ -135,14 +138,19 @@ export async function saveTiers(
     }
 
     if (added.length > 0) {
-      await tx.tier.createMany({
-        data: added.map((tier) => ({
-          tierListId: realTierListId,
-          title: tier.title,
-          color: tier.color,
-          rank: tier.rank,
-        })),
-      });
+      const created = await Promise.all(
+        added.map((tier) =>
+          tx.tier.create({
+            data: {
+              tierListId: realTierListId,
+              title: tier.title,
+              color: tier.color,
+              rank: tier.rank,
+            },
+          }),
+        ),
+      );
+      createdTiers.push(...created);
     }
 
     if (updated.length > 0) {
@@ -154,14 +162,8 @@ export async function saveTiers(
           }),
         ),
       );
+      updatedTiers.push(...updated);
     }
-
-    const allTiers = await tx.tier.findMany({
-      where: { tierListId: realTierListId },
-      orderBy: { rank: "asc" },
-    });
-
-    return allTiers;
   });
 
   const totalTime = Date.now() - startTime;
@@ -172,20 +174,8 @@ export async function saveTiers(
     totalTimeMs: totalTime,
   });
 
-  if (!results || results.length === 0) {
-    return [];
-  }
-
-  interface TierResult { id: number; title: string; color: string; rank: number }
-  const createdTiers = results.filter(
-    (t: TierResult) => !updated.some((u) => u.id === t.id),
-  );
-  const updatedTierList = results.filter((t: TierResult) =>
-    updated.some((u) => u.id === t.id),
-  );
-
   return [
     ...createdTiers.map((t) => ({ ...t, isNew: true })),
-    ...updatedTierList.map((t) => ({ ...t, isNew: false })),
+    ...updatedTiers.map((t) => ({ ...t, isNew: false })),
   ];
 }

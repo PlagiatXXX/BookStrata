@@ -35,10 +35,19 @@ export async function deleteFromCache(key: string): Promise<void> {
 
 export async function clearPattern(pattern: string): Promise<void> {
   try {
-    const keys = await redis.keys(pattern);
-    if (keys.length > 0) {
-      await redis.del(...keys);
-    }
+    let cursor = '0'
+    const pipeline = redis.pipeline()
+
+    do {
+      const result = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100)
+      cursor = result[0]
+      const keys = result[1]
+      if (keys.length > 0) {
+        pipeline.del(...keys)
+      }
+    } while (cursor !== '0')
+
+    await pipeline.exec()
   } catch (error) {
     console.error(`Cache CLEAR error for pattern ${pattern}:`, error);
   }

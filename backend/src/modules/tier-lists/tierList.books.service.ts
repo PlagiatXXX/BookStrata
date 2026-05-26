@@ -36,28 +36,25 @@ export async function updatePlacements(
     }
   }
 
-  const transactions = placements.map((p) =>
-    prisma.bookPlacement.upsert({
-      where: { tierListId_bookId: { tierListId: realTierListId, bookId: p.bookId } },
-      update: { tierId: p.tierId, rank: p.rank },
-      create: {
+  await prisma.$transaction([
+    prisma.bookPlacement.deleteMany({
+      where: { tierListId: realTierListId },
+    }),
+    prisma.bookPlacement.createMany({
+      data: placements.map((p) => ({
         tierListId: realTierListId,
         bookId: p.bookId,
         tierId: p.tierId,
         rank: p.rank,
-      },
+      })),
     }),
-  );
-
-  const result = await prisma.$transaction(transactions);
+  ]);
 
   const totalTime = Date.now() - startTime;
   logger.debug("updatePlacements завершено", {
     placementsCount: placements.length,
     totalTimeMs: totalTime,
   });
-
-  return result;
 }
 
 export async function addBooksToTierList(

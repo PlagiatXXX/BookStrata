@@ -234,6 +234,12 @@ export class NewsService {
     id: string,
     input: UpdateNewsInput,
   ): Promise<NewsArticle | null> {
+    const existing = await prisma.newsArticle.findFirst({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) return null;
+
     const validated = await this.validateUpdateNews(input);
 
     logger.info("Обновление новости", { id });
@@ -277,7 +283,13 @@ export class NewsService {
   /**
    * Удалить новость
    */
-  async deleteNews(id: string): Promise<void> {
+  async deleteNews(id: string): Promise<boolean> {
+    const existing = await prisma.newsArticle.findFirst({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) return false;
+
     logger.info("Удаление новости", { id });
 
     await prisma.newsArticle.delete({
@@ -285,6 +297,7 @@ export class NewsService {
     });
 
     logger.info("Новость удалена", { id });
+    return true;
   }
 
   /**
@@ -294,6 +307,12 @@ export class NewsService {
     id: string,
     isPublished: boolean,
   ): Promise<NewsArticle | null> {
+    const existing = await prisma.newsArticle.findFirst({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) return null;
+
     logger.info("Публикация новости", { id, isPublished });
 
     const article = await prisma.newsArticle.update({

@@ -3,17 +3,27 @@ import { tierListRepository } from "../../../repositories/index.js";
 
 // Получить лайки тир-листа
 export async function getLikes(tierListId: string) {
+  const tierList = await tierListRepository.findById(tierListId, {
+    select: { id: true },
+  });
+  if (!tierList) return 0;
+
   const likes = await prisma.tierListLike.count({
-    where: { tierListId },
+    where: { tierListId: tierList.id },
   });
   return likes;
 }
 
 // Проверить, лайкнул ли пользователь
 export async function isLikedByUser(tierListId: string, userId: number) {
+  const tierList = await tierListRepository.findById(tierListId, {
+    select: { id: true },
+  });
+  if (!tierList) return false;
+
   const like = await prisma.tierListLike.findUnique({
     where: {
-      userId_tierListId: { userId, tierListId },
+      userId_tierListId: { userId, tierListId: tierList.id },
     },
   });
   return !!like;
@@ -21,9 +31,11 @@ export async function isLikedByUser(tierListId: string, userId: number) {
 
 // Поставить лайк (идемпотентный — если уже лайкнул, просто возвращает success)
 export async function like(tierListId: string, userId: number) {
+  const realId = await tierListRepository.resolveId(tierListId);
+
   const existing = await prisma.tierListLike.findUnique({
     where: {
-      userId_tierListId: { userId, tierListId },
+      userId_tierListId: { userId, tierListId: realId },
     },
   });
 
@@ -31,16 +43,15 @@ export async function like(tierListId: string, userId: number) {
     return { success: true };
   }
 
-  // Используем транзакцию для атомарного обновления
   await prisma.$transaction([
     prisma.tierListLike.create({
       data: {
         userId,
-        tierListId,
+        tierListId: realId,
       },
     }),
     prisma.tierList.update({
-      where: { id: tierListId },
+      where: { id: realId },
       data: { likesCount: { increment: 1 } },
     }),
   ]);
@@ -50,10 +61,11 @@ export async function like(tierListId: string, userId: number) {
 
 // Убрать лайк
 export async function unlike(tierListId: string, userId: number) {
-  // Оптимизация Bolt: используем findUnique для поиска по составному индексу
+  const realId = await tierListRepository.resolveId(tierListId);
+
   const existing = await prisma.tierListLike.findUnique({
     where: {
-      userId_tierListId: { userId, tierListId },
+      userId_tierListId: { userId, tierListId: realId },
     },
   });
 
@@ -61,13 +73,12 @@ export async function unlike(tierListId: string, userId: number) {
     return { success: false, message: 'Not liked' };
   }
 
-  // Используем транзакцию для атомарного обновления
   await prisma.$transaction([
     prisma.tierListLike.delete({
-      where: { userId_tierListId: { userId, tierListId } },
+      where: { userId_tierListId: { userId, tierListId: realId } },
     }),
     prisma.tierList.update({
-      where: { id: tierListId },
+      where: { id: realId },
       data: { likesCount: { decrement: 1 } },
     }),
   ]);

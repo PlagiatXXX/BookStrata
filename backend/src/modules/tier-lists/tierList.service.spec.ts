@@ -376,22 +376,25 @@ describe("tierList.service", () => {
       { bookId: 3, tierId: null, rank: 2 },
     ];
 
-    it("должен обновить позиции книг используя upsert", async () => {
-      (prisma.bookPlacement.upsert as any).mockResolvedValue({});
+    it("должен обновить позиции книг используя deleteMany + createMany", async () => {
       (prisma.tier.count as any).mockResolvedValue(2);
+      (prisma.bookPlacement.deleteMany as any).mockResolvedValue({ count: 3 });
+      (prisma.bookPlacement.createMany as any).mockResolvedValue({ count: 3 });
 
       await service.updatePlacements(mockTierListId, mockPlacements);
 
-      expect(prisma.bookPlacement.upsert).toHaveBeenCalledTimes(3);
-      expect(prisma.bookPlacement.upsert).toHaveBeenCalledWith({
-        where: { tierListId_bookId: { tierListId: mockTierListId, bookId: 1 } },
-        update: { tierId: 1, rank: 0 },
-        create: {
+      expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledTimes(1);
+      expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledWith({
+        where: { tierListId: mockTierListId },
+      });
+      expect(prisma.bookPlacement.createMany).toHaveBeenCalledTimes(1);
+      expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
+        data: mockPlacements.map((p) => ({
           tierListId: mockTierListId,
-          bookId: 1,
-          tierId: 1,
-          rank: 0,
-        },
+          bookId: p.bookId,
+          tierId: p.tierId,
+          rank: p.rank,
+        })),
       });
     });
 
@@ -399,12 +402,14 @@ describe("tierList.service", () => {
       const result = await service.updatePlacements(mockTierListId, []);
 
       expect(result).toEqual([]);
-      expect(prisma.bookPlacement.upsert).not.toHaveBeenCalled();
+      expect(prisma.bookPlacement.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.bookPlacement.createMany).not.toHaveBeenCalled();
     });
 
     it("должен использовать транзакцию для всех обновлений", async () => {
-      (prisma.$transaction as any).mockResolvedValue([{}, {}, {}]);
       (prisma.tier.count as any).mockResolvedValue(2);
+      (prisma.bookPlacement.deleteMany as any).mockResolvedValue({ count: 3 });
+      (prisma.bookPlacement.createMany as any).mockResolvedValue({ count: 3 });
 
       await service.updatePlacements(mockTierListId, mockPlacements);
 
@@ -657,64 +662,29 @@ describe("tierList.service", () => {
       { id: 2, title: "A", color: "#4ECDC4", rank: 1 },
     ];
 
-    const mockAllTiers = [
-      ...mockTiersArray,
-      { id: 3, title: "NEW", color: "#000000", rank: 2 },
-    ];
-
     it("должен сохранить тиры в формате full array", async () => {
-      (prisma.$transaction as any).mockResolvedValue(mockAllTiers);
+      (prisma.$transaction as any).mockImplementation(
+        async (fn: (tx: any) => any) => fn(prisma),
+      );
+      (prisma.tier.updateMany as any).mockResolvedValue({ count: 1 });
 
       const result = await service.saveTiers(mockTierListId, mockTiersArray);
 
       expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(2);
     });
 
     it("должен сохранить тиры в формате diff (added)", async () => {
       (prisma.$transaction as any).mockImplementation(
-        async (
-          fn: (
-            arg0: PrismaClient<
-              Prisma.PrismaClientOptions,
-              never,
-              Prisma.RejectOnNotFound | Prisma.RejectPerOperation | undefined,
-              DefaultArgs
-            >,
-          ) => any,
-        ) => {
-          // Вызываем функцию транзакции с моками
-          return fn(prisma);
-        },
+        async (fn: (tx: any) => any) => fn(prisma),
       );
 
-      // Мокаем createMany для вызова внутри транзакции
-      (prisma.tier.createMany as any).mockResolvedValue({ count: 1 });
-
-      // Мокаем findMany для возврата всех тиров (2 существующих + 1 новый = 3)
-      (prisma.tier.findMany as any).mockResolvedValue([
-        {
-          id: 1,
-          title: "S",
-          color: "#FF6B6B",
-          rank: 0,
-          tierListId: mockTierListId,
-        },
-        {
-          id: 2,
-          title: "A",
-          color: "#4ECDC4",
-          rank: 1,
-          tierListId: mockTierListId,
-        },
-        {
-          id: 3,
-          title: "NEW",
-          color: "#000000",
-          rank: 2,
-          tierListId: mockTierListId,
-        },
-      ]);
+      (prisma.tier.create as any).mockResolvedValue({
+        id: 3,
+        title: "NEW",
+        color: "#000000",
+        rank: 2,
+      });
 
       const diffTiers = {
         added: [{ title: "NEW", color: "#000000", rank: 2 }],
@@ -724,17 +694,15 @@ describe("tierList.service", () => {
 
       const result = await service.saveTiers(mockTierListId, diffTiers);
 
-      expect(prisma.tier.createMany).toHaveBeenCalledWith({
-        data: [
-          {
-            title: "NEW",
-            color: "#000000",
-            rank: 2,
-            tierListId: mockTierListId,
-          },
-        ],
+      expect(prisma.tier.create).toHaveBeenCalledWith({
+        data: {
+          title: "NEW",
+          color: "#000000",
+          rank: 2,
+          tierListId: mockTierListId,
+        },
       });
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(1);
     });
 
     it("должен сохранить тиры в формате diff (updated)", async () => {

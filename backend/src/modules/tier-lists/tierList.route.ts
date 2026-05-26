@@ -31,6 +31,20 @@ async function optionalAuthMiddleware(_request: FastifyRequest) {
   // Ничего не делаем
 }
 
+async function runWithConcurrency<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  concurrency: number,
+): Promise<R[]> {
+  const results: R[] = []
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency)
+    const batchResults = await Promise.all(batch.map(fn))
+    results.push(...batchResults)
+  }
+  return results
+}
+
 export async function tierListRoutes(fastify: FastifyInstance) {
   // ========== ЛАЙКИ ==========
 
@@ -338,7 +352,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const tierListId = request.params.id;
       const tierList = await service.prisma.tierList.findUnique({
-        where: { id: tierListId },
+        where: service.getTierListWhereClause(tierListId),
         select: { id: true, userId: true },
       });
       if (!tierList) {
@@ -350,7 +364,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           .send(createApiError(ErrorCodes.FORBIDDEN, "You can only delete your own tier lists"));
       }
 
-      await service.deleteTierList(tierListId);
+      await service.deleteTierList(tierList.id);
       return reply
         .code(200)
         .send(createSuccessResponse({ message: "Tier list deleted successfully" }));
@@ -437,28 +451,27 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       }
 
       // === ОБРАБОТКА КАРТИНОК ПЕРЕД СОХРАНЕНИЕМ ===
-      const processedBooks = await Promise.all(
-        request.body.books.map(async (book) => {
+      const processedBooks = await runWithConcurrency(
+        request.body.books,
+        async (book) => {
           if (book.coverImageUrl && book.coverImageUrl.startsWith("data:")) {
             try {
               const uploadResult = await uploadBase64(
                 book.coverImageUrl,
                 "tiermaker-pro/book-covers",
               );
-              // Заменяем base64 на нормальный URL
               return { ...book, coverImageUrl: uploadResult.url };
             } catch (error) {
               fastify.log.error(
                 { error: String(error) },
                 "Failed to upload base64 image",
               );
-              // Если не удалось загрузить — ставим пустую строку, чтобы не упасть
               return { ...book, coverImageUrl: "" };
             }
           }
-          // Если это уже URL (или пусто) — оставляем как есть
           return book;
-        }),
+        },
+        3,
       );
 
       // Передаем обработанные данные в сервис
@@ -735,8 +748,9 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const body = request.body as any;
       // Процессим картинки для новых книг, если они в base64
       if (body.newBooks?.length) {
-        body.newBooks = await Promise.all(
-          body.newBooks.map(async (book: any) => {
+        body.newBooks = await runWithConcurrency(
+          body.newBooks,
+          async (book: any) => {
             if (book.coverImageUrl && book.coverImageUrl.startsWith("data:")) {
               try {
                 const uploadResult = await uploadBase64(
@@ -749,7 +763,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
               }
             }
             return book;
-          }),
+          },
+          3,
         );
       }
 

@@ -92,6 +92,8 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
     })),
     meta: {
       totalItems,
+      itemCount: tierLists.length,
+      itemsPerPage: pageSize,
       totalPages,
       currentPage: page,
     },

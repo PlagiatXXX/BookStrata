@@ -37,19 +37,13 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     try {
       const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-      logger.info("JWT payload получен", {
-        userId: payload.userId,
-        username: payload.username,
-        role: payload.role,
-      });
-
       // Получаем роль из БД для актуальности
       const rolesService = new RolesService((fastify as any).prisma);
       const userRole = await rolesService.getUserRole(payload.userId);
 
-      logger.info("Роль из БД", {
+      logger.debug("Пользователь аутентифицирован", {
         userId: payload.userId,
-        userRole: userRole ? userRole.name : "null",
+        role: userRole?.name || payload.role,
       });
 
       (request as any).user = {
@@ -57,12 +51,6 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
         username: payload.username,
         role: userRole?.name || payload.role,
       };
-
-      logger.info("Пользователь аутентифицирован", {
-        userId: payload.userId,
-        username: payload.username,
-        role: (request as any).user?.role,
-      });
     } catch (error) {
       // Токен невалидный, оставляем request.user = undefined
       // Проверка будет в middleware requireRole
