@@ -1,0 +1,424 @@
+- generic [ref=e7]:
+  - banner [ref=e8]:
+    - generic [ref=e10]:
+      - button "BookStrata Pro - Рейтинг всего" [ref=e12] [cursor=pointer]:
+        - img [ref=e13]:
+          - generic [ref=e18]: BookStrata Pro
+          - generic [ref=e19]: Рейтинг всего
+      - generic [ref=e20]:
+        - button "Открыть меню" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Перейти в профиль" [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]:
+            - img "fedor's avatar" [ref=e25]
+            - img [ref=e26]
+  - main [ref=e33]:
+    - generic [ref=e35]:
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - generic [ref=e41]: Панель управления
+          - heading "Добро пожаловать, fedor" [level=1] [ref=e42]
+          - paragraph [ref=e43]: Твой уютный уголок для чтения
+          - paragraph [ref=e44]: Создавай свои рейтинги книг в атмосфере тепла и уюта. Делись впечатлениями и находи вдохновение среди единомышленников.
+        - generic [ref=e45]:
+          - button "Создать тир-лист" [ref=e46] [cursor=pointer]:
+            - img [ref=e47]
+            - text: Создать тир-лист
+          - button "Смотреть тренды" [ref=e49] [cursor=pointer]:
+            - img [ref=e50]
+            - text: Смотреть тренды
+      - button "Спросить ИИ-библиотекаря AI" [ref=e54] [cursor=pointer]:
+        - img [ref=e55]
+        - generic [ref=e58]: Спросить ИИ-библиотекаря
+        - generic [ref=e59]: AI
+      - generic [ref=e61]: Ваши рейтинги
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - button "Все" [ref=e64] [cursor=pointer]
+          - button "Публичные" [ref=e65] [cursor=pointer]
+          - button "Приватные" [ref=e66] [cursor=pointer]
+        - combobox [ref=e68] [cursor=pointer]:
+          - option "Сначала новые" [selected]
+          - option "Сначала старые"
+          - option "По названию (A-Я)"
+          - option "По популярности"
+      - generic [ref=e69]:
+        - article [ref=e70]:
+          - button "0 книг" [ref=e71]:
+            - generic [ref=e72]:
+              - img [ref=e74]
+              - generic [ref=e77]: 0 книг
+          - generic [ref=e78]:
+            - button "Переименовать \"1\"" [ref=e79] [cursor=pointer]:
+              - img [ref=e80]
+            - button "Удалить \"1\"" [ref=e82] [cursor=pointer]:
+              - img [ref=e83]
+          - 'button "Открыть тир-лист: 1" [ref=e86] [cursor=pointer]': "1"
+          - generic [ref=e87]:
+            - img [ref=e88]
+            - generic [ref=e91]: 19.05.2026
+          - generic [ref=e92]:
+            - generic [ref=e94]:
+              - img [ref=e95]
+              - text: Приватный
+            - button "Открыть" [ref=e98] [cursor=pointer]
+        - article [ref=e99]:
+          - button "1 книга" [ref=e100]:
+            - generic [ref=e101]:
+              - img [ref=e103]
+              - generic [ref=e106]: 1 книга
+          - generic [ref=e107]:
+            - button "Переименовать \"Top Sci-Fi Books\"" [ref=e108] [cursor=pointer]:
+              - img [ref=e109]
+            - button "Удалить \"Top Sci-Fi Books\"" [ref=e111] [cursor=pointer]:
+              - img [ref=e112]
+          - 'button "Открыть тир-лист: Top Sci-Fi Books" [ref=e115] [cursor=pointer]': Top Sci-Fi Books
+          - generic [ref=e116]:
+            - img [ref=e117]
+            - generic [ref=e120]: 18.05.2026
+          - generic [ref=e121]:
+            - generic [ref=e123]:
+              - img [ref=e124]
+              - text: Публичный
+            - button "Открыть" [ref=e127] [cursor=pointer]
+        - article [ref=e128]:
+          - button "Top Sci-Fi Books" [ref=e129]:
+            - img "Top Sci-Fi Books" [ref=e131]
+          - generic [ref=e132]:
+            - button "Переименовать \"Top Sci-Fi Books\"" [ref=e133] [cursor=pointer]:
+              - img [ref=e134]
+            - button "Удалить \"Top Sci-Fi Books\"" [ref=e136] [cursor=pointer]:
+              - img [ref=e137]
+          - 'button "Открыть тир-лист: Top Sci-Fi Books" [ref=e140] [cursor=pointer]': Top Sci-Fi Books
+          - generic [ref=e141]:
+            - img [ref=e142]
+            - generic [ref=e145]: 18.05.2026
+          - generic [ref=e146]:
+            - generic [ref=e148]:
+              - img [ref=e149]
+              - text: Публичный
+            - button "Открыть" [ref=e152] [cursor=pointer]
+        - article [ref=e153]:
+          - button "6 книг" [ref=e154]:
+            - generic [ref=e155]:
+              - img [ref=e157]
+              - generic [ref=e160]: 6 книг
+          - generic [ref=e161]:
+            - button "Переименовать \"Top Fantasy Books\"" [ref=e162] [cursor=pointer]:
+              - img [ref=e163]
+            - button "Удалить \"Top Fantasy Books\"" [ref=e165] [cursor=pointer]:
+              - img [ref=e166]
+          - 'button "Открыть тир-лист: Top Fantasy Books" [ref=e169] [cursor=pointer]': Top Fantasy Books
+          - generic [ref=e170]:
+            - img [ref=e171]
+            - generic [ref=e174]: 18.05.2026
+          - generic [ref=e175]:
+            - generic [ref=e177]:
+              - img [ref=e178]
+              - text: Приватный
+            - button "Открыть" [ref=e181] [cursor=pointer]
+        - article [ref=e182]:
+          - button "0 книг" [ref=e183]:
+            - generic [ref=e184]:
+              - img [ref=e186]
+              - generic [ref=e189]: 0 книг
+          - generic [ref=e190]:
+            - button "Переименовать \"Top Sci-Fi Books\"" [ref=e191] [cursor=pointer]:
+              - img [ref=e192]
+            - button "Удалить \"Top Sci-Fi Books\"" [ref=e194] [cursor=pointer]:
+              - img [ref=e195]
+          - 'button "Открыть тир-лист: Top Sci-Fi Books" [ref=e198] [cursor=pointer]': Top Sci-Fi Books
+          - generic [ref=e199]:
+            - img [ref=e200]
+            - generic [ref=e203]: 06.05.2026
+          - generic [ref=e204]:
+            - generic [ref=e206]:
+              - img [ref=e207]
+              - text: Приватный
+            - button "Открыть" [ref=e210] [cursor=pointer]
+        - article [ref=e211]:
+          - button "4 книги" [ref=e212]:
+            - generic [ref=e213]:
+              - img [ref=e215]
+              - generic [ref=e218]: 4 книги
+          - generic [ref=e219]:
+            - button "Переименовать \"Top Fantasy Books\"" [ref=e220] [cursor=pointer]:
+              - img [ref=e221]
+            - button "Удалить \"Top Fantasy Books\"" [ref=e223] [cursor=pointer]:
+              - img [ref=e224]
+          - 'button "Открыть тир-лист: Top Fantasy Books" [ref=e227] [cursor=pointer]': Top Fantasy Books
+          - generic [ref=e228]:
+            - img [ref=e229]
+            - generic [ref=e232]: 06.05.2026
+          - generic [ref=e233]:
+            - generic [ref=e235]:
+              - img [ref=e236]
+              - text: Приватный
+            - button "Открыть" [ref=e239] [cursor=pointer]
+        - article [ref=e240]:
+          - button "0 книг" [ref=e241]:
+            - generic [ref=e242]:
+              - img [ref=e244]
+              - generic [ref=e247]: 0 книг
+          - generic [ref=e248]:
+            - button "Переименовать \"Top Sci-Fi Books\"" [ref=e249] [cursor=pointer]:
+              - img [ref=e250]
+            - button "Удалить \"Top Sci-Fi Books\"" [ref=e252] [cursor=pointer]:
+              - img [ref=e253]
+          - 'button "Открыть тир-лист: Top Sci-Fi Books" [ref=e256] [cursor=pointer]': Top Sci-Fi Books
+          - generic [ref=e257]:
+            - img [ref=e258]
+            - generic [ref=e261]: 06.05.2026
+          - generic [ref=e262]:
+            - generic [ref=e264]:
+              - img [ref=e265]
+              - text: Приватный
+            - button "Открыть" [ref=e268] [cursor=pointer]
+        - article [ref=e269]:
+          - button "4 книги" [ref=e270]:
+            - generic [ref=e271]:
+              - img [ref=e273]
+              - generic [ref=e276]: 4 книги
+          - generic [ref=e277]:
+            - button "Переименовать \"Top Fantasy Books\"" [ref=e278] [cursor=pointer]:
+              - img [ref=e279]
+            - button "Удалить \"Top Fantasy Books\"" [ref=e281] [cursor=pointer]:
+              - img [ref=e282]
+          - 'button "Открыть тир-лист: Top Fantasy Books" [ref=e285] [cursor=pointer]': Top Fantasy Books
+          - generic [ref=e286]:
+            - img [ref=e287]
+            - generic [ref=e290]: 06.05.2026
+          - generic [ref=e291]:
+            - generic [ref=e293]:
+              - img [ref=e294]
+              - text: Приватный
+            - button "Открыть" [ref=e297] [cursor=pointer]
+      - generic [ref=e299]:
+        - heading "Моя активность" [level=2] [ref=e300]
+        - generic [ref=e301]:
+          - generic [ref=e303]:
+            - generic [ref=e304]:
+              - paragraph [ref=e305]: Создано тир-листов
+              - paragraph [ref=e306]: "8"
+            - img [ref=e308]
+          - generic [ref=e311]:
+            - generic [ref=e312]:
+              - paragraph [ref=e313]: Опубликовано
+              - paragraph [ref=e314]: "2"
+            - img [ref=e316]
+          - generic [ref=e320]:
+            - generic [ref=e321]:
+              - paragraph [ref=e322]: Черновики
+              - paragraph [ref=e323]: "6"
+            - img [ref=e325]
+          - generic [ref=e329]:
+            - generic [ref=e330]:
+              - paragraph [ref=e331]: Книг в подборках
+              - paragraph [ref=e332]: "15"
+            - img [ref=e334]
+          - generic [ref=e337]:
+            - generic [ref=e338]:
+              - paragraph [ref=e339]: Получено лайков
+              - paragraph [ref=e340]: "3"
+            - img [ref=e342]
+          - generic [ref=e345]:
+            - generic [ref=e346]:
+              - paragraph [ref=e347]: Последняя активность
+              - paragraph [ref=e348]: Сегодня
+            - img [ref=e350]
+      - generic [ref=e354]:
+        - generic [ref=e355]:
+          - heading "Популярные тир-листы" [level=2] [ref=e356]
+          - button "Смотреть все →" [ref=e357] [cursor=pointer]
+        - generic [ref=e358]:
+          - button "Top Sci-Fi Books fedor 3 0" [ref=e359] [cursor=pointer]:
+            - generic [ref=e362]:
+              - paragraph [ref=e363]: Top Sci-Fi Books
+              - paragraph [ref=e364]: fedor
+              - generic [ref=e365]:
+                - generic [ref=e366]:
+                  - img [ref=e367]
+                  - text: "3"
+                - generic [ref=e369]:
+                  - img [ref=e370]
+                  - text: "0"
+          - button "4 44 admin2 2 1" [ref=e372] [cursor=pointer]:
+            - generic [ref=e374]: "4"
+            - generic [ref=e376]:
+              - paragraph [ref=e377]: "44"
+              - paragraph [ref=e378]: admin2
+              - generic [ref=e379]:
+                - generic [ref=e380]:
+                  - img [ref=e381]
+                  - text: "2"
+                - generic [ref=e383]:
+                  - img [ref=e384]
+                  - text: "1"
+          - button "A a admin 2 1" [ref=e386] [cursor=pointer]:
+            - generic [ref=e388]: A
+            - generic [ref=e390]:
+              - paragraph [ref=e391]: a
+              - paragraph [ref=e392]: admin
+              - generic [ref=e393]:
+                - generic [ref=e394]:
+                  - img [ref=e395]
+                  - text: "2"
+                - generic [ref=e397]:
+                  - img [ref=e398]
+                  - text: "1"
+          - button "9 99 test 2 2" [ref=e400] [cursor=pointer]:
+            - generic [ref=e402]: "9"
+            - generic [ref=e404]:
+              - paragraph [ref=e405]: "99"
+              - paragraph [ref=e406]: test
+              - generic [ref=e407]:
+                - generic [ref=e408]:
+                  - img [ref=e409]
+                  - text: "2"
+                - generic [ref=e411]:
+                  - img [ref=e412]
+                  - text: "2"
+      - generic [ref=e416]:
+        - generic [ref=e417]:
+          - generic [ref=e418]:
+            - generic [ref=e419]:
+              - paragraph [ref=e420]: Уровень 3
+              - paragraph [ref=e421]: Страничный глотатель
+            - generic [ref=e422]:
+              - img [ref=e423]
+              - generic [ref=e429]: "3"
+          - paragraph [ref=e432]: 230 XP · 70 XP до уровня 4
+        - generic [ref=e433]:
+          - generic [ref=e434]:
+            - img [ref=e435]
+            - generic [ref=e441]: Достижения
+          - generic [ref=e442]:
+            - generic [ref=e443]:
+              - img [ref=e444]
+              - generic [ref=e446]:
+                - paragraph [ref=e447]: Знаток
+                - paragraph [ref=e448]: Добавить 15 книг в тир-листы
+              - generic [ref=e449]: +50 XP
+            - generic [ref=e450]:
+              - img [ref=e451]
+              - generic [ref=e453]:
+                - paragraph [ref=e454]: Эксперт
+                - paragraph [ref=e455]: Создать 5 подборок
+              - generic [ref=e456]: +50 XP
+            - generic [ref=e457]:
+              - img [ref=e458]
+              - generic [ref=e460]:
+                - paragraph [ref=e461]: Любитель
+                - paragraph [ref=e462]: Добавить 5 книг в тир-листы
+              - generic [ref=e463]: +25 XP
+            - generic [ref=e464]:
+              - img [ref=e465]
+              - generic [ref=e467]:
+                - paragraph [ref=e468]: Участник битвы
+                - paragraph [ref=e469]: Вы приняли участие в битве
+              - generic [ref=e470]: +20 XP
+      - generic [ref=e472]:
+        - generic [ref=e473]:
+          - heading "Сейчас обсуждают" [level=2] [ref=e474]:
+            - img [ref=e475]
+            - text: Сейчас обсуждают
+          - button "Все новости →" [ref=e478] [cursor=pointer]
+        - generic [ref=e479]:
+          - link "C The Guardian Crossing the Wine Dark Sea by Emily Wilson review – a masterclass in translation" [ref=e480] [cursor=pointer]:
+            - /url: https://www.theguardian.com/books/2026/may/26/crossing-the-wine-dark-sea-by-emily-wilson-review-a-masterclass-in-translation
+            - generic [ref=e482]: C
+            - generic [ref=e484]:
+              - generic [ref=e485]:
+                - img [ref=e486]
+                - text: The Guardian
+              - paragraph [ref=e489]: Crossing the Wine Dark Sea by Emily Wilson review – a masterclass in translation
+            - img [ref=e491]
+          - link "Год Литературы «Ясная Поляна» объявила короткий список номинации «Иностранная литература»" [ref=e495] [cursor=pointer]:
+            - /url: https://godliteratury.ru/articles/2026/05/26/iasnaia-poliana-obiavila-korotkij-spisok-nominacii-inostrannaia-literatura
+            - generic [ref=e497]:
+              - generic [ref=e498]:
+                - img [ref=e499]
+                - text: Год Литературы
+              - paragraph [ref=e502]: «Ясная Поляна» объявила короткий список номинации «Иностранная литература»
+            - img [ref=e504]
+          - link "T The Guardian The Vivisectors by Missouri Williams review – twisted love story from a cult writer" [ref=e508] [cursor=pointer]:
+            - /url: https://www.theguardian.com/books/2026/may/26/the-vivisectors-by-missouri-williams-review-twisted-love-story-from-a-cult-writer
+            - generic [ref=e510]: T
+            - generic [ref=e512]:
+              - generic [ref=e513]:
+                - img [ref=e514]
+                - text: The Guardian
+              - paragraph [ref=e517]: The Vivisectors by Missouri Williams review – twisted love story from a cult writer
+            - img [ref=e519]
+          - link "Год Литературы РЖД запустят «Литературный экспресс» из Москвы в Ясную Поляну" [ref=e523] [cursor=pointer]:
+            - /url: https://godliteratury.ru/articles/2026/05/26/rzhd-zapustiat-turisticheskij-poezd-literaturnyj-ekspress-iz-moskvy-v-iasnuiu-polianu
+            - generic [ref=e525]:
+              - generic [ref=e526]:
+                - img [ref=e527]
+                - text: Год Литературы
+              - paragraph [ref=e530]: РЖД запустят «Литературный экспресс» из Москвы в Ясную Поляну
+            - img [ref=e532]
+  - contentinfo [ref=e536]:
+    - generic [ref=e537]:
+      - generic [ref=e538]:
+        - generic [ref=e540]:
+          - paragraph [ref=e541]: BookStrata Pro
+          - heading "Рейтинги без шума." [level=3] [ref=e542]
+          - paragraph [ref=e543]: Ваша персональная библиотека для структурирования знаний и обмена опытом через визуальные тир-листы.
+        - navigation "Основная навигация футера" [ref=e544]:
+          - heading "Основное" [level=4] [ref=e545]
+          - list [ref=e546]:
+            - listitem [ref=e547]:
+              - link "Мои рейтинги" [ref=e548] [cursor=pointer]:
+                - /url: /
+                - img [ref=e550]
+                - text: Мои рейтинги
+            - listitem [ref=e551]:
+              - link "Библиотека" [ref=e552] [cursor=pointer]:
+                - /url: /templates
+                - img [ref=e554]
+                - text: Библиотека
+            - listitem [ref=e556]:
+              - link "Сообщество" [ref=e557] [cursor=pointer]:
+                - /url: /community
+                - img [ref=e559]
+                - text: Сообщество
+        - navigation "Пользовательские ссылки" [ref=e564]:
+          - heading "Пользователю" [level=4] [ref=e565]
+          - list [ref=e566]:
+            - listitem [ref=e567]:
+              - link "Профиль" [ref=e568] [cursor=pointer]:
+                - /url: /profile
+                - img [ref=e570]
+                - text: Профиль
+            - listitem [ref=e573]:
+              - link "Telegram" [ref=e574] [cursor=pointer]:
+                - /url: https://t.me/bookstrata
+                - img [ref=e576]
+                - text: Telegram
+            - listitem [ref=e578]:
+              - link "ВКонтакте" [ref=e579] [cursor=pointer]:
+                - /url: https://vk.com/club237287277
+                - img [ref=e581]
+                - text: ВКонтакте
+            - listitem [ref=e587]:
+              - link "Контакты" [ref=e588] [cursor=pointer]:
+                - /url: /contact
+                - img [ref=e590]
+                - text: Контакты
+        - generic [ref=e594]:
+          - button "Поддержка проекта" [ref=e595]:
+            - img [ref=e596]
+            - text: Поддержка проекта
+            - img [ref=e599]
+          - generic:
+            - generic:
+              - heading "Поддержать донатом" [level=3]
+              - paragraph: Ваша поддержка помогает нам оплачивать сервера и развивать новые функции быстрее.
+              - link "Перейти к донату":
+                - /url: https://www.donationalerts.com/
+      - generic [ref=e601]:
+        - paragraph [ref=e604]: © 2026 BookStrata Pro. Все права защищены.
+        - paragraph [ref=e607]:
+          - generic [ref=e608]: ✦
+          - text: Спасибо, что развиваете проект вместе с нами

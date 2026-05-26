@@ -116,7 +116,14 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleEsc)
-    return () => window.removeEventListener('keydown', handleEsc)
+
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      window.removeEventListener('keydown', handleEsc)
+      document.body.style.overflow = prev
+    }
   }, [isOpen, onClose])
 
   useEffect(() => {
@@ -225,7 +232,7 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto bg-[#111111] p-5">
+        <div className="flex-1 overflow-y-auto [overscroll-behavior:contain] bg-[#111111] p-5">
           {!hasMessages && !isStreaming ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <div className="mb-4 flex size-16 items-center justify-center border-2 border-black bg-[#1d2323]">

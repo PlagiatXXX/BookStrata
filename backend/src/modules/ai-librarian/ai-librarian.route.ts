@@ -5,6 +5,7 @@ import { requirePro } from '../../middleware/proLimit.js'
 import { ErrorCodes, createApiError } from '../../lib/api-response.js'
 import { ChatRequestSchema } from './ai-librarian.schema.js'
 import { getUserTasteProfile, buildSystemPrompt, streamAiResponse, checkAiStatus } from './ai-librarian.service.js'
+import { AiRouterError } from './router.js'
 import { createLogger } from '../../lib/logger.js'
 
 const logger = createLogger('AiLibrarianRoute', { color: 'cyan' })
@@ -135,18 +136,17 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
       } catch (err) {
         if (aborted) return
 
-        logger.error(err instanceof Error ? err : new Error(String(err)), {
-          context: 'AI API stream',
-        })
-
-        let message: string
-        if ((err as any)?.cause?.code === 'ECONNREFUSED') {
-          message = 'AI-библиотекарь недоступен. Проверьте API-ключ Groq.'
-        } else if (err instanceof DOMException && err.name === 'AbortError') {
-          message = 'AI-библиотекарь не ответил вовремя. Попробуйте позже.'
+        if (err instanceof AiRouterError) {
+          logger.error('AI router: все провайдеры недоступны', {
+            providerErrors: err.providerErrors,
+          })
         } else {
-          message = 'Не удалось получить ответ от AI. Попробуйте позже.'
+          logger.error(err instanceof Error ? err : new Error(String(err)), {
+            context: 'AI API stream',
+          })
         }
+
+        const message = 'ИИ-библиотекарь сейчас на перерыве. Постучись через минуту.'
 
         try {
           reply.raw.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`)

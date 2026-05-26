@@ -1,11 +1,5 @@
-import { createLogger } from '../../lib/logger.js'
 import type { PrismaClient } from '@prisma/client'
-
-const logger = createLogger('AiLibrarian', { color: 'cyan' })
-
-const GROQ_API_URL = 'https://api.groq.com/openai/v1'
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama3-70b-8192'
-const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
+import { routeAiResponse, checkAllProvidersStatus } from './router.js'
 
 export interface TasteBook {
   title: string
@@ -22,6 +16,8 @@ export interface TasteProfile {
   totalBooks: number
   totalTierLists: number
   tierListNames: string[]
+  totalLikesReceived: number
+  popularTierLists: Array<{ title: string; likesCount: number }>
 }
 
 export interface AiChunk {
@@ -49,9 +45,16 @@ export async function getUserTasteProfile(
   const lowBooks: TasteBook[] = []
   const unrankedBooks: TasteBook[] = []
   const tierListNames: string[] = []
+  const popularTierLists: Array<{ title: string; likesCount: number }> = []
+  let totalLikesReceived = 0
 
   for (const tl of tierLists) {
     tierListNames.push(tl.title)
+    totalLikesReceived += tl.likesCount
+
+    if (tl.likesCount > 0) {
+      popularTierLists.push({ title: tl.title, likesCount: tl.likesCount })
+    }
 
     for (const p of tl.placements) {
       const book: TasteBook = {
@@ -72,6 +75,8 @@ export async function getUserTasteProfile(
     }
   }
 
+  popularTierLists.sort((a, b) => b.likesCount - a.likesCount)
+
   return {
     topBooks,
     midBooks,
@@ -80,6 +85,8 @@ export async function getUserTasteProfile(
     totalBooks: topBooks.length + midBooks.length + lowBooks.length + unrankedBooks.length,
     totalTierLists: tierLists.length,
     tierListNames,
+    totalLikesReceived,
+    popularTierLists,
   }
 }
 
@@ -93,6 +100,17 @@ export function buildSystemPrompt(profile: TasteProfile, username: string): stri
 
   if (profile.totalBooks > 0) {
     context += `Всего оценено книг: ${profile.totalBooks}.\n`
+  }
+
+  if (profile.totalLikesReceived > 0) {
+    context += `Тир-листы собрали ${profile.totalLikesReceived} лайков.\n`
+  }
+
+  if (profile.popularTierLists.length > 0) {
+    context += `Самые популярные:\n`
+    for (const tl of profile.popularTierLists.slice(0, 3)) {
+      context += `- «${tl.title}» — ${tl.likesCount} лайков\n`
+    }
   }
 
   if (profile.topBooks.length > 0) {
@@ -144,28 +162,8 @@ export function buildSystemPrompt(profile: TasteProfile, username: string): stri
 }
 
 export async function checkAiStatus(): Promise<{ online: boolean; model: string | null }> {
-  try {
-    const headers: Record<string, string> = {}
-    if (GROQ_API_KEY) {
-      headers['Authorization'] = `Bearer ${GROQ_API_KEY}`
-    }
-
-    const response = await fetch(`${GROQ_API_URL}/models`, {
-      headers,
-      signal: AbortSignal.timeout(5000),
-    })
-    if (!response.ok) return { online: false, model: null }
-
-    const data = (await response.json()) as { data?: Array<{ id: string }> }
-    const models = data?.data?.map((m) => m.id) || []
-
-    return {
-      online: models.length > 0,
-      model: models[0] || null,
-    }
-  } catch {
-    return { online: false, model: null }
-  }
+  const status = await checkAllProvidersStatus()
+  return { online: status.online, model: status.activeModel }
 }
 
 export async function* streamAiResponse(
@@ -173,80 +171,5 @@ export async function* streamAiResponse(
   systemPrompt: string,
   signal?: AbortSignal,
 ): AsyncGenerator<AiChunk> {
-  const body = {
-    model: GROQ_MODEL,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      ...messages.map((m) => ({ role: m.role, content: m.content })),
-    ],
-    stream: true,
-    temperature: 0.7,
-    max_tokens: 2048,
-  }
-
-  logger.info('Calling Groq API', { model: GROQ_MODEL, url: GROQ_API_URL })
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  }
-  if (GROQ_API_KEY) {
-    headers['Authorization'] = `Bearer ${GROQ_API_KEY}`
-  }
-
-  const response = await fetch(`${GROQ_API_URL}/chat/completions`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-    signal: signal ?? null,
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => 'Unknown error')
-    logger.error('Groq API error', { status: response.status, body: errorText })
-    throw new Error(`Groq API error: ${response.status} ${errorText}`)
-  }
-
-  const reader = response.body?.getReader()
-  if (!reader) {
-    throw new Error('AI API returned no body stream')
-  }
-
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (!trimmed || !trimmed.startsWith('data: ')) continue
-
-        const data = trimmed.slice(6)
-        if (data === '[DONE]') {
-          yield { content: '', done: true }
-          return
-        }
-
-        try {
-          const parsed = JSON.parse(data)
-          const content = parsed?.choices?.[0]?.delta?.content || ''
-          if (content) {
-            yield { content, done: false }
-          }
-        } catch {
-          // skip malformed JSON chunks
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock()
-  }
-
-  yield { content: '', done: true }
+  yield* routeAiResponse(messages, systemPrompt, signal)
 }

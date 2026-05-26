@@ -10,6 +10,8 @@ const emptyProfile: TasteProfile = {
   totalBooks: 0,
   totalTierLists: 0,
   tierListNames: [],
+  totalLikesReceived: 0,
+  popularTierLists: [],
 }
 
 const richProfile: TasteProfile = {
@@ -29,6 +31,11 @@ const richProfile: TasteProfile = {
   totalBooks: 4,
   totalTierLists: 3,
   tierListNames: ['Лучшее', 'Классика', 'Попса', 'Надо прочесть'],
+  totalLikesReceived: 42,
+  popularTierLists: [
+    { title: 'Лучшее', likesCount: 30 },
+    { title: 'Классика', likesCount: 10 },
+  ],
 }
 
 describe('buildSystemPrompt', () => {

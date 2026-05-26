@@ -217,31 +217,61 @@ export function DashboardPage() {
             onLogoutClick={handleLogout}
           />
 
-          {/* AI Librarian Button — сразу после hero */}
-          <div className="flex justify-center my-10">
+          {/* AI Librarian Card — сразу после hero */}
+          <div className="mx-auto my-12 max-w-3xl">
             {user?.isPro ? (
               <button
                 onClick={handleAiLibrarianOpen}
-                className="group flex cursor-pointer items-center gap-3 border-2 border-black bg-gradient-to-r from-[#1d2323] to-[#111] px-8 py-4 font-bold text-[#f6f1e8] shadow-[6px_6px_0_0_#000000] transition-all hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#000000]"
+                className="group flex w-full cursor-pointer items-center gap-5 border-2 border-black bg-[#111111] p-6 text-left shadow-[6px_6px_0_0_#000000] transition-all hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#000000]"
                 type="button"
               >
-                <Sparkles className="h-5 w-5 text-[#c1fffe] transition-transform group-hover:scale-110" />
-                <span>Спросить ИИ-библиотекаря</span>
-                <span className="rounded border border-[#c1fffe]/30 bg-[#c1fffe]/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-[#c1fffe]">
-                  AI
-                </span>
+                <div className="flex size-14 shrink-0 items-center justify-center border-2 border-black bg-[#c1fffe]">
+                  <Sparkles className="h-6 w-6 text-black" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black tracking-[-0.02em] text-[#f6f1e8]">
+                      ИИ-библиотекарь
+                    </span>
+                    <span className="rounded border border-[#c1fffe]/30 bg-[#c1fffe]/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-[#c1fffe]">
+                      AI
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-[#9aa1a3]">
+                    Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2 border-2 border-black bg-[#c1fffe] px-5 py-3 font-black text-black transition-colors group-hover:bg-[#9cf5f3]">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-sm">Спросить</span>
+                </div>
               </button>
             ) : (
               <button
                 onClick={() => navigate("/pricing")}
-                className="group flex cursor-pointer items-center gap-3 border-2 border-[#554422] bg-gradient-to-r from-[#1a1510] to-[#111] px-8 py-4 font-bold text-[#887744] shadow-[6px_6px_0_0_#000000] transition-all hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#000000]"
+                className="group flex w-full cursor-pointer items-center gap-5 border-2 border-[#2a2818] bg-[#0e0d09] p-6 text-left shadow-[6px_6px_0_0_#000000] transition-all hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#000000]"
                 type="button"
               >
-                <Crown className="h-5 w-5 text-[#887744]" />
-                <span>ИИ-библиотекарь — только Pro</span>
-                <span className="rounded border border-[#887744]/30 bg-[#887744]/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-[#887744]">
-                  PRO
-                </span>
+                <div className="flex size-14 shrink-0 items-center justify-center border-2 border-[#554422] bg-[#1a1510]">
+                  <Crown className="h-6 w-6 text-[#887744]" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black tracking-[-0.02em] text-[#665533]">
+                      ИИ-библиотекарь
+                    </span>
+                    <span className="rounded border border-[#887744]/30 bg-[#887744]/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-[#887744]">
+                      PRO
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-[#554422]">
+                    Персональные рекомендации книг на основе твоих тир-листов. Доступно с Pro-подпиской
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2 border-2 border-[#554422] bg-[#1a1510] px-5 py-3 font-black text-[#887744] transition-colors group-hover:bg-[#221b10]">
+                  <Crown className="h-4 w-4" />
+                  <span className="text-sm">Открыть Pro</span>
+                </div>
               </button>
             )}
           </div>
