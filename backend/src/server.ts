@@ -15,6 +15,7 @@ import { achievementRoutes } from "../src/modules/achievements/achievements.rout
 import { battleRoutes } from "../src/modules/battles/battles.route.js";
 import { forumRoutes } from "../src/modules/forum/forum.route.js";
 import { externalNewsRoutes } from "../src/modules/external-news/external-news.route.js";
+import { donorRoutes } from "../src/modules/donors/donors.route.js";
 import { adminStatsRoutes } from "../src/modules/admin-stats/admin-stats.route.js";
 import { tierListRoutes } from "../src/modules/tier-lists/tierList.route.js";
 import { authRoutes } from "../src/modules/auth/auth.route.js";
@@ -314,6 +315,9 @@ fastify.register(externalNewsRoutes, { prefix: "/api/external-news" });
 
 // Регистрируем контроллер шаблонов с префиксом /api
 fastify.register(templatesPlugin, { prisma, prefix: "/api" });
+
+// Donors (публичный список + админка)
+fastify.register(donorRoutes, { prefix: "/api/donors" });
 
 // AI Librarian
 fastify.register(aiLibrarianRoutes, { prefix: "/api/ai" });

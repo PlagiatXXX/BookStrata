@@ -34,7 +34,7 @@ export interface ExternalNewsItem {
   publishedAt: string
 }
 
-const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=800&q=80"
+const FALLBACK_IMAGE = null
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/\s+/g, " ").trim()

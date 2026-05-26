@@ -64,6 +64,11 @@ const AdminSubscriptionsPage = lazy(() =>
     }),
   ),
 );
+const AdminDonorsPage = lazy(() =>
+  import("@/pages/AdminDonorsPage/AdminDonorsPage").then((module) => ({
+    default: module.AdminDonorsPage,
+  })),
+);
 const AdminBattlesPage = lazy(() =>
   import("@/pages/AdminBattlesPage/AdminBattlesPage").then(
     (module) => ({
@@ -183,6 +188,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminUsersPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/donors",
+        element: (
+          <AdminGuard>
+            <AdminDonorsPage />
           </AdminGuard>
         ),
       },

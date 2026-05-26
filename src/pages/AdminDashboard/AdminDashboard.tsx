@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Newspaper, BookOpen, Users, Crown, Sword, ArrowLeft } from 'lucide-react'
+import { Newspaper, BookOpen, Users, Crown, Sword, Heart, ArrowLeft } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import type { AdminDashboardStats } from '../../../shared/types'
 
@@ -26,6 +26,16 @@ export default function AdminDashboard() {
       })
     return () => { cancelled = true }
   }, [])
+
+  const adminDonorsSection = {
+    title: 'Донатеры',
+    description: 'Управление бегущей строкой в футере',
+    icon: Heart,
+    path: '/admin/donors',
+    color: 'from-pink-500/20 to-pink-500/5',
+    borderColor: 'border-pink-500/30',
+    textColor: 'text-pink-500',
+  };
 
   const adminSections = [
     {
@@ -97,7 +107,7 @@ export default function AdminDashboard() {
 
         {/* Admin Sections Grid */}
         <div className="grid gap-4 sm:grid-cols-2">
-          {adminSections.map((section) => {
+          {[adminDonorsSection, ...adminSections].map((section) => {
             const Icon = section.icon;
             return (
               <button

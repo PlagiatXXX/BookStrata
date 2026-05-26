@@ -16,6 +16,8 @@ function formatDate(date: string) {
   })
 }
 
+const PLACEHOLDER = "/images/new-placeholder.webp"
+
 function NewsCard({ item }: { item: ExternalNewsItem }) {
   const isRussian = item.lang === "ru"
 
@@ -28,7 +30,7 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-(--bg-0)">
         <img
-          src={item.imageUrl ?? ""}
+          src={item.imageUrl ?? PLACEHOLDER}
           alt={item.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"

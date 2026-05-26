@@ -270,6 +270,14 @@ users       UserAchievement[]
 @@map("achievements")
 }
  
+// Имена донатеров для бегущей строки в футере
+model Donor {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  @@map("donors")
+}
+
 // Связь пользователей и достижений
 model UserAchievement {
 id            Int         @id @default(autoincrement())

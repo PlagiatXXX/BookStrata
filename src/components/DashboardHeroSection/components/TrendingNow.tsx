@@ -4,12 +4,7 @@ import { Globe, TrendingUp, ExternalLink } from "lucide-react"
 import { getExternalNews, type ExternalNewsItem } from "@/lib/externalNewsApi"
 import "./TrendingNow.css"
 
-const GRADIENTS = [
-  "linear-gradient(135deg, #06bcf9 0%, #08a8e0 100%)",
-  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-]
+const PLACEHOLDER = "/images/new-placeholder.webp"
 
 function NewsCard({ item }: { item: ExternalNewsItem }) {
   return (
@@ -19,23 +14,12 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
       rel="noopener noreferrer"
       className="trending-card"
     >
-      {item.imageUrl && !item.imageUrl.includes("unsplash") ? (
-        <img
-          src={item.imageUrl}
-          alt=""
-          className="trending-card__img"
-          loading="lazy"
-        />
-      ) : (
-        <div
-          className="trending-card__bg"
-          style={{ background: GRADIENTS[Math.abs(item.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADIENTS.length] }}
-        >
-          <span className="trending-card__initial">
-            {item.title.charAt(0).toUpperCase()}
-          </span>
-        </div>
-      )}
+      <img
+        src={item.imageUrl ?? PLACEHOLDER}
+        alt=""
+        className="trending-card__img"
+        loading="lazy"
+      />
       <div className="trending-card__overlay" />
       <div className="trending-card__content">
         <span className="trending-card__source">

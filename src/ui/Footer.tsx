@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  ChevronDown,
   Sparkles,
+  ChevronDown,
   List,
   Folder,
   Users,
@@ -10,10 +10,22 @@ import {
   MessageCircle,
   Share2,
   HelpCircle,
+  Copy,
+  Check,
 } from "lucide-react";
 import { RainEffect } from "./RainEffect";
+import { apiClient } from "@/lib/api-client";
 
-const DONATE_URL = "https://www.donationalerts.com/";
+const marqueeStyle = `
+@keyframes marquee {
+  from { transform: translateX(100vw); }
+  to { transform: translateX(-100%); }
+}
+.animate-marquee {
+  animation: marquee 27s linear infinite;
+}
+`
+
 const TELEGRAM_URL = "https://t.me/bookstrata";
 const VK_URL = "https://vk.com/club237287277";
 
@@ -41,7 +53,33 @@ const userLinks = [
 
 export const Footer = () => {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [donors, setDonors] = useState<string[]>([]);
   const location = useLocation();
+
+  const cardNumber = "2202207455452840";
+  useEffect(() => {
+    apiClient.get<Array<{ id: number; name: string }>>('/donors')
+      .then((data) => setDonors(data.map((d) => d.name)))
+      .catch(() => {})
+  }, [])
+
+  const handleCopyCard = async () => {
+    try {
+      await navigator.clipboard.writeText(cardNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = cardNumber;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -78,6 +116,7 @@ export const Footer = () => {
 
   return (
     <footer className="relative border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%),#0b0f1f] px-6 py-12 overflow-hidden">
+      <style>{marqueeStyle}</style>
       <RainEffect />
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 relative z-10">
@@ -201,41 +240,67 @@ export const Footer = () => {
               >
                 <div className="relative p-5">
                   <h3 className="text-base font-bold text-white">
-                    Поддержать донатом
+                    Поддержать проект
                   </h3>
                   <p className="mt-2 text-xs text-amber-50/70 leading-relaxed text-left">
-                    Ваша поддержка помогает нам оплачивать сервера и развивать
-                    новые функции быстрее.
+                    Ваша поддержка помогает оплачивать сервера и делать BookStrata
+                    лучше. Спасибо, что вы с нами!
                   </p>
-                  <a
-                    href={DONATE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 flex w-full justify-center items-center rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-black transition-transform hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    Перейти к донату
-                  </a>
+
+                  <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+                    <span className="font-mono text-sm font-bold text-amber-100 tracking-wider">
+                      {cardNumber}
+                    </span>
+                    <button
+                      onClick={handleCopyCard}
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-400/30 px-2.5 py-1 text-[10px] font-medium text-amber-200 transition-colors hover:bg-amber-500/20"
+                      type="button"
+                      aria-label="Копировать номер карты"
+                    >
+                      {copied ? (
+                        <Check className="h-3 w-3 text-green-400" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                      {copied ? "Скопировано" : "Копировать"}
+                    </button>
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-amber-300/60">
+                    Сбербанк • Федор П.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Row: Copyright & Trust message */}
-        <div className="flex flex-col items-center justify-between gap-6 border-t border-white/5 pt-8 text-[11px] font-medium text-[#8f8a80] md:flex-row">
-          <div className="flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-cyan-500 animate-pulse" />
-            <p>
-              © {new Date().getFullYear()} BookStrata Pro. Все права защищены.
-            </p>
-          </div>
+        {/* Bottom Row: Donor Ticker + Copyright & Trust message */}
+        <div className="flex flex-col gap-4 border-t border-white/5 pt-8">
+          {donors.length > 0 && (
+            <div className="relative overflow-hidden w-full">
+              <div className="overflow-hidden w-full">
+                <div className="animate-marquee w-fit whitespace-nowrap text-[11px] font-medium text-amber-200/40">
+                  {donors.map((name) => `♥ ${name}`).join('  ·  ')}
+                </div>
+              </div>
+            </div>
+          )}
 
-          <div className="relative px-4 py-1.5 rounded-full bg-white/5 border border-white/10 group overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-r from-cyan-500/10 via-fuchsia-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-shimmer" />
-            <p className="relative z-10 flex items-center gap-2">
-              <span className="text-cyan-400">✦</span>
-              Спасибо, что развиваете проект вместе с нами
-            </p>
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+            <div className="flex items-center gap-2">
+              <span className="h-1 w-1 rounded-full bg-cyan-500 animate-pulse" />
+              <p className="text-[11px] font-medium text-[#8f8a80]">
+                © {new Date().getFullYear()} BookStrata Pro. Все права защищены.
+              </p>
+            </div>
+
+            <div className="relative px-4 py-1.5 rounded-full bg-white/5 border border-white/10 group overflow-hidden">
+              <div className="absolute inset-0 bg-linear-to-r from-cyan-500/10 via-fuchsia-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-shimmer" />
+              <p className="relative z-10 flex items-center gap-2 text-[11px] font-medium text-[#8f8a80]">
+                <span className="text-cyan-400">✦</span>
+                Спасибо, что развиваете проект вместе с нами
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-620_passed-brightgreen)](./doctor.md)
+[![Tests](https://img.shields.io/badge/Tests-649_passed-brightgreen)](./doctor.md)
 [![React Doctor](https://www.react.doctor/share/badge?p=tiermaker-pro&s=97&w=179&f=96)](https://www.react.doctor/share?p=tiermaker-pro&s=97&w=179&f=96)
 
 ---
@@ -47,6 +47,12 @@
 - **Шаблоны** — Быстрый старт с предустановленными наборами (Fiction, Sci-Fi и др.).
 - **Счётчик лимитов** — Прогресс-бар заполнения тир-листа (лимит 20 книг для бесплатных аккаунтов).
 
+### 🤖 AI-библиотекарь
+- **AI-рекомендации** — Персональные подборки книг на основе ваших тир-листов (Gemini Flash / Groq).
+- **Failover** — Автоматическое переключение между провайдерами (Gemini → Groq) при недоступности.
+- **Кэширование** — In-memory кэш на 5 минут для быстрых повторных запросов.
+- **Профиль вкусов** — Анализ лайков и популярных тир-листов для точных рекомендаций.
+
 ---
 
 ## 🛠️ Технологии
@@ -64,6 +70,7 @@
 - **Zod** (валидация схем на уровне API).
 - **JWT + bcryptjs** (безопасная аутентификация и хранение паролей).
 - **Cloudinary** (обработка и хостинг изображений).
+- **Gemini API + Groq API** (AI-рекомендации с failover).
 
 ### Инфраструктура
 - **Docker** (контейнеризация, docker-compose для PostgreSQL и Redis).
@@ -121,7 +128,7 @@ cd backend && npm run dev # Backend на http://localhost:8080
 
 ## 🧪 Тестирование
 
-Проект покрыт **620 тестами** (347 фронтенд + 273 бэкенд) — Vitest + React Testing Library + Supertest.
+Проект покрыт **649 тестами** (359 фронтенд + 290 бэкенд) — Vitest + React Testing Library + Supertest.
 
 ```bash
 # Запуск тестов фронтенда
@@ -130,9 +137,16 @@ npm test
 # Запуск тестов бэкенда
 cd backend && npm test
 ```
-*Статус: **620/620** тестов проходят успешно ✅*
+*Статус: **649/649** тестов проходят успешно ✅*
 
 ---
+
+## 🤖 AI-библиотекарь
+
+- **AI-рекомендации** — Персональные подборки книг на основе ваших тир-листов (Gemini Flash / Groq).
+- **Failover** — Автоматическое переключение между провайдерами (Gemini → Groq) при недоступности.
+- **Кэширование** — In-memory кэш на 5 минут для быстрых повторных запросов.
+- **Профиль вкусов** — Анализ лайков и популярных тир-листов для точных рекомендаций.
 
 ## 💎 Монетизация (Pro)
 
@@ -150,6 +164,14 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
+## 📸 Скриншоты
+
+Скриншоты проекта находятся в директории [`screenshots/`](./screenshots/).
+
+*(Добавить скриншоты)*
+
+---
+
 ## 🤝 Вклад
 
 Мы приветствуем Pull Requests! Пожалуйста, следуйте стандартам ESLint и используйте Conventional Commits.
@@ -163,7 +185,7 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 22 мая 2026 г.
-**Статус:** Phase 2 Completed ✅ — Full test coverage (620 тестов)
+**Последнее обновление:** 26 мая 2026 г.
+**Статус:** Phase 3 Completed ✅ — AI Librarian + Donor marquee (649 тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)
 **Аудит и рефакторинг:** Jules (Senior Fullstack AI)

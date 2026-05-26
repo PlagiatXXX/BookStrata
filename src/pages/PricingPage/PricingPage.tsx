@@ -51,7 +51,7 @@ const plans = [
 
 function PaymentModal({ onClose }: { onClose: () => void }) {
   const [copied, setCopied] = useState(false)
-  const cardNumber = '2202 2074 5545 2840'
+  const cardNumber = '2202207455452840'
 
   const handleCopy = async () => {
     try {
