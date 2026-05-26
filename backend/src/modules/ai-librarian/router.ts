@@ -73,7 +73,7 @@ export async function* routeAiResponse(
   logger.error('All AI providers failed', { errors })
 
   throw new AiRouterError(
-    'ИИ-библиотекарь сейчас на перерыве. Постучись через минуту.',
+    'Букстраж сейчас на перерыве. Постучись через минуту.',
     errors,
   )
 }

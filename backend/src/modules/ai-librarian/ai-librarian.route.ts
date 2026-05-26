@@ -146,7 +146,7 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
           })
         }
 
-        const message = 'ИИ-библиотекарь сейчас на перерыве. Постучись через минуту.'
+        const message = 'Букстраж сейчас на перерыве. Постучись через минуту.'
 
         try {
           reply.raw.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`)

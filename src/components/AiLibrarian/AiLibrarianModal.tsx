@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Send, X, Sparkles, RotateCcw, Wifi, WifiOff, Loader } from 'lucide-react'
+import { Send, X, RotateCcw, Wifi, WifiOff, Loader } from 'lucide-react'
 import { useAiLibrarian, type AiStatus } from '@/hooks/useAiLibrarian'
 import { useAuth } from '@/hooks/useAuthContext'
 import type { ChatMessage } from '@/lib/aiLibrarianApi'
@@ -66,7 +66,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
             <span className="text-xs font-bold">Я</span>
           )
         ) : (
-          <Bot className="h-4 w-4" />
+          <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
         )}
       </div>
       <div
@@ -85,8 +85,8 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 function StreamingBubble({ content }: { content: string }) {
   return (
     <div className="flex gap-3 animate-fade-in">
-      <div className="flex size-8 shrink-0 items-center justify-center border-2 border-black bg-[#232323] text-[#c1fffe]">
-        <Bot className="h-4 w-4" />
+      <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden border-2 border-black bg-[#232323]">
+        <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
       </div>
       <div className="max-w-[80%] border-2 border-black bg-[#171717] p-3 text-sm leading-relaxed text-[#d4d4d4]">
         {content ? (
@@ -180,8 +180,8 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between border-b-2 border-black bg-[#181818] p-5">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center border-2 border-black bg-[#c1fffe] text-black">
-              <Sparkles className="h-4 w-4" />
+            <div className="flex size-10 items-center justify-center overflow-hidden border-2 border-black bg-[#c1fffe]">
+              <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
             </div>
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
@@ -191,7 +191,7 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
                 id="ai-librarian-title"
                 className="text-xl font-black tracking-[-0.02em] text-[#f6f1e8]"
               >
-                ИИ-библиотекарь
+                Букстраж
               </h2>
             </div>
             <StatusBadge status={status} />
@@ -235,19 +235,19 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
         <div className="flex-1 overflow-y-auto [overscroll-behavior:contain] bg-[#111111] p-5">
           {!hasMessages && !isStreaming ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
-              <div className="mb-4 flex size-16 items-center justify-center border-2 border-black bg-[#1d2323]">
-                <Sparkles className="h-6 w-6 text-[#c1fffe]" />
+              <div className="mb-4 flex size-16 items-center justify-center overflow-hidden border-2 border-black bg-[#1d2323]">
+                <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
               </div>
               <h3 className="mb-2 text-lg font-bold text-[#f6f1e8]">
-                ИИ-библиотекарь
+                Букстраж
               </h3>
               {isOffline ? (
                 <>
                   <p className="mb-1 max-w-xs text-sm text-red-400">
-                    AI-библиотекарь недоступен.
+                    Букстраж недоступен.
                   </p>
                   <p className="mb-4 text-xs text-[#7d8688]">
-                    Проверьте API-ключ Groq и подключение к интернету.
+                    Проверьте API-ключ и подключение к интернету.
                   </p>
                   <button
                     type="button"

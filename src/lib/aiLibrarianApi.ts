@@ -1,5 +1,5 @@
 import { API_BASE_URL } from './config'
-import { getAuthHeader } from './authApi'
+import { getAuthHeader, refreshAccessToken, handleUnauthorized } from './authApi'
 import { createLogger } from './logger'
 import { apiClient } from './api-client'
 
@@ -33,7 +33,7 @@ export async function streamAiChat(
   onEvent: (event: SseEvent) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/ai/librarian/chat`, {
+  let response = await fetch(`${API_BASE_URL}/ai/librarian/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -42,6 +42,24 @@ export async function streamAiChat(
     body: JSON.stringify({ messages }),
     signal,
   })
+
+  if (response.status === 401) {
+    try {
+      await refreshAccessToken()
+      response = await fetch(`${API_BASE_URL}/ai/librarian/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        body: JSON.stringify({ messages }),
+        signal,
+      })
+    } catch {
+      handleUnauthorized()
+      throw new Error('Требуется авторизация. Пожалуйста, войдите в систему.')
+    }
+  }
 
   if (!response.ok) {
     let errorMessage = 'Ошибка соединения с AI-библиотекарем'
@@ -52,7 +70,7 @@ export async function streamAiChat(
       // ignore parse error
     }
     if (response.status === 403) {
-      throw new Error('ИИ-библиотекарь доступен только для Pro подписки')
+      throw new Error('Букстраж доступен только для Pro подписки')
     }
     throw new Error(errorMessage)
   }

@@ -62,6 +62,11 @@ export async function deleteAvatar(publicId: string): Promise<void> {
   await cloudinary.uploader.destroy(publicId);
 }
 
+function optimizeCloudinaryUrl(url: string): string {
+  if (!url.includes('cloudinary.com')) return url
+  return url.replace('/upload/', '/upload/f_auto,q_auto/')
+}
+
 // Универсальная загрузка (base64)
 export async function uploadBase64(
   base64Data: string,
@@ -69,14 +74,10 @@ export async function uploadBase64(
 ): Promise<UploadResult> {
   const result = await cloudinary.uploader.upload(base64Data, {
     folder,
-    transformation: [
-      { width: 512, height: 512, crop: 'fill', gravity: 'auto' },
-      { format: 'webp', quality: 'auto' },
-    ],
   });
 
   return {
-    url: result.secure_url,
+    url: optimizeCloudinaryUrl(result.secure_url),
     public_id: result.public_id,
   };
 }
@@ -88,14 +89,10 @@ export async function uploadFromUrl(
 ): Promise<UploadResult> {
   const result = await cloudinary.uploader.upload(url, {
     folder,
-    transformation: [
-      { width: 512, height: 512, crop: 'fill', gravity: 'auto' },
-      { format: 'webp', quality: 'auto' },
-    ],
   });
 
-    return {
-    url: result.secure_url,
+  return {
+    url: optimizeCloudinaryUrl(result.secure_url),
     public_id: result.public_id,
   };
 }

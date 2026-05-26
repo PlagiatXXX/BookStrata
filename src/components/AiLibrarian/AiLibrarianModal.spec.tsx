@@ -59,7 +59,7 @@ describe('AiLibrarianModal', () => {
       refreshStatus: vi.fn(),
     })
     render(<AiLibrarianModal isOpen={true} onClose={() => {}} />)
-    expect(screen.getByText(/AI-библиотекарь недоступен/i)).toBeDefined()
+    expect(screen.getByText(/Букстраж недоступен/i)).toBeDefined()
   })
 
   it('renders the input field', () => {

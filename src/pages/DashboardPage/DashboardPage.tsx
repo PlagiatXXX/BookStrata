@@ -225,13 +225,13 @@ export function DashboardPage() {
                 className="group flex w-full cursor-pointer items-center gap-5 border-2 border-black bg-[#111111] p-6 text-left shadow-[6px_6px_0_0_#000000] transition-all hover:-translate-y-0.5 hover:shadow-[8px_8px_0_0_#000000]"
                 type="button"
               >
-                <div className="flex size-14 shrink-0 items-center justify-center border-2 border-black bg-[#c1fffe]">
-                  <Sparkles className="h-6 w-6 text-black" />
+                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden border-2 border-black bg-[#c1fffe]">
+                  <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-black tracking-[-0.02em] text-[#f6f1e8]">
-                      ИИ-библиотекарь
+                      Букстраж
                     </span>
                     <span className="rounded border border-[#c1fffe]/30 bg-[#c1fffe]/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-[#c1fffe]">
                       AI
@@ -258,7 +258,7 @@ export function DashboardPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-black tracking-[-0.02em] text-[#665533]">
-                      ИИ-библиотекарь
+                      Букстраж
                     </span>
                     <span className="rounded border border-[#887744]/30 bg-[#887744]/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wide text-[#887744]">
                       PRO

@@ -91,7 +91,7 @@ export async function getUserTasteProfile(
 }
 
 export function buildSystemPrompt(profile: TasteProfile, username: string): string {
-  let context = `Ты — ИИ-библиотекарь BookStrata. Ты общаешься с ${username} и знаешь его книжные вкусы. Вот что у него в коллекции:
+  let context = `Ты — Букстраж, AI-помощник BookStrata. Ты общаешься с ${username} и знаешь его книжные вкусы. Вот что у него в коллекции:
 
 `
   if (profile.totalTierLists > 0) {
