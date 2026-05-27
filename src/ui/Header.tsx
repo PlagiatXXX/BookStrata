@@ -91,9 +91,9 @@ export const Header = ({
     },
     {
       label: "Pro",
-      onClick: () => navigate("/pricing"),
       icon: <Crown size={16} className="text-yellow-400" />,
       description: "Премиум-возможности",
+      badge: "скоро",
     },
     ...(showTemplatesNav
       ? [
@@ -124,7 +124,9 @@ export const Header = ({
                 key={item.label}
                 onClick={item.onClick}
                 aria-current={activeItem === item.label ? "page" : undefined}
-                className={`group relative px-4 py-2 rounded-lg cursor-pointer transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                className={`group relative px-4 py-2 rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                  item.onClick ? "cursor-pointer" : "cursor-not-allowed"
+                } ${
                   activeItem === item.label
                     ? "text-cyan-400"
                     : "text-gray-300 hover:text-white"

@@ -13,7 +13,7 @@ interface StatsCardsProps {
 
 export function StatsCards({ stats }: StatsCardsProps) {
   return (
-    <div className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
+    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
       <div className="cursor-pointer rounded-lg bg-[#1a1a2e] p-3 text-center shadow-lg transition-shadow hover:shadow-primary/10 dark:bg-[#1a1a2e] light:bg-white sm:rounded-xl sm:p-5">
         <div className="flex items-center justify-center gap-1 mb-1 sm:gap-2 sm:mb-2">
           <List size={18} className="text-cyan-400 sm:size-5" />

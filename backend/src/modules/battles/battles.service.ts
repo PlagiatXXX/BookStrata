@@ -212,35 +212,15 @@ export async function closeBattle(battleId: string) {
   });
 }
 
-async function checkFreeBattleLimit(userId: number): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isPro: true },
-  })
-
-  if (user?.isPro) return
-
-  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-
-  const recentApplications = await prisma.battleApplication.count({
-    where: {
-      userId,
-      createdAt: { gte: oneWeekAgo },
-    },
-  })
-
-  if (recentApplications >= 1) {
-    const err = new Error("Бесплатные пользователи могут участвовать в 1 баттле в неделю. Оформите Pro для безлимитного участия.")
-    ;(err as any).statusCode = 403
-    throw err
-  }
+async function checkFreeBattleLimit(): Promise<void> {
+  // Лимит баттлов временно отключён
 }
 
 // Заявки на участие
 export async function applyToBattle(userId: number, battleId: string, tierListId: string, message?: string) {
   logger.info("User applying to battle", { userId, battleId, tierListId });
 
-  await checkFreeBattleLimit(userId);
+  await checkFreeBattleLimit();
 
   // Проверяем существование и активность битвы
   const battle = await prisma.battle.findUnique({
@@ -279,7 +259,7 @@ export async function applyToBattle(userId: number, battleId: string, tierListId
 export async function applyGeneral(userId: number, tierListId: string, message?: string) {
   logger.info("User submitting general application", { userId, tierListId });
 
-  await checkFreeBattleLimit(userId);
+  await checkFreeBattleLimit();
 
   const tierList = await prisma.tierList.findFirst({
     where: { id: tierListId, userId, isPublic: true },

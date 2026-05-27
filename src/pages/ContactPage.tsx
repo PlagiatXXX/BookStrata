@@ -7,7 +7,7 @@ export default function ContactPage() {
         <div className="w-16 h-16 rounded-2xl bg-(--accent-main)/10 border border-(--accent-main)/20 flex items-center justify-center mx-auto">
           <Mail size={32} className="text-(--accent-main)" />
         </div>
-        <h1 className="text-3xl font-black tracking-tight">Контакты</h1>
+        <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Контакты</h1>
         <p className="text-(--ink-1) text-sm leading-relaxed">
           Если у вас есть вопросы, предложения или запросы об удалении контента — напишите нам.
         </p>

@@ -1,6 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
-import { SubscriptionsService } from "../subscriptions/subscriptions.service.js";
 import { uploadFromUrl } from "../../lib/cloudinary.js";
 
 const logger = createLogger("Avatars", { color: "yellow" });
@@ -8,33 +7,22 @@ const logger = createLogger("Avatars", { color: "yellow" });
 const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY;
 const POLLINATIONS_MODEL = process.env.POLLINATIONS_MODEL || "zimage";
 const POLLINATIONS_API_URL = "https://gen.pollinations.ai";
-const DAILY_AVATAR_LIMIT_FREE = 0;
-const DAILY_AVATAR_LIMIT_PRO = 50;
-
-const subscriptionsService = new SubscriptionsService();
+const DAILY_AVATAR_LIMIT = 10;
 
 async function checkAvatarLimit(
   userId: number,
-  userRole?: string,
 ): Promise<{ allowed: boolean; remaining: number; error?: string }> {
-  const [user, isPro] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        aiAvatarsGenerated: true,
-        lastAvatarResetAt: true,
-      },
-    }),
-    subscriptionsService.isProUser(userId),
-  ]);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      aiAvatarsGenerated: true,
+      lastAvatarResetAt: true,
+    },
+  });
 
   if (!user) {
     return { allowed: false, remaining: 0, error: "User not found" };
   }
-
-  const hasAdminRole = userRole === "admin" || userRole === "moderator";
-  const dailyLimit =
-    hasAdminRole || isPro ? DAILY_AVATAR_LIMIT_PRO : DAILY_AVATAR_LIMIT_FREE;
 
   const now = new Date();
   const lastReset = new Date(user.lastAvatarResetAt);
@@ -52,16 +40,16 @@ async function checkAvatarLimit(
       },
     });
 
-    return { allowed: dailyLimit > 0, remaining: dailyLimit };
+    return { allowed: true, remaining: DAILY_AVATAR_LIMIT };
   }
 
-  const remaining = Math.max(0, dailyLimit - user.aiAvatarsGenerated);
+  const remaining = Math.max(0, DAILY_AVATAR_LIMIT - user.aiAvatarsGenerated);
 
-  if (user.aiAvatarsGenerated >= dailyLimit) {
+  if (user.aiAvatarsGenerated >= DAILY_AVATAR_LIMIT) {
     return {
       allowed: false,
       remaining: 0,
-      error: `Daily limit reached (${dailyLimit} per day)`,
+      error: `Daily limit reached (${DAILY_AVATAR_LIMIT} per day)`,
     };
   }
 
@@ -71,7 +59,6 @@ async function checkAvatarLimit(
 export async function generateAvatar(
   prompt: string,
   userId: number,
-  userRole?: string,
 ): Promise<{
   success: boolean;
   imageUrl?: string;
@@ -79,7 +66,7 @@ export async function generateAvatar(
   remaining?: number;
 }> {
   try {
-    const limitCheck = await checkAvatarLimit(userId, userRole);
+    const limitCheck = await checkAvatarLimit(userId);
 
     if (!limitCheck.allowed) {
       return { success: false, error: limitCheck.error || "Limit reached" };
@@ -119,23 +106,16 @@ export async function generateAvatar(
   }
 }
 
-export async function getAvatarLimit(userId: number, userRole?: string) {
-  const [user, isPro] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        aiAvatarsGenerated: true,
-        lastAvatarResetAt: true,
-      },
-    }),
-    subscriptionsService.isProUser(userId),
-  ]);
+export async function getAvatarLimit(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      aiAvatarsGenerated: true,
+      lastAvatarResetAt: true,
+    },
+  });
 
   if (!user) return null;
-
-  const hasAdminRole = userRole === "admin" || userRole === "moderator";
-  const dailyLimit =
-    hasAdminRole || isPro ? DAILY_AVATAR_LIMIT_PRO : DAILY_AVATAR_LIMIT_FREE;
 
   const now = new Date();
   const lastReset = new Date(user.lastAvatarResetAt);
@@ -147,16 +127,14 @@ export async function getAvatarLimit(userId: number, userRole?: string) {
   if (isNewDay) {
     return {
       used: 0,
-      limit: dailyLimit,
-      remaining: dailyLimit,
-      isPro,
+      limit: DAILY_AVATAR_LIMIT,
+      remaining: DAILY_AVATAR_LIMIT,
     };
   }
 
   return {
     used: user.aiAvatarsGenerated,
-    limit: dailyLimit,
-    remaining: Math.max(0, dailyLimit - user.aiAvatarsGenerated),
-    isPro,
+    limit: DAILY_AVATAR_LIMIT,
+    remaining: Math.max(0, DAILY_AVATAR_LIMIT - user.aiAvatarsGenerated),
   };
 }

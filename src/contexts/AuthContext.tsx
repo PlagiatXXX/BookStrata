@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     username: fullUserData.username,
     avatarUrl: fullUserData.avatarUrl,
     role: fullUserData.role || "user",
-    isPro: fullUserData.isPro,
+    isPro: true,
     proExpiresAt: fullUserData.proExpiresAt,
   });
 

@@ -70,7 +70,7 @@ export default function ForumPage() {
                   <Users size={14} />
                   BookStrata Community
                 </div>
-                <h1 className="community-heading text-4xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tighter mb-6 uppercase italic">
+                <h1 className="community-heading text-3xl font-black leading-[0.9] tracking-tighter mb-6 uppercase italic sm:text-4xl md:text-6xl lg:text-7xl">
                   Центр <span className="text-(--accent-main)">активностей</span>
                 </h1>
                 <p className="text-(--ink-1) max-w-xl text-base md:text-lg leading-relaxed font-medium">
@@ -79,7 +79,7 @@ export default function ForumPage() {
                 </p>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 overflow-x-auto">
                 <div className="forum-stat-card brutal-card brutal-border p-4 min-w-[120px]">
                   <div className="text-2xl font-black mb-1">
                     {statsLoading ? <Spinner size="sm" /> : formatCount(forumStats?.totalUsers ?? 0)}
@@ -115,7 +115,7 @@ export default function ForumPage() {
           <section className="mt-24 reveal" data-reveal>
             <div className="brutal-card brutal-border bg-(--ink-0) text-(--bg-0) p-10 md:p-16 relative overflow-hidden">
                <div className="relative z-10 max-w-2xl">
-                 <h2 className="community-heading text-3xl md:text-5xl font-black mb-6 leading-tight uppercase">
+                 <h2 className="community-heading text-2xl font-black mb-6 leading-tight uppercase sm:text-3xl md:text-5xl">
                    Хотите запустить <br/> свою битву?
                  </h2>
                  <p className="text-white/70 mb-8 text-sm md:text-base font-medium leading-relaxed">

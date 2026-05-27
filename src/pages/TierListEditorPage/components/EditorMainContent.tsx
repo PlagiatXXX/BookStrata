@@ -109,7 +109,7 @@ export const EditorMainContent = memo(
 
     return (
       <div className="flex flex-col gap-6 lg:flex-row lg:justify-center">
-        <div className="flex max-w-350 flex-1 flex-col gap-4">
+        <div className="flex max-w-full flex-1 lg:max-w-350 flex-col gap-4">
           <TierGrid
             ref={tierGridRef}
             listData={listData}

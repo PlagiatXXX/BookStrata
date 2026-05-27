@@ -42,7 +42,7 @@ export const NewsSection = memo(({ searchQuery = "" }: NewsSectionProps) => {
       <section className="mb-12 reveal" data-reveal>
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="community-heading text-3xl md:text-4xl font-black leading-tight">
+            <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
               Новости и подборки
             </h2>
             <p className="text-(--ink-1) text-sm mt-1">
@@ -81,7 +81,7 @@ export const NewsSection = memo(({ searchQuery = "" }: NewsSectionProps) => {
     <section className="mb-12 reveal" data-reveal>
       <div className="flex items-end justify-between mb-6">
         <div>
-          <h2 className="community-heading text-3xl md:text-4xl font-black leading-tight">
+          <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
             Новости и подборки
           </h2>
           <p className="text-(--ink-1) text-sm mt-1">

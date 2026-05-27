@@ -17,7 +17,7 @@ export function ProfileActions({
 }: ProfileActionsProps) {
   const isAdmin = userRole === "admin" || userRole === "moderator";
   return (
-    <div className="mt-8 grid grid-cols-3 gap-3">
+    <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-3">
       <button
         onClick={onEditAvatar}
         className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-linear-to-br from-violet-500/20 to-violet-500/5 border border-violet-500/30 hover:border-violet-500/60 hover:from-violet-500/30 hover:to-violet-500/10 transition-colors cursor-pointer"

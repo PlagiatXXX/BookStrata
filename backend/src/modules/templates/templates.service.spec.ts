@@ -179,32 +179,26 @@ describe("TemplatesService", () => {
     };
 
     it("должен создать шаблон с валидацией", async () => {
-      mockTemplate.count.mockResolvedValue(0);
-      mockUser.findUnique.mockResolvedValue({ isPro: false });
       mockTemplate.create.mockResolvedValue(mockCreatedTemplate);
 
       const result = await service.createTemplate(mockInput, "1");
 
-      expect(mockTemplate.count).toHaveBeenCalledWith({
-        where: { authorId: 1 },
-      });
       expect(mockTemplate.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ title: "Test Template", authorId: 1 }),
       });
       expect(result).toEqual(mockCreatedTemplate);
     });
 
-    it("должен проверить лимит шаблонов (5 для бесплатных)", async () => {
-      mockTemplate.count.mockResolvedValue(5);
-      mockUser.findUnique.mockResolvedValue({ isPro: false });
-      await expect(service.createTemplate(mockInput, "1")).rejects.toThrow(
-        "Превышен лимит шаблонов",
-      );
+    it("должен создать шаблон без лимита (Pro-ограничения отключены)", async () => {
+      mockTemplate.create.mockResolvedValue(mockCreatedTemplate);
+
+      const result = await service.createTemplate(mockInput, "1");
+
+      expect(mockTemplate.create).toHaveBeenCalled();
+      expect(result).toEqual(mockCreatedTemplate);
     });
 
     it("должен создать шаблон без userId (анонимно)", async () => {
-      mockTemplate.count.mockResolvedValue(0);
-      mockUser.findUnique.mockResolvedValue({ isPro: false });
       mockTemplate.create.mockResolvedValue(mockCreatedTemplate);
       await service.createTemplate(mockInput, undefined);
       expect(mockTemplate.create).toHaveBeenCalledWith({
@@ -213,8 +207,6 @@ describe("TemplatesService", () => {
     });
 
     it("должен установить isPublic=false по умолчанию", async () => {
-      mockTemplate.count.mockResolvedValue(0);
-      mockUser.findUnique.mockResolvedValue({ isPro: false });
       mockTemplate.create.mockResolvedValue(mockCreatedTemplate);
       const inputWithoutPublic: CreateTemplateInput = {
         title: mockInput.title,
@@ -489,7 +481,6 @@ describe("TemplatesService", () => {
 
     it("должен создать тир-лист из шаблона", async () => {
       mockTemplate.findUnique.mockResolvedValue(mockTemplateData);
-      mockUser.findUnique.mockResolvedValue({ isPro: true });
       mockTierList.create.mockResolvedValue({
         ...mockCreatedTierList,
         tiers: mockCreatedTiers,

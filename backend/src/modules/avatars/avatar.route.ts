@@ -31,7 +31,7 @@ export async function avatarRoutes(fastify: FastifyInstance) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
 
-      const result = await generateAvatar(prompt.trim(), userId, userRole);
+      const result = await generateAvatar(prompt.trim(), userId);
 
       if (!result.success) {
         const statusCode = result.remaining === 0 ? 429 : 500;
@@ -101,7 +101,7 @@ export async function avatarRoutes(fastify: FastifyInstance) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
 
-      const limitInfo = await getAvatarLimit(userId, userRole);
+      const limitInfo = await getAvatarLimit(userId);
 
       if (!limitInfo) {
         return reply.code(404).send({ error: "User not found" });

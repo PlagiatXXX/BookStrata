@@ -91,7 +91,7 @@ export const ExternalNewsSection = memo(() => {
       <section className="mb-12 reveal" data-reveal>
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="community-heading text-3xl md:text-4xl font-black leading-tight">
+            <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
               Книжные новости мира
             </h2>
             <p className="text-(--ink-1) text-sm mt-1">
@@ -126,7 +126,7 @@ export const ExternalNewsSection = memo(() => {
         <div className="flex items-center gap-3">
           <BookOpen size={28} className="text-(--accent-main) shrink-0" />
           <div>
-            <h2 className="community-heading text-3xl md:text-4xl font-black leading-tight">
+            <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
               Книжные новости мира
             </h2>
             <p className="text-(--ink-1) text-sm mt-1">

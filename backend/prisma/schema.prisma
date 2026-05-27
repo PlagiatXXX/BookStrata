@@ -34,6 +34,8 @@ passwordResetTokens  PasswordResetToken[]
 achievements         UserAchievement[]
   battleVotes          BattleVote[]
   battleApplications   BattleApplication[]
+  feedback             Feedback[]
+  bookRatings          BookRating[]
   role                 Role?      @relation(fields: [roleId], references: [id])
 roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
 createdAt            DateTime   @default(now()) @map("created_at")
@@ -49,7 +51,22 @@ coverImageUrl   String          @map("cover_image_url")
 description     String?
 thoughts        String?
 placements      BookPlacement[]
+ratings         BookRating[]
 createdAt       DateTime        @default(now()) @map("created_at")
+}
+
+model BookRating {
+  id        Int      @id @default(autoincrement())
+  bookId    Int
+  userId    Int
+  ratings   Json     // { "style": 8.5, "plot": 7.2, "design": 9.1, ... }
+  createdAt DateTime @default(now()) @map("created_at")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, userId])
+  @@map("book_ratings")
 }
  
 model TierList {
@@ -276,6 +293,25 @@ model Donor {
   name String
 
   @@map("donors")
+}
+
+// Обратная связь от пользователей
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  userId    Int?     @map("user_id")
+  type      String   @default("other") // "bug" | "feature" | "other"
+  status    String   @default("pending") // "pending" | "in_progress" | "done" | "irrelevant"
+  message   String
+  pageUrl   String?  @map("page_url")
+  userEmail String?  @map("user_email")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([status])
+  @@map("feedback")
 }
 
 // Связь пользователей и достижений

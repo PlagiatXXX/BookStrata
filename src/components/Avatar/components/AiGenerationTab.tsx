@@ -14,29 +14,17 @@ export function AiGenerationTab({
   limitInfo,
 }: AiGenerationTabProps) {
   const isDisabled = isBusy || !aiPrompt.trim() || remainingGenerations <= 0;
-  const isPro = limitInfo?.isPro ?? false;
 
   return (
     <div className="space-y-4">
-      {!isPro ? (
-        <div className="p-3 bg-amber-500/20 border border-amber-500/50 rounded-xl">
-          <p className="text-sm text-amber-300">
-            <strong>AI генерация доступна только для Pro подписчиков</strong>
-          </p>
-          <p className="text-xs text-amber-400 mt-1">
-            Получите Pro подписку для генерации уникальных аватаров с помощью AI
-          </p>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
-          <Info size={16} className="text-gray-400 shrink-0" />
-          <span className="text-sm text-gray-400">
-            Осталось генераций сегодня:{" "}
-            <strong className="text-white">{remainingGenerations}</strong> /{" "}
-            {limitInfo?.limit ?? 50}
-          </span>
-        </div>
-      )}
+      <div className="flex items-center gap-2 p-3 bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 rounded-xl">
+        <Info size={16} className="text-gray-400 shrink-0" />
+        <span className="text-sm text-gray-400">
+          Осталось генераций сегодня:{" "}
+          <strong className="text-white">{remainingGenerations}</strong> /{" "}
+          {limitInfo?.limit ?? 10}
+        </span>
+      </div>
 
       <StatusMessages
         error={error}
@@ -73,7 +61,6 @@ export function AiGenerationTab({
         disabled={isDisabled}
         isBusy={isBusy}
         isGenerating={isGenerating}
-        isPro={isPro}
       />
     </div>
   );
@@ -144,7 +131,6 @@ interface GenerateButtonProps {
   disabled: boolean;
   isBusy: boolean;
   isGenerating: boolean;
-  isPro: boolean;
 }
 
 function GenerateButton({
@@ -152,23 +138,8 @@ function GenerateButton({
   disabled,
   isBusy,
   isGenerating,
-  isPro,
 }: GenerateButtonProps) {
   const busyLabel = isGenerating ? "Генерируем..." : "Загружаем...";
-
-  if (!isPro) {
-    return (
-      <button
-        disabled
-        className="relative w-full py-3.5 bg-gray-700 rounded-xl font-semibold text-gray-400 cursor-not-allowed flex items-center justify-center"
-      >
-        <span className="inline-flex items-center gap-2">
-          <Sparkles size={18} />
-          Требуется Pro подписка
-        </span>
-      </button>
-    );
-  }
 
   return (
     <button

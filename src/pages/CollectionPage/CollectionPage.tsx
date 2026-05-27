@@ -109,7 +109,7 @@ return DOMPurify.sanitize(collection.content);
             ))}
           </div>
 
-          <h1 className="community-heading text-3xl md:text-4xl font-black leading-tight mb-6">
+          <h1 className="community-heading text-2xl font-black leading-tight mb-6 sm:text-3xl md:text-4xl">
             {collection.title}
           </h1>
 
@@ -133,7 +133,7 @@ return DOMPurify.sanitize(collection.content);
             <h2 className="text-lg font-bold text-(--ink-0) mb-4">
               Книги подборки
             </h2>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {collection.bookCovers.map((cover, idx) => (
                 <div
                   key={idx}

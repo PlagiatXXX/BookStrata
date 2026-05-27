@@ -50,7 +50,7 @@ export const TemplateGrid = memo(({ activeCategory, searchQuery, applyingTemplat
 
       <div className="col-span-1 sm:col-span-2 lg:col-span-4 brutal-card brutal-border overflow-hidden reveal mt-2 md:mt-4" data-reveal>
         <div className="h-full p-8 flex flex-col justify-center items-center text-center">
-          <h3 className="community-heading text-3xl font-black leading-tight mb-5">
+          <h3 className="community-heading text-2xl font-black leading-tight mb-5 sm:text-3xl">
             Не нашли нужное?
           </h3>
           <Link

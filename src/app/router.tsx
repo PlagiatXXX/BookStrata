@@ -76,6 +76,13 @@ const AdminBattlesPage = lazy(() =>
     }),
   ),
 );
+const AdminFeedbackPage = lazy(() =>
+  import("@/pages/AdminFeedbackPage/AdminFeedbackPage").then(
+    (module) => ({
+      default: module.AdminFeedbackPage,
+    }),
+  ),
+);
 const AdminUsersPage = lazy(() =>
   import("@/pages/AdminUsersPage/AdminUsersPage").then((module) => ({
     default: module.AdminUsersPage,
@@ -204,6 +211,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminBattlesPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/feedback",
+        element: (
+          <AdminGuard>
+            <AdminFeedbackPage />
           </AdminGuard>
         ),
       },

@@ -46,7 +46,7 @@ export const BattleList = memo(() => {
             <div className="w-10 h-10 bg-(--accent-main) rounded-sm flex items-center justify-center brutal-shadow-sm">
               <Sword size={22} className="text-(--bg-0)" />
             </div>
-            <h2 className="community-heading text-3xl md:text-4xl font-black leading-tight">
+            <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
               Битвы шаблонов
             </h2>
           </div>

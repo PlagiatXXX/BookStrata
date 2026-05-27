@@ -61,7 +61,7 @@ export const EditorHeader = ({
   };
 
   return (
-    <div className="mb-8 flex items-end justify-between border-b-4 border-black pb-4">
+    <div className="mb-8 flex flex-col gap-4 border-b-4 border-black pb-4 md:flex-row md:items-end md:justify-between">
       <div>
         <h1 className="nb-display-lg text-white">
           {title}
@@ -73,7 +73,7 @@ export const EditorHeader = ({
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         {!isReadOnly && (
           <SaveButton
             status={saveStatus}

@@ -34,6 +34,7 @@ export default function AdminSubscriptionsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "pro" | "free">("all");
+  const [customDays, setCustomDays] = useState<Record<number, string>>({});
   const queryClient = useQueryClient();
 
   // Загрузка всех пользователей
@@ -189,7 +190,7 @@ export default function AdminSubscriptionsPage() {
             <ArrowLeft size={18} />
             <span className="text-sm">Назад в админку</span>
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Управление подписками
           </h1>
           <p className="mt-2 text-sm text-gray-600">
@@ -386,44 +387,81 @@ export default function AdminSubscriptionsPage() {
                             Деактивировать
                           </button>
                         ) : (
-                          <div className="flex justify-end gap-2">
-                            <button
-                              onClick={() =>
-                                activatePro.mutate({
-                                  userId: user.userId,
-                                  durationDays: 30,
-                                })
-                              }
-                              className="text-amber-600 hover:text-amber-900"
-                              title="Активировать на 30 дней"
-                            >
-                              30 дн
-                            </button>
-                            <button
-                              onClick={() =>
-                                activatePro.mutate({
-                                  userId: user.userId,
-                                  durationDays: 90,
-                                })
-                              }
-                              className="text-amber-600 hover:text-amber-900"
-                              title="Активировать на 90 дней"
-                            >
-                              90 дн
-                            </button>
-                            <button
-                              onClick={() => {
-                                setProStatus.mutate({
-                                  userId: user.userId,
-                                  isPro: true,
-                                  expiresAt: null,
-                                });
-                              }}
-                              className="text-green-600 hover:text-green-900"
-                              title="Бессрочная подписка"
-                            >
-                              ∞
-                            </button>
+                          <div className="flex flex-col items-end gap-2">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() =>
+                                  activatePro.mutate({
+                                    userId: user.userId,
+                                    durationDays: 30,
+                                  })
+                                }
+                                className="text-amber-600 hover:text-amber-900"
+                                title="Активировать на 30 дней"
+                              >
+                                30 дн
+                              </button>
+                              <button
+                                onClick={() =>
+                                  activatePro.mutate({
+                                    userId: user.userId,
+                                    durationDays: 90,
+                                  })
+                                }
+                                className="text-amber-600 hover:text-amber-900"
+                                title="Активировать на 90 дней"
+                              >
+                                90 дн
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setProStatus.mutate({
+                                    userId: user.userId,
+                                    isPro: true,
+                                    expiresAt: null,
+                                  });
+                                }}
+                                className="text-green-600 hover:text-green-900"
+                                title="Бессрочная подписка"
+                              >
+                                ∞
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min={1}
+                                placeholder="дней"
+                                value={customDays[user.userId] ?? ""}
+                                onChange={(e) =>
+                                  setCustomDays((prev) => ({
+                                    ...prev,
+                                    [user.userId]: e.target.value,
+                                  }))
+                                }
+                                className="w-16 rounded border border-gray-300 px-1.5 py-0.5 text-xs text-gray-700 focus:border-amber-500 focus:outline-none"
+                              />
+                              <button
+                                onClick={() => {
+                                  const days = parseInt(customDays[user.userId] ?? "");
+                                  if (days > 0) {
+                                    activatePro.mutate({
+                                      userId: user.userId,
+                                      durationDays: days,
+                                    });
+                                    setCustomDays((prev) => {
+                                      const next = { ...prev };
+                                      delete next[user.userId];
+                                      return next;
+                                    });
+                                  }
+                                }}
+                                className="text-xs text-amber-600 hover:text-amber-900"
+                                title="Активировать на указанное количество дней"
+                              >
+                                OK
+                              </button>
+                            </div>
                           </div>
                         )}
                       </td>

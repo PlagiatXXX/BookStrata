@@ -98,28 +98,7 @@ export class TemplatesService {
       userId,
     });
 
-    // Проверка лимита шаблонов (5 для бесплатной версии)
-    if (userId) {
-      const uId = parseInt(userId);
-      // Оптимизация Bolt: параллельный запрос количества шаблонов и статуса Pro
-      const [userTemplatesCount, user] = await Promise.all([
-        this.prisma.template.count({
-          where: { authorId: uId },
-        }),
-        this.prisma.user.findUnique({
-          where: { id: uId },
-          select: { isPro: true },
-        }),
-      ]);
-
-      const isPro = user?.isPro || false;
-      const MAX_TEMPLATES = isPro ? 100 : 5;
-      if (userTemplatesCount >= MAX_TEMPLATES) {
-        throw new Error(
-          `Превышен лимит шаблонов. Максимальное количество: ${MAX_TEMPLATES}. Оформите Pro-подписку для увеличения лимита.`,
-        );
-      }
-    }
+    // Лимит шаблонов временно отключён
 
     const templateData: any = {
       title: sanitize(validatedInput.title),
@@ -339,19 +318,7 @@ export class TemplatesService {
       throw new Error("Template not found");
     }
 
-    // Проверяем права доступа к шаблону
-    // Проверка Pro-лимита для использования Pro-шаблонов
-    if (template.isProOnly) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: uId },
-        select: { isPro: true },
-      });
-      if (!user?.isPro) {
-        throw new Error(
-          "Этот шаблон доступен только для пользователей с Pro-подпиской.",
-        );
-      }
-    }
+    // Проверка Pro-лимита для использования Pro-шаблонов временно отключена
     if (!template.isPublic && template.authorId !== uId) {
       throw new Error(
         "Unauthorized: Template is not public and does not belong to you",

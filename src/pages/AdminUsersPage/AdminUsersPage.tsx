@@ -117,7 +117,7 @@ export function AdminUsersPage() {
         </button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl font-bold text-white mb-2 sm:text-3xl">
             Управление пользователями
           </h1>
           <p className="text-gray-400">

@@ -62,7 +62,7 @@ export function AdminDonorsPage() {
         </button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Донатеры</h1>
+          <h1 className="text-2xl font-bold text-white mb-2 sm:text-3xl">Донатеры</h1>
           <p className="text-gray-400">
             Имена отображаются в бегущей строке в футере сайта
           </p>

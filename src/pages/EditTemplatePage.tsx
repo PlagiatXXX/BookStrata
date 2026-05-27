@@ -101,7 +101,7 @@ const EditTemplatePage: React.FC = () => {
               </button>
             </div>
 
-            <h1 className="text-3xl lg:text-4xl font-bold bg-linear-to-r from-white via-purple-200 to-cyan-300 bg-clip-text text-transparent mb-1">
+            <h1 className="text-2xl font-bold bg-linear-to-r from-white via-purple-200 to-cyan-300 bg-clip-text text-transparent mb-1 sm:text-3xl lg:text-4xl">
               Редактировать шаблон
             </h1>
             <p className="text-sm text-gray-400">

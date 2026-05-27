@@ -175,7 +175,7 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="ai-librarian-title"
-        className="relative mx-4 flex h-[600px] w-full max-w-2xl flex-col overflow-hidden border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in"
+        className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-y-auto border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b-2 border-black bg-[#181818] p-5">

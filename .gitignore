@@ -35,5 +35,6 @@ doctor.md
 !.github/copilot-instructions.md
 !.github/workflows/
 
+neon_backup.sql
 .opencode/*
 testsprite_tests/*

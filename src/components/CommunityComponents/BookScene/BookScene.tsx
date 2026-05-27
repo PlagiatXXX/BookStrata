@@ -1,13 +1,50 @@
 import { motion } from "framer-motion";
-import { useRef, useCallback, useEffect, memo, type RefObject } from "react";
+import { useRef, useCallback, useEffect, useMemo, memo, type RefObject } from "react";
 import { useBookController } from "./useBookController";
 import "./BookScene.css";
+
+const APHORISMS: string[] = [
+  "Книги — корабли мысли, странствующие по волнам времени и бережно несущие свой драгоценный груз от поколения к поколению.",
+  "Чтение — это диалог с мудрецами, в котором мы слышим только то, что готовы услышать.",
+  "В книгах мы ищем не ответы, а вопросы, которые не решались задать себе.",
+  "Хорошая книга — это сад, что умещается в кармане, цветущий круглый год.",
+  "Читатель проживает тысячу жизней, прежде чем умрёт. Человек, который никогда не читает, проживает всего одну.",
+  "Книга — это приключение, которое начинается с первого слова и никогда не заканчивается.",
+  "В каждой книге спрятан ключ к двери, о существовании которой ты даже не подозревал.",
+  "Чтение делает человека знающим, беседа — находчивым, а привычка записывать — точным.",
+  "Книги — это зеркала: в них мы видим не только автора, но и себя.",
+  "Тот, кто не читает хорошие книги, не имеет преимущества перед тем, кто не умеет читать.",
+  "Книга — это тот друг, который никогда не предаст, всегда рядом и готов поделиться мудростью.",
+  "Чтение — это не просто хобби, это способ замедлить время и расширить границы своей Вселенной.",
+  "В мире, где всё кричит, книга остаётся тихим голосом, который стоит услышать.",
+  "История, прочитанная в детстве, остаётся с тобой навсегда, становясь частью твоего мира.",
+  "Книги учат нас тому, что истинная сила — не в мышцах, а в знаниях и сострадании.",
+  "Чтение хороших книг — это разговор с самыми лучшими людьми прошлых времён.",
+  "Каждая прочитанная книга — это ещё одна прожитая жизнь, ещё один урок, ещё одна вселенная.",
+  "В тишине библиотеки слышен самый громкий разговор — диалог читателя с автором через века.",
+  "Книга — это единственное место, где ты можешь побывать, не выходя из дома.",
+  "Слово — самый сильный инструмент, а книга — бесконечная мастерская, где этот инструмент обретает форму.",
+]
+
+function getDailyAphorism(): { text: string; pageNumber: number } {
+  const now = new Date()
+  const dayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
+  let hash = 0
+  for (let i = 0; i < dayKey.length; i++) {
+    hash = ((hash << 5) - hash) + dayKey.charCodeAt(i)
+    hash |= 0
+  }
+  const index = Math.abs(hash) % APHORISMS.length
+  const pageNumber = 1 + Math.abs(hash ^ 42) % 999
+  return { text: APHORISMS[index], pageNumber }
+}
 
 interface BookSceneProps {
   containerRef: RefObject<HTMLDivElement | null>;
 }
 
 const BookScene = memo(({ containerRef }: BookSceneProps) => {
+  const dailyAphorism = useMemo(() => getDailyAphorism(), [])
   const rootRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -137,10 +174,10 @@ const BookScene = memo(({ containerRef }: BookSceneProps) => {
             style={{ transform: secondPageTransform }}
           >
             <div className="quote">
-              <span className="quote-drop-cap">З</span>
-              нание это сила, но приоритет это направление.
+              <span className="quote-drop-cap">{dailyAphorism.text[0]}</span>
+              {dailyAphorism.text.slice(1)}
             </div>
-            <div className="pageNumber">75</div>
+            <div className="pageNumber">{dailyAphorism.pageNumber}</div>
           </motion.div>
 
           {/* Передняя обложка */}

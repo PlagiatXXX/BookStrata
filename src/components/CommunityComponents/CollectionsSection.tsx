@@ -9,7 +9,7 @@ export const CollectionsSection = memo(() => {
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-(--ink-1)">
             curated
           </p>
-          <h2 className="community-heading text-3xl md:text-4xl font-black leading-tight">
+          <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
             Литературные подборки
           </h2>
           <p className="text-(--ink-1) mt-1">Отобрано модераторами</p>

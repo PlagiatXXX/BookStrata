@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext.tsx";
 import { Spinner } from "@/components/Spinner";
 import { AchievementNotification } from "@/components/AchievementNotification/AchievementNotification";
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
+import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
 import "../styles/sileo-custom.css";
 
 function AppShell() {
@@ -26,6 +27,7 @@ function AppShell() {
       </Suspense>
       <Toaster position="top-center" theme="system" />
       <AchievementNotification achievement={newAchievement} onClose={clearNotification} />
+      <FeedbackButton />
     </AuthProvider>
   );
 }

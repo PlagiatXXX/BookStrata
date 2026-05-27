@@ -100,7 +100,7 @@ export function NewsPage() {
             ))}
           </div>
 
-          <h1 className="community-heading text-3xl md:text-4xl font-black leading-tight mb-6">
+          <h1 className="community-heading text-2xl font-black leading-tight mb-6 sm:text-3xl md:text-4xl">
             {article.title}
           </h1>
 

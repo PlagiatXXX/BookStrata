@@ -328,7 +328,7 @@ export default function BattleDetailPage() {
                     </span>
                   )}
                 </div>
-                <h1 className="community-heading text-3xl md:text-5xl font-black leading-tight tracking-tighter mb-4">
+                <h1 className="community-heading text-2xl font-black leading-tight tracking-tighter mb-4 sm:text-3xl md:text-5xl">
                   {battle.title}
                 </h1>
                 {battle.description && (
@@ -337,7 +337,7 @@ export default function BattleDetailPage() {
                   </p>
                 )}
               </div>
-              <div className="flex gap-4 shrink-0">
+              <div className="flex gap-4 shrink-0 overflow-x-auto">
                 <div className="forum-stat-card brutal-card brutal-border p-4 min-w-[100px] text-center">
                   <div className="text-2xl font-black mb-1">{battle.participants.length}</div>
                   <div className="text-[9px] font-bold uppercase tracking-widest text-(--ink-1)">
