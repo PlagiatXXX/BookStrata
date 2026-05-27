@@ -111,7 +111,7 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
         const timeoutSignal = AbortSignal.timeout(60_000)
         const combinedSignal = AbortSignal.any([abortController.signal, timeoutSignal])
 
-        const stream = streamAiResponse(parsed.data.messages, systemPrompt, combinedSignal)
+        const stream = streamAiResponse(parsed.data.messages, systemPrompt, combinedSignal, String(user.userId))
 
         // SSE keepalive — комментарий каждые 10s, чтобы не оборвало соединение
         keepaliveTimer = setInterval(() => {

@@ -5,6 +5,7 @@ export interface AiProviderConfig {
   model: string
   baseUrl: string
   timeoutMs: number
+  user?: string
 }
 
 export interface AiProvider {
@@ -14,6 +15,7 @@ export interface AiProvider {
     messages: Array<{ role: string; content: string }>,
     systemPrompt: string,
     signal?: AbortSignal,
+    userId?: string,
   ): AsyncGenerator<AiChunk>
   checkStatus(): Promise<{ online: boolean; model: string | null }>
 }

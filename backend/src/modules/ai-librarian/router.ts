@@ -1,5 +1,6 @@
 import { createLogger } from '../../lib/logger.js'
 import type { AiProvider } from './providers/types.js'
+import { customProvider } from './providers/custom.js'
 import { geminiProvider } from './providers/gemini.js'
 import { groqProvider } from './providers/groq.js'
 import type { AiChunk } from './ai-librarian.service.js'
@@ -8,9 +9,16 @@ import { getCachedResponse, setCachedResponse } from './cache.js'
 const logger = createLogger('AiRouter', { color: 'cyan' })
 
 const providers: AiProvider[] = [
+  customProvider,
   geminiProvider,
   groqProvider,
 ]
+
+const API_KEY_MAP: Record<string, string> = {
+  custom: 'CUSTOM_AI_API_KEY',
+  gemini: 'GEMINI_API_KEY',
+  groq: 'GROQ_API_KEY',
+}
 
 export class AiRouterError extends Error {
   constructor(
@@ -26,6 +34,7 @@ export async function* routeAiResponse(
   messages: Array<{ role: string; content: string }>,
   systemPrompt: string,
   signal?: AbortSignal,
+  userId?: string,
 ): AsyncGenerator<AiChunk> {
   const cached = getCachedResponse(systemPrompt, messages)
   if (cached !== null) {
@@ -38,7 +47,9 @@ export async function* routeAiResponse(
   let fullResponse = ''
 
   for (const provider of providers) {
-    if (!provider.model || !process.env[provider.name === 'gemini' ? 'GEMINI_API_KEY' : 'GROQ_API_KEY']) {
+    const envKey = API_KEY_MAP[provider.name]
+    const apiKey = envKey ? process.env[envKey] : ''
+    if (!provider.model || !apiKey) {
       logger.warn('Skipping provider — no API key configured', { provider: provider.name })
       continue
     }
@@ -46,7 +57,7 @@ export async function* routeAiResponse(
     logger.info('Trying AI provider', { provider: provider.name, model: provider.model })
 
     try {
-      for await (const chunk of provider.generate(messages, systemPrompt, signal)) {
+      for await (const chunk of provider.generate(messages, systemPrompt, signal, userId)) {
         if (!chunk.done && chunk.content) {
           fullResponse += chunk.content
         }

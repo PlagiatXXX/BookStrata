@@ -35,4 +35,5 @@ doctor.md
 !.github/copilot-instructions.md
 !.github/workflows/
 
+.opencode/*
 testsprite_tests/*

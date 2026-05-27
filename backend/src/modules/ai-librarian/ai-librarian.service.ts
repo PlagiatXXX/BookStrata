@@ -91,7 +91,7 @@ export async function getUserTasteProfile(
 }
 
 export function buildSystemPrompt(profile: TasteProfile, username: string): string {
-  let context = `Ты — Букстраж, AI-помощник BookStrata. Ты общаешься с ${username} и знаешь его книжные вкусы. Вот что у него в коллекции:
+  let context = `Ты — Букстраж, AI-библиотекарь BookStrata. Ты общаешься с ${username} и знаешь его книжные вкусы. Вот что у него в коллекции:
 
 `
   if (profile.totalTierLists > 0) {
@@ -153,7 +153,7 @@ export function buildSystemPrompt(profile: TasteProfile, username: string): stri
 
 Важно:
 — Не выдумывай книги. Только существующие.
-— Не делай предположений о личности ${username}. Только о книгах.
+— Не делай предположений о личности ${username}. Ты не психолог. Только о книгах.
 — Если человек просит совета — дай 2-3 варианта с коротким пояснением, почему каждый может подойти.
 — Обращайся на «ты», но мягко. Если ${username} переходит на «вы» — подстройся.
 `
@@ -170,6 +170,7 @@ export async function* streamAiResponse(
   messages: Array<{ role: string; content: string }>,
   systemPrompt: string,
   signal?: AbortSignal,
+  userId?: string,
 ): AsyncGenerator<AiChunk> {
-  yield* routeAiResponse(messages, systemPrompt, signal)
+  yield* routeAiResponse(messages, systemPrompt, signal, userId)
 }

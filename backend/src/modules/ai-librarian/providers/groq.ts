@@ -19,6 +19,7 @@ export const groqProvider: AiProvider = {
     messages: Array<{ role: string; content: string }>,
     systemPrompt: string,
     signal?: AbortSignal,
+    _userId?: string,
   ): AsyncGenerator<AiChunk> {
     yield* createChatCompletionStream({ messages, systemPrompt, config, signal })
   },

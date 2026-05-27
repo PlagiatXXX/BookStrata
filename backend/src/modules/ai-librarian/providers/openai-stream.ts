@@ -13,7 +13,7 @@ export async function* createChatCompletionStream(
 ): AsyncGenerator<AiChunk> {
   const { messages, systemPrompt, config, signal } = options
 
-  const body = {
+  const body: Record<string, unknown> = {
     model: config.model,
     messages: [
       { role: 'system', content: systemPrompt },
@@ -22,6 +22,10 @@ export async function* createChatCompletionStream(
     stream: true,
     temperature: 0.7,
     max_tokens: 2048,
+  }
+
+  if (config.user) {
+    body.user = config.user
   }
 
   const headers: Record<string, string> = {
