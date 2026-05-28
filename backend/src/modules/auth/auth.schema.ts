@@ -86,15 +86,6 @@ export const loginSchema = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(loginBodySchema as any),
   response: {
-    200: {
-      description: 'Login successful',
-      type: 'object',
-      properties: {
-        accessToken: { type: 'string', description: 'JWT access token' },
-        userId: { type: 'number', description: 'User ID' },
-        username: { type: 'string', description: 'Username' },
-      },
-    },
     401: makeErrorSchema('Invalid credentials'),
   },
 };

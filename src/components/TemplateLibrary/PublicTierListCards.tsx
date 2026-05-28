@@ -41,9 +41,18 @@ const PublicTierListCards = memo(function PublicTierListCards({
               {tierList.title}
             </h3>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-[#b8b1a3] truncate">
-                {tierList.authorName || tierList.user?.username || "Неизвестный автор"}
-              </span>
+              {tierList.user?.id ? (
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate(`/users/${tierList.user!.id}`) }}
+                  className="text-xs text-[#b8b1a3] hover:text-(--accent-main) transition-colors truncate text-left"
+                >
+                  {tierList.user.username}
+                </button>
+              ) : (
+                <span className="text-xs text-[#b8b1a3] truncate">
+                  {tierList.authorName || "Неизвестный автор"}
+                </span>
+              )}
               <div className="flex items-center gap-1 text-xs">
                 <Heart
                   className={`w-3 h-3 ${isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-400'}`}

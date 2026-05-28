@@ -93,6 +93,31 @@ export class TierListRepository {
     ]);
   }
 
+  async findPublicByUserId(userId: number, pagination: { page: number; pageSize: number }) {
+    const skip = (pagination.page - 1) * pagination.pageSize;
+    return Promise.all([
+      this.db.tierList.findMany({
+        where: { userId, isPublic: true },
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          updatedAt: true,
+          isPublic: true,
+          likesCount: true,
+          slug: true,
+          coverImageUrl: true,
+          user: { select: { username: true, avatarUrl: true } },
+          _count: { select: { placements: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: pagination.pageSize,
+        skip,
+      }),
+      this.db.tierList.count({ where: { userId, isPublic: true } }),
+    ]);
+  }
+
   async findPublic(options: { page: number; pageSize: number; sortBy?: string }) {
     const skip = (options.page - 1) * options.pageSize;
     const orderBy =

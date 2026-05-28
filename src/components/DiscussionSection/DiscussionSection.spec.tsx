@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { MemoryRouter } from "react-router-dom"
 import { DiscussionSection } from "./DiscussionSection"
 
 vi.mock("@/hooks/useAuthContext", () => ({
@@ -26,6 +27,10 @@ vi.mock("@/lib/discussionApi", () => ({
 }))
 
 import * as discussionApi from "@/lib/discussionApi"
+
+function renderWithRouter(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>)
+}
 
 const mockMessages = [
   {
@@ -72,7 +77,7 @@ describe("DiscussionSection", () => {
 
   it("должен показать загрузку при монтировании", () => {
     vi.mocked(discussionApi.getDiscussionByBattle).mockReturnValue(new Promise(() => {}))
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     expect(document.querySelector(".animate-spin")).toBeInTheDocument()
   })
@@ -80,7 +85,7 @@ describe("DiscussionSection", () => {
   it("должен загрузить и отобразить сообщения (variant=battle)", async () => {
     vi.mocked(discussionApi.getDiscussionByBattle).mockResolvedValue(mockDiscussion as any)
 
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     await waitFor(() => {
       expect(screen.getByText("First message")).toBeInTheDocument()
@@ -96,7 +101,7 @@ describe("DiscussionSection", () => {
       messages: [],
     } as any)
 
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     await waitFor(() => {
       expect(screen.getByText("Пока нет комментариев")).toBeInTheDocument()
@@ -106,7 +111,7 @@ describe("DiscussionSection", () => {
   it("должен показать заголовок variant=battle как Комментарии", async () => {
     vi.mocked(discussionApi.getDiscussionByBattle).mockResolvedValue(mockDiscussion as any)
 
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     await waitFor(() => {
       expect(screen.getByText("Комментарии")).toBeInTheDocument()
@@ -116,7 +121,7 @@ describe("DiscussionSection", () => {
   it("должен показать variant=general как Обсуждение", async () => {
     vi.mocked(discussionApi.getGeneralDiscussion).mockResolvedValue(mockDiscussion as any)
 
-    render(<DiscussionSection variant="general" />)
+    renderWithRouter(<DiscussionSection variant="general" />)
 
     await waitFor(() => {
       expect(screen.getByText("Обсуждение")).toBeInTheDocument()
@@ -130,7 +135,7 @@ describe("DiscussionSection", () => {
     vi.mocked(discussionApi.createMessage).mockResolvedValue(mockMessages[0] as any)
     vi.mocked(discussionApi.getDiscussionById).mockResolvedValue(mockDiscussion as any)
 
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     await waitFor(() => {
       expect(screen.getByText("Пока нет комментариев")).toBeInTheDocument()
@@ -151,7 +156,7 @@ describe("DiscussionSection", () => {
     vi.mocked(discussionApi.getDiscussionByBattle).mockResolvedValue(mockDiscussion as any)
     vi.mocked(discussionApi.createMessage).mockResolvedValue(mockMessages[0] as any)
 
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     await waitFor(() => {
       expect(screen.getByText("First message")).toBeInTheDocument()
@@ -170,7 +175,7 @@ describe("DiscussionSection", () => {
     const onBack = vi.fn()
     vi.mocked(discussionApi.getDiscussionByBattle).mockResolvedValue(mockDiscussion as any)
 
-    render(<DiscussionSection variant="battle" battleId="b-1" onBack={onBack} />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" onBack={onBack} />)
 
     await waitFor(() => {
       expect(screen.getByTitle("Назад к списку")).toBeInTheDocument()
@@ -182,7 +187,7 @@ describe("DiscussionSection", () => {
     vi.mocked(discussionApi.getDiscussionById).mockResolvedValue(mockDiscussion as any)
     vi.mocked(discussionApi.updateMessage).mockResolvedValue(mockMessages[0] as any)
 
-    const { container } = render(<DiscussionSection variant="topic" discussionId="d-1" />)
+    const { container } = renderWithRouter(<DiscussionSection variant="topic" discussionId="d-1" />)
 
     await waitFor(() => {
       expect(screen.getByText("First message")).toBeInTheDocument()
@@ -219,7 +224,7 @@ describe("DiscussionSection", () => {
     vi.mocked(discussionApi.deleteMessage).mockResolvedValue(undefined)
     vi.mocked(discussionApi.getDiscussionById).mockResolvedValue(mockDiscussion as any)
 
-    render(<DiscussionSection variant="topic" discussionId="d-1" />)
+    renderWithRouter(<DiscussionSection variant="topic" discussionId="d-1" />)
 
     await waitFor(() => {
       expect(screen.getByText("First message")).toBeInTheDocument()
@@ -244,7 +249,7 @@ describe("DiscussionSection", () => {
 
     vi.mocked(discussionApi.getDiscussionByBattle).mockResolvedValue(mockDiscussion as any)
 
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     await waitFor(() => {
       const textarea = screen.getByPlaceholderText(
@@ -256,7 +261,7 @@ describe("DiscussionSection", () => {
 
   it("должен отображать loading state пока загружаются данные", () => {
     vi.mocked(discussionApi.getDiscussionByBattle).mockReturnValue(new Promise(() => {}))
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     expect(document.querySelector(".animate-spin")).toBeInTheDocument()
     expect(screen.getByText("Комментарии")).toBeInTheDocument()
@@ -265,7 +270,7 @@ describe("DiscussionSection", () => {
   it("должен корректно считать сообщения", async () => {
     vi.mocked(discussionApi.getDiscussionByBattle).mockResolvedValue(mockDiscussion as any)
 
-    render(<DiscussionSection variant="battle" battleId="b-1" />)
+    renderWithRouter(<DiscussionSection variant="battle" battleId="b-1" />)
 
     await waitFor(() => {
       expect(screen.getByText("2")).toBeInTheDocument()

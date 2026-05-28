@@ -159,6 +159,13 @@ export async function getUserById(params: { id: string }) {
       id: true,
       username: true,
       avatarUrl: true,
+      isPro: true,
+      proExpiresAt: true,
+      xp: true,
+      title: true,
+      role: {
+        select: { name: true },
+      },
       createdAt: true,
     },
   });
@@ -167,7 +174,38 @@ export async function getUserById(params: { id: string }) {
     throw new Error("Пользователь не найден");
   }
 
-  return user;
+  // Проверяем, не истёк ли срок подписки
+  const isExpired = user.proExpiresAt && user.proExpiresAt < new Date();
+
+  // Статистика
+  const [tierListStats, publishedCount, placementCount, lastUpdated] = await Promise.all([
+    tierListRepository.aggregateUserStats(userId),
+    prisma.tierList.count({ where: { userId, isPublic: true } }),
+    prisma.bookPlacement.count({ where: { tierList: { userId } } }),
+    prisma.tierList.findFirst({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+      select: { updatedAt: true },
+    }),
+  ]);
+
+  return {
+    id: user.id,
+    username: user.username,
+    avatarUrl: user.avatarUrl,
+    isPro: user.isPro && !isExpired,
+    xp: user.xp,
+    title: user.title,
+    role: user.role?.name ?? null,
+    createdAt: user.createdAt,
+    stats: {
+      tierListsCount: tierListStats._count._all,
+      publishedCount,
+      likesCount: tierListStats._sum.likesCount || 0,
+      totalBooks: placementCount,
+      lastActivity: lastUpdated?.updatedAt.toISOString() ?? null,
+    },
+  };
 }
 
 // Статистика пользователя
@@ -215,6 +253,71 @@ export async function getUserStats(userId: number) {
     likesTodayCount,
     totalBooks: placementCount,
     lastActivity: lastUpdated?.updatedAt.toISOString() ?? null,
+  };
+}
+
+// GET /api/users/:id/tier-lists — публичные тир-листы пользователя
+export async function getUserPublicTierLists(
+  userId: number,
+  page: number,
+  pageSize: number,
+) {
+  const [data, totalItems] = await tierListRepository.findPublicByUserId(userId, { page, pageSize });
+
+  const transformed = data.map((tl: any) => ({
+    ...tl,
+    booksCount: tl._count?.placements ?? 0,
+    _count: undefined,
+  }));
+
+  return { data: transformed, totalItems };
+}
+
+// GET /api/users/:id/taste-match — совпадение вкусов с текущим пользователем
+export async function getTasteMatch(targetUserId: number, currentUserId: number) {
+  // Получаем все ID публичных тир-листов целевого пользователя
+  const targetListIds = await tierListRepository.findUserTierListIds(targetUserId);
+
+  if (targetListIds.length === 0) {
+    return { matchPercent: 0, commonBooks: 0, totalBooks: 0 };
+  }
+
+  // Получаем все книги из тир-листов целевого пользователя
+  const targetPlacements = await prisma.bookPlacement.findMany({
+    where: { tierListId: { in: targetListIds } },
+    include: { book: { select: { title: true, author: true } } },
+  });
+
+  // Получаем все книги текущего пользователя
+  const userListIds = await tierListRepository.findUserTierListIds(currentUserId);
+  const userPlacements = userListIds.length > 0
+    ? await prisma.bookPlacement.findMany({
+        where: { tierListId: { in: userListIds } },
+        include: { book: { select: { title: true, author: true } } },
+      })
+    : [];
+
+  // Строим Set книг текущего пользователя (normalizeKey)
+  const userBookKeys = new Set(
+    userPlacements.map((p) => `${p.book.title.toLowerCase().trim()}|${(p.book.author ?? "").toLowerCase().trim()}`),
+  );
+
+  // Считаем совпадения среди книг целевого пользователя
+  const targetBookKeys = new Set(
+    targetPlacements.map((p) => `${p.book.title.toLowerCase().trim()}|${(p.book.author ?? "").toLowerCase().trim()}`),
+  );
+
+  let commonBooks = 0;
+  for (const key of targetBookKeys) {
+    if (userBookKeys.has(key)) commonBooks++;
+  }
+
+  const totalUnique = targetBookKeys.size + userBookKeys.size - commonBooks;
+
+  return {
+    matchPercent: totalUnique > 0 ? Math.round((commonBooks / totalUnique) * 100) : 0,
+    commonBooks,
+    totalBooks: targetBookKeys.size,
   };
 }
 

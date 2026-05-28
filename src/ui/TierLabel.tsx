@@ -164,13 +164,21 @@ export const TierLabel = memo(
       <div
         ref={droppableRef || wrapperRef}
         style={{ backgroundColor: color }}
-        className="nb-rank-box group/label relative flex shrink-0 items-center justify-center focus-within:opacity-100 tier-label cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset"
+        className={`nb-rank-box group/label relative flex shrink-0 items-center justify-center focus-within:opacity-100 tier-label ${onRename || onChangeColor ? "cursor-pointer" : ""} outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset`}
         onDoubleClick={handleDoubleClick}
         onKeyDown={handleKeyDownContainer}
-        tabIndex={isEditing ? -1 : 0}
-        role="button"
-        aria-label={`Уровень ${title}. Нажмите Enter для переименования`}
-        title="Двойной клик или Enter для переименования"
+        tabIndex={(onRename || onChangeColor) && !isEditing ? 0 : -1}
+        role={onRename || onChangeColor ? "button" : undefined}
+        aria-label={
+          onRename || onChangeColor
+            ? `Уровень ${title}. Нажмите Enter для переименования`
+            : undefined
+        }
+        title={
+          onRename || onChangeColor
+            ? "Двойной клик или Enter для переименования"
+            : undefined
+        }
       >
         {isEditing ? (
           <input

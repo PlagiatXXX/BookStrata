@@ -58,43 +58,49 @@ export function TierListCoverEditor({
   }
 
   return (
-    <div className="tier-list-cover-editor">
-      <TierListCover coverImageUrl={coverImageUrl} title={title} booksCount={booksCount} />
-      {!isReadOnly && (
-        <>
-          {coverImageUrl ? (
-            <div className="tier-list-cover-editor__actions">
+    <div className="mb-6">
+      <p className="nb-label-xs mb-2 text-[#64748b] uppercase tracking-wider">
+        Обложка тир-листа
+      </p>
+      <div className="tier-list-cover-editor max-w-52">
+        <TierListCover coverImageUrl={coverImageUrl} title={title} booksCount={booksCount} className="tier-list-cover--editor" />
+        {!isReadOnly && (
+          <>
+            {coverImageUrl ? (
+              <div className="tier-list-cover-editor__actions">
+                <button
+                  onClick={() => inputRef.current?.click()}
+                  className="tier-list-cover-editor__btn"
+                  type="button"
+                  disabled={uploading}
+                >
+                  <ImagePlus size={14} />
+                  {uploading ? "Загрузка..." : "Изменить обложку"}
+                </button>
+              </div>
+            ) : (
               <button
                 onClick={() => inputRef.current?.click()}
-                className="tier-list-cover-editor__btn"
+                className="tier-list-cover-editor__btn tier-list-cover-editor__btn--add"
                 type="button"
                 disabled={uploading}
               >
                 <ImagePlus size={14} />
-                {uploading ? "Загрузка..." : "Изменить обложку тир-листа"}
+                {uploading ? "Загрузка..." : "Добавить обложку"}
+                {!isPro && <span className="tier-list-cover-editor__pro-badge">Pro</span>}
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => inputRef.current?.click()}
-              className="tier-list-cover-editor__btn tier-list-cover-editor__btn--add"
-              type="button"
-              disabled={uploading}
-            >
-              <ImagePlus size={14} />
-              {uploading ? "Загрузка..." : "Добавить обложку тир-листа"}
-              {!isPro && <span className="tier-list-cover-editor__pro-badge">Pro</span>}
-            </button>
-          )}
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleFile}
-            style={{ display: "none" }}
-          />
-        </>
-      )}
+            )}
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleFile}
+              style={{ display: "none" }}
+            />
+          </>
+        )}
+      </div>
+
     </div>
   )
 }

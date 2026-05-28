@@ -38,3 +38,4 @@ doctor.md
 neon_backup.sql
 .opencode/*
 testsprite_tests/*
+.playwright-mcp/*

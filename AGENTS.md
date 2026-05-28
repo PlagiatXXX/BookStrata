@@ -62,7 +62,7 @@ PostgreSQL 14+ required. Redis via `backend/docker-compose.yml`.
 **Backend (`backend/src/`):**
 - `@/` alias → `src/` (backend tsconfig.json)
 - Module pattern: `modules/{feature}/{feature}.route.ts`, `.service.ts`, `.schema.ts`
-- 12 modules: auth, users, avatars, books, tier-lists, news, roles, subscriptions, achievements, battles, templates, admin-stats
+- 19 modules: auth, users, avatars, books, tier-lists, news, roles, subscriptions, achievements, battles, forum, external-news, templates, donors, discussions, feedback, ratings, ai-librarian, admin-stats
 - `server.ts` — all route registration, plugins (auth, request-context, log-from-frontend, error-notifier)
 - Swagger UI at `/documentation` when running
 - `bodyLimit: 10MB` (for base64 image uploads)
@@ -327,3 +327,54 @@ See `.opencode/skills/*/evals/evals.json` for eval tests.
 ### Gotchas
 - Бэкенд LSP может показывать ошибки `Property 'discussion' does not exist on type 'PrismaClient'` — это после миграции Prisma нужно перегенерировать клиент в IDE (перезапустить LSP). Сборка `npm run build` в `backend/` проходит чисто.
 - `Discussion.battleId` nullable + unique — гарантирует один discussion на битву или один общий чат (где battleId = null).
+
+---
+
+## Session — 2026-05-28 — Test fixes + User Profile + Clickable usernames
+
+### Что сделано
+
+**Бэкенд: эндпоинты для профиля пользователя:**
+- `GET /api/users/:id` — расширен: возвращает `isPro`, `xp`, `title`, `role`, `stats` (`tierListsCount`, `publishedCount`, `likesCount`, `totalBooks`, `lastActivity`). Добавлена auth middleware.
+- `GET /api/users/:id/tier-lists` — пагинированные публичные тир-листы пользователя через `tierListRepository.findPublicByUserId()`
+- `GET /api/users/:id/taste-match` — сравнение всех публичных тир-листов между целевым и текущим пользователем через нормализованные множества. Возвращает `{ matchPercent, commonBooks, totalBooks }`
+
+**Фронтенд: страница профиля:**
+- `src/pages/UserProfilePage/UserProfilePage.tsx` — аватар, username, бейджи (Pro/Админ/Мод), title, дата регистрации, прогресс-бар совпадения вкусов (скрыт для своего профиля), сетка статистики (4 карточки), сетка публичных тир-листов
+- Роут `/users/:id` в `router.tsx`
+- `src/lib/userApi.ts` — типы `PublicUser`, `PublicUserStats`, `TasteMatchResult`, функции `apiGetPublicUser()`, `apiGetUserTierLists()`, `apiGetTasteMatch()`
+
+**Кликабельные username:**
+- `DiscussionSection.tsx` — аватар, username, reply-indicator → `/users/:userId`
+- `BattleDetailPage.tsx` — ParticipantCard (аватар + username), winner section
+- `ForumPage.tsx` — автор топика в desktop и mobile списках
+- `PublicTierListCards.tsx` — имя автора
+
+**Баги:**
+- `auth.schema.ts` — убран `response.200` из `loginSchema` (Fastify стригал `data`-обёртку)
+- `users.route.ts` — `page`/`pageSize` парсились как string через `Number()`/`||`
+
+**Тесты:**
+- Бэкенд `users.service.spec.ts`: +7 тестов (расширен `getUserById`, новые `getUserPublicTierLists`, `getTasteMatch`). Всего 27 в файле.
+- Фронтенд `userApi.spec.ts`: 8 тестов
+- Фронтенд `UserProfilePage.spec.tsx`: 8 тестов
+- Исправлена ошибка `useRouter()` in DiscussionSection tests — обёрнуто в `<MemoryRouter>`
+- Исправлен `isOwnProfile` в тесте вкусов (currentUser совпадал с profile id)
+- Исправлены множественные совпадения текста в stats test
+- **Итог: 765 тестов (403 фронтенд + 362 бэкенд), все проходят**
+
+### Файлы
+- `backend/src/modules/users/users.route.ts` — auth middleware, page/pageSize pars
+- `backend/src/modules/users/users.service.ts` — `getUserById` расширен, `getUserPublicTierLists`, `getTasteMatch`
+- `backend/src/modules/users/users.service.spec.ts` — 27 тестов
+- `backend/src/modules/auth/auth.schema.ts` — убран response.200
+- `backend/src/repositories/tier-list.repository.ts` — `findPublicByUserId`
+- `src/lib/userApi.ts` + `src/lib/userApi.spec.ts`
+- `src/pages/UserProfilePage/` — страница + spec
+- `src/app/router.tsx` — роут `/users/:id`
+- `src/components/DiscussionSection/DiscussionSection.tsx` + spec — navigate, MemoryRouter wrapper
+
+### Gotchas
+- `DiscussionSection` использует `useNavigate()` → все тесты должны быть обёрнуты в `<MemoryRouter>`
+- `TasteMatchResult` — не в `shared/types.ts`, а в `src/lib/userApi.ts`
+- При тестировании профиля: `currentUser.userId` не должен совпадать с `id` из `useParams`, иначе `isOwnProfile = true` и вкусы не отображаются

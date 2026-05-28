@@ -19,7 +19,7 @@ interface TierRowProps {
   onDelete?: (tierId: string) => void;
   onSetActive: (tierId: string) => void;
   isActive: boolean;
-  onDeleteBook: (bookId: string) => void;
+  onDeleteBook?: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
   onViewBook?: (book: Book) => void;
 }

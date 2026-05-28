@@ -24,6 +24,32 @@ export interface UserStats {
   lastActivity: string | null;
 }
 
+export interface PublicUserStats {
+  tierListsCount: number;
+  publishedCount: number;
+  likesCount: number;
+  totalBooks: number;
+  lastActivity: string | null;
+}
+
+export interface PublicUser {
+  id: number;
+  username: string;
+  avatarUrl: string | null;
+  isPro: boolean;
+  xp: number;
+  title: string | null;
+  role: string | null;
+  createdAt: string;
+  stats: PublicUserStats;
+}
+
+export interface TasteMatchResult {
+  matchPercent: number;
+  commonBooks: number;
+  totalBooks: number;
+}
+
 export async function apiGetMe(): Promise<User> {
   userLogger.info("Получение профиля текущего пользователя");
   return apiClient.get<User>("/users/me");
@@ -44,9 +70,28 @@ export async function apiGetUserById(id: string): Promise<User> {
   return apiClient.get<User>(`/users/${id}`);
 }
 
+export async function apiGetPublicUser(id: string): Promise<PublicUser> {
+  userLogger.info("Получение публичного профиля", { userId: id });
+  return apiClient.get<PublicUser>(`/users/${id}`);
+}
+
 export async function apiGetUserStats(): Promise<UserStats> {
   userLogger.info("Получение статистики пользователя");
   return apiClient.get<UserStats>("/users/me/stats");
+}
+
+export async function apiGetUserTierLists(
+  userId: string,
+  page = 1,
+  pageSize = 10,
+) {
+  userLogger.info("Получение публичных тир-листов пользователя", { userId, page });
+  return apiClient.get<any>(`/users/${userId}/tier-lists`, { page, pageSize });
+}
+
+export async function apiGetTasteMatch(userId: string): Promise<TasteMatchResult> {
+  userLogger.info("Получение совпадения вкусов", { userId });
+  return apiClient.get<TasteMatchResult>(`/users/${userId}/taste-match`);
 }
 
 export async function apiUploadAvatar(base64Image: string): Promise<User> {

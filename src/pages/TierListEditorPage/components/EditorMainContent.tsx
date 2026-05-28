@@ -8,6 +8,7 @@ interface EditorMainContentProps {
   listData: TierListData;
   isReadOnly: boolean;
   isPro?: boolean;
+  hideUnranked?: boolean;
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   // Обработчики для TierGrid
   onDeleteBook?: (bookId: string) => void;
@@ -37,6 +38,7 @@ export const EditorMainContent = memo(
     listData,
     isReadOnly,
     isPro = false,
+    hideUnranked = false,
     tierGridRef,
     onDeleteBook,
     onEditBook,
@@ -122,15 +124,17 @@ export const EditorMainContent = memo(
             onSetActiveTier={onSetActiveTier}
           />
 
-          <UnrankedItems
-            books={unrankedBooks}
-            booksCount={totalBooksCount}
-            onUpload={isReadOnly ? undefined : onUploadBooks}
-            onDeleteBook={isReadOnly ? undefined : onDeleteBook}
-            onEditBook={isReadOnly ? undefined : onEditBook}
-            onViewBook={onViewBook}
-            isPro={isPro}
-          />
+          {!hideUnranked && (
+            <UnrankedItems
+              books={unrankedBooks}
+              booksCount={totalBooksCount}
+              onUpload={isReadOnly ? undefined : onUploadBooks}
+              onDeleteBook={isReadOnly ? undefined : onDeleteBook}
+              onEditBook={isReadOnly ? undefined : onEditBook}
+              onViewBook={onViewBook}
+              isPro={isPro}
+            />
+          )}
         </div>
 
         {!isReadOnly && (

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Folder, X, Menu, Globe, LogOut, Swords, Crown } from "lucide-react";
+import { List, Folder, X, Menu, Globe, LogOut, Users, Crown } from "lucide-react";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -44,7 +44,7 @@ export const Header = ({
     (() => {
       const path = location.pathname;
       if (path === "/community") return "Новости";
-      if (path === "/forum") return "Баттлы";
+      if (path === "/forum") return "Актив";
       if (path === "/templates" || path.startsWith("/templates/"))
         return "Шаблоны";
       if (path === "/" || path.startsWith("/tier-lists/"))
@@ -84,10 +84,10 @@ export const Header = ({
       description: "Новости сообщества",
     },
     {
-      label: "Баттлы",
+      label: "Актив",
       onClick: () => navigate("/forum"),
-      icon: <Swords size={18} />,
-      description: "Баттлы пользователей",
+      icon: <Users size={18} />,
+      description: "Актив сообщества",
     },
     {
       label: "Pro",

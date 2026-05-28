@@ -21,6 +21,7 @@ vi.mock("../../lib/prisma.js", () => ({
     },
     bookPlacement: {
       count: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -34,6 +35,20 @@ vi.mock("bcryptjs", () => ({
   hash: vi.fn(async (pw: string) => `hashed_${pw}`),
   compare: vi.fn(async (pw: string, hash: string) => hash === `hashed_${pw}`),
 }));
+
+const { mockAggregateUserStats, mockFindPublicByUserId, mockFindUserTierListIds } = vi.hoisted(() => ({
+  mockAggregateUserStats: vi.fn(),
+  mockFindPublicByUserId: vi.fn(),
+  mockFindUserTierListIds: vi.fn(),
+}))
+
+vi.mock("../../repositories/index.js", () => ({
+  tierListRepository: {
+    aggregateUserStats: mockAggregateUserStats,
+    findPublicByUserId: mockFindPublicByUserId,
+    findUserTierListIds: mockFindUserTierListIds,
+  },
+}))
 
 // Импортируем после vi.mock
 import bcrypt from "bcryptjs";
@@ -354,10 +369,25 @@ describe("users.service", () => {
       id: 1,
       username: "testuser",
       avatarUrl: "https://example.com/avatar.jpg",
+      isPro: true,
+      proExpiresAt: new Date("2099-01-01"),
+      xp: 150,
+      title: "Книжный червь",
+      role: { name: "admin" },
       createdAt: new Date("2024-01-01"),
     };
 
-    it("должен вернуть пользователя по ID", async () => {
+    beforeEach(() => {
+      mockAggregateUserStats.mockResolvedValue({
+        _count: { _all: 5 },
+        _sum: { likesCount: 10 },
+      })
+      ;(prisma.tierList.count as any).mockResolvedValue(3)
+      ;(prisma.bookPlacement.count as any).mockResolvedValue(20)
+      ;(prisma.tierList.findFirst as any).mockResolvedValue({ updatedAt: new Date("2024-06-01") })
+    })
+
+    it("должен вернуть пользователя по ID с расширенными полями", async () => {
       (prisma.user.findUnique as any).mockResolvedValue(mockUser);
 
       const result = await userService.getUserById({ id: mockUserId });
@@ -368,11 +398,47 @@ describe("users.service", () => {
           id: true,
           username: true,
           avatarUrl: true,
+          isPro: true,
+          proExpiresAt: true,
+          xp: true,
+          title: true,
+          role: {
+            select: { name: true },
+          },
           createdAt: true,
         },
       });
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual({
+        id: 1,
+        username: "testuser",
+        avatarUrl: "https://example.com/avatar.jpg",
+        isPro: true,
+        xp: 150,
+        title: "Книжный червь",
+        role: "admin",
+        createdAt: mockUser.createdAt,
+        stats: {
+          tierListsCount: 5,
+          publishedCount: 3,
+          likesCount: 10,
+          totalBooks: 20,
+          lastActivity: expect.any(String),
+        },
+      });
+    });
+
+    it("должен вернуть пользователя с истекшей подпиской как не-Pro", async () => {
+      const expiredUser = {
+        ...mockUser,
+        isPro: true,
+        proExpiresAt: new Date("2020-01-01"),
+      }
+      ;(prisma.user.findUnique as any).mockResolvedValue(expiredUser);
+
+      const result = await userService.getUserById({ id: mockUserId });
+
+      expect(result.isPro).toBe(false);
     });
 
     it("должен бросить ошибку если пользователь не найден", async () => {
@@ -393,12 +459,16 @@ describe("users.service", () => {
   describe("getUserStats", () => {
     const mockUserId = 1;
 
+    beforeEach(() => {
+      mockAggregateUserStats.mockReset()
+    })
+
     it("должен вернуть статистику пользователя", async () => {
-      (prisma.tierList.aggregate as any).mockResolvedValue({
+      mockAggregateUserStats.mockResolvedValue({
         _count: { _all: 5 },
         _sum: { likesCount: 10 },
-      });
-      (prisma.template.count as any).mockResolvedValue(3);
+      })
+      ;(prisma.template.count as any).mockResolvedValue(3);
       (prisma.tierListLike.count as any).mockResolvedValue(2); // today likes
       (prisma.tierList.count as any).mockResolvedValue(4);
       (prisma.bookPlacement.count as any).mockResolvedValue(20);
@@ -416,19 +486,15 @@ describe("users.service", () => {
         lastActivity: expect.any(String),
       });
 
-      expect(prisma.tierList.aggregate).toHaveBeenCalledWith({
-        where: { userId: mockUserId },
-        _count: { _all: true },
-        _sum: { likesCount: true },
-      });
+      expect(mockAggregateUserStats).toHaveBeenCalledWith(mockUserId);
     });
 
     it("должен посчитать likesToday за последние 24 часа", async () => {
-      (prisma.tierList.aggregate as any).mockResolvedValue({
+      mockAggregateUserStats.mockResolvedValue({
         _count: { _all: 0 },
         _sum: { likesCount: 0 },
-      });
-      (prisma.template.count as any).mockResolvedValue(0);
+      })
+      ;(prisma.template.count as any).mockResolvedValue(0);
       (prisma.tierListLike.count as any).mockResolvedValue(0);
       (prisma.tierList.count as any).mockResolvedValue(0);
       (prisma.bookPlacement.count as any).mockResolvedValue(0);
@@ -458,11 +524,11 @@ describe("users.service", () => {
     });
 
     it("должен вернуть нули если нет данных", async () => {
-      (prisma.tierList.aggregate as any).mockResolvedValue({
+      mockAggregateUserStats.mockResolvedValue({
         _count: { _all: 0 },
         _sum: { likesCount: null },
-      });
-      (prisma.template.count as any).mockResolvedValue(0);
+      })
+      ;(prisma.template.count as any).mockResolvedValue(0);
       (prisma.tierListLike.count as any).mockResolvedValue(0);
       (prisma.tierList.count as any).mockResolvedValue(0);
       (prisma.bookPlacement.count as any).mockResolvedValue(0);
@@ -481,4 +547,166 @@ describe("users.service", () => {
       });
     });
   });
+
+  describe("getUserPublicTierLists", () => {
+    const userId = 1
+
+    beforeEach(() => {
+      mockFindPublicByUserId.mockReset()
+    })
+
+    it("должен вернуть пагинированные публичные тир-листы", async () => {
+      const mockData = [
+        {
+          id: "uuid-1",
+          title: "My List",
+          slug: null,
+          coverImageUrl: null,
+          createdAt: new Date("2024-01-01"),
+          updatedAt: new Date("2024-06-01"),
+          isPublic: true,
+          likesCount: 5,
+          user: { username: "testuser", avatarUrl: null },
+          _count: { placements: 3 },
+        },
+        {
+          id: "uuid-2",
+          title: "Another List",
+          slug: "another-list",
+          coverImageUrl: "https://example.com/cover.jpg",
+          createdAt: new Date("2024-02-01"),
+          updatedAt: new Date("2024-07-01"),
+          isPublic: true,
+          likesCount: 2,
+          user: { username: "testuser", avatarUrl: "https://example.com/av.jpg" },
+          _count: { placements: 1 },
+        },
+      ]
+      mockFindPublicByUserId.mockResolvedValue([mockData, 2])
+
+      const result = await userService.getUserPublicTierLists(userId, 1, 10)
+
+      expect(mockFindPublicByUserId).toHaveBeenCalledWith(userId, { page: 1, pageSize: 10 })
+
+      expect(result).toEqual({
+        data: [
+          {
+            id: "uuid-1",
+            title: "My List",
+            slug: null,
+            coverImageUrl: null,
+            createdAt: mockData[0].createdAt,
+            updatedAt: mockData[0].updatedAt,
+            isPublic: true,
+            likesCount: 5,
+            user: { username: "testuser", avatarUrl: null },
+            booksCount: 3,
+          },
+          {
+            id: "uuid-2",
+            title: "Another List",
+            slug: "another-list",
+            coverImageUrl: "https://example.com/cover.jpg",
+            createdAt: mockData[1].createdAt,
+            updatedAt: mockData[1].updatedAt,
+            isPublic: true,
+            likesCount: 2,
+            user: { username: "testuser", avatarUrl: "https://example.com/av.jpg" },
+            booksCount: 1,
+          },
+        ],
+        totalItems: 2,
+      })
+    })
+
+    it("должен вернуть пустой массив если нет публичных тир-листов", async () => {
+      mockFindPublicByUserId.mockResolvedValue([[], 0])
+
+      const result = await userService.getUserPublicTierLists(userId, 1, 10)
+
+      expect(result).toEqual({ data: [], totalItems: 0 })
+    })
+  })
+
+  describe("getTasteMatch", () => {
+    const targetUserId = 1
+    const currentUserId = 2
+
+    beforeEach(() => {
+      mockFindUserTierListIds.mockReset()
+      ;(prisma.bookPlacement.findMany as any).mockReset()
+    })
+
+    it("должен вернуть совпадение вкусов между двумя пользователями", async () => {
+      mockFindUserTierListIds
+        .mockResolvedValueOnce(["tl-1", "tl-2"]) // target user
+        .mockResolvedValueOnce(["tl-3", "tl-4"]) // current user
+
+      const mockTargetPlacements = [
+        { book: { title: "Dune", author: "Frank Herbert" } },
+        { book: { title: "1984", author: "George Orwell" } },
+        { book: { title: "Brave New World", author: "Aldous Huxley" } },
+      ]
+      const mockUserPlacements = [
+        { book: { title: "Dune", author: "Frank Herbert" } },
+        { book: { title: "Fahrenheit 451", author: "Ray Bradbury" } },
+      ]
+      ;(prisma.bookPlacement.findMany as any)
+        .mockResolvedValueOnce(mockTargetPlacements)
+        .mockResolvedValueOnce(mockUserPlacements)
+
+      const result = await userService.getTasteMatch(targetUserId, currentUserId)
+
+      expect(mockFindUserTierListIds).toHaveBeenCalledWith(targetUserId)
+      expect(mockFindUserTierListIds).toHaveBeenCalledWith(currentUserId)
+      expect(prisma.bookPlacement.findMany).toHaveBeenCalledTimes(2)
+
+      expect(result).toEqual({
+        matchPercent: 25,
+        commonBooks: 1,
+        totalBooks: 3,
+      })
+    })
+
+    it("должен вернуть 0% если у целевого пользователя нет тир-листов", async () => {
+      mockFindUserTierListIds.mockResolvedValueOnce([])
+
+      const result = await userService.getTasteMatch(targetUserId, currentUserId)
+
+      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 0 })
+    })
+
+    it("должен вернуть 0% если у текущего пользователя нет тир-листов", async () => {
+      mockFindUserTierListIds
+        .mockResolvedValueOnce(["tl-1"])
+        .mockResolvedValueOnce([])
+
+      const mockTargetPlacements = [
+        { book: { title: "Dune", author: "Frank Herbert" } },
+      ]
+      ;(prisma.bookPlacement.findMany as any).mockResolvedValueOnce(mockTargetPlacements)
+
+      const result = await userService.getTasteMatch(targetUserId, currentUserId)
+
+      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 1 })
+    })
+
+    it("должен вернуть 100% если все книги совпадают", async () => {
+      mockFindUserTierListIds
+        .mockResolvedValueOnce(["tl-1"])
+        .mockResolvedValueOnce(["tl-3"])
+
+      const placements = [
+        { book: { title: "Dune", author: "Frank Herbert" } },
+        { book: { title: "1984", author: "George Orwell" } },
+      ]
+      ;(prisma.bookPlacement.findMany as any)
+        .mockResolvedValueOnce(placements)
+        .mockResolvedValueOnce(placements)
+
+      const result = await userService.getTasteMatch(targetUserId, currentUserId)
+
+      expect(result).toEqual({ matchPercent: 100, commonBooks: 2, totalBooks: 2 })
+    })
+  })
 });

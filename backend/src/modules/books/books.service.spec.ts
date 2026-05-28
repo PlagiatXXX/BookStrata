@@ -158,16 +158,20 @@ describe("books.service", () => {
       );
     });
 
-    it("должен бросить ошибку при ошибке API", async () => {
-      mockFetch.mockResolvedValueOnce({
+    it("должен бросить ошибку после исчерпания ретраев", async () => {
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 403,
         statusText: "Forbidden",
+        text: async () => '{"error":{"message":"Quota exceeded"}}',
       });
 
       await expect(booksService.searchBooks(mockQuery)).rejects.toThrow(
         "Google Books API error: 403 Forbidden",
       );
+
+      // Должно быть 3 попытки (исходная + 2 ретрая)
+      expect(mockFetch).toHaveBeenCalledTimes(3);
     });
 
     it("должен использовать правильный URL для API запроса", async () => {

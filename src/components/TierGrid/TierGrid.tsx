@@ -40,7 +40,7 @@ const TierGridRow = memo(
     onChangeColor?: (tierId: string, newColor: string) => void;
     onRename?: (tierId: string, newTitle: string) => void;
     onDelete?: (tierId: string) => void;
-    onDeleteBook: (bookId: string) => void;
+    onDeleteBook?: (bookId: string) => void;
     onEditBook?: (book: Book) => void;
     onViewBook?: (book: Book) => void;
     onSetActive: (tierId: string) => void;
@@ -112,7 +112,7 @@ export const TierGrid = memo(
       onChangeTierColor,
       onRenameTier,
       onDeleteTier,
-      onDeleteBook = () => {},
+      onDeleteBook,
       onEditBook,
       onViewBook,
       onSetActiveTier = () => {},

@@ -36,7 +36,9 @@ const ParticipantCard = memo(({
   voteState,
   isAuthenticated,
   battleStatus,
-}: ParticipantCardProps) => (
+}: ParticipantCardProps) => {
+  const navigate = useNavigate()
+  return (
   <div className={`participant-card relative h-full flex flex-col ${isWinner ? "border-yellow-500/40" : ""}`}>
     {isWinner && (
       <div className="absolute top-4 right-4 z-10">
@@ -45,7 +47,13 @@ const ParticipantCard = memo(({
     )}
 
     <div className="flex items-center gap-4 mb-6">
-      <div className="w-12 h-12 rounded-full border-2 border-(--line-soft) bg-(--bg-2) overflow-hidden brutal-shadow-sm shrink-0">
+      <div
+        className="w-12 h-12 rounded-full border-2 border-(--line-soft) bg-(--bg-2) overflow-hidden brutal-shadow-sm shrink-0 cursor-pointer"
+        onClick={(e) => { if (tl?.user?.id) { e.stopPropagation(); navigate(`/users/${tl.user.id}`) } }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter" && tl?.user?.id) { e.stopPropagation(); navigate(`/users/${tl.user.id}`) } }}
+      >
         {tl?.user?.avatarUrl ? (
           <img src={tl.user.avatarUrl} alt="" className="w-full h-full object-cover" />
         ) : (
@@ -55,12 +63,22 @@ const ParticipantCard = memo(({
         )}
       </div>
       <div className="min-w-0">
-        <h3 className="font-bold text-base leading-tight truncate">
+        <button
+          onClick={(e) => { e.stopPropagation(); tl?.id && navigate(`/tier-lists/${tl.id}?context=battle`) }}
+          className="font-bold text-base leading-tight truncate text-left cursor-pointer hover:text-(--accent-main) transition-colors block w-full"
+        >
           {tl?.title || "Без названия"}
-        </h3>
-        <p className="text-xs text-(--ink-1) font-medium">
-          {tl?.user?.username || "Неизвестный"}
-        </p>
+        </button>
+        {tl?.user?.username ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(`/users/${tl.user!.id}`) }}
+            className="text-sm text-(--ink-1) font-medium hover:text-(--accent-main) transition-colors text-left cursor-pointer"
+          >
+            {tl.user.username}
+          </button>
+        ) : (
+          <p className="text-xs text-(--ink-1) font-medium">Неизвестный</p>
+        )}
       </div>
     </div>
 
@@ -121,7 +139,8 @@ const ParticipantCard = memo(({
       )}
     </div>
   </div>
-))
+  )
+})
 
 export default function BattleDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -371,9 +390,25 @@ export default function BattleDetailPage() {
                     <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400 mb-1">
                       Победитель
                     </p>
-                    <h2 className="text-2xl font-black mb-1">{winner.tierList.title}</h2>
+                    <h2>
+                      <button
+                        onClick={() => navigate(`/tier-lists/${winner.tierList.id}?context=battle`)}
+                        className="text-2xl font-black mb-1 text-left cursor-pointer hover:text-(--accent-main) transition-colors"
+                      >
+                        {winner.tierList.title}
+                      </button>
+                    </h2>
                     <p className="text-(--ink-1) text-sm">
-                      от {winner.tierList.user?.username || "Неизвестный автор"} &mdash; {winner.votesCount} голосов
+                      от{" "}
+                      {winner.tierList.user?.username ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/users/${winner.tierList.user!.id}`) }}
+                          className="hover:text-(--accent-main) transition-colors cursor-pointer"
+                        >
+                          {winner.tierList.user.username}
+                        </button>
+                      ) : "Неизвестный автор"}
+                      {" "}&mdash; {winner.votesCount} голосов
                     </p>
                   </div>
                 </div>

@@ -28,6 +28,7 @@ interface EditorLayoutProps {
   isPro: boolean;
   tierListId?: string;
   coverImageUrl?: string | null;
+  hideCover?: boolean;
   theme?: string;
   booksCount: number;
   onCoverUpdated?: (url: string) => void;
@@ -47,6 +48,7 @@ export const EditorLayout = ({
   isPro = false,
   tierListId,
   coverImageUrl,
+  hideCover = false,
   theme = "default",
   booksCount = 0,
   onCoverUpdated,
@@ -78,7 +80,7 @@ export const EditorLayout = ({
     >
       <main className="neo-brutalist-editor flex-1 overflow-y-auto p-4  lg:p-8" data-theme={theme}>
         <EditorHeader {...headerProps} />
-        {tierListId && (
+        {tierListId && !hideCover && (
           <TierListCoverEditor
             tierListId={tierListId}
             coverImageUrl={coverImageUrl}

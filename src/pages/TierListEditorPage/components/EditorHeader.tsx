@@ -9,7 +9,7 @@ import type { SaveStatus } from '../hooks/useTierEditorSave';
 
 export interface EditorHeaderProps {
   title: string;
-  author?: { username: string };
+  author?: { id: number; username: string };
   likesCount?: number;
   initialLiked?: boolean;
   tierListId?: string;
@@ -20,6 +20,7 @@ export interface EditorHeaderProps {
   hasUnsavedChanges: boolean;
   onSave: () => void;
   isReadOnly?: boolean;
+  hideFork?: boolean;
 }
 
 export const EditorHeader = ({
@@ -35,6 +36,7 @@ export const EditorHeader = ({
   hasUnsavedChanges,
   onSave,
   isReadOnly = false,
+  hideFork = false,
 }: EditorHeaderProps) => {
   const navigate = useNavigate();
   const [isForking, setIsForking] = useState(false);
@@ -66,10 +68,13 @@ export const EditorHeader = ({
         <h1 className="nb-display-lg text-white">
           {title}
         </h1>
-        {isReadOnly && (
-          <p className="nb-label-md mt-2 text-[#c1fffe]">
-            Автор: {author?.username}
-          </p>
+        {isReadOnly && author && (
+          <button
+            onClick={() => navigate(`/users/${author.id}`)}
+            className="nb-label-md mt-2 text-[#c1fffe] hover:text-white transition-colors text-left"
+          >
+            Автор: {author.username}
+          </button>
         )}
       </div>
 
@@ -85,14 +90,16 @@ export const EditorHeader = ({
 
         {isReadOnly && (
           <>
-            <button
-              onClick={handleFork}
-              disabled={isForking}
-              className="nb-btn-primary flex items-center gap-2"
-            >
-              <GitFork size={18} />
-              {isForking ? 'Копирую...' : 'Своя версия'}
-            </button>
+            {!hideFork && (
+              <button
+                onClick={handleFork}
+                disabled={isForking}
+                className="nb-btn-primary flex items-center gap-2"
+              >
+                <GitFork size={18} />
+                {isForking ? 'Копирую...' : 'Своя версия'}
+              </button>
+            )}
             <div className="nb-heavy-border bg-black p-2 h-13 flex items-center justify-center">
               <LikeButton
                 id={tierListId!}

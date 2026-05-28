@@ -453,7 +453,10 @@
 
 /* TierListCoverEditor */
 .tier-list-cover-editor {
-  margin-bottom: 1.5rem;
+}
+
+.tier-list-cover--editor {
+  height: 5rem;
 }
 
 .tier-list-cover-editor__actions {

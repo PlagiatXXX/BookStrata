@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useNavigate } from "react-router-dom"
 import { ArrowLeft, MessageCircle, Send, Reply, Edit3, Trash2, X, Check, Loader2 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthContext"
 import {
@@ -22,6 +23,7 @@ interface DiscussionSectionProps {
 }
 
 export function DiscussionSection({ variant, battleId, discussionId, title, onBack }: DiscussionSectionProps) {
+  const navigate = useNavigate()
   const { user, isAuthenticated } = useAuth()
   const [discussion, setDiscussion] = useState<Discussion | null>(null)
   const [loading, setLoading] = useState(true)
@@ -242,7 +244,15 @@ export function DiscussionSection({ variant, battleId, discussionId, title, onBa
         {replyTo && (
           <div className="discussion-reply-indicator">
             <Reply size={12} />
-            <span>{replyTo.user.username}</span>
+            <span
+              className="chat-message-username"
+              onClick={(e) => { e.stopPropagation(); navigate(`/users/${replyTo.user.id}`) }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); navigate(`/users/${replyTo.user.id}`) } }}
+            >
+              {replyTo.user.username}
+            </span>
             <button onClick={cancelReply} className="reply-indicator-close" title="Отменить ответ">
               <X size={12} />
             </button>
@@ -307,12 +317,24 @@ function ChatMessageRow({
   onDelete,
   formatDate,
 }: ChatMessageRowProps) {
+  const navigate = useNavigate()
   const isEditing = editingId === message.id
   const isOwner = userId === message.userId
 
+  const goToUser = (userIdNum: number) => (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation()
+    navigate(`/users/${userIdNum}`)
+  }
+
   return (
     <div className="chat-message">
-      <div className="chat-message-avatar">
+      <div
+        className="chat-message-avatar"
+        onClick={goToUser(message.user.id)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter") goToUser(message.user.id)(e) }}
+      >
         {message.user.avatarUrl ? (
           <img src={message.user.avatarUrl} alt="" />
         ) : (
@@ -321,7 +343,13 @@ function ChatMessageRow({
       </div>
       <div className="chat-message-body">
         <div className="chat-message-meta">
-          <span className="chat-message-username">
+          <span
+            className="chat-message-username"
+            onClick={goToUser(message.user.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === "Enter") goToUser(message.user.id)(e) }}
+          >
             {message.user.username}
             {message.user.role?.name === "admin" && <span className="chat-badge-admin">Админ</span>}
             {message.user.role?.name === "moderator" && <span className="chat-badge-mod">Мод</span>}

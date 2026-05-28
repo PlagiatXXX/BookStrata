@@ -90,6 +90,7 @@ const AdminUsersPage = lazy(() =>
 );
 const ContactPage = lazy(() => import("@/pages/ContactPage"))
 const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"))
+const UserProfilePage = lazy(() => import("@/pages/UserProfilePage/UserProfilePage"))
 const CollectionPage = lazy(() =>
   import("@/pages/CollectionPage").then((module) => ({
     default: module.CollectionPage,
@@ -155,6 +156,10 @@ export const router = createBrowserRouter([
           {
             path: "/collections/:id",
             element: <CollectionPage />,
+          },
+          {
+            path: "/users/:id",
+            element: <UserProfilePage />,
           },
         ],
       },

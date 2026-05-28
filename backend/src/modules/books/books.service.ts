@@ -18,8 +18,18 @@ async function fetchWithRetry(
   let lastResponse: Response | null = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const response = await fetch(url);
-    // Успех или клиентская ошибка (4xx, кроме 429) — возвращаем сразу
-    if (response.ok || (response.status >= 400 && response.status < 500 && response.status !== 429)) {
+    // Успех — возвращаем сразу
+    if (response.ok) {
+      return response;
+    }
+    // Google Books возвращает 403 при превышении дневной квоты (quota exceeded)
+    // и 429 при rate limiting — оба временные, ретраим
+    const isRetryable =
+      response.status === 429 ||
+      response.status === 403 ||
+      response.status >= 500;
+
+    if (!isRetryable) {
       return response;
     }
     lastResponse = response;
@@ -77,10 +87,18 @@ export async function searchBooks(
     
     const response = await fetchWithRetry(url.toString(), 3);
     if (!response.ok) {
+      // Пытаемся прочитать тело ошибки от Google для диагностики
+      let errorBody = "";
+      try {
+        errorBody = await response.text();
+      } catch {
+        // ignore
+      }
       // Финальный фейл после ретраев. Логируем как warn, не как error,
       // потому что это проблема стороннего API, а не нашей.
       logger.warn(
         `Google Books API недоступен после ретраев: ${response.status} ${response.statusText}`,
+        errorBody ? { responseBody: errorBody.slice(0, 500) } : undefined,
       );
       // Не кешируем фейл и возвращаем пустой массив — фронт сам покажет "ничего не найдено"
       throw new Error(

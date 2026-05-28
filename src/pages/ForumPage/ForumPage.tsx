@@ -1,7 +1,7 @@
 import { useEffect, memo, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Users, LayoutGrid, MessageSquare, Plus, MessageCircle, Pin, Trash2 } from "lucide-react";
+import { Users, LayoutGrid, Swords, MessageSquare, MessageSquareText, Plus, MessageCircle, Pin, Trash2 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BattleList } from "./components/BattleList";
 import { DiscussionSection } from "@/components/DiscussionSection/DiscussionSection";
@@ -200,7 +200,7 @@ export default function ForumPage() {
                    : "border-transparent text-(--ink-1) hover:text-(--ink-0)"
                }`}
              >
-               <LayoutGrid size={16} />
+                <Swords size={16} />
                Битвы
              </button>
              <button
@@ -222,8 +222,8 @@ export default function ForumPage() {
                    : "border-transparent text-(--ink-1) hover:text-(--ink-0)"
                }`}
              >
-               <MessageSquare size={16} />
-               Форум
+                <MessageSquareText size={16} />
+                Форум
              </button>
           </div>
 
@@ -265,7 +265,15 @@ export default function ForumPage() {
                               {topic.pinned && <span className="forum-topic-pinned-badge">Закреплено</span>}
                             </span>
                             <span className="forum-topic-meta">
-                              {topic.author?.username && `${topic.author.username} · `}
+                              {topic.author?.username && (
+                                <span
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/users/${topic.author!.id}`) }}
+                                  className="hover:text-(--accent-main) transition-colors cursor-pointer"
+                                >
+                                  {topic.author.username}
+                                </span>
+                              )}
+                              {" · "}
                               {topic._count?.messages ?? 0} сообщ.
                               {topic.lastMessageAt && ` · ${formatDate(topic.lastMessageAt)}`}
                             </span>
@@ -339,7 +347,15 @@ export default function ForumPage() {
                                 {topic.pinned && <span className="forum-topic-pinned-badge">Закреплено</span>}
                               </span>
                               <span className="forum-topic-meta">
-                                {topic.author?.username && `${topic.author.username} · `}
+                                {topic.author?.username && (
+                                <span
+                                  onClick={(e) => { e.stopPropagation(); navigate(`/users/${topic.author!.id}`) }}
+                                  className="hover:text-(--accent-main) transition-colors cursor-pointer"
+                                >
+                                    {topic.author.username}
+                                  </span>
+                                )}
+                                {" · "}
                                 {topic._count?.messages ?? 0} сообщ.
                                 {topic.lastMessageAt && ` · ${formatDate(topic.lastMessageAt)}`}
                               </span>
@@ -413,17 +429,18 @@ export default function ForumPage() {
             </div>
           )}
 
-          {/* Bottom Call to Action */}
+           {/* Bottom Call to Action */}
           {activeTab === "battles" && (
-          <section className="mt-24 reveal" data-reveal>
+          <section className="mt-24">
             <div className="brutal-card brutal-border bg-(--ink-0) text-(--bg-0) p-10 md:p-16 relative overflow-hidden">
                <div className="relative z-10 max-w-2xl">
-                 <h2 className="community-heading text-2xl font-black mb-6 leading-tight uppercase sm:text-3xl md:text-5xl">
+                 <h2 className="community-heading text-2xl font-black mb-6 leading-tight uppercase sm:text-3xl md:text-5xl text-(--accent-main)">
                    Хотите запустить <br/> свою битву?
                  </h2>
                  <p className="text-white/70 mb-8 text-sm md:text-base font-medium leading-relaxed">
-                   Станьте куратором сообщества и организуйте соревнование по своему любимому шаблону.
-                   Лучшие битвы получают охваты и уникальные награды.
+                   Организуйте соревнование по своему любимому шаблону.
+                   Ведите дискуссии и узнавайте мнение других людей.
+                   Победители противостояния и лучшие шаблоны будут получать особые отметки.
                  </p>
                   <button
                     onClick={() => setShowCuratorModal(true)}

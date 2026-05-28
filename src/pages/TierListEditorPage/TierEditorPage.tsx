@@ -1,6 +1,6 @@
 import "./ExportThemes.css";
 import { useRef, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
 import type { DragEndEvent } from "@dnd-kit/core";
@@ -38,6 +38,8 @@ const logger = createLogger("TierEditorPage", { color: "green" });
 // Внутренний компонент с ключом для автоматического сброса состояния
 const TierListEditorContent = () => {
   const { id: tierListId = "" } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const fromBattle = searchParams.get("context") === "battle";
   const navigate = useNavigate();
 
   // Получаем все состояния из хука
@@ -410,6 +412,7 @@ const TierListEditorContent = () => {
       ownerUserId,
       currentUserId,
       isReadOnly: true,
+      hideFork: fromBattle,
     }),
   };
 
@@ -432,6 +435,7 @@ const TierListEditorContent = () => {
         isPro={isPro}
         tierListId={tierListId}
         coverImageUrl={coverImageUrl}
+        hideCover={fromBattle}
         theme={theme}
         booksCount={Object.keys(listData.books).length}
         onCoverUpdated={setCoverImageUrl}
@@ -447,6 +451,7 @@ const TierListEditorContent = () => {
           isReadOnly={isReadOnly}
           isPro={isPro}
           tierGridRef={tierGridRef}
+          hideUnranked={fromBattle}
           onDeleteBook={setBookToDelete}
           onEditBook={(book) => setBookToEdit(book)}
           onViewBook={handleViewBook}
@@ -533,6 +538,7 @@ const TierListEditorContent = () => {
         }
         username={authUser?.username || "user"}
         isPro={isPro}
+        isReadOnly={isReadOnly}
       />
     </EditorScreens>
   );

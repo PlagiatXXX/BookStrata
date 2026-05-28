@@ -74,6 +74,7 @@ interface EditorModalsProps {
   onConfirmExport: (theme: ExportTheme, showWatermark: boolean) => Promise<void>;
   username: string;
   isPro: boolean;
+  isReadOnly?: boolean;
 }
 
 export const EditorModals = ({
@@ -109,6 +110,7 @@ export const EditorModals = ({
   onConfirmExport,
   username,
   isPro,
+  isReadOnly = false,
 }: EditorModalsProps) => {
   return (
     <>
@@ -158,6 +160,7 @@ export const EditorModals = ({
         isOpen={!!bookToView}
         onClose={onCloseViewBook}
         book={bookToView}
+        isReadOnly={isReadOnly}
       />
 
       <Suspense fallback={<BookSearchModalLoader />}>

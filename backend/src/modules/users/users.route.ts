@@ -9,10 +9,13 @@ import {
   updateUser,
   changePassword,
   getAllUsers,
+  getTasteMatch,
+  getUserPublicTierLists,
 } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
-import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
+import { ErrorCodes, createApiError, createSuccessResponse, createPaginatedResponse } from "../../lib/api-response.js";
+import { tierListRepository } from "../../repositories/index.js";
 
 export async function userRoutes(fastify: FastifyInstance) {
   // GET /api/users/me
@@ -74,13 +77,57 @@ export async function userRoutes(fastify: FastifyInstance) {
     },
   );
 
-  // GET /api/users/:id
+  // GET /api/users/:id/tier-lists — публичные тир-листы пользователя
   fastify.get<{
     Params: { id: string };
-  }>("/:id", async (request, reply) => {
-    const user = await getUserById(request.params);
-    return reply.code(200).send(createSuccessResponse(user));
-  });
+    Querystring: { page?: number; pageSize?: number };
+  }>(
+    "/:id/tier-lists",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const userId = parseInt(request.params.id);
+      const page = Number(request.query.page) || 1;
+      const pageSize = Number(request.query.pageSize) || 10;
+      const result = await getUserPublicTierLists(userId, page, pageSize);
+      const totalPages = Math.ceil(result.totalItems / pageSize);
+      return reply.send(
+        createPaginatedResponse(result.data, {
+          totalItems: result.totalItems,
+          totalPages,
+          currentPage: page,
+          itemCount: result.data.length,
+          itemsPerPage: pageSize,
+        }, {
+          self: `/api/users/${request.params.id}/tier-lists?page=${page}&pageSize=${pageSize}`,
+          ...(page < totalPages ? { next: `/api/users/${request.params.id}/tier-lists?page=${page + 1}&pageSize=${pageSize}` } : {}),
+          ...(page > 1 ? { prev: `/api/users/${request.params.id}/tier-lists?page=${page - 1}&pageSize=${pageSize}` } : {}),
+          last: `/api/users/${request.params.id}/tier-lists?page=${totalPages}&pageSize=${pageSize}`,
+        }),
+      );
+    },
+  );
+
+  // GET /api/users/:id/taste-match — совпадение вкусов
+  fastify.get<{ Params: { id: string } }>(
+    "/:id/taste-match",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const targetUserId = parseInt(request.params.id);
+      const currentUserId = (request as any).user?.userId;
+      const match = await getTasteMatch(targetUserId, currentUserId);
+      return reply.send(createSuccessResponse(match));
+    },
+  );
+
+  // GET /api/users/:id
+  fastify.get<{ Params: { id: string } }>(
+    "/:id",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const user = await getUserById(request.params);
+      return reply.code(200).send(createSuccessResponse(user));
+    },
+  );
 
   // PUT /api/users/me/avatar
   fastify.put<{

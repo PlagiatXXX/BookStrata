@@ -13,6 +13,7 @@ export interface BookViewModalProps {
   onClose: () => void;
   onAdd?: (book: any) => void;
   isAdding?: boolean;
+  isReadOnly?: boolean;
 }
 
 const sectionTitleClass =
@@ -46,6 +47,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   onClose,
   onAdd,
   isAdding = false,
+  isReadOnly = false,
 }) => {
   const [imageError, setImageError] = useState(false);
   const [pollRatings, setPollRatings] = useState<Record<string, number>>({});
@@ -261,10 +263,28 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
                   <div className="border-t-2 border-[#2a2a2a] pt-4 mt-2">
                     <span className={`${sectionTitleClass} flex items-center gap-2`}>
                       <Star size={14} />
-                      {hasVoted ? "Оценка книги" : "Оцените книгу"}
+                      Оценка книги
                     </span>
 
-                    {hasVoted ? (
+                    {isReadOnly ? (
+                      averages ? (
+                        <div className="space-y-2">
+                          {allCategories.map((cat) => (
+                            <div key={cat.key} className="flex items-center justify-between text-sm">
+                              <span className="text-[#a0a0a0]">{cat.label}</span>
+                              <span className="flex items-center gap-2">
+                                <StarDisplay value={cat.avgValue ?? 0} size={12} />
+                                <span className="text-[#f6f1e8] font-medium w-8 text-right">
+                                  {cat.avgValue?.toFixed(1) ?? "—"}
+                                </span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-[#666]">Нет оценок</p>
+                      )
+                    ) : hasVoted ? (
                       <div className="space-y-2">
                         {allCategories.map((cat) => (
                           <div key={cat.key} className="flex items-center justify-between text-sm">
