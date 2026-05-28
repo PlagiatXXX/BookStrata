@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 import { useTierListActions } from "./useTierListActions";
 import * as apiModule from "@/lib/tierListApi";
 import { logger } from "@/lib/logger";
+import { sileo } from "sileo";
 
 // Моки API
 vi.mock("@/lib/tierListApi", () => ({
@@ -39,9 +40,14 @@ vi.mock("@/lib/logger", async () => {
   };
 });
 
-// Моки alert
-const mockAlert = vi.fn();
-window.alert = mockAlert;
+// Моки sileo
+vi.mock("sileo", () => ({
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+  },
+}));
 
 // Подавляем unhandled rejection от мутаций
 const originalConsoleError = console.error;
@@ -137,7 +143,11 @@ describe("useTierListActions", () => {
       result.current.createNewTierList("New List");
 
       await vi.waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith("Ошибка: Failed to create");
+        expect(sileo.error).toHaveBeenCalledWith({
+          title: "Ошибка создания",
+          description: "Failed to create",
+          duration: 4000,
+        });
       });
 
       expect(logger.error).toHaveBeenCalled();

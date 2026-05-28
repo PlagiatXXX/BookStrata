@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-649_passed-brightgreen)](./doctor.md)
+[![Tests](https://img.shields.io/badge/Tests-742_passed-brightgreen)](./doctor.md)
 [![React Doctor](https://www.react.doctor/share/badge?p=tiermaker-pro&s=97&w=179&f=96)](https://www.react.doctor/share?p=tiermaker-pro&s=97&w=179&f=96)
 
 ---
@@ -44,6 +44,7 @@
 - **Совпадение вкусов** — При просмотре чужого тир-листа показывает процент пересечения книг с вашими списками.
 - **Библиотека** — Разделы «Личные», «Популярные» и «Избранное» с реальными данными и сохранением фокуса через URL.
 - **Баттлы** — Центр активностей с реальной статистикой участников и активных битв.
+- **Обсуждения и Форум** — Общий чат, топики форума с закреплением/удалением (модерация), комментарии под битвами.
 - **Шаблоны** — Быстрый старт с предустановленными наборами (Fiction, Sci-Fi и др.).
 - **Счётчик лимитов** — Прогресс-бар заполнения тир-листа (лимит 20 книг для бесплатных аккаунтов).
 
@@ -122,13 +123,13 @@ cd backend && npm run dev # Backend на http://localhost:8080
 - **Frontend:** Разделение на `pages/`, `components/`, `hooks/`, `contexts/`. Логика редактора вынесена в специализированные хуки (`useTierEditorState`, `useTierEditorSave` и др.).
 - **Backend:** Модульный подход (`modules/`). Каждый модуль (auth, books, tier-lists) содержит свои роуты, схемы (Zod) и сервисы (Prisma).
 - **API:** RESTful API с автоматической Swagger-документацией на `/documentation`.
-- **Forum Stats:** Публичный эндпоинт `GET /api/forum/stats` — количество участников и активных битв.
+- **Discussions:** Модуль обсуждений — общий чат, топики форума, комментарии к битвам. CRUD сообщений, закрепление/удаление топиков (admin/mod).
 
 ---
 
 ## 🧪 Тестирование
 
-Проект покрыт **649 тестами** (359 фронтенд + 290 бэкенд) — Vitest + React Testing Library + Supertest.
+Проект покрыт **742 тестами** (387 фронтенд + 355 бэкенд) — Vitest + React Testing Library + Supertest.
 
 ```bash
 # Запуск тестов фронтенда
@@ -137,7 +138,7 @@ npm test
 # Запуск тестов бэкенда
 cd backend && npm test
 ```
-*Статус: **649/649** тестов проходят успешно ✅*
+*Статус: **742/742** тестов проходят успешно ✅*
 
 ---
 
@@ -185,7 +186,7 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 26 мая 2026 г.
-**Статус:** Phase 3 Completed ✅ — AI Librarian + Donor marquee (649 тестов)
+**Последнее обновление:** 28 мая 2026 г.
+**Статус:** Phase 4 Completed ✅ — Обсуждения и Форум (742 теста)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)
 **Аудит и рефакторинг:** Jules (Senior Fullstack AI)
