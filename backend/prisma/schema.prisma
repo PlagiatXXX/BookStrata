@@ -34,6 +34,7 @@ passwordResetTokens  PasswordResetToken[]
 achievements         UserAchievement[]
   battleVotes          BattleVote[]
   battleApplications   BattleApplication[]
+  discussions          Discussion[]
   discussionMessages   DiscussionMessage[]
   feedback             Feedback[]
   bookRatings          BookRating[]
@@ -154,7 +155,6 @@ status       String              @default("active") // "active", "completed"
 startTime    DateTime            @default(now()) @map("start_time")
 endTime      DateTime            @map("end_time")
 winnerId     String?                @map("winner_id")
-  discussion   Discussion?
   participants BattleParticipant[]
   votes        BattleVote[]
   applications BattleApplication[]
@@ -297,16 +297,22 @@ model Donor {
   @@map("donors")
 }
 
-// Обсуждения (чат на странице битв)
+// Обсуждения (чат на странице битв, общий чат, топики форума)
 model Discussion {
-  id        String              @id @default(uuid())
-  battleId  String?             @unique @map("battle_id")
-  title     String?
-  createdAt DateTime            @default(now()) @map("created_at")
-  updatedAt DateTime            @updatedAt @map("updated_at")
-  messages  DiscussionMessage[]
-  battle    Battle?             @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  id            String              @id @default(uuid())
+  battleId      String?             @map("battle_id")
+  title         String?
+  type          String              @default("topic") // "general" | "topic" | "battle"
+  authorId      Int?                @map("author_id")
+  pinned        Boolean             @default(false)
+  pinnedAt      DateTime?           @map("pinned_at")
+  lastMessageAt DateTime?           @map("last_message_at")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  messages      DiscussionMessage[]
+  author        User?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
+  @@index([type, lastMessageAt])
   @@map("discussions")
 }
 

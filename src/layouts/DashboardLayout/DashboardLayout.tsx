@@ -18,7 +18,7 @@ export function DashboardLayout({
   onSearch,
   searchValue,
   showTemplatesNav = true,
-  showSearch = true,
+  showSearch = false,
   activeItem,
 }: DashboardLayoutProps) {
   return (

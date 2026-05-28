@@ -29,7 +29,7 @@ export const Header = ({
   onSearch,
   searchValue = "",
   showTemplatesNav = true,
-  showSearch = true,
+  showSearch = false,
   activeItem: activeItemProp,
 }: HeaderProps = {}) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

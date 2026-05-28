@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { MessageCircle, Send, Reply, Edit3, Trash2, X, Check, Loader2 } from "lucide-react"
+import { ArrowLeft, MessageCircle, Send, Reply, Edit3, Trash2, X, Check, Loader2 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthContext"
 import {
   getDiscussionByBattle,
   getGeneralDiscussion,
+  getDiscussionById,
   createDiscussion,
   createMessage,
   updateMessage,
@@ -13,12 +14,14 @@ import type { Discussion, DiscussionMessage } from "@/types/discussions"
 import "./DiscussionSection.css"
 
 interface DiscussionSectionProps {
-  variant: "battle" | "general"
+  variant: "battle" | "general" | "topic"
   battleId?: string
+  discussionId?: string
   title?: string
+  onBack?: () => void
 }
 
-export function DiscussionSection({ variant, battleId, title }: DiscussionSectionProps) {
+export function DiscussionSection({ variant, battleId, discussionId, title, onBack }: DiscussionSectionProps) {
   const { user, isAuthenticated } = useAuth()
   const [discussion, setDiscussion] = useState<Discussion | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,22 +33,31 @@ export function DiscussionSection({ variant, battleId, title }: DiscussionSectio
   const [editContent, setEditContent] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const initialLoadRef = useRef(true)
 
-  const sectionTitle = title ?? (variant === "battle" ? "Комментарии" : "Обсуждение")
+  const sectionTitle = discussion?.title
+    ?? title
+    ?? (variant === "battle" ? "Комментарии" : "Обсуждение")
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    const container = document.querySelector(".discussion-messages")
+    if (container) {
+      container.scrollTop = container.scrollHeight
+    }
   }, [])
 
   const loadDiscussion = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = variant === "general"
-        ? await getGeneralDiscussion()
-        : battleId
-          ? await getDiscussionByBattle(battleId)
-          : null
+      let data: Discussion | null = null
+      if (variant === "topic" && discussionId) {
+        data = await getDiscussionById(discussionId)
+      } else if (variant === "general") {
+        data = await getGeneralDiscussion()
+      } else if (variant === "battle" && battleId) {
+        data = await getDiscussionByBattle(battleId)
+      }
       setDiscussion(data)
     } catch {
       if (variant === "battle") {
@@ -56,15 +68,19 @@ export function DiscussionSection({ variant, battleId, title }: DiscussionSectio
     } finally {
       setLoading(false)
     }
-  }, [variant, battleId])
+  }, [variant, battleId, discussionId])
 
   useEffect(() => {
     loadDiscussion()
   }, [loadDiscussion])
 
   useEffect(() => {
-    if (!loading) scrollToBottom()
-  }, [loading, discussion?.messages.length, scrollToBottom])
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false
+      return
+    }
+    scrollToBottom()
+  }, [discussion?.messages.length, scrollToBottom])
 
   const handleSend = async () => {
     const text = input.trim()
@@ -81,7 +97,10 @@ export function DiscussionSection({ variant, battleId, title }: DiscussionSectio
         setSending(false)
         return
       }
-      await createMessage(d.id, text, replyTo?.id ?? undefined)
+      // Всегда цепляем parentId к корневому сообщению (не к вложенному reply),
+      // чтобы не плодить каскады — все replies плоские, один уровень вложенности
+      const parentId = replyTo ? (replyTo.parentId ?? replyTo.id) : undefined
+      await createMessage(d.id, text, parentId)
       setInput("")
       setReplyTo(null)
       await loadDiscussion()
@@ -172,6 +191,11 @@ export function DiscussionSection({ variant, battleId, title }: DiscussionSectio
   return (
     <section className="discussion-section">
       <div className="discussion-header">
+        {onBack && (
+          <button onClick={onBack} className="discussion-back-btn" title="Назад к списку">
+            <ArrowLeft size={18} />
+          </button>
+        )}
         <MessageCircle size={20} />
         <h2>{sectionTitle}</h2>
         {discussion && (
@@ -189,82 +213,64 @@ export function DiscussionSection({ variant, battleId, title }: DiscussionSectio
       <div className="discussion-messages">
         {discussion && discussion.messages.length > 0 ? (
           discussion.messages.map((msg) => (
-            <div key={msg.id} className="discussion-message-wrapper">
-              <ChatMessageRow
-                message={msg}
-                userId={user?.userId}
-                isAuthenticated={!!isAuthenticated}
-                editingId={editingId}
-                editContent={editContent}
-                canDelete={canDelete(msg)}
-                onReply={(m) => { setReplyTo(m); inputRef.current?.focus() }}
-                onStartEdit={startEdit}
-                onEditChange={setEditContent}
-                onEditSubmit={handleEdit}
-                onCancelEdit={() => setEditingId(null)}
-                onDelete={handleDelete}
-                formatDate={formatDate}
-              />
-              {msg.replies.length > 0 && (
-                <div className="discussion-replies">
-                  {msg.replies.map((reply) => (
-                    <ChatMessageRow
-                      key={reply.id}
-                      message={reply}
-                      userId={user?.userId}
-                      isAuthenticated={!!isAuthenticated}
-                      editingId={editingId}
-                      editContent={editContent}
-                      canDelete={canDelete(reply)}
-                      onReply={(m) => { setReplyTo(m); inputRef.current?.focus() }}
-                      onStartEdit={startEdit}
-                      onEditChange={setEditContent}
-                      onEditSubmit={handleEdit}
-                      onCancelEdit={() => setEditingId(null)}
-                      onDelete={handleDelete}
-                      formatDate={formatDate}
-                      isReply
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            <ChatMessageRow
+              key={msg.id}
+              message={msg}
+              userId={user?.userId}
+              isAuthenticated={!!isAuthenticated}
+              editingId={editingId}
+              editContent={editContent}
+              canDelete={canDelete(msg)}
+              onReply={(m) => { setReplyTo(m); inputRef.current?.focus() }}
+              onStartEdit={startEdit}
+              onEditChange={setEditContent}
+              onEditSubmit={handleEdit}
+              onCancelEdit={() => setEditingId(null)}
+              onDelete={handleDelete}
+              formatDate={formatDate}
+            />
           ))
         ) : (
           <div className="discussion-empty">
-            <MessageCircle size={32} className="opacity-30" />
-            <p>{variant === "battle" ? "Пока нет комментариев" : "Пока нет сообщений"}</p>
+            {variant === "battle" ? "Пока нет комментариев" : "Пока нет сообщений"}
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {replyTo && (
-        <div className="discussion-reply-preview">
-          <Reply size={14} />
-          <span>Ответ {replyTo.user.username}</span>
-          <button onClick={cancelReply}><X size={14} /></button>
+      <div className="discussion-input-area">
+        {replyTo && (
+          <div className="discussion-reply-indicator">
+            <Reply size={12} />
+            <span>{replyTo.user.username}</span>
+            <button onClick={cancelReply} className="reply-indicator-close" title="Отменить ответ">
+              <X size={12} />
+            </button>
+          </div>
+        )}
+        <div className="discussion-input-bar">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              isAuthenticated
+                ? replyTo ? `Ответ ${replyTo.user.username}...` : "Написать сообщение..."
+                : "Войдите, чтобы писать"
+            }
+            disabled={!isAuthenticated}
+            rows={1}
+            className="discussion-input"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!isAuthenticated || !input.trim() || sending}
+            className="discussion-send-btn"
+          >
+            {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+          </button>
         </div>
-      )}
-
-      <div className="discussion-input-bar">
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={isAuthenticated ? "Написать сообщение..." : "Войдите, чтобы писать"}
-          disabled={!isAuthenticated}
-          rows={1}
-          className="discussion-input"
-        />
-        <button
-          onClick={handleSend}
-          disabled={!isAuthenticated || !input.trim() || sending}
-          className="discussion-send-btn"
-        >
-          {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-        </button>
       </div>
     </section>
   )
@@ -284,7 +290,6 @@ interface ChatMessageRowProps {
   onCancelEdit: () => void
   onDelete: (id: string) => void
   formatDate: (iso: string) => string
-  isReply?: boolean
 }
 
 function ChatMessageRow({
@@ -301,13 +306,12 @@ function ChatMessageRow({
   onCancelEdit,
   onDelete,
   formatDate,
-  isReply,
 }: ChatMessageRowProps) {
   const isEditing = editingId === message.id
   const isOwner = userId === message.userId
 
   return (
-    <div className={`chat-message ${isReply ? "chat-message--reply" : ""}`}>
+    <div className="chat-message">
       <div className="chat-message-avatar">
         {message.user.avatarUrl ? (
           <img src={message.user.avatarUrl} alt="" />
@@ -322,9 +326,34 @@ function ChatMessageRow({
             {message.user.role?.name === "admin" && <span className="chat-badge-admin">Админ</span>}
             {message.user.role?.name === "moderator" && <span className="chat-badge-mod">Мод</span>}
           </span>
+          {message.parent?.user?.username && (
+            <span className="chat-message-reply-to">
+              <Reply size={10} />
+              @{message.parent.user.username}
+            </span>
+          )}
           <span className="chat-message-time">{formatDate(message.createdAt)}</span>
           {message.createdAt !== message.updatedAt && (
             <span className="chat-message-edited">изменено</span>
+          )}
+          {!isEditing && (
+            <span className="chat-message-actions">
+              {isAuthenticated && (
+                <button onClick={() => onReply(message)} className="msg-action-btn" title="Ответить">
+                  <Reply size={10} />
+                </button>
+              )}
+              {isOwner && (
+                <button onClick={() => onStartEdit(message)} className="msg-action-btn" title="Редактировать">
+                  <Edit3 size={10} />
+                </button>
+              )}
+              {canDelete && (
+                <button onClick={() => onDelete(message.id)} className="msg-action-btn msg-action-delete" title="Удалить">
+                  <Trash2 size={10} />
+                </button>
+              )}
+            </span>
           )}
         </div>
 
@@ -348,24 +377,6 @@ function ChatMessageRow({
         ) : (
           <p className="chat-message-content">{message.content}</p>
         )}
-
-        <div className="chat-message-actions">
-          {isAuthenticated && !isEditing && (
-            <button onClick={() => onReply(message)} className="msg-action-btn" title="Ответить">
-              <Reply size={12} />
-            </button>
-          )}
-          {isOwner && !isEditing && (
-            <button onClick={() => onStartEdit(message)} className="msg-action-btn" title="Редактировать">
-              <Edit3 size={12} />
-            </button>
-          )}
-          {canDelete && !isEditing && (
-            <button onClick={() => onDelete(message.id)} className="msg-action-btn msg-action-delete" title="Удалить">
-              <Trash2 size={12} />
-            </button>
-          )}
-        </div>
       </div>
     </div>
   )
