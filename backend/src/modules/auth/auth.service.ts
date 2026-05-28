@@ -129,6 +129,18 @@ export async function login(payload: LoginPayload): Promise<AuthToken> {
     throw new Error("Неверное имя пользователя или пароль");
   }
 
+  // Проверяем блокировку аккаунта
+  if (user.suspendedUntil && user.suspendedUntil > new Date()) {
+    const until = user.suspendedUntil.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    throw new Error(`Ваш аккаунт заблокирован до ${until}${user.suspensionReason ? `. Причина: ${user.suspensionReason}` : ""}`);
+  }
+
   // Генерируем пару токенов с ролью
   const tokens = generateTokenPair({
     userId: user.id,

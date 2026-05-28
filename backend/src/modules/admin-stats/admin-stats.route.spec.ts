@@ -14,6 +14,9 @@ vi.mock("../../lib/prisma.js", () => {
     tierList: {
       count: vi.fn(),
     },
+    feedback: {
+      count: vi.fn(),
+    },
   };
   return { prisma: tx };
 });
@@ -58,6 +61,7 @@ describe("Admin Stats Routes", () => {
       (prisma.user.count as any).mockResolvedValue(42);
       (prisma.newsArticle.count as any).mockResolvedValue(7);
       (prisma.tierList.count as any).mockResolvedValue(200);
+      (prisma.feedback.count as any).mockResolvedValue(15);
 
       const res = await request(app.server)
         .get("/api/admin/stats")
@@ -69,6 +73,8 @@ describe("Admin Stats Routes", () => {
         proUsers: 42,
         activeNews: 7,
         tierLists: 200,
+        violators: 42,
+        feedbackCount: 15,
       });
     });
 

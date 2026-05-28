@@ -58,6 +58,12 @@ describe("Discussions Routes", () => {
   async function createApp() {
     const instance = Fastify({ logger: false })
 
+    instance.decorate("prisma", {
+      user: {
+        findUnique: vi.fn().mockResolvedValue({ chatBannedAt: null, chatBannedUntil: null }),
+      },
+    })
+
     instance.addHook("preHandler", (request: any, _reply: any, done: any) => {
       const auth = request.headers.authorization
       if (auth === "Bearer admin-token") {

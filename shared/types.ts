@@ -84,6 +84,8 @@ export interface AdminDashboardStats {
   proUsers: number
   activeNews: number
   tierLists: number
+  violators: number
+  feedbackCount: number
 }
 
 export interface PaginationMeta {

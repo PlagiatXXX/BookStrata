@@ -7,6 +7,7 @@ vi.mock("../../lib/prisma.js", () => ({
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+      findMany: vi.fn(),
     },
     template: {
       count: vi.fn(),
@@ -707,6 +708,105 @@ describe("users.service", () => {
       const result = await userService.getTasteMatch(targetUserId, currentUserId)
 
       expect(result).toEqual({ matchPercent: 100, commonBooks: 2, totalBooks: 2 })
+    })
+  })
+
+  describe("getViolators", () => {
+    const mockBannedUser = {
+      id: 1,
+      username: "banned",
+      email: "banned@test.com",
+      chatBannedAt: new Date("2026-05-28T10:00:00Z"),
+      chatBannedUntil: null,
+      suspendedAt: null,
+      suspendedUntil: null,
+      suspensionReason: null,
+      role: { name: "user" },
+      warnings: [],
+      _count: { warnings: 0 },
+    }
+
+    const mockSuspendedUser = {
+      id: 2,
+      username: "suspended",
+      email: "suspended@test.com",
+      chatBannedAt: null,
+      chatBannedUntil: null,
+      suspendedAt: new Date("2026-05-28T10:00:00Z"),
+      suspendedUntil: new Date("2026-06-28T10:00:00Z"),
+      suspensionReason: "Нарушение правил",
+      role: { name: "user" },
+      warnings: [],
+      _count: { warnings: 0 },
+    }
+
+    const mockWarnedUser = {
+      id: 3,
+      username: "warned",
+      email: "warned@test.com",
+      chatBannedAt: null,
+      chatBannedUntil: null,
+      suspendedAt: null,
+      suspendedUntil: null,
+      suspensionReason: null,
+      role: { name: "user" },
+      warnings: [
+        {
+          id: 1,
+          message: "Не пиши капсом",
+          createdAt: new Date("2026-05-27T10:00:00Z"),
+          moderator: { id: 99, username: "admin" },
+        },
+      ],
+      _count: { warnings: 1 },
+    }
+
+    it("должен вернуть список нарушителей с action'ами", async () => {
+      const { prisma } = await import("../../lib/prisma.js")
+      ;(prisma.user.findMany as any).mockResolvedValue([mockBannedUser, mockSuspendedUser, mockWarnedUser])
+
+      const result = await userService.getViolators()
+
+      expect(result).toHaveLength(3)
+
+      const banned = result.find((u: any) => u.userId === 1)
+      expect(banned?.actions).toHaveLength(1)
+      expect(banned?.actions[0].type).toBe("chat_ban")
+      expect(banned?.actions[0].until).toBeNull()
+
+      const suspended = result.find((u: any) => u.userId === 2)
+      expect(suspended?.actions).toHaveLength(1)
+      expect(suspended?.actions[0].type).toBe("suspension")
+      expect(suspended?.actions[0].reason).toBe("Нарушение правил")
+
+      const warned = result.find((u: any) => u.userId === 3)
+      expect(warned?.actions).toHaveLength(1)
+      expect(warned?.actions[0].type).toBe("warning")
+      expect(warned?.warningsCount).toBe(1)
+    })
+
+    it("должен вернуть пустой массив если нарушителей нет", async () => {
+      const { prisma } = await import("../../lib/prisma.js")
+      ;(prisma.user.findMany as any).mockResolvedValue([])
+
+      const result = await userService.getViolators()
+
+      expect(result).toEqual([])
+    })
+
+    it("должен игнорировать истёкшие блокировки", async () => {
+      const { prisma } = await import("../../lib/prisma.js")
+      const expired = {
+        ...mockSuspendedUser,
+        suspendedUntil: new Date("2020-01-01T00:00:00Z"),
+      }
+      ;(prisma.user.findMany as any).mockResolvedValue([expired])
+
+      const result = await userService.getViolators()
+
+      // пользователь попадёт в список (suspendedAt не null), но actions будут пусты
+      expect(result).toHaveLength(1)
+      expect(result[0].actions).toHaveLength(0)
     })
   })
 });

@@ -29,6 +29,7 @@ import { newsRoutes } from "../src/modules/news/news.route.js";
 import { rolesRoutes } from "../src/modules/roles/roles.route.js";
 import { subscriptionsRoutes } from "../src/modules/subscriptions/subscriptions.routes.js";
 import { aiLibrarianRoutes } from "../src/modules/ai-librarian/ai-librarian.route.js";
+import { moderationRoutes } from "../src/modules/moderation/moderation.route.js";
 import templatesPlugin from "../src/modules/templates/templates.plugin.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
 import requestContext from "../src/plugins/requestContext.js";
@@ -333,6 +334,9 @@ fastify.register(ratingsRoutes, { prefix: "/api/ratings" });
 
 // AI Librarian
 fastify.register(aiLibrarianRoutes, { prefix: "/api/ai" });
+
+// Moderation (админские/модераторские инструменты)
+fastify.register(moderationRoutes, { prefix: "/api/moderation" });
 
 // Инициализация подписок на события
 registerAchievementSubscriptions();

@@ -8,6 +8,7 @@ import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 
 
+
 type FormMode = "login" | "register";
 
 interface AuthState {
@@ -116,7 +117,15 @@ export function AuthForm() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[url('/library.webp')] bg-cover bg-center">
+    <div className="relative min-h-screen overflow-hidden">
+      <video
+        autoPlay
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      >
+        <source src="/library4k-hq.mp4" type="video/mp4" />
+      </video>
       {/* затемнение фона */}
       <div className="absolute inset-0 bg-black/20" />
       <div className="relative z-10 flex min-h-screen items-center justify-center">

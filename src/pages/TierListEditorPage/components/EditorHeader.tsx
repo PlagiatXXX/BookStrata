@@ -71,7 +71,7 @@ export const EditorHeader = ({
         {isReadOnly && author && (
           <button
             onClick={() => navigate(`/users/${author.id}`)}
-            className="nb-label-md mt-2 text-[#c1fffe] hover:text-white transition-colors text-left"
+            className="nb-label-md mt-2 text-[#c1fffe] hover:text-white transition-colors text-left cursor-pointer"
           >
             Автор: {author.username}
           </button>

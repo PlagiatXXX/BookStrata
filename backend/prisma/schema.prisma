@@ -40,6 +40,13 @@ achievements         UserAchievement[]
   bookRatings          BookRating[]
   role                 Role?      @relation(fields: [roleId], references: [id])
 roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
+chatBannedAt         DateTime?  @map("chat_banned_at")
+chatBannedUntil      DateTime?  @map("chat_banned_until")
+suspendedAt          DateTime?  @map("suspended_at")
+suspendedUntil       DateTime?  @map("suspended_until")
+suspensionReason     String?    @map("suspension_reason")
+warnings             UserWarning[]       // полученные предупреждения
+warningsGiven        UserWarning[]       @relation("ModeratorWarnings")  // выданные как модератор
 createdAt            DateTime   @default(now()) @map("created_at")
  
 @@index([xp])
@@ -331,6 +338,20 @@ model DiscussionMessage {
 
   @@index([discussionId, createdAt])
   @@map("discussion_messages")
+}
+
+// Предупреждения пользователей от модераторов
+model UserWarning {
+  id           Int      @id @default(autoincrement())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int      @map("user_id")
+  moderator    User     @relation("ModeratorWarnings", fields: [moderatorId], references: [id])
+  moderatorId  Int      @map("moderator_id")
+  message      String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("user_warnings")
 }
 
 // Обратная связь от пользователей

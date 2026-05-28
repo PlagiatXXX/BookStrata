@@ -11,6 +11,7 @@ import {
   getAllUsers,
   getTasteMatch,
   getUserPublicTierLists,
+  getViolators,
 } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
@@ -215,6 +216,16 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const users = await getAllUsers();
       return reply.code(200).send(createSuccessResponse(users));
+    },
+  );
+
+  // GET /api/users/admin/violators - получить нарушителей (только админ)
+  fastify.get(
+    "/admin/violators",
+    { preHandler: [authMiddleware, requireRole("admin")] },
+    async (request, reply) => {
+      const violators = await getViolators();
+      return reply.code(200).send(createSuccessResponse(violators));
     },
   );
 }

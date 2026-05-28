@@ -44,7 +44,7 @@ const PublicTierListCards = memo(function PublicTierListCards({
               {tierList.user?.id ? (
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate(`/users/${tierList.user!.id}`) }}
-                  className="text-xs text-[#b8b1a3] hover:text-(--accent-main) transition-colors truncate text-left"
+                  className="text-xs text-[#b8b1a3] hover:text-(--accent-main) transition-colors truncate text-left cursor-pointer"
                 >
                   {tierList.user.username}
                 </button>

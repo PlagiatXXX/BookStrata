@@ -1,5 +1,5 @@
-import { Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Suspense, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { Toaster } from "sileo";
 import { AuthProvider } from "@/contexts/AuthContext.tsx";
 import { Spinner } from "@/components/Spinner";
@@ -9,7 +9,12 @@ import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
 import "../styles/sileo-custom.css";
 
 function AppShell() {
+  const { pathname } = useLocation();
   const { newAchievement, clearNotification } = useAchievementNotifications();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <AuthProvider>

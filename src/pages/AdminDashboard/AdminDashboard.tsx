@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, ArrowLeft } from 'lucide-react'
+import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, ArrowLeft, ShieldAlert, MailQuestion } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuthContext'
 import type { AdminDashboardStats } from '../../../shared/types'
@@ -197,6 +197,24 @@ export default function AdminDashboard() {
                 <p className="text-gray-400">Коллекций</p>
                 <p className="text-2xl font-bold text-green-500 mt-1">
                   {loading ? '…' : error ? '—' : stats?.tierLists}
+                </p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <ShieldAlert size={14} className="text-red-400" />
+                  <p className="text-gray-400 text-sm">Нарушители</p>
+                </div>
+                <p className="text-2xl font-bold text-red-500 mt-1">
+                  {loading ? '…' : error ? '—' : stats?.violators}
+                </p>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <MailQuestion size={14} className="text-violet-400" />
+                  <p className="text-gray-400 text-sm">Обращения</p>
+                </div>
+                <p className="text-2xl font-bold text-violet-500 mt-1">
+                  {loading ? '…' : error ? '—' : stats?.feedbackCount}
                 </p>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeft,
@@ -11,11 +11,33 @@ import {
   Mail,
   AlertTriangle,
   X,
+  Ban,
+  Users,
+  UserX,
 } from "lucide-react"
 import { api } from "@/lib/api-client"
 import { useAuth } from "@/hooks/useAuthContext"
 import { sileo } from "sileo"
 import type { AdminUser } from "@/types/auth"
+
+interface ViolatorAction {
+  type: "chat_ban" | "suspension" | "warning"
+  date: string
+  until: string | null
+  reason: string | null
+  moderator: { id: number; username: string } | null
+}
+
+interface ViolatorUser {
+  userId: number
+  username: string | null
+  email: string
+  role: string
+  warningsCount: number
+  actions: ViolatorAction[]
+}
+
+type Tab = "users" | "violators"
 
 const ROLES = ["admin", "moderator", "user"] as const
 type Role = (typeof ROLES)[number]
@@ -26,10 +48,23 @@ const ROLE_LABELS: Record<Role, string> = {
   user: "Пользователь",
 }
 
+const ACTION_LABELS: Record<ViolatorAction["type"], string> = {
+  chat_ban: "Чат-бан",
+  suspension: "Блокировка",
+  warning: "Предупреждение",
+}
+
+const ACTION_COLORS: Record<ViolatorAction["type"], string> = {
+  chat_ban: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+  suspension: "bg-red-500/10 text-red-400 border-red-500/30",
+  warning: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+}
+
 export function AdminUsersPage() {
   const navigate = useNavigate()
   const { user: currentUser } = useAuth()
   const queryClient = useQueryClient()
+  const [activeTab, setActiveTab] = useState<Tab>("users")
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all")
   const [changingUserId, setChangingUserId] = useState<number | null>(null)
@@ -44,6 +79,11 @@ export function AdminUsersPage() {
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["admin-users"],
     queryFn: () => api.get<AdminUser[]>("/users/admin/all"),
+  })
+
+  const { data: violators = [], isLoading: violatorsLoading } = useQuery<ViolatorUser[]>({
+    queryKey: ["admin-violators"],
+    queryFn: () => api.get<ViolatorUser[]>("/users/admin/violators"),
   })
 
   const assignRole = useMutation({
@@ -105,6 +145,34 @@ export function AdminUsersPage() {
       year: "numeric",
     })
 
+  const formatDateTime = (dateStr: string) =>
+    new Date(dateStr).toLocaleString("ru-RU", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+
+  const getDuration = (from: string, until: string) => {
+    const diff = new Date(until).getTime() - new Date(from).getTime()
+    if (diff <= 0) return "0 мин."
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    if (days > 0) return `${days} дн.`
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    if (hours > 0) return `${hours} ч.`
+    const mins = Math.floor(diff / (1000 * 60))
+    return `${mins} мин.`
+  }
+
+  const actionIcon = (type: ViolatorAction["type"]) => {
+    switch (type) {
+      case "chat_ban": return <Ban size={10} />
+      case "suspension": return <UserX size={10} />
+      case "warning": return <AlertTriangle size={10} />
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0f0f1a] py-6 sm:py-10">
       <div className="max-w-6xl mx-auto px-4">
@@ -121,200 +189,389 @@ export function AdminUsersPage() {
             Управление пользователями
           </h1>
           <p className="text-gray-400">
-            Просмотр и управление ролями пользователей
+            Просмотр и управление пользователями
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6 items-start sm:items-center justify-between">
-          <div className="flex gap-2 flex-wrap">
-            {(["all", "admin", "moderator", "user"] as const).map((role) => (
-              <button
-                key={role}
-                onClick={() => setRoleFilter(role)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                  roleFilter === role
-                    ? role === "admin"
-                      ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                      : role === "moderator"
-                        ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                        : role === "user"
-                          ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                          : "bg-white/10 text-white border border-white/20"
-                    : "bg-white/5 text-gray-400 border border-transparent hover:bg-white/10"
-                }`}
-              >
-                {role === "all"
-                  ? "Все"
-                  : role === "admin"
-                    ? "Админы"
-                    : role === "moderator"
-                      ? "Модераторы"
-                      : "Пользователи"}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-            />
-            <input
-              type="text"
-              placeholder="Поиск по имени или email..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-gray-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gray-500"
-            />
-          </div>
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "users"
+                ? "bg-white/10 text-white border border-white/20"
+                : "bg-white/5 text-gray-400 border border-transparent hover:bg-white/10"
+            }`}
+          >
+            <Users size={16} />
+            Пользователи
+          </button>
+          <button
+            onClick={() => setActiveTab("violators")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "violators"
+                ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                : "bg-white/5 text-gray-400 border border-transparent hover:bg-white/10"
+            }`}
+          >
+            <UserX size={16} />
+            Нарушители
+            {violators.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs leading-none rounded-full bg-red-500/20 text-red-400">
+                {violators.length}
+              </span>
+            )}
+          </button>
         </div>
 
-        <div className="rounded-xl border border-gray-800 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-white/5 border-b border-gray-800">
-                <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Пользователь
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Роль
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Статус
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
-                  Зарегистрирован
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                  Действия
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-sm text-gray-500"
+        {activeTab === "users" ? (
+          <>
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 items-start sm:items-center justify-between">
+              <div className="flex gap-2 flex-wrap">
+                {(["all", "admin", "moderator", "user"] as const).map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => setRoleFilter(role)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                      roleFilter === role
+                        ? role === "admin"
+                          ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                          : role === "moderator"
+                            ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                            : role === "user"
+                              ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                              : "bg-white/10 text-white border border-white/20"
+                        : "bg-white/5 text-gray-400 border border-transparent hover:bg-white/10"
+                    }`}
                   >
-                    Загрузка...
-                  </td>
-                </tr>
-              ) : filteredUsers.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-sm text-gray-500"
-                  >
-                    Пользователи не найдены
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((u) => (
-                  <tr
-                    key={u.userId}
-                    className="hover:bg-white/[0.02] transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                          {u.username?.[0]?.toUpperCase() || "?"}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-white truncate">
-                            {u.username || "—"}
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Mail size={12} />
-                            <span className="truncate">{u.email}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                          u.role === "admin"
-                            ? "bg-red-500/10 text-red-400"
-                            : u.role === "moderator"
-                              ? "bg-blue-500/10 text-blue-400"
-                              : "bg-green-500/10 text-green-400"
-                        }`}
+                    {role === "all"
+                      ? "Все"
+                      : role === "admin"
+                        ? "Админы"
+                        : role === "moderator"
+                          ? "Модераторы"
+                          : "Пользователи"}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Поиск по имени или email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/5 border border-gray-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gray-500"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-800 overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-white/5 border-b border-gray-800">
+                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      Пользователь
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      Роль
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      Статус
+                    </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
+                      Зарегистрирован
+                    </th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      Действия
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-6 py-12 text-center text-sm text-gray-500"
                       >
-                        {u.role === "admin" ? (
-                          <ShieldCheck size={12} />
-                        ) : u.role === "moderator" ? (
-                          <Shield size={12} />
-                        ) : null}
-                        {u.role === "admin"
-                          ? "Админ"
-                          : u.role === "moderator"
-                            ? "Модератор"
-                            : "Пользователь"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {u.isPro ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">
-                          <Crown size={12} />
-                          Pro
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-500">Free</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-400 hidden md:table-cell">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Calendar size={12} />
-                        {formatDate(u.createdAt)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {canChangeRole && u.userId !== currentUser?.userId ? (
-                        <select
-                          value={u.role}
-                          onChange={(e) => {
-                            const newRole = e.target.value as Role
-                            if (newRole !== u.role) {
-                              setConfirmTarget({
-                                userId: u.userId,
-                                username: u.username || u.email,
-                                currentRole: u.role as Role,
-                                newRole,
-                              })
-                            }
-                          }}
-                          disabled={changingUserId === u.userId}
-                          className="bg-white/10 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white cursor-pointer focus:outline-none focus:border-gray-500 disabled:opacity-50"
-                        >
-                          {ROLES.map((r) => (
-                            <option key={r} value={r} className="bg-[#1a1a2e]">
-                              {ROLE_LABELS[r]}
-                            </option>
-                          ))}
-                        </select>
-                      ) : canChangeRole &&
-                        u.userId === currentUser?.userId ? (
-                        <span className="text-xs text-gray-500 italic">
-                          Это вы
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-500 italic">
-                          —
-                        </span>
-                      )}
+                        Загрузка...
+                      </td>
+                    </tr>
+                  ) : filteredUsers.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-6 py-12 text-center text-sm text-gray-500"
+                      >
+                        Пользователи не найдены
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((u) => (
+                      <tr
+                        key={u.userId}
+                        className="hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                              {u.username?.[0]?.toUpperCase() || "?"}
+                            </div>
+                            <div className="min-w-0">
+                              <Link
+                                to={`/users/${u.userId}`}
+                                className="text-sm font-medium text-white truncate hover:text-orange-400 transition-colors"
+                              >
+                                {u.username || "—"}
+                              </Link>
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Mail size={12} />
+                                <span className="truncate">{u.email}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                              u.role === "admin"
+                                ? "bg-red-500/10 text-red-400"
+                                : u.role === "moderator"
+                                  ? "bg-blue-500/10 text-blue-400"
+                                  : "bg-green-500/10 text-green-400"
+                            }`}
+                          >
+                            {u.role === "admin" ? (
+                              <ShieldCheck size={12} />
+                            ) : u.role === "moderator" ? (
+                              <Shield size={12} />
+                            ) : null}
+                            {u.role === "admin"
+                              ? "Админ"
+                              : u.role === "moderator"
+                                ? "Модератор"
+                                : "Пользователь"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {u.isPro ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">
+                              <Crown size={12} />
+                              Pro
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-500">Free</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400 hidden md:table-cell">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Calendar size={12} />
+                            {formatDate(u.createdAt)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {canChangeRole && u.userId !== currentUser?.userId ? (
+                            <select
+                              value={u.role}
+                              onChange={(e) => {
+                                const newRole = e.target.value as Role
+                                if (newRole !== u.role) {
+                                  setConfirmTarget({
+                                    userId: u.userId,
+                                    username: u.username || u.email,
+                                    currentRole: u.role as Role,
+                                    newRole,
+                                  })
+                                }
+                              }}
+                              disabled={changingUserId === u.userId}
+                              className="bg-white/10 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white cursor-pointer focus:outline-none focus:border-gray-500 disabled:opacity-50"
+                            >
+                              {ROLES.map((r) => (
+                                <option key={r} value={r} className="bg-[#1a1a2e]">
+                                  {ROLE_LABELS[r]}
+                                </option>
+                              ))}
+                            </select>
+                          ) : canChangeRole &&
+                            u.userId === currentUser?.userId ? (
+                            <span className="text-xs text-gray-500 italic">
+                              Это вы
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-500 italic">
+                              —
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-4 text-xs text-gray-500">
+              Всего пользователей: {users.length} · Показано:{" "}
+              {filteredUsers.length}
+            </p>
+          </>
+        ) : (
+          <div className="rounded-xl border border-gray-800 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-white/5 border-b border-gray-800">
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Пользователь
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Роль
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Нарушения
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Действия
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {violatorsLoading ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-12 text-center text-sm text-gray-500"
+                    >
+                      Загрузка...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <p className="mt-4 text-xs text-gray-500">
-          Всего пользователей: {users.length} · Показано:{" "}
-          {filteredUsers.length}
-        </p>
+                ) : violators.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-12 text-center text-sm text-gray-500"
+                    >
+                      Нарушители не найдены
+                    </td>
+                  </tr>
+                ) : (
+                  violators.map((v) => (
+                    <tr
+                      key={v.userId}
+                      className="hover:bg-white/[0.02] transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                            {v.username?.[0]?.toUpperCase() || "?"}
+                          </div>
+                          <div className="min-w-0">
+                            <Link
+                              to={`/users/${v.userId}`}
+                              className="text-sm font-medium text-white truncate hover:text-orange-400 transition-colors"
+                            >
+                              {v.username || "—"}
+                            </Link>
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Mail size={12} />
+                              <span className="truncate">{v.email}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                            v.role === "admin"
+                              ? "bg-red-500/10 text-red-400"
+                              : v.role === "moderator"
+                                ? "bg-blue-500/10 text-blue-400"
+                                : "bg-green-500/10 text-green-400"
+                          }`}
+                        >
+                          {v.role === "admin" ? (
+                            <ShieldCheck size={12} />
+                          ) : v.role === "moderator" ? (
+                            <Shield size={12} />
+                          ) : null}
+                          {ROLE_LABELS[v.role as Role] || "Пользователь"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {v.warningsCount > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                              <AlertTriangle size={10} />
+                              {v.warningsCount} пред.
+                            </span>
+                          )}
+                          {v.actions.some((a) => a.type === "suspension") && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/30">
+                              <Ban size={10} />
+                              Блокировка
+                            </span>
+                          )}
+                          {v.actions.some((a) => a.type === "chat_ban") && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/30">
+                              <UserX size={10} />
+                              Чат-бан
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-2 max-w-sm">
+                          {v.actions.map((a, i) => (
+                            <div
+                              key={i}
+                              className="flex items-start gap-2 text-xs"
+                            >
+                              <span
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded shrink-0 text-xs font-medium border ${ACTION_COLORS[a.type]}`}
+                              >
+                                {actionIcon(a.type)}
+                                {ACTION_LABELS[a.type]}
+                              </span>
+                              <div className="min-w-0 text-gray-400 leading-tight">
+                                <div>
+                                  {formatDateTime(a.date)}
+                                  {a.until
+                                    ? ` — ${getDuration(a.date, a.until)}`
+                                    : ""}
+                                </div>
+                                {a.reason && (
+                                  <div
+                                    className="text-gray-500 truncate max-w-[200px]"
+                                    title={a.reason}
+                                  >
+                                    {a.reason}
+                                  </div>
+                                )}
+                                {a.moderator && (
+                                  <div className="text-gray-500">
+                                    Мод: {a.moderator.username}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          {v.actions.length === 0 && (
+                            <span className="text-xs text-gray-500 italic">
+                              Нет действий
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {confirmTarget && (

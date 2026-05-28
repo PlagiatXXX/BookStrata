@@ -136,10 +136,27 @@ export async function discussionRoutes(fastify: FastifyInstance) {
     },
   )
 
+  // Проверка бана в чате
+  const checkChatBan = async (request: any, reply: any) => {
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: request.user!.userId },
+      select: { chatBannedAt: true, chatBannedUntil: true },
+    })
+    if (!user) return
+
+    const isBanned = user.chatBannedUntil
+      ? user.chatBannedUntil > new Date()
+      : user.chatBannedAt !== null
+
+    if (isBanned) {
+      return reply.code(403).send(createApiError(ErrorCodes.FORBIDDEN, "Вам запрещено писать в чат"))
+    }
+  }
+
   // POST /api/discussions/:id/messages — создать сообщение
   fastify.post<{ Params: { id: string }; Body: CreateMessageBody }>(
     "/:id/messages",
-    { preHandler: [authMiddleware] },
+    { preHandler: [authMiddleware, checkChatBan] },
     async (request, reply) => {
       const userId = request.user!.userId
       const { content, parentId } = request.body

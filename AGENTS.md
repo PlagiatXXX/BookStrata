@@ -378,3 +378,55 @@ See `.opencode/skills/*/evals/evals.json` for eval tests.
 - `DiscussionSection` использует `useNavigate()` → все тесты должны быть обёрнуты в `<MemoryRouter>`
 - `TasteMatchResult` — не в `shared/types.ts`, а в `src/lib/userApi.ts`
 - При тестировании профиля: `currentUser.userId` не должен совпадать с `id` из `useParams`, иначе `isOwnProfile = true` и вкусы не отображаются
+
+---
+
+## Session — 2026-05-28 — Видео на фон, модерация, нарушители
+
+### Что сделано
+
+**Фон страницы авторизации:**
+- Замена статичного `library.webp` на видео `library4k.mp4`
+- Сжатие через ffmpeg (`library4k-hq.mp4`, 4K, CRF 23, ~7 МБ, без звука, без зацикливания)
+- `object-cover` для растяжения на весь экран
+
+**Scroll-to-top:**
+- `AppShell` (`src/app/App.tsx`): `window.scrollTo(0, 0)` на каждый `pathname`
+
+**Moderation: фикс перманентного бана:**
+- `checkChatBan` в `discussions.route.ts` — проверял только `chatBannedUntil` (null при перманенте), теперь проверяет `chatBannedAt`
+- `getUserStatus` в `moderation.service.ts` — та же ошибка, исправлена
+
+**Нарушители:**
+- Бэкенд: `GET /api/users/admin/violators` — список пользователей с активными банами/блокировками/предупреждениями, сгруппированными по action'ам
+- Фронтенд: вкладка «Нарушители» в AdminUsersPage (табы Пользователи / Нарушители)
+
+**Админ-статистика:**
+- `AdminDashboardStats` расширен: `violators`, `feedbackCount`
+- `GET /api/admin/stats` возвращает оба новых поля
+- 2 новые карточки в быстрой статистике админки
+
+**Кликабельные username:**
+- AdminUsersPage: username → `Link` к `/users/:userId`
+
+### Файлы
+
+- `public/library4k.mp4` → `public/library4k-hq.mp4` (сжатый)
+- `src/components/AuthForm/AuthForm.tsx` — `<video>` фон
+- `src/app/App.tsx` — scroll-to-top
+- `backend/src/modules/discussions/discussions.route.ts` — checkChatBan fix
+- `backend/src/modules/moderation/moderation.service.ts` — getUserStatus fix
+- `backend/src/modules/users/users.route.ts` — +GET /admin/violators
+- `backend/src/modules/users/users.service.ts` — +getViolators
+- `shared/types.ts` — AdminDashboardStats: violators, feedbackCount
+- `backend/src/modules/admin-stats/admin-stats.service.ts` — +violators, +feedbackCount
+- `src/pages/AdminDashboard/AdminDashboard.tsx` — 2 новые карточки
+- `src/pages/AdminUsersPage/AdminUsersPage.tsx` — табы + вкладка Нарушители
+
+### Новые тесты
+- `backend/src/modules/moderation/moderation.service.spec.ts` — 10 тестов (getUserStatus, banChat, unbanChat, warn, getWarnings)
+- `src/components/ModerationPanel/ModerationPanel.spec.tsx` — 6 тестов (рендер, тогглы бана, бейдж, админ/модератор)
+- `backend/src/modules/users/users.service.spec.ts` — +3 теста getViolators
+
+### Gotchas
+- `checkChatBan` middleware и `getUserStatus` должны проверять `chatBannedAt !== null` для перманентного бана, а не только `chatBannedUntil > new Date()`

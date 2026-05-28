@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout"
 import { apiGetPublicUser, apiGetUserTierLists, apiGetTasteMatch } from "@/lib/userApi"
 import { useAuth } from "@/hooks/useAuthContext"
 import { Spinner } from "@/components/Spinner"
+import { ModerationPanel } from "@/components/ModerationPanel/ModerationPanel"
 import type { TierListShort } from "@/lib/tierListApi"
 
 export default function UserProfilePage() {
@@ -141,6 +142,15 @@ export default function UserProfilePage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Moderation Panel (admin/mod only) */}
+          {currentUser && !isOwnProfile && (currentUser.role === "admin" || currentUser.role === "moderator") && (
+            <ModerationPanel
+              userId={profile.id}
+              username={profile.username}
+              currentRole={profile.role || "user"}
+            />
           )}
 
           {/* Stats */}

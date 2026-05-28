@@ -354,3 +354,89 @@ export async function getAllUsers() {
     createdAt: user.createdAt.toISOString(),
   }));
 }
+
+export async function getViolators() {
+  const now = new Date()
+  const users = await prisma.user.findMany({
+    where: {
+      OR: [
+        { chatBannedAt: { not: null } },
+        { suspendedAt: { not: null } },
+        { warnings: { some: {} } },
+      ],
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      chatBannedAt: true,
+      chatBannedUntil: true,
+      suspendedAt: true,
+      suspendedUntil: true,
+      suspensionReason: true,
+      role: { select: { name: true } },
+      warnings: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          message: true,
+          createdAt: true,
+          moderator: { select: { id: true, username: true } },
+        },
+      },
+      _count: { select: { warnings: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  })
+
+  return users.map((user) => {
+    const actions: Array<{
+      type: "chat_ban" | "suspension" | "warning"
+      date: string
+      until: string | null
+      reason: string | null
+      moderator: { id: number; username: string } | null
+    }> = []
+
+    if (user.chatBannedAt && (!user.chatBannedUntil || user.chatBannedUntil > now)) {
+      actions.push({
+        type: "chat_ban",
+        date: user.chatBannedAt.toISOString(),
+        until: user.chatBannedUntil?.toISOString() ?? null,
+        reason: null,
+        moderator: null,
+      })
+    }
+
+    if (user.suspendedAt && (!user.suspendedUntil || user.suspendedUntil > now)) {
+      actions.push({
+        type: "suspension",
+        date: user.suspendedAt.toISOString(),
+        until: user.suspendedUntil?.toISOString() ?? null,
+        reason: user.suspensionReason,
+        moderator: null,
+      })
+    }
+
+    const lastWarning = user.warnings[0]
+    if (lastWarning) {
+      actions.push({
+        type: "warning" as const,
+        date: lastWarning.createdAt.toISOString(),
+        until: null,
+        reason: lastWarning.message,
+        moderator: { id: lastWarning.moderator.id, username: lastWarning.moderator.username ?? "—" },
+      })
+    }
+
+    return {
+      userId: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role?.name ?? "user",
+      warningsCount: user._count.warnings,
+      actions: actions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    }
+  })
+}
