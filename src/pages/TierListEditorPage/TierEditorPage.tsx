@@ -463,7 +463,6 @@ const TierListEditorContent = () => {
           onUpdateTier={updateTierSettingsWithUnsaved}
           onClearRows={() => setIsClearAllModalOpen(true)}
           onDownloadImage={() => setIsExportModalOpen(true)}
-          onMyRatingsClick={handleMyRatingsClick}
           onDeleteRating={() => setShowDeleteRatingModal(true)}
           isPublic={isPublic}
           onTogglePublic={togglePublic}

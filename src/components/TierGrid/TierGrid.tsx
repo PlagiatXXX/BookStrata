@@ -148,7 +148,7 @@ export const TierGrid = memo(
             className="nb-btn-secondary w-full flex min-h-16 items-center justify-center border-dashed opacity-60 hover:opacity-100 transition-opacity"
           >
             <PlusCircle size={20} />
-            <span className="ml-3 nb-label-md">Добавить тир</span>
+            <span className="ml-3 nb-label-md">Добавить блок</span>
           </button>
         )}
       </div>

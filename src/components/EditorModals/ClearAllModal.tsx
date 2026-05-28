@@ -16,13 +16,13 @@ export function ClearAllModal({
       isOpen={isOpen}
       onClose={onClose}
       onConfirm={onConfirm}
-      title="Очистить все тиры?"
+      title="Очистить все блоки?"
       titleId="clear-all-title"
       confirmLabel="Очистить"
       description={
         <>
           <p>
-            Все книги из тиров будут перемещены в блок "Книги без рейтинга".
+            Все книги из блоков будут перемещены в блок "Книги без рейтинга".
           </p>
           <p className="mt-3">Это действие нельзя отменить.</p>
         </>

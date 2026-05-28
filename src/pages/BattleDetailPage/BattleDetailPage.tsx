@@ -11,6 +11,7 @@ import { getBattleById, voteInBattle } from "@/lib/battlesApi"
 import { useAuth } from "@/hooks/useAuthContext"
 import { TierListPreview } from "@/components/TierListPreview"
 import type { Battle, BattleParticipant } from "@/types/battles"
+import { DiscussionSection } from "@/components/DiscussionSection/DiscussionSection"
 import "./BattleDetailPage.css"
 
 type VoteState = "idle" | "voting" | "voted" | "error"
@@ -36,28 +37,28 @@ const ParticipantCard = memo(({
   isAuthenticated,
   battleStatus,
 }: ParticipantCardProps) => (
-  <div className={`participant-card h-full flex flex-col ${isWinner ? "border-yellow-500/40" : ""}`}>
+  <div className={`participant-card relative h-full flex flex-col ${isWinner ? "border-yellow-500/40" : ""}`}>
     {isWinner && (
-      <div className="absolute top-3 right-3 z-10">
-        <Trophy size={20} className="text-yellow-400" />
+      <div className="absolute top-4 right-4 z-10">
+        <Trophy size={24} className="text-yellow-400" />
       </div>
     )}
 
-    <div className="flex items-center gap-3 mb-5">
-      <div className="w-10 h-10 rounded-full border-2 border-(--line-soft) bg-(--bg-2) overflow-hidden brutal-shadow-sm shrink-0">
+    <div className="flex items-center gap-4 mb-6">
+      <div className="w-12 h-12 rounded-full border-2 border-(--line-soft) bg-(--bg-2) overflow-hidden brutal-shadow-sm shrink-0">
         {tl?.user?.avatarUrl ? (
           <img src={tl.user.avatarUrl} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-(--ink-1) text-xs font-bold">
+          <div className="w-full h-full flex items-center justify-center text-(--ink-1) text-sm font-bold">
             {tl?.user?.username?.[0]?.toUpperCase() || "?"}
           </div>
         )}
       </div>
       <div className="min-w-0">
-        <h3 className="font-bold text-sm leading-tight truncate">
+        <h3 className="font-bold text-base leading-tight truncate">
           {tl?.title || "Без названия"}
         </h3>
-        <p className="text-[10px] text-(--ink-1) font-medium">
+        <p className="text-xs text-(--ink-1) font-medium">
           {tl?.user?.username || "Неизвестный"}
         </p>
       </div>
@@ -70,10 +71,10 @@ const ParticipantCard = memo(({
     )}
 
     <div className="vote-section mt-auto">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-bold text-(--ink-0)">
+      <div className="flex items-center justify-between mb-5">
+        <span className="text-base font-bold text-(--ink-0)">
           {participant.votesCount || 0}{" "}
-          <span className="text-[10px] font-medium text-(--ink-1) uppercase tracking-wider">
+          <span className="text-xs font-medium text-(--ink-1) uppercase tracking-wider">
             голосов
           </span>
         </span>
@@ -84,7 +85,7 @@ const ParticipantCard = memo(({
           {isAuthenticated ? (
             userVoted ? (
               <div className="voted-badge">
-                <CheckCircle size={14} />
+                <CheckCircle size={16} />
                 Вы проголосовали
               </div>
             ) : (
@@ -96,7 +97,7 @@ const ParticipantCard = memo(({
                 >
                   {voteState === "voting" ? (
                     <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={14} className="animate-spin" />
+                      <Loader2 size={16} className="animate-spin" />
                       Голосую...
                     </span>
                   ) : (
@@ -106,7 +107,7 @@ const ParticipantCard = memo(({
               </MetalFx>
             )
           ) : (
-            <p className="text-center text-[10px] text-(--ink-1) font-medium uppercase tracking-wider">
+            <p className="text-center text-xs text-(--ink-1) font-medium uppercase tracking-wider">
               Войдите, чтобы голосовать
             </p>
           )}
@@ -114,7 +115,7 @@ const ParticipantCard = memo(({
       )}
 
       {battleStatus === "completed" && (
-        <div className="text-center text-[10px] text-(--ink-1) font-medium uppercase tracking-wider">
+        <div className="text-center text-xs text-(--ink-1) font-medium uppercase tracking-wider">
           Битва завершена
         </div>
       )}
@@ -270,7 +271,7 @@ export default function BattleDetailPage() {
         activeItem="Сообщество"
       >
         <div className="battle-shell min-h-screen">
-          <main className="max-w-4xl mx-auto px-6 py-14">
+          <main className="max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-20 py-14">
             <button onClick={handleBack} className="flex items-center gap-2 text-(--ink-1) hover:text-(--ink-0) transition-colors text-xs font-bold uppercase tracking-widest mb-10">
               <ArrowLeft size={14} />
               Назад к битвам
@@ -299,7 +300,7 @@ export default function BattleDetailPage() {
       activeItem="Сообщество"
     >
       <div className="battle-shell min-h-screen">
-        <main className="max-w-4xl mx-auto px-6 py-14 cursor-default text-(--ink-0)">
+        <main className="max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-20 py-14 cursor-default text-(--ink-0)">
           {/* Back button */}
           <button
             onClick={handleBack}
@@ -338,17 +339,17 @@ export default function BattleDetailPage() {
                 )}
               </div>
               <div className="flex gap-4 shrink-0 overflow-x-auto">
-                <div className="forum-stat-card brutal-card brutal-border p-4 min-w-[100px] text-center">
-                  <div className="text-2xl font-black mb-1">{battle.participants.length}</div>
-                  <div className="text-[9px] font-bold uppercase tracking-widest text-(--ink-1)">
+                <div className="forum-stat-card brutal-card brutal-border p-5 min-w-[120px] text-center">
+                  <div className="text-3xl font-black mb-1">{battle.participants.length}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-(--ink-1)">
                     Участников
                   </div>
                 </div>
-                <div className="forum-stat-card brutal-card brutal-border p-4 min-w-[100px] text-center">
-                  <div className="text-2xl font-black mb-1">
+                <div className="forum-stat-card brutal-card brutal-border p-5 min-w-[120px] text-center">
+                  <div className="text-3xl font-black mb-1">
                     {battle.participants.reduce((a, p) => a + (p.votesCount || 0), 0)}
                   </div>
-                  <div className="text-[9px] font-bold uppercase tracking-widest text-(--ink-1)">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-(--ink-1)">
                     Голосов
                   </div>
                 </div>
@@ -393,8 +394,8 @@ export default function BattleDetailPage() {
                 <p className="text-(--ink-1) font-medium">В этой битве пока нет участников</p>
               </div>
             ) : battle.participants.length === 2 ? (
-              <div className="flex flex-col md:flex-row items-stretch gap-6 md:gap-4">
-                <div className="flex-1 w-full">
+              <div className="flex flex-col xl:flex-row items-stretch gap-8 xl:gap-6">
+                <div className="flex-1 w-full min-w-0">
                   <ParticipantCard
                     participant={battle.participants[0]}
                     tl={battle.participants[0].tierList}
@@ -406,10 +407,10 @@ export default function BattleDetailPage() {
                     battleStatus={battle.status}
                   />
                 </div>
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center shrink-0">
                   <div className="battle-vs">VS</div>
                 </div>
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full min-w-0">
                   <ParticipantCard
                     participant={battle.participants[1]}
                     tl={battle.participants[1].tierList}
@@ -446,6 +447,9 @@ export default function BattleDetailPage() {
               </div>
             )}
           </section>
+
+          {/* Discussion section */}
+          <DiscussionSection variant="battle" battleId={battle.id} />
         </main>
       </div>
     </DashboardLayout>

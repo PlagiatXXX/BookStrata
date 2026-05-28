@@ -16,6 +16,7 @@ import { battleRoutes } from "../src/modules/battles/battles.route.js";
 import { forumRoutes } from "../src/modules/forum/forum.route.js";
 import { externalNewsRoutes } from "../src/modules/external-news/external-news.route.js";
 import { donorRoutes } from "../src/modules/donors/donors.route.js";
+import { discussionRoutes } from "../src/modules/discussions/discussions.route.js";
 import { feedbackRoutes } from "../src/modules/feedback/feedback.route.js";
 import { ratingsRoutes } from "../src/modules/ratings/ratings.route.js";
 import { adminStatsRoutes } from "../src/modules/admin-stats/admin-stats.route.js";
@@ -320,6 +321,9 @@ fastify.register(templatesPlugin, { prisma, prefix: "/api" });
 
 // Donors (публичный список + админка)
 fastify.register(donorRoutes, { prefix: "/api/donors" });
+
+// Discussions (обсуждения на странице битв)
+fastify.register(discussionRoutes, { prefix: "/api/discussions" });
 
 // Feedback (обратная связь)
 fastify.register(feedbackRoutes, { prefix: "/api/feedback" });

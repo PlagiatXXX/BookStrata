@@ -151,15 +151,15 @@ export const TierRow = memo(
             <button
               onClick={() => onSetActive(tier.id)}
               title="Настройки"
-              aria-label="Настройки уровня"
+              aria-label="Настройки блока"
               className="text-gray-400 hover:text-[#c1fffe] cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none rounded-sm"
             >
               <Settings size={18} />
             </button>
             <button
               onClick={() => onDelete(tier.id)}
-              title="Удалить тир"
-              aria-label="Удалить уровень"
+              title="Удалить блок"
+              aria-label="Удалить блок"
               className="text-gray-400 hover:text-[#ff51fa] cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none rounded-sm"
             >
               <Trash2 size={18} />

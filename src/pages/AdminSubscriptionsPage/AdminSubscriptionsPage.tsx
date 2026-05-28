@@ -5,6 +5,7 @@ import { api } from "@/lib/api-client";
 import type { AdminUser } from "@/types/auth";
 import { sileo } from "sileo";
 import { Users, Crown, Clock, Shield, ArrowLeft } from "lucide-react";
+import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
 
 // Убираем дублирующий интерфейс — используем AdminUser из types/auth
 interface SubscriptionStats {
@@ -35,6 +36,7 @@ export default function AdminSubscriptionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "pro" | "free">("all");
   const [customDays, setCustomDays] = useState<Record<number, string>>({});
+  const [deactivateUserId, setDeactivateUserId] = useState<number | null>(null);
   const queryClient = useQueryClient();
 
   // Загрузка всех пользователей
@@ -374,14 +376,7 @@ export default function AdminSubscriptionsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {user.isPro ? (
                           <button
-                            onClick={() => {
-                              if (confirm("Деактивировать Pro подписку?")) {
-                                setProStatus.mutate({
-                                  userId: user.userId,
-                                  isPro: false,
-                                });
-                              }
-                            }}
+                            onClick={() => setDeactivateUserId(user.userId)}
                             className="text-red-600 hover:text-red-900"
                           >
                             Деактивировать
@@ -473,6 +468,23 @@ export default function AdminSubscriptionsPage() {
           </div>
         </div>
       </div>
+
+      <EditorConfirmModal
+        isOpen={deactivateUserId !== null}
+        onClose={() => setDeactivateUserId(null)}
+        onConfirm={() => {
+          if (deactivateUserId) {
+            setProStatus.mutate({ userId: deactivateUserId, isPro: false });
+            setDeactivateUserId(null);
+          }
+        }}
+        title="Деактивировать Pro?"
+        titleId="deactivate-pro-title"
+        confirmLabel="Деактивировать"
+        description={
+          <p>Пользователь потеряет доступ к Pro-функциям. Это действие можно отменить позже.</p>
+        }
+      />
     </div>
   );
 }

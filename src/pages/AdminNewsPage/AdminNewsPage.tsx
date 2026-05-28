@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
+import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
 import {
   getNews,
   createNews,
@@ -61,6 +62,7 @@ export function AdminNewsPage() {
   const [editingNews, setEditingNews] = useState<NewsArticle | null>(null);
   const [formData, setFormData] = useState<NewsFormData>(emptyFormData);
   const [formLoading, setFormLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -187,10 +189,6 @@ export function AdminNewsPage() {
   };
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Вы уверены, что хотите удалить новость "${title}"?`)) {
-      return;
-    }
-
     try {
       await deleteNews(id);
       sileo.success({
@@ -198,6 +196,7 @@ export function AdminNewsPage() {
         description: `"${title}" удалена`,
         duration: 3000,
       });
+      setDeleteConfirm(null);
       loadNews();
     } catch (error) {
       console.error("Failed to delete news:", error);
@@ -393,7 +392,7 @@ export function AdminNewsPage() {
                       </button>
                       <button
                         className="admin-news-action-btn delete"
-                        onClick={() => handleDelete(article.id, article.title)}
+                        onClick={() => setDeleteConfirm({ id: article.id, title: article.title })}
                         title="Удалить"
                       >
                         <Trash2 size={16} />
@@ -556,6 +555,24 @@ export function AdminNewsPage() {
             </div>
           </div>
         )}
+
+      <EditorConfirmModal
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => {
+          if (deleteConfirm) {
+            handleDelete(deleteConfirm.id, deleteConfirm.title);
+          }
+        }}
+        title="Удалить новость?"
+        titleId="delete-news-title"
+        confirmLabel="Удалить"
+        description={
+          deleteConfirm ? (
+            <p>Вы уверены, что хотите удалить новость <span className="font-bold text-[#f6f1e8]">"{deleteConfirm.title}"</span>?</p>
+          ) : null
+        }
+      />
       </div>
     </DashboardLayout>
   );

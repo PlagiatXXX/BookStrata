@@ -71,7 +71,7 @@ export function TierListCoverEditor({
                 disabled={uploading}
               >
                 <ImagePlus size={14} />
-                {uploading ? "Загрузка..." : "Изменить обложку"}
+                {uploading ? "Загрузка..." : "Изменить обложку тир-листа"}
               </button>
             </div>
           ) : (
@@ -82,7 +82,7 @@ export function TierListCoverEditor({
               disabled={uploading}
             >
               <ImagePlus size={14} />
-              {uploading ? "Загрузка..." : "Добавить обложку"}
+              {uploading ? "Загрузка..." : "Добавить обложку тир-листа"}
               {!isPro && <span className="tier-list-cover-editor__pro-badge">Pro</span>}
             </button>
           )}

@@ -10,7 +10,8 @@ import {
   XCircle,
   Loader,
   Crown,
-} from "lucide-react";
+} from "lucide-react"
+import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal"
 import { apiClient } from "@/lib/api-client";
 
 interface FeedbackUser {
@@ -62,7 +63,9 @@ export function AdminFeedbackPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rewardingId, setRewardingId] = useState<number | null>(null);
+  const [rewardError, setRewardError] = useState<string | null>(null);
   const [rewarding, setRewarding] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const fetchFeedback = async () => {
     try {
@@ -91,10 +94,10 @@ export function AdminFeedbackPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Удалить этот отзыв?")) return;
     try {
       await apiClient.delete(`/feedback/${id}`);
       setFeedback((prev) => prev.filter((f) => f.id !== id));
+      setDeleteConfirmId(null);
     } catch {
       // ignore
     }
@@ -105,8 +108,9 @@ export function AdminFeedbackPage() {
     try {
       await apiClient.post("/subscriptions/activate", { userId, durationDays });
       setRewardingId(null);
+      setRewardError(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Ошибка");
+      setRewardError(err instanceof Error ? err.message : "Ошибка при активации");
     } finally {
       setRewarding(false);
     }
@@ -147,9 +151,9 @@ export function AdminFeedbackPage() {
           <div className="text-center py-12 text-gray-400">Загрузка…</div>
         )}
 
-        {error && (
+        {(error || rewardError) && (
           <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400">
-            {error}
+            {error || rewardError}
           </div>
         )}
 
@@ -269,7 +273,7 @@ export function AdminFeedbackPage() {
                       </select>
 
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => setDeleteConfirmId(item.id)}
                         className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
                         title="Удалить"
                       >
@@ -283,6 +287,18 @@ export function AdminFeedbackPage() {
           </div>
         )}
       </div>
+
+      <EditorConfirmModal
+        isOpen={deleteConfirmId !== null}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+        title="Удалить отзыв?"
+        titleId="delete-feedback-title"
+        confirmLabel="Удалить"
+        description={
+          <p>Это действие нельзя отменить.</p>
+        }
+      />
     </div>
   );
 }

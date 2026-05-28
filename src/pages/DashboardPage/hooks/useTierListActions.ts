@@ -2,6 +2,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/tierListApi";
 import { createLogger } from "@/lib/logger";
+import { sileo } from "sileo";
 
 // Логгер для хука действий тир-листов
 const logger = createLogger("TierListActions", { color: "magenta" });
@@ -52,9 +53,11 @@ export function useTierListActions({
           : new Error(String(mutationError)),
         { action: "createTierList" },
       );
-      alert(
-        `Ошибка: ${mutationError instanceof Error ? mutationError.message : "Unknown error"}`,
-      );
+      sileo.error({
+        title: "Ошибка создания",
+        description: mutationError instanceof Error ? mutationError.message : "Попробуйте снова",
+        duration: 4000,
+      });
     },
   });
 

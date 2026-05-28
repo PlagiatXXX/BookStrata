@@ -34,6 +34,7 @@ passwordResetTokens  PasswordResetToken[]
 achievements         UserAchievement[]
   battleVotes          BattleVote[]
   battleApplications   BattleApplication[]
+  discussionMessages   DiscussionMessage[]
   feedback             Feedback[]
   bookRatings          BookRating[]
   role                 Role?      @relation(fields: [roleId], references: [id])
@@ -153,6 +154,7 @@ status       String              @default("active") // "active", "completed"
 startTime    DateTime            @default(now()) @map("start_time")
 endTime      DateTime            @map("end_time")
 winnerId     String?                @map("winner_id")
+  discussion   Discussion?
   participants BattleParticipant[]
   votes        BattleVote[]
   applications BattleApplication[]
@@ -293,6 +295,36 @@ model Donor {
   name String
 
   @@map("donors")
+}
+
+// Обсуждения (чат на странице битв)
+model Discussion {
+  id        String              @id @default(uuid())
+  battleId  String?             @unique @map("battle_id")
+  title     String?
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+  messages  DiscussionMessage[]
+  battle    Battle?             @relation(fields: [battleId], references: [id], onDelete: Cascade)
+
+  @@map("discussions")
+}
+
+model DiscussionMessage {
+  id           String             @id @default(uuid())
+  content      String
+  userId       Int                @map("user_id")
+  discussionId String             @map("discussion_id")
+  parentId     String?            @map("parent_id")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  discussion   Discussion         @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  parent       DiscussionMessage? @relation("MessageReplies", fields: [parentId], references: [id])
+  replies      DiscussionMessage[] @relation("MessageReplies")
+
+  @@index([discussionId, createdAt])
+  @@map("discussion_messages")
 }
 
 // Обратная связь от пользователей

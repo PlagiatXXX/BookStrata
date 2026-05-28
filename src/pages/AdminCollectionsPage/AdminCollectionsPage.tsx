@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
+import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
 import {
   getAllCollectionsForAdmin,
   createCollection,
@@ -58,6 +59,7 @@ export function AdminCollectionsPage() {
     useState<CollectionItem | null>(null);
   const [formData, setFormData] = useState<CollectionFormData>(emptyFormData);
   const [formLoading, setFormLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; title: string } | null>(null);
 
   // Проверка на администратора
   const isAdmin = user?.role === "admin";
@@ -166,10 +168,6 @@ export function AdminCollectionsPage() {
   };
 
   const handleDelete = async (id: number, title: string) => {
-    if (!confirm(`Вы уверены, что хотите удалить коллекцию "${title}"?`)) {
-      return;
-    }
-
     try {
       await deleteCollection(id);
       sileo.success({
@@ -178,6 +176,7 @@ export function AdminCollectionsPage() {
         duration: 3000,
       });
       loadCollections();
+      setDeleteConfirm(null);
     } catch (error) {
       console.error("Failed to delete collection:", error);
       sileo.error({
@@ -344,13 +343,13 @@ export function AdminCollectionsPage() {
                       )}
                     </td>
                     <td className="admin-collections-actions">
-                      <button
-                        className="admin-collections-action-btn"
-                        onClick={() => handleOpenEdit(collection)}
-                        title="Редактировать"
-                      >
-                        <Pencil size={16} />
-                      </button>
+              <button
+                onClick={() => setDeleteConfirm({ id: collection.id, title: collection.title })}
+                className="cursor-pointer text-gray-400 hover:text-red-400 transition-colors"
+                title="Удалить"
+              >
+                <Trash2 size={16} />
+              </button>
                       <button
                         className="admin-collections-action-btn delete"
                         onClick={() =>
@@ -539,6 +538,24 @@ export function AdminCollectionsPage() {
             </div>
           </div>
         )}
+
+      <EditorConfirmModal
+        isOpen={deleteConfirm !== null}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => {
+          if (deleteConfirm) {
+            handleDelete(deleteConfirm.id, deleteConfirm.title);
+          }
+        }}
+        title="Удалить коллекцию?"
+        titleId="delete-collection-title"
+        confirmLabel="Удалить"
+        description={
+          deleteConfirm ? (
+            <p>Вы уверены, что хотите удалить коллекцию <span className="font-bold text-[#f6f1e8]">"{deleteConfirm.title}"</span>?</p>
+          ) : null
+        }
+      />
       </div>
     </DashboardLayout>
   );

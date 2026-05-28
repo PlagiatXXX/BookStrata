@@ -29,7 +29,6 @@ interface SettingsSidebarProps {
   onAddRow?: () => void;
   onClearRows?: () => void;
   onDownloadImage?: () => void;
-  onMyRatingsClick: () => void;
   onDeleteRating?: () => void;
   isPublic?: boolean;
   onTogglePublic?: (isPublic: boolean) => void;
@@ -43,7 +42,6 @@ export const SettingsSidebar = memo(({
   onAddRow = () => {},
   onClearRows = () => {},
   onDownloadImage = () => {},
-  onMyRatingsClick,
   onDeleteRating,
   isPublic = false,
   onTogglePublic,
@@ -88,21 +86,21 @@ export const SettingsSidebar = memo(({
       )}
 
       <div className="nb-section-header">
-        <h3 className="nb-label-md mb-4 text-[#c1fffe]">Управление тирами</h3>
+        <h3 className="nb-label-md mb-4 text-[#c1fffe]">Управление блоками</h3>
         <div className="grid grid-cols-1 gap-3">
           <button
             onClick={() => onAddRow()}
             className={secondaryActionButtonClass}
           >
             <Plus size={16} className={actionIconClass} />
-            Добавить тир
+            Добавить блок
           </button>
           <button
             onClick={onClearRows}
             className={dangerActionButtonClass}
           >
             <Trash2 size={16} className={actionIconClass} />
-            Очистить тиры
+            Очистить блоки
           </button>
         </div>
       </div>
@@ -184,14 +182,7 @@ export const SettingsSidebar = memo(({
           className={primaryActionButtonClass}
         >
           <ImageDown size={16} className={actionIconClass} />
-          Скачать
-        </button>
-
-        <button
-          onClick={onMyRatingsClick}
-          className={secondaryActionButtonClass}
-        >
-          Мои рейтинги
+          Скачать тир-лист
         </button>
 
         {onDeleteRating && (

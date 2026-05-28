@@ -18,7 +18,7 @@ export function DeleteTierModal({
       isOpen={isOpen}
       onClose={onClose}
       onConfirm={onConfirm}
-      title="Удалить тир?"
+      title="Удалить блок?"
       titleId="delete-tier-title"
       confirmLabel="Удалить"
       description={
@@ -26,11 +26,11 @@ export function DeleteTierModal({
           <p>
             {tierTitle ? (
               <>
-                Вы уверены, что хотите удалить тир{" "}
+                Вы уверены, что хотите удалить блок{" "}
                 <span className="font-bold text-[#f6f1e8]">"{tierTitle}"</span>?
               </>
             ) : (
-              "Вы уверены, что хотите удалить этот тир?"
+              "Вы уверены, что хотите удалить этот блок?"
             )}
           </p>
           <p className="mt-3">

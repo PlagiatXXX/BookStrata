@@ -265,3 +265,65 @@ Hybrid skill architecture:
 - See skill-specific evals for testing patterns
 
 See `.opencode/skills/*/evals/evals.json` for eval tests.
+
+---
+
+## Session — 2026-05-27 — Discussions & Chat + UI Polish
+
+### Что сделано
+
+**1. UI/UX доработки:**
+- BattleDetailPage: full-width layout (`max-w-4xl` → `max-w-[1800px]`), карточки xl:, обложки 44→80px, participant-card padding 20→28px, border-radius 8→12px
+- Терминология: «тир» → «блок» во всех UI-строках редактора (TierGrid, SettingsSidebar, TierRow, DeleteTierModal, ClearAllModal)
+- SettingsSidebar: убрана кнопка «Мои рейтинги», «Удалить рейтинг» — в самый низ; «Скачать» → «Скачать тир-лист»
+- EditorConfirmModal: убран подзаголовок, убран вложенный border-box, AlertTriangle size-12→size-10, кнопки compact, Cancel/Confirm по краям
+- Modal.tsx: добавлен `document.body.style.overflow = "hidden"` при открытии
+- FeedbackButton: на `/community` смещается влево (`left-6` вместо `right-6`) — не конкурирует с FAB «Создать шаблон»
+
+**2. Нативные диалоги → компоненты:**
+- `confirm()` → `EditorConfirmModal` в AdminSubscriptionsPage, AdminCollectionsPage, AdminNewsPage
+- `alert()` → `sileo.error()` в `useTierListActions`
+- `alert()` → локальный `localError` state в `UploadTab`
+- `alert()` в AdminFeedbackPage → `rewardError` state + инлайн-рендер
+
+**3. Обсуждения и чат (новая фича):**
+- **Prisma:** модели `Discussion` (+ `battleId?` unique nullable) и `DiscussionMessage` (+ `parentId?` для веток). Миграция: `20260527143801_add_discussions`.
+- **Бэкенд-модуль** `backend/src/modules/discussions/`:
+
+| Endpoint | Описание | Auth |
+|---|---|---|
+| `GET /api/discussions/battle/:battleId` | Комментарии для битвы | нет |
+| `GET /api/discussions/general` | Get-or-create общий чат | auth |
+| `POST /api/discussions` | Создать discussion | auth |
+| `GET /api/discussions/:id/messages` | Пагинированные сообщения | нет |
+| `POST /api/discussions/:id/messages` | Создать сообщение | auth |
+| `PATCH /api/discussions/:id/messages/:messageId` | Редактировать своё | auth |
+| `DELETE /api/discussions/:id/messages/:messageId` | Удалить (admin/mod) | auth |
+
+- **Права:** автор — редактирует; админ/модератор — удаляет
+- **Фронтенд-компонент** `DiscussionSection` с variant:
+  - `variant="battle"` — comments per battle (на `BattleDetailPage`, под участниками, заголовок «Комментарии»)
+  - `variant="general"` — общий чат (вкладка «Обсуждения» на `ForumPage`, заголовок «Обсуждение»)
+- ForumPage: таб «Обсуждения» активирован (был `cursor-not-allowed opacity-50` + «Скоро»), переключается с табом «Битвы»
+- Chat-style UI: Enter отправка, автоскролл к новым, ответы (ветки) с отступом, редактирование с меткой «изменено», бейджи «Админ»/«Мод»
+
+### Новые файлы
+- `backend/src/modules/discussions/discussions.{schema,service,route}.ts`
+- `src/types/discussions.ts`
+- `src/lib/discussionApi.ts`
+- `src/components/DiscussionSection/DiscussionSection.{tsx,css}`
+
+### Изменённые файлы
+- `backend/prisma/schema.prisma` (+ Discussion, DiscussionMessage, User.discussionMessages, Battle.discussion)
+- `backend/src/server.ts` (+ import discussionRoutes, register)
+- `src/pages/BattleDetailPage/BattleDetailPage.tsx` (+ DiscussionSection)
+- `src/pages/ForumPage/ForumPage.tsx` (активный таб "discussions")
+- `src/components/FeedbackButton/FeedbackButton.tsx` (community page position via useLocation)
+- Admin страницы: AdminSubscriptionsPage, AdminCollectionsPage, AdminNewsPage (confirm → EditorConfirmModal), AdminFeedbackPage (alert → state)
+- `src/pages/DashboardPage/hooks/useTierListActions.ts` (alert → sileo.error)
+- `src/components/Avatar/components/UploadTab.tsx` (alert → localError)
+- `src/components/EditorModals/EditorConfirmModal.tsx`, `src/ui/Modal.tsx` (стилизация)
+
+### Gotchas
+- Бэкенд LSP может показывать ошибки `Property 'discussion' does not exist on type 'PrismaClient'` — это после миграции Prisma нужно перегенерировать клиент в IDE (перезапустить LSP). Сборка `npm run build` в `backend/` проходит чисто.
+- `Discussion.battleId` nullable + unique — гарантирует один discussion на битву или один общий чат (где battleId = null).

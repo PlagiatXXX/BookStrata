@@ -4,16 +4,22 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, LayoutGrid, MessageSquare } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BattleList } from "./components/BattleList";
+import { DiscussionSection } from "@/components/DiscussionSection/DiscussionSection";
 import { CuratorApplyModal } from "@/components/CuratorApplyModal/CuratorApplyModal";
 import { getForumStats } from "@/lib/battlesApi";
 import { Spinner } from "@/components/Spinner";
 import "./ForumPage.css";
 
 const MemoizedBattleList = memo(BattleList);
+const MemoizedDiscussionSection = memo(
+  () => <DiscussionSection variant="general" />,
+  () => false,
+);
 
 export default function ForumPage() {
   const navigate = useNavigate();
   const [showCuratorModal, setShowCuratorModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<"battles" | "discussions">("battles");
 
   useEffect(() => {
     const elements = Array.from(
@@ -98,20 +104,38 @@ export default function ForumPage() {
 
           {/* Activity Tabs / Sections */}
           <div className="flex items-center gap-6 mb-12 border-b border-(--line-soft) reveal" data-reveal>
-             <button className="forum-tab active flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 border-(--accent-main) text-(--ink-0)">
+             <button
+               onClick={() => setActiveTab("battles")}
+               className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
+                 activeTab === "battles"
+                   ? "border-(--accent-main) text-(--ink-0)"
+                   : "border-transparent text-(--ink-1) hover:text-(--ink-0)"
+               }`}
+             >
                <LayoutGrid size={16} />
                Битвы
              </button>
-             <button className="forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 border-transparent text-(--ink-1) hover:text-(--ink-0) transition-colors cursor-not-allowed opacity-50">
+             <button
+               onClick={() => setActiveTab("discussions")}
+               className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
+                 activeTab === "discussions"
+                   ? "border-(--accent-main) text-(--ink-0)"
+                   : "border-transparent text-(--ink-1) hover:text-(--ink-0)"
+               }`}
+             >
                <MessageSquare size={16} />
                Обсуждения
-               <span className="text-[8px] bg-(--bg-2) px-1.5 py-0.5 rounded ml-1">Скоро</span>
              </button>
           </div>
 
-          <MemoizedBattleList />
+          {activeTab === "battles" ? (
+            <MemoizedBattleList />
+          ) : (
+            <MemoizedDiscussionSection />
+          )}
 
           {/* Bottom Call to Action */}
+          {activeTab === "battles" && (
           <section className="mt-24 reveal" data-reveal>
             <div className="brutal-card brutal-border bg-(--ink-0) text-(--bg-0) p-10 md:p-16 relative overflow-hidden">
                <div className="relative z-10 max-w-2xl">
@@ -135,6 +159,7 @@ export default function ForumPage() {
                </div>
             </div>
           </section>
+          )}
 
           {showCuratorModal && (
             <CuratorApplyModal

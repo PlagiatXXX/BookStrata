@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Bug, MessageCircle, X, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuthContext";
 import { sendFeedback } from "@/lib/feedbackApi";
@@ -18,6 +19,8 @@ export function FeedbackButton() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const { user } = useAuth();
+  const location = useLocation();
+  const isCommunityPage = location.pathname === "/community";
 
   const handleSubmit = async () => {
     if (!message.trim()) return;
@@ -49,7 +52,7 @@ export function FeedbackButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-2xl shadow-violet-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer"
+        className={`fixed bottom-6 z-50 w-14 h-14 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-2xl shadow-violet-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer ${isCommunityPage ? "left-6" : "right-6"}`}
         aria-label="Обратная связь"
         title="Сообщить о проблеме"
       >

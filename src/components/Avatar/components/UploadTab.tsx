@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Upload as UploadIcon } from "lucide-react";
 import { Spinner } from "@/components/Spinner";
 import type { UploadTabProps } from "../types";
@@ -9,9 +10,12 @@ export function UploadTab({
   error,
   isBusy = false,
 }: UploadTabProps) {
+  const [localError, setLocalError] = useState<string | null>(null);
+
   const handleFileSelect = (file: File) => {
+    setLocalError(null);
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-      alert(`Файл слишком большой. Максимум ${MAX_FILE_SIZE_MB}MB.`);
+      setLocalError(`Файл слишком большой. Максимум ${MAX_FILE_SIZE_MB}MB.`);
       return;
     }
 
@@ -82,9 +86,9 @@ export function UploadTab({
         )}
       </div>
 
-      {error && (
+      {(error || localError) && (
         <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">
-          <p className="text-sm text-red-400">{error}</p>
+          <p className="text-sm text-red-400">{error || localError}</p>
         </div>
       )}
 
