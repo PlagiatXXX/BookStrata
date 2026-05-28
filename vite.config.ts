@@ -13,6 +13,9 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  optimizeDeps: {
+    exclude: ["nsfwjs"],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
@@ -30,6 +33,7 @@ export default defineConfig({
     minify: "esbuild",
     target: "esnext",
     rollupOptions: {
+      external: [/nsfwjs\/dist\/models/],
       output: {
         manualChunks: {
           "react-vendor": ["react", "react-dom", "react-router-dom"],
@@ -41,9 +45,14 @@ export default defineConfig({
           ],
           "motion-vendor": ["framer-motion"],
           "tiptap-vendor": ["@tiptap/react", "@tiptap/starter-kit"],
+          "tf-vendor": [
+            "@tensorflow/tfjs-core",
+            "@tensorflow/tfjs-backend-webgl",
+            "nsfwjs",
+          ],
         },
       },
     },
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 1200,
   },
 });

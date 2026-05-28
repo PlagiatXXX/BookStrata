@@ -52,3 +52,51 @@ export async function apiGetWarnings(userId: number): Promise<Warning[]> {
 export async function apiChangeRole(userId: number, role: string) {
   return apiClient.put(`/moderation/users/${userId}/role`, { role })
 }
+
+// ====== Флаги контента (NSFW) ======
+
+export interface ContentFlag {
+  id: number
+  userId: number
+  username: string | null
+  avatarUrl: string | null
+  imageUrl: string
+  flagType: string
+  targetId: string | null
+  nsfwScore: number | null
+  status: string
+  createdAt: string
+  resolvedAt: string | null
+  resolvedByUsername: string | null
+}
+
+export interface FlagsListResult {
+  flags: ContentFlag[]
+  total: number
+}
+
+export async function apiCreateFlag(data: {
+  imageUrl: string
+  flagType: string
+  targetId?: string | null
+  nsfwScore?: number | null
+}) {
+  return apiClient.post("/moderation/flags", data)
+}
+
+export async function apiGetFlags(params?: {
+  status?: string
+  page?: number
+  pageSize?: number
+}): Promise<FlagsListResult> {
+  const searchParams = new URLSearchParams()
+  if (params?.status) searchParams.set("status", params.status)
+  if (params?.page) searchParams.set("page", String(params.page))
+  if (params?.pageSize) searchParams.set("pageSize", String(params.pageSize))
+  const qs = searchParams.toString()
+  return apiClient.get<FlagsListResult>(`/moderation/flags${qs ? `?${qs}` : ""}`)
+}
+
+export async function apiResolveFlag(flagId: number, action: "resolved" | "dismissed") {
+  return apiClient.patch(`/moderation/flags/${flagId}/resolve`, { action })
+}

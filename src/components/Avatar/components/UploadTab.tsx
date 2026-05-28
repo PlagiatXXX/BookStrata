@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Upload as UploadIcon } from "lucide-react";
 import { Spinner } from "@/components/Spinner";
+import { useNsfwCheck } from "@/hooks/useNsfwCheck";
+import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
+import { apiCreateFlag } from "@/lib/moderationApi";
 import type { UploadTabProps } from "../types";
+import type { NsfwResult } from "@/hooks/useNsfwCheck";
 import { MAX_FILE_SIZE_MB } from "../constants";
 
 export function UploadTab({
@@ -11,26 +15,78 @@ export function UploadTab({
   isBusy = false,
 }: UploadTabProps) {
   const [localError, setLocalError] = useState<string | null>(null);
+  const [nsfwState, setNsfwState] = useState<{
+    checking: boolean;
+    result: NsfwResult | null;
+    pendingFile: File | null;
+    pendingBase64: string | null;
+  }>({ checking: false, result: null, pendingFile: null, pendingBase64: null });
+  const pendingFileRef = useRef<File | null>(null);
 
-  const handleFileSelect = (file: File) => {
+  const { checkImage } = useNsfwCheck();
+
+  const handleFileSelect = async (file: File) => {
     setLocalError(null);
+
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       setLocalError(`Файл слишком большой. Максимум ${MAX_FILE_SIZE_MB}MB.`);
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      onFileSelect(base64);
-    };
-    reader.readAsDataURL(file);
+    setNsfwState({ checking: true, result: null, pendingFile: file, pendingBase64: null });
+
+    try {
+      const result = await checkImage(file);
+
+      if (result.isNsfw) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setNsfwState({
+            checking: false,
+            result,
+            pendingFile: file,
+            pendingBase64: reader.result as string,
+          });
+        };
+        reader.readAsDataURL(file);
+        return
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        onFileSelect(reader.result as string);
+        setNsfwState({ checking: false, result: null, pendingFile: null, pendingBase64: null });
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setNsfwState({ checking: false, result: null, pendingFile: null, pendingBase64: null });
+      const reader = new FileReader();
+      reader.onload = () => onFileSelect(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleNsfwOverride = () => {
+    if (nsfwState.pendingBase64) {
+      const maxScore = nsfwState.result
+        ? Math.max(...nsfwState.result.predictions.map((p) => p.probability))
+        : null
+      apiCreateFlag({
+        imageUrl: nsfwState.pendingBase64,
+        flagType: "avatar",
+        nsfwScore: maxScore,
+      }).catch(() => {})
+      onFileSelect(nsfwState.pendingBase64);
+    }
+    setNsfwState({ checking: false, result: null, pendingFile: null, pendingBase64: null });
+  };
+
+  const handleNsfwDismiss = () => {
+    setNsfwState({ checking: false, result: null, pendingFile: null, pendingBase64: null });
   };
 
   const openFilePicker = () => {
-    if (isBusy) {
-      return;
-    }
+    if (isBusy || nsfwState.checking) return;
 
     const input = document.createElement("input");
     input.type = "file";
@@ -38,6 +94,7 @@ export function UploadTab({
     input.onchange = (event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
       if (file) {
+        pendingFileRef.current = file;
         handleFileSelect(file);
       }
     };
@@ -85,6 +142,14 @@ export function UploadTab({
           </>
         )}
       </div>
+
+      <NsfwWarning
+        isChecking={nsfwState.checking}
+        isNsfw={nsfwState.result?.isNsfw ?? false}
+        predictions={nsfwState.result?.predictions}
+        onOverride={handleNsfwOverride}
+        onDismiss={handleNsfwDismiss}
+      />
 
       {(error || localError) && (
         <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl">

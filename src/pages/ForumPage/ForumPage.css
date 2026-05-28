@@ -64,18 +64,19 @@
 .heading-character {
   position: absolute;
   bottom: 100%;
-  left: 50%;
+  left: 25%;
   transform: translateX(-50%);
-  height: 1.2em;
+  height: 1.4em;
   width: auto;
   pointer-events: none;
-  margin-bottom: -0.3em;
+  margin-bottom: -0.5em;
 }
 
 @media (max-width: 639px) {
   .heading-character {
-    height: 1.8em;
-    margin-bottom: -0.5em;
+    height: 2.2em;
+    left: 20%;
+    margin-bottom: -0.8em;
   }
 }
 

@@ -430,3 +430,51 @@ See `.opencode/skills/*/evals/evals.json` for eval tests.
 
 ### Gotchas
 - `checkChatBan` middleware и `getUserStatus` должны проверять `chatBannedAt !== null` для перманентного бана, а не только `chatBannedUntil > new Date()`
+
+---
+
+## Session — 2026-05-28 — NSFW Detection + Content Flags (admin panel)
+
+### Что сделано
+
+**NSFW detection system:**
+- Установлены `@tensorflow/tfjs-core@4.22.0` + `@tensorflow/tfjs-backend-webgl@4.22.0` + `nsfwjs@4.3.0`
+- `src/hooks/useNsfwCheck.ts` — lazy-loaded модель NSFW, WebGL с CPU fallback, threshold 0.8 для Porn/Hentai
+- `src/components/NsfwWarning/NsfwWarning.tsx` — red warning panel с «Продолжить»/«Отменить»
+- Интеграция: `UploadTab` (аватар), `TierListCoverEditor` (обложка тир-листа), `TierEditorPage` (обложки книг)
+
+**Content flags:**
+- Prisma: `ContentFlag` модель (userId, imageUrl, flagType, targetId, nsfwScore, status, createdAt, resolvedAt, resolvedById)
+- Backend: `flags.service.ts` — `createFlag`, `getFlags`, `resolveFlag`
+- Backend routes: `POST /api/moderation/flags`, `GET /api/moderation/flags` (admin/mod), `PATCH /api/moderation/flags/:id/resolve`
+- Frontend: `src/lib/moderationApi.ts` — `apiCreateFlag`, `apiGetFlags`, `apiResolveFlag`
+- Флаг создаётся fire-and-forget при override NSFW предупреждения (`.catch(() => {})`)
+- **AdminUsersPage:** вкладка «Жалобы» — таблица с колонками Пользователь, Изображение, Тип, NSFW, Дата, Действия; кнопки «Отклонить» и «Удалить»
+
+**Vite config:**
+- `optimizeDeps.exclude: ["nsfwjs"]` — esbuild не сканирует nsfwjs модели
+- `rollupOptions.external: [/nsfwjs\/dist\/models/]` — model weights (40+ MB) исключены из dist
+- `manualChunks: { "tf-vendor": [...] }` — TF.js + nsfwjs в отдельный lazy chunk (1.1 MB, 300 KB gzip)
+- `chunkSizeWarningLimit: 1200` — подавляет false warning
+
+**Bugfix:**
+- `AdminUsersPage.tsx` — `f.flagType === "book_cover"` → `"book-cover"` (соответствие бэкенду)
+
+### Новые и изменённые файлы
+
+- `src/hooks/useNsfwCheck.ts` — NSFW detection hook
+- `src/components/NsfwWarning/NsfwWarning.tsx` — warning UI
+- `backend/src/modules/moderation/flags.service.ts` — CRUD флагов
+- `backend/src/modules/moderation/flags.service.spec.ts` — 8 тестов (createFlag, getFlags, resolveFlag)
+- `backend/src/modules/moderation/moderation.schema.ts` — `createFlagSchema`, `resolveFlagSchema`
+- `backend/src/modules/moderation/moderation.route.ts` — +3 роута для флагов
+- `src/lib/moderationApi.ts` — `apiCreateFlag`, `apiGetFlags`, `apiResolveFlag`
+- `src/pages/AdminUsersPage/AdminUsersPage.tsx` — +вкладка «Жалобы»
+- `src/pages/AdminUsersPage/AdminUsersPage.spec.tsx` — +5 тестов для вкладки «Жалобы»
+- `vite.config.ts` — NSFW-related оптимизации сборки
+- `backend/prisma/schema.prisma` — `ContentFlag` модель
+
+### Итог
+- 8 backend тестов для flags.service
+- 5 frontend тестов для вкладки «Жалобы»
+- Все тесты проходят (409 frontend + 370 backend = 779)

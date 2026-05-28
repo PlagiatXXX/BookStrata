@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Bug, MessageCircle, X, Send } from "lucide-react";
+import { Bug, MessageCircle, Lightbulb, HelpCircle, X, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuthContext";
 import { sendFeedback } from "@/lib/feedbackApi";
 
 const TYPES = [
   { value: "bug", label: "Баг", icon: Bug },
-  { value: "feature", label: "Предложение", icon: MessageCircle },
-  { value: "other", label: "Другое", icon: MessageCircle },
+  { value: "feature", label: "Предложение", icon: Lightbulb },
+  { value: "other", label: "Другое", icon: HelpCircle },
 ] as const;
 
 export function FeedbackButton() {

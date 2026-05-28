@@ -14,10 +14,13 @@ import {
   Ban,
   Users,
   UserX,
+  Flag,
 } from "lucide-react"
 import { api } from "@/lib/api-client"
 import { useAuth } from "@/hooks/useAuthContext"
 import { sileo } from "sileo"
+import { apiGetFlags, apiResolveFlag } from "@/lib/moderationApi"
+import type { ContentFlag } from "@/lib/moderationApi"
 import type { AdminUser } from "@/types/auth"
 
 interface ViolatorAction {
@@ -37,7 +40,7 @@ interface ViolatorUser {
   actions: ViolatorAction[]
 }
 
-type Tab = "users" | "violators"
+type Tab = "users" | "violators" | "flags"
 
 const ROLES = ["admin", "moderator", "user"] as const
 type Role = (typeof ROLES)[number]
@@ -86,6 +89,13 @@ export function AdminUsersPage() {
     queryFn: () => api.get<ViolatorUser[]>("/users/admin/violators"),
   })
 
+  const { data: flagsData, isLoading: flagsLoading, refetch: refetchFlags } = useQuery({
+    queryKey: ["admin-flags"],
+    queryFn: () => apiGetFlags({ status: "pending" }),
+  })
+  const flags = flagsData?.flags ?? []
+  const pendingFlagsCount = flagsData?.total ?? 0
+
   const assignRole = useMutation({
     mutationFn: ({
       userId,
@@ -126,6 +136,18 @@ export function AdminUsersPage() {
       setChangingUserId(null)
     }
   }
+
+  const resolveFlagMut = useMutation({
+    mutationFn: ({ id, action }: { id: number; action: "resolved" | "dismissed" }) =>
+      apiResolveFlag(id, action),
+    onSuccess: () => {
+      refetchFlags()
+      sileo.success({ title: "Жалоба обработана", duration: 3000 })
+    },
+    onError: (err: Error) => {
+      sileo.error({ title: "Ошибка", description: err.message, duration: 5000 })
+    },
+  })
 
   const canChangeRole = currentUser?.role === "admin"
 
@@ -218,6 +240,22 @@ export function AdminUsersPage() {
             {violators.length > 0 && (
               <span className="ml-1 px-1.5 py-0.5 text-xs leading-none rounded-full bg-red-500/20 text-red-400">
                 {violators.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("flags")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+              activeTab === "flags"
+                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                : "bg-white/5 text-gray-400 border border-transparent hover:bg-white/10"
+            }`}
+          >
+            <Flag size={16} />
+            Жалобы
+            {pendingFlagsCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 text-xs leading-none rounded-full bg-amber-500/20 text-amber-400">
+                {pendingFlagsCount}
               </span>
             )}
           </button>
@@ -419,7 +457,7 @@ export function AdminUsersPage() {
               {filteredUsers.length}
             </p>
           </>
-        ) : (
+        ) : activeTab === "violators" ? (
           <div className="rounded-xl border border-gray-800 overflow-hidden">
             <table className="w-full">
               <thead>
@@ -563,6 +601,149 @@ export function AdminUsersPage() {
                               Нет действий
                             </span>
                           )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-gray-800 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-white/5 border-b border-gray-800">
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Пользователь
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Изображение
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Тип
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
+                    NSFW
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Дата
+                  </th>
+                  <th className="text-right px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Действия
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {flagsLoading ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-sm text-gray-500"
+                    >
+                      Загрузка...
+                    </td>
+                  </tr>
+                ) : flags.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-sm text-gray-500"
+                    >
+                      Активных жалоб нет
+                    </td>
+                  </tr>
+                ) : (
+                  flags.map((f) => (
+                    <tr
+                      key={f.id}
+                      className="hover:bg-white/[0.02] transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                            {f.avatarUrl ? (
+                              <img
+                                src={f.avatarUrl}
+                                alt=""
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              f.username?.[0]?.toUpperCase() || "?"
+                            )}
+                          </div>
+                          <span className="text-sm font-medium text-white">
+                            {f.username || "—"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="w-16 h-20 rounded-lg bg-white/5 overflow-hidden border border-gray-700">
+                          <img
+                            src={f.imageUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">
+                          {f.flagType === "avatar"
+                            ? "Аватар"
+                            : f.flagType === "tier_cover"
+                              ? "Обложка"
+                              : f.flagType === "book-cover"
+                                ? "Обложка книги"
+                                : f.flagType}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 hidden md:table-cell">
+                        {f.nsfwScore != null ? (
+                          <span
+                            className={`inline-flex items-center gap-1 text-xs font-medium ${
+                              f.nsfwScore >= 0.8
+                                ? "text-red-400"
+                                : f.nsfwScore >= 0.5
+                                  ? "text-amber-400"
+                                  : "text-green-400"
+                            }`}
+                          >
+                            {Math.round(f.nsfwScore * 100)}%
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-500">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-400">
+                        {formatDate(f.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() =>
+                              resolveFlagMut.mutate({
+                                id: f.id,
+                                action: "dismissed",
+                              })
+                            }
+                            disabled={resolveFlagMut.isPending}
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/5 text-gray-400 border border-gray-700 hover:bg-white/10 transition-colors disabled:opacity-50 cursor-pointer"
+                          >
+                            Отклонить
+                          </button>
+                          <button
+                            onClick={() =>
+                              resolveFlagMut.mutate({
+                                id: f.id,
+                                action: "resolved",
+                              })
+                            }
+                            disabled={resolveFlagMut.isPending}
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-colors disabled:opacity-50 cursor-pointer"
+                          >
+                            Удалить
+                          </button>
                         </div>
                       </td>
                     </tr>

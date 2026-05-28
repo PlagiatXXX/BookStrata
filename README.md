@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-765_passed-brightgreen)](./doctor.md)
+[![Tests](https://img.shields.io/badge/Tests-796_passed-brightgreen)](./doctor.md)
 [![React Doctor](https://www.react.doctor/share/badge?p=tiermaker-pro&s=97&w=179&f=96)](https://www.react.doctor/share?p=tiermaker-pro&s=97&w=179&f=96)
 
 ---
@@ -37,6 +37,12 @@
 - **Поиск книг** — Мгновенная интеграция с Google Books API для добавления обложек и описаний.
 - **Загрузка файлов** — Возможность загружать свои изображения через Cloudinary.
 - **Экспорт в PNG** — Делитесь своими результатами как готовыми изображениями.
+
+### 🔞 NSFW Detection
+- **Клиентская проверка** — Автоматическое определение NSFW-контента через `nsfwjs` (TensorFlow.js) при загрузке аватаров и обложек.
+- **Content Flags** — Панель модерации: флаги с NSFW-скором, админ-интерфейс для подтверждения/отклонения жалоб.
+- **Fire-and-forget** — Проверка не блокирует загрузку: при срабатывании пользователь видит предупреждение, флаг отправляется в фоне.
+- **Оптимизация сборки** — Модель NSFW (~5 MB) загружается с CDN, TF.js выделен в отдельный lazy chunk (1.1 MB).
 
 ### 📊 Dashboard и Сообщество
 - **Умная фильтрация** — Сортировка по дате, популярности и алфавиту.
@@ -129,7 +135,7 @@ cd backend && npm run dev # Backend на http://localhost:8080
 
 ## 🧪 Тестирование
 
-Проект покрыт **765 тестами** (403 фронтенд + 362 бэкенд) — Vitest + React Testing Library + Supertest.
+Проект покрыт **796 тестами** (414 фронтенд + 382 бэкенд) — Vitest + React Testing Library + Supertest.
 
 ```bash
 # Запуск тестов фронтенда
@@ -138,7 +144,7 @@ npm test
 # Запуск тестов бэкенда
 cd backend && npm test
 ```
-*Статус: **765/765** тестов проходят успешно ✅*
+*Статус: **796/796** тестов проходят успешно ✅*
 
 ---
 
@@ -187,6 +193,6 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 ---
 
 **Последнее обновление:** 28 мая 2026 г.
-**Статус:** Phase 4+ Completed ✅ — Обсуждения, Форум, Профили (765 тестов)
+**Статус:** Phase 4+ Completed ✅ — NSFW Detection, Content Flags, Admin Flags Tab (796 тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)
 **Аудит и рефакторинг:** Jules (Senior Fullstack AI)

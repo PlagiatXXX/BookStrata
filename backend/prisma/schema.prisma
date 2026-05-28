@@ -45,9 +45,11 @@ chatBannedUntil      DateTime?  @map("chat_banned_until")
 suspendedAt          DateTime?  @map("suspended_at")
 suspendedUntil       DateTime?  @map("suspended_until")
 suspensionReason     String?    @map("suspension_reason")
-warnings             UserWarning[]       // полученные предупреждения
-warningsGiven        UserWarning[]       @relation("ModeratorWarnings")  // выданные как модератор
-createdAt            DateTime   @default(now()) @map("created_at")
+  warnings             UserWarning[]       // полученные предупреждения
+  warningsGiven        UserWarning[]       @relation("ModeratorWarnings")  // выданные как модератор
+  contentFlags         ContentFlag[]
+  resolvedFlags        ContentFlag[]       @relation("ResolvedFlags")
+  createdAt            DateTime   @default(now()) @map("created_at")
  
 @@index([xp])
 }
@@ -352,6 +354,27 @@ model UserWarning {
 
   @@index([userId, createdAt])
   @@map("user_warnings")
+}
+
+// Флаги контента (NSFW-проверка, жалобы)
+model ContentFlag {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  imageUrl      String   @map("image_url")
+  flagType      String   @default("avatar") @map("flag_type") // "avatar" | "tier-cover" | "book-cover"
+  targetId      String?  @map("target_id")
+  nsfwScore     Float?   @map("nsfw_score")
+  status        String   @default("pending") // "pending" | "resolved" | "dismissed"
+  createdAt     DateTime @default(now()) @map("created_at")
+  resolvedAt    DateTime? @map("resolved_at")
+  resolvedById  Int?     @map("resolved_by_id")
+
+  user        User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resolvedBy  User? @relation("ResolvedFlags", fields: [resolvedById], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("content_flags")
 }
 
 // Обратная связь от пользователей

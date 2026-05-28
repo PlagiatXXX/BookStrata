@@ -2,7 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { ModerationService } from "./moderation.service.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { createSuccessResponse, createApiError, ErrorCodes } from "../../lib/api-response.js";
-import { banChatSchema, suspendSchema, warnSchema, changeRoleSchema } from "./moderation.schema.js";
+import { banChatSchema, suspendSchema, warnSchema, changeRoleSchema, createFlagSchema, resolveFlagSchema } from "./moderation.schema.js";
+import { createFlag, getFlags, resolveFlag } from "./flags.service.js";
 
 type IdParams = { Params: { id: string } };
 
@@ -102,6 +103,48 @@ export async function moderationRoutes(fastify: FastifyInstance) {
         select: { id: true, username: true, role: { select: { name: true } } },
       });
       return reply.send(createSuccessResponse(user));
+    },
+  );
+
+  // ====== Флаги контента (NSFW) ======
+
+  fastify.post(
+    "/flags",
+    async (req, reply) => {
+      const { imageUrl, flagType, targetId, nsfwScore } = createFlagSchema.body.parse(req.body);
+      const flag = await createFlag(fastify, {
+        userId: req.user!.userId,
+        imageUrl,
+        flagType,
+        targetId: targetId ?? null,
+        nsfwScore: nsfwScore ?? null,
+      });
+      return reply.code(201).send(createSuccessResponse(flag));
+    },
+  );
+
+  fastify.get<{ Querystring: { status?: string; page?: string; pageSize?: string } }>(
+    "/flags",
+    { preHandler: [requireRole("admin", "moderator")] },
+    async (req, reply) => {
+      const status = req.query.status;
+      const page = Number(req.query.page) || 1;
+      const pageSize = Math.min(Number(req.query.pageSize) || 20, 100);
+      const result = await getFlags(fastify, status, page, pageSize);
+      return reply.send(createSuccessResponse(result));
+    },
+  );
+
+  fastify.patch<{ Params: { id: string }; Body: { action: "resolved" | "dismissed" } }>(
+    "/flags/:id/resolve",
+    { preHandler: [requireRole("admin", "moderator")] },
+    async (req, reply) => {
+      const flagId = Number(req.params.id);
+      if (isNaN(flagId)) return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Неверный ID"));
+
+      const { action } = resolveFlagSchema.body.parse(req.body);
+      const flag = await resolveFlag(fastify, flagId, req.user!.userId, action);
+      return reply.send(createSuccessResponse(flag));
     },
   );
 }

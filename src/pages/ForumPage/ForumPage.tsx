@@ -160,10 +160,10 @@ export default function ForumPage() {
                   <span className="heading-word-wrap">
                     <span className={activeTab === "battles" ? "" : "text-(--accent-main)"}>активностей</span>
                     {activeTab === "battles" && (
-                      <img src="/bookstrasz-character.png" alt="" className="heading-character" />
+                      <img src="/bookstrasz-character.webp" alt="" className="heading-character" />
                     )}
                     {activeTab === "discussions" && (
-                      <img src="/chat-character.png" alt="" className="heading-character" />
+                      <img src="/chat.webp" alt="" className="heading-character" />
                     )}
                   </span>
                 </h1>

@@ -1,5 +1,5 @@
 import "./ExportThemes.css";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
@@ -20,6 +20,10 @@ import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import { useTierEditorDraft } from "./hooks/useTierEditorDraft";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
+import { useNsfwCheck } from "@/hooks/useNsfwCheck";
+import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
+import { apiCreateFlag } from "@/lib/moderationApi";
+import type { NsfwResult } from "@/hooks/useNsfwCheck";
 import "./TierEditorPage.css";
 import type { Book, Tier } from "@/types";
 
@@ -97,6 +101,12 @@ const TierListEditorContent = () => {
 
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(apiData?.coverImageUrl ?? null)
   const [theme, setTheme] = useState<string>(apiData?.theme ?? "default")
+  const [bookNsfwState, setBookNsfwState] = useState<{
+    checking: boolean;
+    result: NsfwResult | null;
+    pendingFiles: File[] | null;
+  }>({ checking: false, result: null, pendingFiles: null })
+  const { checkImage } = useNsfwCheck()
 
   useEffect(() => {
     if (apiData?.coverImageUrl) {
@@ -208,6 +218,73 @@ const TierListEditorContent = () => {
     setDeletedTierIds,
     navigate,
   });
+
+  const processBookFiles = useCallback(async (files: File[]) => {
+    for (const file of files) {
+      const coverImageUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      const bookId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      dispatch({
+        type: "ADD_BOOKS",
+        payload: {
+          newBooks: [
+            {
+              id: bookId,
+              title: file.name.replace(/\.[^/.]+$/, ""),
+              author: "Неизвестен",
+              coverImageUrl,
+            },
+          ],
+        },
+      });
+      setHasUnsavedChanges(true);
+    }
+  }, [dispatch, setHasUnsavedChanges])
+
+  const handleUploadBooks = useCallback(async (files: File[]) => {
+    if (files.length === 0) return
+
+    setBookNsfwState({ checking: true, result: null, pendingFiles: files })
+
+    try {
+      const results = await Promise.all(files.map((f) => checkImage(f)))
+      const nsfwResult = results.find((r) => r.isNsfw)
+
+      if (nsfwResult) {
+        setBookNsfwState({ checking: false, result: nsfwResult, pendingFiles: files })
+        return
+      }
+
+      setBookNsfwState({ checking: false, result: null, pendingFiles: null })
+      await processBookFiles(files)
+    } catch {
+      setBookNsfwState({ checking: false, result: null, pendingFiles: null })
+      await processBookFiles(files)
+    }
+  }, [checkImage, processBookFiles])
+
+  const handleBookNsfwOverride = useCallback(() => {
+    if (bookNsfwState.pendingFiles) {
+      const maxScore = bookNsfwState.result
+        ? Math.max(...bookNsfwState.result.predictions.map((p) => p.probability))
+        : null
+      apiCreateFlag({
+        imageUrl: bookNsfwState.pendingFiles[0]?.name ?? "unknown",
+        flagType: "book-cover",
+        targetId: tierListId,
+        nsfwScore: maxScore,
+      }).catch(() => {})
+      processBookFiles(bookNsfwState.pendingFiles)
+    }
+    setBookNsfwState({ checking: false, result: null, pendingFiles: null })
+  }, [bookNsfwState.pendingFiles, bookNsfwState.result, processBookFiles, tierListId])
+
+  const handleBookNsfwDismiss = useCallback(() => {
+    setBookNsfwState({ checking: false, result: null, pendingFiles: null })
+  }, [])
 
   const pendingDeletedBooksRef = useRef<Map<string, PendingDeletedBook>>(
     new Map(),
@@ -473,32 +550,7 @@ const TierListEditorContent = () => {
           onTogglePublic={togglePublic}
           isTogglingPublic={isTogglingPublic}
           onFindBook={() => setIsSearchModalOpen(true)}
-          onUploadBooks={async (files: File[]) => {
-            // Преобразуем файлы в книги и добавляем
-            for (const file of files) {
-              // Конвертируем в base64 data URL — persist после перезагрузки
-              const coverImageUrl = await new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.readAsDataURL(file);
-              });
-              const bookId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-              dispatch({
-                type: "ADD_BOOKS",
-                payload: {
-                  newBooks: [
-                    {
-                      id: bookId,
-                      title: file.name.replace(/\.[^/.]+$/, ""),
-                      author: "Неизвестен",
-                      coverImageUrl,
-                    },
-                  ],
-                },
-              });
-              setHasUnsavedChanges(true);
-            }
-          }}
+          onUploadBooks={handleUploadBooks}
         />
       </EditorLayout>
 
@@ -540,6 +592,16 @@ const TierListEditorContent = () => {
         isPro={isPro}
         isReadOnly={isReadOnly}
       />
+
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-sm w-full px-4">
+        <NsfwWarning
+          isChecking={bookNsfwState.checking}
+          isNsfw={bookNsfwState.result?.isNsfw ?? false}
+          predictions={bookNsfwState.result?.predictions}
+          onOverride={handleBookNsfwOverride}
+          onDismiss={handleBookNsfwDismiss}
+        />
+      </div>
     </EditorScreens>
   );
 };
