@@ -34,8 +34,8 @@ vi.mock("../../lib/disposable-email.js", () => ({
   isDisposableEmail: vi.fn().mockReturnValue(false),
 }));
 
-vi.mock("../../lib/turnstile.js", () => ({
-  verifyTurnstileToken: vi.fn().mockResolvedValue(true),
+vi.mock("../../lib/smartcaptcha.js", () => ({
+  verifySmartCaptchaToken: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("../../lib/oauth.js", () => ({
@@ -50,7 +50,7 @@ import * as authService from "./auth.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { RolesService } from "../roles/roles.service.js";
 import { isDisposableEmail } from "../../lib/disposable-email.js";
-import { verifyTurnstileToken } from "../../lib/turnstile.js";
+import { verifySmartCaptchaToken } from "../../lib/smartcaptcha.js";
 import { getVkToken, getGoogleToken, parseOAuthUserData } from "../../lib/oauth.js";
 
 describe("Auth Service", () => {
@@ -206,25 +206,25 @@ describe("Auth Service", () => {
       );
     });
 
-    it("должен бросить ошибку если Turnstile не пройден", async () => {
-      (verifyTurnstileToken as any).mockResolvedValueOnce(false);
+    it("должен бросить ошибку если SmartCaptcha не пройдена", async () => {
+      (verifySmartCaptchaToken as any).mockResolvedValueOnce(false);
 
       await expect(
         authService.register({
           ...mockRegisterPayload,
-          turnstileToken: "invalid",
+          captchaToken: "invalid",
         }),
       ).rejects.toThrow("Не удалось подтвердить, что вы не робот");
     });
 
-    it("должен пропускать Turnstile если токен не передан", async () => {
+    it("должен пропускать SmartCaptcha если токен не передан", async () => {
       (prisma.user.findFirst as any).mockResolvedValue(null);
       (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
 
       const result = await authService.register(mockRegisterPayload);
 
       expect(result.emailVerified).toBe(false);
-      expect(verifyTurnstileToken).not.toHaveBeenCalled();
+      expect(verifySmartCaptchaToken).not.toHaveBeenCalled();
     });
 
     it("должен бросить ошибку если пользователь с email уже существует", async () => {

@@ -38,7 +38,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   acceptedTerms: boolean;
-  turnstileToken?: string;
+  captchaToken?: string;
 }
 
 export interface RegisterResult {

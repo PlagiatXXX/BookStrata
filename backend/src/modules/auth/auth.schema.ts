@@ -43,7 +43,7 @@ export const registerBodySchema = z.object({
   acceptedTerms: z
     .boolean()
     .refine((v) => v === true, "Необходимо принять условия использования"),
-  turnstileToken: z
+  captchaToken: z
     .string()
     .optional(),
 });

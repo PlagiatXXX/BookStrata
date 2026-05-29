@@ -7,7 +7,7 @@ import { createLogger } from "../../lib/logger.js";
 import crypto from "crypto";
 import { sendResetPasswordEmail, sendWelcomeEmail, sendVerifyEmail } from "./auth.mail.js";
 import { isDisposableEmail } from "../../lib/disposable-email.js";
-import { verifyTurnstileToken } from "../../lib/turnstile.js";
+import { verifySmartCaptchaToken } from "../../lib/smartcaptcha.js";
 import { getVkToken, getGoogleToken, parseOAuthUserData } from "../../lib/oauth.js";
 
 const logger = createLogger("Auth", { color: "blue" });
@@ -33,7 +33,7 @@ export interface RegisterPayload {
   email: string;
   password: string;
   acceptedTerms: boolean;
-  turnstileToken?: string;
+  captchaToken?: string;
 }
 
 export interface LoginPayload {
@@ -63,8 +63,8 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
     throw new Error("Регистрация с временных почтовых адресов запрещена. Используйте постоянный email.")
   }
 
-  if (payload.turnstileToken) {
-    const isValid = await verifyTurnstileToken(payload.turnstileToken)
+  if (payload.captchaToken) {
+    const isValid = await verifySmartCaptchaToken(payload.captchaToken)
     if (!isValid) {
       throw new Error("Не удалось подтвердить, что вы не робот. Попробуйте ещё раз.")
     }
