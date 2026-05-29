@@ -27,7 +27,7 @@ describe("avatar.service", () => {
     vi.clearAllMocks();
     vi.mocked(uploadFromUrl).mockResolvedValue({
       url: "https://res.cloudinary.com/test/image.webp",
-      public_id: "test_id",
+      publicId: "test_id",
     });
   });
 
@@ -138,7 +138,7 @@ describe("avatar.service", () => {
         lastAvatarResetAt: new Date(),
       } as never);
       vi.mocked(prisma.user.update).mockResolvedValue({} as never);
-      vi.mocked(uploadFromUrl).mockResolvedValue({ url: mockCloudinaryUrl, public_id: "test" });
+      vi.mocked(uploadFromUrl).mockResolvedValue({ url: mockCloudinaryUrl, publicId: "test" });
 
       const result = await avatarService.generateAvatar(prompt, mockUserId);
 

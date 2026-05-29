@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { api } from "@/lib/api-client"
 import { useAuth } from "@/hooks/useAuthContext"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { sileo } from "sileo"
 import { apiGetFlags, apiResolveFlag } from "@/lib/moderationApi"
 import type { ContentFlag } from "@/lib/moderationApi"
@@ -78,6 +79,8 @@ export function AdminUsersPage() {
     currentRole: Role
     newRole: Role
   } | null>(null)
+
+  useBodyScrollLock(!!confirmTarget)
 
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["admin-users"],

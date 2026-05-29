@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Bug, MessageCircle, Lightbulb, HelpCircle, X, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuthContext";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { sendFeedback } from "@/lib/feedbackApi";
 
 const TYPES = [
@@ -12,6 +13,7 @@ const TYPES = [
 
 export function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false);
+  useBodyScrollLock(isOpen)
   const [type, setType] = useState<string>("bug");
   const [message, setMessage] = useState("");
   const [userEmail, setUserEmail] = useState("");

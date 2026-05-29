@@ -1,6 +1,6 @@
 import { memo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Sword, Loader2, AlertCircle } from "lucide-react"
+import { Sword, Loader2 } from "lucide-react"
 import { getActiveBattles } from "@/lib/battlesApi"
 import { type Battle } from "@/types/battles"
 import { BattleCard } from "./BattleCard"
@@ -26,7 +26,7 @@ export const BattleList = memo(() => {
   if (error) {
     return (
       <div className="brutal-card brutal-border p-12 text-center bg-red-500/5">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <img src="/lap.webp" alt="" className="size-12 object-contain mx-auto mb-4" />
         <p className="text-(--ink-0) font-bold mb-2">Не удалось загрузить битвы. Попробуйте позже.</p>
         <button
           onClick={() => refetch()}

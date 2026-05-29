@@ -9,6 +9,7 @@ import { CuratorApplyModal } from "@/components/CuratorApplyModal/CuratorApplyMo
 import { getForumStats } from "@/lib/battlesApi";
 import { getTopics, createTopic, pinTopic, deleteTopic } from "@/lib/discussionApi";
 import { useAuth } from "@/hooks/useAuthContext";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Spinner } from "@/components/Spinner";
 import type { DiscussionTopic } from "@/types/discussions";
 import "./ForumPage.css";
@@ -26,6 +27,7 @@ export default function ForumPage() {
   const [creating, setCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [pinning, setPinning] = useState<string | null>(null);
+  useBodyScrollLock(!!deleteConfirm || showCreateTopic)
 
   const isMod = user?.role === "admin" || user?.role === "moderator";
 

@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,18 +17,16 @@ export const Modal = ({
   maxWidth = "md",
   titleId,
 }: ModalProps) => {
+  useBodyScrollLock(isOpen)
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      const handleEsc = (e: KeyboardEvent) => {
-        if (e.key === "Escape") onClose();
-      };
-      window.addEventListener("keydown", handleEsc);
-      return () => {
-        document.body.style.overflow = "";
-        window.removeEventListener("keydown", handleEsc);
-      };
-    }
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;

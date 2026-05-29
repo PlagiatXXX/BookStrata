@@ -1,4 +1,3 @@
-import { AlertCircle } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 
 interface EditorErrorScreenProps {
@@ -22,7 +21,7 @@ export function EditorErrorScreen({
       <div className="flex items-center justify-center h-screen">
         <div className="text-center max-w-md">
           <div className="mb-6">
-            <AlertCircle size={56} className="text-red-500 mx-auto" />
+            <img src="/lap.webp" alt="" className="size-14 object-contain mx-auto" />
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">Ошибка загрузки</h2>
           <p className="text-gray-300 mb-6">

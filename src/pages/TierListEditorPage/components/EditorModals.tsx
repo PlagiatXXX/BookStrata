@@ -10,6 +10,7 @@ import {
 } from '@/components/EditorModals';
 import { BookEditModal } from '@/components/BookEditModal/BookEditModal';
 import { BookViewModal } from '@/components/BookViewModal/BookViewModal';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { Spinner } from '@/components/Spinner';
 
 // Ленивый импорт модального окна поиска книг
@@ -21,6 +22,7 @@ const BookSearchModal = lazy(() =>
 
 // Компонент загрузки для SearchModal
 function BookSearchModalLoader() {
+  useBodyScrollLock(true)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] animate-fade-in" />

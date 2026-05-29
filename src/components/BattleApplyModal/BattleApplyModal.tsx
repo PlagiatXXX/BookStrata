@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
-import { X, Loader2, AlertCircle, CheckCircle } from "lucide-react"
+import { X, Loader2, CheckCircle } from "lucide-react"
 import { getUserTierLists, type TierListShort } from "@/lib/tierListApi"
 import { applyToBattle } from "@/lib/battlesApi"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
+import { sileo } from "sileo"
 
 interface BattleApplyModalProps {
   battleId: string
@@ -11,6 +13,7 @@ interface BattleApplyModalProps {
 }
 
 export function BattleApplyModal({ battleId, battleTitle, onClose, onSuccess }: BattleApplyModalProps) {
+  useBodyScrollLock(true)
   const [tierLists, setTierLists] = useState<TierListShort[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState("")
@@ -42,8 +45,11 @@ export function BattleApplyModal({ battleId, battleTitle, onClose, onSuccess }: 
       await applyToBattle(battleId, selectedId, message || undefined)
       setSuccess(true)
       onSuccess()
+      sileo.success({ title: "Заявка отправлена", description: `Вы участвуете в битве «${battleTitle}»`, duration: 4000 })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка при отправке заявки")
+      const msg = err instanceof Error ? err.message : "Ошибка при отправке заявки"
+      setError(msg)
+      sileo.error({ title: "Ошибка", description: msg, duration: 5000 })
     } finally {
       setSubmitting(false)
     }
@@ -83,7 +89,7 @@ export function BattleApplyModal({ battleId, battleTitle, onClose, onSuccess }: 
 
             {error && (
               <div className="mb-4 p-3 brutal-card brutal-border bg-red-500/5 border-red-500/30 flex items-center gap-2">
-                <AlertCircle size={14} className="text-red-400 shrink-0" />
+                <img src="/lap.webp" alt="" className="size-3.5 object-contain shrink-0" />
                 <p className="text-red-400 text-xs">{error}</p>
               </div>
             )}

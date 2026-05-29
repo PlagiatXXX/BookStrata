@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, memo } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import {
-  ArrowLeft, Trophy, Sword, Clock, CheckCircle, AlertCircle,
+  ArrowLeft, Trophy, Sword, Clock, CheckCircle,
   Loader2, Users, Crown,
 } from "lucide-react"
 import { sileo } from "sileo"
@@ -296,7 +296,7 @@ export default function BattleDetailPage() {
               Назад к битвам
             </button>
             <div className="brutal-card brutal-border p-12 text-center bg-red-500/5">
-              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <img src="/lap.webp" alt="" className="size-12 object-contain mx-auto mb-4" />
               <p className="text-(--ink-0) font-bold mb-2">{error || "Битва не найдена"}</p>
               <button
                 onClick={fetchBattle}

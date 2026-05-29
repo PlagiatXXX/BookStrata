@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { X, Loader2, AlertCircle } from "lucide-react"
+import { X, Loader2 } from "lucide-react"
 import { api } from "@/lib/api-client"
 import type { BattleApplication } from "@/lib/battlesApi"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 
 interface CreateBattleModalProps {
   approvedApplications: BattleApplication[]
@@ -10,6 +11,7 @@ interface CreateBattleModalProps {
 }
 
 export function CreateBattleModal({ approvedApplications, onClose, onCreated }: CreateBattleModalProps) {
+  useBodyScrollLock(true)
   const [title, setTitle] = useState("")
   const [type, setType] = useState<"weekly" | "monthly">("weekly")
   const [endDate, setEndDate] = useState("")
@@ -69,7 +71,7 @@ export function CreateBattleModal({ approvedApplications, onClose, onCreated }: 
 
         {error && (
           <div className="mb-4 p-3 brutal-card brutal-border bg-red-500/5 border-red-500/30 flex items-center gap-2">
-            <AlertCircle size={14} className="text-red-400 shrink-0" />
+            <img src="/lap.webp" alt="" className="size-3.5 object-contain shrink-0" />
             <p className="text-red-400 text-xs">{error}</p>
           </div>
         )}

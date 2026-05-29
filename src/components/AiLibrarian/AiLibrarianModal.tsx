@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Send, X, RotateCcw, Wifi, WifiOff, Loader } from 'lucide-react'
 import { useAiLibrarian, type AiStatus } from '@/hooks/useAiLibrarian'
 import { useAuth } from '@/hooks/useAuthContext'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { ChatMessage } from '@/lib/aiLibrarianApi'
 
 interface AiLibrarianModalProps {
@@ -110,6 +111,8 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  useBodyScrollLock(isOpen)
+
   useEffect(() => {
     if (!isOpen) return
     const handleEsc = (e: KeyboardEvent) => {
@@ -117,12 +120,8 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
     }
     window.addEventListener('keydown', handleEsc)
 
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
     return () => {
       window.removeEventListener('keydown', handleEsc)
-      document.body.style.overflow = prev
     }
   }, [isOpen, onClose])
 

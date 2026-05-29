@@ -38,6 +38,7 @@ export const TierListCard = memo(
               onOpen(tierList.slug || tierList.id);
             }
           }}
+          className="cursor-pointer"
         >
           <TierListCover
             coverImageUrl={tierList.coverImageUrl}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createLogger } from "@/lib/logger";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
   apiGenerateAvatar,
   apiGetAvatarLimit,
@@ -30,6 +31,8 @@ export function AvatarSelector({
   onSave,
   onClose,
 }: AvatarSelectorProps) {
+  useBodyScrollLock(true)
+
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabId>("presets");
   const [activeCategory, setActiveCategory] = useState<PresetStyle>("cartoon");

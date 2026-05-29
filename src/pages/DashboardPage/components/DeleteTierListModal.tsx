@@ -11,7 +11,7 @@ export function DeleteTierListModal({
 }: DeleteModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} titleId="delete-modal-title">
-      <div className="dashboard-modal">
+      <div className="dashboard-modal relative bg-[#111111]/95 backdrop-blur-sm border border-slate-700/50 rounded-2xl">
         <button
           onClick={onClose}
           className="dashboard-modal__close"
@@ -21,7 +21,8 @@ export function DeleteTierListModal({
           <X size={16} />
         </button>
 
-        <div>
+        <div className="flex flex-col items-center text-center">
+          <img src="/lap.webp" alt="" className="size-[150px] object-contain mb-4" />
           <h2 id="delete-modal-title">Удалить тир-лист</h2>
           <p>
             Это действие нельзя отменить. Рейтинг{' '}

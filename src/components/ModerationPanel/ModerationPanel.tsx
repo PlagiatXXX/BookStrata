@@ -14,6 +14,7 @@ import {
   type Warning,
 } from "@/lib/moderationApi"
 import { useAuth } from "@/hooks/useAuthContext"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { sileo } from "sileo"
 
 interface Props {
@@ -33,6 +34,7 @@ export function ModerationPanel({ userId, username, currentRole }: Props) {
   const { user } = useAuth()
   const isAdmin = user?.role === "admin"
   const [showWarnModal, setShowWarnModal] = useState(false)
+  useBodyScrollLock(showWarnModal)
   const [warnMessage, setWarnMessage] = useState("")
   const [showWarnings, setShowWarnings] = useState(false)
   const [suspendHours, setSuspendHours] = useState(24)

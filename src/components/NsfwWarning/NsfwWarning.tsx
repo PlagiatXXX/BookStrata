@@ -1,4 +1,4 @@
-import { AlertTriangle, ShieldCheck, Loader2 } from "lucide-react"
+import { ShieldCheck, Loader2 } from "lucide-react"
 
 interface NsfwWarningProps {
   isChecking: boolean
@@ -31,7 +31,7 @@ export function NsfwWarning({
   return (
     <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl space-y-3">
       <div className="flex items-start gap-2">
-        <AlertTriangle size={20} className="text-red-400 shrink-0 mt-0.5" />
+        <img src="/lap.webp" alt="" className="size-5 object-contain shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-medium text-red-300">
             Обнаружен контент 18+!

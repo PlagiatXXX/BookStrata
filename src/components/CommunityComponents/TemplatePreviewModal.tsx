@@ -1,6 +1,7 @@
 import { useState, memo } from 'react';
 import { X, BookOpen, Layers, Tag } from 'lucide-react';
 import type { TemplateItem } from '../../data/mockData';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 
 interface TemplatePreviewModalProps {
   template: TemplateItem;
@@ -18,6 +19,8 @@ export const TemplatePreviewModal = memo(({
   isApplying,
 }: TemplatePreviewModalProps) => {
   const [activeTab, setActiveTab] = useState<'books' | 'tiers'>('books');
+
+  useBodyScrollLock(isOpen)
 
   if (!isOpen) return null;
 

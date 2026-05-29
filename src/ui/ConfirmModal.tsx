@@ -1,4 +1,4 @@
-import { AlertTriangle, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type React from "react";
@@ -38,8 +38,8 @@ export function ConfirmModal({
 
         <div className="p-6 text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex size-10 items-center justify-center rounded-full bg-[#ffbd58]/20 text-[#ffbd58]">
-              <AlertTriangle size={20} />
+            <div className="flex items-center justify-center">
+              <img src="/lap.webp" alt="" className="size-[150px] object-contain" />
             </div>
           </div>
 

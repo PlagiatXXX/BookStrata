@@ -5,6 +5,7 @@ import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { useBookSearch } from "@/hooks/useBookSearch";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Spinner } from "@/components/Spinner";
 import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 
@@ -246,6 +247,8 @@ export const BookSearchModal = ({
   tierListId,
   onBookAdded,
 }: BookSearchModalProps) => {
+  useBodyScrollLock(isOpen)
+
   const [state, dispatch] = useReducer(searchReducer, initialSearchState);
   const [viewBook, setViewBook] = useState<OpenLibraryBook | null>(null);
   const [isViewAdding, setIsViewAdding] = useState(false);

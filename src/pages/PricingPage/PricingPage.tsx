@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { ArrowLeft, Crown, CreditCard, Send, X, Copy, Check } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthContext"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { useNavigate } from "react-router-dom"
 import "./PricingPage.css"
 
@@ -50,6 +51,7 @@ const plans = [
 ]
 
 function PaymentModal({ onClose }: { onClose: () => void }) {
+  useBodyScrollLock(true)
   const [copied, setCopied] = useState(false)
   const cardNumber = '2202207455452840'
 
