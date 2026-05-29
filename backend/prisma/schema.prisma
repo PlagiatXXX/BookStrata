@@ -14,16 +14,22 @@ url      = env("DATABASE_URL")
 }
  
 model User {
-id                   Int        @id @default(autoincrement())
-email                String     @unique
-username             String?    @unique
-avatarUrl            String?    @map("avatar_url")
-aiAvatarsGenerated   Int        @default(0)  @map("ai_avatars_generated")
-lastAvatarResetAt    DateTime   @default(now()) @map("last_avatar_reset_at")
-passwordHash         String     @map("password_hash")
-isPro                Boolean    @default(false) @map("is_pro")
-proExpiresAt         DateTime?  @map("pro_expires_at")
-xp                   Int        @default(0)
+  id                             Int        @id @default(autoincrement())
+  email                          String     @unique
+  emailVerifiedAt                DateTime?  @map("email_verified_at")
+  emailVerificationToken         String?    @unique @map("email_verification_token")
+  emailVerificationTokenExpiresAt DateTime? @map("email_verification_token_expires_at")
+  acceptedTermsAt                DateTime?  @map("accepted_terms_at")
+  vkId                           String?    @unique @map("vk_id")
+  googleId                       String?    @unique @map("google_id")
+  username             String?    @unique
+  avatarUrl            String?    @map("avatar_url")
+  aiAvatarsGenerated   Int        @default(0)  @map("ai_avatars_generated")
+  lastAvatarResetAt    DateTime   @default(now()) @map("last_avatar_reset_at")
+  passwordHash         String     @map("password_hash")
+  isPro                Boolean    @default(false) @map("is_pro")
+  proExpiresAt         DateTime?  @map("pro_expires_at")
+  xp                   Int        @default(0)
   title                String?    @default("Новичок")
 tierLists            TierList[]
 templates            Template[]

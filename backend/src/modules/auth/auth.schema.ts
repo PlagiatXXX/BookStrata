@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
-// Вспомогательная функция для стандартного формата ошибок
 const makeErrorSchema = (description: string): Record<string, unknown> => ({
   description,
   type: 'object',
@@ -28,7 +27,6 @@ export const jwtPayloadSchema = z.object({
 
 export type AuthTokenPayload = z.infer<typeof jwtPayloadSchema>;
 
-// Схема для регистрации
 export const registerBodySchema = z.object({
   username: z
     .string()
@@ -42,15 +40,19 @@ export const registerBodySchema = z.object({
     .string()
     .min(8, "Пароль должен содержать минимум 8 символов")
     .max(100, "Пароль не может быть длиннее 100 символов"),
+  acceptedTerms: z
+    .boolean()
+    .refine((v) => v === true, "Необходимо принять условия использования"),
+  turnstileToken: z
+    .string()
+    .optional(),
 });
 
-// Схема для логина
 const loginBodySchema = z.object({
   username: z.string().min(1).max(30),
   password: z.string().min(1).max(100),
 });
 
-// Схема для валидации токена
 const validateBodySchema = z.object({
   token: z
     .string()
@@ -58,22 +60,41 @@ const validateBodySchema = z.object({
     .regex(/^[\w-]+\.[\w-]+\.[\w-]+$/, "Некорректный формат JWT токена"),
 });
 
+const verifyEmailBodySchema = z.object({
+  token: z
+    .string()
+    .min(1, "Токен обязателен")
+    .max(512, "Токен слишком длинный"),
+});
+
+const resendVerificationBodySchema = z.object({
+  email: z
+    .string()
+    .email("Некорректный формат email"),
+});
+
+const forgotPasswordBodySchema = z.object({
+  email: z.string().email().max(255),
+});
+
+const resetPasswordBodySchema = z.object({
+  token: z.string().max(1000),
+  password: z.string().min(8).max(100),
+});
+
 export const registerSchema = {
   description: 'Register a new user account',
   tags: ['Auth'],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(registerBodySchema as any),
   response: {
     201: {
-      description: 'User registered successfully',
+      description: 'User registered successfully, verification email sent',
       type: 'object',
       properties: {
-        accessToken: { type: 'string', description: 'JWT access token' },
         userId: { type: 'number', description: 'Created user ID' },
         username: { type: 'string', description: 'Username' },
-      },
-      headers: {
-        Location: { type: 'string', description: 'URL of created user resource' },
+        email: { type: 'string', description: 'User email' },
+        emailVerified: { type: 'boolean', description: 'Whether email is verified' },
       },
     },
     409: makeErrorSchema('Username or email already exists'),
@@ -83,7 +104,6 @@ export const registerSchema = {
 export const loginSchema = {
   description: 'Login with username and password',
   tags: ['Auth'],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(loginBodySchema as any),
   response: {
     401: makeErrorSchema('Invalid credentials'),
@@ -93,23 +113,48 @@ export const loginSchema = {
 export const validateSchema = {
   description: 'Validate JWT token',
   tags: ['Auth'],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(validateBodySchema as any),
   response: {
     200: {
       description: 'Token is valid',
       type: 'object',
       properties: {
-        valid: { type: 'boolean', description: 'Always true on success' },
-        userId: { type: 'number', description: 'User ID from token' },
-        username: { type: 'string', description: 'Username' },
-        role: { type: 'string', description: 'User role' },
+        valid: { type: 'boolean' },
+        userId: { type: 'number' },
+        username: { type: 'string' },
+        role: { type: 'string' },
       },
     },
     401: makeErrorSchema('Token is invalid or expired'),
   },
 };
 
+export const verifyEmailSchema = {
+  description: 'Verify email address with token',
+  tags: ['Auth'],
+  body: zodToJsonSchema(verifyEmailBodySchema as any),
+};
+
+export const resendVerificationSchema = {
+  description: 'Resend email verification link',
+  tags: ['Auth'],
+  body: zodToJsonSchema(resendVerificationBodySchema as any),
+};
+
+export const forgotPasswordSchema = {
+  description: 'Request password reset',
+  tags: ['Auth'],
+  body: zodToJsonSchema(forgotPasswordBodySchema as any),
+};
+
+export const resetPasswordSchema = {
+  description: 'Reset password with token',
+  tags: ['Auth'],
+  body: zodToJsonSchema(resetPasswordBodySchema as any),
+};
+
 export type RegisterInput = z.infer<typeof registerBodySchema>;
 export type LoginInput = z.infer<typeof loginBodySchema>;
 export type ValidateInput = z.infer<typeof validateBodySchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailBodySchema>;
+export type ResendVerificationInput = z.infer<typeof resendVerificationBodySchema>;

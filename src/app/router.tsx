@@ -90,6 +90,9 @@ const AdminUsersPage = lazy(() =>
 );
 const ContactPage = lazy(() => import("@/pages/ContactPage"))
 const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"))
+const VerifyEmailPage = lazy(() => import("@/pages/VerifyEmailPage").then(m => ({ default: m.VerifyEmailPage })))
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage").then(m => ({ default: m.PrivacyPage })))
+const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage").then(m => ({ default: m.OAuthCallbackPage })))
 const UserProfilePage = lazy(() => import("@/pages/UserProfilePage/UserProfilePage"))
 const CollectionPage = lazy(() =>
   import("@/pages/CollectionPage").then((module) => ({
@@ -109,6 +112,9 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: "/auth", element: <AuthPage /> },
+      { path: "/verify-email", element: <VerifyEmailPage /> },
+      { path: "/privacy", element: <PrivacyPage /> },
+      { path: "/oauth/callback", element: <OAuthCallbackPage /> },
       { path: "/forgot-password", element: <ForgotPasswordPage /> },
       { path: "/reset-password", element: <ResetPasswordPage /> },
       { path: "/contact", element: <ContactPage /> },

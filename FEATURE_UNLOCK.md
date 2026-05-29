@@ -13,9 +13,10 @@
 ### 1. `backend/src/middleware/proLimit.ts`
 
 **Было:** `checkProLimit` запрашивал БД и выставлял лимиты в зависимости от `isPro`.  
-**Стало:** всегда `isPro: true`, `maxBooks: Infinity`, `maxTemplates: Infinity`, `maxExportResolution: "4K"`.
+**Стало:** всегда `isPro: true`, `maxBooks: Infinity`, `maxTemplates: Infinity`, `maxExportResolution: "4K"`.  
+Но при этом вызывает `subscriptionsService.isProUser(userId)`, что автоматически деактивирует просроченные подписки (если `proExpiresAt < now`).
 
-**Как вернуть:** заменить `checkProLimit` на оригинальную реализацию с запросом `subscriptionsService.isProUser()`.
+**Как вернуть:** лимиты уже готовы — достаточно заменить `isPro: true` на `request.proLimit.isPro = await subscriptionsService.isProUser(userId)`.
 
 ---
 
@@ -82,7 +83,25 @@
 
 ---
 
-### 7. `src/contexts/AuthContext.tsx`
+### 7. `backend/src/modules/subscriptions/subscriptions.service.ts`
+
+**Было:** `isProUser()` и `getUserSubscription()` проверяли `proExpiresAt < new Date()` и деактивировали просрочку, но никто их не вызывал на каждый запрос.  
+**Стало:** добавлен публичный метод `expireAllOverdue()` — массовая деактивация одним `UPDATE` всех `WHERE is_pro = true AND pro_expires_at < NOW()`.
+
+**Как вернуть:** не нужно — это инфраструктура, которая работает и при отключенной подписке. Просто чистит мёртвые подписки.
+
+---
+
+### 8. `backend/src/server.ts`
+
+**Было:** ничего.  
+**Стало:** добавлен `setInterval` с `subscriptionsCleanup.expireAllOverdue()` раз в час для фоновой чистки просроченных подписок.
+
+**Как вернуть:** не нужно — работает фоном, не влияет на бизнес-логику.
+
+---
+
+### 9. `src/contexts/AuthContext.tsx`
 
 **Было:** `isPro: fullUserData.isPro`.  
 **Стало:** `isPro: true` — все пользователи считаются Pro на фронтенде.
@@ -91,7 +110,7 @@
 
 ---
 
-### 8. `backend/src/modules/avatars/avatar.service.ts`
+### 10. `backend/src/modules/avatars/avatar.service.ts`
 
 **Было:** `DAILY_AVATAR_LIMIT_PRO = 50`.  
 **Стало:** `DAILY_AVATAR_LIMIT = 10` — лимит генераций аватаров в день.
@@ -100,7 +119,7 @@
 
 ---
 
-### 9. `src/components/Avatar/components/AiGenerationTab.tsx`
+### 11. `src/components/Avatar/components/AiGenerationTab.tsx`
 
 **Было:** проверка `limitInfo?.isPro` — показывала баннер "только для Pro".  
 **Стало:** полностью убрана проверка `isPro` из компонента, удалены пропсы `isPro`.
@@ -109,7 +128,7 @@
 
 ---
 
-### 10. `src/ui/Header.tsx`
+### 12. `src/ui/Header.tsx`
 
 **Было:** вкладка "Pro" вела на `/pricing`.  
 **Стало:** без `onClick`, с бейджем "скоро", курсор `cursor-not-allowed`.
@@ -118,7 +137,7 @@
 
 ---
 
-### 11. Адаптивные CSS-правки (responsive)
+### 13. Адаптивные CSS-правки (responsive)
 
 В рамках аудита адаптивности были изменены 15 файлов:
 - `AiLibrarianModal.tsx` — `h-[600px]` → `max-h-[90vh] overflow-y-auto`
@@ -133,7 +152,7 @@
 
 ---
 
-### 12. Тесты под новую Pro-логику
+### 14. Тесты под новую Pro-логику
 
 Обновлены тесты, которые проверяли старые Pro-лимиты:
 - `backend/src/modules/avatars/avatar.service.spec.ts` — лимит 50 → 10, убран `isPro`

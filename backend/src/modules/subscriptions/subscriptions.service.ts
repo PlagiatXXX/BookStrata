@@ -112,6 +112,30 @@ export class SubscriptionsService {
   }
 
   /**
+   * Массовая деактивация всех просроченных подписок.
+   * Вызывается раз в час из server.ts.
+   * Возвращает количество деактивированных.
+   */
+  async expireAllOverdue(): Promise<number> {
+    const result = await prisma.user.updateMany({
+      where: {
+        isPro: true,
+        proExpiresAt: { lt: new Date() },
+      },
+      data: {
+        isPro: false,
+        proExpiresAt: null,
+      },
+    });
+
+    if (result.count > 0) {
+      logger.info(`Массовая деактивация: ${result.count} просроченных подписок`);
+    }
+
+    return result.count;
+  }
+
+  /**
    * Деактивировать Pro подписку
    */
   async deactivatePro(userId: number): Promise<ProSubscription> {

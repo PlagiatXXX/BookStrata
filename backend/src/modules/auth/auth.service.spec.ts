@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// Моки для Prisma — должны быть ДО импорта сервиса
 vi.mock("../../lib/prisma.js", () => {
   const tx = {
     user: {
@@ -10,6 +9,7 @@ vi.mock("../../lib/prisma.js", () => {
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      deleteMany: vi.fn(),
     },
     role: {
       findUnique: vi.fn(),
@@ -27,12 +27,31 @@ vi.mock("../../lib/prisma.js", () => {
 vi.mock("./auth.mail.js", () => ({
   sendResetPasswordEmail: vi.fn().mockResolvedValue(undefined),
   sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+  sendVerifyEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Импортируем после vi.mock
+vi.mock("../../lib/disposable-email.js", () => ({
+  isDisposableEmail: vi.fn().mockReturnValue(false),
+}));
+
+vi.mock("../../lib/turnstile.js", () => ({
+  verifyTurnstileToken: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("../../lib/oauth.js", () => ({
+  getVkToken: vi.fn(),
+  getGoogleToken: vi.fn(),
+  parseOAuthUserData: vi.fn(),
+  getVkAuthUrl: vi.fn(),
+  getGoogleAuthUrl: vi.fn(),
+}));
+
 import * as authService from "./auth.service.js";
 import { prisma } from "../../lib/prisma.js";
 import { RolesService } from "../roles/roles.service.js";
+import { isDisposableEmail } from "../../lib/disposable-email.js";
+import { verifyTurnstileToken } from "../../lib/turnstile.js";
+import { getVkToken, getGoogleToken, parseOAuthUserData } from "../../lib/oauth.js";
 
 describe("Auth Service", () => {
   beforeEach(() => {
@@ -43,7 +62,6 @@ describe("Auth Service", () => {
     vi.resetAllMocks();
   });
 
-  // Мок для RolesService.getRoleByName
   let mockGetRoleByName: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -54,9 +72,8 @@ describe("Auth Service", () => {
         description: string | null;
       } | null>
     >();
-    // @ts-expect-error - Vitest mock type inference issue
     vi.spyOn(RolesService.prototype, "getRoleByName").mockImplementation(
-      mockGetRoleByName,
+      mockGetRoleByName as any,
     );
   });
 
@@ -128,6 +145,7 @@ describe("Auth Service", () => {
       username: "newuser",
       email: "newuser@example.com",
       password: "password123",
+      acceptedTerms: true,
     };
 
     const mockCreatedUser = {
@@ -153,29 +171,60 @@ describe("Auth Service", () => {
 
       const result = await authService.register(mockRegisterPayload);
 
-      expect(prisma.user.findFirst).toHaveBeenCalledWith({
-        where: {
-          OR: [
-            { email: mockRegisterPayload.email },
-            { username: mockRegisterPayload.username },
-          ],
-        },
-      });
-
       expect(prisma.user.create).toHaveBeenCalledWith({
-        data: {
+        data: expect.objectContaining({
           username: mockRegisterPayload.username,
           email: mockRegisterPayload.email,
           passwordHash: expect.any(String),
           roleId: mockUserRole.id,
-        },
+          emailVerificationToken: expect.any(String),
+          emailVerificationTokenExpiresAt: expect.any(Date),
+          acceptedTermsAt: expect.any(Date),
+        }),
       });
 
       expect(result).toMatchObject({
         userId: 1,
         username: "newuser",
+        email: "newuser@example.com",
+        emailVerified: false,
       });
-      expect(result.accessToken).toBeDefined();
+      expect(result).not.toHaveProperty("accessToken");
+    });
+
+    it("должен бросить ошибку если не приняты условия", async () => {
+      await expect(
+        authService.register({ ...mockRegisterPayload, acceptedTerms: false }),
+      ).rejects.toThrow("Необходимо принять условия использования");
+    });
+
+    it("должен бросить ошибку для disposable email", async () => {
+      (isDisposableEmail as any).mockReturnValueOnce(true);
+
+      await expect(authService.register(mockRegisterPayload)).rejects.toThrow(
+        "Регистрация с временных почтовых адресов запрещена",
+      );
+    });
+
+    it("должен бросить ошибку если Turnstile не пройден", async () => {
+      (verifyTurnstileToken as any).mockResolvedValueOnce(false);
+
+      await expect(
+        authService.register({
+          ...mockRegisterPayload,
+          turnstileToken: "invalid",
+        }),
+      ).rejects.toThrow("Не удалось подтвердить, что вы не робот");
+    });
+
+    it("должен пропускать Turnstile если токен не передан", async () => {
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
+
+      const result = await authService.register(mockRegisterPayload);
+
+      expect(result.emailVerified).toBe(false);
+      expect(verifyTurnstileToken).not.toHaveBeenCalled();
     });
 
     it("должен бросить ошибку если пользователь с email уже существует", async () => {
@@ -215,19 +264,145 @@ describe("Auth Service", () => {
       );
     });
 
-    it("должен сгенерировать JWT токен после регистрации", async () => {
+    it("должен отправить письмо с подтверждением email", async () => {
       (prisma.user.findFirst as any).mockResolvedValue(null);
       (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
 
-      const result = await authService.register(mockRegisterPayload);
+      const { sendVerifyEmail } = await import("./auth.mail.js");
 
-      expect(result.accessToken).toBeDefined();
-      expect(typeof result.accessToken).toBe("string");
+      await authService.register(mockRegisterPayload);
 
-      // Проверяем что токен валидный
-      const decoded = jwt.verify(result.accessToken, "test-secret-key") as any;
-      expect(decoded.userId).toBe(1);
-      expect(decoded.username).toBe("newuser");
+      expect(sendVerifyEmail).toHaveBeenCalledWith(
+        "newuser@example.com",
+        "newuser",
+        expect.any(String),
+      );
+    });
+  });
+
+  describe("verifyEmail", () => {
+    const mockUser = {
+      id: 1,
+      username: "testuser",
+      email: "test@example.com",
+      emailVerifiedAt: null,
+      emailVerificationToken: "valid-token",
+      emailVerificationTokenExpiresAt: new Date(Date.now() + 3600000),
+    };
+
+    it("должен подтвердить email по корректному токену", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+      (prisma.user.update as any).mockResolvedValue({ ...mockUser, emailVerifiedAt: new Date() });
+
+      const result = await authService.verifyEmail("valid-token");
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { emailVerificationToken: "valid-token" },
+      });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          emailVerifiedAt: expect.any(Date),
+          emailVerificationToken: null,
+          emailVerificationTokenExpiresAt: null,
+        },
+      });
+
+      expect(result).toEqual({ userId: 1, username: "testuser" });
+    });
+
+    it("должен бросить ошибку для неверного токена", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(null);
+
+      await expect(authService.verifyEmail("bad-token")).rejects.toThrow(
+        "Неверная или устаревшая ссылка подтверждения",
+      );
+    });
+
+    it("должен вернуть успех если email уже подтверждён", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        emailVerifiedAt: new Date(),
+      });
+
+      const result = await authService.verifyEmail("valid-token");
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(result).toEqual({ userId: 1, username: "testuser" });
+    });
+
+    it("должен бросить ошибку для просроченного токена", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        emailVerificationTokenExpiresAt: new Date(Date.now() - 3600000),
+      });
+
+      await expect(authService.verifyEmail("valid-token")).rejects.toThrow(
+        "Срок действия ссылки истёк",
+      );
+    });
+
+    it("должен отправить приветственное письмо после подтверждения", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+      (prisma.user.update as any).mockResolvedValue({ ...mockUser, emailVerifiedAt: new Date() });
+
+      const { sendWelcomeEmail } = await import("./auth.mail.js");
+
+      await authService.verifyEmail("valid-token");
+
+      expect(sendWelcomeEmail).toHaveBeenCalledWith("test@example.com", "testuser");
+    });
+  });
+
+  describe("resendVerificationEmail", () => {
+    const mockUser = {
+      id: 1,
+      email: "test@example.com",
+      username: "testuser",
+      emailVerifiedAt: null,
+    };
+
+    it("должен обновить токен и отправить письмо", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+      (prisma.user.update as any).mockResolvedValue(mockUser);
+
+      const { sendVerifyEmail } = await import("./auth.mail.js");
+
+      await authService.resendVerificationEmail("test@example.com");
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          emailVerificationToken: expect.any(String),
+          emailVerificationTokenExpiresAt: expect.any(Date),
+        },
+      });
+
+      expect(sendVerifyEmail).toHaveBeenCalledWith(
+        "test@example.com",
+        "testuser",
+        expect.any(String),
+      );
+    });
+
+    it("не должен ничего делать если пользователь не найден", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(null);
+
+      await authService.resendVerificationEmail("nonexistent@example.com");
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("не должен ничего делать если email уже подтверждён", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        emailVerifiedAt: new Date(),
+      });
+
+      await authService.resendVerificationEmail("test@example.com");
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
 
@@ -245,6 +420,8 @@ describe("Auth Service", () => {
       role: {
         name: "user",
       },
+      suspendedUntil: null,
+      suspensionReason: null,
     };
 
     beforeEach(async () => {
@@ -256,18 +433,12 @@ describe("Auth Service", () => {
 
       const result = await authService.login(mockLoginPayload);
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { username: mockLoginPayload.username },
-        include: {
-          role: true,
-        },
-      });
-
       expect(result).toMatchObject({
         userId: 1,
         username: "existinguser",
       });
       expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
     });
 
     it("должен бросить ошибку если пользователь не найден", async () => {
@@ -281,104 +452,260 @@ describe("Auth Service", () => {
     it("должен бросить ошибку при неверном пароле", async () => {
       (prisma.user.findUnique as any).mockResolvedValue(mockUser);
 
-      const wrongPasswordPayload = {
-        ...mockLoginPayload,
-        password: "wrongpassword",
-      };
+      await expect(
+        authService.login({ ...mockLoginPayload, password: "wrongpassword" }),
+      ).rejects.toThrow("Неверное имя пользователя или пароль");
+    });
 
-      await expect(authService.login(wrongPasswordPayload)).rejects.toThrow(
-        "Неверное имя пользователя или пароль",
+    it("должен бросить ошибку если аккаунт заблокирован", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        suspendedUntil: new Date(Date.now() + 86400000),
+        suspensionReason: "Нарушение правил",
+      });
+
+      await expect(authService.login(mockLoginPayload)).rejects.toThrow(
+        "заблокирован",
+      );
+      await expect(authService.login(mockLoginPayload)).rejects.toThrow(
+        "Нарушение правил",
       );
     });
+  });
 
-    it("должен сгенерировать JWT токен при успешном входе", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
-
-      const result = await authService.login(mockLoginPayload);
-
-      expect(result.accessToken).toBeDefined();
-
-      const decoded = jwt.verify(result.accessToken, "test-secret-key") as any;
-      expect(decoded.userId).toBe(1);
-      expect(decoded.username).toBe("existinguser");
-    });
-
-    it("должен использовать одинаковый формат токена для login и register", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
-
-      const loginResult = await authService.login(mockLoginPayload);
-
-      (prisma.user.findFirst as any).mockResolvedValue(null);
-      (prisma.user.create as any).mockResolvedValue({ ...mockUser, id: 2 });
-      mockGetRoleByName.mockResolvedValue({
+  describe("getUserVerificationStatus", () => {
+    it("должен вернуть статус верификации", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
         id: 1,
-        name: "user",
-        description: "Regular user",
+        emailVerifiedAt: new Date(),
+        email: "test@example.com",
       });
 
-      const registerResult = await authService.register({
-        username: "newuser2",
-        email: "newuser2@example.com",
-        password: "password123",
+      const result = await authService.getUserVerificationStatus(1);
+
+      expect(result).toEqual({
+        emailVerified: true,
+        email: "test@example.com",
+      });
+    });
+
+    it("должен вернуть emailVerified: false если email не подтверждён", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        id: 1,
+        emailVerifiedAt: null,
+        email: "test@example.com",
       });
 
-      // Оба токена должны валидироваться
-      const loginDecoded = jwt.verify(
-        loginResult.accessToken,
-        "test-secret-key",
-      ) as any;
-      const registerDecoded = jwt.verify(
-        registerResult.accessToken,
-        "test-secret-key",
-      ) as any;
+      const result = await authService.getUserVerificationStatus(1);
 
-      expect(loginDecoded).toHaveProperty("userId");
-      expect(loginDecoded).toHaveProperty("username");
-      expect(registerDecoded).toHaveProperty("userId");
-      expect(registerDecoded).toHaveProperty("username");
+      expect(result.emailVerified).toBe(false);
+    });
+
+    it("должен бросить ошибку если пользователь не найден", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(null);
+
+      await expect(
+        authService.getUserVerificationStatus(999),
+      ).rejects.toThrow("Пользователь не найден");
     });
   });
 
-  describe("generateToken (internal)", () => {
-    it("должен создать токен с правильным payload", () => {
-      const payload = { userId: 42, username: "testuser" };
-      const token = jwt.sign(payload, "test-secret-key", { expiresIn: "7d" });
+  describe("OAuth VK", () => {
+    const VK_ID = "12345";
 
-      const decoded = jwt.verify(token, "test-secret-key") as any;
+    const mockOAuthUser = {
+      id: VK_ID,
+      email: "vkuser@example.com",
+      username: "VK User",
+      avatarUrl: "https://vk.com/photo.jpg",
+    };
 
-      expect(decoded.userId).toBe(42);
-      expect(decoded.username).toBe("testuser");
-      expect(decoded.exp).toBeDefined();
+    const mockExistingUser = {
+      id: 1,
+      username: "existinguser",
+      email: "vkuser@example.com",
+      passwordHash: "hash",
+      vkId: null,
+      emailVerifiedAt: new Date(),
+      role: { name: "user" },
+    };
+
+    it("должен создать нового пользователя через VK", async () => {
+      (getVkToken as any).mockResolvedValue(JSON.stringify(mockOAuthUser));
+      (parseOAuthUserData as any).mockReturnValue(mockOAuthUser);
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      mockGetRoleByName.mockResolvedValue({ id: 1, name: "user", description: null });
+      (prisma.user.create as any).mockResolvedValue({
+        id: 2,
+        username: "VK_User",
+        email: "vkuser@example.com",
+        vkId: VK_ID,
+        role: { name: "user" },
+        emailVerifiedAt: new Date(),
+      });
+
+      const result = await authService.oauthVk("valid-code");
+
+      expect(result.userId).toBe(2);
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
     });
 
-    it("должен создать токен с экспирацией 7 дней", () => {
-      const payload = { userId: 1, username: "user" };
-      const token = jwt.sign(payload, "test-secret-key", { expiresIn: "7d" });
-      const decoded: any = jwt.verify(token, "test-secret-key");
+    it("должен привязать VK к существующему пользователю по email", async () => {
+      (getVkToken as any).mockResolvedValue(JSON.stringify(mockOAuthUser));
+      (parseOAuthUserData as any).mockReturnValue(mockOAuthUser);
+      (prisma.user.findFirst as any).mockResolvedValue(mockExistingUser);
+      (prisma.user.update as any).mockResolvedValue({ ...mockExistingUser, vkId: VK_ID });
 
-      const now = Math.floor(Date.now() / 1000);
-      const sevenDaysInSeconds = 7 * 24 * 60 * 60;
-      const expectedExp = now + sevenDaysInSeconds;
+      const result = await authService.oauthVk("valid-code");
 
-      expect(decoded.exp).toBeGreaterThanOrEqual(now);
-      expect(decoded.exp).toBeLessThanOrEqual(expectedExp + 10);
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: expect.objectContaining({ vkId: VK_ID }),
+      });
+      expect(result.userId).toBe(1);
+    });
+
+    it("должен создать пользователя без email если VK не вернул email", async () => {
+      (getVkToken as any).mockResolvedValue(JSON.stringify({ ...mockOAuthUser, email: "" }));
+      (parseOAuthUserData as any).mockReturnValue({ ...mockOAuthUser, email: "" });
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      mockGetRoleByName.mockResolvedValue({ id: 1, name: "user", description: null });
+      (prisma.user.create as any).mockResolvedValue({
+        id: 3,
+        username: `vk_${VK_ID}`,
+        email: `${VK_ID}@vk.oauth`,
+        vkId: VK_ID,
+        role: { name: "user" },
+        emailVerifiedAt: null,
+      });
+
+      const result = await authService.oauthVk("valid-code");
+
+      expect(result.userId).toBe(3);
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            email: `${VK_ID}@vk.oauth`,
+            emailVerifiedAt: null,
+          }),
+        }),
+      );
     });
   });
 
-  describe("TokenPayload interface", () => {
-    it("должен иметь правильную структуру токена", () => {
-      const payload = { userId: 123, username: "user123" };
-      const token = jwt.sign(payload, "test-secret-key", { expiresIn: "1h" });
-      const decoded = jwt.verify(token, "test-secret-key") as any;
+  describe("OAuth Google", () => {
+    const mockOAuthUser = {
+      id: "google12345",
+      email: "googleuser@gmail.com",
+      username: "Google User",
+      avatarUrl: "https://google.com/photo.jpg",
+    };
 
-      expect(decoded.userId).toBe(123);
-      expect(decoded.username).toBe("user123");
-      expect(decoded.iat).toBeDefined();
-      expect(decoded.exp).toBeDefined();
+    const mockExistingUser = {
+      id: 1,
+      username: "existinguser",
+      email: "googleuser@gmail.com",
+      passwordHash: "hash",
+      googleId: null,
+      emailVerifiedAt: new Date(),
+      role: { name: "user" },
+    };
+
+    it("должен создать нового пользователя через Google", async () => {
+      (getGoogleToken as any).mockResolvedValue(JSON.stringify(mockOAuthUser));
+      (parseOAuthUserData as any).mockReturnValue(mockOAuthUser);
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      mockGetRoleByName.mockResolvedValue({ id: 1, name: "user", description: null });
+      (prisma.user.create as any).mockResolvedValue({
+        id: 2,
+        username: "Google_User",
+        email: "googleuser@gmail.com",
+        googleId: "google12345",
+        role: { name: "user" },
+        emailVerifiedAt: new Date(),
+      });
+
+      const result = await authService.oauthGoogle("valid-code");
+
+      expect(result.userId).toBe(2);
+      expect(result.accessToken).toBeDefined();
+    });
+
+    it("должен привязать Google к существующему пользователю по email", async () => {
+      (getGoogleToken as any).mockResolvedValue(JSON.stringify(mockOAuthUser));
+      (parseOAuthUserData as any).mockReturnValue(mockOAuthUser);
+      (prisma.user.findFirst as any).mockResolvedValue(mockExistingUser);
+      (prisma.user.update as any).mockResolvedValue({ ...mockExistingUser, googleId: "google12345" });
+
+      const result = await authService.oauthGoogle("valid-code");
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: expect.objectContaining({ googleId: "google12345" }),
+      });
+      expect(result.userId).toBe(1);
     });
   });
 
-  describe("requestPasswordReset (New Implementation)", () => {
+  describe("cleanupUnverifiedAccounts", () => {
+    it("должен удалить неподтверждённые аккаунты старше 24 часов", async () => {
+      (prisma.user.deleteMany as any).mockResolvedValue({ count: 3 });
+
+      const result = await authService.cleanupUnverifiedAccounts();
+
+      expect(prisma.user.deleteMany).toHaveBeenCalledWith({
+        where: {
+          emailVerifiedAt: null,
+          emailVerificationTokenExpiresAt: { lt: expect.any(Date) },
+        },
+      });
+      expect(result).toBe(3);
+    });
+
+    it("должен вернуть 0 если нет аккаунтов для очистки", async () => {
+      (prisma.user.deleteMany as any).mockResolvedValue({ count: 0 });
+
+      const result = await authService.cleanupUnverifiedAccounts();
+
+      expect(result).toBe(0);
+    });
+  });
+
+  describe("generateTokenPair", () => {
+    it("должен создать пару access + refresh токенов", () => {
+      const tokens = authService.generateTokenPair({
+        userId: 1,
+        username: "testuser",
+      });
+
+      expect(tokens.accessToken).toBeDefined();
+      expect(tokens.refreshToken).toBeDefined();
+      expect(typeof tokens.accessToken).toBe("string");
+      expect(typeof tokens.refreshToken).toBe("string");
+
+      const decoded = jwt.verify(tokens.accessToken, "test-secret-key") as any;
+      expect(decoded.userId).toBe(1);
+    });
+  });
+
+  describe("validateRefreshToken", () => {
+    it("должен валидировать корректный refresh токен", async () => {
+      const { generateTokenPair } = authService;
+      const tokens = generateTokenPair({ userId: 1, username: "testuser" });
+
+      const decoded = authService.validateRefreshToken(tokens.refreshToken);
+      expect(decoded.userId).toBe(1);
+    });
+
+    it("должен бросить ошибку для невалидного refresh токена", () => {
+      expect(() => {
+        authService.validateRefreshToken("bad-refresh-token");
+      }).toThrow("Невалидный refresh токен");
+    });
+  });
+
+  describe("requestPasswordReset", () => {
     it("должен сгенерировать новый пароль и вызвать отправку письма", async () => {
       const mockUser = {
         id: 1,

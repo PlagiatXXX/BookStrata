@@ -5,16 +5,27 @@ import {
   validateToken,
   validateRefreshToken,
   generateTokenPair,
+  verifyEmail,
+  resendVerificationEmail,
   requestPasswordReset,
   confirmPasswordReset,
+  getUserVerificationStatus,
+  oauthVk,
+  oauthGoogle,
 } from "./auth.service.js";
 import {
   registerSchema,
   loginSchema,
   validateSchema,
-  RegisterInput,
-  LoginInput,
-  ValidateInput,
+  verifyEmailSchema,
+  resendVerificationSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  type RegisterInput,
+  type LoginInput,
+  type ValidateInput,
+  type VerifyEmailInput,
+  type ResendVerificationInput,
 } from "./auth.schema.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
@@ -26,7 +37,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       schema: registerSchema,
       config: {
         rateLimit: {
-          max: 10,
+          max: 5,
           timeWindow: "1 hour",
         },
       },
@@ -35,35 +46,115 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const result = await register(request.body);
 
-        reply.setCookie("refreshToken", result.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60,
-          path: "/",
-        });
-
         return reply.code(201).header("Location", `/api/users/${result.userId}`).send(createSuccessResponse({
-          accessToken: result.accessToken,
           userId: result.userId,
           username: result.username,
+          email: result.email,
+          emailVerified: result.emailVerified,
         }));
       } catch (error) {
-        if (
-          error instanceof Error &&
-          error.message.includes("уже зарегистрирован")
-        ) {
-          fastify.log.warn(
-            { username: request.body.username, email: request.body.email },
-            error.message,
-          );
-          return reply.code(409).send(createApiError(ErrorCodes.CONFLICT, error.message));
+        if (error instanceof Error) {
+          const msg = error.message;
+
+          if (msg.includes("уже зарегистрирован")) {
+            fastify.log.warn(
+              { username: request.body.username, email: request.body.email },
+              msg,
+            );
+            return reply.code(409).send(createApiError(ErrorCodes.CONFLICT, msg));
+          }
+
+          if (msg.includes("временных почтовых")) {
+            return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, msg));
+          }
+
+          if (msg.includes("робот")) {
+            return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, msg));
+          }
+
+          if (msg.includes("условия использования")) {
+            return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, msg));
+          }
         }
         fastify.log.error(error, "Unexpected error during registration");
         throw error;
       }
     },
   );
+
+  // POST /api/auth/verify-email
+  fastify.post<{ Body: VerifyEmailInput }>(
+    "/verify-email",
+    {
+      schema: verifyEmailSchema,
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const result = await verifyEmail(request.body.token);
+        return reply.code(200).send(createSuccessResponse({
+          message: "Email успешно подтверждён",
+          userId: result.userId,
+          username: result.username,
+        }));
+      } catch (error) {
+        if (error instanceof Error) {
+          const msg = error.message;
+          if (msg.includes("истёк")) {
+            return reply.code(400).send(createApiError(ErrorCodes.TOKEN_EXPIRED, msg));
+          }
+          return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, msg));
+        }
+        throw error;
+      }
+    },
+  );
+
+  // POST /api/auth/resend-verification
+  fastify.post<{ Body: ResendVerificationInput }>(
+    "/resend-verification",
+    {
+      schema: resendVerificationSchema,
+      config: {
+        rateLimit: {
+          max: 3,
+          timeWindow: "1 hour",
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        await resendVerificationEmail(request.body.email);
+        return reply.code(200).send(createSuccessResponse({
+          message: "Если аккаунт с таким email существует и не подтверждён, мы отправили новое письмо.",
+        }));
+      } catch (error) {
+        fastify.log.error(error, "Resend verification error");
+        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Failed to resend verification email"));
+      }
+    },
+  );
+
+  // GET /api/auth/me/verification
+  fastify.get("/me/verification", async (request, reply) => {
+    try {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Требуется авторизация"));
+      }
+
+      const status = await getUserVerificationStatus(userId);
+      return reply.code(200).send(createSuccessResponse(status));
+    } catch (error) {
+      fastify.log.error(error, "Get verification status error");
+      throw error;
+    }
+  });
 
   // POST /api/auth/login
   fastify.post<{ Body: LoginInput }>(
@@ -114,7 +205,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/validate
   fastify.post<{ Body: ValidateInput }>(
     "/validate",
-    { schema: validateSchema }, // <-- Схема для валидации токена
+    { schema: validateSchema },
     async (request, reply) => {
       try {
         const payload = validateToken(request.body.token);
@@ -173,15 +264,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post<{ Body: { email: string } }>(
     "/forgot-password",
     {
-      schema: {
-        body: {
-          type: "object",
-          required: ["email"],
-          properties: {
-            email: { type: "string", format: "email", maxLength: 255 },
-          },
-        },
-      },
+      schema: forgotPasswordSchema,
       config: {
         rateLimit: {
           max: 5,
@@ -205,16 +288,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post<{ Body: { token: string; password: string } }>(
     "/reset-password",
     {
-      schema: {
-        body: {
-          type: "object",
-          required: ["token", "password"],
-          properties: {
-            token: { type: "string", maxLength: 1000 },
-            password: { type: "string", minLength: 8, maxLength: 100 },
-          },
-        },
-      },
+      schema: resetPasswordSchema,
       config: {
         rateLimit: {
           max: 5,
@@ -233,4 +307,72 @@ export async function authRoutes(fastify: FastifyInstance) {
       }
     },
   );
+
+  // OAuth: VK
+  fastify.get("/oauth/vk", async (request, reply) => {
+    const state = Math.random().toString(36).substring(2, 15);
+    const { getVkAuthUrl } = await import("../../lib/oauth.js");
+    return reply.redirect(getVkAuthUrl(state), 301);
+  });
+
+  fastify.get("/oauth/vk/callback", async (request, reply) => {
+    const { code } = request.query as { code?: string };
+    if (!code) {
+      return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Missing authorization code"));
+    }
+
+    try {
+      const result = await oauthVk(code);
+
+      reply.setCookie("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
+      });
+
+      const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      return reply.redirect(`${frontendUrl}/oauth/callback?token=${result.accessToken}`, 301);
+    } catch (error) {
+      fastify.log.error(error, "VK OAuth error");
+      const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      return reply.redirect(`${frontendUrl}/oauth/error`, 301);
+    }
+  });
+
+  // OAuth: Google
+  fastify.get("/oauth/google", async (request, reply) => {
+    const state = Math.random().toString(36).substring(2, 15);
+    const { getGoogleAuthUrl } = await import("../../lib/oauth.js");
+    return reply.redirect(getGoogleAuthUrl(state), 301);
+  });
+
+  fastify.get("/oauth/google/callback", async (request, reply) => {
+    const { code } = request.query as { code?: string };
+    if (!code) {
+      return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Missing authorization code"));
+    }
+
+    try {
+      const result = await oauthGoogle(code);
+
+      reply.setCookie("refreshToken", result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
+      });
+
+      const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      return reply.redirect(`${frontendUrl}/oauth/callback?token=${result.accessToken}`, 301);
+    } catch (error) {
+      fastify.log.error(error, "Google OAuth error");
+      const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      return reply.redirect(`${frontendUrl}/oauth/error`, 301);
+    }
+  });
 }
+
+

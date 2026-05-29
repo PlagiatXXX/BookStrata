@@ -36,6 +36,7 @@ import requestContext from "../src/plugins/requestContext.js";
 import authPlugin from "../src/plugins/auth.js";
 import { errorNotifier } from "./lib/errorNotifier.js";
 import { registerAchievementSubscriptions } from "./lib/event-subscriptions.js";
+import { SubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
 
 const requiredEnvVars = ["DATABASE_URL", "JWT_SECRET", "CLIENT_URL"];
 for (const envVar of requiredEnvVars) {
@@ -340,6 +341,27 @@ fastify.register(moderationRoutes, { prefix: "/api/moderation" });
 
 // Инициализация подписок на события
 registerAchievementSubscriptions();
+
+// Периодическая деактивация просроченных Pro-подписок (раз в час)
+const subscriptionsCleanup = new SubscriptionsService();
+setInterval(() => {
+  subscriptionsCleanup.expireAllOverdue().catch((err) => {
+    fastify.log.error(err, "Ошибка при деактивации просроченных подписок");
+  });
+}, 60 * 60 * 1000);
+
+// Очистка неподтверждённых аккаунтов (каждые 30 минут)
+import { cleanupUnverifiedAccounts } from "./modules/auth/auth.service.js"
+setInterval(async () => {
+  try {
+    const count = await cleanupUnverifiedAccounts()
+    if (count > 0) {
+      fastify.log.info(`Очищено неподтверждённых аккаунтов: ${count}`)
+    }
+  } catch (err) {
+    fastify.log.error(err, "Ошибка при очистке неподтверждённых аккаунтов")
+  }
+}, 30 * 60 * 1000)
 
 const start = async () => {
   try {

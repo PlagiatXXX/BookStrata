@@ -478,3 +478,57 @@ See `.opencode/skills/*/evals/evals.json` for eval tests.
 - 8 backend тестов для flags.service
 - 5 frontend тестов для вкладки «Жалобы»
 - Все тесты проходят (409 frontend + 370 backend = 779)
+
+---
+
+## Session — 2026-05-29 — Email Verification + OAuth + Защита от фейков
+
+### Что сделано
+
+**Защита регистрации от фейковых/мультиаккаунтов:**
+
+- **Backend:**
+  - `register()`: проверка `acceptedTerms`, блокировка disposable-email (~50K доменов через `disposable-email-domains`), проверка Cloudflare Turnstile (invisible)
+  - Возвращает `RegisterResult` (без access-токена) — пользователь должен подтвердить email
+  - `verifyEmail(token)`: поиск по `emailVerificationToken`, проверка срока, установка `emailVerifiedAt`, отправка welcome-письма
+  - `resendVerificationEmail(email)`: новый токен + письмо (security: не падает если email не найден или уже подтверждён)
+  - `cleanupUnverifiedAccounts()`: удаление аккаунтов без подтверждения email старше 24ч (запускается каждые 30 мин в server.ts)
+  - `getUserVerificationStatus(userId)`: проверка статуса подтверждения
+  - `login()`: сохранён как был + учёт suspendedUntil/suspensionReason
+  - OAuth VK/Google: `oauthVk(code)`, `oauthGoogle(code)` — создание/привязка аккаунта, объединение по email, авто-подтверждение email если OAuth предоставил email
+  - OAuth эндпоинты: `/api/auth/oauth/vk`, `/api/auth/oauth/google`, `/api/auth/oauth/vk/callback`, `/api/auth/oauth/google/callback` (redirect с токеном на фронт)
+  - Turnstile интеграция: `lib/turnstile.ts` — вызов Cloudflare API; `lib/oauth.ts` — VK + Google токены/userInfo
+  - Rate limit регистрации снижен до 5 req/hour
+
+- **Frontend:**
+  - `src/pages/VerifyEmailPage.tsx` — страница с ?token=, вызывает `apiVerifyEmail`, показывает спиннер/успех/ошибку
+  - `src/pages/PrivacyPage.tsx` — политика конфиденциальности (GDPR + 152-ФЗ)
+  - `src/pages/OAuthCallbackPage.tsx` — принимает ?token=, сохраняет JWT, редирект на главную
+  - `AuthForm.tsx` — полный рерайт: чекбокс согласия, Turnstile виджет, экран «Подтвердите email» после регистрации, OAuth-кнопки VK/Google
+  - `router.tsx` — новые роуты `/verify-email`, `/privacy`, `/oauth/callback`
+
+- **Prisma миграция:** `add_email_verification_oauth` — поля `emailVerifiedAt`, `emailVerificationToken`, `emailVerificationTokenExpiresAt`, `acceptedTermsAt`, `vkId`, `googleId`
+
+### Тесты
+- `auth.service.spec.ts` — расширен с 15 до 43 тестов: acceptedTerms, disposable, turnstile, verifyEmail (5 кейсов), resendVerificationEmail (3), cleanupUnverifiedAccounts (2), getUserVerificationStatus (3), oauthVk (3), oauthGoogle (2), generateTokenPair (1), validateRefreshToken (2), login suspension (1)
+- **Итог: 30 бэкенд-тест-файлов, 403 теста, все проходят**
+
+### New/Modified ключевые файлы
+- `backend/src/modules/auth/auth.service.ts` — register/verify/resend/cleanup/OAuth
+- `backend/src/modules/auth/auth.service.spec.ts` — 43 теста
+- `backend/src/modules/auth/auth.route.ts` — 8 эндпоинтов + OAuth redirect/callback
+- `backend/src/modules/auth/auth.schema.ts` — acceptedTerms, turnstileToken, verify/resend схемы
+- `backend/src/lib/disposable-email.ts`, `turnstile.ts`, `oauth.ts` — новые утилиты
+- `backend/src/server.ts` — cleanup интервал
+- `backend/prisma/schema.prisma` — +6 полей User
+- `frontend/src/components/AuthForm/AuthForm.tsx` — полный рерайт
+- `frontend/src/pages/VerifyEmailPage.tsx`, `PrivacyPage.tsx`, `OAuthCallbackPage.tsx` — новые страницы
+- `frontend/src/app/router.tsx` — новые роуты
+- `frontend/src/lib/authApi.ts` — apiVerifyEmail, apiResendVerification
+
+### Gotchas
+- LSP-ошибки в auth.service.ts (Prisma типы не перегенерены в IDE) — ложные, `tsc --noEmit` и `npm run build` проходят
+- `RegisterResult` НЕ содержит `accessToken` — пользователь логинится только после подтверждения email (или через OAuth)
+- OAuth callback на бэкенде редиректит на `{CLIENT_URL}/oauth/callback?token=...` — фронт парсит и сохраняет токен
+- Turnstile использует fallback-ключ `1x00000000000000000000AA` при отсутствии `VITE_TURNSTILE_SITE_KEY` (always passes)
+- Существующие пользователи получают `emailVerifiedAt = NOW()` через миграцию (обратная совместимость)

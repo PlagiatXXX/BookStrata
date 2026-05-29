@@ -71,12 +71,15 @@ export const EditorLayout = ({
     }),
   );
 
+  const headerActiveItem = isReadOnly ? undefined : "Мои Рейтинги";
+
   const content = (
     <DashboardLayout
       onMyRatingsClick={onMyRatingsClick}
       onSearch={() => {}}
       searchValue=""
       showSearch={false}
+      activeItem={headerActiveItem}
     >
       <main className="neo-brutalist-editor flex-1 overflow-y-auto p-4  lg:p-8" data-theme={theme}>
         <EditorHeader {...headerProps} />

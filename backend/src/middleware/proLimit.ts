@@ -23,10 +23,19 @@ declare module "fastify" {
 /**
  * Middleware для проверки Pro статуса пользователя
  * Добавляет информацию о лимитах в request
+ *
+ * Автоматически деактивирует просроченные подписки (isProUser
+ * сам вызывает expireSubscription если proExpiresAt < now).
+ * Пока все лимиты разблокированы — при включении достаточно
+ * заменить `isPro: true` на актуальное значение.
  */
 export const checkProLimit = async (
   request: FastifyRequest,
 ) => {
+  if (request.user?.userId) {
+    await subscriptionsService.isProUser(request.user.userId)
+  }
+
   request.proLimit = {
     isPro: true,
     maxBooks: Infinity,

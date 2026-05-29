@@ -117,3 +117,55 @@ export async function sendWelcomeEmail(email: string, username: string): Promise
   });
 }
 
+const getVerifyEmailTemplate = (username: string, token: string) => {
+  const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+  const safeUsername = escapeHtml(username);
+
+  return `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 20px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 5px solid #4f46e5; }
+    h1 { color: #4f46e5; margin-top: 0; }
+    .btn { display: inline-block; background-color: #4f46e5; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; }
+    .footer { font-size: 12px; color: #64748b; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; }
+    .link-text { word-break: break-all; color: #64748b; font-size: 12px; margin-top: 20px; }
+    .note { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 12px; margin-top: 20px; font-size: 14px; color: #92400e; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Подтверждение email</h1>
+    <p>Здравствуйте, <strong>${safeUsername}</strong>!</p>
+    <p>Вы зарегистрировались в BookStrata Pro. Для активации аккаунта подтвердите ваш email:</p>
+    <a href="${verifyLink}" class="btn">Подтвердить email</a>
+    <p class="link-text">Если кнопка не работает, скопируйте и вставьте эту ссылку в браузер:<br>${verifyLink}</p>
+    <div class="note">
+      <strong>Важно:</strong> без подтверждения email вам будут недоступны некоторые функции: публикация тир-листов, создание битв, написание в чат.
+    </div>
+    <p>Ссылка действительна в течение 24 часов.</p>
+    <div class="footer">
+      <p>Вы получили это письмо, потому что зарегистрировались в BookStrata Pro.</p>
+      <p>© ${new Date().getFullYear()} BookStrata Pro. Все права защищены.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+};
+
+export async function sendVerifyEmail(email: string, username: string, token: string): Promise<void> {
+  const html = getVerifyEmailTemplate(username, token);
+  const text = `Здравствуйте, ${username}! Подтвердите ваш email: ${process.env.CLIENT_URL}/verify-email?token=${token}`;
+
+  await sendEmail({
+    to: email,
+    subject: "Подтверждение email — BookStrata Pro",
+    text,
+    html,
+  });
+}
+

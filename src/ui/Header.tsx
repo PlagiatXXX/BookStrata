@@ -47,8 +47,7 @@ export const Header = ({
       if (path === "/forum") return "Актив";
       if (path === "/templates" || path.startsWith("/templates/"))
         return "Шаблоны";
-      if (path === "/" || path.startsWith("/tier-lists/"))
-        return "Мои Рейтинги";
+      if (path === "/") return "Мои Рейтинги";
       return undefined;
     })();
 

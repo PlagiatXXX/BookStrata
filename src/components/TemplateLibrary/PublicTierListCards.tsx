@@ -1,7 +1,9 @@
 import { memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Heart } from "lucide-react";
+import { Calendar, Heart, BookOpen } from "lucide-react";
 import type { TierListShort } from '@/lib/tierListApi';
+import { TierListCover } from "@/components/DashboardHeroSection/components/TierListCover";
+import { booksCountText } from "@/lib/plural";
 
 interface PublicTierListCardsProps {
   tierLists: TierListShort[];
@@ -19,13 +21,15 @@ const PublicTierListCards = memo(function PublicTierListCards({
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {tierLists.map((tierList) => {
         const isLiked = likedIdsSet.has(tierList.id);
-        
+        const booksCount = tierList.booksCount || 0;
+
         return (
-          <div
+          <article
             key={tierList.id}
+            className="group relative cursor-pointer rounded-xl border border-white/10 bg-[rgba(15,30,50,0.4)] p-4 backdrop-blur-[12px] shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(6,188,249,0.3)] hover:shadow-xl"
             role="button"
             tabIndex={0}
             onClick={() => handleCardClick(tierList.id)}
@@ -35,49 +39,66 @@ const PublicTierListCards = memo(function PublicTierListCards({
                 handleCardClick(tierList.id);
               }
             }}
-            className="cursor-pointer bg-black/45 backdrop-blur-[2px] rounded-md p-3 border border-white/20 hover:border-white/40 transition-transform duration-200 min-h-22.5"
           >
-            <h3 className="font-display font-semibold text-[#f3efe6] mb-1 text-sm line-clamp-1">
+            {/* Cover */}
+            <TierListCover
+              coverImageUrl={tierList.coverImageUrl}
+              title={tierList.title}
+              booksCount={booksCount}
+            />
+
+            {/* Title */}
+            <h3
+              className="mt-3 mb-1 font-display font-semibold text-[#e2e8f0] leading-tight cursor-pointer hover:text-[#06bcf9] transition-colors line-clamp-2"
+              title={`Открыть "${tierList.title}"`}
+            >
               {tierList.title}
             </h3>
-            <div className="flex items-center justify-between mt-2">
+
+            {/* Author */}
+            <div className="mb-3">
               {tierList.user?.id ? (
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate(`/users/${tierList.user!.id}`) }}
-                  className="text-xs text-[#b8b1a3] hover:text-(--accent-main) transition-colors truncate text-left cursor-pointer"
+                  className="text-xs text-[#94a3b8] hover:text-[#06bcf9] transition-colors truncate text-left cursor-pointer"
                 >
                   {tierList.user.username}
                 </button>
               ) : (
-                <span className="text-xs text-[#b8b1a3] truncate">
+                <span className="text-xs text-[#94a3b8] truncate block">
                   {tierList.authorName || "Неизвестный автор"}
                 </span>
               )}
-              <div className="flex items-center gap-1 text-xs">
+            </div>
+
+            {/* Stats row */}
+            <div className="flex items-center gap-4 pt-3 border-t border-white/10">
+              <div className="flex items-center gap-1.5 text-xs">
                 <Heart
-                  className={`w-3 h-3 ${isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-400'}`}
+                  className={`w-3.5 h-3.5 ${isLiked ? 'fill-pink-500 text-pink-500' : 'text-[#94a3b8]'}`}
                 />
-                <span className={`font-medium ${isLiked ? 'text-pink-500' : 'text-gray-400'}`}>
+                <span className={`font-medium ${isLiked ? 'text-pink-500' : 'text-[#94a3b8]'}`}>
                   {tierList.likesCount || 0}
                 </span>
               </div>
-            </div>
 
-            <div className="flex items-center mt-2 pt-2 border-t border-white/20">
-              <Calendar size={12} className="text-[#b8b1a3] mr-1" />
-              <span className="text-xs text-[#b8b1a3]">
-                {new Date(tierList.updatedAt).toLocaleString("ru-RU", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                })}
-              </span>
+              <div className="flex items-center gap-1.5 text-xs text-[#94a3b8]">
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>{booksCountText(booksCount)}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-[#94a3b8] ml-auto">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>
+                  {new Date(tierList.updatedAt).toLocaleDateString("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
             </div>
-          </div>
+          </article>
         );
       })}
     </div>
