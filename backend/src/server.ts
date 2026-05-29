@@ -350,6 +350,9 @@ setInterval(() => {
   });
 }, 60 * 60 * 1000);
 
+// Единая инициализация всех модулей при старте
+import { seedAllModules } from "./lib/module-loader.js"
+
 // Очистка неподтверждённых аккаунтов (каждые 30 минут)
 import { cleanupUnverifiedAccounts } from "./modules/auth/auth.service.js"
 setInterval(async () => {
@@ -371,6 +374,9 @@ const start = async () => {
       fastify.log.error("Не удалось подключиться к БД. Сервер не запущен.");
       process.exit(1);
     }
+
+    // Инициализация всех модулей (achievements и т.д.)
+    await seedAllModules()
 
     await fastify.listen({ port: PORT, host: "0.0.0.0" });
     fastify.log.info(`Server listening on port ${PORT}`);

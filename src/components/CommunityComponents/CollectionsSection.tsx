@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Link } from "react-router-dom";
 import { COLLECTIONS } from "../../data/mockData";
 
 export const CollectionsSection = memo(() => {
@@ -25,10 +26,7 @@ export const CollectionsSection = memo(() => {
         {COLLECTIONS.filter((c) => c.isPublished).map((collection) => (
           <div
             key={collection.id}
-            className="brutal-card brutal-border p-6 hover-lift cursor-pointer group"
-            onClick={() =>
-              (window.location.href = `/collections/${collection.id}`)
-            }
+            className="brutal-card brutal-border p-6 hover-lift"
           >
             {collection.bookCovers && collection.bookCovers.length > 0 ? (
               <div className="flex gap-1 mb-4">
@@ -41,6 +39,7 @@ export const CollectionsSection = memo(() => {
                       alt={`Cover ${idx + 1}`}
                       className="w-full h-full object-cover"
                       src={img}
+                      onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
                     />
                   </div>
                 ))}
@@ -51,12 +50,19 @@ export const CollectionsSection = memo(() => {
                   alt={collection.title}
                   className="w-full h-full object-cover"
                   src={collection.coverImageUrl}
+                  onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
                 />
               </div>
             ) : null}
-            <h4 className="community-heading text-xl font-bold leading-tight group-hover:text-(--accent-main) transition-colors">
+            <h4 className="community-heading text-xl font-bold leading-tight mb-3">
               {collection.title}
             </h4>
+            <Link
+              to={`/collections/${collection.id}`}
+              className="text-(--ink-0) text-xs font-semibold uppercase tracking-[0.12em] border-b border-(--line-soft) hover:border-(--line-strong) cursor-pointer"
+            >
+              Открыть
+            </Link>
           </div>
         ))}
       </div>

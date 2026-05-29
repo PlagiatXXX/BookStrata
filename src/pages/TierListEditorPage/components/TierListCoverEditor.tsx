@@ -16,6 +16,8 @@ interface TierListCoverEditorProps {
   isPro: boolean
   isReadOnly: boolean
   onCoverUpdated: (url: string) => void
+  ownerUserId?: number
+  currentUserId?: number | null
 }
 
 export function TierListCoverEditor({
@@ -26,7 +28,12 @@ export function TierListCoverEditor({
   isPro,
   isReadOnly,
   onCoverUpdated,
+  ownerUserId,
+  currentUserId,
 }: TierListCoverEditorProps) {
+  // Двойная проверка: isReadOnly + isOwner (защита от race condition)
+  const isOwner = ownerUserId !== undefined && currentUserId !== undefined && ownerUserId === currentUserId
+  const canEdit = !isReadOnly && isOwner
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [nsfwState, setNsfwState] = useState<{
@@ -116,7 +123,7 @@ export function TierListCoverEditor({
       </p>
       <div className="tier-list-cover-editor max-w-52">
         <TierListCover coverImageUrl={coverImageUrl} title={title} booksCount={booksCount} className="tier-list-cover--editor" />
-        {!isReadOnly && (
+        {canEdit && (
           <>
             {coverImageUrl ? (
               <div className="tier-list-cover-editor__actions">

@@ -45,6 +45,7 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier = 10 }: TierLis
                     alt={item.book.title}
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
                   />
                 </div>
               ))}

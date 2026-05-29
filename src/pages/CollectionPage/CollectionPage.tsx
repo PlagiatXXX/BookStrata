@@ -143,6 +143,7 @@ return DOMPurify.sanitize(collection.content);
                     src={cover}
                     alt={`Книга ${idx + 1}`}
                     className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
                   />
                 </div>
               ))}

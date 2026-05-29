@@ -22,18 +22,14 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
   const isRussian = item.lang === "ru"
 
   return (
-    <a
-      href={item.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group brutal-card brutal-border overflow-hidden hover-lift cursor-pointer block"
-    >
+    <div className="group brutal-card brutal-border overflow-hidden hover-lift block">
       <div className="relative aspect-[16/9] overflow-hidden bg-(--bg-0)">
         <img
           src={item.imageUrl ?? PLACEHOLDER}
           alt={item.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
+          onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-(--bg-0)/80 via-transparent to-transparent" />
         <div className="absolute top-3 left-3 flex items-center gap-1.5 max-w-[80%]">
@@ -54,13 +50,21 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-(--ink-1)">
             {formatDate(item.publishedAt)}
           </span>
-          <ExternalLink
-            size={14}
-            className="text-(--ink-2) group-hover:text-(--ink-0) transition-colors"
-          />
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cursor-pointer"
+            aria-label={`Читать: ${item.title}`}
+          >
+            <ExternalLink
+              size={14}
+              className="text-(--ink-2) hover:text-(--ink-0) transition-colors"
+            />
+          </a>
         </div>
         <h3
-          className="community-heading text-base font-bold leading-snug mb-2 group-hover:text-(--accent-main) transition-colors"
+          className="community-heading text-base font-bold leading-snug mb-2"
           dir={isRussian ? "auto" : undefined}
         >
           {item.title}
@@ -69,7 +73,7 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
           {item.excerpt.trim()}
         </p>
       </div>
-    </a>
+    </div>
   )
 }
 

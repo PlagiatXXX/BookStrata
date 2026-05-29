@@ -1,11 +1,9 @@
-import { Spinner } from '@/components/Spinner';
 import { memo, type CSSProperties } from 'react';
 import type { TemplateItem } from '../../data/mockData';
 
 interface TemplateCardProps {
   template: TemplateItem;
-  isApplying: boolean;
-  onUseTemplate: (template: TemplateItem) => void;
+  onPreview: (template: TemplateItem) => void;
 }
 
 const getGridClass = (size: string) => {
@@ -18,7 +16,7 @@ const getGridClass = (size: string) => {
   return map[size] || '';
 };
 
-export const TemplateCard = memo(({ template, isApplying, onUseTemplate }: TemplateCardProps) => {
+export const TemplateCard = memo(({ template, onPreview }: TemplateCardProps) => {
   const borderColorStyle = template.borderColor.startsWith('#')
     ? template.borderColor
     : `var(--${template.borderColor})`;
@@ -33,6 +31,7 @@ export const TemplateCard = memo(({ template, isApplying, onUseTemplate }: Templ
         alt={template.title}
         className="absolute inset-0 w-full h-full object-cover opacity-45 transition-all duration-500 group-hover:opacity-60 parallax-img"
         src={template.image}
+        onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
       />
 
       <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent p-6 flex flex-col justify-end">
@@ -45,27 +44,17 @@ export const TemplateCard = memo(({ template, isApplying, onUseTemplate }: Templ
           {template.title}
         </h3>
         <p className="text-(--ink-1) text-sm">
-          {template.category} • <span data-count-target={template.uses}>0</span> использований
+          {template.category}
         </p>
       </div>
 
       <div className="absolute inset-0 bg-[rgba(18,18,18,0.62)] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
         <button
-          className={`brutal-cta px-6 py-3 text-xs font-semibold uppercase tracking-widest ${
-            isApplying ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
-          }`}
-          aria-label={`Использовать шаблон: ${template.title}`}
-          disabled={isApplying}
-          onClick={() => onUseTemplate(template)}
+          className="brutal-cta px-6 py-3 text-xs font-semibold uppercase tracking-widest cursor-pointer"
+          aria-label={`Посмотреть шаблон: ${template.title}`}
+          onClick={() => onPreview(template)}
         >
-          {isApplying ? (
-            <span className="inline-flex items-center gap-2">
-              <Spinner size="sm" className="border-(--bg-0) border-t-(--bg-0)" />
-              Открываю...
-            </span>
-          ) : (
-            'Использовать'
-          )}
+          Посмотреть
         </button>
       </div>
     </div>

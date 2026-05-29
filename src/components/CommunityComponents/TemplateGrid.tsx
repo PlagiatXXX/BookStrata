@@ -6,11 +6,10 @@ import { TemplateCard } from './TemplateCard';
 interface TemplateGridProps {
   activeCategory: string;
   searchQuery: string;
-  applyingTemplateId: number | null;
-  onUseTemplate: (template: TemplateItem) => void;
+  onPreview: (template: TemplateItem) => void;
 }
 
-export const TemplateGrid = memo(({ activeCategory, searchQuery, applyingTemplateId, onUseTemplate }: TemplateGridProps) => {
+export const TemplateGrid = memo(({ activeCategory, searchQuery, onPreview }: TemplateGridProps) => {
   const filteredTemplates = useMemo(
     () => {
       const query = searchQuery.toLowerCase().trim();
@@ -35,8 +34,7 @@ export const TemplateGrid = memo(({ activeCategory, searchQuery, applyingTemplat
           <TemplateCard
             key={template.id}
             template={template}
-            isApplying={applyingTemplateId === template.id}
-            onUseTemplate={onUseTemplate}
+            onPreview={onPreview}
           />
         ))
       ) : (

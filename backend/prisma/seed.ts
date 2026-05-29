@@ -3,277 +3,120 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+function envOrFallback(key: string, fallback: string): string {
+  return process.env[key] ?? fallback;
+}
+
 async function main() {
-  // Хешируем пароли для тестовых пользователей
-  const adminPasswordHash = await bcrypt.hash("1234", 10);
-  const userPasswordHash = await bcrypt.hash("1234", 10);
+  const admin1Email = envOrFallback("SEED_ADMIN1_EMAIL", "Fedor-Pasyada@yandex.ru")
+  const admin1Username = envOrFallback("SEED_ADMIN1_USERNAME", "fedor")
+  const admin1Password = envOrFallback("SEED_ADMIN1_PASSWORD", "planchik94")
 
-  // 1. Создаем роли (если не существуют)
-  const adminRole = await prisma.role.upsert({
-    where: { name: "admin" },
-    update: {},
-    create: { name: "admin", description: "Администратор платформы" },
-  });
-  const moderatorRole = await prisma.role.upsert({
-    where: { name: "moderator" },
-    update: {},
-    create: { name: "moderator", description: "Модератор контента" },
-  });
-  const userRole = await prisma.role.upsert({
-    where: { name: "user" },
-    update: {},
-    create: { name: "user", description: "Обычный пользователь" },
-  });
+  const admin2Email = envOrFallback("SEED_ADMIN2_EMAIL", "slyusaralina.slyusar@yandex.ru")
+  const admin2Username = envOrFallback("SEED_ADMIN2_USERNAME", "alina")
+  const admin2Password = envOrFallback("SEED_ADMIN2_PASSWORD", "110520")
 
-  console.log("Roles created:", { adminRole, moderatorRole, userRole });
+  const mod1Email = envOrFallback("SEED_MOD1_EMAIL", "fedorvasin68@gmail.com")
+  const mod1Username = envOrFallback("SEED_MOD1_USERNAME", "Федор")
+  const mod1Password = envOrFallback("SEED_MOD1_PASSWORD", "planchik94")
 
-  // 2. Создаем книги отдельно, чтобы получить их ID
-  const bookHobbit = await prisma.book.create({
-    data: { title: "The Hobbit", author: "Tolkien", coverImageUrl: "url_1" },
-  });
-  const bookHarryPotter = await prisma.book.create({
+  const mod2Email = envOrFallback("SEED_MOD2_EMAIL", "fedorpasyada@gmail.com")
+  const mod2Username = envOrFallback("SEED_MOD2_USERNAME", "Алина")
+  const mod2Password = envOrFallback("SEED_MOD2_PASSWORD", "1234")
+
+  // === Полная очистка БД (в обратном порядке зависимостей) ===
+  await prisma.userAchievement.deleteMany()
+  // ContentFlag: сначала null resolvedById (нет cascade), потом удаляем
+  await prisma.contentFlag.updateMany({ where: { resolvedById: { not: null } }, data: { resolvedById: null } })
+  await prisma.contentFlag.deleteMany()
+  // UserWarning: сначала null moderatorId у тех, кого удалим (нет cascade)
+  await prisma.userWarning.deleteMany()
+  await prisma.templateLike.deleteMany()
+  await prisma.tierListLike.deleteMany()
+  await prisma.battleVote.deleteMany()
+  await prisma.battleApplication.deleteMany()
+  await prisma.battleParticipant.deleteMany()
+  await prisma.battle.deleteMany()
+  await prisma.discussionMessage.deleteMany()
+  await prisma.discussion.deleteMany()
+  await prisma.bookPlacement.deleteMany()
+  await prisma.bookRating.deleteMany()
+  await prisma.book.deleteMany()
+  await prisma.tierList.deleteMany()
+  // Template: сначала отвязываем author, потом удаляем (нет cascade)
+  await prisma.template.updateMany({ where: { authorId: { not: null } }, data: { authorId: null } })
+  await prisma.template.deleteMany()
+  await prisma.newsArticle.deleteMany()
+  await prisma.passwordResetToken.deleteMany()
+  await prisma.feedback.deleteMany()
+  await prisma.donor.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.achievement.deleteMany()
+  await prisma.role.deleteMany()
+
+  console.log("Database cleaned")
+
+  // === Создаём роли ===
+  const adminRole = await prisma.role.create({ data: { name: "admin", description: "Администратор платформы" } })
+  const moderatorRole = await prisma.role.create({ data: { name: "moderator", description: "Модератор контента" } })
+  await prisma.role.create({ data: { name: "user", description: "Обычный пользователь" } })
+
+  console.log("Roles created")
+
+  // === Создаём админов и модераторов ===
+  const hash = (pw: string) => bcrypt.hash(pw, 10)
+
+  const admin1 = await prisma.user.create({
     data: {
-      title: "Harry Potter",
-      author: "J.K. Rowling",
-      coverImageUrl: "url_2",
-    },
-  });
-  const bookPercyJackson = await prisma.book.create({
-    data: {
-      title: "Percy Jackson",
-      author: "Rick Riordan",
-      coverImageUrl: "url_3",
-    },
-  });
-  const bookDune = await prisma.book.create({
-    data: { title: "Dune", author: "Frank Herbert", coverImageUrl: "url_4" },
-  });
-  const bookSherlock = await prisma.book.create({
-    data: {
-      title: "Sherlock Holmes",
-      author: "Arthur Conan Doyle",
-      coverImageUrl: "url_5",
-    },
-  });
-
-  // 3. Создаем пользователей (если не существуют)
-  const fedor = await prisma.user.upsert({
-    where: { email: "fedor@example.com" },
-    update: { roleId: adminRole.id },
-    create: {
-      email: "fedor@example.com",
-      username: "fedor",
-      passwordHash: adminPasswordHash,
+      email: admin1Email,
+      username: admin1Username,
+      passwordHash: await hash(admin1Password),
       roleId: adminRole.id,
+      emailVerifiedAt: new Date(),
+      acceptedTermsAt: new Date(),
     },
-  });
-  await prisma.user.upsert({
-    where: { email: "admin@example.com" },
-    update: { roleId: adminRole.id },
-    create: {
-      email: "admin@example.com",
-      username: "admin",
-      passwordHash: adminPasswordHash,
+  })
+
+  const admin2 = await prisma.user.create({
+    data: {
+      email: admin2Email,
+      username: admin2Username,
+      passwordHash: await hash(admin2Password),
       roleId: adminRole.id,
+      emailVerifiedAt: new Date(),
+      acceptedTermsAt: new Date(),
     },
-  });
-  const alina = await prisma.user.upsert({
-    where: { email: "alina@example.com" },
-    update: { roleId: userRole.id },
-    create: {
-      email: "alina@example.com",
-      passwordHash: userPasswordHash,
-      roleId: userRole.id,
-    },
-  });
+  })
 
-  // Создаем дополнительных пользователей с разными статусами подписки
-  await prisma.user.upsert({
-    where: { email: "pro1@example.com" },
-    update: {
-      roleId: userRole.id,
-      isPro: true,
-      proExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 дней
-      aiAvatarsGenerated: 5,
-    },
-    create: {
-      email: "pro1@example.com",
-      username: "ProUser1",
-      passwordHash: userPasswordHash,
-      roleId: userRole.id,
-      isPro: true,
-      proExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      aiAvatarsGenerated: 5,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: "pro2@example.com" },
-    update: {
-      roleId: userRole.id,
-      isPro: true,
-      proExpiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // +5 дней (истекает скоро)
-      aiAvatarsGenerated: 45, // Почти исчерпан лимит
-    },
-    create: {
-      email: "pro2@example.com",
-      username: "ProUser2",
-      passwordHash: userPasswordHash,
-      roleId: userRole.id,
-      isPro: true,
-      proExpiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-      aiAvatarsGenerated: 45,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: "lifetime@example.com" },
-    update: {
-      roleId: userRole.id,
-      isPro: true,
-      proExpiresAt: null, // Бессрочная подписка
-      aiAvatarsGenerated: 0,
-    },
-    create: {
-      email: "lifetime@example.com",
-      username: "LifetimePro",
-      passwordHash: userPasswordHash,
-      roleId: userRole.id,
-      isPro: true,
-      proExpiresAt: null,
-      aiAvatarsGenerated: 0,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: "free1@example.com" },
-    update: { roleId: userRole.id },
-    create: {
-      email: "free1@example.com",
-      username: "FreeUser1",
-      passwordHash: userPasswordHash,
-      roleId: userRole.id,
-      isPro: false,
-      proExpiresAt: null,
-      aiAvatarsGenerated: 0,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: "free2@example.com" },
-    update: { roleId: userRole.id },
-    create: {
-      email: "free2@example.com",
-      username: "FreeUser2",
-      passwordHash: userPasswordHash,
-      roleId: userRole.id,
-      isPro: false,
-      proExpiresAt: null,
-      aiAvatarsGenerated: 0,
-    },
-  });
-
-  // 4. Создаем TierList №1 для Федора ("Top Fantasy Books")
-  const fantasyTierList = await prisma.tierList.create({
+  const mod1 = await prisma.user.create({
     data: {
-      title: "Top Fantasy Books",
-      userId: fedor.id,
-      // Сразу создаем тиры
-      tiers: {
-        create: [
-          { title: "S", rank: 1, color: "#FFD700" },
-          { title: "A", rank: 2, color: "#C0C0C0" },
-        ],
-      },
+      email: mod1Email,
+      username: mod1Username,
+      passwordHash: await hash(mod1Password),
+      roleId: moderatorRole.id,
+      emailVerifiedAt: new Date(),
+      acceptedTermsAt: new Date(),
     },
-    include: { tiers: true }, // Включаем тиры, чтобы получить их ID
-  });
+  })
 
-  // 5. Создаем BookPlacements для TierList №1
-  const tierS_fantasy = fantasyTierList.tiers.find((t) => t.title === "S")!;
-  const tierA_fantasy = fantasyTierList.tiers.find((t) => t.title === "A")!;
-
-  // -- Книги в тире 'S'
-  await prisma.bookPlacement.create({
+  await prisma.user.create({
     data: {
-      tierListId: fantasyTierList.id,
-      bookId: bookHobbit.id,
-      tierId: tierS_fantasy.id,
-      rank: 1,
+      email: mod2Email,
+      username: mod2Username,
+      passwordHash: await hash(mod2Password),
+      roleId: moderatorRole.id,
+      emailVerifiedAt: new Date(),
+      acceptedTermsAt: new Date(),
     },
-  });
-  await prisma.bookPlacement.create({
-    data: {
-      tierListId: fantasyTierList.id,
-      bookId: bookHarryPotter.id,
-      tierId: tierS_fantasy.id,
-      rank: 2,
-    },
-  });
+  })
 
-  // -- Книга в тире 'A'
-  await prisma.bookPlacement.create({
-    data: {
-      tierListId: fantasyTierList.id,
-      bookId: bookPercyJackson.id,
-      tierId: tierA_fantasy.id,
-      rank: 1,
-    },
-  });
+  console.log("Users created:", { admin1: admin1.username, admin2: admin2.username, mod1: mod1.username, mod2: mod2Username })
 
-  // -- Нераспределенная книга
-  await prisma.bookPlacement.create({
-    data: {
-      tierListId: fantasyTierList.id,
-      bookId: bookDune.id,
-      tierId: null,
-      rank: 1,
-    },
-  });
-
-  // 6. Создаем TierList №2 для Федора ("Top Sci-Fi Books") - простой, без книг
-  await prisma.tierList.create({
-    data: {
-      title: "Top Sci-Fi Books",
-      userId: fedor.id,
-      tiers: {
-        create: [
-          { title: "S", rank: 1, color: "#00FFFF" },
-          { title: "A", rank: 2, color: "#00FF00" },
-        ],
-      },
-    },
-  });
-
-  // 7. Создаем TierList №3 для Алины ("Best Mystery Novels")
-  const mysteryTierList = await prisma.tierList.create({
-    data: {
-      title: "Best Mystery Novels",
-      userId: alina.id,
-      tiers: {
-        create: [
-          { title: "S", rank: 1, color: "#FF4500" },
-          { title: "A", rank: 2, color: "#FF8C00" },
-        ],
-      },
-    },
-  });
-
-  // -- Нераспределенная книга для Алины
-  await prisma.bookPlacement.create({
-    data: {
-      tierListId: mysteryTierList.id,
-      bookId: bookSherlock.id,
-      tierId: null,
-      rank: 1,
-    },
-  });
-
-  // 8. Создаем тестовые новости
-  const news1 = await prisma.newsArticle.create({
-    data: {
+  // === Создаём начальные новости ===
+  const newsData = [
+    {
       title: "Новые возможности платформы",
-      content: `Мы рады сообщить о запуске новых функций платформы TierMaker Pro!
+      content: `Мы рады сообщить о запуске новых функций платформы BookStrata Pro!
 
 Теперь вы можете:
 - Создавать неограниченное количество тир-листов
@@ -282,16 +125,10 @@ async function main() {
 - Загружать обложки книг через drag-and-drop
 
 Следите за обновлениями!`,
-      excerpt: "Обзор новых функций платформы TierMaker Pro",
-      imageUrl: null,
+      excerpt: "Обзор новых функций платформы BookStrata Pro",
       tags: ["новинки", "обновления"],
-      authorId: fedor.id,
-      isPublished: true,
     },
-  });
-
-  const news2 = await prisma.newsArticle.create({
-    data: {
+    {
       title: "Как создать идеальный тир-лист",
       content: `Советы по созданию качественных тир-листов:
 
@@ -302,15 +139,9 @@ async function main() {
 
 Помните, что ваш рейтинг — это субъективное мнение, и оно имеет право на существование!`,
       excerpt: "Руководство для начинающих",
-      imageUrl: null,
       tags: ["гайды", "советы"],
-      authorId: fedor.id,
-      isPublished: true,
     },
-  });
-
-  const news3 = await prisma.newsArticle.create({
-    data: {
+    {
       title: "Топ книг месяца",
       content: `Подборка популярных книг этого месяца по версии нашего сообщества:
 
@@ -327,30 +158,18 @@ async function main() {
 
 А какие книги в вашем топе?`,
       excerpt: "Ежемесячная подборка лучших книг",
-      imageUrl: null,
       tags: ["подборки", "рекомендации"],
-      authorId: fedor.id,
-      isPublished: true,
     },
-  });
+  ]
 
-  console.log("News created:", { news1, news2, news3 });
+  for (const news of newsData) {
+    await prisma.newsArticle.create({
+      data: { ...news, authorId: admin1.id, isPublished: true },
+    })
+  }
 
-  console.log("Seed done!");
-  const fedorLists = await prisma.tierList.findMany({
-    where: { userId: fedor.id },
-  });
-  const alinaLists = await prisma.tierList.findMany({
-    where: { userId: alina.id },
-  });
-  console.log(
-    "Fedor TierList IDs:",
-    fedorLists.map((tl) => tl.id),
-  );
-  console.log(
-    "Alina TierList IDs:",
-    alinaLists.map((tl) => tl.id),
-  );
+  console.log("News created: 3 articles")
+  console.log("Seed done!")
 }
 
 main()

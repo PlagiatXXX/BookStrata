@@ -7,16 +7,12 @@ interface TemplatePreviewModalProps {
   template: TemplateItem;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
-  isApplying: boolean;
 }
 
 export const TemplatePreviewModal = memo(({
   template,
   isOpen,
   onClose,
-  onConfirm,
-  isApplying,
 }: TemplatePreviewModalProps) => {
   const [activeTab, setActiveTab] = useState<'books' | 'tiers'>('books');
 
@@ -102,14 +98,12 @@ export const TemplatePreviewModal = memo(({
                 </div>
               ) : (
                 <>
-                  {/* Список книг с группировкой по уровням */}
                   {tiers.map((tier) => {
                     const tierBooks = booksByTier[tier.id] || [];
                     if (tierBooks.length === 0) return null;
 
                     return (
                       <div key={tier.id} className="border border-(--line-soft) rounded overflow-hidden">
-                        {/* Заголовок уровня */}
                         <div
                           className="px-4 py-2 font-bold text-white text-sm uppercase tracking-wider"
                           style={{ backgroundColor: tier.color }}
@@ -117,27 +111,25 @@ export const TemplatePreviewModal = memo(({
                           {tier.name} — {tierBooks.length} кн.
                         </div>
 
-                        {/* Список книг */}
                         <div className="divide-y divide-(--line-soft)">
                           {tierBooks.map((book, idx) => (
                             <div
                               key={book.id || idx}
                               className="flex gap-4 p-4 hover:bg-(--line-soft)/30 transition-colors"
                             >
-                              {/* Обложка */}
                               <div className="w-16 h-24 flex-shrink-0 overflow-hidden rounded shadow-md">
                                 {book.coverImageUrl ? (
                                   <img
                                     src={book.coverImageUrl}
                                     alt={book.title}
                                     className="w-full h-full object-cover"
+                                    onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
                                   />
                                 ) : (
                                   <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-800" />
                                 )}
                               </div>
 
-                              {/* Информация */}
                               <div className="flex-1 min-w-0">
                                 <h4 className="font-bold text-(--ink-0) truncate">
                                   {book.title}
@@ -188,34 +180,13 @@ export const TemplatePreviewModal = memo(({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-(--line-soft) bg-(--bg-1)">
-          <div className="text-sm text-(--ink-1)">
-            <span className="font-semibold text-(--ink-0)">{defaultBooks.length}</span> книг будет добавлено автоматически
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="brutal-btn px-6 py-3 text-xs font-semibold uppercase tracking-widest"
-            >
-              Отмена
-            </button>
-            <button
-              onClick={onConfirm}
-              disabled={isApplying}
-              className={`brutal-cta px-8 py-3 text-xs font-semibold uppercase tracking-widest ${
-                isApplying ? 'opacity-70 cursor-not-allowed' : ''
-              }`}
-            >
-              {isApplying ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-(--bg-0) border-t-transparent rounded-full animate-spin" />
-                  Создаю...
-                </span>
-              ) : (
-                'Использовать шаблон'
-              )}
-            </button>
-          </div>
+        <div className="flex items-center justify-end p-6 border-t border-(--line-soft) bg-(--bg-1)">
+          <button
+            onClick={onClose}
+            className="brutal-cta px-8 py-3 text-xs font-semibold uppercase tracking-widest"
+          >
+            Назад
+          </button>
         </div>
       </div>
     </div>

@@ -33,6 +33,8 @@ interface EditorLayoutProps {
   booksCount: number;
   onCoverUpdated?: (url: string) => void;
   onThemeChanged?: (theme: string) => void;
+  ownerUserId?: number;
+  currentUserId?: number | null;
 }
 
 export const EditorLayout = ({
@@ -53,6 +55,8 @@ export const EditorLayout = ({
   booksCount = 0,
   onCoverUpdated,
   onThemeChanged,
+  ownerUserId,
+  currentUserId,
 }: EditorLayoutProps) => {
   const activeBook =
     activeItem && "coverImageUrl" in activeItem ? activeItem : null;
@@ -92,6 +96,8 @@ export const EditorLayout = ({
             isPro={isPro}
             isReadOnly={isReadOnly}
             onCoverUpdated={(url) => onCoverUpdated?.(url)}
+            ownerUserId={ownerUserId}
+            currentUserId={currentUserId}
           />
         )}
         {children}

@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
 import { tierListRepository } from "../../repositories/index.js";
+import { registerModule } from "../../lib/module-loader.js";
 
 const logger = createLogger("Achievements", { color: "yellow" });
 
@@ -361,3 +362,6 @@ export async function seedAchievements() {
     });
   }
 }
+
+// Авторегистрация в module-loader — инициализация при старте сервера
+registerModule("achievements", seedAchievements)

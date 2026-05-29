@@ -23,6 +23,7 @@ const TemplateCard = memo(({ template, onEdit, onDelete, viewMode = 'grid' }: Te
             src={imageUrl} 
             alt={template.title} 
             className="w-12 h-12 object-cover brutal-border" 
+            onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
           />
         )}
         <div>

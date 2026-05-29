@@ -517,6 +517,8 @@ const TierListEditorContent = () => {
         booksCount={Object.keys(listData.books).length}
         onCoverUpdated={setCoverImageUrl}
         onThemeChanged={setTheme}
+        ownerUserId={ownerUserId}
+        currentUserId={currentUserId}
       >
         <TasteMatchBanner
           apiData={apiData}

@@ -1,8 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback, memo } from "react";
+import { Link } from "react-router-dom";
 import { Plus, TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
-import { createTierList, saveTierListTiers } from "@/lib/tierListApi";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { TemplateGrid } from "@/components/CommunityComponents/TemplateGrid";
 import { HeroSection } from "@/components/CommunityComponents/HeroSection";
@@ -11,8 +10,6 @@ import { ExternalNewsSection } from "@/components/CommunityComponents/ExternalNe
 import { CollectionsSection } from "@/components/CommunityComponents/CollectionsSection";
 import { TemplatePreviewModal } from "@/components/CommunityComponents/TemplatePreviewModal";
 import { type TemplateItem } from "../../data/mockData";
-import { sileo } from "sileo";
-import { memo } from "react";
 import "./CommunityPage.css";
 
 // Мемоизируем компоненты для предотвращения лишних ререндеров
@@ -26,13 +23,9 @@ const MemoizedCollectionsSection = memo(CollectionsSection);
 export default function CommunityPage() {
   const [activeCategory, setActiveCategory] = useState("actual");
   const [searchQuery, setSearchQuery] = useState("");
-  const [applyingTemplateId, setApplyingTemplateId] = useState<number | null>(
-    null,
-  );
   const [previewTemplate, setPreviewTemplate] = useState<TemplateItem | null>(
     null,
   );
-  const navigate = useNavigate();
 
   useEffect(() => {
     const elements = Array.from(
@@ -56,8 +49,7 @@ export default function CommunityPage() {
     return () => observer.disconnect();
   }, [activeCategory, searchQuery]);
 
-  // Стабилизируем колбэки
-  const handleUseTemplate = useCallback((template: TemplateItem) => {
+  const handlePreview = useCallback((template: TemplateItem) => {
     setPreviewTemplate(template);
   }, []);
 
@@ -65,55 +57,8 @@ export default function CommunityPage() {
     setPreviewTemplate(null);
   }, []);
 
-  const handleConfirmUseTemplate = useCallback(async () => {
-    if (!previewTemplate) return;
-
-    try {
-      setApplyingTemplateId(previewTemplate.id);
-
-      // 1. Создаём тир-лист
-      const createdList = await createTierList(
-        previewTemplate.templateData.title,
-      );
-
-      // 2. Создаём уровни
-      const tiersForApi = previewTemplate.templateData.tiers.map((tier) => ({
-        title: tier.name,
-        color: tier.color,
-        rank: tier.order,
-      }));
-
-      await saveTierListTiers(String(createdList.id), tiersForApi);
-
-      const defaultBooksCount =
-        previewTemplate.templateData.defaultBooks?.length || 0;
-      sileo.success({
-        title: "Шаблон открыт в рейтингах",
-        description:
-          defaultBooksCount > 0
-            ? `${defaultBooksCount} книг будет добавлено в редакторе`
-            : "Шаблон готов к заполнению",
-        duration: 3000,
-      });
-      navigate(`/tier-lists/${createdList.id}`);
-    } catch (error) {
-      console.error(error);
-      sileo.error({
-        title: "Не удалось открыть шаблон",
-        description: "Попробуйте снова позже",
-        duration: 3000,
-      });
-    } finally {
-      setApplyingTemplateId(null);
-      setPreviewTemplate(null);
-    }
-  }, [previewTemplate, navigate]);
-
-  const handleMyRatingsClick = useCallback(() => navigate("/"), [navigate]);
-
   return (
     <DashboardLayout
-      onMyRatingsClick={handleMyRatingsClick}
       showTemplatesNav={true}
       showSearch={false}
       activeItem="Новости"
@@ -146,8 +91,7 @@ export default function CommunityPage() {
           <MemoizedTemplateGrid
             activeCategory={activeCategory}
             searchQuery={searchQuery}
-            applyingTemplateId={applyingTemplateId}
-            onUseTemplate={handleUseTemplate}
+            onPreview={handlePreview}
           />
 
           <div className="flex items-center gap-4 my-12 reveal" data-reveal>
@@ -183,8 +127,6 @@ export default function CommunityPage() {
         template={previewTemplate!}
         isOpen={!!previewTemplate}
         onClose={handleClosePreview}
-        onConfirm={handleConfirmUseTemplate}
-        isApplying={applyingTemplateId === previewTemplate?.id}
       />
     </DashboardLayout>
   );

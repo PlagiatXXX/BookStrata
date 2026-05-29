@@ -102,7 +102,7 @@ export const NewsSection = memo(({ searchQuery = "" }: NewsSectionProps) => {
         {filteredNews.map((article) => (
           <article
             key={article.id}
-            className="brutal-card brutal-border p-6 hover-lift cursor-pointer"
+            className="brutal-card brutal-border p-6 hover-lift"
           >
             <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--ink-1) mb-3">
               {article.tags.length > 0 && (
