@@ -59,7 +59,7 @@ export function checkBookLimit(
   booksToAdd: number,
   proLimit: { maxBooks: number } | undefined,
 ): { allowed: boolean; remaining: number } {
-  const maxBooks = proLimit?.maxBooks ?? 20;
+  const maxBooks = proLimit?.maxBooks ?? 30;
   const newCount = currentCount + booksToAdd;
 
   if (newCount > maxBooks) {

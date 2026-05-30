@@ -1,6 +1,6 @@
 import { prisma, getTierListWhereClause } from "./tierList.utils.js";
 
-const MAX_BOOKS_PER_TIER_LIST = 20;
+const MAX_BOOKS_PER_TIER_LIST = 30;
 
 export async function saveAll(
   tierListId: string,

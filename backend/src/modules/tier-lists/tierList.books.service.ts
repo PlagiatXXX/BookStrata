@@ -3,7 +3,7 @@ import { createLogger } from "../../lib/logger.js";
 
 const logger = createLogger("TierListsBooks", { color: "cyan" });
 
-const MAX_BOOKS_PER_TIER_LIST = 20;
+const MAX_BOOKS_PER_TIER_LIST = 30;
 
 export async function updatePlacements(
   tierListId: string,
