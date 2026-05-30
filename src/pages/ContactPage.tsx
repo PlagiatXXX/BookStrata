@@ -1,8 +1,24 @@
+import { useNavigate } from "react-router-dom"
 import { Mail } from "lucide-react"
 
 export default function ContactPage() {
+  const navigate = useNavigate()
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate("/")
+    }
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6">
+      <div className="w-full max-w-3xl">
+        <button onClick={handleBack} className="text-sm text-orange-500 hover:text-orange-600 mb-4 inline-block cursor-pointer">
+          &larr; Назад
+        </button>
+      </div>
       <div className="max-w-lg w-full text-center space-y-6">
         <div className="w-16 h-16 rounded-2xl bg-(--accent-main)/10 border border-(--accent-main)/20 flex items-center justify-center mx-auto">
           <Mail size={32} className="text-(--accent-main)" />

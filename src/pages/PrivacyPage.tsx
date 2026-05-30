@@ -1,12 +1,22 @@
-import { Link } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 
 export function PrivacyPage() {
+  const navigate = useNavigate()
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate("/")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-zinc-50 py-16 px-4">
       <div className="max-w-3xl mx-auto">
-        <Link to="/auth" className="text-sm text-orange-500 hover:text-orange-600 mb-8 inline-block">
+        <button onClick={handleBack} className="text-sm text-orange-500 hover:text-orange-600 mb-8 inline-block cursor-pointer">
           &larr; Назад
-        </Link>
+        </button>
 
         <h1 className="text-2xl font-bold text-slate-900 mb-6">
           Политика конфиденциальности

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useReducer, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
@@ -76,7 +76,10 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 export function AuthForm() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<FormMode>("login");
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState<FormMode>(() => {
+    return searchParams.get("mode") === "register" ? "register" : "login"
+  });
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
   const captchaTokenRef = useRef<string>("");
 

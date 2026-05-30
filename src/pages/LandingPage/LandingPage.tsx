@@ -139,7 +139,7 @@ function LandingNav() {
 
           <div className="landing-nav__auth">
             <button onClick={() => navigate("/auth")} className="landing-nav__link" type="button">Войти</button>
-            <button onClick={() => navigate("/auth")} className="landing-nav__cta landing-nav__cta--primary" type="button">
+            <button onClick={() => navigate("/auth?mode=register")} className="landing-nav__cta landing-nav__cta--primary" type="button">
               Регистрация
             </button>
           </div>
@@ -462,7 +462,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <Footer />
+      <Footer variant="landing" />
     </div>
   )
 }

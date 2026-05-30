@@ -12,6 +12,9 @@ import {
   HelpCircle,
   Copy,
   Check,
+  ScrollText,
+  Shield,
+  Info,
 } from "lucide-react";
 import { RainEffect } from "./RainEffect";
 import { apiClient } from "@/lib/api-client";
@@ -26,13 +29,23 @@ const marqueeStyle = `
 }
 `
 
-const TELEGRAM_URL = "https://t.me/bookstrata";
+const TELEGRAM_URL = "https://t.me/PasFedor";
 const VK_URL = "https://vk.com/club237287277";
+
+function scrollToSection(id: string) {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: "smooth" })
+}
 
 const mainLinks = [
   { href: "/", label: "Мои рейтинги", icon: <List size={14} /> },
   { href: "/templates", label: "Библиотека", icon: <Folder size={14} /> },
   { href: "/community", label: "Сообщество", icon: <Users size={14} /> },
+];
+
+const landingLinks: { label: string; icon: React.ReactNode; sectionId?: string; href?: string }[] = [
+  { sectionId: "features", label: "Возможности", icon: <Sparkles size={14} /> },
+  { sectionId: "pricing", label: "Тарифы", icon: <Shield size={14} /> },
 ];
 
 const userLinks = [
@@ -51,11 +64,32 @@ const userLinks = [
   },
 ];
 
-export const Footer = () => {
+const landingUserLinks: { label: string; icon: React.ReactNode; href?: string; isExternal?: boolean }[] = [
+  { href: "/privacy", label: "Политика конфиденциальности", icon: <ScrollText size={14} /> },
+  { href: "/terms", label: "Условия использования", icon: <Shield size={14} /> },
+  { href: "/about", label: "О проекте", icon: <Info size={14} /> },
+  {
+    href: TELEGRAM_URL,
+    label: "Telegram",
+    icon: <MessageCircle size={14} />,
+    isExternal: true,
+  },
+  {
+    href: VK_URL,
+    label: "ВКонтакте",
+    icon: <Share2 size={14} />,
+    isExternal: true,
+  },
+  { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
+];
+
+export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [donors, setDonors] = useState<string[]>([]);
   const location = useLocation();
+
+  const isLanding = variant === "landing";
 
   const cardNumber = "2202207455452840";
   useEffect(() => {
@@ -140,33 +174,49 @@ export const Footer = () => {
           {/* Central Zone 1: Main Links */}
           <nav aria-label="Основная навигация футера">
             <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4">
-              Основное
+              {isLanding ? "На сайте" : "Основное"}
             </h4>
             <ul className="flex flex-col gap-3">
-              {mainLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
-                  >
-                    <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
-                      {link.icon}
-                    </span>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {(isLanding ? landingLinks : mainLinks).map((link) => {
+                const isScroll = "sectionId" in link && link.sectionId
+                const key = isScroll ? link.sectionId! : ("href" in link ? link.href! : "")
+                return (
+                  <li key={key}>
+                    {isScroll ? (
+                      <button
+                        onClick={() => scrollToSection(link.sectionId!)}
+                        className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1 cursor-pointer"
+                      >
+                        <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
+                          {link.icon}
+                        </span>
+                        {link.label}
+                      </button>
+                    ) : (
+                      <Link
+                        to={"href" in link ? link.href! : ""}
+                        className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
+                      >
+                        <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
+                          {link.icon}
+                        </span>
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </nav>
 
           {/* Central Zone 2: User Actions */}
           <nav aria-label="Пользовательские ссылки">
             <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4">
-              Пользователю
+              {isLanding ? "Информация" : "Пользователю"}
             </h4>
             <ul className="flex flex-col gap-3">
-              {userLinks.map((link) => (
-                <li key={link.href}>
+              {(isLanding ? landingUserLinks : userLinks).map((link) => (
+                <li key={link.href ?? link.label}>
                   {link.isExternal ? (
                     <a
                       href={link.href}
@@ -181,7 +231,7 @@ export const Footer = () => {
                     </a>
                   ) : (
                     <Link
-                      to={link.href}
+                      to={link.href ?? ""}
                       className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
                     >
                       <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
@@ -192,17 +242,6 @@ export const Footer = () => {
                   )}
                 </li>
               ))}
-              <li>
-                <Link
-                  to="/contact"
-                  className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
-                >
-                  <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
-                    <HelpCircle size={14} />
-                  </span>
-                  Контакты
-                </Link>
-              </li>
             </ul>
           </nav>
 
