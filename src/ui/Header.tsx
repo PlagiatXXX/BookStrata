@@ -62,7 +62,7 @@ export const Header = ({
   const confirmLogout = () => {
     setIsLogoutModalOpen(false);
     logout();
-    navigate("/auth", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const cancelLogout = () => {

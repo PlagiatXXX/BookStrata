@@ -151,7 +151,7 @@ export function DashboardPage() {
 
   const handleLogout = useCallback(() => {
     logout();
-    navigate("/auth", { replace: true });
+    navigate("/", { replace: true });
   }, [logout, navigate]);
 
   const handleOpenTierList = useCallback(

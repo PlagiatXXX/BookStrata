@@ -12,6 +12,7 @@ import {
   getTasteMatch,
   getUserPublicTierLists,
   getViolators,
+  setDonorStatus,
 } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
@@ -226,6 +227,20 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const violators = await getViolators();
       return reply.code(200).send(createSuccessResponse(violators));
+    },
+  );
+
+  // PATCH /api/users/admin/:id/donor - установить/снять статус мецената (только админ)
+  fastify.patch<{
+    Params: { id: string };
+    Body: { isDonor: boolean };
+  }>(
+    "/admin/:id/donor",
+    { preHandler: [authMiddleware, requireRole("admin")] },
+    async (request, reply) => {
+      const userId = parseInt(request.params.id);
+      const result = await setDonorStatus(userId, request.body.isDonor);
+      return reply.code(200).send(createSuccessResponse(result));
     },
   );
 }

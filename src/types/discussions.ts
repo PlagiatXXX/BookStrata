@@ -3,6 +3,7 @@ export interface DiscussionUser {
   username: string
   avatarUrl: string | null
   role?: { name: string } | null
+  isDonor?: boolean
 }
 
 export interface DiscussionMessage {

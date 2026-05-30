@@ -5,7 +5,7 @@ const logger = createLogger("Discussions", { color: "cyan" })
 
 const messageInclude = {
   user: {
-    select: { id: true, username: true, avatarUrl: true, role: { select: { name: true } } },
+    select: { id: true, username: true, avatarUrl: true, isDonor: true, role: { select: { name: true } } },
   },
   parent: {
     select: {
@@ -23,7 +23,7 @@ const discussionWithMessages = {
 
 const topicListInclude = {
   author: {
-    select: { id: true, username: true, avatarUrl: true },
+    select: { id: true, username: true, avatarUrl: true, isDonor: true },
   },
 } as const
 

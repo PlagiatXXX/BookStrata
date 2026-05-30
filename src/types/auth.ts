@@ -32,6 +32,7 @@ export interface AdminUser {
   email: string;
   username: string;
   isPro: boolean;
+  isDonor: boolean;
   proExpiresAt: string | null;
   role: string;
   createdAt: string;

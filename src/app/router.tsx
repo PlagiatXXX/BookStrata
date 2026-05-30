@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { HomeRoute } from "@/components/HomeRoute";
 import { AdminGuard } from "@/components/AdminGuard";
 import AppShell from "./App";
 
@@ -111,6 +112,7 @@ export const router = createBrowserRouter([
   {
     element: <AppShell />,
     children: [
+      { path: "/", element: <HomeRoute /> },
       { path: "/auth", element: <AuthPage /> },
       { path: "/verify-email", element: <VerifyEmailPage /> },
       { path: "/privacy", element: <PrivacyPage /> },
@@ -122,7 +124,7 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
-          { path: "/", element: <DashboardPage /> },
+          { path: "/dashboard", element: <DashboardPage /> },
           {
             path: "/tier-lists/:id",
             element: <TierListEditorPage />,

@@ -64,13 +64,6 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
     "/stats",
     {
       preHandler: [authMiddleware, requireRole("admin")],
-      schema: {
-        response: {
-          200: zodToJsonSchema(subscriptionStatsSchema),
-          401: zodToJsonSchema(errorSchema),
-          403: zodToJsonSchema(errorSchema),
-        },
-      },
     },
     async (_request, reply) => {
       return reply.send(createSuccessResponse(await subscriptionsService.getSubscriptionStats()));
@@ -81,21 +74,6 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
     "/user/:userId",
     {
       preHandler: [authMiddleware, requireRole("admin")],
-      schema: {
-        params: {
-          type: "object",
-          required: ["userId"],
-          properties: {
-            userId: { type: "string" },
-          },
-        },
-        response: {
-          200: zodToJsonSchema(subscriptionResponseSchema),
-          401: zodToJsonSchema(errorSchema),
-          403: zodToJsonSchema(errorSchema),
-          404: zodToJsonSchema(errorSchema),
-        },
-      },
     },
     async (request, reply) => {
       if (!request.user) {
@@ -122,16 +100,6 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
     "/set-status",
     {
       preHandler: [authMiddleware, requireRole("admin")],
-      schema: {
-        body: zodToJsonSchema(setProStatusSchema),
-        response: {
-          200: zodToJsonSchema(subscriptionResponseSchema),
-          400: zodToJsonSchema(errorSchema),
-          401: zodToJsonSchema(errorSchema),
-          403: zodToJsonSchema(errorSchema),
-          404: zodToJsonSchema(errorSchema),
-        },
-      },
     },
     async (request, reply) => {
       const body = request.body as z.infer<typeof setProStatusSchema>;
@@ -169,16 +137,6 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
     "/activate",
     {
       preHandler: [authMiddleware, requireRole("admin")],
-      schema: {
-        body: zodToJsonSchema(activateProSchema),
-        response: {
-          200: zodToJsonSchema(activateProResponseSchema),
-          400: zodToJsonSchema(errorSchema),
-          401: zodToJsonSchema(errorSchema),
-          403: zodToJsonSchema(errorSchema),
-          404: zodToJsonSchema(errorSchema),
-        },
-      },
     },
     async (request, reply) => {
       const body = request.body as z.infer<typeof activateProSchema>;
@@ -215,16 +173,6 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
     "/deactivate",
     {
       preHandler: [authMiddleware, requireRole("admin")],
-      schema: {
-        body: zodToJsonSchema(deactivateProSchema),
-        response: {
-          200: zodToJsonSchema(deactivateProResponseSchema),
-          400: zodToJsonSchema(errorSchema),
-          401: zodToJsonSchema(errorSchema),
-          403: zodToJsonSchema(errorSchema),
-          404: zodToJsonSchema(errorSchema),
-        },
-      },
     },
     async (request, reply) => {
       const body = request.body as z.infer<typeof deactivateProSchema>;
@@ -258,13 +206,6 @@ export const subscriptionsRoutes: FastifyPluginAsync = async (fastify) => {
     "/me",
     {
       preHandler: [authMiddleware],
-      schema: {
-        response: {
-          200: zodToJsonSchema(mySubscriptionResponseSchema),
-          401: zodToJsonSchema(errorSchema),
-          404: zodToJsonSchema(errorSchema),
-        },
-      },
     },
     async (request, reply) => {
       const user = request.user;

@@ -374,6 +374,7 @@ describe("users.service", () => {
       proExpiresAt: new Date("2099-01-01"),
       xp: 150,
       title: "Книжный червь",
+      isDonor: true,
       role: { name: "admin" },
       createdAt: new Date("2024-01-01"),
     };
@@ -403,6 +404,7 @@ describe("users.service", () => {
           proExpiresAt: true,
           xp: true,
           title: true,
+          isDonor: true,
           role: {
             select: { name: true },
           },
@@ -417,6 +419,7 @@ describe("users.service", () => {
         isPro: true,
         xp: 150,
         title: "Книжный червь",
+        isDonor: true,
         role: "admin",
         createdAt: mockUser.createdAt,
         stats: {

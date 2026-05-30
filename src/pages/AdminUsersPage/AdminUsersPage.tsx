@@ -15,10 +15,13 @@ import {
   Users,
   UserX,
   Flag,
+  Heart,
 } from "lucide-react"
 import { api } from "@/lib/api-client"
+import { apiSetDonorStatus } from "@/lib/userApi"
 import { useAuth } from "@/hooks/useAuthContext"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
+import { DonorBadge } from "@/components/DonorBadge/DonorBadge"
 import { sileo } from "sileo"
 import { apiGetFlags, apiResolveFlag } from "@/lib/moderationApi"
 import type { ContentFlag } from "@/lib/moderationApi"
@@ -323,6 +326,9 @@ export function AdminUsersPage() {
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Статус
                     </th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      Меценат
+                    </th>
                     <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
                       Зарегистрирован
                     </th>
@@ -407,13 +413,46 @@ export function AdminUsersPage() {
                             <span className="text-xs text-gray-500">Free</span>
                           )}
                         </td>
+                        <td className="px-6 py-4">
+                          {u.isDonor ? (
+                            <DonorBadge size="sm" />
+                          ) : (
+                            <span className="text-xs text-gray-500">—</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 text-sm text-gray-400 hidden md:table-cell">
                           <span className="inline-flex items-center gap-1.5">
                             <Calendar size={12} />
                             {formatDate(u.createdAt)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                          {canChangeRole && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await apiSetDonorStatus(u.userId, !u.isDonor)
+                                  queryClient.invalidateQueries({ queryKey: ["admin-users"] })
+                                  sileo.success({
+                                    title: u.isDonor ? "Статус мецената снят" : "Статус мецената присвоен",
+                                    duration: 3000,
+                                  })
+                                } catch {
+                                  sileo.error({ title: "Ошибка", duration: 3000 })
+                                }
+                              }}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium border transition-colors cursor-pointer ${
+                                u.isDonor
+                                  ? "bg-amber-500/15 text-amber-400 border-amber-500/25 hover:bg-amber-500/25"
+                                  : "bg-white/5 text-gray-400 border-gray-700 hover:bg-white/10"
+                              }`}
+                              type="button"
+                              title={u.isDonor ? "Снять статус мецената" : "Присвоить статус мецената"}
+                            >
+                              <Heart size={12} />
+                              {u.isDonor ? "Снять" : "Меценат"}
+                            </button>
+                          )}
                           {canChangeRole && u.userId !== currentUser?.userId ? (
                             <select
                               value={u.role}

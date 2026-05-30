@@ -163,6 +163,7 @@ export async function getUserById(params: { id: string }) {
       proExpiresAt: true,
       xp: true,
       title: true,
+      isDonor: true,
       role: {
         select: { name: true },
       },
@@ -196,6 +197,7 @@ export async function getUserById(params: { id: string }) {
     isPro: user.isPro && !isExpired,
     xp: user.xp,
     title: user.title,
+    isDonor: user.isDonor,
     role: user.role?.name ?? null,
     createdAt: user.createdAt,
     stats: {
@@ -332,6 +334,7 @@ export async function getAllUsers() {
       username: true,
       isPro: true,
       proExpiresAt: true,
+      isDonor: true,
       role: {
         select: {
           name: true,
@@ -349,6 +352,7 @@ export async function getAllUsers() {
     email: user.email,
     username: user.username,
     isPro: user.isPro,
+    isDonor: user.isDonor,
     proExpiresAt: user.proExpiresAt?.toISOString() || null,
     role: user.role?.name || "user",
     createdAt: user.createdAt.toISOString(),
@@ -439,4 +443,22 @@ export async function getViolators() {
       actions: actions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     }
   })
+}
+
+// Установить/снять статус донатера (мецената)
+export async function setDonorStatus(userId: number, isDonor: boolean) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      isDonor,
+      donatedAt: isDonor ? new Date() : null,
+    },
+    select: {
+      id: true,
+      username: true,
+      isDonor: true,
+      donatedAt: true,
+    },
+  })
+  return user
 }

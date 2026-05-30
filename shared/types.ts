@@ -10,6 +10,7 @@ export interface User {
   role?: string;
   isPro?: boolean;
   proExpiresAt?: string | null;
+  isDonor?: boolean;
 }
 
 export interface Book {

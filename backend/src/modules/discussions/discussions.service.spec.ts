@@ -204,7 +204,7 @@ describe("discussions.service", () => {
       expect(prisma.discussion.create).toHaveBeenCalledWith({
         data: { title: "New Topic", type: "topic", authorId: 1 },
         include: expect.objectContaining({
-          author: { select: { id: true, username: true, avatarUrl: true } },
+          author: { select: { id: true, username: true, avatarUrl: true, isDonor: true } },
         }),
       })
     })

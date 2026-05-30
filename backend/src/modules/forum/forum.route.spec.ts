@@ -35,6 +35,8 @@ describe("Forum Routes", () => {
       vi.mocked(mockService.getForumStats).mockResolvedValue({
         totalUsers: 42,
         activeBattles: 5,
+        tierLists: 100,
+        totalBooks: 500,
       });
 
       const response = await request(app.server)
@@ -42,7 +44,7 @@ describe("Forum Routes", () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        data: { totalUsers: 42, activeBattles: 5 },
+        data: { totalUsers: 42, activeBattles: 5, tierLists: 100, totalBooks: 500 },
       });
     });
 
@@ -50,6 +52,8 @@ describe("Forum Routes", () => {
       vi.mocked(mockService.getForumStats).mockResolvedValue({
         totalUsers: 0,
         activeBattles: 0,
+        tierLists: 0,
+        totalBooks: 0,
       });
 
       const response = await request(app.server)
@@ -57,7 +61,7 @@ describe("Forum Routes", () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        data: { totalUsers: 0, activeBattles: 0 },
+        data: { totalUsers: 0, activeBattles: 0, tierLists: 0, totalBooks: 0 },
       });
     });
 
@@ -65,6 +69,8 @@ describe("Forum Routes", () => {
       vi.mocked(mockService.getForumStats).mockResolvedValue({
         totalUsers: 10,
         activeBattles: 2,
+        tierLists: 50,
+        totalBooks: 200,
       });
 
       const response = await request(app.server)

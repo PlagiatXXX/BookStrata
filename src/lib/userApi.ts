@@ -10,6 +10,7 @@ export interface User {
   avatarUrl: string | null;
   role?: string;
   isPro?: boolean;
+  isDonor?: boolean;
   proExpiresAt?: string | null;
   createdAt: string;
 }
@@ -37,6 +38,7 @@ export interface PublicUser {
   username: string;
   avatarUrl: string | null;
   isPro: boolean;
+  isDonor: boolean;
   xp: number;
   title: string | null;
   role: string | null;
@@ -101,4 +103,8 @@ export async function apiUploadAvatar(base64Image: string): Promise<User> {
     { avatar: base64Image }
   );
   return result.user;
+}
+
+export async function apiSetDonorStatus(userId: number, isDonor: boolean): Promise<{ id: number; username: string; isDonor: boolean }> {
+  return apiClient.patch(`/users/admin/${userId}/donor`, { isDonor });
 }

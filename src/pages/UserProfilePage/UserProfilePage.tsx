@@ -6,6 +6,7 @@ import { apiGetPublicUser, apiGetUserTierLists, apiGetTasteMatch } from "@/lib/u
 import { useAuth } from "@/hooks/useAuthContext"
 import { Spinner } from "@/components/Spinner"
 import { ModerationPanel } from "@/components/ModerationPanel/ModerationPanel"
+import { DonorBadge } from "@/components/DonorBadge/DonorBadge"
 import type { TierListShort } from "@/lib/tierListApi"
 
 export default function UserProfilePage() {
@@ -113,6 +114,9 @@ export default function UserProfilePage() {
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
                     Мод
                   </span>
+                )}
+                {profile.isDonor && (
+                  <DonorBadge />
                 )}
               </div>
               {profile.title && (

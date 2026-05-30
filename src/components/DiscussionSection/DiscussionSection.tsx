@@ -12,6 +12,7 @@ import {
   deleteMessage,
 } from "@/lib/discussionApi"
 import type { Discussion, DiscussionMessage } from "@/types/discussions"
+import { DonorBadge } from "@/components/DonorBadge/DonorBadge"
 import "./DiscussionSection.css"
 
 interface DiscussionSectionProps {
@@ -353,6 +354,7 @@ function ChatMessageRow({
             {message.user.username}
             {message.user.role?.name === "admin" && <span className="chat-badge-admin">Админ</span>}
             {message.user.role?.name === "moderator" && <span className="chat-badge-mod">Мод</span>}
+            {message.user.isDonor && <DonorBadge size="sm" />}
           </span>
           {message.parent?.user?.username && (
             <span className="chat-message-reply-to">
