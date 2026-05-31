@@ -23,14 +23,14 @@ export function HeroPreviewCard() {
             <div 
               className="new-hero-preview__book"
               style={{ 
-                backgroundImage: "url('https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=200&h=300&fit=crop')" 
+                backgroundImage: "url('/book-covers/default/book-1.webp')" 
               }}
               aria-label="Обложка книги"
             />
             <div 
               className="new-hero-preview__book"
               style={{ 
-                backgroundImage: "url('https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=200&h=300&fit=crop')" 
+                backgroundImage: "url('/book-covers/default/book-2.webp')" 
               }}
               aria-label="Обложка книги"
             />
@@ -46,21 +46,21 @@ export function HeroPreviewCard() {
             <div 
               className="new-hero-preview__book"
               style={{ 
-                backgroundImage: "url('https://images.unsplash.com/photo-1512820790803-83ca734da794?w=200&h=300&fit=crop')" 
+                backgroundImage: "url('/book-covers/default/book-3.webp')" 
               }}
               aria-label="Обложка книги"
             />
             <div 
               className="new-hero-preview__book"
               style={{ 
-                backgroundImage: "url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=200&h=300&fit=crop')" 
+                backgroundImage: "url('/book-covers/default/book-4.webp')" 
               }}
               aria-label="Обложка книги"
             />
             <div 
               className="new-hero-preview__book"
               style={{ 
-                backgroundImage: "url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=200&h=300&fit=crop')" 
+                backgroundImage: "url('/book-covers/default/book-5.webp')" 
               }}
               aria-label="Обложка книги"
             />
@@ -76,7 +76,7 @@ export function HeroPreviewCard() {
             <div 
               className="new-hero-preview__book"
               style={{ 
-                backgroundImage: "url('https://images.unsplash.com/photo-1532012197267-da84d127e765?w=200&h=300&fit=crop')" 
+                backgroundImage: "url('/book-covers/default/book-6.webp')" 
               }}
               aria-label="Обложка книги"
             />

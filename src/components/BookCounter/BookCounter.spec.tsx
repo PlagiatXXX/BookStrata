@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BookCounter } from './BookCounter';
+import { MAX_BOOKS_PER_TIER_LIST } from '@/constants/limits';
 
 describe('BookCounter', () => {
   it('должен отображать счётчик книг для обычного пользователя (0 книг)', () => {
@@ -8,29 +9,29 @@ describe('BookCounter', () => {
 
     expect(screen.getByText('Книги в тир-листе')).toBeInTheDocument();
     expect(screen.getByText('0')).toBeInTheDocument();
-    expect(screen.getByText('/ 20')).toBeInTheDocument();
-    expect(screen.getByText('Можно добавить ещё 20 книг')).toBeInTheDocument();
+    expect(screen.getByText(`/ ${MAX_BOOKS_PER_TIER_LIST}`)).toBeInTheDocument();
+    expect(screen.getByText(`Можно добавить ещё ${MAX_BOOKS_PER_TIER_LIST} книг`)).toBeInTheDocument();
   });
 
   it('должен отображать счётчик книг для 10 книг', () => {
     render(<BookCounter booksCount={10} />);
 
     expect(screen.getByText('10')).toBeInTheDocument();
-    expect(screen.getByText('/ 20')).toBeInTheDocument();
-    expect(screen.getByText('Можно добавить ещё 10 книг')).toBeInTheDocument();
+    expect(screen.getByText(`/ ${MAX_BOOKS_PER_TIER_LIST}`)).toBeInTheDocument();
+    expect(screen.getByText(`Можно добавить ещё ${MAX_BOOKS_PER_TIER_LIST - 10} книг`)).toBeInTheDocument();
   });
 
   it('должен отображать предупреждение при приближении к лимиту (18 книг)', () => {
-    render(<BookCounter booksCount={18} />);
+    render(<BookCounter booksCount={MAX_BOOKS_PER_TIER_LIST - 2} />);
 
-    expect(screen.getByText('18')).toBeInTheDocument();
-    expect(screen.getByText('Осталось 2 из 20')).toBeInTheDocument();
+    expect(screen.getByText(`${MAX_BOOKS_PER_TIER_LIST - 2}`)).toBeInTheDocument();
+    expect(screen.getByText(`Осталось 2 из ${MAX_BOOKS_PER_TIER_LIST}`)).toBeInTheDocument();
   });
 
-  it('должен отображать достижение лимита (20 книг)', () => {
-    render(<BookCounter booksCount={20} />);
+  it('должен отображать достижение лимита', () => {
+    render(<BookCounter booksCount={MAX_BOOKS_PER_TIER_LIST} />);
 
-    expect(screen.getByText('20')).toBeInTheDocument();
+    expect(screen.getByText(`${MAX_BOOKS_PER_TIER_LIST}`)).toBeInTheDocument();
     expect(screen.getByText('Достигнут лимит книг')).toBeInTheDocument();
   });
 
@@ -57,16 +58,18 @@ describe('BookCounter', () => {
   it('должен показывать правильный прогресс-бар', () => {
     const { container, rerender } = render(<BookCounter booksCount={0} />);
 
-    let progressBar = container.querySelector('[style*="width: 0%"]');
+    let progressBar = container.querySelector('[role="progressbar"] > div');
     expect(progressBar).toBeInTheDocument();
+    expect(progressBar).toHaveStyle({ width: '0%' });
 
+    const tenBooksPercent = Math.round(10 / MAX_BOOKS_PER_TIER_LIST * 100);
     rerender(<BookCounter booksCount={10} />);
-    progressBar = container.querySelector('[style*="width: 50%"]');
-    expect(progressBar).toBeInTheDocument();
+    progressBar = container.querySelector('[role="progressbar"] > div');
+    expect(progressBar).toHaveStyle({ width: `${tenBooksPercent}%` });
 
-    rerender(<BookCounter booksCount={20} />);
-    progressBar = container.querySelector('[style*="width: 100%"]');
-    expect(progressBar).toBeInTheDocument();
+    rerender(<BookCounter booksCount={MAX_BOOKS_PER_TIER_LIST} />);
+    progressBar = container.querySelector('[role="progressbar"] > div');
+    expect(progressBar).toHaveStyle({ width: '100%' });
   });
 
   it('должен показывать cyan прогресс-бар для обычного пользователя', () => {
@@ -76,13 +79,13 @@ describe('BookCounter', () => {
   });
 
   it('должен показывать amber прогресс-бар при приближении к лимиту', () => {
-    const { container } = render(<BookCounter booksCount={18} />);
+    const { container } = render(<BookCounter booksCount={MAX_BOOKS_PER_TIER_LIST - 2} />);
     const progressBar = container.querySelector('[class*="bg-amber-500"]');
     expect(progressBar).toBeInTheDocument();
   });
 
   it('должен показывать red прогресс-бар при достижении лимита', () => {
-    const { container } = render(<BookCounter booksCount={20} />);
+    const { container } = render(<BookCounter booksCount={MAX_BOOKS_PER_TIER_LIST} />);
     const progressBar = container.querySelector('[class*="bg-red-500"]');
     expect(progressBar).toBeInTheDocument();
   });

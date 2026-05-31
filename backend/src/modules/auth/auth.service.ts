@@ -7,7 +7,7 @@ import { createLogger } from "../../lib/logger.js";
 import crypto from "crypto";
 import { sendResetPasswordEmail, sendWelcomeEmail, sendVerifyEmail } from "./auth.mail.js";
 import { isDisposableEmail } from "../../lib/disposable-email.js";
-import { verifySmartCaptchaToken } from "../../lib/smartcaptcha.js";
+// import { verifySmartCaptchaToken } from "../../lib/smartcaptcha.js"; // captcha — закомментировано, готово к подключению
 import { getVkToken, getGoogleToken, parseOAuthUserData } from "../../lib/oauth.js";
 
 const logger = createLogger("Auth", { color: "blue" });
@@ -63,12 +63,13 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
     throw new Error("Регистрация с временных почтовых адресов запрещена. Используйте постоянный email.")
   }
 
-  if (payload.captchaToken) {
-    const isValid = await verifySmartCaptchaToken(payload.captchaToken)
-    if (!isValid) {
-      throw new Error("Не удалось подтвердить, что вы не робот. Попробуйте ещё раз.")
-    }
-  }
+  // captcha — закомментировано, готово к подключению
+  // if (payload.captchaToken) {
+  //   const isValid = await verifySmartCaptchaToken(payload.captchaToken)
+  //   if (!isValid) {
+  //     throw new Error("Не удалось подтвердить, что вы не робот. Попробуйте ещё раз.")
+  //   }
+  // }
 
   const hashedPassword = await bcrypt.hash(payload.password, 10);
 
@@ -84,15 +85,23 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
   const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   const user = await prisma.$transaction(async (tx) => {
-    const existing = await tx.user.findFirst({
-      where: {
-        OR: [{ email: payload.email }, { username: payload.username }],
-      },
+    const emailTaken = await tx.user.findFirst({
+      where: { email: { equals: payload.email, mode: 'insensitive' } },
     });
 
-    if (existing) {
+    if (emailTaken) {
       throw new Error(
-        "Пользователь с таким именем или email уже зарегистрирован. Пожалуйста, выберите другое имя пользователя или email.",
+        "Пользователь с таким email уже зарегистрирован. Пожалуйста, используйте другой email.",
+      );
+    }
+
+    const usernameTaken = await tx.user.findFirst({
+      where: { username: { equals: payload.username, mode: 'insensitive' } },
+    });
+
+    if (usernameTaken) {
+      throw new Error(
+        "Пользователь с таким именем уже зарегистрирован. Пожалуйста, выберите другое имя пользователя.",
       );
     }
 
@@ -202,8 +211,8 @@ export async function resendVerificationEmail(email: string): Promise<void> {
 }
 
 export async function login(payload: LoginPayload): Promise<AuthToken> {
-  const user = await prisma.user.findUnique({
-    where: { username: payload.username },
+  const user = await prisma.user.findFirst({
+    where: { username: { equals: payload.username, mode: 'insensitive' } },
     include: { role: true },
   });
 

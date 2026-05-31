@@ -14,25 +14,25 @@ const templates: Template[] = [
     id: 'fiction',
     title: 'Fiction',
     subtitle: 'Художественная литература',
-    imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop',
+    imageUrl: '/book-covers/default/template-fiction.webp',
   },
   {
     id: 'sci-fi',
     title: 'Sci-Fi',
     subtitle: 'Научная фантастика',
-    imageUrl: 'https://images.unsplash.com/photo-1614726365723-49cfae92782f?w=400&h=600&fit=crop',
+    imageUrl: '/book-covers/default/template-scifi.webp',
   },
   {
     id: 'detectives',
     title: 'Detectives',
     subtitle: 'Детективы и триллеры',
-    imageUrl: 'https://images.unsplash.com/photo-1474932437440-744789634d4c?w=400&h=600&fit=crop',
+    imageUrl: '/book-covers/default/template-detectives.webp',
   },
   {
     id: 'non-fiction',
     title: 'Non-fiction',
     subtitle: 'Документалистика',
-    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=600&fit=crop',
+    imageUrl: '/book-covers/default/template-nonfiction.webp',
   },
 ];
 

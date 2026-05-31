@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useTierListBooksLimit } from './useTierListBooksLimit';
+import { MAX_BOOKS_PER_TIER_LIST } from '@/constants/limits';
 
 describe('useTierListBooksLimit', () => {
   it('должен возвращать правильные значения для обычного пользователя (0 книг)', () => {
@@ -9,8 +10,8 @@ describe('useTierListBooksLimit', () => {
     );
 
     expect(result.current.booksCount).toBe(0);
-    expect(result.current.maxBooks).toBe(20);
-    expect(result.current.remainingBooks).toBe(20);
+    expect(result.current.maxBooks).toBe(MAX_BOOKS_PER_TIER_LIST);
+    expect(result.current.remainingBooks).toBe(MAX_BOOKS_PER_TIER_LIST);
     expect(result.current.isAtLimit).toBe(false);
     expect(result.current.progressPercent).toBe(0);
     expect(result.current.canAddMore).toBe(true);
@@ -23,20 +24,20 @@ describe('useTierListBooksLimit', () => {
     );
 
     expect(result.current.booksCount).toBe(10);
-    expect(result.current.maxBooks).toBe(20);
-    expect(result.current.remainingBooks).toBe(10);
+    expect(result.current.maxBooks).toBe(MAX_BOOKS_PER_TIER_LIST);
+    expect(result.current.remainingBooks).toBe(MAX_BOOKS_PER_TIER_LIST - 10);
     expect(result.current.isAtLimit).toBe(false);
-    expect(result.current.progressPercent).toBe(50);
+    expect(result.current.progressPercent).toBe(Math.round(10 / MAX_BOOKS_PER_TIER_LIST * 100));
     expect(result.current.canAddMore).toBe(true);
   });
 
-  it('должен возвращать правильные значения при достижении лимита (20 книг)', () => {
+  it('должен возвращать правильные значения при достижении лимита', () => {
     const { result } = renderHook(() =>
-      useTierListBooksLimit({ booksCount: 20 })
+      useTierListBooksLimit({ booksCount: MAX_BOOKS_PER_TIER_LIST })
     );
 
-    expect(result.current.booksCount).toBe(20);
-    expect(result.current.maxBooks).toBe(20);
+    expect(result.current.booksCount).toBe(MAX_BOOKS_PER_TIER_LIST);
+    expect(result.current.maxBooks).toBe(MAX_BOOKS_PER_TIER_LIST);
     expect(result.current.remainingBooks).toBe(0);
     expect(result.current.isAtLimit).toBe(true);
     expect(result.current.progressPercent).toBe(100);
@@ -45,11 +46,11 @@ describe('useTierListBooksLimit', () => {
 
   it('должен возвращать правильные значения при превышении лимита', () => {
     const { result } = renderHook(() =>
-      useTierListBooksLimit({ booksCount: 25 })
+      useTierListBooksLimit({ booksCount: MAX_BOOKS_PER_TIER_LIST + 5 })
     );
 
-    expect(result.current.booksCount).toBe(25);
-    expect(result.current.maxBooks).toBe(20);
+    expect(result.current.booksCount).toBe(MAX_BOOKS_PER_TIER_LIST + 5);
+    expect(result.current.maxBooks).toBe(MAX_BOOKS_PER_TIER_LIST);
     expect(result.current.remainingBooks).toBe(0);
     expect(result.current.isAtLimit).toBe(true);
     expect(result.current.progressPercent).toBe(100);
@@ -89,10 +90,10 @@ describe('useTierListBooksLimit', () => {
       { initialProps: { booksCount: 5, isPro: false } }
     );
 
-    expect(result.current.remainingBooks).toBe(15);
+    expect(result.current.remainingBooks).toBe(MAX_BOOKS_PER_TIER_LIST - 5);
     expect(result.current.isAtLimit).toBe(false);
 
-    rerender({ booksCount: 20, isPro: false });
+    rerender({ booksCount: MAX_BOOKS_PER_TIER_LIST, isPro: false });
 
     expect(result.current.remainingBooks).toBe(0);
     expect(result.current.isAtLimit).toBe(true);
@@ -101,13 +102,13 @@ describe('useTierListBooksLimit', () => {
   it('должен обновляться при изменении isPro', () => {
     const { result, rerender } = renderHook(
       ({ booksCount, isPro }) => useTierListBooksLimit({ booksCount, isPro }),
-      { initialProps: { booksCount: 20, isPro: false } }
+      { initialProps: { booksCount: MAX_BOOKS_PER_TIER_LIST, isPro: false } }
     );
 
     expect(result.current.isAtLimit).toBe(true);
     expect(result.current.canAddMore).toBe(false);
 
-    rerender({ booksCount: 20, isPro: true });
+    rerender({ booksCount: MAX_BOOKS_PER_TIER_LIST, isPro: true });
 
     expect(result.current.isAtLimit).toBe(false);
     expect(result.current.canAddMore).toBe(true);

@@ -145,9 +145,8 @@ export function DashboardPage() {
 
   // Стабилизируем обработчики для предотвращения ререндеров мемоизированных компонентов
   const handleMyRatingsClick = useCallback(() => {
-    setCurrentPage(1);
-    setSearchQuery("");
-  }, [setCurrentPage, setSearchQuery]);
+    navigate("/");
+  }, [navigate]);
 
   const handleLogout = useCallback(() => {
     logout();

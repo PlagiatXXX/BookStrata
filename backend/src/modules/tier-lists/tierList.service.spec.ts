@@ -489,7 +489,7 @@ describe("tierList.service", () => {
     });
 
     it("должен бросить ошибку при превышении лимита книг", async () => {
-      (prisma.bookPlacement.count as any).mockResolvedValue(19);
+      (prisma.bookPlacement.count as any).mockResolvedValue(28);
 
       const tooManyBooks = Array(5)
         .fill(null)

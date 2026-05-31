@@ -138,7 +138,13 @@ export async function rolesRoutes(fastify: FastifyInstance) {
           },
         });
       } catch (error) {
-        logger.error("Ошибка назначения роли", { error });
+        const message = error instanceof Error ? error.message : "Ошибка при назначении роли";
+        logger.error("Ошибка назначения роли", { error, message });
+
+        if (message.includes("Неверный пароль")) {
+          return reply.code(403).send(createApiError(ErrorCodes.ACCESS_DENIED, message));
+        }
+
         return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при назначении роли"));
       }
     },

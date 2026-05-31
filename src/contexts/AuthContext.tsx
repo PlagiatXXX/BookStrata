@@ -33,6 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       authLogger.info("Fetching user profile", { force });
       const fullUserData = await apiGetMe();

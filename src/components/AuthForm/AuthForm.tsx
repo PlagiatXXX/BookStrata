@@ -1,8 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
-import { useReducer, useState, useRef } from "react";
+import { useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { SmartCaptcha } from "@yandex/smart-captcha";
 import { apiLogin, apiRegister, apiResendVerification, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
 import { Button } from "@/ui/Button";
@@ -31,6 +30,7 @@ type AuthAction =
   | { type: "TOGGLE_PASSWORD" }
   | { type: "SET_ACCEPTED_TERMS"; value: boolean }
   | { type: "REGISTER_SUCCESS"; email: string }
+  | { type: "RESET" }
   | { type: "SUBMIT_START" }
   | { type: "SUBMIT_SUCCESS" }
   | { type: "SUBMIT_FAILURE"; error: string };
@@ -63,6 +63,8 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         registeredEmail: action.email,
         formData: { username: "", email: "", password: "" },
       }
+    case "RESET":
+      return { ...initialAuthState }
     case "SUBMIT_START":
       return { ...state, loading: true, error: null }
     case "SUBMIT_SUCCESS":
@@ -81,7 +83,6 @@ export function AuthForm() {
     return searchParams.get("mode") === "register" ? "register" : "login"
   });
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
-  const captchaTokenRef = useRef<string>("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -110,13 +111,11 @@ export function AuthForm() {
           email: state.formData.email,
           password: state.formData.password,
           acceptedTerms: state.acceptedTerms,
-          captchaToken: captchaTokenRef.current,
         })
         dispatch({ type: "REGISTER_SUCCESS", email: state.formData.email })
       }
     } catch (err) {
       dispatch({ type: "SUBMIT_FAILURE", error: err instanceof Error ? err.message : "Ошибка" })
-      captchaTokenRef.current = ""
     }
   }
 
@@ -163,9 +162,12 @@ export function AuthForm() {
                 <Button onClick={handleResend} isLoading={state.loading} className="w-full rounded-full bg-orange-500/80 hover:bg-orange-500 text-white">
                   Отправить ещё раз
                 </Button>
-                <Link to="/auth" onClick={() => dispatch({ type: "SET_ERROR", error: null })} className="text-sm text-slate-500 hover:text-orange-500 transition-colors">
+                <button
+                  onClick={() => { dispatch({ type: "RESET" }); setMode("login") }}
+                  className="text-sm text-slate-500 hover:text-orange-500 transition-colors cursor-pointer"
+                >
                   Вернуться ко входу
-                </Link>
+                </button>
               </div>
             </div>
           </Card>
@@ -198,7 +200,7 @@ export function AuthForm() {
                 return (
                   <button
                     key={m}
-                    onClick={() => { setMode(m); dispatch({ type: "SET_ERROR", error: null }); captchaTokenRef.current = "" }}
+                    onClick={() => { setMode(m); dispatch({ type: "SET_ERROR", error: null }) }}
                     className={`relative w-32 pb-2 text-center transition-colors duration-200 cursor-pointer ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
                   >
                     {m === "login" ? "Вход" : "Регистрация"}
@@ -266,14 +268,10 @@ export function AuthForm() {
 
               {mode === "register" && (
                 <>
-                  <div className="scale-[0.7] origin-top">
-                    <SmartCaptcha
-                      sitekey={import.meta.env.VITE_SMARTCAPTCHA_SITE_KEY}
-                      onSuccess={(token: string) => { captchaTokenRef.current = token }}
-                    />
-                  </div>
+                  {/* captcha — закомментировано, готово к подключению */}
+                  {/* <SmartCaptcha sitekey={import.meta.env.VITE_SMARTCAPTCHA_SITE_KEY} onSuccess={...} /> */}
 
-                  <label className="flex items-start gap-2 text-xs text-slate-600 -mt-10">
+                  <label className="flex items-start gap-2 text-xs text-slate-600">
                     <input
                       type="checkbox"
                       checked={state.acceptedTerms}

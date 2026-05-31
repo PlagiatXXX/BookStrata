@@ -863,13 +863,13 @@ export function AdminUsersPage() {
 
             <div className="mb-5">
               <label className="block text-sm text-gray-400 mb-1.5 font-medium">
-                Ваш пароль
+                Секретный код
               </label>
               <input
                 type="password"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
-                placeholder="Введите пароль"
+                placeholder="Введите секретный код"
                 className="w-full bg-white/10 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50"
                 autoFocus
                 onKeyDown={(e) => {
@@ -878,6 +878,9 @@ export function AdminUsersPage() {
                   }
                 }}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Код для смены ролей, заданный в настройках сервера
+              </p>
             </div>
 
             <div className="flex gap-3">

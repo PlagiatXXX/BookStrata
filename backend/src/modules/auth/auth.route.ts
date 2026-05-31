@@ -37,7 +37,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       schema: registerSchema,
       config: {
         rateLimit: {
-          max: 5,
+          max: 20,
           timeWindow: "1 hour",
         },
       },
