@@ -414,11 +414,19 @@
 /* ---------- Steps ---------- */
 .landing-steps {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px 24px;
+  align-items: stretch;
+  max-width: 820px;
+  margin: 0 auto;
 }
 
 .landing-step {
+  flex: 1;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
   text-align: center;
   padding: 36px 24px;
   background: rgba(15, 30, 50, 0.4);
@@ -466,9 +474,15 @@
 }
 
 .landing-step__desc {
+  flex: 1;
   font-size: 0.9rem;
   line-height: 1.6;
   color: #94a3b8;
+}
+
+.landing-step-arrow {
+  align-self: center;
+  color: rgba(6, 188, 249, 0.4);
 }
 
 /* ---------- Featured ---------- */
@@ -571,6 +585,101 @@
 
 .mini-tier-card__skeleton-line--short {
   width: 60%;
+}
+
+/* ---------- Section Divider ---------- */
+.landing-divider {
+  position: relative;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(249,115,22,0.4), rgba(6,188,249,0.4), transparent);
+  max-width: 500px;
+  margin: 24px auto;
+  border-radius: 2px;
+}
+
+.landing-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f97316, #06b6d4);
+  box-shadow: 0 0 16px rgba(249,115,22,0.4), 0 0 32px rgba(6,188,249,0.2);
+}
+
+/* ---------- Author Banner ---------- */
+.landing-banner {
+  position: relative;
+  overflow: hidden;
+  padding: 80px 24px;
+}
+
+.landing-banner__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 50%, rgba(249,115,22,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse at 70% 50%, rgba(6,188,249,0.08) 0%, transparent 70%),
+    rgba(11, 22, 32, 0.6);
+}
+
+.landing-banner__content {
+  position: relative;
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.landing-banner__quote-mark {
+  display: block;
+  font-size: 96px;
+  line-height: 1;
+  font-family: Georgia, serif;
+  color: rgba(249,115,22,0.25);
+  margin-bottom: -20px;
+}
+
+.landing-banner__text {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.landing-banner__text p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #cbd5e1;
+  margin-bottom: 16px;
+}
+
+.landing-banner__text p:last-child {
+  font-size: 1.15rem;
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
+.landing-banner__author {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.landing-banner__author-name {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f3efe6;
+}
+
+.landing-banner__author-role {
+  font-size: 0.8rem;
+  color: rgba(249,115,22,0.6);
+  letter-spacing: 0.05em;
 }
 
 /* ---------- Features ---------- */
@@ -772,6 +881,22 @@
   flex-shrink: 0;
 }
 
+.landing-pricing__feature--header {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  padding-bottom: 2px;
+}
+
+.landing-pricing__feature--sep {
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(6, 188, 249, 0.5);
+  padding-left: 2px;
+  margin-bottom: 2px;
+}
+
 /* ---------- Final CTA ---------- */
 .landing-cta {
   position: relative;
@@ -845,13 +970,13 @@
 }
 
 /* ---------- Reveal animation ---------- */
-[data-reveal] {
+.reveal-box {
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 0.7s ease-out, transform 0.7s ease-out;
 }
 
-[data-reveal].reveal--visible {
+.reveal-box.reveal--visible {
   opacity: 1;
   transform: translateY(0);
 }
@@ -863,7 +988,6 @@
     gap: 20px;
   }
 
-  .landing-steps,
   .landing-features {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -927,7 +1051,15 @@
     display: none;
   }
 
-  .landing-steps,
+  .landing-steps {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .landing-step-arrow {
+    display: none;
+  }
+
   .landing-features {
     grid-template-columns: 1fr;
   }
