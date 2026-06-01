@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
   register,
   login,
@@ -143,7 +143,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   // GET /api/auth/me/verification
   fastify.get("/me/verification", async (request, reply) => {
     try {
-      const userId = (request as any).user?.userId;
+      const userId = (request as FastifyRequest).user?.userId;
       if (!userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Требуется авторизация"));
       }

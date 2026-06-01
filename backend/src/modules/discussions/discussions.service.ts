@@ -1,7 +1,4 @@
 import { prisma } from "../../lib/prisma.js"
-import { createLogger } from "../../lib/logger.js"
-
-const logger = createLogger("Discussions", { color: "cyan" })
 
 const messageInclude = {
   user: {

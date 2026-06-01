@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { ErrorCodes, createApiError } from "../../lib/api-response.js";
 import {
@@ -30,14 +30,15 @@ export async function ratingsRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const userId = (request as any).user?.userId;
+      const { user } = request as FastifyRequest;
+      const userId = user?.userId;
       const { bookId, ratings } = request.body as {
         bookId: number;
         ratings: Record<string, number>;
       };
 
       try {
-        const rating = await rateBook(bookId, userId, ratings);
+        const rating = await rateBook(bookId, userId!, ratings);
         const averages = await getBookRatings(bookId);
         return reply.code(201).send({ data: { rating, averages } });
       } catch (err) {
@@ -64,7 +65,7 @@ export async function ratingsRoutes(fastify: FastifyInstance) {
     "/:bookId/mine",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
-      const userId = (request as any).user?.userId;
+      const userId = (request as FastifyRequest).user!.userId;
       const { bookId } = request.params as { bookId: string };
       const rating = await getUserBookRating(Number(bookId), userId);
       return reply.send({ data: rating });

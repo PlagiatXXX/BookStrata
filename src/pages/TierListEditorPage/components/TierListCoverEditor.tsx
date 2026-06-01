@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { ImagePlus, X } from "lucide-react"
+import { ImagePlus } from "lucide-react"
 import { sileo } from "sileo"
 import { uploadTierListCover } from "@/lib/tierListApi"
 import { TierListCover } from "@/components/DashboardHeroSection/components/TierListCover"

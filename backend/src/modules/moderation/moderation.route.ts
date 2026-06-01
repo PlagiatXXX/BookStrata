@@ -26,7 +26,7 @@ export async function moderationRoutes(fastify: FastifyInstance) {
     async (req, reply) => {
       const targetUserId = Number(req.params.id);
       if (isNaN(targetUserId)) return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Неверный ID"));
-      const { duration, reason } = banChatSchema.body.parse(req.body);
+      const { duration } = banChatSchema.body.parse(req.body);
       const result = await moderationService.banChat(targetUserId, req.user!.userId, duration);
       return reply.send(createSuccessResponse(result));
     },

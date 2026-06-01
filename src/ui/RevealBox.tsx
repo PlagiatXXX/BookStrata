@@ -13,14 +13,6 @@ export function RevealBox({ children, className = "" }: RevealBoxProps) {
     const el = ref.current
     if (!el || isVisible) return
 
-    const rect = el.getBoundingClientRect()
-    const isInView = rect.top < window.innerHeight - 100 && rect.bottom > 0
-
-    if (isInView) {
-      setIsVisible(true)
-      return
-    }
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

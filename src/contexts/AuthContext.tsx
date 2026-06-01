@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser(true);
   }, [fetchUser]);
 
-  const handleAvatarUpdated = useCallback((_event: Event) => {
+  const handleAvatarUpdated = useCallback(() => {
     authLogger.info("Avatar updated event received, refreshing user data");
     refreshUser();
   }, [refreshUser]);

@@ -1,4 +1,4 @@
-import React, { useReducer, useCallback, useMemo } from "react";
+import React, { useReducer, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -9,7 +9,6 @@ import {
   getPublicTierLists,
   getLikedTierLists,
   type PaginatedTierListsResponse,
-  type TierListShort,
 } from "@/lib/tierListApi";
 import { Header } from "@/ui/Header";
 import { Footer } from "@/ui/Footer";
@@ -25,7 +24,6 @@ import { TemplateLibrarySidebar } from "./components/TemplateLibrarySidebar";
 import { TemplateLibraryToolbar } from "./components/TemplateLibraryToolbar";
 import { PublicTierListsSection } from "./components/PublicTierListsSection";
 import PublicTierListCards from "./PublicTierListCards";
-import { Pagination } from "@/ui/Pagination";
 import {
   PUBLIC_PAGE_SIZE,
   PUBLIC_TIER_LISTS_STALE_TIME_MS,
@@ -122,12 +120,9 @@ const TemplateLibrary: React.FC = () => {
   );
 
   // likedIdsSet для подсветки лайкнутых в public секции
-  const likedIdsSet = useMemo(() => {
-    if (activeSection === "public" && likedTierListsData?.data) {
-      return new Set(likedTierListsData.data.map((tl) => tl.id));
-    }
-    return new Set<string>();
-  }, [activeSection, likedTierListsData?.data]);
+  const likedIdsSet = (activeSection === "public" && likedTierListsData?.data)
+    ? new Set(likedTierListsData.data.map((tl) => tl.id))
+    : new Set<string>();
 
   const publicTierLists = publicTierListsData?.data || [];
 

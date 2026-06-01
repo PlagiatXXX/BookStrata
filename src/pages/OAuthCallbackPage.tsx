@@ -6,20 +6,19 @@ import { StorageService } from "@/lib/storage"
 export function OAuthCallbackPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const token = searchParams.get("token")
+  const [error] = useState<string | null>(
+    !token ? "Токен авторизации не получен. Попробуйте снова." : null,
+  )
 
   useEffect(() => {
-    const token = searchParams.get("token")
-    if (!token) {
-      setError("Токен авторизации не получен. Попробуйте снова.")
-      return
-    }
+    if (!token) return
 
     setAuthToken(token)
     StorageService.setString("username", "")
     window.dispatchEvent(new Event("auth-token-changed"))
     navigate("/", { replace: true })
-  }, [searchParams, navigate])
+  }, [token, navigate])
 
   if (error) {
     return (

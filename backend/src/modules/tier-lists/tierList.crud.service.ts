@@ -154,7 +154,7 @@ export async function createTierList(userId: number, title: string) {
     const count = await tierListRepository.countByUser(userId);
     if (count >= MAX_FREE_TIER_LISTS) {
       const err = new Error(`Достигнут лимит тир-листов (${MAX_FREE_TIER_LISTS}). Оформите Pro для неограниченного количества.`);
-      (err as any).statusCode = 403;
+      Object.defineProperty(err, 'statusCode', { value: 403 });
       throw err;
     }
   }

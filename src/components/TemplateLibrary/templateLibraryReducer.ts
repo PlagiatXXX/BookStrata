@@ -1,5 +1,3 @@
-import type { TierListShort } from '@/lib/tierListApi';
-
 export type SectionKey = 'private' | 'public' | 'favorites';
 
 export interface TemplateLibraryState {

@@ -78,7 +78,7 @@ async function fetchToBuffer(url: string): Promise<{ buffer: Buffer; contentType
 }
 
 export class YandexStorage implements ImageStorageService {
-  async uploadAvatar(fileBuffer: Buffer, userId: number): Promise<UploadResult> {
+  async uploadAvatar(fileBuffer: Buffer, _userId: number): Promise<UploadResult> {
     const resized = await sharp(fileBuffer)
       .resize(256, 256, { fit: 'cover', position: 'attention' })
       .webp()

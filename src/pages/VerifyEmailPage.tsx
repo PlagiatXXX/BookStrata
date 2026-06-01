@@ -7,15 +7,15 @@ import { Button } from "@/ui/Button"
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get("token")
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
-  const [message, setMessage] = useState("")
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    !token ? "error" : "loading",
+  )
+  const [message, setMessage] = useState(
+    !token ? "Ссылка подтверждения недействительна: отсутствует токен." : "",
+  )
 
   useEffect(() => {
-    if (!token) {
-      setStatus("error")
-      setMessage("Ссылка подтверждения недействительна: отсутствует токен.")
-      return
-    }
+    if (!token) return
 
     apiVerifyEmail(token)
       .then((res) => {

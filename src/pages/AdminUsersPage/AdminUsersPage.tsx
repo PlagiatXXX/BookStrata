@@ -24,7 +24,6 @@ import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { DonorBadge } from "@/components/DonorBadge/DonorBadge"
 import { sileo } from "sileo"
 import { apiGetFlags, apiResolveFlag } from "@/lib/moderationApi"
-import type { ContentFlag } from "@/lib/moderationApi"
 import type { AdminUser } from "@/types/auth"
 
 interface ViolatorAction {

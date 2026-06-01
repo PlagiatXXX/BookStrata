@@ -1,6 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod/v3";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import { createLogger } from "../../lib/logger.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
@@ -9,51 +8,19 @@ import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api
 
 const logger = createLogger("Subscriptions", { color: "cyan" });
 
-const errorSchema = z.object({
-  error: z.string(),
-});
-
-const subscriptionStatsSchema = z.object({
-  totalProUsers: z.number(),
-  activeSubscriptions: z.number(),
-  lifetimeSubscriptions: z.number(),
-  expiringSoon: z.number(),
-});
-
-const subscriptionResponseSchema = z.object({
-  userId: z.number(),
-  isPro: z.boolean(),
-  proExpiresAt: z.string().datetime().nullable(),
-});
-
-const mySubscriptionResponseSchema = z.object({
-  isPro: z.boolean(),
-  proExpiresAt: z.string().datetime().nullable(),
-});
-
-const setProStatusSchema = z.object({
+export const setProStatusSchema = z.object({
   userId: z.number().int().positive(),
   isPro: z.boolean(),
   expiresAt: z.string().datetime().optional().nullable(),
 });
 
-const activateProSchema = z.object({
+export const activateProSchema = z.object({
   userId: z.number().int().positive(),
   durationDays: z.number().int().positive().default(30),
 });
 
-const activateProResponseSchema = subscriptionResponseSchema.extend({
-  proExpiresAt: z.string().datetime(),
-});
-
-const deactivateProSchema = z.object({
+export const deactivateProSchema = z.object({
   userId: z.number().int().positive(),
-});
-
-const deactivateProResponseSchema = z.object({
-  userId: z.number(),
-  isPro: z.boolean(),
-  proExpiresAt: z.null(),
 });
 
 

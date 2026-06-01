@@ -62,8 +62,8 @@ export async function battleRoutes(fastify: FastifyInstance) {
       const battleId = request.params.id;
       try {
         return reply.send(createSuccessResponse(await service.voteInBattle(userId, battleId, request.body.tierListId)));
-      } catch (err: any) {
-        if (err?.code === "P2002") {
+      } catch (err: unknown) {
+        if (err instanceof Error && "code" in err && err.code === "P2002") {
           return reply.code(409).send(createApiError(ErrorCodes.CONFLICT, "Вы уже отдали свой голос в этой битве"));
         }
         throw err;

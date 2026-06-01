@@ -77,8 +77,6 @@ function createWrapper() {
 }
 
 describe("AdminUsersPage", () => {
-  const navigate = vi.fn()
-
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useAuth).mockReturnValue({

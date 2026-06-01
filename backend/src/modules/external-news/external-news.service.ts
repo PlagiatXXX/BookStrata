@@ -42,7 +42,7 @@ function stripHtml(html: string): string {
 
 function extractImage(
   content: string | undefined,
-  enclosure?: Record<string, any>,
+  enclosure?: Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): string | null {
   const enclosureUrl = enclosure?.$?.url ?? enclosure?.url
   if (enclosureUrl) return enclosureUrl
@@ -58,6 +58,7 @@ function buildId(link: string | undefined, title: string | undefined, source: st
 }
 
 /** Extract items from both standard RSS (item inside channel) and non-standard (item at rss level) */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getRssItems(parsed: Record<string, any>): Record<string, any>[] {
   const rss = parsed.rss
   if (!rss) return []
@@ -72,6 +73,7 @@ function getRssItems(parsed: Record<string, any>): Record<string, any>[] {
   return []
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseItem(item: Record<string, any>, cfg: FeedConfig): ExternalNewsItem | null {
   const title = item.title?.[0]?.trim()
   if (!title) return null
@@ -97,6 +99,7 @@ async function fetchFeed(cfg: FeedConfig): Promise<ExternalNewsItem[]> {
   try {
     const response = await fetch(cfg.url)
     const xml = await response.text()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const parsed = await parseStringPromise(xml) as Record<string, any>
     const items = getRssItems(parsed)
     return items.map((item) => parseItem(item, cfg)).filter(Boolean) as ExternalNewsItem[]

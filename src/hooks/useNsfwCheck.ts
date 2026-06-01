@@ -14,7 +14,9 @@ const NSFW_THRESHOLD = 0.8
 const NSFW_CLASSES = ["Porn", "Hentai"]
 
 export function useNsfwCheck() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const modelRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const loadPromiseRef = useRef<Promise<any> | null>(null)
 
   const loadModel = useCallback(async () => {

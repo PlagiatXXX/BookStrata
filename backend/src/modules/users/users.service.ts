@@ -281,7 +281,7 @@ export async function getUserPublicTierLists(
 ) {
   const [data, totalItems] = await tierListRepository.findPublicByUserId(userId, { page, pageSize });
 
-  const transformed = data.map((tl: any) => ({
+  const transformed = data.map((tl) => ({
     ...tl,
     booksCount: tl._count?.placements ?? 0,
     _count: undefined,

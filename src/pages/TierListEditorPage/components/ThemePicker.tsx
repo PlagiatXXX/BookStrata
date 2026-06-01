@@ -4,7 +4,6 @@ import { sileo } from "sileo"
 import { apiClient } from "@/lib/api-client"
 import {
   type TierListTheme,
-  PRO_THEMES,
   THEME_LABELS,
   THEME_COLORS,
 } from "@/lib/tierListApi"

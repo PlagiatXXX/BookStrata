@@ -14,7 +14,6 @@ const TIER_LABELS = ["S", "A", "B", "C", "D", "F"]
 export function TasteMatchBanner({
   apiData,
   isReadOnly,
-  authorUsername,
 }: TasteMatchBannerProps) {
   const { bestMatch, isLoading, hasAny } = useTasteMatch(apiData, isReadOnly)
   const [expanded, setExpanded] = useState(false)

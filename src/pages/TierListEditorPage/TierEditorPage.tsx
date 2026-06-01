@@ -110,7 +110,7 @@ const TierListEditorContent = () => {
 
   useEffect(() => {
     if (apiData?.coverImageUrl) {
-      setCoverImageUrl(apiData.coverImageUrl)
+      setCoverImageUrl(apiData.coverImageUrl) // eslint-disable-line react-hooks/set-state-in-effect
     }
     if (apiData?.theme) {
       setTheme(apiData.theme)

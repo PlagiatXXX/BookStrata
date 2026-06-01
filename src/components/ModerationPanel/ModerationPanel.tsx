@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { ShieldAlert, Ban, Unlock, VolumeX, Volume2, AlertTriangle, MessageSquareWarning, ChevronDown, Check, X } from "lucide-react"
+import { ShieldAlert, Ban, Unlock, VolumeX, Volume2, AlertTriangle, MessageSquareWarning, ChevronDown } from "lucide-react"
 import {
   apiGetModerationStatus,
   apiBanChat,
@@ -38,7 +38,7 @@ export function ModerationPanel({ userId, username, currentRole }: Props) {
   const [warnMessage, setWarnMessage] = useState("")
   const [showWarnings, setShowWarnings] = useState(false)
   const [suspendHours, setSuspendHours] = useState(24)
-  const [suspendReason, setSuspendReason] = useState("")
+  const suspendReason = ""
 
   const { data: status } = useQuery<ModerationStatus>({
     queryKey: ["moderationStatus", userId],

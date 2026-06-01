@@ -98,8 +98,6 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
     apiClient.get<AdminDashboardStats>('/admin/stats')
       .then((data) => {
         if (!cancelled) setStats(data)

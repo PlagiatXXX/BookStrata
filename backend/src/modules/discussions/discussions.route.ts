@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify"
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify"
 import { authMiddleware } from "../auth/auth.middleware.js"
 import * as service from "./discussions.service.js"
 import type { CreateMessageBody, UpdateMessageBody } from "./discussions.schema.js"
@@ -37,9 +37,11 @@ export async function discussionRoutes(fastify: FastifyInstance) {
       try {
         const topic = await service.pinTopic(request.params.id)
         return reply.send(createSuccessResponse(topic))
-      } catch (err: any) {
-        if (err.message === "Topic not found") {
-          return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, err.message))
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          if (err.message === "Topic not found") {
+            return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, err.message))
+          }
         }
         throw err
       }
@@ -58,8 +60,8 @@ export async function discussionRoutes(fastify: FastifyInstance) {
       try {
         await service.deleteTopic(request.params.id)
         return reply.code(204).send()
-      } catch (err: any) {
-        if (err.message === "Topic not found") {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message === "Topic not found") {
           return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, err.message))
         }
         throw err
@@ -137,7 +139,7 @@ export async function discussionRoutes(fastify: FastifyInstance) {
   )
 
   // Проверка бана в чате
-  const checkChatBan = async (request: any, reply: any) => {
+  const checkChatBan = async (request: FastifyRequest, reply: FastifyReply) => {
     const user = await fastify.prisma.user.findUnique({
       where: { id: request.user!.userId },
       select: { chatBannedAt: true, chatBannedUntil: true },
@@ -174,12 +176,14 @@ export async function discussionRoutes(fastify: FastifyInstance) {
       const { content } = request.body
       try {
         return reply.send(createSuccessResponse(await service.updateMessage(request.params.messageId, userId, content)))
-      } catch (err: any) {
-        if (err.message === "Message not found") {
-          return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, err.message))
-        }
-        if (err.message === "You can only edit your own messages") {
-          return reply.code(403).send(createApiError(ErrorCodes.FORBIDDEN, err.message))
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          if (err.message === "Message not found") {
+            return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, err.message))
+          }
+          if (err.message === "You can only edit your own messages") {
+            return reply.code(403).send(createApiError(ErrorCodes.FORBIDDEN, err.message))
+          }
         }
         throw err
       }
@@ -196,12 +200,14 @@ export async function discussionRoutes(fastify: FastifyInstance) {
       try {
         await service.deleteMessage(request.params.messageId, userId, userRole)
         return reply.code(204).send()
-      } catch (err: any) {
-        if (err.message === "Message not found") {
-          return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, err.message))
-        }
-        if (err.message === "Only admins and moderators can delete messages") {
-          return reply.code(403).send(createApiError(ErrorCodes.FORBIDDEN, err.message))
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          if (err.message === "Message not found") {
+            return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, err.message))
+          }
+          if (err.message === "Only admins and moderators can delete messages") {
+            return reply.code(403).send(createApiError(ErrorCodes.FORBIDDEN, err.message))
+          }
         }
         throw err
       }

@@ -144,7 +144,7 @@ export function DiscussionSection({ variant, battleId, discussionId, title, onBa
     }
   }
 
-  const canDelete = (msg: DiscussionMessage) => {
+  const canDelete = (_msg: DiscussionMessage) => {
     if (!user) return false
     const role = user.role
     return role === "admin" || role === "moderator"

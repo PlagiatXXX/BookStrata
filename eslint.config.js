@@ -21,6 +21,7 @@ export default defineConfig([
     },
     rules: {
       'react-compiler/react-compiler': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
     languageOptions: {
       ecmaVersion: 2020,

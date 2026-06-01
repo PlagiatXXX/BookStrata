@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { PrismaClient, User } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { createLogger } from "../../lib/logger.js";
 import { sanitize } from "../../lib/sanitizer.js";
-import { SubscriptionsService } from "../subscriptions/subscriptions.service.js";
 
 // Логгер для сервиса шаблонов
 const logger = createLogger("Templates", { color: "magenta" });

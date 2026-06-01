@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import { X, BookOpen, ImageOff, FileText, Calendar, Star } from "lucide-react";
@@ -54,9 +54,25 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
   const [averages, setAverages] = useState<BookRatingsResult | null>(null);
-  const [votedCategories, setVotedCategories] = useState<Record<string, number> | null>(null);
   const [voteError, setVoteError] = useState("");
   const { user } = useAuth();
+
+  const loadRatings = useCallback(async () => {
+    if (!book) return
+    try {
+      const [avg, mine] = await Promise.all([
+        getBookRatings(book.id),
+        user ? getUserBookRating(book.id) : Promise.resolve(null),
+      ])
+
+      if (avg) setAverages(avg)
+      if (mine) {
+        setHasVoted(true)
+      }
+    } catch {
+      // ignore
+    }
+  }, [book, user])
 
   useEffect(() => {
     if (!isOpen || !book) return;
@@ -67,27 +83,9 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
     setVoteError("");
     setAverages(null);
     setHasVoted(false);
-    setVotedCategories(null);
 
     loadRatings();
-  }, [isOpen, book?.id]);
-
-  const loadRatings = async () => {
-    try {
-      const [avg, mine] = await Promise.all([
-        getBookRatings(book.id),
-        user ? getUserBookRating(book.id) : Promise.resolve(null),
-      ])
-
-      if (avg) setAverages(avg)
-      if (mine) {
-        setHasVoted(true)
-        setVotedCategories(mine.ratings)
-      }
-    } catch {
-      // ignore
-    }
-  }
+  }, [isOpen, book, loadRatings]);
 
   const handleRate = (category: string, value: number) => {
     setPollRatings((prev) => ({ ...prev, [category]: value }))
@@ -105,7 +103,6 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
       await rateBook(book.id, pollRatings)
       loadRatings()
       setHasVoted(true)
-      setVotedCategories({ ...pollRatings })
     } catch (err: any) {
       if (err?.message?.includes?.("уже оценили")) {
         setVoteError("Вы уже оценили эту книгу")

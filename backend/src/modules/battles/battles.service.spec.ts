@@ -274,7 +274,7 @@ describe("Battles Service", () => {
       (prisma.battle.findUnique as any).mockResolvedValue(battleWithParticipants);
       (prisma.battle.update as any).mockResolvedValue(updatedBattle);
 
-      const result = await service.closeBattle(mockBattleId);
+      await service.closeBattle(mockBattleId);
 
       expect(prisma.battle.findUnique).toHaveBeenCalledWith({
         where: { id: mockBattleId },
@@ -301,7 +301,7 @@ describe("Battles Service", () => {
       (prisma.battle.findUnique as any).mockResolvedValue({ id: mockBattleId, status: "active", participants: [] });
       (prisma.battle.update as any).mockResolvedValue({ id: mockBattleId, status: "completed" });
 
-      const result = await service.closeBattle(mockBattleId);
+      await service.closeBattle(mockBattleId);
 
       expect(prisma.battle.update).toHaveBeenCalledWith({
         where: { id: mockBattleId },
@@ -452,7 +452,7 @@ describe("Battles Service", () => {
       (prisma.battleApplication.findFirst as any).mockResolvedValue(mockApplication);
       (prisma.battleApplication.update as any).mockResolvedValue({ ...mockApplication, status: "rejected" });
 
-      const result = await service.reviewApplication(mockBattleId, 1, "rejected");
+      await service.reviewApplication(mockBattleId, 1, "rejected");
 
       expect(prisma.battleApplication.findFirst).toHaveBeenCalledWith({
         where: { id: 1, battleId: mockBattleId },

@@ -167,10 +167,7 @@ export function AdminFeedbackPage() {
           <div className="space-y-3">
             {feedback.map((item) => {
               const typeCfg = TYPE_CONFIG[item.type] ?? TYPE_CONFIG.other;
-              const statusCfg =
-                STATUS_CONFIG[item.status] ?? STATUS_CONFIG.pending;
               const TypeIcon = typeCfg.icon;
-              const StatusIcon = statusCfg.icon;
               const uid = authorId(item);
 
               return (

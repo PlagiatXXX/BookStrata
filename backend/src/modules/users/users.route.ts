@@ -17,7 +17,6 @@ import {
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { ErrorCodes, createApiError, createSuccessResponse, createPaginatedResponse } from "../../lib/api-response.js";
-import { tierListRepository } from "../../repositories/index.js";
 
 export async function userRoutes(fastify: FastifyInstance) {
   // GET /api/users/me

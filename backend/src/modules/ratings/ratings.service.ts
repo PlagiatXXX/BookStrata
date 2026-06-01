@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 
-const RATING_CATEGORIES = ["style", "plot", "design", "atmosphere", "characters"] as const;
+export const RATING_CATEGORIES = ["style", "plot", "design", "atmosphere", "characters"] as const;
 
 export type RatingCategory = typeof RATING_CATEGORIES[number];
 
@@ -29,7 +29,7 @@ export async function rateBook(
     data: {
       bookId,
       userId,
-      ratings: ratings as any,
+      ratings: ratings as Record<string, number>,
     },
   });
 }

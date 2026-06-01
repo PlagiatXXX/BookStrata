@@ -64,14 +64,14 @@ const ParticipantCard = memo(({
       </div>
       <div className="min-w-0">
         <button
-          onClick={(e) => { e.stopPropagation(); tl?.id && navigate(`/tier-lists/${tl.id}?context=battle`) }}
+          onClick={(e) => { e.stopPropagation(); if (tl?.id) navigate(`/tier-lists/${tl.id}?context=battle`) }}
           className="font-bold text-base leading-tight truncate text-left cursor-pointer hover:text-(--accent-main) transition-colors block w-full"
         >
           {tl?.title || "Без названия"}
         </button>
         {tl?.user?.username ? (
           <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/users/${tl.user!.id}`) }}
+            onClick={(e) => { e.stopPropagation(); if (tl?.user?.id) navigate(`/users/${tl.user.id}`) }}
             className="text-sm text-(--ink-1) font-medium hover:text-(--accent-main) transition-colors text-left cursor-pointer"
           >
             {tl.user.username}

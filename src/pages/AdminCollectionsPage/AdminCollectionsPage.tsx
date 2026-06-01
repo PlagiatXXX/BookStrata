@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Plus,
-  Pencil,
   Trash2,
   Eye,
   EyeOff,
@@ -88,27 +87,6 @@ export function AdminCollectionsPage() {
   const handleOpenCreate = () => {
     setEditingCollection(null);
     setFormData(emptyFormData);
-    setShowModal(true);
-  };
-
-  const handleOpenEdit = (collection: CollectionItem) => {
-    setEditingCollection(collection);
-    setFormData({
-      title: collection.title,
-      content: collection.content,
-      excerpt: collection.excerpt,
-      coverImageUrl: collection.coverImageUrl || "",
-      bookCovers:
-        collection.bookCovers.length >= 3
-          ? collection.bookCovers
-          : [
-              ...collection.bookCovers,
-              ...Array(3 - collection.bookCovers.length).fill(""),
-            ],
-      tags: collection.tags.join(", "),
-      isPublished: collection.isPublished,
-      order: collection.order,
-    });
     setShowModal(true);
   };
 

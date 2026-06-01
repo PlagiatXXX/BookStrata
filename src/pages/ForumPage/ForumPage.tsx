@@ -1,7 +1,7 @@
 import { useEffect, memo, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Users, LayoutGrid, Swords, MessageSquare, MessageSquareText, Plus, MessageCircle, Pin, Trash2 } from "lucide-react";
+import { Users, Swords, MessageSquare, MessageSquareText, Plus, Pin, Trash2 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BattleList } from "./components/BattleList";
 import { DiscussionSection } from "@/components/DiscussionSection/DiscussionSection";

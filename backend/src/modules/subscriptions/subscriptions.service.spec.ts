@@ -34,8 +34,6 @@ describe("SubscriptionsService", () => {
 
   const mockUser = { id: 1, username: "test", isPro: true, proExpiresAt: new Date(Date.now() + 86400000) }
   const mockExpiredUser = { id: 2, username: "expired", isPro: true, proExpiresAt: new Date(Date.now() - 86400000) }
-  const mockLifetimeUser = { id: 3, username: "lifetime", isPro: true, proExpiresAt: null }
-  const mockFreeUser = { id: 4, username: "free", isPro: false, proExpiresAt: null }
 
   describe("getUserSubscription", () => {
     it("должен вернуть ProSubscription для активного пользователя", async () => {

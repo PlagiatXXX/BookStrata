@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { ErrorCodes, createApiError } from "../../lib/api-response.js";
@@ -43,7 +43,7 @@ export async function feedbackRoutes(fastify: FastifyInstance) {
         userEmail?: string;
       };
 
-      const userId = (request as any).user?.userId ?? null;
+      const userId = (request as FastifyRequest).user?.userId ?? null;
 
       const feedback = await createFeedback({
         userId,

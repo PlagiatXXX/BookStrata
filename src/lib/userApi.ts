@@ -88,6 +88,7 @@ export async function apiGetUserTierLists(
   pageSize = 10,
 ) {
   userLogger.info("Получение публичных тир-листов пользователя", { userId, page });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return apiClient.get<any>(`/users/${userId}/tier-lists`, { page, pageSize });
 }
 

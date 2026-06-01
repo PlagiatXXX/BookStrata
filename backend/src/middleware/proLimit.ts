@@ -1,8 +1,5 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { SubscriptionsService } from "../modules/subscriptions/subscriptions.service.js";
-import { createLogger } from "../lib/logger.js";
-
-const logger = createLogger("ProLimit", { color: "yellow" });
 
 const subscriptionsService = new SubscriptionsService();
 
