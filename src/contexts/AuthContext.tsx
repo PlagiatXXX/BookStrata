@@ -21,8 +21,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     username: fullUserData.username,
     avatarUrl: fullUserData.avatarUrl,
     role: fullUserData.role || "user",
-    isPro: true,
-    proExpiresAt: fullUserData.proExpiresAt,
+    isPro: fullUserData.isPro ?? false,
+    proExpiresAt: fullUserData.proExpiresAt ?? null,
   });
 
   const fetchUser = useCallback(async (force = false) => {
@@ -67,14 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser(true);
   }, [fetchUser]);
 
-  const handleAvatarUpdated = useCallback((event: Event) => {
-    const customEvent = event as CustomEvent;
-    if (customEvent.detail) {
-      authLogger.info("Avatar updated event received with data, updating state immediately");
-      setUser(mapApiUserToAuthUser(customEvent.detail));
-    } else {
+  const handleAvatarUpdated = useCallback((_event: Event) => {
+    authLogger.info("Avatar updated event received, refreshing user data");
     refreshUser();
-    }
   }, [refreshUser]);
 
   React.useEffect(() => {

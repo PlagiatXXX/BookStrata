@@ -87,7 +87,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Властелин Колец",
           author: "Дж. Р. Р. Толкин",
-          coverImageUrl: "/images/books/lotr.webp",
+          coverImageUrl: "/images/books/vlastelin-kolets.webp",
           description:
             "Эпическое фэнтези о хоббите Фродо, несущем Кольцо Всевластия в Роковую гору.",
           defaultTierId: "tier_s",
@@ -105,7 +105,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Гарри Поттер и философский камень",
           author: "Дж. К. Роулинг",
-          coverImageUrl: "/images/books/harry-potter.webp",
+          coverImageUrl: "/images/books/garri-potter-i-filosofskiy-kamen.webp",
           description:
             "Первая книга о мальчике-волшебнике и его приключениях в Хогвартсе.",
           defaultTierId: "tier_a",
@@ -114,7 +114,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Убить пересмешника",
           author: "Харпер Ли",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/ubit-peresmeshnika.webp",
           description:
             "Роман о расовой несправедливости в американском Юге глазами ребёнка.",
           defaultTierId: "tier_a",
@@ -123,7 +123,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Над пропастью во ржи",
           author: "Дж. Д. Сэлинджер",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/nad-propastyu-vo-rzhi.webp",
           description:
             "История подростка Холдена Колфилда, бунтующего против фальши взрослого мира.",
           defaultTierId: "tier_b",
@@ -132,7 +132,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Великий Гэтсби",
           author: "Ф. Скотт Фицджеральд",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/velikiy-getsbi.webp",
           description:
             "Трагическая история любви и американской мечты в эпоху джаза.",
           defaultTierId: "tier_b",
@@ -141,7 +141,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Повелитель мух",
           author: "Уильям Голдинг",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/povelitel-mukh.webp",
           description:
             "Группа детей оказывается на необитаемом острове и создаёт своё общество.",
           defaultTierId: "tier_c",
@@ -150,7 +150,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Преступление и наказание",
           author: "Фёдор Достоевский",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/prestuplenie-i-nakazanie.webp",
           description:
             "Психологический роман о студенте Раскольникове и его теории о сверхчеловеке.",
           defaultTierId: "tier_c",
@@ -184,7 +184,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Атомные привычки",
           author: "Джеймс Клир",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/atomnye-privychki.webp",
           description:
             "Практическое руководство по формированию полезных привычек.",
           defaultTierId: "tier_gold",
@@ -192,7 +192,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Sapiens. Краткая история человечества",
           author: "Юваль Ной Харари",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/sapiens-kratkaya-istoriya-chelovechestva.webp",
           description:
             "От каменного века до наших дней: как Homo sapiens стал хозяином планеты.",
           defaultTierId: "tier_gold",
@@ -200,28 +200,28 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Думай медленно... решай быстро",
           author: "Даниэль Канеман",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/dumay-medlenno-reshay-bystro.webp",
           description: "Нобелевский лауреат о двух системах мышления.",
           defaultTierId: "tier_silver",
         },
         {
           title: "Краткая история времени",
           author: "Стивен Хокинг",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/kratkaya-istoriya-vremeni.webp",
           description: "От Большого взрыва до чёрных дыр: просто о сложном.",
           defaultTierId: "tier_silver",
         },
         {
           title: "Богатый папа, бедный папа",
           author: "Роберт Кийосаки",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/bogatyy-papa-bednyy-papa.webp",
           description: "Финансовая грамотность и мышление богатого человека.",
           defaultTierId: "tier_bronze",
         },
         {
           title: "7 навыков высокоэффективных людей",
           author: "Стивен Кови",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/7-navykov-vysokoeffektivnykh-lyudey.webp",
           description: "Принципы личной эффективности от классика self-help.",
           defaultTierId: "tier_bronze",
         },
@@ -254,35 +254,35 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Шантарам",
           author: "Грегори Дэвид Робертс",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/shantaram.webp",
           description: "Приключения беглого преступника в Бомбее.",
           defaultTierId: "tier_hot",
         },
         {
           title: "Тень ветра",
           author: "Карлос Руис Сафон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/shadow-wind.webp",
           description: "Мистический триллер в послевоенной Барселоне.",
           defaultTierId: "tier_hot",
         },
         {
           title: "Ночной цирк",
           author: "Эрин Моргенштерн",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/circus.webp",
           description: "Волшебная история о соперничестве иллюзионистов.",
           defaultTierId: "tier_trending",
         },
         {
           title: "Щегол",
           author: "Донна Тартт",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/schegol.webp",
           description: "Роман о взрослении и искусстве.",
           defaultTierId: "tier_trending",
         },
         {
           title: "Бегущий за ветром",
           author: "Халед Хоссейни",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/beguschiy-za-vetrom.webp",
           description: "Трогательная история дружбы в Афганистане.",
           defaultTierId: "tier_rising",
         },
@@ -316,7 +316,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Война и мир",
           author: "Лев Толстой",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/voyna-i-mir.webp",
           description:
             "Эпическое полотно о России в эпоху наполеоновских войн.",
           defaultTierId: "tier_master",
@@ -324,35 +324,35 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Анна Каренина",
           author: "Лев Толстой",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/anna-karenina.webp",
           description: "История любви на фоне социальных перемен XIX века.",
           defaultTierId: "tier_master",
         },
         {
           title: "Преступление и наказание",
           author: "Фёдор Достоевский",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/prestuplenie-i-nakazanie.webp",
           description: "Психологический роман о студенте Раскольникове.",
           defaultTierId: "tier_strong",
         },
         {
           title: "Братья Карамазовы",
           author: "Фёдор Достоевский",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/bratya-karamazovy.webp",
           description: "Философский роман о вере, семье и морали.",
           defaultTierId: "tier_strong",
         },
         {
           title: "Мастер и Маргарита",
           author: "Михаил Булгаков",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/master-i-margarita.webp",
           description: "Мистический роман о дьяволе в Москве 1930-х годов.",
           defaultTierId: "tier_master",
         },
         {
           title: "Имя розы",
           author: "Умберто Эко",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/imya-rozy.webp",
           description: "Философский детектив в средневековом монастыре.",
           defaultTierId: "tier_ok",
         },
@@ -386,42 +386,42 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Властелин Колец",
           author: "Дж. Р. Р. Толкин",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/vlastelin-kolets.webp",
           description: "Эпическое фэнтези о хоббите Фродо и Кольце Всевластия.",
           defaultTierId: "tier_legend",
         },
         {
           title: "Ведьмак. Последнее желание",
           author: "Анджей Сапковский",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/vedmak-poslednee-zhelanie.webp",
           description: "Истории о ведьмаке Геральте из Ривии.",
           defaultTierId: "tier_legend",
         },
         {
           title: "Имя Ветра",
           author: "Патрик Ротфусс",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/imya-vetra.webp",
           description: "Легендарная хроника Квоута, рассказанная им самим.",
           defaultTierId: "tier_epic",
         },
         {
           title: "Путь Королей",
           author: "Брэндон Сандерсон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/put-koroley.webp",
           description: "Эпическое фэнтези о войне, чести и магии на Рошаре.",
           defaultTierId: "tier_epic",
         },
         {
           title: "Гарри Поттер и философский камень",
           author: "Дж. К. Роулинг",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/garri-potter-i-filosofskiy-kamen.webp",
           description: "Первая книга о мальчике-волшебнике.",
           defaultTierId: "tier_good",
         },
         {
           title: "Хроники Нарнии. Лев, колдунья и платяной шкаф",
           author: "К. С. Льюис",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/khroniki-narnii-lev-koldunya-i-platyanoy.webp",
           description:
             "Дети попадают в волшебную страну Нарнию через платяной шкаф.",
           defaultTierId: "tier_good",
@@ -429,7 +429,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Колесо Времени. Око мира",
           author: "Роберт Джордан",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/koleso-vremeni-oko-mira.webp",
           description: "Масштабная фэнтези-сага о Перерождённом Драконе.",
           defaultTierId: "tier_skip",
         },
@@ -462,7 +462,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Шестёрка воронов",
           author: "Ли Бардуго",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/shesterka-voronov.webp",
           description:
             "Команда преступников пытается совершить невозможное ограбление в магическом мире.",
           defaultTierId: "tier_s",
@@ -470,7 +470,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Двор шипов и роз",
           author: "Сара Дж. Маас",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/dvor-shipov-i-roz.webp",
           description:
             "Девушка попадает в мир фей и обнаруживает скрытую силу.",
           defaultTierId: "tier_s",
@@ -478,7 +478,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Голодные игры",
           author: "Сьюзен Коллинз",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/golodnye-igry.webp",
           description:
             "Девушка добровольно участвует в смертельных играх вместо сестры.",
           defaultTierId: "tier_a",
@@ -486,31 +486,23 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Дивергент",
           author: "Вероника Рот",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/divergent.webp",
           description:
             "В мире фракций девушка обнаруживает, что не вписывается ни в одну из них.",
           defaultTierId: "tier_a",
         },
         {
-          title: "Лабиринт",
+          title: "Бегущий по Лабиринту",
           author: "Джеймс Дашнер",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/labirint.webp",
           description:
             "Подростки заперты в гигантском лабиринте и пытаются найти выход.",
           defaultTierId: "tier_b",
         },
         {
-          title: "Бегущий в лабиринте",
-          author: "Джеймс Дашнер",
-          coverImageUrl: "/images/books/placeholder.svg",
-          description:
-            "Группа подростков ищет способ выбраться из смертельного лабиринта.",
-          defaultTierId: "tier_b",
-        },
-        {
           title: "Тёмные начала",
           author: "Филип Пулман",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/temnye-nachala.webp",
           description:
             "Девочка путешествует по параллельным мирам в поисках друга.",
           defaultTierId: "tier_c",
@@ -544,23 +536,23 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Легендарный лунный скульптор",
           author: "Нам Хи Сон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/legendarnyy-lunnyy-skulptor.webp",
           description:
             "Игрок становится легендарным скульптором в виртуальной реальности.",
           defaultTierId: "tier_god",
         },
         {
-          title: "Овергир",
+          title: "От чужих берегов",
           author: "Андрей Круз",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/overgir.webp",
           description:
-            "Герой попадает в игровой мир и начинает свой путь с нуля.",
+            "Пока кто-то смиренно прячется в бункерах и подземельях, главный герой вместе со своими боевыми товарищами храбро отстреливается от мутантов и зомби.",
           defaultTierId: "tier_god",
         },
         {
           title: "Играть, чтобы жить",
-          author: "Рус",
-          coverImageUrl: "/images/books/placeholder.svg",
+          author: "Дмитрий Рус",
+          coverImageUrl: "/images/books/igrat-chtoby-zhit.webp",
           description:
             "Смертельно болен и вынужден играть в виртуальную игру для выживания.",
           defaultTierId: "tier_op",
@@ -568,33 +560,25 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Путь Шамана",
           author: "Василь Маханенко",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/put-shamana.webp",
           description:
             "Игрок выбирает непопулярный класс шамана и становится легендой.",
           defaultTierId: "tier_op",
         },
         {
-          title: "Конструктор миров",
+          title: "Создатель кошмаров",
           author: "Алексей Пехов",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/konstruktor-mirov.webp",
           description:
             "Герой создаёт собственные миры с уникальными правилами.",
           defaultTierId: "tier_strong",
         },
         {
-          title: "Сфера Величия",
-          author: "Дмитрий Рус",
-          coverImageUrl: "/images/books/placeholder.svg",
+          title: "Странники",
+          author: "Андрей и Мария Круз",
+          coverImageUrl: "/images/books/fenterra.webp",
           description:
-            "Виртуальная игра становится реальностью для миллионов игроков.",
-          defaultTierId: "tier_strong",
-        },
-        {
-          title: "Фентерра",
-          author: "Андрей Круз",
-          coverImageUrl: "/images/books/placeholder.svg",
-          description:
-            "Полное погружение в фэнтезийный мир с игровыми механиками.",
+            "Миров и их версий бесконечно много, но есть закономерности, которым подчинены путешествия между мирами.",
           defaultTierId: "tier_trash",
         },
       ],
@@ -627,7 +611,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Двор шипов и роз",
           author: "Сара Дж. Маас",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/dvor-shipov-i-roz.webp",
           description:
             "Охотница попадает в мир фей и влюбляется в опасного лорда.",
           defaultTierId: "tier_otp",
@@ -635,7 +619,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Из крови и пепла",
           author: "Дженнифер Л. Арментроут",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/iz-krovi-i-pepla.webp",
           description:
             "Избранная девушка и её стражник между долгом и запретной любовью.",
           defaultTierId: "tier_otp",
@@ -643,37 +627,38 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Стеклянный трон",
           author: "Сара Дж. Маас",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/steklyannyy-tron.webp",
           description:
             "Юная убийца сражается за свободу в магическом королевстве.",
           defaultTierId: "tier_fave",
         },
         {
-          title: "Отчет ведьмы",
-          author: "Алиса Хербст",
-          coverImageUrl: "/images/books/placeholder.svg",
-          description: "Ведьма в академии магии ищет своё место в мире.",
-          defaultTierId: "tier_fave",
-        },
-        {
-          title: "Королевство шипов и роз",
-          author: "Кристин Кэш",
-          coverImageUrl: "/images/books/placeholder.svg",
+          title: "Четвертое крыло",
+          author: "Ребекка Яррос",
+          coverImageUrl: "/images/books/krylo.webp",
           description:
-            "Принцесса должна выбрать жениха среди магических существ.",
+            "Главная героиня, хрупкая девушка с болезнью суставов, попадает в самое опасное место.",
           defaultTierId: "tier_good",
         },
         {
-          title: "Зачарованные",
-          author: "Марисса Мейер",
-          coverImageUrl: "/images/books/placeholder.svg",
-          description: "Сборник сказок в современном фэнтезийном мире.",
+          title: "Одно темное окно",
+          author: "Рейчел Гиллиг",
+          coverImageUrl: "/images/books/okno.webp",
+          description:
+            "Главная героиня делит свое тело с пугающим, но защищающим её духом.",
           defaultTierId: "tier_good",
         },
         {
-          title: "Лунные хроники",
+          title: "Проклятие",
           author: "Марисса Мейер",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/proklyatiya.webp",
+          description: "Это незабываемое путешествие в уникальный, темный мир.",
+          defaultTierId: "tier_good",
+        },
+        {
+          title: "Лунные хроники. Золушка",
+          author: "Марисса Мейер",
+          coverImageUrl: "/images/books/lunnye-khroniki.webp",
           description: "Кибернетическая Золушка спасает мир от чумы.",
           defaultTierId: "tier_meh",
         },
@@ -691,7 +676,7 @@ export const TEMPLATES: TemplateItem[] = [
     image: "/images/templates/DarkFantasy.webp",
     size: "standard",
     type: "starter",
-    borderColor: "#b91c1c", // accent-red
+    borderColor: "#b91c1c",
     templateData: {
       title: "Тёмное фэнтези",
       description: "Мрачные миры, антигерои и жестокие истории.",
@@ -717,43 +702,43 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Ведьмак. Последнее желание",
           author: "Анджей Сапковский",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/vedmak-poslednee-zhelanie.webp",
           description: "Мутант-охотник на монстров в мире без добра и зла.",
           defaultTierId: "tier_masterpiece",
         },
         {
           title: "Первый закон. Кровь и железо",
           author: "Джо Аберкромби",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/pervyy-zakon-krov-i-zhelezo.webp",
           description: "Мрачное фэнтези о войне, интригах и моральном выборе.",
           defaultTierId: "tier_masterpiece",
         },
         {
           title: "Малазанская книга павших",
           author: "Стивен Эриксон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/malazanskaya-kniga-pavshikh.webp",
           description: "Эпическая сага о богах, империях и древней магии.",
           defaultTierId: "tier_dark",
         },
         {
           title: "Ночной цирк",
           author: "Эрин Моргенштерн",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/circus.webp",
           description:
             "Магическое соперничество двух иллюзионистов в загадочном цирке.",
           defaultTierId: "tier_dark",
         },
         {
-          title: "Дорога королей",
+          title: "Путь королей",
           author: "Брэндон Сандерсон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/doroga-koroley.webp",
           description: "Воины сражаются с древним злом в мире постоянных бурь.",
           defaultTierId: "tier_atmospheric",
         },
         {
           title: "Тёмная башня. Стрелок",
           author: "Стивен Кинг",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/temnaya-bashnya-strelok.webp",
           description:
             "Последний стрелок преследует человека в чёрном через миры.",
           defaultTierId: "tier_atmospheric",
@@ -761,7 +746,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Книга Нового Солнца",
           author: "Джин Вулф",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/kniga-novogo-solntsa.webp",
           description: "Палач становится путешественником в умирающем мире.",
           defaultTierId: "tier_skip",
         },
@@ -796,7 +781,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Война и мир",
           author: "Лев Толстой",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/voyna-i-mir.webp",
           description:
             "Эпическое полотно о России в эпоху наполеоновских войн.",
           defaultTierId: "tier_master",
@@ -804,42 +789,42 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Анна Каренина",
           author: "Лев Толстой",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/anna-karenina.webp",
           description: "История любви на фоне социальных перемен XIX века.",
           defaultTierId: "tier_master",
         },
         {
           title: "Мастер и Маргарита",
           author: "Михаил Булгаков",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/master-i-margarita.webp",
           description: "Мистический роман о дьяволе в Москве 1930-х годов.",
           defaultTierId: "tier_master",
         },
         {
           title: "Преступление и наказание",
           author: "Фёдор Достоевский",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/prestuplenie-i-nakazanie.webp",
           description: "Психологический роман о студенте Раскольникове.",
           defaultTierId: "tier_strong",
         },
         {
           title: "Братья Карамазовы",
           author: "Фёдор Достоевский",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/bratya-karamazovy.webp",
           description: "Философский роман о вере, семье и морали.",
           defaultTierId: "tier_strong",
         },
         {
           title: "Имя розы",
           author: "Умберто Эко",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/imya-rozy.webp",
           description: "Философский детектив в средневековом монастыре.",
           defaultTierId: "tier_ok",
         },
         {
           title: "Сто лет одиночества",
           author: "Габриэль Гарсиа Маркес",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/sto-let-odinochestva.webp",
           description: "Сага о роде Буэндиа в магическом реализме.",
           defaultTierId: "tier_later",
         },
@@ -873,14 +858,14 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Девушка с татуировкой дракона",
           author: "Стиг Ларссон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/devushka-s-tatuirovkoy-drakona.webp",
           description: "Журналист и хакерша расследуют исчезновение девушки.",
           defaultTierId: "tier_twist",
         },
         {
           title: "Исчезнувшая",
           author: "Гиллиан Флинн",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/ischeznuvshaya.webp",
           description:
             "Жена исчезает в годовщину свадьбы, муж становится главным подозреваемым.",
           defaultTierId: "tier_twist",
@@ -888,14 +873,14 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Убийство в Восточном экспрессе",
           author: "Агата Кристи",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/ubiystvo-v-vostochnom-ekspresse.webp",
           description: "Пуаро расследует убийство в застрявшем поезде.",
           defaultTierId: "tier_strong",
         },
         {
           title: "Десять негритят",
           author: "Агата Кристи",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/desyat-negrityat.webp",
           description:
             "Десять незнакомцев оказываются на острове и начинают умирать.",
           defaultTierId: "tier_strong",
@@ -903,7 +888,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Молчание ягнят",
           author: "Томас Харрис",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/molchanie-yagnyat.webp",
           description:
             "Агент ФБР консультируется с каннибалом для поимки маньяка.",
           defaultTierId: "tier_ok",
@@ -911,14 +896,14 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Шерлок Холмс. Этюд в багровых тонах",
           author: "Артур Конан Дойл",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/sherlok-kholms.webp",
           description: "Первое дело великого детектива и доктора Ватсона.",
           defaultTierId: "tier_ok",
         },
         {
           title: "Код да Винчи",
           author: "Дэн Браун",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/kod-da-vinchi.webp",
           description: "Символог ищет разгадку тайны Святого Грааля.",
           defaultTierId: "tier_skip",
         },
@@ -953,7 +938,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Щегол",
           author: "Донна Тартт",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/schegol.webp",
           description:
             "Мальчик выживает после теракта в музее и хранит украденную картину.",
           defaultTierId: "tier_master",
@@ -961,42 +946,42 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Бегущий за ветром",
           author: "Халед Хоссейни",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/beguschiy-za-vetrom.webp",
           description: "Трогательная история дружбы в Афганистане.",
           defaultTierId: "tier_master",
         },
         {
           title: "Шантарам",
           author: "Грегори Дэвид Робертс",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/shantaram.webp",
           description: "Приключения беглого преступника в Бомбее.",
           defaultTierId: "tier_great",
         },
         {
           title: "Тень ветра",
           author: "Карлос Руис Сафон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/ten-vetra.webp",
           description: "Мистический триллер в послевоенной Барселоне.",
           defaultTierId: "tier_great",
         },
         {
           title: "Жизнь Пи",
           author: "Ян Мартел",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/zhizn-pi.webp",
           description: "Мальчик выживает в шлюпке с бенгальским тигром.",
           defaultTierId: "tier_good",
         },
         {
           title: "Вино из одуванчиков",
           author: "Рэй Брэдбери",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/vino-iz-oduvanchikov.webp",
           description: "Ностальгическая история о лете детства.",
           defaultTierId: "tier_good",
         },
         {
-          title: "Где ты, где ты?",
+          title: "Где ты?",
           author: "Марк Леви",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/gde-ty.webp",
           description: "История дружбы, проходящей через всю жизнь.",
           defaultTierId: "tier_ok",
         },
@@ -1028,49 +1013,49 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Мастер и Маргарита",
           author: "Михаил Булгаков",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/master-i-margarita.webp",
           description: "Мистический роман о дьяволе в Москве 1930-х годов.",
           defaultTierId: "tier_classic",
         },
         {
           title: "Тихий Дон",
           author: "Михаил Шолохов",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/tikhiy-don.webp",
           description: "Эпос о донском казачестве в годы революции.",
           defaultTierId: "tier_classic",
         },
         {
           title: "Доктор Живаго",
           author: "Борис Пастернак",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/doktor-zhivago.webp",
           description: "История поэта в годы революции и гражданской войны.",
           defaultTierId: "tier_classic",
         },
         {
           title: "Архипелаг ГУЛАГ",
           author: "Александр Солженицын",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/arkhipelag-gulag.webp",
           description: "Художественно-документальное исследование репрессий.",
           defaultTierId: "tier_modern",
         },
         {
           title: "Москва-Петушки",
           author: "Венедикт Ерофеев",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/moskva-petushki.webp",
           description: "Поэма о путешествии электричкой и смысле жизни.",
           defaultTierId: "tier_modern",
         },
         {
           title: "Generation П",
           author: "Виктор Пелевин",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/generation-p.webp",
           description: "Сатира о поколении 90-х и рекламе в новой России.",
           defaultTierId: "tier_new",
         },
         {
           title: "Лавр",
           author: "Евгений Водолазкин",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/lavr.webp",
           description: "Роман о целителе в средневековой Руси.",
           defaultTierId: "tier_new",
         },
@@ -1113,7 +1098,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Sapiens. Краткая история человечества",
           author: "Юваль Ной Харари",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/sapiens-kratkaya-istoriya-chelovechestva.webp",
           description:
             "От каменного века до наших дней: как Homo sapiens стал хозяином планеты.",
           defaultTierId: "tier_revolution",
@@ -1121,14 +1106,14 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Краткая история времени",
           author: "Стивен Хокинг",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/kratkaya-istoriya-vremeni.webp",
           description: "От Большого взрыва до чёрных дыр: просто о сложном.",
           defaultTierId: "tier_revolution",
         },
         {
           title: "Происхождение видов",
           author: "Чарльз Дарвин",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/proiskhozhdenie-vidov.webp",
           description:
             "Фундаментальный труд об эволюции и естественном отборе.",
           defaultTierId: "tier_fundamental",
@@ -1136,14 +1121,14 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Структура научных революций",
           author: "Томас Кун",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/struktura-nauchnykh-revolyutsiy.webp",
           description: "Философия науки и смена парадигм.",
           defaultTierId: "tier_fundamental",
         },
         {
           title: "Космос",
           author: "Карл Саган",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/kosmos.webp",
           description:
             "Путешествие по Вселенной с великим популяризатором науки.",
           defaultTierId: "tier_popular",
@@ -1151,7 +1136,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Сапиенс. Иллюстрированная история",
           author: "Юваль Ной Харари",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/sapiens-illyustrirovannaya-istoriya.webp",
           description:
             "Иллюстрированная версия бестселлера о истории человечества.",
           defaultTierId: "tier_popular",
@@ -1159,7 +1144,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Физика невозможного",
           author: "Митио Каку",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/fizika-nevozmozhnogo.webp",
           description:
             "Научный взгляд на телепортацию, машины времени и другие технологии.",
           defaultTierId: "tier_popular",
@@ -1198,7 +1183,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Атомные привычки",
           author: "Джеймс Клир",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/atomnye-privychki.webp",
           description:
             "Практическое руководство по формированию полезных привычек.",
           defaultTierId: "tier_must",
@@ -1206,42 +1191,42 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Думай медленно... решай быстро",
           author: "Даниэль Канеман",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/dumay-medlenno-reshay-bystro.webp",
           description: "Нобелевский лауреат о двух системах мышления.",
           defaultTierId: "tier_must",
         },
         {
           title: "Богатый папа, бедный папа",
           author: "Роберт Кийосаки",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/bogatyy-papa-bednyy-papa.webp",
           description: "Финансовая грамотность и мышление богатого человека.",
           defaultTierId: "tier_recommend",
         },
         {
           title: "7 навыков высокоэффективных людей",
           author: "Стивен Кови",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/7-navykov-vysokoeffektivnykh-lyudey.webp",
           description: "Принципы личной эффективности от классика self-help.",
           defaultTierId: "tier_recommend",
         },
         {
           title: "Как завоевывать друзей",
           author: "Дейл Карнеги",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/kak-zavoevyvat-druzey.webp",
           description: "Классика о влиянии на людей и построении отношений.",
           defaultTierId: "tier_recommend",
         },
         {
           title: "Сила воли",
           author: "Келли Макгонигал",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/sila-voli.webp",
           description: "Научный подход к развитию самоконтроля.",
           defaultTierId: "tier_once",
         },
         {
           title: "Магия утра",
           author: "Хэл Элрод",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/magiya-utra.webp",
           description: "Как первые часы дня определяют ваш успех.",
           defaultTierId: "tier_once",
         },
@@ -1276,7 +1261,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Дюна",
           author: "Фрэнк Герберт",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/dyuna.webp",
           description:
             "Эпическая сага о пустынной планете Арракис и борьбе за меланж.",
           defaultTierId: "tier_masterpiece",
@@ -1284,14 +1269,14 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Основание",
           author: "Айзек Азимов",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/osnovanie.webp",
           description: "Грандиозная сага о падении Галактической Империи.",
           defaultTierId: "tier_masterpiece",
         },
         {
           title: "1984",
           author: "Джордж Оруэлл",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/1984.webp",
           description:
             "Антиутопия о тоталитарном обществе под контролем Большого Брата.",
           defaultTierId: "tier_great",
@@ -1299,28 +1284,28 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "О дивный новый мир",
           author: "Олдос Хаксли",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/o-divnyy-novyy-mir.webp",
           description: "Антиутопия о мире, где люди выращиваются в пробирках.",
           defaultTierId: "tier_great",
         },
         {
           title: "Марсианин",
           author: "Энди Вейер",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/marsianin.webp",
           description: "Астронавт выживает на Марсе в одиночку.",
           defaultTierId: "tier_good",
         },
         {
           title: "Контакт",
           author: "Карл Саган",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/kontakt.webp",
           description: "Учёные получают сигнал от внеземной цивилизации.",
           defaultTierId: "tier_good",
         },
         {
           title: "Солярис",
           author: "Станислав Лем",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/solyaris.webp",
           description: "Психологическая фантастика о разумном океане.",
           defaultTierId: "tier_meh",
         },
@@ -1352,7 +1337,7 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Нейромант",
           author: "Уильям Гибсон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/neyromant.webp",
           description:
             "Хакер Кейс погружается в матрицу для выполнения опасного задания.",
           defaultTierId: "tier_classic",
@@ -1360,15 +1345,15 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Мечтают ли андроиды об электроовцах?",
           author: "Филип К. Дик",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/mechtayut-li-androidy-ob-elektroovtsakh.webp",
           description:
             "Охотник за головами преследует андроидов в постапокалиптическом мире.",
           defaultTierId: "tier_classic",
         },
         {
-          title: "Снег",
+          title: "Лавина",
           author: "Нил Стивенсон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/lavina.webp",
           description:
             "Курьер и хакер в мире, где корпорации заменили государства.",
           defaultTierId: "tier_modern",
@@ -1376,29 +1361,22 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Алита",
           author: "Юкито Кисиро",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/alita.webp",
           description: "Киборг-девочка ищет своё прошлое в мире свалки.",
           defaultTierId: "tier_modern",
         },
         {
           title: "Видоизменённый углерод",
           author: "Ричард К. Морган",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/vidoizmenennyy-uglerod.webp",
           description:
             "В мире, где сознание можно переносить, расследуют убийство.",
           defaultTierId: "tier_other",
         },
         {
-          title: "Лавина",
-          author: "Нил Стивенсон",
-          coverImageUrl: "/images/books/placeholder.svg",
-          description: "Вирус в метавселенной угрожает реальному миру.",
-          defaultTierId: "tier_other",
-        },
-        {
           title: "Светлячок",
           author: "Джосс Уидон",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/svetlyachok.webp",
           description:
             "Команда контрабандистов в мире после межпланетной войны.",
           defaultTierId: "tier_other",
@@ -1431,50 +1409,50 @@ export const TEMPLATES: TemplateItem[] = [
         {
           title: "Гиперион",
           author: "Дэн Симмонс",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/giperion.webp",
           description:
             "Семь паломников отправляются к Гипериону в поисках ответов.",
           defaultTierId: "tier_epic",
         },
         {
-          title: "Песнь о Лейбовице",
+          title: "Гимн Лейбовицу",
           author: "Уолтер М. Миллер",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/pesn-o-leybovitse.webp",
           description: "Монахи сохраняют знания после ядерного апокалипсиса.",
           defaultTierId: "tier_epic",
         },
         {
           title: "Звёздный десант",
           author: "Роберт Хайнлайн",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/zvezdnyy-desant.webp",
           description: "Военная фантастика о войне с насекомыми-арахнидами.",
           defaultTierId: "tier_good",
         },
         {
           title: "Вавилон-5",
           author: "Дж. Майкл Стражински",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/vavilon-5.webp",
           description: "Космическая станция как центр дипломатии и конфликтов.",
           defaultTierId: "tier_good",
         },
         {
-          title: "Вселенная Метро 2033",
+          title: "Метро 2033",
           author: "Дмитрий Глуховский",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/metro-2033.webp",
           description: "Выживание в московском метро после ядерной войны.",
           defaultTierId: "tier_average",
         },
         {
           title: "Аннигиляция",
           author: "Джефф Вандермеер",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/annigilyatsiya.webp",
           description: "Экспедиция в Зону Икс, где природа мутирует.",
           defaultTierId: "tier_average",
         },
         {
-          title: "Проблема трёх тел",
+          title: "Задача трёх тел",
           author: "Лю Цысинь",
-          coverImageUrl: "/images/books/placeholder.svg",
+          coverImageUrl: "/images/books/problema-trekh-tel.webp",
           description: "Китайская НФ о контакте с инопланетной цивилизацией.",
           defaultTierId: "tier_average",
         },
@@ -1541,9 +1519,9 @@ export const COLLECTIONS: CollectionItem[] = [
       "Книги, которые получили highest оценки от сообщества BookStrata в этом месяце.",
     coverImageUrl: "/images/collections/2026-hero.webp",
     bookCovers: [
-      "/images/books/placeholder.svg",
-      "/images/books/placeholder.svg",
-      "/images/books/placeholder.svg",
+      "/images/books/shantaram.webp",
+      "/images/books/shadow-wind.webp",
+      "/images/books/circus.webp",
     ],
     tags: ["Популярное", "Выбор читателей", "Топ"],
     isPublished: true,

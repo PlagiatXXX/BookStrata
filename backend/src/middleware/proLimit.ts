@@ -32,15 +32,16 @@ declare module "fastify" {
 export const checkProLimit = async (
   request: FastifyRequest,
 ) => {
+  let isPro = false
   if (request.user?.userId) {
-    await subscriptionsService.isProUser(request.user.userId)
+    isPro = await subscriptionsService.isProUser(request.user.userId)
   }
 
   request.proLimit = {
-    isPro: true,
-    maxBooks: Infinity,
-    maxTemplates: Infinity,
-    maxExportResolution: "4K",
+    isPro,
+    maxBooks: isPro ? Infinity : 30,
+    maxTemplates: isPro ? Infinity : 5,
+    maxExportResolution: isPro ? "4K" : "HD",
   };
 };
 
@@ -48,7 +49,19 @@ export const checkProLimit = async (
  * Middleware для требования Pro статуса
  * Возвращает 403 если пользователь не Pro
  */
-export const requirePro = async () => {};
+export const requirePro = async (
+  request: FastifyRequest,
+  reply: FastifyReply,
+) => {
+  if (!request.proLimit?.isPro) {
+    return reply.code(403).send({
+      error: {
+        code: "pro_required",
+        message: "Для доступа к этой функции требуется Pro подписка",
+      },
+    });
+  }
+};
 
 /**
  * Helper для проверки лимита книг в тир-листе

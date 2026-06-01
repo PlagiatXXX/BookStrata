@@ -129,6 +129,10 @@ fastify.register(authPlugin);
 fastify.register(requestContext);
 fastify.register(logFromFrontend);
 
+// Pro-лимиты (после auth, чтобы request.user был доступен)
+const { checkProLimit } = await import("./middleware/proLimit.js");
+fastify.addHook("onRequest", checkProLimit);
+
 let StoreClass: typeof RedisRateLimitStore | typeof LocalStore = RedisRateLimitStore;
 try {
   await redis.ping();

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Plus,
@@ -64,6 +65,7 @@ export function AdminNewsPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null);
 
+  const queryClient = useQueryClient();
   const ITEMS_PER_PAGE = 10;
 
   // Проверка на администратора
@@ -176,6 +178,7 @@ export function AdminNewsPage() {
 
       handleCloseModal();
       loadNews();
+      queryClient.invalidateQueries({ queryKey: ["news", "published"] });
     } catch (error) {
       console.error("Failed to save news:", error);
       sileo.error({
@@ -198,6 +201,7 @@ export function AdminNewsPage() {
       });
       setDeleteConfirm(null);
       loadNews();
+      queryClient.invalidateQueries({ queryKey: ["news", "published"] });
     } catch (error) {
       console.error("Failed to delete news:", error);
       sileo.error({
@@ -222,7 +226,8 @@ export function AdminNewsPage() {
         description: `"${title}"`,
         duration: 3000,
       });
-      loadNews();
+        loadNews();
+        queryClient.invalidateQueries({ queryKey: ["news", "published"] });
     } catch (error) {
       console.error("Failed to toggle publish:", error);
       sileo.error({

@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, User } from "@prisma/client";
 import { z } from "zod";
 import { createLogger } from "../../lib/logger.js";
 import { sanitize } from "../../lib/sanitizer.js";
+import { SubscriptionsService } from "../subscriptions/subscriptions.service.js";
 
 // Логгер для сервиса шаблонов
 const logger = createLogger("Templates", { color: "magenta" });
@@ -98,7 +99,24 @@ export class TemplatesService {
       userId,
     });
 
-    // Лимит шаблонов временно отключён
+    // Проверка лимита шаблонов
+    if (userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: parseInt(userId) },
+        select: { isPro: true },
+      });
+
+      const maxTemplates = user?.isPro ? 100 : 5;
+      const userTemplatesCount = await this.prisma.template.count({
+        where: { authorId: parseInt(userId) },
+      });
+
+      if (userTemplatesCount >= maxTemplates) {
+        throw new Error(
+          `Достигнут лимит шаблонов (${maxTemplates}). ${user?.isPro ? "" : "Оформите Pro подписку для увеличения лимита."}`,
+        );
+      }
+    }
 
     const templateData: any = {
       title: sanitize(validatedInput.title),
@@ -318,7 +336,17 @@ export class TemplatesService {
       throw new Error("Template not found");
     }
 
-    // Проверка Pro-лимита для использования Pro-шаблонов временно отключена
+    // Проверка Pro-лимита для использования Pro-шаблонов
+    if (template.isProOnly) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: uId },
+        select: { isPro: true },
+      });
+      if (!user?.isPro) {
+        throw new Error("Использование Pro-шаблонов доступно только с Pro подпиской");
+      }
+    }
+
     if (!template.isPublic && template.authorId !== uId) {
       throw new Error(
         "Unauthorized: Template is not public and does not belong to you",

@@ -136,10 +136,12 @@ describe("users.service", () => {
       email: "user@example.com",
       username: mockNewUsername,
       avatarUrl: null,
-      createdAt: new Date("2024-01-01"),
+      isPro: false,
+      proExpiresAt: null,
       role: {
         name: "user",
       },
+      createdAt: new Date("2024-01-01"),
     };
 
     it("должен обновить имя пользователя", async () => {
@@ -163,6 +165,11 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          isPro: true,
+          proExpiresAt: true,
+          role: {
+            select: { name: true },
+          },
           createdAt: true,
         },
       });
@@ -201,6 +208,9 @@ describe("users.service", () => {
       email: "user@example.com",
       username: "testuser",
       avatarUrl: mockAvatarUrl,
+      isPro: false,
+      proExpiresAt: null,
+      role: { name: "user" },
     };
 
     it("должен обновить аватар", async () => {
@@ -216,6 +226,11 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          isPro: true,
+          proExpiresAt: true,
+          role: {
+            select: { name: true },
+          },
         },
       });
 
@@ -240,6 +255,9 @@ describe("users.service", () => {
       email: "user@example.com",
       username: "testuser",
       avatarUrl: null,
+      isPro: false,
+      proExpiresAt: null,
+      role: { name: "user" },
     };
 
     it("должен удалить аватар (установить null)", async () => {
@@ -255,6 +273,11 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          isPro: true,
+          proExpiresAt: true,
+          role: {
+            select: { name: true },
+          },
         },
       });
 

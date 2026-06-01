@@ -35,7 +35,10 @@ doctor.md
 !.github/copilot-instructions.md
 !.github/workflows/
 
+backups/
+
 neon_backup.sql
+AGENTS.md
 .opencode/*
 testsprite_tests/*
 .playwright-mcp/*

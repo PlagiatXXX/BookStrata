@@ -62,7 +62,7 @@ export const Header = ({
   const confirmLogout = () => {
     setIsLogoutModalOpen(false);
     logout();
-    navigate("/", { replace: true });
+    window.location.href = "/";
   };
 
   const cancelLogout = () => {
@@ -90,9 +90,9 @@ export const Header = ({
     },
     {
       label: "Pro",
+      onClick: () => navigate("/pricing"),
       icon: <Crown size={16} className="text-yellow-400" />,
       description: "Премиум-возможности",
-      badge: "скоро",
     },
     ...(showTemplatesNav
       ? [

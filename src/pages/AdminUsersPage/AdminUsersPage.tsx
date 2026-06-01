@@ -313,26 +313,26 @@ export function AdminUsersPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-800 overflow-hidden">
-              <table className="w-full">
+            <div className="rounded-xl border border-gray-800 overflow-x-auto max-w-full">
+              <table className="w-full min-w-[640px]">
                 <thead>
                   <tr className="bg-white/5 border-b border-gray-800">
-                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Пользователь
                     </th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Роль
                     </th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Статус
                     </th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Меценат
                     </th>
-                    <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
                       Зарегистрирован
                     </th>
-                    <th className="text-right px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="text-right px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Действия
                     </th>
                   </tr>
@@ -362,15 +362,15 @@ export function AdminUsersPage() {
                         key={u.userId}
                         className="hover:bg-white/[0.02] transition-colors"
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-bold shrink-0">
                               {u.username?.[0]?.toUpperCase() || "?"}
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 max-w-[180px]">
                               <Link
                                 to={`/users/${u.userId}`}
-                                className="text-sm font-medium text-white truncate hover:text-orange-400 transition-colors"
+                                className="text-sm font-medium text-white truncate block hover:text-orange-400 transition-colors"
                               >
                                 {u.username || "—"}
                               </Link>
@@ -381,7 +381,7 @@ export function AdminUsersPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                               u.role === "admin"
@@ -403,7 +403,7 @@ export function AdminUsersPage() {
                                 : "Пользователь"}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           {u.isPro ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">
                               <Crown size={12} />
@@ -413,20 +413,20 @@ export function AdminUsersPage() {
                             <span className="text-xs text-gray-500">Free</span>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-4">
                           {u.isDonor ? (
                             <DonorBadge size="sm" />
                           ) : (
                             <span className="text-xs text-gray-500">—</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-400 hidden md:table-cell">
+                        <td className="px-4 py-4 text-sm text-gray-400 hidden md:table-cell">
                           <span className="inline-flex items-center gap-1.5">
                             <Calendar size={12} />
                             {formatDate(u.createdAt)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                        <td className="px-4 py-4 text-right whitespace-nowrap">
                           {canChangeRole && (
                             <button
                               onClick={async () => {
@@ -468,7 +468,7 @@ export function AdminUsersPage() {
                                 }
                               }}
                               disabled={changingUserId === u.userId}
-                              className="bg-white/10 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white cursor-pointer focus:outline-none focus:border-gray-500 disabled:opacity-50"
+                              className="ml-2 bg-white/10 border border-gray-700 rounded-lg px-2 py-1 text-sm text-white cursor-pointer focus:outline-none focus:border-gray-500 disabled:opacity-50"
                             >
                               {ROLES.map((r) => (
                                 <option key={r} value={r} className="bg-[#1a1a2e]">
@@ -478,7 +478,7 @@ export function AdminUsersPage() {
                             </select>
                           ) : canChangeRole &&
                             u.userId === currentUser?.userId ? (
-                            <span className="text-xs text-gray-500 italic">
+                            <span className="ml-2 text-xs text-gray-500 italic">
                               Это вы
                             </span>
                           ) : (

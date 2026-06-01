@@ -76,6 +76,11 @@ export async function updateUser(userId: number, username: string) {
       email: true,
       username: true,
       avatarUrl: true,
+      isPro: true,
+      proExpiresAt: true,
+      role: {
+        select: { name: true },
+      },
       createdAt: true,
     },
   });
@@ -91,6 +96,11 @@ export async function updateAvatar(userId: number, avatarUrl: string | null) {
       email: true,
       username: true,
       avatarUrl: true,
+      isPro: true,
+      proExpiresAt: true,
+      role: {
+        select: { name: true },
+      },
     },
   });
 }
@@ -105,6 +115,11 @@ export async function deleteAvatar(userId: number) {
       email: true,
       username: true,
       avatarUrl: true,
+      isPro: true,
+      proExpiresAt: true,
+      role: {
+        select: { name: true },
+      },
     },
   });
 }

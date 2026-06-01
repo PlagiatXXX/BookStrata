@@ -36,7 +36,7 @@ describe("avatar.service", () => {
   });
 
   describe("generateAvatar", () => {
-    it("allows generation with daily limit 10 for all users", async () => {
+    it("blocks generation for free users (limit 0)", async () => {
       const { SubscriptionsService } =
         await import("../subscriptions/subscriptions.service.js");
       vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
@@ -48,12 +48,11 @@ describe("avatar.service", () => {
         aiAvatarsGenerated: 0,
         lastAvatarResetAt: new Date(),
       } as never);
-      vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 
-      expect(result.success).toBe(true);
-      expect(result.remaining).toBe(9);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("лимит");
     });
 
     it("returns user not found when profile is missing", async () => {
@@ -88,7 +87,7 @@ describe("avatar.service", () => {
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 
       expect(result.success).toBe(true);
-      expect(result.remaining).toBe(4);
+      expect(result.remaining).toBe(44);
     });
 
     it("resets the counter for a new day", async () => {
@@ -111,7 +110,7 @@ describe("avatar.service", () => {
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 
       expect(result.success).toBe(true);
-      expect(result.remaining).toBe(9);
+      expect(result.remaining).toBe(49);
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -251,7 +250,7 @@ describe("avatar.service", () => {
 
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 
-      expect(result.remaining).toBe(6);
+      expect(result.remaining).toBe(46);
     });
 
     it("returns an explicit error instead of a fallback avatar when generation fails", async () => {
@@ -270,7 +269,13 @@ describe("avatar.service", () => {
       expect(result.imageUrl).toBeUndefined();
     });
 
-    it("allows generation for all users with daily limit 10", async () => {
+    it("allows generation for pro users with pro limit", async () => {
+      const { SubscriptionsService } =
+        await import("../subscriptions/subscriptions.service.js");
+      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
+        true,
+      );
+
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 0,
@@ -284,12 +289,18 @@ describe("avatar.service", () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.remaining).toBe(9);
+      expect(result.remaining).toBe(49);
     });
   });
 
   describe("getAvatarLimit", () => {
-    it("returns free limits", async () => {
+    it("returns pro limits", async () => {
+      const { SubscriptionsService } =
+        await import("../subscriptions/subscriptions.service.js");
+      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
+        true,
+      );
+
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 5,
@@ -300,14 +311,20 @@ describe("avatar.service", () => {
 
       expect(result).toEqual({
         used: 5,
-        limit: 10,
-        remaining: 5,
+        limit: 50,
+        remaining: 45,
       });
     });
 
-    it("returns refreshed limits for a new day", async () => {
+    it("returns refreshed pro limits for a new day", async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
+
+      const { SubscriptionsService } =
+        await import("../subscriptions/subscriptions.service.js");
+      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
+        true,
+      );
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
@@ -319,8 +336,8 @@ describe("avatar.service", () => {
 
       expect(result).toEqual({
         used: 0,
-        limit: 10,
-        remaining: 10,
+        limit: 50,
+        remaining: 50,
       });
     });
 

@@ -3,10 +3,12 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { jwtPayloadSchema, type AuthTokenPayload } from "./auth.schema.js";
 import { RolesService } from "../roles/roles.service.js";
+import { SubscriptionsService } from "../subscriptions/subscriptions.service.js";
 import { createLogger } from "../../lib/logger.js";
 import crypto from "crypto";
 import { sendResetPasswordEmail, sendWelcomeEmail, sendVerifyEmail } from "./auth.mail.js";
 import { isDisposableEmail } from "../../lib/disposable-email.js";
+import { isReservedUsername } from "../../constants/reserved-usernames.js";
 // import { verifySmartCaptchaToken } from "../../lib/smartcaptcha.js"; // captcha — закомментировано, готово к подключению
 import { getVkToken, getGoogleToken, parseOAuthUserData } from "../../lib/oauth.js";
 
@@ -61,6 +63,11 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
   if (domain && isDisposableEmail(payload.email)) {
     logger.warn("Попытка регистрации с disposable email", { email: payload.email })
     throw new Error("Регистрация с временных почтовых адресов запрещена. Используйте постоянный email.")
+  }
+
+  if (isReservedUsername(payload.username)) {
+    logger.warn("Попытка регистрации с зарезервированным username", { username: payload.username })
+    throw new Error("Это имя пользователя зарезервировано системой. Пожалуйста, выберите другое имя.")
   }
 
   // captcha — закомментировано, готово к подключению
@@ -128,6 +135,18 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
     logger.info("Письмо с подтверждением email отправлено", { userId: user.id });
   } catch (error) {
     logger.error("Ошибка при отправке письма подтверждения", {
+      error: (error as Error).message,
+      userId: user.id,
+    });
+  }
+
+  // Активируем триал Pro на 7 дней
+  try {
+    const subscriptionsService = new SubscriptionsService();
+    await subscriptionsService.activatePro(user.id, 7);
+    logger.info("Пробный Pro-период активирован (7 дней)", { userId: user.id });
+  } catch (error) {
+    logger.error("Ошибка при активации пробного Pro-периода", {
       error: (error as Error).message,
       userId: user.id,
     });
@@ -380,9 +399,13 @@ export async function oauthVk(code: string): Promise<AuthToken> {
     const userRole = await rolesService.getRoleByName("user")
     if (!userRole) throw new Error("Системная ошибка: роль пользователя не найдена")
 
-    const username = oauthUser.username
+    let username = oauthUser.username
       .replace(/[^a-zA-Zа-яА-Я0-9_]/g, "_")
       .substring(0, 30)
+
+    if (!username || isReservedUsername(username)) {
+      username = `vk_${oauthUser.id}`
+    }
 
     user = await prisma.user.create({
       data: {
@@ -434,9 +457,13 @@ export async function oauthGoogle(code: string): Promise<AuthToken> {
     const userRole = await rolesService.getRoleByName("user")
     if (!userRole) throw new Error("Системная ошибка: роль пользователя не найдена")
 
-    const username = oauthUser.username
+    let username = oauthUser.username
       .replace(/[^a-zA-Zа-яА-Я0-9_]/g, "_")
       .substring(0, 30)
+
+    if (!username || isReservedUsername(username)) {
+      username = `google_${oauthUser.id}`
+    }
 
     user = await prisma.user.create({
       data: {
