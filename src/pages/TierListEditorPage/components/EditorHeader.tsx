@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { forkTierList } from '@/lib/tierListApi';
 import { sileo } from 'sileo';
 import { LikeButton } from '@/components/LikeButton';
-import { SaveButton } from './SaveButton';
-import type { SaveStatus } from '../hooks/useTierEditorSave';
 
 export interface EditorHeaderProps {
   title: string;
@@ -15,10 +13,6 @@ export interface EditorHeaderProps {
   tierListId?: string;
   ownerUserId?: number;
   currentUserId?: number;
-  saveStatus: SaveStatus;
-  lastSaved: Date | null;
-  hasUnsavedChanges: boolean;
-  onSave: () => void;
   isReadOnly?: boolean;
   hideFork?: boolean;
 }
@@ -31,10 +25,6 @@ export const EditorHeader = ({
   tierListId,
   ownerUserId,
   currentUserId,
-  saveStatus,
-  lastSaved,
-  hasUnsavedChanges,
-  onSave,
   isReadOnly = false,
   hideFork = false,
 }: EditorHeaderProps) => {
@@ -63,8 +53,8 @@ export const EditorHeader = ({
   };
 
   return (
-    <div className="mb-8 flex flex-col gap-4 border-b-4 border-black pb-4 md:flex-row md:items-end md:justify-between">
-      <div>
+    <div className="mb-8 flex flex-col gap-4 border-b-4 border-black pb-4 md:flex-row md:items-end md:justify-center">
+      <div className="text-center">
         <h1 className="nb-display-lg text-white">
           {title}
         </h1>
@@ -79,15 +69,6 @@ export const EditorHeader = ({
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
-        {!isReadOnly && (
-          <SaveButton
-            status={saveStatus}
-            lastSaved={lastSaved}
-            hasUnsavedChanges={hasUnsavedChanges}
-            onSave={onSave}
-          />
-        )}
-
         {isReadOnly && (
           <>
             {!hideFork && (

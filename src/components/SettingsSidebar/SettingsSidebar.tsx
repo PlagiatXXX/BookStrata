@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import type { Tier } from "@/types";
 import { Switch } from "@/ui/Switch";
+import { SaveButton } from "@/pages/TierListEditorPage/components/SaveButton";
+import type { SaveStatus } from "@/pages/TierListEditorPage/hooks/useTierEditorSave";
 
 const actionButtonBase =
   "flex w-full items-center justify-center gap-2";
@@ -34,6 +36,10 @@ interface SettingsSidebarProps {
   onTogglePublic?: (isPublic: boolean) => void;
   isTogglingPublic?: boolean;
   onFindBook?: () => void;
+  saveStatus?: SaveStatus;
+  lastSaved?: Date | null;
+  hasUnsavedChanges?: boolean;
+  onSave?: () => void;
 }
 
 export const SettingsSidebar = memo(({
@@ -47,6 +53,10 @@ export const SettingsSidebar = memo(({
   onTogglePublic,
   isTogglingPublic = false,
   onFindBook,
+  saveStatus,
+  lastSaved,
+  hasUnsavedChanges,
+  onSave,
 }: SettingsSidebarProps) => {
   const height = activeTier?.height || 130;
   const labelSize = activeTier?.labelSize || "sm";
@@ -193,6 +203,15 @@ export const SettingsSidebar = memo(({
             <Trash size={16} className={actionIconClass} />
             Удалить рейтинг
           </button>
+        )}
+
+        {onSave && saveStatus && (
+          <SaveButton
+            status={saveStatus}
+            lastSaved={lastSaved ?? null}
+            hasUnsavedChanges={hasUnsavedChanges ?? false}
+            onSave={onSave}
+          />
         )}
       </div>
     </aside>

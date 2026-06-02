@@ -454,21 +454,31 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const processedBooks = await runWithConcurrency(
         request.body.books,
         async (book) => {
-          if (book.coverImageUrl && book.coverImageUrl.startsWith("data:")) {
+          const url = book.coverImageUrl;
+          if (!url) return book;
+
+          // data: → uploadBase64
+          if (url.startsWith("data:")) {
             try {
-              const uploadResult = await uploadBase64(
-                book.coverImageUrl,
-                "tiermaker-pro/book-covers",
-              );
+              const uploadResult = await uploadBase64(url, "tiermaker-pro/book-covers");
               return { ...book, coverImageUrl: uploadResult.url };
             } catch (error) {
-              fastify.log.error(
-                { error: String(error) },
-                "Failed to upload base64 image",
-              );
+              fastify.log.error({ error: String(error) }, "Failed to upload base64 image");
               return { ...book, coverImageUrl: "" };
             }
           }
+
+          // Внешний URL → uploadFromUrl (скачать и загрузить в Cloudinary)
+          if (url.startsWith("http") && !url.includes("cloudinary.com")) {
+            try {
+              const uploadResult = await uploadFromUrl(url, "tiermaker-pro/book-covers");
+              return { ...book, coverImageUrl: uploadResult.url };
+            } catch (error) {
+              fastify.log.error({ error: String(error) }, "Failed to upload external cover");
+              return book;
+            }
+          }
+
           return book;
         },
         3,

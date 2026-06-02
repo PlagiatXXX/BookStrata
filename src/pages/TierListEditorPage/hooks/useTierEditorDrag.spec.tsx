@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useTierEditorDrag } from './useTierEditorDrag';
 import type { TierListData } from '@/types';
@@ -58,8 +58,15 @@ describe('useTierEditorDrag', () => {
   const mockSetActiveItem = vi.fn();
   const mockHandleDragEndWithUnsaved = vi.fn();
 
+  let originalFetch: typeof globalThis.fetch;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
   });
 
   describe('Инициализация', () => {
@@ -245,6 +252,19 @@ describe('useTierEditorDrag', () => {
   });
 
   describe('onDownloadImage', () => {
+    function renderHookWithRef() {
+      const hook = renderHook(() =>
+        useTierEditorDrag({
+          listData: mockListData,
+          setActiveItem: mockSetActiveItem,
+          handleDragEndWithUnsaved: mockHandleDragEndWithUnsaved,
+        })
+      );
+      const mockElement = document.createElement('div');
+      hook.result.current.tierGridRef.current = mockElement;
+      return hook;
+    }
+
     it('должен ничего не делать если tierGridRef.current = null', async () => {
       const { result } = renderHook(() =>
         useTierEditorDrag({
@@ -277,23 +297,108 @@ describe('useTierEditorDrag', () => {
       expect(mockToPng).toHaveBeenCalledWith(mockElement, expect.any(Object));
     });
 
-    it('должен обрабатывать ошибку при скачивании', async () => {
-      mockToPng.mockRejectedValue(new Error('Download failed'));
+    it('должен инлайнить background-image через fetch перед toPng', async () => {
+      const mockBlob = new Blob(['fake-image'], { type: 'image/jpeg' });
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      });
 
-      const { result } = renderHook(() =>
-        useTierEditorDrag({
-          listData: mockListData,
-          setActiveItem: mockSetActiveItem,
-          handleDragEndWithUnsaved: mockHandleDragEndWithUnsaved,
-        })
-      );
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
 
-      const mockElement = document.createElement('div');
-      result.current.tierGridRef.current = mockElement;
+      // Добавляем книгу с background-image
+      const card = document.createElement('div');
+      card.className = 'nb-book-card';
+      card.style.backgroundImage = 'url(http://example.com/cover.jpg)';
+      el.appendChild(card);
+
+      const originalBg = card.style.backgroundImage;
 
       await result.current.onDownloadImage();
 
-      // Ошибка обрабатывается внутри хука
+      // fetch был вызван
+      expect(globalThis.fetch).toHaveBeenCalledWith('http://example.com/cover.jpg', { mode: 'cors' });
+
+      // После экспорта background-image восстановлен
+      expect(card.style.backgroundImage).toBe(originalBg);
+
+      // toPng вызван
+      expect(mockToPng).toHaveBeenCalled();
+    });
+
+    it('должен пропускать data: URL и не вызывать fetch', async () => {
+      globalThis.fetch = vi.fn();
+
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      const card = document.createElement('div');
+      card.className = 'nb-book-card';
+      card.style.backgroundImage = 'url(data:image/png;base64,abc123)';
+      el.appendChild(card);
+
+      await result.current.onDownloadImage();
+
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+      expect(mockToPng).toHaveBeenCalled();
+    });
+
+    it('должен обрабатывать ошибку fetch (сервер без CORS) и продолжать', async () => {
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('CORS error'));
+
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      const card = document.createElement('div');
+      card.className = 'nb-book-card';
+      card.style.backgroundImage = 'url(http://example.com/nocors.jpg)';
+      el.appendChild(card);
+
+      await result.current.onDownloadImage();
+
+      // toPng всё равно вызван, несмотря на ошибку CORS
+      expect(mockToPng).toHaveBeenCalled();
+      // background-image не изменился
+      expect(card.style.backgroundImage).toContain('http://example.com/nocors.jpg');
+    });
+
+    it('должен обрабатывать ошибку при скачивании и восстанавливать стили', async () => {
+      mockToPng.mockRejectedValue(new Error('Download failed'));
+
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      const card = document.createElement('div');
+      card.className = 'nb-book-card';
+      card.style.backgroundImage = 'url(http://example.com/cover.jpg)';
+      el.appendChild(card);
+
+      await result.current.onDownloadImage();
+
+      // Стили восстановлены даже при ошибке
+      expect(card.style.backgroundImage).toContain('http://example.com/cover.jpg');
+    });
+
+    it('должен восстанавливать background-image после экспорта', async () => {
+      const mockBlob = new Blob(['fake'], { type: 'image/jpeg' });
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      });
+
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      const card = document.createElement('div');
+      card.className = 'nb-book-card';
+      card.style.backgroundImage = 'url(http://example.com/cover.jpg)';
+      el.appendChild(card);
+
+      await result.current.onDownloadImage();
+
+      // После экспорта — оригинальный URL
+      expect(card.style.backgroundImage).toBe('url("http://example.com/cover.jpg")');
     });
   });
 });

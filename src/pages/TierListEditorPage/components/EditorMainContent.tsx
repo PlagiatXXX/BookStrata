@@ -3,6 +3,7 @@ import { TierGrid } from "@/components/TierGrid/TierGrid";
 import { UnrankedItems } from "@/components/UnrankedItems/UnrankedItems";
 import { SettingsSidebar } from "@/components/SettingsSidebar/SettingsSidebar";
 import type { Book, TierListData } from "@/types";
+import type { SaveStatus } from "../hooks/useTierEditorSave";
 
 interface EditorMainContentProps {
   listData: TierListData;
@@ -31,6 +32,10 @@ interface EditorMainContentProps {
   isTogglingPublic: boolean;
   onFindBook?: () => void;
   onUploadBooks?: (files: File[]) => void;
+  saveStatus?: SaveStatus;
+  lastSaved?: Date | null;
+  hasUnsavedChanges?: boolean;
+  onSave?: () => void;
 }
 
 export const EditorMainContent = memo(
@@ -58,6 +63,10 @@ export const EditorMainContent = memo(
     isTogglingPublic,
     onFindBook,
     onUploadBooks,
+    saveStatus,
+    lastSaved,
+    hasUnsavedChanges,
+    onSave,
   }: EditorMainContentProps) => {
     // Memoize derived data to prevent unnecessary re-renders
     const unrankedBooks = useMemo(
@@ -151,6 +160,10 @@ export const EditorMainContent = memo(
               onTogglePublic={isReadOnly ? undefined : onTogglePublic}
               isTogglingPublic={isTogglingPublic}
               onFindBook={isReadOnly ? undefined : () => onFindBook?.()}
+              saveStatus={saveStatus}
+              lastSaved={lastSaved}
+              hasUnsavedChanges={hasUnsavedChanges}
+              onSave={onSave}
             />
           </div>
         )}

@@ -61,4 +61,80 @@ describe("BookCover", () => {
     
     expect(onView).toHaveBeenCalledWith(mockBook);
   });
+
+  describe("hover — изолированный от родительского group", () => {
+    it("изначально data-book-actions hidden", () => {
+      render(<BookCover book={mockBook} onDelete={() => {}} />);
+      const card = screen.getByRole("img");
+      expect(card).toHaveAttribute("data-book-actions", "hidden");
+    });
+
+    it("mouseEnter → data-book-actions visible, mouseLeave → hidden", () => {
+      render(<BookCover book={mockBook} onDelete={() => {}} onView={() => {}} />);
+      const card = screen.getByRole("img");
+
+      fireEvent.mouseEnter(card);
+      expect(card).toHaveAttribute("data-book-actions", "visible");
+
+      fireEvent.mouseLeave(card);
+      expect(card).toHaveAttribute("data-book-actions", "hidden");
+    });
+
+    it("кнопки получают data-visible=true при наведении", () => {
+      render(
+        <BookCover
+          book={mockBook}
+          onDelete={() => {}}
+          onEdit={() => {}}
+          onView={() => {}}
+        />
+      );
+      const card = screen.getByRole("img");
+
+      fireEvent.mouseEnter(card);
+
+      const deleteBtn = screen.getByLabelText(`Удалить "${mockBook.title}"`);
+      const editBtn = screen.getByLabelText(`Редактировать "${mockBook.title}"`);
+      const viewBtn = screen.getByLabelText(`Просмотреть "${mockBook.title}"`);
+
+      expect(deleteBtn).toHaveAttribute("data-visible", "true");
+      expect(editBtn).toHaveAttribute("data-visible", "true");
+      expect(viewBtn).toHaveAttribute("data-visible", "true");
+    });
+
+    it("кнопки возвращаются в data-visible=false после ухода мыши", () => {
+      render(
+        <BookCover
+          book={mockBook}
+          onDelete={() => {}}
+          onEdit={() => {}}
+          onView={() => {}}
+        />
+      );
+      const card = screen.getByRole("img");
+
+      fireEvent.mouseEnter(card);
+      fireEvent.mouseLeave(card);
+
+      const deleteBtn = screen.getByLabelText(`Удалить "${mockBook.title}"`);
+      expect(deleteBtn).toHaveAttribute("data-visible", "false");
+    });
+
+    it("hover на одной книге не влияет на data-visible других", () => {
+      render(
+        <div>
+          <BookCover book={{ ...mockBook, id: "1" }} onDelete={() => {}} />
+          <BookCover book={{ ...mockBook, id: "2", title: "Other" }} onDelete={() => {}} />
+        </div>
+      );
+
+      const cards = screen.getAllByRole("img");
+      expect(cards).toHaveLength(2);
+
+      fireEvent.mouseEnter(cards[0]);
+
+      expect(cards[0]).toHaveAttribute("data-book-actions", "visible");
+      expect(cards[1]).toHaveAttribute("data-book-actions", "hidden");
+    });
+  });
 });

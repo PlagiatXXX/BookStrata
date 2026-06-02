@@ -58,7 +58,7 @@ const TierLabelText = memo(
     if (isMultiWord) {
       return (
         <span
-          className={`nb-label-text font-black wrap-break-word ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
+          className={`nb-label-text font-black break-words overflow-hidden ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
         >
           {words[0]}
           <br />
@@ -69,8 +69,8 @@ const TierLabelText = memo(
 
     return (
       <span
-        className={`nb-label-text font-black hyphens-auto ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
-        style={{ hyphens: "auto" }}
+        className={`nb-label-text font-black truncate ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
+        title={title}
       >
         {title}
       </span>
@@ -123,7 +123,7 @@ export const TierLabel = memo(
     const dynamicSizeClass = sizeClasses[labelSize];
     const textColor = getTextColorForBackground(color);
 
-    const handleDoubleClick = () => {
+    const handleStartEditing = () => {
       if (!onRename) return;
       setIsEditing(true);
       setInputValue(title);
@@ -156,7 +156,7 @@ export const TierLabel = memo(
       if (isEditing) return;
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        handleDoubleClick();
+        handleStartEditing();
       }
     };
 
@@ -164,19 +164,19 @@ export const TierLabel = memo(
       <div
         ref={droppableRef || wrapperRef}
         style={{ backgroundColor: color }}
-        className={`nb-rank-box group/label relative flex shrink-0 items-center justify-center focus-within:opacity-100 tier-label ${onRename || onChangeColor ? "cursor-pointer" : ""} outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset`}
-        onDoubleClick={handleDoubleClick}
+        className={`nb-rank-box group/label relative flex items-center justify-center focus-within:opacity-100 tier-label ${onRename || onChangeColor ? "cursor-text" : ""} outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset`}
+        onClick={handleStartEditing}
         onKeyDown={handleKeyDownContainer}
         tabIndex={(onRename || onChangeColor) && !isEditing ? 0 : -1}
         role={onRename || onChangeColor ? "button" : undefined}
         aria-label={
           onRename || onChangeColor
-            ? `Уровень ${title}. Нажмите Enter для переименования`
+            ? `Уровень ${title}. Кликните для переименования`
             : undefined
         }
         title={
           onRename || onChangeColor
-            ? "Двойной клик или Enter для переименования"
+            ? "Кликните для переименования"
             : undefined
         }
       >
@@ -187,7 +187,7 @@ export const TierLabel = memo(
             onChange={(e) => setInputValue(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className={`w-full bg-transparent text-center outline-none ${
+            className={`w-full min-w-0 bg-transparent text-center outline-none overflow-hidden text-ellipsis ${
               textColor === "black" ? "text-black" : "text-white"
             }`}
             style={{ fontSize: "inherit", fontWeight: "inherit" }}

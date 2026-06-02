@@ -477,10 +477,6 @@ const TierListEditorContent = () => {
   // Пропсы для EditorHeader
   const headerProps = {
     title: listData.title,
-    saveStatus,
-    lastSaved,
-    hasUnsavedChanges,
-    onSave: handleSave,
     ...(isReadOnly && {
       author: apiData?.user,
       likesCount: likesData?.likesCount || 0,
@@ -553,6 +549,10 @@ const TierListEditorContent = () => {
           isTogglingPublic={isTogglingPublic}
           onFindBook={() => setIsSearchModalOpen(true)}
           onUploadBooks={handleUploadBooks}
+          saveStatus={saveStatus}
+          lastSaved={lastSaved}
+          hasUnsavedChanges={hasUnsavedChanges}
+          onSave={handleSave}
         />
       </EditorLayout>
 

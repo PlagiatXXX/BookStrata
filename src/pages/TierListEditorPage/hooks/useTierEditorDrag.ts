@@ -78,17 +78,46 @@ export function useTierEditorDrag({
       });
 
       const element = tierGridRef.current;
+      const inlineMap = new Map<HTMLElement, string>();
 
       try {
         const { toPng } = await import("html-to-image");
 
-        // 1. Применяем стили экспорта
+        // 1. Инлайним кросс-доменные изображения
+        const cards = element.querySelectorAll<HTMLElement>(".nb-book-card");
+        for (const card of cards) {
+          const bg = card.style.backgroundImage;
+          if (!bg || bg === "none") continue;
+
+          const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
+          if (!match) continue;
+
+          const url = match[1];
+          if (url.startsWith("data:")) continue;
+
+          try {
+            const resp = await fetch(url, { mode: "cors" });
+            if (!resp.ok) continue;
+            const blob = await resp.blob();
+            const dataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            inlineMap.set(card, card.style.backgroundImage);
+            card.style.backgroundImage = `url(${dataUrl})`;
+          } catch {
+            // Сервер без CORS — оставляем как есть
+          }
+        }
+
+        // 2. Применяем стили экспорта
         element.classList.add("is-exporting");
         if (theme !== "default") {
           element.classList.add(`export-theme-${theme}`);
         }
 
-        // 2. Добавляем водяной знак если нужно
+        // 3. Добавляем водяной знак если нужно
         let watermark: HTMLDivElement | null = null;
         if (showWatermark) {
           watermark = document.createElement("div");
@@ -106,10 +135,10 @@ export function useTierEditorDrag({
           element.appendChild(watermark);
         }
 
-        // 3. Ждем немного для применения стилей и шрифтов
+        // 4. Ждем немного для применения стилей и шрифтов
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // 4. Генерируем PNG
+        // 5. Генерируем PNG
         const dataUrl = await toPng(element, {
           cacheBust: true,
           backgroundColor:
@@ -123,7 +152,7 @@ export function useTierEditorDrag({
           },
         });
 
-        // 5. Очищаем временные изменения
+        // 6. Очищаем временные изменения
         element.classList.remove("is-exporting");
         if (theme !== "default") {
           element.classList.remove(`export-theme-${theme}`);
@@ -131,8 +160,12 @@ export function useTierEditorDrag({
         if (watermark) {
           element.removeChild(watermark);
         }
+        for (const [card, originalBg] of inlineMap) {
+          card.style.backgroundImage = originalBg;
+        }
+        inlineMap.clear();
 
-        // 6. Скачиваем файл
+        // 7. Скачиваем файл
         const link = document.createElement("a");
         link.download = `${listData.title.replace(/\s+/g, "-")}-${theme}.png`;
         link.href = dataUrl;
@@ -148,6 +181,10 @@ export function useTierEditorDrag({
           .split(" ")
           .filter((c) => !c.startsWith("export-theme-"))
           .join(" ");
+        for (const [card, originalBg] of inlineMap) {
+          card.style.backgroundImage = originalBg;
+        }
+        inlineMap.clear();
 
         logger.error(err instanceof Error ? err : new Error(String(err)), {
           action: "downloadImage",

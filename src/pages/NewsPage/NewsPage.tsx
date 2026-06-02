@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Calendar, User, Tag } from "lucide-react";
+import "@/pages/AdminCollectionsPage/components/WysiwygEditor.css";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { getNewsById, type NewsArticle } from "@/lib/newsApi";
 import { sileo } from "sileo";
@@ -134,11 +135,10 @@ export function NewsPage() {
         )}
 
         {/* Content */}
-        <div className="prose prose-invert max-w-none">
-          <div className="text-(--ink-1) text-base leading-relaxed whitespace-pre-line">
-            {article.content}
-          </div>
-        </div>
+        <div
+          className="tiptap-editor"
+          dangerouslySetInnerHTML={{ __html: article.content || '' }}
+        />
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t border-(--line-soft)">

@@ -117,7 +117,7 @@ export function TierListCoverEditor({
   }
 
   return (
-    <div className="mb-6">
+    <div>
       <p className="nb-label-xs mb-2 text-[#64748b] uppercase tracking-wider">
         Обложка тир-листа
       </p>

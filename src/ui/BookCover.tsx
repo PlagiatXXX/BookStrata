@@ -14,6 +14,7 @@ export const BookCover = memo(
   forwardRef<HTMLDivElement, BookCoverProps>(
     ({ book, isDraggable = true, onDelete, onEdit, onView }, ref) => {
       const [showActions, setShowActions] = useState(false);
+      const [isHovered, setIsHovered] = useState(false);
       const lastTapTime = useRef<number>(0);
       const innerRef = useRef<HTMLDivElement>(null);
 
@@ -22,6 +23,7 @@ export const BookCover = memo(
         : "";
       const label = `${book.title} - ${book.author}`;
       const hasActions = Boolean(onDelete || onEdit || onView);
+      const showActionsFinal = isHovered || showActions;
 
       const handleClick = (e: React.MouseEvent) => {
         // На десктопе не показываем кнопки по клику
@@ -77,16 +79,16 @@ export const BookCover = memo(
         return () => document.removeEventListener("click", handleClickOutside);
       }, [showActions, book.id]);
 
-      // Синхронизируем data-book-actions с состоянием showActions
+      // Синхронизируем data-book-actions с состоянием showActionsFinal
       useEffect(() => {
         const element = innerRef.current;
         if (element) {
           element.setAttribute(
             "data-book-actions",
-            showActions ? "visible" : "hidden",
+            showActionsFinal ? "visible" : "hidden",
           );
         }
-      }, [showActions]);
+      }, [showActionsFinal]);
 
       return (
         <div
@@ -101,9 +103,11 @@ export const BookCover = memo(
           style={{ backgroundImage: `url(${book.coverImageUrl})` }}
           onClick={handleClick}
           onTouchEnd={handleTouchEnd}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           data-book-id={book.id}
-          data-book-actions={showActions ? "visible" : "hidden"}
-          className={`nb-book-card group relative ${cursorClass}`}
+          data-book-actions={showActionsFinal ? "visible" : "hidden"}
+          className={`nb-book-card relative ${cursorClass}`}
           role="img"
           aria-label={label}
           title={label}
@@ -117,6 +121,7 @@ export const BookCover = memo(
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                setIsHovered(false);
                 setShowActions(false);
                 onDelete(book.id);
               }}
@@ -125,14 +130,12 @@ export const BookCover = memo(
                          nb-heavy-border border-b-0 border-r-0
                          transition-all duration-200
                          opacity-0
-                         group-hover:opacity-100
                          focus-visible:opacity-100
-                         focus-within:opacity-100
                          data-[visible=true]:opacity-100
                          hover:scale-105
                          focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
                          max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
-              data-visible={showActions}
+              data-visible={showActionsFinal}
               title={`Удалить "${book.title}"`}
               aria-label={`Удалить "${book.title}"`}
             >
@@ -152,14 +155,12 @@ export const BookCover = memo(
                          nb-heavy-border border-t-0 border-l-0
                          transition-all duration-200
                          opacity-0
-                         group-hover:opacity-100
                          focus-visible:opacity-100
-                         focus-within:opacity-100
                          data-[visible=true]:opacity-100
                          hover:scale-105
                          focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
                          max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
-              data-visible={showActions}
+              data-visible={showActionsFinal}
               title={`Просмотреть "${book.title}"`}
               aria-label={`Просмотреть "${book.title}"`}
             >
@@ -179,14 +180,12 @@ export const BookCover = memo(
                          nb-heavy-border border-t-0 border-r-0
                          transition-all duration-200
                          opacity-0
-                         group-hover:opacity-100
                          focus-visible:opacity-100
-                         focus-within:opacity-100
                          data-[visible=true]:opacity-100
                          hover:scale-105
                          focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
                          max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
-              data-visible={showActions}
+              data-visible={showActionsFinal}
               title={`Редактировать "${book.title}"`}
               aria-label={`Редактировать "${book.title}"`}
             >

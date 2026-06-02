@@ -431,7 +431,7 @@ export const BookSearchModal = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="book-search-modal-title"
-          className="relative mx-4 flex w-full max-w-3xl flex-col overflow-hidden border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in"
+          className="relative mx-4 flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b-2 border-black bg-[#181818] p-5">
@@ -500,7 +500,7 @@ export const BookSearchModal = ({
           </div>
 
           {/* Results */}
-          <div className="max-h-136 overflow-y-auto bg-[#111111] p-5">
+          <div className="max-h-[55vh] overflow-y-auto bg-[#111111] p-5">
             {/* Toolbar */}
             {results.length > 0 && (
               <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
@@ -583,11 +583,11 @@ export const BookSearchModal = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 border-t-2 border-black bg-[#0a0a0a] p-5">
+          <div className="flex justify-end gap-3 border-t-2 border-black bg-[#0a0a0a] px-5 py-3">
             <button
               type="button"
               onClick={handleClose}
-              className="cursor-pointer border-2 border-black bg-transparent px-5 py-2.5 text-sm font-semibold text-[#b4b4b4] transition-colors hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+              className="cursor-pointer border-2 border-[#4a4a4a] bg-[#1a1a1a] px-5 py-2.5 text-sm font-semibold text-[#d4d4d4] transition-colors hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
             >
               Отмена
             </button>

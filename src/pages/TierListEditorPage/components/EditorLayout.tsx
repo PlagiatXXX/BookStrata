@@ -87,28 +87,32 @@ export const EditorLayout = ({
     >
       <main className="neo-brutalist-editor flex-1 overflow-y-auto p-4  lg:p-8" data-theme={theme}>
         <EditorHeader {...headerProps} />
-        {tierListId && !hideCover && (
-          <TierListCoverEditor
-            tierListId={tierListId}
-            coverImageUrl={coverImageUrl}
-            title={headerProps.title}
-            booksCount={booksCount}
-            isPro={isPro}
-            isReadOnly={isReadOnly}
-            onCoverUpdated={(url) => onCoverUpdated?.(url)}
-            ownerUserId={ownerUserId}
-            currentUserId={currentUserId}
-          />
-        )}
+        <div className="flex flex-wrap gap-3 items-start mb-6">
+          {tierListId && !hideCover && (
+            <TierListCoverEditor
+              tierListId={tierListId}
+              coverImageUrl={coverImageUrl}
+              title={headerProps.title}
+              booksCount={booksCount}
+              isPro={isPro}
+              isReadOnly={isReadOnly}
+              onCoverUpdated={(url) => onCoverUpdated?.(url)}
+              ownerUserId={ownerUserId}
+              currentUserId={currentUserId}
+            />
+          )}
+          {tierListId && !isReadOnly && (
+            <div className="pl-4 flex-1 min-w-0 mt-0.5">
+              <ThemePicker
+                tierListId={tierListId}
+                currentTheme={theme}
+                isPro={isPro}
+                onThemeChanged={(t) => onThemeChanged?.(t)}
+              />
+            </div>
+          )}
+        </div>
         {children}
-        {tierListId && !isReadOnly && (
-          <ThemePicker
-            tierListId={tierListId}
-            currentTheme={theme}
-            isPro={isPro}
-            onThemeChanged={(t) => onThemeChanged?.(t)}
-          />
-        )}
       </main>
     </DashboardLayout>
   );
