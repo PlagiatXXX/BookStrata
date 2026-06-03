@@ -3,6 +3,8 @@ import { ArrowLeft, Crown, CreditCard, Send, X, Copy, Check, Heart} from "lucide
 import { useAuth } from "@/hooks/useAuthContext"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { useNavigate } from "react-router-dom"
+import { SEOHead } from "@/components/SEO/SEOHead"
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 import "./PricingPage.css"
 
 const plans = [
@@ -345,22 +347,15 @@ export default function PricingPage() {
 
   return (
     <div className="pricing-page">
+      <SEOHead title="Тарифы и цены — создавай тир лист книг бесплатно" description="Создавайте тир лист книг онлайн бесплатно или оформите Pro. Безлимитные книжные рейтинги, AI-рекомендации, эксклюзивные темы и полная аналитика." url="/pricing" breadcrumbs={[{ name: "Тарифы", url: "/pricing" }]} />
       <div className="pricing-page__container">
         <div className="pricing-page__header">
-          <button
-            onClick={() => navigate("/")}
-            className="pricing-page__back"
-            type="button"
-            aria-label="На главную"
-          >
-            <ArrowLeft size={20} />
-            На главную
-          </button>
+          <Breadcrumbs items={[{ label: "Тарифы" }]} />
           <h1 className="pricing-page__title">Выберите свой план</h1>
           <p className="pricing-page__subtitle">
-            Создавайте, сравнивайте и делитесь книжными рейтингами —
+            Создавайте тир лист книг онлайн, сравнивайте книжные рейтинги
             <br />
-            с Pro вы получаете максимум возможностей
+            и делитесь подборками. С Pro вы получаете максимум возможностей.
           </p>
         </div>
 

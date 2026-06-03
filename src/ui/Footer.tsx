@@ -50,6 +50,10 @@ const landingLinks: { label: string; icon: React.ReactNode; sectionId?: string; 
 
 const userLinks = [
   { href: "/profile", label: "Профиль", icon: <User size={14} /> },
+  { href: "/about", label: "О проекте", icon: <Info size={14} /> },
+  { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
+  { href: "/privacy", label: "Политика", icon: <ScrollText size={14} /> },
+  { href: "/terms", label: "Условия", icon: <Shield size={14} /> },
   {
     href: TELEGRAM_URL,
     label: "Telegram",

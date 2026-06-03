@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useRef, useCallback, useEffect, useMemo, memo, type RefObject } from "react";
+import { useRef, useCallback, useEffect, useMemo, useLayoutEffect, memo, useState, type RefObject } from "react";
 import { useBookController } from "./useBookController";
 import "./BookScene.css";
 
@@ -46,7 +46,41 @@ interface BookSceneProps {
 const BookScene = memo(({ containerRef }: BookSceneProps) => {
   const dailyAphorism = useMemo(() => getDailyAphorism(), [])
   const rootRef = useRef<HTMLDivElement>(null);
+  const quoteRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [quoteFontSize, setQuoteFontSize] = useState<number>(20);
+
+  useLayoutEffect(() => {
+    const el = quoteRef.current;
+    if (!el) return;
+
+    el.style.fontSize = '20px';
+    el.style.lineHeight = '1.6';
+
+    if (el.scrollHeight <= el.clientHeight) {
+      setQuoteFontSize(20);
+      return;
+    }
+
+    let low = 10;
+    let high = 19;
+    let best = 20;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      el.style.fontSize = `${mid}px`;
+
+      if (el.scrollHeight <= el.clientHeight) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    el.style.fontSize = `${best}px`;
+    setQuoteFontSize(best);
+  }, [dailyAphorism.text]);
 
   const {
     rotateX,
@@ -173,8 +207,13 @@ const BookScene = memo(({ containerRef }: BookSceneProps) => {
             className="secondPage"
             style={{ transform: secondPageTransform }}
           >
-            <div className="quote">
-              <span className="quote-drop-cap">{dailyAphorism.text[0]}</span>
+            <div className="quote" ref={quoteRef}>
+              <span
+                className="quote-drop-cap"
+                style={{ fontSize: quoteFontSize * 2.4 }}
+              >
+                {dailyAphorism.text[0]}
+              </span>
               {dailyAphorism.text.slice(1)}
             </div>
             <div className="pageNumber">{dailyAphorism.pageNumber}</div>

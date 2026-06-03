@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom"
+import { SEOHead } from "@/components/SEO/SEOHead"
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
 export function AboutPage() {
   const navigate = useNavigate()
@@ -13,10 +15,9 @@ export function AboutPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 py-16 px-4">
+      <SEOHead title="О проекте" description="BookStrata — создавайте тир лист книг онлайн, ведите визуальный книжный рейтинг, участвуйте в баттлах и находите книги по вкусу. Узнайте больше о проекте." url="/about" breadcrumbs={[{ name: "О проекте", url: "/about" }]} />
       <div className="max-w-3xl mx-auto">
-        <button onClick={handleBack} className="text-sm text-orange-500 hover:text-orange-600 mb-8 inline-block cursor-pointer">
-          &larr; Назад
-        </button>
+        <Breadcrumbs items={[{ label: "О проекте" }]} theme="light" />
 
         <h1 className="text-2xl font-bold text-slate-900 mb-6">
           О проекте
@@ -26,20 +27,50 @@ export function AboutPage() {
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">Что такое BookStrata?</h2>
             <p>
-              BookStrata — это социальная сеть для читателей, где можно создавать визуальные рейтинги книг
-              (тир-листы), участвовать в баттлах, обсуждать книги и находить новые произведения по вкусу.
+              BookStrata — это социальная сеть для читателей, где можно <strong>создать тир лист книг онлайн</strong>
+              и вести собственный визуальный книжный рейтинг. Участвуйте в баттлах, обсуждайте любимые произведения
+              и находите новые книги по вкусу с помощью ИИ-рекомендаций.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">Возможности</h2>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Создание тир-листов с кастомизацией блоков и обложек</li>
-              <li>Баттлы — голосование за лучшие подборки книг</li>
-              <li>Общий чат и обсуждения</li>
-              <li>ИИ-библиотекарь для рекомендаций</li>
-              <li>Профиль пользователя со статистикой и историей</li>
-            </ul>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium text-slate-800">Создание тир-листов</h3>
+                <p className="mt-1">
+                  Собирайте книги в наглядные блоки S, A, B, C, D. Настраивайте цвета, обложки, темы
+                  и сортируйте книги в любом порядке. Ваш <strong>книжный тир лист</strong> станет отражением вашего вкуса.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-medium text-slate-800">Баттлы</h3>
+                <p className="mt-1">
+                  Сравнивайте свои подборки с другими читателями. Голосуйте за лучший <strong>тир лист книг</strong>,
+                  участвуйте в еженедельных соревнованиях и докажите, что ваш вкус — лучший.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-medium text-slate-800">Обсуждения</h3>
+                <p className="mt-1">
+                  Комментируйте подборки, общайтесь в общем чате, делитесь мнениями в тематических форумах.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-medium text-slate-800">ИИ-библиотекарь</h3>
+                <p className="mt-1">
+                  Умные рекомендации книг на основе ваших тир-листов и предпочтений. Нейросеть подбирает то,
+                  что вам точно понравится.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-medium text-slate-800">Профиль и статистика</h3>
+                <p className="mt-1">
+                  Отслеживайте свою активность, копите XP, открывайте ачивки и повышайте уровень.
+                  Публикуйте свой <strong>книжный рейтинг</strong> и находите читателей со схожими интересами.
+                </p>
+              </div>
+            </div>
           </section>
 
           <section>

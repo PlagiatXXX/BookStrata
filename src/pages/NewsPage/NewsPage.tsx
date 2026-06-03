@@ -4,6 +4,8 @@ import { ArrowLeft, Calendar, User, Tag } from "lucide-react";
 import "@/pages/AdminCollectionsPage/components/WysiwygEditor.css";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { getNewsById, type NewsArticle } from "@/lib/newsApi";
+import { SEOHead } from "@/components/SEO/SEOHead";
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { sileo } from "sileo";
 import "./NewsPage.css";
 
@@ -72,21 +74,25 @@ export function NewsPage() {
   }
 
   return (
-    <DashboardLayout
+    <>
+      <SEOHead
+        title={article.title}
+        description={article.excerpt || `Читайте новость "${article.title}" на BookStrata`}
+        image={article.imageUrl || undefined}
+        url={`/news/${id}`}
+        type="article"
+        publishedTime={article.publishedAt}
+        author={article.authorName || undefined}
+        breadcrumbs={[{ name: "Новости", url: "/community" }, { name: article.title, url: `/news/${id}` }]}
+      />
+      <DashboardLayout
       onMyRatingsClick={() => navigate("/")}
       showTemplatesNav={false}
       showSearch={false}
       activeItem="Новости"
     >
       <article className="max-w-4xl mx-auto px-6 py-12">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate("/community")}
-          className="flex items-center gap-2 text-(--ink-1) hover:text-(--ink-0) transition-colors mb-8 cursor-pointer"
-        >
-          <ArrowLeft size={20} />
-          <span>Назад к новостям</span>
-        </button>
+        <Breadcrumbs items={[{ label: "Новости", href: "/community" }, { label: article.title }]} />
 
         {/* Header */}
         <header className="mb-8">
@@ -158,5 +164,6 @@ export function NewsPage() {
         </footer>
       </article>
     </DashboardLayout>
+    </>
   );
 }

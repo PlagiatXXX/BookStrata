@@ -343,6 +343,10 @@ fastify.register(aiLibrarianRoutes, { prefix: "/api/ai" });
 // Moderation (админские/модераторские инструменты)
 fastify.register(moderationRoutes, { prefix: "/api/moderation" });
 
+// Sitemap (без /api префикса, доступен по /sitemap.xml)
+import { sitemapRoutes } from "../src/modules/sitemap/sitemap.route.js";
+fastify.register(sitemapRoutes);
+
 // Инициализация подписок на события
 registerAchievementSubscriptions();
 

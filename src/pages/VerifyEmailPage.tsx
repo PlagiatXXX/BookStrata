@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom"
 import { apiVerifyEmail } from "@/lib/authApi"
 import { Card } from "@/ui/Card"
 import { Button } from "@/ui/Button"
+import { SEOHead } from "@/components/SEO/SEOHead"
 
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
@@ -30,6 +31,7 @@ export function VerifyEmailPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4">
+      <SEOHead title="Подтверждение email" url="/verify-email" noindex />
       <Card className="w-full max-w-md p-8 text-center">
         {status === "loading" && (
           <div className="flex flex-col items-center gap-4">

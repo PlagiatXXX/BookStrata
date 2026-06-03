@@ -1,0 +1,130 @@
+import { Helmet } from "react-helmet-async";
+
+const SITE_NAME = "BookStrata";
+const DEFAULT_DESC = "BookStrata — создавай тир лист книг онлайн. Визуальный рейтинг и книжный тир лист любимых книг. Сортировка по блокам, баттлы, обсуждения и ИИ-рекомендации.";
+const DEFAULT_IMAGE = "/logo.svg";
+const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
+
+interface SEOHeadProps {
+  title?: string;
+  description?: string;
+  image?: string;
+  url?: string;
+  type?: "website" | "article" | "profile";
+  publishedTime?: string;
+  author?: string;
+  noindex?: boolean;
+  breadcrumbs?: { name: string; url: string }[];
+}
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SITE_NAME,
+  url: SITE_URL,
+  logo: `${SITE_URL}/logo.svg`,
+  description: DEFAULT_DESC,
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_NAME,
+  url: SITE_URL,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+export function SEOHead({
+  title,
+  description = DEFAULT_DESC,
+  image = DEFAULT_IMAGE,
+  url,
+  type = "website",
+  publishedTime,
+  author,
+  noindex,
+  breadcrumbs,
+}: SEOHeadProps) {
+  const pageTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — тир лист книг, визуальный рейтинг книг онлайн`;
+  const pageUrl = url ? `${SITE_URL}${url}` : SITE_URL;
+  const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
+
+  const breadcrumbJsonLd = breadcrumbs
+    ? {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: breadcrumbs.map((crumb, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: crumb.name,
+          item: crumb.url.startsWith("http") ? crumb.url : `${SITE_URL}${crumb.url}`,
+        })),
+      }
+    : null;
+
+  const articleJsonLd =
+    type === "article" && publishedTime
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: title,
+          description,
+          image: imageUrl,
+          author: author ? { "@type": "Person", name: author } : undefined,
+          datePublished: publishedTime,
+          publisher: { "@type": "Organization", name: SITE_NAME },
+        }
+      : null;
+
+  return (
+    <Helmet>
+      <title>{pageTitle}</title>
+      <meta name="description" content={description} />
+
+      <meta property="og:type" content={type} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={imageUrl} />
+      <meta property="og:url" content={pageUrl} />
+      <meta property="og:site_name" content={SITE_NAME} />
+      <meta property="og:locale" content="ru_RU" />
+
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={imageUrl} />
+
+      <link rel="canonical" href={pageUrl} />
+
+      {publishedTime && (
+        <meta property="article:published_time" content={publishedTime} />
+      )}
+      {author && <meta name="author" content={author} />}
+      {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+      <script type="application/ld+json">
+        {JSON.stringify(organizationJsonLd)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(websiteJsonLd)}
+      </script>
+      {breadcrumbJsonLd && (
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbJsonLd)}
+        </script>
+      )}
+      {articleJsonLd && (
+        <script type="application/ld+json">
+          {JSON.stringify(articleJsonLd)}
+        </script>
+      )}
+    </Helmet>
+  );
+}

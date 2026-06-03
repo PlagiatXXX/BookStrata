@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /dashboard
+Disallow: /tier-lists/
+Disallow: /templates/
+Disallow: /profile
+Disallow: /admin
+Disallow: /oauth/
+Disallow: /api/
+
+Sitemap: https://bookstrata.ru/sitemap.xml

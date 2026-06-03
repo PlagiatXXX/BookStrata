@@ -1,22 +1,12 @@
-import { useNavigate } from "react-router-dom"
+import { SEOHead } from "@/components/SEO/SEOHead"
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
 export function PrivacyPage() {
-  const navigate = useNavigate()
-
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-    } else {
-      navigate("/")
-    }
-  }
-
   return (
     <div className="min-h-screen bg-zinc-50 py-16 px-4">
+      <SEOHead title="Политика конфиденциальности BookStrata — защита данных" description="Политика конфиденциальности BookStrata. Какие данные мы собираем, как храним и защищаем, ваши права по 152-ФЗ при использовании сервиса тир лист книг." url="/privacy" breadcrumbs={[{ name: "Политика конфиденциальности", url: "/privacy" }]} />
       <div className="max-w-3xl mx-auto">
-        <button onClick={handleBack} className="text-sm text-orange-500 hover:text-orange-600 mb-8 inline-block cursor-pointer">
-          &larr; Назад
-        </button>
+        <Breadcrumbs items={[{ label: "Политика конфиденциальности" }]} theme="light" />
 
         <h1 className="text-2xl font-bold text-slate-900 mb-6">
           Политика конфиденциальности

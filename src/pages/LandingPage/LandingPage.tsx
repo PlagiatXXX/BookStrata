@@ -9,6 +9,7 @@ import {
 import { Logo } from "@/ui/Logo"
 import { Footer } from "@/ui/Footer"
 import { RevealBox } from "@/ui/RevealBox"
+import { SEOHead } from "@/components/SEO/SEOHead"
 import { getPublicTierLists, type TierListShort } from "@/lib/tierListApi"
 import { getForumStats } from "@/lib/battlesApi"
 import "./LandingPage.css"
@@ -223,6 +224,12 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page">
+      <SEOHead
+        title="Тир лист книг — создай визуальный рейтинг книг онлайн"
+        description="BookStrata — создавай тир лист книг онлайн. Визуальный рейтинг и книжный тир лист любимых книг. Сортировка по блокам, баттлы, обсуждения и ИИ-рекомендации."
+        image="/hero-bg.webp"
+        url="/"
+      />
       <LandingNav />
 
       {/* ============ HERO ============ */}
@@ -247,14 +254,14 @@ export default function LandingPage() {
           </div>
 
           <h1 className="landing-hero__title">
-            Создавай визуальные
+            Создавай
             <br />
-            <span className="landing-hero__gradient-text">рейтинги книг</span>
+            <span className="landing-hero__gradient-text">тир лист книг</span>
           </h1>
 
           <p className="landing-hero__subtitle">
-            Расставляй любимые книги по блокам, участвуй в баттлах, общайся с читателями
-            и находи книги по вкусу с помощью ИИ.
+            Визуальный рейтинг и книжный тир лист — расставляй любимые книги по блокам, участвуй в баттлах,
+            общайся с читателями и находи книги по вкусу с помощью ИИ.
           </p>
 
           <div className="landing-hero__actions">

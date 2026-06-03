@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout"
 import { apiGetPublicUser, apiGetUserTierLists, apiGetTasteMatch } from "@/lib/userApi"
 import { useAuth } from "@/hooks/useAuthContext"
 import { Spinner } from "@/components/Spinner"
+import { SEOHead } from "@/components/SEO/SEOHead"
 import { ModerationPanel } from "@/components/ModerationPanel/ModerationPanel"
 import { DonorBadge } from "@/components/DonorBadge/DonorBadge"
 import type { TierListShort } from "@/lib/tierListApi"
@@ -74,7 +75,15 @@ export default function UserProfilePage() {
   const tierLists = tierListsData?.data ?? []
 
   return (
-    <DashboardLayout onMyRatingsClick={handleMyRatingsClick} showSearch={false}>
+    <>
+      <SEOHead
+        title={profile.username}
+        description={`Профиль пользователя ${profile.username} на BookStrata. ${profile.stats?.tierListsCount || 0} тир-листов, ${profile.stats?.totalBooks || 0} книг.`}
+        image={profile.avatarUrl || undefined}
+        url={`/users/${id}`}
+        type="profile"
+      />
+      <DashboardLayout onMyRatingsClick={handleMyRatingsClick} showSearch={false}>
       <div className="min-h-screen cursor-default">
         <div className="max-w-4xl mx-auto px-6 py-14 pb-20 text-(--ink-0)">
           {/* Back button */}
@@ -213,6 +222,7 @@ export default function UserProfilePage() {
         </div>
       </div>
     </DashboardLayout>
+    </>
   )
 }
 

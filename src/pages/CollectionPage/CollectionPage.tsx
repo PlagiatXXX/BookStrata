@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
+import { SEOHead } from "@/components/SEO/SEOHead";
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { sileo } from "sileo";
 import { getCollectionById } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/lib/collectionsApi";
@@ -80,21 +82,22 @@ return DOMPurify.sanitize(collection.content);
   }
 
   return (
-    <DashboardLayout
+    <>
+      <SEOHead
+        title={collection.title}
+        description={collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
+        image={collection.coverImageUrl || undefined}
+        url={`/collections/${id}`}
+        breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${id}` }]}
+      />
+      <DashboardLayout
       onMyRatingsClick={() => navigate("/")}
       showTemplatesNav={false}
       showSearch={false}
       activeItem="Новости"
     >
       <article className="max-w-4xl mx-auto px-6 py-12">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate("/community")}
-          className="flex items-center gap-2 text-(--ink-1) hover:text-(--ink-0) transition-colors mb-8 cursor-pointer"
-        >
-          <ArrowLeft size={20} />
-          <span>Назад к новостям</span>
-        </button>
+        <Breadcrumbs items={[{ label: "Подборки", href: "/community" }, { label: collection.title }]} />
 
         {/* Header */}
         <header className="mb-8">
@@ -182,5 +185,6 @@ return DOMPurify.sanitize(collection.content);
         </footer>
       </article>
     </DashboardLayout>
+    </>
   );
 }

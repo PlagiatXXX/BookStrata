@@ -5,6 +5,7 @@ import { Button } from "@/ui/Button";
 import { apiResetPassword } from "@/lib/authApi";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { sileo } from "sileo";
+import { SEOHead } from "@/components/SEO/SEOHead";
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -19,6 +20,7 @@ export function ResetPasswordPage() {
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <SEOHead title="Сброс пароля" url="/reset-password" noindex />
         <Card className="p-8 text-center space-y-4">
           <h2 className="text-xl font-bold text-red-600">Невалидная ссылка</h2>
           <p className="text-slate-600">Ссылка для сброса пароля отсутствует или повреждена.</p>
@@ -61,6 +63,7 @@ export function ResetPasswordPage() {
 
   return (
     <div className="relative min-h-screen bg-[url('/library.webp')] bg-cover bg-center">
+      <SEOHead title="Новый пароль" url="/reset-password" noindex />
       <div className="absolute inset-0 bg-black/20" />
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md bg-white/25 backdrop-blur-xs shadow-2xl border border-white/30">
