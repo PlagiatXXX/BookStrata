@@ -87,7 +87,7 @@ export async function saveTiers(
   const startTime = Date.now();
   const realTierListId = await resolveTierListId(tierListId);
 
-  const isDiff = "added" in tiers;
+  const isDiff = typeof tiers === "object" && !Array.isArray(tiers);
 
   let added: Array<{ title: string; color: string; rank: number }> = [];
   let updated: Array<{

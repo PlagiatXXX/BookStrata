@@ -37,7 +37,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       schema: registerSchema,
       config: {
         rateLimit: {
-          max: 20,
+          max: parseInt(process.env.RATE_LIMIT_REGISTER_MAX || "300", 10),
           timeWindow: "1 hour",
         },
       },
@@ -163,7 +163,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       schema: loginSchema,
       config: {
         rateLimit: {
-          max: 20,
+          max: parseInt(process.env.RATE_LIMIT_LOGIN_MAX || "20", 10),
           timeWindow: "1 minute",
         },
       },

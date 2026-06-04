@@ -6,6 +6,7 @@ import { requirePro } from '../../middleware/proLimit.js'
 import { ErrorCodes, createApiError } from '../../lib/api-response.js'
 import { ChatRequestSchema } from './ai-librarian.schema.js'
 import { getUserTasteProfile, buildSystemPrompt, streamAiResponse, checkAiStatus } from './ai-librarian.service.js'
+import type { AiChunk } from './ai-librarian.service.js'
 import { AiRouterError } from './router.js'
 import { createLogger } from '../../lib/logger.js'
 
@@ -80,26 +81,13 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
         tierLists: tasteProfile.totalTierLists,
       })
 
-      // Берём управление ответом на себя для SSE
-      reply.hijack()
-
-      reply.raw.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        'Access-Control-Allow-Origin': CLIENT_URL,
-        'Access-Control-Allow-Credentials': 'true',
-      })
-
       let aborted = false
       const abortController = new AbortController()
       let keepaliveTimer: ReturnType<typeof setInterval> | undefined
 
       const cleanup = () => {
         aborted = true
-        try {
-          abortController.abort()
-        } catch { /* noop */ }
+        try { abortController.abort() } catch { /* noop */ }
         if (keepaliveTimer) {
           clearInterval(keepaliveTimer)
           keepaliveTimer = undefined
@@ -114,49 +102,77 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
 
         const stream = streamAiResponse(parsed.data.messages, systemPrompt, combinedSignal, String(user.userId))
 
-        // SSE keepalive — комментарий каждые 10s, чтобы не оборвало соединение
+        // Сначала пробуем получить первый чанк (провайдеры вызываются тут)
+        // Если все провайдеры недоступны — AiRouterError → 502
+        const iterator = stream[Symbol.asyncIterator]()
+        let firstResult: IteratorResult<AiChunk>
+
+        try {
+          firstResult = await iterator.next()
+        } catch (err) {
+          cleanup()
+          if (err instanceof AiRouterError) {
+            logger.error('AI router: все провайдеры недоступны', {
+              providerErrors: err.providerErrors,
+            })
+            return reply.code(502).send(
+              createApiError(ErrorCodes.SERVICE_UNAVAILABLE, 'Букстраж сейчас на перерыве. Постучись через минуту.'),
+            )
+          }
+          throw err
+        }
+
+        // Первый чанк получен — берём управление и стримим
+        reply.hijack()
+        reply.raw.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          'Access-Control-Allow-Origin': CLIENT_URL,
+          'Access-Control-Allow-Credentials': 'true',
+        })
+
+        // SSE keepalive
         keepaliveTimer = setInterval(() => {
           if (!aborted) {
-            try {
-              reply.raw.write(': keepalive\n\n')
-            } catch { /* noop */ }
+            try { reply.raw.write(': keepalive\n\n') } catch { /* noop */ }
           }
         }, 10_000)
 
-        for await (const chunk of stream) {
-          if (aborted) break
-
+        // Пишем первый чанк
+        if (!aborted) {
           try {
-            if (chunk.done) {
+            if (firstResult.done) {
               reply.raw.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`)
             } else {
-              reply.raw.write(`data: ${JSON.stringify({ type: 'token', content: chunk.content })}\n\n`)
+              reply.raw.write(`data: ${JSON.stringify({ type: 'token', content: firstResult.value.content })}\n\n`)
             }
-          } catch { /* SSE write error, connection likely dead */ }
+          } catch { /* noop */ }
+        }
+
+        // Стримим остальные чанки
+        while (!aborted) {
+          const result = await iterator.next()
+          if (aborted || result.done) break
+
+          try {
+            reply.raw.write(`data: ${JSON.stringify({ type: 'token', content: result.value.content })}\n\n`)
+          } catch { break }
         }
       } catch (err) {
         if (aborted) return
 
-        if (err instanceof AiRouterError) {
-          logger.error('AI router: все провайдеры недоступны', {
-            providerErrors: err.providerErrors,
-          })
-        } else {
-          logger.error(err instanceof Error ? err : new Error(String(err)), {
-            context: 'AI API stream',
-          })
-        }
-
-        const message = 'Букстраж сейчас на перерыве. Постучись через минуту.'
+        // Ошибка после hijack — шлём error в SSE
+        logger.error(err instanceof Error ? err : new Error(String(err)), {
+          context: 'AI API stream',
+        })
 
         try {
-          reply.raw.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`)
+          reply.raw.write(`data: ${JSON.stringify({ type: 'error', message: 'Букстраж сейчас на перерыве. Постучись через минуту.' })}\n\n`)
         } catch { /* noop */ }
       } finally {
         cleanup()
-        try {
-          reply.raw.end()
-        } catch { /* noop */ }
+        try { reply.raw.end() } catch { /* noop */ }
       }
     },
   )

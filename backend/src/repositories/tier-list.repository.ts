@@ -290,7 +290,7 @@ export class TierListRepository {
     return this.db.tierList.update({
       where: getWhereClause(id),
       data: { isPublic },
-      select: { id: true, isPublic },
+      select: { id: true, isPublic: true },
     });
   }
 

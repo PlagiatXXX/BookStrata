@@ -8,13 +8,16 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:integration": "vitest --config vitest.integration.config.ts",
+    "test:integration:ui": "vitest --config vitest.integration.config.ts --ui",
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "seed": "prisma db seed",
-    "prisma:migrate:deploy": "prisma migrate deploy"
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "cleanup:load-test": "tsx scripts/cleanup-load-test-users.ts"
   },
   "keywords": [],
   "author": "",

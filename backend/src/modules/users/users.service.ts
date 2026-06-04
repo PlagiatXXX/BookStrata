@@ -140,7 +140,7 @@ export async function changePassword(
   });
 
   if (!user) {
-    throw new Error("Пользователь не найден");
+    throw Object.assign(new Error("Пользователь не найден"), { statusCode: 404 });
   }
 
   // Проверяем текущий пароль
@@ -149,7 +149,7 @@ export async function changePassword(
     user.passwordHash,
   );
   if (!isValidPassword) {
-    throw new Error("Неверный текущий пароль");
+    throw Object.assign(new Error("Неверный текущий пароль"), { statusCode: 400 });
   }
 
   // Хешируем новый пароль

@@ -158,7 +158,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
       <RainEffect />
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 relative z-10">
-        <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
+        <div className="grid gap-10 lg:grid-cols-[1fr_1fr_1fr_1.2fr]">
           {/* Left Zone: Brand & Positioning */}
           <div className="flex flex-col gap-4">
             <div>
@@ -166,18 +166,18 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 BookStrata Pro
               </p>
               <h3 className="text-xl font-bold text-[#f3efe6]">
-                Рейтинги без шума.
+                Ваш книжный порядок.
               </h3>
               <p className="mt-2 text-sm text-[#b8b1a3] leading-relaxed max-w-xs">
-                Ваша персональная библиотека для структурирования знаний и
-                обмена опытом через визуальные тир-листы.
+                Создавайте тир-листы, открывайте новое, общайтесь с
+                единомышленниками.
               </p>
             </div>
           </div>
 
           {/* Central Zone 1: Main Links */}
           <nav aria-label="Основная навигация футера">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
               {isLanding ? "На сайте" : "Основное"}
             </h4>
             <ul className="flex flex-col gap-3">
@@ -215,7 +215,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
           {/* Central Zone 2: User Actions */}
           <nav aria-label="Пользовательские ссылки">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
               {isLanding ? "Информация" : "Пользователю"}
             </h4>
             <ul className="flex flex-col gap-3">

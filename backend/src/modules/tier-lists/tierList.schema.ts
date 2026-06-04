@@ -245,7 +245,13 @@ export const togglePublicSchema = {
     200: {
       type: 'object',
       properties: {
-        isPublic: { type: 'boolean' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            isPublic: { type: 'boolean' },
+          },
+        },
       },
     },
   },
@@ -409,24 +415,30 @@ export const saveAllSchema = {
     200: {
       type: 'object',
       properties: {
-        message: { type: 'string' },
-        bookReplacements: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              tempId: { type: 'string' },
-              realId: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+            newAchievements: { type: 'array' },
+            bookReplacements: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  tempId: { type: 'string' },
+                  realId: { type: 'string' },
+                },
+              },
             },
-          },
-        },
-        tierReplacements: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              tempId: { type: 'string' },
-              realId: { type: 'string' },
+            tierReplacements: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  tempId: { type: 'string' },
+                  realId: { type: 'string' },
+                },
+              },
             },
           },
         },

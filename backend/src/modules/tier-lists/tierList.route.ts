@@ -186,6 +186,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         return reply.code(200).send({
           data: tierLists.data,
           meta: tierLists.meta,
+          links: tierLists.links,
         });
       } catch (err) {
         logger.error(err as Error, { route: "GET /public" });
@@ -306,7 +307,12 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     { preHandler: [optionalAuthMiddleware], ...schema.getTierListByIdSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
-      const tierList = await service.getFullTierList(tierListId);
+      let tierList: Awaited<ReturnType<typeof service.getFullTierList>>;
+      try {
+        tierList = await service.getFullTierList(tierListId);
+      } catch {
+        return reply.code(404).send(createApiError(ErrorCodes.TIER_LIST_NOT_FOUND, "Tier list not found"));
+      }
 
       const isOwner = request.user?.userId === tierList.userId;
       if (!tierList.isPublic && !isOwner) {
@@ -737,9 +743,10 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         const newTierList = await service.forkTierList(tierListId, userId);
         const newAchievements = await eventBus.emit("tier-list:forked", { userId });
         return reply.code(201).send({ data: { ...newTierList, newAchievements } });
-      } catch (error) {
+      } catch (error: any) {
+        const statusCode = error?.statusCode ?? 500;
         fastify.log.error(error);
-        return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Failed to fork tier list"));
+        return reply.code(statusCode).send(createApiError(ErrorCodes.INTERNAL_ERROR, error?.message ?? "Failed to fork tier list"));
       }
     },
   );

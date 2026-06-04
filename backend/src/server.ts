@@ -142,11 +142,15 @@ try {
   StoreClass = LocalStore;
 }
 
+const rateLimitMax = parseInt(process.env.RATE_LIMIT_MAX || "", 10);
+
 await fastify.register(rateLimit, {
   global: true,
-  max: (req) => {
-    return (req as any).user?.userId ? 200 : 30;
-  },
+  max: rateLimitMax
+    ? rateLimitMax
+    : (req) => {
+        return (req as any).user?.userId ? 200 : 30;
+      },
   timeWindow: "1 minute",
   store: StoreClass as any,
   keyGenerator: (req) => {
@@ -342,6 +346,10 @@ fastify.register(aiLibrarianRoutes, { prefix: "/api/ai" });
 
 // Moderation (админские/модераторские инструменты)
 fastify.register(moderationRoutes, { prefix: "/api/moderation" });
+
+// Admin: очистка load test пользователей
+import { adminCleanupRoutes } from "../src/modules/admin/admin-cleanup.route.js";
+fastify.register(adminCleanupRoutes, { prefix: "/api/admin" });
 
 // Sitemap (без /api префикса, доступен по /sitemap.xml)
 import { sitemapRoutes } from "../src/modules/sitemap/sitemap.route.js";
