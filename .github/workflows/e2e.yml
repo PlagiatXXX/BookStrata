@@ -1,0 +1,98 @@
+name: E2E Tests
+on:
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: bookstrata_test
+          POSTGRES_USER: bookstrata
+          POSTGRES_PASSWORD: bookstrata_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: ./backend
+        run: npx prisma generate
+
+      - name: Run backend migrations
+        working-directory: ./backend
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: "postgresql://bookstrata:bookstrata_pass@localhost:5432/bookstrata_test"
+
+      - name: Seed test database
+        working-directory: ./backend
+        run: npx prisma db seed
+        env:
+          DATABASE_URL: "postgresql://bookstrata:bookstrata_pass@localhost:5432/bookstrata_test"
+          NODE_ENV: test
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend
+        working-directory: ./backend
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-key-for-ci" >> .env
+          echo "DATABASE_URL=postgresql://bookstrata:bookstrata_pass@localhost:5432/bookstrata_test" >> .env
+          echo "CLIENT_URL=http://localhost:5173" >> .env
+          echo "NODE_ENV=test" >> .env
+          echo "DISABLE_EMAIL_VERIFICATION=true" >> .env
+          echo "RATE_LIMIT_REGISTER_MAX=1000" >> .env
+          nohup node dist/server.js > /tmp/backend.log 2>&1 &
+        env:
+          DATABASE_URL: "postgresql://bookstrata:bookstrata_pass@localhost:5432/bookstrata_test"
+
+      - name: Start frontend preview
+        run: |
+          nohup npx vite preview --port 5173 --host 0.0.0.0 > /tmp/frontend.log 2>&1 &
+          npx wait-on http://localhost:5173
+
+      - name: Wait for backend
+        run: npx wait-on http://localhost:8080/health --timeout 30000
+
+      - name: Run E2E tests
+        run: npx playwright test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: |
+            e2e/reports/
+            test-results/
+          retention-days: 7
