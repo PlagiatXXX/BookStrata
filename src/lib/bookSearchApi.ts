@@ -92,6 +92,36 @@ export async function searchOpenLibraryBooks(query: string): Promise<OpenLibrary
   }
 }
 
+export interface LiveLibBook {
+  openLibraryKey: string;
+  title: string;
+  author: string;
+  coverUrl: string | null;
+  coverUrlLarge: string | null;
+}
+
+export async function importFromLiveLib(
+  username: string,
+): Promise<LiveLibBook[]> {
+  bookSearchLogger.info("Импорт книг из LiveLib", { username });
+  try {
+    const result = await apiClient.post<{ books: LiveLibBook[]; username: string }>(
+      "/books/livelib-import",
+      { username },
+    );
+    bookSearchLogger.info("Импорт из LiveLib завершён", {
+      username,
+      count: result.books.length,
+    });
+    return result.books;
+  } catch (err) {
+    if (err instanceof Error) {
+      bookSearchLogger.error(err, { action: "importFromLiveLib", username });
+    }
+    throw err;
+  }
+}
+
 export async function addBookFromOpenLibrary(
   tierListId: string,
   book: OpenLibraryBook

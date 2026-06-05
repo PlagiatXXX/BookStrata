@@ -1,10 +1,13 @@
-import { useReducer, useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { useReducer, useEffect, useState, useCallback } from "react";
+import { X, Star } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { Book } from "@/types";
 import { createLogger } from "@/lib/logger";
 import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
+import { RATING_CATEGORIES, rateBook, getBookRatings, getUserBookRating } from "@/lib/ratingsApi";
+import type { BookRatingsResult } from "@/lib/ratingsApi";
+import { useAuth } from "@/hooks/useAuthContext";
 
 const logger = createLogger("BookEditModal", { color: "cyan" });
 
@@ -93,6 +96,23 @@ const inputClass =
 
 const textareaClass = `${inputClass} resize-none`;
 
+function StarDisplay({ value, size = 14 }: { value: number; size?: number }) {
+  const stars = []
+  const normalized = value / 2
+  for (let i = 0; i < 5; i++) {
+    const fill = Math.min(1, Math.max(0, normalized - i))
+    stars.push(
+      <span key={i} className="relative inline-block" style={{ width: size, height: size }}>
+        <Star size={size} className="absolute inset-0 text-[#444]" />
+        <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+          <Star size={size} className="text-amber-400" fill="#fbbf24" />
+        </span>
+      </span>,
+    )
+  }
+  return <span className="inline-flex items-center gap-0.5">{stars}</span>
+}
+
 export const BookEditModal = ({
   isOpen,
   onClose,
@@ -102,6 +122,96 @@ export const BookEditModal = ({
   const [state, dispatch] = useReducer(bookFormReducer, INITIAL_STATE);
   const [isCoverDeleteModalOpen, setIsCoverDeleteModalOpen] = useState(false);
   const { title, author, description, thoughts, coverImageUrl } = state;
+
+  // Rating state
+  const [pollRatings, setPollRatings] = useState<Record<string, number>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [reVoting, setReVoting] = useState(false);
+  const [averages, setAverages] = useState<BookRatingsResult | null>(null);
+  const [voteError, setVoteError] = useState("");
+  const { user } = useAuth();
+
+  const loadRatings = useCallback(async () => {
+    if (!book?.id) return
+    const bookIdNum = Number(book.id);
+    if (!Number.isFinite(bookIdNum)) return;
+    try {
+      const [avg, mine] = await Promise.all([
+        getBookRatings(bookIdNum),
+        user ? getUserBookRating(bookIdNum) : Promise.resolve(null),
+      ])
+      if (avg) setAverages(avg)
+      if (mine) {
+        setHasVoted(true);
+        setPollRatings(mine.ratings || {});
+      }
+    } catch { /* ignore */ }
+  }, [book, user])
+
+  useEffect(() => {
+    if (!isOpen || !book) return;
+    setPollRatings({});
+    setSubmitting(false);
+    setVoteError("");
+    setAverages(null);
+    setHasVoted(false);
+    setReVoting(false);
+    loadRatings();
+  }, [isOpen, book, loadRatings]);
+
+  const handleRate = (category: string, value: number) => {
+    setPollRatings((prev) => ({ ...prev, [category]: value }))
+  }
+
+  const handleSubmitRating = async () => {
+    if (!user || !book?.id) return
+    const bookIdNum = Number(book.id);
+    if (!Number.isFinite(bookIdNum)) return;
+    const entries = Object.entries(pollRatings)
+    if (entries.length === 0) return
+    setSubmitting(true)
+    setVoteError("")
+    try {
+      await rateBook(bookIdNum, pollRatings)
+      setHasVoted(true)
+      setReVoting(false)
+      loadRatings()
+    } catch {
+      setVoteError("Ошибка при отправке оценки")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleChangeRating = () => {
+    setReVoting(true)
+    setHasVoted(false)
+  }
+
+  const allCategories = RATING_CATEGORIES.map((c) => ({
+    ...c,
+    userValue: pollRatings[c.key],
+    avgValue: averages?.averages?.[c.key],
+  }))
+
+  const pollComplete = allCategories.some((c) => c.userValue !== undefined) &&
+    allCategories.filter((c) => c.userValue !== undefined).length >= 1
+
+  const handleSaveAndClose = () => {
+    if (!book) {
+      handleClose();
+      return;
+    }
+    onSave(book.id, {
+      title: title.trim(),
+      author: author.trim(),
+      description: description.trim() || undefined,
+      thoughts: thoughts.trim() || undefined,
+      coverImageUrl,
+    });
+    handleClose();
+  };
 
   const handleClose = () => {
     dispatch({ type: "RESET" });
@@ -119,62 +229,44 @@ export const BookEditModal = ({
     }
   }, [book, isOpen]);
 
-  const handleSave = () => {
-    logger.info("Book edit modal save clicked", {
-      bookId: book?.id,
-      newTitle: title.trim(),
-    });
-
-    if (!book) return;
-
-    onSave(book.id, {
-      title: title.trim(),
-      author: author.trim(),
-      description: description.trim() || undefined,
-      thoughts: thoughts.trim() || undefined,
-      coverImageUrl,
-    });
-    onClose();
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
-      handleSave();
+      handleSaveAndClose();
     }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      maxWidth="2xl"
-      titleId="book-edit-title"
-    >
+      <Modal
+        isOpen={isOpen}
+        onClose={handleSaveAndClose}
+        className="max-w-[70vw] min-w-[500px]"
+        titleId="book-edit-title"
+      >
       <div
         className="relative flex max-h-[90vh] w-full flex-col overflow-hidden bg-[#111111] text-[#f6f1e8]"
         onKeyDown={handleKeyDown}
       >
         <button
-          onClick={handleClose}
-          className="absolute right-5 top-5 z-20 flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-pink-500 outline-none"
+          onClick={handleSaveAndClose}
+          className="absolute right-4 top-4 z-20 flex size-7 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-pink-500 outline-none"
           title="Закрыть"
           aria-label="Закрыть модальное окно"
         >
-          <X size={18} />
+          <X size={14} />
         </button>
 
-        <div className="border-b-2 border-black bg-[#181818] px-6 py-5">
-          <div className="pr-14">
+        <div className="border-b-2 border-black bg-[#181818] px-5 py-4">
+          <div className="pr-12">
             <p
               id="book-edit-title"
-              className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]"
+              className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]"
             >
               Редактирование книги
             </p>
             <label
               htmlFor="book-title-input"
-              className="mb-3 block text-[11px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
+              className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
             >
               Название <span className="text-pink-500" aria-hidden="true">*</span>
             </label>
@@ -187,7 +279,7 @@ export const BookEditModal = ({
               }
               autoFocus
               maxLength={100}
-              className="w-full border-2 border-black bg-[#0a0a0a] px-5 py-4 text-xl font-black tracking-[-0.03em] text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-lg"
+              className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
               placeholder="Введите название книги"
               aria-label="Название книги"
             />
@@ -300,30 +392,104 @@ export const BookEditModal = ({
                 aria-label="Ваши мысли о книге"
               />
             </section>
+
+            {/* Rating Section */}
+            <section className="border-2 border-black bg-[#171717] p-4">
+              <span className={`${sectionTitleClass} flex items-center gap-2`}>
+                <Star size={14} />
+                Оценка книги
+              </span>
+
+              {hasVoted && !reVoting ? (
+                <div className="mt-2">
+                  {averages ? (
+                    <div className="space-y-2">
+                      {allCategories.map((cat) => (
+                        <div key={cat.key} className="flex items-center justify-between text-sm">
+                          <span className="text-[#a0a0a0]">{cat.label}</span>
+                          <span className="flex items-center gap-2">
+                            <StarDisplay value={cat.avgValue ?? 0} size={12} />
+                            <span className="text-[#f6f1e8] font-medium w-8 text-right text-xs">
+                              {cat.avgValue?.toFixed(1) ?? "—"}
+                            </span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[#555] mt-2">Нет оценок</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleChangeRating}
+                    className="mt-2 cursor-pointer text-xs text-[#c1fffe] underline underline-offset-2 transition-colors hover:text-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none"
+                  >
+                    Изменить оценку
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2.5 mt-2">
+                  {allCategories.map((cat) => (
+                    <div key={cat.key}>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-[#a0a0a0]">{cat.label}</span>
+                        <span className="text-[#c1fffe] font-semibold text-xs">
+                          {cat.userValue !== undefined ? cat.userValue.toFixed(1) : "—"}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0.1}
+                        max={10}
+                        step={0.1}
+                        value={cat.userValue ?? 0}
+                        onChange={(e) => handleRate(cat.key, parseFloat(e.target.value))}
+                        className="w-full h-1 rounded-full appearance-none cursor-pointer
+                          bg-[#2a2a2a] accent-[#c1fffe]
+                          [&::-webkit-slider-thumb]:appearance-none
+                          [&::-webkit-slider-thumb]:w-3.5
+                          [&::-webkit-slider-thumb]:h-3.5
+                          [&::-webkit-slider-thumb]:rounded-full
+                          [&::-webkit-slider-thumb]:bg-[#c1fffe]
+                          [&::-webkit-slider-thumb]:border-2
+                          [&::-webkit-slider-thumb]:border-black"
+                      />
+                    </div>
+                  ))}
+
+                  {voteError && (
+                    <div className="text-xs text-red-400">{voteError}</div>
+                  )}
+
+                  {user ? (
+                    <button
+                      onClick={handleSubmitRating}
+                      disabled={!pollComplete || submitting}
+                      className="w-full mt-1 py-2 bg-[#c1fffe] text-black font-semibold rounded-sm text-xs
+                        hover:bg-[#a0f0f0] transition-colors
+                        disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {submitting ? "Отправка..." : "Оценить"}
+                    </button>
+                  ) : (
+                    <p className="text-xs text-[#555] mt-2">
+                      Войдите, чтобы оценить книгу
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
           </div>
         </div>
 
-        <div className="flex shrink-0 justify-end gap-3 border-t-2 border-black bg-[#0a0a0a] px-6 py-5 max-md:flex-col-reverse">
+        <div className="flex shrink-0 justify-end border-t-2 border-black bg-[#0a0a0a] px-5 py-3">
           <Button
             variant="ghost"
-            onClick={handleClose}
-            className="border-2 border-black bg-transparent px-6 py-3 font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] max-md:w-full focus-visible:ring-2 focus-visible:ring-pink-500"
-            aria-label="Отменить изменения и закрыть"
+            onClick={handleSaveAndClose}
+            className="border-2 border-black bg-transparent px-4 py-2 text-sm font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-pink-500"
+            aria-label="Закрыть"
           >
-            Отмена
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            className="border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black hover:bg-[#9cf5f3] hover:text-black max-md:w-full focus-visible:ring-2 focus-visible:ring-pink-500"
-            title="Ctrl + Enter"
-            aria-label="Сохранить изменения (Ctrl + Enter)"
-            aria-keyshortcuts="Control+Enter"
-          >
-            <span>Сохранить</span>
-            <kbd className="ml-2 hidden text-[10px] font-normal opacity-60 lg:inline-block">
-              Ctrl + Enter
-            </kbd>
+            Закрыть
           </Button>
         </div>
       </div>

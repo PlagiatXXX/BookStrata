@@ -39,7 +39,6 @@ export function ThemePicker({
     <div className="theme-picker">
       <div className="theme-picker__header">
         <span className="theme-picker__label">Тема оформления</span>
-        <span className="theme-picker__hint">{saving ? "Сохранение..." : `${currentTheme === 'default' ? 'Бесплатно' : 'Pro'}`}</span>
       </div>
       <div className="theme-picker__grid">
         {themes.map(([id, label]) => {

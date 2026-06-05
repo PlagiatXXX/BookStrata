@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
+import { motion } from "motion/react"
 import {
   ArrowRight, BookOpen, Sword, Sparkles,
   Trophy, Heart, MessageCircle, Share2, Zap,
-  ChevronRight, Menu, X, Check, Crown, Layers, Brain, Pen, Copy, Paintbrush,
+  ChevronRight, Menu, X, Check, Layers, Brain, Pen, Copy, Paintbrush,
 } from "lucide-react"
 import { Logo } from "@/ui/Logo"
 import { Footer } from "@/ui/Footer"
 import { RevealBox } from "@/ui/RevealBox"
+import { Pointer } from "@/components/ui/pointer"
+import { Highlighter } from "@/components/ui/highlighter"
+import { HanddrawnSmiley } from "@/components/ui/handdrawn-smiley"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { getPublicTierLists, type TierListShort } from "@/lib/tierListApi"
 import { getForumStats } from "@/lib/battlesApi"
@@ -71,42 +75,25 @@ const features = [
 ]
 
 /* ---------- Pricing ---------- */
+const allFeatures = [
+  "Безлимитные тир-листы",
+  "Безлимит книг в тир-листе",
+  "Все темы оформления",
+  "Баттлы и обсуждения",
+  "Кастомные обложки",
+  "Экспорт PNG",
+  "Букстраж (AI-рекомендации)",
+  "Добавление книг через Google Books и LiveLib",
+  "AI-генерация аватарок",
+  "И многое другое",
+]
+
 const plans = [
   {
-    name: "Free",
-    price: "0",
-    period: "навсегда",
-    desc: "Попробуйте все базовые возможности",
-    features: [
-      "До 5 тир-листов",
-      "До 30 книг в тир-листе",
-      "Участие в баттлах",
-      "Базовые темы оформления",
-      "Аналитика и статистика",
-      "Экспорт PNG / PDF",
-      "Литературные новости России и мира",
-    ],
+    name: "Всё бесплатно",
+    features: allFeatures,
     cta: "Начать бесплатно",
-    highlighted: false,
-  },
-  {
-    name: "Pro",
-    price: "300",
-    period: "в месяц",
-    desc: "Для тех, кто живёт книгами",
-    features: [
-      { text: "Всё из Free", type: "header" },
-      { text: "+", type: "separator" },
-      "Безлимитные тир-листы",
-      "Безлимит книг",
-      "Кастомные обложки",
-      "Эксклюзивные темы",
-      "Бейдж Pro + корона",
-      "Букстраж (AI-библиотекарь)",
-      "AI-генерация аватарок",
-    ],
-    cta: "Оформить Pro",
-    highlighted: true,
+    donate: false,
   },
   {
     name: "Донат",
@@ -120,7 +107,7 @@ const plans = [
       "Ранний доступ к фичам",
     ],
     cta: "Поддержать",
-    highlighted: false,
+    donate: true,
   },
 ]
 
@@ -316,13 +303,97 @@ export default function LandingPage() {
       {/* ============ AUTHOR BANNER ============ */}
       <section className="landing-banner" id="author-note">
         <div className="landing-banner__bg" />
+        <Pointer>
+          <motion.div
+            animate={{
+              scale: [0.8, 1.15, 0.8],
+              rotate: [0, 8, -8, 0],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 40 40"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-pink-400 drop-shadow-lg"
+            >
+              <motion.path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                fill="currentColor"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{
+                  duration: 0.8,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            </svg>
+          </motion.div>
+        </Pointer>
         <div className="landing-banner__content">
           <span className="landing-banner__quote-mark">"</span>
           <blockquote className="landing-banner__text">
-            <p>BookStrata родился из простой идеи — дать читателям инструмент, который не просто собирает книги, а помогает увидеть свой вкус, подчерпнуть идеи от других людей и просто приятно провести время. Идея понятное дело не нова - существует ряд зарубежных аналогов, но я взял лучшее, привнес нового и с Вашей помощью готов сделать что то оригинальное. Я делаю этот проект один, вкладываю душу и каждую свободную минуту. Я верю, что можно сделать качественный и полностью российский продукт не хуже аналоговых. Здесь нет маркетинговых манипуляций и пустых обещаний — только искреннее желание сделать лучшую социальную сеть для тех, кто любит читать.</p>
-            <p>Возможно, Вы спросите: "Федор, а почему же тогда Pro-подписки, если нет маркетинга?" Отвечаю: "это необходимость, чтобы приложение жило и развивалось." Суммы намеренно сделаны символическими, а бесплатный функционал остаётся вполне полноценным. Так же есть возможность дополнительно помочь проекту через донат. Если у Вас нет ни малейшей возможности оплатить подписку, а тот функционал Вам крайне важен - напишите мне по контактам и в частном порядке мы решим эти вопросы. </p>
-            <p>Для проекта жизненно необходимы Ваши мнения, критика, идеи, предложения, замечания. Поэтому буду благодарен обратной связи.</p>
-            <p>Спасибо, что Вы здесь. Вместе мы сделаем BookStrata чем-то большим.</p>
+            <p>
+              <Highlighter action="box" color="#c97d60" strokeWidth={2} iterations={3} padding={5} animationDuration={800}>
+                BookStrata
+              </Highlighter>{' '}
+               родился из простой идеи —{' '}
+              <Highlighter action="circle" color="#c97d60" strokeWidth={2} iterations={2} padding={4} animationDuration={600}>
+                дать читателям
+              </Highlighter>{' '}
+              инструмент,
+              который не просто собирает книги, а помогает увидеть свой вкус,
+              подчерпнуть идеи от других людей и просто{" "}
+              <Highlighter action="underline" color="#c97d60" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
+                приятно провести время
+              </Highlighter>.
+              Идея понятное дело не нова — существует ряд зарубежных аналогов,
+              но я взял лучшее, привнес нового и с Вашей помощью готов сделать что-то оригинальное.
+              Я делаю этот проект один,{" "}
+              <Highlighter action="underline" color="#b85b3f" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
+                вкладываю душу
+              </Highlighter>{" "}
+              и каждую свободную минуту. Я верю, что могу сделать качественный и
+              интересный продукт, который будет полезен мне и остальным пользователям.
+              Здесь нет маркетинговых манипуляций и пустых обещаний — только{" "}
+              <Highlighter action="underline" color="#c97d60" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
+                искреннее желание
+              </Highlighter>{" "}
+              сделать{" "}
+              <Highlighter action="underline" color="#b85b3f" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
+                лучшую социальную сеть для тех, кто любит читать
+              </Highlighter>.
+            </p>
+            <p>
+              Также есть возможность помочь проекту через донат. Наверное, Вы спросите:
+              «Федор, а почему же тогда ты просишь{' '}
+              <Highlighter action="crossed-off" color="#ef4444" strokeWidth={2.5} iterations={2} padding={4} animationDuration={600}>
+                кучу денег
+              </Highlighter>{' '}
+              поддержать донатом?»
+              Отвечаю: «это необходимость, чтобы приложение жило и развивалось,
+              для меня оно не выходит бесплатным».
+            </p>
+            <p>
+              Для проекта жизненно необходимы Ваши мнения, критика, идеи, предложения,
+              замечания. Поэтому буду благодарен обратной связи.
+            </p>
+            <p>
+              <Highlighter action="underline" color="#c97d60" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
+                Спасибо, что Вы здесь
+              </Highlighter>
+              . Вместе мы{" "}
+              <Highlighter action="underline" color="#b85b3f" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
+                сделаем BookStrata чем-то большим
+              </Highlighter>.
+            </p>
+            <HanddrawnSmiley className="landing-banner__smiley" size={48} />
           </blockquote>
           <div className="landing-banner__author">
             <span className="landing-banner__author-name">Фёдор</span>
@@ -433,51 +504,52 @@ export default function LandingPage() {
       <section className="landing-section landing-section--alt" id="pricing">
         <div className="landing-section__container">
           <RevealBox><h2 className="landing-section__title">Выберите свой план</h2></RevealBox>
-          <RevealBox><p className="landing-section__subtitle">Начните бесплатно, развивайтесь с Pro</p></RevealBox>
+          <RevealBox><p className="landing-section__subtitle">Всё бесплатно, без ограничений</p></RevealBox>
 
           <RevealBox className="landing-pricing">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`landing-pricing__card ${plan.highlighted ? "landing-pricing__card--pro" : ""}`}
+                className={`landing-pricing__card ${plan.donate ? "landing-pricing__card--donate" : ""}`}
               >
-                {plan.highlighted && <div className="landing-pricing__badge">Популярное</div>}
+                {!plan.donate && (
+                  <div className="landing-pricing__free-badge">Всё включено</div>
+                )}
 
                 <h3 className="landing-pricing__name">
-                  {plan.name === "Pro" && <Crown size={18} />}
+                  {plan.name === "Донат" ? (
+                    <Heart size={18} className="text-amber-300" />
+                  ) : (
+                    <Sparkles size={18} className="text-cyan-400" />
+                  )}
                   {plan.name}
                 </h3>
 
-                <div className="landing-pricing__price">
-                  <span className="landing-pricing__amount">{plan.price}</span>
-                  <span className="landing-pricing__period">/{plan.period}</span>
-                </div>
-
-                <p className="landing-pricing__desc">{plan.desc}</p>
+                {plan.donate && (
+                  <>
+                    <div className="landing-pricing__price">
+                      <span className="landing-pricing__amount">{plan.price}</span>
+                      <span className="landing-pricing__period">/{plan.period}</span>
+                    </div>
+                    {plan.desc && <p className="landing-pricing__desc">{plan.desc}</p>}
+                  </>
+                )}
 
                 <button
                   onClick={() => navigate("/auth")}
-                  className={`landing-pricing__cta ${plan.highlighted ? "landing-pricing__cta--pro" : ""}`}
+                  className={`landing-pricing__cta ${plan.donate ? "landing-pricing__cta--donate" : ""}`}
                   type="button"
                 >
-                  {plan.cta}
+                  {plan.donate ? "Поддержать" : "Начать сейчас"}
                 </button>
 
                 <ul className="landing-pricing__features">
-                  {plan.features.map((f, i) => {
-                    const text = typeof f === "string" ? f : f.text
-                    const isHeader = typeof f === "object" && f.type === "header"
-                    const isSep = typeof f === "object" && f.type === "separator"
-                    return (
-                      <li
-                        key={i}
-                        className={`landing-pricing__feature ${isHeader ? "landing-pricing__feature--header" : ""} ${isSep ? "landing-pricing__feature--sep" : ""}`}
-                      >
-                        {isHeader || isSep ? null : <Check size={14} />}
-                        {text}
-                      </li>
-                    )
-                  })}
+                  {plan.features.map((text, i) => (
+                    <li key={i} className="landing-pricing__feature">
+                      <Check size={14} />
+                      {text}
+                    </li>
+                  ))}
                 </ul>
               </div>
             ))}

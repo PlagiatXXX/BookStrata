@@ -37,25 +37,20 @@ export async function ratingsRoutes(fastify: FastifyInstance) {
         ratings: Record<string, number>;
       };
 
-      try {
-        const rating = await rateBook(bookId, userId!, ratings);
-        const averages = await getBookRatings(bookId);
-        return reply.code(201).send({ data: { rating, averages } });
-      } catch (err) {
-        if (err instanceof Error && err.message === "Вы уже оценили эту книгу") {
-          return reply.code(409).send(
-            createApiError(ErrorCodes.CONFLICT, err.message),
-          );
-        }
-        throw err;
-      }
+      const rating = await rateBook(bookId, userId!, ratings);
+      const averages = await getBookRatings(bookId);
+      return reply.code(201).send({ data: { rating, averages } });
     },
   );
 
   // GET /api/ratings/:bookId — получить средние оценки книги
   fastify.get("/:bookId", async (request, reply) => {
     const { bookId } = request.params as { bookId: string };
-    const ratings = await getBookRatings(Number(bookId));
+    const bookIdNum = Number(bookId);
+    if (!Number.isFinite(bookIdNum)) {
+      return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Invalid bookId"));
+    }
+    const ratings = await getBookRatings(bookIdNum);
     const data = ratings ?? { count: 0, averages: {}, overall: 0 };
     return reply.send({ data: { ...data, categories: CATEGORY_LABELS } });
   });
@@ -67,7 +62,11 @@ export async function ratingsRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = (request as FastifyRequest).user!.userId;
       const { bookId } = request.params as { bookId: string };
-      const rating = await getUserBookRating(Number(bookId), userId);
+      const bookIdNum = Number(bookId);
+      if (!Number.isFinite(bookIdNum)) {
+        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Invalid bookId"));
+      }
+      const rating = await getUserBookRating(bookIdNum, userId);
       return reply.send({ data: rating });
     },
   );

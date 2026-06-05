@@ -4,7 +4,7 @@ import Fastify from "fastify"
 
 vi.mock("../../lib/prisma.js", () => {
   const tx = {
-    bookRating: { findUnique: vi.fn(), create: vi.fn(), findMany: vi.fn() },
+    bookRating: { findUnique: vi.fn(), upsert: vi.fn(), findMany: vi.fn() },
   }
   return { prisma: tx }
 })
@@ -46,10 +46,9 @@ describe("Ratings Routes", () => {
   })
 
   describe("POST /api/ratings", () => {
-    it("должен создать рейтинг", async () => {
+    it("должен создать или обновить рейтинг", async () => {
       const { prisma } = await import("../../lib/prisma.js")
-      vi.mocked(prisma.bookRating.findUnique).mockResolvedValue(null)
-      vi.mocked(prisma.bookRating.create).mockResolvedValue({
+      vi.mocked(prisma.bookRating.upsert).mockResolvedValue({
         id: 1, bookId: 10, userId: 1, ratings: { plot: 8 },
       } as any)
       vi.mocked(prisma.bookRating.findMany).mockResolvedValue([
@@ -65,17 +64,23 @@ describe("Ratings Routes", () => {
       expect(res.body.data.rating).toHaveProperty("id", 1)
     })
 
-    it("должен вернуть 409 если уже оценивал", async () => {
+    it("должен обновить рейтинг при повторной отправке (upsert)", async () => {
       const { prisma } = await import("../../lib/prisma.js")
-      vi.mocked(prisma.bookRating.findUnique).mockResolvedValue({
-        id: 1, bookId: 10, userId: 1,
+      vi.mocked(prisma.bookRating.upsert).mockResolvedValue({
+        id: 1, bookId: 10, userId: 1, ratings: { plot: 9 },
       } as any)
+      vi.mocked(prisma.bookRating.findMany).mockResolvedValue([
+        { ratings: { plot: 9 } },
+      ] as any)
 
-      await request(app.server)
+      const res = await request(app.server)
         .post("/api/ratings")
         .set("Authorization", "Bearer user-token")
-        .send({ bookId: 10, ratings: { plot: 8 } })
-        .expect(409)
+        .send({ bookId: 10, ratings: { plot: 9 } })
+        .expect(201)
+
+      expect(res.body.data.rating).toHaveProperty("ratings")
+      expect(res.body.data.rating.ratings).toEqual({ plot: 9 })
     })
 
     it("должен вернуть 401 без авторизации", async () => {

@@ -1,6 +1,6 @@
 import { useReducer, useCallback, useState, memo, useEffect } from "react";
-import { Search, X, BookOpen, Plus, Eye } from "lucide-react";
-import { batchAddBooksFromSearch, addBookFromGoogleBooks, type OpenLibraryBook } from '@/lib/bookSearchApi';
+import { Search, X, BookOpen, Plus, Eye, User } from "lucide-react";
+import { batchAddBooksFromSearch, addBookFromGoogleBooks, importFromLiveLib, type OpenLibraryBook, type LiveLibBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
@@ -254,6 +254,14 @@ export const BookSearchModal = ({
   const [isViewAdding, setIsViewAdding] = useState(false);
   const [isAddingBooks, setIsAddingBooks] = useState(false);
 
+  // LiveLib import state
+  const [activeTab, setActiveTab] = useState<"search" | "livelib">("search");
+  const [liveLibUsername, setLiveLibUsername] = useState("");
+  const [liveLibResults, setLiveLibResults] = useState<LiveLibBook[]>([]);
+  const [liveLibLoading, setLiveLibLoading] = useState(false);
+  const [liveLibError, setLiveLibError] = useState<string | null>(null);
+  const [liveLibSelected, setLiveLibSelected] = useState<Set<string>>(new Set());
+
   const {
     search,
     results,
@@ -270,6 +278,12 @@ export const BookSearchModal = ({
     setIsAddingBooks(false);
     setIsViewAdding(false);
     setViewBook(null);
+    setActiveTab("search");
+    setLiveLibUsername("");
+    setLiveLibResults([]);
+    setLiveLibLoading(false);
+    setLiveLibError(null);
+    setLiveLibSelected(new Set());
     onClose();
   }, [clearResults, onClose]);
 
@@ -305,6 +319,101 @@ export const BookSearchModal = ({
   const handleSetViewBook = useCallback((book: OpenLibraryBook) => {
     setViewBook(book);
   }, []);
+
+  const handleLiveLibImport = async () => {
+    const username = liveLibUsername.trim();
+    if (!username) return;
+
+    setLiveLibLoading(true);
+    setLiveLibError(null);
+    setLiveLibResults([]);
+    setLiveLibSelected(new Set());
+
+    try {
+      const books = await importFromLiveLib(username);
+      setLiveLibResults(books);
+      if (books.length === 0) {
+        setLiveLibError("Список прочитанного пуст");
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Не удалось загрузить книги";
+      if (message.includes("не найден")) {
+        setLiveLibError("Пользователь не найден на LiveLib");
+      } else {
+        setLiveLibError(message);
+      }
+      logger.error(err as Error, { action: "handleLiveLibImport", username });
+    } finally {
+      setLiveLibLoading(false);
+    }
+  };
+
+  const handleLiveLibToggleBook = useCallback((key: string) => {
+    setLiveLibSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleAddSelectedLiveLibBooks = async () => {
+    if (liveLibSelected.size === 0) return;
+
+    setIsAddingBooks(true);
+
+    const booksToAdd = liveLibResults.filter((book) =>
+      liveLibSelected.has(book.openLibraryKey),
+    );
+
+    try {
+      const addedBooks = await batchAddBooksFromSearch(tierListId, booksToAdd);
+
+      setLiveLibSelected(new Set());
+      setIsAddingBooks(false);
+
+      if (addedBooks.length > 0) {
+        sileo.success({
+          title: `Добавлено ${addedBooks.length} ${addedBooks.length === 1 ? "книга" : addedBooks.length < 5 ? "книги" : "книг"}`,
+          duration: 3000,
+        });
+        onBookAdded?.(addedBooks);
+        handleClose();
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(err, { action: "handleAddSelectedLiveLibBooks" });
+
+      setLiveLibSelected(new Set());
+      setIsAddingBooks(false);
+
+      const errorMessage = err.message || "";
+      if (
+        errorMessage.includes("Превышен лимит книг") ||
+        errorMessage.includes("лимит")
+      ) {
+        sileo.action({
+          title: "Лимит книг",
+          description: `Достигнуто максимальное количество книг в тир-листе (${MAX_BOOKS_PER_TIER_LIST}). Оформите Pro для неограниченного количества.`,
+          duration: 3000,
+          button: {
+            title: "Оформить Pro",
+            onClick: () => {},
+          },
+        });
+      } else {
+        sileo.error({
+          title: "Не удалось добавить книги",
+          description: "Попробуйте снова позже",
+          duration: 3000,
+        });
+      }
+    }
+  };
 
   const handleAddSelectedBooks = async () => {
     if (state.selectedBooks.size === 0) return;
@@ -459,126 +568,258 @@ export const BookSearchModal = ({
             </button>
           </div>
 
-          {/* Search Input */}
-          <div className="border-b-2 border-black bg-[#141414] p-5">
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]">
-              Поиск по названию или автору
-            </p>
-            <div className="flex gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#7d8688]" />
-                <input
-                  type="text"
-                  value={state.query}
-                  onChange={(e) => dispatch({ type: "SET_QUERY", query: e.target.value })}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Введите название книги или автора..."
-                  aria-label="Поиск книг"
-                  autoFocus
-                  className="w-full border-2 border-black bg-[#0a0a0a] py-3 pl-10 pr-10 text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
-                />
-                {state.query && (
-                  <button
-                    type="button"
-                    onClick={() => dispatch({ type: "SET_QUERY", query: "" })}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-[#7d8688] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
-                    aria-label="Очистить поиск"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
+          {/* Tabs — компактные пилюли + кнопка добавления */}
+          <div className="flex items-center gap-1.5 border-b-2 border-black bg-[#141414] px-5 py-2.5">
+            <button
+              type="button"
+              onClick={() => setActiveTab("search")}
+              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none ${
+                activeTab === "search"
+                  ? "bg-[#c1fffe] text-black"
+                  : "text-[#7d8688] hover:text-[#f6f1e8]"
+              }`}
+            >
+              <Search className="h-3 w-3" />
+              Поиск
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("livelib")}
+              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none ${
+                activeTab === "livelib"
+                  ? "bg-[#c1fffe] text-black"
+                  : "text-[#7d8688] hover:text-[#f6f1e8]"
+              }`}
+            >
+              <User className="h-3 w-3" />
+              LiveLib
+            </button>
+
+            <div className="flex-1" />
+
+            {/* Кнопка добавления — справа в таб-баре */}
+            {activeTab === "search" && state.selectedBooks.size > 0 && (
               <button
                 type="button"
-                onClick={handleSearch}
-                disabled={isLoading || isAddingBooks || state.query.length < 2}
-                className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-6 py-3 font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                onClick={handleAddSelectedBooks}
+                disabled={isAddingBooks}
+                className="flex cursor-pointer items-center gap-1.5 rounded bg-[#c1fffe] px-3 py-1.5 text-xs font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none animate-fade-in"
               >
-                {isLoading ? <Spinner size="sm" /> : "Найти"}
+                {isAddingBooks ? (
+                  <Spinner size="sm" />
+                ) : (
+                  <Plus className="h-3 w-3" />
+                )}
+                {isAddingBooks ? "Добавление..." : `Добавить (${state.selectedBooks.size})`}
               </button>
-            </div>
+            )}
+            {activeTab === "livelib" && liveLibSelected.size > 0 && (
+              <button
+                type="button"
+                onClick={handleAddSelectedLiveLibBooks}
+                disabled={isAddingBooks}
+                className="flex cursor-pointer items-center gap-1.5 rounded bg-[#c1fffe] px-3 py-1.5 text-xs font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none animate-fade-in"
+              >
+                {isAddingBooks ? (
+                  <Spinner size="sm" />
+                ) : (
+                  <Plus className="h-3 w-3" />
+                )}
+                {isAddingBooks ? "Добавление..." : `Добавить (${liveLibSelected.size})`}
+              </button>
+            )}
           </div>
+
+          {/* Search Tab */}
+          {activeTab === "search" && (
+            <div className="border-b-2 border-black bg-[#141414] px-5 py-4">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7d8688]" />
+                  <input
+                    type="text"
+                    value={state.query}
+                    onChange={(e) => dispatch({ type: "SET_QUERY", query: e.target.value })}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Название или автор..."
+                    aria-label="Поиск книг"
+                    autoFocus={activeTab === "search"}
+                    className="w-full border-2 border-black bg-[#0a0a0a] py-2.5 pl-9 pr-9 text-sm text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
+                  />
+                  {state.query && (
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: "SET_QUERY", query: "" })}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-[#7d8688] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                      aria-label="Очистить поиск"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  disabled={isLoading || isAddingBooks || state.query.length < 2}
+                  className="flex cursor-pointer items-center gap-1.5 border-2 border-black bg-[#c1fffe] px-5 py-2.5 text-sm font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                >
+                  {isLoading ? <Spinner size="sm" /> : "Найти"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* LiveLib Tab */}
+          {activeTab === "livelib" && (
+            <div className="border-b-2 border-black bg-[#141414] px-5 py-4">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7d8688]" />
+                  <input
+                    type="text"
+                    value={liveLibUsername}
+                    onChange={(e) => setLiveLibUsername(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleLiveLibImport();
+                    }}
+                    placeholder="Username на LiveLib..."
+                    aria-label="LiveLib username"
+                    autoFocus={activeTab === "livelib"}
+                    className="w-full border-2 border-black bg-[#0a0a0a] py-2.5 pl-9 pr-9 text-sm text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLiveLibImport}
+                  disabled={liveLibLoading || !liveLibUsername.trim()}
+                  className="flex cursor-pointer items-center gap-1.5 border-2 border-black bg-[#c1fffe] px-5 py-2.5 text-sm font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                >
+                  {liveLibLoading ? <Spinner size="sm" /> : "Загрузить"}
+                </button>
+              </div>
+              {liveLibError && (
+                <p className="mt-2 text-xs text-red-400">{liveLibError}</p>
+              )}
+            </div>
+          )}
 
           {/* Results */}
           <div className="max-h-[55vh] overflow-y-auto bg-[#111111] p-5">
-            {/* Toolbar */}
-            {results.length > 0 && (
-              <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
-                <span className="text-sm text-[#a8abad]">
-                  Найдено: {totalResults}
-                </span>
-                {state.selectedBooks.size > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleAddSelectedBooks}
-                    disabled={isAddingBooks}
-                    className="flex cursor-pointer items-center gap-2 border-2 border-black bg-[#c1fffe] px-4 py-2 text-sm font-black text-black animate-scale-in transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
-                  >
-                    {isAddingBooks ? (
-                      <Spinner size="sm" />
-                    ) : (
-                      <Plus className="w-4 h-4" />
-                    )}
-                    {isAddingBooks ? "Добавление..." : `Добавить выбранные (${state.selectedBooks.size})`}
-                  </button>
+            {activeTab === "search" && (
+              <>
+                {/* Toolbar */}
+                {results.length > 0 && (
+                  <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
+                    <span className="text-sm text-[#a8abad]">
+                      Найдено: {totalResults}
+                    </span>
+                  </div>
                 )}
-              </div>
+
+                {/* Loading State */}
+                {isLoading && <BookSearchSkeleton />}
+
+                {/* Results List */}
+                {!isLoading && (
+                  <div className="space-y-2">
+                    {results.map((book, index) => (
+                      <div
+                        key={book.openLibraryKey}
+                        style={{ animationDelay: `${index * 30}ms` }}
+                      >
+                        <BookItem
+                          book={book}
+                          isSelected={state.selectedBooks.has(book.openLibraryKey)}
+                          onToggle={handleToggleBookSelection}
+                          onView={handleSetViewBook}
+                        />
+                      </div>
+                    ))}
+
+                    {/* Loading More */}
+                    {isLoadingMore && (
+                      <div className="space-y-2 mt-2">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <BookSkeletonItem key={i} />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Sentinel для infinite scroll */}
+                    {hasMore && <div id="book-search-sentinel" className="h-4" />}
+
+                    {/* Empty State */}
+                    {results.length === 0 && !isLoading && state.hasSearched && (
+                      <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
+                        <BookOpen className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
+                        <p className="text-[#f6f1e8]">Ничего не найдено</p>
+                        <p className="mt-1 text-sm text-[#8b9092]">
+                          Проверьте правильность названия или попробуйте другой
+                          запрос
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Initial State */}
+                    {results.length === 0 && !isLoading && !state.hasSearched && (
+                      <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
+                        <Search className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
+                        <p className="text-[#f6f1e8]">
+                          Введите название книги или автора
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
-            {/* Loading State */}
-            {isLoading && <BookSearchSkeleton />}
-
-            {/* Results List */}
-            {!isLoading && (
-              <div className="space-y-2">
-                {results.map((book, index) => (
-                  <div
-                    key={book.openLibraryKey}
-                    style={{ animationDelay: `${index * 30}ms` }}
-                  >
-                    <BookItem
-                      book={book}
-                      isSelected={state.selectedBooks.has(book.openLibraryKey)}
-                      onToggle={handleToggleBookSelection}
-                      onView={handleSetViewBook}
-                    />
+            {activeTab === "livelib" && (
+              <>
+                {/* Toolbar */}
+                {liveLibResults.length > 0 && (
+                  <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
+                    <span className="text-sm text-[#a8abad]">
+                      {liveLibResults.length} книг из LiveLib
+                    </span>
                   </div>
-                ))}
+                )}
 
-                {/* Loading More */}
-                {isLoadingMore && (
-                  <div className="space-y-2 mt-2">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <BookSkeletonItem key={i} />
+                {/* Loading State */}
+                {liveLibLoading && <BookSearchSkeleton />}
+
+                {/* Results List */}
+                {!liveLibLoading && (
+                  <div className="space-y-2">
+                    {liveLibResults.map((book, index) => (
+                      <div
+                        key={book.openLibraryKey}
+                        style={{ animationDelay: `${index * 30}ms` }}
+                      >
+                        <BookItem
+                          book={book}
+                          isSelected={liveLibSelected.has(book.openLibraryKey)}
+                          onToggle={handleLiveLibToggleBook}
+                          onView={handleSetViewBook}
+                        />
+                      </div>
                     ))}
+
+                    {/* Empty State */}
+                    {liveLibResults.length === 0 && !liveLibLoading && !liveLibError && (
+                      <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
+                        <User className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
+                        <p className="text-[#f6f1e8]">
+                          Введите ваш username на LiveLib
+                        </p>
+                        <p className="mt-1 text-sm text-[#8b9092]">
+                          LiveLib — крупнейшее сообщество читателей в Рунете
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
-
-                {/* Sentinel для infinite scroll */}
-                {hasMore && <div id="book-search-sentinel" className="h-4" />}
-
-                {/* Empty State */}
-                {results.length === 0 && !isLoading && state.hasSearched && (
-                  <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
-                    <BookOpen className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
-                    <p className="text-[#f6f1e8]">Ничего не найдено</p>
-                    <p className="mt-1 text-sm text-[#8b9092]">
-                      Проверьте правильность названия или попробуйте другой
-                      запрос
-                    </p>
-                  </div>
-                )}
-
-                {/* Initial State */}
-                {results.length === 0 && !isLoading && !state.hasSearched && (
-                  <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
-                    <Search className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
-                    <p className="text-[#f6f1e8]">
-                      Введите название книги или автора
-                    </p>
-                  </div>
-                )}
-              </div>
+              </>
             )}
           </div>
 

@@ -8,14 +8,16 @@ interface ModalProps {
   children: React.ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
   titleId?: string;
+  className?: string;
 }
 
 export const Modal = ({
   isOpen,
   onClose,
   children,
-  maxWidth = "md",
+  maxWidth,
   titleId,
+  className = "",
 }: ModalProps) => {
   useBodyScrollLock(isOpen)
   useEffect(() => {
@@ -31,13 +33,15 @@ export const Modal = ({
 
   if (!isOpen) return null;
 
-  const maxWidthClass = {
-    sm: "max-w-sm",
-    md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
-    "2xl": "max-w-2xl",
-  }[maxWidth];
+  const maxWidthClass = maxWidth
+    ? {
+        sm: "max-w-sm",
+        md: "max-w-md",
+        lg: "max-w-lg",
+        xl: "max-w-xl",
+        "2xl": "max-w-2xl",
+      }[maxWidth]
+    : "";
 
   return (
     <div
@@ -47,7 +51,7 @@ export const Modal = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`nb-modal w-full ${maxWidthClass} max-h-[90vh] overflow-y-auto`}
+        className={`nb-modal w-full ${maxWidthClass} ${className} max-h-[90vh] overflow-y-auto`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

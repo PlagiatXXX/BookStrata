@@ -1,50 +1,11 @@
 import { useState } from "react"
-import { Crown, Heart, X, Check, Copy, Send, ArrowLeft } from "lucide-react"
-import { useAuth } from "@/hooks/useAuthContext"
+import { Heart, X, Check, Copy, Send, ArrowLeft, Sparkles } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 import { ShineBorder } from "@/ui/ShineBorder"
 import "./PricingPage.css"
-
-const plans = [
-  {
-    name: "Бесплатно",
-    price: "0",
-    period: "",
-    description: "Все функции BookStrata сейчас бесплатны. Поддержите проект донатом, если он вам полезен.",
-    features: [
-      { text: "Безлимитные тир-листы", included: true },
-      { text: "Безлимит книг в тир-листе", included: true },
-      { text: "Все темы оформления", included: true },
-      { text: "Баттлы и обсуждения", included: true },
-      { text: "Кастомные обложки", included: true },
-      { text: "Экспорт PNG", included: true },
-      { text: "Эксклюзивные темы", included: true },
-      { text: "Букстраж (AI-рекомендации)", included: true },
-      { text: "ИИ-генерация аватарок", included: true },
-      { text: "Добавление книг через Google Books", included: true },
-      { text: "И многое другое для Вас", included: true },
-    ],
-    cta: "",
-    highlighted: false,
-  },
-  {
-    name: "Донат",
-    price: "Любая",
-    period: "сумма",
-    description: "Поддержите развитие проекта",
-    features: [
-      { text: "+100 к карме", included: true },
-      { text: "Бейдж мецената", included: true },
-      { text: "Имя в списке спонсоров", included: true },
-      { text: "Ранний доступ к фичам", included: true },
-    ],
-    cta: "Поддержать",
-    highlighted: false,
-  },
-]
 
 function DonateModal({ onClose }: { onClose: () => void }) {
   useBodyScrollLock(true)
@@ -169,24 +130,30 @@ function DonateModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+const features = [
+  "Безлимитные тир-листы",
+  "Безлимит книг в тир-листе",
+  "Все темы оформления",
+  "Баттлы и обсуждения",
+  "Кастомные обложки",
+  "Экспорт PNG",
+  "Букстраж (AI-рекомендации)",
+  "Добавление книг через Google Books и LiveLib",
+  "И многое другое",
+]
+
 export default function PricingPage() {
-  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [showDonateModal, setShowDonateModal] = useState(false)
 
-  const handleCta = (planName: string) => {
-    if (planName === "Донат") {
-      setShowDonateModal(true)
-      return
-    }
-    navigate(isAuthenticated ? "/" : "/auth")
-  }
-
-  const currentPlan = "Бесплатно"
-
   return (
     <div className="pricing-page">
-      <SEOHead title="Поддержать проект — BookStrata" description="BookStrata полностью бесплатен. Поддержите проект донатом, если он вам полезен. Все функции уже доступны без ограничений." url="/pricing" breadcrumbs={[{ name: "Поддержать", url: "/pricing" }]} />
+      <SEOHead
+        title="Поддержать проект — BookStrata"
+        description="BookStrata полностью бесплатен. Поддержите проект донатом, если он вам полезен. Все функции уже доступны без ограничений."
+        url="/pricing"
+        breadcrumbs={[{ name: "Поддержать", url: "/pricing" }]}
+      />
       <div className="pricing-page__container">
         <div className="pricing-page__header">
           <button
@@ -207,62 +174,74 @@ export default function PricingPage() {
         </div>
 
         <div className="pricing-page__grid">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`pricing-card ${plan.highlighted ? "pricing-card--pro" : ""} ${currentPlan === plan.name ? "pricing-card--current" : ""}`}
-            >
-              {plan.highlighted && (
-                <div className="pricing-card__badge">Популярное</div>
-              )}
-
-              {plan.name === "Донат" && (
-                <ShineBorder
-                  shineColor="#fbbf24"
-                  borderWidth={2}
-                  duration={12}
-                />
-              )}
-
-              <div className="pricing-card__body">
-                <h2 className="pricing-card__name">
-                  {plan.highlighted && <Crown size={18} className="pricing-card__crown" />}
-                  {plan.name}
-                </h2>
-
-                <div className="pricing-card__price">
-                  <span className="pricing-card__amount">{plan.price} ₽</span>
-                  <span className="pricing-card__period">/{plan.period}</span>
-                </div>
-
-                <p className="pricing-card__description">{plan.description}</p>
-
-                {plan.cta && (
-                  <button
-                    onClick={() => handleCta(plan.name)}
-                    className={`pricing-card__cta cursor-pointer ${plan.highlighted ? "pricing-card__cta--pro" : ""}`}
-                    type="button"
-                  >
-                    {plan.cta}
-                  </button>
-                )}
-
-                <ul className="pricing-card__features">
-                  {plan.features.map((feature) => (
-                    <li
-                      key={feature.text}
-                      className={`pricing-card__feature ${feature.included ? "" : "pricing-card__feature--muted"}`}
-                    >
-                      <span className="pricing-card__check">
-                        {feature.included ? "✓" : "—"}
-                      </span>
-                      <span>{feature.text}</span>
-                    </li>
-                  ))}
-                </ul>
+          {/* Карточка возможностей */}
+          <div className="pricing-card">
+            <div className="pricing-card__body">
+              <div className="pricing-card__name">
+                <Sparkles size={18} className="text-cyan-400" />
+                BookStrata
               </div>
+              <div className="pricing-card__free-badge">Всё бесплатно</div>
+              <p className="pricing-card__description">
+                Все возможности проекта доступны без подписок и ограничений.
+              </p>
+              <ul className="pricing-card__features">
+                {features.map((text) => (
+                  <li key={text} className="pricing-card__feature">
+                    <span className="pricing-card__check">✓</span>
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          ))}
+          </div>
+
+          {/* Карточка доната */}
+          <div className="pricing-card pricing-card--donate">
+            <ShineBorder
+              shineColor="#fbbf24"
+              borderWidth={2}
+              duration={12}
+            />
+            <div className="pricing-card__body">
+              <div className="pricing-card__name">
+                <Heart size={18} className="text-amber-300" />
+                Донат
+              </div>
+              <div className="pricing-card__price">
+                <span className="pricing-card__amount">Любая</span>
+                <span className="pricing-card__period">сумма</span>
+              </div>
+              <p className="pricing-card__description">
+                Поддержите развитие проекта
+              </p>
+              <button
+                onClick={() => setShowDonateModal(true)}
+                className="pricing-card__cta pricing-card__cta--donate cursor-pointer"
+                type="button"
+              >
+                Поддержать
+              </button>
+              <ul className="pricing-card__features">
+                <li className="pricing-card__feature">
+                  <span className="pricing-card__check">✓</span>
+                  <span>+100 к карме</span>
+                </li>
+                <li className="pricing-card__feature">
+                  <span className="pricing-card__check">✓</span>
+                  <span>Бейдж мецената</span>
+                </li>
+                <li className="pricing-card__feature">
+                  <span className="pricing-card__check">✓</span>
+                  <span>Имя в списке спонсоров</span>
+                </li>
+                <li className="pricing-card__feature">
+                  <span className="pricing-card__check">✓</span>
+                  <span>Ранний доступ к фичам</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 

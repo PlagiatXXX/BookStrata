@@ -17,18 +17,15 @@ export async function rateBook(
   userId: number,
   ratings: Record<string, number>,
 ) {
-  const existing = await prisma.bookRating.findUnique({
+  // upsert — создать или обновить существующую оценку
+  return prisma.bookRating.upsert({
     where: { bookId_userId: { bookId, userId } },
-  });
-
-  if (existing) {
-    throw new Error("Вы уже оценили эту книгу");
-  }
-
-  return prisma.bookRating.create({
-    data: {
+    create: {
       bookId,
       userId,
+      ratings: ratings as Record<string, number>,
+    },
+    update: {
       ratings: ratings as Record<string, number>,
     },
   });

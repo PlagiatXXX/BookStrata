@@ -4,7 +4,7 @@ vi.mock("../../lib/prisma.js", () => {
   const tx = {
     bookRating: {
       findUnique: vi.fn(),
-      create: vi.fn(),
+      upsert: vi.fn(),
       findMany: vi.fn(),
     },
   }
@@ -29,25 +29,33 @@ describe("ratings.service", () => {
 
   describe("rateBook", () => {
     it("должен создать рейтинг книги", async () => {
-      vi.mocked(prisma.bookRating.findUnique).mockResolvedValue(null)
-      vi.mocked(prisma.bookRating.create).mockResolvedValue({
+      vi.mocked(prisma.bookRating.upsert).mockResolvedValue({
         id: 1, bookId: 10, userId: 1, ratings: { plot: 8.5, style: 7.0 },
       } as any)
 
       const result = await rateBook(10, 1, { plot: 8.5, style: 7.0 })
 
       expect(result).toHaveProperty("id", 1)
-      expect(prisma.bookRating.create).toHaveBeenCalledWith({
-        data: { bookId: 10, userId: 1, ratings: { plot: 8.5, style: 7.0 } },
+      expect(prisma.bookRating.upsert).toHaveBeenCalledWith({
+        where: { bookId_userId: { bookId: 10, userId: 1 } },
+        create: { bookId: 10, userId: 1, ratings: { plot: 8.5, style: 7.0 } },
+        update: { ratings: { plot: 8.5, style: 7.0 } },
       })
     })
 
-    it("должен выбросить ошибку если рейтинг уже существует", async () => {
-      vi.mocked(prisma.bookRating.findUnique).mockResolvedValue({
-        id: 1, bookId: 10, userId: 1,
+    it("должен обновить существующий рейтинг", async () => {
+      vi.mocked(prisma.bookRating.upsert).mockResolvedValue({
+        id: 1, bookId: 10, userId: 1, ratings: { plot: 8 },
       } as any)
 
-      await expect(rateBook(10, 1, { plot: 8 })).rejects.toThrow("Вы уже оценили эту книгу")
+      const result = await rateBook(10, 1, { plot: 8 })
+
+      expect(result).toHaveProperty("id", 1)
+      expect(prisma.bookRating.upsert).toHaveBeenCalledWith({
+        where: { bookId_userId: { bookId: 10, userId: 1 } },
+        create: { bookId: 10, userId: 1, ratings: { plot: 8 } },
+        update: { ratings: { plot: 8 } },
+      })
     })
   })
 

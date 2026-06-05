@@ -34,6 +34,7 @@
     "@prisma/client": "4.16.2",
     "@types/jsonwebtoken": "^9.0.10",
     "bcryptjs": "^3.0.3",
+    "cheerio": "1.2.0",
     "cloudinary": "^2.9.0",
     "disposable-email-domains": "1.0.62",
     "dotenv": "^17.2.3",
