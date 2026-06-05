@@ -1,10 +1,11 @@
 import { useState } from "react"
-import { ArrowLeft, Crown, CreditCard, Send, X, Copy, Check, Heart} from "lucide-react"
+import { Crown, CreditCard, Send, X, Copy, Check, Heart} from "lucide-react"
 import { useAuth } from "@/hooks/useAuthContext"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { useNavigate } from "react-router-dom"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
+import { ShineBorder } from "@/ui/ShineBorder"
 import "./PricingPage.css"
 
 const plans = [
@@ -367,6 +368,28 @@ export default function PricingPage() {
             >
               {plan.highlighted && (
                 <div className="pricing-card__badge">Популярное</div>
+              )}
+
+              {plan.name === "Free" && (
+                <ShineBorder
+                  shineColor="rgba(255,255,255,0.15)"
+                  borderWidth={1}
+                  duration={14}
+                />
+              )}
+              {plan.name === "Pro" && (
+                <ShineBorder
+                  shineColor={["#06bcf9", "#a855f7"]}
+                  borderWidth={1}
+                  duration={10}
+                />
+              )}
+              {plan.name === "Донат" && (
+                <ShineBorder
+                  shineColor="#fbbf24"
+                  borderWidth={1}
+                  duration={12}
+                />
               )}
 
               <div className="pricing-card__body">

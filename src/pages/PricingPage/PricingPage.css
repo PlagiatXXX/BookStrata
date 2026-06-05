@@ -84,9 +84,9 @@
   position: relative;
   background: rgba(15, 30, 50, 0.4);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid transparent;
   border-radius: 18px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: transform 0.2s ease;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -110,22 +110,16 @@
 }
 
 .pricing-card:hover {
-  border-color: rgba(255, 255, 255, 0.18);
   transform: translateY(-2px);
 }
 
 .pricing-card--pro {
-  border-color: rgba(6, 188, 249, 0.25);
   background: rgba(6, 188, 249, 0.06);
-}
-
-.pricing-card--pro:hover {
-  border-color: rgba(6, 188, 249, 0.5);
 }
 
 .pricing-card--current {
   outline: 2px solid rgba(6, 188, 249, 0.5);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .pricing-card__badge {

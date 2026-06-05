@@ -16,7 +16,7 @@ import {
   Shield,
   Info,
 } from "lucide-react";
-import { RainEffect } from "./RainEffect";
+import { Meteors } from "./Meteors";
 import { apiClient } from "@/lib/api-client";
 
 const marqueeStyle = `
@@ -155,7 +155,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   return (
     <footer className="relative border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%),#0b0f1f] px-6 py-12 overflow-hidden">
       <style>{marqueeStyle}</style>
-      <RainEffect />
+      <Meteors number={40} angle={255} minDuration={10} maxDuration={22} minDelay={0} maxDelay={1.5} />
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 relative z-10">
         <div className="grid gap-10 lg:grid-cols-[1fr_1fr_1fr_1.2fr]">
