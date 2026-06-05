@@ -25,7 +25,6 @@ interface EditorLayoutProps {
   headerProps: EditorHeaderProps;
   onMyRatingsClick: () => void;
   isReadOnly: boolean;
-  isPro: boolean;
   tierListId?: string;
   coverImageUrl?: string | null;
   hideCover?: boolean;
@@ -47,7 +46,6 @@ export const EditorLayout = ({
   headerProps,
   onMyRatingsClick,
   isReadOnly,
-  isPro = false,
   tierListId,
   coverImageUrl,
   hideCover = false,
@@ -94,7 +92,6 @@ export const EditorLayout = ({
               coverImageUrl={coverImageUrl}
               title={headerProps.title}
               booksCount={booksCount}
-              isPro={isPro}
               isReadOnly={isReadOnly}
               onCoverUpdated={(url) => onCoverUpdated?.(url)}
               ownerUserId={ownerUserId}
@@ -106,7 +103,6 @@ export const EditorLayout = ({
               <ThemePicker
                 tierListId={tierListId}
                 currentTheme={theme}
-                isPro={isPro}
                 onThemeChanged={(t) => onThemeChanged?.(t)}
               />
             </div>

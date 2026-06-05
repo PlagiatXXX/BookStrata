@@ -9,9 +9,7 @@ export interface User {
   username: string;
   avatarUrl: string | null;
   role?: string;
-  isPro?: boolean;
   isDonor?: boolean;
-  proExpiresAt?: string | null;
   createdAt: string;
 }
 
@@ -37,7 +35,6 @@ export interface PublicUser {
   id: number;
   username: string;
   avatarUrl: string | null;
-  isPro: boolean;
   isDonor: boolean;
   xp: number;
   title: string | null;

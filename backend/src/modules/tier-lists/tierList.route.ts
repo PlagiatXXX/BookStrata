@@ -4,7 +4,6 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { eventBus } from "../../lib/event-emitter.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { createLogger } from "../../lib/logger.js";
-import { checkProLimit, checkBookLimit } from "../../middleware/proLimit.js";
 import * as service from "./tierList.service.js";
 import * as schema from "./tierList.schema.js";
 import { uploadBase64, uploadFromUrl } from "../../lib/cloudinary.js";
@@ -433,28 +432,10 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/:id/books",
-    { preHandler: [authMiddleware, checkProLimit], ...schema.addBooksSchema },
+    { preHandler: [authMiddleware], ...schema.addBooksSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       await service.assertOwner(tierListId, request.user!.userId);
-
-      // Проверяем лимит книг
-      const currentBooksCount = await service.getTierListBooksCount(tierListId);
-      const booksToAdd = request.body.books.length;
-      const limitCheck = checkBookLimit(
-        currentBooksCount,
-        booksToAdd,
-        request.proLimit,
-      );
-
-      if (!limitCheck.allowed) {
-        return reply.code(403).send(
-          createApiError(ErrorCodes.LIMIT_EXCEEDED, "Превышен лимит книг в тир-листе", {
-            remaining: limitCheck.remaining,
-            required: request.proLimit?.isPro ? "Pro" : "Free",
-          }),
-        );
-      }
 
       // === ОБРАБОТКА КАРТИНОК ПЕРЕД СОХРАНЕНИЕМ ===
       const processedBooks = await runWithConcurrency(

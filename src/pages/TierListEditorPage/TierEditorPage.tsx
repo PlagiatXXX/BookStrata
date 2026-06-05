@@ -125,9 +125,6 @@ const TierListEditorContent = () => {
   // Режим просмотра (если не владелец и список публичный)
   const isReadOnly = !isOwner && isPublic;
 
-  // Получаем Pro статус из AuthContext
-  const isPro = authUser?.isPro ?? false;
-
   // Получаем функции из хука useTierList
   const {
     listData,
@@ -505,7 +502,6 @@ const TierListEditorContent = () => {
         headerProps={headerProps}
         onMyRatingsClick={handleMyRatingsClick}
         isReadOnly={isReadOnly}
-        isPro={isPro}
         tierListId={tierListId}
         coverImageUrl={coverImageUrl}
         hideCover={fromBattle}
@@ -524,7 +520,6 @@ const TierListEditorContent = () => {
         <EditorMainContent
           listData={listData}
           isReadOnly={isReadOnly}
-          isPro={isPro}
           tierGridRef={tierGridRef}
           hideUnranked={fromBattle}
           onDeleteBook={setBookToDelete}
@@ -591,7 +586,6 @@ const TierListEditorContent = () => {
           onDownloadImage(theme, showWatermark, authUser?.username)
         }
         username={authUser?.username || "user"}
-        isPro={isPro}
         isReadOnly={isReadOnly}
       />
 

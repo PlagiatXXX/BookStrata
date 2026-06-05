@@ -92,8 +92,6 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
-          isPro: true,
-          proExpiresAt: true,
           role: {
             select: {
               name: true,
@@ -165,8 +163,6 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
-          isPro: true,
-          proExpiresAt: true,
           role: {
             select: { name: true },
           },
@@ -226,8 +222,6 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
-          isPro: true,
-          proExpiresAt: true,
           role: {
             select: { name: true },
           },
@@ -273,8 +267,6 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
-          isPro: true,
-          proExpiresAt: true,
           role: {
             select: { name: true },
           },
@@ -423,8 +415,6 @@ describe("users.service", () => {
           id: true,
           username: true,
           avatarUrl: true,
-          isPro: true,
-          proExpiresAt: true,
           xp: true,
           title: true,
           isDonor: true,
@@ -439,7 +429,6 @@ describe("users.service", () => {
         id: 1,
         username: "testuser",
         avatarUrl: "https://example.com/avatar.jpg",
-        isPro: true,
         xp: 150,
         title: "Книжный червь",
         isDonor: true,
@@ -453,19 +442,6 @@ describe("users.service", () => {
           lastActivity: expect.any(String),
         },
       });
-    });
-
-    it("должен вернуть пользователя с истекшей подпиской как не-Pro", async () => {
-      const expiredUser = {
-        ...mockUser,
-        isPro: true,
-        proExpiresAt: new Date("2020-01-01"),
-      }
-      ;(prisma.user.findUnique as any).mockResolvedValue(expiredUser);
-
-      const result = await userService.getUserById({ id: mockUserId });
-
-      expect(result.isPro).toBe(false);
     });
 
     it("должен бросить ошибку если пользователь не найден", async () => {

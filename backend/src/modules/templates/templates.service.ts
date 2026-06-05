@@ -98,25 +98,6 @@ export class TemplatesService {
       userId,
     });
 
-    // Проверка лимита шаблонов
-    if (userId) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: parseInt(userId) },
-        select: { isPro: true },
-      });
-
-      const maxTemplates = user?.isPro ? 100 : 5;
-      const userTemplatesCount = await this.prisma.template.count({
-        where: { authorId: parseInt(userId) },
-      });
-
-      if (userTemplatesCount >= maxTemplates) {
-        throw new Error(
-          `Достигнут лимит шаблонов (${maxTemplates}). ${user?.isPro ? "" : "Оформите Pro подписку для увеличения лимита."}`,
-        );
-      }
-    }
-
     const templateData: any = {
       title: sanitize(validatedInput.title),
       description: validatedInput.description
@@ -333,17 +314,6 @@ export class TemplatesService {
 
     if (!template) {
       throw new Error("Template not found");
-    }
-
-    // Проверка Pro-лимита для использования Pro-шаблонов
-    if (template.isProOnly) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: uId },
-        select: { isPro: true },
-      });
-      if (!user?.isPro) {
-        throw new Error("Использование Pro-шаблонов доступно только с Pro подпиской");
-      }
     }
 
     if (!template.isPublic && template.authorId !== uId) {

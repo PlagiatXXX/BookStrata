@@ -9,7 +9,6 @@ interface AvatarProps {
   username?: string | null;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
-  isPro?: boolean;
 }
 
 const sizeClasses = {
@@ -59,7 +58,6 @@ export function Avatar({
   username,
   size = "md",
   className = "",
-  isPro = false,
 }: AvatarProps) {
   const initials = getInitials(username);
   const initialsColor = getInitialsColor(username);
@@ -97,8 +95,6 @@ export function Avatar({
       style={{ opacity: isLoaded || hasError ? 1 : 0 }}
     />
   );
-
-  if (!isPro) return avatarEl;
 
   return (
     <div className="relative inline-flex">

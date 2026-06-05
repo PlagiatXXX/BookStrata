@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { EyeIcon, EyeOffIcon, Crown } from "lucide-react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { apiLogin, apiRegister, apiResendVerification, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
 import { Button } from "@/ui/Button";
@@ -268,13 +268,6 @@ export function AuthForm() {
 
               {mode === "register" && (
                 <>
-                  <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <Crown size={16} className="text-amber-500 shrink-0" />
-                    <span className="text-xs text-amber-700">
-                      После регистрации вы получите <strong>7 дней Pro</strong> бесплатно
-                    </span>
-                  </div>
-
                   {/* captcha — закомментировано, готово к подключению */}
                   {/* <SmartCaptcha sitekey={import.meta.env.VITE_SMARTCAPTCHA_SITE_KEY} onSuccess={...} /> */}
 

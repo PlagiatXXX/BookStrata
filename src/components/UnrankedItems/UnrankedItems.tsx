@@ -14,11 +14,10 @@ interface UnrankedItemsProps {
   onDeleteBook?: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
   onViewBook?: (book: Book) => void;
-  isPro?: boolean;
 }
 
 export const UnrankedItems = memo(
-  ({ books, booksCount, onUpload, onDeleteBook, onEditBook, onViewBook, isPro = false }: UnrankedItemsProps) => {
+  ({ books, booksCount, onUpload, onDeleteBook, onEditBook, onViewBook }: UnrankedItemsProps) => {
     const { over } = useDndContext();
     const { setNodeRef, isOver, active } = useDroppable({
       id: UNRANKED_AREA_ID,
@@ -48,7 +47,7 @@ export const UnrankedItems = memo(
 
         <div className="p-4">
           <div className="mb-8">
-            <BookCounter booksCount={displayBooksCount} isPro={isPro} />
+            <BookCounter booksCount={displayBooksCount} />
           </div>
 
           <SortableContext
@@ -73,7 +72,7 @@ export const UnrankedItems = memo(
                   containerId={UNRANKED_AREA_ID}
                 />
               ))}
-              {onUpload && <ImageUploader onUpload={onUpload} booksCount={displayBooksCount} isPro={isPro} />}
+              {onUpload && <ImageUploader onUpload={onUpload} />}
             </div>
           </SortableContext>
         </div>

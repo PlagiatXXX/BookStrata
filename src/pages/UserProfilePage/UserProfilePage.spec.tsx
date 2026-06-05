@@ -99,7 +99,6 @@ describe("UserProfilePage", () => {
     await waitFor(() => {
       expect(screen.getByText("fedor")).toBeDefined()
     })
-    expect(screen.getByText("Pro")).toBeDefined()
     expect(screen.getByText("Админ")).toBeDefined()
     expect(screen.getByText("Страничный глотатель")).toBeDefined()
   })

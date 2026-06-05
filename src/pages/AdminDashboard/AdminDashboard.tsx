@@ -14,6 +14,7 @@ interface AdminSection {
   borderColor: string
   textColor: string
   roles: string[]
+  disabled?: boolean
 }
 
 const ALL_SECTIONS: AdminSection[] = [
@@ -66,6 +67,7 @@ const ALL_SECTIONS: AdminSection[] = [
     borderColor: 'border-amber-500/30',
     textColor: 'text-amber-500',
     roles: ['admin'],
+    disabled: true,
   },
   {
     title: 'Донатеры',
@@ -142,9 +144,9 @@ export default function AdminDashboard() {
             return (
               <button
                 key={section.path}
-                onClick={() => navigate(section.path)}
+                onClick={() => !section.disabled && navigate(section.path)}
                 className={`group flex flex-col items-start gap-4 p-6 rounded-xl bg-linear-to-br ${section.color} 
-                  ${section.borderColor} border hover:border-opacity-60 transition-all cursor-pointer hover:scale-[1.02]
+                  ${section.borderColor} border ${section.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-opacity-60 transition-all cursor-pointer hover:scale-[1.02]'}
                   text-left w-full`}
               >
                 <div className={`p-3 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors`}>

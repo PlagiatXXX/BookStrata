@@ -21,8 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     username: fullUserData.username,
     avatarUrl: fullUserData.avatarUrl,
     role: fullUserData.role || "user",
-    isPro: fullUserData.isPro ?? false,
-    proExpiresAt: fullUserData.proExpiresAt ?? null,
   });
 
   const fetchUser = useCallback(async (force = false) => {

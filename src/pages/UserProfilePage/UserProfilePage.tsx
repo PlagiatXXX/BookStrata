@@ -109,11 +109,6 @@ export default function UserProfilePage() {
             <div className="flex-1">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl font-black tracking-tight">{profile.username}</h1>
-                {profile.isPro && (
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                    Pro
-                  </span>
-                )}
                 {profile.role === "admin" && (
                   <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 border border-pink-500/30">
                     Админ

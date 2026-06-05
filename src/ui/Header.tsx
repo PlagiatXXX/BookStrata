@@ -88,12 +88,6 @@ export const Header = ({
       icon: <Users size={18} />,
       description: "Актив сообщества",
     },
-    {
-      label: "Pro",
-      onClick: () => navigate("/pricing"),
-      icon: <Crown size={16} className="text-yellow-400" />,
-      description: "Премиум-возможности",
-    },
     ...(showTemplatesNav
       ? [
           {
@@ -104,6 +98,12 @@ export const Header = ({
           },
         ]
       : []),
+    {
+      label: "Поддержать",
+      onClick: () => navigate("/pricing"),
+      icon: <Crown size={16} className="text-yellow-400" />,
+      description: "Поддержать проект",
+    },
   ];
 
   return (
@@ -190,7 +190,6 @@ export const Header = ({
                   username={authUser?.username}
                   size="sm"
                   className="w-8 h-8 sm:w-8 sm:h-8 max-sm:w-6 max-sm:h-6"
-                  isPro={authUser?.isPro}
                 />
               </button>
             )}
@@ -241,7 +240,6 @@ export const Header = ({
                   url={authUser?.avatarUrl}
                   username={authUser?.username}
                   size="sm"
-                  isPro={authUser?.isPro}
                 />
                 <div className="text-left flex-1">
                   <div className="font-medium">Профиль</div>

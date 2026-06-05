@@ -13,7 +13,6 @@ interface TierListCoverEditorProps {
   coverImageUrl?: string | null
   title: string
   booksCount: number
-  isPro: boolean
   isReadOnly: boolean
   onCoverUpdated: (url: string) => void
   ownerUserId?: number
@@ -25,7 +24,6 @@ export function TierListCoverEditor({
   coverImageUrl,
   title,
   booksCount,
-  isPro,
   isReadOnly,
   onCoverUpdated,
   ownerUserId,
@@ -61,15 +59,6 @@ export function TierListCoverEditor({
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    if (!isPro) {
-      sileo.action({
-        title: "Кастомные обложки только для Pro",
-        description: "Оформите подписку, чтобы загружать свои обложки",
-        duration: 4000,
-      })
-      return
-    }
 
     if (file.size > 5 * 1024 * 1024) {
       sileo.error({ title: "Файл слишком большой", description: "Максимум 5 MB" })
@@ -146,7 +135,7 @@ export function TierListCoverEditor({
               >
                 <ImagePlus size={14} />
                 {uploading ? "Загрузка..." : "Добавить обложку"}
-                {!isPro && <span className="tier-list-cover-editor__pro-badge">Pro</span>}
+
               </button>
             )}
             <input

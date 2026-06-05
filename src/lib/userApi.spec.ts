@@ -32,7 +32,6 @@ const mockPublicUser = {
   id: 1,
   username: "testuser",
   avatarUrl: "https://example.com/avatar.jpg",
-  isPro: true,
   xp: 150,
   title: "Книжный червь",
   role: "admin",

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FastifyInstance } from 'fastify'
 import { authMiddleware } from '../auth/auth.middleware.js'
-import { requirePro } from '../../middleware/proLimit.js'
 
 import { ErrorCodes, createApiError } from '../../lib/api-response.js'
 import { ChatRequestSchema } from './ai-librarian.schema.js'
@@ -17,7 +16,7 @@ const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'
 export async function aiLibrarianRoutes(fastify: FastifyInstance) {
   fastify.get(
     '/librarian/status',
-    { preHandler: [authMiddleware, requirePro] },
+    { preHandler: [authMiddleware] },
     async (_request, reply) => {
       const status = await checkAiStatus()
       return reply.code(200).send({ data: status })
@@ -28,7 +27,7 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
   fastify.post(
     '/librarian/chat',
     {
-      preHandler: [authMiddleware, requirePro],
+      preHandler: [authMiddleware],
       schema: {
         body: {
           type: 'object',

@@ -8,7 +8,6 @@ import type { SaveStatus } from "../hooks/useTierEditorSave";
 interface EditorMainContentProps {
   listData: TierListData;
   isReadOnly: boolean;
-  isPro?: boolean;
   hideUnranked?: boolean;
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   // Обработчики для TierGrid
@@ -42,7 +41,6 @@ export const EditorMainContent = memo(
   ({
     listData,
     isReadOnly,
-    isPro = false,
     hideUnranked = false,
     tierGridRef,
     onDeleteBook,
@@ -141,7 +139,6 @@ export const EditorMainContent = memo(
               onDeleteBook={isReadOnly ? undefined : onDeleteBook}
               onEditBook={isReadOnly ? undefined : onEditBook}
               onViewBook={onViewBook}
-              isPro={isPro}
             />
           )}
         </div>

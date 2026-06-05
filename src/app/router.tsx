@@ -58,13 +58,6 @@ const AdminDashboard = lazy(() =>
     default: module.default,
   })),
 );
-const AdminSubscriptionsPage = lazy(() =>
-  import("@/pages/AdminSubscriptionsPage/AdminSubscriptionsPage").then(
-    (module) => ({
-      default: module.default,
-    }),
-  ),
-);
 const AdminDonorsPage = lazy(() =>
   import("@/pages/AdminDonorsPage/AdminDonorsPage").then((module) => ({
     default: module.AdminDonorsPage,
@@ -203,7 +196,9 @@ export const router = createBrowserRouter([
         path: "/admin/subscriptions",
         element: (
           <AdminGuard>
-            <AdminSubscriptionsPage />
+            <div className="flex items-center justify-center h-64 text-(--ink-2) text-sm">
+              Раздел временно недоступен
+            </div>
           </AdminGuard>
         ),
       },

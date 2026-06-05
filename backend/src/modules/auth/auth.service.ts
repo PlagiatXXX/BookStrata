@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { jwtPayloadSchema, type AuthTokenPayload } from "./auth.schema.js";
 import { RolesService } from "../roles/roles.service.js";
-import { SubscriptionsService } from "../subscriptions/subscriptions.service.js";
 import { createLogger } from "../../lib/logger.js";
 import crypto from "crypto";
 import { sendResetPasswordEmail, sendWelcomeEmail, sendVerifyEmail } from "./auth.mail.js";
@@ -135,18 +134,6 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
     logger.info("Письмо с подтверждением email отправлено", { userId: user.id });
   } catch (error) {
     logger.error("Ошибка при отправке письма подтверждения", {
-      error: (error as Error).message,
-      userId: user.id,
-    });
-  }
-
-  // Активируем триал Pro на 7 дней
-  try {
-    const subscriptionsService = new SubscriptionsService();
-    await subscriptionsService.activatePro(user.id, 7);
-    logger.info("Пробный Pro-период активирован (7 дней)", { userId: user.id });
-  } catch (error) {
-    logger.error("Ошибка при активации пробного Pro-периода", {
       error: (error as Error).message,
       userId: user.id,
     });

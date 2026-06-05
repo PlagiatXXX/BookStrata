@@ -27,8 +27,7 @@ export async function getMe(userId: number) {
       email: true,
       username: true,
       avatarUrl: true,
-      isPro: true,
-      proExpiresAt: true,
+    
       role: {
         select: {
           name: true,
@@ -42,14 +41,8 @@ export async function getMe(userId: number) {
     throw new Error("Пользователь не найден");
   }
 
-  // Проверяем, не истёк ли срок подписки
-  const isExpired = user.proExpiresAt && user.proExpiresAt < new Date();
-  const actualIsPro = user.isPro && !isExpired;
-
   return {
     ...user,
-    isPro: actualIsPro,
-    proExpiresAt: isExpired ? null : user.proExpiresAt,
     role: user.role?.name || undefined,
   };
 }
@@ -76,8 +69,7 @@ export async function updateUser(userId: number, username: string) {
       email: true,
       username: true,
       avatarUrl: true,
-      isPro: true,
-      proExpiresAt: true,
+    
       role: {
         select: { name: true },
       },
@@ -96,8 +88,7 @@ export async function updateAvatar(userId: number, avatarUrl: string | null) {
       email: true,
       username: true,
       avatarUrl: true,
-      isPro: true,
-      proExpiresAt: true,
+    
       role: {
         select: { name: true },
       },
@@ -115,8 +106,7 @@ export async function deleteAvatar(userId: number) {
       email: true,
       username: true,
       avatarUrl: true,
-      isPro: true,
-      proExpiresAt: true,
+    
       role: {
         select: { name: true },
       },
@@ -174,8 +164,7 @@ export async function getUserById(params: { id: string }) {
       id: true,
       username: true,
       avatarUrl: true,
-      isPro: true,
-      proExpiresAt: true,
+    
       xp: true,
       title: true,
       isDonor: true,
@@ -189,9 +178,6 @@ export async function getUserById(params: { id: string }) {
   if (!user) {
     throw new Error("Пользователь не найден");
   }
-
-  // Проверяем, не истёк ли срок подписки
-  const isExpired = user.proExpiresAt && user.proExpiresAt < new Date();
 
   // Статистика
   const [tierListStats, publishedCount, placementCount, lastUpdated] = await Promise.all([
@@ -209,7 +195,6 @@ export async function getUserById(params: { id: string }) {
     id: user.id,
     username: user.username,
     avatarUrl: user.avatarUrl,
-    isPro: user.isPro && !isExpired,
     xp: user.xp,
     title: user.title,
     isDonor: user.isDonor,

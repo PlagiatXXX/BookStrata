@@ -18,8 +18,6 @@ export interface User {
   username: string;
   avatarUrl?: string | null;
   role?: string;
-  isPro?: boolean;
-  proExpiresAt?: string | null;
 }
 
 export interface AuthError {
@@ -38,8 +36,3 @@ export interface AdminUser {
   createdAt: string;
 }
 
-// Тип для Pro подписки
-export interface ProSubscription {
-  isPro: boolean;
-  proExpiresAt: string | null;
-}

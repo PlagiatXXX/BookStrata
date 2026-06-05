@@ -13,7 +13,6 @@ interface ProfileHeaderProps {
     avatarUrl: string | null;
     email: string;
     createdAt: string;
-    isPro?: boolean;
   };
   username?: string;
   isEditingUsername: boolean;
@@ -58,7 +57,6 @@ export function ProfileHeader({
             username={username}
             size="xl"
             className="h-24 w-24 text-3xl sm:h-28 sm:w-28 sm:text-3xl md:h-32 md:w-32 md:text-4xl"
-            isPro={user?.isPro}
           />
           <button
             onClick={onEditAvatar}

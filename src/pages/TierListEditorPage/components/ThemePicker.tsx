@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Lock } from "lucide-react"
 import { sileo } from "sileo"
 import { apiClient } from "@/lib/api-client"
 import {
@@ -11,28 +10,17 @@ import {
 interface ThemePickerProps {
   tierListId: string
   currentTheme: string
-  isPro: boolean
   onThemeChanged: (theme: string) => void
 }
 
 export function ThemePicker({
   tierListId,
   currentTheme,
-  isPro,
   onThemeChanged,
 }: ThemePickerProps) {
   const [saving, setSaving] = useState(false)
 
   const handleSelect = async (theme: TierListTheme) => {
-    if (!isPro && theme !== "default") {
-      sileo.action({
-        title: "Тема только для Pro",
-        description: "Оформите подписку, чтобы использовать эксклюзивные темы оформления",
-        duration: 4000,
-      })
-      return
-    }
-
     setSaving(true)
     try {
       await apiClient.put(`/tier-lists/${tierListId}`, { theme })
@@ -56,15 +44,14 @@ export function ThemePicker({
       <div className="theme-picker__grid">
         {themes.map(([id, label]) => {
           const colors = THEME_COLORS[id]
-          const isLocked = !isPro && id !== "default"
           return (
             <button
               key={id}
               onClick={() => handleSelect(id)}
               disabled={saving}
-              className={`theme-picker__swatch ${currentTheme === id ? "theme-picker__swatch--active" : ""} ${isLocked ? "theme-picker__swatch--locked" : ""}`}
+              className={`theme-picker__swatch ${currentTheme === id ? "theme-picker__swatch--active" : ""}`}
               type="button"
-              title={isLocked ? "Доступно в Pro" : label}
+              title={label}
             >
               <div
                 className="theme-picker__preview"
@@ -78,11 +65,6 @@ export function ThemePicker({
                   <span style={{ background: colors.tier }} />
                   <span style={{ background: colors.tier }} />
                 </div>
-                {isLocked && (
-                  <div className="theme-picker__lock">
-                    <Lock size={12} />
-                  </div>
-                )}
               </div>
               <span className="theme-picker__name">{label}</span>
               {currentTheme === id && <span className="theme-picker__dot" />}

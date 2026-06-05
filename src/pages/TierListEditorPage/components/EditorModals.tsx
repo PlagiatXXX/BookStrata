@@ -75,7 +75,6 @@ interface EditorModalsProps {
   onCloseExport: () => void;
   onConfirmExport: (theme: ExportTheme, showWatermark: boolean) => Promise<void>;
   username: string;
-  isPro: boolean;
   isReadOnly?: boolean;
 }
 
@@ -111,7 +110,6 @@ export const EditorModals = ({
   onCloseExport,
   onConfirmExport,
   username,
-  isPro,
   isReadOnly = false,
 }: EditorModalsProps) => {
   return (
@@ -179,7 +177,6 @@ export const EditorModals = ({
         onClose={onCloseExport}
         onExport={onConfirmExport}
         username={username}
-        isPro={isPro}
       />
     </>
   );

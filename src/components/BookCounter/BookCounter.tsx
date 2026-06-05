@@ -1,21 +1,10 @@
-import { Book, AlertCircle, CheckCircle2, Crown } from "lucide-react";
-import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
-import { booksCountText, pluralize } from "@/lib/plural";
+import { Book } from "lucide-react";
 
 interface BookCounterProps {
   booksCount: number;
-  isPro?: boolean;
 }
 
-export function BookCounter({ booksCount, isPro = false }: BookCounterProps) {
-  const maxBooks = isPro ? Infinity : MAX_BOOKS_PER_TIER_LIST;
-  const remainingBooks = isPro ? Infinity : Math.max(0, maxBooks - booksCount);
-  const isAtLimit = isPro ? false : booksCount >= maxBooks;
-  const isNearLimit = isPro ? false : booksCount >= maxBooks - 3;
-  const progressPercent = isPro
-    ? 100
-    : Math.min(100, Math.round((booksCount / maxBooks) * 100));
-
+export function BookCounter({ booksCount }: BookCounterProps) {
   return (
     <div className="nb-heavy-border border border-black bg-black p-4">
       <div className="mb-3 flex items-center justify-between">
@@ -24,78 +13,12 @@ export function BookCounter({ booksCount, isPro = false }: BookCounterProps) {
           <span className="text-sm font-medium text-white">
             Книги в тир-листе
           </span>
-          {isPro && (
-            <span className="inline-flex items-center gap-1 nb-heavy-border bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
-              <Crown size={12} />
-              Pro
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-lg font-bold text-white">
-            {isPro ? '∞' : booksCount}
+            {booksCount}
           </span>
-          {!isPro && (
-            <span className="text-sm text-slate-500">/ {maxBooks}</span>
-          )}
         </div>
-      </div>
-
-      {/* Progress Bar */}
-            <div
-        className="relative h-2 overflow-hidden nb-heavy-border bg-gray-900"
-        role="progressbar"
-        aria-valuenow={isPro ? 100 : booksCount}
-        aria-valuemin={0}
-        aria-valuemax={isPro ? 100 : maxBooks}
-        aria-valuetext={isPro ? booksCountText(booksCount) : `${booksCount} из ${maxBooks} ${pluralize(maxBooks, ["книги", "книг", "книг"])}`}
-        aria-label="Прогресс заполнения тир-листа"
-      >
-        <div
-          className={`h-full transition-all duration-300 ${
-            isAtLimit
-              ? 'bg-red-500'
-              : isNearLimit
-              ? 'bg-amber-500'
-              : isPro
-              ? 'bg-amber-400'
-              : 'bg-cyan-500'
-          }`}
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
-
-      {/* Status Message */}
-      <div className="mt-2 flex items-center gap-2" aria-live="polite">
-        {isPro ? (
-          <>
-            <Crown size={14} className="text-amber-400" />
-            <span className="text-xs text-amber-400">
-              Неограниченное количество книг
-            </span>
-          </>
-        ) : isAtLimit ? (
-          <>
-            <AlertCircle size={14} className="text-red-400" />
-            <span className="text-xs text-red-400">
-              Достигнут лимит книг
-            </span>
-          </>
-        ) : isNearLimit ? (
-          <>
-            <AlertCircle size={14} className="text-amber-400" />
-            <span className="text-xs text-amber-400">
-              Осталось {remainingBooks} из {maxBooks}
-            </span>
-          </>
-        ) : (
-          <>
-            <CheckCircle2 size={14} className="text-emerald-400" />
-            <span className="text-xs text-emerald-400">
-              Можно добавить ещё {remainingBooks} книг
-            </span>
-          </>
-        )}
       </div>
     </div>
   );

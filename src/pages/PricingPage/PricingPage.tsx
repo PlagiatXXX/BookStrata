@@ -1,8 +1,8 @@
 import { useState } from "react"
-import { Crown, CreditCard, Send, X, Copy, Check, Heart} from "lucide-react"
+import { Crown, Heart, X, Check, Copy, Send, ArrowLeft } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthContext"
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { useNavigate } from "react-router-dom"
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 import { ShineBorder } from "@/ui/ShineBorder"
@@ -10,46 +10,25 @@ import "./PricingPage.css"
 
 const plans = [
   {
-    name: "Free",
+    name: "Бесплатно",
     price: "0",
-    period: "навсегда",
-    description: "Попробуйте BookStrata, чтобы понять, насколько это увлекательно",
-    features: [
-      { text: "До 5 тир-листов", included: true },
-      { text: "До 20 книг в тир-листе", included: true },
-      { text: "Базовые темы оформления", included: true },
-      { text: "Участие в баттлах (1/нед)", included: true },
-      { text: "Коллаж из книг на обложке", included: true },
-      { text: "Кастомные обложки тир-листов", included: false },
-      { text: "Экспорт PNG / PDF", included: true },
-      { text: "Кастомные темы оформления", included: false },
-      { text: "Аналитика и статистика", included: false },
-      { text: "Бейдж Pro в профиле", included: false },
-      { text: "Букстраж (рекомендации книг)", included: false },
-    ],
-    cta: "Начать бесплатно",
-    highlighted: false,
-  },
-  {
-    name: "Pro",
-    price: "300",
-    period: "в месяц",
-    description: "Для тех, кто живёт книгами и хочет больше возможностей",
+    period: "",
+    description: "Все функции BookStrata сейчас бесплатны. Поддержите проект донатом, если он вам полезен.",
     features: [
       { text: "Безлимитные тир-листы", included: true },
       { text: "Безлимит книг в тир-листе", included: true },
-      { text: "Базовые темы оформления", included: true },
-      { text: "Участие в баттлах (безлимит)", included: true },
-      { text: "Коллаж из книг на обложке", included: true },
-      { text: "Кастомные обложки тир-листов ✓", included: true },
-      { text: "Экспорт PNG / PDF", included: true },
-      { text: "Эксклюзивные темы оформления ✓", included: true },
-      { text: "Аналитика и статистика ✓", included: true },
-      { text: "Бейдж Pro + корона в профиле", included: true },
-      { text: "Букстраж (рекомендации книг)", included: true },
+      { text: "Все темы оформления", included: true },
+      { text: "Баттлы и обсуждения", included: true },
+      { text: "Кастомные обложки", included: true },
+      { text: "Экспорт PNG", included: true },
+      { text: "Эксклюзивные темы", included: true },
+      { text: "Букстраж (AI-рекомендации)", included: true },
+      { text: "ИИ-генерация аватарок", included: true },
+      { text: "Добавление книг через Google Books", included: true },
+      { text: "И многое другое для Вас", included: true },
     ],
-    cta: "Оформить Pro",
-    highlighted: true,
+    cta: "",
+    highlighted: false,
   },
   {
     name: "Донат",
@@ -66,138 +45,6 @@ const plans = [
     highlighted: false,
   },
 ]
-
-function PaymentModal({ onClose }: { onClose: () => void }) {
-  useBodyScrollLock(true)
-  const [copied, setCopied] = useState(false)
-  const cardNumber = '2202207455452840'
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(cardNumber)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // fallback
-      const el = document.createElement('textarea')
-      el.value = cardNumber
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      document.body.removeChild(el)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md rounded-2xl border border-[#c1fffe]/20 bg-[#111] p-6 shadow-2xl animate-scale-in"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 flex size-8 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/5 text-gray-400 transition-colors hover:border-[#c1fffe]/30 hover:text-white"
-          type="button"
-          aria-label="Закрыть"
-        >
-          <X size={16} />
-        </button>
-
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-xl border-2 border-[#c1fffe]/30 bg-[#c1fffe]/10">
-            <CreditCard className="h-5 w-5 text-[#c1fffe]" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Оформление Pro</h2>
-            <p className="text-sm text-gray-400">
-              300 ₽ / месяц
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4">
-            <p className="text-sm font-medium text-green-400 mb-2">
-              Реквизиты для перевода
-            </p>
-            <div className="flex items-center justify-between rounded-lg bg-black/40 px-4 py-3">
-              <span className="font-mono text-base font-bold text-white tracking-wider">
-                {cardNumber}
-              </span>
-              <button
-                onClick={handleCopy}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-[#c1fffe]/30 hover:text-[#c1fffe]"
-                type="button"
-              >
-                {copied ? (
-                  <Check className="h-3.5 w-3.5 text-green-400" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-                {copied ? 'Скопировано' : 'Копировать'}
-              </button>
-            </div>
-            <p className="mt-1.5 text-xs text-gray-500">
-              Получатель: Федор П.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-[#c1fffe]/20 bg-[#c1fffe]/5 p-4">
-            <p className="text-sm font-medium text-[#c1fffe] mb-2">
-              После оплаты
-            </p>
-            <p className="text-sm text-gray-300 leading-relaxed">
-              Напишите в{' '}
-              <a
-                href="https://t.me/PasFedor"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-[#c1fffe] underline underline-offset-2 hover:text-white transition-colors"
-              >
-                <Send size={14} />
-                Telegram
-              </a>
-              {' '}|{' '}
-              <a
-                href="https://vk.com/gim237287277"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-[#c1fffe] underline underline-offset-2 hover:text-white transition-colors"
-              >
-                ВКонтакте
-              </a>
-              {' '}|{' '}
-              <a
-                href="mailto:fedorpasyada@yandex.ru"
-                className="inline-flex items-center gap-1 font-medium text-[#c1fffe] underline underline-offset-2 hover:text-white transition-colors"
-              >
-                fedorpasyada@yandex.ru
-              </a>
-              {' '}— активирую Pro в течение часа.
-            </p>
-          </div>
-
-          <p className="text-xs text-gray-500 text-center">
-            После активации подписка будет действовать 30 дней с момента подтверждения
-          </p>
-        </div>
-
-        <button
-          onClick={onClose}
-          className="mt-6 w-full cursor-pointer rounded-xl border-2 border-[#c1fffe]/30 bg-[#c1fffe]/10 px-6 py-3 text-sm font-bold text-[#c1fffe] transition-colors hover:bg-[#c1fffe]/20"
-          type="button"
-        >
-          Понятно, спасибо
-        </button>
-      </div>
-    </div>
-  )
-}
 
 function DonateModal({ onClose }: { onClose: () => void }) {
   useBodyScrollLock(true)
@@ -323,40 +170,39 @@ function DonateModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function PricingPage() {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showDonateModal, setShowDonateModal] = useState(false)
 
   const handleCta = (planName: string) => {
-    if (planName === "Free") {
-      navigate(isAuthenticated ? "/" : "/auth")
-      return
-    }
     if (planName === "Донат") {
       setShowDonateModal(true)
       return
     }
-    if (!isAuthenticated) {
-      navigate("/auth")
-      return
-    }
-    setShowPaymentModal(true)
+    navigate(isAuthenticated ? "/" : "/auth")
   }
 
-  const currentPlan = user?.isPro ? "Pro" : "Free"
+  const currentPlan = "Бесплатно"
 
   return (
     <div className="pricing-page">
-      <SEOHead title="Тарифы и цены — создавай тир лист книг бесплатно" description="Создавайте тир лист книг онлайн бесплатно или оформите Pro. Безлимитные книжные рейтинги, AI-рекомендации, эксклюзивные темы и полная аналитика." url="/pricing" breadcrumbs={[{ name: "Тарифы", url: "/pricing" }]} />
+      <SEOHead title="Поддержать проект — BookStrata" description="BookStrata полностью бесплатен. Поддержите проект донатом, если он вам полезен. Все функции уже доступны без ограничений." url="/pricing" breadcrumbs={[{ name: "Поддержать", url: "/pricing" }]} />
       <div className="pricing-page__container">
         <div className="pricing-page__header">
-          <Breadcrumbs items={[{ label: "Тарифы" }]} />
-          <h1 className="pricing-page__title">Выберите свой план</h1>
+          <button
+            onClick={() => navigate(-1)}
+            className="flex cursor-pointer items-center gap-2 text-xs font-bold uppercase tracking-widest text-(--ink-1) hover:text-(--ink-0) mb-4 transition-colors self-start"
+            type="button"
+          >
+            <ArrowLeft size={14} />
+            Назад
+          </button>
+          <Breadcrumbs items={[{ label: "Поддержать" }]} />
+          <h1 className="pricing-page__title">Поддержать проект</h1>
           <p className="pricing-page__subtitle">
-            Создавайте тир лист книг онлайн, сравнивайте книжные рейтинги
+            BookStrata полностью бесплатен — все функции доступны без ограничений.
             <br />
-            и делитесь подборками. С Pro вы получаете максимум возможностей.
+            Если проект вам полезен, поддержите его развитие любым донатом.
           </p>
         </div>
 
@@ -370,24 +216,10 @@ export default function PricingPage() {
                 <div className="pricing-card__badge">Популярное</div>
               )}
 
-              {plan.name === "Free" && (
-                <ShineBorder
-                  shineColor="rgba(255,255,255,0.15)"
-                  borderWidth={1}
-                  duration={14}
-                />
-              )}
-              {plan.name === "Pro" && (
-                <ShineBorder
-                  shineColor={["#06bcf9", "#a855f7"]}
-                  borderWidth={1}
-                  duration={10}
-                />
-              )}
               {plan.name === "Донат" && (
                 <ShineBorder
                   shineColor="#fbbf24"
-                  borderWidth={1}
+                  borderWidth={2}
                   duration={12}
                 />
               )}
@@ -405,15 +237,15 @@ export default function PricingPage() {
 
                 <p className="pricing-card__description">{plan.description}</p>
 
-                <button
-                  onClick={() => handleCta(plan.name)}
-                  className={`pricing-card__cta ${plan.highlighted ? "pricing-card__cta--pro" : ""}`}
-                  type="button"
-                >
-                  {currentPlan === plan.name && plan.highlighted
-                    ? "Текущий план"
-                    : plan.cta}
-                </button>
+                {plan.cta && (
+                  <button
+                    onClick={() => handleCta(plan.name)}
+                    className={`pricing-card__cta cursor-pointer ${plan.highlighted ? "pricing-card__cta--pro" : ""}`}
+                    type="button"
+                  >
+                    {plan.cta}
+                  </button>
+                )}
 
                 <ul className="pricing-card__features">
                   {plan.features.map((feature) => (
@@ -434,9 +266,6 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {showPaymentModal && (
-        <PaymentModal onClose={() => setShowPaymentModal(false)} />
-      )}
       {showDonateModal && (
         <DonateModal onClose={() => setShowDonateModal(false)} />
       )}

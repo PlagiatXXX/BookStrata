@@ -144,21 +144,7 @@ export async function getLikedTierLists(
   };
 }
 
-const MAX_FREE_TIER_LISTS = 5;
-
 export async function createTierList(userId: number, title: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { isPro: true } });
-  const isPro = user?.isPro ?? false;
-
-  if (!isPro) {
-    const count = await tierListRepository.countByUser(userId);
-    if (count >= MAX_FREE_TIER_LISTS) {
-      const err = new Error(`Достигнут лимит тир-листов (${MAX_FREE_TIER_LISTS}). Оформите Pro для неограниченного количества.`);
-      Object.defineProperty(err, 'statusCode', { value: 403 });
-      throw err;
-    }
-  }
-
   const randomSuffix = Math.random().toString(36).substring(2, 8);
   const slug = generateUniqueSlug(title, randomSuffix);
   const tierList = await tierListRepository.create(userId, { title, slug });

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '@/ui/Modal';
-import { Download, Check, ShieldCheck } from 'lucide-react';
+import { Download, Check } from 'lucide-react';
 
 export type ExportTheme = 'default' | 'minimalist' | 'vintage' | 'cyberpunk';
 
@@ -9,7 +9,6 @@ interface ExportModalProps {
   onClose: () => void;
   onExport: (theme: ExportTheme, showWatermark: boolean) => Promise<void>;
   username: string;
-  isPro: boolean;
 }
 
 const THEMES: { id: ExportTheme; name: string; description: string; colors: string[] }[] = [
@@ -19,7 +18,7 @@ const THEMES: { id: ExportTheme; name: string; description: string; colors: stri
   { id: 'cyberpunk', name: 'Киберпанк', description: 'Неон и темное будущее', colors: ['#000000', '#00ff00'] },
 ];
 
-export const ExportModal = ({ isOpen, onClose, onExport, username, isPro }: ExportModalProps) => {
+export const ExportModal = ({ isOpen, onClose, onExport, username }: ExportModalProps) => {
   const [selectedTheme, setSelectedTheme] = useState<ExportTheme>('default');
   const [showWatermark, setShowWatermark] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -92,14 +91,6 @@ export const ExportModal = ({ isOpen, onClose, onExport, username, isPro }: Expo
               </button>
             </div>
 
-            {!isPro && (
-              <div className="nb-heavy-border bg-[#ffbd58]/20 p-4 flex items-start gap-3">
-                <ShieldCheck size={20} className="text-black shrink-0 mt-0.5" />
-                <p className="nb-label-md text-[10px] text-black leading-snug">
-                  Удаление водяного знака доступно только пользователям с <strong>Pro подпиской</strong>.
-                </p>
-              </div>
-            )}
           </div>
         </div>
 

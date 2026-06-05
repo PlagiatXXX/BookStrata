@@ -2,54 +2,19 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { ImagePlus } from "lucide-react";
-import { sileo } from "sileo";
-import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 
 interface ImageUploaderProps {
   onUpload?: (files: File[]) => void;
-  booksCount?: number;
-  isPro?: boolean;
 }
 
 export const ImageUploader = ({
   onUpload = () => {},
-  booksCount = 0,
-  isPro = false,
 }: ImageUploaderProps) => {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      if (isPro) return onUpload(acceptedFiles);
-
-      const remainingBooks = MAX_BOOKS_PER_TIER_LIST - booksCount;
-
-      if (booksCount >= MAX_BOOKS_PER_TIER_LIST) {
-        sileo.action({
-          title: "Лимит книг",
-          description:
-            "Достигнуто максимальное количество книг в тир-листе (20). Оформите Pro для неограниченного количества.",
-          duration: 3000,
-          button: {
-            title: "Оформить Pro",
-            onClick: () => {
-              // TODO: Здесь будет переход на страницу оплаты Pro-подписки
-            },
-          },
-        });
-        return;
-      }
-
-      if (acceptedFiles.length > remainingBooks) {
-        sileo.error({
-          title: "Превышен лимит",
-          description: `Можно добавить только ${remainingBooks} книг(и). Вы выбрали ${acceptedFiles.length}.`,
-          duration: 3000,
-        });
-        acceptedFiles = acceptedFiles.slice(0, remainingBooks);
-      }
-
       onUpload(acceptedFiles);
     },
-    [onUpload, booksCount, isPro],
+    [onUpload],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -60,10 +25,7 @@ export const ImageUploader = ({
       "image/webp": [],
       "image/gif": [],
     },
-    disabled: !isPro && booksCount >= MAX_BOOKS_PER_TIER_LIST,
   });
-
-  const isDisabled = !isPro && booksCount >= MAX_BOOKS_PER_TIER_LIST;
 
   return (
     <div
@@ -71,13 +33,12 @@ export const ImageUploader = ({
       className={`flex aspect-square cursor-pointer flex-col items-center justify-center nb-heavy-border border-2 border-dashed
                   border-black text-white transition-colors
                   hover:border-primary hover:text-primary bg-black w-20 h-20
-                  ${isDragActive ? "border-primary bg-primary/10" : ""}
-                  ${isDisabled ? "cursor-not-allowed opacity-50 hover:border-black hover:text-white" : ""}`}
+                  ${isDragActive ? "border-primary bg-primary/10" : ""}`}
     >
       <input {...getInputProps()} />
       <ImagePlus size={16} />
       <span className="text-center text-[10px] mt-0.5 leading-tight">
-        {isDisabled ? "Лимит" : isDragActive ? "Бросьте" : "Загрузить"}
+        {isDragActive ? "Бросьте" : "Загрузить"}
       </span>
     </div>
   );
