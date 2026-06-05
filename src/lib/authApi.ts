@@ -339,7 +339,7 @@ export async function refreshAccessToken(): Promise<string> {
   isRefreshing = true;
 
   try {
-    authLogger.info("Refreshing access token");
+    authLogger.debug("Refreshing access token");
 
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",

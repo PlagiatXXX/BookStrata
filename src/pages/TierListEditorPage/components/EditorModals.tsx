@@ -70,6 +70,7 @@ interface EditorModalsProps {
     author: string | null;
     coverImageUrl: string;
   }> | null) => void;
+  isSavingBeforeLeave?: boolean;
   isUpdatingBook: boolean;
   isExportModalOpen: boolean;
   onCloseExport: () => void;
@@ -105,6 +106,7 @@ export const EditorModals = ({
   onSaveAndLeave,
   onSaveBook,
   onBookAdded,
+  isSavingBeforeLeave = false,
   isUpdatingBook,
   isExportModalOpen,
   onCloseExport,
@@ -140,7 +142,7 @@ export const EditorModals = ({
         onConfirm={onConfirmLeave}
         onSaveAndLeave={onSaveAndLeave}
         isUpdatingBook={isUpdatingBook}
-        isSaving={false}
+        isSaving={isSavingBeforeLeave}
       />
 
       <DeleteRatingModal

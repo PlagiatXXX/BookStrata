@@ -9,14 +9,14 @@ export const PUBLIC_TIER_LISTS_GC_TIME_MS = 300000;
 // === Section labels ===
 export const SECTION_LABELS: Record<string, string> = {
   private: 'Личные тир-листы',
-  public: 'Публичные тир-листы',
+  public: 'Популярные',
   favorites: 'Избранное',
 };
 
 // === Section descriptions ===
 export const SECTION_DESCRIPTIONS: Record<string, string> = {
   private: 'Ваши персональные тир-листы с книгами.',
-  public: 'Подборка публичных рейтингов от сообщества.',
+  public: 'Рейтинги сообщества, отсортированные по популярности.',
   favorites: 'Тир-листы, которые вы лайкнули.',
 };
 

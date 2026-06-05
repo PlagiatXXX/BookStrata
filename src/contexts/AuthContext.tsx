@@ -34,13 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     try {
-      authLogger.info("Fetching user profile", { force });
+      authLogger.info(`Fetching user profile (force=${force})`);
       const fullUserData = await apiGetMe();
       setUser(mapApiUserToAuthUser(fullUserData));
-      authLogger.info("User data fetched successfully", {
-        userId: fullUserData.id,
-        username: fullUserData.username,
-      });
+      authLogger.debug(`User data fetched: id=${fullUserData.id} username=${fullUserData.username}`);
     } catch (err) {
       authLogger.warn("Failed to fetch user profile", {
         error: err instanceof Error ? err.message : String(err),

@@ -201,7 +201,7 @@ export const TierLabel = memo(
         )}
 
         {onChangeColor && (
-          <div className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover/label:opacity-100 focus-within:opacity-100 max-md:opacity-100">
+          <div className="absolute bottom-2 right-2 z-20 opacity-0 transition-opacity group-hover/label:opacity-100 focus-within:opacity-100 max-md:opacity-100">
             <button
               onClick={(e) => {
                 e.stopPropagation();

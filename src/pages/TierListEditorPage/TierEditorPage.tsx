@@ -64,6 +64,7 @@ const TierListEditorContent = () => {
     isSearchModalOpen,
     setIsSearchModalOpen,
 
+    isSavingBeforeLeave,
     setIsSavingBeforeLeave,
     isExportModalOpen,
     setIsExportModalOpen,
@@ -441,7 +442,6 @@ const TierListEditorContent = () => {
       setIgnoreUnsavedBlocker,
       setDeletedTierIds,
       setIsSavingBeforeLeave,
-      cancel: () => {},
       forceSave: handleSave,
       navigate,
       logger,
@@ -579,6 +579,7 @@ const TierListEditorContent = () => {
         onSaveAndLeave={handleSaveBeforeLeave}
         onSaveBook={handleSaveBook}
         onBookAdded={handleBookAdded}
+        isSavingBeforeLeave={isSavingBeforeLeave}
         isUpdatingBook={isUpdatingBook}
         isExportModalOpen={isExportModalOpen}
         onCloseExport={() => setIsExportModalOpen(false)}

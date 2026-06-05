@@ -50,7 +50,6 @@ export interface TasteMatchResult {
 }
 
 export async function apiGetMe(): Promise<User> {
-  userLogger.info("Получение профиля текущего пользователя");
   return apiClient.get<User>("/users/me");
 }
 

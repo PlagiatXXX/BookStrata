@@ -38,7 +38,7 @@ function scrollToSection(id: string) {
 }
 
 const mainLinks = [
-  { href: "/", label: "Мои рейтинги", icon: <List size={14} /> },
+  { href: "/", label: "Главная", icon: <List size={14} /> },
   { href: "/templates", label: "Библиотека", icon: <Folder size={14} /> },
   { href: "/community", label: "Сообщество", icon: <Users size={14} /> },
 ];

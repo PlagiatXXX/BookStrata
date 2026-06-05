@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { Globe, Lock, Star } from 'lucide-react';
-import { Button } from '@/ui/Button';
 import type { TemplateLibrarySidebarProps } from '../types';
 import { SECTION_LABELS } from '../constants';
 
@@ -75,16 +74,6 @@ export const TemplateLibrarySidebar = memo(({
           </div>
         </div>
       )}
-
-      {/* Pro upsell */}
-      <div className="mt-6 rounded-xl border border-cyan-700/50 bg-cyan-900/30 p-3">
-        <p className="text-xs text-cyan-100/90">
-          Обновитесь до Pro для неограниченных шаблонов и кастомных тем.
-        </p>
-        <Button className="mt-3 w-full" size="sm">
-          Обновить
-        </Button>
-      </div>
     </aside>
   );
 });

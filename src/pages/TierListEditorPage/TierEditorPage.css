@@ -164,7 +164,7 @@
   align-items: center;
   justify-content: center;
   border-right: var(--nb-border-width) solid var(--nb-border);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .neo-brutalist-editor .nb-book-track {

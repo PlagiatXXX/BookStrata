@@ -36,8 +36,8 @@ export class TierListRepository {
       select: { userId: true },
     });
     if (!list) {
-      const error = new Error("Forbidden");
-      (error as any).statusCode = 403;
+      const error = new Error("Тир-лист не найден");
+      (error as any).statusCode = 404;
       throw error;
     }
     return list.userId;

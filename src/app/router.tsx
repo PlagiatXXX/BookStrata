@@ -90,6 +90,7 @@ const TermsPage = lazy(() => import("@/pages/TermsPage").then(m => ({ default: m
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })))
 const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage").then(m => ({ default: m.OAuthCallbackPage })))
 const UserProfilePage = lazy(() => import("@/pages/UserProfilePage/UserProfilePage"))
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage/NotFoundPage").then(m => ({ default: m.default })))
 const CollectionPage = lazy(() =>
   import("@/pages/CollectionPage").then((module) => ({
     default: module.CollectionPage,
@@ -236,4 +237,5 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  { path: "*", element: <NotFoundPage /> },
 ]);

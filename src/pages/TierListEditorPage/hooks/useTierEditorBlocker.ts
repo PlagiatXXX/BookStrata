@@ -20,7 +20,6 @@ interface UseTierEditorBlockerParams {
   setIgnoreUnsavedBlocker: (value: boolean) => void;
   setDeletedTierIds: React.Dispatch<React.SetStateAction<number[]>>;
   setIsSavingBeforeLeave: (value: boolean) => void;
-  cancel: () => void;
   forceSave: () => Promise<void>;
   navigate: (path: string) => void;
   logger: {
@@ -41,7 +40,6 @@ export function useTierEditorBlocker({
   setIgnoreUnsavedBlocker,
   setDeletedTierIds,
   setIsSavingBeforeLeave,
-  cancel,
   forceSave,
   navigate,
   logger,
@@ -82,9 +80,8 @@ export function useTierEditorBlocker({
   const handleSaveBeforeLeave = async () => {
     setIsSavingBeforeLeave(true);
     try {
-      cancel();
       await forceSave();
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Сначала отключаем блокер, чтобы hasUnsavedChanges=false не сбросило его
       setShowUnsavedModal(false);
       setIgnoreUnsavedBlocker(true);
       blocker.proceed?.();

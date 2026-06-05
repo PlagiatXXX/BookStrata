@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Folder, X, Menu, Globe, LogOut, Users, Crown } from "lucide-react";
+import { List, Library, X, Menu, Globe, LogOut, Users, Crown } from "lucide-react";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -46,8 +46,8 @@ export const Header = ({
       if (path === "/community") return "Новости";
       if (path === "/forum") return "Актив";
       if (path === "/templates" || path.startsWith("/templates/"))
-        return "Шаблоны";
-      if (path === "/" || path === "/dashboard") return "Мои Рейтинги";
+        return "Библиотека";
+      if (path === "/" || path === "/dashboard") return "Главная";
       return undefined;
     })();
 
@@ -71,7 +71,7 @@ export const Header = ({
 
   const navItems: NavItem[] = [
     {
-      label: "Мои Рейтинги",
+      label: "Главная",
       onClick: onMyRatingsClick,
       icon: <List size={18} />,
       description: "Управление рейтингами",
@@ -91,9 +91,9 @@ export const Header = ({
     ...(showTemplatesNav
       ? [
           {
-            label: "Шаблоны",
+            label: "Библиотека",
             onClick: () => navigate("/templates"),
-            icon: <Folder size={18} />,
+            icon: <Library size={18} />,
             description: "Готовые шаблоны",
           },
         ]
