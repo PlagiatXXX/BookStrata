@@ -115,7 +115,7 @@ describe("ExternalNewsService", () => {
 
       const result = await service.getBooksNews(5)
 
-      expect(result[0].id).toMatch(/^The Guardian-\d+$/)
+      expect(result[0].id).toMatch(/^The Guardian-[a-f0-9]+$/)
     })
 
     it("должен извлекать изображение из enclosure", async () => {

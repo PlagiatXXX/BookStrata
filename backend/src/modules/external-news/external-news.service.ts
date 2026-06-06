@@ -1,3 +1,4 @@
+import crypto from "crypto"
 import { parseStringPromise } from "xml2js"
 import { createLogger } from "../../lib/logger.js"
 import { getFromCache, setToCache } from "../../lib/cache.js"
@@ -53,7 +54,7 @@ function extractImage(
 
 function buildId(link: string | undefined, title: string | undefined, source: string): string {
   const raw = link ?? title ?? `${source}-${Date.now()}`
-  const hash = raw.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const hash = crypto.createHash("md5").update(raw).digest("hex").slice(0, 12)
   return `${source}-${hash}`
 }
 

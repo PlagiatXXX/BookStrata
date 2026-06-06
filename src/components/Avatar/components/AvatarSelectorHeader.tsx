@@ -9,7 +9,7 @@ export function AvatarSelectorHeader({ onClose }: AvatarSelectorHeaderProps) {
       </h2>
       <button
         onClick={onClose}
-        className="rounded-full p-2 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+        className="rounded-full p-2 text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
         aria-label="Закрыть"
       >
         <X size={20} />

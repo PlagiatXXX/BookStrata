@@ -14,16 +14,16 @@ export function AvatarSelectorFooter({
     <div className="flex gap-3 mt-6 pt-4 border-t border-surface-border">
       <button
         onClick={onClose}
-        className="flex-1 py-3 rounded-xl font-medium text-gray-400 hover:text-white transition-colors"
+        className="flex-1 py-3 rounded-xl font-medium text-gray-400 hover:text-white transition-colors cursor-pointer"
       >
         Отмена
       </button>
       <button
         onClick={onSave}
         disabled={disabled}
-        className={`relative flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center ${
+          className={`relative flex-1 py-3 rounded-xl font-medium transition-all flex items-center justify-center ${
           hasSelection
-            ? "bg-primary text-white hover:bg-primary/90"
+            ? "bg-primary text-white hover:bg-primary/90 cursor-pointer"
             : "bg-primary/20 text-primary/50 cursor-not-allowed"
         }`}
       >

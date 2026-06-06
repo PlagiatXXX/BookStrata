@@ -2,11 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createLogger } from "@/lib/logger";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import {
-  apiGenerateAvatar,
-  apiGetAvatarLimit,
-  type AvatarLimitInfo,
-} from "@/lib/avatarApi";
+import { apiGenerateAvatar, apiGetAvatarLimit, type AvatarLimitInfo } from "@/lib/avatarApi";
 import { AvatarSelectorHeader } from "./components/AvatarSelectorHeader";
 import { AvatarPreview } from "./components/AvatarPreview";
 import { TabNavigation } from "./components/TabNavigation";
@@ -60,10 +56,7 @@ export function AvatarSelector({
       queryClient.setQueryData(
         ["avatarLimit"],
         (previous: AvatarLimitInfo | undefined) => {
-          if (!previous) {
-            return previous;
-          }
-
+          if (!previous) return previous;
           return {
             ...previous,
             remaining: data.remaining,

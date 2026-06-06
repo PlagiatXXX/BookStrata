@@ -16,25 +16,23 @@ export type ChangePasswordInput = {
   new_password: string;
 };
 
-// Эндпоинты для работы с профилем пользователя
+// Select для публичных данных профиля (используется во всех запросах своего профиля)
+const userProfileSelect = {
+  id: true,
+  email: true,
+  username: true,
+  avatarUrl: true,
+  role: {
+    select: { name: true },
+  },
+  createdAt: true,
+} as const;
 
 // GET /api/users/me - получить текущего пользователя
 export async function getMe(userId: number) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      avatarUrl: true,
-    
-      role: {
-        select: {
-          name: true,
-        },
-      },
-      createdAt: true,
-    },
+    select: userProfileSelect,
   });
 
   if (!user) {
@@ -64,17 +62,7 @@ export async function updateUser(userId: number, username: string) {
   return prisma.user.update({
     where: { id: userId },
     data: { username },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      avatarUrl: true,
-    
-      role: {
-        select: { name: true },
-      },
-      createdAt: true,
-    },
+    select: userProfileSelect,
   });
 }
 
@@ -83,16 +71,7 @@ export async function updateAvatar(userId: number, avatarUrl: string | null) {
   return prisma.user.update({
     where: { id: userId },
     data: { avatarUrl: avatarUrl },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      avatarUrl: true,
-    
-      role: {
-        select: { name: true },
-      },
-    },
+    select: userProfileSelect,
   });
 }
 
@@ -101,16 +80,7 @@ export async function deleteAvatar(userId: number) {
   return prisma.user.update({
     where: { id: userId },
     data: { avatarUrl: null },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      avatarUrl: true,
-    
-      role: {
-        select: { name: true },
-      },
-    },
+    select: userProfileSelect,
   });
 }
 

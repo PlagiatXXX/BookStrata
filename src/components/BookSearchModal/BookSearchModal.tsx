@@ -489,9 +489,7 @@ export const BookSearchModal = ({
           duration: 3000,
           button: {
             title: "Оформить Pro",
-            onClick: () => {
-              // TODO: Здесь будет переход на страницу оплаты Pro-подписки
-            },
+            onClick: () => {},
           },
         });
         setViewBook(null);

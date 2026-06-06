@@ -19,7 +19,7 @@ export function PresetsTab({
               onCategoryChange(key as PresetsTabProps["activeCategory"])
             }
             disabled={isBusy}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
               activeCategory === key
                 ? "bg-primary text-white"
                 : "bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 text-gray-400 hover:text-white"
@@ -36,7 +36,7 @@ export function PresetsTab({
             key={preset.id}
             onClick={() => onPresetSelect(preset)}
             disabled={isBusy}
-            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+            className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
               selectedPresetUrl === preset.full
                 ? "border-primary ring-2 ring-primary/50"
                 : "border-transparent hover:border-gray-400"

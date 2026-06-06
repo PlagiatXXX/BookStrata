@@ -225,6 +225,7 @@ describe("users.service", () => {
           role: {
             select: { name: true },
           },
+          createdAt: true,
         },
       });
 
@@ -270,6 +271,7 @@ describe("users.service", () => {
           role: {
             select: { name: true },
           },
+          createdAt: true,
         },
       });
 

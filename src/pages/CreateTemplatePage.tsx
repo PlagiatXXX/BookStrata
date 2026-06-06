@@ -59,8 +59,7 @@ const CreateTemplatePage: React.FC = () => {
           button: {
             title: "Оформить Pro",
             onClick: () => {
-              // TODO: Здесь будет переход на страницу оплаты Pro-подписки
-              navigate("/pro");
+              navigate("/pricing");
             },
           },
         });

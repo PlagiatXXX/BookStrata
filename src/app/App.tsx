@@ -7,12 +7,19 @@ import { Spinner } from "@/components/Spinner";
 import { AchievementNotification } from "@/components/AchievementNotification/AchievementNotification";
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
 import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
+import { CookieConsent } from "@/components/CookieConsent/CookieConsent";
 import { SEOHead } from "@/components/SEO/SEOHead";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import "../styles/sileo-custom.css";
 
 function AppShell() {
   const { pathname } = useLocation();
   const { newAchievement, clearNotification } = useAchievementNotifications();
+  const { initIfConsented } = useAnalytics();
+
+  useEffect(() => {
+    initIfConsented();
+  }, [initIfConsented]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -36,6 +43,7 @@ function AppShell() {
         </Suspense>
         <Toaster position="top-center" theme="system" />
         <AchievementNotification achievement={newAchievement} onClose={clearNotification} />
+        <CookieConsent />
         <FeedbackButton />
       </AuthProvider>
     </HelmetProvider>

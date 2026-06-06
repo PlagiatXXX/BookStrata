@@ -145,7 +145,7 @@ function GenerateButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="relative w-full py-3.5 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-violet-500 hover:to-fuchsia-500 transition-all flex items-center justify-center"
+      className="relative w-full py-3.5 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-violet-500 hover:to-fuchsia-500 transition-all flex items-center justify-center cursor-pointer"
     >
       <span className={isBusy ? "opacity-0" : "opacity-100"}>
         <span className="inline-flex items-center gap-2">

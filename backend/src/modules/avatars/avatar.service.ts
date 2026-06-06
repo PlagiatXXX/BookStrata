@@ -5,74 +5,35 @@ import { SubscriptionsService } from "../subscriptions/subscriptions.service.js"
 
 const logger = createLogger("Avatars", { color: "yellow" });
 
-const subscriptionsService = new SubscriptionsService();
-
 const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY;
 const POLLINATIONS_MODEL = process.env.POLLINATIONS_MODEL || "zimage";
 const POLLINATIONS_API_URL = "https://gen.pollinations.ai";
-const DAILY_AVATAR_LIMIT_FREE = 0;
-const DAILY_AVATAR_LIMIT_PRO = 50;
+const DAILY_LIMIT = 10;
 
-async function checkAvatarLimit(
-  userId: number,
-  userRole?: string,
-): Promise<{ allowed: boolean; remaining: number; error?: string }> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      aiAvatarsGenerated: true,
-      lastAvatarResetAt: true,
-    },
-  });
-
-  if (!user) {
-    return { allowed: false, remaining: 0, error: "User not found" };
+async function uploadWithRetry(
+  url: string,
+  folder: string,
+  retries = 2,
+  delayMs = 1500,
+): ReturnType<typeof uploadFromUrl> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await uploadFromUrl(url, folder);
+    } catch (error) {
+      if (attempt < retries) {
+        logger.warn(`uploadFromUrl attempt ${attempt + 1} failed, retrying in ${delayMs}ms`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      } else {
+        throw error;
+      }
+    }
   }
-
-  const isAdmin = userRole === "admin" || userRole === "moderator";
-  if (isAdmin) {
-    return { allowed: true, remaining: DAILY_AVATAR_LIMIT_PRO };
-  }
-
-  const isPro = await subscriptionsService.isProUser(userId);
-  const limit = isPro ? DAILY_AVATAR_LIMIT_PRO : DAILY_AVATAR_LIMIT_FREE;
-
-  const now = new Date();
-  const lastReset = new Date(user.lastAvatarResetAt);
-  const isNewDay =
-    lastReset.getDate() !== now.getDate() ||
-    lastReset.getMonth() !== now.getMonth() ||
-    lastReset.getFullYear() !== now.getFullYear();
-
-  if (isNewDay) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        aiAvatarsGenerated: 0,
-        lastAvatarResetAt: now,
-      },
-    });
-
-    return { allowed: true, remaining: limit };
-  }
-
-  const remaining = Math.max(0, limit - user.aiAvatarsGenerated);
-
-  if (user.aiAvatarsGenerated >= limit) {
-    return {
-      allowed: false,
-      remaining: 0,
-      error: `Ежедневный лимит исчерпан (${limit} в день)`,
-    };
-  }
-
-  return { allowed: true, remaining };
+  throw new Error("uploadWithRetry: all attempts failed");
 }
 
 export async function generateAvatar(
   prompt: string,
   userId: number,
-  userRole?: string,
 ): Promise<{
   success: boolean;
   imageUrl?: string;
@@ -80,36 +41,58 @@ export async function generateAvatar(
   remaining?: number;
 }> {
   try {
-    const limitCheck = await checkAvatarLimit(userId, userRole);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { aiAvatarsGenerated: true, lastAvatarResetAt: true },
+    });
 
-    if (!limitCheck.allowed) {
-      return { success: false, error: limitCheck.error || "Limit reached" };
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    const now = new Date();
+    const lastReset = new Date(user.lastAvatarResetAt);
+    const isNewDay =
+      lastReset.getDate() !== now.getDate() ||
+      lastReset.getMonth() !== now.getMonth() ||
+      lastReset.getFullYear() !== now.getFullYear();
+
+    const used = isNewDay ? 0 : user.aiAvatarsGenerated;
+
+    if (used >= DAILY_LIMIT) {
+      return {
+        success: false,
+        error: `Ежедневный лимит исчерпан (${DAILY_LIMIT} в день)`,
+        remaining: 0,
+      };
     }
 
     const encodedPrompt = encodeURIComponent(prompt);
     const seed = Math.floor(Math.random() * 1000000);
 
-    let imageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=${POLLINATIONS_MODEL || "flux"}&width=512&height=512&seed=${seed}&nologo=true`;
+    const baseImageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=${POLLINATIONS_MODEL || "flux"}&width=512&height=512&seed=${seed}&nologo=true`;
+    const imageUrl = POLLINATIONS_API_KEY
+      ? `${baseImageUrl}&key=${POLLINATIONS_API_KEY}`
+      : baseImageUrl;
 
-    if (POLLINATIONS_API_KEY) {
-      imageUrl += `&key=${POLLINATIONS_API_KEY}`;
-    } else {
-      logger.warn("POLLINATIONS_API_KEY not set - generation will fail");
+    if (!POLLINATIONS_API_KEY) {
+      logger.warn("POLLINATIONS_API_KEY not set - generation may be rate-limited");
     }
 
-    // Security: Upload the generated image to Cloudinary to hide the external API key
-    // This ensures the client never sees the POLLINATIONS_API_KEY in the response
-    const uploadResult = await uploadFromUrl(imageUrl, "tiermaker-pro/generated-avatars");
+    const uploadResult = await uploadWithRetry(imageUrl, "tiermaker-pro/generated-avatars");
 
     await prisma.user.update({
       where: { id: userId },
-      data: { aiAvatarsGenerated: { increment: 1 } },
+      data: {
+        aiAvatarsGenerated: isNewDay ? 1 : { increment: 1 },
+        lastAvatarResetAt: now,
+      },
     });
 
     return {
       success: true,
       imageUrl: uploadResult.url,
-      remaining: limitCheck.remaining - 1,
+      remaining: DAILY_LIMIT - used - 1,
     };
   } catch (error) {
     logger.error(error as Error, { function: "generateAvatar", prompt });
@@ -120,24 +103,13 @@ export async function generateAvatar(
   }
 }
 
-export async function getAvatarLimit(userId: number, userRole?: string) {
+export async function getAvatarLimit(userId: number) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: {
-      aiAvatarsGenerated: true,
-      lastAvatarResetAt: true,
-    },
+    select: { aiAvatarsGenerated: true, lastAvatarResetAt: true },
   });
 
   if (!user) return null;
-
-  const isAdmin = userRole === "admin" || userRole === "moderator";
-  if (isAdmin) {
-    return { used: 0, limit: DAILY_AVATAR_LIMIT_PRO, remaining: DAILY_AVATAR_LIMIT_PRO };
-  }
-
-  const isPro = await subscriptionsService.isProUser(userId);
-  const limit = isPro ? DAILY_AVATAR_LIMIT_PRO : DAILY_AVATAR_LIMIT_FREE;
 
   const now = new Date();
   const lastReset = new Date(user.lastAvatarResetAt);
@@ -146,13 +118,7 @@ export async function getAvatarLimit(userId: number, userRole?: string) {
     lastReset.getMonth() !== now.getMonth() ||
     lastReset.getFullYear() !== now.getFullYear();
 
-  if (isNewDay) {
-    return { used: 0, limit, remaining: limit };
-  }
+  const used = isNewDay ? 0 : user.aiAvatarsGenerated;
 
-  return {
-    used: user.aiAvatarsGenerated,
-    limit,
-    remaining: Math.max(0, limit - user.aiAvatarsGenerated),
-  };
+  return { used, limit: DAILY_LIMIT, remaining: DAILY_LIMIT - used };
 }
