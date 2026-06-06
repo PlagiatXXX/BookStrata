@@ -5,19 +5,15 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { DashboardPage } from "./DashboardPage";
-import * as apiModule from "@/lib/tierListApi";
 import * as userApiModule from "@/lib/userApi";
-import type { ApiTierListResponse } from "@/types/api";
 import * as authContextModule from "@/hooks/useAuthContext";
+import type { Mock } from "vitest";
 
-// Моки для хуков
-vi.mock("@/lib/tierListApi", () => ({
-  getUserTierLists: vi.fn(),
-  createTierList: vi.fn(),
-  updateTierListTitle: vi.fn(),
-  deleteTierList: vi.fn(),
+const { mockNavigate } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
 }));
 
+// Моки для хуков
 vi.mock("@/lib/userApi", () => ({
   apiGetUserStats: vi.fn(),
 }));
@@ -26,33 +22,35 @@ vi.mock("@/hooks/useAuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock("sileo", () => ({
-  sileo: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
+vi.mock("@/hooks/useAiLibrarian", () => ({
+  useAiLibrarian: vi.fn(() => ({
+    messages: [],
+    isStreaming: false,
+    streamingContent: "",
+    error: null,
+    status: "online",
+    sendMessage: vi.fn(),
+    clearMessages: vi.fn(),
+    refreshStatus: vi.fn(),
+  })),
 }));
 
-const mockTierLists = [
-  {
-    id: "1",
-    title: "Test Tier List 1",
-    createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z",
-    isPublic: true,
-    user: { id: 1, username: "testuser" },
-    likesCount: 5,
-  },
-  {
-    id: "2",
-    title: "Test Tier List 2",
-    createdAt: "2024-01-02T00:00:00Z",
-    updatedAt: "2024-01-02T00:00:00Z",
-    isPublic: false,
-    user: { id: 1, username: "testuser" },
-    likesCount: 10,
-  },
-];
+vi.mock("@/hooks/useBodyScrollLock", () => ({
+  useBodyScrollLock: vi.fn(),
+}));
+
+vi.mock("@/lib/logger", () => {
+  const m = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+  return { default: m, createLogger: vi.fn(() => m) };
+});
+
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -87,19 +85,8 @@ describe("DashboardPage", () => {
       refreshUser: vi.fn(),
     });
 
-    // Моки по умолчанию
-    vi.mocked(apiModule.getUserTierLists).mockResolvedValue({
-      data: mockTierLists,
-      meta: {
-        totalItems: 2,
-        itemCount: 2,
-        itemsPerPage: 10,
-        totalPages: 1,
-        currentPage: 1,
-      },
-    });
-
-    vi.mocked(userApiModule.apiGetUserStats).mockResolvedValue({
+    // Мокаем статистику
+    vi.mocked(userApiModule.apiGetUserStats as Mock).mockResolvedValue({
       tierListsCount: 2,
       publishedCount: 1,
       likesCount: 15,
@@ -108,154 +95,68 @@ describe("DashboardPage", () => {
       totalBooks: 10,
       lastActivity: new Date().toISOString(),
     });
-
-    vi.mocked(apiModule.createTierList).mockResolvedValue({
-      id: "3",
-      title: "New Tier List",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isPublic: false,
-      user: { id: 1, username: "testuser" },
-      likesCount: 0,
-    } as unknown as ApiTierListResponse);
-
-    vi.mocked(apiModule.updateTierListTitle).mockResolvedValue({
-      ...mockTierLists[0],
-      title: "Updated Title",
-    });
-
-    vi.mocked(apiModule.deleteTierList).mockResolvedValue({ message: "Tier list deleted successfully" });
   });
 
-  it("должен рендериться с заголовком", () => {
+  it("должен рендериться с приветствием пользователя", () => {
     render(<DashboardPage />, { wrapper: createWrapper() });
 
-    expect(screen.getByText("Ваши рейтинги")).toBeInTheDocument();
+    // Чип
+    expect(screen.getByText("Панель управления")).toBeInTheDocument();
+    // Имя пользователя в приветствии (текст разбит на h1 + span)
+    expect(screen.getByText("Добро пожаловать,")).toBeInTheDocument();
+    expect(screen.getByText("testuser")).toBeInTheDocument();
+    // Кнопки
+    expect(screen.getByText("Создать тир-лист")).toBeInTheDocument();
+    expect(screen.getByText("Смотреть тренды")).toBeInTheDocument();
   });
 
-  it("должен показывать загрузку при isLoading", async () => {
-    vi.mocked(apiModule.getUserTierLists).mockImplementation(
-      () => new Promise(() => {}), // Никогда не разрешается
-    );
-
+  it("должен показывать AI Librarian карточку", () => {
     render(<DashboardPage />, { wrapper: createWrapper() });
 
-    await waitFor(() => {
-      expect(screen.getByText(/загрузка тир-листов/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText("Букстраж")).toBeInTheDocument();
+    expect(screen.getByText("AI")).toBeInTheDocument();
   });
 
-  it("должен отображать тир-листы", async () => {
-    render(<DashboardPage />, { wrapper: createWrapper() });
-
-    await waitFor(() => {
-      expect(screen.getByText("Test Tier List 1")).toBeInTheDocument();
-      expect(screen.getByText("Test Tier List 2")).toBeInTheDocument();
-    });
-  });
-
-  it("должен фильтровать тир-листы по поиску", async () => {
-    render(<DashboardPage />, { wrapper: createWrapper() });
-
-    await waitFor(() => {
-      expect(screen.getByText("Test Tier List 1")).toBeInTheDocument();
-    });
-
-    // Поиск через DashboardLayout - просто проверяем что компонент рендерится
-    // Реальная логика поиска тестируется в useTierListsPagination.spec.ts
-    expect(screen.getByText("Test Tier List 2")).toBeInTheDocument();
-  });
-
-  it("должен показывать пустое состояние когда нет тир-листов", async () => {
-    vi.mocked(apiModule.getUserTierLists).mockResolvedValue({
-      data: [],
-      meta: {
-        totalItems: 0,
-        itemCount: 0,
-        itemsPerPage: 10,
-        totalPages: 0,
-        currentPage: 1,
-      },
+  it("должен рендериться без пользователя (isLoading) без ошибок", () => {
+    vi.mocked(authContextModule.useAuth).mockReturnValue({
+      user: null,
+      isLoading: true,
+      isAuthenticated: false,
+      logout: vi.fn(),
+      refreshUser: vi.fn(),
     });
 
     render(<DashboardPage />, { wrapper: createWrapper() });
 
-    await waitFor(() => {
-      expect(screen.getByText("У вас еще нет тир-листов")).toBeInTheDocument();
-    });
+    // Страница не падает, приветствие без username
+    expect(screen.getByText("Панель управления")).toBeInTheDocument();
   });
 
-  it("должен открывать modal создания при клике на кнопку", async () => {
-    // Мокаем пустой список чтобы показать кнопку создания
-    vi.mocked(apiModule.getUserTierLists).mockResolvedValue({
-      data: [],
-      meta: {
-        totalItems: 0,
-        itemCount: 0,
-        itemsPerPage: 10,
-        totalPages: 0,
-        currentPage: 1,
-      },
-    });
-
+  it("должен открывать AI Librarian модалку при клике на карточку", async () => {
     render(<DashboardPage />, { wrapper: createWrapper() });
 
-    await waitFor(() => {
-      expect(screen.getByText("Создать первый тир-лист")).toBeInTheDocument();
-    });
+    // Кликаем по карточке "Букстраж"
+    fireEvent.click(screen.getByText("Букстраж"));
 
-    fireEvent.click(screen.getByText("Создать первый тир-лист"));
-
+    // Модалка открывается — проверяем наличие заголовка
     await waitFor(() => {
-      expect(screen.getByText("Создать новый тир-лист")).toBeInTheDocument();
+      expect(screen.getByText("BookStrata AI")).toBeInTheDocument();
     });
   });
 
-  describe("модальные окна", () => {
-    it("должен открывать modal переименования", async () => {
-      render(<DashboardPage />, { wrapper: createWrapper() });
+  it("должен переходить на страницу создания тир-листа при клике 'Создать тир-лист'", () => {
+    render(<DashboardPage />, { wrapper: createWrapper() });
 
-      await waitFor(() => {
-        expect(screen.getByText("Test Tier List 1")).toBeInTheDocument();
-      });
+    fireEvent.click(screen.getByText("Создать тир-лист"));
 
-      // Находим кнопку переименования по aria-label (используем regex для учета динамического названия)
-      const renameButtons = screen.getAllByLabelText(/Переименовать/);
-      if (renameButtons.length > 0) {
-        fireEvent.click(renameButtons[0]);
-      } else {
-        // Альтернативно: ищем по классу
-        const buttons = screen.getAllByRole("button");
-        const renameButton = buttons.find((b) => b.title === "Переименовать");
-        if (renameButton) fireEvent.click(renameButton);
-      }
+    expect(mockNavigate).toHaveBeenCalledWith("/templates");
+  });
 
-      await waitFor(() => {
-        expect(screen.getByText("Переименовать тир-лист")).toBeInTheDocument();
-      });
-    });
+  it("должен переходить на страницу сообщества при клике 'Смотреть тренды'", () => {
+    render(<DashboardPage />, { wrapper: createWrapper() });
 
-    it("должен открывать modal удаления", async () => {
-      render(<DashboardPage />, { wrapper: createWrapper() });
+    fireEvent.click(screen.getByText("Смотреть тренды"));
 
-      await waitFor(() => {
-        expect(screen.getByText("Test Tier List 1")).toBeInTheDocument();
-      });
-
-      // Находим кнопку удаления по aria-label (используем regex для учета динамического названия)
-      const deleteButtons = screen.getAllByLabelText(/Удалить/);
-      if (deleteButtons.length > 0) {
-        fireEvent.click(deleteButtons[0]);
-      } else {
-        // Альтернативно: ищем по классу
-        const buttons = screen.getAllByRole("button");
-        const deleteButton = buttons.find((b) => b.title === "Удалить");
-        if (deleteButton) fireEvent.click(deleteButton);
-      }
-
-      await waitFor(() => {
-        expect(screen.getByText("Удалить тир-лист")).toBeInTheDocument();
-      });
-    });
+    expect(mockNavigate).toHaveBeenCalledWith("/community");
   });
 });

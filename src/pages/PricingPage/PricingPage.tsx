@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Heart, X, Check, Copy, Send, ArrowLeft, Sparkles } from "lucide-react"
+import { Heart, X, Check, Copy, Send, ArrowLeft } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { SEOHead } from "@/components/SEO/SEOHead"
@@ -10,7 +10,7 @@ import "./PricingPage.css"
 function DonateModal({ onClose }: { onClose: () => void }) {
   useBodyScrollLock(true)
   const [copied, setCopied] = useState(false)
-  const cardNumber = '2202207455452840'
+  const cardNumber = '2202200609389554'
 
   const handleCopy = async () => {
     try {
@@ -178,7 +178,11 @@ export default function PricingPage() {
           <div className="pricing-card">
             <div className="pricing-card__body">
               <div className="pricing-card__name">
-                <Sparkles size={18} className="text-cyan-400" />
+                <svg width="24" height="24" viewBox="0 0 36 28" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  <rect x="0" y="0" width="36" height="6" rx="3" fill="#8B7CFF" />
+                  <rect x="0" y="10" width="28" height="6" rx="3" fill="#6D5DF6" />
+                  <rect x="0" y="20" width="20" height="6" rx="3" fill="#4C3FFF" />
+                </svg>
                 BookStrata
               </div>
               <div className="pricing-card__free-badge">Всё бесплатно</div>

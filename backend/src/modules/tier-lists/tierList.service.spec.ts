@@ -273,15 +273,15 @@ describe("tierList.service", () => {
       expect(error.statusCode).toBe(403);
     });
 
-    it("должен бросить ошибку 403 если тир-лист не найден", async () => {
+    it("должен бросить ошибку 404 если тир-лист не найден", async () => {
       (prisma.tierList.findUnique as any).mockResolvedValue(null);
 
       const error = await service
         .assertOwner(mockTierListId, mockUserId)
         .catch((e) => e);
 
-      expect(error.message).toBe("Forbidden");
-      expect(error.statusCode).toBe(403);
+      expect(error.message).toBe("Тир-лист не найден");
+      expect(error.statusCode).toBe(404);
     });
   });
 

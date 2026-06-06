@@ -684,6 +684,20 @@
   letter-spacing: 0.05em;
 }
 
+.landing-banner__text-link {
+  color: #fbd38d;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(249, 115, 22, 0.4);
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.landing-banner__text-link:hover {
+  color: #fbbf24;
+  text-decoration-color: #f59e0b;
+}
+
 .landing-banner__smiley {
   position: absolute;
   right: -50px;

@@ -95,7 +95,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
   const isLanding = variant === "landing";
 
-  const cardNumber = "2202207455452840";
+  const cardNumber = "2202200609389554";
   useEffect(() => {
     apiClient.get<Array<{ id: number; name: string }>>('/donors')
       .then((data) => setDonors(data.map((d) => d.name)))
@@ -256,7 +256,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 type="button"
                 id="donate-button"
                 onClick={() => setIsDonateOpen((prev) => !prev)}
-                className="group relative z-20 inline-flex items-center gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden"
+                className="group relative z-20 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden"
                 aria-expanded={isDonateOpen}
                 aria-controls="donate-menu"
               >

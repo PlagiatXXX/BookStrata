@@ -120,14 +120,14 @@ describe("TemplateLibrary", () => {
   it("должен рендериться с заголовком Библиотека", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    const heading = screen.getAllByText("Библиотека")[0];
-    expect(heading.tagName).toBe("H1");
+    const heading = screen.getByRole("heading", { name: /библиотека/i });
+    expect(heading).toBeInTheDocument();
   });
 
   it("должен показывать навигацию по секциям", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    const sectionNames = ["Личные тир-листы", "Публичные тир-листы", "Избранное"];
+    const sectionNames = ["Личные тир-листы", "Популярные", "Избранное"];
     for (const name of sectionNames) {
       expect(screen.getAllByText(name).length).toBeGreaterThan(0);
     }
@@ -144,7 +144,7 @@ describe("TemplateLibrary", () => {
   it("должен переключаться на публичные тир-листы", async () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    const publicBtn = screen.getByText("Публичные тир-листы");
+    const publicBtn = screen.getByText("Популярные");
     fireEvent.click(publicBtn);
 
     await waitFor(() => {
@@ -172,7 +172,7 @@ describe("TemplateLibrary", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(screen.getByText("Нет тир-листов")).toBeInTheDocument();
+      expect(screen.getByText("У вас еще нет тир-листов")).toBeInTheDocument();
     });
   });
 
