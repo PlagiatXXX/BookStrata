@@ -31,48 +31,60 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
           loading="lazy"
           onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-(--bg-0)/80 via-transparent to-transparent" />
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 max-w-[80%]">
-          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] bg-(--bg-0)/80 backdrop-blur-sm text-(--ink-0) px-2 py-1 rounded-sm border border-(--line-soft)">
-            <Globe size={11} />
-            {item.source}
-          </span>
-          {isRussian && (
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] bg-(--accent-main)/20 backdrop-blur-sm text-(--accent-main) px-2 py-1 rounded-sm border border-(--accent-main)/30">
-              RU
+        <div className="absolute inset-0 bg-gradient-to-t from-(--bg-0)/80 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 max-w-[80%] z-10">
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] bg-(--bg-0)/80 backdrop-blur-sm text-(--ink-0) px-1.5 py-0.5 md:px-2 md:py-1 rounded-sm border border-(--line-soft) max-w-full hover:bg-(--bg-0) transition-colors cursor-pointer"
+          >
+            <Globe size={10} className="hidden md:block shrink-0" />
+            <span className="truncate">{item.source}</span>
+          </a>
+          {!isRussian && (
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] bg-(--accent-main)/20 backdrop-blur-sm text-(--accent-main) px-1.5 py-0.5 md:px-2 md:py-1 rounded-sm border border-(--accent-main)/30 shrink-0">
+              EN
             </span>
           )}
         </div>
       </div>
 
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-(--ink-1)">
-            {formatDate(item.publishedAt)}
-          </span>
+        <div className="p-3 md:p-5">
+          <div className="flex items-center justify-between mb-1.5 md:mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-(--ink-1)">
+              {formatDate(item.publishedAt)}
+            </span>
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-pointer"
+              aria-label={`Читать: ${item.title}`}
+            >
+              <ExternalLink
+                size={14}
+                className="text-(--ink-2) hover:text-(--ink-0) transition-colors"
+              />
+            </a>
+          </div>
           <a
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
             className="cursor-pointer"
-            aria-label={`Читать: ${item.title}`}
           >
-            <ExternalLink
-              size={14}
-              className="text-(--ink-2) hover:text-(--ink-0) transition-colors"
-            />
+            <h3
+              className="community-heading text-sm md:text-base font-bold leading-snug mb-1 md:mb-2 line-clamp-2 hover:text-(--accent-main) transition-colors"
+              dir={isRussian ? "auto" : undefined}
+            >
+              {item.title}
+            </h3>
           </a>
+          <p className="hidden md:block text-(--ink-1) text-sm leading-relaxed line-clamp-2">
+            {item.excerpt.trim()}
+          </p>
         </div>
-        <h3
-          className="community-heading text-base font-bold leading-snug mb-2"
-          dir={isRussian ? "auto" : undefined}
-        >
-          {item.title}
-        </h3>
-        <p className="text-(--ink-1) text-sm leading-relaxed line-clamp-2">
-          {item.excerpt.trim()}
-        </p>
-      </div>
     </div>
   )
 }
@@ -104,7 +116,7 @@ export const ExternalNewsSection = memo(() => {
           </div>
         </div>
         <div className="community-rule mb-6" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="brutal-card brutal-border overflow-hidden animate-pulse">
               <div className="aspect-[16/9] bg-(--bg-0)" />
@@ -142,7 +154,7 @@ export const ExternalNewsSection = memo(() => {
 
       <div className="community-rule mb-6" />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         {news.map((item) => (
           <NewsCard key={item.id} item={item} />
         ))}

@@ -263,32 +263,46 @@ const TemplateLibrary: React.FC = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Поиск по названию..."
-                    className="bg-transparent border-none outline-none text-sm text-gray-200 placeholder-gray-500 w-48"
+                    className="bg-transparent border-none outline-none text-sm text-gray-200 placeholder-gray-500 w-36 md:w-48"
                   />
                 </div>
 
-                <div className="dashboard-filters">
-                  <button
-                    onClick={handleSetFilterAll}
-                    className={`dashboard-filter-btn ${filterOption === "all" ? "dashboard-filter-btn--active" : ""}`}
-                    type="button"
+                {/* Фильтры: на десктопе — кнопки, на мобиле — select */}
+                <div className="hidden md:block">
+                  <div className="dashboard-filters">
+                    <button
+                      onClick={handleSetFilterAll}
+                      className={`dashboard-filter-btn ${filterOption === "all" ? "dashboard-filter-btn--active" : ""}`}
+                      type="button"
+                    >
+                      Все
+                    </button>
+                    <button
+                      onClick={handleSetFilterPublic}
+                      className={`dashboard-filter-btn ${filterOption === "public" ? "dashboard-filter-btn--active" : ""}`}
+                      type="button"
+                    >
+                      Публичные
+                    </button>
+                    <button
+                      onClick={handleSetFilterPrivate}
+                      className={`dashboard-filter-btn ${filterOption === "private" ? "dashboard-filter-btn--active" : ""}`}
+                      type="button"
+                    >
+                      Приватные
+                    </button>
+                  </div>
+                </div>
+                <div className="md:hidden">
+                  <select
+                    value={filterOption}
+                    onChange={(e) => setFilterOption(e.target.value as FilterOption)}
+                    className="dashboard-sort__select w-full"
                   >
-                    Все
-                  </button>
-                  <button
-                    onClick={handleSetFilterPublic}
-                    className={`dashboard-filter-btn ${filterOption === "public" ? "dashboard-filter-btn--active" : ""}`}
-                    type="button"
-                  >
-                    Публичные
-                  </button>
-                  <button
-                    onClick={handleSetFilterPrivate}
-                    className={`dashboard-filter-btn ${filterOption === "private" ? "dashboard-filter-btn--active" : ""}`}
-                    type="button"
-                  >
-                    Приватные
-                  </button>
+                    <option value="all">Все</option>
+                    <option value="public">Публичные</option>
+                    <option value="private">Приватные</option>
+                  </select>
                 </div>
               </div>
 

@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Cookie } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/ui/Button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export function CookieConsent() {
   const { accept, isConsented } = useAnalytics();
   const [visible, setVisible] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (isConsented) {
@@ -21,13 +22,15 @@ export function CookieConsent() {
     return () => clearTimeout(timer);
   }, [isConsented]);
 
+  // Не показываем на странице авторизации
+  if (pathname === "/auth") return null;
+  if (isConsented) return null;
+  if (!visible) return null;
+
   const handleAccept = () => {
     accept();
     setVisible(false);
   };
-
-  if (isConsented) return null;
-  if (!visible) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4">

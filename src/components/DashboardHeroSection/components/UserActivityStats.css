@@ -1,14 +1,20 @@
 /* UserActivityStats - Секция статистики активности */
 
 .user-activity-stats {
-  padding: 3rem 0;
+  padding: 1.5rem 0;
   background: transparent;
+}
+
+@media (min-width: 640px) {
+  .user-activity-stats {
+    padding: 3rem 0;
+  }
 }
 
 .user-activity-stats__container {
   width: 100%;
   max-width: 1280px;
-  padding: 0 1rem;
+  padding: 0 0.5rem;
   margin: 0 auto;
 }
 
@@ -25,13 +31,20 @@
 }
 
 .user-activity-stats__title {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .user-activity-stats__title {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
 }
 
 .user-activity-stats__title::before {
@@ -47,23 +60,29 @@
 
 .user-activity-stats__grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
 }
 
 @media (min-width: 640px) {
   .user-activity-stats__grid {
-    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
   }
 }
 
 .user-activity-stats__item {
-  padding: 1rem 1.25rem;
+  padding: 0.75rem;
   background: rgba(15, 30, 50, 0.4);
   backdrop-filter: blur(12px);
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+@media (min-width: 640px) {
+  .user-activity-stats__item {
+    padding: 1rem 1.25rem;
+  }
 }
 
 .dark .user-activity-stats__item {
@@ -88,9 +107,15 @@
 }
 
 .user-activity-stats__label {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 500;
   color: #94a3b8;
+}
+
+@media (min-width: 640px) {
+  .user-activity-stats__label {
+    font-size: 0.75rem;
+  }
 }
 
 .dark .user-activity-stats__label {
@@ -98,10 +123,16 @@
 }
 
 .user-activity-stats__value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 900;
   margin-top: 0.25rem;
   color: #ffffff;
+}
+
+@media (min-width: 640px) {
+  .user-activity-stats__value {
+    font-size: 1.5rem;
+  }
 }
 
 .dark .user-activity-stats__value {
@@ -109,12 +140,20 @@
 }
 
 .user-activity-stats__icon {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .user-activity-stats__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+  }
 }
 
 .user-activity-stats__icon--primary {
@@ -147,8 +186,4 @@
   color: #94a3b8;
 }
 
-@media (min-width: 640px) {
-  .user-activity-stats__grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
+

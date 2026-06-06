@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { TemplateGrid } from "@/components/CommunityComponents/TemplateGrid";
@@ -111,18 +111,6 @@ export default function CommunityPage() {
           <MemoizedCollectionsSection />
         </main>
       </div>
-
-      <Link
-        to="/templates/new"
-        className="fixed bottom-8 right-8 brutal-cta w-14 h-14 flex items-center justify-center group z-50"
-        title="Создать шаблон"
-        aria-label="Создать новый шаблон"
-      >
-        <Plus size={24} />
-        <span className="absolute right-18 bg-(--ink-0) text-(--bg-0) px-3 py-2 rounded-sm text-[10px] font-semibold uppercase tracking-widest opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-(--line-strong)">
-          Создать шаблон
-        </span>
-      </Link>
 
       {/* Модалка предпросмотра шаблона */}
       <TemplatePreviewModal

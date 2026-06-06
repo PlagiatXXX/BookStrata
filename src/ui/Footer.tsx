@@ -213,8 +213,10 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
             </ul>
           </nav>
 
+          {/* User + Donate row on mobile */}
+          <div className="grid grid-cols-2 gap-10 lg:contents">
           {/* Central Zone 2: User Actions */}
-          <nav aria-label="Пользовательские ссылки">
+          <nav aria-label="Пользовательские ссылки" className="lg:contents">
             <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
               {isLanding ? "Информация" : "Пользователю"}
             </h4>
@@ -250,7 +252,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
           </nav>
 
           {/* Right Zone: Donate Block */}
-          <div className="flex flex-col items-start lg:items-end lg:text-right">
+          <div className="flex flex-col items-start lg:items-end lg:text-right lg:contents">
             <div className="relative">
               <button
                 type="button"
@@ -275,11 +277,11 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
               <div
                 id="donate-menu"
-                className={`absolute top-full z-10 w-[min(calc(100vw-3rem),320px)] overflow-hidden rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 lg:origin-top-right lg:left-auto lg:right-0 ${
+                className={`absolute lg:top-full bottom-full z-10 w-[min(calc(100vw-3rem),320px)] overflow-hidden rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 lg:origin-top-right lg:left-auto lg:right-0 ${
                   isDonateOpen
                     ? "pointer-events-auto scale-100 border-amber-500/40 opacity-100 shadow-[0_20px_50px_rgba(249,115,22,0.3)]"
-                    : "pointer-events-none scale-95 border-amber-500/10 opacity-0 -translate-y-4"
-                } ${isDonateOpen ? "left-0 mt-3" : "left-0 -translate-y-4"}`}
+                    : "pointer-events-none scale-95 border-amber-500/10 opacity-0 translate-y-4"
+                } ${isDonateOpen ? "right-0 lg:left-auto lg:mt-3 mb-3" : "right-0 lg:left-auto translate-y-4"}`}
               >
                 <div className="relative p-5">
                   <h3 className="text-base font-bold text-white">
@@ -314,6 +316,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
 

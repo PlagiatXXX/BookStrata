@@ -33,8 +33,6 @@ const ProfilePage = lazy(() =>
 const TemplateLibrary = lazy(
   () => import("@/components/TemplateLibrary/TemplateLibrary"),
 );
-const CreateTemplatePage = lazy(() => import("@/pages/CreateTemplatePage"));
-const EditTemplatePage = lazy(() => import("@/pages/EditTemplatePage"));
 const CommunityPage = lazy(() => import("@/pages/CommunityPage"));
 const ForumPage = lazy(() => import("@/pages/ForumPage"));
 const BattleDetailPage = lazy(() => import("@/pages/BattleDetailPage"));
@@ -130,14 +128,6 @@ export const router = createBrowserRouter([
           {
             path: "/templates",
             element: <TemplateLibrary />,
-          },
-          {
-            path: "/templates/new",
-            element: <CreateTemplatePage />,
-          },
-          {
-            path: "/templates/:id/edit",
-            element: <EditTemplatePage />,
           },
           {
             path: "/profile",
