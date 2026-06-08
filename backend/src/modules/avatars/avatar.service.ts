@@ -1,7 +1,6 @@
 import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
 import { uploadFromUrl } from "../../lib/cloudinary.js";
-import { SubscriptionsService } from "../subscriptions/subscriptions.service.js";
 
 const logger = createLogger("Avatars", { color: "yellow" });
 

@@ -13,6 +13,7 @@ import { Footer } from "@/ui/Footer"
 import { RevealBox } from "@/ui/RevealBox"
 import { Pointer } from "@/components/ui/pointer"
 import { Highlighter } from "@/components/ui/highlighter"
+import { BorderBeam } from "@/components/ui/border-beam"
 import { HanddrawnSmiley } from "@/components/ui/handdrawn-smiley"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { getPublicTierLists, type TierListShort } from "@/lib/tierListApi"
@@ -64,9 +65,9 @@ function AnimatedCounter({ target, suffix = "", label }: { target: number; suffi
 
 /* ---------- Feature card ---------- */
 const features = [
-  { icon: Layers, title: "Визуальные рейтинги", desc: "Создавай тир-листы любимых книг в удобном drag-and-drop редакторе. Выбирай темы, кастомизируй блоки." },
-  { icon: Brain, title: "Букстраж", desc: "ИИ-рекомендации книг на основе твоих тир-листов. Умный алгоритм подбирает то, что тебе понравится." },
-  { icon: Sword, title: "Баттлы", desc: "Сравнивай свои подборки с другими читателями. Голосуй, участвуй, докажи что твой вкус — лучший." },
+  { icon: Layers, title: "Визуальные рейтинги", desc: "Создавай тир-листы любимых книг в удобном drag-and-drop редакторе. Выбирай темы, кастомизируй блоки.", featured: true },
+  { icon: Brain, title: "Букстраж", desc: "ИИ-рекомендации книг на основе твоих тир-листов. Умный алгоритм подбирает то, что тебе понравится.", featured: true },
+  { icon: Sword, title: "Баттлы", desc: "Сравнивай свои подборки с другими читателями. Голосуй, участвуй, докажи что твой вкус — лучший.", featured: true },
   { icon: MessageCircle, title: "Обсуждения", desc: "Комментируй подборки, общайся в общем чате, делись мнениями о книгах с единомышленниками." },
   { icon: Sparkles, title: "AI-генерация аватаров", desc: "Создавай уникальные аватарки с помощью нейросети. Просто опиши желаемый образ — и получи результат." },
   { icon: Copy, title: "Шаблоны и форки", desc: "Используй готовые шаблоны популярных тир-листов или форкай понравившиеся у других авторов. Доставай и развивай." },
@@ -620,12 +621,23 @@ export default function LandingPage() {
 
           <div className="landing-features">
             {features.map((f) => (
-              <RevealBox key={f.title} className="landing-feature">
-                <div className="landing-feature__icon">
-                  <f.icon size={22} />
-                </div>
-                <h3 className="landing-feature__title">{f.title}</h3>
-                <p className="landing-feature__desc">{f.desc}</p>
+              <RevealBox key={f.title} className={`landing-feature ${f.featured ? "landing-feature--featured" : ""}`}>
+                {f.featured ? (
+                  <>
+                    <div className="landing-feature__content">
+                      <h3 className="landing-feature__title">{f.title}</h3>
+                      <p className="landing-feature__desc">{f.desc}</p>
+                    </div>
+                    <div className="landing-feature__icon">
+                      <f.icon size={28} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="landing-feature__title">{f.title}</h3>
+                    <p className="landing-feature__desc">{f.desc}</p>
+                  </>
+                )}
               </RevealBox>
             ))}
           </div>
@@ -644,8 +656,32 @@ export default function LandingPage() {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`landing-pricing__card ${plan.donate ? "landing-pricing__card--donate" : ""}`}
+                className={`landing-pricing__card relative ${plan.donate ? "landing-pricing__card--donate" : ""}`}
               >
+                {plan.donate && (
+                  <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+                    <BorderBeam
+                      duration={10}
+                      size={250}
+                      colorFrom="#f59e0b"
+                      colorTo="#fbbf24"
+                      borderWidth={2}
+                    />
+                  </div>
+                )}
+
+                {!plan.donate && (
+                  <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+                    <BorderBeam
+                      duration={10}
+                      size={250}
+                      colorFrom="#3b82f6"
+                      colorTo="#60a5fa"
+                      borderWidth={2}
+                    />
+                  </div>
+                )}
+
                 {!plan.donate && (
                   <div className="landing-pricing__free-badge">Всё включено</div>
                 )}

@@ -36,16 +36,10 @@ describe("avatar.service", () => {
   });
 
   describe("generateAvatar", () => {
-    it("blocks generation for free users (limit 0)", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        false,
-      );
-
+    it("blocks generation when daily limit is reached", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
-        aiAvatarsGenerated: 0,
+        aiAvatarsGenerated: 10,
         lastAvatarResetAt: new Date(),
       } as never);
 
@@ -56,12 +50,6 @@ describe("avatar.service", () => {
     });
 
     it("returns user not found when profile is missing", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        false,
-      );
-
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null as never);
 
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
@@ -70,13 +58,7 @@ describe("avatar.service", () => {
       expect(result.error).toBe("User not found");
     });
 
-    it("allows generation for pro users within the limit", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
-
+    it("allows generation within the limit", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 5,
@@ -87,18 +69,12 @@ describe("avatar.service", () => {
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 
       expect(result.success).toBe(true);
-      expect(result.remaining).toBe(44);
+      expect(result.remaining).toBe(4);
     });
 
     it("resets the counter for a new day", async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
@@ -110,11 +86,11 @@ describe("avatar.service", () => {
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 
       expect(result.success).toBe(true);
-      expect(result.remaining).toBe(49);
+      expect(result.remaining).toBe(9);
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            aiAvatarsGenerated: 0,
+            aiAvatarsGenerated: 1,
             lastAvatarResetAt: expect.any(Date),
           }),
         }),
@@ -124,12 +100,6 @@ describe("avatar.service", () => {
     it("proxies the Pollinations URL through Cloudinary to hide the API key", async () => {
       const prompt = "cyberpunk portrait with neon glasses";
       const mockCloudinaryUrl = "https://res.cloudinary.com/demo/image/upload/v1/generated.webp";
-
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
@@ -154,12 +124,6 @@ describe("avatar.service", () => {
     });
 
     it("does not increment the counter if Cloudinary upload fails", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
-
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 5,
@@ -180,12 +144,6 @@ describe("avatar.service", () => {
     });
 
     it("increments the generated avatar counter", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
-
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 5,
@@ -205,12 +163,6 @@ describe("avatar.service", () => {
     });
 
     it("uses a different seed between requests", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
-
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 5,
@@ -235,12 +187,6 @@ describe("avatar.service", () => {
     });
 
     it("returns the updated remaining counter", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
-
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 3,
@@ -250,16 +196,10 @@ describe("avatar.service", () => {
 
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 
-      expect(result.remaining).toBe(46);
+      expect(result.remaining).toBe(6);
     });
 
     it("returns an explicit error instead of a fallback avatar when generation fails", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
-
       vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error("API error"));
 
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
@@ -269,13 +209,7 @@ describe("avatar.service", () => {
       expect(result.imageUrl).toBeUndefined();
     });
 
-    it("allows generation for pro users with pro limit", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
-
+    it("allows generation when user has not reached the limit", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 0,
@@ -289,18 +223,12 @@ describe("avatar.service", () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.remaining).toBe(49);
+      expect(result.remaining).toBe(9);
     });
   });
 
   describe("getAvatarLimit", () => {
-    it("returns pro limits", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
-
+    it("returns user limits", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 5,
@@ -311,20 +239,14 @@ describe("avatar.service", () => {
 
       expect(result).toEqual({
         used: 5,
-        limit: 50,
-        remaining: 45,
+        limit: 10,
+        remaining: 5,
       });
     });
 
-    it("returns refreshed pro limits for a new day", async () => {
+    it("returns refreshed limits for a new day", async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        true,
-      );
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
@@ -336,18 +258,12 @@ describe("avatar.service", () => {
 
       expect(result).toEqual({
         used: 0,
-        limit: 50,
-        remaining: 50,
+        limit: 10,
+        remaining: 10,
       });
     });
 
     it("returns null when the user is missing", async () => {
-      const { SubscriptionsService } =
-        await import("../subscriptions/subscriptions.service.js");
-      vi.spyOn(SubscriptionsService.prototype, "isProUser").mockResolvedValue(
-        false,
-      );
-
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null as never);
 
       const result = await avatarService.getAvatarLimit(mockUserId);

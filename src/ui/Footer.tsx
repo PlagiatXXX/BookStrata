@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Sparkles,
@@ -87,8 +87,11 @@ const landingUserLinks: { label: string; icon: React.ReactNode; href?: string; i
   { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
 ];
 
+type PopupDirection = "above" | "below";
+
 export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
+  const [popupDirection, setPopupDirection] = useState<PopupDirection>("above");
   const [copied, setCopied] = useState(false);
   const [donors, setDonors] = useState<string[]>([]);
   const location = useLocation();
@@ -118,6 +121,24 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  const toggleDonate = useCallback(() => {
+    setIsDonateOpen((prev) => {
+      if (!prev) {
+        // Calculate best direction when opening
+        const button = document.getElementById("donate-button");
+        if (button) {
+          const rect = button.getBoundingClientRect();
+          const spaceAbove = rect.top;
+          const spaceBelow = window.innerHeight - rect.bottom;
+          // Popup is ~220px tall + 12px gap
+          const needed = 232;
+          setPopupDirection(spaceBelow >= needed ? "below" : "above");
+        }
+      }
+      return !prev;
+    });
+  }, []);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -153,9 +174,11 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   if (isHidden) return null;
 
   return (
-    <footer className="relative border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%),#0b0f1f] px-6 py-12 overflow-hidden">
+    <footer className="relative border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%),#0b0f1f] px-6 py-12">
       <style>{marqueeStyle}</style>
-      <Meteors number={40} angle={255} minDuration={10} maxDuration={22} minDelay={0} maxDelay={1.5} />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <Meteors number={40} angle={255} minDuration={10} maxDuration={22} minDelay={0} maxDelay={1.5} />
+      </div>
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 relative z-10">
         <div className="grid gap-10 lg:grid-cols-[1fr_1fr_1fr_1.2fr]">
@@ -216,7 +239,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
           {/* User + Donate row on mobile */}
           <div className="grid grid-cols-2 gap-10 lg:contents">
           {/* Central Zone 2: User Actions */}
-          <nav aria-label="Пользовательские ссылки" className="lg:contents">
+          <nav aria-label="Пользовательские ссылки">
             <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
               {isLanding ? "Информация" : "Пользователю"}
             </h4>
@@ -253,11 +276,11 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
           {/* Right Zone: Donate Block */}
           <div className="flex flex-col items-start lg:items-end lg:text-right lg:contents">
-            <div className="relative">
+            <div className="relative self-start">
               <button
                 type="button"
                 id="donate-button"
-                onClick={() => setIsDonateOpen((prev) => !prev)}
+                onClick={toggleDonate}
                 className="group relative z-20 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden"
                 aria-expanded={isDonateOpen}
                 aria-controls="donate-menu"
@@ -277,11 +300,15 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
               <div
                 id="donate-menu"
-                className={`absolute lg:top-full bottom-full z-10 w-[min(calc(100vw-3rem),320px)] overflow-hidden rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 lg:origin-top-right lg:left-auto lg:right-0 ${
+                className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] overflow-hidden rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 origin-bottom-right ${
+                  popupDirection === "below"
+                    ? "top-full mt-3"
+                    : "bottom-full mb-3"
+                } ${
                   isDonateOpen
                     ? "pointer-events-auto scale-100 border-amber-500/40 opacity-100 shadow-[0_20px_50px_rgba(249,115,22,0.3)]"
                     : "pointer-events-none scale-95 border-amber-500/10 opacity-0 translate-y-4"
-                } ${isDonateOpen ? "right-0 lg:left-auto lg:mt-3 mb-3" : "right-0 lg:left-auto translate-y-4"}`}
+                } right-0`}
               >
                 <div className="relative p-5">
                   <h3 className="text-base font-bold text-white">
