@@ -25,6 +25,50 @@ services:
     volumes:
       - redis-data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # === Профиль: полный продакшен-стек ===
+  # docker compose --profile full up -d
+  # Сначала собрать фронт: npm run build
+
+  app:
+    profile: full
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bookstrata-api
+    expose:
+      - "8080"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  nginx:
+    profile: full
+    image: nginx:alpine
+    container_name: bookstrata-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Собранный фронтенд (запусти npm run build перед docker compose)
+      - ../dist:/usr/share/nginx/html:ro
+      # Конфиг nginx
+      - ../nginx/bookstrata.conf:/etc/nginx/conf.d/default.conf:ro
+      # SSL-сертификаты (если есть)
+      - ../nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    restart: unless-stopped
 
 volumes:
   postgres-data:

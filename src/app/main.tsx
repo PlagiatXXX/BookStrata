@@ -18,8 +18,6 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      {" "}
-      {/* <-- Провайдер данных */}
       <RouterProvider router={router} />
     </QueryClientProvider>
   </React.StrictMode>

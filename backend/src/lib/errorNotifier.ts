@@ -1,6 +1,9 @@
 /**
- * Telegram уведомления об ошибках
+ * Email-уведомления об ошибках (через Яндекс.Почту / любой SMTP)
+ * Telegram был заменён, так как api.telegram.org заблокирован в РФ.
  */
+
+import nodemailer from "nodemailer";
 
 interface ErrorReport {
   message: string;
@@ -8,83 +11,105 @@ interface ErrorReport {
   url?: string;
   method?: string;
   userId?: string;
+  userAgent?: string;
+  query?: string;
+  origin?: string;
   timestamp: string;
 }
 
 class ErrorNotifier {
-  private token: string | null = null;
-  private chatId: string | null = null;
+  private transporter: nodemailer.Transporter | null = null;
+  private from: string = "";
+  private to: string = "";
   private isEnabled: boolean = false;
   private lastNotificationTime: number = 0;
   private readonly notificationThrottle = 5000;
 
   initialize(): void {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
-    const enabled = process.env.TELEGRAM_NOTIFICATIONS_ENABLED === 'true';
+    const host = process.env.SMTP_HOST;
+    const port = parseInt(process.env.SMTP_PORT || "465", 10);
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    const from = process.env.SMTP_FROM;
+    const to = process.env.ERROR_NOTIFY_EMAIL || process.env.SMTP_USER || "";
 
-    if (!token || !chatId || !enabled) {
+    // Проверяем SMTP и включаем только в production
+    if (!host || !user || !pass || !from || !to || process.env.NODE_ENV !== "production") {
+      console.log("[ErrorNotifier] Email-уведомления отключены (нужен SMTP + NODE_ENV=production)");
       return;
     }
 
-    this.token = token;
-    this.chatId = chatId;
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
+
+    this.from = from;
+    this.to = to;
     this.isEnabled = true;
+    console.log("✅ Email-уведомления об ошибках включены");
   }
 
   async notify(error: ErrorReport): Promise<void> {
-    if (!this.isEnabled || !this.token || !this.chatId) return;
+    if (!this.isEnabled || !this.transporter) return;
 
     const now = Date.now();
     if (now - this.lastNotificationTime < this.notificationThrottle) return;
     this.lastNotificationTime = now;
 
-    const message = this.formatError(error);
-
     try {
-      const response = await fetch(
-        `https://api.telegram.org/bot${this.token}/sendMessage`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: this.chatId,
-            text: message,
-            parse_mode: 'Markdown',
-            disable_web_page_preview: true,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error('[ErrorNotifier] Telegram API ответил ошибкой:', response.status, text);
-      }
+      await this.transporter.sendMail({
+        from: this.from,
+        to: this.to,
+        subject: `🚨 BookStrata: ${error.message.substring(0, 80)}`,
+        html: this.formatHtml(error),
+      });
     } catch (err) {
-      console.error('[ErrorNotifier] Ошибка отправки в Telegram:', err);
+      console.error("[ErrorNotifier] Ошибка отправки email:", err);
     }
   }
 
-  private formatError(error: ErrorReport): string {
-    const lines = [
-      '🚨 *Новая ошибка*',
-      '',
-      `*Сообщение:* \`${this.truncate(error.message, 150)}\``,
-      `*URL:* \`${error.url || 'N/A'}\``,
-      `*Метод:* \`${error.method || 'N/A'}\``,
-      error.userId ? `*User ID:* \`${error.userId}\`` : null,
-      '',
-      `*Время:* ${new Date(error.timestamp).toLocaleString('ru-RU')}`,
-      '',
-      error.stack ? `*Stack:*\n\`\`\`${this.truncate(error.stack, 2000)}\`\`\`` : null,
-    ].filter((line): line is string => line !== null);
+  private formatHtml(error: ErrorReport): string {
+    const stackHtml = error.stack
+      ? `<pre style="background:#1a1a2e;color:#e0e0e0;padding:12px;border-radius:6px;font-size:13px;overflow-x:auto;">${this.escapeHtml(error.stack)}</pre>`
+      : "";
 
-    return lines.join('\n');
+    return `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;">
+        <div style="background:#dc2626;color:white;padding:16px 24px;border-radius:8px 8px 0 0;">
+          <h2 style="margin:0;font-size:18px;">🚨 BookStrata — ошибка в production</h2>
+        </div>
+        <div style="background:#1f2937;color:#f3f4f6;padding:24px;border-radius:0 0 8px 8px;">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <tr><td style="padding:6px 0;color:#9ca3af;width:100px;">Сообщение</td>
+                <td style="padding:6px 0;"><code>${this.escapeHtml(error.message)}</code></td></tr>
+            <tr><td style="padding:6px 0;color:#9ca3af;">URL</td>
+                <td style="padding:6px 0;"><code>${this.escapeHtml(error.url || "N/A")}</code></td></tr>
+            <tr><td style="padding:6px 0;color:#9ca3af;">Метод</td>
+                <td style="padding:6px 0;">${this.escapeHtml(error.method || "N/A")}</td></tr>
+            ${error.query ? `<tr><td style="padding:6px 0;color:#9ca3af;">Параметры</td><td style="padding:6px 0;"><code>${this.escapeHtml(error.query)}</code></td></tr>` : ""}
+            ${error.userId ? `<tr><td style="padding:6px 0;color:#9ca3af;">Пользователь</td><td style="padding:6px 0;">${this.escapeHtml(error.userId)}</td></tr>` : ""}
+            ${error.userAgent ? `<tr><td style="padding:6px 0;color:#9ca3af;">Браузер</td><td style="padding:6px 0;">${this.escapeHtml(error.userAgent)}</td></tr>` : ""}
+            ${error.origin ? `<tr><td style="padding:6px 0;color:#9ca3af;">Откуда</td><td style="padding:6px 0;">${this.escapeHtml(error.origin)}</td></tr>` : ""}
+            <tr><td style="padding:6px 0;color:#9ca3af;">Время</td>
+                <td style="padding:6px 0;">${new Date(error.timestamp).toLocaleString("ru-RU")}</td></tr>
+          </table>
+          ${stackHtml}
+          <hr style="border-color:#374151;margin:20px 0;">
+          <p style="color:#6b7280;font-size:12px;">Это письмо отправлено автоматически системой мониторинга BookStrata.</p>
+        </div>
+      </div>
+    `;
   }
 
-  private truncate(str: string, max: number): string {
-    if (str.length <= max) return str;
-    return str.substring(0, max) + '... (обрезано)';
+  private escapeHtml(str: string): string {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
   get isInitialized(): boolean {

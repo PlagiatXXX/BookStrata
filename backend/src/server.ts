@@ -39,6 +39,7 @@ import { errorNotifier } from "./lib/errorNotifier.js";
 import { registerAchievementSubscriptions } from "./lib/event-subscriptions.js";
 import { SubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
 
+
 const requiredEnvVars = ["DATABASE_URL", "JWT_SECRET", "CLIENT_URL"];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
@@ -92,16 +93,33 @@ fastify.register(cors, {
   credentials: true, // Разрешаем отправку cookie
 });
 
+const cspDirectives = {
+  defaultSrc: ["'self'"],
+  scriptSrc: [
+    "'self'",
+    "https://smartcaptcha.yandexcloud.net",
+    "https://mc.yandex.ru",
+  ],
+  styleSrc: [
+    "'self'",
+    "'unsafe-inline'",
+    "https://fonts.googleapis.com",
+    "https://smartcaptcha.yandexcloud.net",
+  ],
+  fontSrc: ["'self'", "https://fonts.gstatic.com"],
+  imgSrc: ["'self'", "data:", "https:", "blob:"],
+  frameSrc: ["https://smartcaptcha.yandexcloud.net"],
+  connectSrc: [
+    "'self'",
+    "https://smartcaptcha.yandexcloud.net",
+    "https://api.telegram.org",
+    "https://mc.yandex.ru",
+  ],
+};
+
 await fastify.register(helmet, {
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      scriptSrc: ["'self'"],
-      frameSrc: ["'none'"],
-    },
+    directives: cspDirectives,
   },
 });
 
@@ -138,6 +156,19 @@ try {
 } catch {
   console.warn('⚠️ Redis unavailable, using in-memory rate limit store');
   StoreClass = LocalStore;
+
+  // Уведомление в Telegram о падении Redis
+  errorNotifier.notify({
+    message: "Redis недоступен — сервер работает на in-memory rate limit",
+    stack: undefined,
+    url: "/health",
+    method: "STARTUP",
+    userId: "system",
+    userAgent: undefined,
+    query: undefined,
+    origin: undefined,
+    timestamp: new Date().toISOString(),
+  }).catch(console.error);
 }
 
 const rateLimitMax = parseInt(process.env.RATE_LIMIT_MAX || "", 10);
@@ -175,14 +206,19 @@ fastify.setErrorHandler((error: any, request, reply) => {
     `Необработанная ошибка запроса: ${request.method} ${request.url}`,
   );
 
-  // Отправка уведомления в Telegram
+  // Отправка уведомления в Telegram с контекстом запроса
+  const queryParams = request.url.includes("?") ? request.url.split("?")[1] : undefined;
+
   errorNotifier
     .notify({
       message: error.message ?? "Неизвестная ошибка",
       stack: error.stack,
-      url: request.url,
+      url: request.url.split("?")[0],
       method: request.method,
-      userId: request.headers.authorization ? "authenticated" : "anonymous",
+      query: queryParams,
+      userId: (request as any).user?.userId?.toString() ?? "anonymous",
+      userAgent: request.headers["user-agent"],
+      origin: request.headers.origin || request.headers.referer,
       timestamp: new Date().toISOString(),
     })
     .catch(console.error);
@@ -381,6 +417,44 @@ setInterval(async () => {
   }
 }, 30 * 60 * 1000)
 
+// ========== Graceful Shutdown ==========
+const shutdownSignals = ["SIGTERM", "SIGINT"] as const;
+
+async function gracefulShutdown(signal: string) {
+  fastify.log.info(`Получен сигнал ${signal}. Начинаю корректное завершение...`);
+
+  // Даём серверу 10 секунд на завершение текущих запросов
+  try {
+    await fastify.close();
+    fastify.log.info("HTTP-сервер остановлен.");
+  } catch (err) {
+    fastify.log.error(err, "Ошибка при остановке HTTP-сервера.");
+  }
+
+  // Закрываем соединение с БД
+  try {
+    await prisma.$disconnect();
+    fastify.log.info("Prisma отключена.");
+  } catch (err) {
+    fastify.log.error(err, "Ошибка при отключении Prisma.");
+  }
+
+  // Закрываем Redis
+  try {
+    redis.disconnect();
+    fastify.log.info("Redis отключён.");
+  } catch (err) {
+    fastify.log.error(err, "Ошибка при отключении Redis.");
+  }
+
+  fastify.log.info("Сервер завершил работу.");
+  process.exit(0);
+}
+
+for (const signal of shutdownSignals) {
+  process.on(signal, () => gracefulShutdown(signal));
+}
+
 const start = async () => {
   try {
     // Ждём доступности БД перед стартом сервера (макс. 30 секунд)
@@ -395,6 +469,17 @@ const start = async () => {
 
     await fastify.listen({ port: PORT, host: "0.0.0.0" });
     fastify.log.info(`Server listening on port ${PORT}`);
+
+    // Уведомление о старте (только в production)
+    if (process.env.NODE_ENV === "production") {
+      errorNotifier.notify({
+        message: `Сервер запущен. Порт: ${PORT}, режим: ${process.env.NODE_ENV}`,
+        url: "/health",
+        method: "STARTUP",
+        userId: "system",
+        timestamp: new Date().toISOString(),
+      }).catch(console.error);
+    }
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
