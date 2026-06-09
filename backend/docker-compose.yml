@@ -36,7 +36,7 @@ services:
   # Сначала собрать фронт: npm run build
 
   app:
-    profile: full
+    profiles: ["full"]
     build:
       context: .
       dockerfile: Dockerfile
@@ -53,7 +53,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    profile: full
+    profiles: ["full"]
     image: nginx:alpine
     container_name: bookstrata-nginx
     ports:
