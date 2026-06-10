@@ -4,6 +4,13 @@ import { TIER_COLORS } from "@/constants/colors";
 import type { Tier } from "@/types";
 import { getTextColorForBackground } from "@/utils/colorUtils";
 
+const weightClasses: Record<NonNullable<Tier["labelWeight"]>, string> = {
+  thin: "font-thin",
+  normal: "font-normal",
+  bold: "font-bold",
+  black: "font-black",
+};
+
 const COLOR_NAMES: Record<string, string> = {
   '#FFC0CB': 'Розовый',
   '#DB7093': 'Бледно-фиолетово-красный',
@@ -32,6 +39,9 @@ interface TierLabelProps {
   title: string;
   color: string;
   labelSize?: Tier["labelSize"];
+  labelWeight?: Tier["labelWeight"];
+  labelStyle?: Tier["labelStyle"];
+  labelColor?: Tier["labelColor"];
   onChangeColor?: (tierId: string, newColor: string) => void;
   onRename?: (tierId: string, newTitle: string) => void;
   droppableRef?: React.Ref<HTMLDivElement>;
@@ -48,17 +58,23 @@ interface TierLabelTextProps {
   title: string;
   textColor: string;
   dynamicSizeClass: string;
+  weightClass: string;
+  isItalic: boolean;
+  customColor?: string;
 }
 
 const TierLabelText = memo(
-  ({ title, textColor, dynamicSizeClass }: TierLabelTextProps) => {
+  ({ title, textColor, dynamicSizeClass, weightClass, isItalic, customColor }: TierLabelTextProps) => {
     const words = title.split(/\s+/);
     const isMultiWord = words.length >= 2;
+    const colorClass = customColor ? "" : textColor === "black" ? "text-black" : "text-white";
+    const fontClass = `${weightClass} ${isItalic ? "italic" : ""}`;
 
     if (isMultiWord) {
       return (
         <span
-          className={`nb-label-text font-black break-words overflow-hidden ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
+          className={`nb-label-text break-words overflow-hidden ${colorClass} ${dynamicSizeClass} ${fontClass}`}
+          style={customColor ? { color: customColor } : undefined}
         >
           {words[0]}
           <br />
@@ -69,8 +85,9 @@ const TierLabelText = memo(
 
     return (
       <span
-        className={`nb-label-text font-black truncate ${textColor === "black" ? "text-black" : "text-white"} ${dynamicSizeClass}`}
+        className={`nb-label-text truncate ${colorClass} ${dynamicSizeClass} ${fontClass}`}
         title={title}
+        style={customColor ? { color: customColor } : undefined}
       >
         {title}
       </span>
@@ -86,6 +103,9 @@ export const TierLabel = memo(
     title,
     color,
     labelSize = "sm",
+    labelWeight = "black",
+    labelStyle = "normal",
+    labelColor,
     onChangeColor,
     onRename,
     droppableRef,
@@ -122,6 +142,8 @@ export const TierLabel = memo(
 
     const dynamicSizeClass = sizeClasses[labelSize];
     const textColor = getTextColorForBackground(color);
+    const weightClass = weightClasses[labelWeight];
+    const isItalic = labelStyle === "italic";
 
     const handleStartEditing = () => {
       if (!onRename) return;
@@ -190,13 +212,16 @@ export const TierLabel = memo(
             className={`w-full min-w-0 bg-transparent text-center outline-none overflow-hidden text-ellipsis ${
               textColor === "black" ? "text-black" : "text-white"
             }`}
-            style={{ fontSize: "inherit", fontWeight: "inherit" }}
+            style={{ fontSize: "inherit", fontWeight: "inherit", fontStyle: "inherit" }}
           />
         ) : (
           <TierLabelText
             title={title}
             textColor={textColor}
             dynamicSizeClass={dynamicSizeClass}
+            weightClass={weightClass}
+            isItalic={isItalic}
+            customColor={labelColor}
           />
         )}
 

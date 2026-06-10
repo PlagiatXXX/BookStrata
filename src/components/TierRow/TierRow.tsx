@@ -108,6 +108,9 @@ export const TierRow = memo(
           title={tier.title}
           color={tier.color}
           labelSize={tier.labelSize}
+          labelWeight={tier.labelWeight}
+          labelStyle={tier.labelStyle}
+          labelColor={tier.labelColor}
           onChangeColor={onChangeColor}
           onRename={onRename}
         />

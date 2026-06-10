@@ -144,7 +144,7 @@ export const EditorMainContent = memo(
         </div>
 
         {!isReadOnly && (
-          <div className="shrink-0 lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-8rem)] lg:overflow-y-auto">
+          <div className="shrink-0 lg:sticky lg:top-4 lg:self-start">
             <SettingsSidebar
               key={activeTierData?.id}
               activeTier={activeTierData || undefined}

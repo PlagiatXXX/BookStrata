@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import {
   Plus,
   Trash2,
@@ -8,11 +8,28 @@ import {
   Trash,
   Type,
   Search,
+  Italic,
+  CaseSensitive,
+  Palette,
 } from "lucide-react";
 import type { Tier } from "@/types";
 import { Switch } from "@/ui/Switch";
 import { SaveButton } from "@/pages/TierListEditorPage/components/SaveButton";
 import type { SaveStatus } from "@/pages/TierListEditorPage/hooks/useTierEditorSave";
+
+const LABEL_COLORS = [
+  { value: "", label: "Авто", color: "#888" },
+  { value: "#ffffff", label: "Белый", color: "#ffffff" },
+  { value: "#000000", label: "Чёрный", color: "#000000" },
+  { value: "#ff4444", label: "Красный", color: "#ff4444" },
+  { value: "#3b82f6", label: "Синий", color: "#3b82f6" },
+  { value: "#f59e0b", label: "Золотой", color: "#f59e0b" },
+  { value: "#22c55e", label: "Зелёный", color: "#22c55e" },
+  { value: "#ec4899", label: "Розовый", color: "#ec4899" },
+  { value: "#a855f7", label: "Фиолетовый", color: "#a855f7" },
+  { value: "#ff8c00", label: "Оранжевый", color: "#ff8c00" },
+  { value: "#00ffff", label: "Голубой", color: "#00ffff" },
+] as const;
 
 const actionButtonBase =
   "flex w-full items-center justify-center gap-2";
@@ -79,6 +96,22 @@ export const SettingsSidebar = memo(({
     const newSize = sizes[newIndex];
     onUpdateTier?.(activeTier.id, { labelSize: newSize });
   };
+
+  const handleWeightChange = useCallback((weight: Tier["labelWeight"]) => {
+    if (!activeTier) return;
+    onUpdateTier?.(activeTier.id, { labelWeight: weight });
+  }, [activeTier, onUpdateTier]);
+
+  const handleStyleToggle = useCallback(() => {
+    if (!activeTier) return;
+    const next = activeTier.labelStyle === "italic" ? "normal" : "italic";
+    onUpdateTier?.(activeTier.id, { labelStyle: next });
+  }, [activeTier, onUpdateTier]);
+
+  const handleLabelColorChange = useCallback((color: string) => {
+    if (!activeTier) return;
+    onUpdateTier?.(activeTier.id, { labelColor: color || undefined });
+  }, [activeTier, onUpdateTier]);
 
   return (
     <aside className="nb-sidebar flex w-full flex-col text-white lg:w-80">
@@ -162,6 +195,88 @@ export const SettingsSidebar = memo(({
                 >
                   <Type size={14} />
                 </button>
+              </div>
+            </div>
+
+            {/* Начертание */}
+            <div>
+              <span className="nb-label-md mb-2 flex items-center gap-1.5 text-[10px] text-gray-400 uppercase tracking-widest">
+                <CaseSensitive size={12} />
+                Начертание
+              </span>
+              <div className="flex gap-1">
+                {(["thin", "normal", "bold", "black"] as const).map((w) => {
+                  const isActive = (activeTier?.labelWeight ?? "black") === w;
+                  return (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() => handleWeightChange(w)}
+                      className={`flex-1 cursor-pointer nb-heavy-border px-1.5 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                        isActive
+                          ? "bg-[#c1fffe] text-black shadow-[2px_2px_0_0_#000000]"
+                          : "bg-black text-white hover:bg-gray-900"
+                      }`}
+                    >
+                      {w === "thin" ? "100" : w === "normal" ? "400" : w === "bold" ? "700" : "900"}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Стиль (курсив) */}
+            <div className="flex items-center justify-between">
+              <span className="nb-label-md flex items-center gap-1.5">
+                <Italic size={13} />
+                Курсив
+              </span>
+              <button
+                type="button"
+                onClick={handleStyleToggle}
+                className={`cursor-pointer nb-heavy-border px-3 py-1 text-[11px] font-black uppercase tracking-wider transition-all ${
+                  activeTier?.labelStyle === "italic"
+                    ? "bg-[#ff51fa] text-black shadow-[2px_2px_0_0_#000000]"
+                    : "bg-black text-white hover:bg-gray-900"
+                }`}
+              >
+                {activeTier?.labelStyle === "italic" ? "Вкл" : "Выкл"}
+              </button>
+            </div>
+
+            {/* Цвет текста */}
+            <div>
+              <span className="nb-label-md mb-2 flex items-center gap-1.5 text-[10px] text-gray-400 uppercase tracking-widest">
+                <Palette size={12} />
+                Цвет текста
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {LABEL_COLORS.map((c) => {
+                  const isActive = (activeTier?.labelColor ?? "") === c.value;
+                  return (
+                    <button
+                      key={c.value || "auto"}
+                      type="button"
+                      onClick={() => handleLabelColorChange(c.value)}
+                      className={`nb-heavy-border size-6 cursor-pointer border transition-all ${
+                        isActive
+                          ? "scale-110 ring-2 ring-[#c1fffe] ring-offset-1 ring-offset-black"
+                          : "hover:scale-110"
+                      }`}
+                      style={{
+                        backgroundColor: c.color === "#888" ? undefined : c.color,
+                        backgroundImage:
+                          c.value === ""
+                            ? "linear-gradient(45deg, #000 25%, #fff 25%, #fff 50%, #000 50%, #000 75%, #fff 75%)"
+                            : undefined,
+                        backgroundSize:
+                          c.value === "" ? "6px 6px" : undefined,
+                      }}
+                      title={c.label}
+                      aria-label={c.label}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>

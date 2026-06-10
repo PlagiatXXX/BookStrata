@@ -14,6 +14,9 @@ export interface Tier {
   bookIds: string[];
   height?: number;
   labelSize?: "xs" | "sm" | "md";
+  labelWeight?: "thin" | "normal" | "bold" | "black";
+  labelStyle?: "normal" | "italic";
+  labelColor?: string;
 }
 
 export interface TierListData {
