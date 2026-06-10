@@ -219,7 +219,7 @@ export function AuthForm() {
                   Логин <span className="text-red-500">*</span>
                 </label>
                 <input
-                  id="username" type="text" name="username" placeholder="Логин"
+                  id="username" type="text" name="username" placeholder="Введите логин"
                   value={state.formData.username} onChange={handleChange} required
                   className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none focus:text-slate-950 transition-colors duration-200"
                 />
@@ -232,7 +232,7 @@ export function AuthForm() {
                     Email <span className="text-red-500">*</span>
                   </label>
                   <input
-                    id="email" type="email" name="email" placeholder="Email"
+                    id="email" type="email" name="email" placeholder="example@mail.ru"
                     value={state.formData.email} onChange={handleChange} required
                     className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none"
                   />
@@ -245,7 +245,7 @@ export function AuthForm() {
                   Пароль <span className="text-red-500">*</span>
                 </label>
                 <input
-                  id="password" type={state.showPassword ? "text" : "password"} name="password" placeholder="Пароль"
+                  id="password" type={state.showPassword ? "text" : "password"} name="password" placeholder="••••••••"
                   value={state.formData.password} onChange={handleChange} required
                   className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none pr-10"
                 />
