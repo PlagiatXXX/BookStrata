@@ -89,7 +89,7 @@ export function FeedbackButton() {
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Тип
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {TYPES.map((t) => {
                       const Icon = t.icon;
                       const isActive = type === t.value;
@@ -97,13 +97,13 @@ export function FeedbackButton() {
                         <button
                           key={t.value}
                           onClick={() => setType(t.value)}
-                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                          className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer flex-1 min-w-0 ${
                             isActive
                               ? "bg-violet-600/30 text-violet-300 border border-violet-500/50"
                               : "bg-slate-800/50 text-gray-400 border border-slate-700/50 hover:text-gray-200"
                           }`}
                         >
-                          <Icon size={16} />
+                          <Icon size={14} />
                           {t.label}
                         </button>
                       );

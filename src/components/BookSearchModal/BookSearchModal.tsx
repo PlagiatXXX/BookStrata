@@ -28,20 +28,20 @@ interface BookSearchModalProps {
 
 interface SearchState {
   query: string;
-  selectedBooks: Set<string>;
+  selectedBooks: Record<string, OpenLibraryBook>;
   hasSearched: boolean;
 }
 
 type SearchAction =
   | { type: "SET_QUERY"; query: string }
-  | { type: "TOGGLE_BOOK"; bookKey: string }
+  | { type: "TOGGLE_BOOK"; book: OpenLibraryBook }
   | { type: "CLEAR_SELECTION" }
   | { type: "RESET_SEARCH" }
   | { type: "SET_SEARCHED" };
 
 const initialSearchState: SearchState = {
   query: "",
-  selectedBooks: new Set(),
+  selectedBooks: {},
   hasSearched: false,
 };
 
@@ -52,21 +52,22 @@ function searchReducer(state: SearchState, action: SearchAction): SearchState {
       if (state.query === action.query) return state;
       return { ...state, query: action.query };
     case "TOGGLE_BOOK":
-      { const newSet = new Set(state.selectedBooks);
-      if (newSet.has(action.bookKey)) {
-        newSet.delete(action.bookKey);
+      { const key = action.book.openLibraryKey;
+      const newSelected = { ...state.selectedBooks };
+      if (key in newSelected) {
+        delete newSelected[key];
       } else {
-        newSet.add(action.bookKey);
+        newSelected[key] = action.book;
       }
-      return { ...state, selectedBooks: newSet }; }
+      return { ...state, selectedBooks: newSelected }; }
     case "CLEAR_SELECTION":
       // Guard: Return current state if selection is already empty
-      if (state.selectedBooks.size === 0) return state;
-      return { ...state, selectedBooks: new Set() };
+      if (Object.keys(state.selectedBooks).length === 0) return state;
+      return { ...state, selectedBooks: {} };
     case "RESET_SEARCH":
-      return { query: "", selectedBooks: new Set(), hasSearched: false };
+      return { query: "", selectedBooks: {}, hasSearched: false };
     case "SET_SEARCHED":
-      return { ...state, hasSearched: true, selectedBooks: new Set() };
+      return { ...state, hasSearched: true };
     default:
       return state;
   }
@@ -116,7 +117,7 @@ const BookItem = memo(({
 }: {
   book: OpenLibraryBook;
   isSelected: boolean;
-  onToggle: (bookKey: string) => void;
+  onToggle: (book: OpenLibraryBook) => void;
   onView: (book: OpenLibraryBook) => void;
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -209,7 +210,7 @@ const BookItem = memo(({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onToggle(book.openLibraryKey);
+            onToggle(book);
           }}
           aria-label={isSelected ? "Убрать из выбранного" : "Добавить в выбранное"}
           className={`flex h-10 w-10 cursor-pointer items-center justify-center border-2 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none ${
@@ -313,8 +314,8 @@ export const BookSearchModal = ({
   };
 
   // Стабилизируем обработчики для memoized BookItem
-  const handleToggleBookSelection = useCallback((key: string) => {
-    dispatch({ type: "TOGGLE_BOOK", bookKey: key });
+  const handleToggleBookSelection = useCallback((book: OpenLibraryBook) => {
+    dispatch({ type: "TOGGLE_BOOK", book });
   }, []);
 
   const handleSetViewBook = useCallback((book: OpenLibraryBook) => {
@@ -350,7 +351,8 @@ export const BookSearchModal = ({
     }
   };
 
-  const handleLiveLibToggleBook = useCallback((key: string) => {
+  const handleLiveLibToggleBook = useCallback((book: OpenLibraryBook | LiveLibBook) => {
+    const key = book.openLibraryKey;
     setLiveLibSelected((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -417,16 +419,13 @@ export const BookSearchModal = ({
   };
 
   const handleAddSelectedBooks = async () => {
-    if (state.selectedBooks.size === 0) return;
+    const books = Object.values(state.selectedBooks);
+    if (books.length === 0) return;
 
     setIsAddingBooks(true);
 
-    const booksToAdd = results.filter((book) =>
-      state.selectedBooks.has(book.openLibraryKey),
-    );
-
     try {
-      const addedBooks = await batchAddBooksFromSearch(tierListId, booksToAdd);
+      const addedBooks = await batchAddBooksFromSearch(tierListId, books);
 
       dispatch({ type: "CLEAR_SELECTION" });
       setIsAddingBooks(false);
@@ -579,7 +578,7 @@ export const BookSearchModal = ({
               }`}
             >
               <Search className="h-3 w-3" />
-              Поиск
+              Поиск по названию
             </button>
             <button
               type="button"
@@ -597,7 +596,7 @@ export const BookSearchModal = ({
             <div className="flex-1" />
 
             {/* Кнопка добавления — справа в таб-баре */}
-            {activeTab === "search" && state.selectedBooks.size > 0 && (
+            {activeTab === "search" && Object.keys(state.selectedBooks).length > 0 && (
               <button
                 type="button"
                 onClick={handleAddSelectedBooks}
@@ -609,7 +608,7 @@ export const BookSearchModal = ({
                 ) : (
                   <Plus className="h-3 w-3" />
                 )}
-                {isAddingBooks ? "Добавление..." : `Добавить (${state.selectedBooks.size})`}
+                {isAddingBooks ? "Добавление..." : `Добавить (${Object.keys(state.selectedBooks).length})`}
               </button>
             )}
             {activeTab === "livelib" && liveLibSelected.size > 0 && (
@@ -728,7 +727,7 @@ export const BookSearchModal = ({
                       >
                         <BookItem
                           book={book}
-                          isSelected={state.selectedBooks.has(book.openLibraryKey)}
+                          isSelected={book.openLibraryKey in state.selectedBooks}
                           onToggle={handleToggleBookSelection}
                           onView={handleSetViewBook}
                         />

@@ -245,8 +245,8 @@ function DonateModal({ onClose }: { onClose: () => void }) {
             <p className="text-sm font-medium text-amber-300 mb-2">
               Реквизиты для перевода
             </p>
-            <div className="flex items-center justify-between rounded-lg bg-black/40 px-4 py-3">
-              <span className="font-mono text-base font-bold text-white tracking-wider">
+            <div className="flex items-center justify-between gap-2 rounded-lg bg-black/40 px-4 py-3 flex-wrap">
+              <span className="font-mono text-sm md:text-base font-bold text-white tracking-wider break-all">
                 {cardNumber}
               </span>
               <button

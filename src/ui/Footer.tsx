@@ -278,12 +278,12 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
           {/* Right Zone: Donate Block */}
           <div className="flex flex-col items-start lg:items-end lg:text-right lg:contents">
-            <div className="relative self-start">
+            <div className="relative max-w-full">
               <button
                 type="button"
                 id="donate-button"
                 onClick={toggleDonate}
-                className="group relative z-20 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-4 py-2.5 text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden"
+                className="group relative z-20 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-3 py-2 text-xs md:text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden max-w-full"
                 aria-expanded={isDonateOpen}
                 aria-controls="donate-menu"
               >
@@ -321,13 +321,13 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                     лучше. Спасибо, что вы с нами!
                   </p>
 
-                  <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
-                    <span className="font-mono text-sm font-bold text-amber-100 tracking-wider">
+                  <div className="mt-4 flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 flex-wrap">
+                    <span className="font-mono text-xs font-bold text-amber-100 tracking-wider break-all">
                       {cardNumber}
                     </span>
                     <button
                       onClick={handleCopyCard}
-                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-400/30 px-2.5 py-1 text-[10px] font-medium text-amber-200 transition-colors hover:bg-amber-500/20"
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-400/30 px-2 py-1 text-[10px] font-medium text-amber-200 transition-colors hover:bg-amber-500/20 shrink-0"
                       type="button"
                       aria-label="Копировать номер карты"
                     >

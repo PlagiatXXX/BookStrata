@@ -137,13 +137,16 @@ export function AuthForm() {
   if (state.registeredEmail) {
     return (
       <div className="relative min-h-screen overflow-hidden">
-        <video autoPlay muted playsInline className="absolute inset-0 w-full h-full object-cover">
-          <source src="/library4k-hq.mp4" type="video/mp4" />
-        </video>
+        <div className="absolute inset-0">
+          <video autoPlay muted playsInline className="hidden md:block absolute inset-0 w-full h-full object-cover">
+            <source src="/library4k-hq.mp4" type="video/mp4" />
+          </video>
+          <img src="/library.webp" alt="" className="md:hidden absolute inset-0 w-full h-full object-cover" />
+        </div>
         <div className="absolute inset-0 bg-black/20" />
-        <div className="relative z-10 flex min-h-screen items-center justify-center">
-          <Card className="w-full max-w-md bg-white/25 backdrop-blur-xs shadow-[0_20px_60px_rgba(0,0,0,0.25)] border border-white/30">
-            <div className="p-8 text-center">
+        <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+          <Card className="w-full max-w-sm md:max-w-md bg-white/25 backdrop-blur-xs shadow-[0_20px_60px_rgba(0,0,0,0.25)] border border-white/30">
+            <div className="p-6 md:p-8 text-center">
               <div className="size-16 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
                 <svg className="size-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -179,16 +182,19 @@ export function AuthForm() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <video autoPlay muted playsInline className="absolute inset-0 w-full h-full object-cover">
-        <source src="/library4k-hq.mp4" type="video/mp4" />
-      </video>
-      <div className="absolute inset-0 bg-black/20" />
-      <div className="relative z-10 flex min-h-screen items-center justify-center">
-        <Card className="w-full max-w-md bg-white/25 backdrop-blur-xs shadow-[0_20px_60px_rgba(0,0,0,0.25)] border border-white/30">
-          <div className="p-8">
-            <div className="mb-8 text-center">
-              <h1 className="text-xl font-medium tracking-widest text-slate-800 uppercase">
+      <div className="relative min-h-screen overflow-hidden">
+        <div className="absolute inset-0">
+          <video autoPlay muted playsInline className="hidden md:block absolute inset-0 w-full h-full object-cover">
+            <source src="/library4k-hq.mp4" type="video/mp4" />
+          </video>
+          <img src="/library.webp" alt="" className="md:hidden absolute inset-0 w-full h-full object-cover" />
+        </div>
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+          <Card className="w-full max-w-sm md:max-w-md bg-white/25 backdrop-blur-xs shadow-[0_20px_60px_rgba(0,0,0,0.25)] border border-white/30">
+            <div className="p-6 md:p-8">
+            <div className="mb-6 md:mb-8 text-center">
+              <h1 className="text-lg md:text-xl font-medium tracking-widest text-slate-800 uppercase">
                 Добро пожаловать
               </h1>
               <p className="mt-3 text-xs tracking-wide text-slate-500">
@@ -196,7 +202,7 @@ export function AuthForm() {
               </p>
             </div>
 
-            <div className="relative flex justify-center gap-0 mb-10 text-md tracking-widest font-semibold">
+            <div className="relative flex justify-center gap-0 mb-6 md:mb-10 text-md tracking-widest font-semibold">
               {(["login", "register"] as FormMode[]).map((m) => {
                 const active = mode === m
                 return (
@@ -215,7 +221,7 @@ export function AuthForm() {
               />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
               <div className="relative group">
                 <label htmlFor="username" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
                   Логин <span className="text-red-500">*</span>
