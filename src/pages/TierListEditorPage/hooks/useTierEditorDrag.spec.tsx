@@ -139,6 +139,7 @@ describe('useTierEditorDrag', () => {
           data: {
             current: {
               type: 'book',
+              book: mockListData.books['book-1'],
             },
           },
         },
@@ -344,7 +345,8 @@ describe('useTierEditorDrag', () => {
       expect(mockToPng).toHaveBeenCalled();
     });
 
-    it('должен обрабатывать ошибку fetch (сервер без CORS) и продолжать', async () => {
+    it('должен пробовать прокси при ошибке CORS и продолжать', async () => {
+      // Первый вызов (CORS) — ошибка, второй (прокси) — тоже ошибка
       globalThis.fetch = vi.fn().mockRejectedValue(new Error('CORS error'));
 
       const { result } = renderHookWithRef();
@@ -357,14 +359,21 @@ describe('useTierEditorDrag', () => {
 
       await result.current.onDownloadImage();
 
-      // toPng всё равно вызван, несмотря на ошибку CORS
+      // toPng всё равно вызван, несмотря на ошибки CORS и прокси
       expect(mockToPng).toHaveBeenCalled();
       // background-image не изменился
       expect(card.style.backgroundImage).toContain('http://example.com/nocors.jpg');
+      // fetch вызывался дважды: CORS + прокси
+      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     });
 
     it('должен обрабатывать ошибку при скачивании и восстанавливать стили', async () => {
       mockToPng.mockRejectedValue(new Error('Download failed'));
+      const mockBlob = new Blob(['fake'], { type: 'image/jpeg' });
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      });
 
       const { result } = renderHookWithRef();
       const el = result.current.tierGridRef.current!;

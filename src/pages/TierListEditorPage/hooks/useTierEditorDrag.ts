@@ -11,6 +11,16 @@ import type { ExportTheme } from "../components/ExportModal";
 // Логгер для хука drag-and-drop
 const logger = createLogger("TierEditorDrag", { color: "orange" });
 
+/** Преобразует Blob в data URL */
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Failed to read blob"));
+    reader.readAsDataURL(blob);
+  });
+}
+
 export interface UseTierEditorDragResult {
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   handleDragStart: (event: DragStartEvent) => void;
@@ -18,7 +28,6 @@ export interface UseTierEditorDragResult {
   handleDragEndAndClear: (event: DragEndEvent) => void;
   onDownloadImage: (
     theme?: ExportTheme,
-    showWatermark?: boolean,
     username?: string,
   ) => Promise<void>;
 }
@@ -67,7 +76,6 @@ export function useTierEditorDrag({
   const onDownloadImage = useCallback(
     async (
       theme: ExportTheme = "default",
-      showWatermark = true,
       username = "",
     ) => {
       if (tierGridRef.current === null) return;
@@ -75,7 +83,7 @@ export function useTierEditorDrag({
       logger.info("Downloading tier list as image", {
         title: listData.title,
         theme,
-        showWatermark,
+        watermark: true,
       });
 
       const element = tierGridRef.current;
@@ -98,17 +106,26 @@ export function useTierEditorDrag({
 
           try {
             const resp = await fetch(url, { mode: "cors" });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const blob = await resp.blob();
+            const dataUrl = await blobToDataUrl(blob);
+            inlineMap.set(card, card.style.backgroundImage);
+            card.style.backgroundImage = `url(${dataUrl})`;
+            continue;
+          } catch {
+            // CORS fetch не сработал — пробуем через прокси
+          }
+
+          try {
+            const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(url)}`;
+            const resp = await fetch(proxyUrl);
             if (!resp.ok) continue;
             const blob = await resp.blob();
-            const dataUrl = await new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
-              reader.readAsDataURL(blob);
-            });
+            const dataUrl = await blobToDataUrl(blob);
             inlineMap.set(card, card.style.backgroundImage);
             card.style.backgroundImage = `url(${dataUrl})`;
           } catch {
-            // Сервер без CORS — оставляем как есть
+            // Прокси тоже не сработал — оставляем как есть
           }
         }
 
@@ -118,23 +135,20 @@ export function useTierEditorDrag({
           element.classList.add(`export-theme-${theme}`);
         }
 
-        // 3. Добавляем водяной знак если нужно
-        let watermark: HTMLDivElement | null = null;
-        if (showWatermark) {
-          watermark = document.createElement("div");
-          watermark.className = "export-watermark";
+        // 3. Добавляем водяной знак
+        const watermark = document.createElement("div");
+        watermark.className = "export-watermark";
 
-          const brandSpan = document.createElement("span");
-          brandSpan.textContent = "BookStrata Pro";
+        const brandSpan = document.createElement("span");
+        brandSpan.textContent = "bookstrata.ru";
 
-          const separator = document.createTextNode(" • ");
+        const separator = document.createTextNode(" • ");
 
-          const userSpan = document.createElement("span");
-          userSpan.textContent = `@${username || "user"}`;
+        const userSpan = document.createElement("span");
+        userSpan.textContent = `@${username || "user"}`;
 
-          watermark.append(brandSpan, separator, userSpan);
-          element.appendChild(watermark);
-        }
+        watermark.append(brandSpan, separator, userSpan);
+        element.appendChild(watermark);
 
         // 4. Ждем немного для применения стилей и шрифтов
         await new Promise((resolve) => setTimeout(resolve, 100));

@@ -579,11 +579,12 @@ const TierListEditorContent = () => {
         isUpdatingBook={isUpdatingBook}
         isExportModalOpen={isExportModalOpen}
         onCloseExport={() => setIsExportModalOpen(false)}
-        onConfirmExport={(theme, showWatermark) =>
-          onDownloadImage(theme, showWatermark, authUser?.username)
+        onConfirmExport={(theme) =>
+          onDownloadImage(theme, authUser?.username)
         }
         username={authUser?.username || "user"}
         isReadOnly={isReadOnly}
+        tierListTheme={theme}
       />
 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-sm w-full px-4">

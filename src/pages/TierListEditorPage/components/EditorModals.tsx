@@ -74,9 +74,10 @@ interface EditorModalsProps {
   isUpdatingBook: boolean;
   isExportModalOpen: boolean;
   onCloseExport: () => void;
-  onConfirmExport: (theme: ExportTheme, showWatermark: boolean) => Promise<void>;
+  onConfirmExport: (theme: ExportTheme) => Promise<void>;
   username: string;
   isReadOnly?: boolean;
+  tierListTheme?: string;
 }
 
 export const EditorModals = ({
@@ -113,6 +114,7 @@ export const EditorModals = ({
   onConfirmExport,
   username,
   isReadOnly = false,
+  tierListTheme,
 }: EditorModalsProps) => {
   return (
     <>
@@ -178,7 +180,7 @@ export const EditorModals = ({
         isOpen={isExportModalOpen}
         onClose={onCloseExport}
         onExport={onConfirmExport}
-        username={username}
+        tierListTheme={tierListTheme}
       />
     </>
   );
