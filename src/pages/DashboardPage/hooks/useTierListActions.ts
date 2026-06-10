@@ -8,7 +8,7 @@ import { sileo } from "sileo";
 const logger = createLogger("TierListActions", { color: "magenta" });
 
 interface UseTierListActionsOptions {
-  onSuccess?: () => void;
+  onSuccess?: (tierListId?: string) => void;
   onRefetch?: () => void;
 }
 
@@ -43,7 +43,7 @@ export function useTierListActions({
         queryClient.invalidateQueries({ queryKey: ["user", "stats"] }),
         queryClient.invalidateQueries({ queryKey: ["userTierLists"] })
       ]);
-      onSuccess?.();
+      onSuccess?.(tierList?.id);
       onRefetch?.();
     },
     onError: (mutationError) => {

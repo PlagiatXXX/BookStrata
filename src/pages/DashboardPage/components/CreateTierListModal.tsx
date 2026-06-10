@@ -34,7 +34,7 @@ export function CreateTierListModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} titleId="create-modal-title">
+    <Modal isOpen={isOpen} onClose={onClose} titleId="create-modal-title" maxWidth="sm">
       <div className="dashboard-modal">
         <button
           onClick={onClose}

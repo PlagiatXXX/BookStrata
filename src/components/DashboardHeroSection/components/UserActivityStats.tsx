@@ -1,4 +1,4 @@
-import { PlusCircle, CheckCircle, FileText, BookOpen, Heart, Clock } from 'lucide-react';
+import { Layers, CheckCircle, FileText, BookOpen, Heart, Clock } from 'lucide-react';
 import './UserActivityStats.css';
 
 interface UserActivityStatsProps {
@@ -46,7 +46,7 @@ export function UserActivityStats({
                 <p className="user-activity-stats__value">{tierListsCount}</p>
               </div>
               <div className="user-activity-stats__icon user-activity-stats__icon--primary">
-                <PlusCircle size={24} />
+                <Layers size={24} />
               </div>
             </div>
           </div>

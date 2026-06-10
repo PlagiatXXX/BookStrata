@@ -385,7 +385,7 @@ export default function LandingPage() {
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
             >
-              Создать тир-лист
+              В библиотеку
               <ArrowRight size={18} />
             </button>
             <button

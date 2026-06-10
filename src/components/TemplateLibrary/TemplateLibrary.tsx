@@ -101,6 +101,13 @@ const TemplateLibrary: React.FC = () => {
   }, []);
 
   // ===== CRUD =====
+  const handleCreateSuccess = useCallback((tierListId?: string) => {
+    closeModal();
+    if (tierListId) {
+      navigate(`/tier-lists/${tierListId}`);
+    }
+  }, [closeModal, navigate]);
+
   const {
     createNewTierList,
     renameTierList,
@@ -109,7 +116,7 @@ const TemplateLibrary: React.FC = () => {
     isRenaming,
     isDeleting,
   } = useTierListActions({
-    onSuccess: closeModal,
+    onSuccess: handleCreateSuccess,
     onRefetch: () => {},
   });
 

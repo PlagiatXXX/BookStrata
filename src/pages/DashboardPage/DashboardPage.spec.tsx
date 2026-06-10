@@ -106,7 +106,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Добро пожаловать,")).toBeInTheDocument();
     expect(screen.getByText("testuser")).toBeInTheDocument();
     // Кнопки
-    expect(screen.getByText("Создать тир-лист")).toBeInTheDocument();
+    expect(screen.getByText("В библиотеку")).toBeInTheDocument();
     expect(screen.getByText("Смотреть тренды")).toBeInTheDocument();
   });
 
@@ -144,10 +144,10 @@ describe("DashboardPage", () => {
     });
   });
 
-  it("должен переходить на страницу создания тир-листа при клике 'Создать тир-лист'", () => {
+  it("должен переходить в библиотеку при клике 'В библиотеку'", () => {
     render(<DashboardPage />, { wrapper: createWrapper() });
 
-    fireEvent.click(screen.getByText("Создать тир-лист"));
+    fireEvent.click(screen.getByText("В библиотеку"));
 
     expect(mockNavigate).toHaveBeenCalledWith("/templates");
   });

@@ -468,6 +468,9 @@
   gap: 1rem;
   padding: 2.25rem 1.1rem 1.1rem;
   color: #e2e8f0;
+  background: #1a1d2e;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dashboard-modal__close {

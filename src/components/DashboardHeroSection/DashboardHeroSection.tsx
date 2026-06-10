@@ -1,4 +1,4 @@
-import { PlusCircle, TrendingUp } from "lucide-react";
+import { Library, TrendingUp } from "lucide-react";
 import { HeroPreviewCard } from "./components/HeroPreviewCard";
 import "./DashboardHeroSection.css";
 
@@ -40,8 +40,8 @@ export function DashboardHeroSection({
                 className="new-hero__btn new-hero__btn--primary"
                 type="button"
               >
-                <PlusCircle size={18} />
-                Создать тир-лист
+                <Library size={18} />
+                В библиотеку
               </button>
 
               <button
