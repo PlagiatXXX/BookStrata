@@ -245,3 +245,12 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Скрываем иконку Яндекс.Метрики в правом нижнем углу */
+.ym-informer-widget,
+.ym-informer,
+[class*="ym-informer"],
+#ym-informer,
+.ym-widget-informer {
+  display: none !important;
+}

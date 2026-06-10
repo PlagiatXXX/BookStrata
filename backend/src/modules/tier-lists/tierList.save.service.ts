@@ -1,6 +1,6 @@
 import { prisma, getTierListWhereClause } from "./tierList.utils.js";
 
-const MAX_BOOKS_PER_TIER_LIST = 30;
+// Лимит отключён до введения подписок Pro
 
 export async function saveAll(
   tierListId: string,
@@ -48,30 +48,6 @@ export async function saveAll(
     }
 
     const realTierListId = tierList.id;
-
-    const newBooksCount = payload.newBooks?.length || 0;
-    const existingBookIdsInPlacements = new Set<number>();
-
-    if (payload.placements?.length) {
-      for (const p of payload.placements) {
-        if (typeof p.bookId === "number") {
-          existingBookIdsInPlacements.add(p.bookId);
-        } else if (typeof p.bookId === "string" && !p.bookId.includes("-")) {
-          const parsed = parseInt(p.bookId, 10);
-          if (!isNaN(parsed)) {
-            existingBookIdsInPlacements.add(parsed);
-          }
-        }
-      }
-    }
-
-    const totalBooksCount = existingBookIdsInPlacements.size + newBooksCount;
-
-    if (totalBooksCount > MAX_BOOKS_PER_TIER_LIST) {
-      throw new Error(
-        `Превышен лимит книг в тир-листе. Максимум: ${MAX_BOOKS_PER_TIER_LIST}, запрошено: ${totalBooksCount}`
-      );
-    }
 
     const tierReplacements: { tempId: string; realId: string }[] = [];
     const bookReplacements: { tempId: string; realId: string }[] = [];

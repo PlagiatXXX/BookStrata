@@ -3,7 +3,7 @@ import { createLogger } from "../../lib/logger.js";
 
 const logger = createLogger("TierListsBooks", { color: "cyan" });
 
-const MAX_BOOKS_PER_TIER_LIST = 30;
+// Лимит отключён до введения подписок Pro
 
 export async function updatePlacements(
   tierListId: string,
@@ -74,12 +74,6 @@ export async function addBooksToTierList(
   const existingBooksCount = await prisma.bookPlacement.count({
     where: { tierListId: realTierListId },
   });
-
-  if (existingBooksCount + books.length > MAX_BOOKS_PER_TIER_LIST) {
-    throw new Error(
-      `Превышен лимит книг в тир-листе. Максимум: ${MAX_BOOKS_PER_TIER_LIST}, текущее количество: ${existingBooksCount}, добавляется: ${books.length}`,
-    );
-  }
 
   const results = await prisma.$transaction(async (tx) => {
     const updatedTierList = await tx.tierList.update({

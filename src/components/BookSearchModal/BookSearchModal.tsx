@@ -7,7 +7,6 @@ import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { useBookSearch } from "@/hooks/useBookSearch";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Spinner } from "@/components/Spinner";
-import { MAX_BOOKS_PER_TIER_LIST } from "@/constants/limits";
 
 // Логгер для компонента поиска книг
 const logger = createLogger('BookSearchModal', { color: 'green' });
@@ -391,30 +390,13 @@ export const BookSearchModal = ({
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(err, { action: "handleAddSelectedLiveLibBooks" });
 
-      setLiveLibSelected(new Set());
       setIsAddingBooks(false);
 
-      const errorMessage = err.message || "";
-      if (
-        errorMessage.includes("Превышен лимит книг") ||
-        errorMessage.includes("лимит")
-      ) {
-        sileo.action({
-          title: "Лимит книг",
-          description: `Достигнуто максимальное количество книг в тир-листе (${MAX_BOOKS_PER_TIER_LIST}). Оформите Pro для неограниченного количества.`,
-          duration: 3000,
-          button: {
-            title: "Оформить Pro",
-            onClick: () => {},
-          },
-        });
-      } else {
-        sileo.error({
-          title: "Не удалось добавить книги",
-          description: "Попробуйте снова позже",
-          duration: 3000,
-        });
-      }
+      sileo.error({
+        title: "Не удалось добавить книги",
+        description: "Попробуйте снова позже",
+        duration: 3000,
+      });
     }
   };
 
@@ -442,27 +424,13 @@ export const BookSearchModal = ({
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(err, { action: "batchAddBooksFromSearch" });
 
-      dispatch({ type: "CLEAR_SELECTION" });
       setIsAddingBooks(false);
 
-      const errorMessage = err.message || "";
-      if (errorMessage.includes("Превышен лимит книг") || errorMessage.includes("лимит")) {
-        sileo.action({
-          title: "Лимит книг",
-          description: `Достигнуто максимальное количество книг в тир-листе (${MAX_BOOKS_PER_TIER_LIST}). Оформите Pro для неограниченного количества.`,
-          duration: 3000,
-          button: {
-            title: "Оформить Pro",
-            onClick: () => {},
-          },
-        });
-      } else {
-        sileo.error({
-          title: "Не удалось добавить книги",
-          description: "Попробуйте снова позже",
-          duration: 3000,
-        });
-      }
+      sileo.error({
+        title: "Не удалось добавить книги",
+        description: "Попробуйте снова позже",
+        duration: 3000,
+      });
     }
   };
 
@@ -478,26 +446,8 @@ export const BookSearchModal = ({
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error(err, { action: "addBookFromView", title: book.title });
 
-      // Проверяем ошибку лимита книг
-      const errorMessage = err.message || "";
-      const isLimitError = errorMessage.includes("Превышен лимит книг") || errorMessage.includes("лимит");
-
-      if (isLimitError) {
-        sileo.action({
-          title: "Лимит книг",
-          description: `Достигнуто максимальное количество книг в тир-листе (${MAX_BOOKS_PER_TIER_LIST}). Оформите Pro для неограниченного количества.`,
-          duration: 3000,
-          button: {
-            title: "Оформить Pro",
-            onClick: () => {},
-          },
-        });
-        setViewBook(null);
-        handleClose();
-        return;
-      }
-
       // Проверяем различные форматы ошибок о отсутствии обложки
+      const errorMessage = err.message || "";
       const isNoCoverError =
         errorMessage.includes("no cover image") ||
         errorMessage.includes("Book has no cover") ||
