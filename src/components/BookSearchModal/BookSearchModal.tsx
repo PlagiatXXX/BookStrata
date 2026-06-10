@@ -302,6 +302,7 @@ export const BookSearchModal = ({
     if (!state.query.trim() || state.query.length < 2) return;
 
     dispatch({ type: "SET_SEARCHED" });
+    window.ym?.(109755750, 'reachGoal', 'book_search')
     await search(state.query);
   }, [state.query, search]);
 

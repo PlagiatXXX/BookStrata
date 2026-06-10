@@ -27,6 +27,7 @@ export const ExportModal = ({ isOpen, onClose, onExport, username }: ExportModal
     setIsExporting(true);
     try {
       await onExport(selectedTheme, showWatermark);
+      window.ym?.(109755750, 'reachGoal', 'export_png')
       onClose();
     } finally {
       setIsExporting(false);

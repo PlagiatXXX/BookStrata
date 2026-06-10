@@ -103,6 +103,7 @@ export function AuthForm() {
         StorageService.setString("username", result.username)
         window.dispatchEvent(new Event("auth-token-changed"))
         await new Promise((resolve) => setTimeout(resolve, 200))
+        window.ym?.(109755750, 'reachGoal', 'login')
         navigate("/dashboard")
         dispatch({ type: "SUBMIT_SUCCESS" })
       } else {
@@ -112,6 +113,7 @@ export function AuthForm() {
           password: state.formData.password,
           acceptedTerms: state.acceptedTerms,
         })
+        window.ym?.(109755750, 'reachGoal', 'register')
         dispatch({ type: "REGISTER_SUCCESS", email: state.formData.email })
       }
     } catch (err) {

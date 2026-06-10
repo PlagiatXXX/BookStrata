@@ -98,6 +98,7 @@ export function LikeButton({
       confirmedLikesRef.current = response.likesCount;
       setLiked(response.isLiked);
       setLikes(response.likesCount);
+      window.ym?.(109755750, 'reachGoal', response.isLiked ? 'like' : 'unlike')
       onLikeChange?.(response.likesCount, response.isLiked);
 
       // Обновляем кэш likedTierListIds напрямую через setQueryData
