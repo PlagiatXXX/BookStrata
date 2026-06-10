@@ -419,11 +419,7 @@ const TierListEditorContent = () => {
   };
 
   const handleMyRatingsClick = () => {
-    if (hasUnsavedChanges) {
-      setShowUnsavedModal(true);
-    } else {
-      navigate("/");
-    }
+    navigate("/");
   };
 
   const handleViewBook = (book: Book) => {
