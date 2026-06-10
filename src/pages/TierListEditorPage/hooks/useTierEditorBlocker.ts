@@ -79,12 +79,22 @@ export function useTierEditorBlocker({
 
   const handleSaveBeforeLeave = async () => {
     setIsSavingBeforeLeave(true);
+    // Сохраняем target location пока blocker ещё в состоянии 'blocked'
+    const targetLocation =
+      blocker.state === 'blocked' ? blocker.location : undefined;
     try {
       await forceSave();
-      // Сначала отключаем блокер, чтобы hasUnsavedChanges=false не сбросило его
+      // После сохранения отключаем блокер и закрываем модалку
       setShowUnsavedModal(false);
       setIgnoreUnsavedBlocker(true);
-      blocker.proceed?.();
+      // Продолжаем навигацию вручную (blocker.proceed может успеть сброситься)
+      if (targetLocation) {
+        navigate(
+          targetLocation.pathname +
+            targetLocation.search +
+            targetLocation.hash,
+        );
+      }
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), {
         action: 'saveBeforeLeave',
