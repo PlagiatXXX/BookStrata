@@ -219,7 +219,7 @@ export function AuthForm() {
                   Логин <span className="text-red-500">*</span>
                 </label>
                 <input
-                  id="username" type="text" name="username" placeholder="Введите логин"
+                  id="username" type="text" name="username"
                   value={state.formData.username} onChange={handleChange} required
                   className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none focus:text-slate-950 transition-colors duration-200"
                 />
@@ -232,7 +232,7 @@ export function AuthForm() {
                     Email <span className="text-red-500">*</span>
                   </label>
                   <input
-                    id="email" type="email" name="email" placeholder="example@mail.ru"
+                    id="email" type="email" name="email"
                     value={state.formData.email} onChange={handleChange} required
                     className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none"
                   />
@@ -245,7 +245,7 @@ export function AuthForm() {
                   Пароль <span className="text-red-500">*</span>
                 </label>
                 <input
-                  id="password" type={state.showPassword ? "text" : "password"} name="password" placeholder="••••••••"
+                  id="password" type={state.showPassword ? "text" : "password"} name="password"
                   value={state.formData.password} onChange={handleChange} required
                   className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none pr-10"
                 />
@@ -257,14 +257,14 @@ export function AuthForm() {
                   {state.showPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
                 </button>
                 <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
-                {mode === "login" && (
-                  <div className="flex justify-end mt-1">
-                    <Link to="/forgot-password" className="text-xs text-slate-500 hover:text-orange-500 transition-colors">
-                      Забыли пароль?
-                    </Link>
-                  </div>
-                )}
               </div>
+              {mode === "login" && (
+                <div className="flex justify-end -mt-4">
+                  <Link to="/forgot-password" className="text-xs text-slate-500 hover:text-orange-500 transition-colors">
+                    Забыли пароль?
+                  </Link>
+                </div>
+              )}
 
               {mode === "register" && (
                 <>
