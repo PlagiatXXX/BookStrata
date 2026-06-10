@@ -9,6 +9,7 @@ import type {
 } from "@dnd-kit/core";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
+import { TierLabel } from "@/ui/TierLabel";
 import type { Book, Tier } from "@/types";
 import type { EditorHeaderProps } from "./EditorHeader";
 import { EditorHeader } from "./EditorHeader";
@@ -56,8 +57,12 @@ export const EditorLayout = ({
   ownerUserId,
   currentUserId,
 }: EditorLayoutProps) => {
-  const activeBook =
-    activeItem && "coverImageUrl" in activeItem ? activeItem : null;
+  const activeBook: Book | null =
+    activeItem && "coverImageUrl" in activeItem ? (activeItem as Book) : null;
+  const activeTier: Tier | null =
+    activeItem && "color" in activeItem && "title" in activeItem && !("coverImageUrl" in activeItem)
+      ? (activeItem as Tier)
+      : null;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -136,6 +141,26 @@ export const EditorLayout = ({
             }}
           >
             <BookCover book={activeBook} isDraggable={false} />
+          </div>
+        ) : activeTier ? (
+          <div
+            className="flex items-center gap-2 rounded-lg px-4 py-2 shadow-xl"
+            style={{
+              opacity: 0.85,
+              transform: "rotate(1deg) scale(1.02)",
+              backgroundColor: activeTier.color || "#808080",
+              minWidth: 200,
+            }}
+          >
+            <TierLabel
+              tierId={activeTier.id}
+              title={activeTier.title}
+              color={activeTier.color}
+              labelSize={activeTier.labelSize}
+            />
+            <span className="text-white font-medium truncate">
+              {activeTier.title}
+            </span>
           </div>
         ) : null}
       </DragOverlay>

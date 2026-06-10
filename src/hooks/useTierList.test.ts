@@ -435,4 +435,74 @@ describe('useTierList', () => {
       expect(result.current.listData.tiers['456']).toBeDefined();
     });
   });
+
+  describe('REORDER_TIERS — реордеринг тиров', () => {
+    it('должен менять порядок тиров местами при перетаскивании tier на tier', () => {
+      const { result } = renderHook(() => useTierList(initialData));
+
+      expect(result.current.listData.tierOrder).toEqual(['tier-1', 'tier-2']);
+
+      const mockEvent = {
+        active: {
+          id: 'tier-1',
+          data: { current: { type: 'tier' } },
+        },
+        over: {
+          id: 'tier-2',
+          data: { current: { type: 'tier' } },
+        },
+      } as any;
+
+      act(() => {
+        result.current.handleDragEnd(mockEvent);
+      });
+
+      expect(result.current.listData.tierOrder).toEqual(['tier-2', 'tier-1']);
+    });
+
+    it('должен менять порядок тиров при перетаскивании на книгу внутри другого тира', () => {
+      const { result } = renderHook(() => useTierList(initialData));
+
+      expect(result.current.listData.tierOrder).toEqual(['tier-1', 'tier-2']);
+
+      // Перетаскиваем tier-1 на книгу book-2, которая находится в tier-2
+      const mockEvent = {
+        active: {
+          id: 'tier-1',
+          data: { current: { type: 'tier' } },
+        },
+        over: {
+          id: 'book-2',
+          data: { current: { type: 'book', containerId: 'tier-2' } },
+        },
+      } as any;
+
+      act(() => {
+        result.current.handleDragEnd(mockEvent);
+      });
+
+      expect(result.current.listData.tierOrder).toEqual(['tier-2', 'tier-1']);
+    });
+
+    it('не должен менять порядок при перетаскивании на самого себя', () => {
+      const { result } = renderHook(() => useTierList(initialData));
+
+      const mockEvent = {
+        active: {
+          id: 'tier-1',
+          data: { current: { type: 'tier' } },
+        },
+        over: {
+          id: 'tier-1',
+          data: { current: { type: 'tier' } },
+        },
+      } as any;
+
+      act(() => {
+        result.current.handleDragEnd(mockEvent);
+      });
+
+      expect(result.current.listData.tierOrder).toEqual(['tier-1', 'tier-2']);
+    });
+  });
 });

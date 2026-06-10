@@ -113,7 +113,7 @@ export const TierRow = memo(
         />
 
         <SortableContext
-          id={tier.id}
+          id={`books-${tier.id}`}
           items={tier.bookIds}
           strategy={horizontalListSortingStrategy}
         >

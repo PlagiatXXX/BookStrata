@@ -473,16 +473,22 @@ export const useTierList = (
 
     if (!over || active.id === over.id) return;
 
+    // Определяем overId: если over — книга, используем containerId (родительский tier)
+    const overId =
+      over.data.current?.type === "book"
+        ? over.data.current.containerId
+        : String(over.id);
+
     const isReorderingTiers =
       listData.tierOrder.includes(String(active.id)) &&
-      listData.tierOrder.includes(String(over.id));
+      listData.tierOrder.includes(overId);
 
     if (isReorderingTiers) {
       dispatch({
         type: "REORDER_TIERS",
         payload: {
           activeId: String(active.id),
-          overId: String(over.id),
+          overId,
         },
       });
       return;
@@ -495,9 +501,9 @@ export const useTierList = (
 
       if (over.data.current?.type === "book") {
         destContainer = over.data.current?.containerId;
-      } else if (listData.tiers[String(over.id)]) {
-        destContainer = String(over.id);
-      } else if (String(over.id) === UNRANKED_AREA_ID) {
+      } else if (listData.tiers[overId]) {
+        destContainer = overId;
+      } else if (overId === UNRANKED_AREA_ID) {
         destContainer = UNRANKED_AREA_ID;
       }
 
