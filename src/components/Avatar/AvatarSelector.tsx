@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createLogger } from "@/lib/logger";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { apiGenerateAvatar, apiGetAvatarLimit, type AvatarLimitInfo } from "@/lib/avatarApi";
+import { cropAvatar } from "@/utils/cropAvatar";
 import { AvatarSelectorHeader } from "./components/AvatarSelectorHeader";
 import { AvatarPreview } from "./components/AvatarPreview";
 import { TabNavigation } from "./components/TabNavigation";
@@ -12,6 +13,7 @@ import { UploadTab } from "./components/UploadTab";
 import { AvatarSelectorFooter } from "./components/AvatarSelectorFooter";
 import { useAvatarPreview } from "./hooks/useAvatarPreview";
 import type {
+  AvatarPosition,
   AvatarPreset,
   AvatarSelectorProps,
   PresetStyle,
@@ -35,6 +37,7 @@ export function AvatarSelector({
   const [aiPrompt, setAiPrompt] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarPosition, setAvatarPosition] = useState<AvatarPosition>({ x: 0, y: 0 });
 
   const { preview, setPreviewUrl } = useAvatarPreview();
 
@@ -92,6 +95,7 @@ export function AvatarSelector({
   const handlePresetSelect = (preset: AvatarPreset) => {
     setError(null);
     setPreviewUrl(preset.full);
+    setAvatarPosition({ x: 0, y: 0 });
   };
 
   const handleAiGenerate = async () => {
@@ -103,11 +107,13 @@ export function AvatarSelector({
 
     window.ym?.(109755750, 'reachGoal', 'ai_avatar')
     await generateAvatarMutation.mutateAsync(prompt);
+    setAvatarPosition({ x: 0, y: 0 });
   };
 
   const handleFileSelect = (fileDataUrl: string) => {
     setError(null);
     setPreviewUrl(fileDataUrl);
+    setAvatarPosition({ x: 0, y: 0 });
   };
 
   const handleSave = async () => {
@@ -119,7 +125,13 @@ export function AvatarSelector({
     setIsSaving(true);
 
     try {
-      await onSave(preview.url);
+      // Обрезаем изображение с учётом позиции
+      const cropped = await cropAvatar(
+        preview.url,
+        avatarPosition.x,
+        avatarPosition.y,
+      );
+      await onSave(cropped);
       onClose();
     } catch (saveError) {
       const message =
@@ -148,6 +160,8 @@ export function AvatarSelector({
           hasSelection={hasSelection}
           isBusy={isBusy}
           busyLabel={busyLabel}
+          position={avatarPosition}
+          onPositionChange={setAvatarPosition}
         />
 
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />

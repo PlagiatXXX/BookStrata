@@ -6,6 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AvatarSelector } from "./AvatarSelector";
 import * as avatarApi from "@/lib/avatarApi";
 
+vi.mock("@/utils/cropAvatar", () => ({
+  cropAvatar: vi.fn((url: string) => Promise.resolve(`cropped:${url}`)),
+}));
+
 vi.mock("@/lib/avatarApi", () => ({
   apiGenerateAvatar: vi.fn(),
   apiGetAvatarLimit: vi.fn(),
@@ -128,9 +132,12 @@ describe("AvatarSelector", () => {
     });
 
     fireEvent.click(screen.getByRole("button", { name: /сохранить/i }));
-
-    expect(onSave).toHaveBeenCalledWith("https://example.com/avatar.png");
     expect(screen.getAllByText("Сохраняем...").length).toBeGreaterThan(0);
+
+    // Ждём вызов onSave (после cropAvatar)
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith("cropped:https://example.com/avatar.png");
+    });
 
     resolveSave?.();
 

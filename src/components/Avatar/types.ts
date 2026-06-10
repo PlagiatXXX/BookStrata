@@ -12,6 +12,11 @@ export interface TabConfig {
   icon: LucideIcon;
 }
 
+export interface AvatarPosition {
+  x: number; // -50..50, процент смещения по X
+  y: number; // -50..50, процент смещения по Y
+}
+
 export type PreviewLoadState = "idle" | "loading" | "ready" | "error";
 
 export interface PreviewState {
@@ -57,6 +62,8 @@ export interface AvatarPreviewProps {
   hasSelection: boolean;
   isBusy: boolean;
   busyLabel?: string;
+  position: AvatarPosition;
+  onPositionChange: (position: AvatarPosition) => void;
 }
 
 export interface TabNavigationProps {
