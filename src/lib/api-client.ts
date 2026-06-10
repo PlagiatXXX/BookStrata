@@ -59,7 +59,7 @@ async function request<T>(
     } catch {
       handleUnauthorized();
     }
-    throw new Error("Требуется авторизация. Пожалуйста, войдите в систему.");
+    return null as T;
   }
 
   // 204 No Content

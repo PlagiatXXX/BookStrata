@@ -19,8 +19,8 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-const ACCESS_TOKEN_EXPIRY = "15m";
-const REFRESH_TOKEN_EXPIRY = "7d";
+const ACCESS_TOKEN_EXPIRY = "7d";
+const REFRESH_TOKEN_EXPIRY = "14d";
 
 export interface AuthToken {
   accessToken: string;

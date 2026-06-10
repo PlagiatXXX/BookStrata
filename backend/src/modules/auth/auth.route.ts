@@ -176,7 +176,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60,
+          maxAge: 14 * 24 * 60 * 60,
           path: "/",
         });
 
@@ -245,7 +245,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60,
+        maxAge: 14 * 24 * 60 * 60,
         path: "/",
       });
 
@@ -328,7 +328,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60,
+        maxAge: 14 * 24 * 60 * 60,
         path: "/",
       });
 
@@ -361,7 +361,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60,
+        maxAge: 14 * 24 * 60 * 60,
         path: "/",
       });
 

@@ -293,15 +293,14 @@ export function getAuthHeader(): Record<string, string> {
 }
 
 /**
- * Обработка 401 ошибки
+ * Обработка 401 ошибки — очищает токен и триггерит перепроверку AuthProvider
  */
 export function handleUnauthorized() {
   authLogger.warn(
-    "Неавторизованный доступ — очистка сессии и перенаправление на вход",
+    "Неавторизованный доступ — очистка сессии",
   );
   removeAuthToken();
-  window.dispatchEvent(new CustomEvent("unauthorized"));
-  window.location.href = "/auth";
+  window.dispatchEvent(new Event("auth-token-changed"));
 }
 
 /**
