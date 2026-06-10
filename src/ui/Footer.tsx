@@ -109,6 +109,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
     try {
       await navigator.clipboard.writeText(cardNumber);
       setCopied(true);
+      window.ym?.(109755750, 'reachGoal', 'donate_copy')
       setTimeout(() => setCopied(false), 2000);
     } catch {
       const el = document.createElement("textarea");
@@ -118,6 +119,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
       document.execCommand("copy");
       document.body.removeChild(el);
       setCopied(true);
+      window.ym?.(109755750, 'reachGoal', 'donate_copy')
       setTimeout(() => setCopied(false), 2000);
     }
   };

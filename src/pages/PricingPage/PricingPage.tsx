@@ -16,6 +16,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
     try {
       await navigator.clipboard.writeText(cardNumber)
       setCopied(true)
+      window.ym?.(109755750, 'reachGoal', 'donate_copy')
       setTimeout(() => setCopied(false), 2000)
     } catch {
       const el = document.createElement('textarea')
@@ -25,6 +26,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
       document.execCommand('copy')
       document.body.removeChild(el)
       setCopied(true)
+      window.ym?.(109755750, 'reachGoal', 'donate_copy')
       setTimeout(() => setCopied(false), 2000)
     }
   }
