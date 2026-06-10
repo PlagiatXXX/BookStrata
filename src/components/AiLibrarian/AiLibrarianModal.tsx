@@ -143,6 +143,7 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
     if (!canSend) return
     const text = input
     setInput('')
+    window.ym?.(109755750, 'reachGoal', 'ai_librarian')
     await sendMessage(text)
   }
 

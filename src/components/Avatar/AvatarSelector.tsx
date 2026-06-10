@@ -101,6 +101,7 @@ export function AvatarSelector({
       return;
     }
 
+    window.ym?.(109755750, 'reachGoal', 'ai_avatar')
     await generateAvatarMutation.mutateAsync(prompt);
   };
 
