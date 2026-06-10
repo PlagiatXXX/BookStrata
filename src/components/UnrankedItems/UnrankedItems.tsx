@@ -52,7 +52,7 @@ export const UnrankedItems = memo(
 
           <SortableContext
             id={UNRANKED_AREA_ID}
-            items={books.map((b) => b.id)}
+            items={books.map((b) => `book-${b.id}`)}
             strategy={rectSortingStrategy}
           >
             <div className="relative flex flex-wrap gap-4">

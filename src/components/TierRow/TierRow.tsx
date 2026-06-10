@@ -114,7 +114,7 @@ export const TierRow = memo(
 
         <SortableContext
           id={`books-${tier.id}`}
-          items={tier.bookIds}
+          items={tier.bookIds.map((id) => `book-${id}`)}
           strategy={horizontalListSortingStrategy}
         >
           <div

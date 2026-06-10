@@ -44,7 +44,7 @@ DragIndicatorOverlay.displayName = "DragIndicatorOverlay";
 export const SortableBookCover = memo(
   ({ book, containerId, onDelete, onEdit, onView }: SortableBookCoverProps) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-      useSortable({ id: book.id, data: { type: "book", containerId, book } });
+      useSortable({ id: `book-${book.id}`, data: { type: "book", containerId, book } });
 
     const style = {
       transform: CSS.Transform.toString(transform),

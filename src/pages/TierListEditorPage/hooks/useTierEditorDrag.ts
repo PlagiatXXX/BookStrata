@@ -41,7 +41,8 @@ export function useTierEditorDrag({
       const { active } = event;
       const type = active.data.current?.type;
 
-      const bookData = active.data.current?.book || listData.books[active.id];
+      const bookIdRaw = typeof active.id === "string" && active.id.startsWith("book-") ? active.id.slice(5) : active.id;
+      const bookData = active.data.current?.book || listData.books[bookIdRaw];
       const tierData = active.data.current?.tier || listData.tiers[active.id];
 
       if (type === "book") setActiveItem(bookData || null);
