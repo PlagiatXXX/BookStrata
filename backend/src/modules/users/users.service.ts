@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma.js";
 import bcrypt from "bcryptjs";
 import { tierListRepository } from "../../repositories/index.js";
+import { getTitleEntryByXP } from "../achievements/achievements.service.js";
 
 // Типы для валидации
 export type UpdateAvatarInput = {
@@ -161,12 +162,15 @@ export async function getUserById(params: { id: string }) {
     }),
   ]);
 
+  const titleEntry = getTitleEntryByXP(user.xp);
+
   return {
     id: user.id,
     username: user.username,
     avatarUrl: user.avatarUrl,
     xp: user.xp,
     title: user.title,
+    icon: titleEntry.icon,
     isDonor: user.isDonor,
     role: user.role?.name ?? null,
     createdAt: user.createdAt,

@@ -488,19 +488,28 @@ describe("tierList.service", () => {
       expect(result[1].book.title).toBe("Book 2");
     });
 
-    it("должен бросить ошибку при превышении лимита книг", async () => {
+    it("должен добавить книги даже при превышении лимита (лимит отключён)", async () => {
       (prisma.bookPlacement.count as any).mockResolvedValue(28);
 
-      const tooManyBooks = Array(5)
+      // Mock tx.tierList.update return value
+      (prisma.tierList.update as any).mockResolvedValue({
+        placements: mockPlacements,
+      });
+
+      (prisma.$transaction as any).mockImplementation(async (fn: any) => {
+        return fn(prisma);
+      });
+
+      const manyBooks = Array(5)
         .fill(null)
         .map((_, i) => ({
           title: `Book ${i}`,
           coverImageUrl: `cover${i}.jpg`,
         }));
 
-      await expect(
-        service.addBooksToTierList(mockTierListId, tooManyBooks),
-      ).rejects.toThrow("Превышен лимит книг в тир-листе");
+      const result = await service.addBooksToTierList(mockTierListId, manyBooks);
+      expect(result).toHaveLength(2);
+      expect(prisma.$transaction).toHaveBeenCalled();
     });
 
     it("должен вернуть пустой массив если books пустой", async () => {

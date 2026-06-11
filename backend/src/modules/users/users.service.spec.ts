@@ -433,6 +433,7 @@ describe("users.service", () => {
         avatarUrl: "https://example.com/avatar.jpg",
         xp: 150,
         title: "Книжный червь",
+        icon: "📄",
         isDonor: true,
         role: "admin",
         createdAt: mockUser.createdAt,

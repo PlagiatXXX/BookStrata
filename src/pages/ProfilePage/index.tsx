@@ -112,6 +112,7 @@ export function ProfilePage() {
           {achievementStatus?.title && (
             <div className="mb-2 rounded-full bg-yellow-400/20 px-4 py-1 border border-yellow-400/30 inline-block">
               <p className="text-xs font-bold uppercase tracking-widest text-yellow-400">
+                {achievementStatus.icon && <span className="mr-1.5">{achievementStatus.icon}</span>}
                 {achievementStatus.title}
               </p>
             </div>

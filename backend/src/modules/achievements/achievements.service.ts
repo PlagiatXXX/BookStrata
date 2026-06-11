@@ -16,24 +16,24 @@ export type AchievementId =
   | 'first_tier_list' | 'bibliophile_10' | 'bibliophile_50' | 'popular_author_10' | 'battle_participant' | 'battle_winner' | 'critic';
 
 export const USER_TITLES = [
-  { minXP: 0, title: 'Любопытный наблюдатель', icon: '👀' },
+  { minXP: 0, title: 'Подглядывающий в книги', icon: '👀' },
   { minXP: 50, title: 'Начинающий книголюб', icon: '📘' },
-  { minXP: 150, title: 'Страничный глотатель', icon: '📄' },
-  { minXP: 300, title: 'Абзацевый ас', icon: '🅰️' },
-  { minXP: 500, title: 'Главастый мастер', icon: '📑' },
-  { minXP: 800, title: 'Томный тусовщик', icon: '📚' },
-  { minXP: 1200, title: 'Шкафный стратег', icon: '🗄️' },
+  { minXP: 150, title: 'Шкафный стратег', icon: '📄' },
+  { minXP: 300, title: 'Укротитель абзацев', icon: '🅰️' },
+  { minXP: 500, title: 'Покоритель глав', icon: '📑' },
+  { minXP: 800, title: 'Охотник за сюжетами', icon: '📚' },
+  { minXP: 1200, title: 'Книжный странник', icon: '🧭' },
   { minXP: 1700, title: 'Библиотечный волк', icon: '🐺' },
-  { minXP: 2300, title: 'Свитковый мудрец', icon: '📜' },
-  { minXP: 3000, title: 'Фолиантный феодал', icon: '🏰' },
-  { minXP: 3800, title: 'Инкунабульный игрок', icon: '🎭' },
-  { minXP: 4700, title: 'Палимпсестовый принц', icon: '🤴' },
-  { minXP: 5700, title: 'Кодесный король', icon: '👑' },
-  { minXP: 6800, title: 'Манускриптный маг', icon: '🧙‍♂️' },
+  { minXP: 2300, title: 'Барон библиотеки', icon: '📜' },
+  { minXP: 3000, title: 'Гранд-читатель', icon: '🎩' },
+  { minXP: 3800, title: 'Король книжных миров', icon: '👑' },
+  { minXP: 4700, title: 'Хранитель хроник', icon: '🏛️' },
+  { minXP: 5700, title: 'Повелитель историй', icon: '👑' },
+  { minXP: 6800, title: 'Сюжетный алхимик', icon: '🧙‍♂️' },
   { minXP: 8000, title: 'Летописный лорд', icon: '🏛️' },
   { minXP: 9500, title: 'Хроникер вселенной', icon: '🌍' },
   { minXP: 11000, title: 'Архивариус времени', icon: '⏳' },
-  { minXP: 13000, title: 'Вселенский читатель', icon: '🌌' }
+  { minXP: 13000, title: 'Легенда BookStrata', icon: '🌌' }
 ];
 
 /**
@@ -145,6 +145,8 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a = await checkAndGrantAchievement(userId, 'curator_3');
         if (a) newAchievements.push(a);
       }
+      // Повторяемый XP за создание тир-листа
+      await addXP(userId, 5);
       break;
     }
     case 'add_book': {
@@ -194,6 +196,8 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a = await checkAndGrantAchievement(userId, 'secret_lucky');
         if (a) newAchievements.push(a);
       }
+      // Повторяемый XP за добавление книги
+      await addXP(userId, 1);
       break;
     }
     case 'get_like': {
@@ -214,6 +218,8 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a = await checkAndGrantAchievement(userId, 'popular_author_10');
         if (a) newAchievements.push(a);
       }
+      // Повторяемый XP за получение лайка
+      await addXP(userId, 2);
       break;
     }
     case 'write_review': {
@@ -239,6 +245,8 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a = await checkAndGrantAchievement(userId, 'critic');
         if (a) newAchievements.push(a);
       }
+      // Повторяемый XP за написание рецензии
+      await addXP(userId, 5);
       break;
     }
     case 'participate_battle': {
@@ -255,6 +263,8 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a2 = await checkAndGrantAchievement(userId, 'fighter_2');
         if (a2) newAchievements.push(a2);
       }
+      // Повторяемый XP за участие в битве
+      await addXP(userId, 3);
       break;
     }
     case 'win_battle': {
@@ -273,6 +283,8 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a2 = await checkAndGrantAchievement(userId, 'fighter_4');
         if (a2) newAchievements.push(a2);
       }
+      // Повторяемый XP за победу в битве
+      await addXP(userId, 10);
       break;
     }
     case 'fork': {
@@ -281,6 +293,8 @@ export async function processAction(userId: number, action: 'create_tier_list' |
          const a = await checkAndGrantAchievement(userId, 'explorer');
          if (a) newAchievements.push(a);
        }
+       // Повторяемый XP за форк
+       await addXP(userId, 3);
        break;
     }
   }
@@ -288,16 +302,44 @@ export async function processAction(userId: number, action: 'create_tier_list' |
 }
 
 /**
- * Получить текущее звание пользователя на основе XP
+ * Получить полную запись звания (title + icon) по XP
  */
-export function getTitleByXP(xp: number) {
+export function getTitleEntryByXP(xp: number): { title: string; icon: string } {
   for (let i = USER_TITLES.length - 1; i >= 0; i--) {
     const titleEntry = USER_TITLES[i];
     if (titleEntry && xp >= titleEntry.minXP) {
-      return titleEntry.title;
+      return { title: titleEntry.title, icon: titleEntry.icon };
     }
   }
-  return USER_TITLES[0]?.title || 'Новичок';
+  return { title: USER_TITLES[0]?.title || 'Новичок', icon: USER_TITLES[0]?.icon || '' };
+}
+
+/**
+ * Получить только название звания по XP (для обратной совместимости)
+ */
+export function getTitleByXP(xp: number) {
+  return getTitleEntryByXP(xp).title;
+}
+
+/**
+ * Добавить XP пользователю и обновить звание, если нужно
+ */
+export async function addXP(userId: number, amount: number) {
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { xp: { increment: amount } },
+    select: { xp: true, title: true },
+  });
+
+  const newTitle = getTitleByXP(user.xp);
+  if (newTitle !== user.title) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { title: newTitle },
+    });
+  }
+
+  return user.xp;
 }
 
 /**
@@ -346,8 +388,6 @@ export async function seedAchievements() {
     { id: 'secret_speed', title: 'Скорочтение', description: 'Добавить 10 книг за час', iconUrl: '⚡', xpValue: 50, isSecret: true },
     { id: 'explorer', title: 'Исследователь', description: 'Сделать форк чужого тир-листа', iconUrl: '🧭', xpValue: 15, isSecret: false },
     { id: 'first_tier_list', title: 'Первый тир-лист', description: 'Вы создали свой первый тир-лист!', iconUrl: '🆕', xpValue: 10, isSecret: false },
-    { id: 'bibliophile_10', title: 'Библиофил 10', description: 'Добавлено 10 книг', iconUrl: '📚', xpValue: 20, isSecret: false },
-    { id: 'bibliophile_50', title: 'Библиофил 50', description: 'Добавлено 50 книг', iconUrl: '📚', xpValue: 50, isSecret: false },
     { id: 'popular_author_10', title: 'Популярный автор', description: 'Ваш тир-лист получил 10 лайков', iconUrl: '❤️', xpValue: 30, isSecret: false },
     { id: 'battle_participant', title: 'Участник битвы', description: 'Вы приняли участие в битве', iconUrl: '⚔️', xpValue: 20, isSecret: false },
     { id: 'battle_winner', title: 'Победитель битвы', description: 'Вы победили в битве!', iconUrl: '🥇', xpValue: 100, isSecret: false },

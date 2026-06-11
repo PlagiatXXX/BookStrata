@@ -20,6 +20,7 @@ export interface Achievement {
 export interface AchievementStatus {
   xp: number;
   title: string;
+  icon: string;
 }
 
 export async function apiGetMyAchievements(): Promise<Achievement[]> {

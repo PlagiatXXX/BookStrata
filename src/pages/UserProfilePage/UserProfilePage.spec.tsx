@@ -30,6 +30,7 @@ const mockPublicUser = {
   isDonor: true,
   xp: 290,
   title: "Страничный глотатель",
+  icon: "📄",
   role: "admin",
   createdAt: "2024-01-01T00:00:00.000Z",
   stats: {
@@ -100,7 +101,7 @@ describe("UserProfilePage", () => {
       expect(screen.getByText("fedor")).toBeDefined()
     })
     expect(screen.getByText("Админ")).toBeDefined()
-    expect(screen.getByText("Страничный глотатель")).toBeDefined()
+    expect(screen.getByText(/Страничный глотатель/)).toBeDefined()
   })
 
   it("должен отобразить совпадение вкусов для чужого профиля", async () => {

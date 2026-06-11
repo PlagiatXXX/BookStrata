@@ -124,7 +124,10 @@ export default function UserProfilePage() {
                 )}
               </div>
               {profile.title && (
-                <p className="text-sm text-(--ink-1) mt-1">{profile.title}</p>
+                <p className="text-sm text-(--ink-1) mt-1">
+                  {profile.icon && <span className="mr-1.5">{profile.icon}</span>}
+                  {profile.title}
+                </p>
               )}
               <p className="text-xs text-(--ink-2) mt-1">
                 На сайте с {formatDate(profile.createdAt)}

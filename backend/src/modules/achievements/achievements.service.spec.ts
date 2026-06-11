@@ -43,17 +43,29 @@ describe("Achievements Service", () => {
     vi.clearAllMocks();
   });
 
-  describe("getTitleByXP", () => {
+  describe("getTitleByXP / getTitleEntryByXP", () => {
     it("should return the correct title for 0 XP", () => {
-      expect(service.getTitleByXP(0)).toBe("Любопытный наблюдатель");
+      expect(service.getTitleByXP(0)).toBe("Подглядывающий в книги");
     });
 
     it("should return the correct title for 150 XP", () => {
-      expect(service.getTitleByXP(150)).toBe("Страничный глотатель");
+      expect(service.getTitleByXP(150)).toBe("Шкафный стратег");
     });
 
     it("should return the highest title for very high XP", () => {
-      expect(service.getTitleByXP(100000)).toBe("Вселенский читатель");
+      expect(service.getTitleByXP(100000)).toBe("Легенда BookStrata");
+    });
+
+    it("getTitleEntryByXP should return title + icon", () => {
+      const entry = service.getTitleEntryByXP(150);
+      expect(entry.title).toBe("Шкафный стратег");
+      expect(entry.icon).toBe("📄");
+    });
+
+    it("getTitleEntryByXP should return icon for lowest tier", () => {
+      const entry = service.getTitleEntryByXP(0);
+      expect(entry.title).toBe("Подглядывающий в книги");
+      expect(entry.icon).toBe("👀");
     });
   });
 

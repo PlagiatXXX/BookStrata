@@ -20,7 +20,7 @@ export async function achievementRoutes(fastify: FastifyInstance) {
   );
 
   // GET /api/achievements/status
-  // Возвращает XP и текущее звание
+  // Возвращает XP, текущее звание и иконку
   fastify.get(
     "/status",
     { preHandler: [authMiddleware] },
@@ -33,7 +33,12 @@ export async function achievementRoutes(fastify: FastifyInstance) {
 
        if (!user) return reply.code(404).send(createApiError(ErrorCodes.USER_NOT_FOUND, "User not found"));
 
-       return reply.code(200).send(createSuccessResponse({ xp: user.xp, title: user.title }));
+       const titleEntry = service.getTitleEntryByXP(user.xp);
+       return reply.code(200).send(createSuccessResponse({
+         xp: user.xp,
+         title: user.title,
+         icon: titleEntry.icon,
+       }));
     }
   );
 

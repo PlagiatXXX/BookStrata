@@ -38,6 +38,7 @@ export interface PublicUser {
   isDonor: boolean;
   xp: number;
   title: string | null;
+  icon: string | null;
   role: string | null;
   createdAt: string;
   stats: PublicUserStats;
