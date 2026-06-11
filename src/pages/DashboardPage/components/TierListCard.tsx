@@ -36,28 +36,6 @@ export const TierListCard = memo(
           />
         </div>
 
-        {/* Actions - top right */}
-        <div className="dashboard-card__actions">
-          <button
-            onClick={() => onRename(tierList)}
-            className="dashboard-card__rename"
-            title={`Переименовать "${tierList.title}"`}
-            type="button"
-            aria-label={`Переименовать "${tierList.title}"`}
-          >
-            <Edit2 size={14} />
-          </button>
-          <button
-            onClick={() => onDelete(tierList)}
-            className="dashboard-card__delete"
-            title={`Удалить "${tierList.title}"`}
-            type="button"
-            aria-label={`Удалить "${tierList.title}"`}
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-
         {/* Title */}
         <h3
           role="button"
@@ -76,10 +54,32 @@ export const TierListCard = memo(
           {tierList.title}
         </h3>
 
-        {/* Meta */}
+        {/* Meta + Actions */}
         <div className="dashboard-card__meta">
-          <Clock size={15} />
-          <span>{createdDate.toLocaleDateString("ru-RU")}</span>
+          <div className="flex items-center gap-2">
+            <Clock size={15} />
+            <span>{createdDate.toLocaleDateString("ru-RU")}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onRename(tierList)}
+              className="dashboard-card__rename"
+              title={`Переименовать "${tierList.title}"`}
+              type="button"
+              aria-label={`Переименовать "${tierList.title}"`}
+            >
+              <Edit2 size={14} />
+            </button>
+            <button
+              onClick={() => onDelete(tierList)}
+              className="dashboard-card__delete"
+              title={`Удалить "${tierList.title}"`}
+              type="button"
+              aria-label={`Удалить "${tierList.title}"`}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         </div>
 
         {/* Footer with visibility and open button */}

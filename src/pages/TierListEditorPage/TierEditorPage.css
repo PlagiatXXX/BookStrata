@@ -365,6 +365,8 @@
   min-width: 0;
 }
 
+
+
 .theme-picker__swatch:hover {
   border-color: rgba(255, 255, 255, 0.15);
 }

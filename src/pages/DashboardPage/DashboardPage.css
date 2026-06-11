@@ -154,9 +154,6 @@
 }
 
 .dashboard-card__actions {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
   display: inline-flex;
   align-items: center;
   gap: 0.34rem;
@@ -215,9 +212,9 @@
 }
 
 .dashboard-card__meta {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.34rem;
+  justify-content: space-between;
   margin-bottom: 0.68rem;
   font-size: 0.82rem;
   color: #94a3b8;
