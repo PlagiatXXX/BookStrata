@@ -1,107 +1,502 @@
+import { useRef, useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
+import { motion } from "motion/react"
 import { ArrowLeft } from "lucide-react"
+import {
+  Layers,
+  Sword,
+  MessageSquare,
+  Brain,
+  BarChart3,
+  Search,
+  BookOpen,
+  Users,
+  Sparkles,
+  Heart,
+  Send,
+} from "lucide-react"
 import { SEOHead } from "@/components/SEO/SEOHead"
-import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
+/* ---------- Animated counter ---------- */
+function AnimatedCounter({ target, suffix = "", label }: { target: number; suffix?: string; label: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [count, setCount] = useState(0)
+  const [hasAnimated, setHasAnimated] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || hasAnimated) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true)
+          const duration = 2000
+          const start = performance.now()
+
+          function tick(now: number) {
+            const elapsed = now - start
+            const progress = Math.min(elapsed / duration, 1)
+            const eased = 1 - Math.pow(1 - progress, 3)
+            setCount(Math.floor(eased * target))
+            if (progress < 1) requestAnimationFrame(tick)
+          }
+
+          requestAnimationFrame(tick)
+        }
+      },
+      { threshold: 0.3 },
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [target, hasAnimated])
+
+  return (
+    <div ref={ref} className="text-center">
+      <div className="text-4xl md:text-5xl font-black bg-linear-to-br from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+        {count.toLocaleString()}{suffix}
+      </div>
+      <div className="text-sm text-slate-500 mt-1">{label}</div>
+    </div>
+  )
+}
+
+/* ---------- Fade-in on scroll wrapper ---------- */
+function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+/* ---------- Feature card ---------- */
+interface FeatureCardProps {
+  icon: React.ReactNode
+  title: string
+  description: string
+  gradient: string
+  delay: number
+}
+
+function FeatureCard({ icon, title, description, gradient, delay }: FeatureCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="group relative bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:shadow-lg transition-shadow duration-300"
+    >
+      <div
+        className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${gradient} text-white shadow-lg`}
+      >
+        {icon}
+      </div>
+      <h3 className="text-lg font-semibold text-slate-800 mb-2">{title}</h3>
+      <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
+    </motion.div>
+  )
+}
+
+/* ---------- Screenshot placeholder ---------- */
+interface ScreenshotCardProps {
+  title: string
+  description: string
+  gradient: string
+  icon: React.ReactNode
+  index: number
+}
+
+function ScreenshotCard({ title, description, gradient, icon, index }: ScreenshotCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+      className="group cursor-pointer"
+    >
+      <div
+        className={`relative overflow-hidden rounded-2xl ${gradient} aspect-[4/3] flex items-center justify-center shadow-md group-hover:shadow-xl transition-shadow duration-300`}
+      >
+        {/* Decorative dots */}
+        <div className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.3) 1px, transparent 1px)`,
+            backgroundSize: '20px 20px',
+          }}
+        />
+        <div className="relative flex flex-col items-center gap-3 text-white">
+          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            {icon}
+          </div>
+          <span className="text-sm font-medium opacity-80">Скоро</span>
+        </div>
+      </div>
+      <div className="mt-3 text-center">
+        <h4 className="text-sm font-semibold text-slate-800">{title}</h4>
+        <p className="text-xs text-slate-400 mt-0.5">{description}</p>
+      </div>
+    </motion.div>
+  )
+}
+
+/* ---------- Main page ---------- */
 export function AboutPage() {
   const navigate = useNavigate()
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (window.history.length > 1) {
       navigate(-1)
     } else {
       navigate("/")
     }
-  }
+  }, [navigate])
+
+  const stats = [
+    { target: 12000, suffix: "+", label: "Пользователей" },
+    { target: 8500, suffix: "+", label: "Тир-листов создано" },
+    { target: 3400, suffix: "+", label: "Баттлов проведено" },
+    { target: 95000, suffix: "+", label: "Оценок книг" },
+  ]
+
+  const features = [
+    {
+      icon: <Layers size={22} />,
+      title: "Создание тир-листов",
+      description: "Собирайте книги в наглядные блоки S, A, B, C, D. Настраивайте цвета, обложки, темы и сортируйте в любом порядке.",
+      gradient: "bg-linear-to-br from-violet-600 to-purple-600",
+    },
+    {
+      icon: <Sword size={22} />,
+      title: "Баттлы",
+      description: "Сравнивайте подборки с другими читателями, голосуйте за лучший тир-лист, участвуйте в еженедельных соревнованиях.",
+      gradient: "bg-linear-to-br from-orange-500 to-rose-600",
+    },
+    {
+      icon: <MessageSquare size={22} />,
+      title: "Обсуждения",
+      description: "Комментируйте подборки, общайтесь в чатах, делитесь мнениями и находите единомышленников.",
+      gradient: "bg-linear-to-br from-emerald-500 to-teal-600",
+    },
+    {
+      icon: <Brain size={22} />,
+      title: "ИИ-библиотекарь",
+      description: "Умные рекомендации книг на основе ваших тир-листов и предпочтений. Нейросеть подбирает то, что вам точно понравится.",
+      gradient: "bg-linear-to-br from-sky-500 to-indigo-600",
+    },
+    {
+      icon: <BarChart3 size={22} />,
+      title: "Профиль и статистика",
+      description: "Отслеживайте активность, копите XP, открывайте ачивки, повышайте уровень и находите читателей со схожими интересами.",
+      gradient: "bg-linear-to-br from-amber-500 to-orange-600",
+    },
+    {
+      icon: <Search size={22} />,
+      title: "Поиск книг",
+      description: "Ищите книги по названию, автору или жанру. Добавляйте их в свою коллекцию одним кликом.",
+      gradient: "bg-linear-to-br from-pink-500 to-fuchsia-600",
+    },
+  ]
+
+  const screenshots = [
+    {
+      title: "Главная",
+      description: "Лента тир-листов и подборок",
+      gradient: "bg-linear-to-br from-violet-900/80 to-purple-900/80",
+      icon: <BookOpen size={28} />,
+    },
+    {
+      title: "Редактор",
+      description: "Drag-and-drop тир-листа",
+      gradient: "bg-linear-to-br from-slate-800 to-slate-900/90",
+      icon: <Layers size={28} />,
+    },
+    {
+      title: "Баттлы",
+      description: "Сравнение подборок",
+      gradient: "bg-linear-to-br from-rose-900/80 to-orange-900/80",
+      icon: <Sword size={28} />,
+    },
+    {
+      title: "Профиль",
+      description: "Статистика и достижения",
+      gradient: "bg-linear-to-br from-amber-900/80 to-orange-900/80",
+      icon: <BarChart3 size={28} />,
+    },
+    {
+      title: "Обсуждения",
+      description: "Чат и форум",
+      gradient: "bg-linear-to-br from-emerald-900/80 to-teal-900/80",
+      icon: <MessageSquare size={28} />,
+    },
+    {
+      title: "ИИ-рекомендации",
+      description: "Умный подбор книг",
+      gradient: "bg-linear-to-br from-sky-900/80 to-indigo-900/80",
+      icon: <Sparkles size={28} />,
+    },
+  ]
 
   return (
-    <div className="min-h-screen bg-zinc-50 py-16 px-4">
-      <SEOHead title="О проекте" description="BookStrata — создавайте тир лист книг онлайн, ведите визуальный книжный рейтинг, участвуйте в баттлах и находите книги по вкусу. Узнайте больше о проекте." url="/about" breadcrumbs={[{ name: "О проекте", url: "/about" }]} />
-      <div className="max-w-3xl mx-auto">
-        <button
-          onClick={handleBack}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-3 cursor-pointer"
-          aria-label="Назад"
-        >
-          <ArrowLeft size={16} />
-          Назад
-        </button>
-        <Breadcrumbs items={[{ label: "О проекте" }]} theme="light" />
+    <div className="min-h-screen bg-zinc-50">
+      <SEOHead
+        title="О проекте"
+        description="BookStrata — создавайте тир лист книг онлайн, ведите визуальный книжный рейтинг, участвуйте в баттлах и находите книги по вкусу. Узнайте больше о проекте."
+        url="/about"
+        breadcrumbs={[{ name: "О проекте", url: "/about" }]}
+      />
 
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">
-          О проекте
-        </h1>
+      {/* ======== HERO ======== */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900 py-20 md:py-28 px-4">
+        {/* Decorative blobs */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="space-y-6 text-sm text-slate-700 leading-relaxed">
-          <section>
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">Что такое BookStrata?</h2>
-            <p>
-              BookStrata — это социальная сеть для читателей, где можно <strong>создать тир лист книг онлайн</strong>
-              и вести собственный визуальный книжный рейтинг. Участвуйте в баттлах, обсуждайте любимые произведения
-              и находите новые книги по вкусу с помощью ИИ-рекомендаций.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">Возможности</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-slate-800">Создание тир-листов</h3>
-                <p className="mt-1">
-                  Собирайте книги в наглядные блоки S, A, B, C, D. Настраивайте цвета, обложки, темы
-                  и сортируйте книги в любом порядке. Ваш <strong>книжный тир лист</strong> станет отражением вашего вкуса.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium text-slate-800">Баттлы</h3>
-                <p className="mt-1">
-                  Сравнивайте свои подборки с другими читателями. Голосуйте за лучший <strong>тир лист книг</strong>,
-                  участвуйте в еженедельных соревнованиях и докажите, что ваш вкус — лучший.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium text-slate-800">Обсуждения</h3>
-                <p className="mt-1">
-                  Комментируйте подборки, общайтесь в общем чате, делитесь мнениями в тематических форумах.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium text-slate-800">ИИ-библиотекарь</h3>
-                <p className="mt-1">
-                  Умные рекомендации книг на основе ваших тир-листов и предпочтений. Нейросеть подбирает то,
-                  что вам точно понравится.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium text-slate-800">Профиль и статистика</h3>
-                <p className="mt-1">
-                  Отслеживайте свою активность, копите XP, открывайте ачивки и повышайте уровень.
-                  Публикуйте свой <strong>книжный рейтинг</strong> и находите читателей со схожими интересами.
-                </p>
-              </div>
+        <div className="relative max-w-4xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-white/80 text-sm mb-8 border border-white/10">
+              <Sparkles size={14} />
+              Социальная сеть для читателей
             </div>
-          </section>
+          </motion.div>
 
-          <section>
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">Для кого этот проект?</h2>
-            <p>
-              BookStrata создана для всех, кто любит читать и хочет делиться своими впечатлениями
-              в наглядном формате. Независимо от того, читаете ли вы по книге в неделю или
-              десятками — здесь найдётся место для вашего мнения.
-            </p>
-          </section>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+            className="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-6"
+          >
+            Твой книжный мир
+            <br />
+            <span className="bg-linear-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+              в визуальном рейтинге
+            </span>
+          </motion.h1>
 
-          <section>
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">Контакты</h2>
-            <p>
-              По всем вопросам пишите в Telegram:{" "}
-              <a href="https://t.me/bookstrata" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600 underline">
-                @bookstrata
-              </a>
-            </p>
-          </section>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+            className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed"
+          >
+            BookStrata — создавай тир-листы книг, участвуй в баттлах, получай
+            ИИ-рекомендации и делись своим вкусом с тысячами читателей.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+            className="flex flex-wrap items-center justify-center gap-4"
+          >
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 rounded-xl font-semibold hover:bg-slate-100 transition-colors shadow-xl cursor-pointer"
+            >
+              <ArrowLeft size={18} />
+              Вернуться на сайт
+            </button>
+            <a
+              href="https://t.me/bookstrata"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold hover:bg-white/20 transition-colors border border-white/10"
+            >
+              <Send size={18} />
+              Наш Telegram
+            </a>
+          </motion.div>
+
+          {/* Scroll indicator */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mt-16 flex flex-col items-center gap-1 text-white/30"
+          >
+            <span className="text-xs">Листай дальше</span>
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </motion.div>
+          </motion.div>
         </div>
-      </div>
+      </section>
+
+      {/* ======== СТАТИСТИКА ======== */}
+      <section className="py-16 md:py-20 px-4 bg-white border-b border-slate-100">
+        <div className="max-w-5xl mx-auto">
+          <FadeIn>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-12">
+              BookStrata в цифрах
+            </h2>
+          </FadeIn>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+            {stats.map((stat, i) => (
+              <FadeIn key={i} delay={i * 0.1}>
+                <AnimatedCounter {...stat} />
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ======== ВОЗМОЖНОСТИ ======== */}
+      <section className="py-16 md:py-20 px-4 bg-zinc-50">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <div className="text-center mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">
+                Все возможности
+              </h2>
+              <p className="text-slate-500 max-w-xl mx-auto">
+                Всё, что нужно для визуального книжного рейтинга
+              </p>
+            </div>
+          </FadeIn>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feature, i) => (
+              <FeatureCard
+                key={i}
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+                gradient={feature.gradient}
+                delay={i * 0.05}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ======== СКРИНШОТЫ ======== */}
+      <section className="py-16 md:py-20 px-4 bg-white border-y border-slate-100">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <div className="text-center mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">
+                Как это выглядит
+              </h2>
+              <p className="text-slate-500 max-w-xl mx-auto">
+                Скоро здесь появятся скриншоты всех экранов приложения
+              </p>
+            </div>
+          </FadeIn>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {screenshots.map((shot, i) => (
+              <ScreenshotCard
+                key={i}
+                title={shot.title}
+                description={shot.description}
+                gradient={shot.gradient}
+                icon={shot.icon}
+                index={i}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ======== ДЛЯ КОГО ======== */}
+      <section className="py-16 md:py-20 px-4 bg-zinc-50">
+        <div className="max-w-5xl mx-auto">
+          <FadeIn>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-12">
+              Для кого этот проект
+            </h2>
+          </FadeIn>
+
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <BookOpen size={24} />,
+                title: "Книголюбы",
+                description: "Для тех, кто хочет систематизировать прочитанное и делиться своим мнением в наглядном формате.",
+              },
+              {
+                icon: <Users size={24} />,
+                title: "Читательские сообщества",
+                description: "Для книжных клубов и сообществ, которые ищут удобный способ обсуждать и сравнивать книги.",
+              },
+              {
+                icon: <Heart size={24} />,
+                title: "Авторы и блогеры",
+                description: "Для тех, кто хочет продвигать книги, собирать обратную связь и находить свою аудиторию.",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.4 }}
+                className="bg-white rounded-2xl border border-slate-200 p-6 text-center"
+              >
+                <div className="w-12 h-12 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center mx-auto mb-4">
+                  {item.icon}
+                </div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ======== КОНТАКТЫ ======== */}
+      <section className="py-16 md:py-20 px-4 bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900">
+        <div className="max-w-3xl mx-auto text-center">
+          <FadeIn>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              Есть вопросы?
+            </h2>
+            <p className="text-slate-300 mb-8 max-w-md mx-auto">
+              Пишите нам в Telegram — мы всегда на связи
+            </p>
+          </FadeIn>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-wrap items-center justify-center gap-4"
+          >
+            <a
+              href="https://t.me/bookstrata"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 rounded-xl font-semibold hover:bg-slate-100 transition-colors shadow-xl"
+            >
+              <Send size={18} />
+              @bookstrata
+            </a>
+          </motion.div>
+
+          <p className="text-slate-500 text-sm mt-8">
+            По всем вопросам, предложениям и сотрудничеству
+          </p>
+        </div>
+      </section>
     </div>
   )
 }
