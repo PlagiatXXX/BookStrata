@@ -65,6 +65,36 @@
   display: none !important;
 }
 
+/* Title Bar Styles */
+.export-title-bar {
+  padding: 18px 24px;
+  margin-bottom: 12px;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  border-bottom: 2px solid currentColor;
+  border-bottom-color: inherit;
+  color: #f6f1e8;
+}
+
+.export-theme-minimalist .export-title-bar {
+  color: #111827;
+  font-family: 'Inter', sans-serif;
+}
+
+.export-theme-vintage .export-title-bar {
+  color: #3e2723;
+  font-family: 'Georgia', serif;
+}
+
+.export-theme-cyberpunk .export-title-bar {
+  color: #00ff00;
+  font-family: 'Space Grotesk', sans-serif;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px #00ff00;
+}
+
 /* Watermark Styles */
 .export-watermark {
   padding: 14px 24px;

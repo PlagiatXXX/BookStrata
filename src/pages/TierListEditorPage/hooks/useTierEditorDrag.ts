@@ -88,6 +88,8 @@ export function useTierEditorDrag({
 
       const element = tierGridRef.current;
       const inlineMap = new Map<HTMLElement, string>();
+      let titleBar: HTMLDivElement | null = null;
+      let watermark: HTMLDivElement | null = null;
 
       try {
         const { toPng } = await import("html-to-image");
@@ -135,8 +137,14 @@ export function useTierEditorDrag({
           element.classList.add(`export-theme-${theme}`);
         }
 
-        // 3. Добавляем водяной знак
-        const watermark = document.createElement("div");
+        // 3. Добавляем заголовок тир-листа сверху
+        titleBar = document.createElement("div");
+        titleBar.className = "export-title-bar";
+        titleBar.textContent = listData.title;
+        element.insertBefore(titleBar, element.firstChild);
+
+        // 4. Добавляем водяной знак
+        watermark = document.createElement("div");
         watermark.className = "export-watermark";
 
         const brandSpan = document.createElement("span");
@@ -150,10 +158,10 @@ export function useTierEditorDrag({
         watermark.append(brandSpan, separator, userSpan);
         element.appendChild(watermark);
 
-        // 4. Ждем немного для применения стилей и шрифтов
+        // 5. Ждем немного для применения стилей и шрифтов
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // 5. Генерируем PNG
+        // 6. Генерируем PNG
         const dataUrl = await toPng(element, {
           cacheBust: true,
           backgroundColor:
@@ -167,10 +175,13 @@ export function useTierEditorDrag({
           },
         });
 
-        // 6. Очищаем временные изменения
+        // 7. Очищаем временные изменения
         element.classList.remove("is-exporting");
         if (theme !== "default") {
           element.classList.remove(`export-theme-${theme}`);
+        }
+        if (titleBar) {
+          element.removeChild(titleBar);
         }
         if (watermark) {
           element.removeChild(watermark);
@@ -196,6 +207,12 @@ export function useTierEditorDrag({
           .split(" ")
           .filter((c) => !c.startsWith("export-theme-"))
           .join(" ");
+        if (titleBar && element.contains(titleBar)) {
+          element.removeChild(titleBar);
+        }
+        if (watermark && element.contains(watermark)) {
+          element.removeChild(watermark);
+        }
         for (const [card, originalBg] of inlineMap) {
           card.style.backgroundImage = originalBg;
         }

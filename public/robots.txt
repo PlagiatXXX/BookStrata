@@ -5,8 +5,6 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /verify-email
 Disallow: /dashboard
-Disallow: /tier-lists/
-Disallow: /templates/
 Disallow: /profile
 Disallow: /admin
 Disallow: /oauth/
