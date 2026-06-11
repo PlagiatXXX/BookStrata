@@ -293,8 +293,8 @@ const TierListEditorContent = () => {
 
   // Обработчики с установкой hasUnsavedChanges
   const handleDragEndWithUnsaved = (event: DragEndEvent) => {
-    handleDragEnd(event);
-    setHasUnsavedChanges(true);
+    const changed = handleDragEnd(event);
+    if (changed) setHasUnsavedChanges(true);
   };
 
   const getBookPlacement = (bookId: string) => {

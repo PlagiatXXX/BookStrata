@@ -468,10 +468,10 @@ export const useTierList = (
     dispatch({ type: "REMOVE_ROW", payload: tierId });
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent): boolean => {
     const { active, over } = event;
 
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) return false;
 
     // Определяем overId: если over — книга, используем containerId (родительский tier)
     const overId =
@@ -491,7 +491,7 @@ export const useTierList = (
           overId,
         },
       });
-      return;
+      return true;
     }
 
     const activeIsBook = active.data.current?.type === "book";
@@ -507,10 +507,10 @@ export const useTierList = (
         destContainer = UNRANKED_AREA_ID;
       }
 
-      if (!sourceContainer || !destContainer) return;
+      if (!sourceContainer || !destContainer) return false;
 
       const sourceIndex = active.data.current?.sortable?.index;
-      if (typeof sourceIndex !== "number") return;
+      if (typeof sourceIndex !== "number") return false;
 
       let destIndex: number;
       const overIndex = over.data.current?.sortable?.index;
@@ -553,6 +553,23 @@ export const useTierList = (
         destIndex = items ? items.length : 0;
       }
 
+      // Если книга осталась на том же месте — не считаем изменением
+      if (sourceContainer === destContainer && sourceIndex === destIndex) return false;
+
+      // Если книгу бросили на сам контейнер (не на книгу) и она уже была последней
+      // в этом контейнере — она просто вернулась на своё место
+      if (
+        sourceContainer === destContainer &&
+        over.data.current?.type !== "book" &&
+        destIndex === sourceIndex + 1
+      ) {
+        const items =
+          destContainer === UNRANKED_AREA_ID
+            ? listData.unrankedBookIds
+            : listData.tiers[destContainer]?.bookIds;
+        if (items && sourceIndex === items.length - 1) return false;
+      }
+
       dispatch({
         type: "REORDER_ITEMS",
         payload: {
@@ -562,7 +579,10 @@ export const useTierList = (
           destIndex,
         },
       });
+      return true;
     }
+
+    return false;
   };
 
   const clearRows = () => {

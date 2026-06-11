@@ -78,6 +78,10 @@ export function useTierEditorDraft({
         return;
       }
 
+      // Черновик только что записан (младше 5 секунд) — это наш собственный
+      // автосохранённый черновик, не предлагаем восстановление
+      if (Date.now() - timestamp < 5000) return;
+
       const timeAgo = Math.round((Date.now() - timestamp) / 1000 / 60);
 
       sileo.info({
@@ -96,7 +100,7 @@ export function useTierEditorDraft({
       console.error('Failed to parse draft', e);
       localStorage.removeItem(draftKey);
     }
-  }, [tierListId, draftKey, saveKey, dispatch, setHasUnsavedChanges, sileo, listData, isLoading]);
+  }, [tierListId, draftKey, saveKey, dispatch, setHasUnsavedChanges, sileo, isLoading]);
 
   return { checkAndRestoreDraft, clearDraft };
 }
