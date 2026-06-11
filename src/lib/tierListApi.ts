@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { TierListData } from '@/types';
+import type { TierListData, Tier } from '@/types';
 import type { ApiTierListResponse, ApiBookPlacement } from '@/types/api';
 import { apiClient } from './api-client';
 import { createLogger } from './logger';
@@ -276,6 +276,10 @@ export function transformApiToState(apiData: ApiTierListResponse): TierListData 
       title: apiTier.title,
       color: apiTier.color,
       bookIds: (apiTier.items ?? []).map(processPlacement),
+      labelSize: (apiTier.labelSize as Tier["labelSize"]) || "sm",
+      labelWeight: (apiTier.labelWeight as Tier["labelWeight"]) || "black",
+      labelStyle: (apiTier.labelStyle as Tier["labelStyle"]) || "normal",
+      labelColor: apiTier.labelColor || undefined,
     };
     return tierId;
   });

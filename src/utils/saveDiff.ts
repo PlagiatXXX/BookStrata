@@ -11,6 +11,10 @@ export interface AtomicTierAdd {
   title: string;
   color: string;
   rank: number;
+  labelSize?: string;
+  labelWeight?: string;
+  labelStyle?: string;
+  labelColor?: string;
 }
 
 export interface AtomicTierUpdate {
@@ -18,6 +22,10 @@ export interface AtomicTierUpdate {
   title: string;
   color: string;
   rank: number;
+  labelSize?: string;
+  labelWeight?: string;
+  labelStyle?: string;
+  labelColor?: string;
 }
 
 export interface AtomicTiersDiff {
@@ -65,6 +73,10 @@ export function getAtomicSavePayload(listData: TierListData): AtomicSavePayload 
         title: tier.title,
         color: tier.color,
         rank,
+        labelSize: tier.labelSize,
+        labelWeight: tier.labelWeight,
+        labelStyle: tier.labelStyle,
+        labelColor: tier.labelColor,
       });
     } else {
       updatedTiers.push({
@@ -72,6 +84,10 @@ export function getAtomicSavePayload(listData: TierListData): AtomicSavePayload 
         title: tier.title,
         color: tier.color,
         rank,
+        labelSize: tier.labelSize,
+        labelWeight: tier.labelWeight,
+        labelStyle: tier.labelStyle,
+        labelColor: tier.labelColor,
       });
     }
 

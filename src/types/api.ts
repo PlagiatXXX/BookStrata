@@ -21,6 +21,10 @@ export interface ApiTier {
   title: string;
   color: string;
   rank: number;
+  labelSize?: string;
+  labelWeight?: string;
+  labelStyle?: string;
+  labelColor?: string;
   items: ApiBookPlacement[]; // Книги вложены сюда
 }
 

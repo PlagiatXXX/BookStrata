@@ -12,12 +12,20 @@ export async function saveAll(
         title: string;
         color: string;
         rank: number;
+        labelSize?: string;
+        labelWeight?: string;
+        labelStyle?: string;
+        labelColor?: string;
       }>;
       updated?: Array<{
         id: number;
         title: string;
         color: string;
         rank: number;
+        labelSize?: string;
+        labelWeight?: string;
+        labelStyle?: string;
+        labelColor?: string;
       }>;
       deletedIds?: number[];
     };
@@ -62,7 +70,15 @@ export async function saveAll(
         for (const tier of payload.tiers.updated) {
           await tx.tier.updateMany({
             where: { id: tier.id, tierListId: realTierListId },
-            data: { title: tier.title, color: tier.color, rank: tier.rank },
+            data: {
+              title: tier.title,
+              color: tier.color,
+              rank: tier.rank,
+              ...(tier.labelSize != null && { labelSize: tier.labelSize }),
+              ...(tier.labelWeight != null && { labelWeight: tier.labelWeight }),
+              ...(tier.labelStyle != null && { labelStyle: tier.labelStyle }),
+              ...(tier.labelColor != null && { labelColor: tier.labelColor }),
+            },
           });
         }
       }
@@ -75,6 +91,10 @@ export async function saveAll(
               title: tier.title,
               color: tier.color,
               rank: tier.rank,
+              labelSize: tier.labelSize ?? "sm",
+              labelWeight: tier.labelWeight ?? "black",
+              labelStyle: tier.labelStyle ?? "normal",
+              labelColor: tier.labelColor,
             },
           });
           if (created) {

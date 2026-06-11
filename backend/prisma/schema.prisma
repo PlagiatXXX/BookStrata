@@ -117,13 +117,17 @@ updatedAt   DateTime        @updatedAt @map("updated_at")
 }
  
 model Tier {
-id         Int             @id @default(autoincrement())
-tierList   TierList        @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-tierListId String
-title      String
-color      String          @default("#808080")
-rank       Int
-items      BookPlacement[]
+id           Int             @id @default(autoincrement())
+tierList     TierList        @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+tierListId   String
+title        String
+color        String          @default("#808080")
+rank         Int
+labelSize    String          @default("sm")  @map("label_size")
+labelWeight  String          @default("black")  @map("label_weight")
+labelStyle   String          @default("normal")  @map("label_style")
+labelColor   String?         @map("label_color")
+items        BookPlacement[]
  
 @@index([tierListId, rank])
 }
