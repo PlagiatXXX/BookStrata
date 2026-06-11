@@ -122,6 +122,7 @@ export function useTierEditorSave({
 
       // Очищаем черновик после успешного сохранения
       localStorage.removeItem(`tier-list-draft-${tierListId}`);
+      localStorage.setItem(`tier-list-saved-${tierListId}`, String(Date.now()));
 
       // Сохраняем snapshot для последующего сравнения
       savedSnapshotRef.current = serializePayload(payload);

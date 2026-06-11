@@ -162,12 +162,15 @@ const TierListEditorContent = () => {
     hasUnsavedChanges,
     dispatch: dispatch as React.Dispatch<Action>,
     setHasUnsavedChanges,
+    isLoading,
     sileo,
   });
 
   useEffect(() => {
-    checkAndRestoreDraft();
-  }, [tierListId, checkAndRestoreDraft]);
+    if (!isLoading) {
+      checkAndRestoreDraft();
+    }
+  }, [tierListId, checkAndRestoreDraft, isLoading]);
 
   // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
   useEffect(() => {

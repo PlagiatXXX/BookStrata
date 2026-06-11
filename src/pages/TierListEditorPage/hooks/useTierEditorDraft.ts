@@ -8,6 +8,7 @@ interface UseTierEditorDraftParams {
   hasUnsavedChanges: boolean;
   dispatch: React.Dispatch<Action>;
   setHasUnsavedChanges: (value: boolean) => void;
+  isLoading: boolean;
   sileo: {
     info: (options: {
       title: string;
@@ -24,9 +25,20 @@ export function useTierEditorDraft({
   hasUnsavedChanges,
   dispatch,
   setHasUnsavedChanges,
+  isLoading,
   sileo,
 }: UseTierEditorDraftParams) {
   const draftKey = `tier-list-draft-${tierListId}`;
+
+  const saveKey = `tier-list-saved-${tierListId}`;
+
+  /** Удалить черновик и записать время успешного сохранения */
+  const clearDraft = useCallback(() => {
+    try {
+      localStorage.setItem(saveKey, String(Date.now()));
+    } catch { /* ignore */ }
+    localStorage.removeItem(draftKey);
+  }, [draftKey, saveKey]);
 
   // Сохранение черновика при изменениях
   useEffect(() => {
@@ -39,7 +51,6 @@ export function useTierEditorDraft({
           timestamp: Date.now(),
         }));
       } catch (e) {
-        // QuotaExceededError — черновик слишком большой (обычно из-за base64 картинок)
         if (e instanceof DOMException && e.name === 'QuotaExceededError') {
           localStorage.removeItem(draftKey);
         }
@@ -52,16 +63,21 @@ export function useTierEditorDraft({
 
   // Проверка черновика при инициализации
   const checkAndRestoreDraft = useCallback(() => {
-    if (!tierListId) return;
+    if (!tierListId || isLoading) return;
 
     const savedDraft = localStorage.getItem(draftKey);
     if (!savedDraft) return;
 
     try {
       const { data, timestamp } = JSON.parse(savedDraft);
+      const lastSavedAt = Number(localStorage.getItem(saveKey)) || 0;
 
-      // Если черновик свежее, чем данные с сервера (упрощенно)
-      // В реальности можно сравнивать updatedAt, но для начала предложим пользователю
+      // Черновик старше последнего успешного сохранения — он устарел
+      if (timestamp <= lastSavedAt) {
+        localStorage.removeItem(draftKey);
+        return;
+      }
+
       const timeAgo = Math.round((Date.now() - timestamp) / 1000 / 60);
 
       sileo.info({
@@ -80,7 +96,7 @@ export function useTierEditorDraft({
       console.error('Failed to parse draft', e);
       localStorage.removeItem(draftKey);
     }
-  }, [tierListId, draftKey, dispatch, setHasUnsavedChanges, sileo]);
+  }, [tierListId, draftKey, saveKey, dispatch, setHasUnsavedChanges, sileo, listData, isLoading]);
 
-  return { checkAndRestoreDraft };
+  return { checkAndRestoreDraft, clearDraft };
 }
