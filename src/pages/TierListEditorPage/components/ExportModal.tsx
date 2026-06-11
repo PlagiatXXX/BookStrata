@@ -93,7 +93,7 @@ export const ExportModal = ({ isOpen, onClose, onExport, tierListTheme = 'defaul
             <Download size={22} />
           </div>
           <div className="min-w-0">
-            <h2 className="nb-display-lg text-lg !tracking-tighter sm:text-xl">Экспорт</h2>
+            <h2 className="nb-display-lg text-lg tracking-tighter! sm:text-xl">Экспорт</h2>
             <p className="nb-label-md text-xs text-gray-500 sm:text-sm">Выбери стиль и скачай PNG</p>
           </div>
         </div>

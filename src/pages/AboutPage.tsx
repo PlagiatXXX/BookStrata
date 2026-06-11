@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import { ArrowLeft } from "lucide-react"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
@@ -17,6 +18,14 @@ export function AboutPage() {
     <div className="min-h-screen bg-zinc-50 py-16 px-4">
       <SEOHead title="О проекте" description="BookStrata — создавайте тир лист книг онлайн, ведите визуальный книжный рейтинг, участвуйте в баттлах и находите книги по вкусу. Узнайте больше о проекте." url="/about" breadcrumbs={[{ name: "О проекте", url: "/about" }]} />
       <div className="max-w-3xl mx-auto">
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-3 cursor-pointer"
+          aria-label="Назад"
+        >
+          <ArrowLeft size={16} />
+          Назад
+        </button>
         <Breadcrumbs items={[{ label: "О проекте" }]} theme="light" />
 
         <h1 className="text-2xl font-bold text-slate-900 mb-6">
