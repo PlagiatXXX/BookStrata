@@ -240,7 +240,7 @@ export const BookEditModal = ({
       <Modal
         isOpen={isOpen}
         onClose={handleSaveAndClose}
-        className="max-w-[70vw] min-w-125"
+        className="max-w-[50vw] min-w-125 max-md:min-w-0 max-md:max-w-full"
         titleId="book-edit-title"
       >
       <div

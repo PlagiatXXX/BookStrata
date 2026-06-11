@@ -227,6 +227,27 @@
   overflow: hidden;
 }
 
+@media (max-width: 767px) {
+  .nb-book-card {
+    width: 56px;
+  }
+  .neo-brutalist-editor .nb-book-track {
+    gap: 0.4rem;
+    padding: 0.4rem;
+    min-height: 80px;
+  }
+  .neo-brutalist-editor .nb-rank-box {
+    width: 70px;
+  }
+  .neo-brutalist-editor .nb-tier-actions {
+    width: 36px;
+  }
+  .palette-toggle {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 .nb-book-card:hover {
   transform: rotate(2deg);
   border-color: var(--nb-secondary, #ff51fa);

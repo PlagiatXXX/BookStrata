@@ -145,10 +145,10 @@ export const TierGrid = memo(
         {onAddRow && (
           <button
             onClick={() => onAddRow()}
-            className="nb-btn-secondary w-full flex min-h-16 items-center justify-center border-dashed opacity-60 hover:opacity-100 transition-opacity"
+            className="nb-btn-secondary w-full flex min-h-16 max-md:min-h-12 items-center justify-center border-dashed opacity-60 hover:opacity-100 transition-opacity"
           >
-            <PlusCircle size={20} />
-            <span className="ml-3 nb-label-md">Добавить блок</span>
+            <PlusCircle size={20} className="max-md:size-4" />
+            <span className="ml-3 nb-label-md max-md:text-[10px]">Добавить блок</span>
           </button>
         )}
       </div>
