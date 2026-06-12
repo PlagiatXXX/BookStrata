@@ -39,6 +39,7 @@ export default defineConfig({
         manualChunks: {
           "react-vendor": ["react", "react-dom", "react-router-dom"],
           "query-vendor": ["@tanstack/react-query"],
+          "sentry-vendor": ["@sentry/browser"],
           "dnd-vendor": [
             "@dnd-kit/core",
             "@dnd-kit/sortable",
@@ -54,6 +55,6 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 1200,
+    chunkSizeWarningLimit: 1500,
   },
 });
