@@ -1065,6 +1065,16 @@
     display: block;
   }
 
+  .landing-hero {
+    min-height: 70vh;
+    padding: 80px 16px 24px;
+  }
+
+  .landing-stats {
+    margin-top: -8px;
+    padding: 0 16px;
+  }
+
   .landing-hero__mockup {
     display: none;
   }
