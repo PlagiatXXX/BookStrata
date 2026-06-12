@@ -23,41 +23,35 @@ import "./LandingPage.css"
 /* ---------- Animated counter ---------- */
 function AnimatedCounter({ target, suffix = "", label }: { target: number; suffix?: string; label: string }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [count, setCount] = useState(0)
-  const [hasAnimated, setHasAnimated] = useState(false)
+  const [displayed, setDisplayed] = useState(0)
+  const lastTargetRef = useRef(target)
 
   useEffect(() => {
-    const el = ref.current
-    if (!el || hasAnimated) return
+    if (lastTargetRef.current === target) return
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setHasAnimated(true)
-          const duration = 2000
-          const start = performance.now()
+    const from = displayed
+    const delta = target - from
+    lastTargetRef.current = target
 
-          function tick(now: number) {
-            const elapsed = now - start
-            const progress = Math.min(elapsed / duration, 1)
-            const eased = 1 - Math.pow(1 - progress, 3)
-            setCount(Math.floor(eased * target))
-            if (progress < 1) requestAnimationFrame(tick)
-          }
+    if (delta === 0) return
 
-          requestAnimationFrame(tick)
-        }
-      },
-      { threshold: 0.3 },
-    )
+    const duration = 2000
+    const start = performance.now()
 
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [target, hasAnimated])
+    function tick(now: number) {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplayed(Math.round(from + eased * delta))
+      if (progress < 1) requestAnimationFrame(tick)
+    }
+
+    requestAnimationFrame(tick)
+  })
 
   return (
     <div ref={ref} className="landing-stat">
-      <span className="landing-stat__number">{count.toLocaleString()}{suffix}</span>
+      <span className="landing-stat__number">{displayed.toLocaleString()}{suffix}</span>
       <span className="landing-stat__label">{label}</span>
     </div>
   )

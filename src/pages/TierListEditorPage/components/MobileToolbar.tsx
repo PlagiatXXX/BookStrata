@@ -1,6 +1,10 @@
-import { memo, useState, useRef, useEffect } from "react";
-import { Plus, Search, ImageDown, Trash2, Globe, Save, Ellipsis } from "lucide-react";
+import { memo, useState, useRef, useEffect, useCallback } from "react";
+import {
+  Plus, Search, ImageDown, Trash2, Globe, Save, Ellipsis,
+  Minus, Type, CaseSensitive, Italic, Palette, Sliders,
+} from "lucide-react";
 import type { SaveStatus } from "../hooks/useTierEditorSave";
+import type { Tier } from "@/types";
 
 interface MobileToolbarProps {
   onSave: () => void;
@@ -15,7 +19,24 @@ interface MobileToolbarProps {
   isPublic: boolean;
   onTogglePublic?: (value: boolean) => void;
   isTogglingPublic: boolean;
+  // Настройки полок
+  activeTier?: Tier;
+  onUpdateTier?: (tierId: string, settings: Partial<Omit<Tier, "id" | "bookIds">>) => void;
 }
+
+const LABEL_COLORS = [
+  { value: "", label: "Авто", color: "#888" },
+  { value: "#ffffff", label: "Белый", color: "#ffffff" },
+  { value: "#000000", label: "Чёрный", color: "#000000" },
+  { value: "#ff4444", label: "Красный", color: "#ff4444" },
+  { value: "#3b82f6", label: "Синий", color: "#3b82f6" },
+  { value: "#f59e0b", label: "Золотой", color: "#f59e0b" },
+  { value: "#22c55e", label: "Зелёный", color: "#22c55e" },
+  { value: "#ec4899", label: "Розовый", color: "#ec4899" },
+  { value: "#a855f7", label: "Фиолетовый", color: "#a855f7" },
+  { value: "#ff8c00", label: "Оранжевый", color: "#ff8c00" },
+  { value: "#00ffff", label: "Голубой", color: "#00ffff" },
+] as const;
 
 const btnBase =
   "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 py-1.5 text-[9px] uppercase font-black tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c1fffe] focus-visible:ring-inset";
@@ -38,31 +59,85 @@ export const MobileToolbar = memo(function MobileToolbar({
   isPublic,
   onTogglePublic,
   isTogglingPublic,
+  activeTier,
+  onUpdateTier,
 }: MobileToolbarProps) {
+  const height = activeTier?.height || 130;
+  const labelSize = activeTier?.labelSize || "sm";
+
+  const handleHeightChange = useCallback((direction: "increase" | "decrease") => {
+    if (!activeTier || !onUpdateTier) return;
+    const newHeight = direction === "increase" ? height + 10 : Math.max(80, height - 10);
+    onUpdateTier(activeTier.id, { height: newHeight });
+  }, [activeTier, onUpdateTier, height]);
+
+  const handleLabelSizeChange = useCallback((direction: "increase" | "decrease") => {
+    if (!activeTier || !onUpdateTier) return;
+    const sizes: ("xs" | "sm" | "md")[] = ["xs", "sm", "md"];
+    const currentIndex = sizes.indexOf(labelSize);
+    const newIndex = Math.max(0, Math.min(sizes.length - 1, direction === "increase" ? currentIndex + 1 : currentIndex - 1));
+    onUpdateTier(activeTier.id, { labelSize: sizes[newIndex] });
+  }, [activeTier, onUpdateTier, labelSize]);
+
+  const handleWeightChange = useCallback((weight: Tier["labelWeight"]) => {
+    if (!activeTier || !onUpdateTier) return;
+    onUpdateTier(activeTier.id, { labelWeight: weight });
+  }, [activeTier, onUpdateTier]);
+
+  const handleStyleToggle = useCallback(() => {
+    if (!activeTier || !onUpdateTier) return;
+    const next = activeTier.labelStyle === "italic" ? "normal" : "italic";
+    onUpdateTier(activeTier.id, { labelStyle: next });
+  }, [activeTier, onUpdateTier]);
+
+  const handleLabelColorChange = useCallback((color: string) => {
+    if (!activeTier || !onUpdateTier) return;
+    onUpdateTier(activeTier.id, { labelColor: color || undefined });
+  }, [activeTier, onUpdateTier]);
+
   const [showMore, setShowMore] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Закрываем "ещё" при клике вне
+  const [showTierPanel, setShowTierPanel] = useState(false);
+  const tierPanelRef = useRef<HTMLDivElement>(null);
+  const tierBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Закрываем выпадашки при клике вне
   useEffect(() => {
-    if (!showMore) return;
+    if (!showMore && !showTierPanel) return;
+
     const handleClick = (e: MouseEvent) => {
-      if (
-        moreRef.current &&
-        !moreRef.current.contains(e.target as Node) &&
-        moreBtnRef.current &&
-        !moreBtnRef.current.contains(e.target as Node)
-      ) {
-        setShowMore(false);
+      // "Ещё"
+      if (showMore) {
+        if (
+          moreRef.current &&
+          !moreRef.current.contains(e.target as Node) &&
+          moreBtnRef.current &&
+          !moreBtnRef.current.contains(e.target as Node)
+        ) {
+          setShowMore(false);
+        }
+      }
+      // Полка
+      if (showTierPanel) {
+        if (
+          tierPanelRef.current &&
+          !tierPanelRef.current.contains(e.target as Node) &&
+          tierBtnRef.current &&
+          !tierBtnRef.current.contains(e.target as Node)
+        ) {
+          setShowTierPanel(false);
+        }
       }
     };
-    // Задержка, чтобы не закрыть сразу после открытия
+
     const timer = setTimeout(() => document.addEventListener("click", handleClick), 0);
     return () => {
       clearTimeout(timer);
       document.removeEventListener("click", handleClick);
     };
-  }, [showMore]);
+  }, [showMore, showTierPanel]);
 
   const saveLabel = () => {
     switch (saveStatus) {
@@ -141,6 +216,29 @@ export const MobileToolbar = memo(function MobileToolbar({
               <span>Блок</span>
             </button>
           )}
+
+          {/* Tier Settings (только когда на мобильном) */}
+          <button
+            ref={tierBtnRef}
+            type="button"
+            onClick={() => {
+              if (activeTier) {
+                setShowTierPanel((v) => !v);
+                setShowMore(false);
+              }
+            }}
+            className={`${btnBase} border-r-2 border-black ${
+              activeTier
+                ? showTierPanel
+                  ? btnActive
+                  : "text-gray-400 hover:text-white"
+                : "text-gray-700"
+            }`}
+            aria-label="Настройки полки"
+          >
+            <Sliders size={18} />
+            <span>Полка</span>
+          </button>
 
           {/* Export */}
           <button
@@ -223,6 +321,141 @@ export const MobileToolbar = memo(function MobileToolbar({
                 Удалить рейтинг
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Dropdown настроек полки */}
+      {showTierPanel && activeTier && onUpdateTier && (
+        <div
+          ref={tierPanelRef}
+          className="fixed bottom-16 left-1/2 z-50 w-72 -translate-x-1/2 border-4 border-black bg-[#0e0e0e] p-3 shadow-[4px_4px_0_0_#000000] lg:hidden"
+        >
+          <div className="mb-2 text-[10px] font-black uppercase tracking-widest text-[#ffbd58]">
+            Полка: {activeTier.title}
+          </div>
+
+          {/* Высота строки */}
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Высота</span>
+            <div className="flex items-center gap-1 border-2 border-black bg-black">
+              <button
+                type="button"
+                onClick={() => handleHeightChange("decrease")}
+                className="flex size-7 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black"
+              >
+                <Minus size={12} />
+              </button>
+              <span className="w-6 text-center text-[11px] font-black">{height}</span>
+              <button
+                type="button"
+                onClick={() => handleHeightChange("increase")}
+                className="flex size-7 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
+          </div>
+
+          {/* Размер шрифта */}
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Шрифт</span>
+            <div className="flex items-center gap-1 border-2 border-black bg-black">
+              <button
+                type="button"
+                onClick={() => handleLabelSizeChange("decrease")}
+                className="flex size-7 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black"
+              >
+                <Type size={12} className="rotate-180" />
+              </button>
+              <span className="w-6 text-center text-[11px] font-black uppercase">{labelSize}</span>
+              <button
+                type="button"
+                onClick={() => handleLabelSizeChange("increase")}
+                className="flex size-7 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black"
+              >
+                <Type size={12} />
+              </button>
+            </div>
+          </div>
+
+          {/* Начертание */}
+          <div className="mb-3">
+            <span className="mb-1 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <CaseSensitive size={11} />
+              Начертание
+            </span>
+            <div className="flex gap-1">
+              {(["thin", "normal", "bold", "black"] as const).map((w) => {
+                const isActive = (activeTier?.labelWeight ?? "black") === w;
+                return (
+                  <button
+                    key={w}
+                    type="button"
+                    onClick={() => handleWeightChange(w)}
+                    className={`flex-1 cursor-pointer border-2 border-black px-1 py-1 text-[9px] font-black uppercase tracking-widest transition-all ${
+                      isActive
+                        ? "bg-[#c1fffe] text-black"
+                        : "bg-black text-white hover:bg-gray-900"
+                    }`}
+                  >
+                    {w === "thin" ? "100" : w === "normal" ? "400" : w === "bold" ? "700" : "900"}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Курсив */}
+          <div className="mb-3 flex items-center justify-between">
+            <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-gray-400">
+              <Italic size={12} />
+              Курсив
+            </span>
+            <button
+              type="button"
+              onClick={handleStyleToggle}
+              className={`cursor-pointer border-2 border-black px-2.5 py-1 text-[10px] font-black uppercase tracking-wider transition-all ${
+                activeTier?.labelStyle === "italic"
+                  ? "bg-[#ff51fa] text-black"
+                  : "bg-black text-white hover:bg-gray-900"
+              }`}
+            >
+              {activeTier?.labelStyle === "italic" ? "Вкл" : "Выкл"}
+            </button>
+          </div>
+
+          {/* Цвет текста */}
+          <div>
+            <span className="mb-1.5 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <Palette size={11} />
+              Цвет текста
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {LABEL_COLORS.map((c) => {
+                const isActive = (activeTier?.labelColor ?? "") === c.value;
+                return (
+                  <button
+                    key={c.value || "auto"}
+                    type="button"
+                    onClick={() => handleLabelColorChange(c.value)}
+                    className={`size-5 cursor-pointer border-2 border-black transition-all ${
+                      isActive ? "scale-110 ring-2 ring-[#c1fffe]" : "hover:scale-110"
+                    }`}
+                    style={{
+                      backgroundColor: c.color === "#888" ? undefined : c.color,
+                      backgroundImage:
+                        c.value === ""
+                          ? "linear-gradient(45deg, #000 25%, #fff 25%, #fff 50%, #000 50%, #000 75%, #fff 75%)"
+                          : undefined,
+                      backgroundSize: c.value === "" ? "5px 5px" : undefined,
+                    }}
+                    title={c.label}
+                    aria-label={c.label}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

@@ -44,7 +44,7 @@ function AppShell() {
         <Toaster position="top-center" theme="system" />
         <AchievementNotification achievement={newAchievement} onClose={clearNotification} />
         <CookieConsent />
-        <FeedbackButton />
+        <FeedbackButton raised={pathname.match(/^\/tier-lists\/[^/]+\/?$/)? true : false} />
       </AuthProvider>
     </HelmetProvider>
   );

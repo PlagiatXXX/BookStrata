@@ -365,8 +365,6 @@
   min-width: 0;
 }
 
-
-
 .theme-picker__swatch:hover {
   border-color: rgba(255, 255, 255, 0.15);
 }
@@ -374,6 +372,50 @@
 .theme-picker__swatch--active {
   border-color: #c1fffe !important;
   background: rgba(193, 255, 254, 0.08);
+}
+
+@media (max-width: 767px) {
+  .theme-picker__grid {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.25rem;
+    gap: 0.375rem;
+  }
+  .theme-picker__swatch {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    padding: 0.3rem 0.4rem;
+  }
+  .theme-picker__header {
+    padding-left: 0;
+  }
+
+  /* На мобильных убираем ободок активной темы */
+  .theme-picker__swatch--active {
+    border-color: transparent !important;
+    background: transparent;
+  }
+
+  /* Вместо ободка — галочка внутри превью */
+  .theme-picker__swatch--active .theme-picker__preview::after {
+    content: "✓";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* Точку (старый индикатор) убираем на мобильных */
+  .theme-picker__dot {
+    display: none;
+  }
 }
 
 .theme-picker__swatch--locked {

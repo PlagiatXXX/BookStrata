@@ -35,7 +35,7 @@ export function DashboardLayout({
         showSearch={showSearch}
         activeItem={activeItem}
       />
-      <main className="grid flex-1 grid-cols-1 pt-24">
+      <main className="grid flex-1 grid-cols-1 pt-24 overflow-x-hidden">
         {fullWidth ? (
           children
         ) : (

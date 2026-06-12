@@ -162,7 +162,7 @@ function FeedbackForm({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function FeedbackButton() {
+export function FeedbackButton({ raised = false }: { raised?: boolean }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   useBodyScrollLock(showForm);
@@ -200,7 +200,7 @@ export function FeedbackButton() {
       )}
 
       {/* Плавающее меню */}
-      <div className="fixed bottom-24 right-6 z-50 flex flex-col items-end gap-3 lg:bottom-6">
+      <div className={`fixed right-6 z-50 flex flex-col items-end gap-3 bottom-6 ${raised ? "bottom-24 lg:bottom-6" : ""}`}>
         <AnimatePresence>
           {isMenuOpen && (
             <>

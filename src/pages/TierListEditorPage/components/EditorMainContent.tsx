@@ -181,6 +181,8 @@ export const EditorMainContent = memo(
           isPublic={isPublic}
           onTogglePublic={onTogglePublic}
           isTogglingPublic={isTogglingPublic}
+          activeTier={activeTierData || undefined}
+          onUpdateTier={isReadOnly ? undefined : onUpdateTier}
         />
       )}
     </>
