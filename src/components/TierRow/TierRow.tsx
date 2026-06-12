@@ -141,7 +141,7 @@ export const TierRow = memo(
         </SortableContext>
 
         {onDelete !== undefined && (
-          <div className="nb-tier-actions absolute right-0 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-2 border-l-2 border-black bg-[#0e0e0e] transition-opacity opacity-0 group-hover:opacity-100 focus-within:opacity-100">
+          <div className="nb-tier-actions absolute right-0 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-2 border-l-2 border-black bg-[#0e0e0e] transition-opacity opacity-0 group-hover:opacity-100 focus-within:opacity-100 max-md:opacity-100">
             <button
               title="Переместить"
               aria-label="Переместить уровень"

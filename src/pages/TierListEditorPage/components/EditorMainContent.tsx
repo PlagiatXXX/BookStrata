@@ -2,6 +2,7 @@ import { memo, useCallback, useMemo } from "react";
 import { TierGrid } from "@/components/TierGrid/TierGrid";
 import { UnrankedItems } from "@/components/UnrankedItems/UnrankedItems";
 import { SettingsSidebar } from "@/components/SettingsSidebar/SettingsSidebar";
+import { MobileToolbar } from "./MobileToolbar";
 import type { Book, TierListData } from "@/types";
 import type { SaveStatus } from "../hooks/useTierEditorSave";
 
@@ -115,7 +116,7 @@ export const EditorMainContent = memo(
     );
 
     return (
-      <div className="flex flex-col gap-6 lg:flex-row lg:justify-center">
+      <><div className="flex flex-col gap-6 lg:flex-row lg:justify-center">
         <div className="flex max-w-full flex-1 lg:max-w-350 flex-col gap-4">
           <TierGrid
             ref={tierGridRef}
@@ -144,7 +145,7 @@ export const EditorMainContent = memo(
         </div>
 
         {!isReadOnly && (
-          <div className="shrink-0 lg:sticky lg:top-4 lg:self-start">
+          <div className="hidden shrink-0 lg:sticky lg:top-4 lg:self-start lg:block">
             <SettingsSidebar
               key={activeTierData?.id}
               activeTier={activeTierData || undefined}
@@ -165,6 +166,24 @@ export const EditorMainContent = memo(
           </div>
         )}
       </div>
-    );
+
+      {!isReadOnly && (
+        <MobileToolbar
+          onSave={() => onSave?.()}
+          saveStatus={saveStatus ?? "idle"}
+          lastSaved={lastSaved ?? null}
+          hasUnsavedChanges={hasUnsavedChanges ?? false}
+          onFindBook={onFindBook}
+          onAddRow={onAddRow}
+          onDownloadImage={onDownloadImage}
+          onClearRows={() => onClearRows?.()}
+          onDeleteRating={() => onDeleteRating?.()}
+          isPublic={isPublic}
+          onTogglePublic={onTogglePublic}
+          isTogglingPublic={isTogglingPublic}
+        />
+      )}
+    </>
+  );
   },
 );

@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  saveTierListAtomic,
-} from "@/lib/tierListApi";
+import { saveTierListAtomic } from "@/lib/tierListApi";
 import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
+import { stableStringify } from "@/utils/stableStringify";
 import type { TierListData } from "@/types";
 import type { Action } from "@/hooks/useTierList";
 
@@ -15,22 +14,6 @@ export interface UseTierEditorSaveResult {
   handleSave: () => Promise<void>;
   getSavePayload: () => AtomicSavePayload;
   hasChangesToSave: () => boolean;
-}
-
-function serializePayload(payload: AtomicSavePayload): string {
-  return JSON.stringify({
-    tiers: {
-      added: payload.tiers.added.sort((a, b) => a.tempId.localeCompare(b.tempId)),
-      updated: payload.tiers.updated.sort((a, b) => a.id - b.id),
-      deletedIds: payload.tiers.deletedIds.sort((a, b) => a - b),
-    },
-    newBooks: payload.newBooks.sort((a, b) => a.tempId.localeCompare(b.tempId)),
-    placements: payload.placements.sort((a, b) => {
-      const aKey = `${a.bookId}-${a.tierId}-${a.rank}`;
-      const bKey = `${b.bookId}-${b.tierId}-${b.rank}`;
-      return aKey.localeCompare(bKey);
-    }),
-  });
 }
 
 interface UseTierEditorSaveParams {
@@ -46,6 +29,16 @@ interface UseTierEditorSaveParams {
   };
 }
 
+/**
+ * Преобразует payload в стабильную строку для сравнения.
+ * Использует stableStringify — все ключи объектов сортируются,
+ * поэтому новое поле в AtomicTierAdd / AtomicTierUpdate / AtomicNewBook
+ * автоматически попадёт в сравнение без ручного обновления этой функции.
+ */
+function serializeSnapshot(payload: AtomicSavePayload): string {
+  return stableStringify(payload);
+}
+
 export function useTierEditorSave({
   tierListId,
   listData,
@@ -59,32 +52,32 @@ export function useTierEditorSave({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const savedSnapshotRef = useRef<string | null>(null);
-  const initializedRef = useRef(false);
+  const prevTierListIdRef = useRef<string | undefined>(undefined);
 
   const getSavePayload = useCallback((): AtomicSavePayload => {
     return getAtomicSavePayload(listData);
   }, [listData]);
 
-  // Инициализируем snapshot при первой загрузке данных
-  useEffect(() => {
-    if (!isLoading && !initializedRef.current && listData.id) {
-      const payload = getAtomicSavePayload(listData);
-      savedSnapshotRef.current = serializePayload(payload);
-      initializedRef.current = true;
+  // Инициализируем snapshot при первой загрузке данных.
+  // Выполняется во время рендера (refs можно назначать в render),
+  // чтобы избежать лишних useEffect-ов.
+  if (!isLoading && listData.id) {
+    // Сброс при смене тир-листа
+    if (prevTierListIdRef.current !== listData.id) {
+      prevTierListIdRef.current = listData.id;
+      savedSnapshotRef.current = null;
     }
-  }, [isLoading, listData.id, listData, getSavePayload]);
 
-  // Сбрасываем snapshot при смене тир-листа
-  useEffect(() => {
-    initializedRef.current = false;
-    savedSnapshotRef.current = null;
-  }, [tierListId]);
-
-  
+    // Инициализация snapshot при первом рендере после загрузки
+    if (savedSnapshotRef.current === null) {
+      const payload = getAtomicSavePayload(listData);
+      savedSnapshotRef.current = serializeSnapshot(payload);
+    }
+  }
 
   const hasChangesToSave = useCallback((): boolean => {
     const currentPayload = getAtomicSavePayload(listData);
-    const currentSerialized = serializePayload(currentPayload);
+    const currentSerialized = serializeSnapshot(currentPayload);
 
     if (savedSnapshotRef.current === null) {
       return currentPayload.placements.length > 0;
@@ -125,13 +118,12 @@ export function useTierEditorSave({
       localStorage.setItem(`tier-list-saved-${tierListId}`, String(Date.now()));
 
       // Сохраняем snapshot для последующего сравнения
-      savedSnapshotRef.current = serializePayload(payload);
+      savedSnapshotRef.current = serializeSnapshot(payload);
 
-      // Обновляем кэш React Query — инвалидируем чтобы данные перезапросились
+      // Обновляем кэш React Query
       await queryClient.invalidateQueries({
         queryKey: ["tierList", tierListId],
       });
-      // Инвалидируем список на дашборде, чтобы там обновилась дата
       await queryClient.invalidateQueries({ queryKey: ["userTierLists"] });
 
       logger.info("Сохранение успешно", { tierListId });
