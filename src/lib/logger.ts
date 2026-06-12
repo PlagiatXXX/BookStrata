@@ -191,6 +191,19 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
 
       console.error(formatted, style, errorData.stack ?? '', context ?? '');
 
+      // Отправляем в Sentry
+      try {
+        const sentryError = error instanceof Error ? error : new Error(errorData.message);
+        import("@sentry/browser").then((Sentry) => {
+          Sentry.captureException(sentryError, {
+            tags: { loggerName: name },
+            extra: { ...context },
+          });
+        });
+      } catch {
+        // Sentry может быть не загружен — не критично
+      }
+
       if (sendToServer) {
         sendLogToServer({
           timestamp: new Date().toISOString(),

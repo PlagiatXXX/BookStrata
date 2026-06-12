@@ -36,7 +36,9 @@ import templatesPlugin from "../src/modules/templates/templates.plugin.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
 import requestContext from "../src/plugins/requestContext.js";
 import authPlugin from "../src/plugins/auth.js";
+import * as Sentry from "@sentry/node";
 import { errorNotifier } from "./lib/errorNotifier.js";
+import { initSentry } from "./lib/sentry.js";
 import { registerAchievementSubscriptions } from "./lib/event-subscriptions.js";
 import { SubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
 
@@ -63,6 +65,9 @@ if (!CLIENT_URL) {
 
 // Инициализация Telegram уведомлений об ошибках
 errorNotifier.initialize();
+
+// Инициализация Sentry
+initSentry();
 
 // Определяем, режим разработки или нет
 const isDev = process.env.NODE_ENV !== "production";
@@ -201,13 +206,13 @@ await fastify.register(rateLimit, {
 });
 
 // Глобальный обработчик ошибок
-fastify.setErrorHandler((error: any, request, reply) => {
+fastify.setErrorHandler(async (error: any, request, reply) => {
   fastify.log.error(
     error,
     `Необработанная ошибка запроса: ${request.method} ${request.url}`,
   );
 
-  // Отправка уведомления в Telegram с контекстом запроса
+  // Отправка уведомлений об ошибке
   const queryParams = request.url.includes("?") ? request.url.split("?")[1] : undefined;
 
   errorNotifier
@@ -223,6 +228,20 @@ fastify.setErrorHandler((error: any, request, reply) => {
       timestamp: new Date().toISOString(),
     })
     .catch(console.error);
+
+  // Отправка в Sentry
+  Sentry.withScope((scope) => {
+    scope.setTag("url", request.url);
+    scope.setTag("method", request.method);
+    scope.setTag("user-agent", request.headers["user-agent"] || "unknown");
+    if ((request as any).userId) {
+      scope.setUser({ id: String((request as any).userId) });
+    }
+    if (queryParams) {
+      scope.setExtra("query", queryParams);
+    }
+    Sentry.captureException(error);
+  });
 
   if (error.statusCode === 429) {
     return reply

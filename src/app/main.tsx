@@ -4,6 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import "../styles/globals.css";
 import { router } from "./router";
+import { initSentry } from "../lib/sentry";
+import { AppErrorBoundary } from "../components/ErrorBoundary/AppErrorBoundary";
+
+// Инициализация Sentry — до React
+initSentry();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,12 +18,14 @@ const queryClient = new QueryClient({
       retry: 1,
     },
   },
-}); // Create query client
+});
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </AppErrorBoundary>
   </React.StrictMode>
 );

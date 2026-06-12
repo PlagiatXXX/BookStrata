@@ -30,6 +30,7 @@ export default defineConfig({
     },
   },
   build: {
+    sourcemap: "hidden", // Sentry подгружает map-файлы через плагин, в браузер они не отдаются
     minify: "esbuild",
     target: "esnext",
     rollupOptions: {

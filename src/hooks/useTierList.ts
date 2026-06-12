@@ -4,6 +4,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import type { TierListData, Tier, Book } from "@/types";
 import { UNRANKED_AREA_ID } from "@/constants/dnd";
 import { createLogger } from "@/lib/logger";
+import { getDragEndAction } from "@/utils/dragDrop";
 
 // Логгер для хука useTierList
 const tierListHookLogger = createLogger("UseTierList", { color: "purple" });
@@ -469,114 +470,25 @@ export const useTierList = (
   };
 
   const handleDragEnd = (event: DragEndEvent): boolean => {
-    const { active, over } = event;
+    const action = getDragEndAction(event, listData);
+    if (!action) return false;
 
-    if (!over || active.id === over.id) return false;
-
-    // Определяем overId: если over — книга, используем containerId (родительский tier)
-    const overId =
-      over.data.current?.type === "book"
-        ? over.data.current.containerId
-        : String(over.id);
-
-    const isReorderingTiers =
-      listData.tierOrder.includes(String(active.id)) &&
-      listData.tierOrder.includes(overId);
-
-    if (isReorderingTiers) {
+    if (action.type === "tier") {
       dispatch({
         type: "REORDER_TIERS",
-        payload: {
-          activeId: String(active.id),
-          overId,
-        },
+        payload: { activeId: action.activeId, overId: action.overId },
       });
       return true;
     }
 
-    const activeIsBook = active.data.current?.type === "book";
-    if (activeIsBook) {
-      const sourceContainer = active.data.current?.containerId;
-      let destContainer: string | undefined;
-
-      if (over.data.current?.type === "book") {
-        destContainer = over.data.current?.containerId;
-      } else if (listData.tiers[overId]) {
-        destContainer = overId;
-      } else if (overId === UNRANKED_AREA_ID) {
-        destContainer = UNRANKED_AREA_ID;
-      }
-
-      if (!sourceContainer || !destContainer) return false;
-
-      const sourceIndex = active.data.current?.sortable?.index;
-      if (typeof sourceIndex !== "number") return false;
-
-      let destIndex: number;
-      const overIndex = over.data.current?.sortable?.index;
-      const activeRect = active.rect?.current?.translated || null;
-      const overRect = over.rect || null;
-
-      if (over.data.current?.type === "book" && typeof overIndex === "number") {
-        if (sourceContainer === destContainer) {
-          if (activeRect && overRect) {
-            const insertAfter =
-              activeRect.left + activeRect.width / 2 >
-              overRect.left + overRect.width / 2;
-            destIndex =
-              overIndex +
-              (sourceIndex < overIndex
-                ? insertAfter
-                  ? 0
-                  : -1
-                : insertAfter
-                  ? 1
-                  : 0);
-          } else {
-            destIndex = overIndex;
-          }
-        } else {
-          if (activeRect && overRect) {
-            const insertAfter =
-              activeRect.left + activeRect.width / 2 >
-              overRect.left + overRect.width / 2;
-            destIndex = overIndex + (insertAfter ? 1 : 0);
-          } else {
-            destIndex = overIndex;
-          }
-        }
-      } else {
-        const items =
-          destContainer === UNRANKED_AREA_ID
-            ? listData.unrankedBookIds
-            : listData.tiers[destContainer]?.bookIds;
-        destIndex = items ? items.length : 0;
-      }
-
-      // Если книга осталась на том же месте — не считаем изменением
-      if (sourceContainer === destContainer && sourceIndex === destIndex) return false;
-
-      // Если книгу бросили на сам контейнер (не на книгу) и она уже была последней
-      // в этом контейнере — она просто вернулась на своё место
-      if (
-        sourceContainer === destContainer &&
-        over.data.current?.type !== "book" &&
-        destIndex === sourceIndex + 1
-      ) {
-        const items =
-          destContainer === UNRANKED_AREA_ID
-            ? listData.unrankedBookIds
-            : listData.tiers[destContainer]?.bookIds;
-        if (items && sourceIndex === items.length - 1) return false;
-      }
-
+    if (action.type === "book") {
       dispatch({
         type: "REORDER_ITEMS",
         payload: {
-          sourceContainer,
-          destContainer,
-          sourceIndex,
-          destIndex,
+          sourceContainer: action.sourceContainer,
+          destContainer: action.destContainer,
+          sourceIndex: action.sourceIndex,
+          destIndex: action.destIndex,
         },
       });
       return true;
