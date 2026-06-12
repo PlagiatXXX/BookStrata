@@ -101,6 +101,9 @@ ssh "$SSH_HOST" "
   # Собираем образ бэкенда (с кэшированием слоёв)
   docker compose --profile full build app
 
+  # Чистим build cache — освобождает гигабайты после каждой сборки
+  sudo docker builder prune -af
+
   # Перезапускаем контейнеры с новым образом
   docker compose --profile full up -d
 
