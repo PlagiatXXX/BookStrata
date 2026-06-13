@@ -14,6 +14,8 @@ import {
   Sparkles,
   Heart,
   Send,
+  Pen,
+  Share2,
 } from "lucide-react"
 import { SEOHead } from "@/components/SEO/SEOHead"
 
@@ -106,49 +108,6 @@ function FeatureCard({ icon, title, description, gradient, delay }: FeatureCardP
   )
 }
 
-/* ---------- Screenshot placeholder ---------- */
-interface ScreenshotCardProps {
-  title: string
-  description: string
-  gradient: string
-  icon: React.ReactNode
-  index: number
-}
-
-function ScreenshotCard({ title, description, gradient, icon, index }: ScreenshotCardProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-      className="group cursor-pointer"
-    >
-      <div
-        className={`relative overflow-hidden rounded-2xl ${gradient} aspect-[4/3] flex items-center justify-center shadow-md group-hover:shadow-xl transition-shadow duration-300`}
-      >
-        {/* Decorative dots */}
-        <div className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.3) 1px, transparent 1px)`,
-            backgroundSize: '20px 20px',
-          }}
-        />
-        <div className="relative flex flex-col items-center gap-3 text-white">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            {icon}
-          </div>
-          <span className="text-sm font-medium opacity-80">Скоро</span>
-        </div>
-      </div>
-      <div className="mt-3 text-center">
-        <h4 className="text-sm font-semibold text-slate-800">{title}</h4>
-        <p className="text-xs text-slate-400 mt-0.5">{description}</p>
-      </div>
-    </motion.div>
-  )
-}
-
 /* ---------- Main page ---------- */
 export function AboutPage() {
   const navigate = useNavigate()
@@ -204,45 +163,6 @@ export function AboutPage() {
       title: "Поиск книг",
       description: "Ищите книги по названию, автору или жанру. Добавляйте их в свою коллекцию одним кликом.",
       gradient: "bg-linear-to-br from-pink-500 to-fuchsia-600",
-    },
-  ]
-
-  const screenshots = [
-    {
-      title: "Главная",
-      description: "Лента тир-листов и подборок",
-      gradient: "bg-linear-to-br from-violet-900/80 to-purple-900/80",
-      icon: <BookOpen size={28} />,
-    },
-    {
-      title: "Редактор",
-      description: "Drag-and-drop тир-листа",
-      gradient: "bg-linear-to-br from-slate-800 to-slate-900/90",
-      icon: <Layers size={28} />,
-    },
-    {
-      title: "Баттлы",
-      description: "Сравнение подборок",
-      gradient: "bg-linear-to-br from-rose-900/80 to-orange-900/80",
-      icon: <Sword size={28} />,
-    },
-    {
-      title: "Профиль",
-      description: "Статистика и достижения",
-      gradient: "bg-linear-to-br from-amber-900/80 to-orange-900/80",
-      icon: <BarChart3 size={28} />,
-    },
-    {
-      title: "Обсуждения",
-      description: "Чат и форум",
-      gradient: "bg-linear-to-br from-emerald-900/80 to-teal-900/80",
-      icon: <MessageSquare size={28} />,
-    },
-    {
-      title: "ИИ-рекомендации",
-      description: "Умный подбор книг",
-      gradient: "bg-linear-to-br from-sky-900/80 to-indigo-900/80",
-      icon: <Sparkles size={28} />,
     },
   ]
 
@@ -349,9 +269,16 @@ export function AboutPage() {
             </h2>
           </FadeIn>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            {stats.map((stat, i) => (
+            {[1, 2, 3, 4].map((_, i) => (
               <FadeIn key={i} delay={i * 0.1}>
-                <AnimatedCounter {...stat} />
+                <div className="text-center">
+                  <div className="text-4xl md:text-5xl font-black bg-linear-to-br from-violet-600/30 to-fuchsia-600/30 bg-clip-text text-transparent">
+                    &infin;
+                  </div>
+                  <div className="text-sm text-slate-400 mt-1 italic">
+                    {["Это только начало", "Скоро", "В процессе", "Stay tuned"][i]}
+                  </div>
+                </div>
               </FadeIn>
             ))}
           </div>
@@ -387,76 +314,59 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* ======== СКРИНШОТЫ ======== */}
+      {/* ======== КАК ЭТО РАБОТАЕТ ======== */}
       <section className="py-16 md:py-20 px-4 bg-white border-y border-slate-100">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <FadeIn>
             <div className="text-center mb-12">
               <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3">
-                Как это выглядит
+                Как это работает
               </h2>
               <p className="text-slate-500 max-w-xl mx-auto">
-                Скоро здесь появятся скриншоты всех экранов приложения
+                Четыре простых шага, чтобы начать
               </p>
             </div>
           </FadeIn>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {screenshots.map((shot, i) => (
-              <ScreenshotCard
-                key={i}
-                title={shot.title}
-                description={shot.description}
-                gradient={shot.gradient}
-                icon={shot.icon}
-                index={i}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ======== ДЛЯ КОГО ======== */}
-      <section className="py-16 md:py-20 px-4 bg-zinc-50">
-        <div className="max-w-5xl mx-auto">
-          <FadeIn>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-12">
-              Для кого этот проект
-            </h2>
-          </FadeIn>
-
-          <div className="grid sm:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {[
               {
+                icon: <Pen size={24} />,
+                number: "01",
+                title: "Создай тир-лист",
+                desc: "Придумай название, добавь обложку, выбери уникальный фон. Твой рейтинг — твой стиль.",
+              },
+              {
                 icon: <BookOpen size={24} />,
-                title: "Книголюбы",
-                description: "Для тех, кто хочет систематизировать прочитанное и делиться своим мнением в наглядном формате.",
+                number: "02",
+                title: "Выбери книги",
+                desc: "Находи книги из обширной базы через поиск по названию или автору. Всё под рукой.",
               },
               {
-                icon: <Users size={24} />,
-                title: "Читательские сообщества",
-                description: "Для книжных клубов и сообществ, которые ищут удобный способ обсуждать и сравнивать книги.",
+                icon: <Layers size={24} />,
+                number: "03",
+                title: "Расставь по блокам",
+                desc: "Перетаскивай книги между блоками S, A, B, C и D. Кастомизируй цвета, названия и порядок.",
               },
               {
-                icon: <Heart size={24} />,
-                title: "Авторы и блогеры",
-                description: "Для тех, кто хочет продвигать книги, собирать обратную связь и находить свою аудиторию.",
+                icon: <Share2 size={24} />,
+                number: "04",
+                title: "Делись и соревнуйся",
+                desc: "Публикуй тир-лист, участвуй в баттлах, читай актуальные новости из мира литературы, обсуждай подборки и находи единомышленников.",
               },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.4 }}
-                className="bg-white rounded-2xl border border-slate-200 p-6 text-center"
-              >
-                <div className="w-12 h-12 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center mx-auto mb-4">
-                  {item.icon}
+            ].map((step, i) => (
+              <FadeIn key={i} delay={i * 0.1}>
+                <div className="relative bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-xs hover:shadow-md transition-shadow duration-300">
+                  <span className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white text-sm font-bold flex items-center justify-center shadow-md">
+                    {step.number}
+                  </span>
+                  <div className="w-12 h-12 rounded-xl bg-linear-to-br from-violet-100 to-fuchsia-100 text-violet-700 flex items-center justify-center mx-auto mb-4">
+                    {step.icon}
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">{step.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
                 </div>
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">{item.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{item.description}</p>
-              </motion.div>
+              </FadeIn>
             ))}
           </div>
         </div>

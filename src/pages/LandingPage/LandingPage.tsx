@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
 import {
   ArrowRight, BookOpen, Sword, Sparkles,
-  Trophy, Heart, MessageCircle, Share2, Zap,
+  Trophy, Heart, MessageCircle, MessageSquare, Share2, Zap,
   ChevronRight, Menu, X, Check, Layers, Brain, Pen, Copy, Paintbrush, Send,
+  BarChart3, Users,
 } from "lucide-react"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { Logo } from "@/ui/Logo"
@@ -22,19 +23,16 @@ import "./LandingPage.css"
 
 /* ---------- Animated counter ---------- */
 function AnimatedCounter({ target, suffix = "", label }: { target: number; suffix?: string; label: string }) {
-  const ref = useRef<HTMLDivElement>(null)
   const [displayed, setDisplayed] = useState(0)
-  const lastTargetRef = useRef(target)
+  const prevTarget = useRef(0)
 
   useEffect(() => {
-    if (lastTargetRef.current === target) return
+    if (target === 0) return
+    if (prevTarget.current === target) return
+    prevTarget.current = target
 
-    const from = displayed
+    const from = displayed || 0
     const delta = target - from
-    lastTargetRef.current = target
-
-    if (delta === 0) return
-
     const duration = 2000
     const start = performance.now()
 
@@ -47,10 +45,10 @@ function AnimatedCounter({ target, suffix = "", label }: { target: number; suffi
     }
 
     requestAnimationFrame(tick)
-  })
+  }, [target, displayed])
 
   return (
-    <div ref={ref} className="landing-stat">
+    <div className="landing-stat">
       <span className="landing-stat__number">{displayed.toLocaleString()}{suffix}</span>
       <span className="landing-stat__label">{label}</span>
     </div>
@@ -305,6 +303,112 @@ function DonateModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+/* ---------- Screenshot card (placeholder) ---------- */
+function ScreenshotCard({ title, description, gradient, icon, index, src, videoSrc }: {
+  title: string
+  description: string
+  gradient: string
+  icon: React.ReactNode
+  index: number
+  src?: string
+  videoSrc?: string
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+      className="group cursor-pointer"
+    >
+      <div
+        className={`relative overflow-hidden rounded-2xl ${src || videoSrc ? "" : gradient} aspect-[4/3] flex items-center justify-center shadow-md group-hover:shadow-xl transition-shadow duration-300 bg-[rgba(15,30,50,0.6)]`}
+      >
+        {videoSrc ? (
+          <video
+            src={videoSrc}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)] object-contain rounded-xl"
+          />
+        ) : src ? (
+          <img
+            src={src}
+            alt={title}
+            className="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)] object-contain rounded-xl"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.3) 1px, transparent 1px)`,
+                backgroundSize: '20px 20px',
+              }}
+            />
+            <div className="relative flex flex-col items-center gap-3 text-white">
+              <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                {icon}
+              </div>
+              <span className="text-sm font-medium opacity-80">Скоро</span>
+            </div>
+          </>
+        )}
+      </div>
+      <div className="mt-3 text-center">
+        <h4 className="text-sm font-semibold text-[#e2e8f0]">{title}</h4>
+        <p className="text-xs text-[#94a3b8] mt-0.5">{description}</p>
+      </div>
+    </motion.div>
+  )
+}
+
+const screenshots = [
+  {
+    title: "Главная",
+    description: "Лента тир-листов и подборок",
+    gradient: "bg-linear-to-br from-violet-900/80 to-purple-900/80",
+    icon: <BookOpen size={28} />,
+    src: "/screenshots/dashboard.webp",
+  },
+  {
+    title: "Редактор",
+    description: "Drag-and-drop тир-листа",
+    gradient: "bg-linear-to-br from-slate-800 to-slate-900/90",
+    icon: <Layers size={28} />,
+    videoSrc: "/screenshots/tier-list.mp4",
+  },
+  {
+    title: "Баттлы",
+    description: "Сравнение подборок",
+    gradient: "bg-linear-to-br from-rose-900/80 to-orange-900/80",
+    icon: <Sword size={28} />,
+    src: "/screenshots/battles.webp",
+  },
+  {
+    title: "Профиль",
+    description: "Статистика и достижения",
+    gradient: "bg-linear-to-br from-amber-900/80 to-orange-900/80",
+    icon: <BarChart3 size={28} />,
+    src: "/screenshots/profile.webp",
+  },
+  {
+    title: "Личная библиотека",
+    description: "Поиск и подборки",
+    gradient: "bg-linear-to-br from-emerald-900/80 to-teal-900/80",
+    icon: <MessageSquare size={28} />,
+    src: "/screenshots/library.webp",
+  },
+  {
+    title: "ИИ-рекомендации",
+    description: "Умный подбор книг",
+    gradient: "bg-linear-to-br from-sky-900/80 to-indigo-900/80",
+    icon: <Sparkles size={28} />,
+    src: "/screenshots/AI.webp",
+  },
+]
+
 /* ---------- Main landing page ---------- */
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -531,41 +635,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <div className="landing-divider" />
-
-      {/* ============ HOW IT WORKS ============ */}
-      <section className="landing-section" id="how-it-works">
+      {/* ============ SCREENSHOTS ============ */}
+      <section className="landing-section" id="screenshots">
         <div className="landing-section__container">
-          <RevealBox><h2 className="landing-section__title">Как это работает</h2></RevealBox>
-          <RevealBox><p className="landing-section__subtitle">Четыре простых шага, чтобы начать</p></RevealBox>
+          <RevealBox>
+            <h2 className="landing-section__title">Как это выглядит</h2>
+          </RevealBox>
+          <RevealBox>
+            <p className="landing-section__subtitle">Все экраны приложения</p>
+          </RevealBox>
 
-          <div className="landing-steps">
-            <RevealBox className="landing-step">
-              <div className="landing-step__icon"><Pen size={28} /></div>
-              <span className="landing-step__number">01</span>
-              <h3 className="landing-step__title">Создай тир-лист</h3>
-              <p className="landing-step__desc">Придумай название, добавь обложку, выбери уникальный фон. Твой рейтинг — твой стиль.</p>
-            </RevealBox>
-            <ArrowRight size={32} className="landing-step-arrow landing-step-arrow--right" />
-            <RevealBox className="landing-step">
-              <div className="landing-step__icon"><BookOpen size={28} /></div>
-              <span className="landing-step__number">02</span>
-              <h3 className="landing-step__title">Выбери книги</h3>
-              <p className="landing-step__desc">Находи книги из обширной базы через поиск по названию или автору. Всё под рукой.</p>
-            </RevealBox>
-            <RevealBox className="landing-step">
-              <div className="landing-step__icon"><Layers size={28} /></div>
-              <span className="landing-step__number">03</span>
-              <h3 className="landing-step__title">Расставь по блокам</h3>
-              <p className="landing-step__desc">Перетаскивай книги между блоками S, A, B, C и D. Кастомизируй цвета, названия и порядок.</p>
-            </RevealBox>
-            <ArrowRight size={32} className="landing-step-arrow landing-step-arrow--right" />
-            <RevealBox className="landing-step">
-              <div className="landing-step__icon"><Share2 size={28} /></div>
-              <span className="landing-step__number">04</span>
-              <h3 className="landing-step__title">Делись и соревнуйся</h3>
-              <p className="landing-step__desc">Публикуй тир-лист, участвуй в баттлах, читай актуальные новости из мира литературы, обсуждай подборки и находи единомышленников.</p>
-            </RevealBox>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {screenshots.map((shot, i) => (
+              <ScreenshotCard
+                key={i}
+                title={shot.title}
+                description={shot.description}
+                gradient={shot.gradient}
+                icon={shot.icon}
+                index={i}
+                src={"src" in shot ? shot.src : undefined}
+                videoSrc={"videoSrc" in shot ? (shot as any).videoSrc : undefined}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -633,6 +725,52 @@ export default function LandingPage() {
                   </>
                 )}
               </RevealBox>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="landing-divider" />
+
+      {/* ============ FOR WHOM ============ */}
+      <section className="landing-section" id="for-whom">
+        <div className="landing-section__container" style={{ maxWidth: 900 }}>
+          <RevealBox>
+            <h2 className="landing-section__title">Для кого этот проект</h2>
+          </RevealBox>
+
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <BookOpen size={24} />,
+                title: "Книголюбы",
+                description: "Для тех, кто хочет систематизировать прочитанное и делиться своим мнением в наглядном формате.",
+              },
+              {
+                icon: <Users size={24} />,
+                title: "Читательские сообщества",
+                description: "Для книжных клубов и сообществ, которые ищут удобный способ обсуждать и сравнивать книги.",
+              },
+              {
+                icon: <Heart size={24} />,
+                title: "Авторы и блогеры",
+                description: "Для тех, кто хочет продвигать книги, собирать обратную связь и находить свою аудиторию.",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.4 }}
+                className="p-8 text-center rounded-2xl border border-white/[0.06] bg-[rgba(15,30,50,0.4)] backdrop-blur-[12px] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <div className="w-12 h-12 rounded-xl bg-[rgba(6,188,249,0.1)] text-[#06bcf9] flex items-center justify-center mx-auto mb-4">
+                  {item.icon}
+                </div>
+                <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">{item.title}</h3>
+                <p className="text-sm text-[#94a3b8] leading-relaxed">{item.description}</p>
+              </motion.div>
             ))}
           </div>
         </div>
