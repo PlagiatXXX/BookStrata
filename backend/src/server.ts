@@ -87,7 +87,7 @@ const fastify = Fastify({
       },
     }),
   },
-  bodyLimit: 10 * 1024 * 1024, // 10MB лимит для base64 изображений
+  bodyLimit: 30 * 1024 * 1024, // 30MB лимит для save-all с base64 изображениями
 });
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;

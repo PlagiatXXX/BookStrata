@@ -83,8 +83,17 @@ const ParticipantCard = memo(({
     </div>
 
     {tl?.tiers && tl.tiers.length > 0 && (
-      <div className="mb-4">
-        <TierListPreview tierList={tl} />
+      <div
+        className="mb-3 cursor-pointer group/tierlist"
+        onClick={(e) => { e.stopPropagation(); if (tl?.id) navigate(`/tier-lists/${tl.id}?context=battle`) }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter" && tl?.id) { e.stopPropagation(); navigate(`/tier-lists/${tl.id}?context=battle`) } }}
+      >
+        <TierListPreview tierList={tl} compact maxBooksPerTier={4} />
+        <div className="mt-2 text-[10px] font-medium uppercase tracking-wider text-(--ink-1) opacity-0 group-hover/tierlist:opacity-100 transition-opacity">
+          Открыть полностью &rarr;
+        </div>
       </div>
     )}
 

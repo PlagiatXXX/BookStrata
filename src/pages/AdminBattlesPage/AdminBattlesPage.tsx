@@ -45,6 +45,7 @@ export default function AdminBattlesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-pending-applications"] })
+      queryClient.invalidateQueries({ queryKey: ["admin-approved-applications"] })
       sileo.success({ title: "Заявка обработана", duration: 3000 })
     },
     onError: (err: Error) => {
