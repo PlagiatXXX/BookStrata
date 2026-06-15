@@ -75,6 +75,10 @@ export async function authRoutes(fastify: FastifyInstance) {
           if (msg.includes("условия использования")) {
             return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, msg));
           }
+
+          if (msg.includes("зарезервировано")) {
+            return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, msg));
+          }
         }
         fastify.log.error(error, "Unexpected error during registration");
         throw error;
