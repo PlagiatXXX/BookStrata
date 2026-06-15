@@ -82,7 +82,16 @@ async function prerender() {
     await waitForServer(BASE);
 
     log("🌐 Launch browser…");
-    browser = await chromium.launch({ headless: true });
+    try {
+      browser = await chromium.launch({ headless: true });
+    } catch (err) {
+      log(`⚠️  Cannot launch Chromium: ${err.message}`);
+      log("⚠️  Prerender skipped. Run: npx playwright install-deps chromium");
+      log("⚠️  The site will still work — SPA fallback is active.");
+      // gracefully exit — build succeeded, prerender is optional
+      return;
+    }
+
     for (const route of ROUTES) {
       log(`  → ${route.path} (${route.name})`);
 
