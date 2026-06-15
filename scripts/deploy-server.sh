@@ -73,10 +73,5 @@ info "Перезапуск бэкенда и nginx (postgres/redis не трог
 docker compose up -d app nginx
 ok "Контейнеры запущены"
 
-# ——— 6. Миграции ———
-info "Применяем миграции Prisma..."
-docker exec bookstrata-api npx prisma migrate deploy 2>/dev/null || true
-ok "Миграции применены"
-
 echo ""
 ok "Деплой завершён"
