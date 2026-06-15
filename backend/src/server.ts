@@ -7,6 +7,7 @@ import cookie from "@fastify/cookie";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
+import staticFiles from "@fastify/static";
 import { redis, RedisRateLimitStore } from "./lib/redis.js";
 import LocalStore from "@fastify/rate-limit/store/LocalStore.js";
 import { prisma, waitForDatabase } from "./lib/prisma.js";
@@ -128,6 +129,17 @@ await fastify.register(helmet, {
     directives: cspDirectives,
   },
 });
+
+// Раздача статических файлов (для локального хранения изображений)
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const uploadsDir = join(__dirname, '..', 'uploads')
+fastify.register(staticFiles, {
+  root: uploadsDir,
+  prefix: '/uploads/',
+  decorateReply: false,
+})
 
 // Регистрируем Prisma как декоратор (доступен через fastify.prisma)
 fastify.decorate("prisma", prisma);

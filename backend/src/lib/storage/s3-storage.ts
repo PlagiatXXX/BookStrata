@@ -7,29 +7,29 @@ import sharp from 'sharp'
 import crypto from 'node:crypto'
 import type { ImageStorageService, UploadResult } from './types.js'
 
-const YC_BUCKET = process.env.YC_BUCKET
-if (!YC_BUCKET) {
-  throw new Error('YC_BUCKET environment variable is required for Yandex Object Storage')
+const S3_BUCKET = process.env.S3_BUCKET
+if (!S3_BUCKET) {
+  throw new Error('S3_BUCKET environment variable is required for S3 storage')
 }
 
-const YC_ENDPOINT = process.env.YC_ENDPOINT || 'https://storage.yandexcloud.net'
-const YC_REGION = process.env.YC_REGION || 'ru-central1'
-const YC_ACCESS_KEY_ID = process.env.YC_ACCESS_KEY_ID || ''
-const YC_SECRET_ACCESS_KEY = process.env.YC_SECRET_ACCESS_KEY || ''
-const YC_PUBLIC_HOST = process.env.YC_PUBLIC_HOST || 'storage.yandexcloud.net'
+const S3_ENDPOINT = process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net'
+const S3_REGION = process.env.S3_REGION || 'ru-central1'
+const S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID || ''
+const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY || ''
+const S3_PUBLIC_HOST = process.env.S3_PUBLIC_HOST || 'storage.yandexcloud.net'
 
 const client = new S3Client({
-  endpoint: YC_ENDPOINT,
-  region: YC_REGION,
+  endpoint: S3_ENDPOINT,
+  region: S3_REGION,
   credentials: {
-    accessKeyId: YC_ACCESS_KEY_ID,
-    secretAccessKey: YC_SECRET_ACCESS_KEY,
+    accessKeyId: S3_ACCESS_KEY_ID,
+    secretAccessKey: S3_SECRET_ACCESS_KEY,
   },
   forcePathStyle: false,
 })
 
 function publicUrl(key: string): string {
-  return `https://${YC_PUBLIC_HOST}/${key}`
+  return `https://${S3_PUBLIC_HOST}/${key}`
 }
 
 function generateKey(folder: string, ext: string): string {
@@ -46,7 +46,7 @@ async function uploadBuffer(
   const key = generateKey(folder, ext)
 
   const command = new PutObjectCommand({
-    Bucket: YC_BUCKET,
+    Bucket: S3_BUCKET,
     Key: key,
     Body: buffer,
     ContentType: contentType,
@@ -77,7 +77,7 @@ async function fetchToBuffer(url: string): Promise<{ buffer: Buffer; contentType
   return { buffer, contentType }
 }
 
-export class YandexStorage implements ImageStorageService {
+export class S3Storage implements ImageStorageService {
   async uploadAvatar(fileBuffer: Buffer, _userId: number): Promise<UploadResult> {
     const resized = await sharp(fileBuffer)
       .resize(256, 256, { fit: 'cover', position: 'attention' })
@@ -89,7 +89,7 @@ export class YandexStorage implements ImageStorageService {
 
   async deleteAvatar(publicId: string): Promise<void> {
     const command = new DeleteObjectCommand({
-      Bucket: YC_BUCKET,
+      Bucket: S3_BUCKET,
       Key: publicId,
     })
     await client.send(command)
