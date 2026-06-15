@@ -97,16 +97,19 @@ export function AuthForm() {
         navigate("/dashboard")
         dispatch({ type: "SUBMIT_SUCCESS" })
       } else {
-        await apiRegister({
+        const result = await apiRegister({
           username: state.formData.username,
           email: state.formData.email,
           password: state.formData.password,
           acceptedTerms: state.acceptedTerms,
         })
+        setAuthToken(result.accessToken)
+        StorageService.setString("username", result.username)
+        window.dispatchEvent(new Event("auth-token-changed"))
+        await new Promise((resolve) => setTimeout(resolve, 200))
         window.ym?.(109755750, 'reachGoal', 'register')
-        dispatch({ type: "RESET" })
-        setMode("login")
-        alert("Регистрация успешна! Теперь вы можете войти.")
+        navigate("/dashboard")
+        dispatch({ type: "SUBMIT_SUCCESS" })
       }
     } catch (err) {
       dispatch({ type: "SUBMIT_FAILURE", error: err instanceof Error ? err.message : "Ошибка" })

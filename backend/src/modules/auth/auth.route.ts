@@ -39,11 +39,18 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const result = await register(request.body);
 
+        reply.setCookie("refreshToken", result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 14 * 24 * 60 * 60,
+          path: "/",
+        });
+
         return reply.code(201).header("Location", `/api/users/${result.userId}`).send(createSuccessResponse({
+          accessToken: result.accessToken,
           userId: result.userId,
           username: result.username,
-          email: result.email,
-          emailVerified: result.emailVerified,
         }));
       } catch (error) {
         if (error instanceof Error) {

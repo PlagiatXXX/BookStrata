@@ -42,14 +42,7 @@ export interface LoginPayload {
   password: string;
 }
 
-export interface RegisterResult {
-  userId: number;
-  username: string;
-  email: string;
-  emailVerified: boolean;
-}
-
-export async function register(payload: RegisterPayload): Promise<RegisterResult> {
+export async function register(payload: RegisterPayload): Promise<AuthToken> {
   if (!payload.acceptedTerms) {
     throw new Error("Необходимо принять условия использования");
   }
@@ -118,11 +111,17 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
 
   logger.info("Пользователь зарегистрирован", { userId: user.id, email: user.email });
 
-  return {
+  const tokens = generateTokenPair({
     userId: user.id,
     username: user.username!,
-    email: user.email,
-    emailVerified: true,
+    role: "user",
+  });
+
+  return {
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    userId: user.id,
+    username: user.username!,
   };
 }
 

@@ -74,16 +74,15 @@ export const registerSchema = {
   tags: ['Auth'],
   body: zodToJsonSchema(registerBodySchema as any),
   response: {
-    201: {
-      description: 'User registered successfully, verification email sent',
-      type: 'object',
-      properties: {
-        userId: { type: 'number', description: 'Created user ID' },
-        username: { type: 'string', description: 'Username' },
-        email: { type: 'string', description: 'User email' },
-        emailVerified: { type: 'boolean', description: 'Whether email is verified' },
-      },
-    },
+     201: {
+       description: 'User registered successfully',
+       type: 'object',
+       properties: {
+         accessToken: { type: 'string', description: 'JWT access token' },
+         userId: { type: 'number', description: 'Created user ID' },
+         username: { type: 'string', description: 'Username' },
+       },
+     },
     409: makeErrorSchema('Username or email already exists'),
   },
 };

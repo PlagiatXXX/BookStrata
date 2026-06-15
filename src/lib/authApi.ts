@@ -42,10 +42,9 @@ export interface RegisterPayload {
 }
 
 export interface RegisterResult {
+  accessToken: string;
   userId: number;
   username: string;
-  email: string;
-  emailVerified: boolean;
 }
 
 interface LoginPayload {

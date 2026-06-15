@@ -163,7 +163,7 @@ describe("Auth Service", () => {
       mockGetRoleByName.mockResolvedValue(mockUserRole);
     });
 
-    it("должен зарегистрировать нового пользователя", async () => {
+    it("должен зарегистрировать нового пользователя и вернуть токены", async () => {
       (prisma.user.findFirst as any).mockResolvedValue(null);
       (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
 
@@ -183,10 +183,9 @@ describe("Auth Service", () => {
       expect(result).toMatchObject({
         userId: 1,
         username: "newuser",
-        email: "newuser@example.com",
-        emailVerified: true,
       });
-      expect(result).not.toHaveProperty("accessToken");
+      expect(result.accessToken).toBeDefined();
+      expect(result.refreshToken).toBeDefined();
     });
 
     it("должен бросить ошибку если не приняты условия", async () => {
