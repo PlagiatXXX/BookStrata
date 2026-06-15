@@ -336,6 +336,12 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
         ) : src ? (
           <img
             src={src}
+            srcSet={`
+              ${src.replace('.webp', '-400.webp')} 400w,
+              ${src.replace('.webp', '-800.webp')} 800w,
+              ${src} 1200w
+            `}
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             alt={title}
             className="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)] object-contain rounded-xl"
           />
