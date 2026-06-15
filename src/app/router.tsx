@@ -82,7 +82,6 @@ const AdminUsersPage = lazy(() =>
 );
 const ContactPage = lazy(() => import("@/pages/ContactPage"))
 const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"))
-const VerifyEmailPage = lazy(() => import("@/pages/VerifyEmailPage").then(m => ({ default: m.VerifyEmailPage })))
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage").then(m => ({ default: m.PrivacyPage })))
 const TermsPage = lazy(() => import("@/pages/TermsPage").then(m => ({ default: m.TermsPage })))
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })))
@@ -108,7 +107,6 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <HomeRoute /> },
       { path: "/auth", element: <AuthPage /> },
-      { path: "/verify-email", element: <VerifyEmailPage /> },
       { path: "/privacy", element: <PrivacyPage /> },
       { path: "/terms", element: <TermsPage /> },
       { path: "/about", element: <AboutPage /> },

@@ -1,15 +1,12 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance } from "fastify";
 import {
   register,
   login,
   validateToken,
   validateRefreshToken,
   generateTokenPair,
-  verifyEmail,
-  resendVerificationEmail,
   requestPasswordReset,
   confirmPasswordReset,
-  getUserVerificationStatus,
   oauthVk,
   oauthGoogle,
 } from "./auth.service.js";
@@ -17,15 +14,11 @@ import {
   registerSchema,
   loginSchema,
   validateSchema,
-  verifyEmailSchema,
-  resendVerificationSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   type RegisterInput,
   type LoginInput,
   type ValidateInput,
-  type VerifyEmailInput,
-  type ResendVerificationInput,
 } from "./auth.schema.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
@@ -81,80 +74,6 @@ export async function authRoutes(fastify: FastifyInstance) {
       }
     },
   );
-
-  // POST /api/auth/verify-email
-  fastify.post<{ Body: VerifyEmailInput }>(
-    "/verify-email",
-    {
-      schema: verifyEmailSchema,
-      config: {
-        rateLimit: {
-          max: 10,
-          timeWindow: "1 minute",
-        },
-      },
-    },
-    async (request, reply) => {
-      try {
-        const result = await verifyEmail(request.body.token);
-        return reply.code(200).send(createSuccessResponse({
-          message: "Email успешно подтверждён",
-          userId: result.userId,
-          username: result.username,
-        }));
-      } catch (error) {
-        if (error instanceof Error) {
-          const msg = error.message;
-          if (msg.includes("истёк")) {
-            return reply.code(400).send(createApiError(ErrorCodes.TOKEN_EXPIRED, msg));
-          }
-          return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, msg));
-        }
-        throw error;
-      }
-    },
-  );
-
-  // POST /api/auth/resend-verification
-  fastify.post<{ Body: ResendVerificationInput }>(
-    "/resend-verification",
-    {
-      schema: resendVerificationSchema,
-      config: {
-        rateLimit: {
-          max: 3,
-          timeWindow: "1 hour",
-        },
-      },
-    },
-    async (request, reply) => {
-      try {
-        await resendVerificationEmail(request.body.email);
-        return reply.code(200).send(createSuccessResponse({
-          message: "Если аккаунт с таким email существует и не подтверждён, мы отправили новое письмо.",
-        }));
-      } catch (error) {
-        fastify.log.error(error, "Resend verification error");
-        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Failed to resend verification email"));
-      }
-    },
-  );
-
-  // GET /api/auth/me/verification
-  fastify.get("/me/verification", async (request, reply) => {
-    try {
-      const userId = (request as FastifyRequest).user?.userId;
-      if (!userId) {
-        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Требуется авторизация"));
-      }
-
-      const status = await getUserVerificationStatus(userId);
-      return reply.code(200).send(createSuccessResponse(status));
-    } catch (error) {
-      fastify.log.error(error, "Get verification status error");
-      throw error;
-    }
-  });
 
   // POST /api/auth/login
   fastify.post<{ Body: LoginInput }>(

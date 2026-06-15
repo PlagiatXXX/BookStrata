@@ -2,7 +2,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { apiLogin, apiRegister, apiResendVerification, setAuthToken } from "@/lib/authApi";
+import { apiLogin, apiRegister, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
@@ -20,7 +20,6 @@ interface AuthState {
   error: string | null;
   showPassword: boolean;
   acceptedTerms: boolean;
-  registeredEmail: string | null;
 }
 
 type AuthAction =
@@ -29,7 +28,6 @@ type AuthAction =
   | { type: "SET_ERROR"; error: string | null }
   | { type: "TOGGLE_PASSWORD" }
   | { type: "SET_ACCEPTED_TERMS"; value: boolean }
-  | { type: "REGISTER_SUCCESS"; email: string }
   | { type: "RESET" }
   | { type: "SUBMIT_START" }
   | { type: "SUBMIT_SUCCESS" }
@@ -41,7 +39,6 @@ const initialAuthState: AuthState = {
   error: null,
   showPassword: false,
   acceptedTerms: false,
-  registeredEmail: null,
 };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
@@ -56,13 +53,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return { ...state, showPassword: !state.showPassword }
     case "SET_ACCEPTED_TERMS":
       return { ...state, acceptedTerms: action.value }
-    case "REGISTER_SUCCESS":
-      return {
-        ...state,
-        loading: false,
-        registeredEmail: action.email,
-        formData: { username: "", email: "", password: "" },
-      }
     case "RESET":
       return { ...initialAuthState }
     case "SUBMIT_START":
@@ -114,71 +104,13 @@ export function AuthForm() {
           acceptedTerms: state.acceptedTerms,
         })
         window.ym?.(109755750, 'reachGoal', 'register')
-        dispatch({ type: "REGISTER_SUCCESS", email: state.formData.email })
+        dispatch({ type: "RESET" })
+        setMode("login")
+        alert("Регистрация успешна! Теперь вы можете войти.")
       }
     } catch (err) {
       dispatch({ type: "SUBMIT_FAILURE", error: err instanceof Error ? err.message : "Ошибка" })
     }
-  }
-
-  const handleResend = async () => {
-    if (!state.registeredEmail) return
-    dispatch({ type: "SUBMIT_START" })
-    try {
-      await apiResendVerification(state.registeredEmail)
-      dispatch({ type: "SET_ERROR", error: null })
-      dispatch({ type: "SUBMIT_SUCCESS" })
-      alert("Новое письмо отправлено! Проверьте почту.")
-    } catch (err) {
-      dispatch({ type: "SUBMIT_FAILURE", error: err instanceof Error ? err.message : "Ошибка" })
-    }
-  }
-
-  if (state.registeredEmail) {
-    return (
-      <div className="relative min-h-screen overflow-hidden">
-        <div className="absolute inset-0">
-          <video autoPlay muted playsInline className="hidden md:block absolute inset-0 w-full h-full object-cover">
-            <source src="/library4k-hq.mp4" type="video/mp4" />
-          </video>
-          <img src="/library.webp" alt="" className="md:hidden absolute inset-0 w-full h-full object-cover" />
-        </div>
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
-          <Card className="w-full max-w-sm md:max-w-md bg-white/25 backdrop-blur-xs shadow-[0_20px_60px_rgba(0,0,0,0.25)] border border-white/30">
-            <div className="p-6 md:p-8 text-center">
-              <div className="size-16 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
-                <svg className="size-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-semibold text-slate-800 mb-2">Подтвердите email</h2>
-              <p className="text-sm text-slate-600 mb-1">
-                Мы отправили письмо на
-              </p>
-              <p className="text-sm font-medium text-slate-800 mb-4">
-                {state.registeredEmail}
-              </p>
-              <p className="text-xs text-slate-500 mb-6">
-                Перейдите по ссылке в письме, чтобы активировать аккаунт.
-                Письмо может прийти в папку «Спам».
-              </p>
-              <div className="flex flex-col gap-3">
-                <Button onClick={handleResend} isLoading={state.loading} className="w-full rounded-full bg-orange-500/80 hover:bg-orange-500 text-white">
-                  Отправить ещё раз
-                </Button>
-                <button
-                  onClick={() => { dispatch({ type: "RESET" }); setMode("login") }}
-                  className="text-sm text-slate-500 hover:text-orange-500 transition-colors cursor-pointer"
-                >
-                  Вернуться ко входу
-                </button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    )
   }
 
   return (

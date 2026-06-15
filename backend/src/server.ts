@@ -438,18 +438,7 @@ setInterval(() => {
 // Единая инициализация всех модулей при старте
 import { seedAllModules } from "./lib/module-loader.js"
 
-// Очистка неподтверждённых аккаунтов (каждые 30 минут)
-import { cleanupUnverifiedAccounts } from "./modules/auth/auth.service.js"
-setInterval(async () => {
-  try {
-    const count = await cleanupUnverifiedAccounts()
-    if (count > 0) {
-      fastify.log.info(`Очищено неподтверждённых аккаунтов: ${count}`)
-    }
-  } catch (err) {
-    fastify.log.error(err, "Ошибка при очистке неподтверждённых аккаунтов")
-  }
-}, 30 * 60 * 1000)
+
 
 // ========== Graceful Shutdown ==========
 const shutdownSignals = ["SIGTERM", "SIGINT"] as const;

@@ -5,7 +5,7 @@ import { jwtPayloadSchema, type AuthTokenPayload } from "./auth.schema.js";
 import { RolesService } from "../roles/roles.service.js";
 import { createLogger } from "../../lib/logger.js";
 import crypto from "crypto";
-import { sendResetPasswordEmail, sendWelcomeEmail, sendVerifyEmail } from "./auth.mail.js";
+import { sendResetPasswordEmail } from "./auth.mail.js";
 import { isDisposableEmail } from "../../lib/disposable-email.js";
 import { isReservedUsername } from "../../constants/reserved-usernames.js";
 // import { verifySmartCaptchaToken } from "../../lib/smartcaptcha.js"; // captcha — закомментировано, готово к подключению
@@ -49,10 +49,6 @@ export interface RegisterResult {
   emailVerified: boolean;
 }
 
-function generateVerificationToken(): string {
-  return crypto.randomBytes(32).toString("hex");
-}
-
 export async function register(payload: RegisterPayload): Promise<RegisterResult> {
   if (!payload.acceptedTerms) {
     throw new Error("Необходимо принять условия использования");
@@ -87,9 +83,6 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
     throw new Error("Системная ошибка: роль пользователя не найдена");
   }
 
-  const verificationToken = generateVerificationToken();
-  const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
   const user = await prisma.$transaction(async (tx) => {
     const emailTaken = await tx.user.findFirst({
       where: { email: { equals: payload.email, mode: 'insensitive' } },
@@ -117,103 +110,20 @@ export async function register(payload: RegisterPayload): Promise<RegisterResult
         email: payload.email,
         passwordHash: hashedPassword,
         roleId: userRole.id,
-        emailVerificationToken: verificationToken,
-        emailVerificationTokenExpiresAt: tokenExpiresAt,
+        emailVerifiedAt: new Date(),
         acceptedTermsAt: new Date(),
       },
     });
   });
 
-  logger.info("Пользователь зарегистрирован (ожидает подтверждения email)", {
-    userId: user.id,
-    email: user.email,
-  });
-
-  try {
-    await sendVerifyEmail(user.email, user.username || "Пользователь", verificationToken);
-    logger.info("Письмо с подтверждением email отправлено", { userId: user.id });
-  } catch (error) {
-    logger.error("Ошибка при отправке письма подтверждения", {
-      error: (error as Error).message,
-      userId: user.id,
-    });
-  }
+  logger.info("Пользователь зарегистрирован", { userId: user.id, email: user.email });
 
   return {
     userId: user.id,
     username: user.username!,
     email: user.email,
-    emailVerified: false,
+    emailVerified: true,
   };
-}
-
-export async function verifyEmail(token: string): Promise<{ userId: number; username: string }> {
-  const user = await prisma.user.findUnique({
-    where: { emailVerificationToken: token },
-  });
-
-  if (!user) {
-    throw new Error("Неверная или устаревшая ссылка подтверждения");
-  }
-
-  if (user.emailVerifiedAt) {
-    return { userId: user.id, username: user.username! };
-  }
-
-  if (user.emailVerificationTokenExpiresAt && user.emailVerificationTokenExpiresAt < new Date()) {
-    throw new Error("Срок действия ссылки истёк. Запросите новое письмо для подтверждения.");
-  }
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      emailVerifiedAt: new Date(),
-      emailVerificationToken: null,
-      emailVerificationTokenExpiresAt: null,
-    },
-  });
-
-  logger.info("Email подтверждён", { userId: user.id, email: user.email });
-
-  try {
-    await sendWelcomeEmail(user.email, user.username || "Пользователь");
-  } catch (error) {
-    logger.error("Ошибка при отправке приветственного письма", {
-      error: (error as Error).message,
-      userId: user.id,
-    });
-  }
-
-  return { userId: user.id, username: user.username! };
-}
-
-export async function resendVerificationEmail(email: string): Promise<void> {
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  if (!user || user.emailVerifiedAt) {
-    return;
-  }
-
-  const verificationToken = generateVerificationToken();
-  const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      emailVerificationToken: verificationToken,
-      emailVerificationTokenExpiresAt: tokenExpiresAt,
-    },
-  });
-
-  try {
-    await sendVerifyEmail(user.email, user.username || "Пользователь", verificationToken);
-    logger.info("Письмо с подтверждением email повторно отправлено", { userId: user.id });
-  } catch (error) {
-    logger.error("Ошибка при повторной отправке письма подтверждения", {
-      error: (error as Error).message,
-      userId: user.id,
-    });
-  }
 }
 
 export async function login(payload: LoginPayload): Promise<AuthToken> {
@@ -345,25 +255,6 @@ export async function confirmPasswordReset(token: string, newPassword: string): 
   logger.info("Пароль успешно сброшен", { userId: resetToken.userId });
 }
 
-export async function getUserVerificationStatus(userId: number): Promise<{
-  emailVerified: boolean;
-  email: string;
-}> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { emailVerifiedAt: true, email: true },
-  });
-
-  if (!user) {
-    throw new Error("Пользователь не найден");
-  }
-
-  return {
-    emailVerified: user.emailVerifiedAt !== null,
-    email: user.email,
-  };
-}
-
 // OAuth
 export async function oauthVk(code: string): Promise<AuthToken> {
   const rawData = await getVkToken(code)
@@ -481,19 +372,4 @@ export async function oauthGoogle(code: string): Promise<AuthToken> {
   }
 }
 
-export async function cleanupUnverifiedAccounts(): Promise<number> {
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
-  const result = await prisma.user.deleteMany({
-    where: {
-      emailVerifiedAt: null,
-      emailVerificationTokenExpiresAt: { lt: cutoff },
-    },
-  })
-
-  if (result.count > 0) {
-    logger.info(`Очищено неподтверждённых аккаунтов: ${result.count}`)
-  }
-
-  return result.count
-}

@@ -60,19 +60,6 @@ const validateBodySchema = z.object({
     .regex(/^[\w-]+\.[\w-]+\.[\w-]+$/, "Некорректный формат JWT токена"),
 });
 
-const verifyEmailBodySchema = z.object({
-  token: z
-    .string()
-    .min(1, "Токен обязателен")
-    .max(512, "Токен слишком длинный"),
-});
-
-const resendVerificationBodySchema = z.object({
-  email: z
-    .string()
-    .email("Некорректный формат email"),
-});
-
 const forgotPasswordBodySchema = z.object({
   email: z.string().email().max(255),
 });
@@ -129,18 +116,6 @@ export const validateSchema = {
   },
 };
 
-export const verifyEmailSchema = {
-  description: 'Verify email address with token',
-  tags: ['Auth'],
-  body: zodToJsonSchema(verifyEmailBodySchema as any),
-};
-
-export const resendVerificationSchema = {
-  description: 'Resend email verification link',
-  tags: ['Auth'],
-  body: zodToJsonSchema(resendVerificationBodySchema as any),
-};
-
 export const forgotPasswordSchema = {
   description: 'Request password reset',
   tags: ['Auth'],
@@ -156,5 +131,3 @@ export const resetPasswordSchema = {
 export type RegisterInput = z.infer<typeof registerBodySchema>;
 export type LoginInput = z.infer<typeof loginBodySchema>;
 export type ValidateInput = z.infer<typeof validateBodySchema>;
-export type VerifyEmailInput = z.infer<typeof verifyEmailBodySchema>;
-export type ResendVerificationInput = z.infer<typeof resendVerificationBodySchema>;

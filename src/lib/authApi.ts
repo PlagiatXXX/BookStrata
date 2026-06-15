@@ -86,50 +86,10 @@ export async function apiRegister(
 
   const result = unwrapData<RegisterResult>(await response.json());
 
-  authLogger.info("Регистрация пользователя успешна, требуется подтверждение email", {
+  authLogger.info("Регистрация пользователя успешна", {
     username: payload.username,
   });
   return result;
-}
-
-/**
- * Подтверждение email по токену
- */
-export async function apiVerifyEmail(token: string): Promise<{ message: string; userId: number; username: string }> {
-  authLogger.info("Подтверждение email");
-
-  const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData?.error?.message || "Ошибка подтверждения email";
-    throw new Error(errorMessage);
-  }
-
-  return unwrapData(await response.json());
-}
-
-/**
- * Повторная отправка письма подтверждения
- */
-export async function apiResendVerification(email: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData?.error?.message || "Ошибка отправки письма";
-    throw new Error(errorMessage);
-  }
-
-  return unwrapData(await response.json());
 }
 
 /**

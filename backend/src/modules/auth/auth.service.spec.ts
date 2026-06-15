@@ -26,8 +26,6 @@ vi.mock("../../lib/prisma.js", () => {
 
 vi.mock("./auth.mail.js", () => ({
   sendResetPasswordEmail: vi.fn().mockResolvedValue(undefined),
-  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
-  sendVerifyEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../../lib/disposable-email.js", () => ({
@@ -177,8 +175,7 @@ describe("Auth Service", () => {
           email: mockRegisterPayload.email,
           passwordHash: expect.any(String),
           roleId: mockUserRole.id,
-          emailVerificationToken: expect.any(String),
-          emailVerificationTokenExpiresAt: expect.any(Date),
+          emailVerifiedAt: expect.any(Date),
           acceptedTermsAt: expect.any(Date),
         }),
       });
@@ -187,7 +184,7 @@ describe("Auth Service", () => {
         userId: 1,
         username: "newuser",
         email: "newuser@example.com",
-        emailVerified: false,
+        emailVerified: true,
       });
       expect(result).not.toHaveProperty("accessToken");
     });
@@ -223,147 +220,6 @@ describe("Auth Service", () => {
           }),
         }),
       );
-    });
-
-    it("должен отправить письмо с подтверждением email", async () => {
-      (prisma.user.findFirst as any).mockResolvedValue(null);
-      (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
-
-      const { sendVerifyEmail } = await import("./auth.mail.js");
-
-      await authService.register(mockRegisterPayload);
-
-      expect(sendVerifyEmail).toHaveBeenCalledWith(
-        "newuser@example.com",
-        "newuser",
-        expect.any(String),
-      );
-    });
-  });
-
-  describe("verifyEmail", () => {
-    const mockUser = {
-      id: 1,
-      username: "testuser",
-      email: "test@example.com",
-      emailVerifiedAt: null,
-      emailVerificationToken: "valid-token",
-      emailVerificationTokenExpiresAt: new Date(Date.now() + 3600000),
-    };
-
-    it("должен подтвердить email по корректному токену", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
-      (prisma.user.update as any).mockResolvedValue({ ...mockUser, emailVerifiedAt: new Date() });
-
-      const result = await authService.verifyEmail("valid-token");
-
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { emailVerificationToken: "valid-token" },
-      });
-
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: {
-          emailVerifiedAt: expect.any(Date),
-          emailVerificationToken: null,
-          emailVerificationTokenExpiresAt: null,
-        },
-      });
-
-      expect(result).toEqual({ userId: 1, username: "testuser" });
-    });
-
-    it("должен бросить ошибку для неверного токена", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(null);
-
-      await expect(authService.verifyEmail("bad-token")).rejects.toThrow(
-        "Неверная или устаревшая ссылка подтверждения",
-      );
-    });
-
-    it("должен вернуть успех если email уже подтверждён", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue({
-        ...mockUser,
-        emailVerifiedAt: new Date(),
-      });
-
-      const result = await authService.verifyEmail("valid-token");
-
-      expect(prisma.user.update).not.toHaveBeenCalled();
-      expect(result).toEqual({ userId: 1, username: "testuser" });
-    });
-
-    it("должен бросить ошибку для просроченного токена", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue({
-        ...mockUser,
-        emailVerificationTokenExpiresAt: new Date(Date.now() - 3600000),
-      });
-
-      await expect(authService.verifyEmail("valid-token")).rejects.toThrow(
-        "Срок действия ссылки истёк",
-      );
-    });
-
-    it("должен отправить приветственное письмо после подтверждения", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
-      (prisma.user.update as any).mockResolvedValue({ ...mockUser, emailVerifiedAt: new Date() });
-
-      const { sendWelcomeEmail } = await import("./auth.mail.js");
-
-      await authService.verifyEmail("valid-token");
-
-      expect(sendWelcomeEmail).toHaveBeenCalledWith("test@example.com", "testuser");
-    });
-  });
-
-  describe("resendVerificationEmail", () => {
-    const mockUser = {
-      id: 1,
-      email: "test@example.com",
-      username: "testuser",
-      emailVerifiedAt: null,
-    };
-
-    it("должен обновить токен и отправить письмо", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(mockUser);
-      (prisma.user.update as any).mockResolvedValue(mockUser);
-
-      const { sendVerifyEmail } = await import("./auth.mail.js");
-
-      await authService.resendVerificationEmail("test@example.com");
-
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: {
-          emailVerificationToken: expect.any(String),
-          emailVerificationTokenExpiresAt: expect.any(Date),
-        },
-      });
-
-      expect(sendVerifyEmail).toHaveBeenCalledWith(
-        "test@example.com",
-        "testuser",
-        expect.any(String),
-      );
-    });
-
-    it("не должен ничего делать если пользователь не найден", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(null);
-
-      await authService.resendVerificationEmail("nonexistent@example.com");
-
-      expect(prisma.user.update).not.toHaveBeenCalled();
-    });
-
-    it("не должен ничего делать если email уже подтверждён", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue({
-        ...mockUser,
-        emailVerifiedAt: new Date(),
-      });
-
-      await authService.resendVerificationEmail("test@example.com");
-
-      expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
 
@@ -446,43 +302,6 @@ describe("Auth Service", () => {
       await expect(authService.login(mockLoginPayload)).rejects.toThrow(
         "Нарушение правил",
       );
-    });
-  });
-
-  describe("getUserVerificationStatus", () => {
-    it("должен вернуть статус верификации", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue({
-        id: 1,
-        emailVerifiedAt: new Date(),
-        email: "test@example.com",
-      });
-
-      const result = await authService.getUserVerificationStatus(1);
-
-      expect(result).toEqual({
-        emailVerified: true,
-        email: "test@example.com",
-      });
-    });
-
-    it("должен вернуть emailVerified: false если email не подтверждён", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue({
-        id: 1,
-        emailVerifiedAt: null,
-        email: "test@example.com",
-      });
-
-      const result = await authService.getUserVerificationStatus(1);
-
-      expect(result.emailVerified).toBe(false);
-    });
-
-    it("должен бросить ошибку если пользователь не найден", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(null);
-
-      await expect(
-        authService.getUserVerificationStatus(999),
-      ).rejects.toThrow("Пользователь не найден");
     });
   });
 
@@ -621,30 +440,6 @@ describe("Auth Service", () => {
         data: expect.objectContaining({ googleId: "google12345" }),
       });
       expect(result.userId).toBe(1);
-    });
-  });
-
-  describe("cleanupUnverifiedAccounts", () => {
-    it("должен удалить неподтверждённые аккаунты старше 24 часов", async () => {
-      (prisma.user.deleteMany as any).mockResolvedValue({ count: 3 });
-
-      const result = await authService.cleanupUnverifiedAccounts();
-
-      expect(prisma.user.deleteMany).toHaveBeenCalledWith({
-        where: {
-          emailVerifiedAt: null,
-          emailVerificationTokenExpiresAt: { lt: expect.any(Date) },
-        },
-      });
-      expect(result).toBe(3);
-    });
-
-    it("должен вернуть 0 если нет аккаунтов для очистки", async () => {
-      (prisma.user.deleteMany as any).mockResolvedValue({ count: 0 });
-
-      const result = await authService.cleanupUnverifiedAccounts();
-
-      expect(result).toBe(0);
     });
   });
 
