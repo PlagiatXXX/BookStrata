@@ -37,8 +37,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       sender_name: fromName,
       subject: options.subject,
       body: options.html,
-      body_type: "html",
-      to: options.to,
+      recipients: JSON.stringify([{ email: options.to }]),
     };
 
     const response = await fetch("https://api.unisender.com/ru/api/sendEmail?format=json", {
