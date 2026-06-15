@@ -9,9 +9,9 @@
  */
 
 import { chromium } from "playwright";
-import { spawn } from "child_process";
-import { writeFileSync, mkdirSync, existsSync, statSync } from "fs";
-import { resolve, dirname } from "path";
+import { createServer } from "http";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from "fs";
+import { resolve, dirname, extname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -61,26 +61,59 @@ async function prerender() {
     throw new Error("dist/index.html not found. Run 'npm run build' first.");
   }
 
-  log("🚀 Start preview server…");
-  const server = spawn("npx", ["vite", "preview", "--port", String(PORT), "--strictPort"], {
-    cwd: ROOT,
-    stdio: "pipe",
-    env: { ...process.env },
+  log("🚀 Start static server…");
+
+  // MIME-типы для статики
+  const MIME = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript",
+    ".css": "text/css",
+    ".svg": "image/svg+xml",
+    ".png": "image/png",
+    ".ico": "image/x-icon",
+    ".webp": "image/webp",
+    ".json": "application/json",
+    ".woff2": "font/woff2",
+  };
+
+  let server;
+  await new Promise((resolveServer) => {
+    server = createServer((req, res) => {
+      let filePath = req.url === "/" ? "/index.html" : req.url.split("?")[0];
+
+      // Пробуем отдать существующий файл
+      let diskPath = resolve(DIST, filePath.slice(1));
+      if (existsSync(diskPath) && statSync(diskPath).isFile()) {
+        const ext = extname(diskPath);
+        res.writeHead(200, { "Content-Type": MIME[ext] || "application/octet-stream" });
+        res.end(readFileSync(diskPath));
+        return;
+      }
+
+      // SPA fallback — отдаём index.html для всех маршрутов
+      const fallback = resolve(DIST, "index.html");
+      if (existsSync(fallback)) {
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+        res.end(readFileSync(fallback));
+        return;
+      }
+
+      res.writeHead(404);
+      res.end("Not found");
+    });
+
+    server.listen(PORT, "127.0.0.1", () => {
+      log(`  Server listening on http://127.0.0.1:${PORT}`);
+      resolveServer();
+    });
   });
 
-  let serverOutput = "";
-  server.stdout.on("data", (d) => { serverOutput += d.toString(); });
-  server.stderr.on("data", (d) => { serverOutput += d.toString(); });
-
-  const killServer = () => { try { server.kill("SIGTERM"); } catch {} };
+  const killServer = () => { try { server.close(); } catch {} };
 
   let browser;
   const results = [];
 
   try {
-    // Ждём, пока сервер запустится
-    await waitForServer(BASE);
-
     log("🌐 Launch browser…");
     try {
       browser = await chromium.launch({ headless: true });
