@@ -106,6 +106,7 @@ const cspDirectives = {
     "'self'",
     "https://smartcaptcha.yandexcloud.net",
     "https://mc.yandex.ru",
+    "https://yastatic.net",
   ],
   styleSrc: [
     "'self'",
@@ -115,13 +116,19 @@ const cspDirectives = {
   ],
   fontSrc: ["'self'", "https://fonts.gstatic.com"],
   imgSrc: ["'self'", "data:", "https:", "blob:"],
-  frameSrc: ["https://smartcaptcha.yandexcloud.net"],
+  frameSrc: [
+    "https://smartcaptcha.yandexcloud.net",
+    "https://mc.yandex.ru",
+  ],
   connectSrc: [
     "'self'",
     "https://smartcaptcha.yandexcloud.net",
     "https://api.telegram.org",
     "https://mc.yandex.ru",
+    "wss://mc.yandex.ru",
+    "https://o*.ingest.sentry.io",
   ],
+  workerSrc: ["'self'", "blob:"],
 };
 
 await fastify.register(helmet, {
