@@ -146,7 +146,7 @@ async function prerender() {
         });
 
         const url = `${BASE}${route.path}`;
-        await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
 
         // Ждём, пока React отрендерит контент (а не спиннер)
         // — ждём, когда в #root появятся реальные дочерние элементы
