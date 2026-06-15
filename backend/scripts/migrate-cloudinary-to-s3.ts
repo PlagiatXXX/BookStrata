@@ -22,12 +22,14 @@ import { createLogger } from '../src/lib/logger.js'
 const logger = createLogger('MigrateCloudinary', { color: 'magenta' })
 
 const CLOUDINARY_PATTERN = 'res.cloudinary.com'
-const BATCH_SIZE = 5 // параллельных загрузок
+const BATCH_SIZE = 5
+
+type TableName = 'User' | 'TierList' | 'NewsArticle' | 'Book'
 
 interface MigrationTask {
   id: string | number
   url: string
-  table: 'User' | 'TierList' | 'NewsArticle'
+  table: TableName
   field: string
 }
 
@@ -40,28 +42,36 @@ async function migrateOne(task: MigrationTask): Promise<boolean> {
       return false
     }
 
-    // Обновляем запись в БД
-    if (task.table === 'User') {
-      await prisma.user.update({
-        where: { id: task.id as number },
-        data: { avatarUrl: result.url },
-      })
-    } else if (task.table === 'TierList') {
-      await prisma.tierList.update({
-        where: { id: task.id as string },
-        data: { coverImageUrl: result.url },
-      })
-    } else if (task.table === 'NewsArticle') {
-      await prisma.newsArticle.update({
-        where: { id: task.id as string },
-        data: { imageUrl: result.url },
-      })
+    switch (task.table) {
+      case 'User':
+        await prisma.user.update({
+          where: { id: task.id as number },
+          data: { avatarUrl: result.url },
+        })
+        break
+      case 'TierList':
+        await prisma.tierList.update({
+          where: { id: task.id as string },
+          data: { coverImageUrl: result.url },
+        })
+        break
+      case 'NewsArticle':
+        await prisma.newsArticle.update({
+          where: { id: task.id as string },
+          data: { imageUrl: result.url },
+        })
+        break
+      case 'Book':
+        await prisma.book.update({
+          where: { id: task.id as number },
+          data: { coverImageUrl: result.url },
+        })
+        break
     }
 
     logger.info(`✓ [${task.table}.${task.field}] id=${task.id}`)
     return true
   } catch (err) {
-    const message = err instanceof Error ? `${err.message}\n${err.stack}` : String(err)
     logger.error(`✗ [${task.table}.${task.field}] id=${task.id}`)
     console.error('  Error details:', err)
     return false
@@ -72,7 +82,6 @@ async function migrateAll(): Promise<void> {
   logger.info('=== Миграция изображений с Cloudinary на S3 ===')
   logger.info(`Текущий провайдер: ${process.env.STORAGE_PROVIDER || 'cloudinary'}`)
 
-  // Собираем все задачи
   const tasks: MigrationTask[] = []
 
   // 1. Аватарки пользователей
@@ -108,6 +117,17 @@ async function migrateAll(): Promise<void> {
     }
   }
 
+  // 4. Обложки книг
+  const books = await prisma.book.findMany({
+    where: { coverImageUrl: { contains: CLOUDINARY_PATTERN } },
+    select: { id: true, title: true, coverImageUrl: true },
+  })
+  for (const book of books) {
+    if (book.coverImageUrl) {
+      tasks.push({ id: book.id, url: book.coverImageUrl, table: 'Book', field: 'coverImageUrl' })
+    }
+  }
+
   if (tasks.length === 0) {
     logger.info('Изображений на Cloudinary не найдено. Миграция не требуется.')
     await prisma.$disconnect()
@@ -118,8 +138,8 @@ async function migrateAll(): Promise<void> {
   logger.info(`  Аватары пользователей: ${users.length}`)
   logger.info(`  Обложки тир-листов: ${tierLists.length}`)
   logger.info(`  Изображения новостей: ${news.length}`)
+  logger.info(`  Обложки книг: ${books.length}`)
 
-  // Обрабатываем батчами
   let succeeded = 0
   let failed = 0
 
