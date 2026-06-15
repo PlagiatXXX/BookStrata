@@ -1,6 +1,31 @@
+import nodemailer from "nodemailer";
 import { createLogger } from "./logger.js";
 
 const logger = createLogger("Mailer", { color: "magenta" });
+
+const mailConfig = {
+  host: process.env.SMTP_HOST || "smtp.mailtrap.io",
+  port: parseInt(process.env.SMTP_PORT || "2525"),
+  secure: process.env.SMTP_SECURE === "true", // true for port 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER || "",
+    pass: process.env.SMTP_PASS || "",
+  },
+  pool: true, // Use pooled connections
+  maxConnections: 5,
+  maxMessages: 100,
+};
+
+const transporter = nodemailer.createTransport(mailConfig);
+
+// Verify connection configuration
+transporter.verify((error) => {
+  if (error) {
+    logger.error("SMTP connection error", { error: error.message });
+  } else {
+    logger.info("SMTP server is ready to take our messages");
+  }
+});
 
 export interface SendEmailOptions {
   to: string;
@@ -9,53 +34,25 @@ export interface SendEmailOptions {
   html: string;
 }
 
-const UNISENDER_API_KEY = process.env.UNISENDER_API_KEY;
-const FROM_EMAIL = process.env.SMTP_FROM || '"BookStrata Pro" <noreply@bookstrata.pro>';
-
 /**
- * Generic function to send an email via Unisender API
- * Использует HTTPS (порт 443), поэтому не блокируется хостингом
+ * Generic function to send an email
  */
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
-  if (!UNISENDER_API_KEY) {
-    logger.warn("UNISENDER_API_KEY не задан, письмо не отправлено", {
-      to: options.to,
-      subject: options.subject,
-    });
-    return;
-  }
+  const from = process.env.SMTP_FROM || '"BookStrata Pro" <noreply@bookstrata.pro>';
 
   try {
-    // Парсим from: вытаскиваем имя и email из формата '"Name" <email>'
-    const fromMatch = FROM_EMAIL.match(/"(.*)"\s*<(.*)>/);
-    const fromEmail = fromMatch?.[2] || "noreply@bookstrata.pro";
-    const fromName = fromMatch?.[1] || "BookStrata Pro";
-
-    const params: Record<string, string> = {
-      api_key: UNISENDER_API_KEY,
-      email: fromEmail,
-      sender_name: fromName,
-      subject: options.subject,
-      body: options.html,
-      recipients: JSON.stringify([{ email: options.to }]),
-    };
-
-    const response = await fetch("https://api.unisender.com/ru/api/sendEmail?format=json", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(params).toString(),
-    });
-
-    const data = await response.json() as { result?: { email_id: string }; error?: string; code?: string };
-
-    if (!response.ok || data.error) {
-      throw new Error(`Unisender API error: ${data.error || response.status}`);
-    }
-
-    logger.info("Email sent successfully via Unisender", {
+    const info = await transporter.sendMail({
+      from,
       to: options.to,
       subject: options.subject,
-      emailId: data.result?.email_id,
+      text: options.text,
+      html: options.html,
+    });
+
+    logger.info("Email sent successfully", {
+      messageId: info.messageId,
+      to: options.to,
+      subject: options.subject,
     });
   } catch (error) {
     logger.error("Failed to send email", {

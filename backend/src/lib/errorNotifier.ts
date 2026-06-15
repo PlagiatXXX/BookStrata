@@ -1,8 +1,9 @@
 /**
- * Email-уведомления об ошибках (через SendGrid Web API)
+ * Email-уведомления об ошибках (через Яндекс.Почту / любой SMTP)
+ * Telegram был заменён, так как api.telegram.org заблокирован в РФ.
  */
 
-import { sendEmail } from "./mailer.js";
+import nodemailer from "nodemailer";
 
 interface ErrorReport {
   message: string;
@@ -17,34 +18,50 @@ interface ErrorReport {
 }
 
 class ErrorNotifier {
+  private transporter: nodemailer.Transporter | null = null;
+  private from: string = "";
   private to: string = "";
   private isEnabled: boolean = false;
   private lastNotificationTime: number = 0;
   private readonly notificationThrottle = 5000;
 
   initialize(): void {
-    const to = process.env.ERROR_NOTIFY_EMAIL;
-    const apiKey = process.env.UNISENDER_API_KEY;
+    const host = process.env.SMTP_HOST;
+    const port = parseInt(process.env.SMTP_PORT || "465", 10);
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    const from = process.env.SMTP_FROM;
+    const to = process.env.ERROR_NOTIFY_EMAIL || process.env.SMTP_USER || "";
 
-    if (!to || !apiKey || process.env.NODE_ENV !== "production") {
-      console.log("[ErrorNotifier] Email-уведомления отключены (нужен UNISENDER_API_KEY + ERROR_NOTIFY_EMAIL + NODE_ENV=production)");
+    // Проверяем SMTP и включаем только в production
+    if (!host || !user || !pass || !from || !to || process.env.NODE_ENV !== "production") {
+      console.log("[ErrorNotifier] Email-уведомления отключены (нужен SMTP + NODE_ENV=production)");
       return;
     }
 
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
+
+    this.from = from;
     this.to = to;
     this.isEnabled = true;
     console.log("✅ Email-уведомления об ошибках включены");
   }
 
   async notify(error: ErrorReport): Promise<void> {
-    if (!this.isEnabled) return;
+    if (!this.isEnabled || !this.transporter) return;
 
     const now = Date.now();
     if (now - this.lastNotificationTime < this.notificationThrottle) return;
     this.lastNotificationTime = now;
 
     try {
-      await sendEmail({
+      await this.transporter.sendMail({
+        from: this.from,
         to: this.to,
         subject: `🚨 BookStrata: ${error.message.substring(0, 80)}`,
         html: this.formatHtml(error),
