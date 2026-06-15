@@ -61,8 +61,9 @@ async function migrateOne(task: MigrationTask): Promise<boolean> {
     logger.info(`✓ [${task.table}.${task.field}] id=${task.id}`)
     return true
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    logger.error(`✗ [${task.table}.${task.field}] id=${task.id}: ${message}`)
+    const message = err instanceof Error ? `${err.message}\n${err.stack}` : String(err)
+    logger.error(`✗ [${task.table}.${task.field}] id=${task.id}`)
+    console.error('  Error details:', err)
     return false
   }
 }
