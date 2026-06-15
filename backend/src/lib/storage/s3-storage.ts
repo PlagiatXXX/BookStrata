@@ -29,7 +29,7 @@ const client = new S3Client({
 })
 
 function publicUrl(key: string): string {
-  return `https://${S3_PUBLIC_HOST}/${key}`
+  return `https://${S3_PUBLIC_HOST}/${S3_BUCKET}/${key}`
 }
 
 function generateKey(folder: string, ext: string): string {
