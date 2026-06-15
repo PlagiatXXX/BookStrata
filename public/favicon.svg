@@ -1,0 +1,18 @@
+<svg
+  width="512"
+  height="512"
+  viewBox="0 0 512 512"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+
+  <!-- Top tier bar -->
+  <rect x="96" y="128" width="320" height="64" rx="32" fill="#8B7CFF"/>
+
+  <!-- Middle tier bar -->
+  <rect x="96" y="224" width="256" height="64" rx="32" fill="#6D5DF6"/>
+
+  <!-- Bottom tier bar -->
+  <rect x="96" y="320" width="180" height="64" rx="32" fill="#4C3FFF"/>
+</svg>

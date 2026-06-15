@@ -1,0 +1,167 @@
+/**
+ * Prerender — генерация статического HTML для публичных маршрутов SPA.
+ *
+ * Запускается после `vite build`. Использует Playwright, чтобы открыть
+ * каждый маршрут, дождаться полного рендеринга React и сохранить HTML
+ * в dist/{route}/index.html.
+ *
+ * Использование: node scripts/prerender.mjs
+ */
+
+import { chromium } from "playwright";
+import { spawn } from "child_process";
+import { writeFileSync, mkdirSync, existsSync, statSync } from "fs";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, "..");
+const DIST = resolve(ROOT, "dist");
+
+// Публичные маршруты для индексации
+const ROUTES = [
+  { path: "/",           name: "Главная" },
+  { path: "/about",      name: "О проекте" },
+  { path: "/pricing",    name: "Тарифы" },
+  { path: "/contact",    name: "Контакты" },
+  { path: "/privacy",    name: "Политика конфиденциальности" },
+  { path: "/terms",      name: "Условия использования" },
+];
+
+const PORT = 4173;
+const BASE = `http://localhost:${PORT}`;
+
+function log(msg) {
+  console.log(`[prerender] ${msg}`);
+}
+
+async function waitForServer(url, timeout = 30000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    try {
+      const res = await fetch(url, { method: "HEAD" });
+      if (res.ok) return;
+    } catch {
+      // server not ready yet
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error("Server did not start in time");
+}
+
+async function prerender() {
+  // Проверяем, что dist уже существует (сборка уже выполнена)
+  if (!existsSync(DIST)) {
+    throw new Error("dist/ not found. Run 'npm run build' first, or run this script via the build command.");
+  }
+
+  // Проверяем, что index.html — это файл, а не директория (значит dist — результат vite build)
+  const distIndex = resolve(DIST, "index.html");
+  if (!existsSync(distIndex) || !statSync(distIndex).isFile()) {
+    throw new Error("dist/index.html not found. Run 'npm run build' first.");
+  }
+
+  log("🚀 Start preview server…");
+  const server = spawn("npx", ["vite", "preview", "--port", String(PORT), "--strictPort"], {
+    cwd: ROOT,
+    stdio: "pipe",
+    env: { ...process.env },
+  });
+
+  let serverOutput = "";
+  server.stdout.on("data", (d) => { serverOutput += d.toString(); });
+  server.stderr.on("data", (d) => { serverOutput += d.toString(); });
+
+  const killServer = () => { try { server.kill("SIGTERM"); } catch {} };
+
+  let browser;
+  const results = [];
+
+  try {
+    // Ждём, пока сервер запустится
+    await waitForServer(BASE);
+
+    log("🌐 Launch browser…");
+    browser = await chromium.launch({ headless: true });
+    for (const route of ROUTES) {
+      log(`  → ${route.path} (${route.name})`);
+
+      const context = await browser.newContext({
+        viewport: { width: 1280, height: 720 },
+        userAgent:
+          "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+      });
+      const page = await context.newPage();
+
+      try {
+        // Перехватываем консольные ошибки (не даём им упасть в reject)
+        page.on("pageerror", (err) => {
+          log(`  ⚠️  JS error on ${route.path}: ${err.message}`);
+        });
+
+        const url = `${BASE}${route.path}`;
+        await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+
+        // Ждём, пока React отрендерит контент (а не спиннер)
+        // — ждём, когда в #root появятся реальные дочерние элементы
+        //   (не пустой div со спиннером)
+        await page.waitForFunction(
+          () => {
+            const root = document.getElementById("root");
+            if (!root) return false;
+            // Проверяем, что есть реальный контент (не спиннер загрузки)
+            const html = root.innerHTML;
+            return html.length > 200 && !html.includes("Загрузка...");
+          },
+          { timeout: 20000 },
+        );
+
+        // Даём дополнительное время для анимаций и фоновых изображений
+        await page.waitForTimeout(1000);
+
+        // Проверяем, что title изменился с дефолтного
+        const title = await page.title();
+        log(`    title: ${title}`);
+
+        // Получаем полный HTML страницы (с head-мета-тегами от Helmet)
+        const html = await page.content();
+
+        // Определяем путь для сохранения
+        const savePath =
+          route.path === "/"
+            ? resolve(DIST, "index.html")
+            : resolve(DIST, route.path.slice(1), "index.html");
+
+        mkdirSync(dirname(savePath), { recursive: true });
+        writeFileSync(savePath, html, "utf-8");
+
+        log(`    ✅ saved to ${savePath}`);
+
+        results.push({ path: route.path, title, saved: true });
+      } catch (err) {
+        log(`    ❌ Failed: ${err.message}`);
+        results.push({ path: route.path, error: err.message, saved: false });
+      } finally {
+        await page.close();
+        await context.close();
+      }
+    }
+  } finally {
+    if (browser) await browser.close();
+    killServer();
+  }
+
+  log("");
+  log("═══════════════════════════════════");
+  log("📊 Prerender results:");
+  for (const r of results) {
+    const icon = r.saved ? "✅" : "❌";
+    log(`  ${icon} ${r.path} ${r.title ? `— "${r.title}"` : ""}`);
+  }
+  log("═══════════════════════════════════");
+}
+
+prerender().catch((err) => {
+  console.error("[prerender] Fatal:", err);
+  process.exit(1);
+});
