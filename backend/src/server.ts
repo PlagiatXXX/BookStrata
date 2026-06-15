@@ -126,7 +126,7 @@ const cspDirectives = {
     "https://api.telegram.org",
     "https://mc.yandex.ru",
     "wss://mc.yandex.ru",
-    "https://o*.ingest.sentry.io",
+    "https://*.ingest.sentry.io",
   ],
   workerSrc: ["'self'", "blob:"],
 };
