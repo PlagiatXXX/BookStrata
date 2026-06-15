@@ -22,24 +22,6 @@ const OLD_PREFIX = 'https://s3.twcstorage.ru/'
 const BUCKET = process.env.S3_BUCKET || 'bookstrata'
 const NEW_PREFIX = `https://s3.twcstorage.ru/${BUCKET}/`
 
-async function fixField(
-  table: string,
-  field: string,
-  records: { id: number | string; url: string }[],
-  updateFn: (id: number | string, newUrl: string) => Promise<void>,
-): Promise<number> {
-  let fixed = 0
-  for (const record of records) {
-    if (record.url.startsWith(OLD_PREFIX) && !record.url.startsWith(NEW_PREFIX)) {
-      const newUrl = record.url.replace(OLD_PREFIX, NEW_PREFIX)
-      await updateFn(record.id, newUrl)
-      logger.info(`✓ [${table}.${field}] id=${record.id}: исправлен`)
-      fixed++
-    }
-  }
-  return fixed
-}
-
 async function main() {
   logger.info('=== Исправление S3 URL в БД ===')
 
@@ -50,27 +32,42 @@ async function main() {
     where: { avatarUrl: { startsWith: OLD_PREFIX } },
     select: { id: true, avatarUrl: true },
   })
-  total += await fixField('User', 'avatarUrl', users as any[], async (id, url) => {
-    await prisma.user.update({ where: { id: id as number }, data: { avatarUrl: url } })
-  })
+  for (const u of users) {
+    if (u.avatarUrl && u.avatarUrl.startsWith(OLD_PREFIX) && !u.avatarUrl.startsWith(NEW_PREFIX)) {
+      const newUrl = u.avatarUrl.replace(OLD_PREFIX, NEW_PREFIX)
+      await prisma.user.update({ where: { id: u.id }, data: { avatarUrl: newUrl } })
+      logger.info(`✓ [User.avatarUrl] id=${u.id}`)
+      total++
+    }
+  }
 
   // TierList.coverImageUrl
   const tierLists = await prisma.tierList.findMany({
     where: { coverImageUrl: { startsWith: OLD_PREFIX } },
     select: { id: true, coverImageUrl: true },
   })
-  total += await fixField('TierList', 'coverImageUrl', tierLists as any[], async (id, url) => {
-    await prisma.tierList.update({ where: { id: id as string }, data: { coverImageUrl: url } })
-  })
+  for (const tl of tierLists) {
+    if (tl.coverImageUrl && tl.coverImageUrl.startsWith(OLD_PREFIX) && !tl.coverImageUrl.startsWith(NEW_PREFIX)) {
+      const newUrl = tl.coverImageUrl.replace(OLD_PREFIX, NEW_PREFIX)
+      await prisma.tierList.update({ where: { id: tl.id }, data: { coverImageUrl: newUrl } })
+      logger.info(`✓ [TierList.coverImageUrl] id=${tl.id}`)
+      total++
+    }
+  }
 
   // Book.coverImageUrl
   const books = await prisma.book.findMany({
     where: { coverImageUrl: { startsWith: OLD_PREFIX } },
     select: { id: true, coverImageUrl: true },
   })
-  total += await fixField('Book', 'coverImageUrl', books as any[], async (id, url) => {
-    await prisma.book.update({ where: { id: id as number }, data: { coverImageUrl: url } })
-  })
+  for (const b of books) {
+    if (b.coverImageUrl && b.coverImageUrl.startsWith(OLD_PREFIX) && !b.coverImageUrl.startsWith(NEW_PREFIX)) {
+      const newUrl = b.coverImageUrl.replace(OLD_PREFIX, NEW_PREFIX)
+      await prisma.book.update({ where: { id: b.id }, data: { coverImageUrl: newUrl } })
+      logger.info(`✓ [Book.coverImageUrl] id=${b.id}`)
+      total++
+    }
+  }
 
   logger.info(`=== Исправлено URL: ${total} ===`)
   await prisma.$disconnect()
