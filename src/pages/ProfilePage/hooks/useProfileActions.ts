@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { sileo } from 'sileo';
 import { useAuth } from '@/hooks/useAuthContext';
 import { getAuthToken } from '@/lib/authApi';
 import { API_BASE_URL } from '@/lib/config';
+import { StorageService } from '@/lib/storage';
 import { createLogger } from '@/lib/logger';
 
 // Логгер для хука действий профиля
@@ -39,6 +41,7 @@ interface UseProfileActionsReturn {
 }
 
 export function useProfileActions(): UseProfileActionsReturn {
+  const queryClient = useQueryClient();
   const { user: authUser } = useAuth();
   const username = authUser?.username;
 
@@ -105,6 +108,14 @@ export function useProfileActions(): UseProfileActionsReturn {
 
       sileo.success({ title: 'Имя пользователя обновлено', duration: 3000 });
       setIsEditingUsername(false);
+
+      // Обновляем кешированные данные, чтобы новый ник отображался везде
+      StorageService.setString('username', newUsername.trim());
+      queryClient.invalidateQueries({ queryKey: ['userTierLists'] });
+      queryClient.invalidateQueries({ queryKey: ['user', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['recentPublicTierLists'] });
+      queryClient.invalidateQueries({ queryKey: ['templates', 'user'] });
+
       window.dispatchEvent(new CustomEvent('auth-token-changed'));
     } catch (error) {
       logger.error(error instanceof Error ? error : new Error(String(error)), {
