@@ -7,9 +7,11 @@ import {
   generateTokenPair,
   requestPasswordReset,
   confirmPasswordReset,
+  logout,
   oauthVk,
   oauthGoogle,
 } from "./auth.service.js";
+import { authMiddleware } from "./auth.middleware.js";
 import {
   registerSchema,
   loginSchema,
@@ -163,9 +165,9 @@ export async function authRoutes(fastify: FastifyInstance) {
         return reply.code(401).send(createApiError(ErrorCodes.AUTHENTICATION_REQUIRED, "Refresh token not found"));
       }
 
-      const payload = validateRefreshToken(refreshToken);
+      const payload = await validateRefreshToken(refreshToken);
 
-      const tokens = generateTokenPair({
+      const tokens = await generateTokenPair({
         userId: payload.userId,
         username: payload.username,
         role: payload.role || "user",
@@ -187,6 +189,18 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply
         .code(401)
         .send(createApiError(ErrorCodes.REFRESH_TOKEN_EXPIRED, "Invalid or expired refresh token"));
+    }
+  });
+
+  // POST /api/auth/logout
+  fastify.post("/logout", { preHandler: [authMiddleware] }, async (request, reply) => {
+    try {
+      await logout(request.user!.userId);
+      reply.clearCookie("refreshToken", { path: "/" });
+      return reply.code(200).send(createSuccessResponse({ message: "Logged out successfully" }));
+    } catch (error) {
+      fastify.log.error(error, "Logout error");
+      return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Failed to logout"));
     }
   });
 

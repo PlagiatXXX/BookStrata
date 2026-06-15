@@ -21,6 +21,7 @@ export const jwtPayloadSchema = z.object({
   userId: z.number(),
   username: z.string(),
   role: z.string().optional(),
+  refreshVersion: z.number().optional(),
   iat: z.number().optional(),
   exp: z.number().optional(),
 });

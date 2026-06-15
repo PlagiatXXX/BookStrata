@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js"
+import { sanitize } from "../../lib/sanitizer.js"
 
 const messageInclude = {
   user: {
@@ -140,7 +141,7 @@ export async function createMessage(
 
   const [message] = await prisma.$transaction([
     prisma.discussionMessage.create({
-      data: { discussionId, userId, content, parentId: parentId ?? null },
+      data: { discussionId, userId, content: sanitize(content), parentId: parentId ?? null },
       include: messageInclude,
     }),
     prisma.discussion.update({
@@ -159,7 +160,7 @@ export async function updateMessage(messageId: string, userId: number, content: 
 
   return prisma.discussionMessage.update({
     where: { id: messageId },
-    data: { content },
+    data: { content: sanitize(content) },
     include: messageInclude,
   })
 }

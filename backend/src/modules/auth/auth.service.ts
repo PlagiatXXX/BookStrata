@@ -5,6 +5,7 @@ import { jwtPayloadSchema, type AuthTokenPayload } from "./auth.schema.js";
 import { RolesService } from "../roles/roles.service.js";
 import { createLogger } from "../../lib/logger.js";
 import crypto from "crypto";
+import { redis } from "../../lib/redis.js";
 import { sendResetPasswordEmail } from "./auth.mail.js";
 import { isDisposableEmail } from "../../lib/disposable-email.js";
 import { isReservedUsername } from "../../constants/reserved-usernames.js";
@@ -21,6 +22,31 @@ if (!JWT_SECRET) {
 
 const ACCESS_TOKEN_EXPIRY = "7d";
 const REFRESH_TOKEN_EXPIRY = "14d";
+
+const REFRESH_VERSION_PREFIX = "auth:refresh_version:";
+const REFRESH_VERSION_TTL = 30 * 24 * 60 * 60; // 30 дней (чистим мусор)
+
+async function getRefreshVersion(userId: number): Promise<number> {
+  try {
+    const val = await redis.get(`${REFRESH_VERSION_PREFIX}${userId}`);
+    return val ? parseInt(val, 10) : 0;
+  } catch {
+    logger.warn("Redis unavailable, refresh version check skipped");
+    return 0;
+  }
+}
+
+async function incrementRefreshVersion(userId: number): Promise<void> {
+  try {
+    const key = `${REFRESH_VERSION_PREFIX}${userId}`;
+    const pipeline = redis.pipeline();
+    pipeline.incr(key);
+    pipeline.expire(key, REFRESH_VERSION_TTL);
+    await pipeline.exec();
+  } catch {
+    logger.warn("Redis unavailable, refresh version increment failed", { userId });
+  }
+}
 
 export interface AuthToken {
   accessToken: string;
@@ -111,7 +137,7 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
 
   logger.info("Пользователь зарегистрирован", { userId: user.id, email: user.email });
 
-  const tokens = generateTokenPair({
+  const tokens = await generateTokenPair({
     userId: user.id,
     username: user.username!,
     role: "user",
@@ -151,7 +177,7 @@ export async function login(payload: LoginPayload): Promise<AuthToken> {
     throw new Error(`Ваш аккаунт заблокирован до ${until}${user.suspensionReason ? `. Причина: ${user.suspensionReason}` : ""}`);
   }
 
-  const tokens = generateTokenPair({
+  const tokens = await generateTokenPair({
     userId: user.id,
     username: user.username!,
     role: user.role?.name || "user",
@@ -182,21 +208,40 @@ function generateRefreshToken(payload: Partial<AuthTokenPayload>): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
 }
 
-export function validateRefreshToken(token: string): AuthTokenPayload {
+export async function validateRefreshToken(token: string): Promise<AuthTokenPayload> {
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    return jwtPayloadSchema.parse(payload);
-  } catch {
+    const decoded = jwtPayloadSchema.parse(payload);
+
+    // Проверяем версию refresh-токена (обратная совместимость: старые токены без refreshVersion пропускаем)
+    if (decoded.refreshVersion !== undefined) {
+      const currentVersion = await getRefreshVersion(decoded.userId);
+      if (decoded.refreshVersion !== currentVersion) {
+        throw new Error("Refresh token has been revoked");
+      }
+    }
+
+    return decoded;
+  } catch (error) {
+    if (error instanceof Error && error.message === "Refresh token has been revoked") {
+      throw error;
+    }
     throw new Error("Невалидный refresh токен");
   }
 }
 
-export function generateTokenPair(payload: Partial<AuthTokenPayload>): {
+export async function logout(userId: number): Promise<void> {
+  await incrementRefreshVersion(userId);
+  logger.info("Пользователь вышел, refresh-токены отозваны", { userId });
+}
+
+export async function generateTokenPair(payload: Partial<AuthTokenPayload>): Promise<{
   accessToken: string;
   refreshToken: string;
-} {
+}> {
   const accessToken = generateToken(payload);
-  const refreshToken = generateRefreshToken(payload);
+  const refreshVersion = await getRefreshVersion(payload.userId!);
+  const refreshToken = generateRefreshToken({ ...payload, refreshVersion });
   return { accessToken, refreshToken };
 }
 
@@ -251,7 +296,10 @@ export async function confirmPasswordReset(token: string, newPassword: string): 
     }),
   ]);
 
-  logger.info("Пароль успешно сброшен", { userId: resetToken.userId });
+  // Отзываем все refresh-токены после смены пароля
+  await incrementRefreshVersion(resetToken.userId);
+
+  logger.info("Пароль успешно сброшен, refresh-токены отозваны", { userId: resetToken.userId });
 }
 
 // OAuth
@@ -299,7 +347,7 @@ export async function oauthVk(code: string): Promise<AuthToken> {
     })
   }
 
-  const tokens = generateTokenPair({
+  const tokens = await generateTokenPair({
     userId: user.id,
     username: user.username!,
     role: user.role?.name || "user",
@@ -357,7 +405,7 @@ export async function oauthGoogle(code: string): Promise<AuthToken> {
     })
   }
 
-  const tokens = generateTokenPair({
+  const tokens = await generateTokenPair({
     userId: user.id,
     username: user.username!,
     role: user.role?.name || "user",

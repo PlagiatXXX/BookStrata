@@ -1,5 +1,6 @@
 import { prisma, resolveTierListId, tierListRepository } from "./tierList.utils.js";
 import { createLogger } from "../../lib/logger.js";
+import { sanitize } from "../../lib/sanitizer.js";
 
 const logger = createLogger("TierListsBooks", { color: "cyan" });
 
@@ -87,8 +88,8 @@ export async function addBooksToTierList(
                 title: bookData.title,
                 author: bookData.author ?? null,
                 coverImageUrl: bookData.coverImageUrl,
-                description: bookData.description ?? null,
-                thoughts: bookData.thoughts ?? null,
+                description: bookData.description ? sanitize(bookData.description) : null,
+                thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
               },
             },
           })),
@@ -139,9 +140,17 @@ export async function updateBook(
     throw Object.assign(new Error("Book does not belong to this tier list"), { statusCode: 404 });
   }
 
+  const sanitizedData = { ...data };
+  if (sanitizedData.thoughts !== undefined) {
+    sanitizedData.thoughts = sanitizedData.thoughts ? sanitize(sanitizedData.thoughts) : null;
+  }
+  if (sanitizedData.description !== undefined) {
+    sanitizedData.description = sanitizedData.description ? sanitize(sanitizedData.description) : null;
+  }
+
   return prisma.book.update({
     where: { id: bookId },
-    data,
+    data: sanitizedData,
   });
 }
 

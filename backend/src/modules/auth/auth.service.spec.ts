@@ -28,6 +28,14 @@ vi.mock("./auth.mail.js", () => ({
   sendResetPasswordEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../../lib/redis.js", () => ({
+  redis: {
+    get: vi.fn().mockResolvedValue(null),
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+  },
+}));
+
 vi.mock("../../lib/disposable-email.js", () => ({
   isDisposableEmail: vi.fn().mockReturnValue(false),
 }));
@@ -443,8 +451,8 @@ describe("Auth Service", () => {
   });
 
   describe("generateTokenPair", () => {
-    it("должен создать пару access + refresh токенов", () => {
-      const tokens = authService.generateTokenPair({
+    it("должен создать пару access + refresh токенов", async () => {
+      const tokens = await authService.generateTokenPair({
         userId: 1,
         username: "testuser",
       });
@@ -462,16 +470,16 @@ describe("Auth Service", () => {
   describe("validateRefreshToken", () => {
     it("должен валидировать корректный refresh токен", async () => {
       const { generateTokenPair } = authService;
-      const tokens = generateTokenPair({ userId: 1, username: "testuser" });
+      const tokens = await generateTokenPair({ userId: 1, username: "testuser" });
 
-      const decoded = authService.validateRefreshToken(tokens.refreshToken);
+      const decoded = await authService.validateRefreshToken(tokens.refreshToken);
       expect(decoded.userId).toBe(1);
     });
 
-    it("должен бросить ошибку для невалидного refresh токена", () => {
-      expect(() => {
-        authService.validateRefreshToken("bad-refresh-token");
-      }).toThrow("Невалидный refresh токен");
+    it("должен бросить ошибку для невалидного refresh токена", async () => {
+      await expect(async () => {
+        await authService.validateRefreshToken("bad-refresh-token");
+      }).rejects.toThrow("Невалидный refresh токен");
     });
   });
 

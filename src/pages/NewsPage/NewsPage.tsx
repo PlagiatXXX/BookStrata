@@ -6,6 +6,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { getNewsById, type NewsArticle } from "@/lib/newsApi";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
+import DOMPurify from "dompurify";
 import { sileo } from "sileo";
 import "./NewsPage.css";
 
@@ -143,7 +144,7 @@ export function NewsPage() {
         {/* Content */}
         <div
           className="tiptap-editor"
-          dangerouslySetInnerHTML={{ __html: article.content || '' }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content || '') }}
         />
 
         {/* Footer */}

@@ -50,3 +50,8 @@ e2e/test-results/
 test-results/
 
 testsprite_tests/tmp/config.json
+
+# Garbage files (audit leftovers)
+AUDIT_FILES_GUIDE.md
+load-test*.js
+backend/scripts/cleanup-load-test-users.ts

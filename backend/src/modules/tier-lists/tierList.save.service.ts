@@ -1,4 +1,5 @@
 import { prisma, getTierListWhereClause } from "./tierList.utils.js";
+import { sanitize } from "../../lib/sanitizer.js";
 
 // Лимит отключён до введения подписок Pro
 
@@ -115,8 +116,8 @@ export async function saveAll(
             title: bookData.title,
             author: bookData.author ?? null,
             coverImageUrl: bookData.coverImageUrl,
-            description: bookData.description ?? null,
-            thoughts: bookData.thoughts ?? null,
+            description: bookData.description ? sanitize(bookData.description) : null,
+            thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
           },
         });
         bookReplacements.push({

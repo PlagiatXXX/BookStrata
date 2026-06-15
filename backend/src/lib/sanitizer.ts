@@ -17,7 +17,8 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
   allowedAttributes: {
     a: ["href", "name", "target"],
     img: ["src", "srcset", "alt", "title", "width", "height", "loading"],
-    "*": ["class", "style"] // Разрешаем стили и классы, но sanitize-html по умолчанию фильтрует опасные стили. ID запрещены во избежание DOM Clobbering.
+    "*": ["class"], // Классы для Tailwind-стилизации. Style-атрибут не нужен: TipTap-редактор генерирует HTML без inline-стилей (only class-based). Инлайн style = поверхность для CSS injection (position:fixed overlay, expression(), url(javascript:)).
+    // ID запрещены во избежание DOM Clobbering.
   },
   // Запрещаем скрипты, фреймы и другие опасные элементы
   disallowedTagsMode: "discard",
