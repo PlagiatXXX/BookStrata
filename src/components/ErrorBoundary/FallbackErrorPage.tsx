@@ -1,5 +1,3 @@
-import * as Sentry from "@sentry/browser";
-
 interface FallbackErrorPageProps {
   error: Error | unknown;
   componentStack: string | null;
@@ -20,19 +18,22 @@ export function FallbackErrorPage({
   const errorStack = error instanceof Error ? error.stack : undefined;
 
   const handleReport = () => {
-    Sentry.showReportDialog({
-      eventId: Sentry.lastEventId(),
-      title: "Что-то пошло не так",
-      subtitle: "Наша команда уже уведомлена об ошибке.",
-      subtitle2: "Если хотите помочь — опишите, что вы делали перед ошибкой.",
-      labelName: "Имя (необязательно)",
-      labelEmail: "Email (необязательно)",
-      labelComments: "Что вы делали?",
-      labelClose: "Закрыть",
-      labelSubmit: "Отправить",
-      errorGeneric: "Не удалось отправить отчёт.",
-      errorFormEntry: "Пожалуйста, заполните все поля.",
-      successMessage: "Спасибо! Мы разберёмся.",
+    // Sentry загружается лениво — не в основном бандле
+    import("@sentry/browser").then((Sentry) => {
+      Sentry.showReportDialog({
+        eventId: Sentry.lastEventId(),
+        title: "Что-то пошло не так",
+        subtitle: "Наша команда уже уведомлена об ошибке.",
+        subtitle2: "Если хотите помочь — опишите, что вы делали перед ошибкой.",
+        labelName: "Имя (необязательно)",
+        labelEmail: "Email (необязательно)",
+        labelComments: "Что вы делали?",
+        labelClose: "Закрыть",
+        labelSubmit: "Отправить",
+        errorGeneric: "Не удалось отправить отчёт.",
+        errorFormEntry: "Пожалуйста, заполните все поля.",
+        successMessage: "Спасибо! Мы разберёмся.",
+      });
     });
   };
 

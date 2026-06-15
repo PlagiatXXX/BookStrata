@@ -1,5 +1,4 @@
 import React, { Component, type ReactNode, type ErrorInfo } from "react";
-import * as Sentry from "@sentry/browser";
 import { FallbackErrorPage } from "./FallbackErrorPage";
 
 interface Props {
@@ -30,11 +29,13 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Отправляем в Sentry
-    Sentry.withScope((scope) => {
-      scope.setExtras({ componentStack: errorInfo.componentStack ?? "" });
-      const eventId = Sentry.captureException(error);
-      this.setState({ eventId });
+    // Отправляем в Sentry (ленивая загрузка — ~450 KB)
+    import("@sentry/browser").then((Sentry) => {
+      Sentry.withScope((scope) => {
+        scope.setExtras({ componentStack: errorInfo.componentStack ?? "" });
+        const eventId = Sentry.captureException(error);
+        this.setState({ eventId });
+      });
     });
   }
 
