@@ -52,6 +52,10 @@ COPY --from=builder /build/node_modules/.prisma ./node_modules/.prisma
 COPY prisma/ ./prisma/
 COPY --from=builder /build/node_modules/@prisma/client ./node_modules/@prisma/client
 
+# Скрипты (миграции, утилиты)
+COPY scripts/ ./scripts/
+COPY tsconfig.json ./
+
 # Запускаем от непривилегированного пользователя
 USER appuser
 
