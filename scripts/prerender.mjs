@@ -136,13 +136,17 @@ async function prerender() {
       const page = await context.newPage();
 
       try {
+        // Блокируем запросы к API (бэкенд не запущен во время сборки)
+        await page.route("**/api/**", (route) => route.abort());
+        await page.route("**/sitemap.xml", (route) => route.abort());
+
         // Перехватываем консольные ошибки (не даём им упасть в reject)
         page.on("pageerror", (err) => {
           log(`  ⚠️  JS error on ${route.path}: ${err.message}`);
         });
 
         const url = `${BASE}${route.path}`;
-        await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+        await page.goto(url, { waitUntil: "networkidle", timeout: 20000 });
 
         // Ждём, пока React отрендерит контент (а не спиннер)
         // — ждём, когда в #root появятся реальные дочерние элементы
