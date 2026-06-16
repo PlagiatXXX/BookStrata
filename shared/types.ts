@@ -22,6 +22,8 @@ export interface Book {
   description: string | null;
   thoughts?: string | null;
   createdAt?: string;
+  genre?: string | null;
+  tags?: string[];
 }
 
 export interface Tier {

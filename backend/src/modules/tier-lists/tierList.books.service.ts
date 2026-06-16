@@ -66,6 +66,8 @@ export async function addBooksToTierList(
     coverImageUrl: string;
     description?: string | null;
     thoughts?: string | null;
+    genre?: string | null;
+    tags?: string[];
   }[],
 ) {
   if (books.length === 0) return [];
@@ -90,6 +92,8 @@ export async function addBooksToTierList(
                 coverImageUrl: bookData.coverImageUrl,
                 description: bookData.description ? sanitize(bookData.description) : null,
                 thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
+                genre: bookData.genre ? sanitize(bookData.genre) : null,
+                tags: bookData.tags ?? [],
               },
             },
           })),
@@ -122,6 +126,8 @@ export async function updateBook(
     description?: string | null;
     title?: string;
     author?: string | null;
+    genre?: string | null;
+    tags?: string[];
   },
 ) {
   const tierList = await tierListRepository.findById(tierListId, {
@@ -140,17 +146,24 @@ export async function updateBook(
     throw Object.assign(new Error("Book does not belong to this tier list"), { statusCode: 404 });
   }
 
-  const sanitizedData = { ...data };
+  const sanitizedData: Record<string, unknown> = { ...data };
   if (sanitizedData.thoughts !== undefined) {
-    sanitizedData.thoughts = sanitizedData.thoughts ? sanitize(sanitizedData.thoughts) : null;
+    sanitizedData.thoughts = sanitizedData.thoughts ? sanitize(sanitizedData.thoughts as string) : null;
   }
   if (sanitizedData.description !== undefined) {
-    sanitizedData.description = sanitizedData.description ? sanitize(sanitizedData.description) : null;
+    sanitizedData.description = sanitizedData.description ? sanitize(sanitizedData.description as string) : null;
   }
+  if (sanitizedData.genre !== undefined) {
+    sanitizedData.genre = sanitizedData.genre ? sanitize(sanitizedData.genre as string) : null;
+  }
+
+  if (sanitizedData.title === undefined) delete sanitizedData.title;
+  if (sanitizedData.author === undefined) delete sanitizedData.author;
+  if (sanitizedData.tags === undefined) delete sanitizedData.tags;
 
   return prisma.book.update({
     where: { id: bookId },
-    data: sanitizedData,
+    data: sanitizedData as any,
   });
 }
 

@@ -69,9 +69,15 @@ author          String?
 coverImageUrl   String          @map("cover_image_url")
 description     String?
 thoughts        String?
-placements      BookPlacement[]
-ratings         BookRating[]
-createdAt       DateTime        @default(now()) @map("created_at")
+genre           String?
+tags            String[]
+  placements      BookPlacement[]
+  ratings         BookRating[]
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@index([genre])
+  @@index([tags], type: Gin)
+  @@index([title, author])
 }
 
 model BookRating {

@@ -63,7 +63,7 @@ interface EditorModalsProps {
   onConfirmDeleteRating: () => void;
   onConfirmLeave: () => void;
   onSaveAndLeave: () => void;
-  onSaveBook: (bookId: string, data: { title?: string; author?: string; description?: string; thoughts?: string; coverImageUrl?: string }) => void;
+  onSaveBook: (bookId: string, data: { title?: string; author?: string; description?: string; thoughts?: string; coverImageUrl?: string; genre?: string; tags?: string[] }) => void;
   onBookAdded: (books: Array<{
     id: number;
     title: string;

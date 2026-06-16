@@ -5,6 +5,8 @@ export interface Book {
   coverImageUrl: string;
   description?: string;
   thoughts?: string;
+  genre?: string;
+  tags?: string[];
 }
 
 export interface Tier {

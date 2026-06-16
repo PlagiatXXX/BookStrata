@@ -37,6 +37,8 @@ export async function saveAll(
       coverImageUrl: string;
       description?: string | null;
       thoughts?: string | null;
+      genre?: string | null;
+      tags?: string[];
     }>;
     placements?: Array<{
       bookId: string | number;
@@ -118,6 +120,8 @@ export async function saveAll(
             coverImageUrl: bookData.coverImageUrl,
             description: bookData.description ? sanitize(bookData.description) : null,
             thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
+            genre: bookData.genre ? sanitize(bookData.genre) : null,
+            tags: bookData.tags ?? [],
           },
         });
         bookReplacements.push({

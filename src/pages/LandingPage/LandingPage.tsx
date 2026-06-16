@@ -303,8 +303,8 @@ function DonateModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-/* ---------- Screenshot card (placeholder) ---------- */
-function ScreenshotCard({ title, description, gradient, icon, index, src, videoSrc }: {
+/* ---------- Screenshot card ---------- */
+function ScreenshotCard({ title, description, gradient, icon, index, src, videoSrc, onOpen }: {
   title: string
   description: string
   gradient: string
@@ -312,6 +312,7 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
   index: number
   src?: string
   videoSrc?: string
+  onOpen?: () => void
 }) {
   return (
     <motion.div
@@ -319,10 +320,11 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-      className="group cursor-pointer"
+      className={`group ${src || videoSrc ? "cursor-pointer" : ""}`}
+      onClick={onOpen}
     >
       <div
-        className={`relative overflow-hidden rounded-2xl ${src || videoSrc ? "" : gradient} aspect-[4/3] flex items-center justify-center shadow-md group-hover:shadow-xl transition-shadow duration-300 bg-[rgba(15,30,50,0.6)]`}
+        className={`relative overflow-hidden rounded-2xl shadow-md group-hover:shadow-xl transition-shadow duration-300 bg-[rgba(15,30,50,0.6)] aspect-[4/3] flex items-center justify-center ${src || videoSrc ? "" : gradient}`}
       >
         {videoSrc ? (
           <video
@@ -331,7 +333,7 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
             muted
             loop
             playsInline
-            className="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)] object-contain rounded-xl"
+            className="h-full w-full object-contain rounded-2xl"
           />
         ) : src ? (
           <img
@@ -343,7 +345,7 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
             `}
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             alt={title}
-            className="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)] object-contain rounded-xl"
+            className="h-full w-full object-contain rounded-2xl"
           />
         ) : (
           <>
@@ -369,6 +371,8 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
     </motion.div>
   )
 }
+
+/* ---------- Sort data ---------- */
 
 const screenshots = [
   {
@@ -415,6 +419,52 @@ const screenshots = [
   },
 ]
 
+/* ---------- Lightbox ---------- */
+function Lightbox({ screenshot, onClose }: {
+  screenshot: typeof screenshots[number]
+  onClose: () => void
+}) {
+  useBodyScrollLock(true)
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative max-h-[60vh] max-w-[60vw] w-full h-full flex items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full border border-(--accent-main)/40 bg-(--accent-main) text-white transition-colors hover:brightness-110 shadow-lg"
+          type="button"
+          aria-label="Закрыть"
+        >
+          <X size={16} />
+        </button>
+        {screenshot.videoSrc ? (
+          <video
+            src={screenshot.videoSrc}
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls
+            className="max-h-full max-w-full rounded-xl shadow-2xl"
+          />
+        ) : (
+          <img
+            src={screenshot.src}
+            alt={screenshot.title}
+            className="max-h-full max-w-full rounded-xl shadow-2xl object-contain"
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ---------- Main landing page ---------- */
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -436,6 +486,7 @@ export default function LandingPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const [isDonateOpen, setIsDonateOpen] = useState(false)
+  const [activeScreenshot, setActiveScreenshot] = useState<number | null>(null)
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.playbackRate = 0.7
@@ -662,6 +713,7 @@ export default function LandingPage() {
                 index={i}
                 src={"src" in shot ? shot.src : undefined}
                 videoSrc={"videoSrc" in shot ? (shot as { videoSrc: string }).videoSrc : undefined}
+                onOpen={shot.src || shot.videoSrc ? () => setActiveScreenshot(i) : undefined}
               />
             ))}
           </div>
@@ -888,6 +940,13 @@ export default function LandingPage() {
 
       {isDonateOpen && (
         <DonateModal onClose={() => setIsDonateOpen(false)} />
+      )}
+
+      {activeScreenshot != null && (
+        <Lightbox
+          screenshot={screenshots[activeScreenshot]}
+          onClose={() => setActiveScreenshot(null)}
+        />
       )}
 
       <Footer variant="landing" />

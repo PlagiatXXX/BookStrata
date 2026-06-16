@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useState, useCallback } from "react";
-import { X, Star } from "lucide-react";
+import { X, Star, Hash } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { Book } from "@/types";
@@ -23,6 +23,8 @@ interface BookEditModalProps {
       description?: string;
       thoughts?: string;
       coverImageUrl?: string;
+      genre?: string;
+      tags?: string[];
     },
   ) => void;
 }
@@ -30,6 +32,8 @@ interface BookEditModalProps {
 interface BookFormState {
   title: string;
   author: string;
+  genre: string;
+  tagsInput: string;
   description: string;
   thoughts: string;
   coverImageUrl: string;
@@ -40,9 +44,28 @@ type BookFormAction =
   | { type: "RESET" }
   | { type: "SET_TITLE"; title: string }
   | { type: "SET_AUTHOR"; author: string }
+  | { type: "SET_GENRE"; genre: string }
+  | { type: "SET_TAGS_INPUT"; tagsInput: string }
   | { type: "SET_DESCRIPTION"; description: string }
   | { type: "SET_THOUGHTS"; thoughts: string }
   | { type: "SET_COVER_IMAGE_URL"; coverImageUrl: string };
+
+/** Парсит строку с тегами (#тег1 #тег2) в массив */
+function parseTags(input: string): string[] {
+  const words = input.split(/\s+/).filter(Boolean);
+  const tags: string[] = [];
+  for (const w of words) {
+    const cleaned = w.startsWith("#") ? w.slice(1) : w;
+    if (cleaned) tags.push(cleaned);
+  }
+  return tags;
+}
+
+/** Форматирует массив тегов в строку для инпута */
+function formatTags(tags?: string[]): string {
+  if (!tags || tags.length === 0) return "";
+  return tags.map((t) => `#${t}`).join(" ");
+}
 
 function bookFormReducer(
   state: BookFormState,
@@ -52,7 +75,9 @@ function bookFormReducer(
     case "SET_BOOK":
       return {
         title: action.book.title,
-        author: action.book.author,
+        author: action.book.author || "",
+        genre: action.book.genre || "",
+        tagsInput: formatTags(action.book.tags),
         description: action.book.description || "",
         thoughts: action.book.thoughts || "",
         coverImageUrl: action.book.coverImageUrl || "",
@@ -61,6 +86,8 @@ function bookFormReducer(
       return {
         title: "",
         author: "",
+        genre: "",
+        tagsInput: "",
         description: "",
         thoughts: "",
         coverImageUrl: "",
@@ -69,6 +96,10 @@ function bookFormReducer(
       return { ...state, title: action.title };
     case "SET_AUTHOR":
       return { ...state, author: action.author };
+    case "SET_GENRE":
+      return { ...state, genre: action.genre };
+    case "SET_TAGS_INPUT":
+      return { ...state, tagsInput: action.tagsInput };
     case "SET_DESCRIPTION":
       return { ...state, description: action.description };
     case "SET_THOUGHTS":
@@ -83,6 +114,8 @@ function bookFormReducer(
 const INITIAL_STATE: BookFormState = {
   title: "",
   author: "",
+  genre: "",
+  tagsInput: "",
   description: "",
   thoughts: "",
   coverImageUrl: "",
@@ -95,6 +128,25 @@ const inputClass =
   "w-full border-2 border-black bg-[#0a0a0a] px-4 py-3 text-sm text-[#f6f1e8] placeholder:text-[#676767] outline-none transition-colors focus:border-[#c1fffe]";
 
 const textareaClass = `${inputClass} resize-none`;
+
+/** Показывает теги в виде цветных плашек */
+function TagPills({ tags, size = "sm" }: { tags: string[]; size?: "sm" | "xs" }) {
+  const sizeClass = size === "sm" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-[10px]";
+  if (tags.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {tags.map((tag) => (
+        <span
+          key={tag}
+          className={`inline-flex items-center gap-1 rounded-full border border-cyan-400/30 bg-cyan-400/10 font-medium text-cyan-300 ${sizeClass}`}
+        >
+          <Hash size={size === "sm" ? 10 : 8} />
+          {tag}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function StarDisplay({ value, size = 14 }: { value: number; size?: number }) {
   const stars = []
@@ -121,7 +173,7 @@ export const BookEditModal = ({
 }: BookEditModalProps) => {
   const [state, dispatch] = useReducer(bookFormReducer, INITIAL_STATE);
   const [isCoverDeleteModalOpen, setIsCoverDeleteModalOpen] = useState(false);
-  const { title, author, description, thoughts, coverImageUrl } = state;
+  const { title, author, genre, tagsInput, description, thoughts, coverImageUrl } = state;
 
   // Rating state
   const [pollRatings, setPollRatings] = useState<Record<string, number>>({});
@@ -206,6 +258,8 @@ export const BookEditModal = ({
     onSave(book.id, {
       title: title.trim(),
       author: author.trim(),
+      genre: genre.trim() || undefined,
+      tags: parseTags(tagsInput),
       description: description.trim() || undefined,
       thoughts: thoughts.trim() || undefined,
       coverImageUrl,
@@ -236,11 +290,13 @@ export const BookEditModal = ({
     }
   };
 
+  const parsedTags = parseTags(tagsInput);
+
   return (
       <Modal
         isOpen={isOpen}
         onClose={handleSaveAndClose}
-        className="max-w-[50vw] min-w-125 max-md:min-w-0 max-md:max-w-full"
+        className="max-w-[65vw] min-w-[700px] max-md:min-w-0 max-md:max-w-full"
         titleId="book-edit-title"
       >
       <div
@@ -260,32 +316,61 @@ export const BookEditModal = ({
           <div className="pr-12">
             <p
               id="book-edit-title"
-              className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]"
+              className="mb-1.5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]"
             >
               Редактирование книги
+              <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300/70">
+                автосохранение
+              </span>
             </p>
-            <label
-              htmlFor="book-title-input"
-              className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
-            >
-              Название <span className="text-pink-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="book-title-input"
-              type="text"
-              value={title}
-              onChange={(e) =>
-                dispatch({ type: "SET_TITLE", title: e.target.value })
-              }
-              autoFocus
-              maxLength={100}
-              className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
-              placeholder="Введите название книги"
-              aria-label="Название книги"
-            />
-            <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-              {title.length}/100
-            </span>
+
+            {/* Строка: Название + Жанр */}
+            <div className="grid grid-cols-[1fr_1fr] gap-4">
+              <div>
+                <label
+                  htmlFor="book-title-input"
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
+                >
+                  Название <span className="text-pink-500" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="book-title-input"
+                  type="text"
+                  value={title}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_TITLE", title: e.target.value })
+                  }
+                  autoFocus
+                  maxLength={100}
+                  className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
+                  placeholder="Введите название книги"
+                  aria-label="Название книги"
+                />
+                <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  {title.length}/100
+                </span>
+              </div>
+              <div>
+                <label
+                  htmlFor="book-genre-input"
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
+                >
+                  Жанр
+                </label>
+                <input
+                  id="book-genre-input"
+                  type="text"
+                  value={genre}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_GENRE", genre: e.target.value })
+                  }
+                  maxLength={50}
+                  className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
+                  placeholder="Фантастика, детектив..."
+                  aria-label="Жанр книги"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -325,29 +410,58 @@ export const BookEditModal = ({
               </section>
 
               <div className="grid gap-6">
-                <section className="border-2 border-black bg-[#171717] p-4">
-                  <label
-                    htmlFor="book-author-input"
-                    className={sectionTitleClass}
-                  >
-                    Автор
-                  </label>
-                  <input
-                    id="book-author-input"
-                    type="text"
-                    value={author}
-                    onChange={(e) =>
-                      dispatch({ type: "SET_AUTHOR", author: e.target.value })
-                    }
-                    maxLength={100}
-                    className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
-                    placeholder="Автор книги"
-                    aria-label="Автор книги"
-                  />
-                  <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                    {author.length}/100
-                  </span>
-                </section>
+                {/* Строка: Автор + Теги */}
+                <div className="grid grid-cols-[1fr_1fr] gap-4">
+                  <section className="border-2 border-black bg-[#171717] p-4">
+                    <label
+                      htmlFor="book-author-input"
+                      className={sectionTitleClass}
+                    >
+                      Автор
+                    </label>
+                    <input
+                      id="book-author-input"
+                      type="text"
+                      value={author}
+                      onChange={(e) =>
+                        dispatch({ type: "SET_AUTHOR", author: e.target.value })
+                      }
+                      maxLength={100}
+                      className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                      placeholder="Автор книги"
+                      aria-label="Автор книги"
+                    />
+                    <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                      {author.length}/100
+                    </span>
+                  </section>
+
+                  <section className="border-2 border-black bg-[#171717] p-4">
+                    <label
+                      htmlFor="book-tags-input"
+                      className={sectionTitleClass}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Hash size={12} />
+                        Теги
+                      </span>
+                    </label>
+                    <input
+                      id="book-tags-input"
+                      type="text"
+                      value={tagsInput}
+                      onChange={(e) =>
+                        dispatch({ type: "SET_TAGS_INPUT", tagsInput: e.target.value })
+                      }
+                      className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                      placeholder="#фантастика #приключения"
+                      aria-label="Теги книги"
+                    />
+                    <div className="mt-2">
+                      <TagPills tags={parsedTags} size="xs" />
+                    </div>
+                  </section>
+                </div>
 
                 <section className="border-2 border-black bg-[#171717] p-4">
                   <label

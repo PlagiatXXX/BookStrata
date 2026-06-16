@@ -182,6 +182,8 @@ export const addBooksSchema = {
             coverImageUrl: { type: 'string', maxLength: 2048 },
             description: { type: ['string', 'null'], maxLength: 1000 },
             thoughts: { type: ['string', 'null'], maxLength: 2000 },
+            genre: { type: ['string', 'null'], maxLength: 100 },
+            tags: { type: 'array', items: { type: 'string', maxLength: 50 }, maxItems: 20 },
           },
         },
       },
@@ -207,6 +209,8 @@ export const updateBookSchema = {
       author: { type: 'string', maxLength: 255 },
       description: { type: 'string', maxLength: 1000 },
       thoughts: { type: 'string', maxLength: 2000 },
+      genre: { type: ['string', 'null'], maxLength: 100 },
+      tags: { type: 'array', items: { type: 'string', maxLength: 50 }, maxItems: 20 },
     },
   },
 };

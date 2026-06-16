@@ -92,9 +92,14 @@ export function useTierEditorActions({
   );
 
   const handleSaveBook = useCallback(
-    (bookId: string, data: { title?: string; author?: string; description?: string; thoughts?: string; coverImageUrl?: string }) => {
+    (bookId: string, data: { title?: string; author?: string; description?: string; thoughts?: string; coverImageUrl?: string; genre?: string; tags?: string[] }) => {
       updateBook(bookId, data);
       setHasUnsavedChanges(true);
+
+      sileo.success({ 
+        title: 'Сохранено', 
+        duration: 1500 
+      });
 
       if (!tierListId || !isPersistedBookId(bookId)) return;
 
@@ -103,16 +108,17 @@ export function useTierEditorActions({
         try {
           await apiClient.put(`/tier-lists/${tierListId}/books/${bookId}`, data);
         } catch (error) {
-          logger.error(error instanceof Error ? error : new Error(String(error)), {
-            action: 'updateBook',
-            tierListId,
-            bookId,
-          });
-          sileo.error({ 
-            title: 'Не удалось сохранить изменения', 
-            description: 'Попробуйте снова позже',
-            duration: 3000 
-          });
+          const message = error instanceof Error ? error.message : '';
+          // Книга может не принадлежать тир-листу на сервере (добавлена через поиск) — это ожидаемо
+          if (message.includes('не принадлежит') || message.includes('not belong')) {
+            logger.warn(message, { action: 'updateBook', tierListId, bookId });
+          } else {
+            logger.error(error instanceof Error ? error : new Error(String(error)), {
+              action: 'updateBook',
+              tierListId,
+              bookId,
+            });
+          }
         } finally {
           setIsUpdatingBook(false);
         }

@@ -13,7 +13,7 @@ export type AchievementId =
   | 'fighter_1' | 'fighter_2' | 'fighter_3' | 'fighter_4'
   | 'secret_lucky' | 'secret_night' | 'secret_speed'
   | 'explorer'
-  | 'first_tier_list' | 'bibliophile_10' | 'bibliophile_50' | 'popular_author_10' | 'battle_participant' | 'battle_winner' | 'critic';
+  | 'first_tier_list' | 'popular_author_10' | 'battle_participant' | 'battle_winner' | 'critic';
 
 export const USER_TITLES = [
   { minXP: 0, title: 'Подглядывающий в книги', icon: '👀' },
@@ -164,14 +164,7 @@ export async function processAction(userId: number, action: 'create_tier_list' |
           if (a) newAchievements.push(a);
         }
       }
-      if (count >= 10) {
-        const a = await checkAndGrantAchievement(userId, 'bibliophile_10');
-        if (a) newAchievements.push(a);
-      }
-      if (count >= 50) {
-        const a = await checkAndGrantAchievement(userId, 'bibliophile_50');
-        if (a) newAchievements.push(a);
-      }
+
 
       const now = new Date();
       const moscowHour = (now.getUTCHours() + 3) % 24;

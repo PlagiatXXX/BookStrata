@@ -1,6 +1,6 @@
 import { useSensors, useSensor } from "@dnd-kit/core";
 import { MouseSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
-import { DndContext, DragOverlay, rectIntersection } from "@dnd-kit/core";
+import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type {
   DragStartEvent,
@@ -124,14 +124,14 @@ export const EditorLayout = ({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={rectIntersection}
+      collisionDetection={pointerWithin}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
       onDragCancel={onDragCancel}
     >
       {content}
-      <DragOverlay dropAnimation={null} zIndex={10001}>
+      <DragOverlay zIndex={10001}>
         {activeBook ? (
           <div
             style={{

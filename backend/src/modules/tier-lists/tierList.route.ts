@@ -429,6 +429,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         coverImageUrl: string;
         description?: string | null;
         thoughts?: string | null;
+        genre?: string | null;
+        tags?: string[];
       }[];
     };
   }>(
@@ -497,6 +499,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       author?: string | null;
       description?: string | null;
       thoughts?: string | null;
+      genre?: string | null;
+      tags?: string[];
     };
   }>(
     "/:id/books/:bookId",

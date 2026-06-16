@@ -56,7 +56,7 @@ export const SortableBookCover = memo(
       <div
         ref={setNodeRef}
         style={style}
-        className="relative transition-transform duration-150"
+        className="relative"
         {...attributes}
         {...listeners}
       >
