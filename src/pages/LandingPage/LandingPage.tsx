@@ -515,7 +515,7 @@ export default function LandingPage() {
           loop
           playsInline
           ref={videoRef}
-          poster="/hero-bg.webp"
+          poster="/library-bg.webp"
         />
         <div className="landing-hero__gradient" />
         <div className="landing-hero__pattern" />

@@ -313,7 +313,7 @@ export function AdminUsersPage() {
             </div>
 
             <div className="rounded-xl border border-gray-800 overflow-x-auto max-w-full">
-              <table className="w-full min-w-[640px]">
+              <table className="w-full min-w-160">
                 <thead>
                   <tr className="bg-white/5 border-b border-gray-800">
                     <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -359,14 +359,14 @@ export function AdminUsersPage() {
                     filteredUsers.map((u) => (
                       <tr
                         key={u.userId}
-                        className="hover:bg-white/[0.02] transition-colors"
+                        className="hover:bg-white/2 transition-colors"
                       >
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white text-sm font-bold shrink-0">
                               {u.username?.[0]?.toUpperCase() || "?"}
                             </div>
-                            <div className="min-w-0 max-w-[180px]">
+                            <div className="min-w-0 max-w-45">
                               <Link
                                 to={`/users/${u.userId}`}
                                 className="text-sm font-medium text-white truncate block hover:text-orange-400 transition-colors"
@@ -540,7 +540,7 @@ export function AdminUsersPage() {
                   violators.map((v) => (
                     <tr
                       key={v.userId}
-                      className="hover:bg-white/[0.02] transition-colors"
+                      className="hover:bg-white/2 transition-colors"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -623,7 +623,7 @@ export function AdminUsersPage() {
                                 </div>
                                 {a.reason && (
                                   <div
-                                    className="text-gray-500 truncate max-w-[200px]"
+                                    className="text-gray-500 truncate max-w-50"
                                     title={a.reason}
                                   >
                                     {a.reason}
@@ -698,7 +698,7 @@ export function AdminUsersPage() {
                   flags.map((f) => (
                     <tr
                       key={f.id}
-                      className="hover:bg-white/[0.02] transition-colors"
+                      className="hover:bg-white/2 transition-colors"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
