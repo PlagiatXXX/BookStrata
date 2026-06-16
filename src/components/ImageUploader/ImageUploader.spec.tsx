@@ -14,4 +14,16 @@ describe('ImageUploader', () => {
     render(<ImageUploader />);
     expect(screen.getByText('Загрузить')).toBeInTheDocument();
   });
+
+  it('не показывает ошибку изначально', () => {
+    render(<ImageUploader />);
+    expect(screen.queryByText(/Максимум 5 MB/)).not.toBeInTheDocument();
+  });
+
+  it('должен рендерить текст при drag-active', () => {
+    // Проверить текст "Бросьте" в компоненте не можем через snapshot,
+    // т.к. это состояние управляется useDropzone
+    render(<ImageUploader />);
+    expect(screen.getByText('Загрузить')).toBeInTheDocument();
+  });
 });

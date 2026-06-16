@@ -221,6 +221,29 @@ const TierListEditorContent = () => {
   });
 
   const processBookFiles = useCallback(async (files: File[]) => {
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_TOTAL_SIZE = 30 * 1024 * 1024; // 30 MB
+
+    // Проверяем каждый файл
+    const tooBig = files.find((f) => f.size > MAX_FILE_SIZE);
+    if (tooBig) {
+      sileo.error({
+        title: "Файл слишком большой",
+        description: `«${tooBig.name}» больше 5 MB. Максимум 5 MB на одну обложку.`,
+      });
+      return;
+    }
+
+    // Проверяем суммарный размер
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    if (totalSize > MAX_TOTAL_SIZE) {
+      sileo.error({
+        title: "Слишком большой общий объём",
+        description: `Общий размер файлов (${(totalSize / 1024 / 1024).toFixed(1)} MB) превышает лимит 30 MB.`,
+      });
+      return;
+    }
+
     for (const file of files) {
       const coverImageUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();

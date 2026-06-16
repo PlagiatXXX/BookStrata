@@ -7,6 +7,7 @@ import { createLogger } from "../../lib/logger.js";
 import * as service from "./tierList.service.js";
 import * as schema from "./tierList.schema.js";
 import { uploadBase64, uploadFromUrl } from "../../lib/cloudinary.js";
+import { validateImageSize } from "../../lib/validators.js";
 import type {
   GetTierListsQuery,
   CreateTierListBody,
@@ -446,6 +447,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
           // data: → uploadBase64
           if (url.startsWith("data:")) {
+            const sizeError = validateImageSize(url);
+            if (sizeError) {
+              fastify.log.warn({ book: book.title }, sizeError);
+              return { ...book, coverImageUrl: "" };
+            }
             try {
               const uploadResult = await uploadBase64(url, "tiermaker-pro/book-covers");
               return { ...book, coverImageUrl: uploadResult.url };
@@ -560,6 +566,12 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Invalid image format"));
       }
 
+      // Проверяем размер изображения
+      const sizeError = validateImageSize(coverImageUrl);
+      if (sizeError) {
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, sizeError));
+      }
+
       try {
         // Загружаем изображение на Cloudinary
         const uploadResult = await uploadBase64(
@@ -604,6 +616,12 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       if (!coverImageUrl || !coverImageUrl.startsWith("data:")) {
         return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Invalid image format"));
+      }
+
+      // Проверяем размер изображения
+      const sizeError = validateImageSize(coverImageUrl);
+      if (sizeError) {
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, sizeError));
       }
 
       try {
@@ -750,6 +768,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           body.newBooks,
           async (book: any) => {
             if (book.coverImageUrl && book.coverImageUrl.startsWith("data:")) {
+              const sizeError = validateImageSize(book.coverImageUrl);
+              if (sizeError) {
+                fastify.log.warn({ book: book.title }, sizeError);
+                return { ...book, coverImageUrl: "" };
+              }
               try {
                 const uploadResult = await uploadBase64(
                   book.coverImageUrl,
