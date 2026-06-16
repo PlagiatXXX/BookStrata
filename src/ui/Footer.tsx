@@ -125,22 +125,18 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   };
 
   const toggleDonate = useCallback(() => {
-    setIsDonateOpen((prev) => {
-      if (!prev) {
-        // Calculate best direction when opening
-        const button = document.getElementById("donate-button");
-        if (button) {
-          const rect = button.getBoundingClientRect();
-          const spaceAbove = rect.top;
-          const spaceBelow = window.innerHeight - rect.bottom;
-          // Popup is ~220px tall + 12px gap
-          const needed = 232;
-          setPopupDirection(spaceBelow >= needed ? "below" : "above");
-        }
+    if (!isDonateOpen) {
+      // Calculate best direction when opening
+      const button = document.getElementById("donate-button");
+      if (button) {
+        const rect = button.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        // Popup is ~220px tall + 12px gap
+        setPopupDirection(spaceBelow >= 232 ? "below" : "above");
       }
-      return !prev;
-    });
-  }, []);
+    }
+    setIsDonateOpen((prev) => !prev);
+  }, [isDonateOpen]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -277,8 +273,8 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
           </nav>
 
           {/* Right Zone: Donate Block */}
-          <div className="flex flex-col items-start lg:items-end lg:text-right lg:contents">
-            <div className="relative max-w-full">
+          <div className="flex flex-col items-start self-start lg:items-end lg:text-right lg:contents">
+            <div className="relative max-w-full self-start">
               <button
                 type="button"
                 id="donate-button"
@@ -304,12 +300,12 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 id="donate-menu"
                 className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] overflow-hidden rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 origin-bottom-right ${
                   popupDirection === "below"
-                    ? "top-full mt-3"
-                    : "bottom-full mb-3"
+                    ? "top-full mt-1"
+                    : "bottom-full mb-1"
                 } ${
                   isDonateOpen
                     ? "pointer-events-auto scale-100 border-amber-500/40 opacity-100 shadow-[0_20px_50px_rgba(249,115,22,0.3)]"
-                    : "pointer-events-none scale-95 border-amber-500/10 opacity-0 translate-y-4"
+                    : "pointer-events-none scale-95 border-amber-500/10 opacity-0"
                 } right-0`}
               >
                 <div className="relative p-5">

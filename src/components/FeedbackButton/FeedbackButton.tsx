@@ -200,7 +200,7 @@ export function FeedbackButton({ raised = false }: { raised?: boolean }) {
       )}
 
       {/* Плавающее меню */}
-      <div className={`fixed right-6 z-50 flex flex-col items-end gap-3 bottom-6 ${raised ? "bottom-24 lg:bottom-6" : ""}`}>
+      <div className={`fixed right-6 z-50 flex flex-col items-end gap-3 bottom-6 ${raised ? "bottom-16 lg:bottom-6" : ""}`}>
         <AnimatePresence>
           {isMenuOpen && (
             <>
