@@ -11,7 +11,7 @@ export default {
       'always',
       ['ui', 'api', 'shared', 'deps', 'config', 'ci'],
     ],
-    'subject-case': [2, 'always', 'lower-case'],
+    'subject-case': [0],
     'subject-full-stop': [2, 'never', '.'],
   },
 }
