@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveTierListAtomic } from "@/lib/tierListApi";
 import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
@@ -58,22 +58,20 @@ export function useTierEditorSave({
     return getAtomicSavePayload(listData);
   }, [listData]);
 
-  // Инициализируем snapshot при первой загрузке данных.
-  // Выполняется во время рендера (refs можно назначать в render),
-  // чтобы избежать лишних useEffect-ов.
-  if (!isLoading && listData.id) {
-    // Сброс при смене тир-листа
-    if (prevTierListIdRef.current !== listData.id) {
-      prevTierListIdRef.current = listData.id;
-      savedSnapshotRef.current = null;
-    }
+  // Инициализируем snapshot при первой загрузке данных и при смене тир-листа
+  useEffect(() => {
+    if (!isLoading && listData.id) {
+      if (prevTierListIdRef.current !== listData.id) {
+        prevTierListIdRef.current = listData.id;
+        savedSnapshotRef.current = null;
+      }
 
-    // Инициализация snapshot при первом рендере после загрузки
-    if (savedSnapshotRef.current === null) {
-      const payload = getAtomicSavePayload(listData);
-      savedSnapshotRef.current = serializeSnapshot(payload);
+      if (savedSnapshotRef.current === null) {
+        const payload = getAtomicSavePayload(listData);
+        savedSnapshotRef.current = serializeSnapshot(payload);
+      }
     }
-  }
+  }, [isLoading, listData]);
 
   const hasChangesToSave = useCallback((): boolean => {
     const currentPayload = getAtomicSavePayload(listData);

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useRef, useCallback, useEffect, useMemo, useLayoutEffect, memo, useState, type RefObject } from "react";
+import { useRef, useCallback, useEffect, useMemo, useLayoutEffect, memo, type RefObject } from "react";
 import { useBookController } from "./useBookController";
 import "./BookScene.css";
 
@@ -47,18 +47,19 @@ const BookScene = memo(({ containerRef }: BookSceneProps) => {
   const dailyAphorism = useMemo(() => getDailyAphorism(), [])
   const rootRef = useRef<HTMLDivElement>(null);
   const quoteRef = useRef<HTMLDivElement>(null);
+  const dropCapRef = useRef<HTMLSpanElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [quoteFontSize, setQuoteFontSize] = useState<number>(20);
 
   useLayoutEffect(() => {
     const el = quoteRef.current;
-    if (!el) return;
+    const dropCap = dropCapRef.current;
+    if (!el || !dropCap) return;
 
     el.style.fontSize = '20px';
     el.style.lineHeight = '1.6';
 
     if (el.scrollHeight <= el.clientHeight) {
-      setQuoteFontSize(20);
+      dropCap.style.fontSize = '48px';
       return;
     }
 
@@ -79,7 +80,7 @@ const BookScene = memo(({ containerRef }: BookSceneProps) => {
     }
 
     el.style.fontSize = `${best}px`;
-    setQuoteFontSize(best);
+    dropCap.style.fontSize = `${best * 2.4}px`;
   }, [dailyAphorism.text]);
 
   const {
@@ -209,8 +210,9 @@ const BookScene = memo(({ containerRef }: BookSceneProps) => {
           >
             <div className="quote" ref={quoteRef}>
               <span
+                ref={dropCapRef}
                 className="quote-drop-cap"
-                style={{ fontSize: quoteFontSize * 2.4 }}
+                style={{ fontSize: 48 }}
               >
                 {dailyAphorism.text[0]}
               </span>

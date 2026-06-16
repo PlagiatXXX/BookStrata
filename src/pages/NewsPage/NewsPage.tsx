@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Calendar, User, Tag } from "lucide-react";
+import { Calendar, User, Tag } from "lucide-react";
 import "@/pages/AdminCollectionsPage/components/WysiwygEditor.css";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { getNewsById, type NewsArticle } from "@/lib/newsApi";

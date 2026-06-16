@@ -20,7 +20,7 @@ describe('BookCounter', () => {
     render(<BookCounter booksCount={100} />);
     expect(screen.getByText('100')).toBeInTheDocument();
 
-    const { rerender } = render(<BookCounter booksCount={5} />);
+    render(<BookCounter booksCount={5} />);
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 });

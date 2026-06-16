@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
 import {
   ArrowRight, BookOpen, Sword, Sparkles,
-  Trophy, Heart, MessageCircle, MessageSquare, Share2, Zap,
-  ChevronRight, Menu, X, Check, Layers, Brain, Pen, Copy, Paintbrush, Send,
+  Trophy, Heart, MessageCircle, MessageSquare, Zap,
+  ChevronRight, Menu, X, Check, Layers, Brain, Copy, Paintbrush, Send,
   BarChart3, Users,
 } from "lucide-react"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
@@ -661,7 +661,7 @@ export default function LandingPage() {
                 icon={shot.icon}
                 index={i}
                 src={"src" in shot ? shot.src : undefined}
-                videoSrc={"videoSrc" in shot ? (shot as any).videoSrc : undefined}
+                videoSrc={"videoSrc" in shot ? (shot as { videoSrc: string }).videoSrc : undefined}
               />
             ))}
           </div>

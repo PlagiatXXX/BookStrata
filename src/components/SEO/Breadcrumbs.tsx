@@ -10,10 +10,6 @@ interface BreadcrumbsProps {
   theme?: "dark" | "light";
 }
 
-const separator = (
-  <span className="mx-2 text-(--ink-2) select-none" aria-hidden="true">/</span>
-);
-
 export function Breadcrumbs({ items, theme = "dark" }: BreadcrumbsProps) {
   if (!items.length) return null;
 

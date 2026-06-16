@@ -73,6 +73,7 @@ const resetPasswordBodySchema = z.object({
 export const registerSchema = {
   description: 'Register a new user account',
   tags: ['Auth'],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(registerBodySchema as any),
   response: {
      201: {
@@ -91,6 +92,7 @@ export const registerSchema = {
 export const loginSchema = {
   description: 'Login with username and password',
   tags: ['Auth'],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(loginBodySchema as any),
   response: {
     401: makeErrorSchema('Invalid credentials'),
@@ -100,6 +102,7 @@ export const loginSchema = {
 export const validateSchema = {
   description: 'Validate JWT token',
   tags: ['Auth'],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(validateBodySchema as any),
   response: {
     200: {
@@ -119,12 +122,14 @@ export const validateSchema = {
 export const forgotPasswordSchema = {
   description: 'Request password reset',
   tags: ['Auth'],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(forgotPasswordBodySchema as any),
 };
 
 export const resetPasswordSchema = {
   description: 'Reset password with token',
   tags: ['Auth'],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: zodToJsonSchema(resetPasswordBodySchema as any),
 };
 

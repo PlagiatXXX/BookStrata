@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from "react"
+import { useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "motion/react"
 import { ArrowLeft } from "lucide-react"
@@ -10,59 +10,12 @@ import {
   BarChart3,
   Search,
   BookOpen,
-  Users,
   Sparkles,
-  Heart,
   Send,
   Pen,
   Share2,
 } from "lucide-react"
 import { SEOHead } from "@/components/SEO/SEOHead"
-
-/* ---------- Animated counter ---------- */
-function AnimatedCounter({ target, suffix = "", label }: { target: number; suffix?: string; label: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [count, setCount] = useState(0)
-  const [hasAnimated, setHasAnimated] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el || hasAnimated) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setHasAnimated(true)
-          const duration = 2000
-          const start = performance.now()
-
-          function tick(now: number) {
-            const elapsed = now - start
-            const progress = Math.min(elapsed / duration, 1)
-            const eased = 1 - Math.pow(1 - progress, 3)
-            setCount(Math.floor(eased * target))
-            if (progress < 1) requestAnimationFrame(tick)
-          }
-
-          requestAnimationFrame(tick)
-        }
-      },
-      { threshold: 0.3 },
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [target, hasAnimated])
-
-  return (
-    <div ref={ref} className="text-center">
-      <div className="text-4xl md:text-5xl font-black bg-linear-to-br from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-        {count.toLocaleString()}{suffix}
-      </div>
-      <div className="text-sm text-slate-500 mt-1">{label}</div>
-    </div>
-  )
-}
 
 /* ---------- Fade-in on scroll wrapper ---------- */
 function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
@@ -119,13 +72,6 @@ export function AboutPage() {
       navigate("/")
     }
   }, [navigate])
-
-  const stats = [
-    { target: 12000, suffix: "+", label: "Пользователей" },
-    { target: 8500, suffix: "+", label: "Тир-листов создано" },
-    { target: 3400, suffix: "+", label: "Баттлов проведено" },
-    { target: 95000, suffix: "+", label: "Оценок книг" },
-  ]
 
   const features = [
     {

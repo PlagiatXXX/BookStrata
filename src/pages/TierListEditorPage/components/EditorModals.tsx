@@ -112,7 +112,7 @@ export const EditorModals = ({
   isExportModalOpen,
   onCloseExport,
   onConfirmExport,
-  username,
+  username: _username,
   isReadOnly = false,
   tierListTheme,
 }: EditorModalsProps) => {

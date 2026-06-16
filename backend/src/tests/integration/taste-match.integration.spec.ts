@@ -34,7 +34,7 @@ describe("Taste Match", () => {
     listIdB = JSON.parse(listResB.body).data.id;
 
     // User A: добавляет книги, делает публичным
-    const addARes = await ctx.fastify.inject({
+    await ctx.fastify.inject({
       method: "POST",
       url: `/api/tier-lists/${listIdA}/books`,
       headers: { Authorization: `Bearer ${tokenA}` },

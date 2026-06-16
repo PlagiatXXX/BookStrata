@@ -256,11 +256,6 @@ describe("getDragEndAction", () => {
   });
 
   it("должен вернуть null, если active и over — один и тот же элемент", () => {
-    const event = {
-      active: mockActive("book-1", { type: "book", containerId: "tier-1" }),
-      over: mockOver("book-1", { type: "book", containerId: "tier-1" }),
-    } as unknown as DragEndEvent;
-
     const mockEvent = {
       active: { id: "book-1" },
       over: { id: "book-1" },
@@ -320,11 +315,6 @@ describe("getDragEndAction", () => {
   });
 
   it("должен вернуть null при книге на то же место (noop)", () => {
-    const event = {
-      active: mockActive("book-1", { type: "book", containerId: "tier-1", index: 0 }),
-      over: mockOver("book-1", { type: "book", containerId: "tier-1", index: 0 }),
-    } as unknown as DragEndEvent;
-
     // active.id === over.id → null
     const mockEvent = {
       active: { id: "book-1" },

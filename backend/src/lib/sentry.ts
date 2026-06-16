@@ -32,6 +32,7 @@ export function initSentry() {
  * Ловит все ошибки и отправляет в Sentry перед ответом клиенту.
  */
 export function registerSentryErrorHandler(fastify: FastifyInstance) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fastify.setErrorHandler((error: any, request, reply) => {
     // Отправляем в Sentry
     Sentry.withScope((scope) => {
@@ -39,7 +40,9 @@ export function registerSentryErrorHandler(fastify: FastifyInstance) {
       scope.setTag("method", request.method);
       scope.setTag("user-agent", request.headers["user-agent"] || "unknown");
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((request as any).userId) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         scope.setUser({ id: String((request as any).userId) });
       }
 

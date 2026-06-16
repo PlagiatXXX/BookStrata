@@ -1,7 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const COOKIE_NAME = "cookie_consent";
-let metrikaLoaded = false;
 
 function getCookie(name: string): string | null {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -23,12 +22,18 @@ export function useAnalytics() {
   const [isConsented, setIsConsented] = useState(
     () => getCookie(COOKIE_NAME) === "1",
   );
+  const metrikaLoadedRef = useRef(false);
 
   const accept = useCallback(() => {
-    if (metrikaLoaded) return;
-    metrikaLoaded = true;
+    if (metrikaLoadedRef.current) return;
+    metrikaLoadedRef.current = true;
     setCookie(COOKIE_NAME, "1", 365);
     setIsConsented(true);
+  }, []);
+
+  // Инициализация Яндекс.Метрики после согласия
+  useEffect(() => {
+    if (!isConsented || metrikaLoadedRef.current) return;
 
     const counterId = import.meta.env.VITE_YM_COUNTER_ID;
     if (!counterId) return;
@@ -51,7 +56,7 @@ export function useAnalytics() {
       accurateTrackBounce: true,
       webvisor: true,
     });
-  }, []);
+  }, [isConsented]);
 
   const initIfConsented = useCallback(() => {
     if (isConsented) {

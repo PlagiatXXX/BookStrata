@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ROUTES, USERS, MOCK_BOOK } from "../fixtures/test-data";
+import { ROUTES, MOCK_BOOK } from "../fixtures/test-data";
 import { setupApiMocks } from "../mocks/api-routes";
 
 const TIER_LIST_TITLE = "Мой топ книг";

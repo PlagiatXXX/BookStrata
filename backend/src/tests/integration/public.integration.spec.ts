@@ -7,8 +7,6 @@ describe("Public — togglePublic + GET /public", () => {
   let tokenA: string;
   let tokenB: string;
   let listId: string;
-  let secondListId: string;
-
   beforeAll(async () => {
     ctx = await createTestServer();
 
@@ -23,8 +21,7 @@ describe("Public — togglePublic + GET /public", () => {
     const listRes = await createTierList(ctx.fastify, tokenA, "Публичный список");
     listId = JSON.parse(listRes.body).data.id;
 
-    const secondRes = await createTierList(ctx.fastify, tokenA, "Второй список");
-    secondListId = JSON.parse(secondRes.body).data.id;
+    await createTierList(ctx.fastify, tokenA, "Второй список");
   });
 
   afterAll(async () => {
