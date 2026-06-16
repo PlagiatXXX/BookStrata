@@ -9,7 +9,7 @@ import { UserActivityStats } from "@/components/DashboardHeroSection/components/
 import { DashboardAchievements } from "@/components/DashboardHeroSection/components/DashboardAchievements";
 import { TrendingNow } from "@/components/DashboardHeroSection/components/TrendingNow";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
-import { Sparkles } from "lucide-react";
+
 import "./DashboardPage.css";
 import logger from "@/lib/logger";
 
@@ -109,7 +109,7 @@ export function DashboardPage() {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2 border-2 border-black bg-[#c1fffe] px-3 py-2 sm:px-5 sm:py-3 font-black text-black transition-colors group-hover:bg-[#9cf5f3]">
-                <Sparkles className="h-4 w-4" />
+                <span className="text-base sm:text-lg">🔮</span>
                 <span className="text-xs sm:text-sm">Спросить</span>
               </div>
             </button>
