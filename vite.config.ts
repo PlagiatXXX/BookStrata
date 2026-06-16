@@ -43,19 +43,7 @@ export default defineConfig({
         manualChunks: {
           "react-vendor": ["react", "react-dom", "react-router-dom"],
           "query-vendor": ["@tanstack/react-query"],
-          "sentry-vendor": ["@sentry/browser"],
-          "dnd-vendor": [
-            "@dnd-kit/core",
-            "@dnd-kit/sortable",
-            "@dnd-kit/utilities",
-          ],
           "motion-vendor": ["framer-motion"],
-          "tiptap-vendor": ["@tiptap/react", "@tiptap/starter-kit"],
-          "tf-vendor": [
-            "@tensorflow/tfjs-core",
-            "@tensorflow/tfjs-backend-webgl",
-            "nsfwjs",
-          ],
         },
       },
     },

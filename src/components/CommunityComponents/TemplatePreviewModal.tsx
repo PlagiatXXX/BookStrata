@@ -2,6 +2,7 @@ import { useState, memo } from 'react';
 import { X, BookOpen, Layers, Tag } from 'lucide-react';
 import type { TemplateItem } from '../../data/mockData';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
+import { proxyImageUrl } from '@/utils/imageProxy';
 
 interface TemplatePreviewModalProps {
   template: TemplateItem;
@@ -120,7 +121,7 @@ export const TemplatePreviewModal = memo(({
                               <div className="w-16 h-24 flex-shrink-0 overflow-hidden rounded shadow-md">
                                 {book.coverImageUrl ? (
                                   <img
-                                    src={book.coverImageUrl}
+                                    src={proxyImageUrl(book.coverImageUrl)}
                                     alt={book.title}
                                     className="w-full h-full object-cover"
                                     onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}

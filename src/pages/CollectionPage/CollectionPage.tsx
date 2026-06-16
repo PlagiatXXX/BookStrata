@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { sileo } from "sileo";
 import { getCollectionById } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/lib/collectionsApi";
+import { proxyImageUrl } from "@/utils/imageProxy";
 import "./CollectionPage.css";
 
 export function CollectionPage() {
@@ -86,7 +87,7 @@ return DOMPurify.sanitize(collection.content);
       <SEOHead
         title={collection.title}
         description={collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
-        image={collection.coverImageUrl || undefined}
+        image={proxyImageUrl(collection.coverImageUrl) || undefined}
         url={`/collections/${id}`}
         breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${id}` }]}
       />

@@ -19,6 +19,7 @@ import { HanddrawnSmiley } from "@/components/ui/handdrawn-smiley"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { getPublicTierLists, type TierListShort } from "@/lib/tierListApi"
 import { getForumStats } from "@/lib/battlesApi"
+import { proxyImageUrl } from "@/utils/imageProxy"
 import "./LandingPage.css"
 
 /* ---------- Animated counter ---------- */
@@ -154,9 +155,9 @@ const MiniTierCard = memo(function MiniTierCard({ item }: { item: TierListShort 
       <div
         className="mini-tier-card__cover"
         style={{
-          backgroundImage: item.coverImageUrl
-            ? `url(${item.coverImageUrl})`
-            : "linear-gradient(135deg, rgba(6,188,249,0.2), rgba(168,85,247,0.2))",
+        backgroundImage: item.coverImageUrl
+          ? `url(${proxyImageUrl(item.coverImageUrl)})`
+          : "linear-gradient(135deg, rgba(6,188,249,0.2), rgba(168,85,247,0.2))",
         }}
       >
         <div className="mini-tier-card__overlay">
@@ -345,6 +346,7 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
             `}
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             alt={title}
+            loading="lazy"
             className="h-full w-full object-contain rounded-2xl"
           />
         ) : (
@@ -457,6 +459,7 @@ function Lightbox({ screenshot, onClose }: {
           <img
             src={screenshot.src}
             alt={screenshot.title}
+            loading="lazy"
             className="max-h-full max-w-full rounded-xl shadow-2xl object-contain"
           />
         )}

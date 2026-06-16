@@ -1,4 +1,5 @@
 import { booksCountText } from "@/lib/plural"
+import { proxyImageUrl } from "@/utils/imageProxy"
 
 interface TierListCoverProps {
   coverImageUrl?: string | null
@@ -12,7 +13,7 @@ export function TierListCover({ coverImageUrl, title, booksCount, className = ""
     return (
       <div className={`tier-list-cover ${className}`}>
         <img
-          src={coverImageUrl}
+          src={proxyImageUrl(coverImageUrl)}
           alt={title}
           className="tier-list-cover__img"
           loading="lazy"

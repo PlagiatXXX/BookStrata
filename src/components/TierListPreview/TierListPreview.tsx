@@ -1,5 +1,6 @@
 import { memo } from "react"
 import type { BattleTierList } from "@/types/battles"
+import { proxyImageUrl } from "@/utils/imageProxy"
 
 interface TierListPreviewProps {
   tierList: BattleTierList
@@ -50,7 +51,7 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
                     title={item.book.title}
                   >
                     <img
-                      src={item.book.coverImageUrl}
+                      src={proxyImageUrl(item.book.coverImageUrl)}
                       alt={item.book.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -106,7 +107,7 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
                   title={item.book.title}
                 >
                   <img
-                    src={item.book.coverImageUrl}
+                    src={proxyImageUrl(item.book.coverImageUrl)}
                     alt={item.book.title}
                     className="w-full h-full object-cover"
                     loading="lazy"

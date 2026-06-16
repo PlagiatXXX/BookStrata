@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Heart, BookOpen } from "lucide-react";
 import { getPublicTierLists } from "@/lib/tierListApi";
 import type { TierListShort } from "@/lib/tierListApi";
+import { proxyImageUrl } from "@/utils/imageProxy";
 import "./RecentPublicTierLists.css";
 
 const GRADIENTS = [
@@ -35,7 +36,7 @@ function TierListCard({ tierList }: { tierList: TierListShort }) {
       {tierList.coverImageUrl ? (
         <div
           className="recent-tier-card__bg recent-tier-card__bg--cover"
-          style={{ backgroundImage: `url(${tierList.coverImageUrl})` }}
+          style={{ backgroundImage: `url(${proxyImageUrl(tierList.coverImageUrl)})` }}
         />
       ) : (
         <div

@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Link } from "react-router-dom";
 import { COLLECTIONS } from "../../data/mockData";
+import { proxyImageUrl } from "@/utils/imageProxy";
 
 export const CollectionsSection = memo(() => {
   return (
@@ -46,7 +47,7 @@ export const CollectionsSection = memo(() => {
                 <img
                   alt={collection.title}
                   className="w-full h-full object-cover"
-                  src={collection.coverImageUrl}
+                  src={proxyImageUrl(collection.coverImageUrl)}
                   onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
                 />
               </div>

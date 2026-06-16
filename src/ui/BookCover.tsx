@@ -1,6 +1,7 @@
 import { memo, forwardRef, useState, useEffect, useRef } from "react";
 import { X, Edit2, Eye } from "lucide-react";
 import type { Book } from "@/types";
+import { proxyImageUrl } from "@/utils/imageProxy";
 
 interface BookCoverProps {
   book: Book;
@@ -100,7 +101,7 @@ export const BookCover = memo(
               ref.current = node;
             }
           }}
-          style={{ backgroundImage: `url(${book.coverImageUrl})` }}
+          style={{ backgroundImage: `url(${proxyImageUrl(book.coverImageUrl)})` }}
           onClick={handleClick}
           onTouchEnd={handleTouchEnd}
           onMouseEnter={() => setIsHovered(true)}

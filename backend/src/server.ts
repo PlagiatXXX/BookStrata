@@ -2,6 +2,7 @@
 import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import compress from "@fastify/compress";
 import helmet from "@fastify/helmet";
 import cookie from "@fastify/cookie";
 import swagger from "@fastify/swagger";
@@ -92,6 +93,13 @@ const fastify = Fastify({
 });
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
+
+// Компрессия ответов (gzip/deflate) — регистрируем до CORS,
+// чтобы сжимать все ответы, включая CORS-заголовки
+await fastify.register(compress, {
+  global: true,
+  threshold: 1024, // Не сжимать ответы меньше 1 KB
+});
 
 fastify.register(cors, {
   origin: CLIENT_URL,

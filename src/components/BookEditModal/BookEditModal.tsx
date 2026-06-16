@@ -6,6 +6,7 @@ import type { Book } from "@/types";
 import { createLogger } from "@/lib/logger";
 import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
 import { RATING_CATEGORIES, rateBook, getBookRatings, getUserBookRating } from "@/lib/ratingsApi";
+import { proxyImageUrl } from "@/utils/imageProxy";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
 import { useAuth } from "@/hooks/useAuthContext";
 
@@ -382,7 +383,7 @@ export const BookEditModal = ({
                 <div className="mx-auto h-64 w-40 overflow-hidden border-2 border-black bg-[#0a0a0a] max-sm:h-56">
                   {coverImageUrl ? (
                     <img
-                      src={coverImageUrl}
+                      src={proxyImageUrl(coverImageUrl)}
                       alt={(book?.title ?? title) || "Обложка книги"}
                       className="h-full w-full object-cover"
                       onError={(e) => {

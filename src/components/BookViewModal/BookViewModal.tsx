@@ -5,6 +5,7 @@ import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
 import { getBookRatings } from "@/lib/ratingsApi";
+import { proxyImageUrl } from "@/utils/imageProxy";
 
 export interface BookViewModalProps {
   book: any | null;
@@ -65,12 +66,13 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
 
   const isSearchPreview = !!onAdd;
 
-  const coverUrl =
+  const coverUrl = proxyImageUrl(
     book.coverImageUrl ||
     book.image_url ||
     book.cover_image_url ||
     book.coverUrlLarge ||
-    book.coverUrl;
+    book.coverUrl
+  );
 
   const pages = book.numberOfPages ?? book.number_of_pages ?? book.pageCount;
   const year = book.publishYear ?? book.publish_year;

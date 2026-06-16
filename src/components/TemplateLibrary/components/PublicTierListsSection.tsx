@@ -8,6 +8,7 @@ import { EmptyState } from "./EmptyState";
 import { booksCountText } from "@/lib/plural";
 import type { TierListShort } from "@/lib/tierListApi";
 import "@/components/DashboardHeroSection/components/RecentPublicTierLists.css";
+import { proxyImageUrl } from "@/utils/imageProxy";
 
 interface PublicTierListsSectionProps {
   tierLists: TierListShort[];
@@ -78,7 +79,7 @@ export function PublicTierListsSection({
                     {tierList.coverImageUrl ? (
                       <div
                         className="recent-tier-card__bg recent-tier-card__bg--cover"
-                        style={{ backgroundImage: `url(${tierList.coverImageUrl})` }}
+                        style={{ backgroundImage: `url(${proxyImageUrl(tierList.coverImageUrl)})` }}
                       />
                     ) : (
                       <div className="recent-tier-card__bg" style={{ background: gradient }}>
