@@ -6,22 +6,14 @@ interface PageContainerProps {
 }
 
 /**
- * Единый контейнер для страниц — задаёт max-width, центрирование и
- * горизонтальные отступы. Все страницы, обёрнутые в PageContainer,
- * выглядят одинаково на любом экране.
- *
- * Использование:
- *   <PageContainer>
- *     <PageContent />
- *   </PageContainer>
- *
- * Для страниц без DashboardLayout — обернуть напрямую.
+ * Единый контейнер для страниц — занимает всю ширину родителя.
+ * Каждая страница задаёт свои max-width и паддинги внутри.
  * Для страниц внутри DashboardLayout — обёртка встроена в сам DashboardLayout
  * (отключается через fullWidth).
  */
 export function PageContainer({ children, className = "" }: PageContainerProps) {
   return (
-    <div className={`mx-auto w-full max-w-7xl ${className}`}>
+    <div className={`w-full ${className}`}>
       {children}
     </div>
   );
