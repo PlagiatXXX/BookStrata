@@ -1,6 +1,7 @@
 import {
   DndContext,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   closestCenter,
@@ -37,7 +38,10 @@ export function TiersStep({
   onRemoveTier,
   onMoveTier,
 }: TiersStepProps) {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+  );
   const tierIds = tiers.map((tier) => tier.id);
 
   const handleDragEnd = (event: DragEndEvent) => {

@@ -1,5 +1,5 @@
 import { useSensors, useSensor } from "@dnd-kit/core";
-import { PointerSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
+import { MouseSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
 import { DndContext, DragOverlay, rectIntersection } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type {
@@ -65,13 +65,11 @@ export const EditorLayout = ({
       : null;
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: { distance: 5 },
-      preventScroll: true,
     }),
     useSensor(TouchSensor, {
       activationConstraint: { delay: 250, tolerance: 5 },
-      preventScroll: true,
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
