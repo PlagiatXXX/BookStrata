@@ -50,7 +50,6 @@ export const HeroSection = memo(
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
                   />
 
                   {searchQuery && (

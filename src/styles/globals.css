@@ -199,10 +199,23 @@
   animation: shimmerEffect 3s linear infinite;
 }
 
+/* ── Dove Flight ── */
+@keyframes dove-flight {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0deg);
+  }
+}
+
+.animate-dove-flight {
+  animation: dove-flight 3s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-rain, .animate-shimmer, .animate-shimmer-fast {
+  .animate-rain, .animate-shimmer, .animate-shimmer-fast, .animate-dove-flight {
     animation: none !important;
-    transition: none !important;
   }
 }
 /* ========== End Animations ========== */

@@ -7,9 +7,6 @@ export const CollectionsSection = memo(() => {
     <section className="mt-20 brutal-card brutal-border p-8 reveal" data-reveal>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-(--ink-1)">
-            curated
-          </p>
           <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
             Литературные подборки
           </h2>

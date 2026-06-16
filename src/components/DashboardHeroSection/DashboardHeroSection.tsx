@@ -26,7 +26,7 @@ export function DashboardHeroSection({
                 <span className="new-hero__highlight">{username}</span>
               </h1>
               <p className="new-hero__subtitle">
-                Твой уютный уголок для чтения
+                В свой уютный уголок
               </p>
               <p className="new-hero__description">
                 Создавай свои рейтинги книг в атмосфере тепла и уюта. Делись
@@ -40,7 +40,7 @@ export function DashboardHeroSection({
                 className="new-hero__btn new-hero__btn--primary"
                 type="button"
               >
-                <Library size={18} />
+                <Library size={16} />
                 В библиотеку
               </button>
 
@@ -49,7 +49,7 @@ export function DashboardHeroSection({
                 className="new-hero__btn new-hero__btn--secondary"
                 type="button"
               >
-                <TrendingUp size={18} />
+                <TrendingUp size={16} />
                 Смотреть тренды
               </button>
             </div>

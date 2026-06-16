@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Library, X, Menu, Globe, LogOut, Users, Crown } from "lucide-react";
+import { List, Library, X, Menu, Globe, LogOut, Users } from "lucide-react";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -101,7 +101,7 @@ export const Header = ({
     {
       label: "Поддержать",
       onClick: () => navigate("/pricing"),
-      icon: <Crown size={16} className="text-yellow-400" />,
+      icon: <span className="inline-block text-xl leading-none animate-dove-flight">🕊️</span>,
       description: "Поддержать проект",
     },
   ];

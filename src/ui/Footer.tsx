@@ -283,10 +283,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 aria-expanded={isDonateOpen}
                 aria-controls="donate-menu"
               >
-                <Sparkles
-                  size={16}
-                  className="text-amber-400 group-hover:animate-pulse"
-                />
+                <span className="inline-block text-amber-400 text-base leading-none animate-dove-flight">🕊️</span>
                 Поддержка проекта
                 <ChevronDown
                   size={18}
