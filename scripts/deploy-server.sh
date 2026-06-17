@@ -60,7 +60,7 @@ fi
 # ——— 3. Пересобрать бэкенд ———
 info "Сборка Docker-образа бэкенда..."
 cd "$PROJECT_DIR/backend"
-docker compose build app
+docker compose --profile full build app
 ok "Бэкенд собран"
 
 # ——— 4. Чистим build cache ———
@@ -70,7 +70,7 @@ ok "Build cache очищен"
 
 # ——— 5. Перезапускаем контейнеры ———
 info "Перезапуск бэкенда и nginx (postgres/redis не трогаем)..."
-docker compose up -d app nginx
+docker compose --profile full up -d app nginx
 ok "Контейнеры запущены"
 
 echo ""

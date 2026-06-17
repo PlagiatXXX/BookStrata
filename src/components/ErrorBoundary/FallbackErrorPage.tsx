@@ -41,7 +41,11 @@ export function FallbackErrorPage({
     <div className="flex min-h-screen items-center justify-center bg-black p-4">
       <div className="neo-brutalist-editor nb-modal max-w-md w-full text-center">
         <div className="space-y-4">
-          <div className="text-6xl">💥</div>
+          <img
+            src="/404.webp"
+            alt="BookStratch"
+            className="mx-auto mb-4 size-32 rounded-2xl border-4 border-black object-cover shadow-[6px_6px_0_0_#000]"
+          />
 
           <h1 className="nb-display-lg text-2xl text-black">
             Что-то пошло не так
