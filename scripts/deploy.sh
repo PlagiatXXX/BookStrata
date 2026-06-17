@@ -106,9 +106,6 @@ ssh "$SSH_HOST" "
 
   # Перезапускаем контейнеры с новым образом
   docker compose --profile full up -d
-
-  # Применяем миграции, если есть новые
-  docker exec bookstrata-api npx prisma migrate deploy 2>/dev/null || true
 "
 
 ok "Деплой завершён"
