@@ -22,7 +22,7 @@ export function ResetPasswordPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <SEOHead title="Сброс пароля" url="/reset-password" noindex />
         <Card className="p-8 text-center space-y-4">
-          <h2 className="text-xl font-bold text-red-600">Невалидная ссылка</h2>
+          <h1 className="text-xl font-bold text-red-600">Невалидная ссылка</h1>
           <p className="text-slate-600">Ссылка для сброса пароля отсутствует или повреждена.</p>
           <Link to="/auth">
             <Button variant="outline">Вернуться к входу</Button>

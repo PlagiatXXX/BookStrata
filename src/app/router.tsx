@@ -185,8 +185,9 @@ export const router = createBrowserRouter([
         path: "/admin/subscriptions",
         element: (
           <AdminGuard>
-            <div className="flex items-center justify-center h-64 text-(--ink-2) text-sm">
-              Раздел временно недоступен
+            <div className="flex flex-col items-center justify-center h-64 gap-2">
+              <h1 className="text-lg font-bold text-(--ink-0)">Подписки</h1>
+              <p className="text-sm text-(--ink-2)">Раздел временно недоступен</p>
             </div>
           </AdminGuard>
         ),

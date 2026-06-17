@@ -15,6 +15,7 @@ import {
 } from "@/lib/tierListApi";
 import { Header } from "@/ui/Header";
 import { Footer } from "@/ui/Footer";
+import { MobileBottomNav } from "@/ui/MobileBottomNav";
 import { EmptyState } from "./components/EmptyState";
 import {
   templateLibraryReducer,
@@ -389,7 +390,7 @@ const TemplateLibrary: React.FC = () => {
         showTemplatesNav
         activeItem="Библиотека"
       />
-      <section className="relative min-h-screen pt-16">
+      <section className="relative min-h-screen pt-16 pb-16 md:pb-0">
         <div className="absolute inset-0 bg-[linear-gradient(165deg,rgba(4,25,38,0.95)_0%,rgba(7,31,43,0.92)_35%,rgba(2,19,32,0.95)_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_14%,rgba(0,195,255,0.12),transparent_36%),radial-gradient(circle_at_84%_80%,rgba(31,124,158,0.1),transparent_38%)]" />
 
@@ -453,6 +454,7 @@ const TemplateLibrary: React.FC = () => {
         isPending={isDeleting}
       />
 
+      <MobileBottomNav showTemplatesNav />
       <Footer />
     </div>
   );

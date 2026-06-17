@@ -7,6 +7,8 @@ export default function NotFoundPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a0e1a] px-4">
       <div className="neo-brutalist-card mx-auto flex max-w-lg flex-col items-center p-8 text-center">
+        <h1 className="mb-4 text-4xl font-black text-[#f3efe6]">Страница не найдена</h1>
+
         <img
           src="/404.webp"
           alt="Букстраж"

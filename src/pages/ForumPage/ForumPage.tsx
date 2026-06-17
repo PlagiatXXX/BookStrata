@@ -146,6 +146,7 @@ export default function ForumPage() {
       showTemplatesNav={true}
       showSearch={false}
       activeItem={undefined}
+      bgVariant="dark"
     >
       <div className="forum-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 py-14 pb-20 cursor-default text-(--ink-0)">

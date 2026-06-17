@@ -23,7 +23,7 @@ export function EditorErrorScreen({
           <div className="mb-6">
             <img src="/lap.webp" alt="" className="size-14 object-contain mx-auto" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">Ошибка загрузки</h2>
+          <h1 className="text-2xl font-bold text-white mb-3">Ошибка загрузки</h1>
           <p className="text-gray-300 mb-6">
             {errorMessage}
           </p>

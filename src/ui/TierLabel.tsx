@@ -73,7 +73,7 @@ const TierLabelText = memo(
     if (isMultiWord) {
       return (
         <span
-          className={`nb-label-text break-words overflow-hidden ${colorClass} ${dynamicSizeClass} ${fontClass}`}
+          className={`nb-label-text break-words [hyphens:auto] overflow-hidden ${colorClass} ${dynamicSizeClass} ${fontClass}`}
           style={customColor ? { color: customColor } : undefined}
         >
           {words[0]}
@@ -85,7 +85,7 @@ const TierLabelText = memo(
 
     return (
       <span
-        className={`nb-label-text truncate ${colorClass} ${dynamicSizeClass} ${fontClass}`}
+        className={`nb-label-text break-words [hyphens:auto] ${colorClass} ${dynamicSizeClass} ${fontClass}`}
         title={title}
         style={customColor ? { color: customColor } : undefined}
       >
@@ -186,7 +186,7 @@ export const TierLabel = memo(
       <div
         ref={droppableRef || wrapperRef}
         style={{ backgroundColor: color }}
-        className={`nb-rank-box group/label relative flex items-center justify-center focus-within:opacity-100 tier-label ${onRename || onChangeColor ? "cursor-text" : ""} outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset`}
+        className={`nb-rank-box group/label relative flex items-center justify-center px-1.5 focus-within:opacity-100 tier-label ${onRename || onChangeColor ? "cursor-text" : ""} outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset`}
         onClick={handleStartEditing}
         onKeyDown={handleKeyDownContainer}
         tabIndex={(onRename || onChangeColor) && !isEditing ? 0 : -1}
@@ -209,7 +209,7 @@ export const TierLabel = memo(
             onChange={(e) => setInputValue(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className={`w-full min-w-0 bg-transparent text-center outline-none overflow-hidden text-ellipsis ${
+            className={`w-full min-w-0 bg-transparent text-center outline-none break-words ${
               textColor === "black" ? "text-black" : "text-white"
             }`}
             style={{ fontSize: "inherit", fontWeight: "inherit", fontStyle: "inherit" }}

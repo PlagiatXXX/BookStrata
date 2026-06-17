@@ -53,6 +53,7 @@ export function NewsPage() {
         showTemplatesNav={false}
         showSearch={false}
         activeItem="Новости"
+        bgVariant="dark"
       >
         <div className="max-w-4xl mx-auto px-6 py-12">
           <div className="animate-pulse">
@@ -87,11 +88,12 @@ export function NewsPage() {
         breadcrumbs={[{ name: "Новости", url: "/community" }, { name: article.title, url: `/news/${id}` }]}
       />
       <DashboardLayout
-      onMyRatingsClick={() => navigate("/")}
-      showTemplatesNav={false}
-      showSearch={false}
-      activeItem="Новости"
-    >
+        onMyRatingsClick={() => navigate("/")}
+        showTemplatesNav={false}
+        showSearch={false}
+        activeItem="Новости"
+        bgVariant="dark"
+      >
       <article className="max-w-4xl mx-auto px-6 py-12">
         <Breadcrumbs items={[{ label: "Новости", href: "/community" }, { label: article.title }]} />
 

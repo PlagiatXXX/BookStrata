@@ -44,7 +44,7 @@ function AppShell() {
         <Toaster position="top-center" theme="system" />
         <AchievementNotification achievement={newAchievement} onClose={clearNotification} />
         <CookieConsent />
-        <FeedbackButton raised={pathname.match(/^\/tier-lists\/[^/]+\/?$/)? true : false} />
+        <FeedbackButton raised={pathname.match(/^\/tier-lists\/[^/]+\/?$/)? true : false} withNavMargin={pathname !== "/"} />
       </AuthProvider>
     </HelmetProvider>
   );

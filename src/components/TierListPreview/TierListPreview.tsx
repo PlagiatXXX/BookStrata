@@ -36,7 +36,6 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
                   paddingTop: 6,
                   paddingBottom: 6,
                   overflow: "hidden",
-                  textOverflow: "ellipsis",
                 }}
                 title={tier.title}
               >

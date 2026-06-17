@@ -63,7 +63,7 @@ export default function UserProfilePage() {
     return (
       <DashboardLayout onMyRatingsClick={handleMyRatingsClick} showSearch={false}>
         <div className="min-h-screen flex flex-col items-center justify-center text-(--ink-1)">
-          <p className="text-lg mb-4">Пользователь не найден</p>
+          <h1 className="text-lg mb-4">Пользователь не найден</h1>
           <button onClick={() => navigate(-1)} className="text-xs font-bold uppercase tracking-widest text-(--accent-main) hover:opacity-80 transition-opacity">
             ← Назад
           </button>

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Library, X, Menu, Globe, LogOut, Users } from "lucide-react";
+import { List, Library, Globe, LogOut, Users } from "lucide-react";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -32,7 +32,6 @@ export const Header = ({
   showSearch = false,
   activeItem: activeItemProp,
 }: HeaderProps = {}) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { isAuthenticated, user: authUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -168,14 +167,16 @@ export const Header = ({
               <span>Выйти</span>
             </button>
 
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-              aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
-            >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
+            {/* Mobile logout */}
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="md:hidden p-2 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                aria-label="Выйти"
+              >
+                <LogOut size={18} />
+              </button>
+            )}
 
             {/* User Avatar */}
             {isAuthenticated && (
@@ -196,75 +197,7 @@ export const Header = ({
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <nav className="md:hidden pb-4 space-y-2 border-t border-slate-700/50 pt-4">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  item.onClick?.();
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer ${
-                  activeItem === item.label
-                    ? "text-cyan-400"
-                    : "text-gray-300 hover:text-white"
-                } hover:bg-slate-800/50 transition-all duration-200 text-sm`}
-              >
-                {item.icon}
-                <div className="text-left flex-1">
-                  <div className="font-medium">{item.label}</div>
-                  <div className="text-xs text-gray-500">
-                    {item.description}
-                  </div>
-                </div>
-                {item.badge && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-300">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            ))}
 
-            {/* Mobile Profile Link */}
-            {isAuthenticated && (
-              <button
-                onClick={() => {
-                  navigate("/profile");
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer text-gray-300 hover:text-white hover:bg-slate-800/50 transition-all duration-200 text-sm"
-              >
-                <Avatar
-                  url={authUser?.avatarUrl}
-                  username={authUser?.username}
-                  size="sm"
-                />
-                <div className="text-left flex-1">
-                  <div className="font-medium">Профиль</div>
-                  <div className="text-xs text-gray-500">
-                    {authUser?.username}
-                  </div>
-                </div>
-              </button>
-            )}
-
-            {/* Mobile Logout Button */}
-            {isAuthenticated && (
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer text-red-400 hover:text-red-300 hover:bg-slate-800/50 transition-all duration-200 text-sm border-t border-slate-700/50 mt-2 pt-4"
-              >
-                <LogOut size={18} />
-                <div className="font-medium">Выйти</div>
-              </button>
-            )}
-          </nav>
-        )}
       </div>
     </header>
 

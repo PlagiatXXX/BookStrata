@@ -434,17 +434,9 @@ function Lightbox({ screenshot, onClose }: {
       onClick={onClose}
     >
       <div
-        className="relative max-h-[60vh] max-w-[60vw] w-full h-full flex items-center justify-center"
+        className="relative flex items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute -top-3 -right-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full border border-(--accent-main)/40 bg-(--accent-main) text-white transition-colors hover:brightness-110 shadow-lg"
-          type="button"
-          aria-label="Закрыть"
-        >
-          <X size={16} />
-        </button>
         {screenshot.videoSrc ? (
           <video
             src={screenshot.videoSrc}
@@ -453,16 +445,24 @@ function Lightbox({ screenshot, onClose }: {
             loop
             playsInline
             controls
-            className="max-h-full max-w-full rounded-xl shadow-2xl"
+            className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
           />
         ) : (
           <img
             src={screenshot.src}
             alt={screenshot.title}
             loading="lazy"
-            className="max-h-full max-w-full rounded-xl shadow-2xl object-contain"
+            className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl object-contain"
           />
         )}
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full border border-(--accent-main)/40 bg-(--accent-main) text-white transition-colors hover:brightness-110 shadow-lg"
+          type="button"
+          aria-label="Закрыть"
+        >
+          <X size={16} />
+        </button>
       </div>
     </div>
   )

@@ -64,6 +64,7 @@ export default function CommunityPage() {
       showSearch={false}
       activeItem="Новости"
       onMyRatingsClick={() => navigate("/")}
+      bgVariant="dark"
     >
       <div className="community-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 pb-20 cursor-default text-(--ink-0)">
