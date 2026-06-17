@@ -60,10 +60,13 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # Собранный фронтенд (запусти npm run build перед docker compose)
+      # Собранный фронтенд (запуши npm run build перед docker compose)
       - ../dist:/usr/share/nginx/html:ro
       # Конфиг nginx
       - ../nginx/bookstrata.conf:/etc/nginx/conf.d/default.conf:ro
+      # Snippets (security-заголовки и т.п.) — инклудятся из bookstrata.conf
+      # абсолютным путём /etc/nginx/snippets/*.conf
+      - ../nginx/snippets:/etc/nginx/snippets:ro
       # SSL-сертификаты (если есть)
       - ../nginx/ssl:/etc/nginx/ssl:ro
     depends_on:

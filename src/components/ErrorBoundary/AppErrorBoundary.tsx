@@ -1,5 +1,6 @@
 import React, { Component, type ReactNode, type ErrorInfo } from "react";
 import { FallbackErrorPage } from "./FallbackErrorPage";
+import { isChunkLoadError, hasReloadedThisSession, markReloaded } from "@/lib/lazy";
 
 interface Props {
   children: ReactNode;
@@ -29,6 +30,18 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Запасной слой защиты от stale-бандла:
+    // если ошибка загрузки чанка дошла до boundary (lazy-обёртка её не поймала
+    // или reload уже выполнялся в этой сессии) — пытаемся перезагрузить страницу.
+    // reload ещё не было → перезагружаем и не логируем в Sentry (ошибка авто-восстановимая).
+    // reload уже был → НЕ перезагружаем (защита от цикла), падаем в FallbackErrorPage
+    // и логируем в Sentry как диагностическую ошибку.
+    if (isChunkLoadError(error) && !hasReloadedThisSession()) {
+      markReloaded();
+      window.location.reload();
+      return;
+    }
+
     // Отправляем в Sentry (ленивая загрузка — ~450 KB)
     import("@sentry/browser").then((Sentry) => {
       Sentry.withScope((scope) => {
