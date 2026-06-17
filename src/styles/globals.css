@@ -213,8 +213,22 @@
   animation: dove-flight 3s ease-in-out infinite;
 }
 
+/* ── Gradient XY (для градиентных кнопок) ── */
+@keyframes gradient-xy {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-xy {
+  animation: gradient-xy 2s ease infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-rain, .animate-shimmer, .animate-shimmer-fast, .animate-dove-flight {
+  .animate-rain, .animate-shimmer, .animate-shimmer-fast, .animate-dove-flight, .animate-gradient-xy {
     animation: none !important;
   }
 }

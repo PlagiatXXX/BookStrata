@@ -7,8 +7,6 @@ import {
   Folder,
   Users,
   User,
-  MessageCircle,
-  Share2,
   HelpCircle,
   Copy,
   Check,
@@ -17,6 +15,7 @@ import {
   Info,
 } from "lucide-react";
 import { Meteors } from "./Meteors";
+import { SocialIcons } from "./SocialIcons";
 import { apiClient } from "@/lib/api-client";
 
 const marqueeStyle = `
@@ -54,38 +53,17 @@ const userLinks = [
   { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
   { href: "/privacy", label: "Политика", icon: <ScrollText size={14} /> },
   { href: "/terms", label: "Условия", icon: <Shield size={14} /> },
-  {
-    href: TELEGRAM_URL,
-    label: "Telegram",
-    icon: <MessageCircle size={14} />,
-    isExternal: true,
-  },
-  {
-    href: VK_URL,
-    label: "ВКонтакте",
-    icon: <Share2 size={14} />,
-    isExternal: true,
-  },
 ];
 
 const landingUserLinks: { label: string; icon: React.ReactNode; href?: string; isExternal?: boolean }[] = [
   { href: "/privacy", label: "Политика конфиденциальности", icon: <ScrollText size={14} /> },
   { href: "/terms", label: "Условия использования", icon: <Shield size={14} /> },
   { href: "/about", label: "О проекте", icon: <Info size={14} /> },
-  {
-    href: TELEGRAM_URL,
-    label: "Telegram",
-    icon: <MessageCircle size={14} />,
-    isExternal: true,
-  },
-  {
-    href: VK_URL,
-    label: "ВКонтакте",
-    icon: <Share2 size={14} />,
-    isExternal: true,
-  },
   { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
 ];
+
+const combinedLinks = [...mainLinks, ...userLinks];
+const combinedLandingLinks = [...landingLinks, ...landingUserLinks];
 
 type PopupDirection = "above" | "below";
 
@@ -196,13 +174,13 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
             </div>
           </div>
 
-          {/* Central Zone 1: Main Links */}
+          {/* Central Zone 1: Main Links (все ссылки) */}
           <nav aria-label="Основная навигация футера">
             <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
-              {isLanding ? "На сайте" : "Основное"}
+              Основное
             </h4>
             <ul className="flex flex-col gap-3">
-              {(isLanding ? landingLinks : mainLinks).map((link) => {
+              {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
                 const isScroll = "sectionId" in link && link.sectionId
                 const key = isScroll ? link.sectionId! : ("href" in link ? link.href! : "")
                 return (
@@ -234,46 +212,26 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
             </ul>
           </nav>
 
-          {/* User + Donate row on mobile */}
-          <div className="grid grid-cols-2 gap-10 lg:contents">
-          {/* Central Zone 2: User Actions */}
-          <nav aria-label="Пользовательские ссылки">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
-              {isLanding ? "Информация" : "Пользователю"}
-            </h4>
-            <ul className="flex flex-col gap-3">
-              {(isLanding ? landingUserLinks : userLinks).map((link) => (
-                <li key={link.href ?? link.label}>
-                  {link.isExternal ? (
-                    <a
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-fuchsia-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 rounded-md px-1 -mx-1"
-                    >
-                      <span className="text-[#b8b1a3]/50 group-hover:text-fuchsia-400 group-hover:scale-110 transition-all duration-300">
-                        {link.icon}
-                      </span>
-                      {link.label}
-                    </a>
-                  ) : (
-                    <Link
-                      to={link.href ?? ""}
-                      className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
-                    >
-                      <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
-                        {link.icon}
-                      </span>
-                      {link.label}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </nav>
+          {/* Central Zone 2: SocialIcons + Donate */}
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col items-center">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
+                Соцсети
+              </h4>
+              <SocialIcons
+                links={{
+                  telegram: TELEGRAM_URL,
+                  vk: VK_URL,
+                  github: "https://github.com/PlagiatXXX",
+                  yandexMail: "mailto:fedorpasyada@yandex.ru",
+                  youtube: "https://www.youtube.com/@fedor1994",
+                }}
+              />
+            </div>
+          </div>
 
           {/* Right Zone: Donate Block */}
-          <div className="flex flex-col items-start self-start lg:items-end lg:text-right lg:contents">
+          <div className="flex flex-col items-start self-start lg:items-end lg:text-right">
             <div className="relative max-w-full self-start">
               <button
                 type="button"
@@ -338,7 +296,6 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
 

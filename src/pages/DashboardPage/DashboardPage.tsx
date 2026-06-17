@@ -108,8 +108,8 @@ export function DashboardPage() {
                   Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2 border-2 border-black bg-[#c1fffe] px-3 py-2 sm:px-5 sm:py-3 font-black text-black transition-colors group-hover:bg-[#9cf5f3]">
-                <span className="text-base sm:text-lg">🔮</span>
+              <div className="relative z-10 flex shrink-0 cursor-pointer items-center gap-2 px-6 font-bold text-white transition-all duration-500 before:absolute before:-inset-[5px] before:-z-10 before:rounded-[35px] before:bg-gradient-to-r before:from-violet-500 before:from-10% before:via-sky-500 before:via-30% before:to-pink-500 before:bg-[length:400%] before:transition-all before:duration-500 before:ease-in-out hover:before:blur-xl hover:before:bg-[length:10%] h-[3em] rounded-[30px] bg-gradient-to-r from-violet-500 from-10% via-sky-500 via-30% to-pink-500 to-90% bg-[length:400%] hover:animate-gradient-xy hover:bg-[length:100%] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:bg-violet-700 active:brightness-90 active:translate-y-[2px] focus-visible:ring-2 focus-visible:ring-violet-700">
+                <span className="text-lg sm:text-xl">🔮</span>
                 <span className="text-xs sm:text-sm">Спросить</span>
               </div>
             </button>
