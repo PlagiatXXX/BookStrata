@@ -22,6 +22,8 @@ interface HeaderProps {
   showTemplatesNav?: boolean;
   showSearch?: boolean;
   activeItem?: string;
+  /** Скрывает кнопку "Выйти" — для страниц, где она может сбивать (например, редактор тир-листов) */
+  hideLogout?: boolean;
 }
 
 export const Header = ({
@@ -31,6 +33,7 @@ export const Header = ({
   showTemplatesNav = true,
   showSearch = false,
   activeItem: activeItemProp,
+  hideLogout = false,
 }: HeaderProps = {}) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { isAuthenticated, user: authUser, logout } = useAuth();
@@ -157,18 +160,20 @@ export const Header = ({
             )}
 
             {/* Logout Button (Desktop) */}
-            <button
-              onClick={handleLogout}
-              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-              title="Выйти"
-              aria-label="Выйти"
-            >
-              <LogOut size={16} />
-              <span>Выйти</span>
-            </button>
+            {!hideLogout && (
+              <button
+                onClick={handleLogout}
+                className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                title="Выйти"
+                aria-label="Выйти"
+              >
+                <LogOut size={16} />
+                <span>Выйти</span>
+              </button>
+            )}
 
             {/* Mobile logout */}
-            {isAuthenticated && (
+            {!hideLogout && isAuthenticated && (
               <button
                 onClick={handleLogout}
                 className="md:hidden p-2 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
