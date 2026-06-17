@@ -135,6 +135,7 @@ const cspDirectives = {
     "https://mc.yandex.ru",
     "wss://mc.yandex.ru",
     "https://*.ingest.sentry.io",
+    "https://*.ingest.de.sentry.io",
   ],
   workerSrc: ["'self'", "blob:"],
 };

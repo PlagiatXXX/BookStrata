@@ -1,8 +1,7 @@
 import { createLogger } from '../../lib/logger.js'
 import type { AiProvider } from './providers/types.js'
 import { customProvider } from './providers/custom.js'
-import { geminiProvider } from './providers/gemini.js'
-import { groqProvider } from './providers/groq.js'
+import { openrouterProvider } from './providers/openrouter.js'
 import type { AiChunk } from './ai-librarian.service.js'
 import { getCachedResponse, setCachedResponse } from './cache.js'
 
@@ -10,14 +9,12 @@ const logger = createLogger('AiRouter', { color: 'cyan' })
 
 const providers: AiProvider[] = [
   customProvider,
-  geminiProvider,
-  groqProvider,
+  openrouterProvider,
 ]
 
 const API_KEY_MAP: Record<string, string> = {
   custom: 'CUSTOM_AI_API_KEY',
-  gemini: 'GEMINI_API_KEY',
-  groq: 'GROQ_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
 }
 
 export class AiRouterError extends Error {
