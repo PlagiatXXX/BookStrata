@@ -163,6 +163,7 @@ export function AuthForm() {
                 <input
                   id="username" type="text" name="username"
                   value={state.formData.username} onChange={handleChange} required
+                  autoComplete="username"
                   className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none focus:text-slate-950 transition-colors duration-200"
                 />
                 <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
@@ -176,6 +177,7 @@ export function AuthForm() {
                   <input
                     id="email" type="email" name="email"
                     value={state.formData.email} onChange={handleChange} required
+                    autoComplete="email"
                     className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none"
                   />
                   <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
