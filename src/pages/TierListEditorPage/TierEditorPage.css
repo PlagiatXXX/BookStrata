@@ -9,6 +9,12 @@
     box-shadow: none;
   }
 
+/* Fix scroll container chain — переключаем overflow-x: hidden → clip
+   чтобы не создавать scroll container, ломающий position: sticky внутри */
+main.grid:has(> .neo-brutalist-editor) {
+  overflow-x: clip !important;
+}
+
 /* NEO-BRUTALIST DESIGN TOKENS */
 .neo-brutalist-editor {
   --nb-bg: #0e0e0e;
@@ -265,9 +271,14 @@
 /* SIDEBAR & CONTAINERS */
 .neo-brutalist-editor .nb-sidebar {
   border: var(--nb-border-width) solid var(--nb-border);
+  border-left: 3px solid var(--nb-primary);
   background-color: var(--nb-surface-container-low);
   padding: 1rem;
   border-radius: 0 !important;
+  position: relative;
+  box-shadow:
+    -3px 0 12px rgba(193, 255, 254, 0.07),
+    inset 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .neo-brutalist-editor .nb-sidebar-drop-target {
@@ -286,6 +297,46 @@
   border-bottom: var(--nb-border-width) solid var(--nb-border);
   padding-bottom: 0.8rem;
   margin-bottom: 1rem;
+  padding-left: 0.75rem;
+  position: relative;
+}
+
+.neo-brutalist-editor .nb-section-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  bottom: 0.8rem;
+  width: 2px;
+  background: var(--nb-primary);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ACTIVE TIER SETTINGS CARD */
+.neo-brutalist-editor .nb-sidebar-active-tier {
+  border: var(--nb-border-width) solid rgba(255, 189, 88, 0.2);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 189, 88, 0.04) 0%,
+      transparent 100%
+    );
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.neo-brutalist-editor .nb-sidebar-active-tier::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--nb-tertiary);
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 /* INPUTS */

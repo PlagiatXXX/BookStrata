@@ -1,7 +1,8 @@
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState, useEffect } from "react";
 import { TierGrid } from "@/components/TierGrid/TierGrid";
 import { UnrankedItems } from "@/components/UnrankedItems/UnrankedItems";
 import { SettingsSidebar } from "@/components/SettingsSidebar/SettingsSidebar";
+import { PanelRightOpen, PanelRightClose } from "lucide-react";
 import { MobileToolbar } from "./MobileToolbar";
 import type { Book, TierListData } from "@/types";
 import type { SaveStatus } from "../hooks/useTierEditorSave";
@@ -86,6 +87,15 @@ export const EditorMainContent = memo(
       [activeTierId, listData.tiers],
     );
 
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+      try { return localStorage.getItem('tier-editor-sidebar-collapsed') === 'true' }
+      catch { return false }
+    })
+
+    useEffect(() => {
+      localStorage.setItem('tier-editor-sidebar-collapsed', String(sidebarCollapsed))
+    }, [sidebarCollapsed])
+
     // Стабилизируем обработчики для TierGrid
     const handleChangeTierColor = useCallback(
       (tierId: string, color: string) => {
@@ -115,6 +125,12 @@ export const EditorMainContent = memo(
       [onAddRow],
     );
 
+    // Обёртка для onSetActiveTier: при свёрнутом сайдбаре сначала разворачиваем
+    const handleSetActiveTier = useCallback((id: string) => {
+      if (sidebarCollapsed) setSidebarCollapsed(false)
+      onSetActiveTier(id)
+    }, [sidebarCollapsed, onSetActiveTier])
+
     return (
       <><div className="flex flex-col gap-6 lg:flex-row lg:justify-center">
         <div className="flex max-w-full flex-1 lg:max-w-350 flex-col gap-4">
@@ -129,7 +145,7 @@ export const EditorMainContent = memo(
             onChangeTierColor={isReadOnly ? undefined : handleChangeTierColor}
             onRenameTier={isReadOnly ? undefined : handleRenameTier}
             onDeleteTier={isReadOnly ? undefined : handleDeleteTier}
-            onSetActiveTier={onSetActiveTier}
+            onSetActiveTier={handleSetActiveTier}
           />
 
           {!hideUnranked && (
@@ -145,24 +161,47 @@ export const EditorMainContent = memo(
         </div>
 
         {!isReadOnly && (
-          <div className="hidden shrink-0 lg:sticky lg:top-4 lg:self-start lg:block">
-            <SettingsSidebar
-              key={activeTierData?.id}
-              activeTier={activeTierData || undefined}
-              onUpdateTier={isReadOnly ? undefined : onUpdateTier}
-              onAddRow={isReadOnly ? undefined : onAddRow}
-              onClearRows={isReadOnly ? undefined : () => onClearRows?.()}
-              onDownloadImage={onDownloadImage}
-              onDeleteRating={isReadOnly ? undefined : () => onDeleteRating?.()}
-              isPublic={isPublic}
-              onTogglePublic={isReadOnly ? undefined : onTogglePublic}
-              isTogglingPublic={isTogglingPublic}
-              onFindBook={isReadOnly ? undefined : () => onFindBook?.()}
-              saveStatus={saveStatus}
-              lastSaved={lastSaved}
-              hasUnsavedChanges={hasUnsavedChanges}
-              onSave={onSave}
-            />
+          <div className="hidden lg:flex sticky top-24 self-start shrink-0">
+            <div
+              data-testid="sidebar-transition-wrapper"
+              className={`overflow-hidden transition-[width] duration-300 ease-in-out ${
+                sidebarCollapsed ? 'w-0' : 'w-80'
+              }`}
+            >
+              <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+                <SettingsSidebar
+                  key={activeTierData?.id}
+                  activeTier={activeTierData || undefined}
+                  onUpdateTier={isReadOnly ? undefined : onUpdateTier}
+                  onAddRow={isReadOnly ? undefined : onAddRow}
+                  onClearRows={isReadOnly ? undefined : () => onClearRows?.()}
+                  onDownloadImage={onDownloadImage}
+                  onDeleteRating={isReadOnly ? undefined : () => onDeleteRating?.()}
+                  isPublic={isPublic}
+                  onTogglePublic={isReadOnly ? undefined : onTogglePublic}
+                  isTogglingPublic={isTogglingPublic}
+                  onFindBook={isReadOnly ? undefined : () => onFindBook?.()}
+                  saveStatus={saveStatus}
+                  lastSaved={lastSaved}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onSave={onSave}
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSidebarCollapsed((prev) => !prev)}
+              className="flex shrink-0 self-start items-center cursor-pointer group"
+              title={sidebarCollapsed ? "Показать боковую панель" : "Скрыть боковую панель"}
+              aria-label={sidebarCollapsed ? "Показать боковую панель" : "Скрыть боковую панель"}
+            >
+              <div className="w-4 min-h-[320px] bg-black border-l-2 border-[#c1fffe]/20 shadow-[inset_0_0_12px_0_rgba(193,255,254,0.12),0_0_15px_3px_rgba(193,255,254,0.1)] group-hover:border-[#c1fffe]/60 group-hover:shadow-[inset_0_0_18px_0_rgba(193,255,254,0.25),0_0_25px_6px_rgba(193,255,254,0.2)] transition-all duration-500" />
+              {sidebarCollapsed ? (
+                <PanelRightOpen size={16} className="text-[#c1fffe] ml-1.5 group-hover:brightness-150 transition-all duration-300" />
+              ) : (
+                <PanelRightClose size={16} className="text-[#c1fffe] ml-1.5 group-hover:brightness-150 transition-all duration-300" />
+              )}
+            </button>
           </div>
         )}
       </div>

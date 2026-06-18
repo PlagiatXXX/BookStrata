@@ -100,6 +100,7 @@ export const TierRow = memo(
         style={style}
         className={`nb-tier-row group relative flex ${activeClass}`}
         role="listitem"
+        data-tier-id={tier.id}
       >
         <TierDropTargetOverlay tierId={tier.id} />
 

@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query"
-import { useNavigate } from "react-router-dom"
 import { Globe, TrendingUp, ExternalLink } from "lucide-react"
 import { getExternalNews, type ExternalNewsItem } from "@/lib/externalNewsApi"
 import "./TrendingNow.css"
@@ -36,8 +35,6 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
 }
 
 export function TrendingNow() {
-  const navigate = useNavigate()
-
   const { data, isLoading } = useQuery({
     queryKey: ["trending-news"],
     queryFn: () => getExternalNews(4),
@@ -58,13 +55,12 @@ export function TrendingNow() {
             <TrendingUp size={20} />
             Сейчас обсуждают
           </h2>
-          <button
+          <a
+            href="/community#news"
             className="trending-now__link"
-            onClick={() => navigate("/community")}
-            type="button"
           >
             Все новости →
-          </button>
+          </a>
         </div>
 
         <div className="trending-now__grid">

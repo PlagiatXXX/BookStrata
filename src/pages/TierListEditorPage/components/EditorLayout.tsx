@@ -89,7 +89,7 @@ export const EditorLayout = ({
       hideMobileNav={!isReadOnly}
       hideLogout={true}
     >
-      <main className={`neo-brutalist-editor flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-8 ${!isReadOnly ? "pb-24 lg:pb-8" : ""}`} data-theme={theme}>
+      <main className={`neo-brutalist-editor flex-1 overflow-x-clip p-4 lg:p-8 ${!isReadOnly ? "pb-24 lg:pb-8" : ""}`} data-theme={theme}>
         <EditorHeader {...headerProps} />
         <div className="flex flex-wrap gap-3 items-start mb-6">
           {tierListId && !hideCover && (

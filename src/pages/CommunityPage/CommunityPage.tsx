@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, memo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
@@ -22,11 +22,26 @@ const MemoizedCollectionsSection = memo(CollectionsSection);
 
 export default function CommunityPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeCategory, setActiveCategory] = useState("actual");
   const [searchQuery, setSearchQuery] = useState("");
   const [previewTemplate, setPreviewTemplate] = useState<TemplateItem | null>(
     null,
   );
+
+  // Прокрутка к якорю при переходе с других страниц
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace("#", "");
+      // Ждём рендера lazy-компонентов и прокручиваем
+      requestAnimationFrame(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    }
+  }, [location.hash]);
 
   useEffect(() => {
     const elements = Array.from(

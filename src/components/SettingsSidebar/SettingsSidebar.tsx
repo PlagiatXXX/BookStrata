@@ -114,10 +114,10 @@ export const SettingsSidebar = memo(({
   }, [activeTier, onUpdateTier]);
 
   return (
-    <aside className="nb-sidebar flex w-full flex-col text-white lg:w-80">
+    <aside className="nb-sidebar relative flex w-full flex-col text-white lg:w-80">
       {onFindBook && (
         <div className="nb-section-header">
-          <h3 className="nb-label-md mb-4 text-[#c1fffe]">Поиск в библиотеке</h3>
+          <h3 className="nb-label-md mb-4 text-[#c1fffe]">Поиск в библиотеке / LiveLib</h3>
           <button
             onClick={onFindBook}
             className={primaryActionButtonClass}
@@ -149,7 +149,7 @@ export const SettingsSidebar = memo(({
       </div>
 
       {activeTier && (
-        <div className="nb-section-header">
+        <div className="nb-section-header nb-sidebar-active-tier">
           <h3 className="nb-label-md mb-4 text-[#ffbd58]">Настройки: {activeTier.title}</h3>
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
@@ -283,7 +283,7 @@ export const SettingsSidebar = memo(({
         </div>
       )}
 
-      <div className="mt-auto flex flex-col gap-4">
+      <div className="mt-auto flex flex-col gap-4 border-t border-[#c1fffe]/10 pt-4">
         {onTogglePublic && (
           <div className="flex items-center justify-between nb-heavy-border bg-black p-4">
             <label
