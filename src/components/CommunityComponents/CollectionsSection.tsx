@@ -6,7 +6,7 @@ import { proxyImageUrl } from "@/utils/imageProxy";
 export const CollectionsSection = memo(() => {
   return (
     <section className="mt-20 brutal-card brutal-border p-8 reveal" data-reveal>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
         <div>
           <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
             Литературные подборки

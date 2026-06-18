@@ -123,10 +123,11 @@ export async function checkAndGrantAchievement(userId: number, achievementId: Ac
 }
 
 /**
- * Логика проверки условий для разных действий
+ * Только проверка и выдача достижений (без начисления повторяемого XP)
+ * Используется для ретроактивной синхронизации при загрузке профиля
  */
-export async function processAction(userId: number, action: 'create_tier_list' | 'add_book' | 'get_like' | 'fork' | 'write_review' | 'participate_battle' | 'win_battle') {
-  const newAchievements = [];
+async function checkAchievements(userId: number, action: 'create_tier_list' | 'add_book' | 'get_like' | 'fork' | 'write_review' | 'participate_battle' | 'win_battle') {
+  const newAchievements: Awaited<ReturnType<typeof checkAndGrantAchievement>>[] = [];
 
   switch (action) {
     case 'create_tier_list': {
@@ -145,8 +146,6 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a = await checkAndGrantAchievement(userId, 'curator_3');
         if (a) newAchievements.push(a);
       }
-      // Повторяемый XP за создание тир-листа
-      await addXP(userId, 5);
       break;
     }
     case 'add_book': {
@@ -164,7 +163,6 @@ export async function processAction(userId: number, action: 'create_tier_list' |
           if (a) newAchievements.push(a);
         }
       }
-
 
       const now = new Date();
       const moscowHour = (now.getUTCHours() + 3) % 24;
@@ -189,8 +187,6 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a = await checkAndGrantAchievement(userId, 'secret_lucky');
         if (a) newAchievements.push(a);
       }
-      // Повторяемый XP за добавление книги
-      await addXP(userId, 1);
       break;
     }
     case 'get_like': {
@@ -211,8 +207,6 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a = await checkAndGrantAchievement(userId, 'popular_author_10');
         if (a) newAchievements.push(a);
       }
-      // Повторяемый XP за получение лайка
-      await addXP(userId, 2);
       break;
     }
     case 'write_review': {
@@ -238,8 +232,6 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a = await checkAndGrantAchievement(userId, 'critic');
         if (a) newAchievements.push(a);
       }
-      // Повторяемый XP за написание рецензии
-      await addXP(userId, 5);
       break;
     }
     case 'participate_battle': {
@@ -256,8 +248,6 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a2 = await checkAndGrantAchievement(userId, 'fighter_2');
         if (a2) newAchievements.push(a2);
       }
-      // Повторяемый XP за участие в битве
-      await addXP(userId, 3);
       break;
     }
     case 'win_battle': {
@@ -276,8 +266,6 @@ export async function processAction(userId: number, action: 'create_tier_list' |
         const a2 = await checkAndGrantAchievement(userId, 'fighter_4');
         if (a2) newAchievements.push(a2);
       }
-      // Повторяемый XP за победу в битве
-      await addXP(userId, 10);
       break;
     }
     case 'fork': {
@@ -286,11 +274,30 @@ export async function processAction(userId: number, action: 'create_tier_list' |
          const a = await checkAndGrantAchievement(userId, 'explorer');
          if (a) newAchievements.push(a);
        }
-       // Повторяемый XP за форк
-       await addXP(userId, 3);
        break;
     }
   }
+  return newAchievements;
+}
+
+/**
+ * Логика проверки условий для разных действий + начисление XP
+ * Вызывается при реальном событии (через event-bus)
+ */
+export async function processAction(userId: number, action: 'create_tier_list' | 'add_book' | 'get_like' | 'fork' | 'write_review' | 'participate_battle' | 'win_battle') {
+  const newAchievements = await checkAchievements(userId, action);
+
+  // Повторяемый XP за действие (только при реальном событии!)
+  switch (action) {
+    case 'create_tier_list': await addXP(userId, 5); break;
+    case 'add_book': await addXP(userId, 1); break;
+    case 'get_like': await addXP(userId, 2); break;
+    case 'write_review': await addXP(userId, 5); break;
+    case 'participate_battle': await addXP(userId, 3); break;
+    case 'win_battle': await addXP(userId, 10); break;
+    case 'fork': await addXP(userId, 3); break;
+  }
+
   return newAchievements;
 }
 
@@ -345,7 +352,7 @@ export async function syncUserAchievements(userId: number) {
 
   const results = [];
   for (const action of actions) {
-    const news = await processAction(userId, action);
+    const news = await checkAchievements(userId, action);
     results.push(...news);
   }
   return results;
