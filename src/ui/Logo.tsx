@@ -10,11 +10,9 @@ export const Logo = ({ onClick }: LogoProps) => {
       aria-label="BookStrata Pro - Рейтинг всего"
     >
       <svg
-        width="180"
-        height="48"
         viewBox="0 0 180 48"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0"
+        className="shrink-0 w-[120px] xs:w-[140px] sm:w-[160px] md:w-[180px] h-auto"
       >
         {/* ICON - Animated tier bars */}
         <g transform="translate(4, 10)">

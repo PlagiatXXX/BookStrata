@@ -189,6 +189,7 @@ export function AuthForm() {
                 <input
                   id="password" type={state.showPassword ? "text" : "password"} name="password"
                   value={state.formData.password} onChange={handleChange} required
+                  autoComplete={mode === "register" ? "new-password" : "current-password"}
                   className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none pr-10"
                 />
                 <button

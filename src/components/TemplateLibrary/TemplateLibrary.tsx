@@ -402,14 +402,38 @@ const TemplateLibrary: React.FC = () => {
               onBackClick={handleGoBack}
             />
 
+            {/* Mobile section tabs */}
+            <div className="flex lg:hidden items-center gap-1 mb-4 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {([
+                { key: 'private' as const, label: 'Мои' },
+                { key: 'public' as const, label: 'Публичные' },
+                { key: 'favorites' as const, label: 'Избранное' },
+              ]).map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleSectionChange(key)}
+                  className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                    activeSection === key
+                      ? 'bg-cyan-500/25 text-cyan-100'
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
             <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-              <TemplateLibrarySidebar
-                activeSection={activeSection}
-                activeCategory="all"
-                categories={[]}
-                onSectionChange={handleSectionChange}
-                onCategoryChange={() => {}}
-              />
+              <div className="hidden lg:block">
+                <TemplateLibrarySidebar
+                  activeSection={activeSection}
+                  activeCategory="all"
+                  categories={[]}
+                  onSectionChange={handleSectionChange}
+                  onCategoryChange={() => {}}
+                />
+              </div>
 
               <div className="w-full min-w-0">
                 <TemplateLibraryToolbar

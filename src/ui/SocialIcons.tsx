@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 interface SocialIconsProps {
   links?: {
@@ -20,6 +20,32 @@ export const SocialIcons = ({
   links = {},
 }: SocialIconsProps) => {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isTouch = useRef(false);
+
+  useEffect(() => {
+    isTouch.current = window.matchMedia("(pointer: coarse)").matches;
+  }, []);
+
+  // Close on outside click (touch only)
+  useEffect(() => {
+    if (!open || !isTouch.current) return;
+
+    const handleOutside = (e: Event) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [open]);
+
+  const handleClick = () => {
+    if (isTouch.current) {
+      setOpen((prev) => !prev);
+    }
+  };
 
   const {
     instagram = "#",
@@ -128,8 +154,9 @@ export const SocialIcons = ({
 
   return (
     <div
+      ref={containerRef}
       className="relative inline-block"
-      onMouseLeave={() => setOpen(false)}
+      onMouseLeave={() => !isTouch.current && setOpen(false)}
     >
       {/* Social icons grid — появляется при open */}
       <div
@@ -196,7 +223,8 @@ export const SocialIcons = ({
 
       {/* Гамбургер — триггер */}
       <span
-        onMouseEnter={() => setOpen(true)}
+        onClick={handleClick}
+        onMouseEnter={() => !isTouch.current && setOpen(true)}
         className={`
           absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
           z-10

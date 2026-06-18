@@ -135,8 +135,10 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
     debug: (message: string, context?: LoggerContext) => {
       if (!shouldLog('debug', configLevel)) return;
 
-      const [formatted, style] = formatMessage(name, 'debug', message, color);
-      console.debug(formatted, style, context ?? '');
+      if (isDev) {
+        const [formatted, style] = formatMessage(name, 'debug', message, color);
+        console.debug(formatted, style, context ?? '');
+      }
 
       if (sendToServer && context) {
         sendLogToServer({
@@ -152,8 +154,10 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
     info: (message: string, context?: LoggerContext) => {
       if (!shouldLog('info', configLevel)) return;
 
-      const [formatted, style] = formatMessage(name, 'info', message, color);
-      console.info(formatted, style, context ?? '');
+      if (isDev) {
+        const [formatted, style] = formatMessage(name, 'info', message, color);
+        console.info(formatted, style, context ?? '');
+      }
 
       if (sendToServer && context) {
         sendLogToServer({

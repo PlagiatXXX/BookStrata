@@ -155,7 +155,7 @@ describe("TemplateLibrary", () => {
   it("должен переключаться на избранное", async () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    const favBtn = screen.getByText("Избранное");
+    const favBtn = screen.getAllByText("Избранное")[0];
     fireEvent.click(favBtn);
 
     await waitFor(() => {

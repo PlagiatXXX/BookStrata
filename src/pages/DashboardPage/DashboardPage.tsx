@@ -108,9 +108,9 @@ export function DashboardPage() {
                   Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся
                 </p>
               </div>
-              <div className="relative z-10 flex shrink-0 cursor-pointer items-center gap-2 px-6 font-bold text-white transition-all duration-500 before:absolute before:-inset-[5px] before:-z-10 before:rounded-[35px] before:bg-gradient-to-r before:from-violet-500 before:from-10% before:via-sky-500 before:via-30% before:to-pink-500 before:bg-[length:400%] before:transition-all before:duration-500 before:ease-in-out hover:before:blur-xl hover:before:bg-[length:10%] h-[3em] rounded-[30px] bg-gradient-to-r from-violet-500 from-10% via-sky-500 via-30% to-pink-500 to-90% bg-[length:400%] hover:animate-gradient-xy hover:bg-[length:100%] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:bg-violet-700 active:brightness-90 active:translate-y-[2px] focus-visible:ring-2 focus-visible:ring-violet-700">
-                <span className="text-lg sm:text-xl">🔮</span>
-                <span className="text-xs sm:text-sm">Спросить</span>
+              <div className="relative z-10 flex shrink-0 cursor-pointer items-center gap-1.5 sm:gap-2 px-3 sm:px-6 font-bold text-white transition-all duration-500 before:absolute before:-inset-[5px] before:-z-10 before:rounded-[35px] before:bg-gradient-to-r before:from-violet-500 before:from-10% before:via-sky-500 before:via-30% before:to-pink-500 before:bg-[length:400%] before:transition-all before:duration-500 before:ease-in-out hover:before:blur-xl hover:before:bg-[length:10%] h-[2.5em] sm:h-[3em] rounded-[30px] bg-gradient-to-r from-violet-500 from-10% via-sky-500 via-30% to-pink-500 to-90% bg-[length:400%] hover:animate-gradient-xy hover:bg-[length:100%] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:bg-violet-700 active:brightness-90 active:translate-y-[2px] focus-visible:ring-2 focus-visible:ring-violet-700">
+                <span className="text-base sm:text-xl">🔮</span>
+                <span className="text-[11px] sm:text-sm">Спросить</span>
               </div>
             </button>
           </div>

@@ -1127,4 +1127,81 @@
   .landing-stat__number {
     font-size: 1.4rem;
   }
+
+  .landing-pricing__card {
+    padding: 24px 16px;
+  }
+
+  .landing-feature {
+    padding: 20px 16px;
+  }
+
+  .landing-feature--featured {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  .landing-banner {
+    padding: 48px 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .landing-hero {
+    padding: 72px 12px 20px;
+  }
+
+  .landing-section {
+    padding: 48px 12px;
+  }
+
+  .landing-stats__grid {
+    padding: 16px 10px;
+    gap: 8px;
+  }
+
+  .landing-stat__number {
+    font-size: 1.2rem;
+  }
+
+  .landing-stat__label {
+    font-size: 11px;
+  }
+
+  .landing-hero__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .landing-hero__btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .landing-cta {
+    padding: 48px 12px;
+  }
+
+  .landing-features {
+    gap: 10px;
+  }
+
+  .landing-featured {
+    gap: 10px;
+  }
+
+  .landing-pricing {
+    gap: 12px;
+  }
+
+  .landing-banner__text p {
+    font-size: 0.95rem;
+  }
+
+  .landing-hero__badge {
+    font-size: 11px;
+    padding: 4px 12px;
+  }
 }

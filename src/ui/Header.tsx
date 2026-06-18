@@ -110,11 +110,11 @@ export const Header = ({
 
   return (
     <>
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-6xl bg-background-dark/90 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/40 border border-slate-700/50">
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="fixed top-2 xs:top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] xs:w-[calc(100%-2rem)] max-w-6xl bg-background-dark/90 backdrop-blur-xl rounded-xl xs:rounded-2xl shadow-2xl shadow-black/40 border border-slate-700/50">
+      <div className="px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 xs:h-16">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 xs:gap-3 shrink-0">
             <Logo onClick={onMyRatingsClick} />
           </div>
 
@@ -149,7 +149,7 @@ export const Header = ({
           </nav>
 
           {/* Right Section - Search & Settings */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 xs:gap-3 shrink-0">
             {/* Search */}
             {showSearch && (
               <SearchBar

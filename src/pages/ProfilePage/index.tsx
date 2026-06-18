@@ -14,6 +14,9 @@ import { useUser } from "@/hooks/useUser";
 import { AvatarSelector } from "@/components/Avatar";
 import { Spinner } from "@/components/Spinner";
 import { createLogger } from "@/lib/logger";
+import { Header } from "@/ui/Header";
+import { Footer } from "@/ui/Footer";
+import { MobileBottomNav } from "@/ui/MobileBottomNav";
 
 const logger = createLogger("ProfilePage", { color: "blue" });
 
@@ -98,77 +101,83 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f1a] py-6 dark:bg-[#0f0f1a] light:bg-gray-100 sm:py-10">
-      <div className="mx-auto px-4 w-full max-w-2xl sm:px-6 lg:max-w-4xl">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 sm:mb-6 cursor-pointer"
-        >
-          <ArrowLeft size={16} className="sm:size-5" />
-          <span>Назад</span>
-        </button>
+    <div className="min-h-screen bg-[#0f0f1a] dark:bg-[#0f0f1a] light:bg-gray-100">
+      <Header onMyRatingsClick={() => navigate("/")} hideLogout />
+      <div className="pt-20 sm:pt-24 pb-20 md:pb-10">
+        <div className="mx-auto px-4 w-full max-w-2xl sm:px-6 lg:max-w-4xl">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 sm:mb-6 cursor-pointer"
+          >
+            <ArrowLeft size={16} className="sm:size-5" />
+            <span>Назад</span>
+          </button>
 
-        <div className="mb-4">
-          {achievementStatus?.title && (
-            <div className="mb-2 rounded-full bg-yellow-400/20 px-4 py-1 border border-yellow-400/30 inline-block">
-              <p className="text-xs font-bold uppercase tracking-widest text-yellow-400">
-                {achievementStatus.icon && <span className="mr-1.5">{achievementStatus.icon}</span>}
-                {achievementStatus.title}
-              </p>
-            </div>
-          )}
-          <ProfileHeader
-            user={user || undefined}
-            username={username}
-            isEditingUsername={isEditingUsername}
-            newUsername={newUsername}
-            isSavingUsername={isSavingUsername}
+          <div className="mb-4">
+            {achievementStatus?.title && (
+              <div className="mb-2 rounded-full bg-yellow-400/20 px-4 py-1 border border-yellow-400/30 inline-block">
+                <p className="text-xs font-bold uppercase tracking-widest text-yellow-400">
+                  {achievementStatus.icon && <span className="mr-1.5">{achievementStatus.icon}</span>}
+                  {achievementStatus.title}
+                </p>
+              </div>
+            )}
+            <ProfileHeader
+              user={user || undefined}
+              username={username}
+              isEditingUsername={isEditingUsername}
+              newUsername={newUsername}
+              isSavingUsername={isSavingUsername}
+              onEditAvatar={() => setShowAvatarSelector(true)}
+              onStartEditUsername={startEditUsername}
+              onCancelEditUsername={cancelEditUsername}
+              onSaveUsername={saveUsername}
+              onUsernameChange={setNewUsername}
+            />
+          </div>
+
+          <ProfileActions
             onEditAvatar={() => setShowAvatarSelector(true)}
-            onStartEditUsername={startEditUsername}
-            onCancelEditUsername={cancelEditUsername}
-            onSaveUsername={saveUsername}
-            onUsernameChange={setNewUsername}
+            onPasswordChange={togglePasswordForm}
+            onSettingsClick={() =>
+              sileo.show({ title: "Настройки скоро появятся", icon: "⚙️" })
+            }
+            onAdminPanelClick={() => navigate("/admin")}
+            userRole={authUser?.role}
+          />
+
+          {showPasswordForm && (
+            <PasswordChangeForm
+              currentPassword={currentPassword}
+              newPassword={newPassword}
+              confirmPassword={confirmPassword}
+              showPasswords={showPasswords}
+              isChangingPassword={isChangingPassword}
+              onCurrentPasswordChange={setCurrentPassword}
+              onNewPasswordChange={setNewPassword}
+              onConfirmPasswordChange={setConfirmPassword}
+              onTogglePasswordVisibility={(field) =>
+                setShowPasswords((prev) => ({
+                  ...prev,
+                  [field]: !prev[field],
+                }))
+              }
+              onCancel={cancelPasswordChange}
+              onSubmit={changePassword}
+            />
+          )}
+
+          <StatsCards stats={stats} />
+
+          <AchievementsGrid
+            achievements={achievements}
+            isLoading={isAchievementsLoading}
           />
         </div>
-
-        <ProfileActions
-          onEditAvatar={() => setShowAvatarSelector(true)}
-          onPasswordChange={togglePasswordForm}
-          onSettingsClick={() =>
-            sileo.show({ title: "Настройки скоро появятся", icon: "⚙️" })
-          }
-          onAdminPanelClick={() => navigate("/admin")}
-          userRole={authUser?.role}
-        />
-
-        {showPasswordForm && (
-          <PasswordChangeForm
-            currentPassword={currentPassword}
-            newPassword={newPassword}
-            confirmPassword={confirmPassword}
-            showPasswords={showPasswords}
-            isChangingPassword={isChangingPassword}
-            onCurrentPasswordChange={setCurrentPassword}
-            onNewPasswordChange={setNewPassword}
-            onConfirmPasswordChange={setConfirmPassword}
-            onTogglePasswordVisibility={(field) =>
-              setShowPasswords((prev) => ({
-                ...prev,
-                [field]: !prev[field],
-              }))
-            }
-            onCancel={cancelPasswordChange}
-            onSubmit={changePassword}
-          />
-        )}
-
-        <StatsCards stats={stats} />
-
-        <AchievementsGrid
-          achievements={achievements}
-          isLoading={isAchievementsLoading}
-        />
       </div>
+
+      <MobileBottomNav />
+      <Footer />
 
       {showAvatarSelector && (
         <AvatarSelector

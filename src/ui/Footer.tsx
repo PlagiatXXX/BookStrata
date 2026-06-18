@@ -157,7 +157,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
       </div>
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 relative z-10">
-        <div className="grid gap-10 lg:grid-cols-[1fr_1fr_1fr_1.2fr]">
+        <div className="grid gap-10 lg:grid-cols-[1.2fr_1.4fr_1.2fr]">
           {/* Left Zone: Brand & Positioning */}
           <div className="flex flex-col gap-4">
             <div>
@@ -174,78 +174,80 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
             </div>
           </div>
 
-          {/* Central Zone 1: Main Links (все ссылки) */}
-          <nav aria-label="Основная навигация футера">
+          {/* Central Zone: Main Links + SocialIcons (под одной шапкой) */}
+          <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
               Основное
             </h4>
-            <ul className="flex flex-col gap-3">
-              {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
-                const isScroll = "sectionId" in link && link.sectionId
-                const key = isScroll ? link.sectionId! : ("href" in link ? link.href! : "")
-                return (
-                  <li key={key}>
-                    {isScroll ? (
-                      <button
-                        onClick={() => scrollToSection(link.sectionId!)}
-                        className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1 cursor-pointer"
-                      >
-                        <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
-                          {link.icon}
-                        </span>
-                        {link.label}
-                      </button>
-                    ) : (
-                      <Link
-                        to={"href" in link ? link.href! : ""}
-                        className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
-                      >
-                        <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
-                          {link.icon}
-                        </span>
-                        {link.label}
-                      </Link>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          </nav>
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <nav aria-label="Основная навигация футера" className="shrink-0">
+                <ul className="flex flex-col gap-3">
+                  {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
+                    const isScroll = "sectionId" in link && link.sectionId
+                    const key = isScroll ? link.sectionId! : ("href" in link ? link.href! : "")
+                    return (
+                      <li key={key}>
+                        {isScroll ? (
+                          <button
+                            onClick={() => scrollToSection(link.sectionId!)}
+                            className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1 cursor-pointer"
+                          >
+                            <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
+                              {link.icon}
+                            </span>
+                            {link.label}
+                          </button>
+                        ) : (
+                          <Link
+                            to={"href" in link ? link.href! : ""}
+                            className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
+                          >
+                            <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
+                              {link.icon}
+                            </span>
+                            {link.label}
+                          </Link>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </nav>
 
-          {/* Central Zone 2: SocialIcons + Donate */}
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col items-center">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
-                Соцсети
-              </h4>
-              <SocialIcons
-                links={{
-                  telegram: TELEGRAM_URL,
-                  vk: VK_URL,
-                  github: "https://github.com/PlagiatXXX",
-                  yandexMail: "mailto:fedorpasyada@yandex.ru",
-                  youtube: "https://www.youtube.com/@fedor1994",
-                }}
-              />
+              {/* SocialIcons — бургер рядом с Основное */}
+              <div className="flex flex-col items-start">
+                <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
+                  Соцсети
+                </span>
+                <SocialIcons
+                  links={{
+                    telegram: TELEGRAM_URL,
+                    vk: VK_URL,
+                    github: "https://github.com/PlagiatXXX",
+                    yandexMail: "mailto:fedorpasyada@yandex.ru",
+                    youtube: "https://www.youtube.com/@fedor1994",
+                  }}
+                />
+              </div>
             </div>
           </div>
 
           {/* Right Zone: Donate Block */}
-          <div className="flex flex-col items-start self-start lg:items-end lg:text-right">
-            <div className="relative max-w-full self-start">
+          <div className="flex flex-col items-end self-end text-right">
+            <div className="relative max-w-full">
               <button
                 type="button"
                 id="donate-button"
                 onClick={toggleDonate}
-                className="group relative z-20 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-3 py-2 text-xs md:text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden max-w-full"
+                className="group relative z-20 inline-flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-2.5 sm:px-3 py-2 text-xs md:text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden max-w-full"
                 aria-expanded={isDonateOpen}
                 aria-controls="donate-menu"
               >
-                <span className="inline-block text-amber-400 text-base leading-none animate-dove-flight">🕊️</span>
-                Поддержка проекта
+                <span className="inline-block text-amber-400 text-sm sm:text-base leading-none animate-dove-flight shrink-0">🕊️</span>
+                <span className="truncate">Поддержка проекта</span>
                 <ChevronDown
-                  size={18}
-                  className={`transition-transform duration-300 ${
+                  size={16}
+                  className={`transition-transform duration-300 shrink-0 ${
                     isDonateOpen ? "rotate-180" : "rotate-0"
                   }`}
                 />
@@ -272,13 +274,13 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                     лучше. Спасибо, что вы с нами!
                   </p>
 
-                  <div className="mt-4 flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 flex-wrap">
-                    <span className="font-mono text-xs font-bold text-amber-100 tracking-wider break-all">
+                  <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+                    <span className="font-mono text-xs font-bold text-amber-100 tracking-wider text-center sm:text-left">
                       {cardNumber}
                     </span>
                     <button
                       onClick={handleCopyCard}
-                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-400/30 px-2 py-1 text-[10px] font-medium text-amber-200 transition-colors hover:bg-amber-500/20 shrink-0"
+                      className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 px-2 py-1.5 sm:py-1 text-[10px] font-medium text-amber-200 transition-colors hover:bg-amber-500/20 shrink-0"
                       type="button"
                       aria-label="Копировать номер карты"
                     >
