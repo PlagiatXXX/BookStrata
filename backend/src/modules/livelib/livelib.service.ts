@@ -82,6 +82,25 @@ export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
 
   const books: LiveLibBookRaw[] = [];
 
+  /** Извлекает обложку из элемента, обходя pagespeed-заглушки */
+  function extractCover($el: cheerio.Cheerio<any>): string | null {
+    const $img = $el.find("img");
+    // 1. data-pagespeed-lazy-src — реальный URL при PageSpeed
+    const pagespeedLazy = $img.attr("data-pagespeed-lazy-src");
+    if (pagespeedLazy) return pagespeedLazy;
+    // 2. data-src — ленивая загрузка без PageSpeed
+    const dataSrc = $img.attr("data-src");
+    if (dataSrc) return dataSrc;
+    // 3. style="background:url(...)"
+    const style = $el.attr("style") || "";
+    const match = style.match(/url\(([^)]+)\)/);
+    if (match?.[1]) return match[1];
+    // 4. src — последняя надежда (но может быть pagespeed-заглушкой)
+    const src = $img.attr("src");
+    if (src && !src.startsWith("/pagespeed_static/")) return src;
+    return null;
+  }
+
   // Основной селектор — список прочитанного / поисковая выдача
   $(".object-wrapper.object-edition").each((_, el) => {
     const $el = $(el);
@@ -90,24 +109,7 @@ export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
     if (!title) return;
 
     const author = $el.find("a.description").first().text().trim();
-    let coverImageUrl: string | null = null;
-    const $cover = $el.find(".object-cover");
-    // 1. style="background:url(...)"
-    const coverStyle = $cover.attr("style") || "";
-    const coverMatch = coverStyle.match(/url\(([^)]+)\)/);
-    coverImageUrl = coverMatch?.[1] ?? null;
-    // 2. <img src="..." /> внутри .object-cover
-    if (!coverImageUrl) {
-      coverImageUrl = $cover.find("img").attr("src") || null;
-    }
-    // 3. <img data-src="..." /> (ленивая загрузка)
-    if (!coverImageUrl) {
-      coverImageUrl = $cover.find("img").attr("data-src") || null;
-    }
-    // 4. <img data-pagespeed-lazy-src="..." /> (PageSpeed)
-    if (!coverImageUrl) {
-      coverImageUrl = $cover.find("img").attr("data-pagespeed-lazy-src") || null;
-    }
+    const coverImageUrl = extractCover($el.find(".object-cover"));
     const liveLibUrl =
       $el.find(".ll-redirect").attr("data-link") ||
       $el.find(".brow-title a.title").attr("href") ||
@@ -125,12 +127,8 @@ export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
       if (!title) return;
 
       const author = $el.find("a.slide-book__author").text().trim();
-      const $coverImg = $el.find(".slide-book__link img");
-      const coverImageUrl =
-        $coverImg.attr("src") ||
-        $coverImg.attr("data-src") ||
-        $coverImg.attr("data-pagespeed-lazy-src") ||
-        null;
+      const $coverImg = $el.find(".slide-book__link");
+      const coverImageUrl = extractCover($coverImg);
       const liveLibUrl =
         $el.find(".slide-book__link").attr("href") ||
         $el.find("a.slide-book__title").attr("href") ||
