@@ -14,24 +14,27 @@ export function useHeartbeat() {
   useEffect(() => {
     if (!token) return;
 
-    const sendHeartbeat = () => {
-      if (document.visibilityState === "visible") {
-        api.post("/users/heartbeat").catch(() => {
-          // Ошибка не критична — heartbeat опциональный
-        });
-      }
+    const doHeartbeat = () => {
+      api.post("/users/heartbeat").catch(() => {
+        // Ошибка не критична — heartbeat опциональный
+      });
     };
 
     // Первый heartbeat сразу после монтирования
-    sendHeartbeat();
+    doHeartbeat();
 
-    // Каждые 60 секунд
-    intervalRef.current = setInterval(sendHeartbeat, 60000);
+    // Каждые 60 секунд — только если страница видима
+    intervalRef.current = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        doHeartbeat();
+      }
+    }, 60000);
 
     // Отправляем heartbeat при скрытии страницы (закрытие вкладки)
+    // без проверки visibility — в этот момент она уже "hidden"
     const handleVisibility = () => {
       if (document.visibilityState === "hidden") {
-        sendHeartbeat();
+        doHeartbeat();
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);

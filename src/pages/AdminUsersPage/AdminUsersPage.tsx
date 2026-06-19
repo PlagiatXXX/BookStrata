@@ -88,6 +88,7 @@ export function AdminUsersPage() {
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["admin-users"],
     queryFn: () => api.get<AdminUser[]>("/users/admin/all"),
+    refetchInterval: 30_000,
   })
 
   const { data: violators = [], isLoading: violatorsLoading } = useQuery<ViolatorUser[]>({
