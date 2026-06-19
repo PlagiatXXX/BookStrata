@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-"build:prod": "tsc -b && rm -rf dist.tmp && vite build --outDir dist.tmp && mv -f dist.tmp dist && node scripts/prerender.mjs",
+"build:prod": "tsc -b && rm -rf dist dist.tmp && vite build --outDir dist.tmp && mv dist.tmp dist && node scripts/prerender.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
