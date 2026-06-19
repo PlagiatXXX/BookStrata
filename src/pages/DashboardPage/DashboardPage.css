@@ -574,6 +574,30 @@
   }
 }
 
+/* Books grid — более плотная сетка */
+.dashboard-grid--books {
+  gap: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .dashboard-grid--books {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .dashboard-grid--books {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .dashboard-grid--books {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 760px) {
   .dashboard-home__container {
     padding: 0.75rem 1rem 2.2rem;

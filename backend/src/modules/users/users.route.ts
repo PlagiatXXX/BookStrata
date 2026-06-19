@@ -12,6 +12,8 @@ import {
   searchUsers,
   getTasteMatch,
   getUserPublicTierLists,
+  getMyTierLists,
+  getMyBooks,
   getViolators,
   setDonorStatus,
 } from "./users.service.js";
@@ -76,6 +78,52 @@ export async function userRoutes(fastify: FastifyInstance) {
       }
       const stats = await getUserStats(userId);
       return reply.code(200).send(createSuccessResponse(stats));
+    },
+  );
+
+  // GET /api/users/me/tier-lists — все тир-листы текущего пользователя (включая приватные)
+  fastify.get<{
+    Querystring: { page?: number; pageSize?: number };
+  }>(
+    "/me/tier-lists",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
+      }
+      const page = Number(request.query.page) || 1;
+      const pageSize = Number(request.query.pageSize) || 10;
+      const result = await getMyTierLists(userId, page, pageSize);
+      const totalPages = Math.ceil(result.totalItems / pageSize);
+      return reply.send(
+        createPaginatedResponse(result.data, {
+          totalItems: result.totalItems,
+          totalPages,
+          currentPage: page,
+          itemCount: result.data.length,
+          itemsPerPage: pageSize,
+        }, {
+          self: `/api/users/me/tier-lists?page=${page}&pageSize=${pageSize}`,
+          ...(page < totalPages ? { next: `/api/users/me/tier-lists?page=${page + 1}&pageSize=${pageSize}` } : {}),
+          ...(page > 1 ? { prev: `/api/users/me/tier-lists?page=${page - 1}&pageSize=${pageSize}` } : {}),
+          last: `/api/users/me/tier-lists?page=${totalPages}&pageSize=${pageSize}`,
+        }),
+      );
+    },
+  );
+
+  // GET /api/users/me/books — все книги текущего пользователя
+  fastify.get(
+    "/me/books",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
+      }
+      const books = await getMyBooks(userId);
+      return reply.send(createSuccessResponse(books));
     },
   );
 

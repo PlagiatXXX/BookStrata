@@ -106,6 +106,15 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
+.user-activity-stats__item--clickable {
+  cursor: pointer;
+}
+
+.user-activity-stats__item--active {
+  border-color: rgba(6, 188, 249, 0.6);
+  box-shadow: 0 0 0 1px rgba(6, 188, 249, 0.3), 0 8px 20px rgba(6, 188, 249, 0.1);
+}
+
 .user-activity-stats__content {
   display: flex;
   align-items: center;

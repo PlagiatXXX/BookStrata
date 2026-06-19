@@ -249,6 +249,76 @@ export async function getUserPublicTierLists(
   return { data: transformed, totalItems };
 }
 
+// Тип книги для /me/books
+export interface MyBook {
+  id: number;
+  title: string;
+  author: string | null;
+  coverImageUrl: string;
+  description: string | null;
+  genre: string | null;
+  tags: string[];
+  tierListId: string;
+  tierListTitle: string;
+  createdAt: string;
+}
+
+// GET /api/users/me/books — все книги пользователя (из его тир-листов)
+export async function getMyBooks(userId: number): Promise<MyBook[]> {
+  // Получаем все placements пользователя с книгой и тир-листом
+  const placements = await prisma.bookPlacement.findMany({
+    where: {
+      tierList: { userId },
+    },
+    include: {
+      book: true,
+      tierList: { select: { id: true, title: true } },
+    },
+    orderBy: { tierList: { updatedAt: "desc" } },
+  });
+
+  // Дедикация: если книга есть в нескольких тир-листах, берём из самого свежего
+  const seenBookIds = new Set<number>();
+  const books: MyBook[] = [];
+
+  for (const p of placements) {
+    if (seenBookIds.has(p.bookId)) continue;
+    seenBookIds.add(p.bookId);
+
+    books.push({
+      id: p.book.id,
+      title: p.book.title,
+      author: p.book.author,
+      coverImageUrl: p.book.coverImageUrl,
+      description: p.book.description,
+      genre: p.book.genre,
+      tags: p.book.tags,
+      tierListId: p.tierList.id,
+      tierListTitle: p.tierList.title,
+      createdAt: p.book.createdAt.toISOString(),
+    });
+  }
+
+  return books;
+}
+
+// GET /api/users/me/tier-lists — все тир-листы текущего пользователя (включая приватные)
+export async function getMyTierLists(
+  userId: number,
+  page: number,
+  pageSize: number,
+) {
+  const [data, totalItems] = await tierListRepository.findByUser(userId, { page, pageSize });
+
+  const transformed = data.map((tl) => ({
+    ...tl,
+    booksCount: tl._count?.placements ?? 0,
+    _count: undefined,
+  }));
+
+  return { data: transformed, totalItems };
+}
+
 // GET /api/users/:id/taste-match — совпадение вкусов с текущим пользователем
 export async function getTasteMatch(targetUserId: number, currentUserId: number) {
   // Получаем все ID публичных тир-листов целевого пользователя

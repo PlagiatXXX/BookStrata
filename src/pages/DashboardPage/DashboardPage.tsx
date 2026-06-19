@@ -3,15 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { useAuth } from "@/hooks/useAuthContext";
-import { apiGetUserStats } from "@/lib/userApi";
+import { apiGetUserStats, apiGetMyTierLists, apiGetMyBooks, type MyBook } from "@/lib/userApi";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { UserActivityStats } from "@/components/DashboardHeroSection/components/UserActivityStats";
 import { DashboardAchievements } from "@/components/DashboardHeroSection/components/DashboardAchievements";
 import { TrendingNow } from "@/components/DashboardHeroSection/components/TrendingNow";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
+import { TierListGrid } from "./components/TierListGrid";
+import { BookCard } from "./components/BookCard";
+import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
+import { Spinner } from "@/components/Spinner";
 
 import "./DashboardPage.css";
 import logger from "@/lib/logger";
+import type { TierListShort } from "@/lib/tierListApi";
 
 
 // Мемоизируем компоненты дашборда для предотвращения ререндеров
@@ -35,6 +40,9 @@ export function DashboardPage() {
   }, [user]);
 
   const [isAiLibrarianOpen, setAiLibrarianOpen] = useState(false);
+  const [activeStat, setActiveStat] = useState<'tierlists' | 'published' | 'drafts' | 'books' | null>(null);
+  const [viewingBook, setViewingBook] = useState<MyBook | null>(null);
+  const [showBooks, setShowBooks] = useState(true);
 
   // Data fetching - User stats
   const { data: stats } = useQuery({
@@ -44,6 +52,33 @@ export function DashboardPage() {
     retry: 2,
   });
 
+  // Data fetching - My tier lists (когда активна одна из статистик тир-листов)
+  const showTierLists = activeStat && activeStat !== 'books';
+  const { data: myTierListsData, isLoading: isTierListsLoading } = useQuery({
+    queryKey: ["user", "myTierLists"],
+    queryFn: () => apiGetMyTierLists(1, 100),
+    enabled: !!showTierLists,
+    staleTime: 60 * 1000,
+  });
+
+  // Data fetching - My books (когда активна статистика книг)
+  const { data: myBooksData, isLoading: isBooksLoading } = useQuery({
+    queryKey: ["user", "myBooks"],
+    queryFn: apiGetMyBooks,
+    enabled: activeStat === 'books',
+    staleTime: 60 * 1000,
+  });
+
+  // Фильтрация тир-листов по активной статистике
+  const filteredTierLists: TierListShort[] = showTierLists
+    ? (myTierListsData?.data || []).filter((tl) => {
+        if (activeStat === 'tierlists') return true;
+        if (activeStat === 'published') return tl.isPublic;
+        if (activeStat === 'drafts') return !tl.isPublic;
+        return true;
+      })
+    : [];
+
   // Вычисляем значения для статистики
   const tierListsCount = stats?.tierListsCount || 0;
   const publishedCount = stats?.publishedCount || 0;
@@ -51,6 +86,21 @@ export function DashboardPage() {
   const totalBooks = stats?.totalBooks || 0;
   const likesCount = stats?.likesCount || 0;
   const lastActivity = stats?.lastActivity || null;
+
+  // Обработчики кликов по статистике (toggle)
+  const handleTierListsClick = useCallback(() => {
+    setActiveStat((prev) => prev === 'tierlists' ? null : 'tierlists');
+  }, []);
+  const handlePublishedClick = useCallback(() => {
+    setActiveStat((prev) => prev === 'published' ? null : 'published');
+  }, []);
+  const handleDraftsClick = useCallback(() => {
+    setActiveStat((prev) => prev === 'drafts' ? null : 'drafts');
+  }, []);
+  const handleBooksClick = useCallback(() => {
+    setActiveStat((prev) => prev === 'books' ? null : 'books');
+    setShowBooks(true);
+  }, []);
 
   // Стабилизируем обработчики для предотвращения ререндеров мемоизированных компонентов
   const handleMyRatingsClick = useCallback(() => {
@@ -69,6 +119,18 @@ export function DashboardPage() {
   const handleCommunityClick = useCallback(() => navigate("/community"), [navigate]);
   const handleAiLibrarianOpen = useCallback(() => setAiLibrarianOpen(true), []);
   const handleAiLibrarianClose = useCallback(() => setAiLibrarianOpen(false), []);
+
+  const handleOpenTierList = useCallback((id: string) => {
+    navigate(`/tier-lists/${id}`);
+  }, [navigate]);
+
+  const handleViewBook = useCallback((book: MyBook) => {
+    setViewingBook(book);
+  }, []);
+
+  const handleCloseViewBook = useCallback(() => {
+    setViewingBook(null);
+  }, []);
 
   return (
     <DashboardLayout
@@ -123,7 +185,83 @@ export function DashboardPage() {
             totalBooks={totalBooks}
             likesCount={likesCount}
             lastActivity={lastActivity}
+            onTierListsClick={handleTierListsClick}
+            onPublishedClick={handlePublishedClick}
+            onDraftsClick={handleDraftsClick}
+            onBooksClick={handleBooksClick}
+            activeStat={activeStat}
           />
+
+          {/* Expandable section: tier lists grid */}
+          {showTierLists && (
+            <div className="mt-6 sm:mt-8 mb-8 sm:mb-10">
+              <div className="user-activity-stats__container">
+                <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+                  {activeStat === 'tierlists' && 'Все тир-листы'}
+                  {activeStat === 'published' && 'Опубликованные тир-листы'}
+                  {activeStat === 'drafts' && 'Черновики'}
+                </h3>
+                {isTierListsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner size="lg" />
+                  </div>
+                ) : filteredTierLists.length === 0 ? (
+                  <p className="text-[#94a3b8] text-sm">Нет тир-листов</p>
+                ) : (
+                  <TierListGrid
+                    tierLists={filteredTierLists}
+                    onOpen={handleOpenTierList}
+                    onRename={() => {}}
+                    onDelete={() => {}}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Expandable section: books list */}
+          {activeStat === 'books' && (
+            <div className="mt-6 sm:mt-8 mb-8 sm:mb-10">
+              <div className="user-activity-stats__container">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base sm:text-lg font-bold text-white">
+                    Все книги в подборках
+                    {myBooksData && (
+                      <span className="text-sm font-normal text-[#94a3b8] ml-2">
+                        ({myBooksData.length})
+                      </span>
+                    )}
+                  </h3>
+                  <button
+                    onClick={() => setShowBooks((prev) => !prev)}
+                    className="text-xs text-[#60a5fa] hover:text-[#93bbfd] transition-colors cursor-pointer"
+                    type="button"
+                  >
+                    {showBooks ? 'Скрыть все' : 'Развернуть'}
+                  </button>
+                </div>
+                {isBooksLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner size="lg" />
+                  </div>
+                ) : myBooksData && myBooksData.length > 0 ? (
+                  showBooks && (
+                    <div className="dashboard-grid dashboard-grid--books">
+                      {myBooksData.map((book) => (
+                        <BookCard
+                          key={book.id}
+                          book={book}
+                          onView={handleViewBook}
+                        />
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <p className="text-[#94a3b8] text-sm">Книги не найдены</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Achievements & XP */}
           <DashboardAchievements />
@@ -136,6 +274,12 @@ export function DashboardPage() {
       <AiLibrarianModal
         isOpen={isAiLibrarianOpen}
         onClose={handleAiLibrarianClose}
+      />
+
+      <BookViewModal
+        book={viewingBook}
+        isOpen={!!viewingBook}
+        onClose={handleCloseViewBook}
       />
     </DashboardLayout>
   );

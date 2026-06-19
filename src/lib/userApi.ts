@@ -1,5 +1,6 @@
 import { apiClient } from "./api-client";
 import { createLogger } from "./logger";
+import type { PaginatedTierListsResponse } from "./tierListApi";
 
 const userLogger = createLogger("UserApi", { color: "green" });
 
@@ -87,6 +88,32 @@ export async function apiGetUserTierLists(
   userLogger.info("Получение публичных тир-листов пользователя", { userId, page });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return apiClient.get<any>(`/users/${userId}/tier-lists`, { page, pageSize });
+}
+
+export async function apiGetMyTierLists(
+  page = 1,
+  pageSize = 10,
+): Promise<PaginatedTierListsResponse> {
+  userLogger.info("Получение своих тир-листов", { page });
+  return apiClient.get<PaginatedTierListsResponse>("/users/me/tier-lists", { page, pageSize });
+}
+
+export interface MyBook {
+  id: number;
+  title: string;
+  author: string | null;
+  coverImageUrl: string;
+  description: string | null;
+  genre: string | null;
+  tags: string[];
+  tierListId: string;
+  tierListTitle: string;
+  createdAt: string;
+}
+
+export async function apiGetMyBooks(): Promise<MyBook[]> {
+  userLogger.info("Получение своих книг");
+  return apiClient.get<MyBook[]>("/users/me/books");
 }
 
 export async function apiGetTasteMatch(userId: string): Promise<TasteMatchResult> {

@@ -163,6 +163,7 @@ export async function updateBook(
 
   return prisma.book.update({
     where: { id: bookId },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: sanitizedData as any,
   });
 }

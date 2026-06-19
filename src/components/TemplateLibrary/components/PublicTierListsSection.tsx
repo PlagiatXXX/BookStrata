@@ -113,12 +113,19 @@ export function PublicTierListsSection({
         </section>
       )}
 
+      {/* Остальные тир-листы (кроме featured) — только если showAll */}
+      {isFirstPage && showAll && restTierLists.length > 0 && (
+        <div className="mt-6">
+          <PublicTierListCards tierLists={restTierLists} likedIdsSet={likedIdsSet} />
+        </div>
+      )}
+
       {/* Кнопка «Смотреть все» / «Свернуть» (только на 1-й странице, если есть ещё тир-листы) */}
       {isFirstPage && restTierLists.length > 0 && (
-        <div className="flex justify-center mt-4 mb-6">
+        <div className="flex justify-center mt-3 mb-4">
           <button
             onClick={() => setShowAll((prev) => !prev)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-cyan-700/50 bg-cyan-900/30 text-cyan-100 hover:bg-cyan-900/50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-cyan-700/50 bg-cyan-900/30 text-cyan-100 text-sm hover:bg-cyan-900/50 transition-colors cursor-pointer"
             type="button"
           >
             {showAll ? (
@@ -133,13 +140,6 @@ export function PublicTierListsSection({
               </>
             )}
           </button>
-        </div>
-      )}
-
-      {/* Остальные тир-листы (кроме featured) — только если showAll или не 1-я страница */}
-      {isFirstPage && showAll && restTierLists.length > 0 && (
-        <div>
-          <PublicTierListCards tierLists={restTierLists} likedIdsSet={likedIdsSet} />
         </div>
       )}
 

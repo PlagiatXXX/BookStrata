@@ -8,6 +8,11 @@ interface UserActivityStatsProps {
   totalBooks: number;
   likesCount: number;
   lastActivity: string | null;
+  onTierListsClick?: () => void;
+  onPublishedClick?: () => void;
+  onDraftsClick?: () => void;
+  onBooksClick?: () => void;
+  activeStat?: 'tierlists' | 'published' | 'drafts' | 'books' | null;
 }
 
 function formatLastActivity(date: string | null): string {
@@ -23,13 +28,18 @@ function formatLastActivity(date: string | null): string {
   })
 }
 
-export function UserActivityStats({ 
-  tierListsCount, 
-  publishedCount, 
+export function UserActivityStats({
+  tierListsCount,
+  publishedCount,
   draftsCount,
   totalBooks,
   likesCount,
   lastActivity,
+  onTierListsClick,
+  onPublishedClick,
+  onDraftsClick,
+  onBooksClick,
+  activeStat,
 }: UserActivityStatsProps) {
   return (
     <section className="user-activity-stats">
@@ -37,55 +47,43 @@ export function UserActivityStats({
         <h2 className="user-activity-stats__title">
           Моя активность
         </h2>
-        
+
         <div className="user-activity-stats__grid">
-          <div className="user-activity-stats__item">
-            <div className="user-activity-stats__content">
-              <div>
-                <p className="user-activity-stats__label">Создано тир-листов</p>
-                <p className="user-activity-stats__value">{tierListsCount}</p>
-              </div>
-              <div className="user-activity-stats__icon user-activity-stats__icon--primary">
-                <Layers size={24} />
-              </div>
-            </div>
-          </div>
+          <StatCard
+            label="Создано тир-листов"
+            value={tierListsCount}
+            icon={<Layers size={24} />}
+            iconClass="user-activity-stats__icon--primary"
+            isActive={activeStat === 'tierlists'}
+            onClick={onTierListsClick}
+          />
 
-          <div className="user-activity-stats__item">
-            <div className="user-activity-stats__content">
-              <div>
-                <p className="user-activity-stats__label">Опубликовано</p>
-                <p className="user-activity-stats__value">{publishedCount}</p>
-              </div>
-              <div className="user-activity-stats__icon user-activity-stats__icon--success">
-                <CheckCircle size={24} />
-              </div>
-            </div>
-          </div>
+          <StatCard
+            label="Опубликовано"
+            value={publishedCount}
+            icon={<CheckCircle size={24} />}
+            iconClass="user-activity-stats__icon--success"
+            isActive={activeStat === 'published'}
+            onClick={onPublishedClick}
+          />
 
-          <div className="user-activity-stats__item">
-            <div className="user-activity-stats__content">
-              <div>
-                <p className="user-activity-stats__label">Черновики</p>
-                <p className="user-activity-stats__value">{draftsCount}</p>
-              </div>
-              <div className="user-activity-stats__icon user-activity-stats__icon--warning">
-                <FileText size={24} />
-              </div>
-            </div>
-          </div>
+          <StatCard
+            label="Черновики"
+            value={draftsCount}
+            icon={<FileText size={24} />}
+            iconClass="user-activity-stats__icon--warning"
+            isActive={activeStat === 'drafts'}
+            onClick={onDraftsClick}
+          />
 
-          <div className="user-activity-stats__item">
-            <div className="user-activity-stats__content">
-              <div>
-                <p className="user-activity-stats__label">Книг в подборках</p>
-                <p className="user-activity-stats__value">{totalBooks}</p>
-              </div>
-              <div className="user-activity-stats__icon user-activity-stats__icon--info">
-                <BookOpen size={24} />
-              </div>
-            </div>
-          </div>
+          <StatCard
+            label="Книг в подборках"
+            value={totalBooks}
+            icon={<BookOpen size={24} />}
+            iconClass="user-activity-stats__icon--info"
+            isActive={activeStat === 'books'}
+            onClick={onBooksClick}
+          />
 
           <div className="user-activity-stats__item">
             <div className="user-activity-stats__content">
@@ -113,5 +111,36 @@ export function UserActivityStats({
         </div>
       </div>
     </section>
+  );
+}
+
+interface StatCardProps {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  iconClass: string;
+  isActive?: boolean;
+  onClick?: () => void;
+}
+
+function StatCard({ label, value, icon, iconClass, isActive, onClick }: StatCardProps) {
+  const Tag = onClick ? 'button' : 'div';
+  const buttonProps = onClick ? { type: 'button' as const, onClick } : {};
+
+  return (
+    <Tag
+      className={`user-activity-stats__item${isActive ? ' user-activity-stats__item--active' : ''}${onClick ? ' user-activity-stats__item--clickable' : ''}`}
+      {...buttonProps}
+    >
+      <div className="user-activity-stats__content">
+        <div>
+          <p className="user-activity-stats__label">{label}</p>
+          <p className="user-activity-stats__value">{value}</p>
+        </div>
+        <div className={`user-activity-stats__icon ${iconClass}`}>
+          {icon}
+        </div>
+      </div>
+    </Tag>
   );
 }
