@@ -102,19 +102,44 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
     }
   };
 
+  const recalcPosition = useCallback(() => {
+    const button = document.getElementById("donate-button");
+    if (!button) return;
+    const rect = button.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const popupHeight = 232; // ~220px + 12px gap
+
+    // На мобилке футер внизу — всегда открываем выше
+    // Если сверху тоже не хватает — ставим куда больше места
+    if (spaceBelow >= popupHeight && window.innerWidth >= 768) {
+      setPopupDirection("below");
+    } else if (spaceAbove >= popupHeight) {
+      setPopupDirection("above");
+    } else {
+      // В крайнем случае — выше, попап будет с overflow
+      setPopupDirection(spaceAbove > spaceBelow ? "above" : "below");
+    }
+  }, []);
+
   const toggleDonate = useCallback(() => {
     if (!isDonateOpen) {
-      // Calculate best direction when opening
-      const button = document.getElementById("donate-button");
-      if (button) {
-        const rect = button.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - rect.bottom;
-        // Popup is ~220px tall + 12px gap
-        setPopupDirection(spaceBelow >= 232 ? "below" : "above");
-      }
+      recalcPosition();
     }
     setIsDonateOpen((prev) => !prev);
-  }, [isDonateOpen]);
+  }, [isDonateOpen, recalcPosition]);
+
+  // Пересчитываем позицию при скролле/ресайзе пока открыт
+  useEffect(() => {
+    if (!isDonateOpen) return;
+    const handle = () => recalcPosition();
+    window.addEventListener("scroll", handle, { passive: true });
+    window.addEventListener("resize", handle, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handle);
+      window.removeEventListener("resize", handle);
+    };
+  }, [isDonateOpen, recalcPosition]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -150,7 +175,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   if (isHidden) return null;
 
   return (
-    <footer className="relative border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%),#0b0f1f] px-6 py-12">
+    <footer className="relative overflow-x-hidden border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%),#0b0f1f] px-6 py-12">
       <style>{marqueeStyle}</style>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <Meteors number={40} angle={255} minDuration={10} maxDuration={22} minDelay={0} maxDelay={1.5} />
@@ -255,7 +280,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
               <div
                 id="donate-menu"
-                className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] overflow-hidden rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 origin-bottom-right ${
+                className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] max-h-[60vh] overflow-y-auto rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 origin-bottom-right ${
                   popupDirection === "below"
                     ? "top-full mt-1"
                     : "bottom-full mb-1"

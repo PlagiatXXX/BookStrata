@@ -297,6 +297,56 @@ export async function getTasteMatch(targetUserId: number, currentUserId: number)
   };
 }
 
+// Тип для результатов поиска (публичные данные)
+export interface UserSearchResult {
+  id: number;
+  username: string;
+  avatarUrl: string | null;
+  isDonor: boolean;
+  xp: number;
+  title: string | null;
+  icon: string | null;
+  role: string | null;
+}
+
+// GET /api/users/search?q= — поиск пользователей по нику
+export async function searchUsers(q: string): Promise<UserSearchResult[]> {
+  if (!q || q.trim().length < 1) return [];
+
+  const users = await prisma.user.findMany({
+    where: {
+      username: {
+        contains: q.trim(),
+        mode: "insensitive",
+      },
+    },
+    select: {
+      id: true,
+      username: true,
+      avatarUrl: true,
+      xp: true,
+      title: true,
+      isDonor: true,
+      role: {
+        select: { name: true },
+      },
+    },
+    orderBy: { xp: "desc" },
+    take: 20,
+  });
+
+  return users.map((user) => ({
+    id: user.id,
+    username: user.username ?? "",
+    avatarUrl: user.avatarUrl,
+    isDonor: user.isDonor,
+    xp: user.xp,
+    title: user.title,
+    icon: null,
+    role: user.role?.name ?? null,
+  }));
+}
+
 /**
  * Получить всех пользователей (только для администраторов)
  */

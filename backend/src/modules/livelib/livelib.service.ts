@@ -7,6 +7,7 @@ const logger = createLogger("LiveLib", { color: "magenta" });
 
 const LIVELIB_BASE = "https://www.livelib.ru";
 const CACHE_TTL = 300;
+const MAX_PAGES_PER_LIST = 5; // ~20-25 книг на странице, итого ~100-125 книг на список
 
 export interface LiveLibBookRaw {
   title: string;
@@ -124,8 +125,76 @@ export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
 }
 
 /**
+ * Загружает все страницы одного списка (read / wish) для пользователя.
+ */
+async function fetchListWithPagination(
+  username: string,
+  list: string,
+): Promise<BookSearchResult[]> {
+  const seenUrls = new Set<string>();
+  const allBooks: BookSearchResult[] = [];
+
+  for (let page = 1; page <= MAX_PAGES_PER_LIST; page++) {
+    const url = `${LIVELIB_BASE}/reader/${encodeURIComponent(username)}/${list}${page > 1 ? `?page=${page}` : ""}`;
+    logger.info(`Fetching LiveLib list: ${url}`);
+
+    let html: string;
+    try {
+      const response = await fetchWithRetry(url);
+      html = await response.text();
+    } catch (err) {
+      if (page === 1) {
+        // Первая страница не загрузилась — список недоступен
+        logger.warn(`Не удалось загрузить список ${list} для "${username}"`, {
+          error: (err as Error).message,
+        });
+        return [];
+      }
+      // Следующие страницы — просто выходим, то что есть — уже собрали
+      logger.info(
+        `Страница ${page} списка ${list} недоступна, загружено ${allBooks.length} книг`,
+      );
+      break;
+    }
+
+    const rawBooks = extractBooksFromHtml(html);
+
+    if (rawBooks.length === 0) {
+      logger.info(
+        `Список ${list} закончился на странице ${page} для "${username}"`,
+      );
+      break; // пустая страница — конец списка
+    }
+
+    let newCount = 0;
+    for (const b of rawBooks) {
+      const key = b.liveLibUrl || b.title;
+      if (seenUrls.has(key)) continue;
+      seenUrls.add(key);
+      newCount++;
+      allBooks.push({
+        openLibraryKey: `livelib:${b.liveLibUrl}`,
+        title: b.title,
+        author: b.author || "Неизвестен",
+        coverUrl: b.coverImageUrl,
+        coverUrlLarge: b.coverImageUrl,
+      });
+    }
+
+    logger.info(
+      `Страница ${page} списка ${list}: +${newCount} книг (всего ${allBooks.length})`,
+    );
+
+    // Если на странице меньше книг, чем обычно — вероятно, это последняя
+    if (rawBooks.length < 15) break;
+  }
+
+  return allBooks;
+}
+
+/**
  * Загрузка книг пользователя из его списков на LiveLib.
- * Сначала пробует /read (прочитанное), затем /wish (хочу прочитать).
+ * Собирает все страницы /read (прочитанное) и /wish (хочу прочитать).
  */
 export async function fetchUserBooks(
   username: string,
@@ -139,7 +208,7 @@ export async function fetchUserBooks(
     return cached;
   }
 
-  // Сначала проверяем, существует ли пользователь, и загружаем профиль
+  // Сначала проверяем, существует ли пользователь
   let profileHtml: string | null = null;
   try {
     const profileUrl = `${LIVELIB_BASE}/reader/${encodeURIComponent(username)}`;
@@ -153,75 +222,51 @@ export async function fetchUserBooks(
     if ((err as Error).message === "Пользователь не найден на LiveLib") {
       throw err;
     }
-    // Если не смогли загрузить профиль — пробуем списки
     logger.warn(
       `Не удалось проверить профиль "${username}", пробуем списки`,
     );
   }
 
-  // Пробуем оба списка: read (прочитанное) и wish (хочу прочитать)
-  const lists = ["read", "wish"];
+  // Собираем книги из обоих списков с пагинацией
+  const seenKeys = new Set<string>();
+  const allResults: BookSearchResult[] = [];
 
-  for (const list of lists) {
-    const url = `${LIVELIB_BASE}/reader/${encodeURIComponent(username)}/${list}`;
-    logger.info(`Fetching LiveLib list: ${url}`);
-
-    let html: string;
-    try {
-      const response = await fetchWithRetry(url);
-      html = await response.text();
-    } catch (err) {
-      logger.warn(`Не удалось загрузить ${list} для "${username}"`, {
-        error: (err as Error).message,
-      });
-      if (list === lists[lists.length - 1]) {
-        break; // вместо throw — даём шанс профилю
-      }
-      continue;
+  for (const list of ["read", "wish"]) {
+    const books = await fetchListWithPagination(username, list);
+    for (const b of books) {
+      const key = b.openLibraryKey;
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
+      allResults.push(b);
     }
-
-    const rawBooks = extractBooksFromHtml(html);
-
-    if (rawBooks.length === 0) {
-      logger.info(`Список ${list} пуст для "${username}"`);
-      continue;
-    }
-
-    const results: BookSearchResult[] = rawBooks.map((b) => ({
-      openLibraryKey: `livelib:${b.liveLibUrl}`,
-      title: b.title,
-      author: b.author || "Неизвестен",
-      coverUrl: b.coverImageUrl,
-      coverUrlLarge: b.coverImageUrl,
-    }));
-
-    await setToCache(cacheKey, results, CACHE_TTL);
-    logger.info(
-      `Загружено ${results.length} книг из списка "${list}" для "${username}"`,
-    );
-    return results;
   }
 
-  // Если списки пусты или недоступны — пробуем вытащить книги из карусели на профиле
-  if (profileHtml) {
+  // Если списки пусты или недоступны — пробуем карусель на профиле
+  if (allResults.length === 0 && profileHtml) {
     const rawBooks = extractBooksFromHtml(profileHtml);
     if (rawBooks.length > 0) {
-      const results: BookSearchResult[] = rawBooks.map((b) => ({
-        openLibraryKey: `livelib:${b.liveLibUrl}`,
-        title: b.title,
-        author: b.author || "Неизвестен",
-        coverUrl: b.coverImageUrl,
-        coverUrlLarge: b.coverImageUrl,
-      }));
-
-      await setToCache(cacheKey, results, CACHE_TTL);
-      logger.info(
-        `Загружено ${results.length} книг из профиля "${username}" (карусель)`,
-      );
-      return results;
+      for (const b of rawBooks) {
+        const key = b.liveLibUrl || b.title;
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        allResults.push({
+          openLibraryKey: `livelib:${b.liveLibUrl}`,
+          title: b.title,
+          author: b.author || "Неизвестен",
+          coverUrl: b.coverImageUrl,
+          coverUrlLarge: b.coverImageUrl,
+        });
+      }
     }
   }
 
-  return [];
+  if (allResults.length > 0) {
+    await setToCache(cacheKey, allResults, CACHE_TTL);
+  }
+
+  logger.info(
+    `Загружено всего ${allResults.length} книг для "${username}"`,
+  );
+  return allResults;
 }
 

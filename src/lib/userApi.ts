@@ -106,3 +106,21 @@ export async function apiUploadAvatar(base64Image: string): Promise<User> {
 export async function apiSetDonorStatus(userId: number, isDonor: boolean): Promise<{ id: number; username: string; isDonor: boolean }> {
   return apiClient.patch(`/users/admin/${userId}/donor`, { isDonor });
 }
+
+// Тип результата поиска пользователей
+export interface UserSearchResult {
+  id: number;
+  username: string;
+  avatarUrl: string | null;
+  isDonor: boolean;
+  xp: number;
+  title: string | null;
+  icon: string | null;
+  role: string | null;
+}
+
+// GET /api/users/search?q= — поиск пользователей по нику
+export async function apiSearchUsers(q: string): Promise<UserSearchResult[]> {
+  userLogger.info("Поиск пользователей", { query: q });
+  return apiClient.get<UserSearchResult[]>("/users/search", { q });
+}

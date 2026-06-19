@@ -65,6 +65,7 @@ export function ThemePicker({
                   <span style={{ background: colors.tier }} />
                 </div>
               </div>
+              <span className="theme-picker__name">{label}</span>
               {currentTheme === id && <span className="theme-picker__dot" />}
             </button>
           )

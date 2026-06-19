@@ -15,7 +15,8 @@ interface UseTierEditorDraftParams {
       description: string;
       duration: number;
       button?: { title: string; onClick: () => void };
-    }) => void;
+    }) => string;
+    dismiss: (id: string) => void;
   };
 }
 
@@ -84,7 +85,7 @@ export function useTierEditorDraft({
 
       const timeAgo = Math.round((Date.now() - timestamp) / 1000 / 60);
 
-      sileo.info({
+      const toastId = sileo.info({
         title: 'Найден черновик',
         description: `У вас есть несохраненные изменения (${timeAgo} мин. назад). Восстановить?`,
         duration: 10000,
@@ -93,6 +94,7 @@ export function useTierEditorDraft({
           onClick: () => {
             dispatch({ type: 'SET_STATE', payload: data });
             setHasUnsavedChanges(true);
+            sileo.dismiss(toastId);
           },
         },
       });

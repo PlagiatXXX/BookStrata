@@ -716,6 +716,107 @@ describe("users.service", () => {
     })
   })
 
+  describe("searchUsers", () => {
+    it("должен вернуть пользователей по части ника", async () => {
+      const mockUsers = [
+        { id: 1, username: "testuser", avatarUrl: null, xp: 100, title: "Новичок", isDonor: false, role: { name: "user" } },
+        { id: 2, username: "testmaster", avatarUrl: "https://example.com/av.jpg", xp: 500, title: "Мастер", isDonor: true, role: { name: "admin" } },
+      ];
+      (prisma.user.findMany as any).mockResolvedValue(mockUsers);
+
+      const result = await userService.searchUsers("test");
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: {
+          username: { contains: "test", mode: "insensitive" },
+        },
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          xp: true,
+          title: true,
+          isDonor: true,
+          role: { select: { name: true } },
+        },
+        orderBy: { xp: "desc" },
+        take: 20,
+      });
+
+      expect(result).toEqual([
+        { id: 1, username: "testuser", avatarUrl: null, xp: 100, title: "Новичок", icon: null, isDonor: false, role: "user" },
+        { id: 2, username: "testmaster", avatarUrl: "https://example.com/av.jpg", xp: 500, title: "Мастер", icon: null, isDonor: true, role: "admin" },
+      ]);
+    });
+
+    it("должен вернуть пустой массив если запрос пустой", async () => {
+      const result1 = await userService.searchUsers("");
+      expect(result1).toEqual([]);
+
+      const result2 = await userService.searchUsers("   ");
+      expect(result2).toEqual([]);
+
+      expect(prisma.user.findMany).not.toHaveBeenCalled();
+    });
+
+    it("должен вернуть пустой массив если ничего не найдено", async () => {
+      (prisma.user.findMany as any).mockResolvedValue([]);
+
+      const result = await userService.searchUsers("zzzznonExistent");
+
+      expect(result).toEqual([]);
+    });
+
+    it("должен вернуть до 20 результатов", async () => {
+      const manyUsers = Array.from({ length: 30 }, (_, i) => ({
+        id: i + 1,
+        username: `user${i}`,
+        avatarUrl: null,
+        xp: i * 10,
+        title: "Новичок",
+        isDonor: false,
+        role: { name: "user" },
+      }));
+      (prisma.user.findMany as any).mockResolvedValue(manyUsers.slice(0, 20));
+
+      const result = await userService.searchUsers("user");
+
+      expect(result).toHaveLength(20);
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 20 }),
+      );
+    });
+
+    it("должен искать без учёта регистра", async () => {
+      const mockUsers = [
+        { id: 1, username: "TestUser", avatarUrl: null, xp: 100, title: "Новичок", isDonor: false, role: { name: "user" } },
+      ];
+      (prisma.user.findMany as any).mockResolvedValue(mockUsers);
+
+      const result = await userService.searchUsers("testuser");
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { username: { contains: "testuser", mode: "insensitive" } },
+        }),
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].username).toBe("TestUser");
+    });
+
+    it("должен сортировать по XP (убывание)", async () => {
+      (prisma.user.findMany as any).mockResolvedValue([]);
+
+      await userService.searchUsers("xp");
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { xp: "desc" },
+        }),
+      );
+    });
+  });
+
   describe("getViolators", () => {
     const mockBannedUser = {
       id: 1,

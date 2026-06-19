@@ -51,7 +51,7 @@ ok "Код обновлён"
 # ——— 2. Собрать фронтенд ———
 if [ "$SKIP_BUILD" = false ]; then
   info "Сборка фронтенда..."
-  npm run build
+  npm run build:prod
   ok "Фронтенд собран"
 else
   warn "Сборка пропущена (--skip-build)"

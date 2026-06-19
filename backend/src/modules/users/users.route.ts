@@ -9,6 +9,7 @@ import {
   updateUser,
   changePassword,
   getAllUsers,
+  searchUsers,
   getTasteMatch,
   getUserPublicTierLists,
   getViolators,
@@ -117,6 +118,19 @@ export async function userRoutes(fastify: FastifyInstance) {
       const currentUserId = (request as any).user?.userId;
       const match = await getTasteMatch(targetUserId, currentUserId);
       return reply.send(createSuccessResponse(match));
+    },
+  );
+
+  // GET /api/users/search?q= — поиск пользователей по нику
+  fastify.get<{
+    Querystring: { q: string };
+  }>(
+    "/search",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const q = request.query.q || "";
+      const results = await searchUsers(q);
+      return reply.send(createSuccessResponse(results));
     },
   );
 

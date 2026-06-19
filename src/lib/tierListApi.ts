@@ -6,9 +6,9 @@ import { createLogger } from './logger';
 
 const tierListLogger = createLogger('TierListApi', { color: 'magenta' });
 
-export type TierListTheme = 'default' | 'midnight' | 'sunset' | 'forest' | 'ocean' | 'cyberpunk'
+export type TierListTheme = 'default' | 'midnight' | 'sunset' | 'forest' | 'ocean' | 'cyberpunk' | 'candlelight' | 'frost' | 'burgundy' | 'lunar' | 'sapphire' | 'moss'
 
-export const PRO_THEMES: TierListTheme[] = ['midnight', 'sunset', 'forest', 'ocean', 'cyberpunk']
+export const PRO_THEMES: TierListTheme[] = ['midnight', 'sunset', 'forest', 'ocean', 'cyberpunk', 'candlelight', 'frost', 'burgundy', 'lunar', 'sapphire', 'moss']
 export const FREE_THEMES: TierListTheme[] = ['default']
 
 export const THEME_LABELS: Record<TierListTheme, string> = {
@@ -18,6 +18,12 @@ export const THEME_LABELS: Record<TierListTheme, string> = {
   forest: 'Лес',
   ocean: 'Океан',
   cyberpunk: 'Киберпанк',
+  candlelight: 'Свеча',
+  frost: 'Иней',
+  burgundy: 'Бордо',
+  lunar: 'Луна',
+  sapphire: 'Сапфир',
+  moss: 'Мох',
 }
 
 export const THEME_COLORS: Record<TierListTheme, { bg: string; tier: string; text: string }> = {
@@ -27,6 +33,12 @@ export const THEME_COLORS: Record<TierListTheme, { bg: string; tier: string; tex
   forest: { bg: '#0a1f0f', tier: '#4ade80', text: '#dcfce7' },
   ocean: { bg: '#0a1628', tier: '#38bdf8', text: '#e0f2fe' },
   cyberpunk: { bg: '#0a0a1a', tier: '#ff51fa', text: '#f0f0ff' },
+  candlelight: { bg: '#2a1a08', tier: '#FFF4DD', text: '#fef3c7' },
+  frost: { bg: '#0f1a24', tier: '#c1dcec', text: '#e0f2fe' },
+  burgundy: { bg: '#1a0a0a', tier: '#7B1113', text: '#fef3c7' },
+  lunar: { bg: '#121212', tier: '#a3a3a3', text: '#fafafa' },
+  sapphire: { bg: '#0c1222', tier: '#082567', text: '#eff6ff' },
+  moss: { bg: '#141a0e', tier: '#a3e635', text: '#f7fee7' },
 }
 
 export interface TierListShort {

@@ -396,7 +396,8 @@ main.grid:has(> .neo-brutalist-editor) {
 }
 
 .theme-picker__grid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 0.5rem;
 }
 
@@ -406,13 +407,12 @@ main.grid:has(> .neo-brutalist-editor) {
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.4rem 0.5rem;
+  padding: 0.5rem 0.25rem;
   border: 1.5px solid transparent;
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
   transition: all 100ms cubic-bezier(0, 0, 0.2, 1);
-  flex: 1;
   min-width: 0;
 }
 
@@ -427,6 +427,7 @@ main.grid:has(> .neo-brutalist-editor) {
 
 @media (max-width: 767px) {
   .theme-picker__grid {
+    display: flex;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
@@ -562,6 +563,42 @@ main.grid:has(> .neo-brutalist-editor) {
   --nb-primary: #ff51fa;
   --nb-secondary: #38bdf8;
   --nb-tertiary: #ffbd58;
+}
+
+.neo-brutalist-editor[data-theme="candlelight"] {
+  --nb-bg: #2a1a08;
+  --nb-primary: #FFF4DD;
+}
+
+.neo-brutalist-editor[data-theme="frost"] {
+  --nb-bg: #0f1a24;
+  --nb-primary: #c1dcec;
+}
+
+.neo-brutalist-editor[data-theme="burgundy"] {
+  --nb-bg: #1a0a0a;
+  --nb-primary: #7B1113;
+}
+
+.neo-brutalist-editor[data-theme="lunar"] {
+  --nb-bg: #121212;
+  --nb-primary: #a3a3a3;
+}
+
+.neo-brutalist-editor[data-theme="sapphire"] {
+  --nb-bg: #0c1222;
+  --nb-primary: #082567;
+}
+
+.neo-brutalist-editor[data-theme="moss"] {
+  --nb-bg: #141a0e;
+  --nb-primary: #a3e635;
+}
+
+/* Тёмные акценты — белый текст на кнопках */
+.neo-brutalist-editor[data-theme="sapphire"] .nb-btn-primary,
+.neo-brutalist-editor[data-theme="burgundy"] .nb-btn-primary {
+  color: #ffffff;
 }
 
 /* TierListCoverEditor */

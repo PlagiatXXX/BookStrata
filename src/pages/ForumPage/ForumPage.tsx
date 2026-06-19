@@ -1,13 +1,14 @@
 import { useEffect, memo, useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Users, Swords, MessageSquare, MessageSquareText, Plus, Pin, Trash2 } from "lucide-react";
+import { Search, Users, Swords, MessageSquare, MessageSquareText, Plus, Pin, Trash2 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BattleList } from "./components/BattleList";
 import { DiscussionSection } from "@/components/DiscussionSection/DiscussionSection";
 import { CuratorApplyModal } from "@/components/CuratorApplyModal/CuratorApplyModal";
 import { getForumStats } from "@/lib/battlesApi";
 import { getTopics, createTopic, pinTopic, deleteTopic } from "@/lib/discussionApi";
+import { UserSearchSection } from "./components/UserSearchSection";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Spinner } from "@/components/Spinner";
@@ -18,9 +19,10 @@ const MemoizedBattleList = memo(BattleList);
 
 export default function ForumPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isAuthenticated } = useAuth();
   const [showCuratorModal, setShowCuratorModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"battles" | "discussions" | "forum">("battles");
+  const activeTab = (searchParams.get("tab") as "battles" | "discussions" | "forum" | "users") || "battles";
   const [selectedTopic, setSelectedTopic] = useState<{ id: string } | null>(null);
   const [showCreateTopic, setShowCreateTopic] = useState(false);
   const [topicTitle, setTopicTitle] = useState("");
@@ -74,6 +76,10 @@ export default function ForumPage() {
     return String(count);
   };
 
+  const goToTab = useCallback((tab: string) => {
+    setSearchParams({ tab }, { replace: true });
+  }, [setSearchParams]);
+
   const handleMyRatingsClick = useCallback(() => navigate("/"), [navigate]);
 
   const handleCreateTopic = async () => {
@@ -85,7 +91,7 @@ export default function ForumPage() {
       setTopicTitle("");
       setShowCreateTopic(false);
       setSelectedTopic({ id: newTopic.id });
-      setActiveTab("forum");
+goToTab("forum");
       refetchTopics();
     } catch {
       // ignore
@@ -196,7 +202,7 @@ export default function ForumPage() {
           {/* Activity Tabs */}
           <div className="flex items-center gap-6 mb-12 border-b border-(--line-soft) reveal" data-reveal>
              <button
-               onClick={() => { window.scrollTo(0, 0); setActiveTab("battles"); setSelectedTopic(null); }}
+               onClick={() => { window.scrollTo(0, 0); goToTab("battles"); setSelectedTopic(null); }}
                className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
                  activeTab === "battles"
                    ? "border-(--accent-main) text-(--ink-0)"
@@ -207,18 +213,29 @@ export default function ForumPage() {
                Битвы
              </button>
              <button
-               onClick={() => { window.scrollTo(0, 0); setActiveTab("discussions"); setSelectedTopic(null); }}
-               className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
-                 activeTab === "discussions"
-                   ? "border-(--accent-main) text-(--ink-0)"
-                   : "border-transparent text-(--ink-1) hover:text-(--ink-0)"
-               }`}
+                onClick={() => { window.scrollTo(0, 0); goToTab("discussions"); setSelectedTopic(null); }}
+                className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
+                  activeTab === "discussions"
+                    ? "border-(--accent-main) text-(--ink-0)"
+                    : "border-transparent text-(--ink-1) hover:text-(--ink-0)"
+                }`}
              >
-               <MessageSquare size={16} />
+                <MessageSquare size={16} />
                Обсуждения
              </button>
              <button
-               onClick={() => { window.scrollTo(0, 0); setActiveTab("forum"); setSelectedTopic(null); }}
+                onClick={() => { window.scrollTo(0, 0); goToTab("users"); setSelectedTopic(null); }}
+                className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
+                  activeTab === "users"
+                    ? "border-(--accent-main) text-(--ink-0)"
+                    : "border-transparent text-(--ink-1) hover:text-(--ink-0)"
+                }`}
+             >
+                <Search size={16} />
+               Пользователи
+             </button>
+             <button
+                onClick={() => { window.scrollTo(0, 0); goToTab("forum"); setSelectedTopic(null); }}
                className={`forum-tab forum-tab--forum flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
                  activeTab === "forum"
                    ? "border-(--accent-main) text-(--ink-0)"
@@ -309,6 +326,8 @@ export default function ForumPage() {
                 )}
               </div>
             )
+          ) : activeTab === "users" ? (
+            <UserSearchSection />
           ) : (
             /* Discussions tab: general chat (mobile) or two-column layout (desktop) */
             <div className="forum-discussions-grid">

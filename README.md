@@ -8,8 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-796_passed-brightgreen)](./doctor.md)
-[![React Doctor](https://www.react.doctor/share/badge?p=tiermaker-pro&s=97&w=179&f=96)](https://www.react.doctor/share?p=tiermaker-pro&s=97&w=179&f=96)
+[![Tests](https://img.shields.io/badge/Tests-966_passed-brightgreen)](./README.md)
 
 ---
 
@@ -35,7 +34,7 @@
 - **Drag-and-Drop** — Интуитивная сортировка книг через современную библиотеку `@dnd-kit`.
 - **Автосохранение** — Оптимизированная система диффов для сохранения изменений в фоновом режиме.
 - **Поиск книг** — Мгновенная интеграция с Google Books API для добавления обложек и описаний.
-- **Загрузка файлов** — Возможность загружать свои изображения через Cloudinary.
+- **Загрузка файлов** — Возможность загружать свои изображения (аватары, обложки).
 - **Экспорт в PNG** — Делитесь своими результатами как готовыми изображениями.
 
 ### 🔞 NSFW Detection
@@ -52,7 +51,9 @@
 - **Баттлы** — Центр активностей с реальной статистикой участников и активных битв.
 - **Обсуждения и Форум** — Общий чат, топики форума с закреплением/удалением (модерация), комментарии под битвами.
 - **Шаблоны** — Быстрый старт с предустановленными наборами (Fiction, Sci-Fi и др.).
-- **Счётчик лимитов** — Прогресс-бар заполнения тир-листа (лимит 20 книг для бесплатных аккаунтов).
+- **Поиск пользователей** — Поиск по нику на странице актива, просмотр публичных профилей с тир-листами, статистикой и совпадением вкусов.
+- **LiveLib импорт** — Загрузка книг из списков «прочитанное» и «хочу прочитать» с LiveLib (с пагинацией до ~100–125 книг).
+- **Счётчик лимитов** — Прогресс-бар заполнения тир-листа (лимит 20 книг для бесплатных аккаунтов, ограничение на добавление за раз).
 
 ### 🤖 AI-библиотекарь
 - **AI-рекомендации** — Персональные подборки книг на основе ваших тир-листов (Gemini Flash / Groq).
@@ -76,8 +77,9 @@
 - **Prisma ORM** (типобезопасная работа с PostgreSQL).
 - **Zod** (валидация схем на уровне API).
 - **JWT + bcryptjs** (безопасная аутентификация и хранение паролей).
-- **Cloudinary** (обработка и хостинг изображений).
+- **Sharp** (обработка изображений на сервере).
 - **Gemini API + Groq API** (AI-рекомендации с failover).
+- **LiveLib Parser** (парсинг книг из списков пользователей LiveLib с пагинацией).
 
 ### Инфраструктура
 - **Docker** (контейнеризация, docker-compose для PostgreSQL и Redis).
@@ -89,9 +91,9 @@
 ## 🚀 Быстрый старт
 
 ### Требования
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL 14+
-- npm или yarn
+- npm
 
 ### Установка и запуск
 
@@ -116,8 +118,13 @@ npx prisma db seed
 cd ..
 
 # 5. Запуск разработки (два терминала)
-npm run dev          # Frontend на http://localhost:5173
-cd backend && npm run dev # Backend на http://localhost:8080
+npm run dev            # Frontend на http://localhost:5173
+cd backend && npm run dev  # Backend на http://localhost:8080
+
+# 6. Сборка
+npm run build          # Локальная сборка фронта (без артефактов)
+npm run build:prod     # Продакшен-сборка (с prerender, для деплоя)
+cd backend && npm run build  # Сборка бэкенда
 ```
 
 ---
@@ -126,25 +133,26 @@ cd backend && npm run dev # Backend на http://localhost:8080
 
 Проект следует принципам **чистой архитектуры** и модульности:
 
-- **Frontend:** Разделение на `pages/`, `components/`, `hooks/`, `contexts/`. Логика редактора вынесена в специализированные хуки (`useTierEditorState`, `useTierEditorSave` и др.).
-- **Backend:** Модульный подход (`modules/`). Каждый модуль (auth, books, tier-lists) содержит свои роуты, схемы (Zod) и сервисы (Prisma).
+- **Frontend:** Разделение на `pages/`, `components/`, `hooks/`, `contexts/`. Логика редактора вынесена в специализированные хуки (`useTierEditorState`, `useTierEditorSave`, `useTierEditorDraft` и др.).
+- **Backend:** Модульный подход (`modules/`). 23 модуля: `auth`, `users`, `books`, `tier-lists`, `battles`, `discussions`, `forum`, `news`, `feedback`, `templates`, `avatars`, `achievements`, `ai-librarian`, `livelib`, `moderation`, `ratings`, `subscriptions`, `donors`, `roles`, `admin`, `admin-stats`, `external-news`, `sitemap`, `proxy`.
 - **API:** RESTful API с автоматической Swagger-документацией на `/documentation`.
-- **Discussions:** Модуль обсуждений — общий чат, топики форума, комментарии к битвам. CRUD сообщений, закрепление/удаление топиков (admin/mod).
+- **Discussions:** Общий чат, топики форума, комментарии к битвам. CRUD сообщений, закрепление/удаление топиков (admin/mod).
 
 ---
 
 ## 🧪 Тестирование
 
-Проект покрыт **796 тестами** (414 фронтенд + 382 бэкенд) — Vitest + React Testing Library + Supertest.
+Проект покрыт **966 тестами** (461 фронтенд + 505 бэкенд) — Vitest + React Testing Library.
 
 ```bash
-# Запуск тестов фронтенда
-npm test
+# Запуск всех тестов
+npm test && cd backend && npm test
 
-# Запуск тестов бэкенда
-cd backend && npm test
+# Отдельно
+npm test              # Фронтенд
+cd backend && npm test  # Бэкенд
 ```
-*Статус: **796/796** тестов проходят успешно ✅*
+*Статус: **966/966** тестов проходят успешно ✅*
 
 ---
 
@@ -161,7 +169,7 @@ cd backend && npm test
 - **Лимит книг:** Увеличение лимита с 20 до 100+ книг.
 - **Приватность:** Скрытие профиля и возможность создания неограниченного числа приватных списков.
 - **Экспорт:** Сохранение изображений в 4K качестве без водяных знаков.
-- **Кастомные темы:** Доступ к эксклюзивным темам оформления (Dark Pro, Minimalist, Paper).
+- **Кастомные темы:** 10 Pro-тем оформления (Midnight, Sunset, Forest, Ocean, Cyberpunk, Candlelight, Frost, Burgundy, Lunar, Sapphire, Moss).
 
 ---
 
@@ -192,7 +200,6 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 28 мая 2026 г.
-**Статус:** Phase 4+ Completed ✅ — NSFW Detection, Content Flags, Admin Flags Tab (796 тестов)
+**Последнее обновление:** 19 июня 2026 г.
+**Статус:** LiveLib импорт, AI-библиотекарь, поиск пользователей, NSFW Detection (966 тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)
-**Аудит и рефакторинг:** Jules (Senior Fullstack AI)

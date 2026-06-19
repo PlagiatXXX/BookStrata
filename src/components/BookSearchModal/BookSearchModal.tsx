@@ -11,6 +11,8 @@ import { Spinner } from "@/components/Spinner";
 // Логгер для компонента поиска книг
 const logger = createLogger('BookSearchModal', { color: 'green' });
 
+const MAX_BOOKS_PER_BATCH = 30;
+
 interface BookSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -366,11 +368,20 @@ export const BookSearchModal = ({
   const handleAddSelectedLiveLibBooks = async () => {
     if (liveLibSelected.size === 0) return;
 
-    setIsAddingBooks(true);
-
     const booksToAdd = liveLibResults.filter((book) =>
       liveLibSelected.has(book.openLibraryKey),
     );
+
+    if (booksToAdd.length > MAX_BOOKS_PER_BATCH) {
+      sileo.warning({
+        title: `Можно добавить не больше ${MAX_BOOKS_PER_BATCH} книг за раз`,
+        description: `Уберите лишние или добавьте частями`,
+        duration: 4000,
+      });
+      return;
+    }
+
+    setIsAddingBooks(true);
 
     try {
       const addedBooks = await batchAddBooksFromSearch(tierListId, booksToAdd);
@@ -403,6 +414,15 @@ export const BookSearchModal = ({
   const handleAddSelectedBooks = async () => {
     const books = Object.values(state.selectedBooks);
     if (books.length === 0) return;
+
+    if (books.length > MAX_BOOKS_PER_BATCH) {
+      sileo.warning({
+        title: `Можно добавить не больше ${MAX_BOOKS_PER_BATCH} книг за раз`,
+        description: `Уберите лишние или добавьте частями`,
+        duration: 4000,
+      });
+      return;
+    }
 
     setIsAddingBooks(true);
 
@@ -540,7 +560,7 @@ export const BookSearchModal = ({
               }`}
             >
               <User className="h-3 w-3" />
-              LiveLib
+              Мои книги в LiveLib
             </button>
 
             <div className="flex-1" />
@@ -550,30 +570,46 @@ export const BookSearchModal = ({
               <button
                 type="button"
                 onClick={handleAddSelectedBooks}
-                disabled={isAddingBooks}
-                className="flex cursor-pointer items-center gap-1.5 rounded bg-[#c1fffe] px-3 py-1.5 text-xs font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none animate-fade-in"
+                disabled={isAddingBooks || Object.keys(state.selectedBooks).length > MAX_BOOKS_PER_BATCH}
+                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none animate-fade-in ${
+                  Object.keys(state.selectedBooks).length > MAX_BOOKS_PER_BATCH
+                    ? "bg-[#ef4444]"
+                    : "bg-[#c1fffe]"
+                }`}
               >
                 {isAddingBooks ? (
                   <Spinner size="sm" />
                 ) : (
                   <Plus className="h-3 w-3" />
                 )}
-                {isAddingBooks ? "Добавление..." : `Добавить (${Object.keys(state.selectedBooks).length})`}
+                {isAddingBooks
+                  ? "Добавление..."
+                  : Object.keys(state.selectedBooks).length > MAX_BOOKS_PER_BATCH
+                    ? `Лимит ${MAX_BOOKS_PER_BATCH}`
+                    : `Добавить (${Object.keys(state.selectedBooks).length})`}
               </button>
             )}
             {activeTab === "livelib" && liveLibSelected.size > 0 && (
               <button
                 type="button"
                 onClick={handleAddSelectedLiveLibBooks}
-                disabled={isAddingBooks}
-                className="flex cursor-pointer items-center gap-1.5 rounded bg-[#c1fffe] px-3 py-1.5 text-xs font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none animate-fade-in"
+                disabled={isAddingBooks || liveLibSelected.size > MAX_BOOKS_PER_BATCH}
+                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none animate-fade-in ${
+                  liveLibSelected.size > MAX_BOOKS_PER_BATCH
+                    ? "bg-[#ef4444]"
+                    : "bg-[#c1fffe]"
+                }`}
               >
                 {isAddingBooks ? (
                   <Spinner size="sm" />
                 ) : (
                   <Plus className="h-3 w-3" />
                 )}
-                {isAddingBooks ? "Добавление..." : `Добавить (${liveLibSelected.size})`}
+                {isAddingBooks
+                  ? "Добавление..."
+                  : liveLibSelected.size > MAX_BOOKS_PER_BATCH
+                    ? `Лимит ${MAX_BOOKS_PER_BATCH}`
+                    : `Добавить (${liveLibSelected.size})`}
               </button>
             )}
           </div>
@@ -614,6 +650,9 @@ export const BookSearchModal = ({
                   {isLoading ? <Spinner size="sm" /> : "Найти"}
                 </button>
               </div>
+              <p className="mt-2 text-[10px] text-[#7d8688]">
+                Не более {MAX_BOOKS_PER_BATCH} книг за раз
+              </p>
             </div>
           )}
 
@@ -645,6 +684,9 @@ export const BookSearchModal = ({
                   {liveLibLoading ? <Spinner size="sm" /> : "Загрузить"}
                 </button>
               </div>
+              <p className="mt-2 text-[10px] text-[#7d8688]">
+                Не более {MAX_BOOKS_PER_BATCH} книг за раз
+              </p>
               {liveLibError && (
                 <p className="mt-2 text-xs text-red-400">{liveLibError}</p>
               )}

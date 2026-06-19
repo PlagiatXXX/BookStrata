@@ -6,16 +6,16 @@ interface BookCounterProps {
 
 export function BookCounter({ booksCount }: BookCounterProps) {
   return (
-    <div className="nb-heavy-border border border-black bg-black p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Book size={18} className="text-cyan-400" />
-          <span className="text-sm font-medium text-white">
+    <div className="nb-heavy-border border border-black bg-black px-3 py-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Book size={15} className="text-cyan-400" />
+          <span className="text-xs font-medium text-white">
             Книги в тир-листе
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-lg font-bold text-white">
+          <span className="text-base font-bold text-white">
             {booksCount}
           </span>
         </div>
