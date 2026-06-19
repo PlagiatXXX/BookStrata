@@ -90,9 +90,24 @@ export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
     if (!title) return;
 
     const author = $el.find("a.description").first().text().trim();
-    const coverStyle = $el.find(".object-cover").attr("style") || "";
+    let coverImageUrl: string | null = null;
+    const $cover = $el.find(".object-cover");
+    // 1. style="background:url(...)"
+    const coverStyle = $cover.attr("style") || "";
     const coverMatch = coverStyle.match(/url\(([^)]+)\)/);
-    const coverImageUrl = coverMatch ? (coverMatch[1] ?? null) : null;
+    coverImageUrl = coverMatch?.[1] ?? null;
+    // 2. <img src="..." /> внутри .object-cover
+    if (!coverImageUrl) {
+      coverImageUrl = $cover.find("img").attr("src") || null;
+    }
+    // 3. <img data-src="..." /> (ленивая загрузка)
+    if (!coverImageUrl) {
+      coverImageUrl = $cover.find("img").attr("data-src") || null;
+    }
+    // 4. <img data-pagespeed-lazy-src="..." /> (PageSpeed)
+    if (!coverImageUrl) {
+      coverImageUrl = $cover.find("img").attr("data-pagespeed-lazy-src") || null;
+    }
     const liveLibUrl =
       $el.find(".ll-redirect").attr("data-link") ||
       $el.find(".brow-title a.title").attr("href") ||
@@ -110,8 +125,12 @@ export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
       if (!title) return;
 
       const author = $el.find("a.slide-book__author").text().trim();
-      const coverImg = $el.find(".slide-book__link img");
-      const coverImageUrl = coverImg.attr("data-pagespeed-lazy-src") || null;
+      const $coverImg = $el.find(".slide-book__link img");
+      const coverImageUrl =
+        $coverImg.attr("src") ||
+        $coverImg.attr("data-src") ||
+        $coverImg.attr("data-pagespeed-lazy-src") ||
+        null;
       const liveLibUrl =
         $el.find(".slide-book__link").attr("href") ||
         $el.find("a.slide-book__title").attr("href") ||
@@ -185,8 +204,8 @@ async function fetchListWithPagination(
       `Страница ${page} списка ${list}: +${newCount} книг (всего ${allBooks.length})`,
     );
 
-    // Если на странице меньше книг, чем обычно — вероятно, это последняя
-    if (rawBooks.length < 15) break;
+    // Если страница пуста — конец списка
+    if (rawBooks.length === 0) break;
   }
 
   return allBooks;
