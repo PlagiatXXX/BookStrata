@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import type { SaveStatus } from "../hooks/useTierEditorSave";
 import type { Tier } from "@/types";
+import { useBottomSafeOffset } from "@/hooks/useBottomSafeOffset";
 
 interface MobileToolbarProps {
   onSave: () => void;
@@ -95,6 +96,8 @@ export const MobileToolbar = memo(function MobileToolbar({
     onUpdateTier(activeTier.id, { labelColor: color || undefined });
   }, [activeTier, onUpdateTier]);
 
+  const bottomOffset = useBottomSafeOffset();
+
   const [showMore, setShowMore] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
@@ -170,7 +173,7 @@ export const MobileToolbar = memo(function MobileToolbar({
   return (
     <>
       {/* Основная панель */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 block border-t-4 border-black bg-[#0e0e0e] lg:hidden">
+      <div className="fixed left-0 right-0 z-50 block border-t-4 border-black bg-[#0e0e0e] lg:hidden" style={{ bottom: bottomOffset }}>
         {/* Индикатор времени последнего сохранения */}
         {lastSaved && saveStatus !== "saving" && (
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-b bg-black px-2 text-[8px] uppercase tracking-wider text-gray-500">
@@ -269,7 +272,7 @@ export const MobileToolbar = memo(function MobileToolbar({
       {showMore && (
         <div
           ref={moreRef}
-          className="fixed bottom-16 left-1/2 z-50 w-64 -translate-x-1/2 border-4 border-black bg-[#0e0e0e] p-3 shadow-[4px_4px_0_0_#000000] lg:hidden"
+          className="fixed left-1/2 z-50 w-64 -translate-x-1/2 border-4 border-black bg-[#0e0e0e] p-3 shadow-[4px_4px_0_0_#000000] lg:hidden" style={{ bottom: bottomOffset + 64 }}
         >
           <div className="flex flex-col gap-2">
             {/* Clear All */}
@@ -329,7 +332,7 @@ export const MobileToolbar = memo(function MobileToolbar({
       {showTierPanel && activeTier && onUpdateTier && (
         <div
           ref={tierPanelRef}
-          className="fixed bottom-16 left-1/2 z-50 w-72 -translate-x-1/2 border-4 border-black bg-[#0e0e0e] p-3 shadow-[4px_4px_0_0_#000000] lg:hidden"
+          className="fixed left-1/2 z-50 w-72 -translate-x-1/2 border-4 border-black bg-[#0e0e0e] p-3 shadow-[4px_4px_0_0_#000000] lg:hidden" style={{ bottom: bottomOffset + 64 }}
         >
           <div className="mb-2 text-[10px] font-black uppercase tracking-widest text-[#ffbd58]">
             Полка: {activeTier.title}

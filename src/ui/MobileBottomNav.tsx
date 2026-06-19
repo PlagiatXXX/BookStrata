@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { List, Globe, Users, Library } from "lucide-react";
+import { useBottomSafeOffset } from "@/hooks/useBottomSafeOffset";
 
 interface MobileBottomNavProps {
   showTemplatesNav?: boolean;
@@ -15,13 +16,14 @@ const NAV_ITEMS = [
 export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const bottomOffset = useBottomSafeOffset();
 
   const items = showTemplatesNav
     ? NAV_ITEMS
     : NAV_ITEMS.filter((item) => item.label !== "Библиотека");
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-white/10 bg-background-dark/95 backdrop-blur-xl" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+    <nav className="fixed left-0 right-0 z-50 md:hidden border-t border-white/10 bg-background-dark/95 backdrop-blur-xl" style={{ bottom: bottomOffset, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="flex items-center justify-around h-14">
         {items.map((item) => {
           const isActive = location.pathname === item.path ||
