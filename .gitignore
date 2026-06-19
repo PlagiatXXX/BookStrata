@@ -56,3 +56,4 @@ testsprite_tests/tmp/config.json
 AUDIT_FILES_GUIDE.md
 load-test*.js
 backend/scripts/cleanup-load-test-users.ts
+nginx/ssl/
