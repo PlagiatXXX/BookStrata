@@ -200,9 +200,9 @@ goToTab("forum");
           </section>
 
           {/* Activity Tabs */}
-          <div className="flex items-center gap-6 mb-12 border-b border-(--line-soft) reveal" data-reveal>
+          <div className="flex items-center gap-6 mb-12 border-b border-(--line-soft) max-md:flex-wrap max-md:gap-x-3 max-md:pb-1 reveal" data-reveal>
              <button
-               onClick={() => { window.scrollTo(0, 0); goToTab("battles"); setSelectedTopic(null); }}
+                onClick={() => { goToTab("battles"); setSelectedTopic(null); }}
                className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
                  activeTab === "battles"
                    ? "border-(--accent-main) text-(--ink-0)"
@@ -213,7 +213,7 @@ goToTab("forum");
                Битвы
              </button>
              <button
-                onClick={() => { window.scrollTo(0, 0); goToTab("discussions"); setSelectedTopic(null); }}
+                 onClick={() => { goToTab("discussions"); setSelectedTopic(null); }}
                 className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
                   activeTab === "discussions"
                     ? "border-(--accent-main) text-(--ink-0)"
@@ -224,7 +224,7 @@ goToTab("forum");
                Обсуждения
              </button>
              <button
-                onClick={() => { window.scrollTo(0, 0); goToTab("users"); setSelectedTopic(null); }}
+                 onClick={() => { goToTab("users"); setSelectedTopic(null); }}
                 className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
                   activeTab === "users"
                     ? "border-(--accent-main) text-(--ink-0)"
@@ -235,7 +235,7 @@ goToTab("forum");
                Пользователи
              </button>
              <button
-                onClick={() => { window.scrollTo(0, 0); goToTab("forum"); setSelectedTopic(null); }}
+                 onClick={() => { goToTab("forum"); setSelectedTopic(null); }}
                className={`forum-tab forum-tab--forum flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
                  activeTab === "forum"
                    ? "border-(--accent-main) text-(--ink-0)"
