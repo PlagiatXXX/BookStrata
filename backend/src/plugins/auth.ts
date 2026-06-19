@@ -61,7 +61,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
           if (reply === "OK") {
             const prisma = (fastify as any).prisma;
             if (prisma) {
-              prisma.$executeRaw`UPDATE "users" SET "last_activity_at" = NOW() WHERE "id" = ${payload.userId}`
+              prisma.$executeRaw`UPDATE "User" SET "last_activity_at" = NOW() WHERE "id" = ${payload.userId}`
                 .catch((err: unknown) => {
                   logger.error("Ошибка обновления lastActivityAt", {
                     error: err instanceof Error ? err.message : String(err),

@@ -546,7 +546,7 @@ export async function getViolators() {
 // POST /api/users/heartbeat — пульс активности (раз в минуту от фронта)
 export async function heartbeat(userId: number) {
   await prisma.$executeRaw`
-    UPDATE "users"
+    UPDATE "User"
     SET "total_active_minutes" = "total_active_minutes" + 1,
         "last_activity_at" = NOW()
     WHERE "id" = ${userId}
