@@ -33,6 +33,8 @@ model User {
   title                String?    @default("Новичок")
   isDonor              Boolean    @default(false) @map("is_donor")
   donatedAt            DateTime?  @map("donated_at")
+  lastActivityAt       DateTime?  @map("last_activity_at")
+  totalActiveMinutes   Int        @default(0) @map("total_active_minutes")
 tierLists            TierList[]
 templates            Template[]
 tierListLikes        TierListLike[]

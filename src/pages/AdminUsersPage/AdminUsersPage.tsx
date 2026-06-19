@@ -25,6 +25,7 @@ import { DonorBadge } from "@/components/DonorBadge/DonorBadge"
 import { sileo } from "sileo"
 import { apiGetFlags, apiResolveFlag } from "@/lib/moderationApi"
 import type { AdminUser } from "@/types/auth"
+import { formatRelativeTime, formatTotalMinutes } from "@/utils/timeFormat"
 
 interface ViolatorAction {
   type: "chat_ban" | "suspension" | "warning"
@@ -322,13 +323,19 @@ export function AdminUsersPage() {
                     <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Роль
                     </th>
-                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden sm:table-cell">
                       Статус
                     </th>
-                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden sm:table-cell">
                       Меценат
                     </th>
                     <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
+                      Был(а) в сети
+                    </th>
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden lg:table-cell">
+                      На сайте
+                    </th>
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden lg:table-cell">
                       Зарегистрирован
                     </th>
                     <th className="text-right px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -340,7 +347,7 @@ export function AdminUsersPage() {
                   {isLoading ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={8}
                         className="px-6 py-12 text-center text-sm text-gray-500"
                       >
                         Загрузка...
@@ -349,7 +356,7 @@ export function AdminUsersPage() {
                   ) : filteredUsers.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={8}
                         className="px-6 py-12 text-center text-sm text-gray-500"
                       >
                         Пользователи не найдены
@@ -402,7 +409,7 @@ export function AdminUsersPage() {
                                 : "Пользователь"}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 hidden sm:table-cell">
                           {u.isPro ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400">
                               <Crown size={12} />
@@ -412,7 +419,7 @@ export function AdminUsersPage() {
                             <span className="text-xs text-gray-500">Free</span>
                           )}
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-4 py-4 hidden sm:table-cell">
                           {u.isDonor ? (
                             <DonorBadge size="sm" />
                           ) : (
@@ -420,6 +427,12 @@ export function AdminUsersPage() {
                           )}
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-400 hidden md:table-cell">
+                          {formatRelativeTime(u.lastActivityAt)}
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-400 hidden lg:table-cell">
+                          {formatTotalMinutes(u.totalActiveMinutes)}
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-400 hidden lg:table-cell">
                           <span className="inline-flex items-center gap-1.5">
                             <Calendar size={12} />
                             {formatDate(u.createdAt)}

@@ -32,6 +32,8 @@ export interface AdminUser {
   isPro: boolean;
   isDonor: boolean;
   proExpiresAt: string | null;
+  lastActivityAt: string | null;
+  totalActiveMinutes: number;
   role: string;
   createdAt: string;
 }

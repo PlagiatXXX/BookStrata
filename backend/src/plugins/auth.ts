@@ -2,6 +2,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import jwt from "jsonwebtoken";
+import { redis } from "../lib/redis.js";
 import { RolesService } from "../modules/roles/roles.service.js";
 import { createLogger } from "../lib/logger.js";
 
@@ -51,6 +52,27 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
         username: payload.username,
         role: userRole?.name || payload.role,
       };
+
+      // Throttled обновление lastActivityAt (не чаще раза в 60с на пользователя)
+      // fire-and-forget, не блокируем ответ
+      const lastSeenKey = `last_seen:${payload.userId}`;
+      redis.set(lastSeenKey, Date.now(), "PX", 60000, "NX")
+        .then((reply) => {
+          if (reply === "OK") {
+            const prisma = (fastify as any).prisma;
+            if (prisma) {
+              prisma.$executeRaw`UPDATE "users" SET "last_activity_at" = NOW() WHERE "id" = ${payload.userId}`
+                .catch((err: unknown) => {
+                  logger.error("Ошибка обновления lastActivityAt", {
+                    error: err instanceof Error ? err.message : String(err),
+                  });
+                });
+            }
+          }
+        })
+        .catch(() => {
+          // Redis может быть недоступен — не критично
+        });
     } catch (error) {
       // Токен невалидный, оставляем request.user = undefined
       // Проверка будет в middleware requireRole

@@ -429,6 +429,8 @@ export async function getAllUsers() {
       isPro: true,
       proExpiresAt: true,
       isDonor: true,
+      lastActivityAt: true,
+      totalActiveMinutes: true,
       role: {
         select: {
           name: true,
@@ -448,6 +450,8 @@ export async function getAllUsers() {
     isPro: user.isPro,
     isDonor: user.isDonor,
     proExpiresAt: user.proExpiresAt?.toISOString() || null,
+    lastActivityAt: user.lastActivityAt?.toISOString() || null,
+    totalActiveMinutes: user.totalActiveMinutes,
     role: user.role?.name || "user",
     createdAt: user.createdAt.toISOString(),
   }));
@@ -537,6 +541,17 @@ export async function getViolators() {
       actions: actions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     }
   })
+}
+
+// POST /api/users/heartbeat — пульс активности (раз в минуту от фронта)
+export async function heartbeat(userId: number) {
+  await prisma.$executeRaw`
+    UPDATE "users"
+    SET "total_active_minutes" = "total_active_minutes" + 1,
+        "last_activity_at" = NOW()
+    WHERE "id" = ${userId}
+  `;
+  return { ok: true };
 }
 
 // Установить/снять статус донатера (мецената)

@@ -3,6 +3,7 @@ import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
 import { getAuthToken, removeAuthToken } from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
+import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { createLogger } from "@/lib/logger";
 
 export { AuthContext, type AuthContextType };
@@ -14,6 +15,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const refreshUserDataRef = useRef<(() => void) | null>(null);
+
+  // Heartbeat: отправляет сигнал активности каждые 60с, пока пользователь авторизован
+  useHeartbeat();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapApiUserToAuthUser = (fullUserData: any): User => ({

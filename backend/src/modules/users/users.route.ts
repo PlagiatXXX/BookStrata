@@ -16,6 +16,7 @@ import {
   getMyBooks,
   getViolators,
   setDonorStatus,
+  heartbeat,
 } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
@@ -268,6 +269,20 @@ export async function userRoutes(fastify: FastifyInstance) {
       );
       fastify.log.info({ userId }, "Password changed");
       return reply.code(200).send(createSuccessResponse(user));
+    },
+  );
+
+  // POST /api/users/heartbeat — пульс активности (раз в минуту)
+  fastify.post(
+    "/heartbeat",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
+      }
+      const result = await heartbeat(userId);
+      return reply.send(createSuccessResponse(result));
     },
   );
 

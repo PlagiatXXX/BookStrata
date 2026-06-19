@@ -24,6 +24,7 @@ vi.mock("../../lib/prisma.js", () => ({
       count: vi.fn(),
       findMany: vi.fn(),
     },
+    $executeRaw: vi.fn(),
   },
 }));
 
@@ -913,6 +914,18 @@ describe("users.service", () => {
       // пользователь попадёт в список (suspendedAt не null), но actions будут пусты
       expect(result).toHaveLength(1)
       expect(result[0].actions).toHaveLength(0)
+    })
+  })
+
+  describe("heartbeat", () => {
+    it("должен инкрементировать totalActiveMinutes и обновлять lastActivityAt", async () => {
+      const { prisma } = await import("../../lib/prisma.js")
+      ;(prisma.$executeRaw as any).mockResolvedValue([{ ok: true }])
+
+      const result = await userService.heartbeat(42)
+
+      expect(prisma.$executeRaw).toHaveBeenCalledOnce()
+      expect(result).toEqual({ ok: true })
     })
   })
 });
