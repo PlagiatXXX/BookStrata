@@ -64,6 +64,8 @@ services:
     volumes:
       # Собранный фронтенд (запуши npm run build перед docker compose)
       - ../dist:/usr/share/nginx/html:ro
+      # Предыдущая сборка — fallback для старых JS-чанков
+      - ../dist.old:/usr/share/nginx/html/dist.old:ro
       # Конфиг nginx
       - ../nginx/bookstrata.conf:/etc/nginx/conf.d/default.conf:ro
       - ../nginx/status.conf:/etc/nginx/conf.d/status.conf:ro

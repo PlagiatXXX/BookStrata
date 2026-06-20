@@ -62,8 +62,7 @@ fi
 # mv на одной файловой системе — атомарная операция
 if [ "$SKIP_BUILD" = false ]; then
   info "Атомарный swap dist..."
-  # Удаляем предыдущий backup
-  rm -rf "$PROJECT_DIR/dist.old"
+  # dist.old не удаляем — он нужен как fallback для старых JS-чанков
   # Перемещаем текущую версию в backup
   mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.old" 2>/dev/null || true
   # Атомарно подкладываем новую версию
@@ -87,10 +86,9 @@ info "Перезапуск бэкенда и nginx (postgres/redis не трог
 docker compose --profile full up -d app nginx
 ok "Контейнеры запущены"
 
-# ——— 7. Удаляем старую версию фронта ———
-info "Удаление старой версии фронта..."
-rm -rf "$PROJECT_DIR/dist.old"
-ok "Старая версия удалена"
+# Старая версия фронта (dist.old) не удаляется — она нужна nginx как fallback
+# для старых JS-чанков, пока пользователи не обновят страницу.
+# Она будет перезаписана при следующем деплое.
 
 echo ""
 ok "Деплой завершён"
