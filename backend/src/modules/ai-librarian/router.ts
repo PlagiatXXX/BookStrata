@@ -27,11 +27,25 @@ export class AiRouterError extends Error {
   }
 }
 
+/**
+ * Проверяет, не советует ли AI книги, которые уже есть в коллекции.
+ * Возвращает массив названий книг из коллекции, найденных в ответе.
+ */
+function findAlreadyOwnedBooks(response: string, userBooks: string[]): string[] {
+  return userBooks.filter((title) => {
+    if (!title || title.length < 3) return false
+    // Ищем название книги в ответе — целиком, без учёта регистра
+    const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp(escaped, 'iu').test(response)
+  })
+}
+
 export async function* routeAiResponse(
   messages: Array<{ role: string; content: string }>,
   systemPrompt: string,
   signal?: AbortSignal,
   userId?: string,
+  userBooks?: string[],
 ): AsyncGenerator<AiChunk> {
   const cached = getCachedResponse(systemPrompt, messages)
   if (cached !== null) {
@@ -69,6 +83,17 @@ export async function* routeAiResponse(
         provider: provider.name,
         chars: fullResponse.length,
       })
+
+      // Пост-валидация: проверяем, не советует ли AI книги из коллекции
+      if (userBooks && userBooks.length > 0) {
+        const found = findAlreadyOwnedBooks(fullResponse, userBooks)
+        if (found.length > 0) {
+          logger.warn('AI suggested books already in user collection', {
+            books: found,
+          })
+        }
+      }
+
       return
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)

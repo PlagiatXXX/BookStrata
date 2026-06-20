@@ -386,7 +386,7 @@ export async function searchUsers(q: string): Promise<UserSearchResult[]> {
   const users = await prisma.user.findMany({
     where: {
       username: {
-        contains: q.trim(),
+        startsWith: q.trim(),
         mode: "insensitive",
       },
     },

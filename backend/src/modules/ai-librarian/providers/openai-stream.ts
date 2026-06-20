@@ -20,7 +20,7 @@ export async function* createChatCompletionStream(
       ...messages.map((m) => ({ role: m.role, content: m.content })),
     ],
     stream: true,
-    temperature: 0.7,
+    temperature: 0.3,
     max_tokens: 2048,
   }
 

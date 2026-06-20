@@ -74,6 +74,14 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
 
       const systemPrompt = buildSystemPrompt(tasteProfile, user.username)
 
+      // Собираем все названия книг пользователя для пост-валидации
+      const userBookTitles = [
+        ...tasteProfile.topBooks.map((b) => b.title),
+        ...tasteProfile.midBooks.map((b) => b.title),
+        ...tasteProfile.lowBooks.map((b) => b.title),
+        ...tasteProfile.unrankedBooks.map((b) => b.title),
+      ]
+
       logger.info('Starting AI stream', {
         userId: user.userId,
         tasteBooks: tasteProfile.totalBooks,
@@ -99,7 +107,7 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
         const timeoutSignal = AbortSignal.timeout(60_000)
         const combinedSignal = AbortSignal.any([abortController.signal, timeoutSignal])
 
-        const stream = streamAiResponse(parsed.data.messages, systemPrompt, combinedSignal, String(user.userId))
+        const stream = streamAiResponse(parsed.data.messages, systemPrompt, combinedSignal, String(user.userId), userBookTitles)
 
         // Сначала пробуем получить первый чанк (провайдеры вызываются тут)
         // Если все провайдеры недоступны — AiRouterError → 502

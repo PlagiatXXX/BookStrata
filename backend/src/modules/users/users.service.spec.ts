@@ -718,7 +718,7 @@ describe("users.service", () => {
   })
 
   describe("searchUsers", () => {
-    it("должен вернуть пользователей по части ника", async () => {
+    it("должен вернуть пользователей по началу ника", async () => {
       const mockUsers = [
         { id: 1, username: "testuser", avatarUrl: null, xp: 100, title: "Новичок", isDonor: false, role: { name: "user" } },
         { id: 2, username: "testmaster", avatarUrl: "https://example.com/av.jpg", xp: 500, title: "Мастер", isDonor: true, role: { name: "admin" } },
@@ -729,7 +729,7 @@ describe("users.service", () => {
 
       expect(prisma.user.findMany).toHaveBeenCalledWith({
         where: {
-          username: { contains: "test", mode: "insensitive" },
+          username: { startsWith: "test", mode: "insensitive" },
         },
         select: {
           id: true,
@@ -794,11 +794,11 @@ describe("users.service", () => {
       ];
       (prisma.user.findMany as any).mockResolvedValue(mockUsers);
 
-      const result = await userService.searchUsers("testuser");
+      const result = await userService.searchUsers("test");
 
       expect(prisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { username: { contains: "testuser", mode: "insensitive" } },
+          where: { username: { startsWith: "test", mode: "insensitive" } },
         }),
       );
       expect(result).toHaveLength(1);
