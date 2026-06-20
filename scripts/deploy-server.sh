@@ -24,15 +24,37 @@ ok()    { echo -e "${GREEN}[ ✓ ]${NC} $1"; }
 warn()  { echo -e "${YELLOW}[ ! ]${NC} $1"; }
 err()   { echo -e "${RED}[ ✗ ]${NC} $1"; }
 
+# Healthcheck бэкенда через nginx (proxy /health → app).
+# -k игнорирует сертификат: localhost, а не bookstrata.ru.
+check_health() {
+  info "Healthcheck: ждём поднятия бэкенда..."
+  local url="https://localhost/health"
+  local retries=15
+  local sleep_sec=2
+  for i in $(seq 1 "$retries"); do
+    if curl -sfk --max-time 3 "$url" >/dev/null 2>&1; then
+      ok "Бэкенд отвечает ($url)"
+      return 0
+    fi
+    sleep "$sleep_sec"
+  done
+  err "Бэкенд не ответил за $((retries * sleep_sec)) сек"
+  err "Логи: docker logs bookstrata-api --tail 50"
+  return 1
+}
+
 SKIP_BUILD=false
+ROLLBACK=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-build) SKIP_BUILD=true; shift ;;
+    --rollback)   ROLLBACK=true; shift ;;
     --help)
-      echo "Использование: $0 [--skip-build]"
+      echo "Использование: $0 [--skip-build] [--rollback]"
       echo ""
       echo "  --skip-build    не собирать фронт (если не менялся)"
+      echo "  --rollback      откатить фронт на предыдущую версию (dist.old)"
       exit 0
       ;;
     *)
@@ -41,6 +63,37 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# ——— Откат на предыдущую версию фронта ———
+if [ "$ROLLBACK" = true ]; then
+  info "ROLLBACK: возврат к предыдущей версии фронта..."
+  cd "$PROJECT_DIR"
+
+  if [ ! -d "$PROJECT_DIR/dist.old" ]; then
+    err "dist.old не найден — откатываться не на что"
+    err "Возможно, первый деплой или dist.old удалён вручную"
+    exit 1
+  fi
+
+  # Треугольный swap — обратимый. Повторный --rollback вернёт обратно:
+  #   было:  dist=v2, dist.old=v1
+  #   стало: dist=v1, dist.old=v2
+  mv "$PROJECT_DIR/dist"     "$PROJECT_DIR/dist.tmp"
+  mv "$PROJECT_DIR/dist.old" "$PROJECT_DIR/dist"
+  mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist.old"
+  ok "Фронт откачен к предыдущей версии"
+
+  info "Перезапуск nginx..."
+  cd "$PROJECT_DIR/backend"
+  docker compose --profile full restart nginx
+  ok "Nginx перезапущен"
+
+  check_health || { err "Откат применён, но бэкенд не отвечает"; exit 1; }
+
+  echo ""
+  ok "Откат завершён"
+  exit 0
+fi
 
 # ——— 1. Стянуть код ———
 info "Стягиваем последний код из git..."
@@ -89,6 +142,13 @@ ok "Контейнеры запущены"
 # Старая версия фронта (dist.old) не удаляется — она нужна nginx как fallback
 # для старых JS-чанков, пока пользователи не обновят страницу.
 # Она будет перезаписана при следующем деплое.
+
+# ——— 7. Healthcheck ———
+if ! check_health; then
+  err "Деплой завершился, но бэкенд не здоров!"
+  err "Откат: bash scripts/deploy-server.sh --rollback"
+  exit 1
+fi
 
 echo ""
 ok "Деплой завершён"
