@@ -1,25 +1,36 @@
 import { lazy as ReactLazy, type ComponentType } from "react";
 
 /**
- * Защита от stale-бандла после деплоя.
+ * Защита от stale-бандла после деплоя и битого кеша.
  *
- * Сценарий: пользователь держит вкладку открытой фоновой → происходит
- * деплой → старые чанки удаляются с сервера → при навигации на ещё не
- * открытую страницу React.lazy запрашивает чанк по старому хэшу → 404.
- *
+ * # Stale-бандл (деплой при открытой вкладке)
  * Vite использует нативный ESM, поэтому ошибка — НЕ error.name === 'ChunkLoadError'
  * (это Webpack), а TypeError с текстом:
  *   "Failed to fetch dynamically imported module: ..."
  * В некоторых браузерах/версиях:
  *   "Importing a module script failed."
  *   "error loading dynamically imported module"
+ *
+ * # Битый кеш (повреждённый файл в браузерном кеше)
+ * Файл возвращается с HTTP 200, но содержимое повреждено (частичная загрузка,
+ * ошибка диска, сбой при записи кеша). При попытке выполнить модуль возникает
+ * SyntaxError или TypeError. Это редкий сценарий, но SRI (Subresource Integrity)
+ * в сборке решает его на уровне браузера. Здесь — запасной слой для старых
+ * сборок и для случаев, когда SRI по какой-то причине не сработал.
+ *
  * Webpack-фоллбэк оставлен на случай смены бандлера.
  */
 const CHUNK_ERROR_PATTERNS = [
+  // Stale-бандл (404/network error)
   /Failed to fetch dynamically imported module/i,
   /error loading dynamically imported module/i,
   /Importing a module script failed/i,
   /Loading chunk .* failed/i,
+  // Битый кеш (HTTP 200, но модуль не выполняется)
+  /Failed to resolve module specifier/i,
+  /SyntaxError.*evaluating/i,
+  /SyntaxError.*module/i,
+  /imported module/i,
 ];
 
 export function isChunkLoadError(err: unknown): boolean {
@@ -31,31 +42,35 @@ export function isChunkLoadError(err: unknown): boolean {
 }
 
 /**
- * Guard от зацикливания: один авто-reload на сессию.
+ * Guard от зацикливания: два авто-reload на сессию.
  *
- * sessionStorage — флаг живёт до закрытия вкладки/браузера.
- * Сбрасывать намеренно НЕ нужно: при повторном деплое в той же сессии
- * пользователь увидит FallbackErrorPage (а не бесконечный reload),
- * а из fallback есть кнопка «на главную» с полной перезагрузкой.
+ * Первый — обычный reload (window.location.reload()).
+ * Второй — cache-busting reload (добавляет ?__bust=timestamp),
+ * чтобы браузер не использовал битый кеш.
+ *
+ * Если и второй не помог — ошибка уходит в ErrorBoundary,
+ * который показывает FallbackErrorPage с кнопкой «на главную».
  */
-const RELOADED_KEY = "bs:chunk-reloaded";
+const RELOAD_COUNT_KEY = "bs:chunk-reloaded";
 
-export function hasReloadedThisSession(): boolean {
+export function getReloadCount(): number {
   try {
-    return sessionStorage.getItem(RELOADED_KEY) === "1";
+    return Number(sessionStorage.getItem(RELOAD_COUNT_KEY)) || 0;
   } catch {
-    // sessionStorage недоступен (приватный режим с ограничениями и т.п.) —
-    // считаем, что reload не было, чтобы дать шанс восстановиться
-    return false;
+    return 0;
   }
 }
 
-export function markReloaded(): void {
+export function incrementReloadCount(): void {
   try {
-    sessionStorage.setItem(RELOADED_KEY, "1");
+    sessionStorage.setItem(RELOAD_COUNT_KEY, String(getReloadCount() + 1));
   } catch {
     // игнорируем — guard лишь "best effort"
   }
+}
+
+export function hasReloadedThisSession(): boolean {
+  return getReloadCount() > 0;
 }
 
 /**
@@ -64,11 +79,27 @@ export function markReloaded(): void {
  */
 export function handleChunkLoadError(err: unknown): boolean {
   if (!isChunkLoadError(err)) return false;
-  if (hasReloadedThisSession()) return false;
-  markReloaded();
+
+  const attempt = getReloadCount();
+  if (attempt >= 2) return false; // две попытки — предел
+
+  incrementReloadCount();
   // Небольшая задержка, чтобы успели отработать pending-обработчики
   // (например, Sentry breadcrumb), иначе reload может их оборвать.
-  setTimeout(() => window.location.reload(), 0);
+  setTimeout(() => {
+    if (attempt === 1) {
+      // Вторая попытка — cache-busting: добавляем timestamp,
+      // чтобы браузер не отдал тот же битый файл из кеша
+      const cacheBust = `__bust=${Date.now()}`;
+      const url = window.location.href;
+      window.location.href = url.includes("?")
+        ? `${url}&${cacheBust}`
+        : `${url}?${cacheBust}`;
+    } else {
+      // Первая попытка — обычный reload
+      window.location.reload();
+    }
+  }, 0);
   return true;
 }
 

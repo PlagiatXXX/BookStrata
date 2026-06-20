@@ -1,6 +1,10 @@
 import React, { Component, type ReactNode, type ErrorInfo } from "react";
 import { FallbackErrorPage } from "./FallbackErrorPage";
-import { isChunkLoadError, hasReloadedThisSession, markReloaded } from "@/lib/lazy";
+import {
+  isChunkLoadError,
+  getReloadCount,
+  incrementReloadCount,
+} from "@/lib/lazy";
 
 interface Props {
   children: ReactNode;
@@ -30,15 +34,26 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Запасной слой защиты от stale-бандла:
-    // если ошибка загрузки чанка дошла до boundary (lazy-обёртка её не поймала
-    // или reload уже выполнялся в этой сессии) — пытаемся перезагрузить страницу.
-    // reload ещё не было → перезагружаем и не логируем в Sentry (ошибка авто-восстановимая).
-    // reload уже был → НЕ перезагружаем (защита от цикла), падаем в FallbackErrorPage
-    // и логируем в Sentry как диагностическую ошибку.
-    if (isChunkLoadError(error) && !hasReloadedThisSession()) {
-      markReloaded();
-      window.location.reload();
+    // ========== Защита от stale-бандла и битого кеша ==========
+    // lazy-обёртка (в lib/lazy.ts) уже делает 2 попытки восстановления.
+    // Если ошибка дошла до boundary — пробуем ещё через cache-busting.
+    // Всего до 4 попыток, затем FallbackErrorPage.
+
+    const count = getReloadCount();
+
+    if (isChunkLoadError(error) && count < 4) {
+      incrementReloadCount();
+      if (count === 0) {
+        // Первая попытка — обычный reload
+        window.location.reload();
+      } else {
+        // Последующие — cache-busting (???bust=<timestamp>)
+        const cacheBust = `__bust=${Date.now()}`;
+        const url = window.location.href;
+        window.location.href = url.includes("?")
+          ? `${url}&${cacheBust}`
+          : `${url}?${cacheBust}`;
+      }
       return;
     }
 
