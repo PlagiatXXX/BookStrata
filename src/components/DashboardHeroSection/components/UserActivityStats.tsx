@@ -85,29 +85,21 @@ export function UserActivityStats({
             onClick={onBooksClick}
           />
 
-          <div className="user-activity-stats__item">
-            <div className="user-activity-stats__content">
-              <div>
-                <p className="user-activity-stats__label">Получено лайков</p>
-                <p className="user-activity-stats__value">{likesCount}</p>
-              </div>
-              <div className="user-activity-stats__icon user-activity-stats__icon--like">
-                <Heart size={24} />
-              </div>
-            </div>
-          </div>
+          <StatCard
+            label="Получено лайков"
+            value={likesCount}
+            icon={<Heart size={24} />}
+            iconClass="user-activity-stats__icon--like"
+            centered
+          />
 
-          <div className="user-activity-stats__item">
-            <div className="user-activity-stats__content">
-              <div>
-                <p className="user-activity-stats__label">Последняя активность</p>
-                <p className="user-activity-stats__value">{formatLastActivity(lastActivity)}</p>
-              </div>
-              <div className="user-activity-stats__icon user-activity-stats__icon--neutral">
-                <Clock size={24} />
-              </div>
-            </div>
-          </div>
+          <StatCard
+            label="Последняя активность"
+            value={formatLastActivity(lastActivity)}
+            icon={<Clock size={24} />}
+            iconClass="user-activity-stats__icon--neutral"
+            centered
+          />
         </div>
       </div>
     </section>
@@ -116,14 +108,15 @@ export function UserActivityStats({
 
 interface StatCardProps {
   label: string;
-  value: number;
+  value: number | string;
   icon: React.ReactNode;
   iconClass: string;
   isActive?: boolean;
   onClick?: () => void;
+  centered?: boolean;
 }
 
-function StatCard({ label, value, icon, iconClass, isActive, onClick }: StatCardProps) {
+function StatCard({ label, value, icon, iconClass, isActive, onClick, centered }: StatCardProps) {
   const Tag = onClick ? 'button' : 'div';
   const buttonProps = onClick ? { type: 'button' as const, onClick } : {};
 
@@ -132,7 +125,7 @@ function StatCard({ label, value, icon, iconClass, isActive, onClick }: StatCard
       className={`user-activity-stats__item${isActive ? ' user-activity-stats__item--active' : ''}${onClick ? ' user-activity-stats__item--clickable' : ''}`}
       {...buttonProps}
     >
-      <div className="user-activity-stats__content">
+      <div className={`user-activity-stats__content${centered ? ' user-activity-stats__content--centered' : ''}`}>
         <div>
           <p className="user-activity-stats__label">{label}</p>
           <p className="user-activity-stats__value">{value}</p>

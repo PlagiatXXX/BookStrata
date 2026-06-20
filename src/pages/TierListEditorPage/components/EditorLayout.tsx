@@ -7,6 +7,7 @@ import type {
   DragEndEvent,
   DragOverEvent,
 } from "@dnd-kit/core";
+import { ArrowLeft } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
 import { TierLabel } from "@/ui/TierLabel";
@@ -90,6 +91,15 @@ export const EditorLayout = ({
       hideLogout={true}
     >
       <main className={`neo-brutalist-editor flex-1 overflow-x-clip p-4 lg:p-8 ${!isReadOnly ? "pb-24 lg:pb-8" : ""}`} data-theme={theme}>
+        {/* Кнопка «На главную» только на мобилках, т.к. нижний нав скрыт и логотип неочевиден */}
+        <button
+          onClick={onMyRatingsClick}
+          className="md:hidden flex items-center gap-1.5 text-sm text-cyan-300 hover:text-white transition-colors mb-3 cursor-pointer"
+          type="button"
+        >
+          <ArrowLeft size={16} />
+          На главную
+        </button>
         <EditorHeader {...headerProps} />
         <div className="flex flex-wrap gap-3 items-start mb-6">
           {tierListId && !hideCover && (

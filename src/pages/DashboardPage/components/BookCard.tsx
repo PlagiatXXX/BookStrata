@@ -1,6 +1,7 @@
-import { memo } from "react";
+import { memo, useCallback, useState } from "react";
 import { BookOpen, Eye } from "lucide-react";
 import type { MyBook } from "@/lib/userApi";
+import { proxyImageUrl } from "@/utils/imageProxy";
 
 export interface BookCardProps {
   book: MyBook;
@@ -8,6 +9,12 @@ export interface BookCardProps {
 }
 
 export const BookCard = memo(({ book, onView }: BookCardProps) => {
+  const [imgError, setImgError] = useState(false);
+
+  const handleError = useCallback(() => setImgError(true), []);
+
+  const coverUrl = proxyImageUrl(book.coverImageUrl);
+
   return (
     <article className="dashboard-card !p-1.5 group relative">
       {/* Cover */}
@@ -17,12 +24,13 @@ export const BookCard = memo(({ book, onView }: BookCardProps) => {
         className="relative aspect-[2/3] w-full overflow-hidden rounded-sm bg-[#1e1e1e] cursor-pointer block"
         aria-label={`Просмотреть: ${book.title}`}
       >
-        {book.coverImageUrl ? (
+        {coverUrl && !imgError ? (
           <img
-            src={book.coverImageUrl}
+            src={coverUrl}
             alt={book.title}
             className="h-full w-full object-cover"
             loading="lazy"
+            onError={handleError}
           />
         ) : (
           <div className="flex h-full items-center justify-center">

@@ -176,7 +176,7 @@ export const Header = ({
             {!hideLogout && isAuthenticated && (
               <button
                 onClick={handleLogout}
-                className="md:hidden p-2 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                className="md:hidden p-3.5 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 aria-label="Выйти"
               >
                 <LogOut size={18} />
@@ -187,7 +187,7 @@ export const Header = ({
             {isAuthenticated && (
               <button
                 onClick={() => navigate("/profile")}
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 title="Профиль"
                 aria-label="Перейти в профиль"
               >
@@ -195,7 +195,7 @@ export const Header = ({
                   url={authUser?.avatarUrl}
                   username={authUser?.username}
                   size="sm"
-                  className="w-8 h-8 sm:w-8 sm:h-8 max-sm:w-6 max-sm:h-6"
+                  className="size-8"
                 />
               </button>
             )}

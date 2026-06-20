@@ -143,7 +143,7 @@ export function AuthForm() {
                   <button
                     key={m}
                     onClick={() => { setMode(m); dispatch({ type: "SET_ERROR", error: null }) }}
-                    className={`relative w-32 pb-2 text-center transition-colors duration-200 cursor-pointer ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+                    className={`relative w-32 py-3 text-center transition-colors duration-200 cursor-pointer ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
                   >
                     {m === "login" ? "Вход" : "Регистрация"}
                   </button>
@@ -197,7 +197,7 @@ export function AuthForm() {
                 <button
                   type="button" onClick={() => dispatch({ type: "TOGGLE_PASSWORD" })}
                   aria-label={state.showPassword ? "Скрыть пароль" : "Показать пароль"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 cursor-pointer"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-3 text-slate-500 hover:text-slate-700 cursor-pointer"
                 >
                   {state.showPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
                 </button>
@@ -240,7 +240,7 @@ export function AuthForm() {
               <Button
                 type="submit"
                 isLoading={state.loading}
-                className="w-full -mt-5 rounded-full bg-orange-500/80 hover:bg-orange-500 tracking-wider focus-visible:ring-2 focus-visible:ring-orange-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent transition-colors duration-200 text-sm py-1.5 text-white"
+                className="w-full -mt-5 rounded-full bg-orange-500/80 hover:bg-orange-500 tracking-wider focus-visible:ring-2 focus-visible:ring-orange-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent transition-colors duration-200 text-sm py-3 text-white"
               >
                 {mode === "login" ? "Войти" : "Зарегистрироваться"}
               </Button>

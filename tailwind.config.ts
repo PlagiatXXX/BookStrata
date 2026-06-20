@@ -1,36 +1,7 @@
+// Tailwind v4 — конфигурация темы в @theme CSS-директиве (globals.css)
+// Этот файл оставлен для совместимости с IDE-плагинами Tailwind
 import type { Config } from "tailwindcss"
 
 export default {
-  darkMode: "class",
   content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
-  theme: {
-    screens: {
-      "xs": "400px",
-      "sm": "640px",
-      "md": "768px",
-      "lg": "1024px",
-      "xl": "1280px",
-      "2xl": "1536px",
-    },
-    extend: {
-      colors: {
-        "primary": "#bf00e6",
-        "background-light": "#f8f5f8",
-        "background-dark": "#200f23",
-        "surface-dark": "#2a162e",
-        "surface-border": "#44204b",
-        "text": "var(--text-color)",
-        "accent-blue": "#0ea5e9",
-        "accent-green": "#22c55e",
-        "accent-orange": "#f97316",
-        "accent-purple": "#a855f7",
-        "accent-pink": "#ec4899",
-        "accent-red": "#ef4444",
-      },
-      fontFamily: {
-        display: ["Space Grotesk", "sans-serif"],
-      },
-    },
-  },
-  plugins: [],
 } satisfies Config

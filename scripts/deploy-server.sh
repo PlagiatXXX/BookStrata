@@ -48,30 +48,49 @@ cd "$PROJECT_DIR"
 git pull
 ok "Код обновлён"
 
-# ——— 2. Собрать фронтенд ———
+# ——— 2. Собрать фронтенд во временную директорию ———
 if [ "$SKIP_BUILD" = false ]; then
   info "Сборка фронтенда..."
-  npm run build:prod
+  # Собираем в dist.tmp, чтобы не сломать работающую версию во время билда
+  vite build --outDir dist.tmp
   ok "Фронтенд собран"
 else
   warn "Сборка пропущена (--skip-build)"
 fi
 
-# ——— 3. Пересобрать бэкенд ———
+# ——— 3. Атомарный swap dist ———
+# mv на одной файловой системе — атомарная операция
+if [ "$SKIP_BUILD" = false ]; then
+  info "Атомарный swap dist..."
+  # Удаляем предыдущий backup
+  rm -rf "$PROJECT_DIR/dist.old"
+  # Перемещаем текущую версию в backup
+  mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.old" 2>/dev/null || true
+  # Атомарно подкладываем новую версию
+  mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist"
+  ok "dist обновлён (старая версия сохранена в dist.old)"
+fi
+
+# ——— 4. Пересобрать бэкенд ———
 info "Сборка Docker-образа бэкенда..."
 cd "$PROJECT_DIR/backend"
 docker compose --profile full build app
 ok "Бэкенд собран"
 
-# ——— 4. Чистим build cache ———
+# ——— 5. Чистим build cache ———
 info "Чистка Docker build cache..."
 docker builder prune -af
 ok "Build cache очищен"
 
-# ——— 5. Перезапускаем контейнеры ———
+# ——— 6. Перезапускаем контейнеры ———
 info "Перезапуск бэкенда и nginx (postgres/redis не трогаем)..."
 docker compose --profile full up -d app nginx
 ok "Контейнеры запущены"
+
+# ——— 7. Удаляем старую версию фронта ———
+info "Удаление старой версии фронта..."
+rm -rf "$PROJECT_DIR/dist.old"
+ok "Старая версия удалена"
 
 echo ""
 ok "Деплой завершён"

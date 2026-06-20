@@ -12,6 +12,10 @@
   border-color: var(--accent-main);
 }
 
+.forum-tab {
+  cursor: pointer;
+}
+
 .forum-tab.active {
   color: var(--ink-0);
 }

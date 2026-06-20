@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronUp, Heart, BookOpen } from "lucide-react";
 import { Spinner } from "@/components/Spinner";
@@ -36,8 +36,49 @@ export function PublicTierListsSection({
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
 
-  const featuredTierLists = useMemo(() => tierLists.slice(0, 4), [tierLists]);
   const restTierLists = useMemo(() => tierLists.slice(4), [tierLists]);
+
+  const renderTierCard = useCallback((tierList: TierListShort) => {
+    const gradient = hashGradient(tierList.title);
+    return (
+      <button
+        key={tierList.id}
+        className="recent-tier-card"
+        onClick={() => navigate(`/tier-lists/${tierList.id}`)}
+        type="button"
+      >
+        {tierList.coverImageUrl ? (
+          <div
+            className="recent-tier-card__bg recent-tier-card__bg--cover"
+            style={{ backgroundImage: `url(${proxyImageUrl(tierList.coverImageUrl)})` }}
+          />
+        ) : (
+          <div className="recent-tier-card__bg" style={{ background: gradient }}>
+            <span className="recent-tier-card__initial">
+              {tierList.title.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
+        <div className="recent-tier-card__overlay" />
+        <div className="recent-tier-card__content">
+          <p className="recent-tier-card__title">{tierList.title}</p>
+          <p className="recent-tier-card__author">
+            {tierList.authorName || tierList.user?.username || "Неизвестный автор"}
+          </p>
+          <div className="recent-tier-card__stats">
+            <span className="recent-tier-card__stat">
+              <Heart size={12} />
+              {tierList.likesCount || 0}
+            </span>
+            <span className="recent-tier-card__stat">
+              <BookOpen size={12} />
+              {booksCountText(tierList.booksCount || 0)}
+            </span>
+          </div>
+        </div>
+      </button>
+    );
+  }, [navigate]);
 
   if (isLoading) {
     return (
@@ -56,8 +97,8 @@ export function PublicTierListsSection({
 
   return (
     <>
-      {/* Hero: первые 4 популярных тир-листа (только на 1-й странице) */}
-      {isFirstPage && featuredTierLists.length > 0 && (
+      {/* Популярные тир-листы (только на 1-й странице) */}
+      {isFirstPage && tierLists.length > 0 && (
         <section className="recent-tier-lists">
           <div className="recent-tier-lists__container" style={{ padding: 0 }}>
             <div className="recent-tier-lists__header">
@@ -66,81 +107,38 @@ export function PublicTierListsSection({
               </h2>
             </div>
 
+            {/* Единая сетка: первые 4 всегда, остальные — по showAll */}
             <div className="recent-tier-lists__grid">
-              {featuredTierLists.map((tierList) => {
-                const gradient = hashGradient(tierList.title);
-                return (
-                  <button
-                    key={tierList.id}
-                    className="recent-tier-card"
-                    onClick={() => navigate(`/tier-lists/${tierList.id}`)}
-                    type="button"
-                  >
-                    {tierList.coverImageUrl ? (
-                      <div
-                        className="recent-tier-card__bg recent-tier-card__bg--cover"
-                        style={{ backgroundImage: `url(${proxyImageUrl(tierList.coverImageUrl)})` }}
-                      />
-                    ) : (
-                      <div className="recent-tier-card__bg" style={{ background: gradient }}>
-                        <span className="recent-tier-card__initial">
-                          {tierList.title.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <div className="recent-tier-card__overlay" />
-                    <div className="recent-tier-card__content">
-                      <p className="recent-tier-card__title">{tierList.title}</p>
-                      <p className="recent-tier-card__author">
-                        {tierList.authorName || tierList.user?.username || "Неизвестный автор"}
-                      </p>
-                      <div className="recent-tier-card__stats">
-                        <span className="recent-tier-card__stat">
-                          <Heart size={12} />
-                          {tierList.likesCount || 0}
-                        </span>
-                        <span className="recent-tier-card__stat">
-                          <BookOpen size={12} />
-                          {booksCountText(tierList.booksCount || 0)}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                );
+              {tierLists.map((tierList, index) => {
+                if (index >= 4 && !showAll) return null;
+                return renderTierCard(tierList);
               })}
             </div>
+
+            {/* Кнопка «Смотреть все» / «Свернуть» */}
+            {restTierLists.length > 0 && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={() => setShowAll((prev) => !prev)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-cyan-700/50 bg-cyan-900/30 text-cyan-100 text-sm hover:bg-cyan-900/50 transition-colors cursor-pointer"
+                  type="button"
+                >
+                  {showAll ? (
+                    <>
+                      <ChevronUp size={18} />
+                      Свернуть
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={18} />
+                      Смотреть все — ещё {restTierLists.length}
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </section>
-      )}
-
-      {/* Остальные тир-листы (кроме featured) — только если showAll */}
-      {isFirstPage && showAll && restTierLists.length > 0 && (
-        <div className="mt-6">
-          <PublicTierListCards tierLists={restTierLists} likedIdsSet={likedIdsSet} />
-        </div>
-      )}
-
-      {/* Кнопка «Смотреть все» / «Свернуть» (только на 1-й странице, если есть ещё тир-листы) */}
-      {isFirstPage && restTierLists.length > 0 && (
-        <div className="flex justify-center mt-3 mb-4">
-          <button
-            onClick={() => setShowAll((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-cyan-700/50 bg-cyan-900/30 text-cyan-100 text-sm hover:bg-cyan-900/50 transition-colors cursor-pointer"
-            type="button"
-          >
-            {showAll ? (
-              <>
-                <ChevronUp size={18} />
-                Свернуть
-              </>
-            ) : (
-              <>
-                <ChevronDown size={18} />
-                Смотреть все — ещё {restTierLists.length}
-              </>
-            )}
-          </button>
-        </div>
       )}
 
       {/* На страницах > 1 — показываем все тир-листы как обычно, без hero */}
