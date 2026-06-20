@@ -105,13 +105,33 @@ ok "Код обновлён"
 if [ "$SKIP_BUILD" = false ]; then
   info "Сборка фронтенда..."
   # Собираем в dist.tmp, чтобы не сломать работающую версию во время билда
-  vite build --outDir dist.tmp
+  npx vite build --outDir dist.tmp
   ok "Фронтенд собран"
 else
   warn "Сборка пропущена (--skip-build)"
 fi
 
-# ——— 3. Атомарный swap dist ———
+# ——— 3. Prerender для SEO ———
+# Запускается на dist.tmp, но prerender-скрипт жёстко завязан на dist/.
+# Поэтому: сохраняем dist → dist.saved, кладём dist.tmp → dist,
+#          prerender, возвращаем dist → dist.tmp, восстанавливаем dist.
+if [ "$SKIP_BUILD" = false ]; then
+  info "Prerender публичных маршрутов..."
+  mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.saved" 2>/dev/null || true
+  mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist"
+
+  # Prerender опциональный — если нет chromium, graceful fallback
+  if node "$PROJECT_DIR/scripts/prerender.mjs"; then
+    ok "Prerender завершён"
+  else
+    warn "Prerender пропущен (опционально) — сайт работает как SPA"
+  fi
+
+  mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.tmp"
+  [ -d "$PROJECT_DIR/dist.saved" ] && mv "$PROJECT_DIR/dist.saved" "$PROJECT_DIR/dist"
+fi
+
+# ——— 4. Атомарный swap dist ———
 # mv на одной файловой системе — атомарная операция
 if [ "$SKIP_BUILD" = false ]; then
   info "Атомарный swap dist..."
@@ -123,27 +143,31 @@ if [ "$SKIP_BUILD" = false ]; then
   ok "dist обновлён (старая версия сохранена в dist.old)"
 fi
 
-# ——— 4. Пересобрать бэкенд ———
+# ——— 5. Пересобрать бэкенд ———
 info "Сборка Docker-образа бэкенда..."
 cd "$PROJECT_DIR/backend"
 docker compose --profile full build app
 ok "Бэкенд собран"
 
-# ——— 5. Чистим build cache ———
+# ——— 6. Чистим build cache ———
 info "Чистка Docker build cache..."
 docker builder prune -af
 ok "Build cache очищен"
 
-# ——— 6. Перезапускаем контейнеры ———
+# ——— 7. Перезапускаем контейнеры ———
 info "Перезапуск бэкенда и nginx (postgres/redis не трогаем)..."
-docker compose --profile full up -d app nginx
+# nginx пересоздаём принудительно: compose кэширует конфиг контейнера, и при
+# изменении volumes (как было с dist.old) старый Created-контейнер может
+# застрять с битыми mount'ами. --force-recreate гарантирует актуальный конфиг.
+docker compose --profile full up -d app
+docker compose --profile full up -d --force-recreate nginx
 ok "Контейнеры запущены"
 
 # Старая версия фронта (dist.old) не удаляется — она нужна nginx как fallback
 # для старых JS-чанков, пока пользователи не обновят страницу.
 # Она будет перезаписана при следующем деплое.
 
-# ——— 7. Healthcheck ———
+# ——— 8. Healthcheck ———
 if ! check_health; then
   err "Деплой завершился, но бэкенд не здоров!"
   err "Откат: bash scripts/deploy-server.sh --rollback"
