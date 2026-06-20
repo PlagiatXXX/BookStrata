@@ -73,11 +73,10 @@ describe("userApi", () => {
       await expect(apiGetPublicUser("999")).rejects.toThrow("User not found")
     })
 
-    it("должен вернуть null при 401 (неавторизован)", async () => {
+    it("должен выбросить ошибку при 401 (неавторизован)", async () => {
       mockFetch.mockResolvedValue(mockResponse({ error: { message: "Unauthorized" } }, 401))
 
-      const result = await apiGetPublicUser("1")
-      expect(result).toBeNull()
+      await expect(apiGetPublicUser("1")).rejects.toThrow("Требуется авторизация")
     })
   })
 
