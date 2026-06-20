@@ -85,7 +85,7 @@ export function SEOHead({
 
   return (
     <Helmet>
-      <title>{pageTitle}</title>
+      {title && <title>{pageTitle}</title>}
       <meta name="description" content={description} />
 
       <meta property="og:type" content={type} />

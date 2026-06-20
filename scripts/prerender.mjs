@@ -172,35 +172,10 @@ async function prerender() {
         // Получаем полный HTML страницы (с head-мета-тегами от Helmet)
         let html = await page.content();
 
-        // Инлайним CSS для устранения render-blocking ресурсов
-        const cssText = await page.evaluate(() => {
-          return Array.from(document.styleSheets)
-            .map((sheet) => {
-              try {
-                // Собираем все CSS-правила из каждого листа
-                return Array.from(sheet.cssRules || [])
-                  .map((rule) => rule.cssText)
-                  .join("");
-              } catch {
-                // CORS-ограничения для кросс-доменных таблиц (Google Fonts)
-                return "";
-              }
-            })
-            .join("");
-        });
-
-        if (cssText) {
-          // Удаляем внешние <link rel="stylesheet"> (кроме font/dispatch)
-          html = html.replace(
-            /<link rel="stylesheet"[^>]*href="[^"]*\.css[^"]*"[^>]*>/g,
-            "",
-          );
-          // Вставляем инлайновый <style> перед закрывающим </head>
-          html = html.replace(
-            "</head>",
-            `<style>${cssText}</style></head>`,
-          );
-        }
+        // Не инлайним весь CSS — внешние таблицы кэшируются браузером на год
+        // (заголовок Cache-Control: public, immutable). Инлайн всего CSS раздувает
+        // HTML до 300+ KB, что ухудшает LCP при холодном старте.
+        // Vite-сборка уже оптимизирует CSS: чанки с хэшами, code splitting.
 
         // Определяем путь для сохранения
         const savePath =
