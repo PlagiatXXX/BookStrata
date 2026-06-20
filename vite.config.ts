@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import sri from "rollup-plugin-sri";
 import path from "path";
+// @ts-expect-error — нет типов, это JS-файл
+import sri from "./scripts/sri-plugin.mjs";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,10 +16,9 @@ export default defineConfig({
     tailwindcss(),
     // Subresource Integrity — защита от битого кеша.
     // Если файл повреждён, хеш не совпадёт, браузер сам перезапросит его.
-    {
-      enforce: "post",
-      ...sri({ publicPath: "/" }),
-    },
+    // crossorigin добавляется ТОЛЬКО для кросс-оригинных ресурсов (Google Fonts и т.п.),
+    // чтобы не требовать CORS-заголовков от nginx для статики и не ломать prerender.
+    sri({ publicPath: "/" }),
   ],
   optimizeDeps: {
     exclude: ["nsfwjs"],
