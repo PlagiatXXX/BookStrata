@@ -119,7 +119,7 @@ export function AuthForm() {
       <div className="relative min-h-screen overflow-hidden">
         <div className="absolute inset-0">
           <video autoPlay muted playsInline className="hidden md:block absolute inset-0 w-full h-full object-cover">
-            <source src="/library4k-hq.mp4" type="video/mp4" />
+            <source src="/library4k-hq-full.mp4" type="video/mp4" />
           </video>
           <img src="/library.webp" alt="" fetchPriority="high" className="md:hidden absolute inset-0 w-full h-full object-cover" />
         </div>

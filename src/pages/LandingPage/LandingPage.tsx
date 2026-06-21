@@ -5,7 +5,7 @@ import { motion } from "motion/react"
 import {
   ArrowRight, BookOpen, Sword, Sparkles,
   Trophy, Heart, MessageCircle, MessageSquare, Zap,
-  ChevronRight, Menu, X, Check, Layers, Brain, Copy, Paintbrush, Send,
+  ChevronRight, ChevronUp, Menu, X, Check, Layers, Brain, Copy, Paintbrush, Send,
   BarChart3, Users,
 } from "lucide-react"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
@@ -493,9 +493,18 @@ export default function LandingPage() {
 
   const [isDonateOpen, setIsDonateOpen] = useState(false)
   const [activeScreenshot, setActiveScreenshot] = useState<number | null>(null)
+  const [showScrollTop, setShowScrollTop] = useState(false)
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.playbackRate = 0.7
+  }, [])
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowScrollTop(window.scrollY > window.innerHeight * 0.5)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
   return (
@@ -954,6 +963,18 @@ export default function LandingPage() {
           onClose={() => setActiveScreenshot(null)}
         />
       )}
+
+      {/* Scroll-to-top button */}
+      <motion.button
+        animate={{ opacity: showScrollTop ? 0.35 : 0, pointerEvents: showScrollTop ? "auto" : "none" }}
+        whileHover={{ opacity: 0.7 }}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="fixed left-3 bottom-6 z-40 flex size-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/10 text-white backdrop-blur-sm transition-all"
+        aria-label="Наверх"
+        type="button"
+      >
+        <ChevronUp size={18} />
+      </motion.button>
 
       <Footer variant="landing" />
     </div>
