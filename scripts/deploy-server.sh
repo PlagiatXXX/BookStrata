@@ -135,10 +135,12 @@ fi
 # mv на одной файловой системе — атомарная операция
 if [ "$SKIP_BUILD" = false ]; then
   info "Атомарный swap dist..."
-  # dist.old не удаляем — он нужен как fallback для старых JS-чанков
-  # Перемещаем текущую версию в backup
-  mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.old" 2>/dev/null || true
-  # Атомарно подкладываем новую версию
+  # Трёхходовой атомарный swap для сохранения fallback-версии:
+  #   1. dist.old  → удаляем (там сборка с N-2 деплоя, устарела)
+  #   2. dist      → dist.old (предыдущая сборка → fallback для старых чанков)
+  #   3. dist.tmp  → dist    (новая сборка → в продакшен)
+  rm -rf "$PROJECT_DIR/dist.old"
+  mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.old"
   mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist"
   ok "dist обновлён (старая версия сохранена в dist.old)"
 fi
