@@ -163,9 +163,8 @@ export async function updateBook(
   if (sanitizedData.tags === undefined) delete sanitizedData.tags;
   if (sanitizedData.coverImageUrl === undefined) {
     delete sanitizedData.coverImageUrl;
-  } else {
-    sanitizedData.coverImageUrl = sanitizedData.coverImageUrl || null;
   }
+  // coverImageUrl в БД NOT NULL — не конвертируем в null, оставляем пустую строку
 
   return prisma.book.update({
     where: { id: bookId },
