@@ -57,9 +57,10 @@ suspendedUntil       DateTime?  @map("suspended_until")
 suspensionReason     String?    @map("suspension_reason")
   warnings             UserWarning[]       // полученные предупреждения
   warningsGiven        UserWarning[]       @relation("ModeratorWarnings")  // выданные как модератор
-  contentFlags         ContentFlag[]
-  resolvedFlags        ContentFlag[]       @relation("ResolvedFlags")
-  createdAt            DateTime   @default(now()) @map("created_at")
+   contentFlags         ContentFlag[]
+   resolvedFlags        ContentFlag[]       @relation("ResolvedFlags")
+   analyticsEvents      AnalyticsEvent[]
+   createdAt            DateTime   @default(now()) @map("created_at")
  
 @@index([xp])
 }
@@ -425,6 +426,24 @@ achievement   Achievement @relation(fields: [achievementId], references: [id], o
 achievementId String
 earnedAt      DateTime    @default(now()) @map("earned_at")
  
-@@unique([userId, achievementId])
+  @@unique([userId, achievementId])
 @@map("user_achievements")
+}
+
+model AnalyticsEvent {
+  id        BigInt   @id @default(autoincrement())
+  userId    Int?
+  event     String
+  meta      Json?    @default("{}")
+  url       String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([event])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("analytics_events")
 }

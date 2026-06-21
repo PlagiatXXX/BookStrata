@@ -13,6 +13,7 @@ import { Logo } from "@/ui/Logo"
 import { Footer } from "@/ui/Footer"
 import { RevealBox } from "@/ui/RevealBox"
 import { Pointer } from "@/components/ui/pointer"
+import { apiTrackEvent } from "@/lib/analyticsApi"
 import { Highlighter } from "@/components/ui/highlighter"
 import { BorderBeam } from "@/components/ui/border-beam"
 import { HanddrawnSmiley } from "@/components/ui/handdrawn-smiley"
@@ -190,6 +191,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
     try {
       await navigator.clipboard.writeText(cardNumber)
       setCopied(true)
+      apiTrackEvent('donate_copy')
       setTimeout(() => setCopied(false), 2000)
     } catch {
       const el = document.createElement('textarea')
@@ -199,6 +201,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
       document.execCommand('copy')
       document.body.removeChild(el)
       setCopied(true)
+      apiTrackEvent('donate_copy')
       setTimeout(() => setCopied(false), 2000)
     }
   }
@@ -899,7 +902,7 @@ export default function LandingPage() {
                 )}
 
                 <button
-                  onClick={() => plan.donate ? setIsDonateOpen(true) : navigate("/auth")}
+                  onClick={() => plan.donate ? (apiTrackEvent('donate_page_open'), setIsDonateOpen(true)) : navigate("/auth")}
                   className={`landing-pricing__cta ${plan.donate ? "landing-pricing__cta--donate" : ""}`}
                   type="button"
                 >

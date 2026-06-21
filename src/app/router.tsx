@@ -75,6 +75,13 @@ const AdminFeedbackPage = lazy(() =>
     }),
   ),
 );
+const AdminAnalyticsPage = lazy(() =>
+  import("@/pages/AdminAnalyticsPage/AdminAnalyticsPage").then(
+    (module) => ({
+      default: module.default,
+    }),
+  ),
+);
 const AdminUsersPage = lazy(() =>
   import("@/pages/AdminUsersPage/AdminUsersPage").then((module) => ({
     default: module.AdminUsersPage,
@@ -221,6 +228,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminFeedbackPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/analytics",
+        element: (
+          <AdminGuard>
+            <AdminAnalyticsPage />
           </AdminGuard>
         ),
       },

@@ -12,6 +12,7 @@ import { AiGenerationTab } from "./components/AiGenerationTab";
 import { UploadTab } from "./components/UploadTab";
 import { AvatarSelectorFooter } from "./components/AvatarSelectorFooter";
 import { useAvatarPreview } from "./hooks/useAvatarPreview";
+import { apiTrackEvent } from "@/lib/analyticsApi";
 import type {
   AvatarPosition,
   AvatarPreset,
@@ -106,6 +107,7 @@ export function AvatarSelector({
     }
 
     window.ym?.(109755750, 'reachGoal', 'ai_avatar')
+    apiTrackEvent('ai_avatar')
     await generateAvatarMutation.mutateAsync(prompt);
     setAvatarPosition({ x: 0, y: 0 });
   };

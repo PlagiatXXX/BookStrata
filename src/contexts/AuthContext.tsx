@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, type ReactNode } from "react";
 import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
-import { getAuthToken, removeAuthToken } from "@/lib/authApi";
+import { getAuthToken, removeAuthToken, apiLogout } from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { createLogger } from "@/lib/logger";
@@ -96,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function logout() {
     authLogger.info("User logout");
+    apiLogout();
     setUser(null);
     removeAuthToken();
   }

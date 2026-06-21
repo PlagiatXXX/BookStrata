@@ -4,6 +4,7 @@ import { useAiLibrarian, type AiStatus } from '@/hooks/useAiLibrarian'
 import { useAuth } from '@/hooks/useAuthContext'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { ChatMessage } from '@/lib/aiLibrarianApi'
+import { apiTrackEvent } from '@/lib/analyticsApi'
 
 interface AiLibrarianModalProps {
   isOpen: boolean
@@ -144,6 +145,7 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
     const text = input
     setInput('')
     window.ym?.(109755750, 'reachGoal', 'ai_librarian')
+    apiTrackEvent('ai_librarian_message')
     await sendMessage(text)
   }
 

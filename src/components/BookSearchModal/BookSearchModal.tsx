@@ -7,6 +7,7 @@ import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { useBookSearch } from "@/hooks/useBookSearch";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Spinner } from "@/components/Spinner";
+import { apiTrackEvent } from "@/lib/analyticsApi";
 
 // Логгер для компонента поиска книг
 const logger = createLogger('BookSearchModal', { color: 'green' });
@@ -183,10 +184,10 @@ const BookItem = memo(({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="truncate font-semibold text-[#f6f1e8]">
+        <h3 className="truncate text-sm font-semibold text-[#f6f1e8]">
           {book.title}
         </h3>
-        <p className="truncate text-sm text-[#a8abad]">{book.author}</p>
+        <p className="truncate text-xs text-[#a8abad]">{book.author}</p>
         {book.publishYear && (
           <p className="mt-1 text-xs text-[#7d8688]">{book.publishYear}</p>
         )}
@@ -305,6 +306,7 @@ export const BookSearchModal = ({
 
     dispatch({ type: "SET_SEARCHED" });
     window.ym?.(109755750, 'reachGoal', 'book_search')
+    apiTrackEvent('book_search')
     await search(state.query);
   }, [state.query, search]);
 

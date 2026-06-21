@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, ArrowLeft, ShieldAlert, MailQuestion } from 'lucide-react'
+import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, BarChart3, ArrowLeft, ShieldAlert, MailQuestion } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuthContext'
 import type { AdminDashboardStats } from '../../../shared/types'
@@ -87,6 +87,16 @@ const ALL_SECTIONS: AdminSection[] = [
     color: 'from-violet-500/20 to-violet-500/5',
     borderColor: 'border-violet-500/30',
     textColor: 'text-violet-500',
+    roles: ['admin'],
+  },
+  {
+    title: 'Аналитика',
+    description: 'События и действия пользователей',
+    icon: BarChart3,
+    path: '/admin/analytics',
+    color: 'from-emerald-500/20 to-emerald-500/5',
+    borderColor: 'border-emerald-500/30',
+    textColor: 'text-emerald-500',
     roles: ['admin'],
   },
 ]

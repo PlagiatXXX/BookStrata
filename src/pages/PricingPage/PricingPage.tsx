@@ -5,6 +5,7 @@ import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 import { ShineBorder } from "@/ui/ShineBorder"
+import { apiTrackEvent } from "@/lib/analyticsApi"
 import "./PricingPage.css"
 
 function DonateModal({ onClose }: { onClose: () => void }) {
@@ -17,6 +18,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
       await navigator.clipboard.writeText(cardNumber)
       setCopied(true)
       window.ym?.(109755750, 'reachGoal', 'donate_copy')
+      apiTrackEvent('donate_copy')
       setTimeout(() => setCopied(false), 2000)
     } catch {
       const el = document.createElement('textarea')
@@ -27,6 +29,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
       document.body.removeChild(el)
       setCopied(true)
       window.ym?.(109755750, 'reachGoal', 'donate_copy')
+      apiTrackEvent('donate_copy')
       setTimeout(() => setCopied(false), 2000)
     }
   }
@@ -222,7 +225,7 @@ export default function PricingPage() {
                 Поддержите развитие проекта
               </p>
               <button
-                onClick={() => setShowDonateModal(true)}
+                onClick={() => { apiTrackEvent('donate_page_open'); setShowDonateModal(true) }}
                 className="pricing-card__cta pricing-card__cta--donate cursor-pointer"
                 type="button"
               >

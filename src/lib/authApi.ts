@@ -385,6 +385,23 @@ export async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+/**
+ * Выход из системы — очищает refresh-токен на сервере
+ */
+export async function apiLogout(): Promise<void> {
+  authLogger.info("Выход из системы");
+
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers: getAuthHeader(),
+    });
+  } catch {
+    // Ошибка не критична — токен всё равно удалим локально
+  }
+}
+
 export async function apiForgotPassword(email: string): Promise<{ message: string }> {
   authLogger.info("Запрос на сброс пароля", { email });
 

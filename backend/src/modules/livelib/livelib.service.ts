@@ -83,6 +83,7 @@ export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
   const books: LiveLibBookRaw[] = [];
 
   /** Извлекает обложку из элемента, обходя pagespeed-заглушки */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function extractCover($el: cheerio.Cheerio<any>): string | null {
     const $img = $el.find("img");
     // 1. data-pagespeed-lazy-src — реальный URL при PageSpeed

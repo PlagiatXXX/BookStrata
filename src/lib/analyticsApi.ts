@@ -1,0 +1,70 @@
+import { apiClient } from './api-client'
+
+export interface AnalyticsEvent {
+  id: string
+  userId: number | null
+  event: string
+  meta: Record<string, unknown> | null
+  url: string | null
+  ip: string | null
+  userAgent: string | null
+  createdAt: string
+  username: string | null
+}
+
+export interface AnalyticsResult {
+  events: AnalyticsEvent[]
+  nextCursor: string | null
+  total: number
+}
+
+export interface EventCount {
+  event: string
+  count: number
+}
+
+export interface AnalyticsSummary {
+  todayTotal: number
+  todayByEvent: EventCount[]
+  weekTotal: number
+  weekByEvent: EventCount[]
+}
+
+export interface AnalyticsQuery {
+  event?: string
+  userId?: number
+  search?: string
+  from?: string
+  to?: string
+  limit?: number
+  cursor?: string
+}
+
+export function apiGetAnalytics({ event, userId, search, from, to, limit, cursor }: AnalyticsQuery) {
+  const queryParams: Record<string, string | number | boolean | null | undefined> = {
+    ...(event && { event }),
+    ...(userId !== undefined && { userId }),
+    ...(search && { search }),
+    ...(from && { from }),
+    ...(to && { to }),
+    ...(limit !== undefined && { limit }),
+    ...(cursor && { cursor }),
+  }
+  return apiClient.get<AnalyticsResult>('/admin/analytics/events', queryParams)
+}
+
+export function apiGetAnalyticsSummary() {
+  return apiClient.get<AnalyticsSummary>('/admin/analytics/summary')
+}
+
+export async function apiTrackEvent(
+  event: string,
+  meta?: Record<string, unknown>,
+  url?: string,
+) {
+  try {
+    await apiClient.post('/analytics/track', { event, meta, url })
+  } catch {
+    // Тихий fallback — аналитика не должна ломать UX
+  }
+}

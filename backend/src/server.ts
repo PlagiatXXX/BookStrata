@@ -42,6 +42,7 @@ import * as Sentry from "@sentry/node";
 import { errorNotifier } from "./lib/errorNotifier.js";
 import { initSentry } from "./lib/sentry.js";
 import { registerAchievementSubscriptions } from "./lib/event-subscriptions.js";
+import { registerAnalyticsSubscriptions } from "./lib/analytics-subscriptions.js";
 import { SubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
 
 
@@ -436,12 +437,20 @@ fastify.register(proxyRoutes, { prefix: "/api/proxy" });
 import { adminCleanupRoutes } from "../src/modules/admin/admin-cleanup.route.js";
 fastify.register(adminCleanupRoutes, { prefix: "/api/admin" });
 
+// Analytics
+import { analyticsRoutes } from "../src/modules/analytics/analytics.route.js";
+fastify.register(analyticsRoutes, { prefix: "/api/analytics" });
+
+// Admin: аналитика
+fastify.register(analyticsRoutes, { prefix: "/api/admin/analytics" });
+
 // Sitemap (без /api префикса, доступен по /sitemap.xml)
 import { sitemapRoutes } from "../src/modules/sitemap/sitemap.route.js";
 fastify.register(sitemapRoutes);
 
 // Инициализация подписок на события
 registerAchievementSubscriptions();
+registerAnalyticsSubscriptions();
 
 // Периодическая деактивация просроченных Pro-подписок (раз в час)
 const subscriptionsCleanup = new SubscriptionsService();
