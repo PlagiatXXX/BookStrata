@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { X, Star, ImageOff, FileText, Calendar, BookOpen, Hash } from "lucide-react";
+import { X, Star, FileText, Calendar, BookOpen, Hash } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
 import { getBookRatings } from "@/lib/ratingsApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 
 export interface BookViewModalProps {
   book: any | null;
@@ -133,8 +134,8 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
                     className="w-28 sm:w-full aspect-2/3 border-2 border-black object-cover shadow-lg"
                   />
                 ) : (
-                  <div className="flex w-28 sm:w-full aspect-2/3 items-center justify-center border-2 border-[#2a2a2a] bg-[#0a0a0a]">
-                    <ImageOff size={28} className="text-[#444]" />
+                  <div className="w-28 sm:w-full aspect-2/3 border-2 border-[#2a2a2a] overflow-hidden">
+                    <BookCoverPlaceholder />
                   </div>
                 )}
 

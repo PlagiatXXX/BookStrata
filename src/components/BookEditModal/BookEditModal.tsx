@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useState, useCallback } from "react";
+import { useReducer, useEffect, useState, useCallback, useRef } from "react";
 import { X, Star, Hash } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
@@ -9,6 +9,9 @@ import { RATING_CATEGORIES, rateBook, getBookRatings, getUserBookRating } from "
 import { proxyImageUrl } from "@/utils/imageProxy";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
 import { useAuth } from "@/hooks/useAuthContext";
+import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
+import { uploadBookCover } from "@/lib/tierListApi";
+import { sileo } from "sileo";
 
 const logger = createLogger("BookEditModal", { color: "cyan" });
 
@@ -16,6 +19,7 @@ interface BookEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   book: Book | null;
+  tierListId?: string;
   onSave: (
     bookId: string,
     data: {
@@ -170,10 +174,13 @@ export const BookEditModal = ({
   isOpen,
   onClose,
   book,
+  tierListId,
   onSave,
 }: BookEditModalProps) => {
   const [state, dispatch] = useReducer(bookFormReducer, INITIAL_STATE);
   const [isCoverDeleteModalOpen, setIsCoverDeleteModalOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { title, author, genre, tagsInput, description, thoughts, coverImageUrl } = state;
 
   // Rating state
@@ -250,6 +257,28 @@ export const BookEditModal = ({
 
   const pollComplete = allCategories.some((c) => c.userValue !== undefined) &&
     allCategories.filter((c) => c.userValue !== undefined).length >= 1
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !book || !tierListId) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      sileo.error({ title: "Файл слишком большой", description: "Максимум 5 MB" });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const result = await uploadBookCover(tierListId, book.id, file);
+      dispatch({ type: "SET_COVER_IMAGE_URL", coverImageUrl: result.coverImageUrl });
+      sileo.success({ title: "Обложка обновлена" });
+    } catch {
+      sileo.error({ title: "Ошибка загрузки обложки" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSaveAndClose = () => {
     if (!book) {
@@ -380,7 +409,7 @@ export const BookEditModal = ({
             <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)]">
               <section className="border-2 border-black bg-[#171717] p-3">
                 <p className={`${sectionTitleClass} text-center`}>Обложка</p>
-                <div className="mx-auto h-64 w-40 overflow-hidden border-2 border-black bg-[#0a0a0a] max-sm:h-56">
+                <div className="relative mx-auto h-64 w-40 overflow-hidden border-2 border-black bg-[#0a0a0a] max-sm:h-56">
                   {coverImageUrl ? (
                     <img
                       src={proxyImageUrl(coverImageUrl)}
@@ -388,26 +417,56 @@ export const BookEditModal = ({
                       className="h-full w-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src =
-                          "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='224'><rect fill='%23333' width='160' height='224'/><text fill='%23666' x='50%' y='50%' text-anchor='middle' dominant-baseline='middle'>Нет обложки</text></svg>";
+                        target.style.display = "none";
+                        target.parentElement?.querySelector(".placeholder-fallback")?.classList.remove("hidden");
                       }}
                     />
+                  ) : null}
+                  <div className={`placeholder-fallback ${coverImageUrl ? "hidden" : ""} absolute inset-0`}>
+                    <BookCoverPlaceholder />
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-col gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    aria-hidden="true"
+                  />
+                  {coverImageUrl ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#c1fffe] transition-colors hover:border-[#5cf0e8] hover:bg-[#171717] focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Изменить обложку"
+                      >
+                        {uploading ? "Загрузка..." : "Изменить"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsCoverDeleteModalOpen(true)}
+                        className="w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#ff9db7] transition-colors hover:border-[#ff5c8a] hover:bg-[#171717] hover:text-[#ffd4df] focus-visible:ring-2 focus-visible:ring-pink-500 outline-none"
+                        aria-label="Удалить текущую обложку"
+                      >
+                        Удалить обложку
+                      </button>
+                    </>
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[#6b6b6b]">
-                      <span className="text-sm">Нет обложки</span>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#c1fffe] transition-colors hover:border-[#5cf0e8] hover:bg-[#171717] focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Добавить обложку"
+                    >
+                      {uploading ? "Загрузка..." : "Добавить"}
+                    </button>
                   )}
                 </div>
-                {coverImageUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsCoverDeleteModalOpen(true)}
-                    className="mt-3 w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#ff9db7] transition-colors hover:border-[#ff5c8a] hover:bg-[#171717] hover:text-[#ffd4df] focus-visible:ring-2 focus-visible:ring-pink-500 outline-none"
-                    aria-label="Удалить текущую обложку"
-                  >
-                    Удалить обложку
-                  </button>
-                ) : null}
               </section>
 
               <div className="grid gap-6">
@@ -619,11 +678,8 @@ export const BookEditModal = ({
         title="Удалить обложку?"
         titleId="delete-cover-title"
         confirmLabel="Удалить"
-        description={
-          <>
-            <p>Обложка будет удалена из книги после сохранения изменений.</p>
-            <p className="mt-3">Это поможет избежать случайного удаления.</p>
-          </>
+          description={
+          <p>Обложка будет удалена из книги после сохранения изменений.</p>
         }
       />
     </Modal>

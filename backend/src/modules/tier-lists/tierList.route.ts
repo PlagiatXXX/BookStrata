@@ -501,6 +501,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       thoughts?: string | null;
       genre?: string | null;
       tags?: string[];
+      coverImageUrl?: string;
     };
   }>(
     "/:id/books/:bookId",

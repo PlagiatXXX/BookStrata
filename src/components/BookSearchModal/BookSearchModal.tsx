@@ -1,5 +1,6 @@
 import { useReducer, useCallback, useState, memo, useEffect } from "react";
 import { Search, X, BookOpen, Plus, Eye, User } from "lucide-react";
+import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 import { batchAddBooksFromSearch, addBookFromGoogleBooks, importFromLiveLib, type OpenLibraryBook, type LiveLibBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
@@ -176,9 +177,7 @@ const BookItem = memo(({
             />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <BookOpen className="h-6 w-6 text-[#7d8688]" />
-          </div>
+          <BookCoverPlaceholder compact />
         )}
       </div>
 

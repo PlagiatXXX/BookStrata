@@ -211,6 +211,7 @@ export const updateBookSchema = {
       thoughts: { type: 'string', maxLength: 2000 },
       genre: { type: ['string', 'null'], maxLength: 100 },
       tags: { type: 'array', items: { type: 'string', maxLength: 50 }, maxItems: 20 },
+      coverImageUrl: { type: 'string', maxLength: 2048 },
     },
   },
 };

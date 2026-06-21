@@ -128,6 +128,7 @@ export async function updateBook(
     author?: string | null;
     genre?: string | null;
     tags?: string[];
+    coverImageUrl?: string;
   },
 ) {
   const tierList = await tierListRepository.findById(tierListId, {
@@ -160,6 +161,11 @@ export async function updateBook(
   if (sanitizedData.title === undefined) delete sanitizedData.title;
   if (sanitizedData.author === undefined) delete sanitizedData.author;
   if (sanitizedData.tags === undefined) delete sanitizedData.tags;
+  if (sanitizedData.coverImageUrl === undefined) {
+    delete sanitizedData.coverImageUrl;
+  } else {
+    sanitizedData.coverImageUrl = sanitizedData.coverImageUrl || null;
+  }
 
   return prisma.book.update({
     where: { id: bookId },

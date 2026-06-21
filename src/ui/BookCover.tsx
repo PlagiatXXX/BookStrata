@@ -2,6 +2,7 @@ import { memo, forwardRef, useState, useEffect, useRef } from "react";
 import { X, Edit2, Eye } from "lucide-react";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 
 interface BookCoverProps {
   book: Book;
@@ -91,6 +92,8 @@ export const BookCover = memo(
         }
       }, [showActionsFinal]);
 
+      const hasCover = !!book.coverImageUrl;
+
       return (
         <div
           ref={(node) => {
@@ -101,7 +104,7 @@ export const BookCover = memo(
               ref.current = node;
             }
           }}
-          style={{ backgroundImage: `url(${proxyImageUrl(book.coverImageUrl)})` }}
+          style={hasCover ? { backgroundImage: `url(${proxyImageUrl(book.coverImageUrl)})` } : undefined}
           onClick={handleClick}
           onTouchEnd={handleTouchEnd}
           onMouseEnter={() => setIsHovered(true)}
@@ -109,13 +112,19 @@ export const BookCover = memo(
           data-book-id={book.id}
           data-book-actions={showActionsFinal ? "visible" : "hidden"}
           className={`nb-book-card relative ${cursorClass}`}
-          role="img"
-          aria-label={label}
+          role={hasCover ? "img" : undefined}
+          aria-label={hasCover ? label : undefined}
           title={label}
           onDoubleClick={() => onView?.(book)}
         >
-          {hasActions && (
+          {hasCover && hasActions && (
             <div className="pointer-events-none absolute inset-0 border border-[#c1fffe]/15" />
+          )}
+
+          {!hasCover && (
+            <div className="absolute inset-0">
+              <BookCoverPlaceholder compact />
+            </div>
           )}
 
           {onDelete && (

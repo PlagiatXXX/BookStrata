@@ -157,6 +157,7 @@ export const EditorModals = ({
         isOpen={!!bookToEdit}
         onClose={onCloseEditBook}
         book={bookToEdit}
+        tierListId={tierListId}
         onSave={onSaveBook}
       />
 
