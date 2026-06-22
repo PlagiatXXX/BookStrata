@@ -28,6 +28,44 @@ const ROUTES = [
   { path: "/terms",      name: "Условия использования" },
 ];
 
+/**
+ * Пытается получить список публичных тир-листов с бэкенда.
+ * Если бэкенд доступен — добавляет их URL в ROUTES для prerender'а.
+ */
+async function addPublicTierListRoutes() {
+  // Пробуем локальный бэкенд (Docker) или сервер разработки
+  const API_BASE = process.env.API_URL || "http://localhost:8080";
+  try {
+    log(`📡 Fetching public tier lists from ${API_BASE}/api/tier-lists/public…`);
+    const res = await fetch(`${API_BASE}/api/tier-lists/public?pageSize=50&sortBy=likes`);
+    if (!res.ok) {
+      log(`⚠️  API responded with ${res.status}, skipping tier-list prerender`);
+      return;
+    }
+    const body = await res.json();
+    const items = body.data || [];
+    if (items.length === 0) {
+      log("⚠️  No public tier lists found, skipping");
+      return;
+    }
+    for (const item of items) {
+      const slug = item.slug;
+      if (!slug) {
+        log(`  ⚠️  Tier list "${item.title}" has no slug, skipping`);
+        continue;
+      }
+      const path = `/tier-lists/${slug}`;
+      ROUTES.push({ path, name: `Тир-лист: ${item.title}` });
+      log(`  → ${path} (${item.title})`);
+    }
+    log(`✅ Added ${items.filter(i => i.slug).length} tier lists to prerender`);
+    backendAvailable = true;
+  } catch (err) {
+    log(`⚠️  Cannot reach backend (${API_BASE}): ${err.message}`);
+    log("⚠️  Tier-list prerender skipped (will work on server during deploy)");
+  }
+}
+
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}`;
 
@@ -48,6 +86,9 @@ async function waitForServer(url, timeout = 30000) {
   }
   throw new Error("Server did not start in time");
 }
+
+/** Будет установлен в true, если бэкенд доступен во время сборки */
+let backendAvailable = false;
 
 async function prerender() {
   // Проверяем, что dist уже существует (сборка уже выполнена)
@@ -125,6 +166,9 @@ async function prerender() {
       return;
     }
 
+    // Получаем публичные тир-листы для prerender'а (если бэкенд доступен)
+    await addPublicTierListRoutes();
+
     for (const route of ROUTES) {
       log(`  → ${route.path} (${route.name})`);
 
@@ -136,8 +180,10 @@ async function prerender() {
       const page = await context.newPage();
 
       try {
-        // Блокируем запросы к API (бэкенд не запущен во время сборки)
-        await page.route("**/api/**", (route) => route.abort());
+        // Блокируем запросы к API, только если бэкенд недоступен
+        if (!backendAvailable) {
+          await page.route("**/api/**", (route) => route.abort());
+        }
         await page.route("**/sitemap.xml", (route) => route.abort());
 
         // Перехватываем консольные ошибки (не даём им упасть в reject)

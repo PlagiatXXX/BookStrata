@@ -3,14 +3,14 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { Spinner } from "@/components/Spinner";
 
 /**
- * Защищённый маршрут для авторизованных пользователей.
- * 
+ * Маршрут только для неавторизованных пользователей.
+ *
  * Используется как layout-компонент в React Router v6+:
  * - Отображает Spinner во время загрузки
- * - Перенаправляет на /auth если не авторизован
+ * - Перенаправляет на /dashboard если авторизован
  * - Рендерит дочерние маршруты через Outlet
  */
-export function ProtectedRoute() {
+export function GuestRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -21,9 +21,8 @@ export function ProtectedRoute() {
     );
   }
 
-  if (!isAuthenticated) {
-    const redirect = window.location.pathname;
-    return <Navigate to={`/auth?redirect=${encodeURIComponent(redirect)}`} replace />;
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;

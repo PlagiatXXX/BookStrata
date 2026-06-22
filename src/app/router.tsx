@@ -1,9 +1,11 @@
 import { lazy } from "@/lib/lazy";
 import { createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { HomeRoute } from "@/components/HomeRoute";
+import { GuestRoute } from "@/components/GuestRoute";
 import { AdminGuard } from "@/components/AdminGuard";
 import AppShell from "./App";
+
+const LandingPage = lazy(() => import("@/pages/LandingPage/LandingPage"));
 
 const DashboardPage = lazy(() =>
   import("@/pages/DashboardPage/DashboardPage").then((module) => ({
@@ -107,61 +109,38 @@ const TierListEditorPage = lazy(() =>
     default: module.TierListEditorPage,
   })),
 );
-
 export const router = createBrowserRouter([
   {
     element: <AppShell />,
     children: [
-      { path: "/", element: <HomeRoute /> },
-      { path: "/auth", element: <AuthPage /> },
+      { path: "/", element: <LandingPage /> },
+      {
+        element: <GuestRoute />,
+        children: [
+          { path: "/auth", element: <AuthPage /> },
+          { path: "/forgot-password", element: <ForgotPasswordPage /> },
+          { path: "/reset-password", element: <ResetPasswordPage /> },
+        ],
+      },
       { path: "/privacy", element: <PrivacyPage /> },
       { path: "/terms", element: <TermsPage /> },
       { path: "/about", element: <AboutPage /> },
       { path: "/oauth/callback", element: <OAuthCallbackPage /> },
-      { path: "/forgot-password", element: <ForgotPasswordPage /> },
-      { path: "/reset-password", element: <ResetPasswordPage /> },
       { path: "/contact", element: <ContactPage /> },
       { path: "/pricing", element: <PricingPage /> },
+      { path: "/tier-lists/:id", element: <TierListEditorPage /> },
+      { path: "/templates", element: <TemplateLibrary /> },
+      { path: "/community", element: <CommunityPage /> },
+      { path: "/forum", element: <ForumPage /> },
+      { path: "/forum/battles/:id", element: <BattleDetailPage /> },
       {
         element: <ProtectedRoute />,
         children: [
           { path: "/dashboard", element: <DashboardPage /> },
-          {
-            path: "/tier-lists/:id",
-            element: <TierListEditorPage />,
-          },
-          {
-            path: "/templates",
-            element: <TemplateLibrary />,
-          },
-          {
-            path: "/profile",
-            element: <ProfilePage />,
-          },
-          {
-            path: "/community",
-            element: <CommunityPage />,
-          },
-          {
-            path: "/forum",
-            element: <ForumPage />,
-          },
-          {
-            path: "/forum/battles/:id",
-            element: <BattleDetailPage />,
-          },
-          {
-            path: "/news/:id",
-            element: <NewsPage />,
-          },
-          {
-            path: "/collections/:id",
-            element: <CollectionPage />,
-          },
-          {
-            path: "/users/:id",
-            element: <UserProfilePage />,
-          },
+          { path: "/profile", element: <ProfilePage /> },
+          { path: "/news/:id", element: <NewsPage /> },
+          { path: "/collections/:id", element: <CollectionPage /> },
+          { path: "/users/:id", element: <UserProfilePage /> },
         ],
       },
       {

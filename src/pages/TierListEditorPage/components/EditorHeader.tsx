@@ -1,9 +1,10 @@
 import { GitFork } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { forkTierList } from '@/lib/tierListApi';
 import { sileo } from 'sileo';
 import { LikeButton } from '@/components/LikeButton';
+import { TierListCover } from '@/components/DashboardHeroSection/components/TierListCover';
 
 export interface EditorHeaderProps {
   title: string;
@@ -15,6 +16,8 @@ export interface EditorHeaderProps {
   currentUserId?: number;
   isReadOnly?: boolean;
   hideFork?: boolean;
+  coverImageUrl?: string | null;
+  booksCount?: number;
 }
 
 export const EditorHeader = ({
@@ -27,12 +30,30 @@ export const EditorHeader = ({
   currentUserId,
   isReadOnly = false,
   hideFork = false,
+  coverImageUrl,
+  booksCount = 0,
 }: EditorHeaderProps) => {
   const navigate = useNavigate();
   const [isForking, setIsForking] = useState(false);
 
+  const showAuthPrompt = useCallback(() => {
+    sileo.action({
+      title: 'Создайте свою версию',
+      description: 'Зарегистрируйтесь, чтобы копировать любые тир-листы и редактировать их под себя.',
+      duration: 6000,
+      button: {
+        title: 'Создать аккаунт',
+        onClick: () => navigate('/auth?mode=register'),
+      },
+    });
+  }, [navigate]);
+
   const handleFork = async () => {
     if (!tierListId) return;
+    if (!currentUserId) {
+      showAuthPrompt();
+      return;
+    }
     try {
       setIsForking(true);
       const newTierList = await forkTierList(tierListId);
@@ -53,49 +74,86 @@ export const EditorHeader = ({
   };
 
   return (
-    <div className="mb-8 flex flex-col gap-4 border-b-4 border-black pb-4 md:flex-row md:items-end md:justify-center">
-      <div className="text-center">
-        <h1 className="nb-display-lg text-white">
-          {title}
-        </h1>
-        {isReadOnly && author && (
-          <button
-            onClick={() => navigate(`/users/${author.id}`)}
-            className="nb-label-md mt-2 text-[#c1fffe] hover:text-white transition-colors text-left cursor-pointer"
-          >
-            Автор: {author.username}
-          </button>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-4">
-        {isReadOnly && (
-          <>
-            {!hideFork && (
+    <div className={`${isReadOnly ? "mb-3" : "mb-6 pb-4"}`}>
+      {isReadOnly ? (
+        /* Read-only */
+        <div>
+          {/* Мобилка: название над обложкой, под кнопкой «На главную» */}
+          <div className="md:hidden text-center mb-4">
+            <h1 className="text-lg font-bold text-white">
+              {title}
+            </h1>
+            {author && (
               <button
-                onClick={handleFork}
-                disabled={isForking}
-                className="nb-btn-primary flex items-center gap-2"
+                onClick={() => navigate(`/users/${author.id}`)}
+                className="text-sm text-[#c1fffe] hover:text-white transition-colors cursor-pointer"
               >
-                <GitFork size={18} />
-                {isForking ? 'Копирую...' : 'Своя версия'}
+                автор: {author.username}
               </button>
             )}
-            <div className="nb-heavy-border bg-black p-2 h-13 flex items-center justify-center">
-              <LikeButton
-                id={tierListId!}
-                type="tierlist"
-                initialLikes={likesCount || 0}
-                initialLiked={initialLiked || false}
-                authorId={ownerUserId}
-                currentUserId={currentUserId}
-                size="md"
-                showLabel={true}
+          </div>
+
+          {/* Ряд: обложка | (десктоп: название) | действия */}
+          <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6">
+            {/* Обложка тир-листа (как в редакторе — 7rem) */}
+            <div className="shrink-0 max-w-52 w-full">
+              <p className="nb-label-xs mb-2 text-[#64748b] uppercase tracking-wider">
+                Обложка тир-листа
+              </p>
+              <TierListCover
+                coverImageUrl={coverImageUrl}
+                title={title}
+                booksCount={booksCount}
+                className="tier-list-cover--editor"
               />
             </div>
-          </>
-        )}
-      </div>
+
+            {/* Десктоп: название и автор — по центру горизонтали */}
+            <div className="hidden min-w-0 flex-1 text-center md:block">
+              <h1 className="text-lg font-bold text-white">
+                {title}
+              </h1>
+              {author && (
+                <button
+                  onClick={() => navigate(`/users/${author.id}`)}
+                  className="text-sm text-[#c1fffe] hover:text-white transition-colors cursor-pointer"
+                >
+                  автор: {author.username}
+                </button>
+              )}
+            </div>
+
+            {/* Действия */}
+            <div className="flex items-center gap-3 shrink-0">
+              {!hideFork && (
+                <button
+                  onClick={handleFork}
+                  disabled={isForking}
+                  className="nb-btn-primary flex items-center gap-1.5"
+                  title={currentUserId ? 'Создать свою версию' : 'Войдите, чтобы скопировать'}
+                >
+                  <GitFork size={18} />
+                  {isForking ? 'Копирую...' : 'Своя версия'}
+                </button>
+              )}
+            <LikeButton
+              id={tierListId!}
+              type="tierlist"
+              initialLikes={likesCount || 0}
+              initialLiked={initialLiked || false}
+              authorId={ownerUserId}
+              currentUserId={currentUserId}
+              size="sm"
+            />
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Edit mode: заголовок по центру (без обложки) */
+        <h1 className="text-center nb-display-lg text-white">
+          {title}
+        </h1>
+      )}
     </div>
   );
 };

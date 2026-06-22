@@ -25,8 +25,10 @@ const MemoizedUserActivityStats = memo(UserActivityStats);
 
 
 export function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+
+  const isGuest = !isAuthenticated;
 
   // Отслеживаем изменения пользователя (например, обновление аватара)
  useEffect(() => {
@@ -48,24 +50,25 @@ export function DashboardPage() {
   const { data: stats } = useQuery({
     queryKey: ["user", "stats"],
     queryFn: apiGetUserStats,
-    staleTime: 5 * 60 * 1000, // 5 минут
+    staleTime: 5 * 60 * 1000,
     retry: 2,
+    enabled: !isGuest,
   });
 
-  // Data fetching - My tier lists (когда активна одна из статистик тир-листов)
+  // Data fetching - My tier lists
   const showTierLists = activeStat && activeStat !== 'books';
   const { data: myTierListsData, isLoading: isTierListsLoading } = useQuery({
     queryKey: ["user", "myTierLists"],
     queryFn: () => apiGetMyTierLists(1, 100),
-    enabled: !!showTierLists,
+    enabled: !!showTierLists && !isGuest,
     staleTime: 60 * 1000,
   });
 
-  // Data fetching - My books (когда активна статистика книг)
+  // Data fetching - My books
   const { data: myBooksData, isLoading: isBooksLoading } = useQuery({
     queryKey: ["user", "myBooks"],
     queryFn: apiGetMyBooks,
-    enabled: activeStat === 'books',
+    enabled: activeStat === 'books' && !isGuest,
     staleTime: 60 * 1000,
   });
 
@@ -102,7 +105,7 @@ export function DashboardPage() {
     setShowBooks(true);
   }, []);
 
-  // Стабилизируем обработчики для предотвращения ререндеров мемоизированных компонентов
+  // Стабилизируем обработчики
   const handleMyRatingsClick = useCallback(() => {
     navigate("/");
   }, [navigate]);
@@ -113,11 +116,17 @@ export function DashboardPage() {
   }, [logout, navigate]);
 
   const handleCreateTierList = useCallback(() => {
-    navigate("/templates");
-  }, [navigate]);
+    navigate(isGuest ? "/auth?mode=register" : "/templates");
+  }, [navigate, isGuest]);
 
   const handleCommunityClick = useCallback(() => navigate("/community"), [navigate]);
-  const handleAiLibrarianOpen = useCallback(() => setAiLibrarianOpen(true), []);
+  const handleAiLibrarianOpen = useCallback(() => {
+    if (isGuest) {
+      navigate("/auth?mode=register");
+      return;
+    }
+    setAiLibrarianOpen(true);
+  }, [navigate, isGuest]);
   const handleAiLibrarianClose = useCallback(() => setAiLibrarianOpen(false), []);
 
   const handleOpenTierList = useCallback((id: string) => {
@@ -138,9 +147,8 @@ export function DashboardPage() {
       showSearch={false}
     >
       <section className="dashboard-home">
-        {/* Hero Section — full bleed на мобильных, центрирован на десктопе */}
         <MemoizedDashboardHeader
-          username={user?.username || ""}
+          username={isGuest ? "Гость" : (user?.username || "")}
           onCreateClick={handleCreateTierList}
           onCommunityClick={handleCommunityClick}
           onLogoutClick={handleLogout}
@@ -167,114 +175,142 @@ export function DashboardPage() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs sm:text-sm text-[#9aa1a3] line-clamp-2 sm:line-clamp-none">
-                  Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся
+                  {isGuest
+                    ? "Зарегистрируйся, чтобы получить ИИ-рекомендации книг по твоему вкусу"
+                    : "Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся"}
                 </p>
               </div>
               <div className="relative z-10 flex shrink-0 cursor-pointer items-center gap-1.5 sm:gap-2 px-3 sm:px-6 font-bold text-white transition-all duration-500 before:absolute before:-inset-[5px] before:-z-10 before:rounded-[35px] before:bg-gradient-to-r before:from-violet-500 before:from-10% before:via-sky-500 before:via-30% before:to-pink-500 before:bg-[length:400%] before:transition-all before:duration-500 before:ease-in-out hover:before:blur-xl hover:before:bg-[length:10%] h-[2.5em] sm:h-[3em] rounded-[30px] bg-gradient-to-r from-violet-500 from-10% via-sky-500 via-30% to-pink-500 to-90% bg-[length:400%] hover:animate-gradient-xy hover:bg-[length:100%] hover:brightness-110 hover:-translate-y-[1px] hover:border-b-[6px] active:border-b-[2px] active:bg-violet-700 active:brightness-90 active:translate-y-[2px] focus-visible:ring-2 focus-visible:ring-violet-700">
                 <span className="text-base sm:text-xl">🔮</span>
-                <span className="text-[11px] sm:text-sm">Спросить</span>
+                <span className="text-[11px] sm:text-sm">{isGuest ? "Войти" : "Спросить"}</span>
               </div>
             </button>
           </div>
 
-          {/* Stats Section */}
-          <MemoizedUserActivityStats
-            tierListsCount={tierListsCount}
-            publishedCount={publishedCount}
-            draftsCount={draftsCount}
-            totalBooks={totalBooks}
-            likesCount={likesCount}
-            lastActivity={lastActivity}
-            onTierListsClick={handleTierListsClick}
-            onPublishedClick={handlePublishedClick}
-            onDraftsClick={handleDraftsClick}
-            onBooksClick={handleBooksClick}
-            activeStat={activeStat}
-          />
-
-          {/* Expandable section: tier lists grid */}
-          {showTierLists && (
-            <div className="mt-6 sm:mt-8 mb-8 sm:mb-10">
-              <div className="user-activity-stats__container">
-                <h3 className="text-base sm:text-lg font-bold text-white mb-4">
-                  {activeStat === 'tierlists' && 'Все тир-листы'}
-                  {activeStat === 'published' && 'Опубликованные тир-листы'}
-                  {activeStat === 'drafts' && 'Черновики'}
-                </h3>
-                {isTierListsLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Spinner size="lg" />
-                  </div>
-                ) : filteredTierLists.length === 0 ? (
-                  <p className="text-[#94a3b8] text-sm">Нет тир-листов</p>
-                ) : (
-                  <TierListGrid
-                    tierLists={filteredTierLists}
-                    onOpen={handleOpenTierList}
-                    onRename={() => {}}
-                    onDelete={() => {}}
-                  />
-                )}
+          {isGuest ? (
+            /* Гостевой блок: CTA */
+            <div className="mx-auto my-8 max-w-3xl px-1 sm:px-0 text-center">
+              <div className="border-2 border-(--nb-border) bg-(--nb-surface) p-8 shadow-[4px_4px_0_0_#000000]">
+                <h2 className="nb-display-lg text-white mb-4">
+                  Хочешь создавать тир-листы?
+                </h2>
+                <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
+                  Зарегистрируйся, чтобы собирать визуальные рейтинги книг,
+                  участвовать в баттлах и находить книги по вкусу с помощью ИИ.
+                </p>
+                <button
+                  onClick={() => navigate("/auth?mode=register")}
+                  className="inline-flex items-center gap-2 rounded-none border-2 border-(--nb-border) bg-(--nb-primary) px-8 py-3 font-bold text-black text-lg shadow-[4px_4px_0_0_#000000] hover:shadow-[6px_6px_0_0_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                  type="button"
+                >
+                  Создать аккаунт
+                </button>
               </div>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Stats Section */}
+              <MemoizedUserActivityStats
+                tierListsCount={tierListsCount}
+                publishedCount={publishedCount}
+                draftsCount={draftsCount}
+                totalBooks={totalBooks}
+                likesCount={likesCount}
+                lastActivity={lastActivity}
+                onTierListsClick={handleTierListsClick}
+                onPublishedClick={handlePublishedClick}
+                onDraftsClick={handleDraftsClick}
+                onBooksClick={handleBooksClick}
+                activeStat={activeStat}
+              />
 
-          {/* Expandable section: books list */}
-          {activeStat === 'books' && (
-            <div className="mt-6 sm:mt-8 mb-8 sm:mb-10">
-              <div className="user-activity-stats__container">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base sm:text-lg font-bold text-white">
-                    Все книги в подборках
-                    {myBooksData && (
-                      <span className="text-sm font-normal text-[#94a3b8] ml-2">
-                        ({myBooksData.length})
-                      </span>
+              {/* Expandable section: tier lists grid */}
+              {showTierLists && (
+                <div className="mt-6 sm:mt-8 mb-8 sm:mb-10">
+                  <div className="user-activity-stats__container">
+                    <h3 className="text-base sm:text-lg font-bold text-white mb-4">
+                      {activeStat === 'tierlists' && 'Все тир-листы'}
+                      {activeStat === 'published' && 'Опубликованные тир-листы'}
+                      {activeStat === 'drafts' && 'Черновики'}
+                    </h3>
+                    {isTierListsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Spinner size="lg" />
+                      </div>
+                    ) : filteredTierLists.length === 0 ? (
+                      <p className="text-[#94a3b8] text-sm">Нет тир-листов</p>
+                    ) : (
+                      <TierListGrid
+                        tierLists={filteredTierLists}
+                        onOpen={handleOpenTierList}
+                        onRename={() => {}}
+                        onDelete={() => {}}
+                      />
                     )}
-                  </h3>
-                  <button
-                    onClick={() => setShowBooks((prev) => !prev)}
-                    className="text-xs text-[#60a5fa] hover:text-[#93bbfd] transition-colors cursor-pointer"
-                    type="button"
-                  >
-                    {showBooks ? 'Скрыть все' : 'Развернуть'}
-                  </button>
-                </div>
-                {isBooksLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Spinner size="lg" />
                   </div>
-                ) : myBooksData && myBooksData.length > 0 ? (
-                  showBooks && (
-                    <div className="dashboard-grid dashboard-grid--books">
-                      {myBooksData.map((book) => (
-                        <BookCard
-                          key={book.id}
-                          book={book}
-                          onView={handleViewBook}
-                        />
-                      ))}
+                </div>
+              )}
+
+              {/* Expandable section: books list */}
+              {activeStat === 'books' && (
+                <div className="mt-6 sm:mt-8 mb-8 sm:mb-10">
+                  <div className="user-activity-stats__container">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-base sm:text-lg font-bold text-white">
+                        Все книги в подборках
+                        {myBooksData && (
+                          <span className="text-sm font-normal text-[#94a3b8] ml-2">
+                            ({myBooksData.length})
+                          </span>
+                        )}
+                      </h3>
+                      <button
+                        onClick={() => setShowBooks((prev) => !prev)}
+                        className="text-xs text-[#60a5fa] hover:text-[#93bbfd] transition-colors cursor-pointer"
+                        type="button"
+                      >
+                        {showBooks ? 'Скрыть все' : 'Развернуть'}
+                      </button>
                     </div>
-                  )
-                ) : (
-                  <p className="text-[#94a3b8] text-sm">Книги не найдены</p>
-                )}
-              </div>
-            </div>
+                    {isBooksLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Spinner size="lg" />
+                      </div>
+                    ) : myBooksData && myBooksData.length > 0 ? (
+                      showBooks && (
+                        <div className="dashboard-grid dashboard-grid--books">
+                          {myBooksData.map((book) => (
+                            <BookCard
+                              key={book.id}
+                              book={book}
+                              onView={handleViewBook}
+                            />
+                          ))}
+                        </div>
+                      )
+                    ) : (
+                      <p className="text-[#94a3b8] text-sm">Книги не найдены</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Achievements & XP */}
+              <DashboardAchievements />
+            </>
           )}
 
-          {/* Achievements & XP */}
-          <DashboardAchievements />
-
-          {/* Trending Now */}
+          {/* Trending Now (public) */}
           <TrendingNow />
         </div>
       </section>
 
-      <AiLibrarianModal
-        isOpen={isAiLibrarianOpen}
-        onClose={handleAiLibrarianClose}
-      />
+      {!isGuest && (
+        <AiLibrarianModal
+          isOpen={isAiLibrarianOpen}
+          onClose={handleAiLibrarianClose}
+        />
+      )}
 
       <BookViewModal
         book={viewingBook}

@@ -29,9 +29,9 @@ export async function generateSitemap(): Promise<string> {
     }),
     prisma.tierList.findMany({
       where: { isPublic: true },
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
       orderBy: { likesCount: "desc" },
-      take: 500,
+      take: 1000,
     }),
   ]);
 
@@ -44,14 +44,15 @@ export async function generateSitemap(): Promise<string> {
     ),
   );
 
-  const tierListUrls = tierLists.map((t) =>
-    xmlTag(
-      `${SITE_URL}/tier-lists/${t.id}`,
-      "0.5",
+  const tierListUrls = tierLists.map((t) => {
+    const path = t.slug ? `/tier-lists/${t.slug}` : `/tier-lists/${t.id}`;
+    return xmlTag(
+      `${SITE_URL}${path}`,
+      "0.6",
       "weekly",
       t.updatedAt.toISOString().split("T")[0],
-    ),
-  );
+    );
+  });
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

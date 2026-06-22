@@ -159,44 +159,55 @@ export const Header = ({
               />
             )}
 
-            {/* Logout Button (Desktop) */}
-            {!hideLogout && (
-              <button
-                onClick={handleLogout}
-                className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                title="Выйти"
-                aria-label="Выйти"
-              >
-                <LogOut size={16} />
-                <span>Выйти</span>
-              </button>
-            )}
+            {isAuthenticated ? (
+              <>
+                {/* Logout Button (Desktop) */}
+                {!hideLogout && (
+                  <button
+                    onClick={handleLogout}
+                    className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    title="Выйти"
+                    aria-label="Выйти"
+                  >
+                    <LogOut size={16} />
+                    <span>Выйти</span>
+                  </button>
+                )}
 
-            {/* Mobile logout */}
-            {!hideLogout && isAuthenticated && (
-              <button
-                onClick={handleLogout}
-                className="md:hidden p-3.5 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                aria-label="Выйти"
-              >
-                <LogOut size={18} />
-              </button>
-            )}
+                {/* Mobile logout */}
+                {!hideLogout && (
+                  <button
+                    onClick={handleLogout}
+                    className="md:hidden p-3.5 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    aria-label="Выйти"
+                  >
+                    <LogOut size={18} />
+                  </button>
+                )}
 
-            {/* User Avatar */}
-            {isAuthenticated && (
+                {/* User Avatar */}
+                <button
+                  onClick={() => navigate("/profile")}
+                  className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                  title="Профиль"
+                  aria-label="Перейти в профиль"
+                >
+                  <Avatar
+                    url={authUser?.avatarUrl}
+                    username={authUser?.username}
+                    size="sm"
+                    className="size-8"
+                  />
+                </button>
+              </>
+            ) : (
               <button
-                onClick={() => navigate("/profile")}
-                className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                title="Профиль"
-                aria-label="Перейти в профиль"
+                onClick={() => navigate("/auth?mode=login")}
+                className="flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-400 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                title="Войти"
+                aria-label="Войти"
               >
-                <Avatar
-                  url={authUser?.avatarUrl}
-                  username={authUser?.username}
-                  size="sm"
-                  className="size-8"
-                />
+                Войти
               </button>
             )}
           </div>

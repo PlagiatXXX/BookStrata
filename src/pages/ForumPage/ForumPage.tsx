@@ -464,12 +464,14 @@ goToTab("forum");
                    Ведите дискуссии и узнавайте мнение других людей.
                    Победители противостояния и лучшие шаблоны будут получать особые отметки.
                  </p>
-                  <button
-                    onClick={() => setShowCuratorModal(true)}
-                    className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
-                  >
-                    Подать заявку
-                  </button>
+                   {isAuthenticated && (
+                    <button
+                      onClick={() => setShowCuratorModal(true)}
+                      className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
+                    >
+                      Подать заявку
+                    </button>
+                   )}
                </div>
 
                <div className="absolute top-1/2 right-[-5%] -translate-y-1/2 opacity-10 pointer-events-none hidden lg:block">

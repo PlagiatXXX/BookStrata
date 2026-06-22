@@ -23,7 +23,7 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
     : NAV_ITEMS.filter((item) => item.label !== "Библиотека");
 
   return (
-    <nav className="fixed left-0 right-0 z-50 md:hidden border-t border-white/10 bg-background-dark/95 backdrop-blur-xl" style={{ bottom: bottomOffset, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+    <nav className="fixed left-0 right-0 z-50 md:hidden border-t border-white/10 bg-black" style={{ bottom: bottomOffset, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="flex items-center justify-around h-14">
         {items.map((item) => {
           const isActive = location.pathname === item.path ||

@@ -15,6 +15,7 @@ export interface BookViewModalProps {
   onAdd?: (book: any) => void;
   isAdding?: boolean;
   isReadOnly?: boolean;
+  className?: string;
 }
 
 const sectionTitleClass =
@@ -48,6 +49,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   onClose,
   onAdd,
   isAdding = false,
+  className = "",
 }) => {
   const [imageError, setImageError] = useState(false);
   const [averages, setAverages] = useState<BookRatingsResult | null>(null);
@@ -84,6 +86,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
       onClose={onClose}
       maxWidth="2xl"
       titleId="book-view-title"
+      className={className}
     >
         <div className="max-h-[90vh] overflow-y-auto border-2 border-black bg-[#111111] text-[#f6f1e8]">
           <div className="relative border-b-2 border-black p-4 sm:p-6">

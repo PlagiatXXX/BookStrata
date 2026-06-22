@@ -516,6 +516,8 @@ const TierListEditorContent = () => {
       currentUserId,
       isReadOnly: true,
       hideFork: fromBattle,
+      coverImageUrl: coverImageUrl ?? apiData?.coverImageUrl,
+      booksCount: Object.keys(listData.books).length,
     }),
   };
 
@@ -528,6 +530,7 @@ const TierListEditorContent = () => {
         description={`Тир лист «${apiData?.title || ""}» — визуальный рейтинг книг, созданный на BookStrata`}
         url={`/tier-lists/${pageUrl}`}
         image={apiData?.coverImageUrl || undefined}
+        noindex={apiData ? !isPublic : undefined}
       />
       <EditorScreens
         isLoading={isLoading}

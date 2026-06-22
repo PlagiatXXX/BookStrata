@@ -90,7 +90,7 @@ export const EditorLayout = ({
       hideMobileNav={!isReadOnly}
       hideLogout={true}
     >
-      <main className={`neo-brutalist-editor flex-1 overflow-x-clip p-4 lg:p-8 ${!isReadOnly ? "pb-24 lg:pb-8" : ""}`} data-theme={theme}>
+      <main className={`neo-brutalist-editor flex-1 overflow-x-clip ${isReadOnly ? "px-4 lg:px-8 pb-4 lg:pb-8 pt-1" : "p-4 lg:p-8 pb-24 lg:pb-8"}`} data-theme={theme}>
         {/* Кнопка «На главную» только на мобилках, т.к. нижний нав скрыт и логотип неочевиден */}
         <button
           onClick={onMyRatingsClick}
@@ -101,29 +101,31 @@ export const EditorLayout = ({
           На главную
         </button>
         <EditorHeader {...headerProps} />
-        <div className="flex flex-wrap gap-3 items-start mb-6">
-          {tierListId && !hideCover && (
-            <TierListCoverEditor
-              tierListId={tierListId}
-              coverImageUrl={coverImageUrl}
-              title={headerProps.title}
-              booksCount={booksCount}
-              isReadOnly={isReadOnly}
-              onCoverUpdated={(url) => onCoverUpdated?.(url)}
-              ownerUserId={ownerUserId}
-              currentUserId={currentUserId}
-            />
-          )}
-          {tierListId && !isReadOnly && (
-            <div className="pl-4 flex-1 min-w-0 mt-0.5">
-              <ThemePicker
+        {!isReadOnly && (
+          <div className="flex flex-wrap gap-3 items-start mb-6">
+            {tierListId && !hideCover && (
+              <TierListCoverEditor
                 tierListId={tierListId}
-                currentTheme={theme}
-                onThemeChanged={(t) => onThemeChanged?.(t)}
+                coverImageUrl={coverImageUrl}
+                title={headerProps.title}
+                booksCount={booksCount}
+                isReadOnly={isReadOnly}
+                onCoverUpdated={(url) => onCoverUpdated?.(url)}
+                ownerUserId={ownerUserId}
+                currentUserId={currentUserId}
               />
-            </div>
-          )}
-        </div>
+            )}
+            {tierListId && (
+              <div className="pl-4 flex-1 min-w-0 mt-0.5">
+                <ThemePicker
+                  tierListId={tierListId}
+                  currentTheme={theme}
+                  onThemeChanged={(t) => onThemeChanged?.(t)}
+                />
+              </div>
+            )}
+          </div>
+        )}
         {children}
       </main>
     </DashboardLayout>

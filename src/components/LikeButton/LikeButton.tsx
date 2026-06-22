@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { sileo } from 'sileo';
 import { createLogger } from '@/lib/logger';
 import {
   apiLikeTierList,
@@ -26,7 +28,6 @@ interface LikeButtonProps {
   onLikeChange?: (likes: number, liked: boolean) => void;
   showCount?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  showLabel?: boolean;
 }
 
 export function LikeButton({
@@ -39,7 +40,6 @@ export function LikeButton({
   onLikeChange,
   showCount = true,
   size = 'md',
-  showLabel = false,
 }: LikeButtonProps) {
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(initialLiked);
@@ -57,12 +57,28 @@ export function LikeButton({
     confirmedLikesRef.current = initialLikes;
   }, [initialLiked, initialLikes]);
 
+  const navigate = useNavigate();
   const isOwn = authorId !== undefined && currentUserId !== undefined && authorId === currentUserId;
   const isAuthenticated = !!currentUserId;
-  const label = liked ? 'Оценено' : 'Оценить';
+
+  const showAuthPrompt = useCallback(() => {
+    sileo.action({
+      title: "Войдите, чтобы оценивать",
+      description: "Создайте аккаунт, чтобы сохранять понравившиеся подборки в свою библиотеку.",
+      duration: 6000,
+      button: {
+        title: "Войти",
+        onClick: () => navigate("/auth?mode=register"),
+      },
+    });
+  }, [navigate]);
 
   const handleLike = async () => {
-    if (!isAuthenticated || isLoading) return;
+    if (!isAuthenticated) {
+      showAuthPrompt();
+      return;
+    }
+    if (isLoading) return;
     if (isOwn) return;
 
     if (isLoading) return;
@@ -154,33 +170,27 @@ export function LikeButton({
     lg: 'text-base',
   };
 
-  const labelClasses = {
-    sm: 'text-xs',
-    md: 'text-sm',
-    lg: 'text-base',
-  };
-
   const ariaLabel = `${liked ? 'Убрать отметку "Нравится"' : 'Поставить отметку "Нравится"'}. Всего откликов: ${likes}`;
 
   return (
     <button
       onClick={handleLike}
-      disabled={!isAuthenticated || isLoading || isOwn}
+      disabled={isLoading || isOwn}
       aria-label={ariaLabel}
       aria-pressed={liked}
       className={`
-        flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200
-        active:scale-95 focus-visible:ring-2 focus-visible:ring-pink-500 focus:outline-none
+        group flex items-center gap-1.5 transition-all duration-200
+        active:scale-90 focus-visible:ring-2 focus-visible:ring-pink-500 focus:outline-none
         ${liked
-          ? 'bg-pink-500/20 text-pink-500'
-          : 'bg-surface-light dark:bg-[#2d2d44] light:bg-gray-100 text-gray-400 hover:bg-pink-500/10 hover:text-pink-500'
+          ? 'text-pink-500'
+          : 'text-gray-500 hover:text-pink-400'
         }
-        ${!isAuthenticated || isOwn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+        ${isOwn ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
         ${isLoading ? 'opacity-50' : ''}
       `}
       title={
         !isAuthenticated
-          ? 'Войдите, чтобы лайкнуть'
+          ? 'Войдите, чтобы оценивать подборки'
           : isOwn
           ? 'Нельзя лайкнуть свой тир-лист'
           : liked
@@ -188,27 +198,31 @@ export function LikeButton({
           : 'Поставить "Нравится"'
       }
     >
-      {showLabel && (
-        <span className={`${labelClasses[size]} font-medium`}>
-          {label}
-        </span>
-      )}
       <motion.div
-        animate={liked ? { scale: [1, 1.25, 1.1] } : { scale: 1 }}
-        transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 15 }}
+        layout
+        animate={liked ? { scale: [1, 1.3, 0.9, 1.1, 1] } : { scale: 1 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        whileHover={!isOwn ? { scale: 1.15 } : undefined}
+        whileTap={!isOwn ? { scale: 0.85 } : undefined}
       >
         <Heart
           className={`
             ${sizeClasses[size]}
             transition-all duration-300
-            ${liked ? 'fill-current' : ''}
+            ${liked ? 'fill-current drop-shadow-[0_0_6px_rgba(236,72,153,0.6)]' : ''}
           `}
         />
       </motion.div>
       {showCount && (
-        <span className={`${countSizeClasses[size]} font-medium`}>
+        <motion.span
+          key={likes}
+          initial={false}
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 0.3 }}
+          className={`${countSizeClasses[size]} font-medium tabular-nums`}
+        >
           {likes}
-        </span>
+        </motion.span>
       )}
     </button>
   );

@@ -71,6 +71,7 @@ export function AuthForm() {
   const [mode, setMode] = useState<FormMode>(() => {
     return searchParams.get("mode") === "register" ? "register" : "login"
   });
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,7 +94,7 @@ export function AuthForm() {
         window.dispatchEvent(new Event("auth-token-changed"))
         await new Promise((resolve) => setTimeout(resolve, 200))
         window.ym?.(109755750, 'reachGoal', 'login')
-        navigate("/dashboard")
+        navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
       } else {
         const result = await apiRegister({
@@ -107,7 +108,7 @@ export function AuthForm() {
         window.dispatchEvent(new Event("auth-token-changed"))
         await new Promise((resolve) => setTimeout(resolve, 200))
         window.ym?.(109755750, 'reachGoal', 'register')
-        navigate("/dashboard")
+        navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
       }
     } catch (err) {

@@ -1,7 +1,7 @@
 import React, { useReducer, useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, Lock, Star } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -52,11 +52,12 @@ const VALID_SECTIONS = new Set<SectionKey>(["private", "public", "favorites"]);
 const TemplateLibrary: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  useAuth();
+  const { isAuthenticated } = useAuth();
 
   const urlSection = searchParams.get("section") as SectionKey | null;
+  const defaultSection: SectionKey = isAuthenticated ? "private" : "public";
   const initialSection: SectionKey =
-    urlSection && VALID_SECTIONS.has(urlSection) ? urlSection : "private";
+    urlSection && VALID_SECTIONS.has(urlSection) ? urlSection : defaultSection;
 
   const [state, dispatch] = useReducer(
     templateLibraryReducer,
@@ -79,9 +80,13 @@ const TemplateLibrary: React.FC = () => {
   const [createTitle, setCreateTitle] = useState("");
 
   const openCreateModal = useCallback(() => {
+    if (!isAuthenticated) {
+      navigate("/auth?mode=register");
+      return;
+    }
     setActiveModal("create");
     setCreateTitle("");
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   const openRenameModal = useCallback((tl: TierListShort) => {
     setActiveModal("rename");
@@ -233,6 +238,26 @@ const TemplateLibrary: React.FC = () => {
   const renderSectionContent = () => {
     switch (activeSection) {
       case "private": {
+        if (!isAuthenticated) {
+          return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Lock size={48} className="text-cyan-400/40 mb-4" />
+              <h3 className="text-xl font-semibold text-[#f3efe6] mb-2">
+                Войдите, чтобы управлять тир-листами
+              </h3>
+              <p className="text-[#b8b1a3] mb-6 max-w-md">
+                Создавайте собственные рейтинги книг, делитесь ими и находите единомышленников.
+              </p>
+              <button
+                onClick={() => navigate("/auth?mode=register")}
+                className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
+              >
+                Создать аккаунт
+              </button>
+            </div>
+          );
+        }
+
         if (isLoadingPrivate) {
           return (
             <div className="flex items-center justify-center py-12 text-gray-300">
@@ -366,6 +391,26 @@ const TemplateLibrary: React.FC = () => {
         );
 
       case "favorites": {
+        if (!isAuthenticated) {
+          return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Star size={48} className="text-cyan-400/40 mb-4" />
+              <h3 className="text-xl font-semibold text-[#f3efe6] mb-2">
+                Войдите, чтобы увидеть избранное
+              </h3>
+              <p className="text-[#b8b1a3] mb-6 max-w-md">
+                Отмечайте понравившиеся тир-листы лайками, чтобы они появились здесь.
+              </p>
+              <button
+                onClick={() => navigate("/auth?mode=register")}
+                className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
+              >
+                Войти
+              </button>
+            </div>
+          );
+        }
+
         if (isLoadingLiked) {
           return (
             <div className="flex items-center justify-center py-12 text-gray-300">

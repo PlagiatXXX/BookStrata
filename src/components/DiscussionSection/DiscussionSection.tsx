@@ -206,10 +206,28 @@ export function DiscussionSection({ variant, battleId, discussionId, title, onBa
         )}
       </div>
 
-      {error && (
+      {error && isAuthenticated && (
         <div className="discussion-error">
           <span>{error}</span>
           <button onClick={() => setError(null)}><X size={14} /></button>
+        </div>
+      )}
+
+      {error && !isAuthenticated && variant !== "battle" && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <MessageCircle size={40} className="text-cyan-400/40 mb-4" />
+          <h3 className="text-lg font-semibold text-[#f3efe6] mb-2">
+            Присоединяйтесь к обсуждениям
+          </h3>
+          <p className="text-[#b8b1a3] mb-6 max-w-sm text-sm">
+            Войдите или создайте аккаунт, чтобы читать и участвовать в обсуждениях книжных рейтингов.
+          </p>
+          <button
+            onClick={() => navigate("/auth?mode=register")}
+            className="brutal-cta bg-(--bg-0) text-(--ink-0) px-8 py-3 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
+          >
+            Войти / Регистрация
+          </button>
         </div>
       )}
 

@@ -551,7 +551,7 @@ export default function LandingPage() {
 
           <div className="landing-hero__actions">
             <button
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?mode=register")}
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
             >
@@ -759,7 +759,7 @@ export default function LandingPage() {
 
           <RevealBox className="landing-section__action">
             <button
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?mode=register")}
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
             >
@@ -911,7 +911,7 @@ export default function LandingPage() {
                 )}
 
                 <button
-                  onClick={() => plan.donate ? (apiTrackEvent('donate_page_open'), setIsDonateOpen(true)) : navigate("/auth")}
+                  onClick={() => plan.donate ? (apiTrackEvent('donate_page_open'), setIsDonateOpen(true)) : navigate("/auth?mode=register")}
                   className={`landing-pricing__cta ${plan.donate ? "landing-pricing__cta--donate" : ""}`}
                   type="button"
                 >
@@ -942,7 +942,7 @@ export default function LandingPage() {
           <RevealBox><p className="landing-cta__subtitle">Присоединяйся к сообществу читателей. Это бесплатно.</p></RevealBox>
           <RevealBox>
             <button
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/auth?mode=register")}
               className="landing-cta__btn"
               type="button"
             >
