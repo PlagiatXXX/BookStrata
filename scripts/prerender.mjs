@@ -33,15 +33,23 @@ const BACKEND_URL = process.env.API_URL || "http://localhost:8080";
 
 /**
  * Проксирует API-запрос из браузера на реальный бэкенд.
- * Собирает тело запроса, отправляет fetch и стримит ответ обратно.
+ * Собирает тело запроса, отправляет fetch, собирает ответ — и отдаёт целиком.
  */
 function proxyApiRequest(req, res) {
+  let done = false;
+  const send = (status, headers, body) => {
+    if (done) return;
+    done = true;
+    res.writeHead(status, headers);
+    res.end(body);
+  };
+
   const bodyChunks = [];
   req.on("data", (chunk) => bodyChunks.push(chunk));
   req.on("end", async () => {
     try {
       const apiUrl = `${BACKEND_URL}${req.url}`;
-      const body = bodyChunks.length > 0 ? Buffer.concat(bodyChunks) : null;
+      const body = bodyChunks.length > 0 ? Buffer.concat(bodyChunks) : undefined;
       const apiRes = await fetch(apiUrl, {
         method: req.method,
         headers: {
@@ -51,36 +59,25 @@ function proxyApiRequest(req, res) {
         },
         body,
       });
-      // Проксируем статус и заголовки
       const responseHeaders = {};
       for (const [key, value] of apiRes.headers.entries()) {
         if (!["content-encoding", "transfer-encoding", "connection"].includes(key)) {
           responseHeaders[key] = value;
         }
       }
-      res.writeHead(apiRes.status, responseHeaders);
-      // Стримим тело ответа
-      const reader = apiRes.body.getReader();
-      const pump = () => {
-        reader.read().then(({ done, value }) => {
-          if (done) return res.end();
-          res.write(value);
-          pump();
-        });
-      };
-      pump();
+      const text = await apiRes.text();
+      send(apiRes.status, responseHeaders, text);
     } catch {
-      // Бэкенд недоступен — отдаём SPA fallback, React покажет загрузку
       const fallback = resolve(DIST, "index.html");
       if (existsSync(fallback)) {
-        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-        res.end(readFileSync(fallback));
+        send(200, { "Content-Type": "text/html; charset=utf-8" }, readFileSync(fallback));
       } else {
-        res.writeHead(502);
-        res.end("Backend unavailable");
+        send(502, {}, "Backend unavailable");
       }
     }
   });
+  req.on("error", () => send(502, {}, "Backend unavailable"));
+  req.on("close", () => { done = true; });
 }
 
 /**
