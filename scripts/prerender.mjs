@@ -28,16 +28,69 @@ const ROUTES = [
   { path: "/terms",      name: "Условия использования" },
 ];
 
+// URL бэкенда для прокси API-запросов при пререндеринге
+const BACKEND_URL = process.env.API_URL || "http://localhost:8080";
+
+/**
+ * Проксирует API-запрос из браузера на реальный бэкенд.
+ * Собирает тело запроса, отправляет fetch и стримит ответ обратно.
+ */
+function proxyApiRequest(req, res) {
+  const bodyChunks = [];
+  req.on("data", (chunk) => bodyChunks.push(chunk));
+  req.on("end", async () => {
+    try {
+      const apiUrl = `${BACKEND_URL}${req.url}`;
+      const body = bodyChunks.length > 0 ? Buffer.concat(bodyChunks) : null;
+      const apiRes = await fetch(apiUrl, {
+        method: req.method,
+        headers: {
+          "content-type": req.headers["content-type"] || "",
+          accept: req.headers["accept"] || "application/json",
+          "user-agent": req.headers["user-agent"] || "prerender",
+        },
+        body,
+      });
+      // Проксируем статус и заголовки
+      const responseHeaders = {};
+      for (const [key, value] of apiRes.headers.entries()) {
+        if (!["content-encoding", "transfer-encoding", "connection"].includes(key)) {
+          responseHeaders[key] = value;
+        }
+      }
+      res.writeHead(apiRes.status, responseHeaders);
+      // Стримим тело ответа
+      const reader = apiRes.body.getReader();
+      const pump = () => {
+        reader.read().then(({ done, value }) => {
+          if (done) return res.end();
+          res.write(value);
+          pump();
+        });
+      };
+      pump();
+    } catch {
+      // Бэкенд недоступен — отдаём SPA fallback, React покажет загрузку
+      const fallback = resolve(DIST, "index.html");
+      if (existsSync(fallback)) {
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+        res.end(readFileSync(fallback));
+      } else {
+        res.writeHead(502);
+        res.end("Backend unavailable");
+      }
+    }
+  });
+}
+
 /**
  * Пытается получить список публичных тир-листов с бэкенда.
  * Если бэкенд доступен — добавляет их URL в ROUTES для prerender'а.
  */
 async function addPublicTierListRoutes() {
-  // Пробуем локальный бэкенд (Docker) или сервер разработки
-  const API_BASE = process.env.API_URL || "http://localhost:8080";
   try {
-    log(`📡 Fetching public tier lists from ${API_BASE}/api/tier-lists/public…`);
-    const res = await fetch(`${API_BASE}/api/tier-lists/public?pageSize=50&sortBy=likes`);
+    log(`📡 Fetching public tier lists from ${BACKEND_URL}/api/tier-lists/public…`);
+    const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=50&sortBy=likes`);
     if (!res.ok) {
       log(`⚠️  API responded with ${res.status}, skipping tier-list prerender`);
       return;
@@ -61,7 +114,7 @@ async function addPublicTierListRoutes() {
     log(`✅ Added ${items.filter(i => i.slug).length} tier lists to prerender`);
     backendAvailable = true;
   } catch (err) {
-    log(`⚠️  Cannot reach backend (${API_BASE}): ${err.message}`);
+    log(`⚠️  Cannot reach backend (${BACKEND_URL}): ${err.message}`);
     log("⚠️  Tier-list prerender skipped (will work on server during deploy)");
   }
 }
@@ -120,6 +173,13 @@ async function prerender() {
   let server;
   await new Promise((resolveServer) => {
     server = createServer((req, res) => {
+      // Проксируем API-запросы на бэкенд — чтобы React Query мог загрузить данные
+      // при пререндеринге страниц (тайтлы, описания, OG-мета).
+      if (req.url?.startsWith("/api/")) {
+        proxyApiRequest(req, res);
+        return;
+      }
+
       let filePath = req.url === "/" ? "/index.html" : req.url.split("?")[0];
 
       // Пробуем отдать существующий файл
@@ -201,15 +261,25 @@ async function prerender() {
           () => {
             const root = document.getElementById("root");
             if (!root) return false;
-            // Проверяем, что есть реальный контент (не спиннер загрузки)
             const html = root.innerHTML;
             return html.length > 200 && !html.includes("Загрузка...");
           },
           { timeout: 20000 },
         );
 
+        // Для тир-листов дополнительно ждём обновления title через Helmet
+        if (route.path.startsWith("/tier-lists/")) {
+          await page.waitForFunction(
+            () => document.title !== "Тир лист | BookStrata"
+              && !document.title.includes("тир лист книг, визуальный"),
+            { timeout: 15000 },
+          ).catch(() => {
+            log(`  ⚠️ Title did not update for ${route.path}, using current: "${page.title()}"`);
+          });
+        }
+
         // Даём дополнительное время для анимаций и фоновых изображений
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(500);
 
         // Проверяем, что title изменился с дефолтного
         const title = await page.title();
