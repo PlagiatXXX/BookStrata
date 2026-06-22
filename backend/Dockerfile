@@ -18,13 +18,11 @@ RUN apk add --no-cache openssl
 
 WORKDIR /build
 
-# Сначала только package.json — для кэширования слоя зависимостей
+# Зависимости + Prisma клиент в одном слое (нельзя кэшировать отдельно,
+# иначе при добавлении prisma в devDeps старый кэш npm ci не включает его)
 COPY package.json package-lock.json ./
-RUN npm ci
-
-# Prisma schema + генерация клиента
 COPY prisma/ ./prisma/
-RUN npx prisma generate
+RUN npm ci && ./node_modules/.bin/prisma generate
 
 # Исходники + компиляция
 COPY tsconfig.json ./
