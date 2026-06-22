@@ -15,10 +15,21 @@ vi.mock('@/lib/logger', () => ({
   })),
 }));
 
+// Мокаем StorageService
+vi.mock('@/lib/storage', () => ({
+  StorageService: {
+    getString: vi.fn(),
+  },
+}));
+
+let mockStorageGetString: ReturnType<typeof vi.fn>;
+
 // Мокаем html-to-image
 vi.mock('html-to-image', () => ({
   toPng: vi.fn().mockResolvedValue('data:image/png;base64,test'),
 }));
+
+const { StorageService } = await import('@/lib/storage');
 
 // Получаем моки после vi.mock
 const mockToPng = vi.mocked(await import('html-to-image')).toPng;
@@ -346,6 +357,8 @@ describe('useTierEditorDrag', () => {
     });
 
     it('должен пробовать прокси при ошибке CORS и продолжать', async () => {
+      mockStorageGetString = vi.mocked(StorageService.getString);
+      mockStorageGetString.mockReturnValue('test-token');
       // Первый вызов (CORS) — ошибка, второй (прокси) — тоже ошибка
       globalThis.fetch = vi.fn().mockRejectedValue(new Error('CORS error'));
 
@@ -363,8 +376,98 @@ describe('useTierEditorDrag', () => {
       expect(mockToPng).toHaveBeenCalled();
       // background-image не изменился
       expect(card.style.backgroundImage).toContain('http://example.com/nocors.jpg');
-      // fetch вызывался дважды: CORS + прокси
+      // fetch вызывался: CORS + прокси (с токеном)
       expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+      // Прокси вызван с токеном авторизации
+      expect(globalThis.fetch).toHaveBeenLastCalledWith(
+        expect.stringContaining('/api/proxy/image'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer test-token',
+          }),
+        }),
+      );
+    });
+
+    it('должен пробовать S3 URL для CDN изображений при CORS ошибке', async () => {
+      // S3 URL успешно отдаёт изображение, CDN — CORS ошибка
+      const mockBlob = new Blob(['fake-image'], { type: 'image/jpeg' });
+      globalThis.fetch = vi.fn()
+        // Первый вызов (CDN) — CORS ошибка
+        .mockRejectedValueOnce(new Error('CORS error'))
+        // Второй вызов (S3) — успех
+        .mockResolvedValueOnce({
+          ok: true,
+          blob: () => Promise.resolve(mockBlob),
+        });
+
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      const card = document.createElement('div');
+      card.className = 'nb-book-card';
+      card.style.backgroundImage = 'url(https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/migrated/cover.webp)';
+      el.appendChild(card);
+
+      const originalBg = card.style.backgroundImage;
+
+      await result.current.onDownloadImage();
+
+      // fetch был вызван дважды: CDN (ошибка) и S3 (успех)
+      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+      // Первый — CDN URL
+      expect(globalThis.fetch).toHaveBeenNthCalledWith(
+        1,
+        'https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/migrated/cover.webp',
+        { mode: 'cors' },
+      );
+      // Второй — S3 URL
+      expect(globalThis.fetch).toHaveBeenNthCalledWith(
+        2,
+        'https://s3.twcstorage.ru/bookstrata/tiermaker-pro/migrated/cover.webp',
+        { mode: 'cors' },
+      );
+      // Прокси не вызывался — S3 сработал
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        expect.stringContaining('/api/proxy/image'),
+        expect.anything(),
+      );
+      // После экспорта стили восстанавливаются (cleanup в finally)
+      expect(card.style.backgroundImage).toBe(originalBg);
+
+      // toPng вызван
+      expect(mockToPng).toHaveBeenCalled();
+    });
+
+    it('должен пробовать прокси если и CDN и S3 не сработали', async () => {
+      mockStorageGetString = vi.mocked(StorageService.getString);
+      mockStorageGetString.mockReturnValue('test-token');
+      // Все вызовы — ошибки: CDN, S3, прокси
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('fetch error'));
+
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      const card = document.createElement('div');
+      card.className = 'nb-book-card';
+      card.style.backgroundImage = 'url(https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/migrated/cover.webp)';
+      el.appendChild(card);
+
+      await result.current.onDownloadImage();
+
+      // fetch вызывался 3 раза: CDN, S3, прокси
+      expect(globalThis.fetch).toHaveBeenCalledTimes(3);
+      // Прокси вызван с токеном
+      expect(globalThis.fetch).toHaveBeenLastCalledWith(
+        expect.stringContaining('/api/proxy/image'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer test-token',
+          }),
+        }),
+      );
+      // toPng всё равно вызван
+      expect(mockToPng).toHaveBeenCalled();
     });
 
     it('должен обрабатывать ошибку при скачивании и восстанавливать стили', async () => {

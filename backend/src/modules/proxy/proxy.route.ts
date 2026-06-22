@@ -14,6 +14,8 @@ const ALLOWED_HOSTS = [
   "lh3.googleusercontent.com",
   "googleapis.com",
   "googleusercontent.com",
+  "s3.twcstorage.ru",
+  "cdn.twcstorage.ru",
 ];
 
 /** RFC 1918 + loopback + link-local + AWS metadata (169.254.0.0/16) */

@@ -6,10 +6,34 @@ import type {
 } from "@dnd-kit/core";
 import type { Book, Tier, TierListData } from "@/types";
 import { createLogger } from "@/lib/logger";
+import { StorageService } from "@/lib/storage";
 import type { ExportTheme } from "../components/ExportModal";
 
 // Логгер для хука drag-and-drop
 const logger = createLogger("TierEditorDrag", { color: "orange" });
+
+// Константы для преобразования CDN → S3 (обратная операция proxyImageUrl)
+const S3_BASE = "https://s3.twcstorage.ru/bookstrata";
+// Хост CDN может быть динамическим (re406cj9uj.cdn.twcstorage.ru), поэтому матчим по суффиксу
+const CDN_SUFFIX = ".cdn.twcstorage.ru";
+
+/**
+ * Преобразует CDN URL обратно в S3 URL для fetch (S3 может отдавать CORS).
+ * Если URL не с CDN — возвращает как есть.
+ */
+function cdnToS3Url(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith(CDN_SUFFIX)) {
+      // CDN: https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/migrated/xxx.webp
+      // S3:  https://s3.twcstorage.ru/bookstrata/tiermaker-pro/migrated/xxx.webp
+      return url.replace(parsed.origin, S3_BASE);
+    }
+  } catch {
+    // Если URL некорректный — возвращаем как есть
+  }
+  return url;
+}
 
 /** Преобразует Blob в data URL */
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -106,21 +130,42 @@ export function useTierEditorDrag({
           const url = match[1];
           if (url.startsWith("data:")) continue;
 
-          try {
-            const resp = await fetch(url, { mode: "cors" });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const blob = await resp.blob();
-            const dataUrl = await blobToDataUrl(blob);
-            inlineMap.set(card, card.style.backgroundImage);
-            card.style.backgroundImage = `url(${dataUrl})`;
-            continue;
-          } catch {
-            // CORS fetch не сработал — пробуем через прокси
+          // Пробуем оригинальный URL, а для CDN — ещё и S3 (может отдавать CORS)
+          const urlsToTry = [url];
+          const s3Url = cdnToS3Url(url);
+          if (s3Url !== url) {
+            urlsToTry.push(s3Url);
           }
 
+          let inlined = false;
+          for (const tryUrl of urlsToTry) {
+            try {
+              const resp = await fetch(tryUrl, { mode: "cors" });
+              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+              const blob = await resp.blob();
+              const dataUrl = await blobToDataUrl(blob);
+              inlineMap.set(card, card.style.backgroundImage);
+              card.style.backgroundImage = `url(${dataUrl})`;
+              inlined = true;
+              break;
+            } catch {
+              // CORS fetch не сработал — пробуем следующий URL
+            }
+          }
+
+          if (inlined) continue;
+
+          // Прокси с авторизацией (последняя надежда)
           try {
+            const token = StorageService.getString("authToken");
+            const headers: Record<string, string> = {
+              "Content-Type": "application/json",
+            };
+            if (token) {
+              headers["Authorization"] = `Bearer ${token}`;
+            }
             const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(url)}`;
-            const resp = await fetch(proxyUrl);
+            const resp = await fetch(proxyUrl, { headers });
             if (!resp.ok) continue;
             const blob = await resp.blob();
             const dataUrl = await blobToDataUrl(blob);
