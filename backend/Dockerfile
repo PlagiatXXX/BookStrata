@@ -24,7 +24,7 @@ RUN npm ci
 
 # Prisma schema + генерация клиента
 COPY prisma/ ./prisma/
-RUN ./node_modules/.bin/prisma generate
+RUN npx --prefer-offline prisma generate
 
 # Исходники + компиляция
 COPY tsconfig.json ./
