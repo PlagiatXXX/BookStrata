@@ -32,11 +32,11 @@ const PublicTierListCards = memo(function PublicTierListCards({
             className="group relative cursor-pointer rounded-xl border border-white/10 bg-[rgba(15,30,50,0.4)] p-4 backdrop-blur-[12px] shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(6,188,249,0.3)] hover:shadow-xl"
             role="button"
             tabIndex={0}
-            onClick={() => handleCardClick(tierList.id)}
+            onClick={() => handleCardClick(tierList.slug || tierList.id)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                handleCardClick(tierList.id);
+                handleCardClick(tierList.slug || tierList.id);
               }
             }}
           >

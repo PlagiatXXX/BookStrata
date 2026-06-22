@@ -189,8 +189,8 @@ export default function UserProfilePage() {
                     key={tl.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => handleTierListClick(tl.id)}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleTierListClick(tl.id) } }}
+                    onClick={() => handleTierListClick(tl.slug || tl.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleTierListClick(tl.slug || tl.id) } }}
                     className="cursor-pointer bg-black/45 backdrop-blur-[2px] rounded-md p-4 border border-white/20 hover:border-white/40 transition-all duration-200"
                   >
                     <h3 className="font-semibold text-(--ink-0) mb-1 text-sm line-clamp-1">

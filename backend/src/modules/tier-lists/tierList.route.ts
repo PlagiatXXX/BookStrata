@@ -314,6 +314,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         return reply.code(404).send(createApiError(ErrorCodes.TIER_LIST_NOT_FOUND, "Tier list not found"));
       }
 
+      // 301 редирект UUID → slug (для SEO)
+      if (service.isUuid(tierListId) && tierList.slug) {
+        return reply.code(301).redirect(`/tier-lists/${tierList.slug}`);
+      }
+
       const isOwner = request.user?.userId === tierList.userId;
       if (!tierList.isPublic && !isOwner) {
         return reply.code(403).send(createApiError(ErrorCodes.ACCESS_DENIED, "Access denied"));

@@ -26,6 +26,7 @@ export interface BattlePlacement {
 
 export interface BattleTierList {
   id: string;
+  slug?: string | null;
   title: string;
   userId?: number;
   user?: {

@@ -44,7 +44,7 @@ export function PublicTierListsSection({
       <button
         key={tierList.id}
         className="recent-tier-card"
-        onClick={() => navigate(`/tier-lists/${tierList.id}`)}
+        onClick={() => navigate(`/tier-lists/${tierList.slug || tierList.id}`)}
         type="button"
       >
         {tierList.coverImageUrl ? (

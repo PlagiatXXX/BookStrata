@@ -1,5 +1,6 @@
 import { prisma, tierListRepository } from "./tierList.utils.js";
 import { createLogger } from "../../lib/logger.js";
+import { generateUniqueSlug } from "../../utils/slugify.js";
 
 const logger = createLogger("TierListsFork", { color: "cyan" });
 
@@ -18,10 +19,13 @@ export async function forkTierList(id: string, userId: number) {
   }
 
   return prisma.$transaction(async (tx) => {
+    const newTitle = `${original.title} (копия)`;
+    const slug = generateUniqueSlug(newTitle, crypto.randomUUID());
     const newTierList = await tx.tierList.create({
       data: {
         userId,
-        title: `${original.title} (копия)`,
+        title: newTitle,
+        slug,
         isPublic: false,
         originalTierListId: original.id,
         tiers: {

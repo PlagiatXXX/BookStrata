@@ -152,7 +152,7 @@ function LandingNav() {
 /* ---------- Tier list mini card ---------- */
 const MiniTierCard = memo(function MiniTierCard({ item }: { item: TierListShort }) {
   return (
-    <Link to={`/tier-lists/${item.id}`} className="mini-tier-card">
+    <Link to={`/tier-lists/${item.slug || item.id}`} className="mini-tier-card">
       <div
         className="mini-tier-card__cover"
         style={{

@@ -30,7 +30,7 @@ function TierListCard({ tierList }: { tierList: TierListShort }) {
   return (
     <button
       className="recent-tier-card"
-      onClick={() => navigate(`/tier-lists/${tierList.id}`)}
+      onClick={() => navigate(`/tier-lists/${tierList.slug || tierList.id}`)}
       type="button"
     >
       {tierList.coverImageUrl ? (

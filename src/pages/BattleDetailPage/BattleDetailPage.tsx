@@ -64,7 +64,7 @@ const ParticipantCard = memo(({
       </div>
       <div className="min-w-0">
         <button
-          onClick={(e) => { e.stopPropagation(); if (tl?.id) navigate(`/tier-lists/${tl.id}?context=battle`) }}
+          onClick={(e) => { e.stopPropagation(); if (tl?.id) navigate(`/tier-lists/${tl.slug || tl.id}?context=battle`) }}
           className="font-bold text-base leading-tight truncate text-left cursor-pointer hover:text-(--accent-main) transition-colors block w-full"
         >
           {tl?.title || "Без названия"}
@@ -85,10 +85,10 @@ const ParticipantCard = memo(({
     {tl?.tiers && tl.tiers.length > 0 && (
       <div
         className="mb-3 cursor-pointer group/tierlist"
-        onClick={(e) => { e.stopPropagation(); if (tl?.id) navigate(`/tier-lists/${tl.id}?context=battle`) }}
+        onClick={(e) => { e.stopPropagation(); if (tl?.id) navigate(`/tier-lists/${tl.slug || tl.id}?context=battle`) }}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => { if (e.key === "Enter" && tl?.id) { e.stopPropagation(); navigate(`/tier-lists/${tl.id}?context=battle`) } }}
+        onKeyDown={(e) => { if (e.key === "Enter" && tl?.id) { e.stopPropagation(); navigate(`/tier-lists/${tl.slug || tl.id}?context=battle`) } }}
       >
         <TierListPreview tierList={tl} compact maxBooksPerTier={4} />
         <div className="mt-2 text-[10px] font-medium uppercase tracking-wider text-(--ink-1) opacity-0 group-hover/tierlist:opacity-100 transition-opacity">
@@ -401,7 +401,7 @@ export default function BattleDetailPage() {
                     </p>
                     <h2>
                       <button
-                        onClick={() => navigate(`/tier-lists/${winner.tierList.id}?context=battle`)}
+                        onClick={() => navigate(`/tier-lists/${winner.tierList.slug || winner.tierList.id}?context=battle`)}
                         className="text-2xl font-black mb-1 text-left cursor-pointer hover:text-(--accent-main) transition-colors"
                       >
                         {winner.tierList.title}

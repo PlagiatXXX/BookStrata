@@ -31,6 +31,7 @@ export interface ApiTier {
 // Описывает полный ответ от нашего GET /api/tier-lists/:id
 export interface ApiTierListResponse {
   id: string;
+  slug?: string | null;
   title: string;
   year: number | null;
   isPublic: boolean;

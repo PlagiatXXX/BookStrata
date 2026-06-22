@@ -24,8 +24,12 @@ import { useNsfwCheck } from "@/hooks/useNsfwCheck";
 import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
 import { apiCreateFlag } from "@/lib/moderationApi";
 import type { NsfwResult } from "@/hooks/useNsfwCheck";
+import { SEOHead } from "@/components/SEO/SEOHead";
 import "./TierEditorPage.css";
 import type { Book, Tier } from "@/types";
+
+const isUuid = (value: string) =>
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value);
 
 type PendingDeletedBook = {
   book: Book;
@@ -117,6 +121,13 @@ const TierListEditorContent = () => {
       setTheme(apiData.theme)
     }
   }, [apiData?.coverImageUrl, apiData?.theme])
+
+  // Заменяем UUID на slug в URL после загрузки данных
+  useEffect(() => {
+    if (apiData?.slug && isUuid(tierListId)) {
+      window.history.replaceState(null, "", `/tier-lists/${apiData.slug}`);
+    }
+  }, [apiData?.slug, tierListId])
 
   // Извлекаем ID владельца и текущего пользователя
   const ownerUserId = apiData?.user?.id;
@@ -508,13 +519,22 @@ const TierListEditorContent = () => {
     }),
   };
 
+  const pageUrl = apiData?.slug || tierListId;
+
   return (
-    <EditorScreens
-      isLoading={isLoading}
-      isError={isError}
-      error={error}
-      onMyRatingsClick={handleMyRatingsClick}
-    >
+    <>
+      <SEOHead
+        title={apiData?.title || "Тир лист"}
+        description={`Тир лист «${apiData?.title || ""}» — визуальный рейтинг книг, созданный на BookStrata`}
+        url={`/tier-lists/${pageUrl}`}
+        image={apiData?.coverImageUrl || undefined}
+      />
+      <EditorScreens
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onMyRatingsClick={handleMyRatingsClick}
+      >
       <EditorLayout
         activeItem={activeItem}
         onDragStart={handleDragStart}
@@ -623,6 +643,7 @@ const TierListEditorContent = () => {
         />
       </div>
     </EditorScreens>
+    </>
   );
 };
 
