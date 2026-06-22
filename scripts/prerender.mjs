@@ -66,10 +66,7 @@ function proxyApiRequest(req, res) {
         }
       }
       const text = await apiRes.text();
-      // Проверяем, что бэкенд вернул JSON, а не HTML (ошибка)
-      if (!apiRes.headers.get("content-type")?.includes("json")) {
-        log(`⚠️  Proxy: ${req.url} → ${apiRes.status} (not JSON, backend returned ${apiRes.headers.get("content-type") || "no content-type"})`);
-      }
+      log(`  Proxy: ${req.method} ${req.url} → ${apiRes.status} (${(apiRes.headers.get("content-type") || "no type").split(";")[0]}, ${text.length}B)`);
       send(apiRes.status, responseHeaders, text);
     } catch (err) {
       log(`⚠️  Proxy error for ${req.url}: ${err?.message || err}`);
