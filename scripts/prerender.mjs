@@ -61,7 +61,7 @@ function proxyApiRequest(req, res) {
       });
       const responseHeaders = {};
       for (const [key, value] of apiRes.headers.entries()) {
-        if (!["content-encoding", "transfer-encoding", "connection"].includes(key)) {
+        if (!["content-encoding", "transfer-encoding", "content-length", "connection"].includes(key)) {
           responseHeaders[key] = value;
         }
       }
