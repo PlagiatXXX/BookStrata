@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 const SITE_NAME = "BookStrata";
@@ -57,6 +58,61 @@ export function SEOHead({
   const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
 
   console.log(`[SEOHead] render title="${title}" pageTitle="${pageTitle}"`);
+
+  // Fallback: react-helmet-async v3 + React 19 не всегда корректно hoist'ит
+  // динамические <title>/<meta> в head. Напрямую обновляем DOM.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const head = document.head || document.querySelector("head");
+    if (!head) return;
+
+    document.title = pageTitle;
+
+    const setMeta = (selector: string, attr: string, value: string) => {
+      let el = head.querySelector(selector) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        const match = selector.match(/\[(name|property)="(.+?)"\]/);
+        if (match) {
+          el.setAttribute(match[1]!, match[2]!);
+        }
+        head.appendChild(el);
+      }
+      el.setAttribute(attr, value);
+    };
+
+    const setLink = (selector: string, attr: string, value: string) => {
+      let el = head.querySelector(selector) as HTMLLinkElement | null;
+      if (!el) {
+        el = document.createElement("link");
+        const match = selector.match(/\[rel="(.+?)"\]/);
+        if (match) el.setAttribute("rel", match[1]!);
+        head.appendChild(el);
+      }
+      el.setAttribute(attr, value);
+    };
+
+    setMeta('meta[name="description"]', "content", description);
+    setMeta('meta[property="og:title"]', "content", pageTitle);
+    setMeta('meta[property="og:description"]', "content", description);
+    setMeta('meta[property="og:image"]', "content", imageUrl);
+    setMeta('meta[property="og:url"]', "content", pageUrl);
+    setMeta('meta[property="og:type"]', "content", type);
+    setMeta('meta[name="twitter:title"]', "content", pageTitle);
+    setMeta('meta[name="twitter:description"]', "content", description);
+    setMeta('meta[name="twitter:image"]', "content", imageUrl);
+
+    if (noindex) {
+      setMeta('meta[name="robots"]', "content", "noindex, nofollow");
+    } else {
+      const robots = head.querySelector('meta[name="robots"]');
+      if (robots?.getAttribute("content") === "noindex, nofollow") {
+        robots.remove();
+      }
+    }
+
+    setLink('link[rel="canonical"]', "href", pageUrl);
+  }, [pageTitle, description, imageUrl, pageUrl, type, noindex, title]);
 
   const breadcrumbJsonLd = breadcrumbs
     ? {
