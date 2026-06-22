@@ -10,9 +10,15 @@
 
 import { chromium } from "playwright";
 import { createServer } from "http";
+import { Agent } from "undici";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from "fs";
 import { resolve, dirname, extname } from "path";
 import { fileURLToPath } from "url";
+
+// Dispatcher для fetch() с самоподписанными сертификатами (nginx на localhost).
+// NODE_TLS_REJECT_UNAUTHORIZED=0 не работает с undici fetch в Node 18+,
+// поэтому явно создаём Agent с rejectUnauthorized: false.
+const insecureAgent = new Agent({ connect: { rejectUnauthorized: false } });
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -58,6 +64,7 @@ function proxyApiRequest(req, res) {
           "user-agent": req.headers["user-agent"] || "prerender",
         },
         body,
+        dispatcher: insecureAgent,
       });
       const responseHeaders = {};
       for (const [key, value] of apiRes.headers.entries()) {
@@ -89,7 +96,9 @@ function proxyApiRequest(req, res) {
 async function addPublicTierListRoutes() {
   try {
     log(`📡 Fetching public tier lists from ${BACKEND_URL}/api/tier-lists/public…`);
-    const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=50&sortBy=likes`);
+    const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=50&sortBy=likes`, {
+      dispatcher: insecureAgent,
+    });
     if (!res.ok) {
       log(`⚠️  API responded with ${res.status}, skipping tier-list prerender`);
       return;
