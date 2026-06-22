@@ -118,15 +118,15 @@ fi
 if [ "$SKIP_BUILD" = false ]; then
   info "Prerender публичных маршрутов..."
 
-  # Убеждаемся, что бэкенд доступен для API-прокси (prerender запрашивает данные через него)
-  # Используем nginx на localhost с игнорированием самоподписанного сертификата
+  # API_URL через nginx — чтобы prerender получал реальные данные тир-листов
+  # Используем https://localhost (nginx самоподписанный сертификат)
+  export API_URL="https://localhost"
+  export NODE_TLS_REJECT_UNAUTHORIZED=0
+  ok "API_URL=https://localhost (prerender через nginx)"
+
+  # Проверяем доступность бэкенда (предупреждение, не блокер)
   if ! curl -sfk --max-time 3 'https://localhost/health' >/dev/null 2>&1; then
     warn "Бэкенд (localhost/health) не отвечает — prerender будет без данных тир-листов"
-  else
-    # API_URL через nginx — чтобы prerender получал реальные данные тир-листов
-    export API_URL="https://localhost"
-    export NODE_TLS_REJECT_UNAUTHORIZED=0
-    ok "API_URL=https://localhost (бэкенд доступен через nginx)"
   fi
 
   mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.saved" 2>/dev/null || true
