@@ -152,7 +152,11 @@ if [ "$SKIP_BUILD" = false ]; then
   #   2. dist      → dist.old (предыдущая сборка → fallback для старых чанков)
   #   3. dist.tmp  → dist    (новая сборка → в продакшен)
   rm -rf "$PROJECT_DIR/dist.old"
-  mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.old"
+  # Если dist отсутствует (например, после шага 3, когда нечего было сохранять) —
+  # не падаем, просто пропускаем сохранение fallback-версии.
+  if [ -d "$PROJECT_DIR/dist" ]; then
+    mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.old"
+  fi
   mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist"
   ok "dist обновлён (старая версия сохранена в dist.old)"
 fi
