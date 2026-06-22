@@ -8,7 +8,6 @@ import { AchievementNotification } from "@/components/AchievementNotification/Ac
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
 import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
 import { CookieConsent } from "@/components/CookieConsent/CookieConsent";
-import { SEOHead } from "@/components/SEO/SEOHead";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import "../styles/sileo-custom.css";
@@ -29,7 +28,6 @@ function AppShell() {
 
   return (
     <HelmetProvider>
-      <SEOHead url={pathname} />
       <AuthProvider>
         <Suspense
           fallback={
