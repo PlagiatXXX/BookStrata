@@ -269,15 +269,11 @@ async function prerender() {
           { timeout: 20000 },
         );
 
-        // Для тир-листов дополнительно ждём обновления title через Helmet
-        // — ждём, когда title изменится с дефолтного (который был до загрузки данных)
+        // Для тир-листов ждём, когда title обновится до формата с именем тир-листа
+        // "Книжный тир-лист | BookStrata" → "Название — книжный тир-лист | BookStrata"
         if (route.path.startsWith("/tier-lists/")) {
           await page.waitForFunction(
-            (defaultTitle) => {
-              return document.title !== defaultTitle
-                && !document.title.includes("BookStrata — создавай тир лист книг онлайн");
-            },
-            initialTitle,
+            () => document.title.includes("— книжный тир-лист"),
             { timeout: 15000 },
           ).catch(async () => {
             const currentTitle = await page.title();
