@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createLogger } from "../../lib/logger.js";
-import { authMiddleware } from "../auth/auth.middleware.js";
+
 import { isIP } from "node:net";
 import { promises as dns } from "node:dns";
 
@@ -81,7 +81,6 @@ export async function proxyRoutes(fastify: FastifyInstance) {
   }>(
     "/image",
     {
-      preHandler: [authMiddleware],
       schema: {
         querystring: {
           type: "object",
@@ -125,7 +124,7 @@ export async function proxyRoutes(fastify: FastifyInstance) {
         const buffer = await response.arrayBuffer();
 
         // Set CORS header so the browser can use this on canvas
-        // Маршрут за auth — сужаем origin до фронта вместо "*"
+        // Сужаем origin до фронта вместо "*"
         reply.header("Access-Control-Allow-Origin", process.env.CLIENT_URL || "http://localhost:5173");
         reply.header("Vary", "Origin");
         reply.header("Content-Type", contentType);
