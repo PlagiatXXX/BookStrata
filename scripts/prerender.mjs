@@ -66,8 +66,13 @@ function proxyApiRequest(req, res) {
         }
       }
       const text = await apiRes.text();
+      // Проверяем, что бэкенд вернул JSON, а не HTML (ошибка)
+      if (!apiRes.headers.get("content-type")?.includes("json")) {
+        log(`⚠️  Proxy: ${req.url} → ${apiRes.status} (not JSON, backend returned ${apiRes.headers.get("content-type") || "no content-type"})`);
+      }
       send(apiRes.status, responseHeaders, text);
-    } catch {
+    } catch (err) {
+      log(`⚠️  Proxy error for ${req.url}: ${err?.message || err}`);
       const fallback = resolve(DIST, "index.html");
       if (existsSync(fallback)) {
         send(200, { "Content-Type": "text/html; charset=utf-8" }, readFileSync(fallback));
@@ -270,8 +275,9 @@ async function prerender() {
             () => document.title !== "Тир лист | BookStrata"
               && !document.title.includes("тир лист книг, визуальный"),
             { timeout: 15000 },
-          ).catch(() => {
-            log(`  ⚠️ Title did not update for ${route.path}, using current: "${page.title()}"`);
+          ).catch(async () => {
+            const currentTitle = await page.title();
+            log(`  ⚠️ Title did not update for ${route.path}, using current: "${currentTitle}"`);
           });
         }
 
