@@ -253,6 +253,9 @@ async function prerender() {
         const url = `${BASE}${route.path}`;
         await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
 
+        // Запоминаем дефолтный title (который выставил App.tsx до загрузки данных)
+        const initialTitle = await page.title();
+
         // Ждём, пока React отрендерит контент (а не спиннер)
         // — ждём, когда в #root появятся реальные дочерние элементы
         //   (не пустой div со спиннером)
@@ -267,15 +270,26 @@ async function prerender() {
         );
 
         // Для тир-листов дополнительно ждём обновления title через Helmet
+        // — ждём, когда title изменится с дефолтного (который был до загрузки данных)
         if (route.path.startsWith("/tier-lists/")) {
           await page.waitForFunction(
-            () => document.title !== "Тир лист | BookStrata"
-              && !document.title.includes("тир лист книг, визуальный"),
+            (defaultTitle) => {
+              return document.title !== defaultTitle
+                && !document.title.includes("BookStrata — создавай тир лист книг онлайн");
+            },
+            initialTitle,
             { timeout: 15000 },
           ).catch(async () => {
             const currentTitle = await page.title();
             log(`  ⚠️ Title did not update for ${route.path}, using current: "${currentTitle}"`);
           });
+        } else {
+          // Для остальных страниц тоже проверяем, что title обновился
+          await page.waitForFunction(
+            (defaultTitle) => document.title !== defaultTitle,
+            initialTitle,
+            { timeout: 10000 },
+          ).catch(() => {});
         }
 
         // Даём дополнительное время для анимаций и фоновых изображений
@@ -284,6 +298,20 @@ async function prerender() {
         // Проверяем, что title изменился с дефолтного
         const title = await page.title();
         log(`    title: ${title}`);
+
+        // Логируем SEO-мета-теги, чтобы видеть, что реально сохранится
+        const seo = await page.evaluate(() => ({
+          title: document.title,
+          canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+          ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
+          ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content'),
+          description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+        }));
+        if (seo.title !== "Рейтинг книг и книжные тир-листы онлайн | BookStrata") {
+          log(`    canonical: ${seo.canonical}`);
+          log(`    og:title:   ${seo.ogTitle}`);
+          log(`    og:desc:    ${seo.ogDescription?.slice(0, 80)}…`);
+        }
 
         // Получаем полный HTML страницы (с head-мета-тегами от Helmet)
         let html = await page.content();
