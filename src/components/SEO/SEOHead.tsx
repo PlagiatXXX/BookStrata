@@ -57,6 +57,8 @@ export function SEOHead({
   const pageUrl = url ? `${SITE_URL}${url}` : SITE_URL;
   const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
 
+  console.log(`[SEOHead] render title="${title}" pageTitle="${pageTitle}"`);
+
   // Fallback: react-helmet-async v3 + React 19 не всегда корректно hoist'ит
   // динамические <title>/<meta> в head. Напрямую обновляем DOM.
   useEffect(() => {

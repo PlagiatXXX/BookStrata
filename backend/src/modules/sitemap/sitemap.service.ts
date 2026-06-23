@@ -12,12 +12,12 @@ function xmlTag(url: string, priority: string, changefreq: string, lastmod?: str
 
 export async function generateSitemap(): Promise<string> {
   const staticPages = [
-    xmlTag(`${SITE_URL}/`, "1.0", "weekly"),
-    xmlTag(`${SITE_URL}/about`, "0.7", "monthly"),
-    xmlTag(`${SITE_URL}/pricing`, "0.7", "monthly"),
-    xmlTag(`${SITE_URL}/contact`, "0.5", "monthly"),
-    xmlTag(`${SITE_URL}/privacy`, "0.3", "yearly"),
-    xmlTag(`${SITE_URL}/terms`, "0.3", "yearly"),
+    { url: `${SITE_URL}/`, priority: "1.0", changefreq: "weekly" },
+    { url: `${SITE_URL}/about`, priority: "0.7", changefreq: "monthly" },
+    { url: `${SITE_URL}/pricing`, priority: "0.7", changefreq: "monthly" },
+    { url: `${SITE_URL}/contact`, priority: "0.5", changefreq: "monthly" },
+    { url: `${SITE_URL}/privacy`, priority: "0.3", changefreq: "yearly" },
+    { url: `${SITE_URL}/terms`, priority: "0.3", changefreq: "yearly" },
   ];
 
   const [newsArticles, tierLists] = await Promise.all([
@@ -56,6 +56,6 @@ export async function generateSitemap(): Promise<string> {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticPages, ...tierListUrls, ...newsUrls].join("\n")}
+${[...staticPages, ...newsUrls, ...tierListUrls].join("\n")}
 </urlset>`;
 }

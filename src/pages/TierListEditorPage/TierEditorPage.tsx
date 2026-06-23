@@ -25,7 +25,6 @@ import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
 import { apiCreateFlag } from "@/lib/moderationApi";
 import type { NsfwResult } from "@/hooks/useNsfwCheck";
 import { SEOHead } from "@/components/SEO/SEOHead";
-import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import "./TierEditorPage.css";
 import type { Book, Tier } from "@/types";
 
@@ -524,24 +523,14 @@ const TierListEditorContent = () => {
 
   const pageUrl = apiData?.slug || tierListId;
 
-  // Хлебные крошки: BookStrata > Тир-листы > Название
-  const breadcrumbItems = apiData?.title
-    ? [
-        { label: "BookStrata", href: isAuthenticated ? "/dashboard" : "/" },
-        { label: "Тир-листы", href: "/community" },
-        { label: apiData.title },
-      ]
-    : [];
-
   return (
     <>
       <SEOHead
-        title={apiData?.title ? (isPublic ? `${apiData.title} — рейтинг книг, топ книг читателей` : `${apiData.title} — книжный тир-лист`) : "Книжный тир-лист"}
-        description={apiData?.title ? (isPublic ? `Рейтинг книг «${apiData.title}» — подборка лучших книг по оценкам читателей BookStrata. Откройте новые книги для чтения.` : `Тир лист «${apiData.title}» — визуальный рейтинг книг, созданный на BookStrata`) : `Книжный тир-лист — визуальный рейтинг книг, созданный на BookStrata`}
+        title={apiData?.title ? `${apiData.title} — книжный тир-лист` : "Книжный тир-лист"}
+        description={`Тир лист «${apiData?.title || ""}» — визуальный рейтинг книг, созданный на BookStrata`}
         url={`/tier-lists/${pageUrl}`}
         image={apiData?.coverImageUrl || undefined}
         noindex={apiData ? !isPublic : undefined}
-        breadcrumbs={breadcrumbItems.map(({ label, href }) => ({ name: label, url: href || "" }))}
       />
       <EditorScreens
         isLoading={isLoading}
@@ -568,11 +557,6 @@ const TierListEditorContent = () => {
         ownerUserId={ownerUserId}
         currentUserId={currentUserId}
       >
-        {breadcrumbItems.length > 0 && (
-          <div className="px-6 pt-4">
-            <Breadcrumbs items={breadcrumbItems} />
-          </div>
-        )}
         <TasteMatchBanner
           apiData={apiData}
           isReadOnly={isReadOnly}

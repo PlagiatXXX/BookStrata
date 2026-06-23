@@ -1,41 +1,28 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Tag } from "lucide-react";
+import { Calendar, Tag } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
-import { EditorMainContent } from "@/pages/TierListEditorPage/components/EditorMainContent";
-import { EditorLayout } from "@/pages/TierListEditorPage/components/EditorLayout";
-import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { sileo } from "sileo";
-import { getCollectionBySlug } from "@/lib/collectionsApi";
+import { getCollectionById } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/lib/collectionsApi";
-import type { TierListData, Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
-import { createTierList, saveTierListAtomic } from "@/lib/tierListApi";
-import { getAtomicSavePayload } from "@/utils/saveDiff";
-import { useAuth } from "@/hooks/useAuthContext";
 import "./CollectionPage.css";
-// Стили для EditorLayout/EditorMainContent (тиры, обложки книг)
-import "@/pages/TierListEditorPage/TierEditorPage.css";
 
 export function CollectionPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [collection, setCollection] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);
-  const [bookToView, setBookToView] = useState<Book | null>(null);
-  const tierGridRef = useRef<HTMLDivElement | null>(null);
-  const { user } = useAuth();
-  const currentUserId = user?.userId;
 
   useEffect(() => {
     const loadCollection = async () => {
-      if (!slug) return;
+      if (!id) return;
 
       try {
-        const data = await getCollectionBySlug(slug);
+        const data = await getCollectionById(parseInt(id, 10));
         if (!data) {
           sileo.error({
             title: "Коллекция не найдена",
@@ -60,56 +47,13 @@ export function CollectionPage() {
     };
 
     loadCollection();
-  }, [slug, navigate]);
-
-  // Для curated: строим TierListData из полей коллекции
-  const tierListData = useMemo<TierListData | null>(() => {
-    if (!collection || collection.type !== "curated") return null;
-    return {
-      tierIdToTempIdMap: {},
-      id: `collection-${collection.id}`,
-      title: collection.title,
-      books: collection.books || {},
-      tiers: collection.tiers || {},
-      tierOrder: collection.tierOrder || [],
-      unrankedBookIds: collection.unrankedBookIds || [],
-      isPublic: true,
-    };
-  }, [collection]);
+  }, [id, navigate]);
 
   const sanitizedContent = useMemo(() => {
-    if (!collection?.content) return "";
-    return DOMPurify.sanitize(collection.content);
-  }, [collection?.content]);
+if (!collection?.content) return "";
+return DOMPurify.sanitize(collection.content);
+}, [collection?.content]);
 
-  // Callback для просмотра книги (read-only)
-  const handleViewBook = (book: Book) => {
-    setBookToView(book);
-  };
-
-  // Форк коллекции — создаёт пользовательский тир-лист из данных коллекции
-  const handleForkCollection = async () => {
-    if (!collection || !tierListData) return;
-
-    const newTierList = await createTierList(`${collection.title} (копия)`);
-    const payload = getAtomicSavePayload(tierListData);
-    await saveTierListAtomic(newTierList.id, payload);
-
-    sileo.success({
-      title: 'Версия создана',
-      description: 'Теперь вы можете редактировать этот список под себя',
-    });
-
-    navigate(`/tier-lists/${newTierList.id}`);
-  };
-
-  const handleMyRatingsClick = () => {
-    navigate("/community");
-  };
-
-  const pageUrl = slug || "";
-
-  // ===== Loading =====
   if (loading) {
     return (
       <DashboardLayout
@@ -137,162 +81,109 @@ export function CollectionPage() {
     return null;
   }
 
-  // ===== Curated (тир-лист) =====
-  if (collection.type === "curated" && tierListData) {
-    const headerProps = {
-      title: collection.title,
-      isReadOnly: true as const,
-      author: { id: 0, username: "BookStrata" },
-      likesCount: 0,
-      initialLiked: false,
-      tierListId: pageUrl,
-      coverImageUrl: collection.coverImageUrl,
-      booksCount: Object.keys(tierListData.books).length,
-      currentUserId,
-      onFork: handleForkCollection,
-    };
-
-    const noop = () => {};
-
-    return (
-      <>
-        <SEOHead
-          title={collection.title}
-          description={collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
-          image={proxyImageUrl(collection.coverImageUrl) || undefined}
-          url={`/collections/${slug}`}
-          breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${slug}` }]}
-        />
-        <EditorLayout
-          activeItem={null}
-          onDragStart={noop}
-          onDragOver={noop}
-          onDragEnd={noop}
-          onDragCancel={noop}
-          headerProps={headerProps}
-          onMyRatingsClick={handleMyRatingsClick}
-          isReadOnly={true}
-          tierListId={pageUrl}
-          coverImageUrl={collection.coverImageUrl}
-          hideCover={false}
-          theme="default"
-          booksCount={Object.keys(tierListData.books).length}
-        >
-          <EditorMainContent
-            listData={tierListData}
-            isReadOnly={true}
-            hideUnranked={true}
-            tierGridRef={tierGridRef}
-            onViewBook={handleViewBook}
-            activeTierId={null}
-            onSetActiveTier={() => {}}
-            onDownloadImage={() => {}}
-            isPublic={true}
-            isTogglingPublic={false}
-          />
-        </EditorLayout>
-
-        <BookViewModal
-          key={bookToView?.id || 'closed'}
-          isOpen={!!bookToView}
-          book={bookToView}
-          onClose={() => setBookToView(null)}
-        />
-      </>
-    );
-  }
-
-  // ===== Literary (статья) =====
   return (
     <>
       <SEOHead
         title={collection.title}
         description={collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
         image={proxyImageUrl(collection.coverImageUrl) || undefined}
-        url={`/collections/${slug}`}
-        breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${slug}` }]}
+        url={`/collections/${id}`}
+        breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${id}` }]}
       />
       <DashboardLayout
-        showTemplatesNav={false}
-        showSearch={false}
-        activeItem="Новости"
-      >
-        <article className="max-w-4xl mx-auto px-6 py-12">
-          <Breadcrumbs items={[{ label: "Подборки", href: "/community" }, { label: collection.title }]} />
+      showTemplatesNav={false}
+      showSearch={false}
+      activeItem="Новости"
+    >
+      <article className="max-w-4xl mx-auto px-6 py-12">
+        <Breadcrumbs items={[{ label: "Подборки", href: "/community" }, { label: collection.title }]} />
 
-          {/* Header */}
-          <header className="mb-8">
-            <div className="flex items-center gap-2 flex-wrap mb-4">
-              {collection.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="brutal-label px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            <h1 className="community-heading text-2xl font-black leading-tight mb-6 sm:text-3xl md:text-4xl">
-              {collection.title}
-            </h1>
-          </header>
-
-          {/* Book Covers */}
-          {collection.bookCovers && collection.bookCovers.length > 0 && (
-            <div className="brutal-card brutal-border p-6 mb-8">
-              <h2 className="text-lg font-bold text-(--ink-0) mb-4">
-                Книги подборки
-              </h2>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {collection.bookCovers.map((cover, idx) => (
-                  <div
-                    key={idx}
-                    className="aspect-2/3 bg-(--bg-0) rounded-sm overflow-hidden border border-(--line-soft)"
-                  >
-                    <img
-                      src={cover}
-                      alt={`Книга ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Excerpt */}
-          {collection.excerpt && (
-            <div className="brutal-card brutal-border p-6 mb-8">
-              <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
-                {collection.excerpt}
-              </p>
-            </div>
-          )}
-
-          {/* Content */}
-          <div className="prose prose-invert max-w-none">
-            <div
-              className="collection-content text-(--ink-1) text-base leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-            />
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-center gap-2 flex-wrap mb-4">
+            {collection.tags.map((tag) => (
+              <span
+                key={tag}
+                className="brutal-label px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
 
-          {/* Footer */}
-          <footer className="mt-12 pt-8 border-t border-(--line-soft)">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Tag size={16} className="text-(--ink-1)" />
-              <span className="text-sm text-(--ink-1)">Теги:</span>
-              {collection.tags.map((tag) => (
-                <span key={tag} className="text-sm text-(--accent-main)">
-                  #{tag}
-                </span>
+          <h1 className="community-heading text-2xl font-black leading-tight mb-6 sm:text-3xl md:text-4xl">
+            {collection.title}
+          </h1>
+
+          <div className="flex items-center gap-6 text-sm text-(--ink-1)">
+            <div className="flex items-center gap-2">
+              <Calendar size={16} />
+              <span>
+                {new Date(collection.updatedAt).toLocaleDateString("ru-RU", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Book Covers */}
+        {collection.bookCovers && collection.bookCovers.length > 0 && (
+          <div className="brutal-card brutal-border p-6 mb-8">
+            <h2 className="text-lg font-bold text-(--ink-0) mb-4">
+              Книги подборки
+            </h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {collection.bookCovers.map((cover, idx) => (
+                <div
+                  key={idx}
+                  className="aspect-2/3 bg-(--bg-0) rounded-sm overflow-hidden border border-(--line-soft)"
+                >
+                  <img
+                    src={cover}
+                    alt={`Книга ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+                  />
+                </div>
               ))}
             </div>
-          </footer>
-        </article>
-      </DashboardLayout>
+          </div>
+        )}
+
+        {/* Excerpt */}
+        {collection.excerpt && (
+          <div className="brutal-card brutal-border p-6 mb-8">
+            <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
+              {collection.excerpt}
+            </p>
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="prose prose-invert max-w-none">
+          <div
+            className="collection-content text-(--ink-1) text-base leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+          />
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-12 pt-8 border-t border-(--line-soft)">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Tag size={16} className="text-(--ink-1)" />
+            <span className="text-sm text-(--ink-1)">Теги:</span>
+            {collection.tags.map((tag) => (
+              <span key={tag} className="text-sm text-(--accent-main)">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        </footer>
+      </article>
+    </DashboardLayout>
     </>
   );
 }
