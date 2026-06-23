@@ -25,6 +25,7 @@ import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
 import { apiCreateFlag } from "@/lib/moderationApi";
 import type { NsfwResult } from "@/hooks/useNsfwCheck";
 import { SEOHead } from "@/components/SEO/SEOHead";
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import "./TierEditorPage.css";
 import type { Book, Tier } from "@/types";
 
@@ -523,6 +524,8 @@ const TierListEditorContent = () => {
 
   const pageUrl = apiData?.slug || tierListId;
 
+  const homeUrl = isAuthenticated ? "/dashboard" : "/";
+
   return (
     <>
       <SEOHead
@@ -531,7 +534,23 @@ const TierListEditorContent = () => {
         url={`/tier-lists/${pageUrl}`}
         image={apiData?.coverImageUrl || undefined}
         noindex={apiData ? !isPublic : undefined}
+        breadcrumbs={[
+          { name: "BookStrata", url: homeUrl },
+          { name: "Тир-листы", url: "/community" },
+          { name: apiData?.title || "Тир-лист", url: `/tier-lists/${pageUrl}` },
+        ]}
       />
+      {apiData && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <Breadcrumbs
+            items={[
+              { label: "BookStrata", href: homeUrl },
+              { label: "Тир-листы", href: "/community" },
+              { label: apiData.title },
+            ]}
+          />
+        </div>
+      )}
       <EditorScreens
         isLoading={isLoading}
         isError={isError}

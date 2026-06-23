@@ -414,6 +414,20 @@ async function prerender() {
   log("═══════════════════════════════════");
 }
 
+/*
+// Когда коллекции будут готовы — раскомментировать и добавить их маршруты:
+// import { getCollectionRoutes } from "./getCollectionRoutes.mjs";
+//
+// async function addCollectionRoutes(routes) {
+//   try {
+//     const collectionRoutes = await getCollectionRoutes();
+//     routes.push(...collectionRoutes);
+//   } catch (err) {
+//     console.warn("[prerender] Не удалось загрузить маршруты коллекций:", err.message);
+//   }
+// }
+*/
+
 prerender().catch((err) => {
   console.error("[prerender] Fatal:", err);
   process.exit(1);
