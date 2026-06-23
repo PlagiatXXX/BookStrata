@@ -91,7 +91,7 @@ const TierListEditorContent = () => {
   } = useTierEditorState();
 
   // Получаем данные и настройки пользователя
-  const { user: authUser } = useAuth();
+  const { user: authUser, isAuthenticated } = useAuth();
 
   // Получаем данные через React Query
   const {
@@ -456,7 +456,7 @@ const TierListEditorContent = () => {
   };
 
   const handleMyRatingsClick = () => {
-    navigate("/");
+    navigate(isAuthenticated ? "/dashboard" : "/");
   };
 
   const handleViewBook = (book: Book) => {

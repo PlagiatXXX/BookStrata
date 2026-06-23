@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, memo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
@@ -21,7 +21,6 @@ const MemoizedExternalNewsSection = memo(ExternalNewsSection);
 const MemoizedCollectionsSection = memo(CollectionsSection);
 
 export default function CommunityPage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const [activeCategory, setActiveCategory] = useState("actual");
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,7 +77,6 @@ export default function CommunityPage() {
       showTemplatesNav={true}
       showSearch={false}
       activeItem="Новости"
-      onMyRatingsClick={() => navigate("/")}
       bgVariant="dark"
     >
       <div className="community-shell min-h-screen">

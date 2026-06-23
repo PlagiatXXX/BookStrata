@@ -80,8 +80,6 @@ export default function ForumPage() {
     setSearchParams({ tab }, { replace: true });
   }, [setSearchParams]);
 
-  const handleMyRatingsClick = useCallback(() => navigate("/"), [navigate]);
-
   const handleCreateTopic = async () => {
     const text = topicTitle.trim();
     if (!text || creating) return;
@@ -148,7 +146,6 @@ goToTab("forum");
 
   return (
     <DashboardLayout
-      onMyRatingsClick={handleMyRatingsClick}
       showTemplatesNav={true}
       showSearch={false}
       activeItem={undefined}

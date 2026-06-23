@@ -103,7 +103,7 @@ export function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#0f0f1a] dark:bg-[#0f0f1a] light:bg-gray-100">
       <div className="hidden md:block">
-        <Header onMyRatingsClick={() => navigate("/")} hideLogout />
+        <Header hideLogout />
       </div>
       <div className="pt-20 sm:pt-24 pb-20 md:pb-10">
         <div className="mx-auto px-4 w-full max-w-2xl sm:px-6 lg:max-w-4xl">

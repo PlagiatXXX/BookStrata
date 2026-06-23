@@ -106,10 +106,6 @@ export function DashboardPage() {
   }, []);
 
   // Стабилизируем обработчики
-  const handleMyRatingsClick = useCallback(() => {
-    navigate("/");
-  }, [navigate]);
-
   const handleLogout = useCallback(() => {
     logout();
     navigate("/", { replace: true });
@@ -143,7 +139,6 @@ export function DashboardPage() {
 
   return (
     <DashboardLayout
-      onMyRatingsClick={handleMyRatingsClick}
       showSearch={false}
     >
       <section className="dashboard-home">

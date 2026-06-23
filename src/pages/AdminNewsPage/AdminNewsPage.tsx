@@ -246,7 +246,6 @@ export function AdminNewsPage() {
 
   return (
     <DashboardLayout
-      onMyRatingsClick={() => navigate("/")}
       showTemplatesNav={false}
       showSearch={false}
       activeItem="Админка"

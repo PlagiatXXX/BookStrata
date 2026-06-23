@@ -1,22 +1,24 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { List, Globe, Users, Library } from "lucide-react";
+import { useAuth } from "@/hooks/useAuthContext";
 import { useBottomSafeOffset } from "@/hooks/useBottomSafeOffset";
 
 interface MobileBottomNavProps {
   showTemplatesNav?: boolean;
 }
 
-const NAV_ITEMS = [
-  { label: "Главная", icon: List, path: "/" },
-  { label: "Библиотека", icon: Library, path: "/templates" },
-  { label: "Новости", icon: Globe, path: "/community" },
-  { label: "Актив", icon: Users, path: "/forum" },
-] as const;
-
 export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
   const bottomOffset = useBottomSafeOffset();
+
+  const NAV_ITEMS = [
+    { label: "Главная", icon: List, path: isAuthenticated ? "/dashboard" : "/" },
+    { label: "Библиотека", icon: Library, path: "/templates" },
+    { label: "Новости", icon: Globe, path: "/community" },
+    { label: "Актив", icon: Users, path: "/forum" },
+  ] as const;
 
   const items = showTemplatesNav
     ? NAV_ITEMS
@@ -27,7 +29,7 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
       <div className="flex items-center justify-around h-14">
         {items.map((item) => {
           const isActive = location.pathname === item.path ||
-            (item.path !== "/" && location.pathname.startsWith(item.path));
+            (item.path !== "/" && item.path !== "/dashboard" && location.pathname.startsWith(item.path));
           const Icon = item.icon;
 
           return (

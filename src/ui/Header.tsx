@@ -40,6 +40,11 @@ export const Header = ({
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Дефолтная навигация для "Главная": авторизованные → дашборд, гости → лендинг
+  const handleDefaultMyRatings = () => {
+    navigate(isAuthenticated ? "/dashboard" : "/");
+  };
+
   // Автоматическое определение активной вкладки на основе пути
   const activeItem =
     activeItemProp ||
@@ -74,7 +79,7 @@ export const Header = ({
   const navItems: NavItem[] = [
     {
       label: "Главная",
-      onClick: onMyRatingsClick,
+      onClick: onMyRatingsClick ?? handleDefaultMyRatings,
       icon: <List size={18} />,
       description: "Управление рейтингами",
     },
@@ -115,7 +120,7 @@ export const Header = ({
         <div className="flex items-center justify-between h-14 xs:h-16">
           {/* Logo & Brand */}
           <div className="flex items-center gap-2 xs:gap-3 shrink-0">
-            <Logo onClick={onMyRatingsClick} />
+            <Logo onClick={onMyRatingsClick ?? handleDefaultMyRatings} />
           </div>
 
           {/* Desktop Navigation */}

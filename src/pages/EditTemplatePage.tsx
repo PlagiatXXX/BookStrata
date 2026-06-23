@@ -31,10 +31,6 @@ const EditTemplatePage: React.FC = () => {
     navigate("/templates");
   };
 
-  const handleMyRatingsClick = () => {
-    navigate("/");
-  };
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background-dark">
@@ -63,7 +59,6 @@ const EditTemplatePage: React.FC = () => {
 
   return (
     <DashboardLayout
-      onMyRatingsClick={handleMyRatingsClick}
       showTemplatesNav={false}
       showSearch={false}
     >
@@ -90,7 +85,7 @@ const EditTemplatePage: React.FC = () => {
                 <span className="text-sm font-medium">К шаблонам</span>
               </button>
               <button
-                onClick={handleMyRatingsClick}
+                onClick={() => navigate("/dashboard")}
                 className="group flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-cyan-400/50 rounded-lg text-gray-300 hover:text-cyan-300 transition-all duration-300"
               >
                 <Home

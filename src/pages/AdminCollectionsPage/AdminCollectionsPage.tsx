@@ -198,7 +198,6 @@ export function AdminCollectionsPage() {
 
   return (
     <DashboardLayout
-      onMyRatingsClick={() => navigate("/")}
       showTemplatesNav={false}
       showSearch={false}
       activeItem="Коллекции"

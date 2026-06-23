@@ -57,7 +57,6 @@ return DOMPurify.sanitize(collection.content);
   if (loading) {
     return (
       <DashboardLayout
-        onMyRatingsClick={() => navigate("/")}
         showTemplatesNav={false}
         showSearch={false}
         activeItem="Новости"
@@ -92,7 +91,6 @@ return DOMPurify.sanitize(collection.content);
         breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${id}` }]}
       />
       <DashboardLayout
-      onMyRatingsClick={() => navigate("/")}
       showTemplatesNav={false}
       showSearch={false}
       activeItem="Новости"

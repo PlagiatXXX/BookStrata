@@ -685,17 +685,18 @@
 }
 
 .landing-banner__text-link {
-  color: #fbd38d;
+  color: #fb923c;
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: rgba(249, 115, 22, 0.4);
+  text-decoration-color: rgba(251, 146, 60, 0.7);
+  text-decoration-thickness: 2px;
   transition: all 0.2s;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .landing-banner__text-link:hover {
-  color: #fbbf24;
-  text-decoration-color: #f59e0b;
+  color: #f97316;
+  text-decoration-color: #f97316;
 }
 
 .landing-banner__smiley {

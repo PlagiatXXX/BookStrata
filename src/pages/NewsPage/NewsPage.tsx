@@ -49,7 +49,6 @@ export function NewsPage() {
   if (loading) {
     return (
       <DashboardLayout
-        onMyRatingsClick={() => navigate("/")}
         showTemplatesNav={false}
         showSearch={false}
         activeItem="Новости"
@@ -88,7 +87,6 @@ export function NewsPage() {
         breadcrumbs={[{ name: "Новости", url: "/community" }, { name: article.title, url: `/news/${id}` }]}
       />
       <DashboardLayout
-        onMyRatingsClick={() => navigate("/")}
         showTemplatesNav={false}
         showSearch={false}
         activeItem="Новости"

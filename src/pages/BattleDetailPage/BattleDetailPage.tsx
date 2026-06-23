@@ -256,11 +256,6 @@ export default function BattleDetailPage() {
     }
   }
 
-  const handleMyRatingsClick = useCallback(
-    () => navigate("/"),
-    [navigate],
-  )
-
   const handleBack = useCallback(
     () => navigate("/forum"),
     [navigate],
@@ -273,7 +268,6 @@ export default function BattleDetailPage() {
   if (isLoading) {
     return (
       <DashboardLayout
-        onMyRatingsClick={handleMyRatingsClick}
         showTemplatesNav
         showSearch={false}
         activeItem="Сообщество"
@@ -293,7 +287,6 @@ export default function BattleDetailPage() {
   if (error || !battle) {
     return (
       <DashboardLayout
-        onMyRatingsClick={handleMyRatingsClick}
         showTemplatesNav
         showSearch={false}
         activeItem="Сообщество"
@@ -322,7 +315,6 @@ export default function BattleDetailPage() {
 
   return (
     <DashboardLayout
-      onMyRatingsClick={handleMyRatingsClick}
       showTemplatesNav
       showSearch={false}
       activeItem="Сообщество"

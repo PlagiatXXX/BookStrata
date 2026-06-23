@@ -76,13 +76,8 @@ const CreateTemplatePage: React.FC = () => {
     navigate("/templates");
   };
 
-  const handleMyRatingsClick = () => {
-    navigate("/");
-  };
-
   return (
     <DashboardLayout
-      onMyRatingsClick={handleMyRatingsClick}
       showTemplatesNav={false}
       showSearch={false}
     >
@@ -101,7 +96,7 @@ const CreateTemplatePage: React.FC = () => {
                 <span className="text-sm font-medium">К шаблонам</span>
               </button>
               <button
-                onClick={handleMyRatingsClick}
+                onClick={() => navigate("/dashboard")}
                 className="group flex w-full items-center justify-center gap-2 rounded-md border border-white/30 bg-black/40 px-4 py-2 text-[#f3efe6] transition-colors duration-200 hover:border-white/55 hover:bg-black/55 cursor-pointer sm:w-auto"
               >
                 <Home size={18} className="group-hover:-translate-x-0.5 transition-transform" />
