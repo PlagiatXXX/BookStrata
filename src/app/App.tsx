@@ -39,7 +39,7 @@ function AppShell() {
             </div>
           }
         >
-          <Outlet />
+          <main><Outlet /></main>
         </Suspense>
         <Toaster position="top-center" theme="system" />
         <AchievementNotification achievement={newAchievement} onClose={clearNotification} />

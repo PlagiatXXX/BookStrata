@@ -370,7 +370,7 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
         )}
       </div>
       <div className="mt-3 text-center">
-        <h4 className="text-sm font-semibold text-[#e2e8f0]">{title}</h4>
+        <h3 className="text-sm font-semibold text-[#e2e8f0]">{title}</h3>
         <p className="text-xs text-[#94a3b8] mt-0.5">{description}</p>
       </div>
     </motion.div>
@@ -496,7 +496,21 @@ export default function LandingPage() {
   const [showScrollTop, setShowScrollTop] = useState(false)
 
   useEffect(() => {
-    if (videoRef.current) videoRef.current.playbackRate = 0.7
+    const video = videoRef.current
+    if (!video) return
+    video.playbackRate = 0.7
+    video.setAttribute("fetchpriority", "high")
+  }, [])
+
+  // Preload LCP-изображение (poster видео) — задаёт браузеру приоритет
+  useEffect(() => {
+    const link = document.createElement("link")
+    link.rel = "preload"
+    link.as = "image"
+    link.href = "/library-bg.webp"
+    link.setAttribute("fetchpriority", "high")
+    document.head.appendChild(link)
+    return () => link.remove()
   }, [])
 
   useEffect(() => {

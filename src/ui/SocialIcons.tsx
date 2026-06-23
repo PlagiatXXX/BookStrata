@@ -58,10 +58,11 @@ export const SocialIcons = ({
     phone = "#",
   } = links;
 
-  const items: Array<{ href: string; className: string; children: React.ReactNode }> = [
+  const items: Array<{ href: string; className: string; label: string; children: React.ReactNode }> = [
     {
       href: instagram,
       className: `${ICON_BASE} hover:bg-[#cc39a4] text-[#cc39a4]`,
+      label: "Instagram",
       children: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-7 w-7">
           <path
@@ -76,6 +77,7 @@ export const SocialIcons = ({
     {
       href: telegram,
       className: `${ICON_BASE} hover:bg-blue-500 text-blue-500`,
+      label: "Telegram",
       children: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
           <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0Zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635Z"/>
@@ -85,6 +87,7 @@ export const SocialIcons = ({
     {
       href: vk,
       className: `${ICON_BASE} hover:bg-blue-600 text-blue-600`,
+      label: "ВКонтакте",
       children: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
           <path
@@ -97,6 +100,7 @@ export const SocialIcons = ({
     {
       href: max,
       className: `${ICON_BASE} hover:bg-blue-600 text-blue-600`,
+      label: "TenChat",
       children: (
         <svg aria-hidden="true" viewBox="0 0 1000 1000" fill="currentColor" className="h-7 w-7">
           <path
@@ -111,6 +115,7 @@ export const SocialIcons = ({
     {
       href: youtube,
       className: `${ICON_BASE} hover:bg-red-600 text-red-600`,
+      label: "YouTube",
       children: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
           <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
@@ -120,6 +125,7 @@ export const SocialIcons = ({
     {
       href: yandexMail,
       className: `${ICON_BASE} hover:bg-orange-500 text-orange-500`,
+      label: "Почта",
       children: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
           <path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1.5L12 14 2 7.5V6z"/>
@@ -130,6 +136,7 @@ export const SocialIcons = ({
     {
       href: github,
       className: `${ICON_BASE} hover:bg-black text-black`,
+      label: "GitHub",
       children: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
           <path
@@ -144,6 +151,7 @@ export const SocialIcons = ({
     {
       href: phone,
       className: `${ICON_BASE} hover:bg-green-500 text-green-500`,
+      label: "Телефон",
       children: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
           <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
@@ -172,6 +180,7 @@ export const SocialIcons = ({
             href={item.href}
             {...(item.href !== "#" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             className={item.className}
+            aria-label={item.label}
           >
             {item.children}
           </a>
@@ -182,6 +191,7 @@ export const SocialIcons = ({
           href={items[3]!.href}
           {...(items[3]!.href !== "#" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           className={items[3]!.className}
+          aria-label={items[3]!.label}
         >
           {items[3]!.children}
         </a>
@@ -191,6 +201,7 @@ export const SocialIcons = ({
           href={items[4]!.href}
           {...(items[4]!.href !== "#" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           className={items[4]!.className}
+          aria-label={items[4]!.label}
         >
           {items[4]!.children}
         </a>
@@ -200,6 +211,7 @@ export const SocialIcons = ({
           href={items[5]!.href}
           {...(items[5]!.href !== "#" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           className={items[5]!.className}
+          aria-label={items[5]!.label}
         >
           {items[5]!.children}
         </a>
@@ -208,6 +220,7 @@ export const SocialIcons = ({
           href={items[6]!.href}
           {...(items[6]!.href !== "#" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           className={items[6]!.className}
+          aria-label={items[6]!.label}
         >
           {items[6]!.children}
         </a>
@@ -216,6 +229,7 @@ export const SocialIcons = ({
           href={items[7]!.href}
           {...(items[7]!.href !== "#" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
           className={items[7]!.className}
+          aria-label={items[7]!.label}
         >
           {items[7]!.children}
         </a>

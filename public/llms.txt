@@ -1,0 +1,15 @@
+# BookStrata
+
+BookStrata — социальная сеть читателей. Составляй визуальные рейтинги книг (тир-листы), участвуй в баттлах, общайся на форуме и получай ИИ-рекомендации.
+
+## Основные страницы
+
+- https://bookstrata.ru/ — Главная
+- https://bookstrata.ru/about — О проекте
+- https://bookstrata.ru/pricing — Тарифы
+- https://bookstrata.ru/contact — Контакты
+- https://bookstrata.ru/privacy — Политика конфиденциальности
+- https://bookstrata.ru/terms — Условия использования
+- https://bookstrata.ru/templates — Библиотека тир-листов
+- https://bookstrata.ru/community — Сообщество
+- https://bookstrata.ru/forum — Форум
