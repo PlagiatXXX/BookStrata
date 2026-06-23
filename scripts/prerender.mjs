@@ -167,6 +167,53 @@ async function addPublicTierListRoutes() {
   }
 }
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * ПРЕРЕНДЕР КОЛЛЕКЦИЙ (раскомментируй, когда коллекции готовы)
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * 1. Раскомментируй функцию addCollectionRoutes() ниже
+ * 2. Добавь её вызов в prerender() после addPublicTierListRoutes():
+ *      await addPublicTierListRoutes();
+ *      await addCollectionRoutes();   // <-- раскомментировать
+ * 3. Заливай на сервер и делай build:prod
+ *
+ * Скрипт стучится в /api/collections?publishedOnly=true, получает
+ * список опубликованных коллекций и добавляет /collections/:slug
+ * в ROUTES для пререндера.
+ *
+ * Бэкенд на сервере доступен на 127.0.0.1:8080 — пререндер будет
+ * стучаться на него, получать данные, а Chromium — рендерить HTML
+ * с правильными SEO-тегами.
+ */
+// async function addCollectionRoutes() {
+//   try {
+//     log(`📡 Fetching collections from ${BACKEND_URL}/api/collections?publishedOnly=true…`);
+//     const res = await fetch(`${BACKEND_URL}/api/collections?publishedOnly=true`, {
+//       dispatcher: insecureAgent,
+//     });
+//     if (!res.ok) {
+//       log(`⚠️  API responded with ${res.status}, skipping collection prerender`);
+//       return;
+//     }
+//     const items = await res.json();
+//     if (!Array.isArray(items) || items.length === 0) {
+//       log("⚠️  No published collections found, skipping");
+//       return;
+//     }
+//     for (const col of items) {
+//       const path = `/collections/${col.slug}`;
+//       ROUTES.push({ path, name: `Подборка: ${col.title}` });
+//       log(`  → ${path} (${col.title})`);
+//     }
+//     log(`✅ Added ${items.length} collections to prerender`);
+//     backendAvailable = true;
+//   } catch (err) {
+//     log(`⚠️  Cannot reach backend (${BACKEND_URL}): ${err.message}`);
+//     log("⚠️  Collection prerender skipped (will work on server during deploy)");
+//   }
+// }
+
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}`;
 
