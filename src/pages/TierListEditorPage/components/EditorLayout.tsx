@@ -11,6 +11,7 @@ import { ArrowLeft } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
 import { TierLabel } from "@/ui/TierLabel";
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import type { Book, Tier } from "@/types";
 import type { EditorHeaderProps } from "./EditorHeader";
 import { EditorHeader } from "./EditorHeader";
@@ -36,6 +37,7 @@ interface EditorLayoutProps {
   onThemeChanged?: (theme: string) => void;
   ownerUserId?: number;
   currentUserId?: number | null;
+  breadcrumbItems?: { label: string; href?: string }[];
 }
 
 export const EditorLayout = ({
@@ -57,6 +59,7 @@ export const EditorLayout = ({
   onThemeChanged,
   ownerUserId,
   currentUserId,
+  breadcrumbItems,
 }: EditorLayoutProps) => {
   const activeBook: Book | null =
     activeItem && "coverImageUrl" in activeItem ? (activeItem as Book) : null;
@@ -100,6 +103,11 @@ export const EditorLayout = ({
           <ArrowLeft size={16} />
           На главную
         </button>
+        {breadcrumbItems && (
+          <div className="mb-4">
+            <Breadcrumbs items={breadcrumbItems} />
+          </div>
+        )}
         <EditorHeader {...headerProps} />
         {!isReadOnly && (
           <div className="flex flex-wrap gap-3 items-start mb-6">

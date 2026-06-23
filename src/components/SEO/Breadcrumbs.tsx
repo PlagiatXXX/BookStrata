@@ -32,14 +32,9 @@ export function Breadcrumbs({ items, theme = "dark" }: BreadcrumbsProps) {
   return (
     <nav aria-label="Хлебные крошки" className="mb-6">
       <ol className={`flex items-center flex-wrap text-xs ${theme === "light" ? "text-slate-500" : "text-(--ink-2)"}`}>
-        <li>
-          <Link to="/" className={`transition-colors ${linkColor}`}>
-            BookStrata
-          </Link>
-        </li>
         {items.map((item, i) => (
           <li key={i} className="flex items-center">
-            {separatorEl}
+            {i > 0 && separatorEl}
             {item.href ? (
               <Link to={item.href} className={`transition-colors ${linkColor}`}>
                 {item.label}
