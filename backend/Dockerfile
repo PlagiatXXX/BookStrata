@@ -20,11 +20,14 @@ WORKDIR /build
 
 # Сначала только package.json — для кэширования слоя зависимостей
 COPY package.json package-lock.json ./
-RUN npm ci
+# Явно указываем NODE_ENV=development, чтобы гарантировать установку
+# dev-зависимостей (prisma CLI) — иначе при NODE_ENV=production npm ci
+# пропустит пакеты с флагом devOptional в package-lock.json
+RUN NODE_ENV=development npm ci
 
 # Prisma schema + генерация клиента
 COPY prisma/ ./prisma/
-RUN ./node_modules/.bin/prisma generate
+RUN npx prisma generate
 
 # Исходники + компиляция
 COPY tsconfig.json ./
