@@ -15,6 +15,46 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from "fs
 import { resolve, dirname, extname } from "path";
 import { fileURLToPath } from "url";
 
+/**
+ * Обратная транслитерация: из латинского slug → читаемый русский текст.
+ * Используется как fallback, если API не вернул данные тир-листа.
+ * 
+ * Пример: "moi-lyubimye-knigi-2024-a7bsy0" → "Мои любимые книги 2024"
+ */
+function deslugify(slug) {
+  // Убираем случайный суффикс (последний сегмент, короткий, с цифрами)
+  const segments = slug.split('-');
+  const last = segments[segments.length - 1];
+  // Суффикс уникальности: короткий, буквы+цифры (например "a7bsy0")
+  // Числа без букв ("10", "2024") — не суффикс, а часть названия
+  if (last && last.length <= 8 && /^[a-z0-9]+$/.test(last) && /[a-z]/.test(last) && /\d/.test(last)) {
+    segments.pop();
+  }
+  const latinText = segments.join(' ');
+
+  // Обратная транслитерация: латиница → кириллица
+  // Многосимвольные сопоставления должны обрабатываться раньше односимвольных
+  const map = [
+    ['shch', 'щ'], ['sh', 'ш'], ['ch', 'ч'], ['zh', 'ж'],
+    ['yu', 'ю'], ['ya', 'я'], ['yo', 'ё'],
+    ['j', 'й'], ['c', 'ц'], ['h', 'х'],
+    ['a', 'а'], ['b', 'б'], ['v', 'в'], ['g', 'г'], ['d', 'д'],
+    ['e', 'е'], ['z', 'з'], ['i', 'и'], ['k', 'к'], ['l', 'л'],
+    ['m', 'м'], ['n', 'н'], ['o', 'о'], ['p', 'п'], ['r', 'р'],
+    ['s', 'с'], ['t', 'т'], ['u', 'у'], ['f', 'ф'], ['y', 'ы'],
+  ];
+
+  let result = latinText;
+  for (const [latin, cyrillic] of map) {
+    result = result.replace(new RegExp(latin, 'g'), cyrillic);
+  }
+
+  // Если после всех преобразований пусто — возвращаем "Книжный тир-лист"
+  if (!result.trim()) return "Книжный тир-лист";
+  // Первая буква заглавная
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
 // Dispatcher для fetch() с самоподписанными сертификатами (nginx на localhost).
 // NODE_TLS_REJECT_UNAUTHORIZED=0 не работает с undici fetch в Node 18+,
 // поэтому явно создаём Agent с rejectUnauthorized: false.
@@ -266,8 +306,6 @@ async function prerender() {
         const initialTitle = await page.title();
 
         // Ждём, пока React отрендерит контент (а не спиннер)
-        // — ждём, когда в #root появятся реальные дочерние элементы
-        //   (не пустой div со спиннером)
         await page.waitForFunction(
           () => {
             const root = document.getElementById("root");
@@ -278,33 +316,48 @@ async function prerender() {
           { timeout: 20000 },
         );
 
-        // Для тир-листов ждём, когда title обновится до формата с именем тир-листа
-        // "Книжный тир-лист | BookStrata" → "Название — книжный тир-лист | BookStrata"
+        // Для тир-листов: ждём 5 секунд, пока title обновится
+        // Если не обновился — генерируем fallback из slug
         if (route.path.startsWith("/tier-lists/")) {
           await page.waitForFunction(
             () => document.title.includes("— книжный тир-лист"),
-            { timeout: 15000 },
-          ).catch(async () => {
-            const currentTitle = await page.title();
-            log(`  ⚠️ Title did not update for ${route.path}, using current: "${currentTitle}"`);
-          });
+            { timeout: 5000 },
+          ).catch(() => {});
         } else {
-          // Для остальных страниц тоже проверяем, что title обновился
+          // Для остальных страниц — ждём 5 секунд
           await page.waitForFunction(
             (defaultTitle) => document.title !== defaultTitle,
             initialTitle,
-            { timeout: 10000 },
+            { timeout: 5000 },
           ).catch(() => {});
         }
 
-        // Даём дополнительное время для анимаций и фоновых изображений
+        // Небольшая пауза для завершения анимаций
         await page.waitForTimeout(500);
 
-        // Проверяем, что title изменился с дефолтного
-        const title = await page.title();
-        log(`    title: ${title}`);
+        // Проверяем title — если generic, генерируем из slug
+        const currentTitle = await page.title();
+        const isTierList = route.path.startsWith("/tier-lists/");
+        const needsFallbackTitle = isTierList && !currentTitle.includes("— книжный тир-лист");
 
-        // Логируем SEO-мета-теги, чтобы видеть, что реально сохранится
+        let finalTitle = currentTitle;
+        if (needsFallbackTitle) {
+          const slug = route.path.replace("/tier-lists/", "");
+          const readableTitle = deslugify(slug);
+          finalTitle = `${readableTitle} — книжный рейтинг | BookStrata`;
+          log(`  ⚡ Fallback title: "${finalTitle}"`);
+
+          // Внедряем title и og:title через evaluate (они попадут в page.content())
+          await page.evaluate((t) => {
+            document.title = t;
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) ogTitle.setAttribute('content', t);
+          }, finalTitle);
+        }
+
+        log(`    title: ${finalTitle}`);
+
+        // Логируем SEO-мета-теги
         const seo = await page.evaluate(() => ({
           title: document.title,
           canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
@@ -318,7 +371,7 @@ async function prerender() {
           log(`    og:desc:    ${seo.ogDescription?.slice(0, 80)}…`);
         }
 
-        // Получаем полный HTML страницы (с head-мета-тегами от Helmet)
+        // Получаем полный HTML страницы (с head-мета-тегами)
         let html = await page.content();
 
         // Не инлайним весь CSS — внешние таблицы кэшируются браузером на год
@@ -337,7 +390,7 @@ async function prerender() {
 
         log(`    ✅ saved to ${savePath}`);
 
-        results.push({ path: route.path, title, saved: true });
+        results.push({ path: route.path, title: finalTitle, saved: true });
       } catch (err) {
         log(`    ❌ Failed: ${err.message}`);
         results.push({ path: route.path, error: err.message, saved: false });
