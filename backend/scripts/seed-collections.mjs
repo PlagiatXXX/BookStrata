@@ -7,13 +7,8 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-/** Конвертирует поле tiers/books в plain JSON (Prisma принимает plain objects) */
-function toJson(val) {
-  return val !== undefined ? val : null;
-}
-
 function toPrisma(col) {
-  return {
+  const data = {
     slug: col.slug,
     title: col.title,
     type: col.type,
@@ -24,11 +19,13 @@ function toPrisma(col) {
     tags: col.tags,
     isPublished: col.isPublished,
     order: col.order,
-    tiers: toJson(col.tiers),
     tierOrder: col.tierOrder || [],
-    books: toJson(col.books),
     unrankedBookIds: col.unrankedBookIds || [],
   };
+  // Prisma не принимает null для JSON-полей — добавляем только когда есть значение
+  if (col.tiers !== undefined) data.tiers = col.tiers;
+  if (col.books !== undefined) data.books = col.books;
+  return data;
 }
 
 const collectionSeeds = [
