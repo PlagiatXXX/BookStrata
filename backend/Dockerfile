@@ -14,16 +14,20 @@
 # ---------- Stage 1: Builder ----------
 FROM node:20-alpine AS builder
 
+RUN apk add --no-cache openssl
+
 WORKDIR /build
 
+# Сначала только package.json — для кэширования слоя зависимостей
 COPY package.json package-lock.json ./
-RUN npm ci
+# Явно указываем NODE_ENV=development, чтобы гарантировать установку
+# dev-зависимостей (prisma CLI) — иначе при NODE_ENV=production npm ci
+# пропустит пакеты с флагом devOptional в package-lock.json
+RUN NODE_ENV=development npm ci
 
 # Prisma schema + генерация клиента
-# Используем прямой node entry point вместо npm run — на Alpine + npm 10
-# node_modules/.bin-ссылки могут не создаваться для prisma
 COPY prisma/ ./prisma/
-RUN node node_modules/prisma/build/index.js generate
+RUN npx prisma generate
 
 # Исходники + компиляция
 COPY tsconfig.json ./
@@ -33,8 +37,8 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-alpine AS production
 
-RUN apk add --no-cache openssl 2>/dev/null || true; \
-    addgroup -g 1001 -S appgroup; \
+RUN apk add --no-cache openssl && \
+    addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup
 
 WORKDIR /app
