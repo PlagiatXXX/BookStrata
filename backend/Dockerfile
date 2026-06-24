@@ -21,10 +21,11 @@ WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Prisma schema + генерация клиента (отдельный слой — кэшируется по prisma/,
-# переустановка зависимостей не требуется)
+# Prisma schema + генерация клиента
+# Используем прямой node entry point вместо npm run — на Alpine + npm 10
+# node_modules/.bin-ссылки могут не создаваться для prisma
 COPY prisma/ ./prisma/
-RUN npm run prisma:generate
+RUN node node_modules/prisma/build/index.js generate
 
 # Исходники + компиляция
 COPY tsconfig.json ./
