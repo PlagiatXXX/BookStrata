@@ -277,6 +277,16 @@ const TierListEditorContent = () => {
       });
       setHasUnsavedChanges(true);
     }
+
+    const n = files.length;
+    const lastDigit = n % 10;
+    const lastTwoDigits = n % 100;
+    const prefix = lastDigit === 1 && lastTwoDigits !== 11 ? "Загружена" : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14) ? "Загружены" : "Загружено";
+    const word = lastDigit === 1 && lastTwoDigits !== 11 ? "книга" : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14) ? "книги" : "книг";
+    sileo.success({
+      title: `${prefix} ${n} ${word}`,
+      duration: 3000,
+    });
   }, [dispatch, setHasUnsavedChanges])
 
   const handleUploadBooks = useCallback(async (files: File[]) => {
@@ -596,7 +606,6 @@ const TierListEditorContent = () => {
           onTogglePublic={togglePublic}
           isTogglingPublic={isTogglingPublic}
           onFindBook={() => setIsSearchModalOpen(true)}
-          onUploadBooks={handleUploadBooks}
           saveStatus={saveStatus}
           lastSaved={lastSaved}
           hasUnsavedChanges={hasUnsavedChanges}
@@ -631,6 +640,7 @@ const TierListEditorContent = () => {
         onConfirmLeave={handleConfirmLeave}
         onSaveAndLeave={handleSaveBeforeLeave}
         onSaveBook={handleSaveBook}
+        onUploadBooks={handleUploadBooks}
         onBookAdded={handleBookAdded}
         isSavingBeforeLeave={isSavingBeforeLeave}
         isUpdatingBook={isUpdatingBook}

@@ -44,6 +44,7 @@ interface EditorModalsProps {
   bookToView: Book | null;
   isSearchModalOpen: boolean;
   tierListId: string | undefined;
+  onUploadBooks?: (files: File[]) => void;
   
   // Данные для отображения
   listData: TierListData;
@@ -115,6 +116,7 @@ export const EditorModals = ({
   username: _username,
   isReadOnly = false,
   tierListTheme,
+  onUploadBooks,
 }: EditorModalsProps) => {
   return (
     <>
@@ -174,6 +176,7 @@ export const EditorModals = ({
           onClose={onCloseSearch}
           tierListId={tierListId!}
           onBookAdded={onBookAdded}
+          onUploadBooks={onUploadBooks}
         />
       </Suspense>
 

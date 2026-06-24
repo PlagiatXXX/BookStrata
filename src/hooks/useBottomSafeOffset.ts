@@ -26,11 +26,9 @@ export function useBottomSafeOffset(): number {
     update();
 
     vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
 
     return () => {
       vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
     };
   }, []);
 

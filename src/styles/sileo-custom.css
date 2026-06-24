@@ -1,5 +1,10 @@
 /* Кастомизация Sileo toast уведомлений */
 
+/* Поверх модальных окон (z-[60]) */
+[data-sileo-viewport] {
+  z-index: 9999 !important;
+}
+
 /* Убираем text-transform: capitalize с заголовков */
 [data-sileo-title] {
   text-transform: none !important;

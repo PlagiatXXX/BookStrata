@@ -3,21 +3,20 @@ import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import type { Book } from "@/types";
 import { SortableBookCover } from "@/components/SortableBookCover/SortableBookCover";
-import { ImageUploader } from "@/components/ImageUploader/ImageUploader";
+
 import { BookCounter } from "@/components/BookCounter/BookCounter";
 import { UNRANKED_AREA_ID } from "@/constants/dnd";
 
 interface UnrankedItemsProps {
   books: Book[];
   booksCount?: number;
-  onUpload?: (files: File[]) => void;
   onDeleteBook?: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
   onViewBook?: (book: Book) => void;
 }
 
 export const UnrankedItems = memo(
-  ({ books, booksCount, onUpload, onDeleteBook, onEditBook, onViewBook }: UnrankedItemsProps) => {
+  ({ books, booksCount, onDeleteBook, onEditBook, onViewBook }: UnrankedItemsProps) => {
     const { over } = useDndContext();
     const { setNodeRef, isOver, active } = useDroppable({
       id: UNRANKED_AREA_ID,
@@ -72,7 +71,7 @@ export const UnrankedItems = memo(
                   containerId={UNRANKED_AREA_ID}
                 />
               ))}
-              {onUpload && <ImageUploader onUpload={onUpload} />}
+              
             </div>
           </SortableContext>
         </div>

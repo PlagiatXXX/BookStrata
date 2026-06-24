@@ -32,7 +32,6 @@ interface EditorMainContentProps {
   onTogglePublic?: (value: boolean) => void;
   isTogglingPublic: boolean;
   onFindBook?: () => void;
-  onUploadBooks?: (files: File[]) => void;
   saveStatus?: SaveStatus;
   lastSaved?: Date | null;
   hasUnsavedChanges?: boolean;
@@ -62,7 +61,6 @@ export const EditorMainContent = memo(
     onTogglePublic,
     isTogglingPublic,
     onFindBook,
-    onUploadBooks,
     saveStatus,
     lastSaved,
     hasUnsavedChanges,
@@ -152,7 +150,6 @@ export const EditorMainContent = memo(
             <UnrankedItems
               books={unrankedBooks}
               booksCount={totalBooksCount}
-              onUpload={isReadOnly ? undefined : onUploadBooks}
               onDeleteBook={isReadOnly ? undefined : onDeleteBook}
               onEditBook={isReadOnly ? undefined : onEditBook}
               onViewBook={onViewBook}

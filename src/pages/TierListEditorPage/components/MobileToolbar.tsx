@@ -40,7 +40,7 @@ const LABEL_COLORS = [
 ] as const;
 
 const btnBase =
-  "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 py-1.5 text-[9px] uppercase font-black tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c1fffe] focus-visible:ring-inset";
+  "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 py-2 text-[10px] uppercase font-black tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c1fffe] focus-visible:ring-inset";
 
 const btnActive =
   "text-[#c1fffe]";
@@ -159,7 +159,7 @@ export const MobileToolbar = memo(function MobileToolbar({
     if (saveStatus === "saving") {
       return <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />;
     }
-    return <Save size={18} />;
+    return <Save size={20} />;
   };
 
   const saveColor = () => {
@@ -202,8 +202,8 @@ export const MobileToolbar = memo(function MobileToolbar({
               className={`${btnBase} ${btnInactive} border-r-2 border-black`}
               aria-label="Найти книгу"
             >
-              <Search size={18} />
-              <span>Поиск</span>
+              <Search size={20} />
+              <span>Поиск книг</span>
             </button>
           )}
 
@@ -215,7 +215,7 @@ export const MobileToolbar = memo(function MobileToolbar({
               className={`${btnBase} ${btnInactive} border-r-2 border-black`}
               aria-label="Добавить блок"
             >
-              <Plus size={18} />
+              <Plus size={20} />
               <span>Блок</span>
             </button>
           )}
@@ -239,7 +239,7 @@ export const MobileToolbar = memo(function MobileToolbar({
             }`}
             aria-label="Настройки полки"
           >
-            <Sliders size={18} />
+            <Sliders size={20} />
             <span>Полка</span>
           </button>
 
@@ -250,7 +250,7 @@ export const MobileToolbar = memo(function MobileToolbar({
             className={`${btnBase} ${btnInactive} border-r-2 border-black`}
             aria-label="Скачать тир-лист"
           >
-            <ImageDown size={18} />
+            <ImageDown size={20} />
             <span>Экспорт</span>
           </button>
 
@@ -262,7 +262,7 @@ export const MobileToolbar = memo(function MobileToolbar({
             className={`${btnBase} ${showMore ? btnActive : btnInactive}`}
             aria-label="Ещё"
           >
-            <Ellipsis size={18} />
+            <Ellipsis size={20} />
             <span>Ещё</span>
           </button>
         </div>
