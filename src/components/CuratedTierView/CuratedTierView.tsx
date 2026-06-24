@@ -2,6 +2,7 @@ import { memo } from "react";
 import type { Tier, Book } from "@/types";
 import { TierLabel } from "@/ui/TierLabel";
 import { BookCover } from "@/ui/BookCover";
+import "./CuratedTierView.css";
 
 interface CuratedTierViewProps {
   tiers: Record<string, Tier>;
@@ -12,7 +13,7 @@ interface CuratedTierViewProps {
 
 export const CuratedTierView = memo(({ tiers, tierOrder, books, onViewBook }: CuratedTierViewProps) => {
   return (
-    <div className="neo-brutalist-editor">
+    <div className="curated-tier-view">
       <div className="flex flex-col">
         {tierOrder.map((tierId) => {
           const tier = tiers[tierId];
