@@ -27,7 +27,7 @@ RUN NODE_ENV=development npm ci
 
 # Prisma schema + генерация клиента
 COPY prisma/ ./prisma/
-RUN npx --no-install prisma generate
+RUN ./node_modules/.bin/prisma generate
 
 # Исходники + компиляция
 COPY tsconfig.json ./
