@@ -10,7 +10,6 @@
 
 import { chromium } from "playwright";
 import { createServer } from "http";
-import { Agent } from "undici";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from "fs";
 import { resolve, dirname, extname } from "path";
 import { fileURLToPath } from "url";
@@ -55,10 +54,8 @@ function deslugify(slug) {
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-// Dispatcher для fetch() с самоподписанными сертификатами (nginx на localhost).
-// NODE_TLS_REJECT_UNAUTHORIZED=0 не работает с undici fetch в Node 18+,
-// поэтому явно создаём Agent с rejectUnauthorized: false.
-const insecureAgent = new Agent({ connect: { rejectUnauthorized: false } });
+// для HTTP запросов к localhost не нужен специальный Agent.
+// В Node.js 22+ fetch встроен и работает напрямую.
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -104,7 +101,6 @@ function proxyApiRequest(req, res) {
           "user-agent": req.headers["user-agent"] || "prerender",
         },
         body,
-        dispatcher: insecureAgent,
       });
       const responseHeaders = {};
       for (const [key, value] of apiRes.headers.entries()) {
@@ -136,9 +132,7 @@ function proxyApiRequest(req, res) {
 async function addPublicTierListRoutes() {
   try {
     log(`📡 Fetching public tier lists from ${BACKEND_URL}/api/tier-lists/public…`);
-    const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=50&sortBy=likes`, {
-      dispatcher: insecureAgent,
-    });
+    const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=50&sortBy=likes`);
     if (!res.ok) {
       log(`⚠️  API responded with ${res.status}, skipping tier-list prerender`);
       return;
@@ -316,12 +310,12 @@ async function prerender() {
           { timeout: 20000 },
         );
 
-        // Для тир-листов: ждём 5 секунд, пока title обновится
+        // Для тир-листов: ждём 15 секунд, пока title обновится
         // Если не обновился — генерируем fallback из slug
         if (route.path.startsWith("/tier-lists/")) {
           await page.waitForFunction(
             () => document.title.includes("— книжный тир-лист"),
-            { timeout: 5000 },
+            { timeout: 15000 },
           ).catch(() => {});
         } else {
           // Для остальных страниц — ждём 5 секунд
@@ -344,15 +338,25 @@ async function prerender() {
         if (needsFallbackTitle) {
           const slug = route.path.replace("/tier-lists/", "");
           const readableTitle = deslugify(slug);
-          finalTitle = `${readableTitle} — книжный рейтинг | BookStrata`;
+          finalTitle = `${readableTitle} — книжный тир-лист | BookStrata`;
           log(`  ⚡ Fallback title: "${finalTitle}"`);
 
-          // Внедряем title и og:title через evaluate (они попадут в page.content())
-          await page.evaluate((t) => {
+          // Fallback description из slug
+          const fallbackDesc = `Тир-лист «${readableTitle}» — визуальный рейтинг книг на BookStrata`;
+          log(`  ⚡ Fallback description: "${fallbackDesc}"`);
+
+          // Внедряем title, description и og-теги через evaluate
+          await page.evaluate(({ t, d }) => {
             document.title = t;
-            const ogTitle = document.querySelector('meta[property="og:title"]');
-            if (ogTitle) ogTitle.setAttribute('content', t);
-          }, finalTitle);
+            const setMeta = (selector, attr, value) => {
+              const el = document.querySelector(selector);
+              if (el) el.setAttribute(attr, value);
+            };
+            setMeta('meta[property="og:title"]', 'content', t);
+            setMeta('meta[name="description"]', 'content', d);
+            setMeta('meta[property="og:description"]', 'content', d);
+            setMeta('meta[name="twitter:description"]', 'content', d);
+          }, { t: finalTitle, d: fallbackDesc });
         }
 
         log(`    title: ${finalTitle}`);

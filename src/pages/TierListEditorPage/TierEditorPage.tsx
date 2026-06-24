@@ -535,17 +535,22 @@ const TierListEditorContent = () => {
 
   return (
     <>
-      <SEOHead
-        title={apiData?.title ? `${apiData.title} — книжный тир-лист` : "Книжный тир-лист"}
-        description={`Тир лист «${apiData?.title || ""}» — визуальный рейтинг книг, созданный на BookStrata`}
-        url={`/tier-lists/${pageUrl}`}
-        image={apiData?.coverImageUrl || undefined}
-        noindex={apiData ? !isPublic : undefined}
-        breadcrumbs={[
-          { name: "Тир-листы", url: "/community" },
-          { name: apiData?.title || "Тир-лист", url: `/tier-lists/${pageUrl}` },
-        ]}
-      />
+      {/* Не рендерим SEOHead пока грузятся данные — чтобы избежать пустых мета-тегов */}
+      {(isLoading && !apiData) ? null : (
+        <SEOHead
+          title={apiData?.title ? `${apiData.title} — книжный тир-лист` : "Книжный тир-лист"}
+          description={apiData?.title ? `Тир-лист «${apiData.title}» — визуальный рейтинг книг, созданный на BookStrata` : "Книжный тир-лист на BookStrata — рейтинг книг по уровням"}
+          url={`/tier-lists/${pageUrl}`}
+          image={apiData?.coverImageUrl || undefined}
+          publishedTime={apiData?.updatedAt}
+          type="article"
+          noindex={apiData ? !isPublic : undefined}
+          breadcrumbs={[
+            { name: "Тир-листы", url: "/community" },
+            { name: apiData?.title || "Тир-лист", url: `/tier-lists/${pageUrl}` },
+          ]}
+        />
+      )}
       <EditorScreens
         isLoading={isLoading}
         isError={isError}
