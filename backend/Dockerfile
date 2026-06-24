@@ -18,16 +18,13 @@ RUN apk add --no-cache openssl
 
 WORKDIR /build
 
-# Сначала только package.json — для кэширования слоя зависимостей
 COPY package.json package-lock.json ./
-# Явно указываем NODE_ENV=development, чтобы гарантировать установку
-# dev-зависимостей (prisma CLI) — иначе при NODE_ENV=production npm ci
-# пропустит пакеты с флагом devOptional в package-lock.json
-RUN NODE_ENV=development npm ci
+RUN npm ci
 
-# Prisma schema + генерация клиента
+# Prisma schema + генерация клиента (отдельный слой — кэшируется по prisma/,
+# переустановка зависимостей не требуется)
 COPY prisma/ ./prisma/
-RUN ./node_modules/.bin/prisma generate
+RUN npm run prisma:generate
 
 # Исходники + компиляция
 COPY tsconfig.json ./
