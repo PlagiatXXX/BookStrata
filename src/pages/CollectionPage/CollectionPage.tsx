@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Calendar, Tag, GitFork } from "lucide-react";
+import { Tag, GitFork } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
@@ -130,57 +130,56 @@ return DOMPurify.sanitize(collection.content);
       <article className="max-w-4xl mx-auto px-6 py-12">
         <Breadcrumbs items={[{ label: "Подборки", href: "/community" }, { label: collection.title }]} />
 
-        {/* Header */}
+        <div className="mb-6">
+          <button
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/community');
+              }
+            }}
+            className="text-xs text-(--ink-2) hover:text-(--accent-main) transition-colors cursor-pointer"
+          >
+            ← Назад к подборкам
+          </button>
+        </div>
+
+        {/* Header — как в публичном тир-листе: ряд (название по центру | кнопка справа) */}
         <header className="mb-8">
-          <div className="flex items-center gap-2 flex-wrap mb-4">
-            {collection.tags.map((tag) => (
-              <span
-                key={tag}
-                className="brutal-label px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          <h1 className="community-heading text-2xl font-black leading-tight mb-6 sm:text-3xl md:text-4xl">
-            {collection.title}
-          </h1>
-
-          <div className="flex items-center gap-6 text-sm text-(--ink-1)">
-            <div className="flex items-center gap-2">
-              <Calendar size={16} />
-              <span>
-                {new Date(collection.updatedAt).toLocaleDateString("ru-RU", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </span>
+          <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6">
+            {/* Название по центру */}
+            <div className="min-w-0 flex-1 text-center">
+              <h1 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
+                {collection.title}
+              </h1>
+              {collection.type === "curated" && (
+                <div className="flex items-center justify-center gap-1 text-sm text-(--ink-1) mt-2">
+                  <span>автор:</span>
+                  <span className="text-(--accent-main)">Букстраж</span>
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Fork button for curated collections */}
-          {collection.type === "curated" && (
-            <div className="mt-4">
-              <button
-                onClick={handleFork}
-                className="nb-btn-primary flex items-center gap-1.5"
-                title={currentUserId ? 'Создать свою версию' : 'Войдите, чтобы скопировать'}
-              >
-                <GitFork size={18} />
-                Своя версия
-              </button>
-            </div>
-          )}
+            {/* Fork button справа */}
+            {collection.type === "curated" && (
+              <div className="shrink-0">
+                <button
+                  onClick={handleFork}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
+                  title={currentUserId ? 'Создать свою версию' : 'Войдите, чтобы скопировать'}
+                >
+                  <GitFork size={18} />
+                  Своя версия
+                </button>
+              </div>
+            )}
+          </div>
         </header>
 
         {/* Tier list for curated collections */}
         {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
-          <div className="brutal-card brutal-border p-6 mb-8">
-            <h2 className="text-lg font-bold text-(--ink-0) mb-4">
-              Рейтинг книг
-            </h2>
+          <div className="mb-8">
             <CuratedTierView
               tiers={collection.tiers as Record<string, import("@/types").Tier>}
               tierOrder={collection.tierOrder}

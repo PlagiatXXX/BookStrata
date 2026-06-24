@@ -90,6 +90,7 @@ export default function CommunityPage() {
 
           <MemoizedCollectionGrid
             activeCategory={activeCategory}
+            searchQuery={searchQuery}
           />
 
           <div className="flex items-center gap-4 my-12 reveal" data-reveal>

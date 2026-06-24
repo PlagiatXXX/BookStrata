@@ -5,9 +5,10 @@ import type { CollectionItem } from '@/data/mockData';
 
 interface CollectionGridProps {
   activeCategory: string;
+  searchQuery?: string;
 }
 
-export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => {
+export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: CollectionGridProps) => {
   const [collections, setCollections] = useState<CollectionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +39,16 @@ export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => 
     }
 
     let filtered = collections;
+
+    // Фильтрация по поисковому запросу
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((c) =>
+        c.title.toLowerCase().includes(q) ||
+        (c.excerpt || "").toLowerCase().includes(q) ||
+        (c.tags || []).some((tag) => tag.toLowerCase().includes(q))
+      );
+    }
 
     // Фильтрация по категории
     if (activeCategory && activeCategory !== "all") {
@@ -79,7 +90,7 @@ export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => 
     }
 
     return filtered;
-  }, [collections, activeCategory]);
+  }, [collections, activeCategory, searchQuery]);
 
   if (loading) {
     return (
