@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { getCollectionSeedData } from "./seed-collections.js";
 
 const prisma = new PrismaClient();
 
@@ -168,6 +169,24 @@ async function main() {
   // }
   //
   // console.log("News created: 3 articles")
+
+  // === Подборки (collections) ===
+  const collections = getCollectionSeedData()
+  const newSlugs = new Set(collections.map(c => c.slug))
+
+  // Удаляем коллекции, которых больше нет в сиде (переименованные/удалённые)
+  await prisma.collection.deleteMany({
+    where: { slug: { notIn: Array.from(newSlugs) } },
+  })
+
+  for (const data of collections) {
+    await prisma.collection.upsert({
+      where: { slug: data.slug },
+      update: data,
+      create: data,
+    })
+  }
+  console.log(`Collections seeded: ${collections.length}`)
 
   console.log("Seed done!")
 }
