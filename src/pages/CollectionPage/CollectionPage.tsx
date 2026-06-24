@@ -5,6 +5,7 @@ import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
+import { CuratedTierView } from "@/components/CuratedTierView";
 import { sileo } from "sileo";
 import { getCollectionBySlug } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/lib/collectionsApi";
@@ -153,6 +154,20 @@ return DOMPurify.sanitize(collection.content);
           </div>
         )}
 
+        {/* Tier list for curated collections */}
+        {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
+          <div className="brutal-card brutal-border p-6 mb-8">
+            <h2 className="text-lg font-bold text-(--ink-0) mb-4">
+              Рейтинг книг
+            </h2>
+            <CuratedTierView
+              tiers={collection.tiers as Record<string, import("@/types").Tier>}
+              tierOrder={collection.tierOrder}
+              books={collection.books as Record<string, import("@/types").Book>}
+            />
+          </div>
+        )}
+
         {/* Excerpt */}
         {collection.excerpt && (
           <div className="brutal-card brutal-border p-6 mb-8">
@@ -162,13 +177,15 @@ return DOMPurify.sanitize(collection.content);
           </div>
         )}
 
-        {/* Content */}
-        <div className="prose prose-invert max-w-none">
-          <div
-            className="collection-content text-(--ink-1) text-base leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-          />
-        </div>
+        {/* Content — only for literary collections */}
+        {collection.type === "literary" && sanitizedContent && (
+          <div className="prose prose-invert max-w-none">
+            <div
+              className="collection-content text-(--ink-1) text-base leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+            />
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t border-(--line-soft)">

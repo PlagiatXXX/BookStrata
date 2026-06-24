@@ -13,7 +13,7 @@ export interface TemplateCardProps {
 
 const TemplateCard = memo(({ template, onEdit, onDelete, viewMode = 'grid' }: TemplateCardProps) => {
   const isList = viewMode === 'list';
-  const imageUrl = template.previewImageUrl || '/images/templates/placeholder.webp';
+  const imageUrl = template.previewImageUrl || '/images/books/placeholder.svg';
   
   return (
     <div className={`brutal-card p-4 flex ${isList ? 'flex-row items-center justify-between' : 'flex-col gap-3'}`}>
