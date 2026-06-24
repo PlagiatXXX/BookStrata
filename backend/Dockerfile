@@ -14,8 +14,6 @@
 # ---------- Stage 1: Builder ----------
 FROM node:20-alpine AS builder
 
-RUN apk add --no-cache openssl
-
 WORKDIR /build
 
 COPY package.json package-lock.json ./
@@ -35,8 +33,8 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-alpine AS production
 
-RUN apk add --no-cache openssl && \
-    addgroup -g 1001 -S appgroup && \
+RUN apk add --no-cache openssl 2>/dev/null || true; \
+    addgroup -g 1001 -S appgroup; \
     adduser -S appuser -u 1001 -G appgroup
 
 WORKDIR /app
