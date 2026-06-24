@@ -51,6 +51,59 @@
   margin-top: 0.25rem;
 }
 
+/* Sub-tabs */
+.admin-collections-subtabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  margin-top: -0.25rem;
+}
+
+.admin-collections-subtab {
+  padding: 0.375rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.25rem;
+  color: var(--ink-1);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-collections-subtab:hover {
+  border-color: var(--ink-0);
+  color: var(--ink-0);
+}
+
+.admin-collections-subtab.active {
+  background: var(--accent-main);
+  border-color: var(--accent-main);
+  color: var(--bg-0);
+}
+
+/* Type badge */
+.admin-collections-type-badge {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.admin-collections-type-badge.curated {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+
+.admin-collections-type-badge.literary {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
 .admin-collections-create-btn {
   display: flex;
   align-items: center;
@@ -375,6 +428,29 @@
   cursor: not-allowed;
 }
 
+.admin-collections-btn-upload {
+  padding: 0.75rem 1rem;
+  background: var(--accent-main);
+  border: none;
+  border-radius: 0.375rem;
+  color: var(--bg-0);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: 2.75rem;
+}
+
+.admin-collections-btn-upload:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.admin-collections-btn-upload:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .admin-collections-page {
@@ -407,5 +483,326 @@
 
   .admin-collections-modal {
     max-width: 100%;
+  }
+}
+
+/* ===== Curated Collection Editor ===== */
+.curated-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.curated-editor-section {
+  border: 1px solid var(--line-soft);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: var(--bg-1);
+}
+
+.curated-editor-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.curated-editor-section-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-0);
+}
+
+.curated-editor-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--accent-main);
+  color: var(--bg-0);
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.curated-editor-add-btn:hover {
+  filter: brightness(1.1);
+}
+
+.curated-editor-empty {
+  color: var(--ink-1);
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+  padding: 1rem;
+}
+
+.curated-editor-tiers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.curated-editor-tier-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-0);
+  border: 1px solid var(--line-soft);
+  border-radius: 0.375rem;
+}
+
+.curated-editor-tier-index {
+  width: 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-1);
+}
+
+.curated-editor-input {
+  flex: 1;
+  padding: 0.5rem 0.625rem;
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 0.25rem;
+  color: var(--ink-0);
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: all 0.2s;
+  min-width: 0;
+}
+
+.curated-editor-input:focus {
+  outline: none;
+  border-color: var(--accent-main);
+}
+
+.curated-editor-color-picker {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.curated-editor-color-btn {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.curated-editor-color-btn:hover {
+  transform: scale(1.2);
+}
+
+.curated-editor-color-btn.active {
+  border-color: var(--ink-0);
+  box-shadow: 0 0 0 2px var(--bg-0);
+}
+
+.curated-editor-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  color: var(--ink-1);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.curated-editor-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* Tier groups (books) */
+.curated-editor-tier-group {
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.curated-editor-tier-label {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--bg-0);
+  border-left: 3px solid var(--accent-main);
+  color: var(--ink-0);
+}
+
+.curated-editor-tier-label.unranked {
+  border-left-color: var(--ink-1);
+  color: var(--ink-1);
+}
+
+/* Book row */
+.curated-editor-book-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--line-soft);
+  background: var(--bg-0);
+}
+
+.curated-editor-book-row.new {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.curated-editor-book-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.curated-editor-select {
+  padding: 0.5rem 0.625rem;
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 0.25rem;
+  color: var(--ink-0);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.curated-editor-select:focus {
+  outline: none;
+  border-color: var(--accent-main);
+}
+
+.curated-editor-book-row-main {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.curated-editor-book-row-meta {
+  display: flex;
+  gap: 0.375rem;
+  align-items: center;
+}
+
+.curated-editor-book-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.curated-editor-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  color: var(--ink-1);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.curated-editor-edit-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+
+.curated-editor-book-cover-preview {
+  width: 3rem;
+  height: 4.5rem;
+  flex-shrink: 0;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.curated-editor-book-cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.curated-edit-cover-preview {
+  margin-top: 0.5rem;
+  width: 5rem;
+  height: 7.5rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.curated-edit-cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.curated-edit-modal {
+  max-width: 600px;
+}
+
+/* Type selector */
+.curated-editor-type-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.curated-editor-type-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: var(--bg-1);
+  border: 2px solid var(--line-soft);
+  border-radius: 0.5rem;
+  color: var(--ink-1);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.curated-editor-type-btn:hover {
+  border-color: var(--ink-1);
+  color: var(--ink-0);
+}
+
+.curated-editor-type-btn.active {
+  border-color: var(--accent-main);
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent-main);
+}
+
+@media (max-width: 768px) {
+  .curated-editor-tier-row {
+    flex-wrap: wrap;
+  }
+
+  .curated-editor-color-picker {
+    flex-wrap: wrap;
+  }
+
+  .curated-editor-book-fields {
+    flex-direction: column;
   }
 }

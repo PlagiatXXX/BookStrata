@@ -4,6 +4,12 @@ import { COLLECTIONS } from "../../data/mockData";
 import { proxyImageUrl } from "@/utils/imageProxy";
 
 export const CollectionsSection = memo(() => {
+  const literaryCollections = COLLECTIONS.filter(
+    (c) => c.isPublished && c.type === "literary"
+  );
+
+  if (literaryCollections.length === 0) return null;
+
   return (
     <section className="mt-20 brutal-card brutal-border p-8 reveal" data-reveal>
       <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
@@ -13,18 +19,16 @@ export const CollectionsSection = memo(() => {
           </h2>
           <p className="text-(--ink-1) mt-1">Отобрано модераторами</p>
         </div>
-        <button className="brutal-cta px-5 py-2 text-xs font-semibold uppercase tracking-widest cursor-not-allowed opacity-60">
-          Подписаться
-        </button>
       </div>
 
       <div className="community-rule mb-6" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {COLLECTIONS.filter((c) => c.isPublished).map((collection) => (
-          <div
+        {literaryCollections.map((collection) => (
+          <Link
             key={collection.id}
-            className="brutal-card brutal-border p-6 hover-lift"
+            to={`/collections/${collection.slug}`}
+            className="brutal-card brutal-border p-6 hover-lift block cursor-pointer no-underline"
           >
             {collection.bookCovers && collection.bookCovers.length > 0 ? (
               <div className="flex gap-1 mb-4">
@@ -55,13 +59,10 @@ export const CollectionsSection = memo(() => {
             <h4 className="community-heading text-xl font-bold leading-tight mb-3">
               {collection.title}
             </h4>
-            <Link
-              to={`/collections/${collection.id}`}
-              className="text-(--ink-0) text-xs font-semibold uppercase tracking-[0.12em] border-b border-(--line-soft) hover:border-(--line-strong) cursor-pointer"
-            >
-              Открыть
-            </Link>
-          </div>
+            <p className="text-(--ink-1) text-sm leading-relaxed line-clamp-3">
+              {collection.excerpt}
+            </p>
+          </Link>
         ))}
       </div>
     </section>

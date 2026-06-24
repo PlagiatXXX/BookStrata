@@ -161,6 +161,42 @@ async function addPublicTierListRoutes() {
   }
 }
 
+/**
+ * Пытается получить список опубликованных коллекций с бэкенда.
+ * Если бэкенд доступен — добавляет их URL в ROUTES для prerender'а.
+ */
+async function addPublicCollectionRoutes() {
+  try {
+    log(`📡 Fetching public collections from ${BACKEND_URL}/api/collections…`);
+    const res = await fetch(`${BACKEND_URL}/api/collections?pageSize=50`);
+    if (!res.ok) {
+      log(`⚠️  API responded with ${res.status}, skipping collection prerender`);
+      return;
+    }
+    const body = await res.json();
+    const items = body.data || [];
+    if (items.length === 0) {
+      log("⚠️  No published collections found, skipping");
+      return;
+    }
+    for (const item of items) {
+      const slug = item.slug;
+      if (!slug) {
+        log(`  ⚠️  Collection "${item.title}" has no slug, skipping`);
+        continue;
+      }
+      const path = `/collections/${slug}`;
+      ROUTES.push({ path, name: `Подборка: ${item.title}` });
+      log(`  → ${path} (${item.title})`);
+    }
+    log(`✅ Added ${items.filter(i => i.slug).length} collections to prerender`);
+    backendAvailable = true;
+  } catch (err) {
+    log(`⚠️  Cannot reach backend for collections (${BACKEND_URL}): ${err.message}`);
+    log("⚠️  Collection prerender skipped (will work on server during deploy)");
+  }
+}
+
 const PORT = 4173;
 const BASE = `http://localhost:${PORT}`;
 
@@ -268,8 +304,9 @@ async function prerender() {
       return;
     }
 
-    // Получаем публичные тир-листы для prerender'а (если бэкенд доступен)
+    // Получаем публичные тир-листы и коллекции для prerender'а (если бэкенд доступен)
     await addPublicTierListRoutes();
+    await addPublicCollectionRoutes();
 
     for (const route of ROUTES) {
       log(`  → ${route.path} (${route.name})`);

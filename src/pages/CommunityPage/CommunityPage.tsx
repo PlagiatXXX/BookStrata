@@ -1,32 +1,27 @@
-import { useEffect, useState, useCallback, memo } from "react";
+import { useEffect, useState, memo } from "react";
 import { useLocation } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
-import { TemplateGrid } from "@/components/CommunityComponents/TemplateGrid";
+import { CollectionGrid } from "@/components/CommunityComponents/CollectionGrid";
 import { HeroSection } from "@/components/CommunityComponents/HeroSection";
 import { NewsSection } from "@/components/CommunityComponents/NewsSection";
 import { ExternalNewsSection } from "@/components/CommunityComponents/ExternalNewsSection";
 import { CollectionsSection } from "@/components/CommunityComponents/CollectionsSection";
-import { TemplatePreviewModal } from "@/components/CommunityComponents/TemplatePreviewModal";
-import { type TemplateItem } from "../../data/mockData";
 import "./CommunityPage.css";
 
 // Мемоизируем компоненты для предотвращения лишних ререндеров
 const MemoizedHeroSection = memo(HeroSection);
 const MemoizedCategoryTabs = memo(CategoryTabs);
-const MemoizedTemplateGrid = memo(TemplateGrid);
+const MemoizedCollectionGrid = memo(CollectionGrid);
 const MemoizedNewsSection = memo(NewsSection);
 const MemoizedExternalNewsSection = memo(ExternalNewsSection);
 const MemoizedCollectionsSection = memo(CollectionsSection);
 
 export default function CommunityPage() {
   const location = useLocation();
-  const [activeCategory, setActiveCategory] = useState("actual");
+  const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [previewTemplate, setPreviewTemplate] = useState<TemplateItem | null>(
-    null,
-  );
 
   // Прокрутка к якорю при переходе с других страниц
   useEffect(() => {
@@ -64,14 +59,6 @@ export default function CommunityPage() {
     return () => observer.disconnect();
   }, [activeCategory, searchQuery]);
 
-  const handlePreview = useCallback((template: TemplateItem) => {
-    setPreviewTemplate(template);
-  }, []);
-
-  const handleClosePreview = useCallback(() => {
-    setPreviewTemplate(null);
-  }, []);
-
   return (
     <DashboardLayout
       showTemplatesNav={true}
@@ -97,17 +84,12 @@ export default function CommunityPage() {
           >
             <h2 className="community-heading text-2xl md:text-3xl font-black tracking-tight flex items-center gap-2">
               <TrendingUp className="text-(--accent-main)" size={28} />
-              Популярное на этой неделе
+              Подборки BookStrata
             </h2>
-            <button className="text-(--ink-0) text-xs font-semibold uppercase tracking-[0.12em] border-b border-(--line-soft) hover:border-(--line-strong) cursor-pointer">
-              Смотреть все
-            </button>
           </div>
 
-          <MemoizedTemplateGrid
+          <MemoizedCollectionGrid
             activeCategory={activeCategory}
-            searchQuery={searchQuery}
-            onPreview={handlePreview}
           />
 
           <div className="flex items-center gap-4 my-12 reveal" data-reveal>
@@ -125,13 +107,6 @@ export default function CommunityPage() {
           <MemoizedCollectionsSection />
         </main>
       </div>
-
-      {/* Модалка предпросмотра шаблона */}
-      <TemplatePreviewModal
-        template={previewTemplate!}
-        isOpen={!!previewTemplate}
-        onClose={handleClosePreview}
-      />
     </DashboardLayout>
   );
 }

@@ -18,6 +18,7 @@ export interface EditorHeaderProps {
   hideFork?: boolean;
   coverImageUrl?: string | null;
   booksCount?: number;
+  onFork?: () => Promise<void>;
 }
 
 export const EditorHeader = ({
@@ -32,6 +33,7 @@ export const EditorHeader = ({
   hideFork = false,
   coverImageUrl,
   booksCount = 0,
+  onFork,
 }: EditorHeaderProps) => {
   const navigate = useNavigate();
   const [isForking, setIsForking] = useState(false);
@@ -40,7 +42,7 @@ export const EditorHeader = ({
     sileo.action({
       title: 'Создайте свою версию',
       description: 'Зарегистрируйтесь, чтобы копировать любые тир-листы и редактировать их под себя.',
-      duration: 6000,
+      duration: 10000,
       button: {
         title: 'Создать аккаунт',
         onClick: () => navigate('/auth?mode=register'),
@@ -54,14 +56,18 @@ export const EditorHeader = ({
       showAuthPrompt();
       return;
     }
+    setIsForking(true);
     try {
-      setIsForking(true);
-      const newTierList = await forkTierList(tierListId);
-      sileo.success({
-        title: 'Версия создана',
-        description: 'Теперь вы можете редактировать этот список под себя',
-      });
-      navigate(`/tier-lists/${newTierList.id}`);
+      if (onFork) {
+        await onFork();
+      } else {
+        const newTierList = await forkTierList(tierListId);
+        sileo.success({
+          title: 'Версия создана',
+          description: 'Теперь вы можете редактировать этот список под себя',
+        });
+        navigate(`/tier-lists/${newTierList.id}`);
+      }
     } catch (error) {
       console.error(error);
       sileo.error({

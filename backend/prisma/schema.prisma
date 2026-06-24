@@ -304,7 +304,31 @@ createdAt DateTime @default(now()) @map("created_at")
  
 @@index([token])
 }
- 
+
+// Коллекции (подборки BookStrata — тир-листы и статьи)
+model Collection {
+  id              Int      @id @default(autoincrement())
+  slug            String   @unique
+  title           String
+  type            String   // "curated" | "literary"
+  content         String?  // HTML for literary
+  excerpt         String?
+  coverImageUrl   String   @default("") @map("cover_image_url")
+  bookCovers      String[] @map("book_covers")
+  tags            String[]
+  isPublished     Boolean  @default(false) @map("is_published")
+  order           Int      @default(0)
+  // Curated type data (JSON)
+  tiers           Json?    // Record<string, Tier>
+  tierOrder       String[] @map("tier_order")
+  books           Json?    // Record<string, Book>
+  unrankedBookIds String[] @map("unranked_book_ids")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("collections")
+}
+
 // Достижения
 model Achievement {
 id          String   @id // Код достижения (например, 'first_tier_list')

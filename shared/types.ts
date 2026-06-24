@@ -21,6 +21,7 @@ export interface Book {
   coverImageUrl: string;
   description: string | null;
   thoughts?: string | null;
+  rating?: number;
   createdAt?: string;
   genre?: string | null;
   tags?: string[];

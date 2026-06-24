@@ -15,7 +15,10 @@
     "doctor": "npx -y react-doctor@latest . --verbose",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "prepare": "husky"
+    "prepare": "husky",
+    "fetch-covers": "node scripts/fetch-covers.mjs",
+    "fetch-covers:file": "node scripts/fetch-covers.mjs --file",
+    "fetch-covers:url": "node scripts/fetch-covers.mjs --url"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

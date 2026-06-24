@@ -1,51 +1,59 @@
-import { COLLECTIONS } from "@/data/mockData";
+import { apiClient } from "./api-client";
 import type { CollectionItem } from "@/data/mockData";
 
 export type { CollectionItem };
 export type CreateCollectionInput = Omit<
   CollectionItem,
-  "id" | "createdAt" | "updatedAt"
+  "slug" | "id" | "createdAt" | "updatedAt"
 >;
 export type UpdateCollectionInput = Partial<CreateCollectionInput>;
 
-// Получить все коллекции
+// Получить все опубликованные коллекции
 export async function getCollections(): Promise<CollectionItem[]> {
-  // Имитация задержки API
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  return COLLECTIONS.filter((c) => c.isPublished);
+  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections");
+  return res.data;
 }
 
 // Получить все коллекции для админки (включая черновики)
 export async function getAllCollectionsForAdmin(): Promise<CollectionItem[]> {
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  return COLLECTIONS;
+  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections/admin");
+  return res.data;
 }
 
-// Получить коллекцию по ID
+// Получить коллекцию по ID (для админки)
 export async function getCollectionById(
   id: number,
 ): Promise<CollectionItem | null> {
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  return COLLECTIONS.find((c) => c.id === id) || null;
+  try {
+    const res = await apiClient.get<CollectionItem>(`/collections/admin?id=${id}`);
+    return res;
+  } catch {
+    return null;
+  }
+}
+
+// Получить коллекцию по slug
+export async function getCollectionBySlug(
+  slug: string,
+): Promise<CollectionItem | null> {
+  try {
+    return await apiClient.get<CollectionItem>(`/collections/${slug}`);
+  } catch {
+    return null;
+  }
+}
+
+// Получить все опубликованные коллекции (для публичного листинга)
+export async function getPublishedCollections(): Promise<CollectionItem[]> {
+  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections");
+  return (res.data || []).sort((a, b) => a.order - b.order);
 }
 
 // Создать коллекцию
 export async function createCollection(
   input: CreateCollectionInput,
 ): Promise<CollectionItem> {
-  await new Promise((resolve) => setTimeout(resolve, 200));
-
-  const newCollection: CollectionItem = {
-    ...input,
-    id: Math.max(...COLLECTIONS.map((c) => c.id), 0) + 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  // В реальном приложении здесь был бы API-вызов
-  COLLECTIONS.push(newCollection);
-
-  return newCollection;
+  return apiClient.post<CollectionItem>("/collections", input);
 }
 
 // Обновить коллекцию
@@ -53,44 +61,37 @@ export async function updateCollection(
   id: number,
   input: UpdateCollectionInput,
 ): Promise<CollectionItem> {
-  await new Promise((resolve) => setTimeout(resolve, 200));
-
-  const index = COLLECTIONS.findIndex((c) => c.id === id);
-  if (index === -1) {
-    throw new Error("Коллекция не найдена");
-  }
-
-  const updated: CollectionItem = {
-    ...COLLECTIONS[index],
-    ...input,
-    updatedAt: new Date().toISOString(),
-  };
-
-  COLLECTIONS[index] = updated;
-
-  return updated;
+  return apiClient.put<CollectionItem>(`/collections/${id}`, input);
 }
 
 // Удалить коллекцию
 export async function deleteCollection(id: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 200));
-
-  const index = COLLECTIONS.findIndex((c) => c.id === id);
-  if (index === -1) {
-    throw new Error("Коллекция не найдена");
-  }
-
-  COLLECTIONS.splice(index, 1);
+  return apiClient.delete(`/collections/${id}`);
 }
 
 // Переключить статус публикации
 export async function toggleCollectionPublish(
   id: number,
 ): Promise<CollectionItem> {
-  const collection = COLLECTIONS.find((c) => c.id === id);
-  if (!collection) {
-    throw new Error("Коллекция не найдена");
-  }
+  return apiClient.patch<CollectionItem>(`/collections/${id}/toggle-publish`);
+}
 
-  return updateCollection(id, { isPublished: !collection.isPublished });
+// Загрузить обложку коллекции
+export async function uploadCollectionCover(
+  file: File,
+): Promise<{ coverImageUrl: string }> {
+  const base64 = await fileToBase64(file);
+  return apiClient.post<{ coverImageUrl: string }>(
+    "/collections/upload-cover",
+    { coverImageUrl: base64 },
+  );
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }

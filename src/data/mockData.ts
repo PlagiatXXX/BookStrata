@@ -2,13 +2,14 @@
 // Mock-данные для шаблонов, коллекций и новостей
 import {
   BookOpen,
-  Book,
+  Book as BookIcon,
   History,
   Landmark,
   Rocket,
   SearchCheck,
   TrendingUp,
 } from "lucide-react";
+import type { Book, Tier } from "@/types";
 import type { CreateTemplateData } from "@/types/templates";
 
 export type TemplateItem = {
@@ -36,26 +37,54 @@ export type NewsItem = {
 
 export type CollectionItem = {
   id: number;
+  slug: string;
   title: string;
-  content: string; // HTML-контент
-  excerpt: string; // Краткое описание
-  coverImageUrl: string; // Обложка коллекции
-  bookCovers: string[]; // Массив обложек книг (3-4 шт)
+  type: "curated" | "literary"; // curated = тир-лист, literary = HTML-статья
+  // Для curated (тир-лист):
+  tiers?: Record<string, Tier>;
+  tierOrder?: string[];
+  books?: Record<string, Book>;
+  unrankedBookIds?: string[];
+  // Для literary (статья):
+  content?: string; // HTML-контент
+  // Общие:
+  excerpt?: string;
+  coverImageUrl: string;
+  bookCovers?: string[]; // Массив обложек книг (3-4 шт), для превью
   tags: string[];
   isPublished: boolean;
-  order: number; // Порядок сортировки
+  order: number;
   createdAt: string;
   updatedAt: string;
 };
 
 export const CATEGORIES = [
-  { id: "actual", label: "Актуально", icon: TrendingUp },
-  { id: "fiction", label: "Художественная", icon: Book },
-  { id: "non-fiction", label: "Нон-фикшн", icon: History },
+  { id: "all", label: "Всё", icon: TrendingUp },
   { id: "fantasy", label: "Фэнтези", icon: BookOpen },
-  { id: "classics", label: "Классика", icon: Landmark },
-  { id: "sci-fi", label: "Sci-Fi", icon: Rocket },
   { id: "mystery", label: "Детективы", icon: SearchCheck },
+  { id: "sci-fi", label: "Sci-Fi", icon: Rocket },
+  { id: "classics", label: "Классика", icon: Landmark },
+  { id: "non-fiction", label: "Нон-фикшн", icon: History },
+  { id: "fiction", label: "Художественная", icon: BookIcon },
+  { id: "young-adult", label: "Young Adult", icon: BookIcon },
+  { id: "historical", label: "Исторические", icon: Landmark },
+  { id: "mystical", label: "Мистика", icon: SearchCheck },
+  { id: "contemporary", label: "Современная проза", icon: BookIcon },
+  { id: "cyberpunk", label: "Киберпанк", icon: Rocket },
+  { id: "horror", label: "Хоррор", icon: BookOpen },
+  { id: "romance", label: "Любовные романы", icon: BookIcon },
+  { id: "slavic-fantasy", label: "Славянское фэнтези", icon: BookOpen },
+  { id: "adventure", label: "Приключения", icon: BookIcon },
+  { id: "thriller", label: "Триллеры", icon: SearchCheck },
+  { id: "dystopia", label: "Антиутопии", icon: Rocket },
+  { id: "japanese", label: "Японская литература", icon: BookIcon },
+  { id: "russian-classics", label: "Русская классика", icon: Landmark },
+  { id: "foreign-prose", label: "Зарубежная проза", icon: BookIcon },
+  { id: "philosophical", label: "Философский роман", icon: History },
+  { id: "military", label: "Военная проза", icon: BookIcon },
+  { id: "magical-realism", label: "Магический реализм", icon: BookOpen },
+  { id: "urban-fantasy", label: "Городское фэнтези", icon: BookOpen },
+  { id: "myths", label: "Сказки и мифы", icon: Landmark },
 ];
 
 export const TEMPLATES: TemplateItem[] = [
@@ -1464,7 +1493,9 @@ export const TEMPLATES: TemplateItem[] = [
 export const COLLECTIONS: CollectionItem[] = [
   {
     id: 1,
+    slug: "nobel-laureates",
     title: "Лауреаты Нобелевской премии",
+    type: "literary",
     content: `<h2>Нобелевская премия по литературе</h2>
 <p>Нобелевская премия по литературе — одна из самых престижных наград в мире, вручающаяся ежегодно с <strong>1901 года</strong> за выдающиеся достижения в области литературы.</p>
 
@@ -1486,7 +1517,7 @@ export const COLLECTIONS: CollectionItem[] = [
 </ul>`,
     excerpt:
       "Полная история русских и зарубежных лауреатов Нобелевской премии по литературе с 1901 года.",
-    coverImageUrl: "/images/collections/nobel-prize.webp",
+    coverImageUrl: "/images/collections/literary/nobel-prize.webp",
     bookCovers: [
       "/images/books/bunin-medium.webp",
       "/images/books/pasternak-medium.webp",
@@ -1500,7 +1531,9 @@ export const COLLECTIONS: CollectionItem[] = [
   },
   {
     id: 2,
+    slug: "favorites-bookstrata",
     title: "Фавориты BookStrata",
+    type: "literary",
     content: `<h2>Выбор сообщества BookStrata</h2>
 <p>Эта подборка создана на основе голосов и рекомендаций нашего сообщества. Здесь собраны книги, которые получили наибольшее количество положительных отзывов и высоких оценок.</p>
 
@@ -1517,7 +1550,7 @@ export const COLLECTIONS: CollectionItem[] = [
 </ol>`,
     excerpt:
       "Книги, которые получили highest оценки от сообщества BookStrata в этом месяце.",
-    coverImageUrl: "/images/collections/2026-hero.webp",
+    coverImageUrl: "/images/collections/literary/2026-hero.webp",
     bookCovers: [
       "/images/books/shantaram.webp",
       "/images/books/shadow-wind.webp",
@@ -1531,7 +1564,9 @@ export const COLLECTIONS: CollectionItem[] = [
   },
   {
     id: 3,
+    slug: "historical-prose",
     title: "Историческая проза",
+    type: "literary",
     content: `<h2>Лучшие произведения в жанре исторической прозы</h2>
 <p>Историческая проза — это литературные произведения, в которых действие происходит в прошлом. Авторы тщательно воссоздают атмосферу эпохи, быт, нравы и исторические события.</p>
 
@@ -1553,7 +1588,7 @@ export const COLLECTIONS: CollectionItem[] = [
 <p>Исторические романы позволяют погрузиться в другую эпоху, понять мышление людей прошлого и увидеть параллели с современностью. Это не только развлечение, но и способ лучше понять историю через судьбы конкретных людей.</p>`,
     excerpt:
       "Погрузитесь в разные эпохи через лучшие произведения исторической прозы — от классики до современности.",
-    coverImageUrl: "/images/collections/prosa-hero.webp",
+    coverImageUrl: "/images/collections/literary/prosa-hero.webp",
     bookCovers: [
       "/images/books/prosa-medium.webp",
       "/images/books/prosa1-medium.webp",
@@ -1564,6 +1599,182 @@ export const COLLECTIONS: CollectionItem[] = [
     order: 3,
     createdAt: "2026-02-10T12:00:00Z",
     updatedAt: "2026-03-23T16:45:00Z",
+  },
+  // ===== Curated коллекции (тир-листы) =====
+  {
+    id: 4,
+    slug: "top-fantasy",
+    title: "Топ фэнтези",
+    type: "curated",
+    excerpt: "Лучшие книги в жанре фэнтези: от классики Толкина до современных бестселлеров.",
+    coverImageUrl: "/images/templates/fantasy.webp",
+    bookCovers: ["/images/books/vlastelin-kolets.webp", "/images/books/garri-potter-i-filosofskiy-kamen.webp", "/images/books/igra-prestolov.webp"],
+    tags: ["Фэнтези", "Эпическое фэнтези", "Магия", "Приключения"],
+    isPublished: true,
+    order: 10,
+    createdAt: "2026-04-01T10:00:00Z",
+    updatedAt: "2026-04-01T10:00:00Z",
+    tiers: {
+      s: { id: "s", title: "Шедевр", color: "#ef4444", bookIds: ["b1", "b2"] },
+      a: { id: "a", title: "Отлично", color: "#f97316", bookIds: ["b3", "b4"] },
+      b: { id: "b", title: "Хорошо", color: "#eab308", bookIds: ["b5"] },
+      c: { id: "c", title: "Средне", color: "#84cc16", bookIds: ["b6"] },
+    },
+    tierOrder: ["s", "a", "b", "c"],
+    books: {
+      b1: { id: "b1", title: "Властелин Колец", author: "Дж. Р. Р. Толкин", coverImageUrl: "/images/books/vlastelin-kolets.webp", description: "Эпическое фэнтези о хоббите Фродо, несущем Кольцо Всевластия в Роковую гору." },
+      b2: { id: "b2", title: "Гарри Поттер и философский камень", author: "Дж. К. Роулинг", coverImageUrl: "/images/books/garri-potter-i-filosofskiy-kamen.webp", description: "Первая книга о мальчике-волшебнике и его приключениях в Хогвартсе." },
+      b3: { id: "b3", title: "Игра престолов", author: "Джордж Р. Р. Мартин", coverImageUrl: "/images/books/igra-prestolov.webp", description: "Политические интриги и войны в вымышленном мире Вестероса." },
+      b4: { id: "b4", title: "Хроники Нарнии", author: "К. С. Льюис", coverImageUrl: "/images/books/narnia.webp", description: "Дети попадают в волшебную страну через платяной шкаф." },
+      b5: { id: "b5", title: "Имя ветра", author: "Патрик Ротфусс", coverImageUrl: "/images/books/imya-vetra.webp", description: "История Квоута — мага, вора и музыканта." },
+      b6: { id: "b6", title: "Ведьмак", author: "Анджей Сапковский", coverImageUrl: "/images/books/vedmak.webp", description: "Охотник на чудовищ в мире славянских легенд." },
+    },
+    unrankedBookIds: [],
+  },
+  {
+    id: 5,
+    slug: "best-mystery",
+    title: "Лучшие детективы",
+    type: "curated",
+    excerpt: "Захватывающие детективы и триллеры, которые держат в напряжении до последней страницы.",
+    coverImageUrl: "/images/templates/mystery.webp",
+    bookCovers: ["/images/books/ubit-peresmeshnika.webp", "/images/books/prestuplenie-i-nakazanie.webp", "/images/books/shadow-wind.webp"],
+    tags: ["Детективы", "Триллер", "Мистика", "Криминал"],
+    isPublished: true,
+    order: 11,
+    createdAt: "2026-04-02T10:00:00Z",
+    updatedAt: "2026-04-02T10:00:00Z",
+    tiers: {
+      s: { id: "s", title: "Шедевр", color: "#ef4444", bookIds: ["d1", "d2"] },
+      a: { id: "a", title: "Отлично", color: "#f97316", bookIds: ["d3", "d4"] },
+      b: { id: "b", title: "Хорошо", color: "#eab308", bookIds: ["d5", "d6"] },
+    },
+    tierOrder: ["s", "a", "b"],
+    books: {
+      d1: { id: "d1", title: "Преступление и наказание", author: "Фёдор Достоевский", coverImageUrl: "/images/books/prestuplenie-i-nakazanie.webp", description: "Психологический детектив о студенте Раскольникове." },
+      d2: { id: "d2", title: "Убить пересмешника", author: "Харпер Ли", coverImageUrl: "/images/books/ubit-peresmeshnika.webp", description: "Роман о расовой несправедливости глазами ребёнка." },
+      d3: { id: "d3", title: "Тень ветра", author: "Карлос Руис Сафон", coverImageUrl: "/images/books/shadow-wind.webp", description: "Мистический триллер в послевоенной Барселоне." },
+      d4: { id: "d4", title: "Имя розы", author: "Умберто Эко", coverImageUrl: "/images/books/imya-rozy.webp", description: "Философский детектив в средневековом монастыре." },
+      d5: { id: "d5", title: "Молчание ягнят", author: "Томас Харрис", coverImageUrl: "/images/books/molchanie-yagnyat.webp", description: "Агент ФБР охотится на серийного убийцу." },
+      d6: { id: "d6", title: "Десять негритят", author: "Агата Кристи", coverImageUrl: "/images/books/desyat-negrityat.webp", description: "Десять человек на острове — и ни одного живого." },
+    },
+    unrankedBookIds: [],
+  },
+  {
+    id: 6,
+    slug: "sci-fi",
+    title: "Научная фантастика",
+    type: "curated",
+    excerpt: "Космос, технологии, будущее — лучшие книги научной фантастики всех времён.",
+    coverImageUrl: "/images/templates/CosmOpera.webp",
+    bookCovers: ["/images/books/dyuna.webp", "/images/books/1984.webp", "/images/books/osnovanie.webp"],
+    tags: ["Sci-Fi", "Фантастика", "Космос", "Технологии"],
+    isPublished: true,
+    order: 12,
+    createdAt: "2026-04-03T10:00:00Z",
+    updatedAt: "2026-04-03T10:00:00Z",
+    tiers: {
+      s: { id: "s", title: "Шедевр", color: "#ef4444", bookIds: ["f1", "f2"] },
+      a: { id: "a", title: "Отлично", color: "#f97316", bookIds: ["f3", "f4"] },
+      b: { id: "b", title: "Хорошо", color: "#eab308", bookIds: ["f5"] },
+      c: { id: "c", title: "Средне", color: "#84cc16", bookIds: ["f6"] },
+    },
+    tierOrder: ["s", "a", "b", "c"],
+    books: {
+      f1: { id: "f1", title: "Дюна", author: "Фрэнк Герберт", coverImageUrl: "/images/books/dyuna.webp", description: "Эпическая сага о пустынной планете Арракис." },
+      f2: { id: "f2", title: "1984", author: "Джордж Оруэлл", coverImageUrl: "/images/books/1984.webp", description: "Антиутопия о тоталитарном обществе под контролем Большого Брата." },
+      f3: { id: "f3", title: "Основание", author: "Айзек Азимов", coverImageUrl: "/images/books/osnovanie.webp", description: "Грандиозная сага о падении Галактической Империи." },
+      f4: { id: "f4", title: "О дивный новый мир", author: "Олдос Хаксли", coverImageUrl: "/images/books/o-divnyy-novyy-mir.webp", description: "Антиутопия о мире, где людей выращивают в пробирках." },
+      f5: { id: "f5", title: "Марсианин", author: "Энди Вейер", coverImageUrl: "/images/books/marsianin.webp", description: "Астронавт выживает на Марсе в одиночку." },
+      f6: { id: "f6", title: "Солярис", author: "Станислав Лем", coverImageUrl: "/images/books/solyaris.webp", description: "Психологическая фантастика о разумном океане." },
+    },
+    unrankedBookIds: [],
+  },
+  {
+    id: 7,
+    slug: "classics-ever",
+    title: "Классика навсегда",
+    type: "curated",
+    excerpt: "Великие произведения мировой литературы, которые должен прочитать каждый.",
+    coverImageUrl: "/images/templates/Classics.webp",
+    bookCovers: ["/images/books/velikiy-getsbi.webp", "/images/books/nad-propastyu-vo-rzhi.webp", "/images/books/povelitel-mukh.webp"],
+    tags: ["Классика", "Мировая литература", "Обязательное чтение"],
+    isPublished: true,
+    order: 13,
+    createdAt: "2026-04-04T10:00:00Z",
+    updatedAt: "2026-04-04T10:00:00Z",
+    tiers: {
+      s: { id: "s", title: "Шедевр", color: "#ef4444", bookIds: ["c1", "c2"] },
+      a: { id: "a", title: "Отлично", color: "#f97316", bookIds: ["c3", "c4"] },
+      b: { id: "b", title: "Хорошо", color: "#eab308", bookIds: ["c5", "c6"] },
+    },
+    tierOrder: ["s", "a", "b"],
+    books: {
+      c1: { id: "c1", title: "Великий Гэтсби", author: "Ф. Скотт Фицджеральд", coverImageUrl: "/images/books/velikiy-getsbi.webp", description: "Трагическая история любви и американской мечты." },
+      c2: { id: "c2", title: "Над пропастью во ржи", author: "Дж. Д. Сэлинджер", coverImageUrl: "/images/books/nad-propastyu-vo-rzhi.webp", description: "История подростка Холдена Колфилда." },
+      c3: { id: "c3", title: "Повелитель мух", author: "Уильям Голдинг", coverImageUrl: "/images/books/povelitel-mukh.webp", description: "Группа детей создаёт своё общество на необитаемом острове." },
+      c4: { id: "c4", title: "Гордость и предубеждение", author: "Джейн Остин", coverImageUrl: "/images/books/gordost-i-predubezhdenie.webp", description: "Роман о любви и предрассудках в английской провинции." },
+      c5: { id: "c5", title: "Мастер и Маргарита", author: "Михаил Булгаков", coverImageUrl: "/images/books/master-i-margarita.webp", description: "Мистический роман о дьяволе в Москве." },
+      c6: { id: "c6", title: "Анна Каренина", author: "Лев Толстой", coverImageUrl: "/images/books/anna-karenina.webp", description: "История любви на фоне социальных перемен XIX века." },
+    },
+    unrankedBookIds: [],
+  },
+  {
+    id: 8,
+    slug: "young-adult",
+    title: "Young Adult",
+    type: "curated",
+    excerpt: "Лучшие книги для молодёжи: антиутопии, фэнтези и романы взросления.",
+    coverImageUrl: "/images/templates/2026.webp",
+    bookCovers: ["/images/books/garri-potter-i-filosofskiy-kamen.webp", "/images/books/nad-propastyu-vo-rzhi.webp", "/images/books/povelitel-mukh.webp"],
+    tags: ["Young Adult", "Молодёжная литература", "Подростковая"],
+    isPublished: true,
+    order: 14,
+    createdAt: "2026-04-05T10:00:00Z",
+    updatedAt: "2026-04-05T10:00:00Z",
+    tiers: {
+      s: { id: "s", title: "Must read", color: "#ef4444", bookIds: ["y1", "y2"] },
+      a: { id: "a", title: "Отлично", color: "#f97316", bookIds: ["y3", "y4"] },
+      b: { id: "b", title: "Интересно", color: "#eab308", bookIds: ["y5"] },
+    },
+    tierOrder: ["s", "a", "b"],
+    books: {
+      y1: { id: "y1", title: "Гарри Поттер и философский камень", author: "Дж. К. Роулинг", coverImageUrl: "/images/books/garri-potter-i-filosofskiy-kamen.webp", description: "Мальчик-волшебник начинает свой путь в Хогвартсе." },
+      y2: { id: "y2", title: "Убить пересмешника", author: "Харпер Ли", coverImageUrl: "/images/books/ubit-peresmeshnika.webp", description: "Классика о взрослении и справедливости." },
+      y3: { id: "y3", title: "Голодные игры", author: "Сьюзен Коллинз", coverImageUrl: "/images/books/golodnye-igry.webp", description: "Антиутопия о смертельных играх на выживание." },
+      y4: { id: "y4", title: "Виноваты звёзды", author: "Джон Грин", coverImageUrl: "/images/books/vinovaty-zvyozdy.webp", description: "Трогательная история любви двух подростков с раком." },
+      y5: { id: "y5", title: "Бегущий за ветром", author: "Халед Хоссейни", coverImageUrl: "/images/books/beguschiy-za-vetrom.webp", description: "Трогательная история дружбы в Афганистане." },
+    },
+    unrankedBookIds: [],
+  },
+  {
+    id: 9,
+    slug: "non-fiction-top",
+    title: "Лучший нон-фикшн",
+    type: "curated",
+    excerpt: "Книги, которые меняют жизнь: от привычек до истории человечества.",
+    coverImageUrl: "/images/collections/literary/2026-hero.webp",
+    bookCovers: ["/images/books/atomnye-privychki.webp", "/images/books/sapiens-kratkaya-istoriya-chelovechestva.webp", "/images/books/dumay-medlenno-reshay-bystro.webp"],
+    tags: ["Нон-фикшн", "Саморазвитие", "Наука", "История"],
+    isPublished: true,
+    order: 15,
+    createdAt: "2026-04-06T10:00:00Z",
+    updatedAt: "2026-04-06T10:00:00Z",
+    tiers: {
+      s: { id: "s", title: "Обязательно", color: "#ef4444", bookIds: ["n1", "n2"] },
+      a: { id: "a", title: "Рекомендую", color: "#f97316", bookIds: ["n3", "n4"] },
+      b: { id: "b", title: "Полезно", color: "#eab308", bookIds: ["n5", "n6"] },
+    },
+    tierOrder: ["s", "a", "b"],
+    books: {
+      n1: { id: "n1", title: "Атомные привычки", author: "Джеймс Клир", coverImageUrl: "/images/books/atomnye-privychki.webp", description: "Практическое руководство по формированию полезных привычек." },
+      n2: { id: "n2", title: "Sapiens. Краткая история человечества", author: "Юваль Ной Харари", coverImageUrl: "/images/books/sapiens-kratkaya-istoriya-chelovechestva.webp", description: "От каменного века до наших дней." },
+      n3: { id: "n3", title: "Думай медленно... решай быстро", author: "Даниэль Канеман", coverImageUrl: "/images/books/dumay-medlenno-reshay-bystro.webp", description: "Две системы мышления от нобелевского лауреата." },
+      n4: { id: "n4", title: "Краткая история времени", author: "Стивен Хокинг", coverImageUrl: "/images/books/kratkaya-istoriya-vremeni.webp", description: "От Большого взрыва до чёрных дыр." },
+      n5: { id: "n5", title: "Богатый папа, бедный папа", author: "Роберт Кийосаки", coverImageUrl: "/images/books/bogatyy-papa-bednyy-papa.webp", description: "Финансовая грамотность и мышление богатого человека." },
+      n6: { id: "n6", title: "7 навыков высокоэффективных людей", author: "Стивен Кови", coverImageUrl: "/images/books/7-navykov-vysokoeffektivnykh-lyudey.webp", description: "Принципы личной эффективности." },
+    },
+    unrankedBookIds: [],
   },
 ];
 

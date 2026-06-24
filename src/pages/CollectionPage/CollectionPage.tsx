@@ -6,23 +6,23 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { sileo } from "sileo";
-import { getCollectionById } from "@/lib/collectionsApi";
+import { getCollectionBySlug } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/lib/collectionsApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import "./CollectionPage.css";
 
 export function CollectionPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [collection, setCollection] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadCollection = async () => {
-      if (!id) return;
+      if (!slug) return;
 
       try {
-        const data = await getCollectionById(parseInt(id, 10));
+        const data = await getCollectionBySlug(slug);
         if (!data) {
           sileo.error({
             title: "Коллекция не найдена",
@@ -47,7 +47,7 @@ export function CollectionPage() {
     };
 
     loadCollection();
-  }, [id, navigate]);
+  }, [slug, navigate]);
 
   const sanitizedContent = useMemo(() => {
 if (!collection?.content) return "";
@@ -87,8 +87,8 @@ return DOMPurify.sanitize(collection.content);
         title={collection.title}
         description={collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
         image={proxyImageUrl(collection.coverImageUrl) || undefined}
-        url={`/collections/${id}`}
-        breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${id}` }]}
+        url={`/collections/${slug}`}
+        breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${slug}` }]}
       />
       <DashboardLayout
       showTemplatesNav={false}

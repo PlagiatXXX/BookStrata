@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Plus,
@@ -17,15 +17,22 @@ import {
   updateCollection,
   deleteCollection,
   toggleCollectionPublish,
+  uploadCollectionCover,
   type CollectionItem,
   type CreateCollectionInput,
   type UpdateCollectionInput,
 } from "@/lib/collectionsApi";
 import { useAuth } from "@/hooks/useAuthContext";
 import { WysiwygEditor } from "./components/WysiwygEditor";
+import {
+  CuratedCollectionEditor,
+  type CuratedTier,
+  type CuratedBook,
+} from "./components/CuratedCollectionEditor";
 import "./AdminCollectionsPage.css";
 
 interface CollectionFormData {
+  type: "curated" | "literary";
   title: string;
   content: string;
   excerpt: string;
@@ -37,6 +44,7 @@ interface CollectionFormData {
 }
 
 const emptyFormData: CollectionFormData = {
+  type: "literary",
   title: "",
   content: "",
   excerpt: "",
@@ -59,6 +67,20 @@ export function AdminCollectionsPage() {
   const [formData, setFormData] = useState<CollectionFormData>(emptyFormData);
   const [formLoading, setFormLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; title: string } | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Состояние для curated-редактора
+  const [curatedTiers, setCuratedTiers] = useState<CuratedTier[]>([]);
+  const [curatedBooks, setCuratedBooks] = useState<CuratedBook[]>([]);
+
+  // Фильтр по типу: "all" | "curated" | "literary"
+  const [typeFilter, setTypeFilter] = useState<"all" | "curated" | "literary">("all");
+
+  const filteredCollections = useMemo(() => {
+    if (typeFilter === "all") return collections;
+    return collections.filter((c) => c.type === typeFilter);
+  }, [collections, typeFilter]);
 
   // Проверка на администратора
   const isAdmin = user?.role === "admin";
@@ -84,9 +106,95 @@ export function AdminCollectionsPage() {
     }
   };
 
-  const handleOpenCreate = () => {
+  const handleOpenCreate = (presetType?: "curated" | "literary") => {
     setEditingCollection(null);
-    setFormData(emptyFormData);
+    setFormData({ ...emptyFormData, type: presetType || "literary" });
+    setCuratedTiers(
+      presetType === "curated" && !editingCollection
+        ? [
+            { id: "tier_s", title: "S", color: "#ef4444" },
+            { id: "tier_a", title: "A", color: "#f97316" },
+            { id: "tier_b", title: "B", color: "#eab308" },
+            { id: "tier_c", title: "C", color: "#84cc16" },
+          ]
+        : [],
+    );
+    setCuratedBooks([]);
+    setShowModal(true);
+  };
+
+  // Конвертировать сохранённую коллекцию в формат редактора
+  const handleOpenEdit = (collection: CollectionItem) => {
+    setEditingCollection(collection);
+    setFormData({
+      type: collection.type,
+      title: collection.title,
+      content: collection.content || "",
+      excerpt: collection.excerpt || "",
+      coverImageUrl: collection.coverImageUrl || "",
+      bookCovers: collection.bookCovers?.length ? collection.bookCovers : ["", "", ""],
+      tags: collection.tags.join(", "),
+      isPublished: collection.isPublished,
+      order: collection.order,
+    });
+
+    if (collection.type === "curated" && collection.tiers && collection.tierOrder) {
+      // Конвертируем сохранённые тиры
+      const tiers: CuratedTier[] = collection.tierOrder
+        .map((id) => collection.tiers?.[id])
+        .filter(Boolean)
+        .map((t) => ({
+          id: t!.id,
+          title: t!.title,
+          color: t!.color,
+        }));
+      setCuratedTiers(tiers);
+
+      // Конвертируем книги
+      const books: CuratedBook[] = [];
+      const allBooks = collection.books || {};
+
+      // Книги в тирах
+      collection.tierOrder.forEach((tierId) => {
+        const tier = collection.tiers?.[tierId];
+        if (tier) {
+          tier.bookIds.forEach((bookId) => {
+            const book = allBooks[bookId];
+            if (book) {
+              books.push({
+                id: bookId,
+                title: book.title,
+                author: book.author,
+                coverImageUrl: book.coverImageUrl,
+                description: book.description,
+                tierId: tierId,
+              });
+            }
+          });
+        }
+      });
+
+      // Unranked книги
+      (collection.unrankedBookIds || []).forEach((bookId) => {
+        const book = allBooks[bookId];
+        if (book) {
+          books.push({
+            id: bookId,
+            title: book.title,
+            author: book.author,
+            coverImageUrl: book.coverImageUrl,
+            description: book.description,
+            tierId: null,
+          });
+        }
+      });
+
+      setCuratedBooks(books);
+    } else {
+      setCuratedTiers([]);
+      setCuratedBooks([]);
+    }
+
     setShowModal(true);
   };
 
@@ -94,6 +202,8 @@ export function AdminCollectionsPage() {
     setShowModal(false);
     setEditingCollection(null);
     setFormData(emptyFormData);
+    setCuratedTiers([]);
+    setCuratedBooks([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,12 +211,11 @@ export function AdminCollectionsPage() {
     setFormLoading(true);
 
     try {
-      const input: CreateCollectionInput | UpdateCollectionInput = {
+      const baseInput = {
+        type: formData.type,
         title: formData.title.trim(),
-        content: formData.content.trim(),
         excerpt: formData.excerpt.trim(),
         coverImageUrl: formData.coverImageUrl.trim() || undefined,
-        bookCovers: formData.bookCovers.filter((url) => url.trim() !== ""),
         tags: formData.tags
           .split(",")
           .map((tag) => tag.trim())
@@ -115,21 +224,78 @@ export function AdminCollectionsPage() {
         order: formData.order,
       };
 
-      if (editingCollection) {
-        await updateCollection(editingCollection.id, input);
-        sileo.success({
-          title: "Коллекция обновлена",
-          description: `"${input.title}" сохранена`,
-          duration: 3000,
+      if (formData.type === "curated") {
+        // Строим tiers Record и tierOrder из CuratedTier[]
+        const tiers: Record<string, { id: string; title: string; color: string; bookIds: string[] }> = {};
+        const tierOrder: string[] = [];
+        const books: Record<string, { id: string; title: string; author: string; coverImageUrl: string; description?: string; rating?: number; genre?: string; tags?: string[] }> = {};
+        const unrankedBookIds: string[] = [];
+
+        curatedTiers.forEach((t) => {
+          tiers[t.id] = { id: t.id, title: t.title, color: t.color, bookIds: [] };
+          tierOrder.push(t.id);
         });
+
+        // Разносим книги по тирам
+        curatedBooks.forEach((b) => {
+          if (!b.title.trim()) return; // пропускаем пустые
+
+          const bookId = b.id;
+          books[bookId] = {
+            id: bookId,
+            title: b.title.trim(),
+            author: b.author.trim(),
+            coverImageUrl: b.coverImageUrl.trim(),
+            description: b.description?.trim(),
+            rating: b.rating,
+            genre: b.genre?.trim(),
+            tags: b.tags
+              ? b.tags.split(",").map((t) => t.trim()).filter(Boolean)
+              : undefined,
+          };
+
+          if (b.tierId && tiers[b.tierId]) {
+            tiers[b.tierId].bookIds.push(bookId);
+          } else {
+            unrankedBookIds.push(bookId);
+          }
+        });
+
+        const input = {
+          ...baseInput,
+          tiers,
+          tierOrder,
+          books,
+          unrankedBookIds,
+          content: undefined,
+          bookCovers: formData.bookCovers.filter((url) => url.trim() !== ""),
+        };
+
+        if (editingCollection) {
+          await updateCollection(editingCollection.id, input as UpdateCollectionInput);
+        } else {
+          await createCollection(input as unknown as CreateCollectionInput);
+        }
       } else {
-        await createCollection(input as CreateCollectionInput);
-        sileo.success({
-          title: "Коллекция создана",
-          description: `"${input.title}" опубликована`,
-          duration: 3000,
-        });
+        // literary — как было
+        const input = {
+          ...baseInput,
+          content: formData.content.trim() || undefined,
+          bookCovers: formData.bookCovers.filter((url) => url.trim() !== ""),
+        };
+
+        if (editingCollection) {
+          await updateCollection(editingCollection.id, input as UpdateCollectionInput);
+        } else {
+          await createCollection(input as unknown as CreateCollectionInput);
+        }
       }
+
+      sileo.success({
+        title: editingCollection ? "Коллекция обновлена" : "Коллекция создана",
+        description: `"${formData.title.trim()}" сохранена`,
+        duration: 3000,
+      });
 
       handleCloseModal();
       loadCollections();
@@ -196,6 +362,28 @@ export function AdminCollectionsPage() {
     setFormData({ ...formData, bookCovers: newBookCovers });
   };
 
+  const handleCoverFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      sileo.error({ title: "Слишком большой файл", description: "Максимум 5 MB" });
+      return;
+    }
+
+    setCoverUploading(true);
+    try {
+      const result = await uploadCollectionCover(file);
+      setFormData({ ...formData, coverImageUrl: result.coverImageUrl });
+      sileo.success({ title: "Обложка загружена" });
+    } catch {
+      sileo.error({ title: "Ошибка загрузки" });
+    } finally {
+      setCoverUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <DashboardLayout
       showTemplatesNav={false}
@@ -228,17 +416,52 @@ export function AdminCollectionsPage() {
                 </Link>
               )}
             </div>
-            <h1 className="admin-collections-title">Управление коллекциями</h1>
+
+            {/* Sub-tabs: Все / Статьи / Тир-листы */}
+            <div className="admin-collections-subtabs">
+              <button
+                className={`admin-collections-subtab ${typeFilter === "all" ? "active" : ""}`}
+                onClick={() => setTypeFilter("all")}
+              >
+                Все
+              </button>
+              <button
+                className={`admin-collections-subtab ${typeFilter === "literary" ? "active" : ""}`}
+                onClick={() => setTypeFilter("literary")}
+              >
+                Статьи
+              </button>
+              <button
+                className={`admin-collections-subtab ${typeFilter === "curated" ? "active" : ""}`}
+                onClick={() => setTypeFilter("curated")}
+              >
+                Тир-листы
+              </button>
+            </div>
+
+            <h1 className="admin-collections-title">
+              {typeFilter === "all" && "Все коллекции"}
+              {typeFilter === "literary" && "Литературные подборки"}
+              {typeFilter === "curated" && "Тир-листы BookStrata"}
+            </h1>
             <p className="admin-collections-subtitle">
-              Литературные подборки: лауреаты, фавориты, историческая проза
+              {typeFilter === "all" && "Литературные подборки и тир-листы"}
+              {typeFilter === "literary" && "Статьи: лауреаты, фавориты, историческая проза"}
+              {typeFilter === "curated" && "Рейтинговые подборки с тирами"}
             </p>
           </div>
           <button
             className="admin-collections-create-btn"
-            onClick={handleOpenCreate}
+            onClick={() => {
+              handleOpenCreate(typeFilter === "literary" ? "literary" : "curated");
+            }}
           >
             <Plus size={20} />
-            <span>Создать коллекцию</span>
+            <span>
+              {typeFilter === "literary" && "Создать статью"}
+              {typeFilter === "curated" && "Создать тир-лист"}
+              {typeFilter === "all" && "Создать"}
+            </span>
           </button>
         </div>
 
@@ -246,18 +469,24 @@ export function AdminCollectionsPage() {
           {loading ? (
             <div className="admin-collections-loading">
               <FileText className="animate-pulse" size={48} />
-              <p>Загрузка коллекций...</p>
+              <p>Загрузка...</p>
             </div>
-          ) : collections.length === 0 ? (
+          ) : filteredCollections.length === 0 ? (
             <div className="admin-collections-empty">
               <FileText size={48} />
-              <p>Коллекций пока нет</p>
+              <p>
+                {typeFilter === "all" && "Коллекций пока нет"}
+                {typeFilter === "literary" && "Литературных подборок пока нет"}
+                {typeFilter === "curated" && "Тир-листов пока нет"}
+              </p>
               <button
                 className="admin-collections-create-btn"
-                onClick={handleOpenCreate}
+                onClick={() => handleOpenCreate(typeFilter === "literary" ? "literary" : "curated")}
               >
                 <Plus size={18} />
-                <span>Создать первую коллекцию</span>
+                <span>
+                  {typeFilter === "literary" ? "Создать статью" : "Создать тир-лист"}
+                </span>
               </button>
             </div>
           ) : (
@@ -273,10 +502,15 @@ export function AdminCollectionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {collections.map((collection) => (
+                {filteredCollections.map((collection) => (
                   <tr key={collection.id}>
                     <td className="admin-collections-title-cell">
-                      <span>{collection.title}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{collection.title}</span>
+                        <span className={`admin-collections-type-badge ${collection.type}`}>
+                          {collection.type === "curated" ? "Тир-лист" : "Статья"}
+                        </span>
+                      </div>
                     </td>
                     <td>
                       <div className="admin-collections-tags">
@@ -320,18 +554,16 @@ export function AdminCollectionsPage() {
                       )}
                     </td>
                     <td className="admin-collections-actions">
-              <button
-                onClick={() => setDeleteConfirm({ id: collection.id, title: collection.title })}
-                className="cursor-pointer text-gray-400 hover:text-red-400 transition-colors"
-                title="Удалить"
-              >
-                <Trash2 size={16} />
-              </button>
                       <button
-                        className="admin-collections-action-btn delete"
-                        onClick={() =>
-                          handleDelete(collection.id, collection.title)
-                        }
+                        onClick={() => handleOpenEdit(collection)}
+                        className="cursor-pointer text-gray-400 hover:text-cyan-400 transition-colors"
+                        title="Редактировать"
+                      >
+                        <FileText size={16} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm({ id: collection.id, title: collection.title })}
+                        className="cursor-pointer text-gray-400 hover:text-red-400 transition-colors"
                         title="Удалить"
                       >
                         <Trash2 size={16} />
@@ -398,31 +630,97 @@ export function AdminCollectionsPage() {
                   />
                 </div>
 
+                {/* Тип коллекции */}
                 <div className="admin-collections-form-group">
-                  <label htmlFor="content">Содержание *</label>
-                  <WysiwygEditor
-                    value={formData.content}
-                    onChange={(content) =>
-                      setFormData({ ...formData, content })
-                    }
-                  />
+                  <label>Тип коллекции</label>
+                  <div className="curated-editor-type-selector">
+                    <button
+                      type="button"
+                      className={`curated-editor-type-btn ${formData.type === "curated" ? "active" : ""}`}
+                      onClick={() => {
+                        setFormData({ ...formData, type: "curated", content: "" });
+                        if (!editingCollection) {
+                          setCuratedTiers([
+                            { id: "tier_s", title: "S", color: "#ef4444" },
+                            { id: "tier_a", title: "A", color: "#f97316" },
+                            { id: "tier_b", title: "B", color: "#eab308" },
+                            { id: "tier_c", title: "C", color: "#84cc16" },
+                          ]);
+                        }
+                      }}
+                    >
+                      Тир-лист (подборка с рейтингом)
+                    </button>
+                    <button
+                      type="button"
+                      className={`curated-editor-type-btn ${formData.type === "literary" ? "active" : ""}`}
+                      onClick={() => {
+                        setFormData({ ...formData, type: "literary" });
+                        setCuratedTiers([]);
+                        setCuratedBooks([]);
+                      }}
+                    >
+                      Статья (текстовая подборка)
+                    </button>
+                  </div>
                 </div>
+
+                {/* Контент: зависит от типа */}
+                {formData.type === "literary" ? (
+                  <div className="admin-collections-form-group">
+                    <label htmlFor="content">Содержание *</label>
+                    <WysiwygEditor
+                      value={formData.content}
+                      onChange={(content) =>
+                        setFormData({ ...formData, content })
+                      }
+                    />
+                  </div>
+                ) : (
+                  <div className="admin-collections-form-group">
+                    <label>Книги и уровни</label>
+                    <CuratedCollectionEditor
+                      tiers={curatedTiers}
+                      books={curatedBooks}
+                      onTiersChange={setCuratedTiers}
+                      onBooksChange={setCuratedBooks}
+                    />
+                  </div>
+                )}
 
                 <div className="admin-collections-form-row">
                   <div className="admin-collections-form-group">
                     <label htmlFor="coverImageUrl">URL обложки коллекции</label>
-                    <input
-                      id="coverImageUrl"
-                      type="url"
-                      value={formData.coverImageUrl}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          coverImageUrl: e.target.value,
-                        })
-                      }
-                      placeholder="https://example.com/cover.jpg"
-                    />
+                    <div className="flex gap-2 items-start">
+                      <input
+                        id="coverImageUrl"
+                        type="text"
+                        value={formData.coverImageUrl}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            coverImageUrl: e.target.value,
+                          })
+                        }
+                        placeholder="/images/collections/nazvanie.webp"
+                        className="flex-1"
+                      />
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleCoverFileSelect}
+                      />
+                      <button
+                        type="button"
+                        className="admin-collections-btn-upload"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={coverUploading}
+                      >
+                        {coverUploading ? "..." : "Загрузить"}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="admin-collections-form-group">
@@ -442,22 +740,24 @@ export function AdminCollectionsPage() {
                   </div>
                 </div>
 
-                <div className="admin-collections-form-group">
-                  <label>Обложки книг (до 3)</label>
-                  <div className="admin-collections-book-covers">
-                    {formData.bookCovers.map((cover, index) => (
-                      <input
-                        key={index}
-                        type="url"
-                        placeholder={`Обложка ${index + 1}`}
-                        value={cover}
-                        onChange={(e) =>
-                          handleBookCoverChange(index, e.target.value)
-                        }
-                      />
-                    ))}
+                {formData.type === "literary" && (
+                  <div className="admin-collections-form-group">
+                    <label>Обложки книг (до 3)</label>
+                    <div className="admin-collections-book-covers">
+                      {formData.bookCovers.map((cover, index) => (
+                        <input
+                          key={index}
+                          type="url"
+                          placeholder={`Обложка ${index + 1}`}
+                          value={cover}
+                          onChange={(e) =>
+                            handleBookCoverChange(index, e.target.value)
+                          }
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="admin-collections-form-group">
                   <label htmlFor="tags">Теги</label>

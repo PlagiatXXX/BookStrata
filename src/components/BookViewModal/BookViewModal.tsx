@@ -52,16 +52,24 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   className = "",
 }) => {
   const [imageError, setImageError] = useState(false);
-  const [averages, setAverages] = useState<BookRatingsResult | null>(null);
+  const [apiRatings, setApiRatings] = useState<BookRatingsResult | null>(null);
+
+  // Рейтинг для отображения: из данных книги (коллекции) или с сервера
+  const displayRating = book?.rating != null
+    ? { count: 0, averages: {}, overall: book.rating }
+    : apiRatings;
 
   useEffect(() => {
     if (!isOpen || !book) return;
+
+    // Если рейтинг уже есть в книге — API не нужен
+    if (book.rating != null) return;
 
     const bookIdNum = Number(book.id);
     if (!Number.isFinite(bookIdNum)) return;
 
     getBookRatings(bookIdNum).then((result) => {
-      setAverages(result);
+      setApiRatings(result);
     }).catch(() => { /* ignore */ });
   }, [isOpen, book]);
 
@@ -142,11 +150,11 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
                   </div>
                 )}
 
-                {averages && (
+                {displayRating && (
                   <div className="flex flex-col items-center gap-0.5">
-                    <StarDisplay value={averages.overall} />
+                    <StarDisplay value={displayRating.overall} />
                     <span className="text-[11px] text-[#a0a0a0]">
-                      {averages.overall.toFixed(1)}
+                      {displayRating.overall.toFixed(1)}
                     </span>
                   </div>
                 )}
