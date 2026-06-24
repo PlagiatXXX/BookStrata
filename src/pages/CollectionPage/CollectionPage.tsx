@@ -175,30 +175,6 @@ return DOMPurify.sanitize(collection.content);
           )}
         </header>
 
-        {/* Book Covers */}
-        {collection.bookCovers && collection.bookCovers.length > 0 && (
-          <div className="brutal-card brutal-border p-6 mb-8">
-            <h2 className="text-lg font-bold text-(--ink-0) mb-4">
-              Книги подборки
-            </h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {collection.bookCovers.map((cover, idx) => (
-                <div
-                  key={idx}
-                  className="aspect-2/3 bg-(--bg-0) rounded-sm overflow-hidden border border-(--line-soft)"
-                >
-                  <img
-                    src={cover}
-                    alt={`Книга ${idx + 1}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Tier list for curated collections */}
         {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
           <div className="brutal-card brutal-border p-6 mb-8">

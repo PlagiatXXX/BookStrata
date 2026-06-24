@@ -1,21 +1,43 @@
-import { memo, useMemo } from 'react';
-import { COLLECTIONS } from '@/data/mockData';
+import { memo, useState, useEffect, useMemo } from 'react';
+import { getPublishedCollections } from '@/lib/collectionsApi';
 import { CollectionCard } from './CollectionCard';
+import type { CollectionItem } from '@/data/mockData';
 
 interface CollectionGridProps {
   activeCategory: string;
 }
 
 export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => {
+  const [collections, setCollections] = useState<CollectionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    getPublishedCollections()
+      .then((data) => {
+        if (!cancelled) {
+          const curated = data.filter((c) => c.type === "curated");
+          setCollections(curated);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCollections([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
   const filteredCollections = useMemo(() => {
-    if (!COLLECTIONS || COLLECTIONS.length === 0) {
+    if (collections.length === 0) {
       return [];
     }
 
-    // Только опубликованные curated-коллекции
-    let filtered = COLLECTIONS.filter(
-      (c) => c.type === "curated" && c.isPublished
-    );
+    let filtered = collections;
 
     // Фильтрация по категории
     if (activeCategory && activeCategory !== "all") {
@@ -57,7 +79,17 @@ export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => 
     }
 
     return filtered;
-  }, [activeCategory]);
+  }, [collections, activeCategory]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[180px]">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="brutal-card brutal-border animate-pulse bg-(--bg-1)" />
+        ))}
+      </div>
+    );
+  }
 
   if (filteredCollections.length === 0) {
     return (

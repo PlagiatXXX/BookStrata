@@ -1,12 +1,25 @@
-import { memo } from "react";
+import { memo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { COLLECTIONS } from "../../data/mockData";
+import { getPublishedCollections } from "@/lib/collectionsApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import type { CollectionItem } from "@/data/mockData";
 
 export const CollectionsSection = memo(() => {
-  const literaryCollections = COLLECTIONS.filter(
-    (c) => c.isPublished && c.type === "literary"
-  );
+  const [literaryCollections, setLiteraryCollections] = useState<CollectionItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPublishedCollections()
+      .then((data) => {
+        if (!cancelled) {
+          setLiteraryCollections(data.filter((c) => c.type === "literary"));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLiteraryCollections([]);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   if (literaryCollections.length === 0) return null;
 
