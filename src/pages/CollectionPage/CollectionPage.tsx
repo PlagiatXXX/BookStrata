@@ -1,22 +1,29 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Calendar, Tag } from "lucide-react";
+import { Calendar, Tag, GitFork } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { CuratedTierView } from "@/components/CuratedTierView";
+import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
+import { useAuth } from "@/hooks/useAuthContext";
 import { sileo } from "sileo";
 import { getCollectionBySlug } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/lib/collectionsApi";
+import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import "./CollectionPage.css";
 
 export function CollectionPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [collection, setCollection] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewedBook, setViewedBook] = useState<Book | null>(null);
+
+  const currentUserId = authUser?.userId ?? null;
 
   useEffect(() => {
     const loadCollection = async () => {
@@ -49,6 +56,30 @@ export function CollectionPage() {
 
     loadCollection();
   }, [slug, navigate]);
+
+  const handleViewBook = useCallback((book: Book) => {
+    setViewedBook(book);
+  }, []);
+
+  const handleFork = useCallback(() => {
+    if (!currentUserId) {
+      sileo.action({
+        title: 'Создайте свою версию',
+        description: 'Зарегистрируйтесь, чтобы копировать любые подборки и редактировать их под себя.',
+        duration: 10000,
+        button: {
+          title: 'Создать аккаунт',
+          onClick: () => navigate('/auth?mode=register'),
+        },
+      });
+      return;
+    }
+    sileo.info({
+      title: 'Скоро',
+      description: 'Возможность копировать подборки появится в ближайшее время',
+      duration: 5000,
+    });
+  }, [currentUserId, navigate]);
 
   const sanitizedContent = useMemo(() => {
 if (!collection?.content) return "";
@@ -128,6 +159,20 @@ return DOMPurify.sanitize(collection.content);
               </span>
             </div>
           </div>
+
+          {/* Fork button for curated collections */}
+          {collection.type === "curated" && (
+            <div className="mt-4">
+              <button
+                onClick={handleFork}
+                className="nb-btn-primary flex items-center gap-1.5"
+                title={currentUserId ? 'Создать свою версию' : 'Войдите, чтобы скопировать'}
+              >
+                <GitFork size={18} />
+                Своя версия
+              </button>
+            </div>
+          )}
         </header>
 
         {/* Book Covers */}
@@ -164,6 +209,7 @@ return DOMPurify.sanitize(collection.content);
               tiers={collection.tiers as Record<string, import("@/types").Tier>}
               tierOrder={collection.tierOrder}
               books={collection.books as Record<string, import("@/types").Book>}
+              onViewBook={handleViewBook}
             />
           </div>
         )}
@@ -186,6 +232,15 @@ return DOMPurify.sanitize(collection.content);
             />
           </div>
         )}
+
+        {/* Book View Modal */}
+        <BookViewModal
+          book={viewedBook}
+          isOpen={!!viewedBook}
+          onClose={() => setViewedBook(null)}
+          isReadOnly
+          hideThoughts
+        />
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t border-(--line-soft)">

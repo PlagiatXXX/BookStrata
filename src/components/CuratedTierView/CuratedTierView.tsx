@@ -1,65 +1,55 @@
 import { memo } from "react";
 import type { Tier, Book } from "@/types";
+import { TierLabel } from "@/ui/TierLabel";
+import { BookCover } from "@/ui/BookCover";
 
 interface CuratedTierViewProps {
   tiers: Record<string, Tier>;
   tierOrder: string[];
   books: Record<string, Book>;
+  onViewBook?: (book: Book) => void;
 }
 
-export const CuratedTierView = memo(({ tiers, tierOrder, books }: CuratedTierViewProps) => {
+export const CuratedTierView = memo(({ tiers, tierOrder, books, onViewBook }: CuratedTierViewProps) => {
   return (
-    <div className="flex flex-col gap-1">
-      {tierOrder.map((tierId) => {
-        const tier = tiers[tierId];
-        if (!tier) return null;
+    <div className="neo-brutalist-editor">
+      <div className="flex flex-col">
+        {tierOrder.map((tierId) => {
+          const tier = tiers[tierId];
+          if (!tier) return null;
 
-        const tierBooks = tier.bookIds
-          .map((bookId) => books[bookId])
-          .filter(Boolean);
+          const tierBooks = tier.bookIds
+            .map((bookId) => books[bookId])
+            .filter(Boolean);
 
-        return (
-          <div key={tier.id} className="flex items-stretch gap-1">
-            <div
-              className="flex items-center justify-center shrink-0 font-bold text-white"
-              style={{
-                width: 56,
-                minHeight: 80,
-                backgroundColor: tier.color,
-                fontSize: 14,
-                lineHeight: 1,
-                letterSpacing: "0.05em",
-                borderRadius: 6,
-              }}
-            >
-              {tier.title}
-            </div>
-            <div className="flex items-center gap-[3px] flex-wrap min-h-[80px] flex-1">
-              {tierBooks.map((book) => (
-                <div
-                  key={`${tier.id}-${book.id}`}
-                  className="rounded-[4px] border border-black/10 overflow-hidden shrink-0"
-                  style={{ width: 80, aspectRatio: "2/3" }}
-                  title={`${book.title}${book.author ? ` — ${book.author}` : ""}`}
-                >
-                  <img
-                    src={book.coverImageUrl}
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+          return (
+            <div key={tier.id} className="nb-tier-row group relative flex">
+              <TierLabel
+                tierId={tier.id}
+                title={tier.title}
+                color={tier.color}
+                labelSize={tier.labelSize}
+                labelWeight={tier.labelWeight}
+                labelStyle={tier.labelStyle}
+                labelColor={tier.labelColor}
+              />
+              <div className="nb-book-track relative flex flex-1 flex-wrap content-start items-center transition-colors">
+                {tierBooks.map((book) => (
+                  <BookCover
+                    key={book.id}
+                    book={book}
+                    isDraggable={false}
+                    onView={onViewBook}
                   />
-                </div>
-              ))}
-              {tierBooks.length === 0 && (
-                <div className="flex items-center justify-center h-20 w-full text-sm text-(--ink-2) italic">
-                  Нет книг
-                </div>
-              )}
+                ))}
+                {tierBooks.length === 0 && (
+                  <div className="w-full h-full pointer-events-none" />
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 });

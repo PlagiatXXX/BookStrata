@@ -16,6 +16,7 @@ export interface BookViewModalProps {
   isAdding?: boolean;
   isReadOnly?: boolean;
   className?: string;
+  hideThoughts?: boolean;
 }
 
 const sectionTitleClass =
@@ -49,6 +50,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   onClose,
   onAdd,
   isAdding = false,
+  hideThoughts = false,
   className = "",
 }) => {
   const [imageError, setImageError] = useState(false);
@@ -194,7 +196,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
                       </div>
                     )}
 
-                    {book.thoughts && (
+                    {!hideThoughts && book.thoughts && (
                       <div>
                         <span
                           className={`${sectionTitleClass} flex items-center gap-2`}
