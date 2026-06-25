@@ -1,5 +1,5 @@
 import { useEffect, useState, memo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
@@ -20,7 +20,10 @@ const MemoizedCollectionsSection = memo(CollectionsSection);
 
 export default function CommunityPage() {
   const location = useLocation();
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeCategory, setActiveCategory] = useState(
+    () => searchParams.get("category") || "all",
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
   // Прокрутка к якорю при переходе с других страниц
@@ -36,6 +39,22 @@ export default function CommunityPage() {
       });
     }
   }, [location.hash]);
+
+  // Синхронизируем category с URL, чтобы при навигации назад сохранялся раздел
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (activeCategory === "all") {
+          next.delete("category");
+        } else {
+          next.set("category", activeCategory);
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  }, [activeCategory, setSearchParams]);
 
   useEffect(() => {
     const elements = Array.from(

@@ -171,6 +171,9 @@ export function AdminCollectionsPage() {
                 author: book.author,
                 coverImageUrl: book.coverImageUrl,
                 description: book.description,
+                rating: book.rating,
+                genre: book.genre,
+                tags: book.tags?.join(", "),
                 tierId: tierId,
               });
             }
@@ -188,6 +191,9 @@ export function AdminCollectionsPage() {
             author: book.author,
             coverImageUrl: book.coverImageUrl,
             description: book.description,
+            rating: book.rating,
+            genre: book.genre,
+            tags: book.tags?.join(", "),
             tierId: null,
           });
         }
@@ -584,7 +590,6 @@ export function AdminCollectionsPage() {
         {showModal && (
           <div
             className="admin-collections-modal-overlay"
-            onClick={handleCloseModal}
           >
             <div
               className="admin-collections-modal"

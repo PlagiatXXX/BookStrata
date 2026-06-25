@@ -5,6 +5,7 @@ export interface Book {
   coverImageUrl: string;
   description?: string;
   thoughts?: string;
+  rating?: number;
   genre?: string;
   tags?: string[];
 }
