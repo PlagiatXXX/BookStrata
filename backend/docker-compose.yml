@@ -41,6 +41,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: bookstrata-api
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     expose:
       - "8080"
     env_file:
