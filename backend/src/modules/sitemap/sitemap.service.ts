@@ -35,6 +35,19 @@ export async function generateSitemap(): Promise<string> {
     }),
   ]);
 
+  // Коллекции — опционально: таблицы может не быть в тестовой БД
+  let collections: { slug: string; updatedAt: Date }[] = [];
+  try {
+    collections = await prisma.collection.findMany({
+      where: { isPublished: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { order: "asc" },
+      take: 200,
+    });
+  } catch {
+    // таблица collections ещё не создана — пропускаем
+  }
+
   const newsUrls = newsArticles.map((a) =>
     xmlTag(
       `${SITE_URL}/news/${a.id}`,
@@ -54,8 +67,17 @@ export async function generateSitemap(): Promise<string> {
     );
   });
 
+  const collectionUrls = collections.map((c) =>
+    xmlTag(
+      `${SITE_URL}/collections/${c.slug}`,
+      "0.7",
+      "weekly",
+      c.updatedAt.toISOString().split("T")[0],
+    ),
+  );
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls].join("\n")}
+${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls].join("\n")}
 </urlset>`;
 }
