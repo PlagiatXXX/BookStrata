@@ -23,5 +23,15 @@ describe("Sitemap", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toMatch(/application\/xml/);
+
+    const body = res.body;
+    expect(body).toContain('<?xml version="1.0"');
+    expect(body).toContain("<urlset");
+    // В тестовом окружении CLIENT_URL не задан — fallback до localhost
+    expect(body).toMatch(/<loc>https?:\/\/[^<]+\/<\/loc>/);
+    expect(body).toContain("<priority>1.0</priority>");
+    expect(body).toContain("<changefreq>weekly</changefreq>");
+    expect(body).toContain("</urlset>");
+    expect(body).not.toContain("[object Object]");
   });
 });
