@@ -301,7 +301,6 @@ export function CuratedCollectionEditor({
       {editingBook && editForm && (
         <div
           className="admin-collections-modal-overlay"
-          onClick={handleCloseEdit}
         >
           <div
             className="admin-collections-modal curated-edit-modal"

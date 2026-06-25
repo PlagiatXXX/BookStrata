@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Star, FileText, Calendar, BookOpen, Hash } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
@@ -53,6 +53,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   hideThoughts = false,
   className = "",
 }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [imageError, setImageError] = useState(false);
   const [apiRatings, setApiRatings] = useState<BookRatingsResult | null>(null);
 
@@ -60,6 +61,13 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   const displayRating = book?.rating != null
     ? { count: 0, averages: {}, overall: book.rating }
     : apiRatings;
+
+  // При открытии модалки всегда скроллим контент вверх
+  useEffect(() => {
+    if (isOpen) {
+      scrollRef.current?.scrollTo(0, 0);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || !book) return;
@@ -98,7 +106,10 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
       titleId="book-view-title"
       className={className}
     >
-        <div className="max-h-[90vh] overflow-y-auto border-2 border-black bg-[#111111] text-[#f6f1e8]">
+        <div
+          ref={scrollRef}
+          className="max-h-[90vh] overflow-y-auto border-2 border-black bg-[#111111] text-[#f6f1e8]"
+        >
           <div className="relative border-b-2 border-black p-4 sm:p-6">
             <button
               onClick={onClose}
