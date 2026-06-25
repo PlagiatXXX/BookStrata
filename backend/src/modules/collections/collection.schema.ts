@@ -28,6 +28,7 @@ export const createCollectionSchema = z.object({
   excerpt: z.string().max(300).optional(),
   coverImageUrl: z.string().optional().default(""),
   bookCovers: z.array(z.string()).optional().default([]),
+  categoryId: z.string().optional(),
   tags: z.array(z.string()).optional().default([]),
   isPublished: z.boolean().optional().default(false),
   order: z.number().int().optional().default(0),
@@ -57,6 +58,7 @@ export const createCollectionJsonSchema = {
       content: { type: "string" },
       excerpt: { type: "string", maxLength: 300 },
       coverImageUrl: { type: "string" },
+      categoryId: { type: "string" },
       bookCovers: { type: "array", items: { type: "string" } },
       tags: { type: "array", items: { type: "string" } },
       isPublished: { type: "boolean" },
@@ -75,6 +77,7 @@ export const getCollectionsJsonSchema = {
     type: "object",
     properties: {
       type: { type: "string", enum: ["curated", "literary"] },
+      categoryId: { type: "string" },
       isPublished: { type: "string" },
       page: { type: "string", default: "1" },
       pageSize: { type: "string", default: "50" },

@@ -47,6 +47,7 @@ export async function validateUpdateInput(input: unknown) {
 
 export async function getCollections(options?: {
   type?: string;
+  categoryId?: string;
   isPublished?: boolean;
   page?: number;
   pageSize?: number;
@@ -57,6 +58,7 @@ export async function getCollections(options?: {
 
   const where: Prisma.CollectionWhereInput = {};
   if (options?.type) where.type = options.type;
+  if (options?.categoryId) where.categoryId = options.categoryId;
   if (options?.isPublished !== undefined) where.isPublished = options.isPublished;
 
   const [data, total] = await Promise.all([
@@ -99,6 +101,7 @@ export async function createCollection(input: CreateCollectionInput) {
       type: input.type,
       content: input.content || null,
       excerpt: input.excerpt || null,
+      categoryId: input.categoryId || null,
       coverImageUrl: input.coverImageUrl || "",
       bookCovers: input.bookCovers || [],
       tags: input.tags || [],
@@ -119,6 +122,7 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
   if (input.type !== undefined) data.type = input.type;
   if (input.content !== undefined) data.content = input.content || null;
   if (input.excerpt !== undefined) data.excerpt = input.excerpt || null;
+  if (input.categoryId !== undefined) data.categoryId = input.categoryId || null;
   if (input.coverImageUrl !== undefined) data.coverImageUrl = input.coverImageUrl || "";
   if (input.bookCovers !== undefined) data.bookCovers = input.bookCovers;
   if (input.tags !== undefined) data.tags = input.tags;

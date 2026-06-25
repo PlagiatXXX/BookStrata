@@ -12,9 +12,10 @@ import {
 export async function collectionRoutes(fastify: FastifyInstance) {
   // GET / — получить все опубликованные коллекции
   fastify.get("/", async (request, reply) => {
-    const query = request.query as { type?: string; page?: string; pageSize?: string };
+    const query = request.query as { type?: string; categoryId?: string; page?: string; pageSize?: string };
     const result = await service.getCollections({
       type: query.type,
+      categoryId: query.categoryId,
       isPublished: true,
       page: query.page ? Number(query.page) : 1,
       pageSize: query.pageSize ? Number(query.pageSize) : 50,
@@ -27,7 +28,7 @@ export async function collectionRoutes(fastify: FastifyInstance) {
     "/admin",
     { preHandler: [authMiddleware, requireRole("admin", "moderator")] },
     async (request, reply) => {
-      const query = request.query as { id?: string; type?: string; page?: string; pageSize?: string };
+      const query = request.query as { id?: string; type?: string; categoryId?: string; page?: string; pageSize?: string };
 
       // Если запрошена конкретная коллекция по id
       if (query.id) {
@@ -40,6 +41,7 @@ export async function collectionRoutes(fastify: FastifyInstance) {
 
       const result = await service.getCollections({
         type: query.type,
+        categoryId: query.categoryId,
         page: query.page ? Number(query.page) : 1,
         pageSize: query.pageSize ? Number(query.pageSize) : 200,
       });

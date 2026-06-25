@@ -40,6 +40,7 @@ export type CollectionItem = {
   slug: string;
   title: string;
   type: "curated" | "literary"; // curated = тир-лист, literary = HTML-статья
+  categoryId?: string | null;
   // Для curated (тир-лист):
   tiers?: Record<string, Tier>;
   tierOrder?: string[];
@@ -61,29 +62,23 @@ export type CollectionItem = {
 export const CATEGORIES = [
   { id: "all", label: "Всё", icon: TrendingUp },
   { id: "fantasy", label: "Фэнтези", icon: BookOpen },
-  { id: "mystery", label: "Детективы", icon: SearchCheck },
   { id: "sci-fi", label: "Sci-Fi", icon: Rocket },
   { id: "classics", label: "Классика", icon: Landmark },
   { id: "non-fiction", label: "Нон-фикшн", icon: History },
   { id: "fiction", label: "Художественная", icon: BookIcon },
   { id: "young-adult", label: "Young Adult", icon: BookIcon },
   { id: "historical", label: "Исторические", icon: Landmark },
-  { id: "mystical", label: "Мистика", icon: SearchCheck },
-  { id: "contemporary", label: "Современная проза", icon: BookIcon },
+  { id: "horror", label: "Хоррор и мистика", icon: BookOpen },
   { id: "cyberpunk", label: "Киберпанк", icon: Rocket },
-  { id: "horror", label: "Хоррор", icon: BookOpen },
   { id: "romance", label: "Любовные романы", icon: BookIcon },
   { id: "slavic-fantasy", label: "Славянское фэнтези", icon: BookOpen },
   { id: "adventure", label: "Приключения", icon: BookIcon },
-  { id: "thriller", label: "Триллеры", icon: SearchCheck },
+  { id: "thriller", label: "Триллеры и детективы", icon: SearchCheck },
   { id: "dystopia", label: "Антиутопии", icon: Rocket },
   { id: "japanese", label: "Японская литература", icon: BookIcon },
   { id: "russian-classics", label: "Русская классика", icon: Landmark },
   { id: "foreign-prose", label: "Зарубежная проза", icon: BookIcon },
-  { id: "philosophical", label: "Философский роман", icon: History },
   { id: "military", label: "Военная проза", icon: BookIcon },
-  { id: "magical-realism", label: "Магический реализм", icon: BookOpen },
-  { id: "urban-fantasy", label: "Городское фэнтези", icon: BookOpen },
   { id: "myths", label: "Сказки и мифы", icon: Landmark },
 ];
 
@@ -865,7 +860,7 @@ export const TEMPLATES: TemplateItem[] = [
     id: 5,
     title: "ТРИЛЛЕРЫ И ДЕТЕКТИВЫ",
     category: "Детективы",
-    categoryId: "mystery",
+    categoryId: "thriller",
     uses: "19k",
     author: "MysteryFan",
     image: "/images/templates/detectiv.webp",
@@ -1638,13 +1633,13 @@ export const COLLECTIONS: CollectionItem[] = [
   },
   {
     id: 5,
-    slug: "best-mystery",
-    title: "Лучшие детективы",
+    slug: "top-detective",
+    title: "Топ детективов и триллеров — рейтинг книг",
     type: "curated",
     excerpt: "Захватывающие детективы и триллеры, которые держат в напряжении до последней страницы.",
     coverImageUrl: "/images/collections/curated/top-detective/intruder.jpg",
     bookCovers: ["/images/collections/curated/top-detective/intruder.jpg", "/images/collections/curated/top-detective/alibi.jpeg", "/images/collections/curated/top-detective/his-her.jpeg"],
-    tags: ["Детективы", "Триллер", "Мистика", "Криминал"],
+    tags: ["Детективы", "Триллеры", "Мистика", "Криминал", "Психология"],
     isPublished: true,
     order: 11,
     createdAt: "2026-04-02T10:00:00Z",
@@ -1672,13 +1667,13 @@ export const COLLECTIONS: CollectionItem[] = [
   },
   {
     id: 6,
-    slug: "sci-fi",
-    title: "Научная фантастика",
+    slug: "top-fantastic",
+    title: "Топ книг фантастика — рейтинг",
     type: "curated",
-    excerpt: "Космос, технологии, будущее — лучшие книги научной фантастики всех времён.",
+    excerpt: "Классика и современность: лучшие научно-фантастические романы, расширяющие границы воображения.",
     coverImageUrl: "/images/collections/curated/top-fantastic/carl.jpeg",
     bookCovers: ["/images/collections/curated/top-fantastic/carl.jpeg", "/images/collections/curated/top-fantastic/dark-matter.jpeg", "/images/collections/curated/top-fantastic/gold-son.jpeg"],
-    tags: ["Sci-Fi", "Фантастика", "Космос", "Технологии"],
+    tags: ["Фантастика", "Sci-Fi", "Классика", "Киберпанк"],
     isPublished: true,
     order: 12,
     createdAt: "2026-04-03T10:00:00Z",

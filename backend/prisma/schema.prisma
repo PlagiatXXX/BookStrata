@@ -311,6 +311,7 @@ model Collection {
   slug            String   @unique
   title           String
   type            String   // "curated" | "literary"
+  categoryId      String?  @map("category_id")
   content         String?  // HTML for literary
   excerpt         String?
   coverImageUrl   String   @default("") @map("cover_image_url")

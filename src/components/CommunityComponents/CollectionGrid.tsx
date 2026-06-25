@@ -50,43 +50,9 @@ export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: Collec
       );
     }
 
-    // Фильтрация по категории
+    // Фильтрация по категории (прямое поле categoryId)
     if (activeCategory && activeCategory !== "all") {
-      const categoryMap: Record<string, string[]> = {
-        "fantasy": ["фэнтези", "фентези"],
-        "mystery": ["детектив", "детективы"],
-        "sci-fi": ["sci-fi", "научная фантастика", "фантастика"],
-        "classics": ["классика"],
-        "non-fiction": ["нон-фикшн", "non-fiction", "документальная"],
-        "fiction": ["художественная", "проза"],
-        "young-adult": ["young adult", "ya", "молодёжная"],
-        "historical": ["историческая", "исторический"],
-        "mystical": ["мистика"],
-        "contemporary": ["современная проза", "современная"],
-        "cyberpunk": ["киберпанк"],
-        "horror": ["хоррор", "ужасы"],
-        "romance": ["любовный", "романтика"],
-        "slavic-fantasy": ["славянское фэнтези", "славянская"],
-        "adventure": ["приключения"],
-        "thriller": ["триллер"],
-        "dystopia": ["антиутопия"],
-        "japanese": ["японская"],
-        "russian-classics": ["русская классика"],
-        "foreign-prose": ["зарубежная"],
-        "philosophical": ["философский"],
-        "military": ["военная"],
-        "magical-realism": ["магический реализм"],
-        "urban-fantasy": ["городское фэнтези"],
-        "myths": ["сказки", "мифы"],
-      };
-
-      const keywords = categoryMap[activeCategory];
-      if (keywords) {
-        filtered = filtered.filter((c) => {
-          const searchText = `${c.title} ${c.excerpt || ""} ${c.tags?.join(" ") || ""}`.toLowerCase();
-          return keywords.some((kw) => searchText.includes(kw));
-        });
-      }
+      filtered = filtered.filter((c) => c.categoryId === activeCategory);
     }
 
     return filtered;

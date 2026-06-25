@@ -22,6 +22,7 @@ import {
   type CreateCollectionInput,
   type UpdateCollectionInput,
 } from "@/lib/collectionsApi";
+import { CATEGORIES } from "@/data/mockData";
 import { useAuth } from "@/hooks/useAuthContext";
 import { WysiwygEditor } from "./components/WysiwygEditor";
 import {
@@ -37,6 +38,7 @@ interface CollectionFormData {
   content: string;
   excerpt: string;
   coverImageUrl: string;
+  categoryId: string;
   bookCovers: string[];
   tags: string;
   isPublished: boolean;
@@ -49,6 +51,7 @@ const emptyFormData: CollectionFormData = {
   content: "",
   excerpt: "",
   coverImageUrl: "",
+  categoryId: "",
   bookCovers: ["", "", ""],
   tags: "",
   isPublished: false,
@@ -132,6 +135,7 @@ export function AdminCollectionsPage() {
       content: collection.content || "",
       excerpt: collection.excerpt || "",
       coverImageUrl: collection.coverImageUrl || "",
+      categoryId: collection.categoryId || "",
       bookCovers: collection.bookCovers?.length ? collection.bookCovers : ["", "", ""],
       tags: collection.tags.join(", "),
       isPublished: collection.isPublished,
@@ -216,6 +220,7 @@ export function AdminCollectionsPage() {
         title: formData.title.trim(),
         excerpt: formData.excerpt.trim(),
         coverImageUrl: formData.coverImageUrl.trim() || undefined,
+        categoryId: formData.categoryId || undefined,
         tags: formData.tags
           .split(",")
           .map((tag) => tag.trim())
@@ -663,6 +668,25 @@ export function AdminCollectionsPage() {
                       Статья (текстовая подборка)
                     </button>
                   </div>
+                </div>
+
+                {/* Категория (жанр) */}
+                <div className="admin-collections-form-group">
+                  <label htmlFor="categoryId">Категория (жанр)</label>
+                  <select
+                    id="categoryId"
+                    value={formData.categoryId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, categoryId: e.target.value })
+                    }
+                  >
+                    <option value="">Без категории</option>
+                    {CATEGORIES.filter((c) => c.id !== "all").map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Контент: зависит от типа */}
