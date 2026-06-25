@@ -14,6 +14,8 @@
 # ---------- Stage 1: Builder ----------
 FROM node:20-alpine AS builder
 
+RUN apk add --no-cache openssl
+
 WORKDIR /build
 
 # Сначала только package.json — для кэширования слоя зависимостей
@@ -35,7 +37,7 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-alpine AS production
 
-RUN apk add --no-cache openssl 2>/dev/null || true && \
+RUN apk add --no-cache openssl && \
     addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup
 
