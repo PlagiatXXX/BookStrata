@@ -146,6 +146,15 @@ await fastify.register(helmet, {
   contentSecurityPolicy: {
     directives: cspDirectives,
   },
+  strictTransportSecurity: {
+    maxAge: 63072000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  xFrameOptions: { action: "sameorigin" },
+  xContentTypeOptions: true,
+  referrerPolicy: { policy: "origin-when-cross-origin" },
+  xDnsPrefetchControl: { allow: true },
 });
 
 // Раздача статических файлов (для локального хранения изображений)

@@ -99,6 +99,7 @@ export function SEOHead({
     setMeta('meta[name="twitter:title"]', "content", pageTitle);
     setMeta('meta[name="twitter:description"]', "content", description);
     setMeta('meta[name="twitter:image"]', "content", imageUrl);
+    setMeta('meta[name="twitter:image:alt"]', "content", description);
 
     if (noindex) {
       setMeta('meta[name="robots"]', "content", "noindex, nofollow");
@@ -156,6 +157,7 @@ export function SEOHead({
       <meta name="twitter:title" content={pageTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={imageUrl} />
+      <meta name="twitter:image:alt" content={description} />
 
       <link rel="canonical" href={pageUrl} />
 

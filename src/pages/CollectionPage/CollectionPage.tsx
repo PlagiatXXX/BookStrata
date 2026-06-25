@@ -127,24 +127,24 @@ return DOMPurify.sanitize(collection.content);
       showSearch={false}
       activeItem="Новости"
     >
-      <article className="max-w-4xl mx-auto px-6 py-12">
+      {/* Breadcrumbs + Назад — на левый край */}
+      <div className="px-6 pt-6 pb-4 space-y-1">
         <Breadcrumbs items={[{ label: "Подборки", href: "/community" }, { label: collection.title }]} />
+        <button
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/community');
+            }
+          }}
+          className="text-xs text-(--ink-2) hover:text-(--accent-main) transition-colors cursor-pointer"
+        >
+          ← Назад к подборкам
+        </button>
+      </div>
 
-        <div className="mb-6">
-          <button
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1);
-              } else {
-                navigate('/community');
-              }
-            }}
-            className="text-xs text-(--ink-2) hover:text-(--accent-main) transition-colors cursor-pointer"
-          >
-            ← Назад к подборкам
-          </button>
-        </div>
-
+      <article className="max-w-4xl mx-auto px-6 pb-12">
         {/* Header — как в публичном тир-листе: ряд (название по центру | кнопка справа) */}
         <header className="mb-8">
           <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6">
@@ -177,9 +177,9 @@ return DOMPurify.sanitize(collection.content);
           </div>
         </header>
 
-        {/* Tier list for curated collections */}
+        {/* Tier list for curated collections — на всю ширину */}
         {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
-          <div className="mb-8">
+          <div className="full-width-tier-list mb-8">
             <CuratedTierView
               tiers={collection.tiers as Record<string, import("@/types").Tier>}
               tierOrder={collection.tierOrder}

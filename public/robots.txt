@@ -10,4 +10,28 @@ Disallow: /admin
 Disallow: /oauth/
 Disallow: /api/
 
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /auth
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /admin
+Disallow: /oauth/
+Disallow: /api/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /auth
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /admin
+Disallow: /oauth/
+Disallow: /api/
+
 Sitemap: https://bookstrata.ru/sitemap.xml

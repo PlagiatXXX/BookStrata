@@ -1,5 +1,20 @@
 /* CollectionPage styles */
 
+/* Full-width tier list section — выходит за пределы max-w-4xl контейнера */
+.full-width-tier-list {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  padding-left: max(env(safe-area-inset-left), 1rem);
+  padding-right: max(env(safe-area-inset-right), 1rem);
+}
+
+@media (max-width: 767px) {
+  .full-width-tier-list {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
 .collection-content h1,
 .collection-content h2,
 .collection-content h3 {
