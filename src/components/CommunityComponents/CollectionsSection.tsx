@@ -54,7 +54,7 @@ export const CollectionsSection = memo(() => {
                       alt={`Cover ${idx + 1}`}
                       className="w-full h-full object-cover"
                       src={img}
-                      onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+                      onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
                     />
                   </div>
                 ))}
@@ -65,7 +65,7 @@ export const CollectionsSection = memo(() => {
                   alt={collection.title}
                   className="w-full h-full object-cover"
                   src={proxyImageUrl(collection.coverImageUrl)}
-                  onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+                  onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
                 />
               </div>
             ) : null}

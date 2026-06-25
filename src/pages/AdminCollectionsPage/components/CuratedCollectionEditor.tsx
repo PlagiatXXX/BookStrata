@@ -376,7 +376,7 @@ export function CuratedCollectionEditor({
                   onChange={(e) =>
                     setEditForm({ ...editForm, coverImageUrl: e.target.value })
                   }
-                  placeholder="/images/books/nazvanie.webp"
+                  placeholder="/images/collections/curated/slug/image.jpeg"
                 />
                 {editForm.coverImageUrl && (
                   <div className="curated-edit-cover-preview">

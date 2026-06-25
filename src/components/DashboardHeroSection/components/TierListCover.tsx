@@ -17,7 +17,7 @@ export function TierListCover({ coverImageUrl, title, booksCount, className = ""
           alt={title}
           className="tier-list-cover__img"
           loading="lazy"
-          onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+          onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
         />
       </div>
     )

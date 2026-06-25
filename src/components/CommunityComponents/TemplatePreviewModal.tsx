@@ -124,7 +124,7 @@ export const TemplatePreviewModal = memo(({
                                     src={proxyImageUrl(book.coverImageUrl)}
                                     alt={book.title}
                                     className="w-full h-full object-cover"
-                                    onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+                                    onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
                                   />
                                 ) : (
                                   <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-800" />

@@ -31,7 +31,7 @@ export const TemplateCard = memo(({ template, onPreview }: TemplateCardProps) =>
         alt={template.title}
         className="absolute inset-0 w-full h-full object-cover opacity-45 transition-all duration-500 group-hover:opacity-60 parallax-img"
         src={template.image}
-        onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+        onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
       />
 
       <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent p-6 flex flex-col justify-end">

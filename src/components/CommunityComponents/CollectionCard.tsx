@@ -20,7 +20,7 @@ const getGridClass = (index: number): string => {
   return map[size] || '';
 };
 
-const FALLBACK = '/images/books/placeholder.svg';
+const FALLBACK = '/images/placeholder.svg';
 
 export const CollectionCard = memo(({ collection }: CollectionCardProps) => {
   const navigate = useNavigate();

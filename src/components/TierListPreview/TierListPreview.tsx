@@ -54,7 +54,7 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
                       alt={item.book.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
-                      onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+                      onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
                     />
                   </div>
                 ))}
@@ -110,7 +110,7 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
                     alt={item.book.title}
                     className="w-full h-full object-cover"
                     loading="lazy"
-                    onError={(e) => { e.currentTarget.src = '/images/books/placeholder.svg' }}
+                    onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
                   />
                 </div>
               ))}
