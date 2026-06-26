@@ -11,19 +11,20 @@
 #     bookstrata-backend
 # ============================================================
 
-# ---------- Stage 1: Builder ----------
-FROM node:20-alpine AS builder
+# --- Используем Debian-based slim вместо Alpine ---
+# Alpine требует openssl1.1-compat из community-репозитория для Prisma,
+# а на сервере DNS на Alpine-репозитории недоступен.
+# Debian имеет OpenSSL из коробки.
 
-# --- Регистр mirror для российских серверов ---
+# ---------- Stage 1: Builder ----------
+FROM node:20-slim AS builder
+
+# Зеркало npm registry для ускорения на российских серверах
 ENV npm_config_registry=https://registry.npmmirror.com
 # Prisma engine binary mirror (тот же npmmirror)
 ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 
 WORKDIR /build
-
-# OpenSSL 1.1 compat — Prisma 4.x engine на Alpine требует libssl.so.1.1
-# Используем community-репозиторий Alpine v3.20
-RUN apk add --no-cache -X https://dl-cdn.alpinelinux.org/alpine/v3.20/community openssl1.1-compat
 
 # Сначала только package.json — для кэширования слоя зависимостей
 COPY package.json package-lock.json ./
@@ -44,16 +45,13 @@ COPY src/ ./src/
 RUN npm run build
 
 # ---------- Stage 2: Production ----------
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
 
 ENV npm_config_registry=https://registry.npmmirror.com
 ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 
-# OpenSSL 1.1 compat — Prisma engine требует libssl.so.1.1 на Alpine
-RUN apk add --no-cache -X https://dl-cdn.alpinelinux.org/alpine/v3.20/community openssl1.1-compat
-
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S appuser -u 1001 -G appgroup
+RUN groupadd -g 1001 appgroup && \
+    useradd -m -u 1001 -g appgroup appuser
 
 WORKDIR /app
 
@@ -78,7 +76,8 @@ USER appuser
 
 EXPOSE 8080
 
+# Healthcheck через встроенный http-модуль Node (wget не входит в slim-образ)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:8080/health || exit 1
+  CMD node -e "require('http').get('http://127.0.0.1:8080/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 CMD ["node", "dist/src/server.js"]
