@@ -460,6 +460,7 @@ const BookRow = memo(function BookRow({
   onMove,
   onEdit,
 }: BookRowProps) {
+  const titleEmpty = !book.title.trim();
   const isNew = !book.title && !book.author;
 
   return (
@@ -468,10 +469,11 @@ const BookRow = memo(function BookRow({
         <div className="curated-editor-book-row-main">
           <input
             type="text"
-            className="curated-editor-input"
+            className={`curated-editor-input ${titleEmpty ? "curated-editor-input--error" : ""}`}
             value={book.title}
             onChange={(e) => onUpdate(book.id, "title", e.target.value)}
-            placeholder="Название книги"
+            placeholder="Название книги *"
+            required
           />
           <input
             type="text"

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 const SITE_NAME = "BookStrata";
-const DEFAULT_DESC = "BookStrata — создавай тир лист книг онлайн. Визуальный рейтинг и книжный тир лист любимых книг. Сортировка по блокам, баттлы, обсуждения и ИИ-рекомендации.";
+const DEFAULT_DESC = "BookStrata — интерактивный рейтинг книг. Составляй визуальный топ лучших книг, узнавай что почитать, собирай подборки по жанрам, участвуй в баттлах и получай ИИ-рекомендации.";
 const DEFAULT_IMAGE = "/logo.svg";
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
 
@@ -53,7 +53,7 @@ export function SEOHead({
   noindex,
   breadcrumbs,
 }: SEOHeadProps) {
-  const pageTitle = title ? `${title} | ${SITE_NAME}` : `Рейтинг книг и книжные тир-листы онлайн | ${SITE_NAME}`;
+  const pageTitle = title ? `${title} | ${SITE_NAME}` : `Интерактивный рейтинг книг — топ лучших книг и что почитать | ${SITE_NAME}`;
   const pageUrl = url ? `${SITE_URL}${url}` : SITE_URL;
   const imageUrl = image.startsWith("http") ? image : `${SITE_URL}${image}`;
 

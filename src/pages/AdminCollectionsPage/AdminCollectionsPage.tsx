@@ -236,6 +236,18 @@ export function AdminCollectionsPage() {
       };
 
       if (formData.type === "curated") {
+        // Проверяем книги без названия
+        const emptyBooks = curatedBooks.filter((b) => !b.title.trim());
+        if (emptyBooks.length > 0) {
+          setFormLoading(false);
+          sileo.warning({
+            title: `${emptyBooks.length} книг без названия`,
+            description: `Заполните название у ${emptyBooks.length > 1 ? "них" : "неё"} или удалите пустые строки.`,
+            duration: 2000,
+          });
+          return;
+        }
+
         // Строим tiers Record и tierOrder из CuratedTier[]
         const tiers: Record<string, { id: string; title: string; color: string; bookIds: string[] }> = {};
         const tierOrder: string[] = [];
@@ -305,7 +317,7 @@ export function AdminCollectionsPage() {
       sileo.success({
         title: editingCollection ? "Коллекция обновлена" : "Коллекция создана",
         description: `"${formData.title.trim()}" сохранена`,
-        duration: 3000,
+        duration: 2000,
       });
 
       handleCloseModal();
@@ -517,7 +529,13 @@ export function AdminCollectionsPage() {
                   <tr key={collection.id}>
                     <td className="admin-collections-title-cell">
                       <div className="flex items-center gap-2">
-                        <span>{collection.title}</span>
+                        <button
+                          onClick={() => handleOpenEdit(collection)}
+                          className="admin-collections-title-link"
+                          title="Редактировать"
+                        >
+                          {collection.title}
+                        </button>
                         <span className={`admin-collections-type-badge ${collection.type}`}>
                           {collection.type === "curated" ? "Тир-лист" : "Статья"}
                         </span>

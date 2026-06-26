@@ -183,6 +183,23 @@
   max-width: 300px;
 }
 
+.admin-collections-title-link {
+  background: none;
+  border: none;
+  color: var(--ink-0);
+  font-weight: 600;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.admin-collections-title-link:hover {
+  color: var(--accent-main);
+}
+
 .admin-collections-tags {
   display: flex;
   flex-wrap: wrap;
@@ -581,6 +598,16 @@
 .curated-editor-input:focus {
   outline: none;
   border-color: var(--accent-main);
+}
+
+.curated-editor-input--error {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.curated-editor-input--error:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
 }
 
 .curated-editor-color-picker {
