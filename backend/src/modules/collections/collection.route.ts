@@ -7,6 +7,7 @@ import * as service from "./collection.service.js";
 import {
   type CreateCollectionInput,
   type UpdateCollectionInput,
+  parseUrlSchema,
 } from "./collection.schema.js";
 
 export async function collectionRoutes(fastify: FastifyInstance) {
@@ -46,6 +47,20 @@ export async function collectionRoutes(fastify: FastifyInstance) {
         pageSize: query.pageSize ? Number(query.pageSize) : 200,
       });
       return reply.code(200).send(result);
+    },
+  );
+
+  // GET /admin/preview/:slug — получить коллекцию по slug (включая черновики, только админ)
+  fastify.get(
+    "/admin/preview/:slug",
+    { preHandler: [authMiddleware, requireRole("admin", "moderator")] },
+    async (request, reply) => {
+      const { slug } = request.params as { slug: string };
+      const collection = await service.getCollectionBySlugAdmin(slug);
+      if (!collection) {
+        return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Collection not found"));
+      }
+      return reply.code(200).send({ data: collection });
     },
   );
 
@@ -104,6 +119,40 @@ export async function collectionRoutes(fastify: FastifyInstance) {
       const id = Number((request.params as { id: string }).id);
       const collection = await service.togglePublish(id);
       return reply.code(200).send({ data: collection });
+    },
+  );
+
+  // POST /admin/parse-url — спарсить книги из статьи по URL
+  fastify.post<{ Body: { url: string } }>(
+    "/admin/parse-url",
+    { preHandler: [authMiddleware, requireRole("admin", "moderator")] },
+    async (request, reply) => {
+      const { url } = parseUrlSchema.parse(request.body);
+      try {
+        const books = await service.parseBooksFromUrl(url);
+        return reply.code(200).send({ data: books });
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "Ошибка парсинга страницы";
+        fastify.log.error({ error, url }, "Parse URL failed");
+        return reply
+          .code(422)
+          .send(createApiError(ErrorCodes.INTERNAL_ERROR, message));
+      }
+    },
+  );
+
+  // POST /admin/fetch-covers — найти обложки для списка книг
+  fastify.post<{ Body: { books: { title: string; author: string }[] } }>(
+    "/admin/fetch-covers",
+    { preHandler: [authMiddleware, requireRole("admin", "moderator")] },
+    async (request, reply) => {
+      const { books } = request.body;
+      if (!Array.isArray(books) || books.length === 0) {
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Передайте массив книг"));
+      }
+      const result = await service.fetchCoversForBooks(books);
+      return reply.code(200).send({ data: result });
     },
   );
 

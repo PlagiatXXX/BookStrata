@@ -54,6 +54,7 @@ interface CollectionSeed {
   categoryId?: string;
   content?: string;
   excerpt?: string;
+  editorialNote?: string | null;
   coverImageUrl: string;
   bookCovers: string[];
   tags: string[];
@@ -84,6 +85,7 @@ async function main() {
       categoryId: col.categoryId || undefined,
       content: col.content || undefined,
       excerpt: col.excerpt || undefined,
+      editorialNote: (col as Record<string, unknown>).editorialNote as string | null | undefined || undefined,
       coverImageUrl: col.coverImageUrl,
       bookCovers: col.bookCovers as string[],
       tags: col.tags as string[],
@@ -145,6 +147,7 @@ function generateFileContent(seeds: CollectionSeed[]): string {
   lines.push(`  categoryId?: string;`);
   lines.push(`  content?: string;`);
   lines.push(`  excerpt?: string;`);
+  lines.push(`  editorialNote?: string | null;`);
   lines.push(`  coverImageUrl: string;`);
   lines.push(`  bookCovers: string[];`);
   lines.push(`  tags: string[];`);

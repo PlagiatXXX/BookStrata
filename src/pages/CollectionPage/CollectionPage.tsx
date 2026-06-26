@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Tag, GitFork } from "lucide-react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Tag, GitFork, Calendar } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
@@ -9,7 +9,7 @@ import { CuratedTierView } from "@/components/CuratedTierView";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { useAuth } from "@/hooks/useAuthContext";
 import { sileo } from "sileo";
-import { getCollectionBySlug } from "@/lib/collectionsApi";
+import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/lib/collectionsApi";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
@@ -17,6 +17,8 @@ import "./CollectionPage.css";
 
 export function CollectionPage() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get("preview") === "1";
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const [collection, setCollection] = useState<CollectionItem | null>(null);
@@ -30,7 +32,9 @@ export function CollectionPage() {
       if (!slug) return;
 
       try {
-        const data = await getCollectionBySlug(slug);
+        const data = isPreview
+          ? await getCollectionPreviewBySlug(slug)
+          : await getCollectionBySlug(slug);
         if (!data) {
           sileo.error({
             title: "Коллекция не найдена",
@@ -189,6 +193,15 @@ return DOMPurify.sanitize(collection.content);
           </div>
         )}
 
+        {/* Editorial note (SEO-текст) */}
+        {collection.editorialNote && (
+          <div className="brutal-card brutal-border p-6 mb-8 border-l-4" style={{ borderLeftColor: "var(--accent-main)" }}>
+            <p className="text-base text-(--ink-1) leading-relaxed">
+              {collection.editorialNote}
+            </p>
+          </div>
+        )}
+
         {/* Excerpt */}
         {collection.excerpt && (
           <div className="brutal-card brutal-border p-6 mb-8">
@@ -197,6 +210,14 @@ return DOMPurify.sanitize(collection.content);
             </p>
           </div>
         )}
+
+        {/* Last updated */}
+        <div className="flex items-center gap-2 mb-8 text-sm text-(--ink-2)">
+          <Calendar size={14} />
+          <span>Обновлено: {new Date(collection.updatedAt).toLocaleDateString("ru-RU", {
+            day: "numeric", month: "long", year: "numeric",
+          })}</span>
+        </div>
 
         {/* Content — only for literary collections */}
         {collection.type === "literary" && sanitizedContent && (

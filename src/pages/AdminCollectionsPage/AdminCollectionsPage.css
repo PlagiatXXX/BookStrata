@@ -388,6 +388,16 @@
   color: var(--ink-1);
 }
 
+.admin-collections-form-error {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
 .admin-collections-checkbox-label {
   display: flex;
   align-items: center;
@@ -443,6 +453,28 @@
 .admin-collections-btn-submit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.admin-collections-btn-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.25rem;
+  color: var(--ink-1);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.admin-collections-btn-preview:hover {
+  border-color: var(--accent-main);
+  color: var(--accent-main);
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .admin-collections-btn-upload {
@@ -548,6 +580,18 @@
 
 .curated-editor-add-btn:hover {
   filter: brightness(1.1);
+}
+
+.curated-editor-add-btn--secondary {
+  background: transparent;
+  border: 1px solid var(--line-soft);
+  color: var(--ink-1);
+}
+
+.curated-editor-add-btn--secondary:hover {
+  border-color: var(--accent-main);
+  color: var(--accent-main);
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .curated-editor-empty {
@@ -679,6 +723,41 @@
   color: var(--ink-1);
 }
 
+/* Drop zone highlight */
+.curated-editor-tier-group--drag-over {
+  outline: 2px dashed var(--accent-main);
+  outline-offset: -2px;
+  background: rgba(99, 102, 241, 0.04);
+  transition: all 0.15s ease;
+}
+
+.curated-editor-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  min-height: 2.5rem;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  color: var(--ink-2);
+  cursor: grab;
+  transition: all 0.15s;
+  padding: 0;
+  touch-action: none;
+}
+
+.curated-editor-drag-handle:hover {
+  color: var(--accent-main);
+  background: rgba(99, 102, 241, 0.08);
+  border-color: var(--line-soft);
+}
+
+.curated-editor-drag-handle:active {
+  cursor: grabbing;
+}
+
 /* Book row */
 .curated-editor-book-row {
   display: flex;
@@ -687,10 +766,15 @@
   padding: 0.5rem 0.75rem;
   border-top: 1px solid var(--line-soft);
   background: var(--bg-0);
+  transition: opacity 0.15s ease;
 }
 
 .curated-editor-book-row.new {
   background: rgba(99, 102, 241, 0.03);
+}
+
+.curated-editor-book-row--dragging {
+  opacity: 0.4;
 }
 
 .curated-editor-book-fields {

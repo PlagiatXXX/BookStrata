@@ -43,6 +43,17 @@ export async function getCollectionBySlug(
   }
 }
 
+// Получить коллекцию по slug с пропуском isPublished (для админ-превью)
+export async function getCollectionPreviewBySlug(
+  slug: string,
+): Promise<CollectionItem | null> {
+  try {
+    return await apiClient.get<CollectionItem>(`/collections/admin/preview/${slug}`);
+  } catch {
+    return null;
+  }
+}
+
 // Получить все опубликованные коллекции (для публичного листинга)
 export async function getPublishedCollections(): Promise<CollectionItem[]> {
   const res = await apiClient.get<{ data: CollectionItem[] }>("/collections");
@@ -74,6 +85,26 @@ export async function toggleCollectionPublish(
   id: number,
 ): Promise<CollectionItem> {
   return apiClient.patch<CollectionItem>(`/collections/${id}/toggle-publish`);
+}
+
+// Спарсить книги из статьи по URL
+export async function parseBooksFromUrl(
+  url: string,
+): Promise<{ title: string; author: string; coverImageUrl: string }[]> {
+  return apiClient.post<{ title: string; author: string; coverImageUrl: string }[]>(
+    "/collections/admin/parse-url",
+    { url },
+  );
+}
+
+// Найти обложки для книг
+export async function fetchCoversForBooks(
+  books: { title: string; author: string }[],
+): Promise<{ title: string; author: string; coverImageUrl: string }[]> {
+  return apiClient.post<{ title: string; author: string; coverImageUrl: string }[]>(
+    "/collections/admin/fetch-covers",
+    { books },
+  );
 }
 
 // Загрузить обложку коллекции

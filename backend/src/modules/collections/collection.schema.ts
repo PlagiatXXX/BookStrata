@@ -32,6 +32,7 @@ export const createCollectionSchema = z.object({
   tags: z.array(z.string()).optional().default([]),
   isPublished: z.boolean().optional().default(false),
   order: z.number().int().optional().default(0),
+  editorialNote: z.string().nullable().optional(),
   // Curated fields
   tiers: z.record(z.string(), tierObjectSchema).optional(),
   tierOrder: z.array(z.string()).optional(),
@@ -108,6 +109,12 @@ export const updateCollectionJsonSchema = {
     },
   },
 };
+
+export const parseUrlSchema = z.object({
+  url: z.string().url("Некорректный URL"),
+});
+
+export type ParseUrlInput = z.infer<typeof parseUrlSchema>;
 
 export const deleteCollectionJsonSchema = {
   description: "Delete a collection",

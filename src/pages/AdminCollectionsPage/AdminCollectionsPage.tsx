@@ -43,6 +43,7 @@ interface CollectionFormData {
   tags: string;
   isPublished: boolean;
   order: number;
+  editorialNote: string;
 }
 
 const emptyFormData: CollectionFormData = {
@@ -56,6 +57,7 @@ const emptyFormData: CollectionFormData = {
   tags: "",
   isPublished: false,
   order: 0,
+  editorialNote: "",
 };
 
 export function AdminCollectionsPage() {
@@ -111,7 +113,19 @@ export function AdminCollectionsPage() {
 
   const handleOpenCreate = (presetType?: "curated" | "literary") => {
     setEditingCollection(null);
-    setFormData({ ...emptyFormData, type: presetType || "literary" });
+    setFormData({
+      type: presetType || "literary",
+      title: "",
+      content: "",
+      excerpt: "",
+      coverImageUrl: "",
+      categoryId: "",
+      bookCovers: ["", "", ""],
+      tags: "",
+      isPublished: false,
+      order: 0,
+      editorialNote: "",
+    });
     setCuratedTiers(
       presetType === "curated" && !editingCollection
         ? [
@@ -140,6 +154,7 @@ export function AdminCollectionsPage() {
       tags: collection.tags.join(", "),
       isPublished: collection.isPublished,
       order: collection.order,
+      editorialNote: collection.editorialNote || "",
     });
 
     if (collection.type === "curated" && collection.tiers && collection.tierOrder) {
@@ -233,6 +248,7 @@ export function AdminCollectionsPage() {
           .filter((tag) => tag.length > 0),
         isPublished: formData.isPublished,
         order: formData.order,
+        editorialNote: formData.editorialNote.trim() || null,
       };
 
       if (formData.type === "curated") {
@@ -658,6 +674,22 @@ export function AdminCollectionsPage() {
                   />
                 </div>
 
+                <div className="admin-collections-form-group">
+                  <label htmlFor="editorialNote">Редакционная заметка</label>
+                  <textarea
+                    id="editorialNote"
+                    value={formData.editorialNote}
+                    onChange={(e) =>
+                      setFormData({ ...formData, editorialNote: e.target.value })
+                    }
+                    placeholder="Почему именно эти книги? Как составлялся рейтинг? Что сюда не вошло?"
+                    rows={4}
+                  />
+                  <span className="admin-collections-form-hint">
+                    Отображается на странице подборки. Уникальный контент для SEO.
+                  </span>
+                </div>
+
                 {/* Тип коллекции */}
                 <div className="admin-collections-form-group">
                   <label>Тип коллекции</label>
@@ -837,6 +869,29 @@ export function AdminCollectionsPage() {
                     <span>Опубликовать сразу</span>
                   </label>
                 </div>
+
+                {editingCollection && (
+                  <div className="admin-collections-form-group">
+                    <div className="flex items-center gap-4 text-sm text-(--ink-2)">
+                      <span>Последнее обновление: {new Date(editingCollection.updatedAt).toLocaleDateString("ru-RU", {
+                        day: "numeric", month: "long", year: "numeric",
+                      })}</span>
+                      <button
+                        type="button"
+                        className="admin-collections-btn-preview"
+                        onClick={() => window.open(
+                          editingCollection.isPublished
+                            ? `/collections/${editingCollection.slug}`
+                            : `/collections/${editingCollection.slug}?preview=1`,
+                          "_blank",
+                        )}
+                      >
+                        <Eye size={14} />
+                        Предпросмотр
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="admin-collections-form-actions">
                   <button

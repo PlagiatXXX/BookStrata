@@ -50,6 +50,7 @@ export type CollectionItem = {
   content?: string; // HTML-контент
   // Общие:
   excerpt?: string;
+  editorialNote?: string | null; // Редакционная заметка (содержит текст "Почему именно эти книги?")
   coverImageUrl: string;
   bookCovers?: string[]; // Массив обложек книг (3-4 шт), для превью
   tags: string[];

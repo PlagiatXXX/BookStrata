@@ -67,3 +67,6 @@ skills-lock.json
 
 # Agent configs (ctx7)
 .agents/
+
+# Temporary parser tests
+backend/tmp-test-*

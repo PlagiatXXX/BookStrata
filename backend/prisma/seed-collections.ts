@@ -13,6 +13,7 @@ type CollectionSeed = {
   categoryId?: string;
   content?: string;
   excerpt?: string;
+  editorialNote?: string | null;
   coverImageUrl: string;
   bookCovers: string[];
   tags: string[];
