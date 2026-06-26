@@ -14,10 +14,16 @@
 # ---------- Stage 1: Builder ----------
 FROM node:20-alpine AS builder
 
-# Зеркало npm registry для ускорения на российских серверах
+# --- Регистр mirror для российских серверов ---
 ENV npm_config_registry=https://registry.npmmirror.com
+# Prisma engine binary mirror (тот же npmmirror)
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 
 WORKDIR /build
+
+# OpenSSL 1.1 compat — Prisma 4.x engine на Alpine требует libssl.so.1.1
+# Используем community-репозиторий Alpine v3.20
+RUN apk add --no-cache -X https://dl-cdn.alpinelinux.org/alpine/v3.20/community openssl1.1-compat
 
 # Сначала только package.json — для кэширования слоя зависимостей
 COPY package.json package-lock.json ./
@@ -41,6 +47,10 @@ RUN npm run build
 FROM node:20-alpine AS production
 
 ENV npm_config_registry=https://registry.npmmirror.com
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
+
+# OpenSSL 1.1 compat — Prisma engine требует libssl.so.1.1 на Alpine
+RUN apk add --no-cache -X https://dl-cdn.alpinelinux.org/alpine/v3.20/community openssl1.1-compat
 
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup
