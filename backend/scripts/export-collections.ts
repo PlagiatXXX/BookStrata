@@ -59,7 +59,6 @@ interface CollectionSeed {
   tags: string[];
   isPublished: boolean;
   order: number;
-  editorialNote?: string | null;
   tiers?: Record<string, { id: string; title: string; color: string; bookIds: string[] }>;
   tierOrder?: string[];
   books?: Record<string, BookSeed>;
@@ -113,12 +112,6 @@ async function main() {
       }
     }
 
-    // Добавляем editorialNote, если есть (может не быть в схеме пока)
-    const note = (col as unknown as Record<string, unknown>).editorialNote as string | null | undefined;
-    if (note) {
-      seed.editorialNote = note;
-    }
-
     return seed;
   });
 
@@ -157,7 +150,6 @@ function generateFileContent(seeds: CollectionSeed[]): string {
   lines.push(`  tags: string[];`);
   lines.push(`  isPublished: boolean;`);
   lines.push(`  order: number;`);
-  lines.push(`  editorialNote?: string | null;`);
   lines.push(`  tiers?: Record<string, { id: string; title: string; color: string; bookIds: string[] }>;`);
   lines.push(`  tierOrder?: string[];`);
   lines.push(`  books?: Record<string, {`);
@@ -187,8 +179,7 @@ function generateFileContent(seeds: CollectionSeed[]): string {
   lines.push(`    tags: col.tags,`);
   lines.push(`    isPublished: col.isPublished,`);
   lines.push(`    order: col.order,`);
-  lines.push(`    editorialNote: col.editorialNote ?? null,`);
-  lines.push(`    tiers: col.tiers as Prisma.InputJsonValue ?? Prisma.JsonNull,`);
+    lines.push(`    tiers: col.tiers as Prisma.InputJsonValue ?? Prisma.JsonNull,`);
   lines.push(`    tierOrder: col.tierOrder || [],`);
   lines.push(`    books: col.books as Prisma.InputJsonValue ?? Prisma.JsonNull,`);
   lines.push(`    unrankedBookIds: col.unrankedBookIds || [],`);
@@ -217,9 +208,6 @@ function generateFileContent(seeds: CollectionSeed[]): string {
     lines.push(`    tags: ${JSON.stringify(seed.tags)},`);
     lines.push(`    isPublished: ${JSON.stringify(seed.isPublished)},`);
     lines.push(`    order: ${seed.order},`);
-    if (seed.editorialNote) {
-      lines.push(`    editorialNote: ${JSON.stringify(seed.editorialNote)},`);
-    }
     if (seed.tiers) {
       lines.push(`    tiers: ${JSON.stringify(seed.tiers)},`);
     }

@@ -18,7 +18,6 @@ type CollectionSeed = {
   tags: string[];
   isPublished: boolean;
   order: number;
-  editorialNote?: string | null;
   tiers?: Record<string, { id: string; title: string; color: string; bookIds: string[] }>;
   tierOrder?: string[];
   books?: Record<string, {
@@ -48,7 +47,6 @@ function toPrisma(col: CollectionSeed): Prisma.CollectionCreateInput {
     tags: col.tags,
     isPublished: col.isPublished,
     order: col.order,
-    editorialNote: col.editorialNote ?? null,
     tiers: col.tiers as Prisma.InputJsonValue ?? Prisma.JsonNull,
     tierOrder: col.tierOrder || [],
     books: col.books as Prisma.InputJsonValue ?? Prisma.JsonNull,
