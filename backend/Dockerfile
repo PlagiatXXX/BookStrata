@@ -11,13 +11,12 @@
 #     bookstrata-backend
 # ============================================================
 
-# --- Используем Debian-based slim вместо Alpine ---
-# Alpine требует openssl1.1-compat из community-репозитория для Prisma,
-# а на сервере DNS на Alpine-репозитории недоступен.
-# Debian имеет OpenSSL из коробки.
+# --- Debian 11 (Bullseye) — OpenSSL 1.1 из коробки ---
+# Prisma 4.x engine требует libssl.so.1.1. На Debian 12 (Bookworm)
+# только OpenSSL 3.0, а на Bullseye — 1.1 из коробки.
 
 # ---------- Stage 1: Builder ----------
-FROM node:20-slim AS builder
+FROM node:20-bullseye-slim AS builder
 
 # Зеркало npm registry для ускорения на российских серверах
 ENV npm_config_registry=https://registry.npmmirror.com
@@ -45,7 +44,7 @@ COPY src/ ./src/
 RUN npm run build
 
 # ---------- Stage 2: Production ----------
-FROM node:20-slim AS production
+FROM node:20-bullseye-slim AS production
 
 ENV npm_config_registry=https://registry.npmmirror.com
 ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
