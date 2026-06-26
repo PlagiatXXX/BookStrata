@@ -14,6 +14,9 @@
 # ---------- Stage 1: Builder ----------
 FROM node:20-alpine AS builder
 
+# Зеркало npm registry для ускорения на российских серверах
+ENV npm_config_registry=https://registry.npmmirror.com
+
 WORKDIR /build
 
 # Сначала только package.json — для кэширования слоя зависимостей
@@ -25,7 +28,9 @@ RUN NODE_ENV=development npm ci
 
 # Prisma schema + генерация клиента
 COPY prisma/ ./prisma/
-RUN npx prisma generate
+# Используем --no-install, чтобы npx не пытался скачать пакет из registry
+# (prisma уже установлен через npm ci на предыдущем шаге)
+RUN npx --no-install prisma generate
 
 # Исходники + компиляция
 COPY tsconfig.json ./
@@ -35,14 +40,15 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-alpine AS production
 
+ENV npm_config_registry=https://registry.npmmirror.com
+
 RUN addgroup -g 1001 -S appgroup && \
     adduser -S appuser -u 1001 -G appgroup
 
 WORKDIR /app
 
 # Устанавливаем только production-зависимости
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && \
+RUN npm ci --omit=dev --maxsockets=1 && \
     npm cache clean --force
 
 # Копируем собранный код и сгенерированный Prisma-клиент
