@@ -240,7 +240,6 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
           <Button
             variant="ghost"
             onClick={onClose}
-            autoFocus={!onAdd}
             className="text-sm focus-visible:ring-2 focus-visible:ring-cyan-400"
           >
             Закрыть
@@ -251,7 +250,6 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
               onClick={() => onAdd(book)}
               size="sm"
               className="bg-[#c1fffe] text-black hover:bg-[#a0f0f0] text-xs font-black focus-visible:ring-2 focus-visible:ring-cyan-600"
-              autoFocus
               aria-label="Добавить в тир-лист"
             >
               Добавить

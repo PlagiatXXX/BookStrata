@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useState, memo, useEffect } from "react";
+import { useReducer, useCallback, useState, memo, useEffect, useRef } from "react";
 import { Search, X, BookOpen, Plus, Eye, User, Upload } from "lucide-react";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 import { batchAddBooksFromSearch, addBookFromGoogleBooks, importFromLiveLib, type OpenLibraryBook, type LiveLibBook } from '@/lib/bookSearchApi';
@@ -459,6 +459,16 @@ export const BookSearchModal = ({
     }
   };
 
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Focus the modal container on open so the browser doesn't auto-focus
+  // the search input (which would pop the keyboard on mobile).
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      modalRef.current.focus();
+    }
+  }, [isOpen]);
+
   const totalSelectedCount = Object.keys(state.selectedBooks).length + liveLibSelected.size;
   const overLimit = totalSelectedCount > MAX_BOOKS_PER_BATCH;
 
@@ -476,9 +486,11 @@ export const BookSearchModal = ({
 
         {/* Modal */}
         <div
+          ref={modalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="book-search-modal-title"
+          tabIndex={-1}
           className="relative mx-4 flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in"
         >
           {/* Header */}
