@@ -559,21 +559,18 @@ const collectionSeeds = [
 
 async function main() {
   const collections = collectionSeeds.map(toPrisma);
-  const newSlugs = new Set(collections.map((c) => c.slug));
-
-  const deleted = await prisma.collection.deleteMany({
-    where: { slug: { notIn: Array.from(newSlugs) } },
-  });
-  console.log(`Deleted: ${deleted.count} collections`);
+  let created = 0;
 
   for (const data of collections) {
-    await prisma.collection.upsert({
-      where: { slug: data.slug },
-      update: data,
-      create: data,
-    });
+    const exists = await prisma.collection.findUnique({ where: { slug: data.slug } });
+    if (!exists) {
+      await prisma.collection.create({ data });
+      created++;
+    }
   }
-  console.log(`Seeded: ${collections.length} collections`);
+
+  if (created > 0) console.log(`Collections created: ${created}`);
+  else console.log("Collections: no new ones to create");
 }
 
 main()

@@ -170,23 +170,22 @@ async function main() {
   //
   // console.log("News created: 3 articles")
 
-  // === Подборки (collections) ===
+  // === Подборки (collections) — create-only ===
+  // Seed НИКОГДА не перезаписывает существующие коллекции,
+  // чтобы не затёрсть правки, сделанные через админку на проде.
   const collections = getCollectionSeedData()
-  const newSlugs = new Set(collections.map(c => c.slug))
-
-  // Удаляем коллекции, которых больше нет в сиде (переименованные/удалённые)
-  await prisma.collection.deleteMany({
-    where: { slug: { notIn: Array.from(newSlugs) } },
-  })
+  let created = 0
 
   for (const data of collections) {
-    await prisma.collection.upsert({
-      where: { slug: data.slug },
-      update: data,
-      create: data,
-    })
+    const exists = await prisma.collection.findUnique({ where: { slug: data.slug } })
+    if (!exists) {
+      await prisma.collection.create({ data })
+      created++
+    }
   }
-  console.log(`Collections seeded: ${collections.length}`)
+
+  if (created > 0) console.log(`Collections created: ${created}`)
+  else console.log("Collections: no new ones to create")
 
   console.log("Seed done!")
 }
