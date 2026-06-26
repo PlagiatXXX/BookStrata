@@ -192,3 +192,129 @@ export async function getTierListBooksCount(
 export async function getTierListMetadata(id: string) {
   return tierListRepository.getMetadata(id);
 }
+
+// Нормализация ключа книги для сравнения
+function normalizeKey(title: string, author: string | null): string {
+  return `${title.toLowerCase().trim()}|${(author ?? "").toLowerCase().trim()}`;
+}
+
+// GET /api/tier-lists/:id/taste-match — сравнение вкуса с автором просматриваемого тир-листа
+export async function getTierListTasteMatch(
+  tierListIdOrSlug: string,
+  currentUserId?: number,
+) {
+  const realId = await resolveTierListId(tierListIdOrSlug);
+
+  // Получаем тир-лист с его тирами и размещениями
+  const tierList = await prisma.tierList.findUnique({
+    where: { id: realId },
+    include: {
+      tiers: { orderBy: { rank: "asc" } },
+      placements: {
+        include: {
+          book: { select: { title: true, author: true, coverImageUrl: true } },
+          tier: { select: { id: true, title: true, rank: true } },
+        },
+      },
+    },
+  });
+
+  if (!tierList) {
+    return { matchPercent: 0, commonBooks: 0, totalBooks: 0, matches: [] };
+  }
+
+  // Строим map книг просматриваемого тир-листа: ключ → { tier }
+  const listBookMap = new Map<
+    string,
+    { tierId: number | null; tierTitle: string | null; tierRank: number | null }
+  >();
+  for (const p of tierList.placements) {
+    const key = normalizeKey(p.book.title, p.book.author);
+    if (!listBookMap.has(key)) {
+      listBookMap.set(key, {
+        tierId: p.tier?.id ?? null,
+        tierTitle: p.tier?.title ?? null,
+        tierRank: p.tier?.rank ?? null,
+      });
+    }
+  }
+
+  const totalBooks = listBookMap.size;
+
+  // Если пользователь не авторизован — возвращаем только количество книг
+  if (!currentUserId) {
+    return { matchPercent: 0, commonBooks: 0, totalBooks, matches: [] };
+  }
+
+  // Получаем все книги текущего пользователя
+  const userListIds = await tierListRepository.findUserTierListIds(currentUserId);
+  if (userListIds.length === 0) {
+    return { matchPercent: 0, commonBooks: 0, totalBooks, matches: [] };
+  }
+
+  const userPlacements = await prisma.bookPlacement.findMany({
+    where: { tierListId: { in: userListIds } },
+    include: {
+      book: { select: { title: true, author: true, coverImageUrl: true } },
+      tier: { select: { id: true, title: true, rank: true } },
+    },
+  });
+
+  // Строим map книг пользователя
+  const userBookMap = new Map<
+    string,
+    { tierId: number | null; tierTitle: string | null; tierRank: number | null }
+  >();
+  for (const p of userPlacements) {
+    const key = normalizeKey(p.book.title, p.book.author);
+    if (!userBookMap.has(key)) {
+      userBookMap.set(key, {
+        tierId: p.tier?.id ?? null,
+        tierTitle: p.tier?.title ?? null,
+        tierRank: p.tier?.rank ?? null,
+      });
+    }
+  }
+
+  // Находим общие книги
+  const matches: Array<{
+    book: { title: string; author: string | null; coverImageUrl: string };
+    tierInList: string | null;
+    tierInListId: number | null;
+    tierInListRank: number | null;
+    tierInMine: string | null;
+    tierInMineId: number | null;
+    tierInMineRank: number | null;
+  }> = [];
+
+  for (const p of tierList.placements) {
+    const key = normalizeKey(p.book.title, p.book.author);
+    const userMatch = userBookMap.get(key);
+    if (userMatch) {
+      matches.push({
+        book: {
+          title: p.book.title,
+          author: p.book.author,
+          coverImageUrl: p.book.coverImageUrl,
+        },
+        tierInList: p.tier?.title ?? null,
+        tierInListId: p.tier?.id ?? null,
+        tierInListRank: p.tier?.rank ?? null,
+        tierInMine: userMatch.tierTitle,
+        tierInMineId: userMatch.tierId,
+        tierInMineRank: userMatch.tierRank,
+      });
+    }
+  }
+
+  const commonBooks = matches.length;
+  const userBookKeys = userBookMap.size;
+  const totalUnique = totalBooks + userBookKeys - commonBooks;
+
+  return {
+    matchPercent: totalUnique > 0 ? Math.round((commonBooks / totalUnique) * 100) : 0,
+    commonBooks,
+    totalBooks,
+    matches,
+  };
+}

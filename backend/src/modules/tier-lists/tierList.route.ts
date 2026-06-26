@@ -327,6 +327,30 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
   );
 
+  // GET /:id/taste-match — совпадение вкусов с автором тир-листа
+  fastify.get<{ Params: { id: string } }>(
+    "/:id/taste-match",
+    async (request, reply) => {
+      const tierListIdOrSlug = request.params.id;
+      const currentUserId = (request as any).user?.userId;
+
+      try {
+        const result = await service.getTierListTasteMatch(
+          tierListIdOrSlug,
+          currentUserId,
+        );
+        return reply.code(200).send({ data: result });
+      } catch (err: any) {
+        if (err?.message?.includes("not found")) {
+          return reply.code(404).send(
+            createApiError(ErrorCodes.TIER_LIST_NOT_FOUND, "Tier list not found"),
+          );
+        }
+        throw err;
+      }
+    },
+  );
+
   // PUT /:id -> Обновить тир-лист (название или тему)
   fastify.put<{ Params: { id: string }; Body: { title?: string; theme?: string } }>(
     "/:id",

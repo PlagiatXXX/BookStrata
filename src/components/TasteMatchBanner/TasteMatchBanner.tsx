@@ -1,4 +1,4 @@
-import { Heart, Loader2, ChevronDown, ChevronUp, Minus } from "lucide-react"
+import { Heart, Loader2, ChevronDown, ChevronUp, Minus, AlertCircle } from "lucide-react"
 import { useState } from "react"
 import { useTasteMatch } from "@/hooks/useTasteMatch"
 import type { ApiTierListResponse } from "@/types/api"
@@ -14,11 +14,12 @@ const TIER_LABELS = ["S", "A", "B", "C", "D", "F"]
 export function TasteMatchBanner({
   apiData,
   isReadOnly,
+  authorUsername,
 }: TasteMatchBannerProps) {
-  const { bestMatch, isLoading, hasAny } = useTasteMatch(apiData, isReadOnly)
+  const { bestMatch, isLoading, hasAny, isError } = useTasteMatch(apiData, isReadOnly)
   const [expanded, setExpanded] = useState(false)
 
-  if (!isReadOnly || !hasAny) return null
+  if (!isReadOnly) return null
 
   if (isLoading) {
     return (
@@ -29,7 +30,18 @@ export function TasteMatchBanner({
     )
   }
 
-  if (!bestMatch) return null
+  if (isError) {
+    return (
+      <div className="mb-6 flex items-center gap-2 rounded-md border border-yellow-500/20 bg-yellow-500/5 px-4 py-3">
+        <AlertCircle size={14} className="text-yellow-400" />
+        <span className="text-xs text-[#b8b1a3]">
+          Не удалось рассчитать совпадение вкусов
+        </span>
+      </div>
+    )
+  }
+
+  if (!hasAny || !bestMatch) return null
 
   const isHighMatch = bestMatch.matchPercent >= 70
   const isMediumMatch = bestMatch.matchPercent >= 40
@@ -73,16 +85,20 @@ export function TasteMatchBanner({
             >
               {bestMatch.matchPercent}%
             </span>
+            {authorUsername && (
+              <span className="text-xs text-[#b8b1a3] ml-1">
+                с {authorUsername}
+              </span>
+            )}
           </p>
           <p className="text-xs text-[#b8b1a3]">
             {bestMatch.commonBooks === 1
               ? `1 общая книга — вы оба читали одно и то же`
-              : `${bestMatch.commonBooks} общих книг — вы читаете то же самое`}
-            {bestMatch.commonBooks > 0 && (
-              <span className="ml-1">
-                (с «{bestMatch.title}»)
-              </span>
-            )}
+              : `${bestMatch.commonBooks} общих ${
+                  bestMatch.commonBooks >= 2 && bestMatch.commonBooks <= 4
+                    ? "книги"
+                    : "книг"
+                } — вы читаете то же самое`}
           </p>
         </div>
         {bestMatch.details.length > 0 && (
@@ -106,6 +122,13 @@ export function TasteMatchBanner({
                   key={i}
                   className="flex items-center gap-2 rounded-sm bg-black/30 px-2.5 py-1.5 text-xs"
                 >
+                  {d.coverImageUrl && (
+                    <img
+                      src={d.coverImageUrl}
+                      alt=""
+                      className="h-5 w-3.5 rounded object-cover"
+                    />
+                  )}
                   <span className="flex-1 truncate text-[#f3efe6]">
                     {d.title}{d.author ? ` (${d.author})` : ""}
                   </span>

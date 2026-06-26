@@ -20,6 +20,7 @@ export {
   clearAllTiers,
   getTierListBooksCount,
   getTierListMetadata,
+  getTierListTasteMatch,
 } from "./tierList.crud.service.js";
 
 export {

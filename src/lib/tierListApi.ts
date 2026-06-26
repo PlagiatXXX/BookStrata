@@ -355,3 +355,31 @@ export async function forkTierList(id: string): Promise<ApiTierListResponse> {
   tierListLogger.info('Копия тир-листа успешно создана', { originalId: id, newId: result.id });
   return result;
 }
+
+// --- Taste Match ---
+
+export interface TierListTasteMatchResult {
+  matchPercent: number;
+  commonBooks: number;
+  totalBooks: number;
+  matches: Array<{
+    book: {
+      title: string;
+      author: string | null;
+      coverImageUrl: string;
+    };
+    tierInList: string | null;
+    tierInListId: number | null;
+    tierInListRank: number | null;
+    tierInMine: string | null;
+    tierInMineId: number | null;
+    tierInMineRank: number | null;
+  }>;
+}
+
+export async function apiGetTierListTasteMatch(
+  idOrSlug: string,
+): Promise<TierListTasteMatchResult> {
+  tierListLogger.info("Получение совпадения вкусов для тир-листа", { idOrSlug });
+  return apiClient.get<TierListTasteMatchResult>(`/tier-lists/${idOrSlug}/taste-match`);
+}
