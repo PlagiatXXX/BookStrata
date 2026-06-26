@@ -48,6 +48,7 @@ RUN addgroup -g 1001 -S appgroup && \
 WORKDIR /app
 
 # Устанавливаем только production-зависимости
+COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --maxsockets=1 && \
     npm cache clean --force
 
