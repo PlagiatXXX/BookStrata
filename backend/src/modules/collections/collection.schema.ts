@@ -31,6 +31,7 @@ export const createCollectionSchema = z.object({
   categoryId: z.string().optional(),
   tags: z.array(z.string()).optional().default([]),
   isPublished: z.boolean().optional().default(false),
+  isFeatured: z.boolean().optional().default(false),
   order: z.number().int().optional().default(0),
   editorialNote: z.string().nullable().optional(),
   // Curated fields

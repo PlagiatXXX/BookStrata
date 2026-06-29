@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { saveTierListAtomic } from "@/lib/tierListApi";
+import { createTierList, saveTierListAtomic } from "@/lib/tierListApi";
+import { apiClient } from "@/lib/api-client";
 import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
 import { stableStringify } from "@/utils/stableStringify";
 import type { TierListData } from "@/types";
@@ -27,6 +28,7 @@ interface UseTierEditorSaveParams {
     info: (message: string, context: { tierListId: string }) => void;
     error: (error: Error, context: { tierListId: string; action: string }) => void;
   };
+  theme?: string;
 }
 
 /**
@@ -47,6 +49,7 @@ export function useTierEditorSave({
   isReadOnly,
   setHasUnsavedChanges,
   logger,
+  theme = "default",
 }: UseTierEditorSaveParams): UseTierEditorSaveResult {
   const queryClient = useQueryClient();
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -89,8 +92,42 @@ export function useTierEditorSave({
 
     setSaveStatus("saving");
     try {
+      // Определяем, нужно ли создать тир-лист (форк или новый)
+      const isNumericId = /^\d+$/.test(listData.id);
+      let effectiveId = isNumericId ? listData.id : tierListId;
+
+      if (!isNumericId) {
+        // Создаём новый тир-лист
+        const created = await createTierList(listData.title || "Новый тир-лист");
+        effectiveId = String(created.id);
+
+        // Обновляем URL на slug (человекочитаемый), если он есть
+        const urlPath = created.slug
+          ? `/tier-lists/${created.slug}`
+          : `/tier-lists/${effectiveId}`;
+        window.history.replaceState(null, "", urlPath);
+
+        // Обновляем ID в данных редактора
+        dispatch({
+          type: "SET_STATE",
+          payload: { ...listData, id: effectiveId, tierIdToTempIdMap: {} },
+        });
+
+        // Переносим черновик под новый ID
+        const draft = localStorage.getItem(`tier-list-draft-${tierListId}`);
+        if (draft) {
+          localStorage.setItem(`tier-list-draft-${effectiveId}`, draft);
+          localStorage.removeItem(`tier-list-draft-${tierListId}`);
+        }
+
+        // Сохраняем тему, если она выбрана нестандартная
+        if (theme && theme !== "default") {
+          apiClient.put(`/tier-lists/${effectiveId}`, { theme }).catch(() => {});
+        }
+      }
+
       const payload = getSavePayload();
-      const result = await saveTierListAtomic(tierListId, payload);
+      const result = await saveTierListAtomic(effectiveId, payload);
 
       setHasUnsavedChanges(false);
       setSaveStatus("saved");
@@ -112,8 +149,8 @@ export function useTierEditorSave({
       }
 
       // Очищаем черновик после успешного сохранения
-      localStorage.removeItem(`tier-list-draft-${tierListId}`);
-      localStorage.setItem(`tier-list-saved-${tierListId}`, String(Date.now()));
+      localStorage.removeItem(`tier-list-draft-${effectiveId}`);
+      localStorage.setItem(`tier-list-saved-${effectiveId}`, String(Date.now()));
 
       // Сохраняем snapshot для последующего сравнения
       savedSnapshotRef.current = serializeSnapshot(payload);
@@ -135,7 +172,7 @@ export function useTierEditorSave({
         action: "manual-save",
       });
     }
-  }, [tierListId, isLoading, isReadOnly, getSavePayload, setHasUnsavedChanges, dispatch, queryClient, logger]);
+  }, [tierListId, isLoading, isReadOnly, getSavePayload, setHasUnsavedChanges, dispatch, queryClient, logger, theme, listData]);
 
   return {
     saveStatus,

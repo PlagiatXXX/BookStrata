@@ -119,13 +119,16 @@ export const TierGrid = memo(
     } = props;
     const { tiers, tierOrder, books } = listData;
 
+    // Фильтруем tierOrder — убираем ID, которых нет в tiers (защита от race condition)
+    const validTierOrder = tierOrder.filter((id) => id && tiers[id]);
+
     return (
       <div ref={ref} className="flex flex-col gap-2 bg-transparent">
         <SortableContext
-          items={tierOrder}
+          items={validTierOrder}
           strategy={verticalListSortingStrategy}
         >
-          {tierOrder.map((tierId) => (
+          {validTierOrder.map((tierId) => (
             <TierGridRow
               key={tierId}
               tier={tiers[tierId]}

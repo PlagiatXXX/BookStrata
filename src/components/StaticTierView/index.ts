@@ -1,0 +1,1 @@
+export { StaticTierView } from "./StaticTierView";

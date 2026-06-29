@@ -54,6 +54,19 @@ export async function getCollectionPreviewBySlug(
   }
 }
 
+
+
+export async function getFeaturedCollections(): Promise<CollectionItem[]> {
+  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections?isFeatured=true");
+  return (res.data || []).sort((a, b) => a.order - b.order);
+}
+
+// Получить не-featured коллекции (для страницы Сообщества)
+export async function getCommunityCollections(): Promise<CollectionItem[]> {
+  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections?isFeatured=false");
+  return (res.data || []).sort((a, b) => a.order - b.order);
+}
+
 // Получить все опубликованные коллекции (для публичного листинга)
 export async function getPublishedCollections(): Promise<CollectionItem[]> {
   const res = await apiClient.get<{ data: CollectionItem[] }>("/collections");

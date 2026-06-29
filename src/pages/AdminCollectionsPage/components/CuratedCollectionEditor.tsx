@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, memo, useRef } from "react";
 import { Plus, Trash2, Edit3, X, Upload, ExternalLink, GripVertical } from "lucide-react";
-import { DndContext, useDraggable, useDroppable, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, useDraggable, useDroppable, pointerWithin, type DragEndEvent } from "@dnd-kit/core";
 
 export interface CuratedTier {
   id: string;
@@ -328,7 +328,7 @@ export function CuratedCollectionEditor({
       // Сбрасываем ошибку через 5 секунд, чтобы админ её увидел
       setTimeout(() => setJsonImportError(null), 5000);
     }
-  }, [jsonImportText, books, tiers, onBooksChange]);
+  }, [jsonImportText, books, onBooksChange]);
 
   // Обработчик окончания перетаскивания книги
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -464,7 +464,7 @@ export function CuratedCollectionEditor({
         </div>
 
         {/* Книги по тирам — с drag-and-drop */}
-        <DndContext onDragEnd={handleDragEnd}>
+        <DndContext collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
           {tiers.map((tier) => {
             const tierBooks = booksByTier.grouped[tier.id] || [];
             if (tierBooks.length === 0) return null;
@@ -925,13 +925,12 @@ const BookRow = memo(function BookRow({
   const titleEmpty = !book.title.trim();
   const isNew = !book.title && !book.author;
 
-  // dnd-kit draggable
-  const { attributes, listeners, setNodeRef, transform, isDragging } = draggable
-    ? useDraggable({
-        id: `book-${book.id}`,
-        data: { bookId: book.id, type: "curated-book" },
-      })
-    : { attributes: {}, listeners: {}, setNodeRef: undefined, transform: null, isDragging: false };
+  // dnd-kit draggable — всегда вызываем хук (правила hooks)
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `book-${book.id}`,
+    data: { bookId: book.id, type: "curated-book" },
+    disabled: !draggable,
+  });
 
   const style = transform
     ? { transform: `translate(${transform.x}px, ${transform.y}px)`, opacity: isDragging ? 0.4 : 1 }

@@ -42,6 +42,7 @@ interface CollectionFormData {
   bookCovers: string[];
   tags: string;
   isPublished: boolean;
+  isFeatured: boolean;
   order: number;
   editorialNote: string;
 }
@@ -56,6 +57,7 @@ const emptyFormData: CollectionFormData = {
   bookCovers: ["", "", ""],
   tags: "",
   isPublished: false,
+  isFeatured: false,
   order: 0,
   editorialNote: "",
 };
@@ -123,6 +125,7 @@ export function AdminCollectionsPage() {
       bookCovers: ["", "", ""],
       tags: "",
       isPublished: false,
+      isFeatured: false,
       order: 0,
       editorialNote: "",
     });
@@ -153,6 +156,7 @@ export function AdminCollectionsPage() {
       bookCovers: collection.bookCovers?.length ? collection.bookCovers : ["", "", ""],
       tags: collection.tags.join(", "),
       isPublished: collection.isPublished,
+      isFeatured: collection.isFeatured,
       order: collection.order,
       editorialNote: collection.editorialNote || "",
     });
@@ -247,6 +251,7 @@ export function AdminCollectionsPage() {
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
         isPublished: formData.isPublished,
+        isFeatured: formData.isFeatured,
         order: formData.order,
         editorialNote: formData.editorialNote.trim() || null,
       };
@@ -867,6 +872,22 @@ export function AdminCollectionsPage() {
                       }
                     />
                     <span>Опубликовать сразу</span>
+                  </label>
+                </div>
+
+                <div className="admin-collections-form-group">
+                  <label className="admin-collections-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={formData.isFeatured}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          isFeatured: e.target.checked,
+                        })
+                      }
+                    />
+                    <span>Редакционная подборка (показывать на странице Рейтинг книг)</span>
                   </label>
                 </div>
 

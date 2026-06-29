@@ -1,6 +1,7 @@
 import { memo, forwardRef, useState, useEffect, useRef } from "react";
 import { X, Edit2, Eye } from "lucide-react";
 import type { Book } from "@/types";
+import type { ReadStatus } from "@/hooks/useReadStatus";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 
@@ -10,11 +11,13 @@ interface BookCoverProps {
   onDelete?: (bookId: string) => void;
   onEdit?: (book: Book) => void;
   onView?: (book: Book) => void;
+  readStatus?: ReadStatus | null;
+  onToggleStatus?: () => void;
 }
 
 export const BookCover = memo(
   forwardRef<HTMLDivElement, BookCoverProps>(
-    ({ book, isDraggable = true, onDelete, onEdit, onView }, ref) => {
+    ({ book, isDraggable = true, onDelete, onEdit, onView, readStatus, onToggleStatus }, ref) => {
       const [showActions, setShowActions] = useState(false);
       const [isHovered, setIsHovered] = useState(false);
       const lastTapTime = useRef<number>(0);
@@ -121,6 +124,64 @@ export const BookCover = memo(
             <div className="pointer-events-none absolute inset-0 border border-[#c1fffe]/15" />
           )}
 
+          {/* Read status badge — плашка снизу с текстом */}
+          {onToggleStatus && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onToggleStatus();
+              }}
+              className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 flex h-5 items-center justify-center gap-1
+                         rounded-t px-2
+                         bg-black/70 text-[9px] font-bold uppercase leading-none tracking-wider
+                         transition-all duration-150
+                         hover:bg-black/90 hover:h-6
+                         focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
+                         max-md:pointer-events-auto"
+              title={
+                readStatus === "read"
+                  ? "Прочитал"
+                  : readStatus === "reading"
+                    ? "Читаю сейчас"
+                    : readStatus === "want"
+                      ? "В планах"
+                      : "Нажмите, чтобы отметить статус книги"
+              }
+              aria-label={
+                readStatus === "read"
+                  ? "Прочитал"
+                  : readStatus === "reading"
+                    ? "Читаю сейчас"
+                    : readStatus === "want"
+                      ? "В планах"
+                      : "Отметить статус книги"
+              }
+            >
+              {!readStatus && (
+                <span className="text-(--ink-3) leading-none">+ Отметить</span>
+              )}
+              {readStatus === "read" && (
+                <>
+                  <span className="text-green-400 leading-none">✓</span>
+                  <span className="text-green-300">Прочитал</span>
+                </>
+              )}
+              {readStatus === "reading" && (
+                <>
+                  <span className="text-sky-400 leading-none">📖</span>
+                  <span className="text-sky-300">Читаю</span>
+                </>
+              )}
+              {readStatus === "want" && (
+                <>
+                  <span className="text-amber-400 leading-none">★</span>
+                  <span className="text-amber-300">В планах</span>
+                </>
+              )}
+            </button>
+          )}
+
           {!hasCover && (
             <div className="absolute inset-0">
               <BookCoverPlaceholder compact />
@@ -160,9 +221,9 @@ export const BookCover = memo(
                 setShowActions(false);
                 onView(book);
               }}
-              className="absolute left-0 bottom-0 z-10 flex size-6 items-center justify-center
+              className="absolute left-0 top-0 z-10 flex size-6 items-center justify-center
                          bg-[#ffbd58] text-black
-                         nb-heavy-border border-t-0 border-l-0
+                         nb-heavy-border border-b-0 border-l-0
                          transition-all duration-200
                          opacity-0
                          focus-visible:opacity-100

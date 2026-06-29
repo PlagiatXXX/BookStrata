@@ -50,11 +50,12 @@ export type CollectionItem = {
   content?: string; // HTML-контент
   // Общие:
   excerpt?: string;
+  isFeatured: boolean;
   editorialNote?: string | null; // Редакционная заметка (содержит текст "Почему именно эти книги?")
   coverImageUrl: string;
   bookCovers?: string[]; // Массив обложек книг (3-4 шт), для превью
   tags: string[];
-  isPublished: boolean;
+    isPublished: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -1520,6 +1521,8 @@ export const COLLECTIONS: CollectionItem[] = [
       "/images/books/sholohov-medium.webp",
     ],
     tags: ["Нобелевская премия", "Классика", "Лауреаты"],
+    isFeatured: false,
+
     isPublished: true,
     order: 1,
     createdAt: "2026-01-15T10:00:00Z",
@@ -1553,6 +1556,8 @@ export const COLLECTIONS: CollectionItem[] = [
       "/images/books/circus.webp",
     ],
     tags: ["Популярное", "Выбор читателей", "Топ"],
+    isFeatured: false,
+
     isPublished: true,
     order: 2,
     createdAt: "2026-02-01T09:00:00Z",
@@ -1591,6 +1596,8 @@ export const COLLECTIONS: CollectionItem[] = [
       "/images/books/prosa3-medium.webp",
     ],
     tags: ["Историческая проза", "Классика", "Современная литература"],
+    isFeatured: false,
+
     isPublished: true,
     order: 3,
     createdAt: "2026-02-10T12:00:00Z",
@@ -1606,6 +1613,8 @@ export const COLLECTIONS: CollectionItem[] = [
     coverImageUrl: "/images/collections/curated/top-fantasy/mistborn.jpeg",
     bookCovers: ["/images/collections/curated/top-fantasy/mistborn.jpeg", "/images/collections/curated/top-fantasy/astral-library.jpeg", "/images/collections/curated/top-fantasy/house-lasyr.jpeg"],
     tags: ["Фэнтези", "Эпическое фэнтези", "Магия", "Приключения"],
+    isFeatured: false,
+
     isPublished: true,
     order: 10,
     createdAt: "2026-04-01T10:00:00Z",
@@ -1641,6 +1650,8 @@ export const COLLECTIONS: CollectionItem[] = [
     coverImageUrl: "/images/collections/curated/top-detective/intruder.jpg",
     bookCovers: ["/images/collections/curated/top-detective/intruder.jpg", "/images/collections/curated/top-detective/alibi.jpeg", "/images/collections/curated/top-detective/his-her.jpeg"],
     tags: ["Детективы", "Триллеры", "Мистика", "Криминал", "Психология"],
+    isFeatured: false,
+
     isPublished: true,
     order: 11,
     createdAt: "2026-04-02T10:00:00Z",
@@ -1675,6 +1686,8 @@ export const COLLECTIONS: CollectionItem[] = [
     coverImageUrl: "/images/collections/curated/top-fantastic/carl.jpeg",
     bookCovers: ["/images/collections/curated/top-fantastic/carl.jpeg", "/images/collections/curated/top-fantastic/dark-matter.jpeg", "/images/collections/curated/top-fantastic/gold-son.jpeg"],
     tags: ["Фантастика", "Sci-Fi", "Классика", "Киберпанк"],
+    isFeatured: false,
+
     isPublished: true,
     order: 12,
     createdAt: "2026-04-03T10:00:00Z",
@@ -1709,6 +1722,8 @@ export const COLLECTIONS: CollectionItem[] = [
     coverImageUrl: "/images/collections/curated/popular-science/atomic.jpeg",
     bookCovers: ["/images/collections/curated/popular-science/atomic.jpeg", "/images/collections/curated/popular-science/anthropocene.jpeg", "/images/collections/curated/popular-science/anxious.jpeg"],
     tags: ["Нон-фикшн", "Саморазвитие", "Наука", "История"],
+    isFeatured: false,
+
     isPublished: true,
     order: 15,
     createdAt: "2026-04-06T10:00:00Z",

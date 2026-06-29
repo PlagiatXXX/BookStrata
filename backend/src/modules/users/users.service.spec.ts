@@ -840,7 +840,7 @@ describe("users.service", () => {
       chatBannedAt: null,
       chatBannedUntil: null,
       suspendedAt: new Date("2026-05-28T10:00:00Z"),
-      suspendedUntil: new Date("2026-06-28T10:00:00Z"),
+      suspendedUntil: new Date("2027-06-28T10:00:00Z"),
       suspensionReason: "Нарушение правил",
       role: { name: "user" },
       warnings: [],

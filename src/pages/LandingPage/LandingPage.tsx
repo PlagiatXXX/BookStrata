@@ -4,9 +4,9 @@ import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
 import {
   ArrowRight, BookOpen, Sword, Sparkles,
-  Trophy, Heart, MessageCircle, MessageSquare, Zap,
-  ChevronRight, ChevronUp, Menu, X, Check, Layers, Brain, Copy, Paintbrush, Send,
-  BarChart3, Users,
+  Heart, MessageSquare, Zap,
+  ChevronRight, ChevronUp, Menu, X, Check, Layers, Copy, Send,
+  BarChart3,
 } from "lucide-react"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { Logo } from "@/ui/Logo"
@@ -14,9 +14,7 @@ import { Footer } from "@/ui/Footer"
 import { RevealBox } from "@/ui/RevealBox"
 import { Pointer } from "@/components/ui/pointer"
 import { apiTrackEvent } from "@/lib/analyticsApi"
-import { Highlighter } from "@/components/ui/highlighter"
 import { BorderBeam } from "@/components/ui/border-beam"
-import { HanddrawnSmiley } from "@/components/ui/handdrawn-smiley"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { getPublicTierLists, type TierListShort } from "@/lib/tierListApi"
 import { getForumStats } from "@/lib/battlesApi"
@@ -57,17 +55,57 @@ function AnimatedCounter({ target, suffix = "", label }: { target: number; suffi
   )
 }
 
-/* ---------- Feature card ---------- */
-const features = [
-  { icon: Layers, title: "Визуальные рейтинги", desc: "Создавай тир-листы любимых книг в удобном drag-and-drop редакторе. Выбирай темы, кастомизируй блоки.", featured: true },
-  { icon: Brain, title: "Букстраж", desc: "ИИ-рекомендации книг на основе твоих тир-листов. Умный алгоритм подбирает то, что тебе понравится.", featured: true },
-  { icon: Sword, title: "Баттлы", desc: "Сравнивай свои подборки с другими читателями. Голосуй, участвуй, докажи что твой вкус — лучший.", featured: true },
-  { icon: MessageCircle, title: "Обсуждения", desc: "Комментируй подборки, общайся в общем чате, делись мнениями о книгах с единомышленниками." },
-  { icon: Sparkles, title: "AI-генерация аватаров", desc: "Создавай уникальные аватарки с помощью нейросети. Просто опиши желаемый образ — и получи результат." },
-  { icon: Copy, title: "Шаблоны и форки", desc: "Используй готовые шаблоны популярных тир-листов или форкай понравившиеся у других авторов. Доставай и развивай." },
-  { icon: Paintbrush, title: "Украшай", desc: "Оформляй тир-листы под своё настроение и вкус, добавляй кастомные обложки." },
-  { icon: Trophy, title: "Геймификация", desc: "Зарабатывай XP, открывай ачивки, повышай уровень. Соревнуйся в еженедельных баттлах." },
-  { icon: Heart, title: "Совпадение вкусов", desc: "Находи читателей со схожими интересами. Сравнивай профили и подписывайся на топовых авторов." },
+/* ---------- Scenario card ---------- */
+interface ScenarioItem {
+  icon: React.ComponentType<{ size?: number }>
+  title: string
+  points: string[]
+  gradient: string
+  featured?: boolean
+}
+
+const scenarios: ScenarioItem[] = [
+  {
+    icon: BookOpen,
+    title: "Ведите свою библиотеку",
+    points: [
+      "Добавляйте книги из Google Books и LiveLib",
+      "Отмечайте статус: прочитано / читаю / планирую",
+      "Никогда не забывайте, что читали",
+    ],
+    gradient: "from-emerald-500 to-teal-600",
+  },
+  {
+    icon: Layers,
+    title: "Создавайте личные рейтинги",
+    points: [
+      "Распределяйте книги по уровням S, A, B, C, D",
+      "Кастомизируйте темы, обложки и блоки",
+      "Делитесь визуальными подборками с друзьями",
+    ],
+    gradient: "from-violet-600 to-purple-600",
+    featured: true,
+  },
+  {
+    icon: Heart,
+    title: "Находите единомышленников",
+    points: [
+      "Сравнивайте свои рейтинги с другими читателями",
+      "Подписывайтесь на людей с похожим вкусом",
+      "Обсуждайте книги в комментариях",
+    ],
+    gradient: "from-rose-500 to-pink-600",
+  },
+  {
+    icon: Sparkles,
+    title: "Открывайте новые книги",
+    points: [
+      "ИИ анализирует ваши вкусы и предлагает новинки",
+      "Подборки на основе реальных читательских предпочтений",
+      "Попадайте в книги, которые точно зайдут",
+    ],
+    gradient: "from-sky-500 to-indigo-600",
+  },
 ]
 
 /* ---------- Pricing ---------- */
@@ -107,6 +145,25 @@ const plans = [
   },
 ]
 
+/* ---------- Target audience ---------- */
+const audienceItems = [
+  {
+    icon: BookOpen,
+    title: "Читаете 5–15 книг в год",
+    desc: "Чтобы не забывать прочитанное, вести список «что дальше» и находить новые книги по своим интересам.",
+  },
+  {
+    icon: Heart,
+    title: "Любите делиться и сравнивать",
+    desc: "Чтобы показывать друзьям свой топ книг, участвовать в обсуждениях и находить людей со схожим вкусом.",
+  },
+  {
+    icon: Sparkles,
+    title: "Устали от случайных рекомендаций",
+    desc: "Чтобы получать подборки книг, которые действительно подходят под ваш вкус, а не общие списки бестселлеров.",
+  },
+]
+
 /* ---------- Nav ---------- */
 function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -124,7 +181,9 @@ function LandingNav() {
         <Logo onClick={() => navigate("/")} />
 
         <div className={`landing-nav__links ${mobileOpen ? "landing-nav__links--open" : ""}`}>
-          <button onClick={() => scrollTo("features")} className="landing-nav__link" type="button">Возможности</button>
+          <button onClick={() => scrollTo("scenarios")} className="landing-nav__link" type="button">Возможности</button>
+          <Link to="/rankings" className="landing-nav__link">Рейтинг книг</Link>
+          <Link to="/what-to-read" className="landing-nav__link">Что почитать</Link>
           <button onClick={() => scrollTo("pricing")} className="landing-nav__link" type="button">Тарифы</button>
           <a href="https://t.me/bookstrata" target="_blank" rel="noopener noreferrer" className="landing-nav__link">Telegram</a>
 
@@ -377,8 +436,7 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
   )
 }
 
-/* ---------- Sort data ---------- */
-
+/* ---------- Screenshots data ---------- */
 const screenshots = [
   {
     title: "Главная",
@@ -502,7 +560,7 @@ export default function LandingPage() {
     video.setAttribute("fetchpriority", "high")
   }, [])
 
-  // Preload LCP-изображение (poster видео) — задаёт браузеру приоритет
+  // Preload LCP-изображение (poster видео)
   useEffect(() => {
     const link = document.createElement("link")
     link.rel = "preload"
@@ -524,8 +582,8 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <SEOHead
-        title="Интерактивный рейтинг книг — топ лучших книг и что почитать"
-        description="BookStrata — интерактивный рейтинг книг. Составляй топ лучших книг, узнавай что почитать, собирай визуальные подборки по жанрам, участвуй в баттлах и получай ИИ-рекомендации. Бесплатно."
+        title="BookStrata — помните каждую прочитанную книгу. Открывайте новые."
+        description="BookStrata — личная библиотека, визуальные рейтинги книг и сообщество читателей. Ведите список прочитанного, составляйте тир-листы, находите книги по вкусу с ИИ. Бесплатно."
         image="/hero-bg.webp"
         url="/"
       />
@@ -549,18 +607,21 @@ export default function LandingPage() {
         <div className="landing-hero__content">
           <div className="landing-hero__badge">
             <Sparkles size={14} />
-            Социальная сеть читателей
+            Ваша читательская история
           </div>
 
           <h1 className="landing-hero__title">
-            Рейтинг книг
+            Помните каждую
             <br />
-            и <span className="landing-hero__gradient-text">тир-лист</span> онлайн
+            прочитанную книгу.
+            <br />
+            <span className="landing-hero__gradient-text">Открывайте новые.</span>
           </h1>
 
           <p className="landing-hero__subtitle">
-            Составляй визуальный рейтинг книг и тир-листы — расставляй любимые книги по уровням, участвуй в баттлах,
-            общайся с читателями и находи книги по вкусу с помощью ИИ.
+            BookStrata — личная библиотека, визуальные рейтинги книг
+            и сообщество читателей в одном месте. Ведите список прочитанного,
+            составляйте тир-листы, находите книги по вкусу с&nbsp;помощью&nbsp;ИИ.
           </p>
 
           <div className="landing-hero__actions">
@@ -569,15 +630,15 @@ export default function LandingPage() {
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
             >
-              В библиотеку
+              Начать бесплатно
               <ArrowRight size={18} />
             </button>
             <button
-              onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => document.getElementById("screenshots")?.scrollIntoView({ behavior: "smooth" })}
               className="landing-hero__btn landing-hero__btn--secondary"
               type="button"
             >
-              Узнать больше
+              Как это выглядит
             </button>
           </div>
         </div>
@@ -598,125 +659,6 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ============ STATS ============ */}
-      <section className="landing-stats" id="stats">
-        <div className="landing-stats__grid">
-          <AnimatedCounter target={forumStats?.totalUsers ?? 0} suffix="+" label="Пользователей" />
-          <AnimatedCounter target={forumStats?.activeBattles ?? 0} suffix="" label="Проведено баттлов" />
-          <AnimatedCounter target={forumStats?.tierLists ?? 0} suffix="" label="Создано тир-листов" />
-          <AnimatedCounter target={forumStats?.totalBooks ?? 0} suffix="+" label="Книг в базе" />
-        </div>
-      </section>
-
-      {/* ============ AUTHOR BANNER ============ */}
-      <section className="landing-banner" id="author-note">
-        <div className="landing-banner__bg" />
-        <Pointer>
-          <motion.div
-            animate={{
-              scale: [0.8, 1.15, 0.8],
-              rotate: [0, 8, -8, 0],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 40 40"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-pink-400 drop-shadow-lg"
-            >
-              <motion.path
-                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                fill="currentColor"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{
-                  duration: 0.8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-            </svg>
-          </motion.div>
-        </Pointer>
-        <div className="landing-banner__content">
-          <span className="landing-banner__quote-mark">"</span>
-          <blockquote className="landing-banner__text">
-            <p>
-              <Highlighter action="box" color="#c97d60" strokeWidth={2} iterations={3} padding={5} animationDuration={800}>
-                BookStrata
-              </Highlighter>{' '}
-               родился из простой идеи —{' '}
-              <Highlighter action="circle" color="#c97d60" strokeWidth={2} iterations={2} padding={4} animationDuration={600}>
-                дать читателям
-              </Highlighter>{' '}
-              инструмент,
-              который не просто собирает книги, а помогает увидеть свой вкус,
-              подчерпнуть идеи от других людей и просто{" "}
-              <Highlighter action="underline" color="#c97d60" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
-                приятно провести время
-              </Highlighter>.
-              Идея понятное дело не нова — существует ряд зарубежных аналогов,
-              но я взял лучшее, привнес нового и с Вашей помощью готов сделать что-то оригинальное.
-              Я делаю этот проект один,{" "}
-              <Highlighter action="underline" color="#b85b3f" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
-                вкладываю душу
-              </Highlighter>{" "}
-              и каждую свободную минуту. Я верю, что могу сделать качественный и
-              интересный продукт, который будет полезен мне и остальным пользователям.
-              Здесь нет маркетинговых манипуляций и пустых обещаний — только{" "}
-              <Highlighter action="underline" color="#c97d60" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
-                искреннее желание
-              </Highlighter>{" "}
-              сделать{" "}
-              <Highlighter action="underline" color="#b85b3f" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
-                лучшую социальную сеть для тех, кто любит читать, делиться и вдохновляться
-              </Highlighter>.
-            </p>
-            <p>
-              Также есть возможность помочь проекту через донат. Наверное, Вы спросите:
-              «Федор, а почему же тогда ты просишь{' '}
-              <Highlighter action="crossed-off" color="#ef4444" strokeWidth={2.5} iterations={2} padding={4} animationDuration={600}>
-                кучу денег
-              </Highlighter>{' '}
-              поддержать донатом?»
-              Отвечаю: «это необходимость, чтобы приложение жило и развивалось,
-              для меня оно не выходит бесплатным».
-            </p>
-            <p>
-              Для проекта жизненно необходимы Ваши мнения, критика, идеи, предложения,
-              замечания. Поэтому буду благодарен обратной связи.
-            </p>
-            <p>
-              Подписывайтесь на наши группы в{" "}
-              <a href="https://vk.com/club237287277" target="_blank" rel="noopener noreferrer" className="landing-banner__text-link">ВК</a>
-              {" "}или{" "}
-              <a href="https://t.me/bookstrata" target="_blank" rel="noopener noreferrer" className="landing-banner__text-link">Telegram</a>
-              , чтобы не упустить важные новости и обновления!
-            </p>
-            <p>
-              <Highlighter action="underline" color="#c97d60" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
-                Спасибо, что Вы здесь
-              </Highlighter>
-              . Вместе мы{" "}
-              <Highlighter action="underline" color="#b85b3f" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>
-                сделаем BookStrata чем-то большим
-              </Highlighter>.
-            </p>
-            <HanddrawnSmiley className="landing-banner__smiley" size={48} />
-          </blockquote>
-          <div className="landing-banner__author">
-            <span className="landing-banner__author-name">Фёдор</span>
-            <span className="landing-banner__author-role">создатель BookStrata</span>
           </div>
         </div>
       </section>
@@ -744,6 +686,63 @@ export default function LandingPage() {
                 videoSrc={"videoSrc" in shot ? (shot as { videoSrc: string }).videoSrc : undefined}
                 onOpen={shot.src || shot.videoSrc ? () => setActiveScreenshot(i) : undefined}
               />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============ STATS ============ */}
+      <section className="landing-stats" id="stats">
+        <div className="landing-stats__grid">
+          <AnimatedCounter target={forumStats?.totalUsers ?? 0} suffix="+" label="Пользователей" />
+          <AnimatedCounter target={forumStats?.activeBattles ?? 0} suffix="" label="Проведено баттлов" />
+          <AnimatedCounter target={forumStats?.tierLists ?? 0} suffix="" label="Создано тир-листов" />
+          <AnimatedCounter target={forumStats?.totalBooks ?? 0} suffix="+" label="Книг в базе" />
+        </div>
+      </section>
+
+      <div className="landing-divider" />
+
+      {/* ============ SCENARIOS ============ */}
+      <section className="landing-section" id="scenarios">
+        <div className="landing-section__container">
+          <RevealBox><h2 className="landing-section__title">Что вы сможете делать</h2></RevealBox>
+          <RevealBox><p className="landing-section__subtitle">BookStrata закрывает главные потребности читателя</p></RevealBox>
+
+          <div className="landing-features">
+            {scenarios.map((s) => (
+              <RevealBox key={s.title} className={`landing-feature ${s.featured ? "landing-feature--featured" : ""}`}>
+                {s.featured ? (
+                  <>
+                    <div className="landing-feature__content">
+                      <h3 className="landing-feature__title">{s.title}</h3>
+                      <ul className="landing-feature__list">
+                        {s.points.map((point, i) => (
+                          <li key={i} className="landing-feature__list-item">
+                            <span className="landing-feature__check" />
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="landing-feature__icon">
+                      <s.icon size={28} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="landing-feature__title">{s.title}</h3>
+                    <ul className="landing-feature__list">
+                      {s.points.map((point, i) => (
+                        <li key={i} className="landing-feature__list-item">
+                          <span className="landing-feature__check" />
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </RevealBox>
             ))}
           </div>
         </div>
@@ -786,64 +785,18 @@ export default function LandingPage() {
 
       <div className="landing-divider" />
 
-      {/* ============ FEATURES ============ */}
-      <section className="landing-section" id="features">
-        <div className="landing-section__container">
-          <RevealBox><h2 className="landing-section__title">Все возможности</h2></RevealBox>
-          <RevealBox><p className="landing-section__subtitle">BookStrata — это не просто тир-листы</p></RevealBox>
-
-          <div className="landing-features">
-            {features.map((f) => (
-              <RevealBox key={f.title} className={`landing-feature ${f.featured ? "landing-feature--featured" : ""}`}>
-                {f.featured ? (
-                  <>
-                    <div className="landing-feature__content">
-                      <h3 className="landing-feature__title">{f.title}</h3>
-                      <p className="landing-feature__desc">{f.desc}</p>
-                    </div>
-                    <div className="landing-feature__icon">
-                      <f.icon size={28} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="landing-feature__title">{f.title}</h3>
-                    <p className="landing-feature__desc">{f.desc}</p>
-                  </>
-                )}
-              </RevealBox>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className="landing-divider" />
-
-      {/* ============ FOR WHOM ============ */}
-      <section className="landing-section" id="for-whom">
+      {/* ============ TARGET AUDIENCE ============ */}
+      <section className="landing-section" id="audience">
         <div className="landing-section__container" style={{ maxWidth: 900 }}>
           <RevealBox>
-            <h2 className="landing-section__title">Для кого этот проект</h2>
+            <h2 className="landing-section__title">Кому подойдёт BookStrata</h2>
+          </RevealBox>
+          <RevealBox>
+            <p className="landing-section__subtitle">Сценарии, в которых проект становится полезным</p>
           </RevealBox>
 
           <div className="grid sm:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <BookOpen size={24} />,
-                title: "Книголюбы",
-                description: "Для тех, кто хочет систематизировать прочитанное и делиться своим мнением в наглядном формате.",
-              },
-              {
-                icon: <Users size={24} />,
-                title: "Читательские сообщества",
-                description: "Для книжных клубов и сообществ, которые ищут удобный способ обсуждать и сравнивать книги.",
-              },
-              {
-                icon: <Heart size={24} />,
-                title: "Авторы и блогеры",
-                description: "Для тех, кто хочет продвигать книги, собирать обратную связь и находить свою аудиторию.",
-              },
-            ].map((item, i) => (
+            {audienceItems.map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -853,12 +806,82 @@ export default function LandingPage() {
                 className="p-8 text-center rounded-2xl border border-white/[0.06] bg-[rgba(15,30,50,0.4)] backdrop-blur-[12px] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-300"
               >
                 <div className="w-12 h-12 rounded-xl bg-[rgba(6,188,249,0.1)] text-[#06bcf9] flex items-center justify-center mx-auto mb-4">
-                  {item.icon}
+                  <item.icon size={24} />
                 </div>
                 <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">{item.title}</h3>
-                <p className="text-sm text-[#94a3b8] leading-relaxed">{item.description}</p>
+                <p className="text-sm text-[#94a3b8] leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="landing-divider" />
+
+      {/* ============ AUTHOR NOTE ============ */}
+      <section className="landing-banner" id="author-note">
+        <div className="landing-banner__bg" />
+        <Pointer>
+          <motion.div
+            animate={{
+              scale: [0.8, 1.15, 0.8],
+              rotate: [0, 8, -8, 0],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 40 40"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-pink-400 drop-shadow-lg"
+            >
+              <motion.path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                fill="currentColor"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{
+                  duration: 0.8,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            </svg>
+          </motion.div>
+        </Pointer>
+        <div className="landing-banner__content">
+          <span className="landing-banner__quote-mark">"</span>
+          <blockquote className="landing-banner__text">
+            <p>
+              BookStrata родился из простой идеи —{' '}
+              дать читателям инструмент, который не просто собирает книги,
+              а помогает увидеть свой вкус, находить единомышленников
+              и открывать новое. Я делаю этот проект один, вкладываю душу
+              и каждую свободную минуту.
+            </p>
+            <p>
+              Здесь нет маркетинговых манипуляций и пустых обещаний — только
+              искреннее желание сделать лучшую площадку для тех, кто любит
+              читать, делиться и вдохновляться.
+            </p>
+          </blockquote>
+
+          <Link
+            to="/history"
+            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold transition-colors"
+            style={{ color: "#fb923c" }}
+          >
+            Читать историю проекта →
+          </Link>
+
+          <div className="landing-banner__author">
+            <span className="landing-banner__author-name">Фёдор</span>
+            <span className="landing-banner__author-role">создатель BookStrata</span>
           </div>
         </div>
       </section>
@@ -952,15 +975,15 @@ export default function LandingPage() {
       <section className="landing-cta">
         <div className="landing-cta__bg" />
         <div className="landing-cta__content">
-          <RevealBox><h2 className="landing-cta__title">Готов создать свой первый тир-лист?</h2></RevealBox>
-          <RevealBox><p className="landing-cta__subtitle">Присоединяйся к сообществу читателей. Это бесплатно.</p></RevealBox>
+          <RevealBox><h2 className="landing-cta__title">Ваши книги ждут</h2></RevealBox>
+          <RevealBox><p className="landing-cta__subtitle">Начните бесплатно — без ограничений и скрытых платежей.</p></RevealBox>
           <RevealBox>
             <button
               onClick={() => navigate("/auth?mode=register")}
               className="landing-cta__btn"
               type="button"
             >
-              Начать сейчас
+              Создать аккаунт
               <Zap size={20} />
             </button>
           </RevealBox>

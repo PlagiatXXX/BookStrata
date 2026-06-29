@@ -49,6 +49,7 @@ export async function getCollections(options?: {
   type?: string;
   categoryId?: string;
   isPublished?: boolean;
+  isFeatured?: boolean;
   page?: number;
   pageSize?: number;
 }) {
@@ -60,6 +61,7 @@ export async function getCollections(options?: {
   if (options?.type) where.type = options.type;
   if (options?.categoryId) where.categoryId = options.categoryId;
   if (options?.isPublished !== undefined) where.isPublished = options.isPublished;
+  if (options?.isFeatured !== undefined) where.isFeatured = options.isFeatured;
 
   const [data, total] = await Promise.all([
     prisma.collection.findMany({
@@ -106,6 +108,7 @@ export async function createCollection(input: CreateCollectionInput) {
       bookCovers: input.bookCovers || [],
       tags: input.tags || [],
       isPublished: input.isPublished ?? false,
+      isFeatured: input.isFeatured ?? false,
       order: input.order ?? 0,
       editorialNote: input.editorialNote || null,
       tiers: toJsonValue(input.tiers),
@@ -128,6 +131,7 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
   if (input.bookCovers !== undefined) data.bookCovers = input.bookCovers;
   if (input.tags !== undefined) data.tags = input.tags;
   if (input.isPublished !== undefined) data.isPublished = input.isPublished;
+  if (input.isFeatured !== undefined) data.isFeatured = input.isFeatured;
   if (input.order !== undefined) data.order = input.order;
   if (input.editorialNote !== undefined) data.editorialNote = input.editorialNote || null;
   if (input.tiers !== undefined) data.tiers = toJsonValue(input.tiers);
@@ -200,8 +204,8 @@ async function fetchBookCover(title: string, author: string): Promise<string> {
         { signal: AbortSignal.timeout(5_000) },
       );
       if (!resp.ok) return "";
-      const d = await resp.json() as { items?: Array<Record<string, unknown>> };
-      return d.items?.length ? pickCover(d.items as any) : "";
+      const d = await resp.json() as { items?: Array<{ volumeInfo?: { imageLinks?: Record<string, string> } }> };
+      return d.items?.length ? pickCover(d.items) : "";
     } catch {
       return "";
     }
@@ -385,7 +389,6 @@ export async function parseBooksFromUrl(url: string): Promise<ParsedBook[]> {
   // Goodreads, Livelib и другие сайты с карточками книг
   $('a[href*="/book/show/"], a[href*="/book/"], a[href*="book"]').each((_, el) => {
     const $a = $(el);
-    const href = $a.attr("href") || "";
     const $img = $a.find("img[alt]").first();
     const altText = $img.attr("alt")?.trim();
     if (!altText || altText.length < 3 || altText.length > 150) return;
@@ -489,7 +492,7 @@ export async function parseBooksFromUrl(url: string): Promise<ParsedBook[]> {
 
     // Финальная чистка
     title = title.replace(/\s+/g, " ").replace(/["«»„“”“\u00AB\u00BB]/g, "").trim();
-    title = title.replace(/^\d+[\.\)]\s*/, "").trim();
+    title = title.replace(/^\d+[.)]\s*/, "").trim();
     // Убираем ценники: "379 ₽ 462 ₽-18%" → ""
     title = title.replace(/\d+\s*[₽$€]\s*(\d+\s*[₽$€])?(\s*[-+]\d+%)?/g, "").trim();
     // Убираем тип обложки: "Мягкая обложка", "Твердый переплет"

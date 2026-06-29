@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sparkles,
   ChevronDown,
@@ -13,6 +14,8 @@ import {
   ScrollText,
   Shield,
   Info,
+  BarChart3,
+  BookOpen,
 } from "lucide-react";
 import { Meteors } from "./Meteors";
 import { SocialIcons } from "./SocialIcons";
@@ -38,6 +41,8 @@ function scrollToSection(id: string) {
 
 const mainLinks = [
   { href: "/", label: "Главная", icon: <List size={14} /> },
+  { href: "/rankings", label: "Рейтинг книг", icon: <BarChart3 size={14} /> },
+  { href: "/what-to-read", label: "Что почитать", icon: <BookOpen size={14} /> },
   { href: "/templates", label: "Библиотека", icon: <Folder size={14} /> },
   { href: "/community", label: "Сообщество", icon: <Users size={14} /> },
 ];
@@ -71,17 +76,20 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   const [isDonateOpen, setIsDonateOpen] = useState(false);
   const [popupDirection, setPopupDirection] = useState<PopupDirection>("above");
   const [copied, setCopied] = useState(false);
-  const [donors, setDonors] = useState<string[]>([]);
   const location = useLocation();
 
   const isLanding = variant === "landing";
 
+  const { data: donors = [] } = useQuery({
+    queryKey: ["donors"],
+    queryFn: () =>
+      apiClient.get<Array<{ id: number; name: string }>>('/donors')
+        .then((data) => data.map((d) => d.name)),
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
   const cardNumber = "2202200609389554";
-  useEffect(() => {
-    apiClient.get<Array<{ id: number; name: string }>>('/donors')
-      .then((data) => setDonors(data.map((d) => d.name)))
-      .catch(() => {})
-  }, [])
 
   const handleCopyCard = async () => {
     try {

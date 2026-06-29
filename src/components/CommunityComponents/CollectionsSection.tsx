@@ -1,25 +1,21 @@
-import { memo, useState, useEffect } from "react";
+import { memo, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { getPublishedCollections } from "@/lib/collectionsApi";
+import { useQuery } from "@tanstack/react-query";
+import { getCommunityCollections } from "@/lib/collectionsApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
-import type { CollectionItem } from "@/data/mockData";
 
 export const CollectionsSection = memo(() => {
-  const [literaryCollections, setLiteraryCollections] = useState<CollectionItem[]>([]);
+  const { data: collections = [] } = useQuery({
+    queryKey: ["published-collections"],
+    queryFn: getCommunityCollections,
+    staleTime: 60 * 1000,
+    retry: 2,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    getPublishedCollections()
-      .then((data) => {
-        if (!cancelled) {
-          setLiteraryCollections(data.filter((c) => c.type === "literary"));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLiteraryCollections([]);
-      });
-    return () => { cancelled = true; };
-  }, []);
+  const literaryCollections = useMemo(
+    () => collections.filter((c) => c.type === "literary"),
+    [collections],
+  );
 
   if (literaryCollections.length === 0) return null;
 

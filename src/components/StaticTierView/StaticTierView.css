@@ -1,24 +1,23 @@
-/* CuratedTierView — стили для отображения тир-листа в коллекции */
-/* Дублирует общие стили из TierEditorPage.css, но только то, что нужно */
+/* StaticTierView — стили для отображения тир-листа в коллекции */
 
-.curated-tier-view {
+.static-tier-view {
   width: 100%;
   max-width: 100%;
   font-family: 'Manrope', sans-serif;
 }
 
-.curated-tier-view .nb-tier-row {
+.static-tier-view .nb-tier-row {
   display: flex;
   background-color: #1a1a1a;
   border-bottom: 2px solid #000;
   border-radius: 0 !important;
 }
 
-.curated-tier-view .nb-tier-row:first-child {
+.static-tier-view .nb-tier-row:first-child {
   border-top: 2px solid #000;
 }
 
-.curated-tier-view .nb-rank-box {
+.static-tier-view .nb-rank-box {
   width: 130px;
   flex-shrink: 0;
   display: flex;
@@ -28,7 +27,7 @@
   overflow: visible;
 }
 
-.curated-tier-view .nb-book-track {
+.static-tier-view .nb-book-track {
   flex-grow: 1;
   padding: 0.8rem;
   display: flex;
@@ -38,12 +37,12 @@
 }
 
 @media (max-width: 767px) {
-  .curated-tier-view .nb-book-track {
+  .static-tier-view .nb-book-track {
     gap: 0.4rem;
     padding: 0.4rem;
     min-height: 80px;
   }
-  .curated-tier-view .nb-rank-box {
+  .static-tier-view .nb-rank-box {
     width: 70px;
   }
 }

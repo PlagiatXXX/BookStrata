@@ -5,6 +5,7 @@ import { proxyImageUrl } from '@/utils/imageProxy';
 
 interface CollectionCardProps {
   collection: CollectionItem;
+  className?: string;
 }
 
 const getGridClass = (index: number): string => {
@@ -22,7 +23,7 @@ const getGridClass = (index: number): string => {
 
 const FALLBACK = '/images/placeholder.svg';
 
-export const CollectionCard = memo(({ collection }: CollectionCardProps) => {
+export const CollectionCard = memo(({ collection, className = '' }: CollectionCardProps) => {
   const navigate = useNavigate();
 
   const handleClick = useCallback(() => {
@@ -35,7 +36,7 @@ export const CollectionCard = memo(({ collection }: CollectionCardProps) => {
 
   return (
     <div
-      className={`group relative overflow-hidden brutal-card brutal-border border-l-4 transition-all duration-300 hover-lift ${getGridClass(collection.id)}`}
+      className={`group relative overflow-hidden brutal-card brutal-border border-l-4 transition-all duration-300 hover-lift min-h-[200px] ${getGridClass(collection.id)} ${className}`}
       style={{ borderLeftColor: 'var(--accent-main)' } as CSSProperties}
     >
       {/* Фон — тёмный градиент */}
@@ -77,9 +78,9 @@ export const CollectionCard = memo(({ collection }: CollectionCardProps) => {
       </div>
 
       {/* Оверлей при наведении */}
-      <div className="absolute inset-0 bg-[rgba(18,18,18,0.62)] opacity-0 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
+      <div className="absolute inset-0 bg-[rgba(18,18,18,0.62)] opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
         <button
-          className="brutal-cta px-4 py-2 md:px-6 md:py-3 text-xs font-semibold uppercase tracking-widest cursor-pointer"
+          className="brutal-cta px-3 py-1.5 md:px-6 md:py-3 text-[10px] md:text-xs font-semibold uppercase tracking-widest cursor-pointer"
           aria-label={`Посмотреть подборку: ${collection.title}`}
           onClick={handleClick}
         >

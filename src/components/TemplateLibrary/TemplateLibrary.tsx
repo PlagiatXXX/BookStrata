@@ -139,7 +139,7 @@ const TemplateLibrary: React.FC = () => {
   }, [tierListToDelete, removeTierList]);
 
   // ===== Navigation =====
-  const handleGoBack = useCallback(() => navigate("/dashboard"), [navigate]);
+  const handleGoBack = useCallback(() => navigate("/"), [navigate]);
 
   const handleSectionChange = useCallback(
     (section: SectionKey) => {

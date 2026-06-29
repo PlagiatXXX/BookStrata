@@ -13,11 +13,12 @@ import {
 export async function collectionRoutes(fastify: FastifyInstance) {
   // GET / — получить все опубликованные коллекции
   fastify.get("/", async (request, reply) => {
-    const query = request.query as { type?: string; categoryId?: string; page?: string; pageSize?: string };
+    const query = request.query as { type?: string; categoryId?: string; isFeatured?: string; page?: string; pageSize?: string };
     const result = await service.getCollections({
       type: query.type,
       categoryId: query.categoryId,
       isPublished: true,
+      isFeatured: query.isFeatured === "true" ? true : query.isFeatured === "false" ? false : undefined,
       page: query.page ? Number(query.page) : 1,
       pageSize: query.pageSize ? Number(query.pageSize) : 50,
     });

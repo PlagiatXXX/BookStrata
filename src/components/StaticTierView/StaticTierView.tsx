@@ -1,19 +1,37 @@
 import { memo } from "react";
 import type { Tier, Book } from "@/types";
+import type { ReadStatus } from "@/hooks/useReadStatus";
 import { TierLabel } from "@/ui/TierLabel";
 import { BookCover } from "@/ui/BookCover";
-import "./CuratedTierView.css";
+import "./StaticTierView.css";
 
-interface CuratedTierViewProps {
+interface StaticTierViewProps {
   tiers: Record<string, Tier>;
   tierOrder: string[];
   books: Record<string, Book>;
   onViewBook?: (book: Book) => void;
+  filterGenre?: string | null;
+  statuses?: Record<string, ReadStatus>;
+  onToggleStatus?: (bookId: string) => void;
 }
 
-export const CuratedTierView = memo(({ tiers, tierOrder, books, onViewBook }: CuratedTierViewProps) => {
+function matchesGenre(book: Book, genre: string | null | undefined): boolean {
+  if (!genre) return true;
+  if (!book.genre) return false;
+  return book.genre.toLowerCase() === genre.toLowerCase();
+}
+
+export const StaticTierView = memo(({
+  tiers,
+  tierOrder,
+  books,
+  onViewBook,
+  filterGenre,
+  statuses,
+  onToggleStatus,
+}: StaticTierViewProps) => {
   return (
-    <div className="curated-tier-view">
+    <div className="static-tier-view">
       <div className="flex flex-col">
         {tierOrder.map((tierId) => {
           const tier = tiers[tierId];
@@ -21,7 +39,8 @@ export const CuratedTierView = memo(({ tiers, tierOrder, books, onViewBook }: Cu
 
           const tierBooks = tier.bookIds
             .map((bookId) => books[bookId])
-            .filter(Boolean);
+            .filter(Boolean)
+            .filter((book) => matchesGenre(book, filterGenre));
 
           return (
             <div key={tier.id} className="nb-tier-row group relative flex">
@@ -41,6 +60,8 @@ export const CuratedTierView = memo(({ tiers, tierOrder, books, onViewBook }: Cu
                     book={book}
                     isDraggable={false}
                     onView={onViewBook}
+                    readStatus={statuses?.[book.id] ?? null}
+                    onToggleStatus={onToggleStatus ? () => onToggleStatus(book.id) : undefined}
                   />
                 ))}
                 {tierBooks.length === 0 && (
@@ -55,4 +76,4 @@ export const CuratedTierView = memo(({ tiers, tierOrder, books, onViewBook }: Cu
   );
 });
 
-CuratedTierView.displayName = "CuratedTierView";
+StaticTierView.displayName = "StaticTierView";

@@ -48,6 +48,7 @@ const TierListEditorContent = () => {
   const { id: tierListId = "" } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const fromBattle = searchParams.get("context") === "battle";
+  const forkSlug = searchParams.get("fork");
   const navigate = useNavigate();
 
   // Получаем все состояния из хука
@@ -102,7 +103,7 @@ const TierListEditorContent = () => {
     likesData,
     isPublic,
     initialDataForHook,
-  } = useTierEditorQueries(tierListId);
+  } = useTierEditorQueries(tierListId, forkSlug);
 
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(apiData?.coverImageUrl ?? null)
   const [theme, setTheme] = useState<string>(apiData?.theme ?? "default")
@@ -165,6 +166,7 @@ const TierListEditorContent = () => {
     isReadOnly,
     setHasUnsavedChanges,
     logger,
+    theme,
   });
 
   const { checkAndRestoreDraft } = useTierEditorDraft({

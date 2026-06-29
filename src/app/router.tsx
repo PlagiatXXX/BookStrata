@@ -94,6 +94,7 @@ const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"))
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage").then(m => ({ default: m.PrivacyPage })))
 const TermsPage = lazy(() => import("@/pages/TermsPage").then(m => ({ default: m.TermsPage })))
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })))
+const HistoryPage = lazy(() => import("@/pages/HistoryPage"))
 const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage").then(m => ({ default: m.OAuthCallbackPage })))
 const UserProfilePage = lazy(() => import("@/pages/UserProfilePage/UserProfilePage"))
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage/NotFoundPage").then(m => ({ default: m.default })))
@@ -102,6 +103,8 @@ const CollectionPage = lazy(() =>
     default: module.CollectionPage,
   })),
 );
+const RankingsPage = lazy(() => import("@/pages/RankingsPage/RankingsPage"));
+const WhatToReadPage = lazy(() => import("@/pages/WhatToReadPage/WhatToReadPage"));
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() =>
@@ -125,9 +128,12 @@ export const router = createBrowserRouter([
       { path: "/privacy", element: <PrivacyPage /> },
       { path: "/terms", element: <TermsPage /> },
       { path: "/about", element: <AboutPage /> },
+      { path: "/history", element: <HistoryPage /> },
       { path: "/oauth/callback", element: <OAuthCallbackPage /> },
       { path: "/contact", element: <ContactPage /> },
       { path: "/pricing", element: <PricingPage /> },
+      { path: "/rankings", element: <RankingsPage /> },
+      { path: "/what-to-read", element: <WhatToReadPage /> },
       { path: "/collections/:slug", element: <CollectionPage /> },
       { path: "/tier-lists/:id", element: <TierListEditorPage /> },
       { path: "/templates", element: <TemplateLibrary /> },

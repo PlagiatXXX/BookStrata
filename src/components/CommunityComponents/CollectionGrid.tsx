@@ -1,7 +1,7 @@
-import { memo, useState, useEffect, useMemo } from 'react';
-import { getPublishedCollections } from '@/lib/collectionsApi';
+import { memo, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getCommunityCollections } from '@/lib/collectionsApi';
 import { CollectionCard } from './CollectionCard';
-import type { CollectionItem } from '@/data/mockData';
 
 interface CollectionGridProps {
   activeCategory: string;
@@ -9,36 +9,23 @@ interface CollectionGridProps {
 }
 
 export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: CollectionGridProps) => {
-  const [collections, setCollections] = useState<CollectionItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-
-    getPublishedCollections()
-      .then((data) => {
-        if (!cancelled) {
-          const curated = data.filter((c) => c.type === "curated");
-          setCollections(curated);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setCollections([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => { cancelled = true; };
-  }, []);
+  const {
+    data: collections = [],
+    isLoading,
+  } = useQuery({
+    queryKey: ["published-collections"],
+    queryFn: getCommunityCollections,
+    staleTime: 60 * 1000,
+    retry: 2,
+  });
 
   const filteredCollections = useMemo(() => {
-    if (collections.length === 0) {
+    const curated = collections.filter((c) => c.type === "curated");
+    if (curated.length === 0) {
       return [];
     }
 
-    let filtered = collections;
+    let filtered = curated;
 
     // Фильтрация по поисковому запросу
     if (searchQuery.trim()) {
@@ -58,7 +45,7 @@ export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: Collec
     return filtered;
   }, [collections, activeCategory, searchQuery]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[180px]">
         {Array.from({ length: 4 }).map((_, i) => (

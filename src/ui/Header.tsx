@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Library, Globe, LogOut, Users } from "lucide-react";
+import { List, Library, Globe, LogOut, Users, BarChart3 } from "lucide-react";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -50,6 +50,7 @@ export const Header = ({
     activeItemProp ||
     (() => {
       const path = location.pathname;
+      if (path === "/rankings") return "Рейтинг книг";
       if (path === "/community") return "Новости";
       if (path === "/forum") return "Актив";
       if (path === "/templates" || path.startsWith("/templates/"))
@@ -82,6 +83,12 @@ export const Header = ({
       onClick: onMyRatingsClick ?? handleDefaultMyRatings,
       icon: <List size={18} />,
       description: "Управление рейтингами",
+    },
+    {
+      label: "Рейтинг книг",
+      onClick: () => navigate("/rankings"),
+      icon: <BarChart3 size={18} />,
+      description: "Редакционные подборки",
     },
     {
       label: "Новости",
@@ -124,13 +131,13 @@ export const Header = ({
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-0">
             {navItems.map((item) => (
               <button
                 key={item.label}
                 onClick={item.onClick}
                 aria-current={activeItem === item.label ? "page" : undefined}
-                className={`group relative px-4 py-2 rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                className={`group relative px-3 py-2 rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                   item.onClick ? "cursor-pointer" : "cursor-not-allowed"
                 } ${
                   activeItem === item.label

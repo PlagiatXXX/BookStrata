@@ -22,15 +22,24 @@ export function ThemePicker({
 
   const handleSelect = async (theme: TierListTheme) => {
     setSaving(true)
-    try {
-      await apiClient.put(`/tier-lists/${tierListId}`, { theme })
-      onThemeChanged(theme)
+
+    // Сначала переключаем тему локально (чтобы UI не ждал ответа сервера)
+    onThemeChanged(theme)
+
+    // Пропускаем API-запрос, если тир-лист ещё не создан (id = "new" или "fork-...")
+    const isRealTierList = tierListId && !/^(new|fork-)/.test(tierListId)
+    if (isRealTierList) {
+      try {
+        await apiClient.put(`/tier-lists/${tierListId}`, { theme })
+        sileo.success({ title: `Тема: ${THEME_LABELS[theme]}` })
+      } catch {
+        sileo.error({ title: "Ошибка при смене темы" })
+      }
+    } else {
       sileo.success({ title: `Тема: ${THEME_LABELS[theme]}` })
-    } catch {
-      sileo.error({ title: "Ошибка при смене темы" })
-    } finally {
-      setSaving(false)
     }
+
+    setSaving(false)
   }
 
   const themes = Object.entries(THEME_LABELS) as [TierListTheme, string][]

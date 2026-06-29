@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { List, Globe, Users, Library } from "lucide-react";
+import { List, Globe, Users, Library, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBottomSafeOffset } from "@/hooks/useBottomSafeOffset";
 
@@ -15,6 +15,7 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
 
   const NAV_ITEMS = [
     { label: "Главная", icon: List, path: isAuthenticated ? "/dashboard" : "/" },
+    { label: "Рейтинг", icon: BarChart3, path: "/rankings" },
     { label: "Библиотека", icon: Library, path: "/templates" },
     { label: "Новости", icon: Globe, path: "/community" },
     { label: "Актив", icon: Users, path: "/forum" },

@@ -319,6 +319,7 @@ model Collection {
   tags            String[]
   isPublished     Boolean  @default(false) @map("is_published")
   order           Int      @default(0)
+  isFeatured      Boolean  @default(false) @map("is_featured")
   // Редакционная заметка (отображается на странице подборки, SEO-контент)
   editorialNote   String?  @map("editorial_note")
   // Curated type data (JSON)
