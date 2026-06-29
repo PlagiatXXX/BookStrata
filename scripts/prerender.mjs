@@ -64,6 +64,7 @@ const DIST = resolve(ROOT, "dist");
 // Публичные маршруты для индексации
 const ROUTES = [
   { path: "/",           name: "Главная" },
+  { path: "/rankings",   name: "Рейтинг книг" },
   { path: "/about",      name: "О проекте" },
   { path: "/pricing",    name: "Тарифы" },
   { path: "/contact",    name: "Контакты" },
@@ -347,11 +348,19 @@ async function prerender() {
           { timeout: 20000 },
         );
 
-        // Для тир-листов: ждём 15 секунд, пока title обновится
-        // Если не обновился — генерируем fallback из slug
-        if (route.path.startsWith("/tier-lists/")) {
+        // Для тир-листов и коллекций: ждём 15 секунд, пока title обновится
+        // Если не обновился — генерируем fallback из названия маршрута
+        const isTierList = route.path.startsWith("/tier-lists/");
+        const isCollection = route.path.startsWith("/collections/");
+
+        if (isTierList) {
           await page.waitForFunction(
             () => document.title.includes("— книжный тир-лист"),
+            { timeout: 15000 },
+          ).catch(() => {});
+        } else if (isCollection) {
+          await page.waitForFunction(
+            () => !document.title.includes("помните каждую прочитанную книгу"),
             { timeout: 15000 },
           ).catch(() => {});
         } else {
@@ -366,24 +375,34 @@ async function prerender() {
         // Небольшая пауза для завершения анимаций
         await page.waitForTimeout(500);
 
-        // Проверяем title — если generic, генерируем из slug
+        // Проверяем title — если generic, генерируем fallback
         const currentTitle = await page.title();
-        const isTierList = route.path.startsWith("/tier-lists/");
-        const needsFallbackTitle = isTierList && !currentTitle.includes("— книжный тир-лист");
+        const needsFallbackTitle =
+          (isTierList && !currentTitle.includes("— книжный тир-лист")) ||
+          (isCollection && currentTitle.includes("помните каждую прочитанную книгу"));
 
         let finalTitle = currentTitle;
         if (needsFallbackTitle) {
-          const slug = route.path.replace("/tier-lists/", "");
-          const readableTitle = deslugify(slug);
-          finalTitle = `${readableTitle} — книжный тир-лист | BookStrata`;
-          log(`  ⚡ Fallback title: "${finalTitle}"`);
+          let fallbackTitle, fallbackDesc, canonicalPath;
 
-          // Fallback description из slug
-          const fallbackDesc = `Тир-лист «${readableTitle}» — визуальный рейтинг книг на BookStrata`;
-          log(`  ⚡ Fallback description: "${fallbackDesc}"`);
+          if (isTierList) {
+            const slug = route.path.replace("/tier-lists/", "");
+            const readableTitle = deslugify(slug);
+            fallbackTitle = `${readableTitle} — книжный тир-лист | BookStrata`;
+            fallbackDesc = `Тир-лист «${readableTitle}» — визуальный рейтинг книг на BookStrata`;
+            canonicalPath = route.path;
+            log(`  ⚡ Fallback title: "${fallbackTitle}"`);
+          } else if (isCollection) {
+            // Используем name из маршрута (например "Подборка: Топ книг фэнтези — рейтинг лучших 2026")
+            const collectionName = route.name.replace("Подборка: ", "");
+            fallbackTitle = `${collectionName} — подборка книг | BookStrata`;
+            fallbackDesc = `Редакционная подборка книг «${collectionName}» — лучшие книги по жанру, рейтинг и рекомендации на BookStrata`;
+            canonicalPath = route.path;
+            log(`  ⚡ Fallback title: "${fallbackTitle}"`);
+          }
 
           // Внедряем title, description и og-теги через evaluate
-          await page.evaluate(({ t, d }) => {
+          await page.evaluate(({ t, d, cp }) => {
             document.title = t;
             const setMeta = (selector, attr, value) => {
               const el = document.querySelector(selector);
@@ -393,7 +412,12 @@ async function prerender() {
             setMeta('meta[name="description"]', 'content', d);
             setMeta('meta[property="og:description"]', 'content', d);
             setMeta('meta[name="twitter:description"]', 'content', d);
-          }, { t: finalTitle, d: fallbackDesc });
+            // Правим canonical, если он ушёл в fallback на главную
+            const canonical = document.querySelector('link[rel="canonical"]');
+            if (canonical) {
+              canonical.setAttribute('href', `https://bookstrata.ru${cp}`);
+            }
+          }, { t: fallbackTitle, d: fallbackDesc, cp: canonicalPath });
         }
 
         log(`    title: ${finalTitle}`);
