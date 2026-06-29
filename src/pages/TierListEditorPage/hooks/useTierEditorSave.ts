@@ -93,11 +93,13 @@ export function useTierEditorSave({
     setSaveStatus("saving");
     try {
       // Определяем, нужно ли создать тир-лист (форк или новый)
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const isNumericId = /^\d+$/.test(listData.id);
-      let effectiveId = isNumericId ? listData.id : tierListId;
+      const isUuid = UUID_RE.test(listData.id);
+      let effectiveId = isNumericId || isUuid ? listData.id : tierListId;
 
-      if (!isNumericId) {
-        // Создаём новый тир-лист
+      if (!isNumericId && !isUuid) {
+        // Создаём новый тир-лист (только для temp ID черновика)
         const created = await createTierList(listData.title || "Новый тир-лист");
         effectiveId = String(created.id);
 
