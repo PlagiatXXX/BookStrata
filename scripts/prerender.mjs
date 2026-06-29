@@ -401,6 +401,9 @@ async function prerender() {
             log(`  ⚡ Fallback title: "${fallbackTitle}"`);
           }
 
+          // Обновляем finalTitle для вывода в лог и результаты
+          finalTitle = fallbackTitle;
+
           // Внедряем title, description и og-теги через evaluate
           await page.evaluate(({ t, d, cp }) => {
             document.title = t;

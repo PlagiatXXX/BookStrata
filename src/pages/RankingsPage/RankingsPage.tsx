@@ -35,7 +35,7 @@ export default function RankingsPage() {
   return (
     <>
       <SEOHead
-        title="Рейтинг книг — лучшие книги и что почитать | BookStrata"
+        title="Рейтинг книг — лучшие книги и что почитать"
         description="Редакционные подборки BookStrata: лучшие книги в жанрах, составленные редакцией. Найдите что почитать."
         url="/rankings"
       />
