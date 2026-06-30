@@ -359,8 +359,15 @@ async function prerender() {
             { timeout: 15000 },
           ).catch(() => {});
         } else if (isCollection) {
+          const collectionName = route.name.replace("Подборка: ", "");
           await page.waitForFunction(
-            () => !document.title.includes("помните каждую прочитанную книгу"),
+            (name) => {
+              const t = document.title;
+              return t.length > 0
+                && !t.includes("интерактивный рейтинг книг")
+                && (t.includes(name) || t.includes("— подборка книг"));
+            },
+            collectionName,
             { timeout: 15000 },
           ).catch(() => {});
         } else {
@@ -379,7 +386,7 @@ async function prerender() {
         const currentTitle = await page.title();
         const needsFallbackTitle =
           (isTierList && !currentTitle.includes("— книжный тир-лист")) ||
-          (isCollection && currentTitle.includes("помните каждую прочитанную книгу"));
+          (isCollection && (!currentTitle || currentTitle.includes("интерактивный рейтинг книг")));
 
         let finalTitle = currentTitle;
         if (needsFallbackTitle) {
