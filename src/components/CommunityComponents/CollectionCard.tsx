@@ -77,14 +77,14 @@ export const CollectionCard = memo(({ collection, className = '' }: CollectionCa
         )}
       </div>
 
-      {/* Оверлей при наведении */}
-      <div className="absolute inset-0 bg-[rgba(18,18,18,0.62)] opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity flex items-center justify-center">
+      {/* Оверлей при наведении — на мобильных без затемнения, кнопка в углу */}
+      <div className="absolute inset-0 md:bg-[rgba(18,18,18,0.62)] md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity md:flex md:items-center md:justify-center">
         <button
-          className="brutal-cta px-3 py-1.5 md:px-6 md:py-3 text-[10px] md:text-xs font-semibold uppercase tracking-widest cursor-pointer"
+          className="absolute bottom-2 right-2 md:static brutal-cta px-2 py-1 md:px-6 md:py-3 text-[10px] md:text-xs font-semibold uppercase tracking-widest cursor-pointer"
           aria-label={`Посмотреть подборку: ${collection.title}`}
           onClick={handleClick}
         >
-          Посмотреть
+          Посмотреть&nbsp;→
         </button>
       </div>
     </div>

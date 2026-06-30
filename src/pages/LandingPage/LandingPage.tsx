@@ -582,7 +582,7 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <SEOHead
-        title="BookStrata — помните каждую прочитанную книгу. Открывайте новые."
+        title="BookStrata — интерактивный рейтинг книг, твоё книжное пространство"
         description="BookStrata — личная библиотека, визуальные рейтинги книг и сообщество читателей. Ведите список прочитанного, составляйте тир-листы, находите книги по вкусу с ИИ. Бесплатно."
         image="/hero-bg.webp"
         url="/"
