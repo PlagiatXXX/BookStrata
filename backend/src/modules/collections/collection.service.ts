@@ -159,13 +159,27 @@ interface ParsedBook {
   coverImageUrl: string;
 }
 
-async function fetchBookCover(title: string, author: string): Promise<string> {
+/** Максимальное время на один запрос к Open Library */
+const OPENLIB_TIMEOUT = 3_000;
+/** Максимальное время на один запрос к Google Books */
+const GOOGLE_TIMEOUT = 4_000;
+
+async function fetchBookCover(
+  title: string,
+  author: string,
+  overallRemaining?: number,
+): Promise<string> {
+  // Общий сигнал — если передан remaining, ограничиваем им все вложенные запросы
+  const overallSignal = overallRemaining
+    ? AbortSignal.timeout(overallRemaining)
+    : undefined;
+
   // === Попытка 1: Open Library (быстро, часто находит англоязычные книги) ===
   try {
     const query = encodeURIComponent(`${title} ${author}`.trim());
     const resp = await fetch(
       `https://openlibrary.org/search.json?q=${query}&limit=5`,
-      { signal: AbortSignal.timeout(4_000) },
+      { signal: overallSignal ?? AbortSignal.timeout(OPENLIB_TIMEOUT) },
     );
     if (resp.ok) {
       const data = (await resp.json()) as { docs?: Array<{ cover_i?: number }> };
@@ -188,7 +202,6 @@ async function fetchBookCover(title: string, author: string): Promise<string> {
     for (const item of items) {
       const links = item.volumeInfo?.imageLinks;
       if (!links) continue;
-      // Приоритет: large → medium → thumbnail
       const url = links.large || links.medium || links.thumbnail;
       if (url) {
         return url.replace("http:", "https:").replace("&edge=curl", "");
@@ -201,7 +214,7 @@ async function fetchBookCover(title: string, author: string): Promise<string> {
     try {
       const resp = await fetch(
         `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&key=${gbKey}&maxResults=5`,
-        { signal: AbortSignal.timeout(5_000) },
+        { signal: overallSignal ?? AbortSignal.timeout(GOOGLE_TIMEOUT) },
       );
       if (!resp.ok) return "";
       const d = await resp.json() as { items?: Array<{ volumeInfo?: { imageLinks?: Record<string, string> } }> };
@@ -216,11 +229,11 @@ async function fetchBookCover(title: string, author: string): Promise<string> {
   let cover = await googleFetch(`intitle:${title}${authorPart}`);
   if (cover) return cover;
 
-  // 2b: широкий поиск — только title (как ручной поиск в редакторе)
+  // 2b: широкий поиск — только title
   cover = await googleFetch(`intitle:${title}`);
   if (cover) return cover;
 
-  // 2c: совсем широкий — title + author без префиксов (если автор не пуст)
+  // 2c: совсем широкий — title + author без префиксов
   if (author) {
     cover = await googleFetch(`${title} ${author}`);
   }
@@ -231,12 +244,21 @@ async function fetchBookCover(title: string, author: string): Promise<string> {
 export async function fetchCoversForBooks(
   books: { title: string; author: string }[],
 ): Promise<ParsedBook[]> {
+  const OVERALL_TIMEOUT = 120_000; // 2 минуты на весь запрос
+  const deadline = Date.now() + OVERALL_TIMEOUT;
+
   const results: ParsedBook[] = [];
-  const concurrency = 3;
+  const concurrency = 5;
   for (let i = 0; i < books.length; i += concurrency) {
+    // Если общий таймаут истёк — возвращаем что нашли
+    if (Date.now() >= deadline) break;
+
     const batch = books.slice(i, i + concurrency);
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+
     const covers = await Promise.allSettled(
-      batch.map(b => fetchBookCover(b.title, b.author)),
+      batch.map(b => fetchBookCover(b.title, b.author, remaining)),
     );
     covers.forEach((result, j) => {
       const book = batch[j]!;
@@ -434,16 +456,29 @@ export async function parseBooksFromUrl(url: string): Promise<ParsedBook[]> {
       continue;
     }
     const next = candidates[i + 1];
-    // Если это пара: строка похожа на автора (ФИО), а предыдущая — название
+    // Текущая строка похожа на автора (ФИО)?
+    const curIsAuthor = /^[A-ZА-Я][a-zа-яё]+\s+[A-ZА-Я][a-zа-яё]+/.test(cur.text) && cur.text.length < 50;
+
     if (
+      next &&
+      !next.noPair &&
+      curIsAuthor &&
+      cur.text.length > 3 &&
+      !/[—–-]/.test(cur.text)
+    ) {
+      // cur — автор, next — название книги
+      pairs.push({ title: next.text, author: cur.text });
+      i++;
+    } else if (
       next &&
       !next.noPair &&
       /^[A-ZА-Я][a-zа-яё]+\s+[A-ZА-Я][a-zа-яё]+/.test(next.text) &&
       next.text.length < 50 &&
       cur.text.length > 3 &&
       !/[—–-]/.test(cur.text) &&
-      !/^[A-ZА-Я][a-zа-яё]+\s+[A-ZА-Я]/.test(cur.text)
+      !curIsAuthor
     ) {
+      // cur — название, next — автор
       pairs.push({ title: cur.text, author: next.text });
       i++;
     }
