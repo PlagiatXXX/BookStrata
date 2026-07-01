@@ -3,7 +3,6 @@ import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import jwt from "jsonwebtoken";
 import { redis } from "../lib/redis.js";
-import { RolesService } from "../modules/roles/roles.service.js";
 import { createLogger } from "../lib/logger.js";
 
 const logger = createLogger("AuthPlugin", {
@@ -38,19 +37,19 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     try {
       const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
 
-      // Получаем роль из БД для актуальности
-      const rolesService = new RolesService((fastify as any).prisma);
-      const userRole = await rolesService.getUserRole(payload.userId);
-
       logger.debug("Пользователь аутентифицирован", {
         userId: payload.userId,
-        role: userRole?.name || payload.role,
+        role: payload.role,
       });
 
+      // Роль читаем из JWT-payload, а не из БД.
+      // JWT-токен выдаётся/обновляется при логине и refresh, роль в нём актуальна на момент выдачи.
+      // При смене роли админом пользователь получит новую роль после перелогина или refresh.
+      // Для более быстрой смены роли без перелогина можно кэшировать role в Redis.
       (request as any).user = {
         userId: payload.userId,
         username: payload.username,
-        role: userRole?.name || payload.role,
+        role: payload.role || "user",
       };
 
       // Throttled обновление lastActivityAt (не чаще раза в 60с на пользователя)

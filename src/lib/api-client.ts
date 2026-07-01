@@ -1,5 +1,6 @@
 import { getAuthHeader, refreshAccessToken, handleUnauthorized } from "./authApi";
 import { checkResponseForAchievements } from "./achievementApi";
+import { sileo } from "sileo";
 import { API_BASE_URL } from "./config";
 
 type QueryValue = string | number | boolean | null | undefined;
@@ -59,6 +60,10 @@ async function request<T>(
     } catch {
       handleUnauthorized();
     }
+    sileo.error({
+      title: "Сессия истекла",
+      description: "Пожалуйста, войдите в систему снова",
+    });
     throw new Error("Требуется авторизация");
   }
 
@@ -73,7 +78,9 @@ async function request<T>(
     json = await response.json();
   } catch {
     if (!response.ok) {
-      throw new Error(`Ошибка: ${response.statusText}`);
+      const msg = `Ошибка: ${response.statusText}`;
+      sileo.error({ title: "Ошибка запроса", description: msg });
+      throw new Error(msg);
     }
     return json as T;
   }
@@ -86,6 +93,7 @@ async function request<T>(
       ?? errObj?.error as string
       ?? errObj?.message as string
       ?? `Ошибка: ${response.statusText}`;
+    sileo.error({ title: "Ошибка", description: message });
     throw new Error(message);
   }
 

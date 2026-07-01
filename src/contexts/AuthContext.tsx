@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, type ReactNode } from "react";
 import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
-import { getAuthToken, removeAuthToken, apiLogout } from "@/lib/authApi";
+import { getAuthToken, removeAuthToken, refreshAccessToken, apiLogout } from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { createLogger } from "@/lib/logger";
@@ -74,22 +74,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   React.useEffect(() => {
     let isMounted = true;
 
-    const performCheck = async () => {
+    const restoreSession = async () => {
+      // При старте access-токен хранится только в памяти.
+      // Если его нет — пробуем восстановить сессию через refresh-токен (HttpOnly cookie).
+      if (!getAuthToken()) {
+        try {
+          authLogger.info("Сессия не найдена в памяти, пробуем refresh");
+          await refreshAccessToken();
+        } catch {
+          authLogger.info("Refresh не удался — пользователь не авторизован");
+        }
+      }
+
       if (isMounted) {
         await fetchUser();
       }
     };
 
-    performCheck();
+    restoreSession();
 
     window.addEventListener("auth-token-changed", handleAuthTokenChanged);
-    window.addEventListener("storage", handleAuthTokenChanged);
     window.addEventListener("avatar-updated", handleAvatarUpdated as EventListener);
 
     return () => {
       isMounted = false;
       window.removeEventListener("auth-token-changed", handleAuthTokenChanged);
-      window.removeEventListener("storage", handleAuthTokenChanged);
       window.removeEventListener("avatar-updated", handleAvatarUpdated as EventListener);
     };
   }, [fetchUser, handleAuthTokenChanged, handleAvatarUpdated]);

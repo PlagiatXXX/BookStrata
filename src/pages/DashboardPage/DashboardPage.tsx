@@ -12,6 +12,7 @@ import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { TierListGrid } from "./components/TierListGrid";
 import { BookCard } from "./components/BookCard";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
+import { SkeletonGrid, SkeletonCard } from "@/ui/Skeleton";
 import { Spinner } from "@/components/Spinner";
 
 import "./DashboardPage.css";
@@ -229,9 +230,7 @@ export function DashboardPage() {
                       {activeStat === 'drafts' && 'Черновики'}
                     </h3>
                     {isTierListsLoading ? (
-                      <div className="flex justify-center py-8">
-                        <Spinner size="lg" />
-                      </div>
+                      <SkeletonGrid count={6} />
                     ) : filteredTierLists.length === 0 ? (
                       <p className="text-[#94a3b8] text-sm">Нет тир-листов</p>
                     ) : (
@@ -268,8 +267,10 @@ export function DashboardPage() {
                       </button>
                     </div>
                     {isBooksLoading ? (
-                      <div className="flex justify-center py-8">
-                        <Spinner size="lg" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <SkeletonCard key={i} />
+                        ))}
                       </div>
                     ) : myBooksData && myBooksData.length > 0 ? (
                       showBooks && (

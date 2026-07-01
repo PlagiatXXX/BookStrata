@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { uploadBase64 } from "../../lib/cloudinary.js";
+import { validateImageSize } from "../../lib/validators.js";
 import { createApiError, ErrorCodes } from "../../lib/api-response.js";
 import * as service from "./collection.service.js";
 import {
@@ -166,6 +167,12 @@ export async function collectionRoutes(fastify: FastifyInstance) {
 
       if (!coverImageUrl || !coverImageUrl.startsWith("data:")) {
         return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Invalid image format"));
+      }
+
+      // Валидация размера перед отправкой в Cloudinary
+      const sizeError = validateImageSize(coverImageUrl);
+      if (sizeError) {
+        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, sizeError));
       }
 
       try {

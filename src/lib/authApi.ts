@@ -1,10 +1,17 @@
 import type { AuthResponse, ValidateTokenResponse } from "@/types/auth";
 import { API_BASE_URL } from "./config";
 import { createLogger } from "./logger";
-import { StorageService } from "./storage";
 
 // Логгер для модуля аутентификации
 const authLogger = createLogger("AuthApi", { color: "cyan" });
+
+/**
+ * In-memory хранилище access-токена.
+ * Токен НЕ сохраняется в localStorage — это исключает XSS-кражу токена.
+ * При перезагрузке страницы сессия восстанавливается через refresh-токен
+ * (HttpOnly cookie), который отправляется автоматически.
+ */
+let inMemoryToken: string | null = null;
 
 /**
  * Разворачивает { data: ... } из ответа API (безопасно, без циклических импортов)
@@ -217,30 +224,31 @@ export async function apiValidateToken(
   throw new Error("Валидация токена не удалась после всех попыток");
 }
 
-// ========== TOKEN MANAGEMENT ==========
+// ========== TOKEN MANAGEMENT (in-memory) ==========
 
 /**
- * Сохранить токен в localStorage
+ * Сохранить access-токен в памяти.
+ * Токен больше не пишется в localStorage — это безопаснее от XSS.
+ * @see https://owasp.org/www-community/vulnerabilities/Storing_Access_Tokens_in_Local_Storage
  */
-
 export function setAuthToken(token: string) {
-  StorageService.setString("authToken", token);
+  inMemoryToken = token;
   window.dispatchEvent(new Event("auth-token-changed"));
 }
 
-
 /**
- * Получить токен из localStorage
+ * Получить access-токен из памяти.
  */
 export function getAuthToken(): string | null {
-  return StorageService.getString("authToken");
+  return inMemoryToken;
 }
 
 /**
- * Удалить токен из localStorage
+ * Удалить access-токен из памяти.
  */
 export function removeAuthToken() {
-  StorageService.remove("authToken");
+  inMemoryToken = null;
+  window.dispatchEvent(new Event("auth-token-changed"));
 }
 
 /**

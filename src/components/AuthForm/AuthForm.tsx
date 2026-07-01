@@ -65,6 +65,31 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
   }
 }
 
+/** Валидация одного поля формы */
+function validateField(name: string, value: string, mode: FormMode): string | null {
+  switch (name) {
+    case "username": {
+      if (!value.trim()) return "Логин обязателен";
+      if (value.trim().length < 2) return "Минимум 2 символа";
+      if (value.trim().length > 30) return "Максимум 30 символов";
+      return null;
+    }
+    case "email": {
+      if (mode !== "register") return null;
+      if (!value.trim()) return "Email обязателен";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return "Некорректный email";
+      return null;
+    }
+    case "password": {
+      if (!value) return "Пароль обязателен";
+      if (value.length < 8) return "Минимум 8 символов";
+      return null;
+    }
+    default:
+      return null;
+  }
+}
+
 export function AuthForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -73,14 +98,33 @@ export function AuthForm() {
   });
   const redirectTo = searchParams.get("redirect") || "/dashboard";
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     dispatch({ type: "SET_FIELD", field: name as keyof AuthState["formData"], value })
+    // Валидируем поле сразу при изменении
+    const error = validateField(name, value, mode);
+    setFieldErrors((prev) => ({ ...prev, [name]: error }));
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Валидируем все поля
+    const errors: Record<string, string | null> = {};
+    const fields = mode === "register"
+      ? ["username", "email", "password"]
+      : ["username", "password"];
+    let hasErrors = false;
+    for (const field of fields) {
+      const error = validateField(field, state.formData[field as keyof typeof state.formData], mode);
+      errors[field] = error;
+      if (error) hasErrors = true;
+    }
+    setFieldErrors(errors);
+    if (hasErrors) return;
+
     dispatch({ type: "SUBMIT_START" })
 
     try {
@@ -168,6 +212,7 @@ export function AuthForm() {
                   className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none focus:text-slate-950 transition-colors duration-200"
                 />
                 <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
+                {fieldErrors.username && <p className="text-xs text-red-500 mt-1">{fieldErrors.username}</p>}
               </div>
 
               {mode === "register" && (
@@ -175,13 +220,14 @@ export function AuthForm() {
                   <label htmlFor="email" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
                     Email <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    id="email" type="email" name="email"
-                    value={state.formData.email} onChange={handleChange} required
-                    autoComplete="email"
-                    className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none"
-                  />
-                  <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
+                    <input
+                      id="email" type="email" name="email"
+                      value={state.formData.email} onChange={handleChange} required
+                      autoComplete="email"
+                      className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none"
+                    />
+                    <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
+                    {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
                 </div>
               )}
 
@@ -203,6 +249,7 @@ export function AuthForm() {
                   {state.showPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
                 </button>
                 <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
+                {fieldErrors.password && <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>}
               </div>
               {mode === "login" && (
                 <div className="flex justify-end -mt-4">

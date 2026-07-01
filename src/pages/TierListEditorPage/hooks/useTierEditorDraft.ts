@@ -30,7 +30,7 @@ export function useTierEditorDraft({
   sileo,
 }: UseTierEditorDraftParams) {
   const draftKey = `tier-list-draft-${tierListId}`;
-
+  const offeredKey = `tier-list-draft-offered-${tierListId}`;
   const saveKey = `tier-list-saved-${tierListId}`;
 
   /** Удалить черновик и записать время успешного сохранения */
@@ -39,7 +39,8 @@ export function useTierEditorDraft({
       localStorage.setItem(saveKey, String(Date.now()));
     } catch { /* ignore */ }
     localStorage.removeItem(draftKey);
-  }, [draftKey, saveKey]);
+    localStorage.removeItem(offeredKey);
+  }, [draftKey, offeredKey, saveKey]);
 
   // Сохранение черновика при изменениях
   useEffect(() => {
@@ -83,6 +84,15 @@ export function useTierEditorDraft({
       // автосохранённый черновик, не предлагаем восстановление
       if (Date.now() - timestamp < 5000) return;
 
+      // Если мы уже предлагали этот черновик (тот же timestamp) — не показываем снова
+      const lastOffered = Number(localStorage.getItem(offeredKey)) || 0;
+      if (lastOffered === timestamp) return;
+
+      // Запоминаем, что предложили этот черновик
+      try {
+        localStorage.setItem(offeredKey, String(timestamp));
+      } catch { /* ignore */ }
+
       const timeAgo = Math.round((Date.now() - timestamp) / 1000 / 60);
 
       const toastId = sileo.info({
@@ -102,7 +112,7 @@ export function useTierEditorDraft({
       console.error('Failed to parse draft', e);
       localStorage.removeItem(draftKey);
     }
-  }, [tierListId, draftKey, saveKey, dispatch, setHasUnsavedChanges, sileo, isLoading]);
+  }, [tierListId, draftKey, offeredKey, saveKey, dispatch, setHasUnsavedChanges, sileo, isLoading]);
 
   return { checkAndRestoreDraft, clearDraft };
 }

@@ -11,13 +11,24 @@ const SEARCH_CACHE_TTL_EMPTY = 60 * 5;
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
+/** Таймаут на один fetch-запрос к Google Books API (10 секунд) */
+const FETCH_TIMEOUT_MS = 10_000;
+
 async function fetchWithRetry(
   url: string,
   maxAttempts = 3,
 ): Promise<Response> {
   let lastResponse: Response | null = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
     // Успех — возвращаем сразу
     if (response.ok) {
       return response;

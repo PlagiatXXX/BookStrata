@@ -4,6 +4,8 @@ import { generateAvatar, getAvatarLimit } from "./avatar.service.js";
 import { updateAvatar as updateUserAvatar } from "../users/users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { uploadBase64, uploadFromUrl } from "../../lib/cloudinary.js";
+import { validateImageSize } from "../../lib/validators.js";
+import { createApiError, ErrorCodes } from "../../lib/api-response.js";
 import {
   generateAvatarSchema,
   uploadAvatarSchema,
@@ -61,6 +63,14 @@ export async function avatarRoutes(fastify: FastifyInstance) {
       const userId = (request as any).user?.userId;
       if (!userId) {
         return reply.code(401).send({ error: "Unauthorized" });
+      }
+
+      // Валидация размера base64 перед отправкой в Cloudinary
+      if (avatar.startsWith("data:")) {
+        const sizeError = validateImageSize(avatar);
+        if (sizeError) {
+          return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, sizeError));
+        }
       }
 
       // Если это локальный preset (относительный путь), сохраняем напрямую в БД

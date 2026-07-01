@@ -140,12 +140,12 @@ export const router = createBrowserRouter([
       { path: "/community", element: <CommunityPage /> },
       { path: "/forum", element: <ForumPage /> },
       { path: "/forum/battles/:id", element: <BattleDetailPage /> },
+      { path: "/news/:id", element: <NewsPage /> },
       {
         element: <ProtectedRoute />,
         children: [
           { path: "/dashboard", element: <DashboardPage /> },
           { path: "/profile", element: <ProfilePage /> },
-          { path: "/news/:id", element: <NewsPage /> },
           { path: "/users/:id", element: <UserProfilePage /> },
         ],
       },
