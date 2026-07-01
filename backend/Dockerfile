@@ -18,19 +18,12 @@
 # ---------- Stage 1: Builder ----------
 FROM node:20-bullseye-slim AS builder
 
-# Зеркало npm registry для ускорения на российских серверах
-ENV npm_config_registry=https://registry.npmmirror.com
-# Prisma engine binary mirror (тот же npmmirror)
-ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
-
 WORKDIR /build
 
 # Сначала только package.json — для кэширования слоя зависимостей
 COPY package.json package-lock.json ./
-# Явно указываем NODE_ENV=development, чтобы гарантировать установку
-# dev-зависимостей (prisma CLI) — иначе при NODE_ENV=production npm ci
-# пропустит пакеты с флагом devOptional в package-lock.json
-RUN NODE_ENV=development npm ci
+# Устанавливаем все зависимости (включая prisma CLI для генерации клиента)
+RUN npm ci
 
 # Prisma schema + генерация клиента
 COPY prisma/ ./prisma/
@@ -46,17 +39,14 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-bullseye-slim AS production
 
-ENV npm_config_registry=https://registry.npmmirror.com
-ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
-
 RUN groupadd -g 1001 appgroup && \
     useradd -m -u 1001 -g appgroup appuser
 
 WORKDIR /app
 
-# Устанавливаем только production-зависимости
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --maxsockets=1 && \
+# Копируем node_modules из builder и удаляем dev-зависимости
+COPY --from=builder /build/node_modules ./node_modules
+RUN npm prune --omit=dev && \
     npm cache clean --force
 
 # Копируем собранный код и сгенерированный Prisma-клиент
