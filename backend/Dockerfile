@@ -36,10 +36,6 @@ COPY tsconfig.json ./
 COPY src/ ./src/
 RUN npm run build
 
-# Удаляем dev-зависимости (теперь копируем только production)
-RUN npm prune --omit=dev && \
-    npm cache clean --force
-
 # ---------- Stage 2: Production ----------
 FROM node:20-bullseye-slim AS production
 
@@ -48,7 +44,8 @@ RUN groupadd -g 1001 appgroup && \
 
 WORKDIR /app
 
-# Копируем уже очищенные node_modules и собранный код
+# Копируем node_modules (с dev-зависимостями — они не исполняются, но гарантируют
+# что production-пакеты типа dotenv не будут ошибочно удалены)
 COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
 # Prisma schema нужен runtime для migrate deploy
@@ -56,6 +53,9 @@ COPY prisma/ ./prisma/
 # Скрипты (миграции, утилиты)
 COPY scripts/ ./scripts/
 COPY tsconfig.json ./
+
+# Очищаем кэш npm (кэш остался только в builder, но и тут чистим на всякий случай)
+RUN npm cache clean --force
 
 # Запускаем от непривилегированного пользователя
 USER appuser
