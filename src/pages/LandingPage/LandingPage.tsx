@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback, memo } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { motion } from "motion/react"
+import { useAuth } from "@/hooks/useAuthContext"
 import {
   ArrowRight, BookOpen, Sword, Sparkles,
   Heart, MessageSquare, Zap,
@@ -407,6 +408,14 @@ function Lightbox({ screenshot, onClose }: {
 /* ---------- Main landing page ---------- */
 export default function LandingPage() {
   const navigate = useNavigate()
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
+
+  // Редирект авторизованных пользователей на дашборд
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, isAuthLoading, navigate]);
 
   const { data: tierListsData } = useQuery({
     queryKey: ["landing-tierlists"],
@@ -453,6 +462,8 @@ export default function LandingPage() {
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
+
+  if (isAuthenticated && !isAuthLoading) return null;
 
   return (
     <div className="landing-page">

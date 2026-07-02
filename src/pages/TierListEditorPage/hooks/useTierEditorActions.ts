@@ -64,7 +64,9 @@ export function useTierEditorActions({
         // Инвалидируем кэш для синхронизации (Stats важны, так как там счетчик публичных)
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['userTierLists'] }),
-          queryClient.invalidateQueries({ queryKey: ['user', 'stats'] })
+          queryClient.invalidateQueries({ queryKey: ['user', 'stats'] }),
+          queryClient.invalidateQueries({ queryKey: ['publicTierListsSorted'] }),
+          queryClient.invalidateQueries({ queryKey: ['publicTierLists'] }),
         ]); 
         sileo.success({
           title: isPublic ? 'Тир-лист опубликован' : 'Тир-лист скрыт',

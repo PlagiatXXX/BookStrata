@@ -308,7 +308,7 @@ export const BookSearchModal = ({
 
     dispatch({ type: "SET_SEARCHED" });
     window.ym?.(109755750, 'reachGoal', 'book_search')
-    apiTrackEvent('book_search')
+    apiTrackEvent('book_search', { query: state.query })
     await search(state.query);
   }, [state.query, search]);
 

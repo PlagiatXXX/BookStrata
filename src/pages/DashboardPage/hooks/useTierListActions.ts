@@ -36,6 +36,7 @@ export function useTierListActions({
     onSuccess: async (tierList) => {
       logger.info("New tier list created - navigating to editor", {
         id: tierList.id,
+        slug: tierList.slug,
         title: tierList.title,
       });
       // Инвалидируем кэш статистики пользователя
@@ -43,7 +44,7 @@ export function useTierListActions({
         queryClient.invalidateQueries({ queryKey: ["user", "stats"] }),
         queryClient.invalidateQueries({ queryKey: ["userTierLists"] })
       ]);
-      onSuccess?.(tierList?.id);
+      onSuccess?.(tierList?.slug || tierList?.id);
       onRefetch?.();
     },
     onError: (mutationError) => {

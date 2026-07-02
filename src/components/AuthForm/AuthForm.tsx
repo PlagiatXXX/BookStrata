@@ -3,6 +3,7 @@ import { useReducer, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { apiLogin, apiRegister, setAuthToken } from "@/lib/authApi";
+import { apiTrackEvent } from "@/lib/analyticsApi";
 import { StorageService } from "@/lib/storage";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
@@ -137,6 +138,7 @@ export function AuthForm() {
         StorageService.setString("username", result.username)
         window.dispatchEvent(new Event("auth-token-changed"))
         await new Promise((resolve) => setTimeout(resolve, 200))
+        apiTrackEvent('login', { username: state.formData.username })
         window.ym?.(109755750, 'reachGoal', 'login')
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
@@ -151,6 +153,7 @@ export function AuthForm() {
         StorageService.setString("username", result.username)
         window.dispatchEvent(new Event("auth-token-changed"))
         await new Promise((resolve) => setTimeout(resolve, 200))
+        apiTrackEvent('signup', { username: state.formData.username })
         window.ym?.(109755750, 'reachGoal', 'register')
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
