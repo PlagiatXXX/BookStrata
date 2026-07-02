@@ -999,6 +999,17 @@ const BookRow = memo(function BookRow({
             onChange={(e) => onUpdate(book.id, "coverImageUrl", e.target.value)}
             placeholder="URL обложки"
           />
+          <input
+            type="number"
+            className="curated-editor-input curated-editor-input--rating"
+            value={book.rating ?? ""}
+            onChange={(e) => onUpdate(book.id, "rating", e.target.value ? String(Number(e.target.value)) : "")}
+            placeholder="Оценка"
+            min={1}
+            max={10}
+            step={0.1}
+            style={{ width: 80 }}
+          />
           <div className="curated-editor-book-actions">
             <button
               type="button"

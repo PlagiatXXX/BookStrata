@@ -36,6 +36,7 @@ describe("books.service query normalization", () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining("q=intitle%3AHarry+Potter"),
+      expect.any(Object),
     );
   });
 });

@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Tag, Calendar, BookOpen } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
+import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { StaticTierView } from "@/components/StaticTierView";
@@ -16,7 +17,7 @@ import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import "./CollectionPage.css";
 
-export function CollectionPage() {
+export default function CollectionPage() {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
@@ -170,6 +171,30 @@ return DOMPurify.sanitize(collection.content);
         url={`/collections/${slug}`}
         breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${slug}` }]}
       />
+
+      {/* Book JSON-LD для каждой книги в коллекции */}
+      {collection.books && (
+        <Helmet>
+          {Object.values(collection.books).map((book) => (
+            <script key={book.id} type="application/ld+json">
+              {JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Book",
+                name: book.title,
+                author: book.author
+                  ? { "@type": "Person", name: book.author }
+                  : undefined,
+                image: proxyImageUrl(book.coverImageUrl),
+                ...(book.description
+                  ? { description: book.description }
+                  : {}),
+                ...(book.genre ? { genre: book.genre } : {}),
+              })}
+            </script>
+          ))}
+        </Helmet>
+      )}
+
       <DashboardLayout
       showSearch={false}
     >

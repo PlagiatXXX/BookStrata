@@ -50,7 +50,7 @@ const emptyFormData: NewsFormData = {
   isPublished: false,
 };
 
-export function AdminNewsPage() {
+export default function AdminNewsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();

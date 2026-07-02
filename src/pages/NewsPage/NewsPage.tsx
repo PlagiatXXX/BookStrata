@@ -10,7 +10,7 @@ import DOMPurify from "dompurify";
 import { sileo } from "sileo";
 import "./NewsPage.css";
 
-export function NewsPage() {
+export default function NewsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [article, setArticle] = useState<NewsArticle | null>(null);

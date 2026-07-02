@@ -548,7 +548,7 @@ const TierListEditorContent = () => {
           type="article"
           noindex={apiData ? !isPublic : undefined}
           breadcrumbs={[
-            { name: "Тир-листы", url: "/community" },
+            { name: "Библиотека", url: "/templates" },
             { name: apiData?.title || "Тир-лист", url: `/tier-lists/${pageUrl}` },
           ]}
         />
@@ -578,7 +578,7 @@ const TierListEditorContent = () => {
         ownerUserId={ownerUserId}
         currentUserId={currentUserId}
         breadcrumbItems={[
-          { label: "Тир-листы", href: "/community" },
+          { label: "Библиотека", href: "/templates" },
           { label: apiData?.title || "Тир-лист" },
         ]}
       >
@@ -676,7 +676,7 @@ const TierListEditorContent = () => {
 };
 
 // Главный компонент с key для сброса состояния при смене tierListId
-export const TierListEditorPage = () => {
+export default function TierListEditorPage() {
   const { id: tierListId = "" } = useParams<{ id: string }>();
   return <TierListEditorContent key={tierListId} />;
 };

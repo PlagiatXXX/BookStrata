@@ -15,6 +15,7 @@ import {
   Pen,
   Share2,
 } from "lucide-react"
+import { Helmet } from "react-helmet-async"
 import { SEOHead } from "@/components/SEO/SEOHead"
 
 /* ---------- Fade-in on scroll wrapper ---------- */
@@ -62,7 +63,7 @@ function FeatureCard({ icon, title, description, gradient, delay }: FeatureCardP
 }
 
 /* ---------- Main page ---------- */
-export function AboutPage() {
+export default function AboutPage() {
   const navigate = useNavigate()
 
   const handleBack = useCallback(() => {
@@ -120,6 +121,23 @@ export function AboutPage() {
         url="/about"
         breadcrumbs={[{ name: "О проекте", url: "/about" }]}
       />
+
+      {/* AboutPage JSON-LD */}
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "AboutPage",
+            name: "О проекте BookStrata",
+            description: "BookStrata — создавайте тир лист книг онлайн, ведите визуальный книжный рейтинг, участвуйте в баттлах и находите книги по вкусу. Узнайте больше о проекте.",
+            url: "https://bookstrata.ru/about",
+            mainEntity: {
+              "@type": "Organization",
+              "@id": "https://bookstrata.ru#organization",
+            },
+          })}
+        </script>
+      </Helmet>
 
       {/* ======== HERO ======== */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900 py-20 md:py-28 px-4">

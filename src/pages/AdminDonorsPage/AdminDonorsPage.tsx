@@ -8,7 +8,7 @@ interface DonorItem {
   name: string
 }
 
-export function AdminDonorsPage() {
+export default function AdminDonorsPage() {
   const navigate = useNavigate()
   const [donors, setDonors] = useState<DonorItem[]>([])
   const [newName, setNewName] = useState('')

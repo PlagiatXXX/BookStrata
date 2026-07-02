@@ -57,7 +57,7 @@ const REWARD_OPTIONS = [
   { days: 7, label: "7 дней" },
 ];
 
-export function AdminFeedbackPage() {
+export default function AdminFeedbackPage() {
   const navigate = useNavigate();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);

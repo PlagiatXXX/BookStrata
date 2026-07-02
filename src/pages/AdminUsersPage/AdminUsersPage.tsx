@@ -67,7 +67,7 @@ const ACTION_COLORS: Record<ViolatorAction["type"], string> = {
   warning: "bg-amber-500/10 text-amber-400 border-amber-500/30",
 }
 
-export function AdminUsersPage() {
+export default function AdminUsersPage() {
   const navigate = useNavigate()
   const { user: currentUser } = useAuth()
   const queryClient = useQueryClient()

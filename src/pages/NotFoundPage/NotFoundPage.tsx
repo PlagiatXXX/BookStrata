@@ -1,9 +1,18 @@
+import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, Home } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
 
 export default function NotFoundPage() {
   const navigate = useNavigate();
+
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  }, [navigate]);
 
   return (
     <>
@@ -20,7 +29,7 @@ export default function NotFoundPage() {
 
         <div className="flex gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="nb-btn-secondary flex cursor-pointer items-center gap-2"
             type="button"
           >

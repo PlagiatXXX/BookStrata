@@ -6,7 +6,7 @@ import { apiForgotPassword } from "@/lib/authApi";
 import { sileo } from "sileo";
 import { SEOHead } from "@/components/SEO/SEOHead";
 
-export function ForgotPasswordPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);

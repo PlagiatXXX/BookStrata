@@ -21,15 +21,21 @@ interface SEOHeadProps {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": `${SITE_URL}#organization`,
   name: SITE_NAME,
   url: SITE_URL,
   logo: `${SITE_URL}/logo.svg`,
   description: DEFAULT_DESC,
+  sameAs: [
+    "https://t.me/PasFedor",
+    "https://vk.com/club237287277",
+  ],
 };
 
 const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": `${SITE_URL}#website`,
   name: SITE_NAME,
   url: SITE_URL,
   potentialAction: {
@@ -140,6 +146,19 @@ export function SEOHead({
         }
       : null;
 
+  // WebPage JSON-LD — базовая разметка для всех страниц
+  const webpageJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: pageTitle,
+    description,
+    url: pageUrl,
+    publisher: { "@id": `${SITE_URL}#organization` },
+    ...(breadcrumbs
+      ? { breadcrumb: { "@id": `${pageUrl}#breadcrumb` } }
+      : {}),
+  };
+
   return (
     <Helmet>
       {title && <title>{pageTitle}</title>}
@@ -160,6 +179,7 @@ export function SEOHead({
       <meta name="twitter:image:alt" content={description} />
 
       <link rel="canonical" href={pageUrl} />
+      <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} — Новости книжного рейтинга`} href={`${SITE_URL}/rss.xml`} />
 
       {publishedTime && (
         <meta property="article:published_time" content={publishedTime} />
@@ -183,6 +203,9 @@ export function SEOHead({
           {JSON.stringify(articleJsonLd)}
         </script>
       )}
+      <script type="application/ld+json">
+        {JSON.stringify(webpageJsonLd)}
+      </script>
     </Helmet>
   );
 }

@@ -459,6 +459,10 @@ fastify.register(analyticsRoutes, { prefix: "/api/admin/analytics" });
 import { sitemapRoutes } from "../src/modules/sitemap/sitemap.route.js";
 fastify.register(sitemapRoutes);
 
+// RSS-фид (без /api префикса, доступен по /rss.xml)
+import { rssRoutes } from "../src/modules/rss/rss.route.js";
+fastify.register(rssRoutes);
+
 // Инициализация подписок на события
 registerAchievementSubscriptions();
 registerAnalyticsSubscriptions();

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, BarChart3, ArrowLeft, ShieldAlert, MailQuestion } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuthContext'
-import type { AdminDashboardStats } from '../../../shared/types'
+import type { AdminDashboardStats } from '@/../shared/types'
 
 interface AdminSection {
   title: string
@@ -104,24 +104,14 @@ const ALL_SECTIONS: AdminSection[] = [
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [stats, setStats] = useState<AdminDashboardStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-    apiClient.get<AdminDashboardStats>('/admin/stats')
-      .then((data) => {
-        if (!cancelled) setStats(data)
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message)
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [])
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ['admin', 'stats'],
+    queryFn: () => apiClient.get<AdminDashboardStats>('/admin/stats'),
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+    enabled: user?.role === 'admin',
+  })
 
   const visibleSections = ALL_SECTIONS.filter(
     (s) => user?.role && s.roles.includes(user.role),
@@ -188,25 +178,25 @@ export default function AdminDashboard() {
               <div>
                 <p className="text-gray-400">Всего пользователей</p>
                 <p className="text-2xl font-bold text-white mt-1">
-                  {loading ? '…' : error ? '—' : stats?.totalUsers}
+                    {isLoading ? '…' : error ? '—' : stats?.totalUsers}
                 </p>
               </div>
               <div>
                 <p className="text-gray-400">Pro пользователей</p>
                 <p className="text-2xl font-bold text-amber-500 mt-1">
-                  {loading ? '…' : error ? '—' : stats?.proUsers}
+                  {isLoading ? '…' : error ? '—' : stats?.proUsers}
                 </p>
               </div>
               <div>
                 <p className="text-gray-400">Активных новостей</p>
                 <p className="text-2xl font-bold text-blue-500 mt-1">
-                  {loading ? '…' : error ? '—' : stats?.activeNews}
+                  {isLoading ? '…' : error ? '—' : stats?.activeNews}
                 </p>
               </div>
               <div>
                 <p className="text-gray-400">Коллекций</p>
                 <p className="text-2xl font-bold text-green-500 mt-1">
-                  {loading ? '…' : error ? '—' : stats?.tierLists}
+                  {isLoading ? '…' : error ? '—' : stats?.tierLists}
                 </p>
               </div>
               <div>
@@ -215,7 +205,7 @@ export default function AdminDashboard() {
                   <p className="text-gray-400 text-sm">Нарушители</p>
                 </div>
                 <p className="text-2xl font-bold text-red-500 mt-1">
-                  {loading ? '…' : error ? '—' : stats?.violators}
+                  {isLoading ? '…' : error ? '—' : stats?.violators}
                 </p>
               </div>
               <div>
@@ -224,12 +214,12 @@ export default function AdminDashboard() {
                   <p className="text-gray-400 text-sm">Обращения</p>
                 </div>
                 <p className="text-2xl font-bold text-violet-500 mt-1">
-                  {loading ? '…' : error ? '—' : stats?.feedbackCount}
+                  {isLoading ? '…' : error ? '—' : stats?.feedbackCount}
                 </p>
               </div>
             </div>
             {error && (
-              <p className="text-xs text-red-400 mt-4">Ошибка загрузки: {error}</p>
+              <p className="text-xs text-red-400 mt-4">Ошибка загрузки: {error.message}</p>
             )}
           </div>
         )}

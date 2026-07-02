@@ -33,6 +33,7 @@ export const createCollectionSchema = z.object({
   isPublished: z.boolean().optional().default(false),
   isFeatured: z.boolean().optional().default(false),
   order: z.number().int().optional().default(0),
+  accentColor: z.string().optional(),
   editorialNote: z.string().nullable().optional(),
   // Curated fields
   tiers: z.record(z.string(), tierObjectSchema).optional(),

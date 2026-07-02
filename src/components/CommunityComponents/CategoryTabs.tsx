@@ -1,5 +1,8 @@
-import { memo } from 'react';
-import { CATEGORIES } from '../../data/mockData';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CATEGORIES } from '@/data/mockData';
+
+const SCROLL_AMOUNT = 240;
 
 interface CategoryTabsProps {
   activeCategory: string;
@@ -7,6 +10,36 @@ interface CategoryTabsProps {
 }
 
 export const CategoryTabs = memo(({ activeCategory, setActiveCategory }: CategoryTabsProps) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateArrows = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    updateArrows();
+    el.addEventListener('scroll', updateArrows, { passive: true });
+    const ro = new ResizeObserver(updateArrows);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', updateArrows);
+      ro.disconnect();
+    };
+  }, [updateArrows]);
+
+  const scrollBy = useCallback((direction: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction === 'left' ? -SCROLL_AMOUNT : SCROLL_AMOUNT, behavior: 'smooth' });
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const currentIndex = CATEGORIES.findIndex((c) => c.id === activeCategory);
     let nextIndex = -1;
@@ -21,11 +54,25 @@ export const CategoryTabs = memo(({ activeCategory, setActiveCategory }: Categor
       setTimeout(() => document.getElementById(`tab-${CATEGORIES[nextIndex].id}`)?.focus(), 0);
     }
   };
+
   return (
-    <section className="mb-12 reveal" data-reveal>
-      
-      <div 
-        className="flex items-center gap-3 overflow-x-auto pb-4 no-scrollbar"
+    <section className="mb-12 reveal relative group" data-reveal>
+      {/* Левая стрелка */}
+      <button
+        type="button"
+        aria-label="Прокрутить влево"
+        onClick={() => scrollBy('left')}
+        className={`absolute left-0 top-0 bottom-4 z-10 flex items-center justify-center w-8 bg-linear-to-r from-(--bg-0) via-(--bg-0)/90 to-transparent cursor-pointer transition-opacity duration-200 ${
+          canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <ChevronLeft size={18} className="text-(--ink-1)" />
+      </button>
+
+      {/* Контейнер с табами */}
+      <div
+        ref={scrollRef}
+        className="flex items-center gap-3 overflow-x-auto pb-4 no-scrollbar px-8"
         role="tablist"
         aria-label="Категории контента"
         onKeyDown={handleKeyDown}
@@ -50,6 +97,18 @@ export const CategoryTabs = memo(({ activeCategory, setActiveCategory }: Categor
           </button>
         ))}
       </div>
+
+      {/* Правая стрелка */}
+      <button
+        type="button"
+        aria-label="Прокрутить вправо"
+        onClick={() => scrollBy('right')}
+        className={`absolute right-0 top-0 bottom-4 z-10 flex items-center justify-center w-8 bg-linear-to-l from-(--bg-0) via-(--bg-0)/90 to-transparent cursor-pointer transition-opacity duration-200 ${
+          canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <ChevronRight size={18} className="text-(--ink-1)" />
+      </button>
     </section>
   );
 });

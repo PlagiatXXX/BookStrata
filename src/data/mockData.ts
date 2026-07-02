@@ -55,11 +55,26 @@ export type CollectionItem = {
   coverImageUrl: string;
   bookCovers?: string[]; // Массив обложек книг (3-4 шт), для превью
   tags: string[];
-    isPublished: boolean;
+  isPublished: boolean;
   order: number;
+  accentColor?: string; // Цветовая акцентная подсветка карточки (hex)
   createdAt: string;
   updatedAt: string;
 };
+
+/** Палитра акцентных цветов для карточек коллекций */
+export const COLLECTION_ACCENTS = [
+  '#f97316', // оранжевый (текущий accent-main)
+  '#ef4444', // красный
+  '#ec4899', // розовый
+  '#a855f7', // фиолетовый
+  '#6366f1', // индиго
+  '#3b82f6', // синий
+  '#06b6d4', // циан
+  '#14b8a6', // бирюзовый
+  '#22c55e', // зелёный
+  '#eab308', // жёлтый
+] as const;
 
 export const CATEGORIES = [
   { id: "all", label: "Всё", icon: TrendingUp },

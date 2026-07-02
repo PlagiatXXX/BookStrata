@@ -23,6 +23,8 @@ const getGridClass = (index: number): string => {
 
 const FALLBACK = '/images/placeholder.svg';
 
+const DEFAULT_ACCENT = 'var(--accent-main)';
+
 export const CollectionCard = memo(({ collection, className = '' }: CollectionCardProps) => {
   const navigate = useNavigate();
 
@@ -34,10 +36,13 @@ export const CollectionCard = memo(({ collection, className = '' }: CollectionCa
   const previewCovers = (collection.bookCovers || []).slice(0, 3);
   const hasCovers = previewCovers.length > 0;
 
+  // Акцентный цвет: из коллекции или fallback
+  const accentColor = collection.accentColor || DEFAULT_ACCENT;
+
   return (
     <div
       className={`group relative overflow-hidden brutal-card brutal-border border-l-4 transition-all duration-300 hover-lift min-h-[200px] ${getGridClass(collection.id)} ${className}`}
-      style={{ borderLeftColor: 'var(--accent-main)' } as CSSProperties}
+      style={{ borderLeftColor: accentColor } as CSSProperties}
     >
       {/* Фон — тёмный градиент */}
       <div className="absolute inset-0 bg-linear-to-br from-(--bg-1) via-(--bg-0) to-(--bg-2)" />
@@ -64,10 +69,7 @@ export const CollectionCard = memo(({ collection, className = '' }: CollectionCa
 
       {/* Контент внизу */}
       <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/40 to-transparent p-6 flex flex-col justify-end">
-        <span className="brutal-label text-[10px] font-semibold uppercase px-2 py-0.5 mb-2 w-fit bg-accent-main/20 text-accent-main border-accent-main/30">
-          Подборка BookStrata
-        </span>
-        <h3 className="community-heading font-extrabold leading-none mb-1 text-xl md:text-2xl">
+        <h3 className="community-heading font-extrabold leading-none mb-1 text-lg md:text-xl">
           {collection.title}
         </h3>
         {collection.excerpt && (

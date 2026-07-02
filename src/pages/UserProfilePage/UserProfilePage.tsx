@@ -1,3 +1,4 @@
+import { useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { ArrowLeft, Heart, Calendar, Trophy, BookOpen, Star } from "lucide-react"
@@ -35,6 +36,14 @@ export default function UserProfilePage() {
     staleTime: 60_000,
   })
 
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  }, [navigate])
+
   const handleTierListClick = (tierListId: string) => {
     navigate(`/tier-lists/${tierListId}`)
   }
@@ -62,7 +71,7 @@ export default function UserProfilePage() {
       <DashboardLayout showSearch={false}>
         <div className="min-h-screen flex flex-col items-center justify-center text-(--ink-1)">
           <h1 className="text-lg mb-4">Пользователь не найден</h1>
-          <button onClick={() => navigate(-1)} className="text-xs font-bold uppercase tracking-widest text-(--accent-main) hover:opacity-80 transition-opacity">
+          <button onClick={handleBack} className="text-xs font-bold uppercase tracking-widest text-(--accent-main) hover:opacity-80 transition-opacity">
             ← Назад
           </button>
         </div>
@@ -86,7 +95,7 @@ export default function UserProfilePage() {
         <div className="max-w-4xl mx-auto px-6 py-14 pb-20 text-(--ink-0)">
           {/* Back button */}
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-(--ink-1) hover:text-(--ink-0) mb-8 transition-colors"
           >
             <ArrowLeft size={14} />

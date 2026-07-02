@@ -7,7 +7,7 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { sileo } from "sileo";
 import { SEOHead } from "@/components/SEO/SEOHead";
 
-export function ResetPasswordPage() {
+export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();

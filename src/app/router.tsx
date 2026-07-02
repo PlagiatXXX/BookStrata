@@ -7,111 +7,41 @@ import AppShell from "./App";
 
 const LandingPage = lazy(() => import("@/pages/LandingPage/LandingPage"));
 
-const DashboardPage = lazy(() =>
-  import("@/pages/DashboardPage/DashboardPage").then((module) => ({
-    default: module.DashboardPage,
-  })),
-);
-const AuthPage = lazy(() =>
-  import("@/pages/AuthPage").then((module) => ({
-    default: module.AuthPage,
-  })),
-);
-const ForgotPasswordPage = lazy(() =>
-  import("@/pages/ForgotPasswordPage").then((module) => ({
-    default: module.ForgotPasswordPage,
-  })),
-);
-const ResetPasswordPage = lazy(() =>
-  import("@/pages/ResetPasswordPage").then((module) => ({
-    default: module.ResetPasswordPage,
-  })),
-);
-const ProfilePage = lazy(() =>
-  import("@/pages/ProfilePage").then((module) => ({
-    default: module.ProfilePage,
-  })),
-);
+const DashboardPage = lazy(() => import("@/pages/DashboardPage/DashboardPage"));
+const AuthPage = lazy(() => import("@/pages/AuthPage"));
+const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
+const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const TemplateLibrary = lazy(
   () => import("@/components/TemplateLibrary/TemplateLibrary"),
 );
 const CommunityPage = lazy(() => import("@/pages/CommunityPage"));
 const ForumPage = lazy(() => import("@/pages/ForumPage"));
 const BattleDetailPage = lazy(() => import("@/pages/BattleDetailPage"));
-const NewsPage = lazy(() =>
-  import("@/pages/NewsPage").then((module) => ({
-    default: module.NewsPage,
-  })),
-);
-const AdminNewsPage = lazy(() =>
-  import("@/pages/AdminNewsPage").then((module) => ({
-    default: module.AdminNewsPage,
-  })),
-);
-const AdminCollectionsPage = lazy(() =>
-  import("@/pages/AdminCollectionsPage").then((module) => ({
-    default: module.AdminCollectionsPage,
-  })),
-);
-const AdminDashboard = lazy(() =>
-  import("@/pages/AdminDashboard/AdminDashboard").then((module) => ({
-    default: module.default,
-  })),
-);
-const AdminDonorsPage = lazy(() =>
-  import("@/pages/AdminDonorsPage/AdminDonorsPage").then((module) => ({
-    default: module.AdminDonorsPage,
-  })),
-);
-const AdminBattlesPage = lazy(() =>
-  import("@/pages/AdminBattlesPage/AdminBattlesPage").then(
-    (module) => ({
-      default: module.default,
-    }),
-  ),
-);
-const AdminFeedbackPage = lazy(() =>
-  import("@/pages/AdminFeedbackPage/AdminFeedbackPage").then(
-    (module) => ({
-      default: module.AdminFeedbackPage,
-    }),
-  ),
-);
-const AdminAnalyticsPage = lazy(() =>
-  import("@/pages/AdminAnalyticsPage/AdminAnalyticsPage").then(
-    (module) => ({
-      default: module.default,
-    }),
-  ),
-);
-const AdminUsersPage = lazy(() =>
-  import("@/pages/AdminUsersPage/AdminUsersPage").then((module) => ({
-    default: module.AdminUsersPage,
-  })),
-);
-const ContactPage = lazy(() => import("@/pages/ContactPage"))
-const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"))
-const PrivacyPage = lazy(() => import("@/pages/PrivacyPage").then(m => ({ default: m.PrivacyPage })))
-const TermsPage = lazy(() => import("@/pages/TermsPage").then(m => ({ default: m.TermsPage })))
-const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })))
-const HistoryPage = lazy(() => import("@/pages/HistoryPage"))
-const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage").then(m => ({ default: m.OAuthCallbackPage })))
-const UserProfilePage = lazy(() => import("@/pages/UserProfilePage/UserProfilePage"))
-const NotFoundPage = lazy(() => import("@/pages/NotFoundPage/NotFoundPage").then(m => ({ default: m.default })))
-const CollectionPage = lazy(() =>
-  import("@/pages/CollectionPage").then((module) => ({
-    default: module.CollectionPage,
-  })),
-);
+const NewsPage = lazy(() => import("@/pages/NewsPage/NewsPage"));
+const AdminNewsPage = lazy(() => import("@/pages/AdminNewsPage/AdminNewsPage"));
+const AdminCollectionsPage = lazy(() => import("@/pages/AdminCollectionsPage/AdminCollectionsPage"));
+const AdminDashboard = lazy(() => import("@/pages/AdminDashboard/AdminDashboard"));
+const AdminDonorsPage = lazy(() => import("@/pages/AdminDonorsPage/AdminDonorsPage"));
+const AdminBattlesPage = lazy(() => import("@/pages/AdminBattlesPage/AdminBattlesPage"));
+const AdminFeedbackPage = lazy(() => import("@/pages/AdminFeedbackPage/AdminFeedbackPage"));
+const AdminAnalyticsPage = lazy(() => import("@/pages/AdminAnalyticsPage/AdminAnalyticsPage"));
+const AdminUsersPage = lazy(() => import("@/pages/AdminUsersPage/AdminUsersPage"));
+const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"));
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
+const TermsPage = lazy(() => import("@/pages/TermsPage"));
+const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const HistoryPage = lazy(() => import("@/pages/HistoryPage"));
+const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage"));
+const UserProfilePage = lazy(() => import("@/pages/UserProfilePage/UserProfilePage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage/NotFoundPage"));
+const CollectionPage = lazy(() => import("@/pages/CollectionPage/CollectionPage"));
 const RankingsPage = lazy(() => import("@/pages/RankingsPage/RankingsPage"));
 const WhatToReadPage = lazy(() => import("@/pages/WhatToReadPage/WhatToReadPage"));
 
 // Lazy loading for the DnD-heavy editor page
-const TierListEditorPage = lazy(() =>
-  import("@/pages/TierListEditorPage/TierEditorPage").then((module) => ({
-    default: module.TierListEditorPage,
-  })),
-);
+const TierListEditorPage = lazy(() => import("@/pages/TierListEditorPage/TierEditorPage"));
 export const router = createBrowserRouter([
   {
     element: <AppShell />,

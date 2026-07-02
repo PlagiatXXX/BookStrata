@@ -186,16 +186,20 @@ describe("books.service", () => {
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("https://www.googleapis.com/books/v1/volumes"),
+        expect.any(Object),
       );
       // URL кодируется правильно: intitle:Harry Potter -> intitle%3AHarry+Potter
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("q=intitle%3AHarry"),
+        expect.any(Object),
       );
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("key=test-google-books-api-key"),
+        expect.any(Object),
       );
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("maxResults=20"),
+        expect.any(Object),
       );
     });
 

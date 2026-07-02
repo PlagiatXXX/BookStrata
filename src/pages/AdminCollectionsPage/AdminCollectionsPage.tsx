@@ -22,7 +22,7 @@ import {
   type CreateCollectionInput,
   type UpdateCollectionInput,
 } from "@/lib/collectionsApi";
-import { CATEGORIES } from "@/data/mockData";
+import { CATEGORIES, COLLECTION_ACCENTS } from "@/data/mockData";
 import { useAuth } from "@/hooks/useAuthContext";
 import { WysiwygEditor } from "./components/WysiwygEditor";
 import {
@@ -45,6 +45,7 @@ interface CollectionFormData {
   isFeatured: boolean;
   order: number;
   editorialNote: string;
+  accentColor: string;
 }
 
 const emptyFormData: CollectionFormData = {
@@ -60,9 +61,10 @@ const emptyFormData: CollectionFormData = {
   isFeatured: false,
   order: 0,
   editorialNote: "",
+  accentColor: "",
 };
 
-export function AdminCollectionsPage() {
+export default function AdminCollectionsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -128,6 +130,7 @@ export function AdminCollectionsPage() {
       isFeatured: false,
       order: 0,
       editorialNote: "",
+      accentColor: "",
     });
     setCuratedTiers(
       presetType === "curated" && !editingCollection
@@ -159,6 +162,7 @@ export function AdminCollectionsPage() {
       isFeatured: collection.isFeatured,
       order: collection.order,
       editorialNote: collection.editorialNote || "",
+      accentColor: collection.accentColor || "",
     });
 
     if (collection.type === "curated" && collection.tiers && collection.tierOrder) {
@@ -254,6 +258,7 @@ export function AdminCollectionsPage() {
         isFeatured: formData.isFeatured,
         order: formData.order,
         editorialNote: formData.editorialNote.trim() || null,
+        accentColor: formData.accentColor || undefined,
       };
 
       if (formData.type === "curated") {
@@ -889,6 +894,41 @@ export function AdminCollectionsPage() {
                     />
                     <span>Редакционная подборка (показывать на странице Рейтинг книг)</span>
                   </label>
+                </div>
+
+                {/* Акцентный цвет карточки */}
+                <div className="admin-collections-form-group">
+                  <label>Цвет подсветки карточки</label>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, accentColor: "" })}
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-all cursor-pointer ${
+                        !formData.accentColor
+                          ? 'border-(--accent-main) scale-110'
+                          : 'border-(--line-soft) hover:border-(--line-strong)'
+                      }`}
+                      title="По умолчанию"
+                      style={{ background: 'var(--accent-main)' }}
+                    >
+                      A
+                    </button>
+                    {COLLECTION_ACCENTS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, accentColor: color })}
+                        className={`w-8 h-8 rounded-full border-2 transition-all cursor-pointer ${
+                          formData.accentColor === color
+                            ? 'border-white scale-110 ring-2 ring-white/30'
+                            : 'border-transparent hover:scale-110'
+                        }`}
+                        style={{ backgroundColor: color }}
+                        title={color}
+                        aria-label={`Цвет ${color}`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 {editingCollection && (

@@ -25,7 +25,7 @@ const MemoizedDashboardHeader = memo(DashboardHeader);
 const MemoizedUserActivityStats = memo(UserActivityStats);
 
 
-export function DashboardPage() {
+export default function DashboardPage() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 

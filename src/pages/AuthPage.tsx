@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { AuthForm } from "@/components/AuthForm/AuthForm";
 import { SEOHead } from "@/components/SEO/SEOHead";
 
-export function AuthPage() {
+export default function AuthPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 

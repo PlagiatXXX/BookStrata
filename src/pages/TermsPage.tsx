@@ -1,7 +1,7 @@
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
-export function TermsPage() {
+export default function TermsPage() {
   return (
     <div className="min-h-screen bg-zinc-50 py-16 px-4">
       <SEOHead title="Условия использования BookStrata — правила сервиса тир лист книг" description="Ознакомьтесь с условиями использования BookStrata. Правила регистрации, размещения контента, ответственности и конфиденциальности при создании тир лист книг онлайн." url="/terms" breadcrumbs={[{ name: "Условия использования", url: "/terms" }]} />

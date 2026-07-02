@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
-import { DashboardPage } from "./DashboardPage";
+import DashboardPage from "./DashboardPage";
 import * as userApiModule from "@/lib/userApi";
 import * as authContextModule from "@/hooks/useAuthContext";
 import type { Mock } from "vitest";

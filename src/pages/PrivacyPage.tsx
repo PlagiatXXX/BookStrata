@@ -1,7 +1,7 @@
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
-export function PrivacyPage() {
+export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-zinc-50 py-16 px-4">
       <SEOHead title="Политика конфиденциальности BookStrata — защита данных" description="Политика конфиденциальности BookStrata. Какие данные мы собираем, как храним и защищаем, ваши права по 152-ФЗ при использовании сервиса тир лист книг." url="/privacy" breadcrumbs={[{ name: "Политика конфиденциальности", url: "/privacy" }]} />

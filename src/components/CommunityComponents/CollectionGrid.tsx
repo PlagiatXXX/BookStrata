@@ -47,7 +47,7 @@ export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: Collec
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[180px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 auto-rows-[180px]">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="brutal-card brutal-border animate-pulse bg-(--bg-1)" />
         ))}
@@ -67,8 +67,8 @@ export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: Collec
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-[180px]">
-      {filteredCollections.map((collection) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 auto-rows-[180px]">
+        {filteredCollections.map((collection) => (
         <CollectionCard
           key={collection.id}
           collection={collection}

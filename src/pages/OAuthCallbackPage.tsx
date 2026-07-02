@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom"
 import { setAuthToken } from "@/lib/authApi"
 import { StorageService } from "@/lib/storage"
 
-export function OAuthCallbackPage() {
+export default function OAuthCallbackPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const token = searchParams.get("token")

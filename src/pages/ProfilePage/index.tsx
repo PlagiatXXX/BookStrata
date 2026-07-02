@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { sileo } from "sileo";
@@ -20,7 +20,7 @@ import { MobileBottomNav } from "@/ui/MobileBottomNav";
 
 const logger = createLogger("ProfilePage", { color: "blue" });
 
-export function ProfilePage() {
+export default function ProfilePage() {
   const navigate = useNavigate();
   const { isAuthenticated, user: authUser } = useAuth();
   const { user, stats, isLoading, uploadAvatar } = useUser();
@@ -56,6 +56,14 @@ export function ProfilePage() {
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
 
   const username = authUser?.username || user?.username;
+
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  }, [navigate]);
 
   const handleAvatarSave = async (avatarUrl: string) => {
     try {
@@ -108,7 +116,7 @@ export function ProfilePage() {
       <div className="pt-4 sm:pt-24 pb-20 md:pb-10">
         <div className="mx-auto px-4 w-full max-w-2xl sm:px-6 lg:max-w-4xl">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 sm:mb-6 cursor-pointer"
           >
             <ArrowLeft size={16} className="sm:size-5" />
