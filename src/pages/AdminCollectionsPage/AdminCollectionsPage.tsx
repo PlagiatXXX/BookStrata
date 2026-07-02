@@ -11,6 +11,7 @@ import {
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { sileo } from "sileo";
 import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getAllCollectionsForAdmin,
   createCollection,
@@ -68,6 +69,7 @@ export default function AdminCollectionsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [collections, setCollections] = useState<CollectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -347,6 +349,8 @@ export default function AdminCollectionsPage() {
       });
 
       handleCloseModal();
+      // Сбрасываем кэш CommunityPage, чтобы карточки показали новый accentColor
+      queryClient.invalidateQueries({ queryKey: ["published-collections"] });
       loadCollections();
     } catch (error) {
       console.error("Failed to save collection:", error);

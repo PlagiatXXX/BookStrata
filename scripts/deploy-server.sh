@@ -101,6 +101,13 @@ cd "$PROJECT_DIR"
 git pull
 ok "Код обновлён"
 
+# ——— 1b. Prisma migrate (если есть новые миграции) ———
+info "Накатка Prisma-миграций..."
+cd "$PROJECT_DIR/backend"
+npx prisma generate
+npx prisma migrate deploy
+ok "Миграции накатаны"
+
 # ——— 2. Собрать фронтенд во временную директорию ———
 if [ "$SKIP_BUILD" = false ]; then
   info "Сборка фронтенда..."
