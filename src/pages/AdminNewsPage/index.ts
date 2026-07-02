@@ -1,1 +1,1 @@
-export { AdminNewsPage } from './AdminNewsPage';
+export { default as AdminNewsPage } from './AdminNewsPage';

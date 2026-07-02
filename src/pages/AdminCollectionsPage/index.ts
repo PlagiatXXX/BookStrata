@@ -1,1 +1,1 @@
-export { AdminCollectionsPage } from "./AdminCollectionsPage";
+export { default as AdminCollectionsPage } from "./AdminCollectionsPage";
