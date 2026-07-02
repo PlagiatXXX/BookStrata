@@ -13,7 +13,6 @@ import { TierListGrid } from "./components/TierListGrid";
 import { BookCard } from "./components/BookCard";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { SkeletonGrid, SkeletonCard } from "@/ui/Skeleton";
-import { Spinner } from "@/components/Spinner";
 
 import "./DashboardPage.css";
 import logger from "@/lib/logger";

@@ -55,6 +55,8 @@ export function useAnalytics() {
       trackLinks: true,
       accurateTrackBounce: true,
       webvisor: true,
+      defer: true,
+      trackHash: true,
     });
   }, [isConsented]);
 
