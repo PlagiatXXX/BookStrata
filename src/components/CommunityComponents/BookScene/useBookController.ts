@@ -69,8 +69,8 @@ export function useBookController(containerRef: RefObject<HTMLElement | null>): 
   const open = useMotionValue(0);
 
   const openSpring = useSpring(open, {
-    stiffness: 90,
-    damping: 22,
+    stiffness: 60,
+    damping: 28,
   });
 
   /* ================= SCENE ROTATION ================= */
