@@ -25,8 +25,8 @@ describe('usePublicTierListsPagination', () => {
         })
       );
 
-      // 30 items / 6 per page = 5 pages
-      expect(result.current.totalPages).toBe(5);
+      // 30 items / 8 per page = 4 pages
+      expect(result.current.totalPages).toBe(4);
     });
 
     it('должен возвращать 1 если метаданные пустые', () => {

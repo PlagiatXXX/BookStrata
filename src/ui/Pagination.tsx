@@ -90,7 +90,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1 || isFetching}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-800/80 bg-[#08293c] text-cyan-100 transition-colors hover:bg-[#0b3550] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-cyan-800/80 bg-[#08293c] text-cyan-100 transition-colors hover:bg-[#0b3550] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
           aria-label="Предыдущая страница"
         >
           <ChevronLeft size={16} />
@@ -108,7 +108,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               onClick={() => onPageChange(page as number)}
               disabled={isFetching}
               aria-current={currentPage === page ? 'page' : undefined}
-              className={`min-w-9 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+              className={`min-w-9 cursor-pointer rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                 currentPage === page
                   ? 'border-cyan-300/80 bg-cyan-500/25 text-cyan-100'
                   : 'border-cyan-800/80 bg-[#08293c] text-cyan-100 hover:bg-[#0b3550]'
@@ -123,7 +123,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           type="button"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!actualHasNext || isFetching}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-800/80 bg-[#08293c] text-cyan-100 transition-colors hover:bg-[#0b3550] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+          className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-cyan-800/80 bg-[#08293c] text-cyan-100 transition-colors hover:bg-[#0b3550] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
           aria-label="Следующая страница"
         >
           <ChevronRight size={16} />

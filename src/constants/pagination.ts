@@ -3,7 +3,7 @@
  */
 export const DEFAULT_PAGE_SIZE = 10;
 export const PUBLIC_CATALOG_PAGE_SIZE = 6;
-export const PUBLIC_PAGE_SIZE = 6; // compatibility alias
+export const PUBLIC_PAGE_SIZE = 8;
 
 // Template Library specific constants
 export const COVER_HEIGHTS_MAP = {

@@ -2,7 +2,7 @@
 export const COVER_HEIGHTS = [320, 420, 360, 500, 390, 460];
 
 // === Pagination ===
-export const PUBLIC_PAGE_SIZE = 6;
+export const PUBLIC_PAGE_SIZE = 8;
 export const PUBLIC_TIER_LISTS_STALE_TIME_MS = 30000;
 export const PUBLIC_TIER_LISTS_GC_TIME_MS = 300000;
 
