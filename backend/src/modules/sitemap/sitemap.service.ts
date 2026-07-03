@@ -13,6 +13,10 @@ function xmlTag(url: string, priority: string, changefreq: string, lastmod?: str
 export async function generateSitemap(): Promise<string> {
   const staticPages = [
     { url: `${SITE_URL}/`, priority: "1.0", changefreq: "weekly" },
+    { url: `${SITE_URL}/rankings`, priority: "0.8", changefreq: "daily" },
+    { url: `${SITE_URL}/community`, priority: "0.6", changefreq: "weekly" },
+    { url: `${SITE_URL}/forum`, priority: "0.6", changefreq: "weekly" },
+    { url: `${SITE_URL}/what-to-read`, priority: "0.8", changefreq: "weekly" },
     { url: `${SITE_URL}/about`, priority: "0.7", changefreq: "monthly" },
     { url: `${SITE_URL}/pricing`, priority: "0.7", changefreq: "monthly" },
     { url: `${SITE_URL}/contact`, priority: "0.5", changefreq: "monthly" },
