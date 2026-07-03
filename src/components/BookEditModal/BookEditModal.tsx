@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 import { uploadBookCover } from "@/lib/tierListApi";
 import { sileo } from "sileo";
+import AuthorInput from "@/components/AuthorInput/AuthorInput";
 
 const logger = createLogger("BookEditModal", { color: "cyan" });
 
@@ -479,17 +480,14 @@ export const BookEditModal = ({
                     >
                       Автор
                     </label>
-                    <input
-                      id="book-author-input"
-                      type="text"
+                    <AuthorInput
                       value={author}
-                      onChange={(e) =>
-                        dispatch({ type: "SET_AUTHOR", author: e.target.value })
+                      onChange={(val) =>
+                        dispatch({ type: "SET_AUTHOR", author: val })
                       }
                       maxLength={100}
-                      className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                      inputClass={inputClass}
                       placeholder="Автор книги"
-                      aria-label="Автор книги"
                     />
                     <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                       {author.length}/100

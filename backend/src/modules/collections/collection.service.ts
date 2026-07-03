@@ -6,6 +6,9 @@ import {
   type CreateCollectionInput,
   type UpdateCollectionInput,
 } from "./collection.schema.js";
+import { createAuthorService } from "../authors/authors.service.js";
+
+const authorService = createAuthorService(prisma);
 
 function slugify(text: string): string {
   const cyrillicToLatin: Record<string, string> = {
@@ -93,8 +96,31 @@ export async function getCollectionById(id: number) {
   return prisma.collection.findUnique({ where: { id } });
 }
 
+/**
+ * Зарегистрировать всех авторов из книг коллекции в реестре авторов.
+ * Вызывается при создании/обновлении коллекции.
+ */
+async function registerAuthorsFromCollectionBooks(
+  books: Record<string, { author?: string | null }>,
+) {
+  const authors = new Set<string>();
+  for (const book of Object.values(books)) {
+    if (book.author?.trim()) {
+      authors.add(book.author.trim());
+    }
+  }
+  await Promise.all(
+    Array.from(authors).map((name) => authorService.findOrCreate(name)),
+  );
+}
+
 export async function createCollection(input: CreateCollectionInput) {
   const slug = slugify(input.title);
+
+  // Регистрируем авторов из книг коллекции в реестре
+  if (input.books) {
+    await registerAuthorsFromCollectionBooks(input.books);
+  }
 
   return prisma.collection.create({
     data: {
@@ -138,7 +164,11 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
   if (input.editorialNote !== undefined) data.editorialNote = input.editorialNote || null;
   if (input.tiers !== undefined) data.tiers = toJsonValue(input.tiers);
   if (input.tierOrder !== undefined) data.tierOrder = input.tierOrder;
-  if (input.books !== undefined) data.books = toJsonValue(input.books);
+  if (input.books !== undefined) {
+    data.books = toJsonValue(input.books);
+    // Регистрируем авторов из книг коллекции в реестре
+    await registerAuthorsFromCollectionBooks(input.books);
+  }
   if (input.unrankedBookIds !== undefined) data.unrankedBookIds = input.unrankedBookIds;
 
   return prisma.collection.update({

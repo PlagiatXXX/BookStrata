@@ -1,5 +1,8 @@
 import { prisma, getTierListWhereClause } from "./tierList.utils.js";
 import { sanitize } from "../../lib/sanitizer.js";
+import { createAuthorService } from "../authors/authors.service.js";
+
+const authorService = createAuthorService(prisma);
 
 // Лимит отключён до введения подписок Pro
 
@@ -112,11 +115,23 @@ export async function saveAll(
 
     if (payload.newBooks?.length) {
       const newBooksData = payload.newBooks;
-      for (const bookData of newBooksData) {
+      // Находим или создаём авторов до транзакции
+      const booksWithAuthors = await Promise.all(
+        newBooksData.map(async (bookData) => {
+          let authorId: number | null = null;
+          if (bookData.author) {
+            const author = await authorService.findOrCreate(bookData.author);
+            authorId = author.id;
+          }
+          return { ...bookData, authorId };
+        }),
+      );
+      for (const bookData of booksWithAuthors) {
         const created = await tx.book.create({
           data: {
             title: bookData.title,
             author: bookData.author ?? null,
+            authorId: bookData.authorId,
             coverImageUrl: bookData.coverImageUrl,
             description: bookData.description ? sanitize(bookData.description) : null,
             thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,

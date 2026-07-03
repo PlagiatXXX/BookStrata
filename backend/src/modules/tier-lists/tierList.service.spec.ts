@@ -44,6 +44,12 @@ vi.mock("../../lib/prisma.js", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    author: {
+      findFirst: vi.fn().mockResolvedValue(null), // по умолчанию автор не найден
+      findUnique: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn().mockImplementation((data) => Promise.resolve({ id: 999, ...data, slug: 'test-author', books: [], createdAt: new Date(), updatedAt: new Date() })),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -59,6 +65,12 @@ describe("tierList.service", () => {
     vi.clearAllMocks();
     (prisma.tierList.findUnique as any).mockResolvedValue({ id: "1" });
     (prisma.user.findUnique as any).mockResolvedValue({ isPro: false });
+    // author mock по умолчанию
+    (prisma.author.findFirst as any).mockResolvedValue(null);
+    (prisma.author.findMany as any).mockResolvedValue([]);
+    (prisma.author.create as any).mockImplementation((data: any) =>
+      Promise.resolve({ id: 999, ...data, slug: 'test-author' }),
+    );
   });
 
   afterEach(() => {

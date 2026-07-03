@@ -27,6 +27,7 @@ import { authRoutes } from "../src/modules/auth/auth.route.js";
 import { userRoutes } from "../src/modules/users/users.route.js";
 import { avatarRoutes } from "../src/modules/avatars/avatar.route.js";
 import { booksRoutes } from "../src/modules/books/books.route.js";
+import { authorsRoutes } from "../src/modules/authors/authors.route.js";
 import { livelibRoutes } from "../src/modules/livelib/livelib.route.js";
 import { newsRoutes } from "../src/modules/news/news.route.js";
 import { rolesRoutes } from "../src/modules/roles/roles.route.js";
@@ -39,6 +40,8 @@ import templatesPlugin from "../src/modules/templates/templates.plugin.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
 import requestContext from "../src/plugins/requestContext.js";
 import authPlugin from "../src/plugins/auth.js";
+import { ZodError } from "zod";
+import { Prisma } from "@prisma/client";
 import * as Sentry from "@sentry/node";
 import { errorNotifier } from "./lib/errorNotifier.js";
 import { initSentry } from "./lib/sentry.js";
@@ -313,12 +316,35 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
       .send(createApiError(ErrorCodes.CONFLICT, "Конфликт данных."));
   }
 
+  // ZodError — ошибка валидации
+  if (error instanceof ZodError) {
+    const firstIssue = error.issues[0];
+    const message = firstIssue
+      ? `${firstIssue.path.join(".")}: ${firstIssue.message}`
+      : "Ошибка валидации данных";
+    return reply
+      .code(400)
+      .send(createApiError(ErrorCodes.VALIDATION_ERROR, message, error.issues));
+  }
+
+  // Prisma P2025 — запись не найдена
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2025"
+  ) {
+    return reply
+      .code(404)
+      .send(createApiError(ErrorCodes.NOT_FOUND, "Запись не найдена."));
+  }
+
   // Для отладки в режиме разработки возвращаем сообщение ошибки
   const isDev = process.env.NODE_ENV !== "production";
   return reply.code(error.statusCode || 500).send(
     createApiError(
       ErrorCodes.INTERNAL_ERROR,
-      isDev ? error.message : "Сервер не был подготовлен для этой цели.",
+      isDev
+        ? error.message
+        : "Произошла внутренняя ошибка сервера. Попробуйте позже.",
       isDev ? { stack: error.stack } : undefined,
     ),
   );
@@ -410,6 +436,7 @@ fastify.register(authRoutes, { prefix: "/api/auth" });
 fastify.register(userRoutes, { prefix: "/api/users" });
 fastify.register(avatarRoutes, { prefix: "/api/avatars" });
 fastify.register(booksRoutes, { prefix: "/api/books" });
+fastify.register(authorsRoutes, { prefix: "/api/authors" });
 fastify.register(livelibRoutes, { prefix: "/api/books" });
 fastify.register(tierListRoutes, { prefix: "/api/tier-lists" });
 fastify.register(newsRoutes, { prefix: "/api/news" });

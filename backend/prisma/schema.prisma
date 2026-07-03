@@ -69,6 +69,7 @@ model Book {
 id              Int             @id @default(autoincrement())
 title           String
 author          String?
+authorId        Int?
 coverImageUrl   String          @map("cover_image_url")
 description     String?
 thoughts        String?
@@ -76,11 +77,13 @@ genre           String?
 tags            String[]
   placements      BookPlacement[]
   ratings         BookRating[]
+  authorRel       Author?         @relation(fields: [authorId], references: [id], onDelete: Restrict)
   createdAt       DateTime        @default(now()) @map("created_at")
 
   @@index([genre])
   @@index([tags], type: Gin)
   @@index([title, author])
+  @@index([authorId])
 }
 
 model BookRating {
@@ -475,4 +478,17 @@ model AnalyticsEvent {
   @@index([userId])
   @@index([createdAt])
   @@map("analytics_events")
+}
+
+model Author {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  slug      String? @unique
+  books     Book[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([name])
+  @@map("authors")
 }

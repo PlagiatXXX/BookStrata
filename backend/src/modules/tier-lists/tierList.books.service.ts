@@ -1,8 +1,10 @@
 import { prisma, resolveTierListId, tierListRepository } from "./tierList.utils.js";
 import { createLogger } from "../../lib/logger.js";
 import { sanitize } from "../../lib/sanitizer.js";
+import { createAuthorService } from "../authors/authors.service.js";
 
 const logger = createLogger("TierListsBooks", { color: "cyan" });
+const authorService = createAuthorService(prisma);
 
 // Лимит отключён до введения подписок Pro
 
@@ -74,6 +76,18 @@ export async function addBooksToTierList(
 
   const realTierListId = await resolveTierListId(tierListId);
 
+  // Сначала находим или создаём авторов для всех книг
+  const booksWithAuthors = await Promise.all(
+    books.map(async (bookData) => {
+      let authorId: number | null = null;
+      if (bookData.author) {
+        const author = await authorService.findOrCreate(bookData.author);
+        authorId = author.id;
+      }
+      return { ...bookData, authorId };
+    }),
+  );
+
   const existingBooksCount = await prisma.bookPlacement.count({
     where: { tierListId: realTierListId },
   });
@@ -83,12 +97,13 @@ export async function addBooksToTierList(
       where: { id: realTierListId },
       data: {
         placements: {
-          create: books.map((bookData, index) => ({
+          create: booksWithAuthors.map((bookData, index) => ({
             rank: existingBooksCount + index,
             book: {
               create: {
                 title: bookData.title,
                 author: bookData.author ?? null,
+                authorId: bookData.authorId,
                 coverImageUrl: bookData.coverImageUrl,
                 description: bookData.description ? sanitize(bookData.description) : null,
                 thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
@@ -159,12 +174,24 @@ export async function updateBook(
   }
 
   if (sanitizedData.title === undefined) delete sanitizedData.title;
-  if (sanitizedData.author === undefined) delete sanitizedData.author;
   if (sanitizedData.tags === undefined) delete sanitizedData.tags;
   if (sanitizedData.coverImageUrl === undefined) {
     delete sanitizedData.coverImageUrl;
   }
   // coverImageUrl в БД NOT NULL — не конвертируем в null, оставляем пустую строку
+
+  // Если автор передан — находим или создаём в реестре
+  if (sanitizedData.author !== undefined) {
+    if (sanitizedData.author) {
+      const author = await authorService.findOrCreate(sanitizedData.author as string);
+      sanitizedData.authorId = author.id;
+    } else {
+      sanitizedData.authorId = null;
+    }
+  } else {
+    delete sanitizedData.author;
+    delete sanitizedData.authorId;
+  }
 
   return prisma.book.update({
     where: { id: bookId },

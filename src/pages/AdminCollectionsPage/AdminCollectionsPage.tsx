@@ -298,7 +298,7 @@ export default function AdminCollectionsPage() {
             author: b.author.trim(),
             coverImageUrl: b.coverImageUrl.trim(),
             description: b.description?.trim(),
-            rating: b.rating,
+            rating: b.rating != null ? Number(b.rating) : undefined,
             genre: b.genre?.trim(),
             tags: b.tags
               ? b.tags.split(",").map((t) => t.trim()).filter(Boolean)
