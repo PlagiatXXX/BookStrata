@@ -307,6 +307,9 @@ export default function AdminCollectionsPage() {
 
           if (b.tierId && tiers[b.tierId]) {
             tiers[b.tierId].bookIds.push(bookId);
+          } else if (tierOrder.length > 0) {
+            // Книга без тира — назначаем в первый тир
+            tiers[tierOrder[0]!].bookIds.push(bookId);
           } else {
             unrankedBookIds.push(bookId);
           }

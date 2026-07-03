@@ -199,7 +199,7 @@ return DOMPurify.sanitize(collection.content);
       showSearch={false}
     >
       {/* Breadcrumbs + Назад — на левый край */}
-      <div className="px-6 pt-6 pb-4 space-y-1">
+      <div className="px-4 sm:px-6 pt-6 pb-4 space-y-1">
         <Breadcrumbs items={[{ label: "Подборки", href: "/community" }, { label: collection.title }]} />
         <button
           onClick={() => {
@@ -215,7 +215,7 @@ return DOMPurify.sanitize(collection.content);
         </button>
       </div>
 
-      <article className="max-w-4xl mx-auto px-6 pb-12">
+      <article className="max-w-6xl mx-auto px-4 sm:px-6 pb-12">
         {/* Header — как в публичном тир-листе: ряд (название по центру | кнопка справа) */}
         <header className="mb-8">
           <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6">
@@ -293,7 +293,7 @@ return DOMPurify.sanitize(collection.content);
 
         {/* Tier list for curated collections — на всю ширину */}
         {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
-          <div className="full-width-tier-list mb-8">
+          <div className="mb-8">
             <StaticTierView
               tiers={collection.tiers as Record<string, import("@/types").Tier>}
               tierOrder={collection.tierOrder}
@@ -302,6 +302,7 @@ return DOMPurify.sanitize(collection.content);
               filterGenre={filterGenre}
               statuses={statuses}
               onToggleStatus={toggleStatus}
+              unrankedBookIds={collection.unrankedBookIds}
             />
           </div>
         )}

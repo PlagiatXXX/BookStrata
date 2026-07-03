@@ -13,6 +13,7 @@ interface StaticTierViewProps {
   filterGenre?: string | null;
   statuses?: Record<string, ReadStatus>;
   onToggleStatus?: (bookId: string) => void;
+  unrankedBookIds?: string[];
 }
 
 function matchesGenre(book: Book, genre: string | null | undefined): boolean {
@@ -29,7 +30,13 @@ export const StaticTierView = memo(({
   filterGenre,
   statuses,
   onToggleStatus,
+  unrankedBookIds,
 }: StaticTierViewProps) => {
+  const unrankedBooks = unrankedBookIds
+    ?.map((bookId) => books[bookId])
+    .filter(Boolean)
+    .filter((book) => matchesGenre(book, filterGenre)) ?? [];
+
   return (
     <div className="static-tier-view">
       <div className="flex flex-col">
@@ -71,6 +78,29 @@ export const StaticTierView = memo(({
             </div>
           );
         })}
+
+        {/* Unranked books section */}
+        {unrankedBooks.length > 0 && (
+          <div className="nb-tier-row group relative flex">
+            <TierLabel
+              tierId="__unranked__"
+              title="Без уровня"
+              color="transparent"
+            />
+            <div className="nb-book-track relative flex flex-1 flex-wrap content-start items-center transition-colors">
+              {unrankedBooks.map((book) => (
+                <BookCover
+                  key={book.id}
+                  book={book}
+                  isDraggable={false}
+                  onView={onViewBook}
+                  readStatus={statuses?.[book.id] ?? null}
+                  onToggleStatus={onToggleStatus ? () => onToggleStatus(book.id) : undefined}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
