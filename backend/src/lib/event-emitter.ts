@@ -3,6 +3,8 @@ import { createLogger } from "./logger.js";
 const logger = createLogger("EventBus", { color: "green" });
 
 export interface EventPayloads {
+  "user:registered": { userId: number }
+  "user:login": { userId: number }
   "tier-list:created": { userId: number }
   "tier-list:book-added": { userId: number }
   "tier-list:forked": { userId: number }

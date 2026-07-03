@@ -240,7 +240,7 @@ export class TierListRepository {
         userId,
         title: data.title,
         slug: data.slug,
-        isPublic: false,
+        isPublic: true,
         tiers: {
           create: [
             { title: "S", color: "#FF6B6B", rank: 0 },

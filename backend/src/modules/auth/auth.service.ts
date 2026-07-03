@@ -11,6 +11,7 @@ import { isDisposableEmail } from "../../lib/disposable-email.js";
 import { isReservedUsername } from "../../constants/reserved-usernames.js";
 // import { verifySmartCaptchaToken } from "../../lib/smartcaptcha.js"; // captcha — закомментировано, готово к подключению
 import { getVkToken, getGoogleToken, parseOAuthUserData } from "../../lib/oauth.js";
+import { eventBus } from "../../lib/event-emitter.js";
 
 const logger = createLogger("Auth", { color: "blue" });
 
@@ -137,6 +138,10 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
 
   logger.info("Пользователь зарегистрирован", { userId: user.id, email: user.email });
 
+  eventBus.emit("user:registered", { userId: user.id }).catch((err) => {
+    logger.error("Ошибка при эмите события регистрации", { error: err });
+  });
+
   const tokens = await generateTokenPair({
     userId: user.id,
     username: user.username!,
@@ -176,6 +181,10 @@ export async function login(payload: LoginPayload): Promise<AuthToken> {
     });
     throw new Error(`Ваш аккаунт заблокирован до ${until}${user.suspensionReason ? `. Причина: ${user.suspensionReason}` : ""}`);
   }
+
+  eventBus.emit("user:login", { userId: user.id }).catch((err) => {
+    logger.error("Ошибка при эмите события логина", { error: err });
+  });
 
   const tokens = await generateTokenPair({
     userId: user.id,
@@ -345,6 +354,10 @@ export async function oauthVk(code: string): Promise<AuthToken> {
       },
       include: { role: true },
     })
+
+    eventBus.emit("user:registered", { userId: user.id }).catch((err) => {
+      logger.error("Ошибка при эмите события регистрации VK", { error: err })
+    })
   }
 
   const tokens = await generateTokenPair({
@@ -402,6 +415,10 @@ export async function oauthGoogle(code: string): Promise<AuthToken> {
         acceptedTermsAt: new Date(),
       },
       include: { role: true },
+    })
+
+    eventBus.emit("user:registered", { userId: user.id }).catch((err) => {
+      logger.error("Ошибка при эмите события регистрации Google", { error: err })
     })
   }
 

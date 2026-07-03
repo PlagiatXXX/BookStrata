@@ -92,7 +92,7 @@ describe("tierList.service", () => {
         title: "Test List 2",
         createdAt: new Date("2024-01-03"),
         updatedAt: new Date("2024-01-04"),
-        isPublic: false,
+        isPublic: true,
         likesCount: 3,
         _count: { placements: 5 },
       },
@@ -161,7 +161,7 @@ describe("tierList.service", () => {
       userId: mockUserId,
       slug: expect.any(String),
       title: mockTitle,
-      isPublic: false,
+      isPublic: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       tiers: [
@@ -185,7 +185,7 @@ describe("tierList.service", () => {
           userId: mockUserId,
           slug: expect.any(String),
           title: mockTitle,
-          isPublic: false,
+          isPublic: true,
           tiers: {
             create: [
               { title: "S", color: "#FF6B6B", rank: 0 },

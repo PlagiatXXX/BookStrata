@@ -5,6 +5,14 @@ import { prisma } from './prisma.js'
 const analytics = createAnalyticsService(prisma)
 
 export function registerAnalyticsSubscriptions() {
+  eventBus.on('user:registered', async ({ userId }) => {
+    await analytics.trackEvent({ userId, event: 'user_register' })
+  })
+
+  eventBus.on('user:login', async ({ userId }) => {
+    await analytics.trackEvent({ userId, event: 'login' })
+  })
+
   eventBus.on('tier-list:created', async ({ userId }) => {
     await analytics.trackEvent({ userId, event: 'tierlist_create' })
   })

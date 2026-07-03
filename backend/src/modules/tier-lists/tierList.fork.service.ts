@@ -26,7 +26,7 @@ export async function forkTierList(id: string, userId: number) {
         userId,
         title: newTitle,
         slug,
-        isPublic: false,
+        isPublic: true,
         originalTierListId: original.id,
         tiers: {
           create: original.tiers.map((tier) => ({
