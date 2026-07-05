@@ -560,7 +560,7 @@ export default function AdminCollectionsPage() {
               <tbody>
                 {filteredCollections.map((collection) => (
                   <tr key={collection.id}>
-                    <td className="admin-collections-title-cell">
+                    <td className="admin-collections-title-cell" data-label="Название">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleOpenEdit(collection)}
@@ -574,7 +574,7 @@ export default function AdminCollectionsPage() {
                         </span>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Теги">
                       <div className="admin-collections-tags">
                         {collection.tags.map((tag: string, index: number) => (
                           <span key={index} className="admin-collections-tag">
@@ -583,8 +583,8 @@ export default function AdminCollectionsPage() {
                         ))}
                       </div>
                     </td>
-                    <td>{collection.order}</td>
-                    <td>
+                    <td data-label="Порядок">{collection.order}</td>
+                    <td data-label="Статус">
                       <button
                         className={`admin-collections-status-btn ${collection.isPublished ? "published" : "draft"}`}
                         onClick={() =>
@@ -605,7 +605,7 @@ export default function AdminCollectionsPage() {
                         )}
                       </button>
                     </td>
-                    <td>
+                    <td data-label="Обновлено">
                       {new Date(collection.updatedAt).toLocaleDateString(
                         "ru-RU",
                         {
@@ -615,7 +615,7 @@ export default function AdminCollectionsPage() {
                         },
                       )}
                     </td>
-                    <td className="admin-collections-actions">
+                    <td className="admin-collections-actions" data-label="Действия">
                       <button
                         onClick={() => handleOpenEdit(collection)}
                         className="cursor-pointer text-gray-400 hover:text-cyan-400 transition-colors"

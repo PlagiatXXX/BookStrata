@@ -219,6 +219,60 @@ async function waitForServer(url, timeout = 30000) {
   throw new Error("Server did not start in time");
 }
 
+/**
+ * Очищает дублирующиеся теги в &lt;head&gt;: title, canonical и meta с одинаковым name/property.
+ * Оставляет только первое вхождение каждого. Вызывается на полном HTML после page.content().
+ */
+function deduplicateHeadTags(html) {
+  const headMatch = html.match(/<head>([\s\S]*?)<\/head>/i);
+  if (!headMatch) return html;
+
+  const headContent = headMatch[1];
+  const seen = new Set();
+  const resultTags = [];
+  const tagRegex = /<(\w+)(?:[^>]*\/>|[^>]*>[\s\S]*?<\/\1>)|<(\w+)(?:[^>]*)>/gi;
+  let tagMatch;
+
+  while ((tagMatch = tagRegex.exec(headContent)) !== null) {
+    const fullTag = tagMatch[0];
+
+    // Определяем тип тега и ключ для дедупликации
+    let key = null;
+
+    // <title>...</title>
+    const titleMatch = fullTag.match(/^<title/i);
+    if (titleMatch) {
+      key = 'title';
+    }
+
+    // <link rel="canonical" ...>
+    const canonicalMatch = fullTag.match(/^<link\s[^>]*rel="canonical"/i);
+    if (canonicalMatch) {
+      key = 'canonical';
+    }
+
+    // <meta name="..." ...>
+    const metaNameMatch = fullTag.match(/^<meta\s[^>]*name="([^"]+)"/i);
+    if (metaNameMatch) {
+      key = `meta:${metaNameMatch[1].toLowerCase()}`;
+    }
+
+    // <meta property="..." ...>
+    const metaPropMatch = fullTag.match(/^<meta\s[^>]*property="([^"]+)"/i);
+    if (metaPropMatch) {
+      key = `meta:${metaPropMatch[1].toLowerCase()}`;
+    }
+
+    if (key && seen.has(key)) {
+      continue; // пропускаем дубль
+    }
+    if (key) seen.add(key);
+    resultTags.push(fullTag);
+  }
+
+  return html.replace(headContent, resultTags.join('\n    '));
+}
+
 /** Будет установлен в true, если бэкенд доступен во время сборки */
 let backendAvailable = false;
 
@@ -448,6 +502,11 @@ async function prerender() {
 
         // Получаем полный HTML страницы (с head-мета-тегами)
         let html = await page.content();
+
+        // Очищаем дублирующиеся теги в <head>, которые возникают из-за
+        // react-helmet-async + fallback useEffect в SEOHead.
+        // Оставляем только первый <title>, первый canonical, и первые meta с одинаковым name/property.
+        html = deduplicateHeadTags(html);
 
         // Не инлайним весь CSS — внешние таблицы кэшируются браузером на год
         // (заголовок Cache-Control: public, immutable). Инлайн всего CSS раздувает

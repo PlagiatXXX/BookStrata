@@ -57,6 +57,9 @@ async function request<T>(
       if (retryCount === 0) {
         return request<T>(method, path, data, retryCount + 1);
       }
+      // Если мы здесь — refresh формально успешен, но это уже повторный 401.
+      // Значит refresh не решает проблему — токен восстановить не удаётся.
+      handleUnauthorized();
     } catch {
       handleUnauthorized();
     }

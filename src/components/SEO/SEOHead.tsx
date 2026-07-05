@@ -119,7 +119,7 @@ export function SEOHead({
     setLink('link[rel="canonical"]', "href", pageUrl);
   }, [pageTitle, description, imageUrl, pageUrl, type, noindex, title]);
 
-  const breadcrumbJsonLd = breadcrumbs
+  const breadcrumbJsonLd = breadcrumbs?.length
     ? {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",

@@ -500,7 +500,7 @@
   cursor: not-allowed;
 }
 
-/* Responsive */
+/* Responsive — планшеты */
 @media (max-width: 768px) {
   .admin-collections-page {
     padding: 1rem;
@@ -517,21 +517,221 @@
     justify-content: center;
   }
 
-  .admin-collections-table {
-    font-size: 0.8rem;
-  }
-
-  .admin-collections-table th,
-  .admin-collections-table td {
-    padding: 0.75rem 0.5rem;
-  }
-
   .admin-collections-form-row {
     grid-template-columns: 1fr;
   }
 
   .admin-collections-modal {
     max-width: 100%;
+  }
+
+  .admin-collections-modal-header {
+    padding: 1rem;
+  }
+
+  .admin-collections-form {
+    padding: 1rem;
+  }
+
+  /* тип-селектор в столбик */
+  .curated-editor-type-selector {
+    flex-direction: column;
+  }
+
+  /* кнопки импорта книг — в столбик */
+  .curated-editor-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .curated-editor-section-header > div {
+    flex-wrap: wrap;
+  }
+}
+
+/* Responsive — телефоны */
+@media (max-width: 640px) {
+  /* ===== Таблица → карточки ===== */
+  .admin-collections-table {
+    font-size: 0.8rem;
+  }
+
+  .admin-collections-table thead {
+    display: none;
+  }
+
+  .admin-collections-table,
+  .admin-collections-table tbody,
+  .admin-collections-table tr,
+  .admin-collections-table td {
+    display: block;
+  }
+
+  .admin-collections-table tr {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--line-soft);
+    border-radius: 0.5rem;
+    background: var(--bg-0);
+  }
+
+  .admin-collections-table td {
+    padding: 0.375rem 0;
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .admin-collections-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--ink-1);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+
+  .admin-collections-table td:last-child {
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--line-soft);
+    margin-top: 0.25rem;
+    justify-content: flex-end;
+  }
+
+  .admin-collections-title-cell {
+    max-width: none;
+  }
+
+  .admin-collections-actions {
+    gap: 0.75rem;
+  }
+
+  /* модалка — компактнее */
+  .admin-collections-modal {
+    margin: 0;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .admin-collections-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .admin-collections-modal-header h2 {
+    font-size: 1rem;
+  }
+
+  .admin-collections-form-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .admin-collections-form-group input,
+  .admin-collections-form-group textarea {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.85rem;
+  }
+
+  /* поле URL обложки + кнопка загрузки — в столбик */
+  .admin-collections-form-group .flex.gap-2.items-start {
+    flex-direction: column;
+  }
+  .admin-collections-form-group .flex.gap-2.items-start > input {
+    width: 100%;
+  }
+
+  /* кнопка загрузки — на всю ширину */
+  .admin-collections-btn-upload {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* заголовок меньше */
+  .admin-collections-title {
+    font-size: 1.25rem;
+  }
+
+  /* ===== CuratedEditor: тиры ===== */
+  .curated-editor-tier-row {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .curated-editor-tier-row .curated-editor-input {
+    min-width: 100%;
+    order: -1;
+  }
+
+  .curated-editor-color-picker {
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .curated-editor-color-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  /* ===== CuratedEditor: книги ===== */
+  .curated-editor-book-row {
+    flex-wrap: wrap;
+  }
+
+  .curated-editor-book-row-main {
+    flex-wrap: wrap;
+  }
+
+  .curated-editor-book-row-main .curated-editor-input {
+    min-width: 100%;
+  }
+
+  .curated-editor-book-row-meta {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .curated-editor-book-row-meta .curated-editor-select {
+    width: 100%;
+  }
+
+  .curated-editor-book-row-meta .curated-editor-input[type="number"] {
+    width: 100% !important;
+  }
+
+  .curated-editor-book-actions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: 0.25rem;
+  }
+
+  .curated-editor-book-cover-preview {
+    display: none;
+  }
+
+  .curated-editor-section {
+    padding: 0.75rem;
+  }
+
+  .curated-editor-section-header h3 {
+    font-size: 0.85rem;
+  }
+
+  /* ===== импорт-модалки ===== */
+  .admin-collections-form-actions {
+    flex-wrap: wrap;
+  }
+
+  .admin-collections-form-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-collections-form-row {
+    gap: 0.5rem;
   }
 }
 
