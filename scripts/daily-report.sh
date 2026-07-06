@@ -111,10 +111,10 @@ ${PRERENDER_LAST}"
 
 # ─── Отправка ───────────────────────────────────────────────
 
-curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+curl -s --max-time 10 -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
   -d chat_id="${CHAT_ID}" \
   -d text="${MSG}" \
   -d parse_mode="Markdown" \
-  -d disable_web_page_preview=true >/dev/null
+  -d disable_web_page_preview=true >/dev/null 2>&1
 
 echo "Report sent at $(date)"
