@@ -42,7 +42,7 @@ LOAD=$(uptime | awk -F'load average:' '{print $2}' | xargs)
 UPTIME=$(uptime -p | sed 's/up //')
 
 # Docker-контейнеры
-CONTAINERS=$(docker ps --format "table {{.Names}}\t{{.Status}}" 2>/dev/null || echo "Docker недоступен")
+CONTAINERS=$(timeout 5 docker ps --format "table {{.Names}}\t{{.Status}}" 2>/dev/null || echo "Docker недоступен")
 
 # Бэкап
 BACKUP_LOG=$(tail -3 /var/log/bookstrata/backup.log 2>/dev/null || echo "Нет лога")
@@ -63,7 +63,7 @@ METRIKA_LINE=$(grep -a "Сводка" /var/log/bookstrata/prerender-cron.log 2>/
 
 # SSL (дней до истечения)
 if command -v openssl &>/dev/null; then
-  SSL_EXPIRY=$(echo | openssl s_client -connect bookstrata.ru:443 -servername bookstrata.ru 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2 || echo "не удалось проверить")
+  SSL_EXPIRY=$(timeout 5 openssl s_client -connect bookstrata.ru:443 -servername bookstrata.ru 2>/dev/null <<< "" | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2 || echo "не удалось проверить")
   if [ -n "$SSL_EXPIRY" ] && [ "$SSL_EXPIRY" != "не удалось проверить" ]; then
     SSL_EXPIRY_EPOCH=$(date -d "$SSL_EXPIRY" +%s 2>/dev/null || echo 0)
     NOW_EPOCH=$(date +%s)
