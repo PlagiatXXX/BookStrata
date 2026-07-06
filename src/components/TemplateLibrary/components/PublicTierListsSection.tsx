@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Spinner } from "@/components/Spinner";
 import PublicTierListCards from "../PublicTierListCards";
@@ -34,10 +34,14 @@ export function PublicTierListsSection({
 }: PublicTierListsSectionProps) {
   const [showAll, setShowAll] = useState(false);
 
-  // Сбрасываем showAll при смене страницы
-  useEffect(() => {
-    setShowAll(false);
-  }, [currentPage]);
+  // Сбрасываем showAll при смене страницы через обёртку onPagechange
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setShowAll(false);
+      onPageChange(page);
+    },
+    [onPageChange],
+  );
 
   if (isLoading) {
     return (
@@ -95,7 +99,7 @@ export function PublicTierListsSection({
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={onPageChange}
+        onPageChange={handlePageChange}
         isFetching={isFetching}
         pageNumbers={pageNumbers}
         hasNextPage={hasNextPage}

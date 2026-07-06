@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 const COOKIE_NAME = "cookie_consent";
 
@@ -18,6 +18,32 @@ declare global {
   }
 }
 
+function initMetrika() {
+  const counterId = import.meta.env.VITE_YM_COUNTER_ID;
+  if (!counterId) return;
+
+  const script = document.createElement("script");
+  script.src = "https://mc.yandex.ru/metrika/tag.js";
+  script.async = true;
+  document.head.appendChild(script);
+
+  window.ym = window.ym || function (...args: unknown[]) {
+    (window.ym as unknown as { a: unknown[]; l: number }).a =
+      (window.ym as unknown as { a: unknown[]; l: number }).a || [];
+    (window.ym as unknown as { a: unknown[] }).a.push(args);
+  };
+  (window.ym as unknown as { l: number }).l = Date.now();
+
+  window.ym(Number(counterId), "init", {
+    clickmap: true,
+    trackLinks: true,
+    accurateTrackBounce: true,
+    webvisor: true,
+    defer: true,
+    trackHash: true,
+  });
+}
+
 export function useAnalytics() {
   const [isConsented, setIsConsented] = useState(
     () => getCookie(COOKIE_NAME) === "1",
@@ -29,36 +55,8 @@ export function useAnalytics() {
     metrikaLoadedRef.current = true;
     setCookie(COOKIE_NAME, "1", 365);
     setIsConsented(true);
+    initMetrika();
   }, []);
-
-  // Инициализация Яндекс.Метрики после согласия
-  useEffect(() => {
-    if (!isConsented || metrikaLoadedRef.current) return;
-
-    const counterId = import.meta.env.VITE_YM_COUNTER_ID;
-    if (!counterId) return;
-
-    const script = document.createElement("script");
-    script.src = "https://mc.yandex.ru/metrika/tag.js";
-    script.async = true;
-    document.head.appendChild(script);
-
-    window.ym = window.ym || function (...args: unknown[]) {
-      (window.ym as unknown as { a: unknown[]; l: number }).a =
-        (window.ym as unknown as { a: unknown[]; l: number }).a || [];
-      (window.ym as unknown as { a: unknown[] }).a.push(args);
-    };
-    (window.ym as unknown as { l: number }).l = Date.now();
-
-    window.ym(Number(counterId), "init", {
-      clickmap: true,
-      trackLinks: true,
-      accurateTrackBounce: true,
-      webvisor: true,
-      defer: true,
-      trackHash: true,
-    });
-  }, [isConsented]);
 
   const initIfConsented = useCallback(() => {
     if (isConsented) {

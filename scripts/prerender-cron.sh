@@ -65,8 +65,8 @@ ok "dist/ найден"
 
 # ——— Проверка бэкенда ———
 info "Проверка бэкенда..."
-BACKEND_URL="${API_URL:-http://localhost:8080}"
-if curl -sf --max-time 5 "$BACKEND_URL/health" >/dev/null 2>&1; then
+BACKEND_URL="${API_URL:-https://localhost}"
+if curl -sfk --max-time 5 "$BACKEND_URL/health" >/dev/null 2>&1; then
   ok "Бэкенд доступен ($BACKEND_URL/health)"
 else
   warn "Бэкенд не отвечает — prerender будет без данных тир-листов"

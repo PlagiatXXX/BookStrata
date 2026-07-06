@@ -30,8 +30,9 @@ FILEPATH="$BACKUP_DIR/$FILENAME"
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting backup..."
 
-# Дамп + gzip
-pg_dump "$DATABASE_URL" --no-owner | gzip > "$FILEPATH"
+# Убираем query-параметры (?connection_limit=1 и т.п.) — pg_dump их не понимает
+CLEAN_URL="${DATABASE_URL%%\?*}"
+pg_dump "$CLEAN_URL" --no-owner | gzip > "$FILEPATH"
 
 SIZE=$(du -h "$FILEPATH" | cut -f1)
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Local backup saved: $FILENAME ($SIZE)"
