@@ -146,8 +146,7 @@ function TagPills({ tags, size = "sm" }: { tags: string[]; size?: "sm" | "xs" })
           key={tag}
           className={`inline-flex items-center gap-1 rounded-full border border-cyan-400/30 bg-cyan-400/10 font-medium text-cyan-300 ${sizeClass}`}
         >
-          <Hash size={size === "sm" ? 10 : 8} />
-          {tag}
+          #{tag}
         </span>
       ))}
     </div>

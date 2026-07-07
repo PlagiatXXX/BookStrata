@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from "react";
-import { X, Star, FileText, Calendar, BookOpen, Hash } from "lucide-react";
+import { X, Star, FileText, Calendar, BookOpen } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
@@ -139,8 +139,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
                     key={tag}
                     className="inline-flex items-center gap-1 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[10px] font-medium text-cyan-300"
                   >
-                    <Hash size={8} />
-                    {tag}
+                    #{tag}
                   </span>
                 ))}
               </div>
