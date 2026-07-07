@@ -13,9 +13,9 @@ const getGridClass = (index: number): string => {
   const patterns = ['standard', 'tall', 'standard', 'large', 'standard', 'wide', 'standard'];
   const size = patterns[index % patterns.length];
   const map: Record<string, string> = {
-    large: 'col-span-2 row-span-2',
-    tall: 'row-span-2',
-    wide: 'col-span-2',
+    large: 'sm:col-span-2 sm:row-span-2',
+    tall: 'sm:row-span-2',
+    wide: 'sm:col-span-2',
     standard: '',
   };
   return map[size] || '';
