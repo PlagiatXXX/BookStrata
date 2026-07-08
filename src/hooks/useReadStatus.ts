@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 
-export type ReadStatus = "read" | "reading" | "want";
+export type ReadStatus = "read";
 
 const STORAGE_PREFIX = "read-status-";
 
@@ -33,29 +33,24 @@ export function useReadStatus(collectionSlug: string | undefined) {
     saveStatuses(slug, statuses);
   }, [statuses, slug]);
 
-  // Циклическое переключение: null → read → reading → want → null
+  // Бинарное переключение: null → "read" → null
   const toggleStatus = useCallback((bookId: string) => {
     setStatuses((prev) => {
-      const current = prev[bookId];
-      if (!current) return { ...prev, [bookId]: "read" as const };
-      if (current === "read") return { ...prev, [bookId]: "reading" as const };
-      if (current === "reading") return { ...prev, [bookId]: "want" as const };
-      // want → удаляем (null)
-      const next = { ...prev };
-      delete next[bookId];
-      return next;
+      if (prev[bookId]) {
+        // Было "read" → снимаем
+        const next = { ...prev };
+        delete next[bookId];
+        return next;
+      }
+      // Не было → ставим "read"
+      return { ...prev, [bookId]: "read" as const };
     });
   }, []);
 
-  const readCount = useMemo(
-    () => Object.values(statuses).filter((s) => s === "read").length,
-    [statuses],
-  );
-
-  const totalMarked = useMemo(
+  const markedCount = useMemo(
     () => Object.keys(statuses).length,
     [statuses],
   );
 
-  return { statuses, toggleStatus, readCount, totalMarked };
+  return { statuses, toggleStatus, markedCount };
 }

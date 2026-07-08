@@ -139,45 +139,16 @@ export const BookCover = memo(
                          hover:bg-black/90 hover:h-6
                          focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
                          max-md:pointer-events-auto"
-              title={
-                readStatus === "read"
-                  ? "Прочитал"
-                  : readStatus === "reading"
-                    ? "Читаю сейчас"
-                    : readStatus === "want"
-                      ? "В планах"
-                      : "Нажмите, чтобы отметить статус книги"
-              }
-              aria-label={
-                readStatus === "read"
-                  ? "Прочитал"
-                  : readStatus === "reading"
-                    ? "Читаю сейчас"
-                    : readStatus === "want"
-                      ? "В планах"
-                      : "Отметить статус книги"
-              }
+              title={readStatus === "read" ? "Прочитал" : "Нажмите, чтобы отметить книгу как прочитанную"}
+              aria-label={readStatus === "read" ? "Убрать отметку" : "Отметить как прочитанное"}
             >
-              {!readStatus && (
-                <span className="text-(--ink-3) leading-none">+ Отметить</span>
-              )}
-              {readStatus === "read" && (
+              {readStatus === "read" ? (
                 <>
                   <span className="text-green-400 leading-none">✓</span>
                   <span className="text-green-300">Прочитал</span>
                 </>
-              )}
-              {readStatus === "reading" && (
-                <>
-                  <span className="text-sky-400 leading-none">📖</span>
-                  <span className="text-sky-300">Читаю</span>
-                </>
-              )}
-              {readStatus === "want" && (
-                <>
-                  <span className="text-amber-400 leading-none">★</span>
-                  <span className="text-amber-300">В планах</span>
-                </>
+              ) : (
+                <span className="text-(--ink-3) leading-none">+ Отметить</span>
               )}
             </button>
           )}

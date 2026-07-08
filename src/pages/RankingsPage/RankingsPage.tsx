@@ -5,7 +5,7 @@ import { TrendingUp, Plus } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
-import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
+import { CollectionFlipCard } from "@/components/CommunityComponents/CollectionFlipCard";
 import { getFeaturedCollections } from "@/lib/collectionsApi";
 import { useAuth } from "@/hooks/useAuthContext";
 
@@ -83,7 +83,7 @@ export default function RankingsPage() {
                         {collection.editorialNote}
                       </div>
                     )}
-                    <CollectionCard collection={collection} className="col-span-1! row-span-1!" />
+                    <CollectionFlipCard collection={collection} />
                   </div>
                 ))}
               </div>
@@ -94,7 +94,7 @@ export default function RankingsPage() {
                   <h2 className="text-lg font-semibold mb-3">Ещё подборки</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-[200px]">
                     {featuredWithoutNotes.map((collection) => (
-                      <CollectionCard key={collection.id} collection={collection} />
+                      <CollectionFlipCard key={collection.id} collection={collection} />
                     ))}
                   </div>
                 </div>

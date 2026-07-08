@@ -68,7 +68,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
             <span className="text-xs font-bold">Я</span>
           )
         ) : (
-          <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
+          <img src="/Selfi.webp" alt="Букстраж" className="h-full w-full object-cover" />
         )}
       </div>
       <div
@@ -88,7 +88,7 @@ function StreamingBubble({ content }: { content: string }) {
   return (
     <div className="flex gap-3 animate-fade-in">
       <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden border-2 border-black bg-[#232323]">
-        <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
+        <img src="/Selfi.webp" alt="Букстраж" className="h-full w-full object-cover" />
       </div>
       <div className="max-w-[80%] border-2 border-black bg-[#171717] p-3 text-sm leading-relaxed text-[#d4d4d4]">
         {content ? (
@@ -183,7 +183,7 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
         <div className="flex items-center justify-between border-b-2 border-black bg-[#181818] p-5">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center overflow-hidden border-2 border-black bg-[#c1fffe]">
-              <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
+              <img src="/Selfi.webp" alt="Букстраж" className="h-full w-full object-cover" />
             </div>
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
@@ -238,7 +238,7 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
           {!hasMessages && !isStreaming ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <div className="mb-4 flex size-16 items-center justify-center overflow-hidden border-2 border-black bg-[#1d2323]">
-                <img src="/bukstrazh.webp" alt="Букстраж" className="h-full w-full object-cover" />
+                <img src="/Selfi.webp" alt="Букстраж" className="h-full w-full object-cover" />
               </div>
               <h3 className="mb-2 text-lg font-bold text-[#f6f1e8]">
                 Букстраж

@@ -1,5 +1,5 @@
 import "./ExportThemes.css";
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 
 import { sileo } from "sileo";
@@ -49,6 +49,10 @@ const TierListEditorContent = () => {
   const [searchParams] = useSearchParams();
   const fromBattle = searchParams.get("context") === "battle";
   const forkSlug = searchParams.get("fork");
+  const forkReadIds = useMemo(() => {
+    const raw = searchParams.get("readIds");
+    return raw ? raw.split(",").filter(Boolean) : null;
+  }, [searchParams]);
   const navigate = useNavigate();
 
   // Получаем все состояния из хука
@@ -103,7 +107,7 @@ const TierListEditorContent = () => {
     likesData,
     isPublic,
     initialDataForHook,
-  } = useTierEditorQueries(tierListId, forkSlug);
+  } = useTierEditorQueries(tierListId, forkSlug, forkReadIds);
 
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(apiData?.coverImageUrl ?? null)
   const [theme, setTheme] = useState<string>(apiData?.theme ?? "default")

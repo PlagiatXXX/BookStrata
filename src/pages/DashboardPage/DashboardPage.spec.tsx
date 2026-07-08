@@ -167,7 +167,7 @@ describe("DashboardPage", () => {
     render(<DashboardPage />, { wrapper: createWrapper() });
 
     expect(screen.getByText("Букстраж")).toBeInTheDocument();
-    expect(screen.getByText("AI")).toBeInTheDocument();
+    expect(screen.getByText("Спросить")).toBeInTheDocument();
   });
 
   it("должен рендериться без пользователя (isLoading) без ошибок", () => {
@@ -188,8 +188,8 @@ describe("DashboardPage", () => {
   it("должен открывать AI Librarian модалку при клике на карточку", async () => {
     render(<DashboardPage />, { wrapper: createWrapper() });
 
-    // Кликаем по карточке "Букстраж"
-    fireEvent.click(screen.getByText("Букстраж"));
+    // Кликаем по кнопке "Спросить"
+    fireEvent.click(screen.getByText("Спросить"));
 
     // Модалка открывается — проверяем наличие заголовка
     await waitFor(() => {

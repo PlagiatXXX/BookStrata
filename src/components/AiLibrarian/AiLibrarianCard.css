@@ -1,0 +1,418 @@
+/* ===== AI Librarian Card — вертикальная, как пример с космонавтом ===== */
+
+.ai-librarian-card {
+  position: relative;
+  width: 24em;
+  padding: 2.5em 2em 2em;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #171717;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  padding: 2em 1.5em 1.5em;
+  border-radius: 20px;
+  overflow: hidden;
+  z-index: 1;
+  row-gap: 0.9em;
+}
+
+/* ===== Тёмный слой (::after) ===== */
+.ai-librarian-card::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 20px;
+  background: rgb(23, 23, 23, 0.7);
+  transition: all 0.4s ease-in-out;
+  z-index: -1;
+}
+
+/* ===== Обёртка аватара ===== */
+.ai-card-avatar-wrap {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Луна в левом верхнем углу карточки ===== */
+.ai-card-moon {
+  position: absolute;
+  top: -1.5em;
+  left: -1.5em;
+  width: 7em;
+  height: 7em;
+  border-radius: 50%;
+  background: #f9f9fb;
+  box-shadow:
+    0 0 60px rgba(193, 255, 254, 0.6),
+    0 0 120px rgba(193, 255, 254, 0.3),
+    inset #c1fffe 0 0 30px -12px;
+  transition: 0.4s ease-in-out;
+  pointer-events: none;
+  z-index: 0;
+}
+.ai-librarian-card:hover .ai-card-moon {
+  box-shadow:
+    0 0 100px rgba(193, 255, 254, 1),
+    0 0 180px rgba(193, 255, 254, 0.5),
+    inset #c1fffe 0 0 40px -8px;
+}
+
+/* ===== Парящий аватар (как космонавт) ===== */
+.ai-card-avatar {
+  width: 11em;
+  height: 11em;
+  animation: ai-float 10s ease-in-out infinite;
+  z-index: 1;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: filter 0.3s ease;
+}
+.ai-card-avatar:active {
+  cursor: grabbing;
+}
+
+@keyframes ai-float {
+  0%   { transform: translateX(0) translateY(0); }
+  25%  { transform: translateY(-0.8em) translateX(-0.5em); rotate: -6deg; }
+  50%  { transform: translateY(0.5em) translateX(-0.3em); }
+  75%  { transform: translateY(-0.6em) translateX(0.5em); rotate: 6deg; }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+/* ===== Заголовок ===== */
+.ai-card-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #f6f1e8;
+  text-align: center;
+  z-index: 2;
+  transition: 0.4s ease-in-out;
+  position: relative;
+}
+.ai-librarian-card:hover .ai-card-title {
+  letter-spacing: 0.025em;
+}
+
+/* Звёзды */
+.ai-card-title::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  opacity: 1;
+  box-shadow:
+    120px 80px #c1fffe, 180px 140px #c1fffe, 40px 50px #c1fffe,
+    60px 120px #c1fffe, 100px 90px #c1fffe, 200px 60px #c1fffe,
+    250px 30px #c1fffe, 300px 100px #c1fffe, 50px 160px #c1fffe,
+    220px 150px #c1fffe;
+  z-index: -1;
+  transition: 1s ease;
+  animation: ai-stars 1.5s linear alternate infinite;
+  animation-delay: 0s;
+  pointer-events: none;
+}
+.ai-librarian-card:hover .ai-card-title::before {
+  filter: blur(3px);
+}
+
+/* Доп. звёзды на самой карточке */
+.ai-librarian-card .ai-card-stars-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.ai-librarian-card .ai-card-stars-bg::before,
+.ai-librarian-card .ai-card-stars-bg::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  opacity: 1;
+  transition: 1.5s ease;
+  animation: ai-stars 1.5s linear alternate infinite;
+  pointer-events: none;
+}
+.ai-librarian-card .ai-card-stars-bg::before {
+  box-shadow:
+    140px 20px #c1fffe, 425px 20px #c1fffe, 70px 120px #c1fffe, 20px 130px #c1fffe,
+    110px 80px #c1fffe, 280px 80px #c1fffe, 250px 350px #c1fffe, 280px 230px #c1fffe,
+    220px 190px #c1fffe, 450px 100px #c1fffe, 380px 80px #c1fffe, 520px 50px #c1fffe;
+  animation-delay: 0.4s;
+}
+.ai-librarian-card .ai-card-stars-bg::after {
+  box-shadow:
+    490px 330px #c1fffe, 420px 300px #c1fffe, 320px 280px #c1fffe,
+    380px 350px #c1fffe, 546px 170px #c1fffe, 420px 180px #c1fffe, 370px 150px #c1fffe,
+    200px 250px #c1fffe, 80px 20px #c1fffe, 190px 50px #c1fffe, 270px 20px #c1fffe,
+    120px 230px #c1fffe, 350px -1px #c1fffe, 150px 369px #c1fffe;
+  animation-delay: 0.8s;
+}
+.ai-librarian-card:hover .ai-card-stars-bg::before,
+.ai-librarian-card:hover .ai-card-stars-bg::after {
+  filter: blur(3px);
+}
+
+/* ===== Подзаголовок ===== */
+.ai-card-subtitle {
+  font-size: 0.8rem;
+  color: #a0a5a7;
+  line-height: 1.5;
+  text-align: center;
+  z-index: 2;
+  position: relative;
+  max-width: 18em;
+}
+
+/* ===== Кнопка (shooting stars) ===== */
+.ai-card-button {
+  position: relative;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #fff;
+  background: linear-gradient(135deg, #c1fffe, #7dd4fd, #a78bfa);
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(193, 255, 254, 0.3);
+  font-family: inherit;
+  margin-top: 0.25em;
+}
+.ai-card-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(193, 255, 254, 0.5);
+}
+.ai-card-button:active {
+  transform: translateY(0);
+}
+
+/* Shooting stars */
+.ai-card-button::before {
+  content: '';
+  position: absolute;
+  top: -400%;
+  left: 200%;
+  rotate: -45deg;
+  width: 5em;
+  height: 1px;
+  background: linear-gradient(90deg, #c1fffe, transparent);
+  animation: ai-shooting 4s ease-in-out infinite;
+  animation-delay: 1s;
+  pointer-events: none;
+}
+.ai-card-button::after {
+  content: '';
+  position: absolute;
+  top: -250%;
+  left: 150%;
+  rotate: -45deg;
+  width: 4em;
+  height: 1px;
+  background: linear-gradient(90deg, #c1fffe, transparent);
+  animation: ai-shooting 4s ease-in-out infinite;
+  animation-delay: 3s;
+  pointer-events: none;
+}
+.ai-librarian-card:hover .ai-card-button::before,
+.ai-librarian-card:hover .ai-card-button::after {
+  filter: blur(3px);
+}
+
+@keyframes ai-shooting {
+  0% {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(-30em) translateY(0);
+    opacity: 1;
+  }
+  70% {
+    transform: translateX(-40em) translateY(0);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+    opacity: 0;
+  }
+}
+
+/* ===== Easter egg — при зажатии аватара ===== */
+.ai-librarian-card.is-pressed .ai-card-title,
+.ai-librarian-card.is-pressed .ai-card-subtitle,
+.ai-librarian-card.is-pressed .ai-card-button {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+/* Звёзды собираются в слово "Bookstrata" — плотный 6×5 шрифт */
+.ai-librarian-card.is-pressed .ai-card-stars-bg::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  filter: blur(0);
+  animation: none;
+  scale: 0.7;
+  transform: translateX(1.2em) translateY(6em);
+  box-shadow:
+    18px 240px #9b40fc,
+    24px 240px #9b40fc,
+    30px 240px #9b40fc,
+    36px 240px #9b40fc,
+    18px 246px #9b40fc,
+    36px 246px #9b40fc,
+    18px 252px #9b40fc,
+    24px 252px #9b40fc,
+    30px 252px #9b40fc,
+    36px 252px #9b40fc,
+    18px 258px #9b40fc,
+    36px 258px #9b40fc,
+    18px 264px #9b40fc,
+    24px 264px #9b40fc,
+    30px 264px #9b40fc,
+    36px 264px #9b40fc,
+    54px 240px #9b40fc,
+    60px 240px #9b40fc,
+    48px 246px #9b40fc,
+    66px 246px #9b40fc,
+    48px 252px #9b40fc,
+    66px 252px #9b40fc,
+    48px 258px #9b40fc,
+    66px 258px #9b40fc,
+    54px 264px #9b40fc,
+    60px 264px #9b40fc,
+    84px 240px #9b40fc,
+    90px 240px #9b40fc,
+    78px 246px #9b40fc,
+    96px 246px #9b40fc,
+    78px 252px #9b40fc,
+    96px 252px #9b40fc,
+    78px 258px #9b40fc,
+    96px 258px #9b40fc,
+    84px 264px #9b40fc,
+    90px 264px #9b40fc,
+    108px 240px #9b40fc,
+    126px 240px #9b40fc,
+    108px 246px #9b40fc,
+    120px 246px #9b40fc,
+    108px 252px #9b40fc,
+    114px 252px #9b40fc,
+    108px 258px #9b40fc,
+    120px 258px #9b40fc,
+    108px 264px #9b40fc,
+    126px 264px #9b40fc,
+    144px 240px #9b40fc,
+    150px 240px #9b40fc,
+    156px 240px #9b40fc,
+    138px 246px #9b40fc,
+    144px 252px #9b40fc,
+    150px 252px #9b40fc;
+}
+
+.ai-librarian-card.is-pressed .ai-card-stars-bg::after {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  filter: blur(0);
+  animation: none;
+  scale: 0.7;
+  transform: translateX(1.2em) translateY(6em);
+  box-shadow:
+    156px 258px #9b40fc,
+    138px 264px #9b40fc,
+    144px 264px #9b40fc,
+    150px 264px #9b40fc,
+    168px 240px #9b40fc,
+    174px 240px #9b40fc,
+    180px 240px #9b40fc,
+    186px 240px #9b40fc,
+    180px 246px #9b40fc,
+    180px 252px #9b40fc,
+    180px 258px #9b40fc,
+    180px 264px #9b40fc,
+    198px 240px #9b40fc,
+    204px 240px #9b40fc,
+    210px 240px #9b40fc,
+    198px 246px #9b40fc,
+    216px 246px #9b40fc,
+    198px 252px #9b40fc,
+    198px 258px #9b40fc,
+    198px 264px #9b40fc,
+    234px 240px #9b40fc,
+    240px 240px #9b40fc,
+    228px 246px #9b40fc,
+    246px 246px #9b40fc,
+    228px 252px #9b40fc,
+    234px 252px #9b40fc,
+    240px 252px #9b40fc,
+    246px 252px #9b40fc,
+    228px 258px #9b40fc,
+    246px 258px #9b40fc,
+    228px 264px #9b40fc,
+    246px 264px #9b40fc,
+    258px 240px #9b40fc,
+    264px 240px #9b40fc,
+    270px 240px #9b40fc,
+    276px 240px #9b40fc,
+    270px 246px #9b40fc,
+    270px 252px #9b40fc,
+    270px 258px #9b40fc,
+    270px 264px #9b40fc,
+    294px 240px #9b40fc,
+    300px 240px #9b40fc,
+    288px 246px #9b40fc,
+    306px 246px #9b40fc,
+    288px 252px #9b40fc,
+    294px 252px #9b40fc,
+    300px 252px #9b40fc,
+    306px 252px #9b40fc,
+    288px 258px #9b40fc,
+    306px 258px #9b40fc,
+    288px 264px #9b40fc,
+    306px 264px #9b40fc;
+}
+
+@keyframes ai-stars {
+  0%   { opacity: 0.3; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+/* ===== Адаптивность ===== */
+@media (max-width: 640px) {
+  .ai-librarian-card {
+    padding: 1.5em 1em 1.25em;
+  }
+  .ai-card-avatar {
+    width: 7em;
+    height: 7em;
+  }
+  .ai-card-title {
+    font-size: 1.2rem;
+  }
+  .ai-card-subtitle {
+    font-size: 0.75rem;
+  }
+}

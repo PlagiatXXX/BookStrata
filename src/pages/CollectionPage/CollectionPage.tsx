@@ -30,31 +30,18 @@ export default function CollectionPage() {
   const currentUserId = authUser?.userId ?? null;
   const [filterGenre, setFilterGenre] = useState<string | null>(null);
 
-  const { statuses, toggleStatus, readCount, totalMarked } = useReadStatus(slug);
+  const { statuses, toggleStatus, markedCount } = useReadStatus(slug);
 
-  // Тост-фидбек при переключении статуса книги
+  // Тост-фидбек при отметке прочитанного
   const prevStatusesRef = useRef(statuses);
   useEffect(() => {
     const prev = prevStatusesRef.current;
     for (const bookId of Object.keys(statuses)) {
-      if (statuses[bookId] !== prev[bookId]) {
-        const labels = {
-          read: { title: "✓ Добавлено в прочитанные", color: "text-green-400" },
-          reading: { title: "📖 В процессе чтения", color: "text-sky-400" },
-          want: { title: "★ В списке желаемого", color: "text-amber-400" },
-        };
-        const label = labels[statuses[bookId]];
-        if (label) {
-          sileo.success({ title: label.title, duration: 2500 });
-        }
+      if (!(bookId in prev)) {
+        sileo.success({ title: "✓ Добавлено в прочитанные", duration: 2000 });
       }
     }
-    // Проверяем, что удалили (книга убрана из статусов)
-    for (const bookId of Object.keys(prev)) {
-      if (!(bookId in statuses)) {
-        // Статус снят — ничего не показываем (или мягкое уведомление)
-      }
-    }
+    // Книга убрана из статусов — ничего не показываем
     prevStatusesRef.current = statuses;
   }, [statuses]);
 
@@ -129,8 +116,14 @@ export default function CollectionPage() {
       });
       return;
     }
-    window.location.href = `/tier-lists/new?fork=${slug || ""}`;
-  }, [currentUserId, navigate, slug]);
+    const readIds = Object.keys(statuses);
+    const params = new URLSearchParams();
+    params.set('fork', slug || '');
+    if (readIds.length > 0) {
+      params.set('readIds', readIds.join(','));
+    }
+    window.location.href = `/tier-lists/new?${params.toString()}`;
+  }, [currentUserId, navigate, slug, statuses]);
 
   const sanitizedContent = useMemo(() => {
 if (!collection?.content) return "";
@@ -281,16 +274,6 @@ return DOMPurify.sanitize(collection.content);
           </div>
         )}
 
-        {/* Value callout — Зачем отмечать книги (только для новых посетителей) */}
-        {collection.type === "curated" && totalMarked === 0 && (
-          <div className="brutal-card brutal-border p-5 mb-8 border-l-4" style={{ borderLeftColor: "var(--accent-main)" }}>
-            <p className="text-sm text-(--ink-1) leading-relaxed">
-              <span className="font-bold">Нажимайте на плашку внизу книги</span>, чтобы отметить статус: прочитал, читаю сейчас или в планах.{' '}
-              Отмеченные книги сохранятся в вашей личной библиотеке.
-            </p>
-          </div>
-        )}
-
         {/* Tier list for curated collections — на всю ширину */}
         {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
           <div className="mb-8">
@@ -306,6 +289,65 @@ return DOMPurify.sanitize(collection.content);
             />
           </div>
         )}
+
+        {/* CTA-блоки — всегда в DOM, анимация через max-height, чтобы не прыгала страница */}
+        <div className="overflow-hidden transition-all duration-500 ease-in-out" style={{ maxHeight: collection.type === "curated" ? '500px' : '0px' }}>
+          {/* Value callout — пока нет отметок */}
+          <div
+            className="overflow-hidden transition-all duration-500 ease-in-out"
+            style={{ maxHeight: collection.type === "curated" && markedCount === 0 ? '200px' : '0px', opacity: collection.type === "curated" && markedCount === 0 ? 1 : 0 }}
+          >
+            <div className="brutal-card brutal-border p-5 mb-8 border-l-4" style={{ borderLeftColor: "var(--accent-main)" }}>
+              <p className="text-sm text-(--ink-1) leading-relaxed">
+                <span className="font-bold">Отмечайте книги, которые читали</span> —{' '}
+                нажмите на плашку <span className="text-(--ink-0)">+ Отметить</span> внизу обложки.{' '}
+                Потом сможете собрать свой рейтинг из отмеченных книг.
+              </p>
+            </div>
+          </div>
+
+          {/* CTA — когда есть отметки */}
+          <div
+            className="overflow-hidden transition-all duration-500 ease-in-out"
+            style={{ maxHeight: collection.type === "curated" && markedCount > 0 ? '500px' : '0px', opacity: collection.type === "curated" && markedCount > 0 ? 1 : 0 }}
+          >
+            <div className="brutal-card brutal-border p-6 mb-8 text-center">
+              {markedCount >= 4 ? (
+                <>
+                  <p className="text-lg font-bold mb-2">
+                    Не согласны с этим рейтингом?
+                  </p>
+                  <p className="text-sm text-(--ink-2) mb-4">
+                    Вы читали {markedCount} из {stats.totalBooks} книг этой подборки —{' '}
+                    у вас уже есть своё мнение. Расставьте их по своим уровням.
+                  </p>
+                  <button
+                    onClick={handleFork}
+                    className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
+                  >
+                    Составить свой рейтинг
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-bold mb-2">
+                    Не согласны с этим рейтингом?
+                  </p>
+                  <p className="text-sm text-(--ink-2) mb-4">
+                    Отмечено {markedCount} из {stats.totalBooks} книг. Отмечайте дальше или{' '}
+                    сразу соберите свой рейтинг.
+                  </p>
+                  <button
+                    onClick={handleFork}
+                    className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
+                  >
+                    Составить свой рейтинг
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Excerpt */}
         {collection.excerpt && (
@@ -355,43 +397,6 @@ return DOMPurify.sanitize(collection.content);
             ))}
           </div>
         </footer>
-
-        {/* CTA — адаптивный, в зависимости от числа отмеченных книг */}
-        {collection.type === "curated" && totalMarked > 0 && (
-          <div className="brutal-card brutal-border p-6 mt-8 text-center">
-            {readCount >= 4 ? (
-              <>
-                <p className="text-lg font-bold mb-2">
-                  Вы уже читали {readCount} из {stats.totalBooks} книг этой подборки
-                </p>
-                <p className="text-sm text-(--ink-2) mb-4">
-                  Интересно, насколько ваш рейтинг отличается от редакционного?
-                </p>
-                <button
-                  onClick={handleFork}
-                  className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
-                >
-                  Составить свой рейтинг
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-lg font-bold mb-2">
-                  Уже начали собирать свою библиотеку
-                </p>
-                <p className="text-sm text-(--ink-2) mb-4">
-                  Отмеченные книги сохранятся. Продолжите отмечать или создайте свой рейтинг.
-                </p>
-                <button
-                  onClick={handleFork}
-                  className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
-                >
-                  Продолжить
-                </button>
-              </>
-            )}
-          </div>
-        )}
       </article>
     </DashboardLayout>
     </>

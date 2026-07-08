@@ -19,12 +19,18 @@ const emptyData: TierListData = {
 
 function collectionToTierListData(
   collection: NonNullable<Awaited<ReturnType<typeof getCollectionBySlug>>>,
+  readIds?: string[],
 ): TierListData {
   const idMap = new Map<string, string>();
+
+  // Если передан readIds — форкаем только отмеченные книги
+  const readIdsSet = readIds?.length ? new Set(readIds) : null;
 
   // Префикс "fork-" гарантирует, что бэкенд создаст книги как новые (temp-IDs)
   const books: Record<string, Book> = {};
   Object.entries(collection.books || {}).forEach(([origId, book]) => {
+    // Если фильтруем по readIds — пропускаем неотмеченные
+    if (readIdsSet && !readIdsSet.has(origId)) return;
     const tempId = `fork-${origId}`;
     idMap.set(origId, tempId);
     books[tempId] = { ...book, id: tempId };
@@ -80,6 +86,7 @@ export interface TierEditorQueriesResult {
 export function useTierEditorQueries(
   tierListId: string | undefined,
   forkSlug?: string | null,
+  forkReadIds?: string[] | null,
 ): TierEditorQueriesResult {
   const isNew = tierListId === "new";
 
@@ -131,7 +138,7 @@ export function useTierEditorQueries(
   const initialDataForHook = useMemo((): TierListData => {
     // Форк из коллекции
     if (isNew && forkCollection) {
-      return collectionToTierListData(forkCollection);
+      return collectionToTierListData(forkCollection, forkReadIds ?? undefined);
     }
     // Новый пустой тир-лист
     if (isNew) {
@@ -148,7 +155,7 @@ export function useTierEditorQueries(
       return getInitialData(tierListId!, 'Новый тир-лист');
     }
     return emptyData;
-  }, [apiData, isTierListError, tierListId, isNew, forkCollection]);
+  }, [apiData, isTierListError, tierListId, isNew, forkCollection, forkReadIds]);
 
   const isLoading = isNew ? isForkLoading : isTierListLoading;
   const isError = isNew ? isForkError : isTierListError;
