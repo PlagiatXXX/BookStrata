@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Cookie } from "lucide-react";
-import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAnalytics } from "@/contexts/AnalyticsContext";
 import { Button } from "@/ui/Button";
 import { Link, useLocation } from "react-router-dom";
 
@@ -8,12 +8,6 @@ export function CookieConsent() {
   const { accept, isConsented } = useAnalytics();
   const [visible, setVisible] = useState(false);
   const { pathname } = useLocation();
-
-  useEffect(() => {
-    if (isConsented) {
-      accept();
-    }
-  }, [isConsented, accept]);
 
   // Эффект для таймера показа баннера — только если нет согласия
   useEffect(() => {

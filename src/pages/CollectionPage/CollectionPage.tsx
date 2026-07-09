@@ -274,6 +274,17 @@ return DOMPurify.sanitize(collection.content);
           </div>
         )}
 
+        {/* Value callout — пока нет отметок, над тир-листом */}
+        {collection.type === "curated" && markedCount === 0 && (
+          <div className="brutal-card brutal-border p-5 mb-8 border-l-4" style={{ borderLeftColor: "var(--accent-main)" }}>
+            <p className="text-sm text-(--ink-1) leading-relaxed">
+              <span className="font-bold">Отмечайте книги, которые читали</span> —{' '}
+              нажмите на плашку <span className="text-(--ink-0)">+ Отметить</span> внизу обложки.{' '}
+              Потом сможете собрать свой рейтинг из отмеченных книг.
+            </p>
+          </div>
+        )}
+
         {/* Tier list for curated collections — на всю ширину */}
         {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
           <div className="mb-8">
@@ -290,23 +301,8 @@ return DOMPurify.sanitize(collection.content);
           </div>
         )}
 
-        {/* CTA-блоки — всегда в DOM, анимация через max-height, чтобы не прыгала страница */}
-        <div className="overflow-hidden transition-all duration-500 ease-in-out" style={{ maxHeight: collection.type === "curated" ? '500px' : '0px' }}>
-          {/* Value callout — пока нет отметок */}
-          <div
-            className="overflow-hidden transition-all duration-500 ease-in-out"
-            style={{ maxHeight: collection.type === "curated" && markedCount === 0 ? '200px' : '0px', opacity: collection.type === "curated" && markedCount === 0 ? 1 : 0 }}
-          >
-            <div className="brutal-card brutal-border p-5 mb-8 border-l-4" style={{ borderLeftColor: "var(--accent-main)" }}>
-              <p className="text-sm text-(--ink-1) leading-relaxed">
-                <span className="font-bold">Отмечайте книги, которые читали</span> —{' '}
-                нажмите на плашку <span className="text-(--ink-0)">+ Отметить</span> внизу обложки.{' '}
-                Потом сможете собрать свой рейтинг из отмеченных книг.
-              </p>
-            </div>
-          </div>
-
-          {/* CTA — когда есть отметки */}
+        {/* CTA — когда есть отметки, под тир-листом */}
+        <div className="overflow-hidden transition-all duration-500 ease-in-out" style={{ maxHeight: collection.type === "curated" && markedCount > 0 ? '500px' : '0px' }}>
           <div
             className="overflow-hidden transition-all duration-500 ease-in-out"
             style={{ maxHeight: collection.type === "curated" && markedCount > 0 ? '500px' : '0px', opacity: collection.type === "curated" && markedCount > 0 ? 1 : 0 }}
@@ -339,7 +335,7 @@ return DOMPurify.sanitize(collection.content);
                   </p>
                   <button
                     onClick={handleFork}
-                    className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-6 py-2 text-sm font-medium uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
                   >
                     Составить свой рейтинг
                   </button>

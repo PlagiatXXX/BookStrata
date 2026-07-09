@@ -741,17 +741,6 @@ export function CuratedCollectionEditor({
             <div className="admin-collections-form">
               <div className="admin-collections-form-row">
                 <div className="admin-collections-form-group">
-                  <label>Название *</label>
-                  <input
-                    type="text"
-                    value={editForm.title}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, title: e.target.value })
-                    }
-                    placeholder="Название книги"
-                  />
-                </div>
-                <div className="admin-collections-form-group">
                   <label>Автор</label>
                   <input
                     type="text"
@@ -760,6 +749,17 @@ export function CuratedCollectionEditor({
                       setEditForm({ ...editForm, author: e.target.value })
                     }
                     placeholder="Имя автора"
+                  />
+                </div>
+                <div className="admin-collections-form-group">
+                  <label>Название *</label>
+                  <input
+                    type="text"
+                    value={editForm.title}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, title: e.target.value })
+                    }
+                    placeholder="Название книги"
                   />
                 </div>
               </div>
@@ -961,18 +961,18 @@ const BookRow = memo(function BookRow({
         <div className="curated-editor-book-row-main">
           <input
             type="text"
+            className="curated-editor-input"
+            value={book.author}
+            onChange={(e) => onUpdate(book.id, "author", e.target.value)}
+            placeholder="Автор"
+          />
+          <input
+            type="text"
             className={`curated-editor-input ${titleEmpty ? "curated-editor-input--error" : ""}`}
             value={book.title}
             onChange={(e) => onUpdate(book.id, "title", e.target.value)}
             placeholder="Название книги *"
             required
-          />
-          <input
-            type="text"
-            className="curated-editor-input"
-            value={book.author}
-            onChange={(e) => onUpdate(book.id, "author", e.target.value)}
-            placeholder="Автор"
           />
         </div>
         <div className="curated-editor-book-row-meta">
