@@ -56,7 +56,13 @@
 }
 
 /* ── Мedia query variant для hover-эффектов (только устройства с курсором) ── */
-@custom-variant hover-only (@media (hover: hover) and (pointer: fine) { &:hover });
+@custom-variant hover-only {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
 
 /* ── Shine Border ── */
 @keyframes shine {
