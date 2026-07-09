@@ -21,7 +21,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
     ref,
   ) => {
    const base =
-  "inline-flex items-center justify-center gap-2 nb-heavy-border border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent-main)] disabled:opacity-50 disabled:cursor-not-allowed relative";
+  "inline-flex items-center justify-center gap-2 nb-heavy-border border transition-[transform,color,background-color,border-color] duration-150 ease-[var(--ease-out)] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[var(--accent-main)] disabled:opacity-50 disabled:cursor-not-allowed relative";
 
     const sizes = {
       sm: "px-3 py-1.5 text-sm",

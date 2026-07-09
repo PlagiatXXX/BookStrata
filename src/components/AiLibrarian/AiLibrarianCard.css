@@ -28,7 +28,7 @@
   inset: 2px;
   border-radius: 20px;
   background: rgb(23, 23, 23, 0.7);
-  transition: all 0.4s ease-in-out;
+  transition: opacity 0.4s ease-in-out;
   z-index: -1;
 }
 
@@ -54,7 +54,7 @@
     0 0 60px rgba(193, 255, 254, 0.6),
     0 0 120px rgba(193, 255, 254, 0.3),
     inset #c1fffe 0 0 30px -12px;
-  transition: 0.4s ease-in-out;
+  transition: box-shadow 0.4s ease-in-out;
   pointer-events: none;
   z-index: 0;
 }
@@ -97,7 +97,7 @@
   color: #f6f1e8;
   text-align: center;
   z-index: 2;
-  transition: 0.4s ease-in-out;
+  transition: letter-spacing 0.4s ease-in-out;
   position: relative;
 }
 .ai-librarian-card:hover .ai-card-title {
@@ -195,7 +195,7 @@
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 4px 15px rgba(193, 255, 254, 0.3);
   font-family: inherit;
   margin-top: 0.25em;

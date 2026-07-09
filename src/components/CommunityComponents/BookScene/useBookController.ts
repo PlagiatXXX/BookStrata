@@ -40,12 +40,12 @@ export function useBookController(containerRef: RefObject<HTMLElement | null>): 
 
   const baseRotateYSpring = useSpring(baseRotateY, {
     stiffness: 120,
-    damping: 30,
+    damping: 22,
   });
 
   const baseRotateXSpring = useSpring(baseRotateX, {
     stiffness: 100,
-    damping: 25,
+    damping: 20,
   });
 
   /* ================= POINTER ================= */
@@ -69,8 +69,8 @@ export function useBookController(containerRef: RefObject<HTMLElement | null>): 
   const open = useMotionValue(0);
 
   const openSpring = useSpring(open, {
-    stiffness: 60,
-    damping: 28,
+    stiffness: 80,
+    damping: 22,
   });
 
   /* ================= SCENE ROTATION ================= */

@@ -17,13 +17,18 @@ export const CollectionFlipCard = memo(({ collection, className = '' }: Collecti
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canHoverRef = useRef(
+    typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  );
 
   const handleMouseEnter = useCallback(() => {
+    if (!canHoverRef.current) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     setIsFlipped(true);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
+    if (!canHoverRef.current) return;
     // Небольшая задержка перед закрытием, чтобы не дёргалось
     timerRef.current = setTimeout(() => setIsFlipped(false), 100);
   }, []);
@@ -58,7 +63,7 @@ export const CollectionFlipCard = memo(({ collection, className = '' }: Collecti
       aria-label={`Подборка: ${collection.title}`}
     >
       <div
-        className={`absolute inset-0 duration-700 [transform-style:preserve-3d] will-change-transform ${
+        className={`absolute inset-0 duration-500 [transform-style:preserve-3d] will-change-transform ${
           isFlipped ? '[transform:rotateX(180deg)]' : ''
         }`}
       >
@@ -130,7 +135,7 @@ export const CollectionFlipCard = memo(({ collection, className = '' }: Collecti
             <button
               onClick={(e) => { e.stopPropagation(); handleClick(); }}
               className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.12em]
-                         bg-white/20 hover:bg-white/30 text-white
+                         bg-white/20 hover-only:bg-white/30 text-white
                          px-3 py-1.5 rounded-sm
                          transition-colors duration-150"
               aria-label={`Посмотреть подборку: ${collection.title}`}

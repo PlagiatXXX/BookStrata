@@ -215,6 +215,12 @@ export default function BattleDetailPage() {
     )
     if (elements.length === 0) return
 
+    // Если пользователь предпочитает уменьшенное движение — показываем сразу
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      elements.forEach((el) => el.classList.add('reveal--visible'))
+      return
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {

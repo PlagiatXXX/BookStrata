@@ -7,9 +7,11 @@
   transition: transform 0.2s ease;
 }
 
-.forum-stat-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-main);
+@media (hover: hover) and (pointer: fine) {
+  .forum-stat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-main);
+  }
 }
 
 .forum-tab {
@@ -50,9 +52,11 @@
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.hover-lift:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-main);
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-main);
+  }
 }
 
 .community-heading {

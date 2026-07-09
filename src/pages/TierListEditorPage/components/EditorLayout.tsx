@@ -7,6 +7,7 @@ import type {
   DragEndEvent,
   DragOverEvent,
 } from "@dnd-kit/core";
+import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
@@ -155,16 +156,22 @@ export const EditorLayout = ({
       {content}
       <DragOverlay zIndex={10001}>
         {activeBook ? (
-          <div
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             style={{
               opacity: 0.85,
               transform: "rotate(2deg) scale(1.05)",
             }}
           >
             <BookCover book={activeBook} isDraggable={false} />
-          </div>
+          </motion.div>
         ) : activeTier ? (
-          <div
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="flex items-center gap-2 rounded-lg px-4 py-2 shadow-xl"
             style={{
               opacity: 0.85,
@@ -182,7 +189,7 @@ export const EditorLayout = ({
             <span className="text-white font-medium truncate">
               {activeTier.title}
             </span>
-          </div>
+          </motion.div>
         ) : null}
       </DragOverlay>
     </DndContext>

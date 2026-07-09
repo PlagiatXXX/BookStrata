@@ -72,9 +72,11 @@
   padding: 28px;
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
-.participant-card:hover {
-  border-color: rgba(243, 239, 230, 0.18);
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .participant-card:hover {
+    border-color: rgba(243, 239, 230, 0.18);
+    transform: translateY(-2px);
+  }
 }
 .participant-card::before {
   content: '';
@@ -137,9 +139,11 @@
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.hover-lift:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-main);
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-main);
+  }
 }
 
 .community-heading {
@@ -164,7 +168,7 @@
 .brutal-cta {
   border: 1.5px solid var(--line-strong);
   border-radius: 4px;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
 }
 
@@ -213,9 +217,11 @@
   transition: transform 0.2s ease;
 }
 
-.forum-stat-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-main);
+@media (hover: hover) and (pointer: fine) {
+  .forum-stat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-main);
+  }
 }
 
 .brutal-shadow-sm {

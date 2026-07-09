@@ -16,8 +16,10 @@
   will-change: transform, border-color;
 }
 
-.hover-lift:hover {
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .parallax-img {
@@ -25,9 +27,11 @@
   will-change: transform;
 }
 
-.group:hover .parallax-img {
-  transform: scale(1.03) translateY(-2px);
-  filter: saturate(1.02);
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .parallax-img {
+    transform: scale(1.03) translateY(-2px);
+    filter: saturate(1.02);
+  }
 }
 
 .community-shell {
@@ -56,8 +60,10 @@
   background: var(--bg-1);
 }
 
-.brutal-card:hover {
-  border-color: var(--line-strong);
+@media (hover: hover) and (pointer: fine) {
+  .brutal-card:hover {
+    border-color: var(--line-strong);
+  }
 }
 
 .brutal-label {
@@ -76,11 +82,13 @@
   transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
-.brutal-cta:hover {
-  transform: translateY(-2px);
-  background: var(--accent-main);
-  color: var(--ink-0);
-  border-color: var(--accent-main);
+@media (hover: hover) and (pointer: fine) {
+  .brutal-cta:hover {
+    transform: translateY(-2px);
+    background: var(--accent-main);
+    color: var(--ink-0);
+    border-color: var(--accent-main);
+  }
 }
 
 .brutal-cta:focus-visible {

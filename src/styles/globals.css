@@ -17,6 +17,11 @@
   --accent-alt: #2f6b5f;
   --line-strong: #f3efe6;
   --line-soft: #3a352f;
+
+  /* ── Custom easing curves (Emil Kowalski / animations.dev) ── */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 @theme {
@@ -49,6 +54,9 @@
   --text-6xl: clamp(2.75rem, 2rem + 3.5vw, 4rem);
   --text-6xl--line-height: 1.05;
 }
+
+/* ── Мedia query variant для hover-эффектов (только устройства с курсором) ── */
+@custom-variant hover-only (@media (hover: hover) and (pointer: fine) { &:hover });
 
 /* ── Shine Border ── */
 @keyframes shine {

@@ -64,7 +64,7 @@
   color: #94a3b8;
   cursor: pointer;
   border-radius: 8px;
-  transition: all 0.2s;
+  transition: color 0.2s ease, background-color 0.2s ease;
   font-family: "Manrope", system-ui, sans-serif;
 }
 
@@ -87,7 +87,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   font-family: "Manrope", system-ui, sans-serif;
   white-space: nowrap;
 }
@@ -223,7 +223,7 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
   border: none;
   font-family: "Manrope", system-ui, sans-serif;
 }
@@ -434,7 +434,7 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
-  transition: all 0.3s;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .landing-step:hover {
@@ -501,7 +501,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   overflow: hidden;
-  transition: all 0.25s;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .mini-tier-card:hover {
@@ -690,7 +690,7 @@
   text-underline-offset: 3px;
   text-decoration-color: rgba(251, 146, 60, 0.7);
   text-decoration-thickness: 2px;
-  transition: all 0.2s;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
   font-weight: 600;
 }
 
@@ -721,7 +721,7 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
-  transition: all 0.25s;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .landing-feature:hover {
@@ -844,7 +844,7 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
-  transition: all 0.3s;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .landing-pricing__card:hover {
@@ -919,7 +919,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s;
+  transition: transform 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.04);
   color: #e2e8f0;
@@ -1027,7 +1027,7 @@
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.25s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
   background: var(--accent-main);
   color: #fff;
   box-shadow: 0 4px 32px rgba(217, 79, 43, 0.3);
@@ -1043,7 +1043,7 @@
 .reveal-box {
   opacity: 0;
   transform: translateY(30px);
-  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  transition: opacity 0.4s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), transform 0.4s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
 }
 
 .reveal-box.reveal--visible {
