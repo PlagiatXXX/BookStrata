@@ -388,101 +388,132 @@ async function prerender() {
         const url = `${BASE}${route.path}`;
         await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
 
-        // Запоминаем дефолтный title (который выставил App.tsx до загрузки данных)
-        const initialTitle = await page.title();
-
-        // Ждём, пока React отрендерит контент (а не спиннер)
-        await page.waitForFunction(
-          () => {
-            const root = document.getElementById("root");
-            if (!root) return false;
-            const html = root.innerHTML;
-            return html.length > 200 && !html.includes("Загрузка...");
-          },
-          { timeout: 20000 },
-        );
-
-        // Для тир-листов и коллекций: ждём 15 секунд, пока title обновится
-        // Если не обновился — генерируем fallback из названия маршрута
+        // Определяем тип страницы для выбора стратегии ожидания контента
         const isTierList = route.path.startsWith("/tier-lists/");
         const isCollection = route.path.startsWith("/collections/");
+        const isRankings = route.path.startsWith("/rankings");
+
+        // ── Ждём реальный контент (не заголовок, а DOM-элементы) ──
+        let contentLoaded = false;
 
         if (isTierList) {
-          await page.waitForFunction(
-            () => document.title.includes("— книжный тир-лист"),
-            { timeout: 15000 },
-          ).catch(() => {});
-        } else if (isCollection) {
-          const collectionName = route.name.replace("Подборка: ", "");
-          await page.waitForFunction(
-            (name) => {
-              const t = document.title;
-              return t.length > 0
-                && !t.includes("интерактивный рейтинг книг")
-                && (t.includes(name) || t.includes("— подборка книг"));
+          // Ждём редактор тир-листа, ряд тира или книгу
+          contentLoaded = await page.waitForFunction(
+            () => {
+              const editor = document.querySelector("main.neo-brutalist-editor");
+              const tierRow = document.querySelector(".nb-tier-row");
+              const bookCard = document.querySelector(".nb-book-card");
+              return !!(editor || tierRow || bookCard);
             },
-            collectionName,
-            { timeout: 15000 },
-          ).catch(() => {});
+            { timeout: 25000 },
+          ).then(() => true).catch(() => false);
+        } else if (isCollection) {
+          // Ждём заголовок коллекции, статический тир-вью или книгу
+          contentLoaded = await page.waitForFunction(
+            () => {
+              const heading = document.querySelector("h1.community-heading");
+              const tierView = document.querySelector(".static-tier-view");
+              const bookCard = document.querySelector(".nb-book-card");
+              return !!(heading || tierView || bookCard);
+            },
+            { timeout: 25000 },
+          ).then(() => true).catch(() => false);
+        } else if (isRankings) {
+          // Ждём заголовок или карточки коллекций
+          contentLoaded = await page.waitForFunction(
+            () => {
+              const heading = document.querySelector("h1.community-heading");
+              const card = document.querySelector('article[role="button"]');
+              return !!(heading || card);
+            },
+            { timeout: 20000 },
+          ).then(() => true).catch(() => false);
         } else {
-          // Для остальных страниц — ждём 5 секунд
-          await page.waitForFunction(
-            (defaultTitle) => document.title !== defaultTitle,
-            initialTitle,
-            { timeout: 5000 },
-          ).catch(() => {});
+          // Для остальных страниц — ждём, пока React отрендерит контент
+          contentLoaded = await page.waitForFunction(
+            () => {
+              const root = document.getElementById("root");
+              if (!root) return false;
+              const html = root.innerHTML;
+              return html.length > 500 && !html.includes("Загрузка...");
+            },
+            { timeout: 20000 },
+          ).then(() => true).catch(() => false);
         }
 
-        // Небольшая пауза для завершения анимаций
-        await page.waitForTimeout(500);
+        // ── Fallback: если контент не загрузился (API недоступен) ──
+        let finalTitle = await page.title();
+        let needsFallback = !contentLoaded;
 
-        // Проверяем title — если generic, генерируем fallback
-        const currentTitle = await page.title();
-        const needsFallbackTitle =
-          (isTierList && !currentTitle.includes("— книжный тир-лист")) ||
-          (isCollection && (!currentTitle || currentTitle.includes("интерактивный рейтинг книг")));
+        if (needsFallback) {
+          log(`  ⚡ Контент не загрузился (API недоступен), генерирую fallback…`);
 
-        let finalTitle = currentTitle;
-        if (needsFallbackTitle) {
           let fallbackTitle, fallbackDesc, canonicalPath;
+          let fallbackBodyHtml = "";
 
           if (isTierList) {
             const slug = route.path.replace("/tier-lists/", "");
             const readableTitle = deslugify(slug);
             fallbackTitle = `${readableTitle} — книжный тир-лист | BookStrata`;
-            fallbackDesc = `Тир-лист «${readableTitle}» — визуальный рейтинг книг на BookStrata`;
+            fallbackDesc = `Тир-лист «${readableTitle}» — визуальный рейтинг книг, составленный читателем на BookStrata. Оценивайте и сортируйте любимые книги.`;
             canonicalPath = route.path;
-            log(`  ⚡ Fallback title: "${fallbackTitle}"`);
+            fallbackBodyHtml = `
+<article itemscope itemtype="https://schema.org/ItemList">
+  <h1 itemprop="name">${fallbackTitle.replace(/ \| BookStrata$/, "")}</h1>
+  <p itemprop="description">${fallbackDesc}</p>
+  <p>Тир-лист временно недоступен. Зайдите позже, чтобы увидеть книги в подборке.</p>
+  <nav>
+    <a href="/">BookStrata — главная</a> |
+    <a href="/rankings">Рейтинг книг</a> |
+    <a href="/community">Сообщество</a>
+  </nav>
+</article>`;
           } else if (isCollection) {
-            // Используем name из маршрута (например "Подборка: Топ книг фэнтези — рейтинг лучших 2026")
             const collectionName = route.name.replace("Подборка: ", "");
             fallbackTitle = `${collectionName} — подборка книг | BookStrata`;
-            fallbackDesc = `Редакционная подборка книг «${collectionName}» — лучшие книги по жанру, рейтинг и рекомендации на BookStrata`;
+            fallbackDesc = `Редакционная подборка книг «${collectionName}» — лучшие книги по жанру, рейтинг и рекомендации читателей на BookStrata.`;
             canonicalPath = route.path;
-            log(`  ⚡ Fallback title: "${fallbackTitle}"`);
+            fallbackBodyHtml = `
+<article itemscope itemtype="https://schema.org/Collection">
+  <h1 itemprop="name">${collectionName}</h1>
+  <p itemprop="description">${fallbackDesc}</p>
+  <p>Книги из подборки временно недоступны. Зайдите позже.</p>
+  <nav>
+    <a href="/">BookStrata — главная</a> |
+    <a href="/rankings">Рейтинг книг</a>
+  </nav>
+</article>`;
           }
 
-          // Обновляем finalTitle для вывода в лог и результаты
           finalTitle = fallbackTitle;
 
-          // Внедряем title, description и og-теги через evaluate
-          await page.evaluate(({ t, d, cp }) => {
+          // Внедряем title, мета-теги и контент в DOM через evaluate
+          await page.evaluate(({ t, d, cp, bodyHtml }) => {
             document.title = t;
             const setMeta = (selector, attr, value) => {
               const el = document.querySelector(selector);
               if (el) el.setAttribute(attr, value);
             };
-            setMeta('meta[property="og:title"]', 'content', t);
-            setMeta('meta[name="description"]', 'content', d);
-            setMeta('meta[property="og:description"]', 'content', d);
-            setMeta('meta[name="twitter:description"]', 'content', d);
-            // Правим canonical, если он ушёл в fallback на главную
+            setMeta('meta[property="og:title"]', "content", t);
+            setMeta('meta[name="description"]', "content", d);
+            setMeta('meta[property="og:description"]', "content", d);
+            setMeta('meta[name="twitter:description"]', "content", d);
             const canonical = document.querySelector('link[rel="canonical"]');
             if (canonical) {
-              canonical.setAttribute('href', `https://bookstrata.ru${cp}`);
+              canonical.setAttribute("href", `https://bookstrata.ru${cp}`);
             }
-          }, { t: fallbackTitle, d: fallbackDesc, cp: canonicalPath });
+            // Инжектим контент в #root, чтобы Google индексировал что-то осмысленное
+            const root = document.getElementById("root");
+            if (root && (root.innerHTML.length < 200 || root.innerHTML.includes("Загрузка..."))) {
+              root.innerHTML = bodyHtml;
+            }
+          }, { t: fallbackTitle, d: fallbackDesc, cp: canonicalPath, bodyHtml: fallbackBodyHtml });
+
+          log(`  ⚡ Fallback: "${fallbackTitle}"`);
         }
+
+        // Небольшая пауза для завершения анимаций
+        await page.waitForTimeout(300);
 
         log(`    title: ${finalTitle}`);
 
