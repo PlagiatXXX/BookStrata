@@ -509,9 +509,9 @@ async function processRoute(browser, route) {
           root.innerHTML = bodyHtml;
         }
 
-        // 4. ⚠️ Удаляем все скрипты — иначе React продолжит работу
-        //    и перезапишет title/мета-теги после завершения evaluate.
-        document.querySelectorAll('script').forEach(s => s.remove());
+        // 4. Скрипты НЕ удаляем — React должен иметь возможность
+        //    гидратироваться и взять управление на себя, если это SPA-страница.
+        //    Раньше мы удаляли скрипты, но это ломало сайт при любом fallback.
       }, { t: fallbackTitle, d: fallbackDesc, cp: canonicalPath, bodyHtml: fallbackBodyHtml });
 
       log(`  ⚡ Fallback: "${fallbackTitle}"`);
