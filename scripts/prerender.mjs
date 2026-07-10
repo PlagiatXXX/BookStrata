@@ -276,6 +276,235 @@ function deduplicateHeadTags(html) {
 /** Будет установлен в true, если бэкенд доступен во время сборки */
 let backendAvailable = false;
 
+/** Количество параллельно обрабатываемых страниц */
+const CONCURRENCY = 4;
+
+/** Таймаут ожидания загрузки контента на странице (статичные маршруты) */
+const PAGE_TIMEOUT = 10_000;
+
+/** Таймаут для динамических страниц (тир-листы, коллекции) */
+const PAGE_TIMEOUT_DYNAMIC = 30_000;
+
+/**
+ * Дефолтный title, который устанавливает SEOHead до загрузки данных.
+ * Если document.title !== DEFAULT_TITLE — значит данные загрузились.
+ */
+const DEFAULT_TITLE = "Интерактивный рейтинг книг — топ лучших книг и что почитать | BookStrata";
+
+/**
+ * Проверяет, загрузился ли реальный контент на странице.
+ *
+ * Приоритеты (по надёжности):
+ * 1. document.title изменился с дефолтного — SEOHead отработал с данными
+ * 2. canonical содержит не-корневой путь — тоже признак загрузки
+ * 3. Fallback: в #root > 2000 символов и нет скелетонов
+ */
+async function pageHasContent(page) {
+  return page.evaluate((defaultTitle) => {
+    // Самый надёжный признак: React обновил title после загрузки данных
+    if (document.title && document.title !== defaultTitle) return true;
+
+    const root = document.getElementById("root");
+    if (!root) return false;
+    const html = root.innerHTML;
+
+    // Скелетоны Tailwind используют animate-pulse
+    if (html.includes("animate-pulse")) return false;
+    // Если текст содержит "Загрузка..." — ещё не готово
+    if (html.includes("Загрузка...") || html.includes("Загрузка")) return false;
+    // Если в корне меньше 2000 символов — вероятно, загрузка
+    if (html.length < 2000) return false;
+
+    return true;
+  }, DEFAULT_TITLE);
+}
+
+/**
+ * Ждёт, пока на странице появится реальный контент.
+ * Проверяет каждые 500 мс, максимум timeout мс.
+ */
+async function waitForContent(page, timeout = PAGE_TIMEOUT) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    if (await pageHasContent(page)) return true;
+    await page.waitForTimeout(500);
+  }
+  return false;
+}
+
+/**
+ * Обрабатывает один маршрут: открывает страницу, ждёт контент,
+ * при необходимости внедряет fallback, сохраняет HTML.
+ */
+async function processRoute(browser, route) {
+  const url = `${BASE}${route.path}`;
+  const isTierList = route.path.startsWith("/tier-lists/");
+  const isCollection = route.path.startsWith("/collections/");
+  const isRankings = route.path.startsWith("/rankings");
+
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 720 },
+    // Не используем бота — Chromium как обычный пользователь
+    userAgent:
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+  });
+  const page = await context.newPage();
+
+  try {
+    // Блокируем запросы к API, только если бэкенд недоступен
+    if (!backendAvailable) {
+      await page.route("**/api/**", (route) => route.abort());
+    }
+    await page.route("**/sitemap.xml", (route) => route.abort());
+
+    // Перехватываем консольные ошибки (не даём им упасть в reject)
+    page.on("pageerror", (err) => {
+      log(`  ⚠️  JS error on ${route.path}: ${err.message}`);
+    });
+
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+
+    // ── Ждём реальный контент (проверка каждые 500 мс) ──
+    // Для динамических страниц (тир-листы, коллекции) даём больше времени
+    const contentTimeout = (isTierList || isCollection) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
+    const contentLoaded = await waitForContent(page, contentTimeout);
+
+    // ── Fallback: если контент не загрузился ──
+    let finalTitle = await page.title();
+
+    if (!contentLoaded) {
+      log(`  ⚡ Контент не загрузился, генерирую fallback…`);
+
+      let fallbackTitle, fallbackDesc, canonicalPath;
+      let fallbackBodyHtml = "";
+
+      if (isTierList) {
+        const slug = route.path.replace("/tier-lists/", "");
+        // Используем name из ROUTES (там реальное название из API), а не deslugify
+        const readableTitle = route.name.replace("Тир-лист: ", "") || deslugify(slug);
+        fallbackTitle = `${readableTitle} — книжный тир-лист | BookStrata`;
+        fallbackDesc = `Тир-лист «${readableTitle}» — визуальный рейтинг книг, составленный читателем на BookStrata. Оценивайте и сортируйте любимые книги.`;
+        canonicalPath = route.path;
+        fallbackBodyHtml = `
+<article itemscope itemtype="https://schema.org/ItemList">
+  <h1 itemprop="name">${readableTitle}</h1>
+  <p itemprop="description">${fallbackDesc}</p>
+  <p>Тир-лист временно недоступен. Зайдите позже, чтобы увидеть книги в подборке.</p>
+  <nav>
+    <a href="/">BookStrata — главная</a> |
+    <a href="/rankings">Рейтинг книг</a>
+  </nav>
+</article>`;
+      } else if (isCollection) {
+        const collectionName = route.name.replace("Подборка: ", "");
+        fallbackTitle = `${collectionName} — подборка книг | BookStrata`;
+        fallbackDesc = `Редакционная подборка книг «${collectionName}» — лучшие книги по жанру, рейтинг и рекомендации читателей на BookStrata.`;
+        canonicalPath = route.path;
+        fallbackBodyHtml = `
+<article itemscope itemtype="https://schema.org/Collection">
+  <h1 itemprop="name">${collectionName}</h1>
+  <p itemprop="description">${fallbackDesc}</p>
+  <p>Книги из подборки временно недоступны. Зайдите позже.</p>
+  <nav>
+    <a href="/">BookStrata — главная</a> |
+    <a href="/rankings">Рейтинг книг</a>
+  </nav>
+</article>`;
+      }
+
+      finalTitle = fallbackTitle;
+
+      await page.evaluate(({ t, d, cp, bodyHtml }) => {
+        // 1. Устанавливаем <title> — и через document.title, и через DOM-элемент
+        document.title = t;
+        let titleEl = document.querySelector('title');
+        if (!titleEl) {
+          titleEl = document.createElement('title');
+          document.head.appendChild(titleEl);
+        }
+        titleEl.textContent = t;
+
+        // 2. Мета-теги
+        const setMeta = (selector, attr, value) => {
+          const el = document.querySelector(selector);
+          if (el) el.setAttribute(attr, value);
+        };
+        setMeta('meta[property="og:title"]', "content", t);
+        setMeta('meta[name="description"]', "content", d);
+        setMeta('meta[property="og:description"]', "content", d);
+        setMeta('meta[name="twitter:description"]', "content", d);
+        const canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical) {
+          canonical.setAttribute("href", `https://bookstrata.ru${cp}`);
+        }
+
+        // 3. Заменяем root на статический контент
+        const root = document.getElementById("root");
+        if (root && (root.innerHTML.length < 2000 || root.innerHTML.includes("animate-pulse"))) {
+          root.innerHTML = bodyHtml;
+        }
+
+        // 4. ⚠️ Удаляем все скрипты — иначе React продолжит работу
+        //    и перезапишет title/мета-теги после завершения evaluate.
+        document.querySelectorAll('script').forEach(s => s.remove());
+      }, { t: fallbackTitle, d: fallbackDesc, cp: canonicalPath, bodyHtml: fallbackBodyHtml });
+
+      log(`  ⚡ Fallback: "${fallbackTitle}"`);
+    }
+
+    // Небольшая пауза для завершения анимаций
+    await page.waitForTimeout(300);
+
+    log(`    title: ${finalTitle}`);
+
+    // Логируем SEO-мета-теги
+    const seo = await page.evaluate(() => ({
+      title: document.title,
+      canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+      ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
+      ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content'),
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
+    }));
+    if (seo.title !== DEFAULT_TITLE) {
+      log(`    canonical: ${seo.canonical}`);
+      log(`    og:title:   ${seo.ogTitle}`);
+      log(`    og:desc:    ${seo.ogDescription?.slice(0, 80)}…`);
+    }
+
+    // Получаем полный HTML страницы (с head-мета-тегами)
+    let html = await page.content();
+
+    // Очищаем дублирующиеся теги в <head>, которые возникают из-за
+    // react-helmet-async + fallback useEffect в SEOHead.
+    // Оставляем только первый <title>, первый canonical, и первые meta с одинаковым name/property.
+    html = deduplicateHeadTags(html);
+
+    // Не инлайним весь CSS — внешние таблицы кэшируются браузером на год
+    // (заголовок Cache-Control: public, immutable). Инлайн всего CSS раздувает
+    // HTML до 300+ KB, что ухудшает LCP при холодном старте.
+    // Vite-сборка уже оптимизирует CSS: чанки с хэшами, code splitting.
+
+    // Определяем путь для сохранения
+    const savePath =
+      route.path === "/"
+        ? resolve(DIST, "index.html")
+        : resolve(DIST, route.path.slice(1), "index.html");
+
+    mkdirSync(dirname(savePath), { recursive: true });
+    writeFileSync(savePath, html, "utf-8");
+
+    log(`    ✅ saved to ${savePath}`);
+
+    return { path: route.path, title: finalTitle, saved: true };
+  } catch (err) {
+    log(`    ❌ Failed: ${err.message}`);
+    return { path: route.path, error: err.message, saved: false };
+  } finally {
+    await page.close();
+    await context.close();
+  }
+}
+
 async function prerender() {
   // Проверяем, что dist уже существует (сборка уже выполнена)
   if (!existsSync(DIST)) {
@@ -363,206 +592,15 @@ async function prerender() {
     await addPublicTierListRoutes();
     await addPublicCollectionRoutes();
 
-    for (const route of ROUTES) {
-      log(`  → ${route.path} (${route.name})`);
+    // Параллельная обработка страниц (CONCURRENCY за раз)
+    for (let i = 0; i < ROUTES.length; i += CONCURRENCY) {
+      const batch = ROUTES.slice(i, i + CONCURRENCY);
+      log(`\n📦 Batch ${Math.floor(i / CONCURRENCY) + 1}/${Math.ceil(ROUTES.length / CONCURRENCY)} (${batch.length} pages)`);
 
-      const context = await browser.newContext({
-        viewport: { width: 1280, height: 720 },
-        userAgent:
-          "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
-      });
-      const page = await context.newPage();
-
-      try {
-        // Блокируем запросы к API, только если бэкенд недоступен
-        if (!backendAvailable) {
-          await page.route("**/api/**", (route) => route.abort());
-        }
-        await page.route("**/sitemap.xml", (route) => route.abort());
-
-        // Перехватываем консольные ошибки (не даём им упасть в reject)
-        page.on("pageerror", (err) => {
-          log(`  ⚠️  JS error on ${route.path}: ${err.message}`);
-        });
-
-        const url = `${BASE}${route.path}`;
-        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
-
-        // Определяем тип страницы для выбора стратегии ожидания контента
-        const isTierList = route.path.startsWith("/tier-lists/");
-        const isCollection = route.path.startsWith("/collections/");
-        const isRankings = route.path.startsWith("/rankings");
-
-        // ── Ждём реальный контент (не заголовок, а DOM-элементы) ──
-        let contentLoaded = false;
-
-        if (isTierList) {
-          // Ждём редактор тир-листа, ряд тира или книгу
-          contentLoaded = await page.waitForFunction(
-            () => {
-              const editor = document.querySelector("main.neo-brutalist-editor");
-              const tierRow = document.querySelector(".nb-tier-row");
-              const bookCard = document.querySelector(".nb-book-card");
-              return !!(editor || tierRow || bookCard);
-            },
-            { timeout: 25000 },
-          ).then(() => true).catch(() => false);
-        } else if (isCollection) {
-          // Ждём заголовок коллекции, статический тир-вью или книгу
-          contentLoaded = await page.waitForFunction(
-            () => {
-              const heading = document.querySelector("h1.community-heading");
-              const tierView = document.querySelector(".static-tier-view");
-              const bookCard = document.querySelector(".nb-book-card");
-              return !!(heading || tierView || bookCard);
-            },
-            { timeout: 25000 },
-          ).then(() => true).catch(() => false);
-        } else if (isRankings) {
-          // Ждём заголовок или карточки коллекций
-          contentLoaded = await page.waitForFunction(
-            () => {
-              const heading = document.querySelector("h1.community-heading");
-              const card = document.querySelector('article[role="button"]');
-              return !!(heading || card);
-            },
-            { timeout: 20000 },
-          ).then(() => true).catch(() => false);
-        } else {
-          // Для остальных страниц — ждём, пока React отрендерит контент
-          contentLoaded = await page.waitForFunction(
-            () => {
-              const root = document.getElementById("root");
-              if (!root) return false;
-              const html = root.innerHTML;
-              return html.length > 500 && !html.includes("Загрузка...");
-            },
-            { timeout: 20000 },
-          ).then(() => true).catch(() => false);
-        }
-
-        // ── Fallback: если контент не загрузился (API недоступен) ──
-        let finalTitle = await page.title();
-        let needsFallback = !contentLoaded;
-
-        if (needsFallback) {
-          log(`  ⚡ Контент не загрузился (API недоступен), генерирую fallback…`);
-
-          let fallbackTitle, fallbackDesc, canonicalPath;
-          let fallbackBodyHtml = "";
-
-          if (isTierList) {
-            const slug = route.path.replace("/tier-lists/", "");
-            const readableTitle = deslugify(slug);
-            fallbackTitle = `${readableTitle} — книжный тир-лист | BookStrata`;
-            fallbackDesc = `Тир-лист «${readableTitle}» — визуальный рейтинг книг, составленный читателем на BookStrata. Оценивайте и сортируйте любимые книги.`;
-            canonicalPath = route.path;
-            fallbackBodyHtml = `
-<article itemscope itemtype="https://schema.org/ItemList">
-  <h1 itemprop="name">${fallbackTitle.replace(/ \| BookStrata$/, "")}</h1>
-  <p itemprop="description">${fallbackDesc}</p>
-  <p>Тир-лист временно недоступен. Зайдите позже, чтобы увидеть книги в подборке.</p>
-  <nav>
-    <a href="/">BookStrata — главная</a> |
-    <a href="/rankings">Рейтинг книг</a> |
-    <a href="/community">Сообщество</a>
-  </nav>
-</article>`;
-          } else if (isCollection) {
-            const collectionName = route.name.replace("Подборка: ", "");
-            fallbackTitle = `${collectionName} — подборка книг | BookStrata`;
-            fallbackDesc = `Редакционная подборка книг «${collectionName}» — лучшие книги по жанру, рейтинг и рекомендации читателей на BookStrata.`;
-            canonicalPath = route.path;
-            fallbackBodyHtml = `
-<article itemscope itemtype="https://schema.org/Collection">
-  <h1 itemprop="name">${collectionName}</h1>
-  <p itemprop="description">${fallbackDesc}</p>
-  <p>Книги из подборки временно недоступны. Зайдите позже.</p>
-  <nav>
-    <a href="/">BookStrata — главная</a> |
-    <a href="/rankings">Рейтинг книг</a>
-  </nav>
-</article>`;
-          }
-
-          finalTitle = fallbackTitle;
-
-          // Внедряем title, мета-теги и контент в DOM через evaluate
-          await page.evaluate(({ t, d, cp, bodyHtml }) => {
-            document.title = t;
-            const setMeta = (selector, attr, value) => {
-              const el = document.querySelector(selector);
-              if (el) el.setAttribute(attr, value);
-            };
-            setMeta('meta[property="og:title"]', "content", t);
-            setMeta('meta[name="description"]', "content", d);
-            setMeta('meta[property="og:description"]', "content", d);
-            setMeta('meta[name="twitter:description"]', "content", d);
-            const canonical = document.querySelector('link[rel="canonical"]');
-            if (canonical) {
-              canonical.setAttribute("href", `https://bookstrata.ru${cp}`);
-            }
-            // Инжектим контент в #root, чтобы Google индексировал что-то осмысленное
-            const root = document.getElementById("root");
-            if (root && (root.innerHTML.length < 200 || root.innerHTML.includes("Загрузка..."))) {
-              root.innerHTML = bodyHtml;
-            }
-          }, { t: fallbackTitle, d: fallbackDesc, cp: canonicalPath, bodyHtml: fallbackBodyHtml });
-
-          log(`  ⚡ Fallback: "${fallbackTitle}"`);
-        }
-
-        // Небольшая пауза для завершения анимаций
-        await page.waitForTimeout(300);
-
-        log(`    title: ${finalTitle}`);
-
-        // Логируем SEO-мета-теги
-        const seo = await page.evaluate(() => ({
-          title: document.title,
-          canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
-          ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute('content'),
-          ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content'),
-          description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
-        }));
-        if (seo.title !== "Рейтинг книг и книжные тир-листы онлайн | BookStrata") {
-          log(`    canonical: ${seo.canonical}`);
-          log(`    og:title:   ${seo.ogTitle}`);
-          log(`    og:desc:    ${seo.ogDescription?.slice(0, 80)}…`);
-        }
-
-        // Получаем полный HTML страницы (с head-мета-тегами)
-        let html = await page.content();
-
-        // Очищаем дублирующиеся теги в <head>, которые возникают из-за
-        // react-helmet-async + fallback useEffect в SEOHead.
-        // Оставляем только первый <title>, первый canonical, и первые meta с одинаковым name/property.
-        html = deduplicateHeadTags(html);
-
-        // Не инлайним весь CSS — внешние таблицы кэшируются браузером на год
-        // (заголовок Cache-Control: public, immutable). Инлайн всего CSS раздувает
-        // HTML до 300+ KB, что ухудшает LCP при холодном старте.
-        // Vite-сборка уже оптимизирует CSS: чанки с хэшами, code splitting.
-
-        // Определяем путь для сохранения
-        const savePath =
-          route.path === "/"
-            ? resolve(DIST, "index.html")
-            : resolve(DIST, route.path.slice(1), "index.html");
-
-        mkdirSync(dirname(savePath), { recursive: true });
-        writeFileSync(savePath, html, "utf-8");
-
-        log(`    ✅ saved to ${savePath}`);
-
-        results.push({ path: route.path, title: finalTitle, saved: true });
-      } catch (err) {
-        log(`    ❌ Failed: ${err.message}`);
-        results.push({ path: route.path, error: err.message, saved: false });
-      } finally {
-        await page.close();
-        await context.close();
-      }
+      const batchResults = await Promise.all(
+        batch.map((route) => processRoute(browser, route)),
+      );
+      results.push(...batchResults);
     }
   } finally {
     if (browser) await browser.close();
