@@ -324,8 +324,8 @@ async function pageHasContent(page) {
     if (html.includes("animate-pulse")) return false;
     // Если текст содержит "Загрузка..." — ещё не готово
     if (html.includes("Загрузка...") || html.includes("Загрузка")) return false;
-    // Если в корне достаточно контента — считаем загруженным
-    if (html.length >= 2000) return true;
+    // Если в корне меньше 2000 символов — вероятно, загрузка
+    if (html.length < 2000) return false;
 
     // ── 3. Проверка title (только если он не дефолтный) ──
     const title = document.title || '';
