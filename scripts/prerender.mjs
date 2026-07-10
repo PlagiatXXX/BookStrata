@@ -286,23 +286,24 @@ const PAGE_TIMEOUT = 10_000;
 const PAGE_TIMEOUT_DYNAMIC = 30_000;
 
 /**
- * Дефолтный title, который устанавливает SEOHead до загрузки данных.
- * Если document.title !== DEFAULT_TITLE — значит данные загрузились.
- */
-const DEFAULT_TITLE = "Интерактивный рейтинг книг — топ лучших книг и что почитать | BookStrata";
-
-/**
  * Проверяет, загрузился ли реальный контент на странице.
  *
  * Приоритеты (по надёжности):
- * 1. document.title изменился с дефолтного — SEOHead отработал с данными
- * 2. canonical содержит не-корневой путь — тоже признак загрузки
- * 3. Fallback: в #root > 2000 символов и нет скелетонов
+ * 1. canonical-ссылка содержит специфичный путь (не корень сайта) —
+ *    значит SEOHead отработал с данными из API
+ * 2. Fallback: в #root > 2000 символов, нет скелетонов и "Загрузка..."
  */
 async function pageHasContent(page) {
-  return page.evaluate((defaultTitle) => {
-    // Самый надёжный признак: React обновил title после загрузки данных
-    if (document.title && document.title !== defaultTitle) return true;
+  return page.evaluate(() => {
+    // Самый надёжный признак: canonical установлен на конкретную страницу
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      const href = canonical.getAttribute('href') || '';
+      // Если canonical не просто корень сайта — значит данные загружены
+      if (href !== 'https://bookstrata.ru' && href !== 'https://bookstrata.ru/') {
+        return true;
+      }
+    }
 
     const root = document.getElementById("root");
     if (!root) return false;
@@ -316,7 +317,7 @@ async function pageHasContent(page) {
     if (html.length < 2000) return false;
 
     return true;
-  }, DEFAULT_TITLE);
+  });
 }
 
 /**
@@ -465,7 +466,7 @@ async function processRoute(browser, route) {
       ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content'),
       description: document.querySelector('meta[name="description"]')?.getAttribute('content'),
     }));
-    if (seo.title !== DEFAULT_TITLE) {
+    if (seo.canonical !== 'https://bookstrata.ru' && seo.canonical !== 'https://bookstrata.ru/') {
       log(`    canonical: ${seo.canonical}`);
       log(`    og:title:   ${seo.ogTitle}`);
       log(`    og:desc:    ${seo.ogDescription?.slice(0, 80)}…`);
