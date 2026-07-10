@@ -10,7 +10,7 @@
 
 import { chromium } from "playwright";
 import { createServer } from "http";
-import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, copyFileSync } from "fs";
 import { resolve, dirname, extname } from "path";
 import { fileURLToPath } from "url";
 
@@ -64,7 +64,13 @@ const DIST = resolve(ROOT, "dist");
 // Публичные маршруты для индексации
 const ROUTES = [
   { path: "/",           name: "Главная" },
+  { path: "/auth",       name: "Вход / Регистрация" },
   { path: "/rankings",   name: "Рейтинг книг" },
+  { path: "/community",  name: "Сообщество" },
+  { path: "/history",    name: "История" },
+  { path: "/what-to-read", name: "Что почитать" },
+  { path: "/templates",  name: "Шаблоны" },
+  { path: "/forum",      name: "Форум" },
   { path: "/about",      name: "О проекте" },
   { path: "/pricing",    name: "Тарифы" },
   { path: "/contact",    name: "Контакты" },
@@ -580,6 +586,15 @@ async function prerender() {
   const distIndex = resolve(DIST, "index.html");
   if (!existsSync(distIndex) || !statSync(distIndex).isFile()) {
     throw new Error("dist/index.html not found. Run 'npm run build' first.");
+  }
+
+  // Сохраняем оригинальный SPA-index.html (Vite build) до того, как prerender
+  // заменит index.html на главную страницу. Нужен для nginx: если для SPA-роута
+  // нет prerender-файла — отдаём spa-index.html вместо index.html (главной).
+  const spaIndex = resolve(DIST, "spa-index.html");
+  if (!existsSync(spaIndex)) {
+    copyFileSync(distIndex, spaIndex);
+    log("💾 Saved original SPA index as spa-index.html");
   }
 
   log("🚀 Start static server…");
