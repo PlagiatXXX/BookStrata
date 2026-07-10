@@ -295,7 +295,7 @@ const PAGE_TIMEOUT_DYNAMIC = 30_000;
  */
 async function pageHasContent(page) {
   return page.evaluate(() => {
-    // Самый надёжный признак: canonical установлен на конкретную страницу
+    // ── 1. Проверка canonical (быстрый путь) ──
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) {
       const href = canonical.getAttribute('href') || '';
@@ -305,6 +305,13 @@ async function pageHasContent(page) {
       }
     }
 
+    // ── 2. Проверка title ──
+    const title = document.title || '';
+    if (title.includes('| BookStrata') && !title.includes('Загрузка') && !title.includes('Loading')) {
+      return true;
+    }
+
+    // ── 3. Проверка содержимого root ──
     const root = document.getElementById("root");
     if (!root) return false;
     const html = root.innerHTML;
@@ -411,6 +418,17 @@ async function processRoute(browser, route) {
     <a href="/rankings">Рейтинг книг</a>
   </nav>
 </article>`;
+      } else {
+        // Статические страницы (главная, контакты, privacy, etc.)
+        const pageName = route.name || "BookStrata";
+        fallbackTitle = `${pageName} | BookStrata`;
+        fallbackDesc = `BookStrata — интерактивный рейтинг книг. Составляйте визуальные подборки, находите что почитать и делитесь мнением.`;
+        canonicalPath = route.path;
+        fallbackBodyHtml = `
+<main>
+  <h1>${pageName}</h1>
+  <p>${fallbackDesc}</p>
+</main>`;
       }
 
       finalTitle = fallbackTitle;
@@ -435,7 +453,7 @@ async function processRoute(browser, route) {
         setMeta('meta[property="og:description"]', "content", d);
         setMeta('meta[name="twitter:description"]', "content", d);
         const canonical = document.querySelector('link[rel="canonical"]');
-        if (canonical) {
+        if (canonical && cp) {
           canonical.setAttribute("href", `https://bookstrata.ru${cp}`);
         }
 
