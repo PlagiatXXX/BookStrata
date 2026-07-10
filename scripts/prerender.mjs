@@ -324,8 +324,8 @@ async function pageHasContent(page) {
     if (html.includes("animate-pulse")) return false;
     // Если текст содержит "Загрузка..." — ещё не готово
     if (html.includes("Загрузка...") || html.includes("Загрузка")) return false;
-    // Если в корне меньше 2000 символов — вероятно, загрузка
-    if (html.length < 2000) return false;
+    // Если в корне достаточно контента — считаем загруженным
+    if (html.length >= 2000) return true;
 
     // ── 3. Проверка title (только если он не дефолтный) ──
     const title = document.title || '';
@@ -390,9 +390,18 @@ async function processRoute(browser, route) {
     }
     await page.route("**/sitemap.xml", (route) => route.abort());
 
-    // Блокируем эндпоинты, которые возвращают 404 в пререндере
-    await page.route("**/api/auth/refresh", (route) => route.abort());
-    await page.route("**/api/log", (route) => route.abort());
+    // Блокируем эндпоинты, которые возвращают 404 в пререндере.
+    // Используем fulfill вместо abort, чтобы не вызывать network error в React.
+    await page.route("**/api/auth/refresh", (route) => route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Unauthorized" }),
+    }));
+    await page.route("**/api/log", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "{}",
+    }));
 
     // Перехватываем консольные ошибки (не даём им упасть в reject)
     page.on("pageerror", (err) => {
