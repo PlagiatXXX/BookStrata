@@ -286,32 +286,36 @@ const PAGE_TIMEOUT = 10_000;
 const PAGE_TIMEOUT_DYNAMIC = 30_000;
 
 /**
+ * Дефолтные заголовки из SPA-заготовки (index.html) и SEOHead fallback.
+ * Пока title один из них — данные страницы ещё не загрузились.
+ */
+const DEFAULT_TITLES = [
+  'BookStrata — интерактивный рейтинг книг, твоё книжное пространство | BookStrata',
+  'Интерактивный рейтинг книг — топ лучших книг и что почитать | BookStrata',
+];
+
+/**
  * Проверяет, загрузился ли реальный контент на странице.
  *
  * Приоритеты (по надёжности):
  * 1. canonical-ссылка содержит специфичный путь (не корень сайта) —
  *    значит SEOHead отработал с данными из API
  * 2. Fallback: в #root > 2000 символов, нет скелетонов и "Загрузка..."
+ * 3. title не равен дефолтному — значит React обновил его через SEOHead
  */
 async function pageHasContent(page) {
-  return page.evaluate(() => {
-    // ── 1. Проверка canonical (быстрый путь) ──
+  return page.evaluate((defaultTitles) => {
+    // ── 1. Проверка canonical (самый надёжный для не-корневых страниц) ──
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) {
       const href = canonical.getAttribute('href') || '';
-      // Если canonical не просто корень сайта — значит данные загружены
+      // Если canonical не просто корень сайта — значит SEOHead с url отработал
       if (href !== 'https://bookstrata.ru' && href !== 'https://bookstrata.ru/') {
         return true;
       }
     }
 
-    // ── 2. Проверка title ──
-    const title = document.title || '';
-    if (title.includes('| BookStrata') && !title.includes('Загрузка') && !title.includes('Loading')) {
-      return true;
-    }
-
-    // ── 3. Проверка содержимого root ──
+    // ── 2. Проверка содержимого root ──
     const root = document.getElementById("root");
     if (!root) return false;
     const html = root.innerHTML;
@@ -323,8 +327,14 @@ async function pageHasContent(page) {
     // Если в корне меньше 2000 символов — вероятно, загрузка
     if (html.length < 2000) return false;
 
-    return true;
-  });
+    // ── 3. Проверка title (только если он не дефолтный) ──
+    const title = document.title || '';
+    if (!defaultTitles.includes(title) && title.includes('| BookStrata')) {
+      return true;
+    }
+
+    return false;
+  }, DEFAULT_TITLES);
 }
 
 /**
@@ -336,6 +346,21 @@ async function waitForContent(page, timeout = PAGE_TIMEOUT) {
   while (Date.now() < deadline) {
     if (await pageHasContent(page)) return true;
     await page.waitForTimeout(500);
+  }
+  return false;
+}
+
+/**
+ * Ждёт, пока document.title изменится с дефолтного на кастомный (от SEOHead).
+ * Это нужно, потому что SEOHead устанавливает title через useEffect,
+ * который отрабатывает после того, как Helmet обновит canonical/head.
+ */
+async function waitForTitle(page, timeout = 5000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const title = await page.title();
+    if (!DEFAULT_TITLES.includes(title)) return true;
+    await page.waitForTimeout(200);
   }
   return false;
 }
@@ -365,6 +390,10 @@ async function processRoute(browser, route) {
     }
     await page.route("**/sitemap.xml", (route) => route.abort());
 
+    // Блокируем эндпоинты, которые возвращают 404 в пререндере
+    await page.route("**/api/auth/refresh", (route) => route.abort());
+    await page.route("**/api/log", (route) => route.abort());
+
     // Перехватываем консольные ошибки (не даём им упасть в reject)
     page.on("pageerror", (err) => {
       log(`  ⚠️  JS error on ${route.path}: ${err.message}`);
@@ -376,6 +405,14 @@ async function processRoute(browser, route) {
     // Для динамических страниц (тир-листы, коллекции) даём больше времени
     const contentTimeout = (isTierList || isCollection) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
     const contentLoaded = await waitForContent(page, contentTimeout);
+
+    // ── Дополнительно ждём обновления title (useEffect SEOHead) ──
+    // После того как canonical/og-теги обновились (Helmet), нужно дать время
+    // на установку document.title через useEffect в SEOHead.
+    // Для корневой страницы пропускаем — её title совпадает с дефолтным.
+    if (contentLoaded && route.path !== '/') {
+      await waitForTitle(page, 5000);
+    }
 
     // ── Fallback: если контент не загрузился ──
     let finalTitle = await page.title();
