@@ -111,10 +111,56 @@ else
   warn "Сборка пропущена (--skip-build)"
 fi
 
-# ——— 3. Prerender для SEO ———
-# Запускается на dist.tmp, но prerender-скрипт жёстко завязан на dist/.
-# Поэтому: сохраняем dist → dist.saved, кладём dist.tmp → dist,
-#          prerender, возвращаем dist → dist.tmp, восстанавливаем dist.
+# ——— 4. Пересобрать бэкенд ———
+info "Сборка Docker-образа бэкенда..."
+cd "$PROJECT_DIR/backend"
+docker compose --profile full build app
+ok "Бэкенд собран"
+
+# ——— 5. Чистим build cache ———
+info "Чистка Docker build cache..."
+docker builder prune -af
+ok "Build cache очищен"
+
+# ——— 6. Перезапускаем контейнеры (бэкенд + nginx) ———
+info "Перезапуск бэкенда и nginx (postgres/redis не трогаем)..."
+# nginx пересоздаём принудительно: compose кэширует конфиг контейнера, и при
+# изменении volumes (как было с dist.old) старый Created-контейнер может
+# застрять с битыми mount'ами. --force-recreate гарантирует актуальный конфиг.
+docker compose --profile full up -d app
+docker compose --profile full up -d --force-recreate nginx
+ok "Контейнеры запущены"
+
+# ——— 7. Атомарный swap dist ———
+# mv на одной файловой системе — атомарная операция
+if [ "$SKIP_BUILD" = false ]; then
+  info "Атомарный swap dist..."
+  # Трёхходовой атомарный swap для сохранения fallback-версии:
+  #   1. dist.old  → удаляем (там сборка с N-2 деплоя, устарела)
+  #   2. dist      → dist.old (предыдущая сборка → fallback для старых чанков)
+  #   3. dist.tmp  → dist    (новая сборка → в продакшен)
+  rm -rf "$PROJECT_DIR/dist.old"
+  # Если dist отсутствует — не падаем, просто пропускаем сохранение fallback-версии.
+  if [ -d "$PROJECT_DIR/dist" ]; then
+    mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.old"
+  fi
+  mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist"
+  ok "dist обновлён (старая версия сохранена в dist.old)"
+fi
+
+# ——— 8. Healthcheck ———
+if ! check_health; then
+  err "Деплой завершился, но бэкенд не здоров!"
+  err "Откат: bash scripts/deploy-server.sh --rollback"
+  exit 1
+fi
+
+# ——— 9. Prerender для SEO ———
+# Запускается ПОСЛЕ обновления бэкенда, чтобы API возвращал актуальные данные.
+# Prerender-скрипт жёстко завязан на dist/, поэтому:
+#   сохраняем dist → dist.saved,
+#   prerender,
+#   возвращаем dist → dist.saved.
 if [ "$SKIP_BUILD" = false ]; then
   info "Prerender публичных маршрутов..."
 
@@ -123,13 +169,7 @@ if [ "$SKIP_BUILD" = false ]; then
   export API_URL="http://localhost:8080"
   ok "API_URL=http://localhost:8080 (prerender напрямую к бэкенду)"
 
-  # Проверяем доступность бэкенда (предупреждение, не блокер)
-  if ! curl -sf --max-time 3 'http://localhost:8080/health' >/dev/null 2>&1; then
-    warn "Бэкенд (localhost:8080/health) не отвечает — prerender будет без данных"
-  fi
-
   mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.saved" 2>/dev/null || true
-  mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist"
 
   # Prerender опциональный — если нет chromium, graceful fallback
   if node "$PROJECT_DIR/scripts/prerender.mjs"; then
@@ -140,56 +180,12 @@ if [ "$SKIP_BUILD" = false ]; then
 
   mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.tmp"
   [ -d "$PROJECT_DIR/dist.saved" ] && mv "$PROJECT_DIR/dist.saved" "$PROJECT_DIR/dist"
-fi
-
-# ——— 4. Атомарный swap dist ———
-# mv на одной файловой системе — атомарная операция
-if [ "$SKIP_BUILD" = false ]; then
-  info "Атомарный swap dist..."
-  # Трёхходовой атомарный swap для сохранения fallback-версии:
-  #   1. dist.old  → удаляем (там сборка с N-2 деплоя, устарела)
-  #   2. dist      → dist.old (предыдущая сборка → fallback для старых чанков)
-  #   3. dist.tmp  → dist    (новая сборка → в продакшен)
-  rm -rf "$PROJECT_DIR/dist.old"
-  # Если dist отсутствует (например, после шага 3, когда нечего было сохранять) —
-  # не падаем, просто пропускаем сохранение fallback-версии.
-  if [ -d "$PROJECT_DIR/dist" ]; then
-    mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.old"
-  fi
   mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist"
-  ok "dist обновлён (старая версия сохранена в dist.old)"
 fi
-
-# ——— 5. Пересобрать бэкенд ———
-info "Сборка Docker-образа бэкенда..."
-cd "$PROJECT_DIR/backend"
-docker compose --profile full build app
-ok "Бэкенд собран"
-
-# ——— 6. Чистим build cache ———
-info "Чистка Docker build cache..."
-docker builder prune -af
-ok "Build cache очищен"
-
-# ——— 7. Перезапускаем контейнеры ———
-info "Перезапуск бэкенда и nginx (postgres/redis не трогаем)..."
-# nginx пересоздаём принудительно: compose кэширует конфиг контейнера, и при
-# изменении volumes (как было с dist.old) старый Created-контейнер может
-# застрять с битыми mount'ами. --force-recreate гарантирует актуальный конфиг.
-docker compose --profile full up -d app
-docker compose --profile full up -d --force-recreate nginx
-ok "Контейнеры запущены"
 
 # Старая версия фронта (dist.old) не удаляется — она нужна nginx как fallback
 # для старых JS-чанков, пока пользователи не обновят страницу.
 # Она будет перезаписана при следующем деплое.
-
-# ——— 8. Healthcheck ———
-if ! check_health; then
-  err "Деплой завершился, но бэкенд не здоров!"
-  err "Откат: bash scripts/deploy-server.sh --rollback"
-  exit 1
-fi
 
 echo ""
 ok "Деплой завершён"
