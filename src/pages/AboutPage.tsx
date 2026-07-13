@@ -119,7 +119,7 @@ export default function AboutPage() {
         title="О проекте"
         description="BookStrata — создавайте тир лист книг онлайн, ведите визуальный книжный рейтинг, участвуйте в баттлах и находите книги по вкусу. Узнайте больше о проекте."
         url="/about"
-        breadcrumbs={[{ name: "О проекте", url: "/about" }]}
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "О проекте", url: "/about" }]}
       />
 
       {/* AboutPage JSON-LD */}

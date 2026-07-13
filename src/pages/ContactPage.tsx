@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 export default function ContactPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
-      <SEOHead title="Контакты BookStrata — связь с создателями тир лист книг" description="Свяжитесь с командой BookStrata по вопросам сотрудничества, предложениям, рекламе или удалению контента. Создавайте тир лист книг и будьте на связи." url="/contact" breadcrumbs={[{ name: "Контакты", url: "/contact" }]} />
+      <SEOHead title="Контакты BookStrata — связь с создателями тир лист книг" description="Свяжитесь с командой BookStrata по вопросам сотрудничества, предложениям, рекламе или удалению контента. Создавайте тир лист книг и будьте на связи." url="/contact" breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Контакты", url: "/contact" }]} />
       <div className="w-full max-w-3xl">
         <Breadcrumbs items={[{ label: "Контакты" }]} theme="light" />
       </div>

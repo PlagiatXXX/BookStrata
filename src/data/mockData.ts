@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { Book, Tier } from "@/types";
 import type { CreateTemplateData } from "@/types/templates";
+import { CATEGORIES as BASE_CATEGORIES } from "./categories";
 
 export type TemplateItem = {
   id: number;
@@ -76,28 +77,32 @@ export const COLLECTION_ACCENTS = [
   '#eab308', // жёлтый
 ] as const;
 
-export const CATEGORIES = [
-  { id: "all", label: "Всё", icon: TrendingUp },
-  { id: "fantasy", label: "Фэнтези", icon: BookOpen },
-  { id: "sci-fi", label: "Sci-Fi", icon: Rocket },
-  { id: "classics", label: "Классика", icon: Landmark },
-  { id: "non-fiction", label: "Нон-фикшн", icon: History },
-  { id: "fiction", label: "Художественная", icon: BookIcon },
-  { id: "young-adult", label: "Young Adult", icon: BookIcon },
-  { id: "historical", label: "Исторические", icon: Landmark },
-  { id: "horror", label: "Хоррор и мистика", icon: BookOpen },
-  { id: "cyberpunk", label: "Киберпанк", icon: Rocket },
-  { id: "romance", label: "Любовные романы", icon: BookIcon },
-  { id: "slavic-fantasy", label: "Славянское фэнтези", icon: BookOpen },
-  { id: "adventure", label: "Приключения", icon: BookIcon },
-  { id: "thriller", label: "Триллеры и детективы", icon: SearchCheck },
-  { id: "dystopia", label: "Антиутопии", icon: Rocket },
-  { id: "japanese", label: "Японская литература", icon: BookIcon },
-  { id: "russian-classics", label: "Русская классика", icon: Landmark },
-  { id: "foreign-prose", label: "Зарубежная проза", icon: BookIcon },
-  { id: "military", label: "Военная проза", icon: BookIcon },
-  { id: "myths", label: "Сказки и мифы", icon: Landmark },
-];
+const CATEGORY_ICONS: Record<string, typeof TrendingUp> = {
+  fantasy: BookOpen,
+  "sci-fi": Rocket,
+  classics: Landmark,
+  "non-fiction": History,
+  fiction: BookIcon,
+  "young-adult": BookIcon,
+  historical: Landmark,
+  horror: BookOpen,
+  cyberpunk: Rocket,
+  romance: BookIcon,
+  "slavic-fantasy": BookOpen,
+  adventure: BookIcon,
+  thriller: SearchCheck,
+  dystopia: Rocket,
+  japanese: BookIcon,
+  "russian-classics": Landmark,
+  "foreign-prose": BookIcon,
+  military: BookIcon,
+  myths: Landmark,
+};
+
+export const CATEGORIES = BASE_CATEGORIES.map((cat) => ({
+  ...cat,
+  icon: cat.id === "all" ? TrendingUp : (CATEGORY_ICONS[cat.id] || BookOpen),
+}));
 
 export const TEMPLATES: TemplateItem[] = [
   {

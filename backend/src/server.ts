@@ -35,6 +35,7 @@ import { subscriptionsRoutes } from "../src/modules/subscriptions/subscriptions.
 import { aiLibrarianRoutes } from "../src/modules/ai-librarian/ai-librarian.route.js";
 import { proxyRoutes } from "../src/modules/proxy/proxy.route.js";
 import { collectionRoutes } from "../src/modules/collections/collection.route.js";
+import { topicRoutes } from "../src/modules/collections/topic.route.js";
 import { moderationRoutes } from "../src/modules/moderation/moderation.route.js";
 import templatesPlugin from "../src/modules/templates/templates.plugin.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
@@ -470,6 +471,7 @@ fastify.register(moderationRoutes, { prefix: "/api/moderation" });
 
 fastify.register(proxyRoutes, { prefix: "/api/proxy" });
 fastify.register(collectionRoutes, { prefix: "/api/collections" });
+fastify.register(topicRoutes, { prefix: "/api/topics" });
 
 // Admin: очистка load test пользователей
 import { adminCleanupRoutes } from "../src/modules/admin/admin-cleanup.route.js";

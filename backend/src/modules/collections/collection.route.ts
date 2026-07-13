@@ -12,14 +12,32 @@ import {
 } from "./collection.schema.js";
 
 export async function collectionRoutes(fastify: FastifyInstance) {
+  // GET /tags — получить все уникальные теги из опубликованных коллекций
+  fastify.get("/tags", async (_request, reply) => {
+    const tags = await service.getAllTags();
+    return reply.code(200).send({ data: tags });
+  });
+
+  // GET /by-tag/:tag — получить коллекции по тегу
+  fastify.get("/by-tag/:tag", async (request, reply) => {
+    const { tag } = request.params as { tag: string };
+    const result = await service.getCollections({
+      tag: tag.toLowerCase(),
+      isPublished: true,
+      pageSize: 100,
+    });
+    return reply.code(200).send(result);
+  });
+
   // GET / — получить все опубликованные коллекции
   fastify.get("/", async (request, reply) => {
-    const query = request.query as { type?: string; categoryId?: string; isFeatured?: string; page?: string; pageSize?: string };
+    const query = request.query as { type?: string; categoryId?: string; isFeatured?: string; tag?: string; page?: string; pageSize?: string };
     const result = await service.getCollections({
       type: query.type,
       categoryId: query.categoryId,
       isPublished: true,
       isFeatured: query.isFeatured === "true" ? true : query.isFeatured === "false" ? false : undefined,
+      tag: query.tag,
       page: query.page ? Number(query.page) : 1,
       pageSize: query.pageSize ? Number(query.pageSize) : 50,
     });

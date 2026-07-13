@@ -118,15 +118,14 @@ fi
 if [ "$SKIP_BUILD" = false ]; then
   info "Prerender публичных маршрутов..."
 
-  # API_URL через nginx — чтобы prerender получал реальные данные тир-листов
-  # Используем https://localhost (nginx самоподписанный сертификат)
-  export API_URL="https://localhost"
-  export NODE_TLS_REJECT_UNAUTHORIZED=0
-  ok "API_URL=https://localhost (prerender через nginx)"
+  # API_URL напрямую к бэкенду (минуя nginx) — чтобы fetch в Node.js
+  # не падал на самоподписанном сертификате. Порт 8080 — внутренний порт app-контейнера.
+  export API_URL="http://localhost:8080"
+  ok "API_URL=http://localhost:8080 (prerender напрямую к бэкенду)"
 
   # Проверяем доступность бэкенда (предупреждение, не блокер)
-  if ! curl -sfk --max-time 3 'https://localhost/health' >/dev/null 2>&1; then
-    warn "Бэкенд (localhost/health) не отвечает — prerender будет без данных тир-листов"
+  if ! curl -sf --max-time 3 'http://localhost:8080/health' >/dev/null 2>&1; then
+    warn "Бэкенд (localhost:8080/health) не отвечает — prerender будет без данных"
   fi
 
   mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.saved" 2>/dev/null || true

@@ -98,26 +98,40 @@ function proxyApiRequest(req, res) {
   req.on("data", (chunk) => bodyChunks.push(chunk));
   req.on("end", async () => {
     try {
-      const apiUrl = `${BACKEND_URL}${req.url}`;
       const body = bodyChunks.length > 0 ? Buffer.concat(bodyChunks) : undefined;
-      const apiRes = await fetch(apiUrl, {
-        method: req.method,
-        headers: {
-          "content-type": req.headers["content-type"] || "",
-          accept: req.headers["accept"] || "application/json",
-          "user-agent": req.headers["user-agent"] || "prerender",
-        },
-        body,
-      });
-      const responseHeaders = {};
-      for (const [key, value] of apiRes.headers.entries()) {
-        if (!["content-encoding", "transfer-encoding", "content-length", "connection"].includes(key)) {
-          responseHeaders[key] = value;
+      const headers = {
+        "content-type": req.headers["content-type"] || "",
+        accept: req.headers["accept"] || "application/json",
+        "user-agent": req.headers["user-agent"] || "prerender",
+      };
+
+      // Пытаемся сначала https, при ошибке — http (fallback для самоподписанных сертификатов)
+      const tryFetch = async (url) => {
+        const apiRes = await fetch(url, { method: req.method, headers, body });
+        const responseHeaders = {};
+        for (const [key, value] of apiRes.headers.entries()) {
+          if (!["content-encoding", "transfer-encoding", "content-length", "connection"].includes(key)) {
+            responseHeaders[key] = value;
+          }
         }
+        const text = await apiRes.text();
+        log(`  Proxy: ${req.method} ${req.url} → ${apiRes.status} (${(apiRes.headers.get("content-type") || "no type").split(";")[0]}, ${text.length}B)`);
+        send(apiRes.status, responseHeaders, text);
+      };
+
+      const apiUrl = `${BACKEND_URL}${req.url}`;
+      // Если BACKEND_URL начинается с https://localhost — сразу пробуем http
+      if (BACKEND_URL.startsWith('https://localhost')) {
+        const httpUrl = apiUrl.replace('https://', 'http://');
+        try {
+          await tryFetch(httpUrl);
+        } catch {
+          // если http не сработал — пробуем https (на случай если он всё же настроен)
+          await tryFetch(apiUrl);
+        }
+      } else {
+        await tryFetch(apiUrl);
       }
-      const text = await apiRes.text();
-      log(`  Proxy: ${req.method} ${req.url} → ${apiRes.status} (${(apiRes.headers.get("content-type") || "no type").split(";")[0]}, ${text.length}B)`);
-      send(apiRes.status, responseHeaders, text);
     } catch (err) {
       log(`⚠️  Proxy error for ${req.url}: ${err?.message || err}`);
       const fallback = resolve(DIST, "index.html");
@@ -166,6 +180,27 @@ async function addPublicTierListRoutes() {
     log(`⚠️  Cannot reach backend (${BACKEND_URL}): ${err.message}`);
     log("⚠️  Tier-list prerender skipped (will work on server during deploy)");
   }
+}
+
+/**
+ * Категории для страниц /topics/.
+ * Читается из src/data/category-ids.json — единый источник правды.
+ */
+const CATEGORY_IDS_PATH = resolve(__dirname, "..", "src", "data", "category-ids.json");
+const TOPIC_CATEGORIES = JSON.parse(readFileSync(CATEGORY_IDS_PATH, "utf-8"));
+
+/**
+ * Добавляет страницы категорий в ROUTES для prerender'а.
+ * Бэкенд не требуется — список статический.
+ */
+async function addTopicRoutes() {
+  log(`📡 Adding topic pages for ${TOPIC_CATEGORIES.length} categories…`);
+  for (const cat of TOPIC_CATEGORIES) {
+    const path = `/topics/${cat}`;
+    ROUTES.push({ path, name: `Категория: ${cat}` });
+    log(`  → ${path} (${cat})`);
+  }
+  log(`✅ Added ${TOPIC_CATEGORIES.length} topic pages to prerender`);
 }
 
 /**
@@ -668,9 +703,10 @@ async function prerender() {
       return;
     }
 
-    // Получаем публичные тир-листы и коллекции для prerender'а (если бэкенд доступен)
+    // Получаем публичные тир-листы, коллекции и темы для prerender'а (если бэкенд доступен)
     await addPublicTierListRoutes();
     await addPublicCollectionRoutes();
+    await addTopicRoutes();
 
     // Параллельная обработка страниц (CONCURRENCY за раз)
     for (let i = 0; i < ROUTES.length; i += CONCURRENCY) {

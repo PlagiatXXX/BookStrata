@@ -4,7 +4,7 @@ import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-zinc-50 py-16 px-4">
-      <SEOHead title="Условия использования BookStrata — правила сервиса тир лист книг" description="Ознакомьтесь с условиями использования BookStrata. Правила регистрации, размещения контента, ответственности и конфиденциальности при создании тир лист книг онлайн." url="/terms" breadcrumbs={[{ name: "Условия использования", url: "/terms" }]} />
+      <SEOHead title="Условия использования BookStrata — правила сервиса тир лист книг" description="Ознакомьтесь с условиями использования BookStrata. Правила регистрации, размещения контента, ответственности и конфиденциальности при создании тир лист книг онлайн." url="/terms" breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Условия использования", url: "/terms" }]} />
       <div className="max-w-3xl mx-auto">
         <Breadcrumbs items={[{ label: "Условия использования" }]} theme="light" />
 

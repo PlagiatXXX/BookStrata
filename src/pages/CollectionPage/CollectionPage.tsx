@@ -162,7 +162,7 @@ return DOMPurify.sanitize(collection.content);
         description={collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
         image={proxyImageUrl(collection.coverImageUrl) || undefined}
         url={`/collections/${slug}`}
-        breadcrumbs={[{ name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${slug}` }]}
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${slug}` }]}
       />
 
       {/* Book JSON-LD для каждой книги в коллекции */}

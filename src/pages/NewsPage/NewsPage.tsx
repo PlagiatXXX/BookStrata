@@ -84,7 +84,7 @@ export default function NewsPage() {
         type="article"
         publishedTime={article.publishedAt}
         author={article.authorName || undefined}
-        breadcrumbs={[{ name: "Новости", url: "/community" }, { name: article.title, url: `/news/${id}` }]}
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Новости", url: "/community" }, { name: article.title, url: `/news/${id}` }]}
       />
       <DashboardLayout
         showTemplatesNav={false}

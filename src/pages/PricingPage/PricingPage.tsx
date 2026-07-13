@@ -157,7 +157,7 @@ export default function PricingPage() {
         title="Поддержать проект — BookStrata"
         description="BookStrata полностью бесплатен. Поддержите проект донатом, если он вам полезен. Все функции уже доступны без ограничений."
         url="/pricing"
-        breadcrumbs={[{ name: "Поддержать", url: "/pricing" }]}
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Поддержать", url: "/pricing" }]}
       />
       <div className="pricing-page__container">
         <div className="pricing-page__header">

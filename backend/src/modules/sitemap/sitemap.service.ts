@@ -80,8 +80,32 @@ export async function generateSitemap(): Promise<string> {
     ),
   );
 
+  // Уникальные категории из коллекций для /topics/
+  let topicCategoryIds: string[] = [];
+  try {
+    const catRecords = await prisma.collection.findMany({
+      where: { isPublished: true, categoryId: { not: null } },
+      select: { categoryId: true },
+      distinct: ["categoryId"],
+    });
+    topicCategoryIds = catRecords
+      .map((c) => c.categoryId)
+      .filter((id): id is string => !!id)
+      .sort();
+  } catch {
+    // таблица collections ещё не создана
+  }
+
+  const topicUrls = topicCategoryIds.map((catId) =>
+    xmlTag(
+      `${SITE_URL}/topics/${encodeURIComponent(catId)}`,
+      "0.6",
+      "weekly",
+    ),
+  );
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls].join("\n")}
+${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...topicUrls].join("\n")}
 </urlset>`;
 }

@@ -552,6 +552,7 @@ const TierListEditorContent = () => {
           type="article"
           noindex={apiData ? !isPublic : undefined}
           breadcrumbs={[
+            { name: "Главная", url: "/" },
             { name: "Библиотека", url: "/templates" },
             { name: apiData?.title || "Тир-лист", url: `/tier-lists/${pageUrl}` },
           ]}

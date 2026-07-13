@@ -53,6 +53,7 @@ export async function getCollections(options?: {
   categoryId?: string;
   isPublished?: boolean;
   isFeatured?: boolean;
+  tag?: string;
   page?: number;
   pageSize?: number;
 }) {
@@ -65,6 +66,7 @@ export async function getCollections(options?: {
   if (options?.categoryId) where.categoryId = options.categoryId;
   if (options?.isPublished !== undefined) where.isPublished = options.isPublished;
   if (options?.isFeatured !== undefined) where.isFeatured = options.isFeatured;
+  if (options?.tag) where.tags = { has: options.tag };
 
   const [data, total] = await Promise.all([
     prisma.collection.findMany({
@@ -179,6 +181,44 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
 
 export async function getCollectionBySlugAdmin(slug: string) {
   return prisma.collection.findUnique({ where: { slug } });
+}
+
+/**
+ * Получить список категорий с количеством опубликованных коллекций.
+ */
+export async function getCategoryStats(): Promise<{ categoryId: string; count: number }[]> {
+  const result = await prisma.collection.groupBy({
+    by: ["categoryId"],
+    where: {
+      isPublished: true,
+      categoryId: { not: null },
+    },
+    _count: { categoryId: true },
+    orderBy: { _count: { categoryId: "desc" } },
+  });
+  return result
+    .filter((r) => r.categoryId)
+    .map((r) => ({
+      categoryId: r.categoryId!,
+      count: r._count.categoryId,
+    }));
+}
+
+/**
+ * Получить все уникальные теги из опубликованных коллекций.
+ */
+export async function getAllTags(): Promise<string[]> {
+  const collections = await prisma.collection.findMany({
+    where: { isPublished: true },
+    select: { tags: true },
+  });
+  const tagSet = new Set<string>();
+  for (const c of collections) {
+    for (const tag of c.tags) {
+      if (tag.trim()) tagSet.add(tag.trim().toLowerCase());
+    }
+  }
+  return Array.from(tagSet).sort();
 }
 
 export async function deleteCollection(id: number) {
