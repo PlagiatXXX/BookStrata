@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import './AiLibrarianCard.css'
 
 interface AiLibrarianCardProps {
@@ -8,12 +8,34 @@ interface AiLibrarianCardProps {
 
 export function AiLibrarianCard({ isGuest, onAskClick }: AiLibrarianCardProps) {
   const [isPressed, setIsPressed] = useState(false)
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearPressTimer = useCallback(() => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current)
+      pressTimer.current = null
+    }
+  }, [])
+
+  const handlePressStart = useCallback(() => {
+    clearPressTimer()
+    pressTimer.current = setTimeout(() => setIsPressed(true), 400)
+  }, [clearPressTimer])
+
+  const handlePressEnd = useCallback(() => {
+    clearPressTimer()
+    setIsPressed(false)
+  }, [clearPressTimer])
 
   const handleMouseDown = useCallback(() => setIsPressed(true), [])
   const handleMouseUp = useCallback(() => setIsPressed(false), [])
   const handleMouseLeave = useCallback(() => {
     if (isPressed) setIsPressed(false)
   }, [isPressed])
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+  }, [])
 
   return (
     <div
@@ -36,6 +58,10 @@ export function AiLibrarianCard({ isGuest, onAskClick }: AiLibrarianCardProps) {
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handlePressStart}
+          onTouchEnd={handlePressEnd}
+          onTouchCancel={handlePressEnd}
+          onContextMenu={handleContextMenu}
           draggable={false}
         />
       </div>

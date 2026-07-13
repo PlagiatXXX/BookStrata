@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
 import { CATEGORIES } from "@/data/mockData";
+import { CATEGORY_SEO } from "@/data/category-seo";
 import type { CollectionItem } from "@/lib/collectionsApi";
 
 interface TopicCollectionData {
@@ -37,9 +38,14 @@ export default function TopicPage() {
     retry: 1,
   });
 
+  // SEO-текст из статического файла (приоритет) или динамический fallback
+  const mainSeoText = slug && CATEGORY_SEO[slug]
+    ? CATEGORY_SEO[slug]
+    : `Подборки книг в жанре «${categoryLabel}» — рейтинг читателей, отзывы и рекомендации на BookStrata.`;
+
   const description = data?.data?.length
-    ? `Подборки книг в жанре «${categoryLabel}» — ${data.data.slice(0, 3).map((c) => c.title).join(", ")} и другие. Рейтинг книг, отзывы, рекомендации. Составьте свой тир-лист на BookStrata.`
-    : `Подборки книг в жанре «${categoryLabel}» — рейтинг читателей на BookStrata`;
+    ? `Подборки книг в жанре «${categoryLabel}» — ${data.data.slice(0, 3).map((c) => c.title).join(", ")} и другие. ${mainSeoText}`
+    : mainSeoText;
 
   // Если всего одна коллекция — показываем её контент
   const singleCollection = data?.data?.length === 1 ? data.data[0] : null;
@@ -129,9 +135,8 @@ export default function TopicPage() {
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-(--ink-0) mb-3">
               {categoryLabel}
             </h1>
-            <p className="text-(--ink-2) text-sm leading-relaxed max-w-2xl">
-              Подборки книг в жанре {categoryLabel.toLowerCase()} — рейтинг читателей, отзывы и рекомендации.
-              Выберите подборку, отмечайте прочитанные книги и составляйте свой топ.
+            <p className="text-(--ink-1) text-base leading-relaxed max-w-3xl">
+              {mainSeoText}
             </p>
           </div>
 
