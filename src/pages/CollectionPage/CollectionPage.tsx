@@ -15,6 +15,7 @@ import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectio
 import type { CollectionItem } from "@/lib/collectionsApi";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import { COLLECTION_SEO } from "@/data/collection-seo";
 import "./CollectionPage.css";
 
 export default function CollectionPage() {
@@ -159,7 +160,7 @@ return DOMPurify.sanitize(collection.content);
     <>
       <SEOHead
         title={collection.title}
-        description={collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
+        description={COLLECTION_SEO[slug || ''] || collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
         image={proxyImageUrl(collection.coverImageUrl) || undefined}
         url={`/collections/${slug}`}
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${slug}` }]}
