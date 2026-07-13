@@ -67,7 +67,7 @@ export default function TopicPage() {
     return (
       <DashboardLayout showSearch={false}>
         <SEOHead
-          title={`Жанр «${categoryLabel}» — подборок пока нет | BookStrata`}
+          title={`Жанр «${categoryLabel}» — подборок пока нет`}
           description={`В жанре «${categoryLabel}» пока нет подборок. Посмотрите другие коллекции на BookStrata.`}
           url={`/topics/${slug}`}
           noindex
@@ -104,7 +104,7 @@ export default function TopicPage() {
   return (
     <>
       <SEOHead
-        title={`${categoryLabel} — подборки книг и рейтинг | BookStrata`}
+        title={`${categoryLabel} — подборки книг и рейтинг`}
         description={description}
         url={`/topics/${slug}`}
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: categoryLabel, url: `/topics/${slug}` }]}
