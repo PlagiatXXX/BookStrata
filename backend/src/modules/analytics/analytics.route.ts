@@ -118,8 +118,9 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
     {
       preHandler: [authMiddleware, requireRole('admin')],
     },
-    async (_request, reply) => {
-      const result = await analytics.getFunnel()
+    async (request, reply) => {
+      const { days } = request.query as { days?: string }
+      const result = await analytics.getFunnel(days ? Number(days) : 30)
       return reply.code(200).send({ data: result })
     },
   )

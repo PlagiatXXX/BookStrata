@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
 import { api } from "@/lib/api-client";
 import { getAuthToken } from "@/lib/authApi";
+import { apiTrackEvent } from "@/lib/analyticsApi";
 
 /**
  * Отправляет heartbeat каждые 60 секунд, пока пользователь авторизован
- * и страница видима. Используется для отслеживания lastActivityAt
- * и накопления totalActiveMinutes.
+ * и страница видима. Используется для отслеживания lastActivityAt,
+ * накопления totalActiveMinutes и трекинга сессий в аналитике.
  */
 export function useHeartbeat() {
   const token = getAuthToken();
@@ -18,6 +19,7 @@ export function useHeartbeat() {
       api.post("/users/heartbeat").catch(() => {
         // Ошибка не критична — heartbeat опциональный
       });
+      apiTrackEvent("session_heartbeat");
     };
 
     // Первый heartbeat сразу после монтирования

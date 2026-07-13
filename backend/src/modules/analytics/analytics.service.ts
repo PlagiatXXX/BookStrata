@@ -275,11 +275,12 @@ export function createAnalyticsService(prisma: PrismaClient) {
   }
 
   // Воронка: регистрация → создание → публикация → шейринг
-  const getFunnel = async (): Promise<FunnelResult> => {
-    // Пользователи, совершившие каждое действие за всё время
+  const getFunnel = async (days: number = 30): Promise<FunnelResult> => {
+    const since = days ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : new Date(0)
+
     const countUsersWithEvent = async (event: string): Promise<number> => {
       const rows = await prisma.analyticsEvent.findMany({
-        where: { event, userId: { not: null } },
+        where: { event, userId: { not: null }, createdAt: { gte: since } },
         select: { userId: true },
         distinct: ['userId'],
       })
@@ -287,7 +288,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
     }
 
     const stages: FunnelStage[] = [
-      { name: 'Регистрация', count: await countUsersWithEvent('signup') },
+      { name: 'Регистрация', count: await countUsersWithEvent('user_register') },
       { name: 'Создание тир-листа', count: await countUsersWithEvent('tierlist_create') },
       { name: 'Публикация', count: await countUsersWithEvent('tierlist_publish') },
       { name: 'Поделились', count: await countUsersWithEvent('share_clicked') },
@@ -309,7 +310,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
 
       const registrations = await prisma.analyticsEvent.findMany({
         where: {
-          event: 'signup',
+          event: 'user_register',
           userId: { not: null },
           createdAt: { gte: registeredBefore, lt: since },
         },

@@ -84,8 +84,8 @@ export function apiGetAnalyticsMetrics() {
   return apiClient.get<MetricsResult>('/admin/analytics/metrics')
 }
 
-export function apiGetAnalyticsFunnel() {
-  return apiClient.get<FunnelResult>('/admin/analytics/funnel')
+export function apiGetAnalyticsFunnel(days: number = 30) {
+  return apiClient.get<FunnelResult>('/admin/analytics/funnel', { days })
 }
 
 export function apiGetAnalyticsRetention() {

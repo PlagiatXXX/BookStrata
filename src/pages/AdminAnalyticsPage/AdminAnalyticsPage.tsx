@@ -6,7 +6,7 @@ import { apiGetAnalytics, apiGetAnalyticsSummary, apiGetAnalyticsMetrics, apiGet
 
 const EVENT_LABELS: Record<string, string> = {
   page_view: 'Просмотр страницы',
-  signup: 'Регистрация',
+  user_register: 'Регистрация',
   login: 'Вход в систему',
   logout: 'Выход',
   session_heartbeat: 'Активность на сайте',
@@ -30,7 +30,7 @@ const EVENT_LABELS: Record<string, string> = {
 
 const EVENT_COLORS: Record<string, string> = {
   page_view: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  signup: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  user_register: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
   login: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
   session_heartbeat: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
   tierlist_create: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
@@ -74,8 +74,8 @@ export default function AdminAnalyticsPage() {
   })
 
   const { data: funnel } = useQuery({
-    queryKey: ['admin-analytics-funnel'],
-    queryFn: apiGetAnalyticsFunnel,
+    queryKey: ['admin-analytics-funnel', 30],
+    queryFn: () => apiGetAnalyticsFunnel(30),
   })
 
   const { data: retention } = useQuery({
