@@ -538,6 +538,7 @@ const TierListEditorContent = () => {
   };
 
   const pageUrl = apiData?.slug || tierListId;
+  const shareUrl = `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}/tier-lists/${pageUrl}`;
 
   return (
     <>
@@ -613,6 +614,8 @@ const TierListEditorContent = () => {
           onUpdateTier={updateTierSettingsWithUnsaved}
           onClearRows={() => setIsClearAllModalOpen(true)}
           onDownloadImage={() => setIsExportModalOpen(true)}
+          shareUrl={shareUrl}
+          title={listData.title}
           onDeleteRating={() => setShowDeleteRatingModal(true)}
           isPublic={isPublic}
           onTogglePublic={togglePublic}

@@ -27,6 +27,8 @@ interface EditorMainContentProps {
   onUpdateTier?: (tierId: string, settings: any) => void;
   onClearRows?: () => void;
   onDownloadImage: () => void;
+  shareUrl?: string;
+  title?: string;
   onDeleteRating?: () => void;
   isPublic: boolean;
   onTogglePublic?: (value: boolean) => void;
@@ -56,6 +58,8 @@ export const EditorMainContent = memo(
     onUpdateTier,
     onClearRows,
     onDownloadImage,
+    shareUrl,
+    title,
     onDeleteRating,
     isPublic,
     onTogglePublic,
@@ -173,6 +177,8 @@ export const EditorMainContent = memo(
                   onAddRow={isReadOnly ? undefined : onAddRow}
                   onClearRows={isReadOnly ? undefined : () => onClearRows?.()}
                   onDownloadImage={onDownloadImage}
+                  shareUrl={shareUrl}
+                  title={title}
                   onDeleteRating={isReadOnly ? undefined : () => onDeleteRating?.()}
                   isPublic={isPublic}
                   onTogglePublic={isReadOnly ? undefined : onTogglePublic}
@@ -212,6 +218,8 @@ export const EditorMainContent = memo(
           onFindBook={onFindBook}
           onAddRow={onAddRow}
           onDownloadImage={onDownloadImage}
+          shareUrl={shareUrl}
+          title={title}
           onClearRows={() => onClearRows?.()}
           onDeleteRating={() => onDeleteRating?.()}
           isPublic={isPublic}
