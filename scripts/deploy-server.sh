@@ -162,10 +162,12 @@ fi
 if [ "$SKIP_BUILD" = false ]; then
   info "Prerender публичных маршрутов..."
 
-  # API_URL напрямую к бэкенду (минуя nginx) — чтобы fetch в Node.js
-  # не падал на самоподписанном сертификате. Порт 8080 — внутренний порт app-контейнера.
-  export API_URL="http://localhost:8080"
-  ok "API_URL=http://localhost:8080 (prerender напрямую к бэкенду)"
+  # API_URL через nginx (https://localhost) — порт 8080 контейнера не опубликован наружу.
+  # Nginx проксирует /api/* на app:8080 внутри Docker-сети.
+  export API_URL="https://localhost"
+  # Отключаем проверку TLS для self-signed сертификата localhost
+  export NODE_TLS_REJECT_UNAUTHORIZED=0
+  ok "API_URL=https://localhost (prerender через nginx)"
 
   # Prerender опциональный — если нет chromium, graceful fallback
   if node "$PROJECT_DIR/scripts/prerender.mjs"; then
