@@ -122,17 +122,16 @@ info "Чистка Docker build cache..."
 docker builder prune -af
 ok "Build cache очищен"
 
-# ——— 6. Перезапускаем контейнеры (бэкенд + nginx) ———
-info "Перезапуск бэкенда и nginx (postgres/redis не трогаем)..."
-# nginx пересоздаём принудительно: compose кэширует конфиг контейнера, и при
-# изменении volumes (как было с dist.old) старый Created-контейнер может
-# застрять с битыми mount'ами. --force-recreate гарантирует актуальный конфиг.
+# ——— 6. Перезапускаем бэкенд (postgres/redis не трогаем) ———
+info "Перезапуск бэкенда..."
 docker compose --profile full up -d app
-docker compose --profile full up -d --force-recreate nginx
-ok "Контейнеры запущены"
+ok "Бэкенд запущен"
 
 # ——— 7. Атомарный swap dist ———
-# mv на одной файловой системе — атомарная операция
+# mv на одной файловой системе — атомарная операция.
+# ВАЖНО: swap ДО перезапуска nginx, чтобы nginx увидел новые файлы.
+# Docker bind mount захватывает inode директории, и если nginx стартует
+# до swap'а, он остаётся со старыми файлами (см. баг #...).
 if [ "$SKIP_BUILD" = false ]; then
   info "Атомарный swap dist..."
   # Трёхходовой атомарный swap для сохранения fallback-версии:
@@ -148,14 +147,22 @@ if [ "$SKIP_BUILD" = false ]; then
   ok "dist обновлён (старая версия сохранена в dist.old)"
 fi
 
-# ——— 8. Healthcheck ———
+# ——— 8. Перезапускаем nginx с новыми файлами ———
+info "Перезапуск nginx..."
+# nginx пересоздаём принудительно: compose кэширует конфиг контейнера, и при
+# изменении volumes старый Created-контейнер может застрять с битыми mount'ами.
+# --force-recreate гарантирует актуальный конфиг и свежие bind mount'ы.
+docker compose --profile full up -d --force-recreate nginx
+ok "Nginx перезапущен"
+
+# ——— 9. Healthcheck ———
 if ! check_health; then
   err "Деплой завершился, но бэкенд не здоров!"
   err "Откат: bash scripts/deploy-server.sh --rollback"
   exit 1
 fi
 
-# ——— 9. Prerender для SEO ———
+# ——— 10. Prerender для SEO ———
 # Запускается ПОСЛЕ обновления бэкенда, чтобы API возвращал актуальные данные.
 # dist уже содержит новую сборку (после атомарного swap'а на шаге 7).
 # Prerender пишет HTML прямо в dist/ — дополнительных mv не нужно.
