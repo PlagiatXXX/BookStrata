@@ -157,10 +157,8 @@ fi
 
 # ——— 9. Prerender для SEO ———
 # Запускается ПОСЛЕ обновления бэкенда, чтобы API возвращал актуальные данные.
-# Prerender-скрипт жёстко завязан на dist/, поэтому:
-#   сохраняем dist → dist.saved,
-#   prerender,
-#   возвращаем dist → dist.saved.
+# dist уже содержит новую сборку (после атомарного swap'а на шаге 7).
+# Prerender пишет HTML прямо в dist/ — дополнительных mv не нужно.
 if [ "$SKIP_BUILD" = false ]; then
   info "Prerender публичных маршрутов..."
 
@@ -169,23 +167,13 @@ if [ "$SKIP_BUILD" = false ]; then
   export API_URL="http://localhost:8080"
   ok "API_URL=http://localhost:8080 (prerender напрямую к бэкенду)"
 
-  mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.saved" 2>/dev/null || true
-
   # Prerender опциональный — если нет chromium, graceful fallback
   if node "$PROJECT_DIR/scripts/prerender.mjs"; then
     ok "Prerender завершён"
   else
     warn "Prerender пропущен (опционально) — сайт работает как SPA"
   fi
-
-  mv "$PROJECT_DIR/dist" "$PROJECT_DIR/dist.tmp"
-  [ -d "$PROJECT_DIR/dist.saved" ] && mv "$PROJECT_DIR/dist.saved" "$PROJECT_DIR/dist"
-  mv "$PROJECT_DIR/dist.tmp" "$PROJECT_DIR/dist"
 fi
-
-# Старая версия фронта (dist.old) не удаляется — она нужна nginx как fallback
-# для старых JS-чанков, пока пользователи не обновят страницу.
-# Она будет перезаписана при следующем деплое.
 
 echo ""
 ok "Деплой завершён"
