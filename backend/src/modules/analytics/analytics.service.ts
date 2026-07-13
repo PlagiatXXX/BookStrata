@@ -49,6 +49,35 @@ export interface AnalyticsSummary {
   weekByEvent: EventCount[]
 }
 
+export interface MetricsResult {
+  dau: number
+  mau: number
+  stickiness: number
+  churn: number
+  churnRate: number
+}
+
+export interface FunnelStage {
+  name: string
+  count: number
+}
+
+export interface FunnelResult {
+  stages: FunnelStage[]
+}
+
+export interface RetentionResult {
+  d1: number
+  d7: number
+  d30: number
+}
+
+const RETENTION_EVENTS = [
+  'page_view', 'session_heartbeat', 'tierlist_create',
+  'tierlist_fork', 'tierlist_like', 'book_add',
+  'book_search', 'export_png',
+]
+
 export function createAnalyticsService(prisma: PrismaClient) {
   const trackEvent = async (payload: TrackPayload): Promise<void> => {
     try {
@@ -136,39 +165,186 @@ export function createAnalyticsService(prisma: PrismaClient) {
     }
   }
 
+  // Фикс: GROUP BY на уровне БД вместо full scan + JS Map
   const getSummary = async (): Promise<AnalyticsSummary> => {
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000)
 
-    const [todayEvents, weekEvents] = await Promise.all([
-      prisma.analyticsEvent.findMany({
+    const mapGroupByResult = (
+      rows: { event: string; _count: { event: number } }[],
+    ): EventCount[] =>
+      rows
+        .map((r) => ({ event: r.event, count: r._count.event }))
+        .sort((a, b) => b.count - a.count)
+
+    const [todayTotal, todayByEvent, weekTotal, weekByEvent] = await Promise.all([
+      prisma.analyticsEvent.count({ where: { createdAt: { gte: todayStart } } }),
+      prisma.analyticsEvent.groupBy({
+        by: ['event'],
         where: { createdAt: { gte: todayStart } },
-        select: { event: true },
+        _count: { event: true },
+        orderBy: { _count: { event: 'desc' } },
       }),
-      prisma.analyticsEvent.findMany({
+      prisma.analyticsEvent.count({ where: { createdAt: { gte: weekStart } } }),
+      prisma.analyticsEvent.groupBy({
+        by: ['event'],
         where: { createdAt: { gte: weekStart } },
-        select: { event: true },
+        _count: { event: true },
+        orderBy: { _count: { event: 'desc' } },
       }),
     ])
 
-    const countByEvent = (events: { event: string }[]): EventCount[] => {
-      const map = new Map<string, number>()
-      for (const { event } of events) {
-        map.set(event, (map.get(event) ?? 0) + 1)
-      }
-      return Array.from(map.entries())
-        .map(([event, count]) => ({ event, count }))
-        .sort((a, b) => b.count - a.count)
-    }
-
     return {
-      todayTotal: todayEvents.length,
-      todayByEvent: countByEvent(todayEvents),
-      weekTotal: weekEvents.length,
-      weekByEvent: countByEvent(weekEvents),
+      todayTotal,
+      todayByEvent: mapGroupByResult(todayByEvent),
+      weekTotal,
+      weekByEvent: mapGroupByResult(weekByEvent),
     }
   }
 
-  return { trackEvent, getEvents, getSummary }
+  // Очистка событий старше N дней
+  const cleanupOldEvents = async (daysToKeep: number = 30): Promise<number> => {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - daysToKeep)
+
+    try {
+      const result = await prisma.analyticsEvent.deleteMany({
+        where: { createdAt: { lt: cutoff } },
+      })
+      if (result.count > 0) {
+        console.log(`[Analytics] Cleaned up ${result.count} events older than ${daysToKeep} days`)
+      }
+      return result.count
+    } catch (err) {
+      console.error('[Analytics] Cleanup failed:', err)
+      return 0
+    }
+  }
+
+  // DAU, MAU, Stickiness, Churn
+  const getMetrics = async (): Promise<MetricsResult> => {
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const last30Start = new Date(todayStart.getTime() - 29 * 24 * 60 * 60 * 1000)
+    const prev30Start = new Date(todayStart.getTime() - 59 * 24 * 60 * 60 * 1000)
+    const prev30End = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const [dau, mau, prevActiveUsers] = await Promise.all([
+      // DAU: уникальные userId за сегодня (не null)
+      prisma.analyticsEvent.findMany({
+        where: { userId: { not: null }, createdAt: { gte: todayStart } },
+        select: { userId: true },
+        distinct: ['userId'],
+      }),
+      // MAU: уникальные userId за последние 30 дней
+      prisma.analyticsEvent.findMany({
+        where: { userId: { not: null }, createdAt: { gte: last30Start } },
+        select: { userId: true },
+        distinct: ['userId'],
+      }),
+      // Пользователи, активные в предыдущие 30 дней (31-60 дней назад)
+      prisma.analyticsEvent.findMany({
+        where: { userId: { not: null }, createdAt: { gte: prev30Start, lt: last30Start } },
+        select: { userId: true },
+        distinct: ['userId'],
+      }),
+    ])
+
+    const dauCount = dau.length
+    const mauCount = mau.length
+    const prevActiveIds = new Set(prevActiveUsers.map((u) => u.userId))
+
+    // Churn: пользователи, активные в предыдущие 30 дней, но не в последние 30
+    const currentActiveIds = new Set(mau.map((u) => u.userId))
+    let churnedCount = 0
+    for (const id of prevActiveIds) {
+      if (!currentActiveIds.has(id)) churnedCount++
+    }
+
+    const churn = prevActiveIds.size > 0 ? churnedCount / prevActiveIds.size : 0
+    const stickiness = mauCount > 0 ? dauCount / mauCount : 0
+
+    return {
+      dau: dauCount,
+      mau: mauCount,
+      stickiness: Math.round(stickiness * 10000) / 100, // в процентах, 2 знака
+      churn: churnedCount,
+      churnRate: Math.round(churn * 10000) / 100,
+    }
+  }
+
+  // Воронка: регистрация → создание → публикация → шейринг
+  const getFunnel = async (): Promise<FunnelResult> => {
+    // Пользователи, совершившие каждое действие за всё время
+    const countUsersWithEvent = async (event: string): Promise<number> => {
+      const rows = await prisma.analyticsEvent.findMany({
+        where: { event, userId: { not: null } },
+        select: { userId: true },
+        distinct: ['userId'],
+      })
+      return rows.length
+    }
+
+    const stages: FunnelStage[] = [
+      { name: 'Регистрация', count: await countUsersWithEvent('signup') },
+      { name: 'Создание тир-листа', count: await countUsersWithEvent('tierlist_create') },
+      { name: 'Публикация', count: await countUsersWithEvent('tierlist_publish') },
+      { name: 'Поделились', count: await countUsersWithEvent('share_clicked') },
+    ]
+
+    return { stages }
+  }
+
+  // Retention D1/D7/D30
+  const getRetention = async (): Promise<RetentionResult> => {
+    const now = new Date()
+
+    const countRetained = async (daysAfter: number): Promise<number> => {
+      // Пользователи, которые зарегистрировались достаточно давно (чтобы прошло daysAfter дней)
+      const since = new Date(now.getTime() - daysAfter * 24 * 60 * 60 * 1000)
+
+      // Находим пользователей, зарегистрировавшихся после since и до daysAfter+1 день назад
+      const registeredBefore = new Date(now.getTime() - (daysAfter + 1) * 24 * 60 * 60 * 1000)
+
+      const registrations = await prisma.analyticsEvent.findMany({
+        where: {
+          event: 'signup',
+          userId: { not: null },
+          createdAt: { gte: registeredBefore, lt: since },
+        },
+        select: { userId: true, createdAt: true },
+        distinct: ['userId'],
+      })
+
+      if (registrations.length === 0) return 0
+
+      let retained = 0
+      for (const reg of registrations) {
+        const targetDayStart = new Date(reg.createdAt.getTime() + daysAfter * 24 * 60 * 60 * 1000)
+        const targetDayEnd = new Date(targetDayStart.getTime() + 24 * 60 * 60 * 1000)
+
+        const activity = await prisma.analyticsEvent.findFirst({
+          where: {
+            userId: reg.userId!,
+            event: { in: RETENTION_EVENTS },
+            createdAt: { gte: targetDayStart, lt: targetDayEnd },
+          },
+        })
+        if (activity) retained++
+      }
+
+      return Math.round((retained / registrations.length) * 10000) / 100
+    }
+
+    const [d1, d7, d30] = await Promise.all([
+      countRetained(1),
+      countRetained(7),
+      countRetained(30),
+    ])
+
+    return { d1, d7, d30 }
+  }
+
+  return { trackEvent, getEvents, getSummary, cleanupOldEvents, getMetrics, getFunnel, getRetention }
 }

@@ -48,6 +48,7 @@ import { errorNotifier } from "./lib/errorNotifier.js";
 import { initSentry } from "./lib/sentry.js";
 import { registerAchievementSubscriptions } from "./lib/event-subscriptions.js";
 import { registerAnalyticsSubscriptions } from "./lib/analytics-subscriptions.js";
+import { createAnalyticsService } from "./modules/analytics/analytics.service.js";
 import { SubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
 
 
@@ -503,6 +504,20 @@ setInterval(() => {
     fastify.log.error(err, "Ошибка при деактивации просроченных подписок");
   });
 }, 60 * 60 * 1000);
+
+// Очистка аналитики старше 30 дней (раз в час)
+const analyticsCleanup = createAnalyticsService(prisma);
+setInterval(() => {
+  analyticsCleanup.cleanupOldEvents(30).catch((err) => {
+    fastify.log.error(err, "Ошибка при очистке старых событий аналитики");
+  });
+}, 60 * 60 * 1000);
+// Первый запуск — через минуту после старта
+setTimeout(() => {
+  analyticsCleanup.cleanupOldEvents(30).catch((err) => {
+    fastify.log.error(err, "Ошибка при первой очистке старых событий аналитики");
+  });
+}, 60 * 1000);
 
 // Единая инициализация всех модулей при старте
 import { seedAllModules } from "./lib/module-loader.js"

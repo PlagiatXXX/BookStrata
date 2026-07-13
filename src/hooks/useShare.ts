@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { apiTrackEvent } from "@/lib/analyticsApi";
 
 export interface ShareUrls {
   telegram: string;
@@ -10,6 +11,7 @@ export interface ShareUrls {
  * Возвращает:
  *   getShareUrls({ url, title }) — ссылки для TG/VK/Twitter
  *   copyLink(url) — копирование в буфер обмена + copied на 2с
+ *   shareTo(url) — открыть URL соцсети в новом окне
  *   copied — флаг «скопировано»
  */
 export function useShare() {
@@ -45,11 +47,15 @@ export function useShare() {
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    // Трекинг для воронки
+    apiTrackEvent('share_clicked', { method: 'copy' });
   }, []);
 
   /** Открыть URL соцсети в новом окне */
   const shareTo = useCallback((shareUrl: string) => {
     window.open(shareUrl, "_blank", "noopener,noreferrer,width=600,height=500");
+    // Трекинг для воронки
+    apiTrackEvent('share_clicked', { method: 'social' });
   }, []);
 
   return { getShareUrls, copyLink, copied, shareTo };

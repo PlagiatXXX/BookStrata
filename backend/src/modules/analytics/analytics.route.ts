@@ -99,4 +99,40 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
       return reply.code(200).send({ data: result })
     },
   )
+
+  // GET /api/admin/analytics/metrics — DAU, MAU, Stickiness, Churn (только admin)
+  fastify.get(
+    '/metrics',
+    {
+      preHandler: [authMiddleware, requireRole('admin')],
+    },
+    async (_request, reply) => {
+      const result = await analytics.getMetrics()
+      return reply.code(200).send({ data: result })
+    },
+  )
+
+  // GET /api/admin/analytics/funnel — воронка (регистрация → создание → публикация → шейринг)
+  fastify.get(
+    '/funnel',
+    {
+      preHandler: [authMiddleware, requireRole('admin')],
+    },
+    async (_request, reply) => {
+      const result = await analytics.getFunnel()
+      return reply.code(200).send({ data: result })
+    },
+  )
+
+  // GET /api/admin/analytics/retention — Retention D1/D7/D30
+  fastify.get(
+    '/retention',
+    {
+      preHandler: [authMiddleware, requireRole('admin')],
+    },
+    async (_request, reply) => {
+      const result = await analytics.getRetention()
+      return reply.code(200).send({ data: result })
+    },
+  )
 }

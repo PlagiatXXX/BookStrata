@@ -7,6 +7,7 @@ import type { Action } from '@/hooks/useTierList';
 import type { Book } from '@/types';
 import { deleteTierList, removeBookFromTierList, toggleTierListPublic } from '@/lib/tierListApi';
 import { apiClient } from '@/lib/api-client';
+import { apiTrackEvent } from '@/lib/analyticsApi';
 import { createLogger } from '@/lib/logger';
 
 // Логгер для хука действий редактора
@@ -67,7 +68,8 @@ export function useTierEditorActions({
           queryClient.invalidateQueries({ queryKey: ['user', 'stats'] }),
           queryClient.invalidateQueries({ queryKey: ['publicTierListsSorted'] }),
           queryClient.invalidateQueries({ queryKey: ['publicTierLists'] }),
-        ]); 
+        ]);
+        apiTrackEvent(isPublic ? 'tierlist_publish' : 'tierlist_unpublish', { tierListId });
         sileo.success({
           title: isPublic ? 'Тир-лист опубликован' : 'Тир-лист скрыт',
           duration: 3000,

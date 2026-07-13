@@ -30,6 +30,29 @@ export interface AnalyticsSummary {
   weekByEvent: EventCount[]
 }
 
+export interface MetricsResult {
+  dau: number
+  mau: number
+  stickiness: number
+  churn: number
+  churnRate: number
+}
+
+export interface FunnelStage {
+  name: string
+  count: number
+}
+
+export interface FunnelResult {
+  stages: FunnelStage[]
+}
+
+export interface RetentionResult {
+  d1: number
+  d7: number
+  d30: number
+}
+
 export interface AnalyticsQuery {
   event?: string
   userId?: number
@@ -55,6 +78,18 @@ export function apiGetAnalytics({ event, userId, search, from, to, limit, cursor
 
 export function apiGetAnalyticsSummary() {
   return apiClient.get<AnalyticsSummary>('/admin/analytics/summary')
+}
+
+export function apiGetAnalyticsMetrics() {
+  return apiClient.get<MetricsResult>('/admin/analytics/metrics')
+}
+
+export function apiGetAnalyticsFunnel() {
+  return apiClient.get<FunnelResult>('/admin/analytics/funnel')
+}
+
+export function apiGetAnalyticsRetention() {
+  return apiClient.get<RetentionResult>('/admin/analytics/retention')
 }
 
 export async function apiTrackEvent(
