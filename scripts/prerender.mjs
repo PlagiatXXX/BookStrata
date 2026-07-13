@@ -196,9 +196,9 @@ const TOPIC_CATEGORIES = JSON.parse(readFileSync(CATEGORY_IDS_PATH, "utf-8"));
 async function addTopicRoutes() {
   log(`📡 Adding topic pages for ${TOPIC_CATEGORIES.length} categories…`);
   for (const cat of TOPIC_CATEGORIES) {
-    const path = `/topics/${cat}`;
-    ROUTES.push({ path, name: `Категория: ${cat}` });
-    log(`  → ${path} (${cat})`);
+    const path = `/topics/${cat.id}`;
+    ROUTES.push({ path, name: cat.label });
+    log(`  → ${path} (${cat.label})`);
   }
   log(`✅ Added ${TOPIC_CATEGORIES.length} topic pages to prerender`);
 }
