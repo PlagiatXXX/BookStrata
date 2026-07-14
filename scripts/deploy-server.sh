@@ -166,13 +166,16 @@ fi
 # Вычитывает slug + title всех опубликованных коллекций из БД
 # и сохраняет в src/data/collection-routes.json.
 # Это нужно, чтобы prerender не зависел от доступности API (см. #prerender-fix).
+# Postgres опубликован на 127.0.0.1:5432, передаём DATABASE_URL явно,
+# т.к. в .env сервера хост может быть docker hostname (postgres).
 if [ "$SKIP_BUILD" = false ]; then
   info "Экспорт маршрутов коллекций из БД..."
   cd "$PROJECT_DIR/backend"
-  if npx tsx scripts/export-collection-routes.ts; then
+  if DATABASE_URL="postgresql://bookstrata:bookstrata_pass@127.0.0.1:5432/bookstrata" \
+    npx tsx scripts/export-collection-routes.ts; then
     ok "Маршруты коллекций экспортированы"
   else
-    warn "Не удалось экспортировать коллекции (БД недоступна?) — prerender использует JSON из репы"
+    warn "Не удалось экспортировать коллекции — prerender использует JSON из репы"
   fi
   cd "$PROJECT_DIR"
 fi
