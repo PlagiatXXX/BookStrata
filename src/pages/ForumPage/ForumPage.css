@@ -245,17 +245,30 @@
   border: 1px solid rgba(124, 92, 252, 0.25);
 }
 
+/* На устройствах с hover кнопки показываются только при наведении */
+@media (hover: hover) and (pointer: fine) {
+  .forum-topic-actions {
+    opacity: 0;
+  }
+
+  .forum-topic-row:hover .forum-topic-actions {
+    opacity: 1;
+  }
+}
+
+/* На тач-устройствах кнопки видны всегда */
+@media (hover: none) and (pointer: coarse) {
+  .forum-topic-actions {
+    opacity: 1;
+  }
+}
+
 .forum-topic-actions {
   display: flex;
   align-items: center;
   gap: 0.125rem;
   padding-right: 0.5rem;
-  opacity: 0;
   transition: opacity 0.15s;
-}
-
-.forum-topic-row:hover .forum-topic-actions {
-  opacity: 1;
 }
 
 .forum-topic-action-btn {
@@ -297,6 +310,14 @@
   height: 1px;
   background: var(--line-soft, rgba(255, 255, 255, 0.08));
   margin: 0.75rem 0;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

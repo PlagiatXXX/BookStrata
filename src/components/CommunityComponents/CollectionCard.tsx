@@ -71,11 +71,37 @@ export const CollectionCard = memo(({ collection, className = '' }: CollectionCa
         <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent pointer-events-none z-[1]" />
       )}
 
-      {/* ===== Название — всегда видимо, внизу слева ===== */}
+      {/* ===== Название + мета — всегда видимо, внизу слева ===== */}
       <div className="absolute bottom-3 left-3 right-3 z-10 pointer-events-none">
+        {/* Акцентная полоска — всегда видна */}
+        <div
+          className="w-8 h-[2px] rounded-full mb-1.5 shrink-0"
+          style={{ background: accentColor }}
+        />
+
         <h3 className="font-display text-base sm:text-lg font-bold text-white leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
           {collection.title}
         </h3>
+
+        {/* Описание + счётчик — всегда видно на мобильных,
+            на десктопе прячется при hover (когда панель заезжает) */}
+        <div className="flex items-center gap-2 mt-1 group-hover:opacity-0 transition-opacity duration-200">
+          {collection.excerpt && (
+            <p className="text-xs text-white/80 leading-snug line-clamp-1">
+              {collection.excerpt}
+            </p>
+          )}
+          {booksCount > 0 && (
+            <div className="flex items-center gap-1 text-[11px] text-white/60 shrink-0">
+              <BookOpen size={11} />
+              <span>
+                {booksCount}{' '}
+                {booksCount === 1 ? 'книга' :
+                 booksCount < 5 ? 'книги' : 'книг'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ===== Боковая панель — выезжает слева при наведении ===== */}

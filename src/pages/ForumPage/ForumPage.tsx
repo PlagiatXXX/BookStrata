@@ -2,6 +2,7 @@ import { useEffect, memo, useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Users, Swords, MessageSquare, MessageSquareText, Plus, Pin, Trash2 } from "lucide-react";
+import { SEOHead } from "@/components/SEO/SEOHead";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BattleList } from "./components/BattleList";
 import { DiscussionSection } from "@/components/DiscussionSection/DiscussionSection";
@@ -157,6 +158,11 @@ goToTab("forum");
       activeItem={undefined}
       bgVariant="dark"
     >
+      <SEOHead
+        title="Форум и битвы шаблонов"
+        description="Участвуйте в битвах шаблонов тир-листов, обсуждайте книжные рейтинги и находите единомышленников в сообществе BookStrata."
+        url="/forum"
+      />
       <div className="forum-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 py-14 pb-20 cursor-default text-(--ink-0)">
           {/* Forum Header / Hero */}
@@ -203,7 +209,7 @@ goToTab("forum");
           </section>
 
           {/* Activity Tabs */}
-          <div className="flex items-center gap-6 mb-12 border-b border-(--line-soft) max-md:flex-wrap max-md:gap-x-3 max-md:pb-1 reveal" data-reveal>
+          <div className="flex items-center gap-6 mb-12 border-b border-(--line-soft) overflow-x-auto no-scrollbar reveal" data-reveal>
              <button
                 onClick={() => { goToTab("battles"); setSelectedTopic(null); }}
                className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${

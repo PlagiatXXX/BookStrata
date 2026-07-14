@@ -1,6 +1,7 @@
 import { useEffect, useState, memo } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
+import { SEOHead } from "@/components/SEO/SEOHead";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { CollectionGrid } from "@/components/CommunityComponents/CollectionGrid";
@@ -91,6 +92,11 @@ export default function CommunityPage() {
       activeItem="Новости"
       bgVariant="dark"
     >
+      <SEOHead
+        title="Новости и сообщество книжных рейтингов"
+        description="Подборки книг, редакционные статьи, новости книжного мира. Найдите вдохновение для следующего тир-листа в сообществе BookStrata."
+        url="/community"
+      />
       <div className="community-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 pb-20 cursor-default text-(--ink-0)">
           <MemoizedHeroSection

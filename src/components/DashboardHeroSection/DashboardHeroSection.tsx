@@ -41,7 +41,7 @@ export function DashboardHeroSection({
                 type="button"
               >
                 <Library size={16} />
-                В библиотеку
+                Создать тир-лист
               </button>
 
               <button

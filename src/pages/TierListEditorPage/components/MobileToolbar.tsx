@@ -43,12 +43,12 @@ const LABEL_COLORS = [
 ] as const;
 
 const btnBase =
-  "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 py-2 text-[10px] uppercase font-black tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c1fffe] focus-visible:ring-inset";
+  "flex flex-col items-center justify-center gap-0.5 flex-1 min-w-0 px-1 py-2 text-[10px] uppercase font-black tracking-wider transition-[transform,color] duration-100 ease-out active:scale-[0.93] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c1fffe] focus-visible:ring-inset";
 
 const btnActive =
   "text-[#c1fffe]";
 const btnInactive =
-  "text-gray-400 hover:text-white";
+  "text-white/40 hover:text-white active:text-white";
 
 export const MobileToolbar = memo(function MobileToolbar({
   onSave,
@@ -180,10 +180,10 @@ export const MobileToolbar = memo(function MobileToolbar({
   return (
     <>
       {/* Основная панель */}
-      <div className="fixed left-0 right-0 z-50 block border-t-4 border-black bg-[#0e0e0e] lg:hidden" style={{ bottom: bottomOffset }}>
-        {/* Индикатор времени последнего сохранения */}
+      <div className="fixed left-0 right-0 z-50 block border-t border-white/[0.06] bg-black/85 backdrop-blur-2xl lg:hidden" style={{ bottom: bottomOffset }}>
+        {/* Индикатор времени последнего сохранения — как на iPhone (Dynamic Island style) */}
         {lastSaved && saveStatus !== "saving" && (
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-b bg-black px-2 text-[8px] uppercase tracking-wider text-gray-500">
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-b bg-black/60 backdrop-blur-sm px-2.5 text-[8px] uppercase tracking-wider text-white/40">
             {lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
         )}
@@ -194,7 +194,7 @@ export const MobileToolbar = memo(function MobileToolbar({
             type="button"
             onClick={onSave}
             disabled={saveStatus === "saving"}
-            className={`${btnBase} ${saveColor()} border-r-2 border-black`}
+            className={`${btnBase} ${saveColor()} border-r border-white/[0.06]`}
             aria-label="Сохранить"
           >
             {saveIcon()}
@@ -206,7 +206,7 @@ export const MobileToolbar = memo(function MobileToolbar({
             <button
               type="button"
               onClick={() => onFindBook()}
-              className={`${btnBase} ${btnInactive} border-r-2 border-black`}
+              className={`${btnBase} ${btnInactive} border-r border-white/[0.06]`}
               aria-label="Найти книгу"
             >
               <Search size={20} />
@@ -219,7 +219,7 @@ export const MobileToolbar = memo(function MobileToolbar({
             <button
               type="button"
               onClick={() => onAddRow()}
-              className={`${btnBase} ${btnInactive} border-r-2 border-black`}
+              className={`${btnBase} ${btnInactive} border-r border-white/[0.06]`}
               aria-label="Добавить блок"
             >
               <Plus size={20} />
@@ -237,12 +237,12 @@ export const MobileToolbar = memo(function MobileToolbar({
                 setShowMore(false);
               }
             }}
-            className={`${btnBase} border-r-2 border-black ${
+            className={`${btnBase} border-r border-white/[0.06] ${
               activeTier
                 ? showTierPanel
                   ? btnActive
-                  : "text-gray-400 hover:text-white"
-                : "text-gray-700"
+                  : "text-white/40 hover:text-white"
+                : "text-white/20"
             }`}
             aria-label="Настройки полки"
           >
@@ -254,7 +254,7 @@ export const MobileToolbar = memo(function MobileToolbar({
           <button
             type="button"
             onClick={onDownloadImage}
-            className={`${btnBase} ${btnInactive} border-r-2 border-black`}
+            className={`${btnBase} ${btnInactive} border-r border-white/[0.06]`}
             aria-label="Скачать тир-лист"
           >
             <ImageDown size={20} />
@@ -266,14 +266,13 @@ export const MobileToolbar = memo(function MobileToolbar({
             <button
               type="button"
               onClick={() => setShowSharePopover((v) => !v)}
-              className={`${btnBase} ${copied || showSharePopover ? btnActive : btnInactive} border-r-2 border-black relative`}
+              className={`${btnBase} ${copied || showSharePopover ? btnActive : btnInactive} border-r border-white/[0.06] relative`}
               aria-label="Поделиться"
             >
               {copied ? <Check size={20} /> : <Share2 size={20} />}
-              <span>{copied ? "Готово" : "Поделиться"}</span>
 
               {showSharePopover && (
-                <div className="fixed left-1/2 z-50 w-64 -translate-x-1/2 border-4 border-black bg-[#0e0e0e] p-3 shadow-[4px_4px_0_0_#000000]" style={{ bottom: bottomOffset + 64 }}>
+                <div className="fixed left-1/2 z-50 w-64 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50" style={{ bottom: bottomOffset + 60 }}>
                   <div className="grid grid-cols-2 gap-2">
                     {/* Telegram */}
                     <button
@@ -284,7 +283,7 @@ export const MobileToolbar = memo(function MobileToolbar({
                         shareTo(getShareUrls({ url: shareUrl, title: t }).telegram);
                         setShowSharePopover(false);
                       }}
-                      className="flex flex-col items-center gap-1 p-3 rounded hover:bg-white/10 transition-colors"
+                      className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-[0.97] transition-[transform,background] duration-100 ease-out"
                       title="Telegram"
                     >
                       <svg viewBox="0 0 24 24" fill="currentColor" className="size-7 text-[#c1fffe]">
@@ -302,7 +301,7 @@ export const MobileToolbar = memo(function MobileToolbar({
                         shareTo(getShareUrls({ url: shareUrl, title: t }).vk);
                         setShowSharePopover(false);
                       }}
-                      className="flex flex-col items-center gap-1 p-3 rounded hover:bg-white/10 transition-colors"
+                      className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-[0.97] transition-[transform,background] duration-100 ease-out"
                       title="VK"
                     >
                       <svg viewBox="0 0 24 24" fill="currentColor" className="size-7 text-[#c1fffe]">
@@ -320,7 +319,7 @@ export const MobileToolbar = memo(function MobileToolbar({
                     copyLink(shareUrl);
                     setShowSharePopover(false);
                   }}
-                  className="mt-2 flex w-full items-center justify-center gap-2 border-2 border-[#c1fffe]/20 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-gray-300 transition-colors hover:bg-white/5"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#c1fffe]/20 px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-white/60 transition-[transform,background] duration-100 ease-out hover:bg-white/5 active:scale-[0.97]"
                 >
                   <Copy size={14} className="text-[#c1fffe]" />
                   {copied ? "Скопировано" : "Копировать ссылку"}
@@ -348,7 +347,7 @@ export const MobileToolbar = memo(function MobileToolbar({
       {showMore && (
         <div
           ref={moreRef}
-          className="fixed left-1/2 z-50 w-64 -translate-x-1/2 border-4 border-black bg-[#0e0e0e] p-3 shadow-[4px_4px_0_0_#000000] lg:hidden" style={{ bottom: bottomOffset + 64 }}
+          className="fixed left-1/2 z-50 w-64 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden" style={{ bottom: bottomOffset + 60 }}
         >
           <div className="flex flex-col gap-2">
             {/* Clear All */}
@@ -356,7 +355,7 @@ export const MobileToolbar = memo(function MobileToolbar({
               <button
                 type="button"
                 onClick={() => { setShowMore(false); onClearRows(); }}
-                className="flex items-center gap-3 border-2 border-[#ff51fa] px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#ff51fa] transition-colors hover:bg-[#ff51fa]/10"
+                className="flex items-center gap-3 rounded-xl border border-[#ff51fa]/40 px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-[#ff51fa] transition-[transform,background] duration-100 ease-out hover:bg-[#ff51fa]/10 active:scale-[0.97]"
               >
                 <Trash2 size={16} />
                 Очистить блоки
@@ -365,8 +364,8 @@ export const MobileToolbar = memo(function MobileToolbar({
 
             {/* Public Access */}
             {onTogglePublic && (
-              <div className="flex items-center justify-between border-2 border-gray-700 px-3 py-2">
-                <label className="flex cursor-pointer items-center gap-3 text-[11px] font-black uppercase tracking-wider text-gray-300">
+              <div className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2.5">
+                <label className="flex cursor-pointer items-center gap-3 text-[11px] font-black uppercase tracking-wider text-white/60">
                   <Globe size={16} className="text-[#c1fffe]" />
                   Публичный
                 </label>
@@ -376,12 +375,12 @@ export const MobileToolbar = memo(function MobileToolbar({
                   aria-checked={isPublic}
                   disabled={isTogglingPublic}
                   onClick={() => onTogglePublic(!isPublic)}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full border-2 border-black transition-colors ${
-                    isPublic ? "bg-[#c1fffe]" : "bg-gray-700"
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${
+                    isPublic ? "bg-[#c1fffe]" : "bg-white/20"
                   }`}
                 >
                   <span
-                    className={`inline-block size-3.5 rounded-full border-2 border-black bg-white transition-transform ${
+                    className={`inline-block size-3.5 rounded-full bg-white transition-transform duration-200 ease-out ${
                       isPublic ? "translate-x-4" : "translate-x-0.5"
                     }`}
                   />
@@ -394,7 +393,7 @@ export const MobileToolbar = memo(function MobileToolbar({
               <button
                 type="button"
                 onClick={() => { setShowMore(false); onDeleteRating(); }}
-                className="flex items-center gap-3 border-2 border-[#ff51fa] px-3 py-2 text-[11px] font-black uppercase tracking-wider text-[#ff51fa] transition-colors hover:bg-[#ff51fa]/10"
+                className="flex items-center gap-3 rounded-xl border border-[#ff51fa]/40 px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-[#ff51fa] transition-[transform,background] duration-100 ease-out hover:bg-[#ff51fa]/10 active:scale-[0.97]"
               >
                 <Trash2 size={16} />
                 Удалить рейтинг
@@ -408,28 +407,28 @@ export const MobileToolbar = memo(function MobileToolbar({
       {showTierPanel && activeTier && onUpdateTier && (
         <div
           ref={tierPanelRef}
-          className="fixed left-1/2 z-50 w-72 -translate-x-1/2 border-4 border-black bg-[#0e0e0e] p-3 shadow-[4px_4px_0_0_#000000] lg:hidden" style={{ bottom: bottomOffset + 64 }}
+          className="fixed left-1/2 z-50 w-72 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden" style={{ bottom: bottomOffset + 60 }}
         >
-          <div className="mb-2 text-[10px] font-black uppercase tracking-widest text-[#ffbd58]">
-            Полка: {activeTier.title}
+          <div className="mb-3 text-[10px] font-black uppercase tracking-widest text-[#ffbd58]">
+            {activeTier.title}
           </div>
 
           {/* Высота строки */}
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Высота</span>
-            <div className="flex items-center gap-1 border-2 border-black bg-black">
+            <span className="text-[10px] font-black uppercase tracking-wider text-white/40">Высота</span>
+            <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5">
               <button
                 type="button"
                 onClick={() => handleHeightChange("decrease")}
-                className="flex size-7 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black"
+                className="flex size-8 items-center justify-center text-white/60 transition-[transform,background] duration-100 ease-out hover:bg-white/10 active:scale-[0.9] active:bg-white/15 rounded-l-lg"
               >
                 <Minus size={12} />
               </button>
-              <span className="w-6 text-center text-[11px] font-black">{height}</span>
+              <span className="w-7 text-center text-[11px] font-black tabular-nums text-white/80">{height}</span>
               <button
                 type="button"
                 onClick={() => handleHeightChange("increase")}
-                className="flex size-7 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black"
+                className="flex size-8 items-center justify-center text-white/60 transition-[transform,background] duration-100 ease-out hover:bg-white/10 active:scale-[0.9] active:bg-white/15 rounded-r-lg"
               >
                 <Plus size={12} />
               </button>
@@ -438,20 +437,20 @@ export const MobileToolbar = memo(function MobileToolbar({
 
           {/* Размер шрифта */}
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Шрифт</span>
-            <div className="flex items-center gap-1 border-2 border-black bg-black">
+            <span className="text-[10px] font-black uppercase tracking-wider text-white/40">Шрифт</span>
+            <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5">
               <button
                 type="button"
                 onClick={() => handleLabelSizeChange("decrease")}
-                className="flex size-7 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black"
+                className="flex size-8 items-center justify-center text-white/60 transition-[transform,background] duration-100 ease-out hover:bg-white/10 active:scale-[0.9] active:bg-white/15 rounded-l-lg"
               >
                 <Type size={12} className="rotate-180" />
               </button>
-              <span className="w-6 text-center text-[11px] font-black uppercase">{labelSize}</span>
+              <span className="w-7 text-center text-[11px] font-black uppercase tabular-nums text-white/80">{labelSize}</span>
               <button
                 type="button"
                 onClick={() => handleLabelSizeChange("increase")}
-                className="flex size-7 items-center justify-center bg-black text-white hover:bg-[#c1fffe] hover:text-black"
+                className="flex size-8 items-center justify-center text-white/60 transition-[transform,background] duration-100 ease-out hover:bg-white/10 active:scale-[0.9] active:bg-white/15 rounded-r-lg"
               >
                 <Type size={12} />
               </button>
@@ -460,7 +459,7 @@ export const MobileToolbar = memo(function MobileToolbar({
 
           {/* Начертание */}
           <div className="mb-3">
-            <span className="mb-1 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+            <span className="mb-1.5 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white/40">
               <CaseSensitive size={11} />
               Начертание
             </span>
@@ -472,11 +471,11 @@ export const MobileToolbar = memo(function MobileToolbar({
                     key={w}
                     type="button"
                     onClick={() => handleWeightChange(w)}
-                    className={`flex-1 cursor-pointer border-2 border-black px-1 py-1 text-[9px] font-black uppercase tracking-widest transition-all ${
+                    className={`flex-1 cursor-pointer rounded-lg px-1 py-1.5 text-[9px] font-black uppercase tracking-widest transition-[transform,background,color] duration-100 ease-out ${
                       isActive
                         ? "bg-[#c1fffe] text-black"
-                        : "bg-black text-white hover:bg-gray-900"
-                    }`}
+                        : "bg-white/5 text-white/50 hover:bg-white/10"
+                    } active:scale-[0.95]`}
                   >
                     {w === "thin" ? "100" : w === "normal" ? "400" : w === "bold" ? "700" : "900"}
                   </button>
@@ -487,17 +486,17 @@ export const MobileToolbar = memo(function MobileToolbar({
 
           {/* Курсив */}
           <div className="mb-3 flex items-center justify-between">
-            <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-gray-400">
+            <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-white/40">
               <Italic size={12} />
               Курсив
             </span>
             <button
               type="button"
               onClick={handleStyleToggle}
-              className={`cursor-pointer border-2 border-black px-2.5 py-1 text-[10px] font-black uppercase tracking-wider transition-all ${
+              className={`cursor-pointer rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-[transform,background,color] duration-100 ease-out active:scale-[0.95] ${
                 activeTier?.labelStyle === "italic"
                   ? "bg-[#ff51fa] text-black"
-                  : "bg-black text-white hover:bg-gray-900"
+                  : "bg-white/5 text-white/50 hover:bg-white/10"
               }`}
             >
               {activeTier?.labelStyle === "italic" ? "Вкл" : "Выкл"}
@@ -506,7 +505,7 @@ export const MobileToolbar = memo(function MobileToolbar({
 
           {/* Цвет текста */}
           <div>
-            <span className="mb-1.5 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-500">
+            <span className="mb-2 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white/40">
               <Palette size={11} />
               Цвет текста
             </span>
@@ -518,9 +517,11 @@ export const MobileToolbar = memo(function MobileToolbar({
                     key={c.value || "auto"}
                     type="button"
                     onClick={() => handleLabelColorChange(c.value)}
-                    className={`size-5 cursor-pointer border-2 border-black transition-all ${
-                      isActive ? "scale-110 ring-2 ring-[#c1fffe]" : "hover:scale-110"
-                    }`}
+                    className={`size-6 cursor-pointer rounded-lg transition-[transform,box-shadow] duration-100 ease-out ${
+                      isActive
+                        ? "scale-110 ring-2 ring-[#c1fffe] ring-offset-1 ring-offset-[#0e0e0e]"
+                        : "hover:scale-110"
+                    } active:scale-95`}
                     style={{
                       backgroundColor: c.color === "#888" ? undefined : c.color,
                       backgroundImage:

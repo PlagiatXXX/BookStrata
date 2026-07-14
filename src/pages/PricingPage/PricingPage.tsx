@@ -69,13 +69,13 @@ function DonateModal({ onClose }: { onClose: () => void }) {
             <p className="text-sm font-medium text-amber-300 mb-2">
               Реквизиты для перевода
             </p>
-            <div className="flex items-center justify-between rounded-lg bg-black/40 px-4 py-3">
-              <span className="font-mono text-base font-bold text-white tracking-wider">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg bg-black/40 px-4 py-3">
+              <span className="font-mono text-sm sm:text-base font-bold text-white tracking-wider break-all">
                 {cardNumber}
               </span>
               <button
                 onClick={handleCopy}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-200 transition-colors hover:bg-amber-500/20"
+                className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-200 transition-colors hover:bg-amber-500/20 shrink-0"
                 type="button"
               >
                 {copied ? (

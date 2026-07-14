@@ -26,8 +26,8 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
     : NAV_ITEMS.filter((item) => item.label !== "Библиотека");
 
   return (
-    <nav className="fixed left-0 right-0 z-50 md:hidden border-t border-white/10 bg-black" style={{ bottom: bottomOffset, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-      <div className="flex items-center justify-around h-14">
+    <nav className="fixed left-0 right-0 z-50 md:hidden border-t border-white/[0.06] bg-black/85 backdrop-blur-2xl" style={{ bottom: bottomOffset }}>
+      <div className="flex items-stretch h-14">
         {items.map((item) => {
           const isActive = location.pathname === item.path ||
             (item.path !== "/" && item.path !== "/dashboard" && location.pathname.startsWith(item.path));
@@ -37,10 +37,10 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
             <button
               key={item.label}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors cursor-pointer ${
+              className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition-[transform,color] duration-100 ease-out cursor-pointer active:scale-[0.93] ${
                 isActive
                   ? "text-cyan-400"
-                  : "text-gray-400 hover:text-gray-200"
+                  : "text-white/40 hover:text-white active:text-white"
               }`}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}

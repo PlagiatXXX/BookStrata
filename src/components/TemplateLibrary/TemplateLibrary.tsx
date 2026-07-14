@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search, Lock, Star } from "lucide-react";
 
+import { SEOHead } from "@/components/SEO/SEOHead";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Spinner } from "@/components/Spinner";
@@ -430,6 +431,11 @@ const TemplateLibrary: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-dark">
+      <SEOHead
+        title="Шаблоны тир-листов и библиотека"
+        description="Библиотека шаблонов тир-листов BookStrata. Создавайте и публикуйте рейтинги книг, находите вдохновение в работах сообщества."
+        url="/templates"
+      />
       <Header
         onMyRatingsClick={handleGoBack}
         showTemplatesNav

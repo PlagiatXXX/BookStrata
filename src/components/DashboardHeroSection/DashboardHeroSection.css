@@ -133,17 +133,21 @@
   letter-spacing: 0.04em;
   border-radius: 0;
   border: 2px solid #000000;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
   cursor: pointer;
-  box-shadow: 3px 3px 0 0 #000000;
+  position: relative;
 }
 
-/* Primary — «В библиотеку» (важнее, крупнее) */
+/* Primary — «Создать тир-лист» (важнее, крупнее) */
+
 .new-hero__btn--primary {
   padding: 0.7rem 1.5rem;
   font-size: 0.875rem;
   background: #c1fffe;
   color: #000000;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow:
+    4px 4px 0 0 rgba(6, 188, 249, 0.55),
+    9px 9px 0 0 rgba(0, 0, 0, 0.85);
 }
 
 @media (min-width: 640px) {
@@ -155,8 +159,14 @@
 
 .new-hero__btn--primary:hover {
   transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0 0 #000000;
   background: #9cf5f3;
+  box-shadow: none;
+}
+
+.new-hero__btn--primary:active {
+  transform: translate(2px, 2px);
+  transition-duration: 0.08s;
+  box-shadow: none;
 }
 
 /* Secondary — «Смотреть тренды» (менее важна, компактнее) */
@@ -166,6 +176,7 @@
   background: transparent;
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, border-color 0.15s ease;
   box-shadow: 3px 3px 0 0 rgba(255, 255, 255, 0.25);
 }
 
@@ -180,7 +191,13 @@
   background: rgba(255, 255, 255, 0.1);
   border-color: #ffffff;
   transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0 0 rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+}
+
+.new-hero__btn--secondary:active {
+  transform: translate(2px, 2px);
+  transition-duration: 0.08s;
+  box-shadow: none;
 }
 
 .new-hero__btn:focus-visible {

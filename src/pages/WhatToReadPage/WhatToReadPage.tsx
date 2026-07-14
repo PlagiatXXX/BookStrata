@@ -65,7 +65,7 @@ export default function WhatToReadPage() {
               <Link
                 key={mood.slug}
                 to={`/collections/${mood.slug}`}
-                className="brutal-card brutal-border p-5 text-center hover-lift transition-all duration-200 group"
+                className="brutal-card brutal-border p-4 sm:p-5 text-center hover-lift transition-all duration-200 group min-h-[150px] sm:min-h-0"
               >
                 <div className="mb-3 group-hover:scale-110 transition-transform flex items-center justify-center">
                   {mood.image ? (
