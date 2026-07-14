@@ -61,6 +61,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const DIST = resolve(ROOT, "dist");
 
+// Путь к JSON со slug'ами коллекций (fallback, если API бэкенда недоступен)
+const COLLECTION_ROUTES_PATH = resolve(ROOT, "src", "data", "collection-routes.json");
+
 // Публичные маршруты для индексации
 const ROUTES = [
   { path: "/",           name: "Главная" },
@@ -208,35 +211,59 @@ async function addTopicRoutes() {
  * Если бэкенд доступен — добавляет их URL в ROUTES для prerender'а.
  */
 async function addPublicCollectionRoutes() {
+  // Сначала пробуем получить список коллекций с бэкенда (через API)
+  let items = [];
+  let fromApi = false;
+
   try {
     log(`📡 Fetching public collections from ${BACKEND_URL}/api/collections…`);
-    const res = await fetch(`${BACKEND_URL}/api/collections?pageSize=50`);
-    if (!res.ok) {
-      log(`⚠️  API responded with ${res.status}, skipping collection prerender`);
-      return;
-    }
-    const body = await res.json();
-    const items = body.data || [];
-    if (items.length === 0) {
-      log("⚠️  No published collections found, skipping");
-      return;
-    }
-    for (const item of items) {
-      const slug = item.slug;
-      if (!slug) {
-        log(`  ⚠️  Collection "${item.title}" has no slug, skipping`);
-        continue;
+    const res = await fetch(`${BACKEND_URL}/api/collections?pageSize=200`);
+    if (res.ok) {
+      const body = await res.json();
+      items = body.data || [];
+      if (items.length === 0) {
+        log("⚠️  No published collections found via API");
+      } else {
+        log(`✅ API returned ${items.length} collections`);
+        fromApi = true;
+        backendAvailable = true;
       }
-      const path = `/collections/${slug}`;
-      ROUTES.push({ path, name: `Подборка: ${item.title}` });
-      log(`  → ${path} (${item.title})`);
+    } else {
+      log(`⚠️  API responded with ${res.status}`);
     }
-    log(`✅ Added ${items.filter(i => i.slug).length} collections to prerender`);
-    backendAvailable = true;
   } catch (err) {
     log(`⚠️  Cannot reach backend for collections (${BACKEND_URL}): ${err.message}`);
-    log("⚠️  Collection prerender skipped (will work on server during deploy)");
   }
+
+  // Если API недоступен — читаем из JSON-файла (должен быть актуален)
+  if (!fromApi) {
+    log("📂 Falling back to collection-routes.json…");
+    try {
+      const raw = readFileSync(COLLECTION_ROUTES_PATH, "utf-8");
+      items = JSON.parse(raw);
+      if (items.length === 0) {
+        log("⚠️  collection-routes.json is empty");
+        return;
+      }
+      log(`✅ Loaded ${items.length} collections from ${COLLECTION_ROUTES_PATH}`);
+    } catch (jsonErr) {
+      log(`⚠️  Cannot read collection-routes.json: ${jsonErr.message}`);
+      log("⚠️  Collection prerender skipped entirely");
+      return;
+    }
+  }
+
+  for (const item of items) {
+    const slug = item.slug;
+    if (!slug) {
+      log(`  ⚠️  Collection "${item.title}" has no slug, skipping`);
+      continue;
+    }
+    const path = `/collections/${slug}`;
+    ROUTES.push({ path, name: `Подборка: ${item.title}` });
+    log(`  → ${path} (${item.title})`);
+  }
+  log(`✅ Added ${items.filter(i => i.slug).length} collections to prerender`);
 }
 
 const PORT = 4173;

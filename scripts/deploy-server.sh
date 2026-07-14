@@ -162,7 +162,22 @@ if ! check_health; then
   exit 1
 fi
 
-# ——— 10. Prerender для SEO ———
+# ——— 10. Экспорт маршрутов коллекций для prerender'а ———
+# Вычитывает slug + title всех опубликованных коллекций из БД
+# и сохраняет в src/data/collection-routes.json.
+# Это нужно, чтобы prerender не зависел от доступности API (см. #prerender-fix).
+if [ "$SKIP_BUILD" = false ]; then
+  info "Экспорт маршрутов коллекций из БД..."
+  cd "$PROJECT_DIR/backend"
+  if npx tsx scripts/export-collection-routes.ts; then
+    ok "Маршруты коллекций экспортированы"
+  else
+    warn "Не удалось экспортировать коллекции (БД недоступна?) — prerender использует JSON из репы"
+  fi
+  cd "$PROJECT_DIR"
+fi
+
+# ——— 11. Prerender для SEO ———
 # Запускается ПОСЛЕ обновления бэкенда, чтобы API возвращал актуальные данные.
 # dist уже содержит новую сборку (после атомарного swap'а на шаге 7).
 # Prerender пишет HTML прямо в dist/ — дополнительных mv не нужно.

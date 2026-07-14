@@ -17,6 +17,7 @@
     "prisma:generate": "prisma generate",
     "seed": "prisma db seed",
     "seed:export": "tsx scripts/export-collections.ts",
+    "export:collection-routes": "tsx scripts/export-collection-routes.ts",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "cleanup:load-test": "tsx scripts/cleanup-load-test-users.ts"
   },
