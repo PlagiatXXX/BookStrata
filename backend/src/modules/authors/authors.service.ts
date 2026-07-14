@@ -12,6 +12,21 @@ export interface AuthorResult {
   bookCount: number;
 }
 
+/**
+ * Эвристика: похоже ли имя на название книги, а не на автора.
+ */
+export function looksLikeBookTitle(name: string): boolean {
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  // Кавычки-ёлочки — почти всегда книжное название
+  if (/[«»]/.test(trimmed)) return true;
+  // Слишком длинное — не автор (максимум ~100 символов на длинное имя)
+  if (trimmed.length > 100) return true;
+  // Содержит перенос строки
+  if (/\n/.test(trimmed)) return true;
+  return false;
+}
+
 export function createAuthorService(prisma: PrismaClient) {
   /**
    * Найти автора по точному совпадению имени (case-insensitive)
@@ -101,12 +116,14 @@ export function createAuthorService(prisma: PrismaClient) {
       take: limit,
     });
 
-    return authors.map((a) => ({
-      id: a.id,
-      name: a.name,
-      slug: a.slug,
-      bookCount: a._count.books,
-    }));
+    return authors
+      .filter((a) => !looksLikeBookTitle(a.name))
+      .map((a) => ({
+        id: a.id,
+        name: a.name,
+        slug: a.slug,
+        bookCount: a._count.books,
+      }));
   };
 
   return {

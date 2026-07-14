@@ -33,13 +33,17 @@ async function main() {
 
     try {
       const author = await authorService.findOrCreate(book.author);
-      await prisma.book.update({
-        where: { id: book.id },
-        data: { authorId: author.id },
-      });
-      updated++;
-      if (author.bookCount <= 1) {
-        created++;
+      if (author) {
+        await prisma.book.update({
+          where: { id: book.id },
+          data: { authorId: author.id },
+        });
+        updated++;
+        if (author.bookCount <= 1) {
+          created++;
+        }
+      } else {
+        skipped++;
       }
     } catch (err) {
       console.error(`Error updating book ${book.id} ("${book.author}"):`, err);

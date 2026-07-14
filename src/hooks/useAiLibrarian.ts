@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { streamAiChat, checkAiStatus, type ChatMessage, type SseEvent } from '@/lib/aiLibrarianApi'
+import { streamAiChat, checkAiStatus, type ChatMessage, type SseEvent, type AiLibrarianContext } from '@/lib/aiLibrarianApi'
 import { createLogger } from '@/lib/logger'
 
 const logger = createLogger('useAiLibrarian', { color: 'cyan' })
@@ -12,7 +12,7 @@ export interface UseAiLibrarianReturn {
   streamingContent: string
   error: string | null
   status: AiStatus
-  sendMessage: (content: string) => Promise<void>
+  sendMessage: (content: string, context?: AiLibrarianContext) => Promise<void>
   clearMessages: () => void
   refreshStatus: () => void
 }
@@ -39,7 +39,7 @@ export function useAiLibrarian(): UseAiLibrarianReturn {
     refreshStatus()
   }, [refreshStatus])
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, context?: AiLibrarianContext) => {
     if (!content.trim() || isStreaming || status !== 'online') return
 
     setError(null)
@@ -79,7 +79,7 @@ export function useAiLibrarian(): UseAiLibrarianReturn {
     }
 
     try {
-      await streamAiChat(updatedMessages, handleEvent, abortRef.current.signal)
+      await streamAiChat(updatedMessages, handleEvent, abortRef.current.signal, context)
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         if (fullResponse === '') {

@@ -3,12 +3,13 @@ import { Send, X, RotateCcw, Wifi, WifiOff, Loader } from 'lucide-react'
 import { useAiLibrarian, type AiStatus } from '@/hooks/useAiLibrarian'
 import { useAuth } from '@/hooks/useAuthContext'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
-import type { ChatMessage } from '@/lib/aiLibrarianApi'
+import type { ChatMessage, AiLibrarianContext } from '@/lib/aiLibrarianApi'
 import { apiTrackEvent } from '@/lib/analyticsApi'
 
 interface AiLibrarianModalProps {
   isOpen: boolean
   onClose: () => void
+  context?: AiLibrarianContext
 }
 
 function StatusBadge({ status }: { status: AiStatus }) {
@@ -105,7 +106,7 @@ function StreamingBubble({ content }: { content: string }) {
   )
 }
 
-export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
+export function AiLibrarianModal({ isOpen, onClose, context }: AiLibrarianModalProps) {
   const { messages, isStreaming, streamingContent, error, status, sendMessage, clearMessages, refreshStatus } =
     useAiLibrarian()
   const [input, setInput] = useState('')
@@ -146,7 +147,7 @@ export function AiLibrarianModal({ isOpen, onClose }: AiLibrarianModalProps) {
     setInput('')
     window.ym?.(109755750, 'reachGoal', 'ai_librarian')
     apiTrackEvent('ai_librarian_message')
-    await sendMessage(text)
+    await sendMessage(text, context)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

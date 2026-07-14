@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useState, useCallback, useRef } from "react";
-import { X, Star, Hash } from "lucide-react";
+import { X, Star, Hash, Sparkles, Loader } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { Book } from "@/types";
@@ -11,6 +11,7 @@ import type { BookRatingsResult } from "@/lib/ratingsApi";
 import { useAuth } from "@/hooks/useAuthContext";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 import { uploadBookCover } from "@/lib/tierListApi";
+import { generateBookDescription } from "@/lib/aiLibrarianApi";
 import { sileo } from "sileo";
 import AuthorInput from "@/components/AuthorInput/AuthorInput";
 
@@ -180,6 +181,7 @@ export const BookEditModal = ({
   const [state, dispatch] = useReducer(bookFormReducer, INITIAL_STATE);
   const [isCoverDeleteModalOpen, setIsCoverDeleteModalOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { title, author, genre, tagsInput, description, thoughts, coverImageUrl } = state;
 
@@ -296,6 +298,28 @@ export const BookEditModal = ({
     });
     handleClose();
   };
+
+  const handleAiDescribe = useCallback(async () => {
+    if (!title.trim()) {
+      sileo.warning({ title: "Сначала введите название книги" })
+      return
+    }
+    setAiLoading(true)
+    try {
+      const desc = await generateBookDescription(title.trim(), author.trim())
+      if (desc) {
+        dispatch({ type: "SET_DESCRIPTION", description: desc })
+        sileo.success({ title: "Описание сгенерировано" })
+      }
+    } catch (err) {
+      logger.error(err instanceof Error ? err : new Error(String(err)), {
+        action: 'generateBookDescription',
+      })
+      sileo.error({ title: "Не удалось сгенерировать описание" })
+    } finally {
+      setAiLoading(false)
+    }
+  }, [title, author])
 
   const handleClose = () => {
     dispatch({ type: "RESET" });
@@ -521,12 +545,29 @@ export const BookEditModal = ({
                 </div>
 
                 <section className="border-2 border-black bg-[#171717] p-4">
-                  <label
-                    htmlFor="book-description-input"
-                    className={sectionTitleClass}
-                  >
-                    Описание
-                  </label>
+                  <div className="flex items-center justify-between mb-3">
+                    <label
+                      htmlFor="book-description-input"
+                      className={sectionTitleClass}
+                    >
+                      Описание
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleAiDescribe}
+                      disabled={aiLoading || !title.trim()}
+                      className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-cyan-400/30 bg-cyan-400/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300 transition-colors hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      title="Сгенерировать описание через AI"
+                      aria-label="Сгенерировать описание через AI"
+                    >
+                      {aiLoading ? (
+                        <Loader size={12} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={12} />
+                      )}
+                      {aiLoading ? 'Генерация...' : 'AI'}
+                    </button>
+                  </div>
                   <textarea
                     id="book-description-input"
                     value={description}

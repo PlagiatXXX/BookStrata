@@ -1,16 +1,21 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, Plus } from "lucide-react";
+import { TrendingUp, Plus, Sparkles } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { CollectionFlipCard } from "@/components/CommunityComponents/CollectionFlipCard";
+import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { getFeaturedCollections } from "@/lib/collectionsApi";
 import { useAuth } from "@/hooks/useAuthContext";
 
 export default function RankingsPage() {
   const { isAuthenticated } = useAuth();
+  const [isAiOpen, setAiOpen] = useState(false);
+  const handleAiOpen = useCallback(() => setAiOpen(true), []);
+  const handleAiClose = useCallback(() => setAiOpen(false), []);
+
   const {
     data: collections = [],
     isLoading,
@@ -53,6 +58,15 @@ export default function RankingsPage() {
               Редакционные подборки BookStrata — мы собрали лучшие книги по разным жанрам,
               чтобы вам было проще найти что почитать.
             </p>
+            {/* Кнопка AI-библиотекаря */}
+            <button
+              type="button"
+              onClick={handleAiOpen}
+              className="mt-4 inline-flex items-center gap-2 rounded border-2 border-(--accent-main) bg-(--accent-main)/10 px-4 py-2 text-sm font-bold text-(--accent-main) transition-all hover:bg-(--accent-main)/20 cursor-pointer"
+            >
+              <Sparkles size={16} />
+              Спросить у Букстража
+            </button>
           </div>
 
           {/* Сетка коллекций */}
@@ -128,6 +142,12 @@ export default function RankingsPage() {
           </div>
         </div>
       </DashboardLayout>
+
+      <AiLibrarianModal
+        isOpen={isAiOpen}
+        onClose={handleAiClose}
+        context={{ pageType: 'rankings' }}
+      />
     </>
   );
 }

@@ -42,7 +42,7 @@ describe('buildSystemPrompt', () => {
   it('handles empty profile', () => {
     const prompt = buildSystemPrompt(emptyProfile, 'Test')
     expect(prompt).toContain('Test')
-    expect(prompt).not.toContain('Всего оценено книг')
+    expect(prompt).not.toContain('Всего книг в коллекции')
   })
 
   it('includes user name', () => {
@@ -52,7 +52,7 @@ describe('buildSystemPrompt', () => {
 
   it('includes total books count', () => {
     const prompt = buildSystemPrompt(richProfile, 'User')
-    expect(prompt).toContain('Всего оценено книг: 4')
+    expect(prompt).toContain('Всего книг в коллекции: 4')
   })
 
   it('includes tier list names', () => {

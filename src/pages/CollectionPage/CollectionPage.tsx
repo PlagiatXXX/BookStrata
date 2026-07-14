@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Tag, Calendar, BookOpen } from "lucide-react";
+import { Tag, Calendar, BookOpen, Sparkles } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { Helmet } from "react-helmet-async";
@@ -8,6 +8,7 @@ import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { StaticTierView } from "@/components/StaticTierView";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
+import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useReadStatus } from "@/hooks/useReadStatus";
 import { sileo } from "sileo";
@@ -27,6 +28,9 @@ export default function CollectionPage() {
   const [collection, setCollection] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewedBook, setViewedBook] = useState<Book | null>(null);
+  const [isAiOpen, setAiOpen] = useState(false);
+  const handleAiOpen = useCallback(() => setAiOpen(true), []);
+  const handleAiClose = useCallback(() => setAiOpen(false), []);
 
   const currentUserId = authUser?.userId ?? null;
   const [filterGenre, setFilterGenre] = useState<string | null>(null);
@@ -225,6 +229,15 @@ return DOMPurify.sanitize(collection.content);
                 </div>
               )}
             </div>
+            {/* Кнопка AI-библиотекаря */}
+            <button
+              type="button"
+              onClick={handleAiOpen}
+              className="inline-flex items-center gap-2 rounded border-2 border-(--accent-main) bg-(--accent-main)/10 px-4 py-2 text-sm font-bold text-(--accent-main) transition-all hover:bg-(--accent-main)/20 cursor-pointer"
+            >
+              <Sparkles size={16} />
+              Спросить у Букстража
+            </button>
           </div>
         </header>
 
@@ -380,6 +393,12 @@ return DOMPurify.sanitize(collection.content);
           onClose={() => setViewedBook(null)}
           isReadOnly
           hideThoughts
+        />
+
+        <AiLibrarianModal
+          isOpen={isAiOpen}
+          onClose={handleAiClose}
+          context={{ pageType: 'collection', slug }}
         />
 
         {/* Footer */}

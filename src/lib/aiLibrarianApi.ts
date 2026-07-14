@@ -20,6 +20,54 @@ export interface AiStatusResponse {
   model: string | null
 }
 
+export interface AiLibrarianContext {
+  pageType: 'rankings' | 'collection' | 'book-description'
+  slug?: string
+}
+
+export async function generateBookDescription(
+  title: string,
+  author: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  const message = author
+    ? `Напиши описание для книги «${title}» (${author})`
+    : `Напиши описание для книги «${title}»`
+
+  return new Promise<string>((resolve, reject) => {
+    const messages: ChatMessage[] = [{ role: 'user', content: message }]
+    let fullResponse = ''
+    let settled = false
+
+    streamAiChat(
+      messages,
+      (event) => {
+        if (settled) return
+        switch (event.type) {
+          case 'token':
+            fullResponse += event.content
+            break
+          case 'done':
+            settled = true
+            resolve(fullResponse.trim())
+            break
+          case 'error':
+            settled = true
+            reject(new Error(event.message))
+            break
+        }
+      },
+      signal,
+      { pageType: 'book-description' },
+    ).catch((err) => {
+      if (!settled) {
+        settled = true
+        reject(err)
+      }
+    })
+  })
+}
+
 export async function checkAiStatus(): Promise<AiStatusResponse> {
   try {
     return await apiClient.get<AiStatusResponse>('/ai/librarian/status')
@@ -32,14 +80,20 @@ export async function streamAiChat(
   messages: ChatMessage[],
   onEvent: (event: SseEvent) => void,
   signal?: AbortSignal,
+  context?: AiLibrarianContext,
 ): Promise<void> {
+  const body: Record<string, unknown> = { messages }
+  if (context) {
+    body.context = context
+  }
+
   let response = await fetch(`${API_BASE_URL}/ai/librarian/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...getAuthHeader(),
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify(body),
     signal,
   })
 
@@ -52,7 +106,7 @@ export async function streamAiChat(
           'Content-Type': 'application/json',
           ...getAuthHeader(),
         },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify(body),
         signal,
       })
     } catch {

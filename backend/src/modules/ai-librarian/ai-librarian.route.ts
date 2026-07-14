@@ -5,7 +5,8 @@ import { authMiddleware } from '../auth/auth.middleware.js'
 import { ErrorCodes, createApiError } from '../../lib/api-response.js'
 import { ChatRequestSchema } from './ai-librarian.schema.js'
 import { getUserTasteProfile, buildSystemPrompt, streamAiResponse, checkAiStatus } from './ai-librarian.service.js'
-import type { AiChunk } from './ai-librarian.service.js'
+import type { AiChunk, PageContext } from './ai-librarian.service.js'
+import { getCollectionBySlug, getCollections } from '../collections/collection.service.js'
 import { AiRouterError } from './router.js'
 import { createLogger } from '../../lib/logger.js'
 
@@ -45,6 +46,14 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
                 },
               },
             },
+            context: {
+              type: 'object',
+              required: ['pageType'],
+              properties: {
+                pageType: { type: 'string', enum: ['rankings', 'collection', 'book-description'] },
+                slug: { type: 'string' },
+              },
+            },
           },
         },
       },
@@ -72,7 +81,53 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
         )
       }
 
-      const systemPrompt = buildSystemPrompt(tasteProfile, user.username)
+      // Загружаем контекст страницы, если передан
+      let pageContext: PageContext | undefined
+      const rawContext = parsed.data.context
+      if (rawContext) {
+        if (rawContext.pageType === 'collection' && rawContext.slug) {
+          try {
+            const collection = await getCollectionBySlug(rawContext.slug)
+            if (collection) {
+              const tiers = collection.tiers as Record<string, { title: string; bookIds: string[] }> | undefined
+              const books = collection.books as Record<string, { title: string; author?: string | null; genre?: string | null; description?: string | null }> | undefined
+              pageContext = {
+                pageType: 'collection',
+                collection: {
+                  title: collection.title,
+                  slug: collection.slug,
+                  excerpt: collection.excerpt ?? undefined,
+                  editorialNote: collection.editorialNote,
+                  type: collection.type,
+                  tierOrder: collection.tierOrder,
+                  tiers,
+                  books,
+                },
+              }
+            }
+          } catch (err) {
+            logger.warn('Failed to load collection context', { slug: rawContext.slug, error: err instanceof Error ? err.message : String(err) })
+          }
+        }
+
+        if (rawContext.pageType === 'rankings') {
+          try {
+            const result = await getCollections({ isFeatured: true, isPublished: true, pageSize: 50 })
+            pageContext = {
+              pageType: 'rankings',
+              featuredCollections: result.data.map((c) => ({
+                title: c.title,
+                slug: c.slug,
+                editorialNote: c.editorialNote,
+              })),
+            }
+          } catch (err) {
+            logger.warn('Failed to load rankings context', { error: err instanceof Error ? err.message : String(err) })
+          }
+        }
+      }
+
+      const systemPrompt = buildSystemPrompt(tasteProfile, user.username, pageContext)
 
       // Собираем все названия книг пользователя для пост-валидации
       const userBookTitles = [
