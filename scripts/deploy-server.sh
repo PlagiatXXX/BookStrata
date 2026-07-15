@@ -147,7 +147,14 @@ if [ "$SKIP_BUILD" = false ]; then
   ok "dist обновлён (старая версия сохранена в dist.old)"
 fi
 
-# ——— 8. Перезапускаем nginx с новыми файлами ———
+# ——— 8. Создаём SPA-fallback (до prerender) ———
+# spa-index.html — оригинальный index.html (чистый SPA).
+# Нужен nginx для роутов без prerender: try_files $uri ... /spa-index.html.
+# Создаём ДО prerender, чтобы даже если prerender упадёт — SPA-роуты работали.
+cp "$PROJECT_DIR/dist/index.html" "$PROJECT_DIR/dist/spa-index.html"
+ok "SPA-fallback сохранён (spa-index.html)"
+
+# ——— 9. Перезапускаем nginx с новыми файлами ———
 info "Перезапуск nginx..."
 # nginx пересоздаём принудительно: compose кэширует конфиг контейнера, и при
 # изменении volumes старый Created-контейнер может застрять с битыми mount'ами.
@@ -155,14 +162,14 @@ info "Перезапуск nginx..."
 docker compose --profile full up -d --force-recreate nginx
 ok "Nginx перезапущен"
 
-# ——— 9. Healthcheck ———
+# ——— 10. Healthcheck ———
 if ! check_health; then
   err "Деплой завершился, но бэкенд не здоров!"
   err "Откат: bash scripts/deploy-server.sh --rollback"
   exit 1
 fi
 
-# ——— 10. Экспорт маршрутов коллекций для prerender'а ———
+# ——— 11. Экспорт маршрутов коллекций для prerender'а ———
 # Вычитывает slug + title всех опубликованных коллекций из БД
 # и сохраняет в src/data/collection-routes.json.
 # Это нужно, чтобы prerender не зависел от доступности API (см. #prerender-fix).
@@ -180,7 +187,7 @@ if [ "$SKIP_BUILD" = false ]; then
   cd "$PROJECT_DIR"
 fi
 
-# ——— 11. Prerender для SEO ———
+# ——— 12. Prerender для SEO ———
 # Запускается ПОСЛЕ обновления бэкенда, чтобы API возвращал актуальные данные.
 # dist уже содержит новую сборку (после атомарного swap'а на шаге 7).
 # Prerender пишет HTML прямо в dist/ — дополнительных mv не нужно.

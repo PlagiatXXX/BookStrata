@@ -33,9 +33,57 @@
     <link rel="preconnect" href="https://re406cj9uj.cdn.twcstorage.ru" />
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous" />
 
+    <!-- Inline лоадер — виден сразу, пока React не загрузился и не заменил содержимое #root -->
+    <style>
+      #root-loader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #0f172a;
+        color: #94a3b8;
+        font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+        padding: 1rem;
+      }
+      #root-loader .loader-logo {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: #d94f2b;
+        margin-bottom: 1.5rem;
+      }
+      #root-loader .loader-spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid rgba(217, 79, 43, 0.2);
+        border-top-color: #d94f2b;
+        border-radius: 50%;
+        animation: loader-spin 0.8s linear infinite;
+      }
+      @keyframes loader-spin {
+        to { transform: rotate(360deg); }
+      }
+      #root-loader .loader-text {
+        margin-top: 0.75rem;
+        font-size: 0.8125rem;
+        opacity: 0.6;
+        animation: loader-pulse 1.5s ease-in-out infinite;
+      }
+      @keyframes loader-pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 0.3; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="root-loader">
+        <div class="loader-logo">BookStrata</div>
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Загрузка...</div>
+      </div>
+    </div>
     <script type="module" src="./src/app/main.tsx"></script>
   </body>
 </html>
