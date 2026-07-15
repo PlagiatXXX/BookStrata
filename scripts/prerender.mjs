@@ -270,7 +270,8 @@ async function addPublicCollectionRoutes() {
 }
 
 const PORT = 4173;
-const BASE = `http://localhost:${PORT}`;
+const HOST = '127.0.0.1';
+const BASE = `http://${HOST}:${PORT}`;
 
 function log(msg) {
   console.log(`[prerender] ${msg}`);
@@ -374,48 +375,67 @@ const DEFAULT_TITLES = [
  * 2. Fallback: в #root > 2000 символов, нет скелетонов и "Загрузка..."
  * 3. title не равен дефолтному — значит React обновил его через SEOHead
  */
-async function pageHasContent(page) {
-  return page.evaluate((defaultTitles) => {
-    // ── 1. Проверка canonical (самый надёжный для не-корневых страниц) ──
+async function pageHasContent(page, routePath) {
+  const diag = await page.evaluate((defaultTitles) => {
     const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      const href = canonical.getAttribute('href') || '';
-      // Если canonical не просто корень сайта — значит SEOHead с url отработал
-      if (href !== 'https://bookstrata.ru' && href !== 'https://bookstrata.ru/') {
-        return true;
-      }
-    }
+    const canonicalHref = canonical?.getAttribute('href') || null;
 
-    // ── 2. Проверка содержимого root ──
     const root = document.getElementById("root");
-    if (!root) return false;
-    const html = root.innerHTML;
+    const rootHtml = root?.innerHTML || '';
+    const rootText = root?.innerText || '';
+    const rootLen = rootHtml.length;
 
-    // Скелетоны Tailwind используют animate-pulse
-    if (html.includes("animate-pulse")) return false;
-    // Если текст содержит "Загрузка..." — ещё не готово
-    if (html.includes("Загрузка...") || html.includes("Загрузка")) return false;
-    // Если в корне меньше 2000 символов — вероятно, загрузка
-    if (html.length < 2000) return false;
-
-    // ── 3. Проверка title (только если он не дефолтный) ──
     const title = document.title || '';
-    if (!defaultTitles.includes(title) && title.includes('| BookStrata')) {
-      return true;
-    }
 
-    return false;
+    const hasAnimatePulse = rootHtml.includes("animate-pulse");
+    const hasLoading = rootHtml.includes("Загрузка...") || rootHtml.includes("Загрузка");
+    const hasContent = rootLen >= 2000 && !hasAnimatePulse && !hasLoading;
+
+    const isCanonicalSet = canonicalHref !== null
+      && canonicalHref !== 'https://bookstrata.ru'
+      && canonicalHref !== 'https://bookstrata.ru/';
+
+    const isTitleSet = !defaultTitles.includes(title) && title.includes('| BookStrata');
+
+    return {
+      rootLen,
+      rootPreview: rootText.slice(0, 300),
+      hasAnimatePulse,
+      hasLoading,
+      hasContent,
+      canonicalHref,
+      isCanonicalSet,
+      title,
+      isTitleSet,
+    };
   }, DEFAULT_TITLES);
+
+  // Логируем раз в 2 секунды (каждый 4-й check при интервале 500ms)
+  if (!pageHasContent._counter) pageHasContent._counter = 0;
+  pageHasContent._counter++;
+  if (pageHasContent._counter % 4 === 1) {
+    log(`  🔍 Content check [${routePath}]: len=${diag.rootLen}, pulse=${diag.hasAnimatePulse}, loading=${diag.hasLoading}, canonical="${diag.canonicalHref?.slice(0, 60)}", title="${diag.title?.slice(0, 60)}"`);
+    if (diag.rootPreview) {
+      log(`  🔍  root preview: ${diag.rootPreview.slice(0, 200).replace(/\n/g, ' ')}`);
+    }
+  }
+
+  // Собственно проверка — те же критерии, что и раньше
+  if (diag.isCanonicalSet) return true;
+  if (diag.hasContent) return true;
+  if (diag.isTitleSet) return true;
+
+  return false;
 }
 
 /**
  * Ждёт, пока на странице появится реальный контент.
  * Проверяет каждые 500 мс, максимум timeout мс.
  */
-async function waitForContent(page, timeout = PAGE_TIMEOUT) {
+async function waitForContent(page, timeout = PAGE_TIMEOUT, routePath = '') {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
-    if (await pageHasContent(page)) return true;
+    if (await pageHasContent(page, routePath)) return true;
     await page.waitForTimeout(500);
   }
   return false;
@@ -481,6 +501,25 @@ async function processRoute(browser, route) {
     // Перехватываем консольные ошибки (не даём им упасть в reject)
     page.on("pageerror", (err) => {
       log(`  ⚠️  JS error on ${route.path}: ${err.message}`);
+      log(`  ⚠️  Stack: ${err.stack?.split('\n').slice(0, 6).join(' → ')}`);
+    });
+
+    // Логируем все API-запросы, которые делает браузер
+    page.on("request", (req) => {
+      if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
+        log(`  🌐 Request: ${req.method()} ${req.url()}`);
+      }
+    });
+    page.on("requestfinished", (req) => {
+      if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
+        const resp = req.response();
+        log(`  🌐 Response: ${req.method()} ${req.url()} → ${resp?.status() || 'no-resp'}`);
+      }
+    });
+    page.on("requestfailed", (req) => {
+      if (req.url().includes('/api/')) {
+        log(`  🌐 FAILED: ${req.method()} ${req.url()} → ${req.failure()?.errorText || 'unknown'}`);
+      }
     });
 
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
@@ -488,7 +527,7 @@ async function processRoute(browser, route) {
     // ── Ждём реальный контент (проверка каждые 500 мс) ──
     // Для динамических страниц (тир-листы, коллекции) даём больше времени
     const contentTimeout = (isTierList || isCollection) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
-    const contentLoaded = await waitForContent(page, contentTimeout);
+    const contentLoaded = await waitForContent(page, contentTimeout, route.path);
 
     // ── Дополнительно ждём обновления title (useEffect SEOHead) ──
     // После того как canonical/og-теги обновились (Helmet), нужно дать время
@@ -714,8 +753,8 @@ async function prerender() {
       res.end("Not found");
     });
 
-    server.listen(PORT, "127.0.0.1", () => {
-      log(`  Server listening on http://127.0.0.1:${PORT}`);
+    server.listen(PORT, HOST, () => {
+      log(`  Server listening on http://${HOST}:${PORT}`);
       resolveServer();
     });
   });
