@@ -93,6 +93,11 @@ function proxyApiRequest(req, res) {
   const send = (status, headers, body) => {
     if (done) return;
     done = true;
+    // Обязательно указываем Content-Length — без него при keep-alive браузер
+    // не узнает, где конец ответа, и fetch() зависнет навсегда.
+    if (body && !headers['content-length'] && !headers['transfer-encoding']) {
+      headers['content-length'] = Buffer.byteLength(body, 'utf-8');
+    }
     res.writeHead(status, headers);
     res.end(body);
   };
@@ -115,7 +120,9 @@ function proxyApiRequest(req, res) {
         console.log('[PRERENDER API RESPONSE]', apiRes.status, apiRes.headers.get('content-type'), apiRes.headers.get('content-length'));
         const responseHeaders = {};
         for (const [key, value] of apiRes.headers.entries()) {
-          if (!["content-encoding", "transfer-encoding", "content-length", "connection"].includes(key)) {
+          // Content-Length НЕ удаляем — иначе при keep-alive браузер не узнает,
+          // где конец ответа, и fetch() никогда не завершится.
+          if (!["content-encoding", "transfer-encoding", "connection"].includes(key)) {
             responseHeaders[key] = value;
           }
         }
@@ -387,7 +394,12 @@ async function pageHasContent(page, routePath) {
 
     const title = document.title || '';
 
-    const hasAnimatePulse = rootHtml.includes("animate-pulse");
+    // Проверяем animate-pulse только внутри <main>, чтобы не ловить
+    // декоративный пульс в Footer (там cyan-500 точка с animate-pulse).
+    const main = document.querySelector('main');
+    const mainHtml = main?.innerHTML || '';
+    const hasAnimatePulse = mainHtml.includes("animate-pulse");
+
     const hasLoading = rootHtml.includes("Загрузка...") || rootHtml.includes("Загрузка");
     const hasContent = rootLen >= 2000 && !hasAnimatePulse && !hasLoading;
 
@@ -504,22 +516,38 @@ async function processRoute(browser, route) {
       log(`  ⚠️  Stack: ${err.stack?.split('\n').slice(0, 6).join(' → ')}`);
     });
 
-    // Логируем все API-запросы, которые делает браузер
+    // Трекинг запросов для диагностики: запросы, которые начались, но не завершились
+    const pendingApiRequests = new Map();
+
     page.on("request", (req) => {
       if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
+        pendingApiRequests.set(req.url(), { method: req.method(), start: Date.now() });
         log(`  🌐 Request: ${req.method()} ${req.url()}`);
       }
     });
     page.on("requestfinished", (req) => {
       if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
+        pendingApiRequests.delete(req.url());
         const resp = req.response();
-        log(`  🌐 Response: ${req.method()} ${req.url()} → ${resp?.status || 'no-resp'}`);
+        const status = resp ? resp.status : 'no-resp';
+        log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
+        if (!resp) {
+          log(`  ⚠️  Response object is null — request was likely aborted or failed silently`);
+        }
       }
     });
     page.on("requestfailed", (req) => {
       if (req.url().includes('/api/')) {
+        pendingApiRequests.delete(req.url());
         log(`  🌐 FAILED: ${req.method()} ${req.url()} → ${req.failure()?.errorText || 'unknown'}`);
       }
+    });
+
+    // Ловим unhandled promise rejections в браузере
+    await page.evaluate(() => {
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('UNHANDLED PROMISE REJECTION:', event.reason?.message || event.reason);
+      });
     });
 
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
@@ -541,7 +569,85 @@ async function processRoute(browser, route) {
     let finalTitle = await page.title();
 
     if (!contentLoaded) {
-      log(`  ⚡ Контент не загрузился, генерирую fallback…`);
+      log(`  ⚡ Контент не загрузился, диагностика…`);
+
+      // Логируем зависшие API-запросы
+      if (pendingApiRequests.size > 0) {
+        log(`  ⚠️  Зависшие API-запросы (${pendingApiRequests.size}):`);
+        for (const [url, info] of pendingApiRequests) {
+          const elapsed = Date.now() - info.start;
+          log(`  ⚠️    ${info.method} ${url} (${elapsed}ms)`);
+        }
+      } else {
+        log(`  ✓ Все API-запросы завершились`);
+      }
+
+      // Проверяем доступность бэкенда из браузера прямым fetch (таймаут 5с)
+      try {
+        const fetchTest = await page.evaluate(async () => {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const resp = await fetch('/api/health', { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!resp.ok) return { error: `HTTP ${resp.status}` };
+            const text = await resp.text();
+            return { ok: true, status: resp.status, body: text.slice(0, 200) };
+          } catch (err) {
+            return { error: err.message || String(err) };
+          }
+        });
+        log(`  🔬 Direct fetch /api/health: ${JSON.stringify(fetchTest)}`);
+      } catch (e) {
+        log(`  ⚠️  Fetch test error: ${e.message}`);
+      }
+
+      // Ищем в DOM данные из API — коллекции, категории, ошибки
+      try {
+        const domContent = await page.evaluate(() => {
+          const root = document.getElementById('root');
+          if (!root) return { error: 'root not found' };
+          const html = root.innerHTML;
+          
+          // Ищем признаки данных из API
+          const hasCollectionCard = html.includes('collection-card') || html.includes('CollectionCard');
+          const hasCategoryLabel = html.includes('horror') || html.includes('dystopia') || html.includes('romance');
+          const hasTitle = html.includes('h1') || html.includes('<h1');
+          const hasErrorState = html.includes('не найдена') || html.includes('не загрузилась') || html.includes('ошибка');
+          const hasAnimatePulse = html.includes('animate-pulse');
+          const textLen = root.innerText.length;
+          
+          return {
+            textLen,
+            hasCollectionCard,
+            hasCategoryLabel,
+            hasTitle,
+            hasErrorState,
+            hasAnimatePulse,
+            // Смотрим первые 500 символов innerText (без лишних пробелов)
+            textPreview: root.innerText.slice(0, 300).replace(/\s+/g, ' ').trim(),
+          };
+        });
+        log(`  🔬 DOM content: len=${domContent.textLen}, card=${domContent.hasCollectionCard}, cat=${domContent.hasCategoryLabel}, err=${domContent.hasErrorState}, pulse=${domContent.hasAnimatePulse}`);
+        log(`  🔬 DOM preview: ${domContent.textPreview?.slice(0, 200)}`);
+      } catch (e) {
+        log(`  ⚠️  DOM diagnostic error: ${e.message}`);
+      }
+
+      // Проверяем, есть ли в <head> данные от SEOHead
+      try {
+        const headDiag = await page.evaluate(() => {
+          const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href');
+          const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content');
+          const desc = document.querySelector('meta[name="description"]')?.getAttribute('content');
+          return { canonical, ogTitle, desc };
+        });
+        log(`  🔬 Head: canonical="${headDiag.canonical}" og:title="${headDiag.ogTitle}"`);
+      } catch (e) {
+        log(`  ⚠️  Head diagnostic error: ${e.message}`);
+      }
+
+      log(`  ⚡ Генерирую fallback…`);
 
       let fallbackTitle, fallbackDesc, canonicalPath;
       let fallbackBodyHtml = "";
