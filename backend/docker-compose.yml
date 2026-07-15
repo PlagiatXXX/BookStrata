@@ -46,6 +46,8 @@ services:
       - 1.1.1.1
     expose:
       - "8080"
+    ports:
+      - "127.0.0.1:8080:8080"
     env_file:
       - .env
     depends_on:
