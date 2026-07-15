@@ -63,10 +63,16 @@ async function request<T>(
     } catch {
       handleUnauthorized();
     }
-    sileo.error({
-      title: "Сессия истекла",
-      description: "Пожалуйста, войдите в систему снова",
-    });
+    // Не показываем тост для auth/refresh — при пререндере нет сессии, это штатная ситуация.
+    // Также скрываем тост если страница в Prerendering API (Google/Yandex боты).
+    const isAuthRefresh = path.includes("/auth/refresh");
+    const isPrerendering = typeof document !== "undefined" && "prerendering" in document;
+    if (!isAuthRefresh && !isPrerendering) {
+      sileo.error({
+        title: "Сессия истекла",
+        description: "Пожалуйста, войдите в систему снова",
+      });
+    }
     throw new Error("Требуется авторизация");
   }
 

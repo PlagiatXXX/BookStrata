@@ -24,6 +24,7 @@ import { useNsfwCheck } from "@/hooks/useNsfwCheck";
 import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
 import { apiCreateFlag } from "@/lib/moderationApi";
 import type { NsfwResult } from "@/hooks/useNsfwCheck";
+import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import "./TierEditorPage.css";
 import type { Book, Tier } from "@/types";
@@ -559,6 +560,55 @@ const TierListEditorContent = () => {
           ]}
         />
       )}
+
+      {/* ItemList + Book JSON-LD для публичных тир-листов (SEO) */}
+      {isPublic && apiData && Object.keys(listData.books).length > 0 && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              name: apiData.title,
+              description: `Тир-лист «${apiData.title}» — визуальный рейтинг книг, созданный на BookStrata`,
+              url: `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}/tier-lists/${pageUrl}`,
+              author: apiData.user
+                ? { "@type": "Person", name: apiData.user.username || "Anonymous" }
+                : undefined,
+              itemListElement: listData.tierOrder
+                .map((tierId) => {
+                  const tier = listData.tiers[tierId];
+                  if (!tier) return [];
+                  return tier.bookIds
+                    .map((bookId, index) => {
+                      const book = listData.books[bookId];
+                      if (!book) return null;
+                      return {
+                        "@type": "ListItem",
+                        position: index + 1,
+                        item: {
+                          "@type": "Book",
+                          name: book.title,
+                          author: book.author
+                            ? { "@type": "Person", name: book.author }
+                            : undefined,
+                          ...(book.coverImageUrl
+                            ? { image: book.coverImageUrl }
+                            : {}),
+                          ...(book.description
+                            ? { description: book.description }
+                            : {}),
+                          position: tier.title,
+                        },
+                      };
+                    })
+                    .filter(Boolean);
+                })
+                .flat(),
+            })}
+          </script>
+        </Helmet>
+      )}
+
       <EditorScreens
         isLoading={isLoading}
         isError={isError}
