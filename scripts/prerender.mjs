@@ -107,8 +107,13 @@ function proxyApiRequest(req, res) {
   req.on("end", async () => {
     try {
       const body = bodyChunks.length > 0 ? Buffer.concat(bodyChunks) : undefined;
+      // Для POST/PUT/PATCH с телом обязательно передаём Content-Type.
+      // Если клиент не указал — ставим application/json (типичный случай для API).
+      const hasBody = ['POST', 'PUT', 'PATCH'].includes(req.method) && bodyChunks.length > 0;
+      const contentType = req.headers["content-type"]
+        || (hasBody ? "application/json" : "");
       const headers = {
-        "content-type": req.headers["content-type"] || "",
+        "content-type": contentType,
         accept: req.headers["accept"] || "application/json",
         "user-agent": req.headers["user-agent"] || "prerender",
       };
@@ -371,6 +376,7 @@ const PAGE_TIMEOUT_DYNAMIC = 30_000;
 const DEFAULT_TITLES = [
   'BookStrata — интерактивный рейтинг книг, твоё книжное пространство | BookStrata',
   'Интерактивный рейтинг книг — топ лучших книг и что почитать | BookStrata',
+  'Главная | BookStrata',
 ];
 
 /**
@@ -487,27 +493,30 @@ async function processRoute(browser, route) {
   const page = await context.newPage();
 
   try {
-    // Специфичные эндпоинты (регистрируем ДО **/api/** — Playwright проверяет по порядку,
-    // первый matching handler побеждает, поэтому специфичные должны быть первыми)
-    await page.route("**/api/auth/refresh", (route) => route.fulfill({
-      status: 401,
-      contentType: "application/json",
-      body: JSON.stringify({ error: "Unauthorized" }),
-    }));
+    // API-прокси через Playwright: перехватываем запросы, чтобы
+    // auth/refresh всегда возвращал 401 (нет сессии при пререндере),
+    // а остальные проксируем на реальный бэкенд.
     await page.route("**/api/log", (route) => route.fulfill({
       status: 200,
       contentType: "application/json",
       body: "{}",
     }));
 
-    // Прокси для всех остальных API-запросов напрямую к бэкенду (обходит локальный сервер)
     if (backendAvailable) {
       await page.route("**/api/**", async (route) => {
         const req = route.request();
+        // Auth/refresh: всегда 401 — при пререндере нет сессии
+        if (req.url().includes('/auth/refresh')) {
+          await route.fulfill({
+            status: 401,
+            contentType: "application/json",
+            body: JSON.stringify({ error: "Unauthorized" }),
+          });
+          return;
+        }
         const targetUrl = req.url().replace(BASE, BACKEND_URL);
 
         try {
-          // Копируем заголовки, исключая проблемные для сброса keep-alive
           const headers = {};
           for (const [key, value] of Object.entries(req.headers())) {
             if (!['host', 'connection', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) {
@@ -524,13 +533,10 @@ async function processRoute(browser, route) {
           const body = await response.text();
           const responseHeaders = {};
           for (const [key, value] of response.headers.entries()) {
-            // Content-Length пересчитываем сами — `response.text()` декодирует,
-            // а `route.fulfill()` ожидает точную длину
             if (!['content-encoding', 'transfer-encoding', 'connection', 'content-length'].includes(key)) {
               responseHeaders[key] = value;
             }
           }
-          // Всегда ставим правильный Content-Length в байтах (UTF-8)
           responseHeaders['content-length'] = String(Buffer.byteLength(body, 'utf-8'));
 
           await route.fulfill({
@@ -547,7 +553,9 @@ async function processRoute(browser, route) {
       await page.route("**/api/**", (route) => route.abort());
     }
 
+    // Блокируем внешние запросы, не нужные при пререндере
     await page.route("**/sitemap.xml", (route) => route.abort());
+    await page.route("**/sentry.io/**", (route) => route.abort());
 
     // Логи браузера для диагностики
     page.on("console", (msg) => {
@@ -563,26 +571,38 @@ async function processRoute(browser, route) {
     const pendingApiRequests = new Map();
 
     page.on("request", (req) => {
-      if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
-        pendingApiRequests.set(req.url(), { method: req.method(), start: Date.now() });
-        log(`  🌐 Request: ${req.method()} ${req.url()}`);
+      try {
+        if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
+          pendingApiRequests.set(req.url(), { method: req.method(), start: Date.now() });
+          log(`  🌐 Request: ${req.method()} ${req.url()}`);
+        }
+      } catch {
+        // Игнорируем — страница/контекст могли быть уже закрыты
       }
     });
     page.on("requestfinished", (req) => {
-      if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
-        pendingApiRequests.delete(req.url());
-        const resp = req.response();
-        const status = resp ? resp.status : 'no-resp';
-        log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
-        if (!resp) {
-          log(`  ⚠️  Response object is null — request was likely aborted or failed silently`);
+      try {
+        if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
+          pendingApiRequests.delete(req.url());
+          const resp = req.response();
+          const status = resp ? resp.status : 'no-resp';
+          log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
+          if (!resp) {
+            log(`  ⚠️  Response object is null — request was likely aborted or failed silently`);
+          }
         }
+      } catch {
+        // Игнорируем — страница/контекст могли быть уже закрыты
       }
     });
     page.on("requestfailed", (req) => {
-      if (req.url().includes('/api/')) {
-        pendingApiRequests.delete(req.url());
-        log(`  🌐 FAILED: ${req.method()} ${req.url()} → ${req.failure()?.errorText || 'unknown'}`);
+      try {
+        if (req.url().includes('/api/')) {
+          pendingApiRequests.delete(req.url());
+          log(`  🌐 FAILED: ${req.method()} ${req.url()} → ${req.failure()?.errorText || 'unknown'}`);
+        }
+      } catch {
+        // Игнорируем — страница/контекст могли быть уже закрыты
       }
     });
 
