@@ -99,7 +99,7 @@ export function useTierEditorSave({
       let effectiveId = isNumericId || isUuid ? listData.id : tierListId;
 
       if (!isNumericId && !isUuid) {
-        // Создаём новый тир-лист (только для temp ID черновика)
+        // Создаём новый тир-лист
         const created = await createTierList(listData.title || "Новый тир-лист");
         effectiveId = String(created.id);
 
@@ -114,13 +114,6 @@ export function useTierEditorSave({
           type: "SET_STATE",
           payload: { ...listData, id: effectiveId, tierIdToTempIdMap: {} },
         });
-
-        // Переносим черновик под новый ID
-        const draft = localStorage.getItem(`tier-list-draft-${tierListId}`);
-        if (draft) {
-          localStorage.setItem(`tier-list-draft-${effectiveId}`, draft);
-          localStorage.removeItem(`tier-list-draft-${tierListId}`);
-        }
 
         // Сохраняем тему, если она выбрана нестандартная
         if (theme && theme !== "default") {
@@ -149,10 +142,6 @@ export function useTierEditorSave({
           payload: result.tierReplacements,
         });
       }
-
-      // Очищаем черновик после успешного сохранения
-      localStorage.removeItem(`tier-list-draft-${effectiveId}`);
-      localStorage.setItem(`tier-list-saved-${effectiveId}`, String(Date.now()));
 
       // Сохраняем snapshot для последующего сравнения
       savedSnapshotRef.current = serializeSnapshot(payload);

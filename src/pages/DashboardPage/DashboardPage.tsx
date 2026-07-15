@@ -281,6 +281,7 @@ export default function DashboardPage() {
         <AiLibrarianModal
           isOpen={isAiLibrarianOpen}
           onClose={handleAiLibrarianClose}
+          variant="sidebar"
         />
       )}
 

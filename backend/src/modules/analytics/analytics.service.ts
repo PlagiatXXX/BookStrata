@@ -228,8 +228,6 @@ export function createAnalyticsService(prisma: PrismaClient) {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const last30Start = new Date(todayStart.getTime() - 29 * 24 * 60 * 60 * 1000)
     const prev30Start = new Date(todayStart.getTime() - 59 * 24 * 60 * 60 * 1000)
-    const prev30End = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000)
-
     const [dau, mau, prevActiveUsers] = await Promise.all([
       // DAU: уникальные userId за сегодня (не null)
       prisma.analyticsEvent.findMany({

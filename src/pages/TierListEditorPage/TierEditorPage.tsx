@@ -18,7 +18,6 @@ import { useTierEditorQueries } from "./hooks/useTierEditorQueries";
 import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
-import { useTierEditorDraft } from "./hooks/useTierEditorDraft";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
 import { useNsfwCheck } from "@/hooks/useNsfwCheck";
 import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
@@ -173,22 +172,6 @@ const TierListEditorContent = () => {
     logger,
     theme,
   });
-
-  const { checkAndRestoreDraft } = useTierEditorDraft({
-    tierListId,
-    listData,
-    hasUnsavedChanges,
-    dispatch: dispatch as React.Dispatch<Action>,
-    setHasUnsavedChanges,
-    isLoading,
-    sileo,
-  });
-
-  useEffect(() => {
-    if (!isLoading) {
-      checkAndRestoreDraft();
-    }
-  }, [tierListId, checkAndRestoreDraft, isLoading]);
 
   // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
   useEffect(() => {

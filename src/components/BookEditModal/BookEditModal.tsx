@@ -132,7 +132,7 @@ const sectionTitleClass =
   "mb-3 block text-[11px] font-bold uppercase tracking-[0.14em] text-[#c1fffe]";
 
 const inputClass =
-  "w-full border-2 border-black bg-[#0a0a0a] px-4 py-3 text-sm text-[#f6f1e8] placeholder:text-[#676767] outline-none transition-colors focus:border-[#c1fffe]";
+  "w-full border-2 border-black bg-[#0a0a0a] px-4 py-3 text-sm text-[#f6f1e8] placeholder:text-[#676767] outline-none transition-colors focus:border-[#c1fffe] max-md:px-3 max-md:py-2 max-md:text-xs";
 
 const textareaClass = `${inputClass} resize-none`;
 
@@ -350,7 +350,7 @@ export const BookEditModal = ({
       <Modal
         isOpen={isOpen}
         onClose={handleSaveAndClose}
-        className="max-w-[65vw] min-w-[700px] max-md:min-w-0 max-md:max-w-full"
+        className="max-w-[65vw] min-w-[700px] max-md:min-w-0 max-md:max-w-full max-md:mx-2"
         titleId="book-edit-title"
       >
       <div
@@ -366,7 +366,7 @@ export const BookEditModal = ({
           <X size={14} />
         </button>
 
-        <div className="border-b-2 border-black bg-[#181818] px-5 py-4">
+        <div className="border-b-2 border-black bg-[#181818] px-5 py-4 max-md:px-3 max-md:py-3">
           <div className="pr-12">
             <p
               id="book-edit-title"
@@ -379,7 +379,7 @@ export const BookEditModal = ({
             </p>
 
             {/* Строка: Название + Жанр */}
-            <div className="grid grid-cols-[1fr_1fr] gap-4">
+            <div className="grid grid-cols-[1fr_1fr] gap-4 max-md:grid-cols-1">
               <div>
                 <label
                   htmlFor="book-title-input"
@@ -394,7 +394,6 @@ export const BookEditModal = ({
                   onChange={(e) =>
                     dispatch({ type: "SET_TITLE", title: e.target.value })
                   }
-                  autoFocus
                   maxLength={100}
                   className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
                   placeholder="Введите название книги"
@@ -428,7 +427,7 @@ export const BookEditModal = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-[#111111] p-6">
+        <div className="flex-1 overflow-y-auto bg-[#111111] p-6 max-md:p-3">
           <div className="flex flex-col gap-6">
             <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)]">
               <section className="border-2 border-black bg-[#171717] p-3">
@@ -495,7 +494,7 @@ export const BookEditModal = ({
 
               <div className="grid gap-6">
                 {/* Строка: Автор + Теги */}
-                <div className="grid grid-cols-[1fr_1fr] gap-4">
+                <div className="grid grid-cols-[1fr_1fr] gap-4 max-md:grid-cols-1">
                   <section className="border-2 border-black bg-[#171717] p-4">
                     <label
                       htmlFor="book-author-input"
@@ -694,7 +693,7 @@ export const BookEditModal = ({
           </div>
         </div>
 
-        <div className="flex shrink-0 justify-end border-t-2 border-black bg-[#0a0a0a] px-5 py-3">
+        <div className="flex shrink-0 justify-end border-t-2 border-black bg-[#0a0a0a] px-5 py-3 max-md:px-3 max-md:py-2">
           <Button
             variant="ghost"
             onClick={handleSaveAndClose}

@@ -193,7 +193,7 @@ describe("DashboardPage", () => {
 
     // Модалка открывается — проверяем наличие заголовка
     await waitFor(() => {
-      expect(screen.getByText("BookStrata AI")).toBeInTheDocument();
+      expect(screen.getByText("Твой личный ИИ-библиотекарь")).toBeInTheDocument();
     });
   });
 
