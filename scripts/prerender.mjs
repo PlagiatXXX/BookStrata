@@ -487,14 +487,8 @@ async function processRoute(browser, route) {
   const page = await context.newPage();
 
   try {
-    // Блокируем запросы к API, только если бэкенд недоступен
-    if (!backendAvailable) {
-      await page.route("**/api/**", (route) => route.abort());
-    }
-    await page.route("**/sitemap.xml", (route) => route.abort());
-
-    // Блокируем эндпоинты, которые возвращают 404 в пререндере.
-    // Используем fulfill вместо abort, чтобы не вызывать network error в React.
+    // Специфичные эндпоинты (регистрируем ДО **/api/** — Playwright проверяет по порядку,
+    // первый matching handler побеждает, поэтому специфичные должны быть первыми)
     await page.route("**/api/auth/refresh", (route) => route.fulfill({
       status: 401,
       contentType: "application/json",
@@ -505,6 +499,55 @@ async function processRoute(browser, route) {
       contentType: "application/json",
       body: "{}",
     }));
+
+    // Прокси для всех остальных API-запросов напрямую к бэкенду (обходит локальный сервер)
+    if (backendAvailable) {
+      await page.route("**/api/**", async (route) => {
+        const req = route.request();
+        const targetUrl = req.url().replace(BASE, BACKEND_URL);
+
+        try {
+          // Копируем заголовки, исключая проблемные для сброса keep-alive
+          const headers = {};
+          for (const [key, value] of Object.entries(req.headers())) {
+            if (!['host', 'connection', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) {
+              headers[key] = value;
+            }
+          }
+
+          const response = await fetch(targetUrl, {
+            method: req.method(),
+            headers,
+            body: ['POST', 'PUT', 'PATCH'].includes(req.method()) ? req.postDataBuffer() : undefined,
+          });
+
+          const body = await response.text();
+          const responseHeaders = {};
+          for (const [key, value] of response.headers.entries()) {
+            // Content-Length пересчитываем сами — `response.text()` декодирует,
+            // а `route.fulfill()` ожидает точную длину
+            if (!['content-encoding', 'transfer-encoding', 'connection', 'content-length'].includes(key)) {
+              responseHeaders[key] = value;
+            }
+          }
+          // Всегда ставим правильный Content-Length в байтах (UTF-8)
+          responseHeaders['content-length'] = String(Buffer.byteLength(body, 'utf-8'));
+
+          await route.fulfill({
+            status: response.status,
+            headers: responseHeaders,
+            body,
+          });
+        } catch (err) {
+          log(`  ⚠️ API proxy error for ${req.url()}: ${err.message}`);
+          await route.fulfill({ status: 502, contentType: 'text/plain', body: 'Backend unavailable' });
+        }
+      });
+    } else {
+      await page.route("**/api/**", (route) => route.abort());
+    }
+
+    await page.route("**/sitemap.xml", (route) => route.abort());
 
     // Логи браузера для диагностики
     page.on("console", (msg) => {
