@@ -513,7 +513,7 @@ async function processRoute(browser, route) {
     page.on("requestfinished", (req) => {
       if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
         const resp = req.response();
-        log(`  🌐 Response: ${req.method()} ${req.url()} → ${resp?.status() || 'no-resp'}`);
+        log(`  🌐 Response: ${req.method()} ${req.url()} → ${resp?.status || 'no-resp'}`);
       }
     });
     page.on("requestfailed", (req) => {
