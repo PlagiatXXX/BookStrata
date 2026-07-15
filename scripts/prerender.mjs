@@ -110,7 +110,9 @@ function proxyApiRequest(req, res) {
 
       // Пытаемся сначала https, при ошибке — http (fallback для самоподписанных сертификатов)
       const tryFetch = async (url) => {
+        console.log('[PRERENDER API]', url);
         const apiRes = await fetch(url, { method: req.method, headers, body });
+        console.log('[PRERENDER API RESPONSE]', apiRes.status, apiRes.headers.get('content-type'), apiRes.headers.get('content-length'));
         const responseHeaders = {};
         for (const [key, value] of apiRes.headers.entries()) {
           if (!["content-encoding", "transfer-encoding", "content-length", "connection"].includes(key)) {
@@ -118,6 +120,7 @@ function proxyApiRequest(req, res) {
           }
         }
         const text = await apiRes.text();
+        console.log('[PRERENDER API BODY]', text.slice(0, 500));
         log(`  Proxy: ${req.method} ${req.url} → ${apiRes.status} (${(apiRes.headers.get("content-type") || "no type").split(";")[0]}, ${text.length}B)`);
         send(apiRes.status, responseHeaders, text);
       };
@@ -471,6 +474,10 @@ async function processRoute(browser, route) {
       body: "{}",
     }));
 
+    // Логи браузера для диагностики
+    page.on("console", (msg) => {
+      log(`  🖥️ [${msg.type()}] ${msg.text()}`);
+    });
     // Перехватываем консольные ошибки (не даём им упасть в reject)
     page.on("pageerror", (err) => {
       log(`  ⚠️  JS error on ${route.path}: ${err.message}`);
