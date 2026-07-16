@@ -6,17 +6,18 @@ import {
 import sharp from 'sharp'
 import crypto from 'node:crypto'
 import type { ImageStorageService, UploadResult } from './types.js'
+import { config } from '../../config/env.js'
 
-const S3_BUCKET = process.env.S3_BUCKET
+const S3_BUCKET = config.S3_BUCKET
 if (!S3_BUCKET) {
   throw new Error('S3_BUCKET environment variable is required for S3 storage')
 }
 
-const S3_ENDPOINT = process.env.S3_ENDPOINT || 'https://storage.yandexcloud.net'
-const S3_REGION = process.env.S3_REGION || 'ru-central1'
-const S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID || ''
-const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY || ''
-const S3_PUBLIC_HOST = process.env.S3_PUBLIC_HOST || 'storage.yandexcloud.net'
+const S3_ENDPOINT = config.S3_ENDPOINT
+const S3_REGION = config.S3_REGION
+const S3_ACCESS_KEY_ID = config.S3_ACCESS_KEY_ID
+const S3_SECRET_ACCESS_KEY = config.S3_SECRET_ACCESS_KEY
+const S3_PUBLIC_HOST = config.S3_PUBLIC_HOST
 
 const client = new S3Client({
   endpoint: S3_ENDPOINT,

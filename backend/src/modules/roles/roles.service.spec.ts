@@ -18,6 +18,7 @@ vi.mock("../../lib/prisma.js", () => {
 
 import { RolesService } from "./roles.service.js";
 import { prisma } from "../../lib/prisma.js";
+import { setConfig } from "../../config/env.js";
 
 describe("RolesService", () => {
   let rolesService: RolesService;
@@ -127,7 +128,7 @@ describe("RolesService", () => {
     };
 
     beforeEach(() => {
-      delete process.env.ADMIN_ROLE_CHANGE_SECRET;
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: undefined });
     });
 
     it("должен назначить роль пользователю (без проверки пароля)", async () => {
@@ -169,7 +170,7 @@ describe("RolesService", () => {
     });
 
     it("должен требовать пароль если установлен ADMIN_ROLE_CHANGE_SECRET", async () => {
-      process.env.ADMIN_ROLE_CHANGE_SECRET = "secret123";
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
       (prisma.role.findUnique as any).mockResolvedValue(mockAdminRole);
 
       await expect(rolesService.assignRole(1, "admin", 42, "")).rejects.toThrow(
@@ -179,7 +180,7 @@ describe("RolesService", () => {
     });
 
     it("должен принять правильный пароль", async () => {
-      process.env.ADMIN_ROLE_CHANGE_SECRET = "secret123";
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
       (prisma.role.findUnique as any).mockResolvedValue(mockAdminRole);
       (prisma.user.update as any).mockResolvedValue(mockUpdatedUser);
 

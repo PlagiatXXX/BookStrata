@@ -2,18 +2,18 @@ import { createChatCompletionStream, checkOpenAiCompatibleStatus } from './opena
 import type { AiProvider } from './types.js'
 import type { AiChunk } from '../ai-librarian.service.js'
 
-const CUSTOM_AI_BASE_URL = process.env.CUSTOM_AI_BASE_URL || 'https://api.neuraldeep.ru/v1'
+import { config } from "../../../config/env.js";
 
-const baseConfig = {
-  apiKey: process.env.CUSTOM_AI_API_KEY || '',
-  model: process.env.CUSTOM_AI_MODEL || 'gpt-oss-120b',
-  baseUrl: CUSTOM_AI_BASE_URL,
-  timeoutMs: 15_000,
+export const customConfig = {
+  apiKey: config.CUSTOM_AI_API_KEY,
+  model: config.CUSTOM_AI_MODEL,
+  baseUrl: config.CUSTOM_AI_BASE_URL,
+  timeoutMs: 30_000,
 }
 
 export const customProvider: AiProvider = {
   name: 'custom',
-  model: baseConfig.model,
+  model: customConfig.model,
 
   async *generate(
     messages: Array<{ role: string; content: string }>,
@@ -21,11 +21,11 @@ export const customProvider: AiProvider = {
     signal?: AbortSignal,
     userId?: string,
   ): AsyncGenerator<AiChunk> {
-    const config = userId ? { ...baseConfig, user: userId } : baseConfig
-    yield* createChatCompletionStream({ messages, systemPrompt, config, signal })
+    const activeConfig = userId ? { ...customConfig, user: userId } : customConfig
+    yield* createChatCompletionStream({ messages, systemPrompt, config: activeConfig, signal })
   },
 
   async checkStatus() {
-    return checkOpenAiCompatibleStatus(baseConfig)
+    return checkOpenAiCompatibleStatus(customConfig)
   },
 }

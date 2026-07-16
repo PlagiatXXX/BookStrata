@@ -1,4 +1,5 @@
 import { sendEmail } from "../../lib/mailer.js";
+import { config } from "../../config/env.js";
 
 /**
  * Simple HTML escaping to prevent XSS/injection in emails
@@ -16,7 +17,7 @@ function escapeHtml(unsafe: string): string {
  * HTML Template for Password Reset Link Email (Russian)
  */
 const getResetPasswordTemplate = (username: string, token: string) => {
-  const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`;
+  const resetLink = `${config.CLIENT_URL}/reset-password?token=${token}`;
   const safeUsername = escapeHtml(username);
 
   return `
@@ -56,7 +57,7 @@ const getResetPasswordTemplate = (username: string, token: string) => {
  */
 export async function sendResetPasswordEmail(email: string, username: string, token: string): Promise<void> {
   const html = getResetPasswordTemplate(username, token);
-  const text = `Здравствуйте, ${username}! Для сброса пароля перейдите по ссылке: ${process.env.CLIENT_URL}/reset-password?token=${token}`;
+  const text = `Здравствуйте, ${username}! Для сброса пароля перейдите по ссылке: ${config.CLIENT_URL}/reset-password?token=${token}`;
 
   await sendEmail({
     to: email,

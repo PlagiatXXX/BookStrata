@@ -1,12 +1,13 @@
 import { v2 as cloudinary } from 'cloudinary'
 import type { ImageStorageService, UploadResult } from './types.js'
+import { config } from '../../config/env.js'
 
-if (process.env.CLOUDINARY_URL) {
-  cloudinary.config({ url: process.env.CLOUDINARY_URL })
+if (config.CLOUDINARY_URL) {
+  cloudinary.config({ url: config.CLOUDINARY_URL })
 } else {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
-  const apiKey = process.env.CLOUDINARY_API_KEY
-  const apiSecret = process.env.CLOUDINARY_API_SECRET
+  const cloudName = config.CLOUDINARY_CLOUD_NAME
+  const apiKey = config.CLOUDINARY_API_KEY
+  const apiSecret = config.CLOUDINARY_API_SECRET
 
   if (!cloudName || !apiKey || !apiSecret) {
     throw new Error('CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET must be set')

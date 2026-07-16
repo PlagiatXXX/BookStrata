@@ -1,4 +1,5 @@
 import { prisma, resolveTierListId } from "./tierList.utils.js";
+import { AuthorizationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 
 const logger = createLogger("TierListsTiers", { color: "cyan" });
@@ -40,7 +41,7 @@ export async function updateTier(
   });
 
   if (!tier || tier.tierListId !== realTierListId) {
-    throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
+    throw new AuthorizationError("Forbidden");
   }
 
   return prisma.tier.update({

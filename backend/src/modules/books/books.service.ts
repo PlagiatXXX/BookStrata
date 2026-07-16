@@ -8,7 +8,9 @@ const logger = createLogger("Books", { color: "green" });
 const SEARCH_CACHE_TTL = 60 * 60 * 24;
 const SEARCH_CACHE_TTL_EMPTY = 60 * 5;
 
-const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY;
+import { config } from "../../config/env.js";
+
+const GOOGLE_BOOKS_API_KEY = config.GOOGLE_BOOKS_API_KEY;
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
 
 /** Таймаут на один fetch-запрос к Google Books API (10 секунд) */

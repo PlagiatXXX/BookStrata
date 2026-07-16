@@ -12,7 +12,9 @@ import { createLogger } from '../../lib/logger.js'
 
 const logger = createLogger('AiLibrarianRoute', { color: 'cyan' })
 
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'
+import { config } from "../../config/env.js";
+
+const CLIENT_URL = config.CLIENT_URL
 
 export async function aiLibrarianRoutes(fastify: FastifyInstance) {
   fastify.get(

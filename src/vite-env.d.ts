@@ -14,6 +14,8 @@ interface ImportMeta {
 }
 
 // Флаг, устанавливаемый prerender-скриптом (Playwright) через page.addInitScript
-interface Window {
-  __PRERENDER__?: boolean;
+declare global {
+  interface Window {
+    __PRERENDER__?: boolean;
+  }
 }

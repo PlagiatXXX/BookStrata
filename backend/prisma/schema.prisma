@@ -22,7 +22,7 @@ model User {
   acceptedTermsAt                DateTime?  @map("accepted_terms_at")
   vkId                           String?    @unique @map("vk_id")
   googleId                       String?    @unique @map("google_id")
-  username             String?    @unique
+  username             String     @unique
   avatarUrl            String?    @map("avatar_url")
   aiAvatarsGenerated   Int        @default(0)  @map("ai_avatars_generated")
   lastAvatarResetAt    DateTime   @default(now()) @map("last_avatar_reset_at")

@@ -1,8 +1,10 @@
-const VK_CLIENT_ID = process.env.VK_CLIENT_ID || ""
-const VK_CLIENT_SECRET = process.env.VK_CLIENT_SECRET || ""
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || ""
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || ""
-const CLIENT_URL = process.env.CLIENT_URL || ""
+import { config } from "../config/env.js";
+
+const VK_CLIENT_ID = config.VK_CLIENT_ID
+const VK_CLIENT_SECRET = config.VK_CLIENT_SECRET
+const GOOGLE_CLIENT_ID = config.GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = config.GOOGLE_CLIENT_SECRET
+const CLIENT_URL = config.CLIENT_URL
 
 export interface OAuthUserInfo {
   id: string

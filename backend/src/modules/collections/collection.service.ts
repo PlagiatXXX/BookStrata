@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { NotFoundError } from "../../lib/errors.js";
 import { Prisma } from "@prisma/client";
 import {
   createCollectionSchema,
@@ -7,6 +8,7 @@ import {
   type UpdateCollectionInput,
 } from "./collection.schema.js";
 import { createAuthorService } from "../authors/authors.service.js";
+import { config } from "../../config/env.js";
 
 const authorService = createAuthorService(prisma);
 
@@ -267,7 +269,7 @@ async function fetchBookCover(
   }
 
   // === Попытка 2: Google Books API ===
-  const gbKey = process.env.GOOGLE_BOOKS_API_KEY;
+  const gbKey = config.GOOGLE_BOOKS_API_KEY;
   if (!gbKey) return "";
 
   const pickCover = (items: Array<{ volumeInfo?: { imageLinks?: Record<string, string> } }>): string => {
@@ -638,7 +640,7 @@ export async function parseBooksFromUrl(url: string): Promise<ParsedBook[]> {
 
 export async function togglePublish(id: number) {
   const collection = await prisma.collection.findUnique({ where: { id } });
-  if (!collection) throw new Error("Collection not found");
+  if (!collection) throw new NotFoundError("Collection not found");
 
   return prisma.collection.update({
     where: { id },

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import { NotFoundError, AuthorizationError, ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { sanitize } from "../../lib/sanitizer.js";
 
@@ -168,7 +169,7 @@ export class TemplatesService {
   async getUserTemplates(userId: string) {
     // Проверяем, что userId может быть преобразован в число
     if (!userId || isNaN(parseInt(userId))) {
-      throw new Error("Invalid user ID provided");
+      throw new ValidationError("Invalid user ID provided");
     }
 
     const templates = await this.prisma.template.findMany({
@@ -222,7 +223,7 @@ export class TemplatesService {
   async updateTemplate(id: string, input: UpdateTemplateInput, userId: string) {
     // Проверяем, что userId может быть преобразован в число
     if (!userId || isNaN(parseInt(userId))) {
-      throw new Error("Invalid user ID provided");
+      throw new ValidationError("Invalid user ID provided");
     }
 
     const validatedInput = await this.validateUpdateTemplate(input);
@@ -233,11 +234,11 @@ export class TemplatesService {
     });
 
     if (!template) {
-      throw new Error("Template not found");
+      throw new NotFoundError("Template not found");
     }
 
     if (template.authorId !== parseInt(userId)) {
-      throw new Error("Unauthorized: You can only update your own templates");
+      throw new AuthorizationError("You can only update your own templates");
     }
 
     // Создаем объект с данными для обновления, включая поля только если они были переданы
@@ -279,7 +280,7 @@ export class TemplatesService {
   async deleteTemplate(id: string, userId: string) {
     // Проверяем, что userId может быть преобразован в число
     if (!userId || isNaN(parseInt(userId))) {
-      throw new Error("Invalid user ID provided");
+      throw new ValidationError("Invalid user ID provided");
     }
 
     // Проверяем, что пользователь является владельцем шаблона
@@ -288,11 +289,11 @@ export class TemplatesService {
     });
 
     if (!template) {
-      throw new Error("Template not found");
+      throw new NotFoundError("Template not found");
     }
 
     if (template.authorId !== parseInt(userId)) {
-      throw new Error("Unauthorized: You can only delete your own templates");
+      throw new AuthorizationError("You can only delete your own templates");
     }
 
     return this.prisma.template.delete({
@@ -304,7 +305,7 @@ export class TemplatesService {
     const uId = parseInt(userId);
     // Проверяем, что userId может быть преобразован в число
     if (!userId || isNaN(uId)) {
-      throw new Error("Invalid user ID provided");
+      throw new ValidationError("Invalid user ID provided");
     }
 
     // Получаем шаблон
@@ -313,12 +314,12 @@ export class TemplatesService {
     });
 
     if (!template) {
-      throw new Error("Template not found");
+      throw new NotFoundError("Template not found");
     }
 
     if (!template.isPublic && template.authorId !== uId) {
-      throw new Error(
-        "Unauthorized: Template is not public and does not belong to you",
+      throw new AuthorizationError(
+        "Template is not public and does not belong to you",
       );
     }
 

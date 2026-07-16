@@ -3,9 +3,11 @@ import { createLogger } from "../../lib/logger.js";
 import { uploadFromUrl } from "../../lib/cloudinary.js";
 
 const logger = createLogger("Avatars", { color: "yellow" });
+import { config } from "../../config/env.js";
 
-const POLLINATIONS_API_KEY = process.env.POLLINATIONS_API_KEY;
-const POLLINATIONS_MODEL = process.env.POLLINATIONS_MODEL || "zimage";
+const POLLINATIONS_API_KEY = config.POLLINATIONS_API_KEY;
+
+const POLLINATIONS_MODEL = config.POLLINATIONS_MODEL;
 const POLLINATIONS_API_URL = "https://gen.pollinations.ai";
 const DAILY_LIMIT = 10;
 

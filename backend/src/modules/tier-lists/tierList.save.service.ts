@@ -1,4 +1,5 @@
 import { prisma, getTierListWhereClause } from "./tierList.utils.js";
+import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { sanitize } from "../../lib/sanitizer.js";
 import { createAuthorService } from "../authors/authors.service.js";
 
@@ -58,7 +59,7 @@ export async function saveAll(
     });
 
     if (!tierList) {
-      throw new Error("Tier list not found");
+      throw new NotFoundError("Tier list not found");
     }
 
     const realTierListId = tierList.id;
@@ -181,7 +182,7 @@ export async function saveAll(
         });
 
         if (count !== existingBookIds.length) {
-          throw new Error("One or more books do not belong to this user");
+          throw new ValidationError("One or more books do not belong to this user");
         }
       }
 
@@ -208,7 +209,7 @@ export async function saveAll(
         });
 
         if (tierCount !== existingTierIds.length) {
-          throw new Error("One or more tiers do not belong to this tier list");
+          throw new ValidationError("One or more tiers do not belong to this tier list");
         }
       }
 

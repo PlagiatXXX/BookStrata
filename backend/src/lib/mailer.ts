@@ -1,15 +1,16 @@
 import nodemailer from "nodemailer";
 import { createLogger } from "./logger.js";
+import { config } from "../config/env.js";
 
 const logger = createLogger("Mailer", { color: "magenta" });
 
 const mailConfig = {
-  host: process.env.SMTP_HOST || "smtp.mailtrap.io",
-  port: parseInt(process.env.SMTP_PORT || "2525"),
-  secure: process.env.SMTP_SECURE === "true", // true for port 465, false for other ports
+  host: config.SMTP_HOST || "smtp.mailtrap.io",
+  port: config.SMTP_PORT,
+  secure: config.SMTP_SECURE === "true", // true for port 465, false for other ports
   auth: {
-    user: process.env.SMTP_USER || "",
-    pass: process.env.SMTP_PASS || "",
+    user: config.SMTP_USER || "",
+    pass: config.SMTP_PASS || "",
   },
   pool: true, // Use pooled connections
   maxConnections: 5,
@@ -38,7 +39,7 @@ export interface SendEmailOptions {
  * Generic function to send an email
  */
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
-  const from = process.env.SMTP_FROM || '"BookStrata Pro" <noreply@bookstrata.pro>';
+  const from = config.SMTP_FROM;
 
   try {
     const info = await transporter.sendMail({

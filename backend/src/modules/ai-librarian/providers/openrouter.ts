@@ -1,10 +1,11 @@
 import { createChatCompletionStream, checkOpenAiCompatibleStatus } from './openai-stream.js'
 import type { AiProvider } from './types.js'
 import type { AiChunk } from '../ai-librarian.service.js'
+import { config } from '../../../config/env.js'
 
 const baseConfig = {
-  apiKey: process.env.OPENROUTER_API_KEY || '',
-  model: process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct',
+  apiKey: config.OPENROUTER_API_KEY,
+  model: config.OPENROUTER_MODEL,
   baseUrl: 'https://openrouter.ai/api/v1',
   timeoutMs: 30_000,
 }

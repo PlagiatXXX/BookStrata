@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { createLogger } from "../../lib/logger.js";
+import { config } from "../../config/env.js";
 
 import { isIP } from "node:net";
 import { promises as dns } from "node:dns";
@@ -125,7 +126,7 @@ export async function proxyRoutes(fastify: FastifyInstance) {
 
         // Set CORS header so the browser can use this on canvas
         // Сужаем origin до фронта вместо "*"
-        reply.header("Access-Control-Allow-Origin", process.env.CLIENT_URL || "http://localhost:5173");
+        reply.header("Access-Control-Allow-Origin", config.CLIENT_URL);
         reply.header("Vary", "Origin");
         reply.header("Content-Type", contentType);
         reply.header("Cache-Control", "public, max-age=86400"); // cache for 1 day

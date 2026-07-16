@@ -724,7 +724,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
         const createdBook = results[0]?.book;
         if (!createdBook) {
-          throw new Error("Failed to create book");
+          throw new Error("Failed to create book"); // будет поймано как 500
         }
 
         fastify.log.info(

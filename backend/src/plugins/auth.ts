@@ -4,17 +4,13 @@ import fp from "fastify-plugin";
 import jwt from "jsonwebtoken";
 import { redis } from "../lib/redis.js";
 import { createLogger } from "../lib/logger.js";
+import { requestContextAls } from "./requestContext.js";
+import { config } from "../config/env.js";
 
 const logger = createLogger("AuthPlugin", {
   color: "blue",
-  level: process.env.NODE_ENV === "development" ? "warn" : "info",
+  level: config.NODE_ENV === "development" ? "warn" : "info",
 });
-
-const JWT_SECRET = process.env.JWT_SECRET!;
-if (!JWT_SECRET) {
-  logger.error("FATAL: JWT_SECRET is not defined in your .env file");
-  process.exit(1);
-}
 
 interface JwtPayload {
   userId: number;
@@ -35,22 +31,52 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     const token = authHeader.substring(7);
 
     try {
-      const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
+      const payload = jwt.verify(token, config.JWT_SECRET) as JwtPayload;
 
       logger.debug("Пользователь аутентифицирован", {
         userId: payload.userId,
         role: payload.role,
       });
 
-      // Роль читаем из JWT-payload, а не из БД.
-      // JWT-токен выдаётся/обновляется при логине и refresh, роль в нём актуальна на момент выдачи.
-      // При смене роли админом пользователь получит новую роль после перелогина или refresh.
-      // Для более быстрой смены роли без перелогина можно кэшировать role в Redis.
+      // Сначала пытаемся получить актуальную роль из Redis-кэша, затем из БД.
+      // Это гарантирует, что при смене роли админом права обновятся в течение ~60 секунд,
+      // а не ждут перелогина (7-14 дней с текущими сроками жизни JWT).
+      let role = payload.role || "user";
+      try {
+        const cacheKey = `user:role:${payload.userId}`;
+        const cachedRole = await redis.get(cacheKey);
+
+        if (cachedRole) {
+          role = cachedRole;
+        } else {
+          const prisma = (fastify as any).prisma;
+          if (prisma) {
+            const dbUser = await prisma.user.findUnique({
+              where: { id: payload.userId },
+              select: { role: { select: { name: true } } },
+            });
+            if (dbUser?.role?.name) {
+              role = dbUser.role.name;
+            }
+          }
+          // Кэшируем на 60 секунд — баланс между производительностью и актуальностью
+          redis.set(cacheKey, role, "EX", 60).catch(() => {});
+        }
+      } catch {
+        // Redis или БД недоступны — используем роль из JWT (не меняется до релогина)
+      }
+
       (request as any).user = {
         userId: payload.userId,
         username: payload.username,
-        role: payload.role || "user",
+        role,
       };
+
+      // Прокидываем userId в AsyncLocalStorage для логирования
+      const alsStore = requestContextAls.getStore();
+      if (alsStore) {
+        alsStore.userId = payload.userId;
+      }
 
       // Throttled обновление lastActivityAt (не чаще раза в 60с на пользователя)
       // fire-and-forget, не блокируем ответ

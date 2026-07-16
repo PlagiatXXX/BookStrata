@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
+import { config } from "../config/env.js";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -16,14 +17,13 @@ const IGNORED_DEV_QUERIES = new Set([
 ]);
 
 function getSlowQueryThresholdMs(): number {
-  const rawValue = process.env.PRISMA_SLOW_QUERY_THRESHOLD_MS;
-  const parsedValue = Number(rawValue);
+  const rawValue = config.PRISMA_SLOW_QUERY_THRESHOLD_MS;
 
-  if (!rawValue || Number.isNaN(parsedValue) || parsedValue < 0) {
+  if (rawValue === undefined || rawValue < 0) {
     return DEFAULT_SLOW_QUERY_THRESHOLD_MS;
   }
 
-  return parsedValue;
+  return rawValue;
 }
 
 function shouldLogSlowQuery(query: string, duration: number): boolean {
@@ -104,7 +104,7 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     log:
-      process.env.NODE_ENV === "development"
+      config.NODE_ENV === "development"
         ? [
             { emit: "event", level: "query" },
             { emit: "stdout", level: "error" },
@@ -113,7 +113,7 @@ export const prisma =
         : [{ emit: "stdout", level: "error" }],
   });
 // Логирование медленных запросов в dev (>100мс)
-if (process.env.NODE_ENV === "development") {
+if (config.NODE_ENV === "development") {
   // @ts-expect-error — типы Prisma для $on('query') требуют generic-конфига логов
   prisma.$on("query", (e: { duration: number; query: string }) => {
     if (shouldLogSlowQuery(e.query, e.duration)) {
@@ -123,7 +123,7 @@ if (process.env.NODE_ENV === "development") {
     }
   });
 }
-if (process.env.NODE_ENV !== "production") {
+if (config.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 

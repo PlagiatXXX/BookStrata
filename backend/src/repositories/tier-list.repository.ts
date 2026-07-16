@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { PrismaClient} from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
+import { NotFoundError, AuthorizationError } from "../lib/errors.js";
 
 type TxClient = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
@@ -36,9 +37,7 @@ export class TierListRepository {
       select: { userId: true },
     });
     if (!list) {
-      const error = new Error("Тир-лист не найден");
-      (error as any).statusCode = 404;
-      throw error;
+      throw new NotFoundError("Тир-лист не найден");
     }
     return list.userId;
   }
@@ -46,9 +45,7 @@ export class TierListRepository {
   async assertOwner(id: string, userId: number) {
     const ownerId = await this.getOwner(id);
     if (ownerId !== userId) {
-      const error = new Error("Forbidden");
-      (error as any).statusCode = 403;
-      throw error;
+      throw new AuthorizationError("Forbidden");
     }
   }
 

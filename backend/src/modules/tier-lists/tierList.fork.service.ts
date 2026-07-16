@@ -1,4 +1,5 @@
 import { prisma, tierListRepository } from "./tierList.utils.js";
+import { AuthorizationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { generateUniqueSlug } from "../../utils/slugify.js";
 
@@ -15,7 +16,7 @@ export async function forkTierList(id: string, userId: number) {
       requesterUserId: userId,
       ownerUserId: original.userId,
     });
-    throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
+    throw new AuthorizationError("Forbidden");
   }
 
   return prisma.$transaction(async (tx) => {

@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { NotFoundError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 
 const logger = createLogger("Subscriptions", { color: "cyan" });
@@ -69,7 +70,7 @@ export class SubscriptionsService {
     });
 
     if (!user) {
-      throw new Error(`Пользователь ${userId} не найден`);
+      throw new NotFoundError(`Пользователь ${userId} не найден`);
     }
 
     const updatedUser = await prisma.user.update({

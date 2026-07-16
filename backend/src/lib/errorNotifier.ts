@@ -4,6 +4,7 @@
  */
 
 import nodemailer from "nodemailer";
+import { config } from "../config/env.js";
 
 interface ErrorReport {
   message: string;
@@ -26,15 +27,15 @@ class ErrorNotifier {
   private readonly notificationThrottle = 5000;
 
   initialize(): void {
-    const host = process.env.SMTP_HOST;
-    const port = parseInt(process.env.SMTP_PORT || "465", 10);
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
-    const from = process.env.SMTP_FROM;
-    const to = process.env.ERROR_NOTIFY_EMAIL || process.env.SMTP_USER || "";
+    const host = config.SMTP_HOST;
+    const port = config.SMTP_PORT;
+    const user = config.SMTP_USER;
+    const pass = config.SMTP_PASS;
+    const from = config.SMTP_FROM;
+    const to = config.ERROR_NOTIFY_EMAIL || config.SMTP_USER || "";
 
     // Проверяем SMTP и включаем только в production
-    if (!host || !user || !pass || !from || !to || process.env.NODE_ENV !== "production") {
+    if (!host || !user || !pass || !from || !to || config.NODE_ENV !== "production") {
       console.log("[ErrorNotifier] Email-уведомления отключены (нужен SMTP + NODE_ENV=production)");
       return;
     }

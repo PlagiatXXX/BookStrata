@@ -29,7 +29,7 @@ export default function UserProfilePage() {
     enabled: !!id,
   })
 
-  const isPrerender = typeof window !== 'undefined' && (window as any).__PRERENDER__ === true
+  const isPrerender = typeof window !== 'undefined' && window.__PRERENDER__ === true
 
   const { data: tasteMatch } = useQuery({
     queryKey: ["tasteMatch", id],

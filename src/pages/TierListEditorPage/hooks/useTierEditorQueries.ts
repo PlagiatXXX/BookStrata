@@ -116,7 +116,7 @@ export function useTierEditorQueries(
   });
 
   // При пререндере не делаем запросы, требующие авторизации
-  const isPrerender = typeof window !== 'undefined' && (window as any).__PRERENDER__ === true;
+  const isPrerender = typeof window !== 'undefined' && window.__PRERENDER__ === true;
 
   // Получаем количество лайков
   const { data: likesData } = useQuery({

@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { eventBus } from "../../lib/event-emitter.js";
 import { tierListRepository } from "../../repositories/index.js";
@@ -22,7 +23,7 @@ export async function createBattle(data: CreateBattleInput) {
 const tierLists = await tierListRepository.findByIds(data.participantTierListIds);
  
 if (tierLists.length !== data.participantTierListIds.length) {
-throw new Error("One or more tier lists are not found or not public");
+throw new NotFoundError("One or more tier lists are not found or not public");
 }
 
   return prisma.battle.create({
@@ -119,7 +120,7 @@ export async function voteInBattle(userId: number, battleId: string, tierListId:
   });
 
   if (!battle || battle.status !== "active" || battle.endTime < new Date()) {
-    throw new Error("Battle is not active or has ended");
+    throw new ValidationError("Battle is not active or has ended");
   }
 
   // Проверяем, является ли тир-лист участником битвы
@@ -133,7 +134,7 @@ export async function voteInBattle(userId: number, battleId: string, tierListId:
   });
 
   if (!participant) {
-    throw new Error("Tier list is not a participant in this battle");
+    throw new NotFoundError("Tier list is not a participant in this battle");
   }
 
   return prisma.$transaction(async (tx) => {
@@ -162,8 +163,8 @@ export async function closeBattle(battleId: string) {
   logger.info("Closing battle", { battleId });
 
   const battle = await getBattleById(battleId);
-  if (!battle) throw new Error("Battle not found");
-  if (battle.status === "completed") throw new Error("Battle already completed");
+  if (!battle) throw new NotFoundError("Battle not found");
+  if (battle.status === "completed") throw new ValidationError("Battle already completed");
 
   if (battle.participants.length === 0) {
      return prisma.battle.update({
@@ -226,7 +227,7 @@ async function checkFreeBattleLimit(userId: number): Promise<void> {
   });
 
   if (recentApplications >= 1) {
-    throw new Error("Бесплатные пользователи могут подать заявку на участие в битве не чаще раза в неделю");
+    throw new ValidationError("Бесплатные пользователи могут подать заявку на участие в битве не чаще раза в неделю");
   }
 }
 
@@ -243,7 +244,7 @@ export async function applyToBattle(userId: number, battleId: string, tierListId
   });
 
   if (!battle || battle.status !== "active" || battle.endTime < new Date()) {
-    throw new Error("Battle is not active or has ended");
+    throw new ValidationError("Battle is not active or has ended");
   }
 
   // Проверяем, что тир-лист существует и принадлежит пользователю
@@ -252,7 +253,7 @@ export async function applyToBattle(userId: number, battleId: string, tierListId
   });
 
   if (!tierList) {
-    throw new Error("Tier list not found or not public");
+    throw new NotFoundError("Tier list not found or not public");
   }
 
   // Проверяем, не участвует ли уже этот тир-лист в битве
@@ -261,7 +262,7 @@ export async function applyToBattle(userId: number, battleId: string, tierListId
   });
 
   if (existingParticipant) {
-    throw new Error("This tier list is already participating in the battle");
+    throw new ValidationError("This tier list is already participating in the battle");
   }
 
   return prisma.battleApplication.create({
@@ -280,7 +281,7 @@ export async function applyGeneral(userId: number, tierListId: string, message?:
   });
 
   if (!tierList) {
-    throw new Error("Tier list not found or not public");
+    throw new NotFoundError("Tier list not found or not public");
   }
 
   return prisma.battleApplication.create({
@@ -333,11 +334,11 @@ export async function reviewApplication(battleId: string | null, applicationId: 
   const application = await prisma.battleApplication.findFirst({ where });
 
   if (!application) {
-    throw new Error("Application not found");
+    throw new NotFoundError("Application not found");
   }
 
   if (application.status !== "pending") {
-    throw new Error("Application already reviewed");
+    throw new ValidationError("Application already reviewed");
   }
 
   if (status === "rejected") {

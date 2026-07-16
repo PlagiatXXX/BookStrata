@@ -1,12 +1,13 @@
 import type { ImageStorageService, UploadResult } from './types.js'
 import { CloudinaryStorage } from './cloudinary-storage.js'
 import { createLogger } from '../logger.js'
+import { config } from '../../config/env.js'
 
 export type { ImageStorageService, UploadResult }
 
 const logger = createLogger('Storage', { color: 'yellow' })
 
-const provider = process.env.STORAGE_PROVIDER || 'cloudinary'
+const provider = config.STORAGE_PROVIDER
 
 let storage: ImageStorageService
 

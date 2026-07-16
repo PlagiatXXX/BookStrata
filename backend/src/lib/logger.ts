@@ -10,19 +10,33 @@
 import fs from 'fs';
 import path from 'path';
 import type { Logger, LoggerConfig, LogLevel, LoggerContext } from '../types/logger.js';
+import { getRequestId } from '../plugins/requestContext.js';
+import { config } from '../config/env.js';
 
 // Глобальное состояние
-let globalLogLevel: LogLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+let globalLogLevel: LogLevel = config.NODE_ENV === 'production' ? 'info' : 'debug';
 
 // Логирование в файл для production
-const isProd = process.env.NODE_ENV === 'production';
-const logDir = process.env.LOG_DIR || '/var/log/tiermaker';
+const isProd = config.NODE_ENV === 'production';
+const logDir = config.LOG_DIR;
 const errorLogFile = path.join(logDir, 'errors.log');
 const allLogFile = path.join(logDir, 'app.log');
 
 // Создать директорию для логов если нет
 if (isProd && !fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
+}
+
+/**
+ * Обогащает контекст лога requestId из AsyncLocalStorage.
+ * Позволяет не передавать requestId вручную в каждом вызове.
+ */
+function enrichContext(context?: LoggerContext): LoggerContext {
+  const requestId = getRequestId();
+  if (!requestId) {
+    return context ?? {};
+  }
+  return { ...context, requestId };
 }
 
 /**
@@ -185,48 +199,52 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
     debug: (message: string, context?: LoggerContext) => {
       if (!shouldLog('debug', configLevel)) return;
 
+      const enriched = enrichContext(context);
       const formatted = formatMessage(name, 'debug', message, logColor);
 
       console.debug(formatted);
-      if (context) {
-        console.debug(serializeContext(context));
+      if (Object.keys(enriched).length > 0) {
+        console.debug(serializeContext(enriched));
       }
       
       // Запись в файл
-      writeToFile('debug', `${name}: ${message}`, context);
+      writeToFile('debug', `${name}: ${message}`, enriched);
     },
 
     info: (message: string, context?: LoggerContext) => {
       if (!shouldLog('info', configLevel)) return;
 
+      const enriched = enrichContext(context);
       const formatted = formatMessage(name, 'info', message, logColor);
 
       console.info(formatted);
-      if (context) {
-        console.info(serializeContext(context));
+      if (Object.keys(enriched).length > 0) {
+        console.info(serializeContext(enriched));
       }
       
       // Запись в файл
-      writeToFile('info', `${name}: ${message}`, context);
+      writeToFile('info', `${name}: ${message}`, enriched);
     },
 
     warn: (message: string, context?: LoggerContext) => {
       if (!shouldLog('warn', configLevel)) return;
 
+      const enriched = enrichContext(context);
       const formatted = formatMessage(name, 'warn', message, logColor);
 
       console.warn(formatted);
-      if (context) {
-        console.warn(serializeContext(context));
+      if (Object.keys(enriched).length > 0) {
+        console.warn(serializeContext(enriched));
       }
       
       // Запись в файл
-      writeToFile('warn', `${name}: ${message}`, context);
+      writeToFile('warn', `${name}: ${message}`, enriched);
     },
 
     error: (error: Error | unknown, context?: LoggerContext) => {
       if (!shouldLog('error', configLevel)) return;
 
+      const enriched = enrichContext(context);
       const errorData = extractError(error);
       const formatted = formatMessage(name, 'error', errorData.message, logColor);
 
@@ -236,12 +254,12 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
         console.error(ANSI_COLORS.gray + errorData.stack + ANSI_COLORS.reset);
       }
 
-      if (context) {
-        console.error(serializeContext(context));
+      if (Object.keys(enriched).length > 0) {
+        console.error(serializeContext(enriched));
       }
       
       // Запись в файл
-      writeToFile('error', `${name}: ${errorData.message}`, context, errorData.stack);
+      writeToFile('error', `${name}: ${errorData.message}`, enriched, errorData.stack);
     },
   };
   

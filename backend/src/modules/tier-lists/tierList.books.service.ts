@@ -1,4 +1,5 @@
 import { prisma, resolveTierListId, tierListRepository } from "./tierList.utils.js";
+import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { sanitize } from "../../lib/sanitizer.js";
 import { createAuthorService } from "../authors/authors.service.js";
@@ -35,7 +36,7 @@ export async function updatePlacements(
     });
 
     if (tierCount !== tierIds.length) {
-      throw new Error("One or more tiers do not belong to this tier list");
+      throw new ValidationError("One or more tiers do not belong to this tier list");
     }
   }
 
@@ -151,7 +152,7 @@ export async function updateBook(
   });
 
   if (!tierList) {
-    throw Object.assign(new Error("Tier list not found"), { statusCode: 404 });
+    throw new NotFoundError("Tier list not found");
   }
 
   const bookPlacement = await prisma.bookPlacement.findUnique({
@@ -159,7 +160,7 @@ export async function updateBook(
   });
 
   if (!bookPlacement) {
-    throw Object.assign(new Error("Book does not belong to this tier list"), { statusCode: 404 });
+    throw new NotFoundError("Book does not belong to this tier list");
   }
 
   const sanitizedData: Record<string, unknown> = { ...data };
@@ -210,7 +211,7 @@ export async function updateBookCover(
   });
 
   if (!tierList) {
-    throw Object.assign(new Error("Tier list not found"), { statusCode: 404 });
+    throw new NotFoundError("Tier list not found");
   }
 
   const bookPlacement = await prisma.bookPlacement.findUnique({
@@ -218,7 +219,7 @@ export async function updateBookCover(
   });
 
   if (!bookPlacement) {
-    throw Object.assign(new Error("Book does not belong to this tier list"), { statusCode: 404 });
+    throw new NotFoundError("Book does not belong to this tier list");
   }
 
   return prisma.book.update({

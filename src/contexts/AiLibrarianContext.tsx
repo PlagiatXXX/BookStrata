@@ -70,6 +70,7 @@ export function AiLibrarianProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.__PRERENDER__) return
     refreshStatus()
   }, [refreshStatus])
 

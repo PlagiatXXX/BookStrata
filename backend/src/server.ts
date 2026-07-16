@@ -9,10 +9,11 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 import staticFiles from "@fastify/static";
+import { config } from "./config/env.js";
 import { redis, RedisRateLimitStore } from "./lib/redis.js";
 import LocalStore from "@fastify/rate-limit/store/LocalStore.js";
 import { prisma, waitForDatabase } from "./lib/prisma.js";
-import { ErrorCodes, createApiError } from "./lib/api-response.js";
+import { ErrorCodes, createApiError, type ErrorCode } from "./lib/api-response.js";
 import { achievementRoutes } from "../src/modules/achievements/achievements.route.js";
 import { battleRoutes } from "../src/modules/battles/battles.route.js";
 import { forumRoutes } from "../src/modules/forum/forum.route.js";
@@ -46,31 +47,15 @@ import { Prisma } from "@prisma/client";
 import * as Sentry from "@sentry/node";
 import { errorNotifier } from "./lib/errorNotifier.js";
 import { initSentry } from "./lib/sentry.js";
+import { AppError } from "./lib/errors.js";
 import { registerAchievementSubscriptions } from "./lib/event-subscriptions.js";
 import { registerAnalyticsSubscriptions } from "./lib/analytics-subscriptions.js";
 import { createAnalyticsService } from "./modules/analytics/analytics.service.js";
 import { SubscriptionsService } from "./modules/subscriptions/subscriptions.service.js";
 
-
-const requiredEnvVars = ["DATABASE_URL", "JWT_SECRET", "CLIENT_URL"];
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    console.error(`FATAL: ${envVar} is not defined in your .env file`);
-    process.exit(1);
-  }
-}
-
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  console.error("FATAL: JWT_SECRET is not defined in your .env file");
-  process.exit(1);
-}
-
-const CLIENT_URL = process.env.CLIENT_URL;
-if (!CLIENT_URL) {
-  console.error("FATAL: CLIENT_URL is not defined in your .env file");
-  process.exit(1);
-}
+// Инициализация конфигурации (валидация process.env через Zod)
+// Импорт config уже триггернул валидацию — если env невалидный,
+// процесс завершится с понятным сообщением.
 
 // Инициализация Telegram уведомлений об ошибках
 errorNotifier.initialize();
@@ -78,10 +63,6 @@ errorNotifier.initialize();
 // Инициализация Sentry
 initSentry();
 
-// Определяем, режим разработки или нет
-const isDev = process.env.NODE_ENV !== "production";
-
-// 2. ЗАМЕНЯЕМ КОНФИГУРАЦИЮ ЛОГГЕРА НА БОЛЕЕ ПРОДВИНУТУЮ
 const fastify = Fastify({
   ajv: {
     customOptions: {
@@ -89,8 +70,8 @@ const fastify = Fastify({
     },
   },
   logger: {
-    level: isDev ? "debug" : "info",
-    ...(isDev && {
+    level: config.NODE_ENV === "production" ? "info" : "debug",
+    ...(config.NODE_ENV !== "production" && {
       transport: {
         target: "pino-pretty",
       },
@@ -99,7 +80,7 @@ const fastify = Fastify({
   bodyLimit: 30 * 1024 * 1024, // 30MB лимит для save-all с base64 изображениями
 });
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8080;
+const PORT = config.PORT;
 
 // Компрессия ответов (gzip/deflate) — регистрируем до CORS,
 // чтобы сжимать все ответы, включая CORS-заголовки
@@ -109,7 +90,7 @@ await fastify.register(compress, {
 });
 
 fastify.register(cors, {
-  origin: CLIENT_URL,
+  origin: config.CLIENT_URL,
   methods: ["GET", "HEAD", "PUT", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // Разрешаем отправку cookie
@@ -178,7 +159,7 @@ fastify.decorate("prisma", prisma);
 
 // Регистрируем плагин cookie
 await fastify.register(cookie, {
-  secret: JWT_SECRET, // Для подписи cookie
+  secret: config.JWT_SECRET, // Для подписи cookie
 });
 
 // Health check endpoint for deployment
@@ -193,9 +174,9 @@ fastify.get("/health", async () => {
   };
 });
 
-// Аутентификация ДО rate limit чтобы request.user был доступен
-fastify.register(authPlugin);
+// Контекст запроса (requestId) ДО аутентификации — чтобы ALS был активен
 fastify.register(requestContext);
+fastify.register(authPlugin);
 fastify.register(logFromFrontend);
 
 
@@ -221,7 +202,7 @@ try {
   }).catch(console.error);
 }
 
-const rateLimitMax = parseInt(process.env.RATE_LIMIT_MAX || "", 10);
+const rateLimitMax = config.RATE_LIMIT_MAX;
 
 await fastify.register(rateLimit, {
   global: true,
@@ -287,35 +268,29 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
     Sentry.captureException(error);
   });
 
+  // 429 — rate-limit плагин (не AppError, проверяем до instanceof)
   if (error.statusCode === 429) {
     return reply
       .code(429)
       .send(createApiError(ErrorCodes.RATE_LIMIT_EXCEEDED, "Слишком много запросов, попробуйте позже."));
   }
 
-  if (
-    error.message === "Невалидный токен" ||
-    error.message === "Unauthorized" ||
-    error.statusCode === 401
-  ) {
-    return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, error.message || "Unauthorized"));
-  }
-
-  if (
-    error &&
-    typeof error === "object" &&
-    "code" in error &&
-    error.code === "P2002"
-  ) {
-    const target = (error.meta as { target?: string[] })?.target ?? [];
-    if (target.includes("username")) {
-      return reply
-        .code(409)
-        .send(createApiError(ErrorCodes.USERNAME_TAKEN, "Пользователь с таким именем уже существует."));
-    }
+  // Типизированные ошибки приложения — code и statusCode из класса
+  if (error instanceof AppError) {
+    const sentryLevel = error.statusCode >= 500 ? "error" : "warning";
+    Sentry.withScope((scope) => {
+      scope.setLevel(sentryLevel);
+      scope.setTag("error_code", error.code);
+      scope.setExtra("error_details", error.details);
+      Sentry.captureException(error);
+    });
     return reply
-      .code(409)
-      .send(createApiError(ErrorCodes.CONFLICT, "Конфликт данных."));
+      .code(error.statusCode)
+      .send(createApiError(
+        error.code as ErrorCode,
+        error.message,
+        error.details,
+      ));
   }
 
   // ZodError — ошибка валидации
@@ -329,6 +304,17 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
       .send(createApiError(ErrorCodes.VALIDATION_ERROR, message, error.issues));
   }
 
+  // Prisma P2002 — нарушение уникальности (race condition при регистрации и т.п.)
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    const fields = (error.meta?.target as string[] | undefined)?.join(", ") || "";
+    return reply
+      .code(409)
+      .send(createApiError(ErrorCodes.CONFLICT, `Запись с таким значением уже существует${fields ? ` (${fields})` : ""}.`));
+  }
+
   // Prisma P2025 — запись не найдена
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -340,7 +326,7 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
   }
 
   // Для отладки в режиме разработки возвращаем сообщение ошибки
-  const isDev = process.env.NODE_ENV !== "production";
+  const isDev = config.NODE_ENV !== "production";
   return reply.code(error.statusCode || 500).send(
     createApiError(
       ErrorCodes.INTERNAL_ERROR,
@@ -578,9 +564,9 @@ const start = async () => {
     fastify.log.info(`Server listening on port ${PORT}`);
 
     // Уведомление о старте (только в production)
-    if (process.env.NODE_ENV === "production") {
+    if (config.NODE_ENV === "production") {
       errorNotifier.notify({
-        message: `Сервер запущен. Порт: ${PORT}, режим: ${process.env.NODE_ENV}`,
+        message: `Сервер запущен. Порт: ${PORT}, режим: ${config.NODE_ENV}`,
         url: "/health",
         method: "STARTUP",
         userId: "system",

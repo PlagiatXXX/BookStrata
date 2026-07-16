@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { NotFoundError, ConflictError, ValidationError } from "../../lib/errors.js";
 import bcrypt from "bcryptjs";
 import { tierListRepository } from "../../repositories/index.js";
 import { getTitleEntryByXP } from "../achievements/achievements.service.js";
@@ -37,7 +38,7 @@ export async function getMe(userId: number) {
   });
 
   if (!user) {
-    throw new Error("Пользователь не найден");
+    throw new NotFoundError("Пользователь не найден");
   }
 
   return {
@@ -57,7 +58,7 @@ export async function updateUser(userId: number, username: string) {
   });
 
   if (existing) {
-    throw new Error("Это имя пользователя уже занято");
+    throw new ConflictError("Это имя пользователя уже занято");
   }
 
   return prisma.user.update({
@@ -101,7 +102,7 @@ export async function changePassword(
   });
 
   if (!user) {
-    throw Object.assign(new Error("Пользователь не найден"), { statusCode: 404 });
+    throw new NotFoundError("Пользователь не найден");
   }
 
   // Проверяем текущий пароль
@@ -110,7 +111,7 @@ export async function changePassword(
     user.passwordHash,
   );
   if (!isValidPassword) {
-    throw Object.assign(new Error("Неверный текущий пароль"), { statusCode: 400 });
+    throw new ValidationError("Неверный текущий пароль");
   }
 
   // Хешируем новый пароль
@@ -147,7 +148,7 @@ export async function getUserById(params: { id: string }) {
   });
 
   if (!user) {
-    throw new Error("Пользователь не найден");
+    throw new NotFoundError("Пользователь не найден");
   }
 
   // Статистика
@@ -407,7 +408,7 @@ export async function searchUsers(q: string): Promise<UserSearchResult[]> {
 
   return users.map((user) => ({
     id: user.id,
-    username: user.username ?? "",
+    username: user.username,
     avatarUrl: user.avatarUrl,
     isDonor: user.isDonor,
     xp: user.xp,

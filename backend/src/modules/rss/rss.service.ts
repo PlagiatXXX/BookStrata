@@ -1,6 +1,8 @@
 import { prisma } from "../../lib/prisma.js";
 
-const SITE_URL = process.env.CLIENT_URL || "https://bookstrata.ru";
+import { config } from "../../config/env.js";
+
+const SITE_URL = config.CLIENT_URL;
 const SITE_NAME = "BookStrata";
 
 function escapeXml(str: string): string {

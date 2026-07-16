@@ -3,12 +3,13 @@ import crypto from 'node:crypto'
 import { access, mkdir, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ImageStorageService, UploadResult } from './types.js'
+import { config } from '../../config/env.js'
 
-const UPLOADS_DIR = process.env.UPLOADS_DIR
-  ? join(process.cwd(), process.env.UPLOADS_DIR)
+const UPLOADS_DIR = config.UPLOADS_DIR
+  ? join(process.cwd(), config.UPLOADS_DIR)
   : join(process.cwd(), 'uploads')
 
-const BASE_URL = process.env.UPLOADS_BASE_URL || '/uploads'
+const BASE_URL = config.UPLOADS_BASE_URL
 
 async function ensureDir(dir: string): Promise<void> {
   try {

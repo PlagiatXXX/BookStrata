@@ -1,16 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import {
-  register,
-  login,
-  validateToken,
-  validateRefreshToken,
-  generateTokenPair,
-  requestPasswordReset,
-  confirmPasswordReset,
-  logout,
-  oauthVk,
-  oauthGoogle,
-} from "./auth.service.js";
+import { register, login } from "./auth.service.js";
+import { validateToken, validateRefreshToken, generateTokenPair, logout } from "./token.service.js";
+import { requestPasswordReset, confirmPasswordReset } from "./password-reset.service.js";
+import { oauthVk, oauthGoogle } from "./oauth.service.js";
 import { authMiddleware } from "./auth.middleware.js";
 import {
   registerSchema,
@@ -23,6 +15,7 @@ import {
   type ValidateInput,
 } from "./auth.schema.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
+import { config } from "../../config/env.js";
 
 export async function authRoutes(fastify: FastifyInstance) {
   // POST /api/auth/register
@@ -32,7 +25,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       schema: registerSchema,
       config: {
         rateLimit: {
-          max: parseInt(process.env.RATE_LIMIT_REGISTER_MAX || "300", 10),
+          max: config.RATE_LIMIT_REGISTER_MAX,
           timeWindow: "1 hour",
         },
       },
@@ -43,7 +36,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
         reply.setCookie("refreshToken", result.refreshToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: config.NODE_ENV === "production",
           sameSite: "strict",
           maxAge: 14 * 24 * 60 * 60,
           path: "/",
@@ -95,7 +88,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       schema: loginSchema,
       config: {
         rateLimit: {
-          max: parseInt(process.env.RATE_LIMIT_LOGIN_MAX || "20", 10),
+          max: config.RATE_LIMIT_LOGIN_MAX,
           timeWindow: "1 minute",
         },
       },
@@ -106,7 +99,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
         reply.setCookie("refreshToken", result.refreshToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: config.NODE_ENV === "production",
           sameSite: "strict",
           maxAge: 14 * 24 * 60 * 60,
           path: "/",
@@ -175,7 +168,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
       reply.setCookie("refreshToken", tokens.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: config.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 14 * 24 * 60 * 60,
         path: "/",
@@ -270,17 +263,17 @@ export async function authRoutes(fastify: FastifyInstance) {
 
       reply.setCookie("refreshToken", result.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: config.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 14 * 24 * 60 * 60,
         path: "/",
       });
 
-      const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      const frontendUrl = config.CLIENT_URL;
       return reply.redirect(`${frontendUrl}/oauth/callback?token=${result.accessToken}`, 301);
     } catch (error) {
       fastify.log.error(error, "VK OAuth error");
-      const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      const frontendUrl = config.CLIENT_URL;
       return reply.redirect(`${frontendUrl}/oauth/error`, 301);
     }
   });
@@ -303,17 +296,17 @@ export async function authRoutes(fastify: FastifyInstance) {
 
       reply.setCookie("refreshToken", result.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: config.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 14 * 24 * 60 * 60,
         path: "/",
       });
 
-      const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      const frontendUrl = config.CLIENT_URL;
       return reply.redirect(`${frontendUrl}/oauth/callback?token=${result.accessToken}`, 301);
     } catch (error) {
       fastify.log.error(error, "Google OAuth error");
-      const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+      const frontendUrl = config.CLIENT_URL;
       return reply.redirect(`${frontendUrl}/oauth/error`, 301);
     }
   });

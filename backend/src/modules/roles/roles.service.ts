@@ -1,5 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
+import { ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
+import { redis } from "../../lib/redis.js";
+import { config } from "../../config/env.js";
 
 const logger = createLogger("Roles", { color: "yellow" });
 
@@ -81,10 +84,10 @@ export class RolesService {
     }
 
     // Проверяем секретный пароль для смены роли
-    const secret = process.env.ADMIN_ROLE_CHANGE_SECRET;
+    const secret = config.ADMIN_ROLE_CHANGE_SECRET;
     if (secret) {
       if (!adminPassword || adminPassword !== secret) {
-        throw new Error("Неверный пароль для смены роли");
+        throw new ValidationError("Неверный пароль для смены роли");
       }
     }
 
@@ -104,6 +107,9 @@ export class RolesService {
       logger.error("Роль пользователя не найдена после обновления", { userId });
       return null;
     }
+
+    // Инвалидируем кэш роли — следующий запрос пользователя получит новую роль из БД
+    redis.del(`user:role:${userId}`).catch(() => {});
 
     const result: UserRoleInfo = {
       id: user.role.id,
@@ -126,6 +132,9 @@ export class RolesService {
       where: { id: userId },
       data: { roleId: null },
     });
+
+    // Инвалидируем кэш роли
+    redis.del(`user:role:${userId}`).catch(() => {});
 
     logger.info("Роль снята", { userId });
   }

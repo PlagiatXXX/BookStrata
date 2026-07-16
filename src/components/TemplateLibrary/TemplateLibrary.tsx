@@ -187,7 +187,7 @@ const TemplateLibrary: React.FC = () => {
   });
 
   // При пререндере не делаем запросы, требующие авторизации
-  const isPrerender = typeof window !== 'undefined' && (window as any).__PRERENDER__ === true;
+  const isPrerender = typeof window !== 'undefined' && window.__PRERENDER__ === true;
 
   const {
     data: likedTierListsData,

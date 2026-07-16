@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js"
+import { NotFoundError, AuthorizationError } from "../../lib/errors.js"
 import { sanitize } from "../../lib/sanitizer.js"
 
 const messageInclude = {
@@ -83,7 +84,7 @@ export async function createTopic(title: string, userId: number) {
 
 export async function pinTopic(topicId: string) {
   const topic = await prisma.discussion.findUnique({ where: { id: topicId } })
-  if (!topic) throw new Error("Topic not found")
+  if (!topic) throw new NotFoundError("Topic not found")
   const now = new Date()
   return prisma.discussion.update({
     where: { id: topicId },
@@ -100,7 +101,7 @@ export async function pinTopic(topicId: string) {
 
 export async function deleteTopic(topicId: string) {
   const topic = await prisma.discussion.findUnique({ where: { id: topicId } })
-  if (!topic) throw new Error("Topic not found")
+  if (!topic) throw new NotFoundError("Topic not found")
   await prisma.discussion.delete({ where: { id: topicId } })
 }
 
@@ -133,7 +134,7 @@ export async function createMessage(
       select: { discussionId: true },
     })
     if (!parent || parent.discussionId !== discussionId) {
-      throw new Error("Parent message not found")
+      throw new NotFoundError("Parent message not found")
     }
   }
 
@@ -155,8 +156,8 @@ export async function createMessage(
 
 export async function updateMessage(messageId: string, userId: number, content: string) {
   const message = await prisma.discussionMessage.findUnique({ where: { id: messageId } })
-  if (!message) throw new Error("Message not found")
-  if (message.userId !== userId) throw new Error("You can only edit your own messages")
+  if (!message) throw new NotFoundError("Message not found")
+  if (message.userId !== userId) throw new AuthorizationError("You can only edit your own messages")
 
   return prisma.discussionMessage.update({
     where: { id: messageId },
@@ -167,11 +168,11 @@ export async function updateMessage(messageId: string, userId: number, content: 
 
 export async function deleteMessage(messageId: string, userId: number, userRole: string | undefined) {
   const message = await prisma.discussionMessage.findUnique({ where: { id: messageId } })
-  if (!message) throw new Error("Message not found")
+  if (!message) throw new NotFoundError("Message not found")
 
   const isModOrAdmin = userRole === "admin" || userRole === "moderator"
   if (!isModOrAdmin) {
-    throw new Error("Only admins and moderators can delete messages")
+    throw new AuthorizationError("Only admins and moderators can delete messages")
   }
 
   await prisma.discussionMessage.delete({ where: { id: messageId } })

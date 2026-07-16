@@ -3,9 +3,10 @@
  */
 import * as Sentry from "@sentry/node";
 import type { FastifyInstance } from "fastify";
+import { config } from "../config/env.js";
 
-const SENTRY_DSN = process.env.SENTRY_DSN;
-const IS_DEV = process.env.NODE_ENV !== "production";
+const SENTRY_DSN = config.SENTRY_DSN;
+const IS_DEV = config.NODE_ENV !== "production";
 
 export function initSentry() {
   if (!SENTRY_DSN) {

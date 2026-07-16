@@ -1,4 +1,6 @@
-const SMARTCAPTCHA_SECRET = process.env.SMARTCAPTCHA_SECRET_KEY || ""
+import { config } from "../config/env.js";
+
+const SMARTCAPTCHA_SECRET = config.SMARTCAPTCHA_SECRET_KEY
 
 export async function verifySmartCaptchaToken(token: string): Promise<boolean> {
   if (!SMARTCAPTCHA_SECRET) {

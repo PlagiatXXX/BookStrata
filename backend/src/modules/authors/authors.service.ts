@@ -1,4 +1,5 @@
 // backend/src/modules/authors/authors.service.ts
+import { ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { slugify } from "../../utils/slugify.js";
 import type { PrismaClient } from "@prisma/client";
@@ -59,7 +60,7 @@ export function createAuthorService(prisma: PrismaClient) {
   const findOrCreate = async (name: string): Promise<AuthorResult> => {
     const trimmed = name.trim();
     if (!trimmed) {
-      throw new Error("Author name cannot be empty");
+      throw new ValidationError("Author name cannot be empty");
     }
 
     // Пробуем найти существующего
