@@ -12,3 +12,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+// Флаг, устанавливаемый prerender-скриптом (Playwright) через page.addInitScript
+interface Window {
+  __PRERENDER__?: boolean;
+}

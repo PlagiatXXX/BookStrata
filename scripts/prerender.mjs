@@ -493,13 +493,36 @@ async function processRoute(browser, route) {
   const page = await context.newPage();
 
   try {
+    // Устанавливаем флаг пререндера — фронт не будет слать ошибки в Sentry
+    // и может отключить несущественные при пререндере запросы
+    await page.addInitScript(() => {
+      window.__PRERENDER__ = true;
+    });
+
     // API-прокси через Playwright: перехватываем запросы, чтобы
     // auth/refresh всегда возвращал 401 (нет сессии при пререндере),
     // а остальные проксируем на реальный бэкенд.
+    // Аuth-зависимые эндпоинты сразу возвращаем пустой ответ без авторизации,
+    // чтобы не было лавины 401 → refresh → cleanup → rerender.
+    const mockUnauthed = { status: 200, contentType: "application/json" };
     await page.route("**/api/log", (route) => route.fulfill({
       status: 200,
       contentType: "application/json",
       body: "{}",
+    }));
+
+    // Эндпоинты, которым нужна авторизация — на пререндере сразу мокаем
+    await page.route("**/api/tier-lists/liked", (route) => route.fulfill({
+      ...mockUnauthed,
+      body: JSON.stringify({ likedIds: [] }),
+    }));
+    await page.route("**/api/tier-lists/*/taste-match", (route) => route.fulfill({
+      ...mockUnauthed,
+      body: JSON.stringify({ matchPercent: 0, commonBooks: 0, details: [] }),
+    }));
+    await page.route("**/api/ai/librarian/status", (route) => route.fulfill({
+      ...mockUnauthed,
+      body: JSON.stringify({ available: false }),
     }));
 
     if (backendAvailable) {

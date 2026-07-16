@@ -64,9 +64,11 @@ async function request<T>(
       handleUnauthorized();
     }
     // Не показываем тост для auth/refresh — при пререндере нет сессии, это штатная ситуация.
-    // Также скрываем тост если страница в Prerendering API (Google/Yandex боты).
+    // Также скрываем тост если страница в Prerendering API (Google/Yandex боты)
+    // или в Playwright-пререндере (window.__PRERENDER__).
     const isAuthRefresh = path.includes("/auth/refresh");
-    const isPrerendering = typeof document !== "undefined" && "prerendering" in document;
+    const isPrerendering = typeof document !== "undefined"
+      && (("prerendering" in document) || (window as any).__PRERENDER__ === true);
     if (!isAuthRefresh && !isPrerendering) {
       sileo.error({
         title: "Сессия истекла",

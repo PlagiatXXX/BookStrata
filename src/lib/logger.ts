@@ -195,17 +195,20 @@ export function createLogger(name: string, config: LoggerConfig = {}): Logger {
 
       console.error(formatted, style, errorData.stack ?? '', context ?? '');
 
-      // Отправляем в Sentry
-      try {
-        const sentryError = error instanceof Error ? error : new Error(errorData.message);
-        import("@sentry/browser").then((Sentry) => {
-          Sentry.captureException(sentryError, {
-            tags: { loggerName: name },
-            extra: { ...context },
+      // Отправляем в Sentry (кроме режима пререндера — там нет сессии, 401 — штатно)
+      const isPrerender = typeof window !== 'undefined' && (window as any).__PRERENDER__ === true;
+      if (!isPrerender) {
+        try {
+          const sentryError = error instanceof Error ? error : new Error(errorData.message);
+          import("@sentry/browser").then((Sentry) => {
+            Sentry.captureException(sentryError, {
+              tags: { loggerName: name },
+              extra: { ...context },
+            });
           });
-        });
-      } catch {
-        // Sentry может быть не загружен — не критично
+        } catch {
+          // Sentry может быть не загружен — не критично
+        }
       }
 
       if (sendToServer) {
