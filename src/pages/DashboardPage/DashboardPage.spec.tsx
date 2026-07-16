@@ -34,6 +34,8 @@ vi.mock("@/hooks/useAiLibrarian", () => ({
     sendMessage: vi.fn(),
     clearMessages: vi.fn(),
     refreshStatus: vi.fn(),
+    switchSession: vi.fn(),
+    activeSessionKey: "__global",
   })),
 }));
 

@@ -24,6 +24,8 @@ beforeEach(() => {
     sendMessage: vi.fn(),
     clearMessages: vi.fn(),
     refreshStatus: vi.fn(),
+    switchSession: vi.fn(),
+    activeSessionKey: '__global',
   })
 })
 
@@ -57,6 +59,8 @@ describe('AiLibrarianModal', () => {
       sendMessage: vi.fn(),
       clearMessages: vi.fn(),
       refreshStatus: vi.fn(),
+      switchSession: vi.fn(),
+      activeSessionKey: '__global',
     })
     render(<AiLibrarianModal isOpen={true} onClose={() => {}} />)
     expect(screen.getByText(/Букстраж недоступен/i)).toBeDefined()
@@ -84,6 +88,8 @@ describe('AiLibrarianModal', () => {
       sendMessage: vi.fn(),
       clearMessages: vi.fn(),
       refreshStatus: vi.fn(),
+      switchSession: vi.fn(),
+      activeSessionKey: '__global',
     })
     render(<AiLibrarianModal isOpen={true} onClose={() => {}} />)
     expect(screen.getByText('OFFLINE')).toBeDefined()
@@ -117,6 +123,8 @@ describe('AiLibrarianModal', () => {
       sendMessage: vi.fn(),
       clearMessages: vi.fn(),
       refreshStatus: vi.fn(),
+      switchSession: vi.fn(),
+      activeSessionKey: '__global',
     })
     render(<AiLibrarianModal isOpen={true} onClose={() => {}} />)
     expect(screen.getByLabelText('Очистить диалог')).toBeDefined()
@@ -132,6 +140,8 @@ describe('AiLibrarianModal', () => {
       sendMessage: vi.fn(),
       clearMessages: vi.fn(),
       refreshStatus: vi.fn(),
+      switchSession: vi.fn(),
+      activeSessionKey: '__global',
     })
     render(<AiLibrarianModal isOpen={true} onClose={() => {}} />)
     expect(screen.getByText('Проверить ещё раз')).toBeDefined()

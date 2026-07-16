@@ -186,13 +186,16 @@ const TemplateLibrary: React.FC = () => {
     enabled: activeSection === "public",
   });
 
+  // При пререндере не делаем запросы, требующие авторизации
+  const isPrerender = typeof window !== 'undefined' && (window as any).__PRERENDER__ === true;
+
   const {
     data: likedTierListsData,
     isLoading: isLoadingLiked,
   } = useQuery<PaginatedTierListsResponse, Error>({
     queryKey: ["likedTierLists"],
     queryFn: () => getLikedTierLists(1, 100),
-    enabled: activeSection === "favorites",
+    enabled: activeSection === "favorites" && !isPrerender,
     staleTime: PUBLIC_TIER_LISTS_STALE_TIME_MS,
     gcTime: PUBLIC_TIER_LISTS_GC_TIME_MS,
   });

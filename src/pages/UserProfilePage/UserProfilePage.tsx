@@ -29,10 +29,12 @@ export default function UserProfilePage() {
     enabled: !!id,
   })
 
+  const isPrerender = typeof window !== 'undefined' && (window as any).__PRERENDER__ === true
+
   const { data: tasteMatch } = useQuery({
     queryKey: ["tasteMatch", id],
     queryFn: () => apiGetTasteMatch(id!),
-    enabled: !!id && !isOwnProfile,
+    enabled: !!id && !isOwnProfile && !isPrerender,
     staleTime: 60_000,
   })
 

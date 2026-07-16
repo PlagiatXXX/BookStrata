@@ -115,11 +115,14 @@ export function useTierEditorQueries(
     staleTime: 60_000,
   });
 
+  // При пререндере не делаем запросы, требующие авторизации
+  const isPrerender = typeof window !== 'undefined' && (window as any).__PRERENDER__ === true;
+
   // Получаем количество лайков
   const { data: likesData } = useQuery({
     queryKey: ['tierListLikes', tierListId],
     queryFn: () => (tierListId ? apiGetTierListLikes(tierListId) : null),
-    enabled: !!tierListId && !isNew,
+    enabled: !!tierListId && !isNew && !isPrerender,
   });
 
   // Получаем все лайкнутые тир-листы
@@ -127,6 +130,7 @@ export function useTierEditorQueries(
     queryKey: ['likedTierListIds'],
     queryFn: () => apiGetLikedTierListIds(),
     staleTime: 5 * 60 * 1000,
+    enabled: !isPrerender,
   });
 
   const likedIdsSet = useMemo(

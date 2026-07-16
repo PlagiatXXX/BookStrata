@@ -5,6 +5,7 @@ import { useAiLibrarian, type AiStatus } from '@/hooks/useAiLibrarian'
 import { useAuth } from '@/hooks/useAuthContext'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { ChatMessage, AiLibrarianContext } from '@/lib/aiLibrarianApi'
+import { getSessionKey } from '@/contexts/aiLibrarian.context'
 import { apiTrackEvent } from '@/lib/analyticsApi'
 
 /* ─── Suggestion chips ─── */
@@ -338,6 +339,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
     sendMessage,
     clearMessages,
     refreshStatus,
+    switchSession,
   } = useAiLibrarian()
   const [input, setInput] = useState('')
   const [draftStatusIndex, setDraftStatusIndex] = useState(0)
@@ -358,6 +360,14 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
       setTimeout(() => textareaRef.current?.focus(), 150)
     }
   }, [isOpen])
+
+  // Переключаем сессию в соответствии с контекстом страницы
+  useEffect(() => {
+    if (isOpen) {
+      const key = getSessionKey(context)
+      switchSession(key)
+    }
+  }, [isOpen, context, switchSession])
 
   // Rotate pre-token statuses
   useEffect(() => {

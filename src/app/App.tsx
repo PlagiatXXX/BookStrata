@@ -9,6 +9,7 @@ import { useAchievementNotifications } from "@/hooks/useAchievementNotifications
 import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
 import { CookieConsent } from "@/components/CookieConsent/CookieConsent";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
+import { AiLibrarianProvider } from "@/contexts/AiLibrarianContext";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import "../styles/sileo-custom.css";
 
@@ -24,6 +25,7 @@ function AppShell() {
   return (
     <HelmetProvider>
       <AuthProvider>
+        <AiLibrarianProvider>
         <AnalyticsProvider>
           <Suspense
             fallback={
@@ -42,6 +44,7 @@ function AppShell() {
           <CookieConsent />
           <FeedbackButton raised={pathname.match(/^\/tier-lists\/[^/]+\/?$/)? true : false} withNavMargin={pathname !== "/"} />
         </AnalyticsProvider>
+        </AiLibrarianProvider>
       </AuthProvider>
     </HelmetProvider>
   );
