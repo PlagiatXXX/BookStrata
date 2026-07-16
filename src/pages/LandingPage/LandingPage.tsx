@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { motion } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 import { useAuth } from "@/hooks/useAuthContext"
 import {
   ArrowRight, BookOpen, Sword, Sparkles,
@@ -147,11 +147,18 @@ const plans = [
   },
 ]
 
+/* ---------- Hero rotating phrases ---------- */
+const heroPhrases = [
+  "Открывайте новые.",
+  "Оценивайте.",
+  "Вдохновляйтесь.",
+]
+
 /* ---------- Target audience ---------- */
 const audienceItems = [
   {
     icon: BookOpen,
-    title: "Читаете 5–15 книг в год",
+    title: "Читаете от 5 книг в год",
     desc: "Чтобы не забывать прочитанное, вести список «что дальше» и находить новые книги по своим интересам.",
   },
   {
@@ -436,6 +443,14 @@ export default function LandingPage() {
   const [isDonateOpen, setIsDonateOpen] = useState(false)
   const [activeScreenshot, setActiveScreenshot] = useState<number | null>(null)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [phraseIndex, setPhraseIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPhraseIndex((prev) => (prev + 1) % heroPhrases.length)
+    }, 2500)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
@@ -501,7 +516,19 @@ export default function LandingPage() {
             <br />
             прочитанную книгу.
             <br />
-            <span className="landing-hero__gradient-text">Открывайте новые.</span>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={phraseIndex}
+                className="landing-hero__gradient-text"
+                initial={{ opacity: 0, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, filter: 'blur(4px)' }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                style={{ display: 'inline-block' }}
+              >
+                {heroPhrases[phraseIndex]}
+              </motion.span>
+            </AnimatePresence>
           </h1>
 
           <p className="landing-hero__subtitle">
@@ -549,6 +576,40 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ============ FEATURED ============ */}
+      <div className="landing-divider" />
+      <section className="landing-section landing-section--alt" id="featured">
+        <div className="landing-section__container">
+          <RevealBox><h2 className="landing-section__title">Популярные тир-листы</h2></RevealBox>
+          <RevealBox><p className="landing-section__subtitle">Что создают наши пользователи</p></RevealBox>
+
+          <RevealBox className="landing-featured">
+            {tierLists && tierLists.length > 0
+              ? tierLists.map((item) => <MiniTierCard key={item.id} item={item} />)
+              : Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="mini-tier-card mini-tier-card--skeleton">
+                    <div className="mini-tier-card__cover" />
+                    <div className="mini-tier-card__body">
+                      <div className="mini-tier-card__skeleton-line" />
+                      <div className="mini-tier-card__skeleton-line mini-tier-card__skeleton-line--short" />
+                    </div>
+                  </div>
+                ))}
+          </RevealBox>
+
+          <RevealBox className="landing-section__action">
+            <button
+              onClick={() => navigate("/auth?mode=register")}
+              className="landing-hero__btn landing-hero__btn--primary"
+              type="button"
+            >
+              Смотреть все
+              <ChevronRight size={18} />
+            </button>
+          </RevealBox>
+        </div>
+      </section>
+
       {/* ============ SCREENSHOTS ============ */}
       <section className="landing-section" id="screenshots">
         <div className="landing-section__container">
@@ -584,6 +645,27 @@ export default function LandingPage() {
           <AnimatedCounter target={forumStats?.activeBattles ?? 0} suffix="" label="Проведено баттлов" />
           <AnimatedCounter target={forumStats?.tierLists ?? 0} suffix="" label="Создано тир-листов" />
           <AnimatedCounter target={forumStats?.totalBooks ?? 0} suffix="+" label="Книг в базе" />
+        </div>
+      </section>
+
+      <div className="landing-divider" />
+
+      {/* ============ FINAL CTA ============ */}
+      <section className="landing-cta">
+        <div className="landing-cta__bg" />
+        <div className="landing-cta__content">
+          <RevealBox><h2 className="landing-cta__title">Ваши книги ждут</h2></RevealBox>
+          <RevealBox><p className="landing-cta__subtitle">Начните бесплатно — без ограничений и скрытых платежей.</p></RevealBox>
+          <RevealBox>
+            <button
+              onClick={() => navigate("/auth?mode=register")}
+              className="landing-cta__btn"
+              type="button"
+            >
+              Создать аккаунт
+              <Zap size={20} />
+            </button>
+          </RevealBox>
         </div>
       </section>
 
@@ -634,40 +716,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <div className="landing-divider" />
 
-      {/* ============ FEATURED ============ */}
-      <section className="landing-section landing-section--alt" id="featured">
-        <div className="landing-section__container">
-          <RevealBox><h2 className="landing-section__title">Популярные тир-листы</h2></RevealBox>
-          <RevealBox><p className="landing-section__subtitle">Что создают наши пользователи</p></RevealBox>
-
-          <RevealBox className="landing-featured">
-            {tierLists && tierLists.length > 0
-              ? tierLists.map((item) => <MiniTierCard key={item.id} item={item} />)
-              : Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="mini-tier-card mini-tier-card--skeleton">
-                    <div className="mini-tier-card__cover" />
-                    <div className="mini-tier-card__body">
-                      <div className="mini-tier-card__skeleton-line" />
-                      <div className="mini-tier-card__skeleton-line mini-tier-card__skeleton-line--short" />
-                    </div>
-                  </div>
-                ))}
-          </RevealBox>
-
-          <RevealBox className="landing-section__action">
-            <button
-              onClick={() => navigate("/auth?mode=register")}
-              className="landing-hero__btn landing-hero__btn--primary"
-              type="button"
-            >
-              Смотреть все
-              <ChevronRight size={18} />
-            </button>
-          </RevealBox>
-        </div>
-      </section>
 
       <div className="landing-divider" />
 
@@ -851,27 +900,6 @@ export default function LandingPage() {
                 </ul>
               </div>
             ))}
-          </RevealBox>
-        </div>
-      </section>
-
-      <div className="landing-divider" />
-
-      {/* ============ FINAL CTA ============ */}
-      <section className="landing-cta">
-        <div className="landing-cta__bg" />
-        <div className="landing-cta__content">
-          <RevealBox><h2 className="landing-cta__title">Ваши книги ждут</h2></RevealBox>
-          <RevealBox><p className="landing-cta__subtitle">Начните бесплатно — без ограничений и скрытых платежей.</p></RevealBox>
-          <RevealBox>
-            <button
-              onClick={() => navigate("/auth?mode=register")}
-              className="landing-cta__btn"
-              type="button"
-            >
-              Создать аккаунт
-              <Zap size={20} />
-            </button>
           </RevealBox>
         </div>
       </section>

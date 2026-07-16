@@ -18,10 +18,10 @@ interface MoodCard {
 const MOODS: MoodCard[] = [
   { emoji: "😂", title: "Посмеяться", description: "Юмористические книги и комедийные романы", slug: "what-to-read-funny", image: "/funny_small.webp" },
   { emoji: "😱", title: "Испугаться", description: "Хорроры и мистика", slug: "horror-books", image: "/scary_small.webp" },
-  { emoji: "🤔", title: "Задуматься", description: "Философская проза и интеллектуальные романы", slug: "best-books-ever" },
-  { emoji: "💕", title: "Влюбиться", description: "Любовные романы и истории", slug: "top-romance" },
-  { emoji: "🧙‍♂️", title: "Убежать от реала", description: "Фэнтези и магические миры", slug: "top-fantasy" },
-  { emoji: "🔍", title: "Раскрыть тайну", description: "Детективы и триллеры", slug: "top-detective" },
+  { emoji: "🤔", title: "Задуматься", description: "Философская проза и интеллектуальные романы", slug: "best-books-ever", image: "/philosoph.webp" },
+  { emoji: "💕", title: "Влюбиться", description: "Любовные романы и истории", slug: "top-romance", image: "/loveis.webp" },
+  { emoji: "🧙‍♂️", title: "Убежать от реала", description: "Фэнтези и магические миры", slug: "top-fantasy", image: "/fantast.webp" },
+  { emoji: "🔍", title: "Раскрыть тайну", description: "Детективы и триллеры", slug: "top-detective", image: "/sherlock.webp" },
 ];
 
 export default function WhatToReadPage() {
@@ -65,13 +65,13 @@ export default function WhatToReadPage() {
               <Link
                 key={mood.slug}
                 to={`/collections/${mood.slug}`}
-                className="brutal-card brutal-border p-4 sm:p-5 text-center hover-lift transition-all duration-200 group min-h-[150px] sm:min-h-0"
+                className="brutal-card brutal-border p-5 sm:p-6 text-center hover-lift transition-all duration-200 group min-h-[180px] sm:min-h-0"
               >
                 <div className="mb-3 group-hover:scale-110 transition-transform flex items-center justify-center">
                   {mood.image ? (
-                    <img src={mood.image} alt={mood.title} className="w-10 h-10 rounded object-cover" />
+                    <img src={mood.image} alt={mood.title} className="w-16 h-auto max-h-24 rounded" />
                   ) : (
-                    <span className="text-3xl">{mood.emoji}</span>
+                    <span className="text-4xl">{mood.emoji}</span>
                   )}
                 </div>
                 <h3 className="text-sm font-bold mb-1">{mood.title}</h3>
