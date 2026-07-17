@@ -18,6 +18,19 @@ import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api
 import { config } from "../../config/env.js";
 
 export async function authRoutes(fastify: FastifyInstance) {
+  // Fastify 5 не принимает пустое JSON тело (FST_ERR_CTP_EMPTY_JSON_BODY).
+  // Браузер может сам добавить Content-Type: application/json даже для POST без тела.
+  // Переопределяем парсер для application/json — пустое тело парсится как {}.
+  fastify.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body: string | Buffer, done) => {
+    try {
+      const str = typeof body === 'string' ? body : body.toString();
+      done(null, str ? JSON.parse(str) : {});
+    } catch (err: any) {
+      err.statusCode = 400;
+      done(err, undefined);
+    }
+  });
+
   // POST /api/auth/register
   fastify.post<{ Body: RegisterInput }>(
     "/register",
@@ -153,8 +166,8 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post("/refresh", {
     // Fastify 5 требует тело для POST с Content-Type: application/json.
     // Браузер может сам добавить этот заголовок даже без тела.
-    // bodyLimit: 0 отключает парсинг тела — refresh работает только по куке.
-    bodyLimit: 0,
+    // bodyLimit: 1 отключает парсинг тела для пустых запросов — refresh работает только по куке.
+    bodyLimit: 1,
   }, async (request, reply) => {
     try {
       const refreshToken = request.cookies.refreshToken;
