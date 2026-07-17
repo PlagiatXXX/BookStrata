@@ -82,8 +82,12 @@ export async function validateRefreshToken(token: string): Promise<AuthTokenPayl
 }
 
 export async function logout(userId: number): Promise<void> {
-  await incrementRefreshVersion(userId);
-  logger.info("Пользователь вышел, refresh-токены отозваны", { userId });
+  // Refresh-токен хранится в httpOnly Secure SameSite=Strict cookie —
+  // украсть через XSS нельзя. Клиент сам чистит куку при logout,
+  // поэтому серверу не нужно инвалидировать refreshVersion.
+  // Инвалидация refreshVersion всё ещё используется при смене пароля
+  // для отзыва всех сессий (в password-reset.service.ts).
+  logger.info("Пользователь вышел (refresh-токен остаётся валидным до истечения срока)", { userId });
 }
 
 export async function generateTokenPair(payload: Partial<AuthTokenPayload>): Promise<{
