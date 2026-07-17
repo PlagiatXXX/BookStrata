@@ -1,5 +1,5 @@
 // src/lib/authorsApi.ts
-import { apiClient } from './api-client'
+import { apiClient, ApiRequestError } from './api-client'
 
 export interface AuthorResult {
   id: number
@@ -19,7 +19,10 @@ export async function searchAuthors(q: string, limit = 10): Promise<AuthorResult
   try {
     const response = await apiClient.get<AuthorSearchResponse>('/authors/search', { q, limit })
     return response.authors
-  } catch {
-    return []
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) {
+      return [];
+    }
+    throw error;
   }
 }

@@ -1,4 +1,3 @@
-import React from 'react';
 import type { SaveStatus } from '../hooks/useTierEditorSave';
 
 interface SaveButtonProps {

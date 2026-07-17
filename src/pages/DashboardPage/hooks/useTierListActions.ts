@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/tierListApi";
+import type { PaginatedTierListsResponse, TierListShort } from "@/lib/tierListApi";
 import { createLogger } from "@/lib/logger";
 import { sileo } from "sileo";
 
@@ -73,11 +73,11 @@ export function useTierListActions({
       const previousTierLists = queryClient.getQueryData(["userTierLists"]);
 
       // Оптимистично обновляем название в кэше
-      queryClient.setQueriesData({ queryKey: ["userTierLists"] }, (old: any) => {
+      queryClient.setQueriesData<PaginatedTierListsResponse>({ queryKey: ["userTierLists"] }, (old) => {
         if (!old || !old.data) return old;
         return {
           ...old,
-          data: old.data.map((item: any) => 
+          data: old.data.map((item: TierListShort) => 
             String(item.id) === String(id) ? { ...item, title } : item
           )
         };
@@ -89,7 +89,7 @@ export function useTierListActions({
       logger.info("Tier list renamed successfully");
       onSuccess?.();
     },
-    onError: (mutationError, variables, context) => {
+    onError: (mutationError, _variables, context) => {
       // Откат при ошибке
       if (context?.previousTierLists) {
         queryClient.setQueryData(["userTierLists"], context.previousTierLists);
@@ -116,11 +116,11 @@ export function useTierListActions({
       const previousTierLists = queryClient.getQueryData(["userTierLists"]);
 
       // Оптимистично удаляем из списка
-      queryClient.setQueriesData({ queryKey: ["userTierLists"] }, (old: any) => {
+      queryClient.setQueriesData<PaginatedTierListsResponse>({ queryKey: ["userTierLists"] }, (old) => {
         if (!old || !old.data) return old;
         return {
           ...old,
-          data: old.data.filter((item: any) => String(item.id) !== String(id))
+          data: old.data.filter((item: TierListShort) => String(item.id) !== String(id))
         };
       });
 
@@ -130,7 +130,7 @@ export function useTierListActions({
       logger.info("Tier list deleted successfully");
       onSuccess?.();
     },
-    onError: (mutationError, id, context) => {
+    onError: (mutationError, _id, context) => {
       if (context?.previousTierLists) {
         queryClient.setQueryData(["userTierLists"], context.previousTierLists);
       }

@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import type { Template } from '@/types/templates';
 import { Button } from '@/ui/Button';
 

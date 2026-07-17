@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { TierListData, Tier } from '@/types';
 import type { ApiTierListResponse, ApiBookPlacement } from '@/types/api';
 import { apiClient } from './api-client';
@@ -161,18 +160,18 @@ export async function saveTierListPlacements(
 
 export async function saveTierListTiers(
   id: string,
-  tiers: any,
+  tiers: NonNullable<SaveTierListPayload['tiers']>,
 ) {
-  const isDiff = 'added' in (tiers as any);
+  const isDiff = 'added' in tiers;
 
   if (isDiff) {
     tierListLogger.info('Сохранение тиров (diff)', {
       tierListId: id,
-      added: (tiers as any).added?.length,
-      updated: (tiers as any).updated?.length,
+      added: tiers.added?.length,
+      updated: tiers.updated?.length,
     });
   } else {
-    tierListLogger.info('Сохранение тиров (полный массив)', { tierListId: id, count: (tiers as Array<any>).length });
+    tierListLogger.info('Сохранение тиров (полный массив)', { tierListId: id, count: tiers.length });
   }
 
   const result = await apiClient.put(`/tier-lists/${id}/tiers`, tiers);
@@ -183,9 +182,9 @@ export async function saveTierListTiers(
 export async function addBooksToTierList(
   id: string,
   books: { title: string; author?: string; coverImageUrl: string; description?: string | null; thoughts?: string | null }[]
-): Promise<any> {
+): Promise<ApiTierListResponse> {
   tierListLogger.info('Добавление книг в рейтинговый список', { tierListId: id, booksCount: books.length });
-  const result = await apiClient.post(`/tier-lists/${id}/books`, { books });
+  const result = await apiClient.post<ApiTierListResponse>(`/tier-lists/${id}/books`, { books });
   tierListLogger.info('Книги успешно добавлены', { tierListId: id, booksCount: books.length });
   return result;
 }
@@ -253,13 +252,16 @@ function fileToBase64(file: File): Promise<string> {
 
 export async function saveTierListAtomic(
   id: string,
-  payload: any
+  payload: SaveTierListPayload
 ): Promise<{
   bookReplacements?: { tempId: string; realId: string }[];
   tierReplacements?: { tempId: string; realId: string }[];
 }> {
   tierListLogger.info("Атомарное сохранение тир-листа", { tierListId: id });
-  return apiClient.put<any>(`/tier-lists/${id}/save-all`, payload);
+  return apiClient.put<{
+    bookReplacements?: { tempId: string; realId: string }[];
+    tierReplacements?: { tempId: string; realId: string }[];
+  }>(`/tier-lists/${id}/save-all`, payload);
 }
 
 export function transformApiToState(apiData: ApiTierListResponse): TierListData {

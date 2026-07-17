@@ -4,10 +4,8 @@ import { useQuery } from "@tanstack/react-query"
 import { motion, AnimatePresence } from "motion/react"
 import { useAuth } from "@/hooks/useAuthContext"
 import {
-  ArrowRight, BookOpen, Sword, Sparkles,
-  Heart, MessageSquare, Zap,
-  ChevronRight, ChevronUp, Menu, X, Check, Layers,
-  BarChart3,
+  ArrowRight, Heart, Layers, Sparkles, Zap,
+  ChevronRight, ChevronUp, Menu, X, Check,
 } from "lucide-react"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { Logo } from "@/ui/Logo"
@@ -20,6 +18,7 @@ import { DonateModal } from "@/components/DonateModal/DonateModal"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { getPublicTierLists, type TierListShort } from "@/lib/tierListApi"
 import { getForumStats } from "@/lib/battlesApi"
+import { scenarios, plans, heroPhrases, audienceItems, screenshots, type ScreenshotItem } from "./landingData"
 import { proxyImageUrl } from "@/utils/imageProxy"
 import "./LandingPage.css"
 
@@ -57,121 +56,7 @@ function AnimatedCounter({ target, suffix = "", label }: { target: number; suffi
   )
 }
 
-/* ---------- Scenario card ---------- */
-interface ScenarioItem {
-  icon: React.ComponentType<{ size?: number }>
-  title: string
-  points: string[]
-  gradient: string
-  featured?: boolean
-}
-
-const scenarios: ScenarioItem[] = [
-  {
-    icon: BookOpen,
-    title: "Ведите свою библиотеку",
-    points: [
-      "Добавляйте книги из Google Books и LiveLib",
-      "Отмечайте статус: прочитано / читаю / планирую",
-      "Никогда не забывайте, что читали",
-    ],
-    gradient: "from-emerald-500 to-teal-600",
-  },
-  {
-    icon: Layers,
-    title: "Создавайте личные рейтинги",
-    points: [
-      "Распределяйте книги по уровням S, A, B, C, D",
-      "Кастомизируйте темы, обложки и блоки",
-      "Делитесь визуальными подборками с друзьями",
-    ],
-    gradient: "from-violet-600 to-purple-600",
-    featured: true,
-  },
-  {
-    icon: Heart,
-    title: "Находите единомышленников",
-    points: [
-      "Сравнивайте свои рейтинги с другими читателями",
-      "Подписывайтесь на людей с похожим вкусом",
-      "Обсуждайте книги в комментариях",
-    ],
-    gradient: "from-rose-500 to-pink-600",
-  },
-  {
-    icon: Sparkles,
-    title: "Открывайте новые книги",
-    points: [
-      "ИИ анализирует ваши вкусы и предлагает новинки",
-      "Подборки на основе реальных читательских предпочтений",
-      "Попадайте в книги, которые точно зайдут",
-    ],
-    gradient: "from-sky-500 to-indigo-600",
-  },
-]
-
-/* ---------- Pricing ---------- */
-const allFeatures = [
-  "Безлимитные тир-листы",
-  "Безлимит книг в тир-листе",
-  "Все темы оформления",
-  "Баттлы и обсуждения",
-  "Кастомные обложки",
-  "Экспорт PNG",
-  "Букстраж (AI-рекомендации)",
-  "Добавление книг через Google Books и LiveLib",
-  "AI-генерация аватарок",
-  "И многое другое",
-]
-
-const plans = [
-  {
-    name: "Всё бесплатно",
-    features: allFeatures,
-    cta: "Начать бесплатно",
-    donate: false,
-  },
-  {
-    name: "Донат",
-    price: "Любая",
-    period: "сумма",
-    desc: "Поддержите развитие проекта",
-    features: [
-      "+100 к карме",
-      "Бейдж мецената",
-      "Имя в списке спонсоров",
-      "Ранний доступ к фичам",
-    ],
-    cta: "Поддержать",
-    donate: true,
-  },
-]
-
-/* ---------- Hero rotating phrases ---------- */
-const heroPhrases = [
-  "рейтингов книг",
-  "тир-листов",
-  "личных подборок",
-]
-
-/* ---------- Target audience ---------- */
-const audienceItems = [
-  {
-    icon: BookOpen,
-    title: "Читаете от 5 книг в год",
-    desc: "Чтобы не забывать прочитанное, вести список «что дальше» и находить новые книги по своим интересам.",
-  },
-  {
-    icon: Heart,
-    title: "Любите делиться и сравнивать",
-    desc: "Чтобы показывать друзьям свой топ книг, участвовать в обсуждениях и находить людей со схожим вкусом.",
-  },
-  {
-    icon: Sparkles,
-    title: "Устали от случайных рекомендаций",
-    desc: "Чтобы получать подборки книг, которые действительно подходят под ваш вкус, а не общие списки бестселлеров.",
-  },
-]
+/* ---------- Nav ---------- */
 
 /* ---------- Nav ---------- */
 function LandingNav() {
@@ -320,55 +205,8 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
   )
 }
 
-/* ---------- Screenshots data ---------- */
-const screenshots = [
-  {
-    title: "Главная",
-    description: "Лента тир-листов и подборок",
-    gradient: "bg-linear-to-br from-violet-900/80 to-purple-900/80",
-    icon: <BookOpen size={28} />,
-    src: "/screenshots/dashboard.webp",
-  },
-  {
-    title: "Редактор",
-    description: "Drag-and-drop тир-листа",
-    gradient: "bg-linear-to-br from-slate-800 to-slate-900/90",
-    icon: <Layers size={28} />,
-    videoSrc: "/screenshots/tier-list.mp4",
-  },
-  {
-    title: "Баттлы",
-    description: "Сравнение подборок",
-    gradient: "bg-linear-to-br from-rose-900/80 to-orange-900/80",
-    icon: <Sword size={28} />,
-    src: "/screenshots/battles.webp",
-  },
-  {
-    title: "Профиль",
-    description: "Статистика и достижения",
-    gradient: "bg-linear-to-br from-amber-900/80 to-orange-900/80",
-    icon: <BarChart3 size={28} />,
-    src: "/screenshots/profile.webp",
-  },
-  {
-    title: "Личная библиотека",
-    description: "Поиск и подборки",
-    gradient: "bg-linear-to-br from-emerald-900/80 to-teal-900/80",
-    icon: <MessageSquare size={28} />,
-    src: "/screenshots/library.webp",
-  },
-  {
-    title: "ИИ-рекомендации",
-    description: "Умный подбор книг",
-    gradient: "bg-linear-to-br from-sky-900/80 to-indigo-900/80",
-    icon: <Sparkles size={28} />,
-    src: "/screenshots/AI.webp",
-  },
-]
-
-/* ---------- Lightbox ---------- */
 function Lightbox({ screenshot, onClose }: {
-  screenshot: typeof screenshots[number]
+  screenshot: ScreenshotItem
   onClose: () => void
 }) {
   useBodyScrollLock(true)

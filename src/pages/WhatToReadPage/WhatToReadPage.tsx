@@ -5,7 +5,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
-import { getPublishedCollections } from "@/lib/collectionsApi";
+import { getCollections } from "@/lib/collectionsApi";
 
 interface MoodCard {
   emoji: string;
@@ -27,7 +27,7 @@ const MOODS: MoodCard[] = [
 export default function WhatToReadPage() {
   const { data: collections = [] } = useQuery({
     queryKey: ["published-collections"],
-    queryFn: getPublishedCollections,
+    queryFn: getCollections,
     staleTime: 60 * 1000,
     retry: 2,
   });

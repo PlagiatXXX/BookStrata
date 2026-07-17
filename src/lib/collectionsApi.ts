@@ -1,5 +1,5 @@
 import type { CollectionItem } from "@/types/collection";
-import { apiClient } from "./api-client";
+import { apiClient, ApiRequestError } from "./api-client";
 
 export type CreateCollectionInput = Omit<
   CollectionItem,
@@ -7,16 +7,15 @@ export type CreateCollectionInput = Omit<
 >;
 export type UpdateCollectionInput = Partial<CreateCollectionInput>;
 
-// Получить все опубликованные коллекции
+// Получить все опубликованные коллекции (для публичного листинга)
 export async function getCollections(): Promise<CollectionItem[]> {
-  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections");
-  return res.data;
+  const res = await apiClient.get<CollectionItem[]>("/collections");
+  return (res || []).sort((a, b) => a.order - b.order);
 }
 
 // Получить все коллекции для админки (включая черновики)
 export async function getAllCollectionsForAdmin(): Promise<CollectionItem[]> {
-  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections/admin");
-  return res.data;
+  return apiClient.get<CollectionItem[]>("/collections/admin");
 }
 
 // Получить коллекцию по ID (для админки)
@@ -26,8 +25,11 @@ export async function getCollectionById(
   try {
     const res = await apiClient.get<CollectionItem>(`/collections/admin?id=${id}`);
     return res;
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
 }
 
@@ -37,8 +39,11 @@ export async function getCollectionBySlug(
 ): Promise<CollectionItem | null> {
   try {
     return await apiClient.get<CollectionItem>(`/collections/${slug}`);
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
 }
 
@@ -48,28 +53,25 @@ export async function getCollectionPreviewBySlug(
 ): Promise<CollectionItem | null> {
   try {
     return await apiClient.get<CollectionItem>(`/collections/admin/preview/${slug}`);
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
 }
 
 
 
 export async function getFeaturedCollections(): Promise<CollectionItem[]> {
-  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections?isFeatured=true");
-  return (res.data || []).sort((a, b) => a.order - b.order);
+  const res = await apiClient.get<CollectionItem[]>("/collections?isFeatured=true");
+  return (res || []).sort((a, b) => a.order - b.order);
 }
 
 // Получить не-featured коллекции (для страницы Сообщества)
 export async function getCommunityCollections(): Promise<CollectionItem[]> {
-  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections?isFeatured=false");
-  return (res.data || []).sort((a, b) => a.order - b.order);
-}
-
-// Получить все опубликованные коллекции (для публичного листинга)
-export async function getPublishedCollections(): Promise<CollectionItem[]> {
-  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections");
-  return (res.data || []).sort((a, b) => a.order - b.order);
+  const res = await apiClient.get<CollectionItem[]>("/collections?isFeatured=false");
+  return (res || []).sort((a, b) => a.order - b.order);
 }
 
 // Создать коллекцию

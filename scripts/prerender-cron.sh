@@ -72,6 +72,14 @@ else
   warn "Бэкенд не отвечает — prerender будет без данных тир-листов"
 fi
 
+# ——— Экспорт маршрутов коллекций (fallback для prerender) ———
+info "Экспорт маршрутов коллекций из БД..."
+if npx tsx "$PROJECT_DIR/backend/scripts/export-collection-routes.ts" 2>&1; then
+  ok "Маршруты коллекций экспортированы"
+else
+  warn "Не удалось экспортировать коллекции — prerender использует JSON из репы"
+fi
+
 # ——— Запуск prerender ———
 info "Запуск prerender..."
 export API_URL="$BACKEND_URL"

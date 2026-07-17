@@ -1,4 +1,4 @@
-import { api } from "./api-client";
+import { api, ApiRequestError } from "./api-client";
 
 export interface NewsArticle {
   id: string;
@@ -75,8 +75,11 @@ export const getPublishedNews = async (limit = 6): Promise<NewsArticle[]> => {
 export const getNewsById = async (id: string): Promise<NewsArticle | null> => {
   try {
     return await api.get<NewsArticle>(`/news/${id}`);
-  } catch {
-    return null;
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) {
+      return null;
+    }
+    throw error;
   }
 };
 

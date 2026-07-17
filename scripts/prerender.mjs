@@ -607,19 +607,22 @@ async function processRoute(browser, route) {
       }
     });
     page.on("requestfinished", (req) => {
-      try {
-        if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
-          pendingApiRequests.delete(req.url());
-          const resp = req.response();
-          const status = resp ? resp.status : 'no-resp';
-          log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
-          if (!resp) {
-            log(`  ⚠️  Response object is null — request was likely aborted or failed silently`);
+      (async () => {
+        try {
+          if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
+            pendingApiRequests.delete(req.url());
+            let resp;
+            try { resp = req.response(); } catch { resp = null; }
+            const status = resp ? resp.status : 'no-resp';
+            log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
+            if (!resp) {
+              log(`  ⚠️  Response object is null — request was likely aborted or failed silently`);
+            }
           }
+        } catch {
+          // Игнорируем — страница/контекст могли быть уже закрыты
         }
-      } catch {
-        // Игнорируем — страница/контекст могли быть уже закрыты
-      }
+      })().catch(() => {});
     });
     page.on("requestfailed", (req) => {
       try {
