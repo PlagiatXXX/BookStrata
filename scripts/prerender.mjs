@@ -305,7 +305,8 @@ async function waitForServer(url, timeout = 30000) {
 
 /**
  * Очищает дублирующиеся теги в &lt;head&gt;: title, canonical и meta с одинаковым name/property.
- * Оставляет только первое вхождение каждого. Вызывается на полном HTML после page.content().
+ * Оставляет последнее вхождение каждого (Helmet/SEOHead добавляет их последними).
+ * Вызывается на полном HTML после page.content().
  */
 function deduplicateHeadTags(html) {
   const headMatch = html.match(/<head>([\s\S]*?)<\/head>/i);
@@ -348,7 +349,22 @@ function deduplicateHeadTags(html) {
     }
 
     if (key && seen.has(key)) {
-      continue; // пропускаем дубль
+      // Удаляем предыдущее вхождение — оставляем последнее (Helmet/SEOHead)
+      const idx = resultTags.findIndex(t => {
+        if (key === 'title') return /^<title/i.test(t);
+        if (key === 'canonical') return /^<link\s[^>]*rel="canonical"/i.test(t);
+        if (key.startsWith('meta:')) {
+          const metaKey = key.slice(5);
+          const nameMatch = t.match(/^<meta\s[^>]*name="([^"]+)"/i);
+          if (nameMatch && nameMatch[1].toLowerCase() === metaKey) return true;
+          const propMatch = t.match(/^<meta\s[^>]*property="([^"]+)"/i);
+          if (propMatch && propMatch[1].toLowerCase() === metaKey) return true;
+        }
+        return false;
+      });
+      if (idx !== -1) {
+        resultTags.splice(idx, 1);
+      }
     }
     if (key) seen.add(key);
     resultTags.push(fullTag);
@@ -952,8 +968,9 @@ async function prerender() {
         return;
       }
 
-      // SPA fallback — отдаём index.html для всех маршрутов
-      const fallback = resolve(DIST, "index.html");
+      // SPA fallback — отдаём spa-index.html (оригинальный Vite-билд без title),
+      // а не index.html, который уже мог быть перезаписан пререндером корня (/).
+      const fallback = resolve(DIST, "spa-index.html");
       if (existsSync(fallback)) {
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         res.end(readFileSync(fallback));
