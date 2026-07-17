@@ -9,8 +9,8 @@ export type UpdateCollectionInput = Partial<CreateCollectionInput>;
 
 // Получить все опубликованные коллекции (для публичного листинга)
 export async function getCollections(): Promise<CollectionItem[]> {
-  const res = await apiClient.get<CollectionItem[]>("/collections");
-  return (res || []).sort((a, b) => a.order - b.order);
+  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections");
+  return (res.data || []).sort((a, b) => a.order - b.order);
 }
 
 // Получить все коллекции для админки (включая черновики)
@@ -64,14 +64,14 @@ export async function getCollectionPreviewBySlug(
 
 
 export async function getFeaturedCollections(): Promise<CollectionItem[]> {
-  const res = await apiClient.get<CollectionItem[]>("/collections?isFeatured=true");
-  return (res || []).sort((a, b) => a.order - b.order);
+  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections?isFeatured=true");
+  return (res.data || []).sort((a, b) => a.order - b.order);
 }
 
 // Получить не-featured коллекции (для страницы Сообщества)
 export async function getCommunityCollections(): Promise<CollectionItem[]> {
-  const res = await apiClient.get<CollectionItem[]>("/collections?isFeatured=false");
-  return (res || []).sort((a, b) => a.order - b.order);
+  const res = await apiClient.get<{ data: CollectionItem[] }>("/collections?isFeatured=false");
+  return (res.data || []).sort((a, b) => a.order - b.order);
 }
 
 // Создать коллекцию
