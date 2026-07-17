@@ -25,6 +25,13 @@ export const THEME_LABELS: Record<TierListTheme, string> = {
   moss: 'Мох',
 }
 
+/**
+ * Theme preview colors (used by ThemePicker swatches).
+ * Maps to GTC CSS variables:
+ *   bg   → --theme-bg
+ *   tier → --theme-accent-primary
+ *   text → --theme-on-background
+ */
 export const THEME_COLORS: Record<TierListTheme, { bg: string; tier: string; text: string }> = {
   default: { bg: '#0e0e0e', tier: '#c1fffe', text: '#ffffff' },
   midnight: { bg: '#0f172a', tier: '#818cf8', text: '#e2e8f0' },

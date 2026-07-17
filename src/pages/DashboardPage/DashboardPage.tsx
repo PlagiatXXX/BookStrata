@@ -162,7 +162,7 @@ export default function DashboardPage() {
           {isGuest ? (
             /* Гостевой блок: CTA */
             <div className="mx-auto my-8 max-w-3xl px-1 sm:px-0 text-center">
-              <div className="border-2 border-(--nb-border) bg-(--nb-surface) p-8 shadow-[4px_4px_0_0_#000000]">
+              <div className="border-2 border-black bg-gray-900 p-8 shadow-[4px_4px_0_0_#000000]">
                 <h2 className="nb-display-lg text-white mb-4">
                   Хочешь создавать тир-листы?
                 </h2>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
                 </p>
                 <button
                   onClick={() => navigate("/auth?mode=register")}
-                  className="inline-flex items-center gap-2 rounded-none border-2 border-(--nb-border) bg-(--nb-primary) px-8 py-3 font-bold text-black text-lg shadow-[4px_4px_0_0_#000000] hover:shadow-[6px_6px_0_0_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-none border-2 border-black bg-[#c1fffe] px-8 py-3 font-bold text-black text-lg shadow-[4px_4px_0_0_#000000] hover:shadow-[6px_6px_0_0_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
                   type="button"
                 >
                   Создать аккаунт

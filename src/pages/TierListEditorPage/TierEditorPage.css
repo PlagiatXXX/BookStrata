@@ -15,29 +15,35 @@ main.grid:has(> .neo-brutalist-editor) {
   overflow-x: clip !important;
 }
 
-/* NEO-BRUTALIST DESIGN TOKENS */
+/* ═══════════════════════════════════════════════════════════════
+   GTC (Global · Theme · Component) Design Tokens
+   См. https://gtc.design — модель для масштабируемых UI-систем
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Global tokens (примитивы, никогда не меняются с темой) ── */
 .neo-brutalist-editor {
-  --nb-bg: #0e0e0e;
-  --nb-primary: #c1fffe;    /* S-Tier / Cyan */
-  --nb-secondary: #ff51fa;  /* A-Tier / Pink */
-  --nb-tertiary: #ffbd58;   /* B-Tier / Orange */
-  --nb-on-background: #ffffff;
+  --global-border: #000000;
+  --global-border-width: 2px;
+  --global-shadow-offset: 2px;
 
-  --nb-border: #000000;
-  --nb-border-width: 2px;
-  --nb-shadow-offset: 2px;
+  --global-font-display: 'Space Grotesk', sans-serif;
+  --global-font-body: 'Manrope', sans-serif;
 
-  --nb-font-display: 'Space Grotesk', sans-serif;
-  --nb-font-body: 'Manrope', sans-serif;
+  --global-surface-lowest: #000000;
+  --global-surface-low: #1a1a1a;
+  --global-surface-high: #3a3a3a;
+  --global-surface-bright: #ffffff;
 
-  --nb-surface-container-lowest: #000000;
-  --nb-surface-container-low: #1a1a1a;
-  --nb-surface-container-highest: #3a3a3a;
-  --nb-surface-bright: #ffffff;
+  /* ── Theme tokens (переключаются через data-theme / mode) ── */
+  --theme-bg: #0e0e0e;
+  --theme-accent-primary: #c1fffe;    /* S-Tier / Cyan */
+  --theme-accent-secondary: #ff51fa;  /* A-Tier / Pink */
+  --theme-accent-tertiary: #ffbd58;   /* B-Tier / Orange */
+  --theme-on-background: #ffffff;
 
-  font-family: var(--nb-font-body);
-  background-color: var(--nb-bg);
-  color: var(--nb-on-background);
+  font-family: var(--global-font-body);
+  background-color: var(--theme-bg);
+  color: var(--theme-on-background);
   min-height: 100vh;
   position: relative;
 }
@@ -58,16 +64,16 @@ main.grid:has(> .neo-brutalist-editor) {
 
 /* UTILITIES */
 .nb-heavy-border {
-  border: var(--nb-border-width) solid var(--nb-border) !important;
+  border: var(--global-border-width) solid var(--global-border) !important;
   border-radius: 0 !important;
 }
 
 .nb-card-shadow {
-  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0 var(--nb-border) !important;
+  box-shadow: var(--global-shadow-offset) var(--global-shadow-offset) 0 0 var(--global-border) !important;
 }
 
 .nb-display-lg {
-  font-family: var(--nb-font-display);
+  font-family: var(--global-font-display);
   font-weight: 700;
   font-size: 2rem;
   line-height: 1;
@@ -76,13 +82,13 @@ main.grid:has(> .neo-brutalist-editor) {
 }
 
 .nb-headline-lg {
-  font-family: var(--nb-font-display);
+  font-family: var(--global-font-display);
   font-weight: 500;
   font-size: 1.5rem;
 }
 
 .nb-label-md {
-  font-family: var(--nb-font-display);
+  font-family: var(--global-font-display);
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -95,12 +101,12 @@ main.grid:has(> .neo-brutalist-editor) {
 
 /* INDUSTRIAL BUTTON */
 .nb-btn-primary {
-  background-color: var(--nb-primary);
-  color: var(--nb-border);
-  border: var(--nb-border-width) solid var(--nb-border);
-  box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 0 var(--nb-border);
+  background-color: var(--theme-accent-primary);
+  color: var(--global-border);
+  border: var(--global-border-width) solid var(--global-border);
+  box-shadow: var(--global-shadow-offset) var(--global-shadow-offset) 0 0 var(--global-border);
   padding: 0.4em 1em;
-  font-family: var(--nb-font-display);
+  font-family: var(--global-font-display);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.75rem;
@@ -110,16 +116,16 @@ main.grid:has(> .neo-brutalist-editor) {
 }
 
 .nb-btn-primary:hover {
-  transform: translate(var(--nb-shadow-offset), var(--nb-shadow-offset));
-  box-shadow: 0 0 0 0 var(--nb-border);
+  transform: translate(var(--global-shadow-offset), var(--global-shadow-offset));
+  box-shadow: 0 0 0 0 var(--global-border);
 }
 
 .nb-btn-secondary {
   background-color: transparent;
-  color: var(--nb-on-background);
-  border: var(--nb-border-width) solid var(--nb-primary);
+  color: var(--theme-on-background);
+  border: var(--global-border-width) solid var(--theme-accent-primary);
   padding: 0.4em 1em;
-  font-family: var(--nb-font-display);
+  font-family: var(--global-font-display);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.75rem;
@@ -135,14 +141,14 @@ main.grid:has(> .neo-brutalist-editor) {
 /* TIER ROW & CONTAINER */
 .neo-brutalist-editor .nb-tier-row {
   display: flex;
-  background-color: var(--nb-surface-container-low);
-  border-bottom: var(--nb-border-width) solid var(--nb-border);
+  background-color: var(--global-surface-low);
+  border-bottom: var(--global-border-width) solid var(--global-border);
   border-radius: 0 !important;
 }
 
 .neo-brutalist-editor .nb-tier-row-active {
   display: flex;
-  background-color: var(--nb-surface-container-low);
+  background-color: var(--global-surface-low);
   border: 2px solid #22d3ee;
   border-radius: 0 !important;
   box-shadow: 0 0 12px rgba(34, 211, 238, 0.4);
@@ -155,12 +161,12 @@ main.grid:has(> .neo-brutalist-editor) {
 
 .neo-brutalist-editor .nb-tier-row:first-child,
 .neo-brutalist-editor .nb-tier-row-active:first-child {
-  border-top: var(--nb-border-width) solid var(--nb-border);
+  border-top: var(--global-border-width) solid var(--global-border);
 }
 
 /* TIER ACTIONS */
 .neo-brutalist-editor .nb-tier-actions {
-  border-left: var(--nb-border-width) solid var(--nb-border);
+  border-left: var(--global-border-width) solid var(--global-border);
 }
 
 .neo-brutalist-editor .nb-rank-box {
@@ -169,7 +175,7 @@ main.grid:has(> .neo-brutalist-editor) {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: var(--nb-border-width) solid var(--nb-border);
+  border-right: var(--global-border-width) solid var(--global-border);
   overflow: visible;
 }
 
@@ -224,9 +230,9 @@ main.grid:has(> .neo-brutalist-editor) {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  border: var(--nb-border-width, 2px) solid var(--nb-border, #000000);
-  box-shadow: var(--nb-shadow-offset, 2px) var(--nb-shadow-offset, 2px) 0 0
-    var(--nb-border, #000000);
+  border: var(--global-border-width, 2px) solid var(--global-border, #000000);
+  box-shadow: var(--global-shadow-offset, 2px) var(--global-shadow-offset, 2px) 0 0
+    var(--global-border, #000000);
   position: relative;
   border-radius: 0 !important;
   transition: transform 100ms cubic-bezier(0, 0, 0.2, 1), border-color 100ms cubic-bezier(0, 0, 0.2, 1), box-shadow 100ms cubic-bezier(0, 0, 0.2, 1);
@@ -256,9 +262,9 @@ main.grid:has(> .neo-brutalist-editor) {
 
 .nb-book-card:hover {
   transform: rotate(2deg);
-  border-color: var(--nb-secondary, #ff51fa);
-  box-shadow: var(--nb-shadow-offset, 2px) var(--nb-shadow-offset, 2px) 0 0
-    var(--nb-secondary, #ff51fa);
+  border-color: var(--theme-accent-secondary, #ff51fa);
+  box-shadow: var(--global-shadow-offset, 2px) var(--global-shadow-offset, 2px) 0 0
+    var(--theme-accent-secondary, #ff51fa);
 }
 
 .nb-book-card img {
@@ -270,9 +276,9 @@ main.grid:has(> .neo-brutalist-editor) {
 
 /* SIDEBAR & CONTAINERS */
 .neo-brutalist-editor .nb-sidebar {
-  border: var(--nb-border-width) solid var(--nb-border);
-  border-left: 3px solid var(--nb-primary);
-  background-color: var(--nb-surface-container-low);
+  border: var(--global-border-width) solid var(--global-border);
+  border-left: 3px solid var(--theme-accent-primary);
+  background-color: var(--global-surface-low);
   padding: 1rem;
   border-radius: 0 !important;
   position: relative;
@@ -282,7 +288,7 @@ main.grid:has(> .neo-brutalist-editor) {
 }
 
 .neo-brutalist-editor .nb-sidebar-drop-target {
-  border-color: var(--nb-primary);
+  border-color: var(--theme-accent-primary);
   box-shadow: 0 0 0 2px rgba(193, 255, 254, 0.35);
   background:
     linear-gradient(
@@ -290,11 +296,11 @@ main.grid:has(> .neo-brutalist-editor) {
       rgba(193, 255, 254, 0.14),
       rgba(193, 255, 254, 0.05)
     ),
-    var(--nb-surface-container-low);
+    var(--global-surface-low);
 }
 
 .neo-brutalist-editor .nb-section-header {
-  border-bottom: var(--nb-border-width) solid var(--nb-border);
+  border-bottom: var(--global-border-width) solid var(--global-border);
   padding-bottom: 0.8rem;
   margin-bottom: 1rem;
   padding-left: 0.75rem;
@@ -308,14 +314,14 @@ main.grid:has(> .neo-brutalist-editor) {
   top: 0.15rem;
   bottom: 0.8rem;
   width: 2px;
-  background: var(--nb-primary);
+  background: var(--theme-accent-primary);
   opacity: 0.5;
   pointer-events: none;
 }
 
 /* ACTIVE TIER SETTINGS CARD */
 .neo-brutalist-editor .nb-sidebar-active-tier {
-  border: var(--nb-border-width) solid rgba(255, 189, 88, 0.2);
+  border: var(--global-border-width) solid rgba(255, 189, 88, 0.2);
   background:
     linear-gradient(
       145deg,
@@ -334,7 +340,7 @@ main.grid:has(> .neo-brutalist-editor) {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--nb-tertiary);
+  background: var(--theme-accent-tertiary);
   opacity: 0.6;
   pointer-events: none;
 }
@@ -347,7 +353,7 @@ main.grid:has(> .neo-brutalist-editor) {
 .neo-brutalist-editor .nb-input-label {
   display: block;
   margin-bottom: 0.5rem;
-  font-family: var(--nb-font-display);
+  font-family: var(--global-font-display);
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -355,8 +361,8 @@ main.grid:has(> .neo-brutalist-editor) {
 
 .neo-brutalist-editor .nb-input {
   width: 100%;
-  background-color: var(--nb-surface-container-lowest);
-  border: var(--nb-border-width) solid var(--nb-border);
+  background-color: var(--global-surface-lowest);
+  border: var(--global-border-width) solid var(--global-border);
   color: #ffffff;
   padding: 0.5rem;
   outline: none;
@@ -365,15 +371,15 @@ main.grid:has(> .neo-brutalist-editor) {
 }
 
 .neo-brutalist-editor .nb-input:focus {
-  border-color: var(--nb-primary);
+  border-color: var(--theme-accent-primary);
 }
 
 /* MODALS */
 .neo-brutalist-editor .nb-modal {
-  background-color: var(--nb-surface-bright);
+  background-color: var(--global-surface-bright);
   color: #000000;
-  border: var(--nb-border-width) solid var(--nb-border);
-  box-shadow: 4px 4px 0 0 var(--nb-border);
+  border: var(--global-border-width) solid var(--global-border);
+  box-shadow: 4px 4px 0 0 var(--global-border);
   border-radius: 0 !important;
   padding: 1rem;
 }
@@ -388,7 +394,7 @@ main.grid:has(> .neo-brutalist-editor) {
 }
 
 .theme-picker__label {
-  font-family: var(--nb-font-display);
+  font-family: var(--global-font-display);
   font-size: 0.6875rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -536,66 +542,66 @@ main.grid:has(> .neo-brutalist-editor) {
   background: #c1fffe;
 }
 
-/* ── Theme CSS Variables ── */
+/* ── Theme token overrides by mode (GTC: each data-theme is a mode) ── */
 
 .neo-brutalist-editor[data-theme="midnight"] {
-  --nb-bg: #0f172a;
-  --nb-primary: #818cf8;
+  --theme-bg: #0f172a;
+  --theme-accent-primary: #818cf8;
 }
 
 .neo-brutalist-editor[data-theme="sunset"] {
-  --nb-bg: #1c0f0a;
-  --nb-primary: #fb923c;
+  --theme-bg: #1c0f0a;
+  --theme-accent-primary: #fb923c;
 }
 
 .neo-brutalist-editor[data-theme="forest"] {
-  --nb-bg: #0a1f0f;
-  --nb-primary: #4ade80;
+  --theme-bg: #0a1f0f;
+  --theme-accent-primary: #4ade80;
 }
 
 .neo-brutalist-editor[data-theme="ocean"] {
-  --nb-bg: #0a1628;
-  --nb-primary: #38bdf8;
+  --theme-bg: #0a1628;
+  --theme-accent-primary: #38bdf8;
 }
 
 .neo-brutalist-editor[data-theme="cyberpunk"] {
-  --nb-bg: #0a0a1a;
-  --nb-primary: #ff51fa;
-  --nb-secondary: #38bdf8;
-  --nb-tertiary: #ffbd58;
+  --theme-bg: #0a0a1a;
+  --theme-accent-primary: #ff51fa;
+  --theme-accent-secondary: #38bdf8;
+  --theme-accent-tertiary: #ffbd58;
 }
 
 .neo-brutalist-editor[data-theme="candlelight"] {
-  --nb-bg: #2a1a08;
-  --nb-primary: #FFF4DD;
+  --theme-bg: #2a1a08;
+  --theme-accent-primary: #FFF4DD;
 }
 
 .neo-brutalist-editor[data-theme="frost"] {
-  --nb-bg: #0f1a24;
-  --nb-primary: #c1dcec;
+  --theme-bg: #0f1a24;
+  --theme-accent-primary: #c1dcec;
 }
 
 .neo-brutalist-editor[data-theme="burgundy"] {
-  --nb-bg: #1a0a0a;
-  --nb-primary: #7B1113;
+  --theme-bg: #1a0a0a;
+  --theme-accent-primary: #7B1113;
 }
 
 .neo-brutalist-editor[data-theme="lunar"] {
-  --nb-bg: #121212;
-  --nb-primary: #a3a3a3;
+  --theme-bg: #121212;
+  --theme-accent-primary: #a3a3a3;
 }
 
 .neo-brutalist-editor[data-theme="sapphire"] {
-  --nb-bg: #0c1222;
-  --nb-primary: #082567;
+  --theme-bg: #0c1222;
+  --theme-accent-primary: #082567;
 }
 
 .neo-brutalist-editor[data-theme="moss"] {
-  --nb-bg: #141a0e;
-  --nb-primary: #a3e635;
+  --theme-bg: #141a0e;
+  --theme-accent-primary: #a3e635;
 }
 
-/* Тёмные акценты — белый текст на кнопках */
+/* Тёмные акценты — белый текст на кнопках (sapphire и burgundy слишком тёмные для чёрного текста) */
 .neo-brutalist-editor[data-theme="sapphire"] .nb-btn-primary,
 .neo-brutalist-editor[data-theme="burgundy"] .nb-btn-primary {
   color: #ffffff;
@@ -653,7 +659,7 @@ main.grid:has(> .neo-brutalist-editor) {
   align-items: center;
   gap: 0.375rem;
   padding: 0.4rem 0.75rem;
-  font-family: var(--nb-font-display);
+  font-family: var(--global-font-display);
   font-size: 0.6875rem;
   font-weight: 700;
   text-transform: uppercase;
