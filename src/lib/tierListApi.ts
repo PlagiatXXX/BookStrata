@@ -74,7 +74,7 @@ export interface PaginatedTierListsResponse {
 }
 
 export interface SaveTierListPayload {
-  placements?: { bookId: number; tierId: number | null; rank: number }[];
+  placements?: { bookId: string | number; tierId: string | number | null; rank: number }[];
   tiers?: Array<{ id?: number; title: string; color: string; rank: number }> | {
     added: Array<{ title: string; color: string; rank: number }>;
     updated: Array<{ id: number; title: string; color: string; rank: number }>;
@@ -150,7 +150,7 @@ export async function getPublicTierLists(
 
 export async function saveTierListPlacements(
   id: string,
-  placements: { bookId: number; tierId: number | null; rank: number }[]
+  placements: { bookId: string | number; tierId: string | number | null; rank: number }[]
 ) {
   tierListLogger.info('Сохранение позиций', { tierListId: id, count: placements.length });
   const result = await apiClient.put(`/tier-lists/${id}/placements`, { placements });

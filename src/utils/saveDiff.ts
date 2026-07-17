@@ -36,6 +36,7 @@ export interface AtomicTiersDiff {
 
 export interface AtomicNewBook {
   tempId: string;
+  id: string;
   title: string;
   author?: string;
   coverImageUrl: string;
@@ -117,6 +118,7 @@ export function getAtomicSavePayload(listData: TierListData): AtomicSavePayload 
     .filter((book) => toNumericId(book.id) === null)
     .map((book) => ({
       tempId: book.id,
+      id: book.id,
       title: book.title,
       author: book.author,
       coverImageUrl: book.coverImageUrl,

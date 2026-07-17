@@ -612,7 +612,7 @@ async function processRoute(browser, route) {
           if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
             pendingApiRequests.delete(req.url());
             let resp;
-            try { resp = req.response(); } catch { resp = null; }
+            try { resp = await req.response(); } catch { resp = null; }
             const status = resp ? resp.status : 'no-resp';
             log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
             if (!resp) {
