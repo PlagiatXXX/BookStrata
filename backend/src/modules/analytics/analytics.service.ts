@@ -318,19 +318,46 @@ export function createAnalyticsService(prisma: PrismaClient) {
 
       if (registrations.length === 0) return 0
 
+      // Глобальное временное окно, покрывающее все индивидуальные окна удержания
+      const firstReg = registrations[0]!
+      let minCreatedAt = firstReg.createdAt
+      let maxCreatedAt = firstReg.createdAt
+      for (const reg of registrations) {
+        if (reg.createdAt < minCreatedAt) minCreatedAt = reg.createdAt
+        if (reg.createdAt > maxCreatedAt) maxCreatedAt = reg.createdAt
+      }
+
+      const globalStart = new Date(minCreatedAt.getTime() + daysAfter * 24 * 60 * 60 * 1000)
+      const globalEnd = new Date(maxCreatedAt.getTime() + (daysAfter + 1) * 24 * 60 * 60 * 1000)
+
+      // Один запрос: все события retention для этих пользователей в глобальном окне
+      const userIds = registrations.map((r) => r.userId!)
+      const allActivities = await prisma.analyticsEvent.findMany({
+        where: {
+          userId: { in: userIds },
+          event: { in: RETENTION_EVENTS },
+          createdAt: { gte: globalStart, lt: globalEnd },
+        },
+        select: { userId: true, createdAt: true },
+      })
+
+      // Группируем активности по userId
+      const userActivityMap = new Map<number, Date[]>()
+      for (const a of allActivities) {
+        const list = userActivityMap.get(a.userId!) ?? []
+        list.push(a.createdAt)
+        userActivityMap.set(a.userId!, list)
+      }
+
+      // Проверяем каждого пользователя по его индивидуальному окну (без дополнительных запросов)
       let retained = 0
       for (const reg of registrations) {
-        const targetDayStart = new Date(reg.createdAt.getTime() + daysAfter * 24 * 60 * 60 * 1000)
-        const targetDayEnd = new Date(targetDayStart.getTime() + 24 * 60 * 60 * 1000)
+        const targetStart = new Date(reg.createdAt.getTime() + daysAfter * 24 * 60 * 60 * 1000)
+        const targetEnd = new Date(targetStart.getTime() + 24 * 60 * 60 * 1000)
 
-        const activity = await prisma.analyticsEvent.findFirst({
-          where: {
-            userId: reg.userId!,
-            event: { in: RETENTION_EVENTS },
-            createdAt: { gte: targetDayStart, lt: targetDayEnd },
-          },
-        })
-        if (activity) retained++
+        const activities = userActivityMap.get(reg.userId!) ?? []
+        const hasActivity = activities.some((a) => a >= targetStart && a < targetEnd)
+        if (hasActivity) retained++
       }
 
       return Math.round((retained / registrations.length) * 10000) / 100

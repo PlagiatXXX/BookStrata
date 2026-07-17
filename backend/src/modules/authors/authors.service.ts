@@ -99,6 +99,48 @@ export function createAuthorService(prisma: PrismaClient) {
   };
 
   /**
+   * Найти или создать несколько авторов за один batch-запрос.
+   * Для уже существующих — один findMany, для остальных — создание по одному.
+   * Возвращает Map<оригинальное_имя, AuthorResult>.
+   */
+  const findOrCreateMany = async (names: string[]): Promise<Map<string, AuthorResult>> => {
+    const uniqueNames = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
+    if (uniqueNames.length === 0) return new Map();
+
+    // Загружаем существующих авторов (без insensitive mode в in-условии)
+    const existing = await prisma.author.findMany({
+      where: { name: { in: uniqueNames } },
+      include: { _count: { select: { books: true } } },
+    });
+
+    // Строим lookup: lowercase → AuthorResult (существующие)
+    const existingMap = new Map<string, AuthorResult>();
+    for (const author of existing) {
+      existingMap.set(author.name.toLowerCase(), {
+        id: author.id,
+        name: author.name,
+        slug: author.slug,
+        bookCount: author._count?.books ?? 0,
+      });
+    }
+
+    const result = new Map<string, AuthorResult>();
+
+    for (const name of uniqueNames) {
+      const found = existingMap.get(name.toLowerCase());
+      if (found) {
+        result.set(name, found);
+      } else {
+        // Создаём по одному — обычно их 0–3
+        const created = await findOrCreate(name);
+        result.set(name, created);
+      }
+    }
+
+    return result;
+  };
+
+  /**
    * Поиск авторов по подстроке (для автодополнения)
    */
   const search = async (query: string, limit = 10): Promise<AuthorResult[]> => {
@@ -130,6 +172,7 @@ export function createAuthorService(prisma: PrismaClient) {
   return {
     findByName,
     findOrCreate,
+    findOrCreateMany,
     search,
   };
 }

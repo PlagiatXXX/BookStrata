@@ -1,17 +1,14 @@
 import { prisma } from '../../../lib/prisma.js';
 import { tierListRepository } from "../../../repositories/index.js";
 
-// Получить лайки тир-листа
+// Получить количество лайков тир-листа
 export async function getLikes(tierListId: string) {
-  const tierList = await tierListRepository.findById(tierListId, {
-    select: { id: true },
-  });
-  if (!tierList) return 0;
+  const realId = await tierListRepository.resolveId(tierListId).catch(() => null);
+  if (!realId) return 0;
 
-  const likes = await prisma.tierListLike.count({
-    where: { tierListId: tierList.id },
+  return prisma.tierListLike.count({
+    where: { tierListId: realId },
   });
-  return likes;
 }
 
 // Проверить, лайкнул ли пользователь

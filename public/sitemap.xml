@@ -22,6 +22,21 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://bookstrata.ru/blog</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://bookstrata.ru/blog/why-not-goodreads</loc>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://bookstrata.ru/blog/ssr-without-nextjs</loc>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://bookstrata.ru/pricing</loc>
     <priority>0.7</priority>
     <changefreq>monthly</changefreq>

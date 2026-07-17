@@ -149,9 +149,9 @@ const plans = [
 
 /* ---------- Hero rotating phrases ---------- */
 const heroPhrases = [
-  "Открывайте новые.",
-  "Оценивайте.",
-  "Вдохновляйтесь.",
+  "рейтингов книг",
+  "тир-листов",
+  "личных подборок",
 ]
 
 /* ---------- Target audience ---------- */
@@ -193,6 +193,7 @@ function LandingNav() {
           <button onClick={() => scrollTo("scenarios")} className="landing-nav__link" type="button">Возможности</button>
           <Link to="/rankings" className="landing-nav__link">Рейтинг книг</Link>
           <Link to="/what-to-read" className="landing-nav__link">Что почитать</Link>
+          <Link to="/blog" className="landing-nav__link">Блог</Link>
           <button onClick={() => scrollTo("pricing")} className="landing-nav__link" type="button">Тарифы</button>
           <a href="https://t.me/bookstrata" target="_blank" rel="noopener noreferrer" className="landing-nav__link">Telegram</a>
 
@@ -483,8 +484,8 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <SEOHead
-        title="BookStrata — интерактивный рейтинг книг, твоё книжное пространство"
-        description="BookStrata — личная библиотека, визуальные рейтинги книг и сообщество читателей. Ведите список прочитанного, составляйте тир-листы, находите книги по вкусу с ИИ. Бесплатно."
+        title="BookStrata — крупнейшая библиотека пользовательских рейтингов книг"
+        description="BookStrata — крупнейшая библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите личную библиотеку, находите книги по вкусу с ИИ и общайтесь с единомышленниками."
         image="/hero-bg.webp"
         url="/"
       />
@@ -508,13 +509,13 @@ export default function LandingPage() {
         <div className="landing-hero__content">
           <div className="landing-hero__badge">
             <Sparkles size={14} />
-            Ваша читательская история
+            Пользовательские рейтинги книг
           </div>
 
           <h1 className="landing-hero__title">
-            Помните каждую
+            BookStrata — крупнейшая
             <br />
-            прочитанную книгу.
+            библиотека пользовательских
             <br />
             <AnimatePresence mode="wait">
               <motion.span
@@ -532,9 +533,8 @@ export default function LandingPage() {
           </h1>
 
           <p className="landing-hero__subtitle">
-            BookStrata — личная библиотека, визуальные рейтинги книг
-            и сообщество читателей в одном месте. Ведите список прочитанного,
-            составляйте тир-листы, находите книги по вкусу с&nbsp;помощью&nbsp;ИИ.
+            Создавайте тир-листы, ведите личную библиотеку, находите книги
+            по вкусу с&nbsp;ИИ и общайтесь с&nbsp;единомышленниками.
           </p>
 
           <div className="landing-hero__actions">

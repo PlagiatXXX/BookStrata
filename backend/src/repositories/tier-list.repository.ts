@@ -291,20 +291,6 @@ export class TierListRepository {
     });
   }
 
-  async incrementLikeCount(id: string) {
-    return this.db.tierList.update({
-      where: { id },
-      data: { likesCount: { increment: 1 } },
-    });
-  }
-
-  async decrementLikeCount(id: string) {
-    return this.db.tierList.update({
-      where: { id },
-      data: { likesCount: { increment: -1 } },
-    });
-  }
-
   // ─── Full fetch (for routes) ──────────────────────────────────
 
   async getFullTierList(id: string) {

@@ -1,8 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
- 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ID strategy:
+//   Int (autoincrement) — внутренние сущности: User, Tier, BookPlacement, TierListLike и т.д.
+//   UUID                — публичные сущности: TierList, Template, Battle (нельзя перебирать)
+// Это сознательное решение — не смешивать без необходимости.
  
 generator client {
 provider = "prisma-client-js"
@@ -63,6 +62,7 @@ suspensionReason     String?    @map("suspension_reason")
    createdAt            DateTime   @default(now()) @map("created_at")
  
 @@index([xp])
+@@index([roleId])
 }
  
 model Book {
@@ -175,6 +175,7 @@ likes         TemplateLike[]
 battles       Battle[]
  
 @@index([type])
+@@index([authorId])
 }
  
 model Battle {
@@ -306,6 +307,7 @@ expiresAt DateTime @map("expires_at")
 createdAt DateTime @default(now()) @map("created_at")
  
 @@index([token])
+@@index([userId])
 }
 
 // Коллекции (подборки BookStrata — тир-листы и статьи)

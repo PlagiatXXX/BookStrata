@@ -40,6 +40,8 @@ const CollectionPage = lazy(() => import("@/pages/CollectionPage/CollectionPage"
 const RankingsPage = lazy(() => import("@/pages/RankingsPage/RankingsPage"));
 const WhatToReadPage = lazy(() => import("@/pages/WhatToReadPage/WhatToReadPage"));
 const TopicPage = lazy(() => import("@/pages/TopicPage"));
+const BlogPage = lazy(() => import("@/pages/BlogPage/BlogPage"));
+const BlogArticlePage = lazy(() => import("@/pages/BlogPage/BlogArticlePage"));
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() => import("@/pages/TierListEditorPage/TierEditorPage"));
@@ -65,6 +67,8 @@ export const router = createBrowserRouter([
       { path: "/pricing", element: <PricingPage /> },
       { path: "/rankings", element: <RankingsPage /> },
       { path: "/what-to-read", element: <WhatToReadPage /> },
+      { path: "/blog", element: <BlogPage /> },
+      { path: "/blog/:slug", element: <BlogArticlePage /> },
       { path: "/topics/:slug", element: <TopicPage /> },
       { path: "/collections/:slug", element: <CollectionPage /> },
       { path: "/tier-lists/:id", element: <TierListEditorPage /> },

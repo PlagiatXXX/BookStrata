@@ -124,6 +124,7 @@ export async function searchBooks(
     };
 
     const books: BookSearchResult[] = (data.items || [])
+      .filter((book): book is GoogleBookResponse => !!book?.volumeInfo)
       .map((book) => {
         const result: BookSearchResult = {
           openLibraryKey: book.id,

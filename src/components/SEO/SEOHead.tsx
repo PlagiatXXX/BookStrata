@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 const SITE_NAME = "BookStrata";
-const DEFAULT_DESC = "BookStrata — интерактивный рейтинг книг. Составляй визуальный топ лучших книг, узнавай что почитать, собирай подборки по жанрам, участвуй в баттлах и получай ИИ-рекомендации.";
+const DEFAULT_DESC = "BookStrata — крупнейшая библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите личную библиотеку, находите книги по вкусу с ИИ и общайтесь с единомышленниками.";
 const DEFAULT_IMAGE = "/logo.svg";
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
 

@@ -113,9 +113,7 @@ async function registerAuthorsFromCollectionBooks(
       authors.add(book.author.trim());
     }
   }
-  await Promise.all(
-    Array.from(authors).map((name) => authorService.findOrCreate(name)),
-  );
+  await authorService.findOrCreateMany(Array.from(authors));
 }
 
 export async function createCollection(input: CreateCollectionInput) {

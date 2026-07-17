@@ -22,6 +22,9 @@ export async function generateSitemap(): Promise<string> {
     { url: `${SITE_URL}/about`, priority: "0.7", changefreq: "monthly" },
     { url: `${SITE_URL}/pricing`, priority: "0.7", changefreq: "monthly" },
     { url: `${SITE_URL}/contact`, priority: "0.5", changefreq: "monthly" },
+    { url: `${SITE_URL}/blog`, priority: "0.7", changefreq: "weekly" },
+    { url: `${SITE_URL}/blog/why-not-goodreads`, priority: "0.6", changefreq: "monthly" },
+    { url: `${SITE_URL}/blog/ssr-without-nextjs`, priority: "0.6", changefreq: "monthly" },
     { url: `${SITE_URL}/privacy`, priority: "0.3", changefreq: "yearly" },
     { url: `${SITE_URL}/terms`, priority: "0.3", changefreq: "yearly" },
   ];

@@ -2,7 +2,7 @@ import { prisma, resolveTierListId, tierListRepository } from "./tierList.utils.
 import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { sanitize } from "../../lib/sanitizer.js";
-import { createAuthorService } from "../authors/authors.service.js";
+import { createAuthorService, type AuthorResult } from "../authors/authors.service.js";
 
 const logger = createLogger("TierListsBooks", { color: "cyan" });
 const authorService = createAuthorService(prisma);
@@ -77,17 +77,15 @@ export async function addBooksToTierList(
 
   const realTierListId = await resolveTierListId(tierListId);
 
-  // Сначала находим или создаём авторов для всех книг
-  const booksWithAuthors = await Promise.all(
-    books.map(async (bookData) => {
-      let authorId: number | null = null;
-      if (bookData.author) {
-        const author = await authorService.findOrCreate(bookData.author);
-        authorId = author.id;
-      }
-      return { ...bookData, authorId };
-    }),
-  );
+  // Batch: находим или создаём всех авторов за один проход
+  const authorNames = books.map((b) => b.author).filter(Boolean) as string[];
+  const authorMap = authorNames.length > 0
+    ? await authorService.findOrCreateMany(authorNames)
+    : new Map<string, AuthorResult>();
+  const booksWithAuthors = books.map((bookData) => ({
+    ...bookData,
+    authorId: bookData.author ? (authorMap.get(bookData.author)?.id ?? null) : null,
+  }));
 
   const existingBooksCount = await prisma.bookPlacement.count({
     where: { tierListId: realTierListId },

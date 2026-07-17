@@ -41,6 +41,7 @@ function scrollToSection(id: string) {
 
 const mainLinks = [
   { href: "/", label: "Главная", icon: <List size={14} /> },
+  { href: "/blog", label: "Блог", icon: <BookOpen size={14} /> },
   { href: "/rankings", label: "Рейтинг книг", icon: <BarChart3 size={14} /> },
   { href: "/what-to-read", label: "Что почитать", icon: <BookOpen size={14} /> },
   { href: "/templates", label: "Библиотека", icon: <Folder size={14} /> },
@@ -195,14 +196,13 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
           <div className="flex flex-col gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-400/80 mb-1">
-                BookStrata Pro
+                BookStrata
               </p>
               <h3 className="text-xl font-bold text-[#f3efe6]">
-                Ваш книжный порядок.
+                Крупнейшая библиотека
               </h3>
               <p className="mt-2 text-sm text-[#b8b1a3] leading-relaxed max-w-xs">
-                Создавайте тир-листы, открывайте новое, общайтесь с
-                единомышленниками.
+                пользовательских рейтингов книг.
               </p>
             </div>
           </div>

@@ -24,7 +24,11 @@ export async function templateLikesRoutes(fastify: FastifyInstance) {
     },
     async (request: any, reply) => {
       const templateId = request.params.id;
-      const userId = request.user.userId;
+      const userId = request.user?.userId;
+
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
 
       await like(templateId, userId);
 
@@ -44,7 +48,11 @@ export async function templateLikesRoutes(fastify: FastifyInstance) {
     },
     async (request: any, reply) => {
       const templateId = request.params.id;
-      const userId = request.user.userId;
+      const userId = request.user?.userId;
+
+      if (!userId) {
+        return reply.code(401).send({ error: "Unauthorized" });
+      }
 
       const result = await unlike(templateId, userId);
 

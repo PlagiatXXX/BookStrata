@@ -120,7 +120,7 @@ describe("TemplateLibrary", () => {
   it("должен рендериться с заголовком Библиотека", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    const heading = screen.getByRole("heading", { name: /библиотека/i });
+    const heading = screen.getByRole("heading", { name: "Библиотека" });
     expect(heading).toBeInTheDocument();
   });
 
