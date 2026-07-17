@@ -348,7 +348,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-cyan-500 animate-pulse" />
+              <span className="h-1 w-1 rounded-full bg-cyan-500 opacity-80" />
               <p className="text-[11px] font-medium text-[#8f8a80]">
                 © {new Date().getFullYear()} BookStrata Pro. Все права защищены.
               </p>

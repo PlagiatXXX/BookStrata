@@ -400,11 +400,9 @@ async function pageHasContent(page, routePath) {
 
     const title = document.title || '';
 
-    // Проверяем animate-pulse только внутри <main>, чтобы не ловить
-    // декоративный пульс в Footer (там cyan-500 точка с animate-pulse).
-    const main = document.querySelector('main');
-    const mainHtml = main?.innerHTML || '';
-    const hasAnimatePulse = mainHtml.includes("animate-pulse");
+    // Проверяем animate-pulse по всему root, чтобы ловить скелетоны
+    // (Footer использует data-decoration-pulse вместо animate-pulse).
+    const hasAnimatePulse = rootHtml.includes("animate-pulse");
 
     const hasLoading = rootHtml.includes("Загрузка...") || rootHtml.includes("Загрузка");
     const hasContent = rootLen >= 2000 && !hasAnimatePulse && !hasLoading;
