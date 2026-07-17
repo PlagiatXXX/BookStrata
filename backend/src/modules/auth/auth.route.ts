@@ -51,6 +51,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           httpOnly: true,
           secure: config.NODE_ENV === "production",
           sameSite: "strict",
+          signed: false,
           maxAge: 14 * 24 * 60 * 60,
           path: "/",
         });
@@ -114,6 +115,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           httpOnly: true,
           secure: config.NODE_ENV === "production",
           sameSite: "strict",
+          signed: false,
           maxAge: 14 * 24 * 60 * 60,
           path: "/",
         });
@@ -188,6 +190,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         httpOnly: true,
         secure: config.NODE_ENV === "production",
         sameSite: "strict",
+        signed: false,
         maxAge: 14 * 24 * 60 * 60,
         path: "/",
       });
@@ -283,6 +286,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         httpOnly: true,
         secure: config.NODE_ENV === "production",
         sameSite: "strict",
+        signed: false,
         maxAge: 14 * 24 * 60 * 60,
         path: "/",
       });
@@ -316,6 +320,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         httpOnly: true,
         secure: config.NODE_ENV === "production",
         sameSite: "strict",
+        signed: false,
         maxAge: 14 * 24 * 60 * 60,
         path: "/",
       });
