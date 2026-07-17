@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
-import type { CollectionItem } from '@/data/mockData';
+import type { CollectionItem } from '@/types/collection';
 import { proxyImageUrl } from '@/utils/imageProxy';
 
 interface CollectionFlipCardProps {

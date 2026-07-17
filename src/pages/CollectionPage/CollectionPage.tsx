@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { useReadStatus } from "@/hooks/useReadStatus";
 import { sileo } from "sileo";
 import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectionsApi";
-import type { CollectionItem } from "@/lib/collectionsApi";
+import type { CollectionItem } from "@/types/collection";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { COLLECTION_SEO } from "@/data/collection-seo";

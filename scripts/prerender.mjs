@@ -468,7 +468,9 @@ async function waitForTitle(page, timeout = 5000) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     const title = await page.title();
-    if (!DEFAULT_TITLES.includes(title)) return true;
+    // Ждём, пока title станет содержательным:
+    // не пустой, не дефолтный, содержит разделитель "| BookStrata"
+    if (title && title !== '' && !DEFAULT_TITLES.includes(title) && title.includes('| BookStrata')) return true;
     await page.waitForTimeout(200);
   }
   return false;
@@ -482,6 +484,7 @@ async function processRoute(browser, route) {
   const url = `${BASE}${route.path}`;
   const isTierList = route.path.startsWith("/tier-lists/");
   const isCollection = route.path.startsWith("/collections/");
+  const isTopic = route.path.startsWith("/topics/");
   const isRankings = route.path.startsWith("/rankings");
 
   const context = await browser.newContext({
@@ -640,7 +643,7 @@ async function processRoute(browser, route) {
 
     // ── Ждём реальный контент (проверка каждые 500 мс) ──
     // Для динамических страниц (тир-листы, коллекции) даём больше времени
-    const contentTimeout = (isTierList || isCollection) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
+    const contentTimeout = (isTierList || isCollection || isTopic) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
     const contentLoaded = await waitForContent(page, contentTimeout, route.path);
 
     // ── Дополнительно ждём обновления title (useEffect SEOHead) ──
@@ -648,7 +651,12 @@ async function processRoute(browser, route) {
     // на установку document.title через useEffect в SEOHead.
     // Для корневой страницы пропускаем — её title совпадает с дефолтным.
     if (contentLoaded && route.path !== '/') {
-      await waitForTitle(page, 5000);
+      const titleSet = await waitForTitle(page, 5000);
+      if (!titleSet) {
+        log(`  ⚠️ Title не обновился за 5 секунд, повторная проверка…`);
+        // Даём ещё шанс — ждём появления содержательного title ещё 3 секунды
+        await waitForTitle(page, 3000);
+      }
     }
 
     // ── Fallback: если контент не загрузился ──
@@ -770,6 +778,16 @@ async function processRoute(browser, route) {
     <a href="/rankings">Рейтинг книг</a>
   </nav>
 </article>`;
+      } else if (isTopic) {
+        const categoryName = route.name || deslugify(route.path.replace("/topics/", ""));
+        fallbackTitle = `${categoryName} — подборки книг и рейтинг | BookStrata`;
+        fallbackDesc = `Подборки книг в жанре «${categoryName}» — рейтинг читателей, отзывы и рекомендации на BookStrata.`;
+        canonicalPath = route.path;
+        fallbackBodyHtml = `
+<main>
+  <h1>${categoryName}</h1>
+  <p>${fallbackDesc}</p>
+</main>`;
       } else {
         // Статические страницы (главная, контакты, privacy, etc.)
         const pageName = route.name || "BookStrata";

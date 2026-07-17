@@ -9,7 +9,7 @@ import {
   SearchCheck,
   TrendingUp,
 } from "lucide-react";
-import type { Book, Tier } from "@/types";
+import type { CollectionItem } from "@/types/collection";
 import type { CreateTemplateData } from "@/types/templates";
 import { CATEGORIES as BASE_CATEGORIES } from "./categories";
 
@@ -34,33 +34,6 @@ export type NewsItem = {
   excerpt: string;
   tag: string;
   readTime: string;
-};
-
-export type CollectionItem = {
-  id: number;
-  slug: string;
-  title: string;
-  type: "curated" | "literary"; // curated = тир-лист, literary = HTML-статья
-  categoryId?: string | null;
-  // Для curated (тир-лист):
-  tiers?: Record<string, Tier>;
-  tierOrder?: string[];
-  books?: Record<string, Book>;
-  unrankedBookIds?: string[];
-  // Для literary (статья):
-  content?: string; // HTML-контент
-  // Общие:
-  excerpt?: string;
-  isFeatured: boolean;
-  editorialNote?: string | null; // Редакционная заметка (содержит текст "Почему именно эти книги?")
-  coverImageUrl: string;
-  bookCovers?: string[]; // Массив обложек книг (3-4 шт), для превью
-  tags: string[];
-  isPublished: boolean;
-  order: number;
-  accentColor?: string; // Цветовая акцентная подсветка карточки (hex)
-  createdAt: string;
-  updatedAt: string;
 };
 
 /** Палитра акцентных цветов для карточек коллекций */

@@ -1,7 +1,6 @@
+import type { CollectionItem } from "@/types/collection";
 import { apiClient } from "./api-client";
-import type { CollectionItem } from "@/data/mockData";
 
-export type { CollectionItem };
 export type CreateCollectionInput = Omit<
   CollectionItem,
   "slug" | "id" | "createdAt" | "updatedAt"

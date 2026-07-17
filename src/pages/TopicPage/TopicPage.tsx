@@ -9,7 +9,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
 import { CATEGORIES } from "@/data/mockData";
 import { CATEGORY_SEO } from "@/data/category-seo";
-import type { CollectionItem } from "@/lib/collectionsApi";
+import type { CollectionItem } from "@/types/collection";
 
 interface TopicCollectionData {
   data: CollectionItem[];
