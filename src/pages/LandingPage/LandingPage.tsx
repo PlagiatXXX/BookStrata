@@ -78,6 +78,7 @@ function LandingNav() {
           <button onClick={() => scrollTo("scenarios")} className="landing-nav__link" type="button">Возможности</button>
           <Link to="/rankings" className="landing-nav__link">Рейтинг книг</Link>
           <Link to="/what-to-read" className="landing-nav__link">Что почитать</Link>
+          <Link to="/celebrities" className="landing-nav__link">Знаменитости</Link>
           <Link to="/blog" className="landing-nav__link">Блог</Link>
           <button onClick={() => scrollTo("pricing")} className="landing-nav__link" type="button">Тарифы</button>
           <a href="https://t.me/bookstrata" target="_blank" rel="noopener noreferrer" className="landing-nav__link">Telegram</a>

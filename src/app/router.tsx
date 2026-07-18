@@ -42,6 +42,9 @@ const WhatToReadPage = lazy(() => import("@/pages/WhatToReadPage/WhatToReadPage"
 const TopicPage = lazy(() => import("@/pages/TopicPage"));
 const BlogPage = lazy(() => import("@/pages/BlogPage/BlogPage"));
 const BlogArticlePage = lazy(() => import("@/pages/BlogPage/BlogArticlePage"));
+const CelebritiesPage = lazy(() => import("@/pages/CelebritiesPage/CelebritiesPage"));
+const CelebrityPage = lazy(() => import("@/pages/CelebrityPage/CelebrityPage"));
+const AdminCelebritiesPage = lazy(() => import("@/pages/AdminCelebritiesPage/AdminCelebritiesPage"));
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() => import("@/pages/TierListEditorPage/TierEditorPage"));
@@ -74,6 +77,8 @@ export const router = createBrowserRouter([
       { path: "/tier-lists/:id", element: <TierListEditorPage /> },
       { path: "/templates", element: <TemplateLibrary /> },
       { path: "/community", element: <CommunityPage /> },
+      { path: "/celebrities", element: <CelebritiesPage /> },
+      { path: "/celebrities/:slug", element: <CelebrityPage /> },
       { path: "/forum", element: <ForumPage /> },
       { path: "/forum/battles/:id", element: <BattleDetailPage /> },
       { path: "/news/:id", element: <NewsPage /> },
@@ -106,6 +111,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminCollectionsPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/celebrities",
+        element: (
+          <AdminGuard>
+            <AdminCelebritiesPage />
           </AdminGuard>
         ),
       },

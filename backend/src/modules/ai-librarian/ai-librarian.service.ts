@@ -44,9 +44,20 @@ export interface CollectionContext {
   books?: Record<string, CollectionBookContext>
 }
 
+export interface CelebrityContext {
+  name: string
+  slug: string
+  biography: string | null
+  category: string
+  tierOrder?: string[]
+  tiers?: Record<string, { title: string; bookIds: string[] }>
+  books?: Record<string, CollectionBookContext>
+}
+
 export interface PageContext {
-  pageType: 'rankings' | 'collection' | 'book-description'
+  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity'
   collection?: CollectionContext
+  celebrity?: CelebrityContext
   featuredCollections?: Array<{ title: string; slug: string; editorialNote: string | null }>
 }
 
@@ -248,6 +259,29 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
       lines.push(``)
       lines.push(`Пользователь может спросить про любую книгу из этой подборки — отвечай по ней.`)
       lines.push(`Не предлагай книги, которых нет в этой подборке, если пользователь явно не просит «а что ещё почитать». Если просит — используй базовую коллекцию пользователя.`)
+      sections.push(lines.join('\n'))
+    }
+
+    if (pageContext.pageType === 'celebrity' && pageContext.celebrity) {
+      const c = pageContext.celebrity
+      const lines: string[] = [
+        `Ты находишься на странице знаменитости «${c.name}».`,
+        `Категория: ${c.category || 'без категории'}.`,
+      ]
+      if (c.biography) lines.push(`О знаменитости: ${c.biography}`)
+      if (c.books) {
+        const bookList = Object.values(c.books).slice(0, 30)
+        lines.push(`Книги, которые упоминала эта знаменитость (${bookList.length}):`)
+        for (const b of bookList) {
+          const parts = [b.title]
+          if (b.author) parts.push(b.author)
+          if (b.genre) parts.push(`[${b.genre}]`)
+          lines.push(`— ${parts.join(' — ')}`)
+        }
+      }
+      lines.push(``)
+      lines.push(`Пользователь может спросить про любую книгу из этого списка, про вкусы или привычки чтения знаменитости. Отвечай с учётом контекста.`)
+      lines.push(`Не предлагай книги, которых нет в этом списке, если пользователь явно не просит «а что ещё почитать из похожего». Если просит — используй базовую коллекцию пользователя.`)
       sections.push(lines.join('\n'))
     }
   }

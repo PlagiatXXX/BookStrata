@@ -7,6 +7,7 @@ import { ChatRequestSchema } from './ai-librarian.schema.js'
 import { getUserTasteProfile, buildSystemPrompt, streamAiResponse, checkAiStatus } from './ai-librarian.service.js'
 import type { AiChunk, PageContext } from './ai-librarian.service.js'
 import { getCollectionBySlug, getCollections } from '../collections/collection.service.js'
+import { getCelebrityBySlug } from '../celebrities/celebrity.service.js'
 import { AiRouterError } from './router.js'
 import { createLogger } from '../../lib/logger.js'
 
@@ -109,6 +110,30 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
             }
           } catch (err) {
             logger.warn('Failed to load collection context', { slug: rawContext.slug, error: err instanceof Error ? err.message : String(err) })
+          }
+        }
+
+        if (rawContext.pageType === 'celebrity' && rawContext.slug) {
+          try {
+            const celebrity = await getCelebrityBySlug(rawContext.slug)
+            if (celebrity && celebrity.isPublished) {
+              const tiers = celebrity.tiers as Record<string, { title: string; bookIds: string[] }> | undefined
+              const books = celebrity.books as Record<string, { title: string; author?: string | null; genre?: string | null; description?: string | null }> | undefined
+              pageContext = {
+                pageType: 'celebrity',
+                celebrity: {
+                  name: celebrity.name,
+                  slug: celebrity.slug,
+                  biography: celebrity.biography,
+                  category: celebrity.category,
+                  tierOrder: celebrity.tierOrder,
+                  tiers,
+                  books,
+                },
+              }
+            }
+          } catch (err) {
+            logger.warn('Failed to load celebrity context', { slug: rawContext.slug, error: err instanceof Error ? err.message : String(err) })
           }
         }
 

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { Send, X, RotateCcw, Wifi, WifiOff, Loader } from 'lucide-react'
+import { useEffect, useRef, useState, useCallback, useSyncExternalStore } from 'react'
+import { Send, X, RotateCcw, Wifi, WifiOff, Loader, LogIn } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAiLibrarian, type AiStatus } from '@/hooks/useAiLibrarian'
 import { useAuth } from '@/hooks/useAuthContext'
@@ -346,6 +347,13 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+  const handleLogin = useCallback(() => {
+    onClose()
+    navigate('/auth?mode=login')
+  }, [onClose, navigate])
+
   useBodyScrollLock(isOpen)
   useAutosizeTextarea(textareaRef, input)
 
@@ -439,7 +447,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          {isOffline && (
+          {isOffline && isAuthenticated && (
             <IconButton
               onClick={refreshStatus}
               label="Проверить соединение"
@@ -448,7 +456,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
               <Loader className="h-4 w-4" />
             </IconButton>
           )}
-          {hasMessages && (
+          {hasMessages && isAuthenticated && (
             <IconButton
               onClick={handleClear}
               disabled={isStreaming}
@@ -464,130 +472,161 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
         </div>
       </div>
 
-      {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto [overscroll-behavior:contain] bg-[#111111] px-5 py-4">
-        {!hasMessages && !isStreaming ? (
-          <div className="flex h-full flex-col items-center justify-start pt-6 text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-              className="mb-4 flex size-14 items-center justify-center overflow-hidden rounded-xl border border-black/10 bg-[#1d2323]"
-            >
-              <img src="/Selfi.webp" alt="Букстраж" className="h-full w-full object-cover" />
-            </motion.div>
-
-            {isOffline ? (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <h3 className="mb-2 text-base font-bold text-[#f6f1e8]">
-                  Букстраж недоступен
-                </h3>
-                <p className="mb-1 max-w-xs text-sm text-red-400">
-                  Проверьте API-ключ и подключение к интернету.
-                </p>
-                <button
-                  type="button"
-                  onClick={refreshStatus}
-                  disabled={isChecking}
-                  className="mt-4 flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/6 px-5 py-2.5 text-sm font-bold text-[#f6f1e8] transition-all duration-200 hover:bg-white/10 hover:border-white/20 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
-                >
-                  {isChecking ? (
-                    <Loader className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Loader className="h-4 w-4" />
-                  )}
-                  Проверить ещё раз
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <h3 className="mb-2 text-base font-bold text-[#f6f1e8]">
-                  Привет, я Букстраж
-                </h3>
-                <p className="mb-5 mx-auto max-w-sm text-sm text-[#a8abad] leading-relaxed">
-                  Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.
-                </p>
-                <SuggestionChips onSelect={handleSuggestion} disabled={isStreaming} />
-              </motion.div>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {messages.map((msg, i) => (
-              <ChatBubble key={i} message={msg} />
-            ))}
-
-            {isStreaming && (
-              <StreamingBubble
-                content={streamingContent}
-                statusText={DRAFT_STATUSES[draftStatusIndex]}
-              />
-            )}
-
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-2.5 text-sm text-red-400"
-              >
-                {error}
-              </motion.div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
-
-      {/* ── Input ── */}
-      <div className="border-t border-white/8 bg-[#0a0a0a] px-5 py-4">
-        <div className="flex gap-2 items-end">
-          <div className="relative flex-1">
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isOffline
-                  ? 'AI недоступен...'
-                  : isStreaming
-                    ? 'AI отвечает...'
-                    : 'Спроси у библиотекаря...'
-              }
-              disabled={isStreaming || isOffline}
-              aria-label="Сообщение для AI-библиотекаря"
-              className="w-full resize-none rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 pr-12 text-sm text-[#f6f1e8] placeholder:text-[#5f6667] outline-none transition-all duration-200 focus:border-[#c1fffe]/40 focus:ring-1 focus:ring-[#c1fffe]/20 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
+      {!isAuthenticated ? (
+        /* ── Auth Wall ── */
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center bg-[#111111]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+            className="mb-5 flex size-16 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[#1d2323]"
+          >
+            <img src="/Selfi.webp" alt="Букстраж" className="h-full w-full object-cover" />
+          </motion.div>
+          <h3 className="mb-2 text-lg font-bold text-[#f6f1e8]">
+            Букстраж ждёт тебя
+          </h3>
+          <p className="mb-6 max-w-xs text-sm text-[#a8abad] leading-relaxed">
+            AI-библиотекарь поможет найти идеальную книгу по твоему вкусу. 
+            Войди в аккаунт, чтобы начать общение.
+          </p>
           <button
             type="button"
-            onClick={handleSend}
-            disabled={!canSend}
-            className="flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#c1fffe] px-4 py-2.5 font-black text-black transition-all duration-200 hover:bg-[#9cf5f3] hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:bg-[#3d4345] disabled:text-[#7d8688] disabled:hover:scale-100 disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
-            aria-label="Отправить сообщение"
+            onClick={handleLogin}
+            className="flex cursor-pointer items-center gap-2 rounded-xl bg-[#c1fffe] px-6 py-3 font-black text-black transition-all duration-200 hover:bg-[#9cf5f3] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
           >
-            {isStreaming ? (
-              <span className="flex gap-0.5">
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-black" style={{ animationDelay: '0ms' }} />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-black" style={{ animationDelay: '150ms' }} />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-black" style={{ animationDelay: '300ms' }} />
-              </span>
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+            <LogIn size={18} />
+            Войти
           </button>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* ── Messages ── */}
+          <div className="flex-1 overflow-y-auto [overscroll-behavior:contain] bg-[#111111] px-5 py-4">
+            {!hasMessages && !isStreaming ? (
+              <div className="flex h-full flex-col items-center justify-start pt-6 text-center">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                  className="mb-4 flex size-14 items-center justify-center overflow-hidden rounded-xl border border-black/10 bg-[#1d2323]"
+                >
+                  <img src="/Selfi.webp" alt="Букстраж" className="h-full w-full object-cover" />
+                </motion.div>
+
+                {isOffline ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    <h3 className="mb-2 text-base font-bold text-[#f6f1e8]">
+                      Букстраж недоступен
+                    </h3>
+                    <p className="mb-1 max-w-xs text-sm text-red-400">
+                      Проверьте API-ключ и подключение к интернету.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={refreshStatus}
+                      disabled={isChecking}
+                      className="mt-4 flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/6 px-5 py-2.5 text-sm font-bold text-[#f6f1e8] transition-all duration-200 hover:bg-white/10 hover:border-white/20 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                    >
+                      {isChecking ? (
+                        <Loader className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Loader className="h-4 w-4" />
+                      )}
+                      Проверить ещё раз
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    <h3 className="mb-2 text-base font-bold text-[#f6f1e8]">
+                      Привет, я Букстраж
+                    </h3>
+                    <p className="mb-5 mx-auto max-w-sm text-sm text-[#a8abad] leading-relaxed">
+                      Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.
+                    </p>
+                    <SuggestionChips onSelect={handleSuggestion} disabled={isStreaming} />
+                  </motion.div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {messages.map((msg, i) => (
+                  <ChatBubble key={i} message={msg} />
+                ))}
+
+                {isStreaming && (
+                  <StreamingBubble
+                    content={streamingContent}
+                    statusText={DRAFT_STATUSES[draftStatusIndex]}
+                  />
+                )}
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-2.5 text-sm text-red-400"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
+
+          {/* ── Input ── */}
+          <div className="border-t border-white/8 bg-[#0a0a0a] px-5 py-4">
+            <div className="flex gap-2 items-end">
+              <div className="relative flex-1">
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    isOffline
+                      ? 'AI недоступен...'
+                      : isStreaming
+                        ? 'AI отвечает...'
+                        : 'Спроси у библиотекаря...'
+                  }
+                  disabled={isStreaming || isOffline}
+                  aria-label="Сообщение для AI-библиотекаря"
+                  className="w-full resize-none rounded-xl border border-white/10 bg-[#111] px-4 py-2.5 pr-12 text-sm text-[#f6f1e8] placeholder:text-[#5f6667] outline-none transition-all duration-200 focus:border-[#c1fffe]/40 focus:ring-1 focus:ring-[#c1fffe]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!canSend}
+                className="flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#c1fffe] px-4 py-2.5 font-black text-black transition-all duration-200 hover:bg-[#9cf5f3] hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:bg-[#3d4345] disabled:text-[#7d8688] disabled:hover:scale-100 disabled:active:scale-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                aria-label="Отправить сообщение"
+              >
+                {isStreaming ? (
+                  <span className="flex gap-0.5">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-black" style={{ animationDelay: '0ms' }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-black" style={{ animationDelay: '150ms' }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-black" style={{ animationDelay: '300ms' }} />
+                  </span>
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   )
 

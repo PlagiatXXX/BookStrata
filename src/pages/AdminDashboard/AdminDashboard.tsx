@@ -39,6 +39,16 @@ const ALL_SECTIONS: AdminSection[] = [
     roles: ['admin', 'moderator'],
   },
   {
+    title: 'Знаменитости',
+    description: 'Управление профилями знаменитостей',
+    icon: Crown,
+    path: '/admin/celebrities',
+    color: 'from-yellow-500/20 to-yellow-500/5',
+    borderColor: 'border-yellow-500/30',
+    textColor: 'text-yellow-500',
+    roles: ['admin', 'moderator'],
+  },
+  {
     title: 'Битвы',
     description: 'Управление битвами и заявками',
     icon: Sword,

@@ -6,7 +6,7 @@ export const ChatMessageSchema = z.object({
 })
 
 export const PageContextSchema = z.object({
-  pageType: z.enum(['rankings', 'collection', 'book-description']),
+  pageType: z.enum(['rankings', 'collection', 'book-description', 'celebrity']),
   slug: z.string().optional(),
 })
 

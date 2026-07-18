@@ -1,7 +1,7 @@
 import { API_BASE_URL } from './config'
+import { apiClient } from './api-client'
 import { getAuthHeader, refreshAccessToken, handleUnauthorized } from './authApi'
 import { createLogger } from './logger'
-import { apiClient } from './api-client'
 
 const logger = createLogger('AiLibrarianApi', { color: 'cyan' })
 
@@ -21,7 +21,7 @@ export interface AiStatusResponse {
 }
 
 export interface AiLibrarianContext {
-  pageType: 'rankings' | 'collection' | 'book-description'
+  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity'
   slug?: string
 }
 

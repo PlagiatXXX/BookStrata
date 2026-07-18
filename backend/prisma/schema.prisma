@@ -339,6 +339,27 @@ model Collection {
   @@map("collections")
 }
 
+// Знаменитости (что читают знаменитости)
+model Celebrity {
+  id              Int      @id @default(autoincrement())
+  slug            String   @unique
+  name            String
+  photoUrl        String   @default("") @map("photo_url")
+  biography       String?
+  category        String   @default("") // singer, actor, financier, sportsman, writer, tv-host, scientist, philosopher, director, musician, blogger, other
+  isPublished     Boolean  @default(false) @map("is_published")
+  order           Int      @default(0)
+  // Tier list data (JSON, как в коллекциях)
+  tiers           Json?    // Record<string, Tier>
+  tierOrder       String[] @map("tier_order")
+  books           Json?    // Record<string, Book>
+  unrankedBookIds String[] @map("unranked_book_ids")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("celebrities")
+}
+
 // Достижения
 model Achievement {
 id          String   @id // Код достижения (например, 'first_tier_list')

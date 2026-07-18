@@ -1,0 +1,276 @@
+.celebrities-page {
+  min-height: 60vh;
+}
+
+.celebrities-hero {
+  text-align: center;
+  padding-top: 1rem;
+}
+
+.celebrities-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1.15;
+  margin: 0 0 0.75rem;
+  background: linear-gradient(135deg, var(--ink-0), var(--accent-main));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.celebrities-subtitle {
+  font-size: 1.125rem;
+  color: var(--ink-2);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Category Tabs */
+.celebrities-tabs-section {
+  position: relative;
+}
+
+.celebrities-tabs-scroll {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0 2rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.celebrities-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.celebrities-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--line-soft);
+  background: var(--bg-1);
+  color: var(--ink-1);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.celebrities-tab:hover {
+  border-color: var(--accent-main);
+  color: var(--accent-main);
+}
+
+.celebrities-tab.active {
+  background: var(--accent-main);
+  color: #fff;
+  border-color: var(--accent-main);
+}
+
+.celebrities-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+}
+
+.celebrities-tab-arrow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  background: linear-gradient(to right, var(--bg-0), transparent);
+  border: none;
+  color: var(--ink-1);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.celebrities-tab-arrow.left {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-0), transparent);
+}
+
+.celebrities-tab-arrow.right {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-0), transparent);
+}
+
+/* Empty state */
+.celebrities-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  border: 1px dashed var(--line-soft);
+  border-radius: 12px;
+}
+
+.celebrities-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.celebrities-empty-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink-0);
+  margin: 0 0 0.5rem;
+}
+
+.celebrities-empty-text {
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+/* Grid */
+.celebrities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Card */
+.celebrity-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  background: var(--bg-0);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.25s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.celebrity-card:hover {
+  border-color: var(--accent-main);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.celebrity-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent-main), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+
+.celebrity-card:hover::before {
+  opacity: 0.05;
+}
+
+.celebrity-card-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  border: 2px solid var(--line-soft);
+  transition: border-color 0.25s;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.celebrity-card:hover .celebrity-card-photo {
+  border-color: var(--accent-main);
+}
+
+.celebrity-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.celebrity-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--ink-2);
+  background: var(--bg-1);
+}
+
+.celebrity-card-info {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.celebrity-card-name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--ink-0);
+  margin: 0 0 0.25rem;
+  line-height: 1.3;
+}
+
+.celebrity-card-category {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  display: block;
+}
+
+.celebrity-card-books {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-1);
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-1);
+  border-radius: 9999px;
+  border: 1px solid var(--line-soft);
+}
+
+.celebrity-card-books-label {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+@media (max-width: 640px) {
+  .celebrities-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .celebrities-title {
+    font-size: 1.75rem;
+  }
+
+  .celebrity-card-photo {
+    width: 72px;
+    height: 72px;
+  }
+}
