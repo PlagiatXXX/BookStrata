@@ -271,77 +271,64 @@ export function handleUnauthorized() {
 }
 
 /**
- * Флаг для предотвращения множественных refresh запросов
+ * Singleton-промис для дедупликации параллельных refresh-запросов.
+ *
+ * Все одновременные вызовы refreshAccessToken() получают один и тот же промис.
+ * При успехе — все ждущие получают токен. При ошибке — все получают reject.
+ * Промис обнуляется после завершения (очистка в finally через .then(clean, clean)).
+ *
+ * Предыдущая реализация использовала isRefreshing + refreshSubscribers,
+ * но при ошибке subscriber'ы никогда не реджектились — промисы зависали навечно.
  */
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
-
-/**
- * Подписаться на новый токен после refresh
- */
-function subscribeTokenRefresh(cb: (token: string) => void) {
-  refreshSubscribers.push(cb);
-}
-
-/**
- * Уведомить подписчиков о новом токене
- */
-function onTokenRefreshed(token: string) {
-  refreshSubscribers.forEach((cb) => cb(token));
-  refreshSubscribers = [];
-}
+let refreshPromise: Promise<string> | null = null;
 
 /**
  * Refresh access токена
  */
 export async function refreshAccessToken(): Promise<string> {
-  if (isRefreshing) {
-    // Если уже идёт refresh, ждём результата
-    return new Promise((resolve) => {
-      subscribeTokenRefresh((token) => resolve(token));
-    });
+  if (refreshPromise) {
+    // Уже идёт refresh — возвращаем тот же промис всем ожидающим
+    return refreshPromise;
   }
 
-  isRefreshing = true;
+  authLogger.debug("Refreshing access token");
 
-  try {
-    authLogger.debug("Refreshing access token");
+  refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
+    method: "POST",
+    credentials: "include", // Отправляем cookie с refresh токеном
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        authLogger.warn("Refresh token failed, redirecting to login");
+        handleUnauthorized();
+        throw new Error("Refresh token failed");
+      }
 
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: "POST",
-      credentials: "include", // Отправляем cookie с refresh токеном
-    });
+      const data = unwrapData<{ accessToken: string }>(await response.json());
+      const newAccessToken = data.accessToken;
 
-    if (!response.ok) {
-      authLogger.warn("Refresh token failed, redirecting to login");
+      // Сохраняем новый access токен
+      setAuthToken(newAccessToken);
+
+      authLogger.info("Access token refreshed successfully");
+      return newAccessToken;
+    })
+    .catch((error) => {
+      authLogger.error(
+        error instanceof Error ? error : new Error(String(error)),
+        { action: "refresh access token" },
+      );
       handleUnauthorized();
-      throw new Error("Refresh token failed");
-    }
+      throw error; // reject — все ждущие промисы упадут с этой ошибкой
+    });
 
-    const data = unwrapData<{ accessToken: string }>(await response.json());
-    const newAccessToken = data.accessToken;
+  // Очищаем refreshPromise после завершения (успех или ошибка)
+  const cleanup = () => {
+    refreshPromise = null;
+  };
+  refreshPromise.then(cleanup, cleanup);
 
-    // Сохраняем новый access токен
-    setAuthToken(newAccessToken);
-
-    authLogger.info("Access token refreshed successfully");
-
-    // Уведомляем подписчиков
-    onTokenRefreshed(newAccessToken);
-
-    return newAccessToken;
-  } catch (error) {
-    authLogger.error(
-      error instanceof Error ? error : new Error(String(error)),
-      {
-        action: "refresh access token",
-      },
-    );
-    handleUnauthorized();
-    throw error;
-  } finally {
-    isRefreshing = false;
-  }
+  return refreshPromise;
 }
 
 /**

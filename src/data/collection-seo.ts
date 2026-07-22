@@ -3,6 +3,48 @@
  * Ключ — slug коллекции, значение — описание для meta-тегов.
  * Тексты написаны под реальные поисковые запросы из семантического ядра.
  */
+
+/**
+ * Человекочитаемые заголовки для slug коллекций.
+ * Используются, когда данные коллекции ещё не загружены (пререндер / загрузка).
+ */
+export const COLLECTION_TITLES: Record<string, string> = {
+  "must-read": "Книги, которые должен прочитать каждый",
+  "top-100-books": "Топ 100 книг — список лучших книг всех времён",
+  "summer-reading": "Что почитать летом — подборка книг для отпуска",
+  "top-fantasy": "Топ книг фэнтези — рейтинг лучших",
+  "top-detective": "Топ детективов и триллеров",
+  "top-romance": "Топ романов — рейтинг лучших",
+  "top-fantastic": "Топ книг фантастика",
+  "top-popadantsy": "Топ книг попаданцы",
+  "best-books-2026": "Топ книг 2026 — рейтинг лучших",
+  "best-books-2025": "Топ книг 2025",
+  "best-books-ever": "Лучшие книги всех времён",
+  "best-books-year": "Лучшие книги года",
+  "what-to-read-interesting": "Что почитать интересного",
+  "what-to-read-children": "Что почитать детям",
+  "horror-books": "Топ книг ужасов и мистики",
+  "romantic-fantasy": "Романтическое фэнтези",
+  "historical-novels": "Топ исторических романов",
+  "historical-prose": "Историческая проза",
+  "popular-science": "Топ научно-популярных книг",
+  "best-mystery": "Лучшие детективы и триллеры",
+  "non-fiction-top": "Лучший нон-фикшн",
+  "nobel-laureates": "Лауреаты Нобелевской премии по литературе",
+  "favorites-bookstrata": "Фавориты BookStrata",
+  "best-books-list": "Список лучших книг",
+  "interesting-books": "Подборка интересных книг",
+  "high-rated-books": "Книги с высоким рейтингом",
+  "reader-rating": "Рейтинг книг читателей",
+  "russian-books": "Список лучших русских книг",
+  "dark-romance": "Дарк романы",
+  "contemporary-books": "Современные книги",
+  "romantic-stories": "Топ романтических историй",
+  "rejting-luchshih-yaponskih-knig-21dxa9": "Рейтинг лучших японских книг",
+  "detektivnaya-klassika-chto-pochitat-53s7lt": "Детективная классика — что почитать",
+  "rejting-knig-v-zhanre-non-fiction-ztpv9k": "Рейтинг книг в жанре non-fiction",
+};
+
 export const COLLECTION_SEO: Record<string, string> = {
   "top-fantasy":
     "Рейтинг лучших книг в жанре фэнтези — топ книг, которые стоит прочитать. " +

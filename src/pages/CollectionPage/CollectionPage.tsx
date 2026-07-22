@@ -16,7 +16,7 @@ import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectio
 import type { CollectionItem } from "@/types/collection";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
-import { COLLECTION_SEO } from "@/data/collection-seo";
+import { COLLECTION_SEO, COLLECTION_TITLES } from "@/data/collection-seo";
 import "./CollectionPage.css";
 
 export default function CollectionPage() {
@@ -89,13 +89,22 @@ export default function CollectionPage() {
         }
         setCollection(data);
       } catch (error) {
-        console.error("Failed to load collection:", error);
-        sileo.error({
-          title: "Ошибка загрузки",
-          description: "Не удалось загрузить коллекцию",
-          duration: 3000,
-        });
-        navigate("/community");
+        // Ошибка API (сеть, таймаут, бэкенд недоступен) — при пререндеринге
+        // не редиректим, а показываем страницу с SEO-данными из slug.
+        // Это гарантирует, что пререндерер сохранит корректные meta-теги,
+        // а при гидрации React дозагрузит данные.
+        if (typeof window !== 'undefined' && window.__PRERENDER__) {
+          console.warn('[prerender] API недоступен, показываем SEO-заглушку');
+        } else {
+          console.error("Failed to load collection:", error);
+          sileo.error({
+            title: "Ошибка загрузки",
+            description: "Не удалось загрузить коллекцию",
+            duration: 3000,
+          });
+        }
+        // Даже при ошибке показываем страницу с SEO-данными (пререндер)
+        // вместо редиректа на /community
       } finally {
         setLoading(false);
       }
@@ -135,41 +144,80 @@ if (!collection?.content) return "";
 return DOMPurify.sanitize(collection.content);
 }, [collection?.content]);
 
+  // SEO — всегда, даже при загрузке/ошибке, чтобы prerender гарантированно
+  // захватил meta-теги. Пока данные не загружены — используем slug из URL.
+  // Пока данные не загружены — используем читаемый заголовок из COLLECTION_TITLES
+  const seoTitle = collection?.title || COLLECTION_TITLES[slug || ''] || slug || '';
+  const seoDesc = COLLECTION_SEO[slug || '']
+    || collection?.excerpt
+    || `Подборка "${seoTitle}" на BookStrata — лучшие книги по жанру, рейтинг и рекомендации читателей`;
+  const seoImage = collection?.coverImageUrl
+    ? (proxyImageUrl(collection.coverImageUrl) || undefined)
+    : undefined;
+  const seoUrl = slug ? `/collections/${slug}` : undefined;
+  const seoBreadcrumbs = slug
+    ? [
+        { name: "Главная", url: "/" },
+        { name: "Подборки", url: "/community" },
+        { name: seoTitle || "Подборка", url: `/collections/${slug}` },
+      ]
+    : undefined;
+
   if (loading) {
     return (
-      <DashboardLayout
-        showSearch={false}
-      >
-        <div className="max-w-4xl mx-auto px-6 py-12">
-          <div className="animate-pulse">
-            <div className="h-4 bg-(--bg-1) rounded w-20 mb-4" />
-            <div className="h-10 bg-(--bg-1) rounded w-3/4 mb-6" />
-            <div className="h-4 bg-(--bg-1) rounded w-40 mb-8" />
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-4 bg-(--bg-1) rounded w-full" />
-              ))}
+      <>
+        <SEOHead
+          title={seoTitle}
+          description={seoDesc}
+          image={seoImage}
+          url={seoUrl}
+          breadcrumbs={seoBreadcrumbs}
+        />
+        <DashboardLayout
+          showSearch={false}
+        >
+          <div className="max-w-4xl mx-auto px-6 py-12">
+            <div className="animate-pulse">
+              <div className="h-4 bg-(--bg-1) rounded w-20 mb-4" />
+              <div className="h-10 bg-(--bg-1) rounded w-3/4 mb-6" />
+              <div className="h-4 bg-(--bg-1) rounded w-40 mb-8" />
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-4 bg-(--bg-1) rounded w-full" />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </DashboardLayout>
+        </DashboardLayout>
+      </>
     );
   }
 
   if (!collection) {
-    return null;
+    // Коллекция не загрузилась (API недоступен) — показываем SEO-заглушку
+    // с данными из slug. При пререндеринге бот получит корректные meta-теги,
+    // а пользователь увидит сообщение о недоступности.
+    return (
+      <>
+        <SEOHead
+          title={seoTitle}
+          description={seoDesc}
+          image={seoImage}
+          url={seoUrl}
+          breadcrumbs={seoBreadcrumbs}
+        />
+        <DashboardLayout showSearch={false}>
+          <div className="max-w-4xl mx-auto px-6 py-12 text-center">
+            <h1 className="text-2xl font-bold mb-4">{seoTitle}</h1>
+            <p className="text-(--ink-2)">Коллекция временно недоступна. Попробуйте обновить страницу.</p>
+          </div>
+        </DashboardLayout>
+      </>
+    );
   }
 
   return (
     <>
-      <SEOHead
-        title={collection.title}
-        description={COLLECTION_SEO[slug || ''] || collection.excerpt || `Подборка "${collection.title}" на BookStrata`}
-        image={proxyImageUrl(collection.coverImageUrl) || undefined}
-        url={`/collections/${slug}`}
-        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Подборки", url: "/community" }, { name: collection.title, url: `/collections/${slug}` }]}
-      />
-
       {/* Book JSON-LD для каждой книги в коллекции */}
       {collection.books && (
         <Helmet>

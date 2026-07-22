@@ -463,12 +463,22 @@ async function pageHasContent(page, routePath) {
     }
   }
 
-  // Страница считается готовой, только когда ВСЕ критерии выполнены:
-  // 1. Нет скелетонов (animate-pulse, data-decoration-pulse)
-  // 2. Нет индикаторов загрузки
-  // 3. Title валидный (не дефолтный, > 5 символов)
-  // 4. Canonical установлен (не корень) ИЛИ в root больше 3000 символов
-  if (!diag.hasAnimatePulse && !diag.hasLoading && diag.isTitleValid && (diag.isCanonicalValid || diag.rootLen > 3000)) {
+  // Страница считается готовой, когда:
+  // 1. Нет скелетонов (animate-pulse, data-decoration-pulse) И
+  //    нет индикаторов загрузки, И title валидный, И (canonical ИЛИ контент > 3KB)
+  //    — полная загрузка данных.
+  // 2. ИЛИ canonical уже установлен на специфичный путь (не корень) И title валидный
+  //    — SEO-теги уже проставлены (SEOHead отрендерился с данными из slug),
+  //    остальной контент догрузится при гидрации.
+  //    Это критично для коллекций: при недоступном API в пререндеринге
+  //    CollectionPage рендерит SEOHead с COLLECTION_SEO/TITLES из slug,
+  //    и страницу можно сохранять.
+  // 3. 🛡️ isSeoReady НЕ срабатывает, пока есть animate-pulse —
+  //    иначе сохранится скелетон вместо контента.
+  const isSeoReady = diag.isCanonicalValid && diag.isTitleValid && !diag.hasAnimatePulse;
+
+  if ((!diag.hasAnimatePulse && !diag.hasLoading && diag.isTitleValid && (diag.isCanonicalValid || diag.rootLen > 3000))
+    || isSeoReady) {
     return true;
   }
 
