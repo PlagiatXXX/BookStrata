@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useRef } from "react";
+import { useReducer, useEffect, useRef, useMemo } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { TierListData, Tier, Book } from "@/types";
@@ -438,21 +438,33 @@ export const useTierList = (
   initialData: TierListData,
   allowSync: boolean = true,
 ) => {
-  const [listData, dispatch] = useReducer(tierListReducer, initialData);
+  // Защита от undefined tiers (может возникнуть при несовместимости формата данных)
+  const safeInitialData: TierListData = useMemo(
+    () => ({
+      ...initialData,
+      tiers: initialData?.tiers ?? {},
+      tierOrder: initialData?.tierOrder ?? [],
+      unrankedBookIds: initialData?.unrankedBookIds ?? [],
+      books: initialData?.books ?? {},
+    }),
+    [initialData],
+  );
+
+  const [listData, dispatch] = useReducer(tierListReducer, safeInitialData);
   const syncedTierListIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!initialData?.id || !allowSync) return;
+    if (!safeInitialData?.id || !allowSync) return;
 
-    if (syncedTierListIdRef.current !== initialData.id) {
-      syncedTierListIdRef.current = initialData.id;
+    if (syncedTierListIdRef.current !== safeInitialData.id) {
+      syncedTierListIdRef.current = safeInitialData.id;
       tierListHookLogger.info(
         "useTierList: Инициализация нового тир-листа",
-        { listId: initialData.id },
+        { listId: safeInitialData.id },
       );
-      dispatch({ type: "SET_STATE", payload: initialData });
+      dispatch({ type: "SET_STATE", payload: safeInitialData });
     }
-  }, [initialData, allowSync]);
+  }, [safeInitialData, allowSync]);
 
   const setTitle = (newTitle: string) => {
     dispatch({ type: "SET_TITLE", payload: newTitle });

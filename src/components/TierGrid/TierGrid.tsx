@@ -117,7 +117,11 @@ export const TierGrid = memo(
       onViewBook,
       onSetActiveTier = () => {},
     } = props;
-    const { tiers, tierOrder, books } = listData;
+    const {
+      tiers = {},
+      tierOrder = [],
+      books = {},
+    } = listData || {};
 
     // Фильтруем tierOrder — убираем ID, которых нет в tiers (защита от race condition)
     const validTierOrder = tierOrder.filter((id) => id && tiers[id]);

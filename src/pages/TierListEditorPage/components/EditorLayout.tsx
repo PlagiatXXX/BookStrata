@@ -1,13 +1,12 @@
 import { useSensors, useSensor } from "@dnd-kit/core";
 import { MouseSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
-import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
+import { DndContext, DragOverlay, pointerWithin, rectIntersection, type CollisionDetection } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type {
   DragStartEvent,
   DragEndEvent,
   DragOverEvent,
 } from "@dnd-kit/core";
-import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
@@ -18,6 +17,19 @@ import type { EditorHeaderProps } from "./EditorHeader";
 import { EditorHeader } from "./EditorHeader";
 import { TierListCoverEditor } from "./TierListCoverEditor";
 import { ThemePicker } from "./ThemePicker";
+
+// Кастомный алгоритм коллизий:
+// 1. pointerWithin — точное попадание курсора в карточку/контейнер
+// 2. rectIntersection — fallback для пустых тиров и стыков между карточками
+const customCollisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  if (pointerCollisions.length > 0) return pointerCollisions;
+
+  const rectCollisions = rectIntersection(args);
+  if (rectCollisions.length > 0) return rectCollisions;
+
+  return [];
+};
 
 interface EditorLayoutProps {
   children: React.ReactNode;
@@ -71,10 +83,13 @@ export const EditorLayout = ({
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
-      activationConstraint: { distance: 5 },
+      activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
+      activationConstraint: {
+        delay: 200,
+        tolerance: 8,
+      },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -147,7 +162,7 @@ export const EditorLayout = ({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={customCollisionDetection}
       onDragStart={onDragStart}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
@@ -156,28 +171,22 @@ export const EditorLayout = ({
       {content}
       <DragOverlay zIndex={10001}>
         {activeBook ? (
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+          <div
+            className="shadow-2xl rounded-md overflow-hidden cursor-grabbing select-none"
             style={{
-              opacity: 0.85,
-              transform: "rotate(2deg) scale(1.05)",
+              transform: "rotate(3deg) scale(1.05)",
+              willChange: "transform",
             }}
           >
             <BookCover book={activeBook} isDraggable={false} />
-          </motion.div>
+          </div>
         ) : activeTier ? (
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="flex items-center gap-2 rounded-lg px-4 py-2 shadow-xl"
+          <div
+            className="flex items-center gap-2 rounded-lg px-4 py-2 shadow-2xl min-w-[200px] cursor-grabbing select-none"
             style={{
-              opacity: 0.85,
-              transform: "rotate(1deg) scale(1.02)",
               backgroundColor: activeTier.color || "#808080",
-              minWidth: 200,
+              transform: "rotate(1.5deg) scale(1.02)",
+              willChange: "transform",
             }}
           >
             <TierLabel
@@ -189,7 +198,7 @@ export const EditorLayout = ({
             <span className="text-white font-medium truncate">
               {activeTier.title}
             </span>
-          </motion.div>
+          </div>
         ) : null}
       </DragOverlay>
     </DndContext>

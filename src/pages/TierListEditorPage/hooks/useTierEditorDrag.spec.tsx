@@ -29,6 +29,15 @@ vi.mock('html-to-image', () => ({
   toPng: vi.fn().mockResolvedValue('data:image/png;base64,test'),
 }));
 
+// Мокаем sileo
+vi.mock('sileo', () => ({
+  sileo: {
+    error: vi.fn(),
+    success: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
 const { StorageService } = await import('@/lib/storage');
 
 // Получаем моки после vi.mock
@@ -309,7 +318,7 @@ describe('useTierEditorDrag', () => {
       expect(mockToPng).toHaveBeenCalledWith(mockElement, expect.any(Object));
     });
 
-    it('должен инлайнить background-image через fetch перед toPng', async () => {
+    it('должен инлайнить background-image через прокси перед toPng', async () => {
       const mockBlob = new Blob(['fake-image'], { type: 'image/jpeg' });
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -329,8 +338,16 @@ describe('useTierEditorDrag', () => {
 
       await result.current.onDownloadImage();
 
-      // fetch был вызван
-      expect(globalThis.fetch).toHaveBeenCalledWith('http://example.com/cover.jpg', { mode: 'cors' });
+      // fetch вызван к прокси (не напрямую)
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/proxy/image'),
+        expect.any(Object),
+      );
+      // Прямой CORS-запрос больше не делается
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(
+        'http://example.com/cover.jpg',
+        { mode: 'cors' },
+      );
 
       // После экспорта background-image восстановлен
       expect(card.style.backgroundImage).toBe(originalBg);
@@ -356,11 +373,9 @@ describe('useTierEditorDrag', () => {
       expect(mockToPng).toHaveBeenCalled();
     });
 
-    it('должен пробовать прокси при ошибке CORS и продолжать', async () => {
-      mockStorageGetString = vi.mocked(StorageService.getString);
-      mockStorageGetString.mockReturnValue('test-token');
-      // Первый вызов (CORS) — ошибка, второй (прокси) — тоже ошибка
-      globalThis.fetch = vi.fn().mockRejectedValue(new Error('CORS error'));
+    it('должен ставить fallback-pixel если прокси не сработал', async () => {
+      // Прокси не работает — имитируем ошибку сети
+      globalThis.fetch = vi.fn(() => Promise.reject(new Error('Network error')));
 
       const { result } = renderHookWithRef();
       const el = result.current.tierGridRef.current!;
@@ -370,36 +385,24 @@ describe('useTierEditorDrag', () => {
       card.style.backgroundImage = 'url(http://example.com/nocors.jpg)';
       el.appendChild(card);
 
+      const originalBg = card.style.backgroundImage;
+
       await result.current.onDownloadImage();
 
-      // toPng всё равно вызван, несмотря на ошибки CORS и прокси
+      // fetch вызывался 1 раз — только прокси
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+      // toPng всё равно вызван, несмотря на ошибку прокси
       expect(mockToPng).toHaveBeenCalled();
-      // background-image не изменился
-      expect(card.style.backgroundImage).toContain('http://example.com/nocors.jpg');
-      // fetch вызывался: CORS + прокси (с токеном)
-      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
-      // Прокси вызван с токеном авторизации
-      expect(globalThis.fetch).toHaveBeenLastCalledWith(
-        expect.stringContaining('/api/proxy/image'),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer test-token',
-          }),
-        }),
-      );
+      // После экспорта background-image восстановлен (inlineMap cleanup)
+      expect(card.style.backgroundImage).toBe(originalBg);
     });
 
-    it('должен пробовать S3 URL для CDN изображений при CORS ошибке', async () => {
-      // S3 URL успешно отдаёт изображение, CDN — CORS ошибка
+    it('должен проксировать CDN URL через /api/proxy/image', async () => {
       const mockBlob = new Blob(['fake-image'], { type: 'image/jpeg' });
-      globalThis.fetch = vi.fn()
-        // Первый вызов (CDN) — CORS ошибка
-        .mockRejectedValueOnce(new Error('CORS error'))
-        // Второй вызов (S3) — успех
-        .mockResolvedValueOnce({
-          ok: true,
-          blob: () => Promise.resolve(mockBlob),
-        });
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(mockBlob),
+      });
 
       const { result } = renderHookWithRef();
       const el = result.current.tierGridRef.current!;
@@ -413,62 +416,24 @@ describe('useTierEditorDrag', () => {
 
       await result.current.onDownloadImage();
 
-      // fetch был вызван дважды: CDN (ошибка) и S3 (успех)
-      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
-      // Первый — CDN URL
-      expect(globalThis.fetch).toHaveBeenNthCalledWith(
-        1,
-        'https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/migrated/cover.webp',
-        { mode: 'cors' },
+      // fetch вызывался 1 раз — только прокси
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+      // Прокси вызван с encodeURIComponent CDN URL
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining(encodeURIComponent(
+          'https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/migrated/cover.webp',
+        )),
+        expect.any(Object),
       );
-      // Второй — S3 URL
-      expect(globalThis.fetch).toHaveBeenNthCalledWith(
-        2,
-        'https://s3.twcstorage.ru/bookstrata/tiermaker-pro/migrated/cover.webp',
-        { mode: 'cors' },
-      );
-      // Прокси не вызывался — S3 сработал
-      expect(globalThis.fetch).not.toHaveBeenCalledWith(
-        expect.stringContaining('/api/proxy/image'),
-        expect.anything(),
-      );
-      // После экспорта стили восстанавливаются (cleanup в finally)
+      // После экспорта стили восстанавливаются
       expect(card.style.backgroundImage).toBe(originalBg);
 
       // toPng вызван
       expect(mockToPng).toHaveBeenCalled();
     });
 
-    it('должен пробовать прокси если и CDN и S3 не сработали', async () => {
-      mockStorageGetString = vi.mocked(StorageService.getString);
-      mockStorageGetString.mockReturnValue('test-token');
-      // Все вызовы — ошибки: CDN, S3, прокси
-      globalThis.fetch = vi.fn().mockRejectedValue(new Error('fetch error'));
-
-      const { result } = renderHookWithRef();
-      const el = result.current.tierGridRef.current!;
-
-      const card = document.createElement('div');
-      card.className = 'nb-book-card';
-      card.style.backgroundImage = 'url(https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/migrated/cover.webp)';
-      el.appendChild(card);
-
-      await result.current.onDownloadImage();
-
-      // fetch вызывался 3 раза: CDN, S3, прокси
-      expect(globalThis.fetch).toHaveBeenCalledTimes(3);
-      // Прокси вызван с токеном
-      expect(globalThis.fetch).toHaveBeenLastCalledWith(
-        expect.stringContaining('/api/proxy/image'),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: 'Bearer test-token',
-          }),
-        }),
-      );
-      // toPng всё равно вызван
-      expect(mockToPng).toHaveBeenCalled();
-    });
+    // Удалён тест "должен пробовать прокси если и CDN и S3 не сработали"
+    // — логика CDN→S3→прокси заменена на единый вызов прокси
 
     it('должен обрабатывать ошибку при скачивании и восстанавливать стили', async () => {
       mockToPng.mockRejectedValue(new Error('Download failed'));

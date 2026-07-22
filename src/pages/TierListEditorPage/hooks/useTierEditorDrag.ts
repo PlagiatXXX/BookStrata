@@ -8,32 +8,14 @@ import type { Book, Tier, TierListData } from "@/types";
 import { createLogger } from "@/lib/logger";
 import { StorageService } from "@/lib/storage";
 import type { ExportTheme } from "../components/ExportModal";
+import { sileo } from "sileo";
 
 // Логгер для хука drag-and-drop
 const logger = createLogger("TierEditorDrag", { color: "orange" });
 
-// Константы для преобразования CDN → S3 (обратная операция proxyImageUrl)
-const S3_BASE = "https://s3.twcstorage.ru/bookstrata";
-// Хост CDN может быть динамическим (re406cj9uj.cdn.twcstorage.ru), поэтому матчим по суффиксу
-const CDN_SUFFIX = ".cdn.twcstorage.ru";
-
-/**
- * Преобразует CDN URL обратно в S3 URL для fetch (S3 может отдавать CORS).
- * Если URL не с CDN — возвращает как есть.
- */
-function cdnToS3Url(url: string): string {
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.endsWith(CDN_SUFFIX)) {
-      // CDN: https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/migrated/xxx.webp
-      // S3:  https://s3.twcstorage.ru/bookstrata/tiermaker-pro/migrated/xxx.webp
-      return url.replace(parsed.origin, S3_BASE);
-    }
-  } catch {
-    // Если URL некорректный — возвращаем как есть
-  }
-  return url;
-}
+// Прозрачный 1×1 GIF для fallback, если изображение не удалось загрузить
+const FALLBACK_PIXEL =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
 /** Преобразует Blob в data URL */
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -118,7 +100,9 @@ export function useTierEditorDrag({
       try {
         const { toPng } = await import("html-to-image");
 
-        // 1. Инлайним кросс-доменные изображения
+        // 1. Инлайним изображения через серверный прокси (обходит CORS)
+        //    Прямой fetch к CDN/S3 убран — на продакшене CORS настроен только для bookstrata.ru,
+        //    а пользователь может заходить с другого домена.
         const cards = element.querySelectorAll<HTMLElement>(".nb-book-card");
         for (const card of cards) {
           const bg = card.style.backgroundImage;
@@ -130,32 +114,7 @@ export function useTierEditorDrag({
           const url = match[1];
           if (url.startsWith("data:")) continue;
 
-          // Пробуем оригинальный URL, а для CDN — ещё и S3 (может отдавать CORS)
-          const urlsToTry = [url];
-          const s3Url = cdnToS3Url(url);
-          if (s3Url !== url) {
-            urlsToTry.push(s3Url);
-          }
-
-          let inlined = false;
-          for (const tryUrl of urlsToTry) {
-            try {
-              const resp = await fetch(tryUrl, { mode: "cors" });
-              if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-              const blob = await resp.blob();
-              const dataUrl = await blobToDataUrl(blob);
-              inlineMap.set(card, card.style.backgroundImage);
-              card.style.backgroundImage = `url(${dataUrl})`;
-              inlined = true;
-              break;
-            } catch {
-              // CORS fetch не сработал — пробуем следующий URL
-            }
-          }
-
-          if (inlined) continue;
-
-          // Прокси с авторизацией (последняя надежда)
+          // Пытаемся загрузить через прокси
           try {
             const token = StorageService.getString("authToken");
             const headers: Record<string, string> = {
@@ -166,13 +125,16 @@ export function useTierEditorDrag({
             }
             const proxyUrl = `/api/proxy/image?url=${encodeURIComponent(url)}`;
             const resp = await fetch(proxyUrl, { headers });
-            if (!resp.ok) continue;
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const blob = await resp.blob();
             const dataUrl = await blobToDataUrl(blob);
             inlineMap.set(card, card.style.backgroundImage);
             card.style.backgroundImage = `url(${dataUrl})`;
           } catch {
-            // Прокси тоже не сработал — оставляем как есть
+            // Прокси не сработал — ставим прозрачный пиксель вместо кросс-доменного URL,
+            // чтобы canvas не стал tainted при отрисовке
+            inlineMap.set(card, card.style.backgroundImage);
+            card.style.backgroundImage = `url(${FALLBACK_PIXEL})`;
           }
         }
 
@@ -266,6 +228,12 @@ export function useTierEditorDrag({
         logger.error(err instanceof Error ? err : new Error(String(err)), {
           action: "downloadImage",
           title: listData.title,
+        });
+
+        sileo.error({
+          title: "Не удалось скачать изображение",
+          description:
+            "Проверьте подключение к интернету или попробуйте ещё раз.",
         });
       }
     },
