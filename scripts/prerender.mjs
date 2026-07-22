@@ -468,19 +468,24 @@ async function pageHasContent(page, routePath) {
 
   // Страница считается готовой, когда:
   //
-  // 1. (ПРИОРИТЕТ) В #root > 3KB контента, нет скелетонов и загрузки.
-  //    Это самый надёжный сигнал — Helmet может ещё не успеть обновить
-  //    <title>/canonical (они асинхронные), но контент уже отрендерен.
-  //    Без этой проверки страницы вроде коллекций (122KB контента, но
-  //    canonical="undefined") ждут таймаута 30 секунд.
+  // 1. (БАЛАНС) В #root > 3KB контента, нет скелетонов И хотя бы один
+  //    SEO-тег (title ИЛИ canonical) уже установлен Helmet/SEOHead.
+  //    Content-детекция без SEO-тегов была слишком быстрой — коллекции
+  //    сохранялись с пустыми title/canonical, потому что useEffect
+  //    SEOHead не успевал отработать до момента проверки.
+  //    Добавляем hasMinSeo — ждём 100-300ms, пока Helmet смонтируется,
+  //    но не 30 секунд как раньше.
   //
-  // 2. canonical и title установлены на специфичные (не дефолтные) пути,
-  //    нет скелетонов — SEO-теги готовы. Важно для страниц с малым
-  //    контентом, где Helmet успел раньше.
-  const hasContent = !diag.hasAnimatePulse && !diag.hasLoading && diag.rootLen > 3000;
-  const isSeoReady = diag.isCanonicalValid && diag.isTitleValid && !diag.hasAnimatePulse;
+  // 2. canonical и title оба валидны, нет скелетонов — полная SEO-готовность.
+  //    Важно для страниц с малым контентом, где Helmet успел раньше.
+  const noSkeletons = !diag.hasAnimatePulse && !diag.hasLoading;
+  const hasMinSeo = diag.isTitleValid || diag.isCanonicalValid;
 
-  if (hasContent || isSeoReady) {
+  if (noSkeletons && diag.rootLen > 3000 && hasMinSeo) {
+    return true;
+  }
+
+  if (noSkeletons && diag.isTitleValid && diag.isCanonicalValid) {
     return true;
   }
 

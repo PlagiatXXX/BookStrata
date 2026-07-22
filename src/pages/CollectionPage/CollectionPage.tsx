@@ -218,6 +218,15 @@ return DOMPurify.sanitize(collection.content);
 
   return (
     <>
+      {/* SEO — для пререндера и гидрации */}
+      <SEOHead
+        title={seoTitle}
+        description={seoDesc}
+        image={seoImage}
+        url={seoUrl}
+        breadcrumbs={seoBreadcrumbs}
+      />
+
       {/* Book JSON-LD для каждой книги в коллекции */}
       {collection.books && (
         <Helmet>
