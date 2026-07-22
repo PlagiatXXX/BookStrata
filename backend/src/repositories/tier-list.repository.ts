@@ -240,11 +240,11 @@ export class TierListRepository {
         isPublic: true,
         tiers: {
           create: [
-            { title: "S", color: "#FF6B6B", rank: 0 },
-            { title: "A", color: "#4ECDC4", rank: 1 },
-            { title: "B", color: "#45B7D1", rank: 2 },
-            { title: "C", color: "#96CEB4", rank: 3 },
-            { title: "D", color: "#FFEAA7", rank: 4 },
+            { title: "Шедевр", color: "#FF6B6B", rank: 0 },
+            { title: "Отлично", color: "#4ECDC4", rank: 1 },
+            { title: "Хорошо", color: "#45B7D1", rank: 2 },
+            { title: "Средне", color: "#96CEB4", rank: 3 },
+            { title: "Плохо", color: "#FFEAA7", rank: 4 },
           ],
         },
       },

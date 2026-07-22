@@ -70,11 +70,11 @@ const initialFormState: TemplateEditorFormState = {
 };
 
 const PRESET_TIERS: TierTemplate[] = [
-  { id: "1", name: "S", color: "#FFD700", order: 0 },
-  { id: "2", name: "A", color: "#C0C0C0", order: 1 },
-  { id: "3", name: "B", color: "#CD7F32", order: 2 },
-  { id: "4", name: "C", color: "#8B4513", order: 3 },
-  { id: "5", name: "D", color: "#696969", order: 4 },
+  { id: "1", name: "Шедевр", color: "#FFD700", order: 0 },
+  { id: "2", name: "Отлично", color: "#C0C0C0", order: 1 },
+  { id: "3", name: "Хорошо", color: "#CD7F32", order: 2 },
+  { id: "4", name: "Средне", color: "#8B4513", order: 3 },
+  { id: "5", name: "Плохо", color: "#696969", order: 4 },
 ];
 
 export function useTemplateEditorState({

@@ -180,66 +180,66 @@ describe("tierList.service", () => {
       isPublic: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      tiers: [
-        { id: 1, title: "S", color: "#FF6B6B", rank: 0 },
-        { id: 2, title: "A", color: "#4ECDC4", rank: 1 },
-        { id: 3, title: "B", color: "#45B7D1", rank: 2 },
-        { id: 4, title: "C", color: "#96CEB4", rank: 3 },
-        { id: 5, title: "D", color: "#FFEAA7", rank: 4 },
-      ],
-      placements: [],
-      unrankedBooks: [],
-    };
+        tiers: [
+          { id: 1, title: "Шедевр", color: "#FF6B6B", rank: 0 },
+          { id: 2, title: "Отлично", color: "#4ECDC4", rank: 1 },
+          { id: 3, title: "Хорошо", color: "#45B7D1", rank: 2 },
+          { id: 4, title: "Средне", color: "#96CEB4", rank: 3 },
+          { id: 5, title: "Плохо", color: "#FFEAA7", rank: 4 },
+        ],
+        placements: [],
+        unrankedBooks: [],
+      };
 
-    it("должен создать новый тир-лист с 5 тирами по умолчанию", async () => {
-      (prisma.tierList.create as any).mockResolvedValue(mockCreatedTierList);
+      it("должен создать новый тир-лист с 5 тирами по умолчанию", async () => {
+        (prisma.tierList.create as any).mockResolvedValue(mockCreatedTierList);
 
-      const result = await service.createTierList(mockUserId, mockTitle);
+        const result = await service.createTierList(mockUserId, mockTitle);
 
-      expect(prisma.tierList.create).toHaveBeenCalledWith({
-        data: {
-          userId: mockUserId,
-          slug: expect.any(String),
-          title: mockTitle,
-          isPublic: true,
-          tiers: {
-            create: [
-              { title: "S", color: "#FF6B6B", rank: 0 },
-              { title: "A", color: "#4ECDC4", rank: 1 },
-              { title: "B", color: "#45B7D1", rank: 2 },
-              { title: "C", color: "#96CEB4", rank: 3 },
-              { title: "D", color: "#FFEAA7", rank: 4 },
-            ],
-          },
-        },
-        include: {
-          tiers: {
-            orderBy: { rank: "asc" },
-            include: {
-              items: { orderBy: { rank: "asc" }, include: { book: true } },
+        expect(prisma.tierList.create).toHaveBeenCalledWith({
+          data: {
+            userId: mockUserId,
+            slug: expect.any(String),
+            title: mockTitle,
+            isPublic: true,
+            tiers: {
+              create: [
+                { title: "Шедевр", color: "#FF6B6B", rank: 0 },
+                { title: "Отлично", color: "#4ECDC4", rank: 1 },
+                { title: "Хорошо", color: "#45B7D1", rank: 2 },
+                { title: "Средне", color: "#96CEB4", rank: 3 },
+                { title: "Плохо", color: "#FFEAA7", rank: 4 },
+              ],
             },
           },
-          placements: {
-            where: { tierId: null },
-            include: { book: true },
-            orderBy: { rank: "asc" },
+          include: {
+            tiers: {
+              orderBy: { rank: "asc" },
+              include: {
+                items: { orderBy: { rank: "asc" }, include: { book: true } },
+              },
+            },
+            placements: {
+              where: { tierId: null },
+              include: { book: true },
+              orderBy: { rank: "asc" },
+            },
           },
-        },
-      });
+        });
 
-      expect(result).toMatchObject({
-        id: mockCreatedTierList.id,
-        userId: mockCreatedTierList.userId,
-        title: mockCreatedTierList.title,
-        isPublic: mockCreatedTierList.isPublic,
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
-        tiers: expect.arrayContaining([
-          expect.objectContaining({ title: "S", rank: 0 }),
-        ]),
-        unrankedBooks: [],
+        expect(result).toMatchObject({
+          id: mockCreatedTierList.id,
+          userId: mockCreatedTierList.userId,
+          title: mockCreatedTierList.title,
+          isPublic: mockCreatedTierList.isPublic,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          tiers: expect.arrayContaining([
+            expect.objectContaining({ title: "Шедевр", rank: 0 }),
+          ]),
+          unrankedBooks: [],
+        });
       });
-    });
 
     it("должен вернуть тир-лист с unrankedBooks", async () => {
       const tierListWithUnranked = {
