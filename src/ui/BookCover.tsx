@@ -20,6 +20,7 @@ export const BookCover = memo(
     ({ book, isDraggable = true, onDelete, onEdit, onView, readStatus, onToggleStatus }, ref) => {
       const [showActions, setShowActions] = useState(false);
       const [isHovered, setIsHovered] = useState(false);
+      const [coverError, setCoverError] = useState(false);
       const lastTapTime = useRef<number>(0);
       const innerRef = useRef<HTMLDivElement>(null);
 
@@ -97,6 +98,25 @@ export const BookCover = memo(
 
       const hasCover = !!book.coverImageUrl;
 
+      // Сбрасываем ошибку загрузки при смене URL
+      useEffect(() => {
+        if (!hasCover) return;
+        setCoverError(false);
+
+        const img = new Image();
+        img.onload = () => setCoverError(false);
+        img.onerror = () => setCoverError(true);
+        img.src = proxyImageUrl(book.coverImageUrl);
+
+        return () => {
+          img.onload = null;
+          img.onerror = null;
+        };
+      }, [book.coverImageUrl, hasCover]);
+
+      const showCover = hasCover && !coverError;
+      const bgImageUrl = showCover ? proxyImageUrl(book.coverImageUrl) : undefined;
+
       return (
         <div
           ref={(node) => {
@@ -107,7 +127,7 @@ export const BookCover = memo(
               ref.current = node;
             }
           }}
-          style={hasCover ? { backgroundImage: `url(${proxyImageUrl(book.coverImageUrl)})` } : undefined}
+          style={bgImageUrl ? { backgroundImage: `url(${bgImageUrl})` } : undefined}
           onClick={handleClick}
           onTouchEnd={handleTouchEnd}
           onMouseEnter={() => setIsHovered(true)}
@@ -115,11 +135,11 @@ export const BookCover = memo(
           data-book-id={book.id}
           data-book-actions={showActionsFinal ? "visible" : "hidden"}
           className={`nb-book-card relative ${cursorClass}`}
-          role={hasCover ? "img" : undefined}
-          aria-label={hasCover ? label : undefined}
+          role={showCover ? "img" : undefined}
+          aria-label={showCover ? label : undefined}
           onDoubleClick={() => onView?.(book)}
         >
-          {hasCover && hasActions && (
+          {showCover && hasActions && (
             <div className="pointer-events-none absolute inset-0 border border-[#c1fffe]/15" />
           )}
 
@@ -152,7 +172,7 @@ export const BookCover = memo(
             </button>
           )}
 
-          {!hasCover && (
+          {!showCover && (
             <div className="absolute inset-0">
               <BookCoverPlaceholder compact />
             </div>

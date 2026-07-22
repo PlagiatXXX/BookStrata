@@ -7,13 +7,73 @@ const logger = createLogger("LiveLib", { color: "magenta" });
 
 const LIVELIB_BASE = "https://www.livelib.ru";
 const CACHE_TTL = 300;
-const MAX_PAGES_PER_LIST = 5; // ~20-25 книг на странице, итого ~100-125 книг на список
+const MAX_PAGES_PER_LIST = 30; // до ~600 книг на список
 
+/**
+ * @deprecated LiveLib перешёл на Next.js SPA — данные больше не в HTML.
+ * Оставлено для обратной совместимости тестов.
+ */
 export interface LiveLibBookRaw {
   title: string;
   author: string;
   coverImageUrl: string | null;
   liveLibUrl: string;
+}
+
+/**
+ * @deprecated LiveLib перешёл на Next.js SPA — используется RSC payload.
+ * Оставлено для обратной совместимости тестов.
+ */
+export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
+  const $ = cheerio.load(html);
+
+  const books: LiveLibBookRaw[] = [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function extractCover($el: cheerio.Cheerio<any>): string | null {
+    const $img = $el.find("img");
+    const pagespeedLazy = $img.attr("data-pagespeed-lazy-src");
+    if (pagespeedLazy) return pagespeedLazy;
+    const dataSrc = $img.attr("data-src");
+    if (dataSrc) return dataSrc;
+    const style = $el.attr("style") || "";
+    const match = style.match(/url\(([^)]+)\)/);
+    if (match?.[1]) return match[1];
+    const src = $img.attr("src");
+    if (src && !src.startsWith("/pagespeed_static/")) return src;
+    return null;
+  }
+
+  $(".object-wrapper.object-edition").each((_, el) => {
+    const $el = $(el);
+    const title = $el.find(".brow-title a.title").text().trim();
+    if (!title) return;
+    const author = $el.find("a.description").first().text().trim();
+    const coverImageUrl = extractCover($el.find(".object-cover"));
+    const liveLibUrl =
+      $el.find(".ll-redirect").attr("data-link") ||
+      $el.find(".brow-title a.title").attr("href") ||
+      "";
+    books.push({ title, author, coverImageUrl, liveLibUrl });
+  });
+
+  if (books.length === 0) {
+    $("li.slide-book__item").each((_, el) => {
+      const $el = $(el);
+      const title = $el.find("a.slide-book__title").text().trim();
+      if (!title) return;
+      const author = $el.find("a.slide-book__author").text().trim();
+      const $coverImg = $el.find(".slide-book__link");
+      const coverImageUrl = extractCover($coverImg);
+      const liveLibUrl =
+        $el.find(".slide-book__link").attr("href") ||
+        $el.find("a.slide-book__title").attr("href") ||
+        "";
+      books.push({ title, author, coverImageUrl, liveLibUrl });
+    });
+  }
+
+  return books;
 }
 
 /** Реалистичные браузерные заголовки, чтобы LiveLib не блокировал */
@@ -31,180 +91,276 @@ const BROWSER_HEADERS: Record<string, string> = {
   "Upgrade-Insecure-Requests": "1",
 };
 
-async function fetchWithRetry(
-  url: string,
-  maxAttempts = 2,
-): Promise<Response> {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-
-      const response = await fetch(url, {
-        headers: BROWSER_HEADERS,
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-
-      if (response.ok) {
-        logger.info(`LiveLib ответил ${response.status} для ${url}`);
-        return response;
-      }
-
-      // 404 — пользователь не найден, не ретраим
-      if (response.status === 404) {
-        throw new Error("Пользователь не найден на LiveLib");
-      }
-
-      logger.warn(
-        `LiveLib ответил ${response.status} (попытка ${attempt}/${maxAttempts})`,
-        { url },
-      );
-    } catch (err) {
-      if ((err as Error).message === "Пользователь не найден на LiveLib") {
-        throw err;
-      }
-      logger.warn(
-        `Ошибка соединения с LiveLib (попытка ${attempt}/${maxAttempts}): ${(err as Error).message}`,
-        { url },
-      );
-    }
-
-    if (attempt < maxAttempts) {
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-  }
-  throw new Error("LiveLib вернул ошибку");
+/**
+ * Строит корректный Next-Router-State-Tree для страницы коллекции пользователя.
+ * Next.js использует это дерево для определения, какой кусок страницы отрендерить.
+ */
+function makeRscStateTree(
+  userId: number,
+  collectionType: string,
+): string {
+  const tree = [
+    "",
+    {
+      children: [
+        "users",
+        {
+          children: [
+            String(userId),
+            {
+              children: [
+                "books",
+                {
+                  children: [
+                    collectionType,
+                    { children: ["__PAGE__", {}] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  return encodeURIComponent(JSON.stringify(tree));
 }
 
-export function extractBooksFromHtml(html: string): LiveLibBookRaw[] {
-  const $ = cheerio.load(html);
+/** Заголовки для RSC-запроса к Next.js App Router */
+function makeRscHeaders(
+  userId: number,
+  collectionType: string,
+): Record<string, string> {
+  return {
+    ...BROWSER_HEADERS,
+    RSC: "1",
+    Accept: "*/*",
+    "Next-Router-State-Tree": makeRscStateTree(userId, collectionType),
+  };
+}
 
-  const books: LiveLibBookRaw[] = [];
+/**
+ * Извлекает все art_edition объекты из RSC-текста.
+ * Проходит по всему тексту, находит сбалансированные JSON-объекты,
+ * содержащие "art_edition", и собирает их.
+ */
+function extractAllBooksFromRsc(rscText: string): LiveLibApiBook[] {
+  const books: LiveLibApiBook[] = [];
+  const searchKey = '"art_edition":{';
+  let pos = 0;
 
-  /** Извлекает обложку из элемента, обходя pagespeed-заглушки */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function extractCover($el: cheerio.Cheerio<any>): string | null {
-    const $img = $el.find("img");
-    // 1. data-pagespeed-lazy-src — реальный URL при PageSpeed
-    const pagespeedLazy = $img.attr("data-pagespeed-lazy-src");
-    if (pagespeedLazy) return pagespeedLazy;
-    // 2. data-src — ленивая загрузка без PageSpeed
-    const dataSrc = $img.attr("data-src");
-    if (dataSrc) return dataSrc;
-    // 3. style="background:url(...)"
-    const style = $el.attr("style") || "";
-    const match = style.match(/url\(([^)]+)\)/);
-    if (match?.[1]) return match[1];
-    // 4. src — последняя надежда (но может быть pagespeed-заглушкой)
-    const src = $img.attr("src");
-    if (src && !src.startsWith("/pagespeed_static/")) return src;
-    return null;
-  }
+  while ((pos = rscText.indexOf(searchKey, pos)) !== -1) {
+    // Ищем `{` перед `"art_edition"` — начало объекта книги
+    let bookStart = pos;
+    while (bookStart >= 0) {
+      if (rscText[bookStart] === "{") break;
+      bookStart--;
+    }
+    if (bookStart < 0) { pos += searchKey.length; continue; }
 
-  // Основной селектор — список прочитанного / поисковая выдача
-  $(".object-wrapper.object-edition").each((_, el) => {
-    const $el = $(el);
+    const parentObj = extractBalanced(rscText, bookStart);
+    if (!parentObj) { pos += searchKey.length; continue; }
 
-    const title = $el.find(".brow-title a.title").text().trim();
-    if (!title) return;
-
-    const author = $el.find("a.description").first().text().trim();
-    const coverImageUrl = extractCover($el.find(".object-cover"));
-    const liveLibUrl =
-      $el.find(".ll-redirect").attr("data-link") ||
-      $el.find(".brow-title a.title").attr("href") ||
-      "";
-
-    books.push({ title, author, coverImageUrl, liveLibUrl });
-  });
-
-  // Альтернативный селектор — карусель на профиле (wishlist и т.д.)
-  if (books.length === 0) {
-    $("li.slide-book__item").each((_, el) => {
-      const $el = $(el);
-
-      const title = $el.find("a.slide-book__title").text().trim();
-      if (!title) return;
-
-      const author = $el.find("a.slide-book__author").text().trim();
-      const $coverImg = $el.find(".slide-book__link");
-      const coverImageUrl = extractCover($coverImg);
-      const liveLibUrl =
-        $el.find(".slide-book__link").attr("href") ||
-        $el.find("a.slide-book__title").attr("href") ||
-        "";
-
-      books.push({ title, author, coverImageUrl, liveLibUrl });
-    });
+    try {
+      const parsed = JSON.parse(parentObj) as LiveLibApiBook;
+      if (parsed.art_edition?.title) {
+        books.push(parsed);
+      }
+    } catch {
+      // невалидный объект — пропускаем
+    }
+    pos = bookStart + parentObj.length;
   }
 
   return books;
 }
 
 /**
+ * Извлекает userId из редиректа /reader/{username} → /users/{userId}
+ */
+async function resolveUserId(username: string): Promise<number> {
+  const url = `${LIVELIB_BASE}/reader/${encodeURIComponent(username)}`;
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      const response = await fetch(url, {
+        method: "HEAD",
+        headers: BROWSER_HEADERS,
+        signal: controller.signal,
+        redirect: "manual",
+      });
+      clearTimeout(timeout);
+
+      const location = response.headers.get("location") || "";
+      const match = location.match(/\/users\/(\d+)/);
+      if (match) {
+        logger.info(
+          `Пользователь "${username}" → userId ${match[1]}`,
+        );
+        return Number(match[1]);
+      }
+
+      // Если редиректа нет — проверяем тело ответа
+      if (response.ok) {
+        const body = await response.text();
+        const bodyMatch = body.match(/\/users\/(\d+)/);
+        if (bodyMatch) return Number(bodyMatch[1]);
+      }
+
+      if (response.status === 404) {
+        throw new Error("Пользователь не найден на LiveLib");
+      }
+    } catch (err) {
+      if ((err as Error).message === "Пользователь не найден на LiveLib") {
+        throw err;
+      }
+      logger.warn(
+        `Ошибка при получении userId (попытка ${attempt}): ${(err as Error).message}`,
+      );
+    }
+
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  throw new Error(`Не удалось найти пользователя "${username}" на LiveLib`);
+}
+
+interface LiveLibApiBook {
+  id: number;
+  art_edition: {
+    id: number;
+    title: string;
+    authors: { full_name: string }[];
+    cover_url: string;
+    url: string;
+  };
+}
+
+/**
+ * Находит сбалансированный JSON-объект или массив в тексте, начиная с позиции openPos.
+ * Возвращает найденный фрагмент текста и позицию закрывающего символа.
+ */
+function extractBalanced(text: string, openPos: number): string | null {
+  if (openPos >= text.length) return null;
+  const openChar = text[openPos];
+  const closeChar = openChar === "{" ? "}" : openChar === "[" ? "]" : null;
+  if (!closeChar) return null;
+
+  let depth = 1;
+  let i = openPos + 1;
+  let inString = false;
+
+  while (i < text.length && depth > 0) {
+    const ch = text[i]!;
+    if (inString) {
+      if (ch === "\\") i++; // skip escaped
+      else if (ch === '"') inString = false;
+    } else {
+      if (ch === '"') inString = true;
+      else if (ch === openChar) depth++;
+      else if (ch === closeChar) depth--;
+    }
+    i++;
+  }
+
+  return depth === 0 ? text.slice(openPos, i) : null;
+}
+
+/**
+ * Загружает одну страницу списка книг через RSC payload.
+ * Страница кодируется через ?page=N.
+ */
+async function fetchRscListPage(
+  userId: number,
+  list: string,
+  page: number,
+): Promise<LiveLibApiBook[]> {
+  const collectionType = list === "read" ? "read" : "wish";
+  const baseUrl = `${LIVELIB_BASE}/users/${userId}/books/${collectionType}`;
+  const url = page === 1 ? baseUrl : `${baseUrl}?page=${page}`;
+  logger.info(`Fetching LiveLib RSC: ${url}`);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const response = await fetch(url, {
+      headers: makeRscHeaders(userId, collectionType),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        logger.warn(`Список ${list} не найден для userId ${userId}`);
+        return [];
+      }
+      logger.warn(`RSC запрос вернул ${response.status} для ${url}`);
+      return [];
+    }
+
+    const text = await response.text();
+    return extractAllBooksFromRsc(text);
+  } catch (err) {
+    clearTimeout(timeout);
+    logger.warn(
+      `Ошибка при загрузке RSC списка ${list}: ${(err as Error).message}`,
+    );
+    return [];
+  }
+}
+
+/**
  * Загружает все страницы одного списка (read / wish) для пользователя.
+ * Страницы запрашиваются последовательно, чтобы не нагружать LiveLib.
+ * Дубликаты (из React Query cache) отфильтровываются по art_edition.url.
  */
 async function fetchListWithPagination(
-  username: string,
+  userId: number,
   list: string,
 ): Promise<BookSearchResult[]> {
   const seenUrls = new Set<string>();
   const allBooks: BookSearchResult[] = [];
 
   for (let page = 1; page <= MAX_PAGES_PER_LIST; page++) {
-    const url = `${LIVELIB_BASE}/reader/${encodeURIComponent(username)}/${list}${page > 1 ? `?page=${page}` : ""}`;
-    logger.info(`Fetching LiveLib list: ${url}`);
+    const apiBooks = await fetchRscListPage(userId, list, page);
 
-    let html: string;
-    try {
-      const response = await fetchWithRetry(url);
-      html = await response.text();
-    } catch (err) {
-      if (page === 1) {
-        // Первая страница не загрузилась — список недоступен
-        logger.warn(`Не удалось загрузить список ${list} для "${username}"`, {
-          error: (err as Error).message,
-        });
-        return [];
-      }
-      // Следующие страницы — просто выходим, то что есть — уже собрали
+    if (apiBooks.length === 0) {
       logger.info(
-        `Страница ${page} списка ${list} недоступна, загружено ${allBooks.length} книг`,
+        `Список ${list} закончился на странице ${page} для userId ${userId}`,
       );
       break;
     }
 
-    const rawBooks = extractBooksFromHtml(html);
-
-    if (rawBooks.length === 0) {
-      logger.info(
-        `Список ${list} закончился на странице ${page} для "${username}"`,
-      );
-      break; // пустая страница — конец списка
-    }
-
     let newCount = 0;
-    for (const b of rawBooks) {
-      const key = b.liveLibUrl || b.title;
+    for (const b of apiBooks) {
+      const key = b.art_edition.url || b.art_edition.title;
       if (seenUrls.has(key)) continue;
       seenUrls.add(key);
       newCount++;
+
+      const author = b.art_edition.authors
+        ?.map((a: { full_name: string }) => a.full_name)
+        .join(", ") || "Неизвестен";
+
       allBooks.push({
-        openLibraryKey: `livelib:${b.liveLibUrl}`,
-        title: b.title,
-        author: b.author || "Неизвестен",
-        coverUrl: b.coverImageUrl,
-        coverUrlLarge: b.coverImageUrl,
+        openLibraryKey: `livelib:${b.art_edition.url}`,
+        title: b.art_edition.title,
+        author,
+        coverUrl: b.art_edition.cover_url,
+        coverUrlLarge: b.art_edition.cover_url,
       });
     }
 
     logger.info(
-      `Страница ${page} списка ${list}: +${newCount} книг (всего ${allBooks.length})`,
+      `Страница ${page} списка ${list}: +${newCount} новых (всего ${allBooks.length})`,
     );
 
-    // Если страница пуста — конец списка
-    if (rawBooks.length === 0) break;
+    // Если не появилось новых книг — конец списка
+    if (newCount === 0) break;
   }
 
   return allBooks;
@@ -226,55 +382,20 @@ export async function fetchUserBooks(
     return cached;
   }
 
-  // Сначала проверяем, существует ли пользователь
-  let profileHtml: string | null = null;
-  try {
-    const profileUrl = `${LIVELIB_BASE}/reader/${encodeURIComponent(username)}`;
-    const profileResp = await fetchWithRetry(profileUrl);
-    profileHtml = await profileResp.text();
-    const profileTitle = profileHtml.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] || "";
-    if (profileTitle.includes("Страница не найдена") || profileTitle.includes("Ошибка 404")) {
-      throw new Error("Пользователь не найден на LiveLib");
-    }
-  } catch (err) {
-    if ((err as Error).message === "Пользователь не найден на LiveLib") {
-      throw err;
-    }
-    logger.warn(
-      `Не удалось проверить профиль "${username}", пробуем списки`,
-    );
-  }
+  // Получаем userId через редирект
+  const userId = await resolveUserId(username);
 
   // Собираем книги из обоих списков с пагинацией
   const seenKeys = new Set<string>();
   const allResults: BookSearchResult[] = [];
 
   for (const list of ["read", "wish"]) {
-    const books = await fetchListWithPagination(username, list);
+    const books = await fetchListWithPagination(userId, list);
     for (const b of books) {
       const key = b.openLibraryKey;
       if (seenKeys.has(key)) continue;
       seenKeys.add(key);
       allResults.push(b);
-    }
-  }
-
-  // Если списки пусты или недоступны — пробуем карусель на профиле
-  if (allResults.length === 0 && profileHtml) {
-    const rawBooks = extractBooksFromHtml(profileHtml);
-    if (rawBooks.length > 0) {
-      for (const b of rawBooks) {
-        const key = b.liveLibUrl || b.title;
-        if (seenKeys.has(key)) continue;
-        seenKeys.add(key);
-        allResults.push({
-          openLibraryKey: `livelib:${b.liveLibUrl}`,
-          title: b.title,
-          author: b.author || "Неизвестен",
-          coverUrl: b.coverImageUrl,
-          coverUrlLarge: b.coverImageUrl,
-        });
-      }
     }
   }
 

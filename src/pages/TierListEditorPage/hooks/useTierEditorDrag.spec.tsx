@@ -22,8 +22,6 @@ vi.mock('@/lib/storage', () => ({
   },
 }));
 
-let mockStorageGetString: ReturnType<typeof vi.fn>;
-
 // Мокаем html-to-image
 vi.mock('html-to-image', () => ({
   toPng: vi.fn().mockResolvedValue('data:image/png;base64,test'),
@@ -37,8 +35,6 @@ vi.mock('sileo', () => ({
     warning: vi.fn(),
   },
 }));
-
-const { StorageService } = await import('@/lib/storage');
 
 // Получаем моки после vi.mock
 const mockToPng = vi.mocked(await import('html-to-image')).toPng;

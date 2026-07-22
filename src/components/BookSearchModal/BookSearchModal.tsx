@@ -14,8 +14,6 @@ import { apiTrackEvent } from "@/lib/analyticsApi";
 // Логгер для компонента поиска книг
 const logger = createLogger('BookSearchModal', { color: 'green' });
 
-const MAX_BOOKS_PER_BATCH = 30;
-
 interface BookSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -377,14 +375,6 @@ export const BookSearchModal = ({
     const allBooks = [...searchBooks, ...liveLibBooks];
 
     if (allBooks.length === 0) return;
-    if (allBooks.length > MAX_BOOKS_PER_BATCH) {
-      sileo.warning({
-        title: `Можно добавить не больше ${MAX_BOOKS_PER_BATCH} книг за раз`,
-        description: `Уберите лишние или добавьте частями`,
-        duration: 4000,
-      });
-      return;
-    }
 
     setIsAddingBooks(true);
 
@@ -470,7 +460,7 @@ export const BookSearchModal = ({
   }, [isOpen]);
 
   const totalSelectedCount = Object.keys(state.selectedBooks).length + liveLibSelected.size;
-  const overLimit = totalSelectedCount > MAX_BOOKS_PER_BATCH;
+  const overLimit = false;
 
   if (!isOpen) return null;
 
@@ -600,9 +590,6 @@ export const BookSearchModal = ({
                   {isLoading ? <Spinner size="sm" /> : "Найти"}
                 </button>
               </div>
-              <p className="mt-2 text-[10px] text-[#7d8688]">
-                Не более {MAX_BOOKS_PER_BATCH} книг за раз
-              </p>
             </div>
           )}
 
@@ -633,9 +620,6 @@ export const BookSearchModal = ({
                   {liveLibLoading ? <Spinner size="sm" /> : "Загрузить"}
                 </button>
               </div>
-              <p className="mt-2 text-[10px] text-[#7d8688]">
-                Не более {MAX_BOOKS_PER_BATCH} книг за раз
-              </p>
               {liveLibError && (
                 <p className="mt-2 text-xs text-red-400">{liveLibError}</p>
               )}
@@ -652,6 +636,34 @@ export const BookSearchModal = ({
                     <span className="text-sm text-[#a8abad]">
                       Найдено: {totalResults}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allSelected = results.every(
+                          (b) => b.openLibraryKey in state.selectedBooks,
+                        );
+                        if (allSelected) {
+                          // Deselect all
+                          results.forEach((b) => {
+                            if (b.openLibraryKey in state.selectedBooks) {
+                              dispatch({ type: "TOGGLE_BOOK", book: b });
+                            }
+                          });
+                        } else {
+                          // Select all not yet selected
+                          results.forEach((b) => {
+                            if (!(b.openLibraryKey in state.selectedBooks)) {
+                              dispatch({ type: "TOGGLE_BOOK", book: b });
+                            }
+                          });
+                        }
+                      }}
+                      className="cursor-pointer text-xs font-bold text-[#c1fffe] transition-colors hover:text-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                    >
+                      {results.every((b) => b.openLibraryKey in state.selectedBooks)
+                        ? "Снять всё"
+                        : "Выбрать всё"}
+                    </button>
                   </div>
                 )}
 
@@ -721,6 +733,28 @@ export const BookSearchModal = ({
                     <span className="text-sm text-[#a8abad]">
                       {liveLibResults.length} книг из LiveLib
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const allSelected = liveLibResults.every((b) =>
+                          liveLibSelected.has(b.openLibraryKey),
+                        );
+                        if (allSelected) {
+                          setLiveLibSelected(new Set());
+                        } else {
+                          setLiveLibSelected(
+                            new Set(liveLibResults.map((b) => b.openLibraryKey)),
+                          );
+                        }
+                      }}
+                      className="cursor-pointer text-xs font-bold text-[#c1fffe] transition-colors hover:text-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                    >
+                      {liveLibResults.every((b) =>
+                        liveLibSelected.has(b.openLibraryKey),
+                      )
+                        ? "Снять всё"
+                        : "Выбрать всё"}
+                    </button>
                   </div>
                 )}
 
@@ -794,8 +828,8 @@ export const BookSearchModal = ({
                   {isAddingBooks
                     ? "Добавление..."
                     : overLimit
-                      ? `Лимит ${MAX_BOOKS_PER_BATCH}`
-                      : `Добавить (${totalSelectedCount})`}
+                    ? `Лимит`
+                    : `Добавить (${totalSelectedCount})`}
                 </button>
               )}
             </div>
