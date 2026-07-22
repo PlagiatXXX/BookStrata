@@ -92,10 +92,13 @@ const BACKEND_URL = process.env.API_URL || "http://localhost:8080";
 function proxyApiRequest(req, res) {
   // --- ЗАГЛУШКИ НА УРОВНЕ ПРОКСИ-СЕРВЕРА (до реальных вызовов к бэкенду) ---
 
-  // Авторизация: при пререндере пользователь всегда гость
+  // Авторизация: при пререндере пользователь всегда гость.
+  // Возвращаем 200 с пустыми данными, чтобы React НЕ пытался
+  // делать refresh token (который ни к чему не приведёт при пререндере).
+  // Раньше был 401, что вызывало цикл refresh → handleUnauthorized → retry.
   if (req.url.includes('/api/auth/')) {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Unauthorized (Prerender)' }));
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ authenticated: false, user: null }));
     return;
   }
 
@@ -391,10 +394,10 @@ let backendAvailable = false;
 const CONCURRENCY = 4;
 
 /** Таймаут ожидания загрузки контента на странице (статичные маршруты) */
-const PAGE_TIMEOUT = 10_000;
+const PAGE_TIMEOUT = 5_000;
 
 /** Таймаут для динамических страниц (тир-листы, коллекции) */
-const PAGE_TIMEOUT_DYNAMIC = 30_000;
+const PAGE_TIMEOUT_DYNAMIC = 8_000;
 
 /**
  * Дефолтные заголовки из SPA-заготовки (index.html) и SEOHead fallback.
@@ -464,21 +467,20 @@ async function pageHasContent(page, routePath) {
   }
 
   // Страница считается готовой, когда:
-  // 1. Нет скелетонов (animate-pulse, data-decoration-pulse) И
-  //    нет индикаторов загрузки, И title валидный, И (canonical ИЛИ контент > 3KB)
-  //    — полная загрузка данных.
-  // 2. ИЛИ canonical уже установлен на специфичный путь (не корень) И title валидный
-  //    — SEO-теги уже проставлены (SEOHead отрендерился с данными из slug),
-  //    остальной контент догрузится при гидрации.
-  //    Это критично для коллекций: при недоступном API в пререндеринге
-  //    CollectionPage рендерит SEOHead с COLLECTION_SEO/TITLES из slug,
-  //    и страницу можно сохранять.
-  // 3. 🛡️ isSeoReady НЕ срабатывает, пока есть animate-pulse —
-  //    иначе сохранится скелетон вместо контента.
+  //
+  // 1. (ПРИОРИТЕТ) В #root > 3KB контента, нет скелетонов и загрузки.
+  //    Это самый надёжный сигнал — Helmet может ещё не успеть обновить
+  //    <title>/canonical (они асинхронные), но контент уже отрендерен.
+  //    Без этой проверки страницы вроде коллекций (122KB контента, но
+  //    canonical="undefined") ждут таймаута 30 секунд.
+  //
+  // 2. canonical и title установлены на специфичные (не дефолтные) пути,
+  //    нет скелетонов — SEO-теги готовы. Важно для страниц с малым
+  //    контентом, где Helmet успел раньше.
+  const hasContent = !diag.hasAnimatePulse && !diag.hasLoading && diag.rootLen > 3000;
   const isSeoReady = diag.isCanonicalValid && diag.isTitleValid && !diag.hasAnimatePulse;
 
-  if ((!diag.hasAnimatePulse && !diag.hasLoading && diag.isTitleValid && (diag.isCanonicalValid || diag.rootLen > 3000))
-    || isSeoReady) {
+  if (hasContent || isSeoReady) {
     return true;
   }
 
@@ -541,46 +543,18 @@ async function processRoute(browser, route) {
       window.__PRERENDER__ = true;
     });
 
-    // API-прокси через Playwright: перехватываем запросы, чтобы
-    // auth/refresh всегда возвращал 401 (нет сессии при пререндере),
-    // а остальные проксируем на реальный бэкенд.
-    // Аuth-зависимые эндпоинты сразу возвращаем пустой ответ без авторизации,
-    // чтобы не было лавины 401 → refresh → cleanup → rerender.
-    const mockUnauthed = { status: 200, contentType: "application/json" };
-    await page.route("**/api/log", (route) => route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: "{}",
-    }));
+    // ── Playwright API-прокси с правильным приоритетом маршрутов ──
+    //
+    // Playwright применяет маршруты в порядке, ОБРАТНОМ регистрации
+    // (последний зарегистрированный → первый отработавший).
+    //
+    // Чтобы специфичные маршруты (auth, log, donors) перехватывали
+    // запросы ДО общего прокси на бэкенд, регистрируем wildcard
+    // **/api/** ПЕРВЫМ (низкий приоритет), а точечные — ПОСЛЕ.
+    //
+    // ⚠️ Порядок регистрации критичен! Сначала wildcard, потом специфичные.
 
-    // Эндпоинты, которым нужна авторизация — на пререндере сразу мокаем
-    await page.route("**/api/tier-lists/liked", (route) => route.fulfill({
-      ...mockUnauthed,
-      body: JSON.stringify({ likedIds: [] }),
-    }));
-    await page.route("**/api/tier-lists/*/taste-match", (route) => route.fulfill({
-      ...mockUnauthed,
-      body: JSON.stringify({ matchPercent: 0, commonBooks: 0, details: [] }),
-    }));
-    await page.route("**/api/ai/librarian/status", (route) => route.fulfill({
-      ...mockUnauthed,
-      body: JSON.stringify({ available: false }),
-    }));
-
-    // Авторизация: все запросы к /api/auth/* мгновенно возвращают 401
-    await page.route("**/api/auth/**", (route) => route.fulfill({
-      status: 401,
-      contentType: "application/json",
-      body: JSON.stringify({ error: { code: "unauthorized", message: "Пререндер — без авторизации" } }),
-    }));
-
-    // Некритичные для SEO запросы: список донатеров в футере
-    await page.route("**/api/donors**", (route) => route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([]),
-    }));
-
+    // ── 1. Wildcard «**/api/**» регистрируется ПЕРВЫМ (низкий приоритет) ──
     if (backendAvailable) {
       await page.route("**/api/**", async (route) => {
         const req = route.request();
@@ -622,6 +596,44 @@ async function processRoute(browser, route) {
     } else {
       await page.route("**/api/**", (route) => route.abort());
     }
+
+    // ── 2. Специфичные маршруты регистрируются ПОТОМ (высокий приоритет) ──
+    const mockUnauthed = { status: 200, contentType: "application/json" };
+    await page.route("**/api/log", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "{}",
+    }));
+
+    // Эндпоинты, которым нужна авторизация — на пререндере сразу мокаем
+    await page.route("**/api/tier-lists/liked", (route) => route.fulfill({
+      ...mockUnauthed,
+      body: JSON.stringify({ likedIds: [] }),
+    }));
+    await page.route("**/api/tier-lists/*/taste-match", (route) => route.fulfill({
+      ...mockUnauthed,
+      body: JSON.stringify({ matchPercent: 0, commonBooks: 0, details: [] }),
+    }));
+    await page.route("**/api/ai/librarian/status", (route) => route.fulfill({
+      ...mockUnauthed,
+      body: JSON.stringify({ available: false }),
+    }));
+
+    // Авторизация: возвращаем 200 с пустым пользователем, чтобы React
+    // НЕ пытался делать refresh token (это вызывало цикл 401→refresh→cleanup).
+    // Раньше был 401 — каждый запрос триггерил auth-флоу и тратил секунды.
+    await page.route("**/api/auth/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ authenticated: false, user: null }),
+    }));
+
+    // Некритичные для SEO запросы: список донатеров в футере
+    await page.route("**/api/donors**", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([]),
+    }));
 
     // Блокируем внешние запросы, не нужные при пререндере
     await page.route("**/sitemap.xml", (route) => route.abort());
