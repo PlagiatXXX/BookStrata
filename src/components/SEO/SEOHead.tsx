@@ -59,7 +59,9 @@ export function SEOHead({
   noindex,
   breadcrumbs,
 }: SEOHeadProps) {
-  const pageTitle = title ? `${title} | ${SITE_NAME}` : `Интерактивный рейтинг книг — топ лучших книг и что почитать | ${SITE_NAME}`;
+  // Убираем дублирование бренда: если title уже содержит | BookStrata, не добавляем повторно.
+  const cleanTitle = title?.replace(new RegExp(`\\s*\\|\\s*${SITE_NAME}\\s*$`), "");
+  const pageTitle = cleanTitle ? `${cleanTitle} | ${SITE_NAME}` : `Интерактивный рейтинг книг — топ лучших книг и что почитать | ${SITE_NAME}`;
   const pageUrl = url ? `${SITE_URL}${url}` : SITE_URL;
   const imageUrl = image.startsWith("http") ? image : new URL(image, SITE_URL).href;
 

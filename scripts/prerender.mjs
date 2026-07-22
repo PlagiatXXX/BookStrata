@@ -289,20 +289,6 @@ function log(msg) {
   console.log(`[prerender] ${msg}`);
 }
 
-async function waitForServer(url, timeout = 30000) {
-  const start = Date.now();
-  while (Date.now() - start < timeout) {
-    try {
-      const res = await fetch(url, { method: "HEAD" });
-      if (res.ok) return;
-    } catch {
-      // server not ready yet
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error("Server did not start in time");
-}
-
 /**
  * Очищает дублирующиеся теги в &lt;head&gt;: title, canonical и meta с одинаковым name/property.
  * Оставляет последнее вхождение каждого (Helmet/SEOHead добавляет их последними).
@@ -418,27 +404,27 @@ async function pageHasContent(page, routePath) {
 
     // Проверяем animate-pulse по всему root, чтобы ловить скелетоны
     // (Footer использует data-decoration-pulse вместо animate-pulse).
-    const hasAnimatePulse = rootHtml.includes("animate-pulse");
+    const hasAnimatePulse = rootHtml.includes("animate-pulse") || rootHtml.includes("data-decoration-pulse");
 
     const hasLoading = rootHtml.includes("Загрузка...") || rootHtml.includes("Загрузка");
-    const hasContent = rootLen >= 2000 && !hasAnimatePulse && !hasLoading;
 
-    const isCanonicalSet = canonicalHref !== null
+    // Title считается валидным, если он не дефолтный и содержит больше 5 символов
+    const isTitleValid = title && !defaultTitles.includes(title) && title.length > 5;
+
+    // Canonical считается установленным, если href не null и не корень сайта
+    const isCanonicalValid = canonicalHref !== null
       && canonicalHref !== 'https://bookstrata.ru'
       && canonicalHref !== 'https://bookstrata.ru/';
-
-    const isTitleSet = !defaultTitles.includes(title) && title.includes('| BookStrata');
 
     return {
       rootLen,
       rootPreview: rootText.slice(0, 300),
       hasAnimatePulse,
       hasLoading,
-      hasContent,
+      isTitleValid,
       canonicalHref,
-      isCanonicalSet,
+      isCanonicalValid,
       title,
-      isTitleSet,
     };
   }, DEFAULT_TITLES);
 
@@ -452,10 +438,14 @@ async function pageHasContent(page, routePath) {
     }
   }
 
-  // Собственно проверка — те же критерии, что и раньше
-  if (diag.isCanonicalSet) return true;
-  if (diag.hasContent) return true;
-  if (diag.isTitleSet) return true;
+  // Страница считается готовой, только когда ВСЕ критерии выполнены:
+  // 1. Нет скелетонов (animate-pulse, data-decoration-pulse)
+  // 2. Нет индикаторов загрузки
+  // 3. Title валидный (не дефолтный, > 5 символов)
+  // 4. Canonical установлен (не корень) ИЛИ в root больше 3000 символов
+  if (!diag.hasAnimatePulse && !diag.hasLoading && diag.isTitleValid && (diag.isCanonicalValid || diag.rootLen > 3000)) {
+    return true;
+  }
 
   return false;
 }
@@ -542,18 +532,23 @@ async function processRoute(browser, route) {
       body: JSON.stringify({ available: false }),
     }));
 
+    // Авторизация: все запросы к /api/auth/* мгновенно возвращают 401
+    await page.route("**/api/auth/**", (route) => route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({ error: { code: "unauthorized", message: "Пререндер — без авторизации" } }),
+    }));
+
+    // Некритичные для SEO запросы: список донатеров в футере
+    await page.route("**/api/donors**", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([]),
+    }));
+
     if (backendAvailable) {
       await page.route("**/api/**", async (route) => {
         const req = route.request();
-        // Auth/refresh: всегда 401 — при пререндере нет сессии
-        if (req.url().includes('/auth/refresh')) {
-          await route.fulfill({
-            status: 401,
-            contentType: "application/json",
-            body: JSON.stringify({ error: "Unauthorized" }),
-          });
-          return;
-        }
         const targetUrl = req.url().replace(BASE, BACKEND_URL);
 
         try {
