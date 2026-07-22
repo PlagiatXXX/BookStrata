@@ -117,7 +117,6 @@ export const BookCover = memo(
           className={`nb-book-card relative ${cursorClass}`}
           role={hasCover ? "img" : undefined}
           aria-label={hasCover ? label : undefined}
-          title={label}
           onDoubleClick={() => onView?.(book)}
         >
           {hasCover && hasActions && (

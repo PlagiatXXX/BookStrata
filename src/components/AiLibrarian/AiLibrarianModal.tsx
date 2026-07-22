@@ -346,6 +346,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
   const [draftStatusIndex, setDraftStatusIndex] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const isMobile = useIsMobile()
 
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
@@ -362,12 +363,12 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streamingContent])
 
-  // Focus input on open
+  // Focus input on open (только на десктопе)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isMobile) {
       setTimeout(() => textareaRef.current?.focus(), 150)
     }
-  }, [isOpen])
+  }, [isOpen, isMobile])
 
   // Переключаем сессию в соответствии с контекстом страницы
   useEffect(() => {
@@ -387,7 +388,6 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
     }
   }, [isStreaming, streamingContent])
 
-  const isMobile = useIsMobile()
   const effectiveVariant = variant === 'sidebar' && isMobile ? 'modal' : variant
 
   const isOffline = status === 'offline'

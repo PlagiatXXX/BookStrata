@@ -123,7 +123,7 @@ export const TierGrid = memo(
     const validTierOrder = tierOrder.filter((id) => id && tiers[id]);
 
     return (
-      <div ref={ref} className="flex flex-col gap-2 bg-transparent">
+      <div ref={ref} className="flex flex-col gap-0.5 bg-transparent">
         <SortableContext
           items={validTierOrder}
           strategy={verticalListSortingStrategy}

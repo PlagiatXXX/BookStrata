@@ -33,7 +33,7 @@ describe("RenameTierListModal", () => {
     expect(screen.getByText("Old Title")).toBeInTheDocument();
   });
 
-  it("должен рендерить input с autoFocus и правильными атрибутами", () => {
+  it("должен рендерить input с правильными атрибутами", () => {
     render(<RenameTierListModal {...defaultProps} />, {
       wrapper: ({ children }) => <div>{children}</div>,
     });

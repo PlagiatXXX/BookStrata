@@ -25,9 +25,10 @@ export async function authRoutes(fastify: FastifyInstance) {
     try {
       const str = typeof body === 'string' ? body : body.toString();
       done(null, str ? JSON.parse(str) : {});
-    } catch (err: any) {
-      err.statusCode = 400;
-      done(err, undefined);
+    } catch (err: unknown) {
+      const error = err as Error & { statusCode?: number };
+      error.statusCode = 400;
+      done(error, undefined);
     }
   });
 

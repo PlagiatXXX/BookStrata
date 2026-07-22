@@ -49,7 +49,6 @@ export function ParseUrlModal({
               value={url}
               onChange={(e) => onUrlChange(e.target.value)}
               placeholder="https://www.livelib.ru/selection/..."
-              autoFocus
             />
             <span className="admin-collections-form-hint">
               Поддерживаются Livelib, Readrate, Fantlab, LitRes, Wikipedia и другие сайты.

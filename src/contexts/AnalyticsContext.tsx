@@ -68,20 +68,16 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   );
   const metrikaLoadedRef = useRef(false);
 
-  // Авто-инициализация для вернувшихся пользователей (есть кука)
+  // Инициализируем метрику сразу при загрузке (с defer), без ожидания согласия
   useEffect(() => {
-    if (isConsented && !metrikaLoadedRef.current) {
-      metrikaLoadedRef.current = true;
-      initMetrika();
-    }
-  }, [isConsented]);
-
-  const accept = useCallback(() => {
     if (metrikaLoadedRef.current) return;
     metrikaLoadedRef.current = true;
+    initMetrika();
+  }, []);
+
+  const accept = useCallback(() => {
     setCookie(COOKIE_NAME, "1", 365);
     setIsConsented(true);
-    initMetrika();
   }, []);
 
   const value = useMemo(() => ({ accept, isConsented }), [accept, isConsented]);

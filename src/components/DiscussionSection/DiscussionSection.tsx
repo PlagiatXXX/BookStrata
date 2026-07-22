@@ -410,7 +410,6 @@ function ChatMessageRow({
             <textarea
               value={editContent}
               onChange={(e) => onEditChange(e.target.value)}
-              autoFocus
               rows={2}
             />
             <div className="chat-message-edit-actions">

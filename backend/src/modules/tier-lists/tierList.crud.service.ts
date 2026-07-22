@@ -9,12 +9,17 @@ import type { GetTierListsQuery } from "./tierList.schema.js";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface TierListWithCount { _count?: any; [key: string]: unknown }
 
+function safePageParam(value: string | undefined, fallback: number): number {
+  const parsed = parseInt(value ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export async function getUserTierLists(
   userId: number,
   query: GetTierListsQuery,
 ) {
-  const page = parseInt(query.page || "1", 10);
-  const pageSize = parseInt(query.pageSize || "10", 10);
+  const page = safePageParam(query.page, 1);
+  const pageSize = safePageParam(query.pageSize, 10);
 
   const [tierLists, totalItems] = await tierListRepository.findByUser(userId, {
     page,
@@ -40,7 +45,9 @@ export async function getUserTierLists(
   if (page > 1) {
     links.prev = `${baseUrl}?page=${page - 1}&pageSize=${pageSize}`;
   }
-  links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}`;
+  if (totalPages > 0) {
+    links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}`;
+  }
 
   return {
     data,
@@ -60,8 +67,8 @@ export async function getFullTierList(id: string) {
 }
 
 export async function getPublicTierLists(query: GetTierListsQuery) {
-  const page = parseInt(query.page || "1", 10);
-  const pageSize = parseInt(query.pageSize || "10", 10);
+  const page = safePageParam(query.page, 1);
+  const pageSize = safePageParam(query.pageSize, 10);
 
   const [tierLists, totalItems] = await tierListRepository.findPublic({
     page,
@@ -80,7 +87,9 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
   if (page > 1) {
     links.prev = `${baseUrl}?page=${page - 1}&pageSize=${pageSize}&sortBy=${query.sortBy || "updated_at"}`;
   }
-  links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}&sortBy=${query.sortBy || "updated_at"}`;
+  if (totalPages > 0) {
+    links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}&sortBy=${query.sortBy || "updated_at"}`;
+  }
 
   return {
     data: tierLists.map((tl) => ({
@@ -105,8 +114,8 @@ export async function getLikedTierLists(
   userId: number,
   query: GetTierListsQuery,
 ) {
-  const page = parseInt(query.page || "1", 10);
-  const pageSize = parseInt(query.pageSize || "10", 10);
+  const page = safePageParam(query.page, 1);
+  const pageSize = safePageParam(query.pageSize, 10);
 
   const [data, totalItems] = await tierListRepository.findLikedByUser(userId, {
     page,
@@ -124,7 +133,9 @@ export async function getLikedTierLists(
   if (page > 1) {
     links.prev = `${baseUrl}?page=${page - 1}&pageSize=${pageSize}`;
   }
-  links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}`;
+  if (totalPages > 0) {
+    links.last = `${baseUrl}?page=${totalPages}&pageSize=${pageSize}`;
+  }
 
   return {
     data: data.map((tl: Record<string, unknown>) => ({
@@ -193,11 +204,6 @@ export async function getTierListMetadata(id: string) {
   return tierListRepository.getMetadata(id);
 }
 
-// Нормализация ключа книги для сравнения
-function normalizeKey(title: string, author: string | null): string {
-  return `${title.toLowerCase().trim()}|${(author ?? "").toLowerCase().trim()}`;
-}
-
 // GET /api/tier-lists/:id/taste-match — сравнение вкуса с автором просматриваемого тир-листа
 export async function getTierListTasteMatch(
   tierListIdOrSlug: string,
@@ -205,14 +211,14 @@ export async function getTierListTasteMatch(
 ) {
   const realId = await resolveTierListId(tierListIdOrSlug);
 
-  // Получаем тир-лист с его тирами и размещениями
+  // Получаем тир-лист с его тирами и размещениями (с bookId для JOIN)
   const tierList = await prisma.tierList.findUnique({
     where: { id: realId },
     include: {
       tiers: { orderBy: { rank: "asc" } },
       placements: {
         include: {
-          book: { select: { title: true, author: true, coverImageUrl: true } },
+          book: { select: { id: true, title: true, author: true, coverImageUrl: true } },
           tier: { select: { id: true, title: true, rank: true } },
         },
       },
@@ -223,52 +229,49 @@ export async function getTierListTasteMatch(
     return { matchPercent: 0, commonBooks: 0, totalBooks: 0, matches: [] };
   }
 
-  // Строим map книг просматриваемого тир-листа: ключ → { tier }
-  const listBookMap = new Map<
-    string,
-    { tierId: number | null; tierTitle: string | null; tierRank: number | null }
-  >();
-  for (const p of tierList.placements) {
-    const key = normalizeKey(p.book.title, p.book.author);
-    if (!listBookMap.has(key)) {
-      listBookMap.set(key, {
-        tierId: p.tier?.id ?? null,
-        tierTitle: p.tier?.title ?? null,
-        tierRank: p.tier?.rank ?? null,
-      });
-    }
-  }
-
-  const totalBooks = listBookMap.size;
+  const totalBooks = tierList.placements.length;
 
   // Если пользователь не авторизован — возвращаем только количество книг
   if (!currentUserId) {
     return { matchPercent: 0, commonBooks: 0, totalBooks, matches: [] };
   }
 
-  // Получаем все книги текущего пользователя
+  // Получаем все ID тир-листов пользователя
   const userListIds = await tierListRepository.findUserTierListIds(currentUserId);
   if (userListIds.length === 0) {
     return { matchPercent: 0, commonBooks: 0, totalBooks, matches: [] };
   }
 
-  const userPlacements = await prisma.bookPlacement.findMany({
+  // Берём только bookId из просматриваемого тир-листа — вместо всех книг пользователя
+  const listBookIds = [...new Set(tierList.placements.map((p: { bookId: number }) => p.bookId))];
+
+  // Лёгкий запрос: считаем все уникальные книги пользователя (нужно для Jaccard similarity)
+  const userUniqueBooks = await prisma.bookPlacement.groupBy({
+    by: ["bookId"],
     where: { tierListId: { in: userListIds } },
+    _count: { bookId: true },
+  });
+  const userBookKeys = userUniqueBooks.length;
+
+  const userPlacements = await prisma.bookPlacement.findMany({
+    where: {
+      tierListId: { in: userListIds },
+      bookId: { in: listBookIds },
+    },
     include: {
       book: { select: { title: true, author: true, coverImageUrl: true } },
       tier: { select: { id: true, title: true, rank: true } },
     },
   });
 
-  // Строим map книг пользователя
+  // Строим map книг пользователя по bookId (первое вхождение — приоритет)
   const userBookMap = new Map<
-    string,
+    number,
     { tierId: number | null; tierTitle: string | null; tierRank: number | null }
   >();
   for (const p of userPlacements) {
-    const key = normalizeKey(p.book.title, p.book.author);
-    if (!userBookMap.has(key)) {
-      userBookMap.set(key, {
+    if (!userBookMap.has(p.bookId)) {
+      userBookMap.set(p.bookId, {
         tierId: p.tier?.id ?? null,
         tierTitle: p.tier?.title ?? null,
         tierRank: p.tier?.rank ?? null,
@@ -276,7 +279,7 @@ export async function getTierListTasteMatch(
     }
   }
 
-  // Находим общие книги
+  // Собираем совпадения по bookId — без нормализации строк
   const matches: Array<{
     book: { title: string; author: string | null; coverImageUrl: string };
     tierInList: string | null;
@@ -288,8 +291,7 @@ export async function getTierListTasteMatch(
   }> = [];
 
   for (const p of tierList.placements) {
-    const key = normalizeKey(p.book.title, p.book.author);
-    const userMatch = userBookMap.get(key);
+    const userMatch = userBookMap.get(p.bookId);
     if (userMatch) {
       matches.push({
         book: {
@@ -308,7 +310,6 @@ export async function getTierListTasteMatch(
   }
 
   const commonBooks = matches.length;
-  const userBookKeys = userBookMap.size;
   const totalUnique = totalBooks + userBookKeys - commonBooks;
 
   return {

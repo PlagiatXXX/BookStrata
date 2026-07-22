@@ -443,7 +443,6 @@ goToTab("forum");
               <div className="bg-(--bg-1) rounded-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
                 <h3 className="text-lg font-bold mb-4">Создать тему</h3>
                 <input
-                  autoFocus
                   value={topicTitle}
                   onChange={(e) => setTopicTitle(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleCreateTopic() }}

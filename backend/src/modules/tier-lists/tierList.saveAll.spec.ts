@@ -13,6 +13,8 @@ vi.mock('../../lib/prisma.js', () => ({
       count: vi.fn().mockResolvedValue(1),
     },
     book: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      count: vi.fn().mockResolvedValue(1),
       create: vi.fn().mockResolvedValue({ id: 201 }),
     },
     bookPlacement: {
@@ -23,17 +25,19 @@ vi.mock('../../lib/prisma.js', () => ({
     tierList: {
       update: vi.fn(),
       findMany: vi.fn().mockResolvedValue([{ id: 123 }]),
-      findUnique: vi.fn().mockResolvedValue({ id: 123 }),
+      findUnique: vi.fn().mockResolvedValue({ id: "123" }),
     },
   },
 }));
 
 describe('tierList.service.saveAll', () => {
   const userId = 1;
-  const tierListId = 123;
+  const tierListId = "123";
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Восстанавливаем реализацию транзакции, т.к. clearAllMocks сбрасывает все mockImplementation
+    (prisma.$transaction as any).mockImplementation((cb: any) => cb(prisma));
   });
 
   it('should save all changes in a transaction', async () => {

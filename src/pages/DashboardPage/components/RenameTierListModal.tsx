@@ -82,7 +82,6 @@ export function RenameTierListModal({
             placeholder="Введите новое название..."
             className={`dashboard-modal__input transition-colors ${showError ? "border-red-500! ring-2 ring-red-500/20" : ""}`}
             maxLength={100}
-            autoFocus
             disabled={isPending}
             aria-label="Новое название тир-листа"
           />

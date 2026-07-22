@@ -200,6 +200,19 @@ const TierListEditorContent = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleSave, isReadOnly, hasUnsavedChanges, saveStatus]);
+
+  // Автосохранение по таймеру (каждые 30 сек)
+  useEffect(() => {
+    if (isReadOnly || !tierListId) return;
+
+    const interval = setInterval(() => {
+      if (hasUnsavedChanges && saveStatus !== "saving") {
+        handleSave();
+      }
+    }, 30_000);
+
+    return () => clearInterval(interval);
+  }, [handleSave, isReadOnly, hasUnsavedChanges, saveStatus, tierListId]);
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Получаем функции из хука действий
@@ -694,9 +707,16 @@ const TierListEditorContent = () => {
         isUpdatingBook={isUpdatingBook}
         isExportModalOpen={isExportModalOpen}
         onCloseExport={() => setIsExportModalOpen(false)}
-        onConfirmExport={(theme) =>
-          onDownloadImage(theme, authUser?.username)
-        }
+        onConfirmExport={async (theme) => {
+          if (hasUnsavedChanges) {
+            try {
+              await handleSave();
+            } catch {
+              // Ошибка сохранения — не блокируем экспорт
+            }
+          }
+          onDownloadImage(theme, authUser?.username);
+        }}
         username={authUser?.username || "user"}
         isReadOnly={isReadOnly}
         tierListTheme={theme}

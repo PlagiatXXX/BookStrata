@@ -36,7 +36,6 @@ export function DeleteTierListModal({
             className="dashboard-btn dashboard-btn--ghost"
             type="button"
             disabled={isPending}
-            autoFocus
           >
             Отмена
           </button>

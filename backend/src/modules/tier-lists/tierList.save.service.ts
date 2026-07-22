@@ -67,84 +67,104 @@ export async function saveAll(
     const tierReplacements: { tempId: string; realId: string }[] = [];
     const bookReplacements: { tempId: string; realId: string }[] = [];
 
+    // --- 1. ОБРАБОТКА ТИРОВ ---
     if (payload.tiers) {
       if (payload.tiers.deletedIds?.length) {
         await tx.tier.deleteMany({
           where: { id: { in: payload.tiers.deletedIds }, tierListId: realTierListId },
         });
       }
+
+      // Оптимизация: Параллельное обновление тиров
       if (payload.tiers.updated?.length) {
-        for (const tier of payload.tiers.updated) {
-          await tx.tier.updateMany({
-            where: { id: tier.id, tierListId: realTierListId },
-            data: {
-              title: tier.title,
-              color: tier.color,
-              rank: tier.rank,
-              ...(tier.labelSize != null && { labelSize: tier.labelSize }),
-              ...(tier.labelWeight != null && { labelWeight: tier.labelWeight }),
-              ...(tier.labelStyle != null && { labelStyle: tier.labelStyle }),
-              ...(tier.labelColor != null && { labelColor: tier.labelColor }),
-            },
-          });
-        }
+        await Promise.all(
+          payload.tiers.updated.map((tier) =>
+            tx.tier.updateMany({
+              where: { id: tier.id, tierListId: realTierListId },
+              data: {
+                title: tier.title,
+                color: tier.color,
+                rank: tier.rank,
+                ...(tier.labelSize != null && { labelSize: tier.labelSize }),
+                ...(tier.labelWeight != null && { labelWeight: tier.labelWeight }),
+                ...(tier.labelStyle != null && { labelStyle: tier.labelStyle }),
+                ...(tier.labelColor != null && { labelColor: tier.labelColor }),
+              },
+            })
+          )
+        );
       }
+
+      // Оптимизация: Параллельное создание тиров
       if (payload.tiers.added?.length) {
-        const addedTiers = payload.tiers.added;
-        for (const tier of addedTiers) {
-          const created = await tx.tier.create({
-            data: {
-              tierListId: realTierListId,
-              title: tier.title,
-              color: tier.color,
-              rank: tier.rank,
-              labelSize: tier.labelSize ?? "sm",
-              labelWeight: tier.labelWeight ?? "black",
-              labelStyle: tier.labelStyle ?? "normal",
-              labelColor: tier.labelColor,
-            },
-          });
-          if (created) {
-            tierReplacements.push({
-              tempId: tier.tempId,
-              realId: String(created.id),
+        const addedResults = await Promise.all(
+          payload.tiers.added.map(async (tier) => {
+            const created = await tx.tier.create({
+              data: {
+                tierListId: realTierListId,
+                title: tier.title,
+                color: tier.color,
+                rank: tier.rank,
+                labelSize: tier.labelSize ?? "sm",
+                labelWeight: tier.labelWeight ?? "black",
+                labelStyle: tier.labelStyle ?? "normal",
+                labelColor: tier.labelColor,
+              },
             });
-          }
-        }
+            return { tempId: tier.tempId, realId: String(created.id) };
+          })
+        );
+        tierReplacements.push(...addedResults);
       }
     }
 
+    // --- 2. ОБРАБОТКА НОВЫХ КНИГ ---
     if (payload.newBooks?.length) {
       const newBooksData = payload.newBooks;
-      // Batch: находим или создаём всех авторов за один проход
       const authorNames = newBooksData.map((b) => b.author).filter(Boolean) as string[];
       const authorMap = authorNames.length > 0
         ? await authorService.findOrCreateMany(authorNames)
         : new Map<string, AuthorResult>();
+
       const booksWithAuthors = newBooksData.map((bookData) => ({
         ...bookData,
         authorId: bookData.author ? (authorMap.get(bookData.author)?.id ?? null) : null,
       }));
-      for (const bookData of booksWithAuthors) {
-        const created = await tx.book.create({
-          data: {
-            title: bookData.title,
-            author: bookData.author ?? null,
-            authorId: bookData.authorId,
-            coverImageUrl: bookData.coverImageUrl,
-            description: bookData.description ? sanitize(bookData.description) : null,
-            thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
-            genre: bookData.genre ? sanitize(bookData.genre) : null,
-            tags: bookData.tags ?? [],
-          },
-        });
-        bookReplacements.push({
-          tempId: bookData.tempId,
-          realId: String(created.id),
-        });
-      }
+
+      // Оптимизация: Параллельный поиск/создание книг
+      const bookResults = await Promise.all(
+        booksWithAuthors.map(async (bookData) => {
+          const existing = await tx.book.findFirst({
+            where: {
+              title: bookData.title,
+              author: bookData.author ?? null,
+            },
+            select: { id: true },
+          });
+
+          if (existing) {
+            return { tempId: bookData.tempId, realId: String(existing.id) };
+          }
+
+          const created = await tx.book.create({
+            data: {
+              title: bookData.title,
+              author: bookData.author ?? null,
+              authorId: bookData.authorId,
+              coverImageUrl: bookData.coverImageUrl,
+              description: bookData.description ? sanitize(bookData.description) : null,
+              thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
+              genre: bookData.genre ? sanitize(bookData.genre) : null,
+              tags: bookData.tags ?? [],
+            },
+          });
+          return { tempId: bookData.tempId, realId: String(created.id) };
+        })
+      );
+      bookReplacements.push(...bookResults);
     }
 
+    // --- 3. ОБРАБОТКА РАЗМЕЩЕНИЙ (PLACEMENTS) ---
     if (payload.placements?.length) {
       const bookReplacementMap = new Map(
         bookReplacements.map((r) => [r.tempId, r.realId]),
@@ -156,54 +176,33 @@ export async function saveAll(
       const existingBookIds = Array.from(
         new Set(
           payload.placements
-            .filter(
-              (p) => typeof p.bookId !== "string" || !p.bookId.includes("-"),
-            )
-            .map((p) =>
-              typeof p.bookId === "string" ? parseInt(p.bookId, 10) : p.bookId,
-            ),
+            .filter((p) => typeof p.bookId !== "string" || !p.bookId.includes("-"))
+            .map((p) => (typeof p.bookId === "string" ? parseInt(p.bookId, 10) : p.bookId)),
         ),
       );
 
+      // Исправление: Проверяем физическое существование книг в глобальной базе
       if (existingBookIds.length > 0) {
-        const userTierLists = await tx.tierList.findMany({
-          where: { userId },
-          select: { id: true },
-        });
-        const userTierListIds = userTierLists.map((tl) => tl.id);
-
-        const count = await tx.bookPlacement.count({
-          where: {
-            bookId: { in: existingBookIds },
-            tierListId: { in: userTierListIds },
-          },
+        const existingBooksCount = await tx.book.count({
+          where: { id: { in: existingBookIds } },
         });
 
-        if (count !== existingBookIds.length) {
-          throw new ValidationError("One or more books do not belong to this user");
+        if (existingBooksCount !== existingBookIds.length) {
+          throw new ValidationError("One or more books do not exist in the database");
         }
       }
 
       const existingTierIds = Array.from(
         new Set(
           payload.placements
-            .filter(
-              (p) =>
-                p.tierId !== null &&
-                (typeof p.tierId !== "string" || !p.tierId.includes("-")),
-            )
-            .map((p) =>
-              typeof p.tierId === "string" ? parseInt(p.tierId, 10) : p.tierId!,
-            ),
+            .filter((p) => p.tierId !== null && (typeof p.tierId !== "string" || !p.tierId.includes("-")))
+            .map((p) => (typeof p.tierId === "string" ? parseInt(p.tierId, 10) : p.tierId!)),
         ),
       );
 
       if (existingTierIds.length > 0) {
         const tierCount = await tx.tier.count({
-          where: {
-            id: { in: existingTierIds },
-            tierListId: realTierListId,
-          },
+          where: { id: { in: existingTierIds }, tierListId: realTierListId },
         });
 
         if (tierCount !== existingTierIds.length) {
@@ -219,26 +218,20 @@ export async function saveAll(
         let finalBookId: number;
         if (typeof p.bookId === "string" && p.bookId.includes("-")) {
           const realId = bookReplacementMap.get(p.bookId);
-          if (!realId)
-            throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
+          if (!realId) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
           finalBookId = parseInt(realId, 10);
         } else {
-          finalBookId =
-            typeof p.bookId === "string" ? parseInt(p.bookId, 10) : p.bookId;
+          finalBookId = typeof p.bookId === "string" ? parseInt(p.bookId, 10) : p.bookId;
         }
 
         let finalTierId: number | null = null;
         if (p.tierId !== null) {
           if (typeof p.tierId === "string" && p.tierId.includes("-")) {
             const realId = tierReplacementMap.get(p.tierId);
-            if (!realId)
-              throw new Error(
-                `Real ID not found for temp tier ID: ${p.tierId}`,
-              );
+            if (!realId) throw new Error(`Real ID not found for temp tier ID: ${p.tierId}`);
             finalTierId = parseInt(realId, 10);
           } else {
-            finalTierId =
-              typeof p.tierId === "string" ? parseInt(p.tierId, 10) : p.tierId;
+            finalTierId = typeof p.tierId === "string" ? parseInt(p.tierId, 10) : p.tierId;
           }
         }
 
@@ -250,23 +243,30 @@ export async function saveAll(
         };
       });
 
-      await tx.bookPlacement.createMany({
-        data: placementData,
-      });
+      await tx.bookPlacement.createMany({ data: placementData });
     }
 
+    // --- 4. УДАЛЕНИЕ КНИГ И СБОРКА МУСОРА ---
     if (payload.deletedBookIds?.length) {
+      // Удаляем связи из текущего тир-листа
       await tx.bookPlacement.deleteMany({
         where: { bookId: { in: payload.deletedBookIds }, tierListId: realTierListId },
       });
 
-      const remainingPlacements = await tx.bookPlacement.count({
+      // Исправление: Точечно вычисляем книги, у которых глобально осталось 0 размещений
+      const remainingPlacements = await tx.bookPlacement.groupBy({
+        by: ['bookId'],
         where: { bookId: { in: payload.deletedBookIds } },
+        _count: true,
       });
 
-      if (remainingPlacements === 0) {
+      const booksStillInUse = remainingPlacements.map(p => p.bookId);
+      const orphanedBookIds = payload.deletedBookIds.filter(id => !booksStillInUse.includes(id));
+
+      // Удаляем только те книги, которые нигде больше не используются
+      if (orphanedBookIds.length > 0) {
         await tx.book.deleteMany({
-          where: { id: { in: payload.deletedBookIds } },
+          where: { id: { in: orphanedBookIds } },
         });
       }
     }
@@ -276,9 +276,6 @@ export async function saveAll(
       data: { updatedAt: new Date() },
     });
 
-    return {
-      bookReplacements,
-      tierReplacements,
-    };
+    return { bookReplacements, tierReplacements };
   });
 }

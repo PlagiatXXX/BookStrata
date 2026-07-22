@@ -20,7 +20,6 @@ const CLIENT_URL = config.CLIENT_URL
 export async function aiLibrarianRoutes(fastify: FastifyInstance) {
   fastify.get(
     '/librarian/status',
-    { preHandler: [authMiddleware] },
     async (_request, reply) => {
       const status = await checkAiStatus()
       return reply.code(200).send({ data: status })

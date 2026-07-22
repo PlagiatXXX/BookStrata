@@ -40,6 +40,8 @@ vi.mock("../../lib/prisma.js", () => ({
       findUniqueOrThrow: vi.fn(),
     },
     book: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      count: vi.fn().mockResolvedValue(1),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -71,6 +73,8 @@ describe("tierList.service", () => {
     (prisma.author.create as any).mockImplementation((data: any) =>
       Promise.resolve({ id: 999, ...data, slug: 'test-author' }),
     );
+    // book.count по умолчанию — книги существуют
+    (prisma.book.count as any).mockResolvedValue(1);
   });
 
   afterEach(() => {
@@ -1181,18 +1185,13 @@ describe("tierList.service", () => {
       ).rejects.toThrow("Real ID not found for temp book ID: missing-temp-id");
     });
 
-    it("должен проверять принадлежность книги по всем тир-листам пользователя", async () => {
+    it("должен размещать книгу без проверки владения (книги глобальные)", async () => {
       (prisma.$transaction as any).mockImplementation(async (fn: any) => {
         return fn(prisma);
       });
 
       (prisma.tierList.findUnique as any).mockResolvedValue({ id: "1" });
-      (prisma.tierList.findMany as any).mockResolvedValue([
-        { id: "1" },
-        { id: "2" },
-      ]);
-      (prisma.bookPlacement.count as any).mockResolvedValue(1);
-      (prisma.bookPlacement.deleteMany as any).mockResolvedValue({ count: 1 });
+      (prisma.bookPlacement.deleteMany as any).mockResolvedValue({ count: 0 });
       (prisma.bookPlacement.createMany as any).mockResolvedValue({ count: 1 });
       (prisma.tierList.update as any).mockResolvedValue({});
 
@@ -1202,15 +1201,12 @@ describe("tierList.service", () => {
 
       await service.saveAll(mockTierListId, mockUserId, payload);
 
-      expect(prisma.tierList.findMany).toHaveBeenCalledWith({
+      // Проверка владения удалена — книга сразу идёт в createMany
+      expect(prisma.tierList.findMany).not.toHaveBeenCalledWith({
         where: { userId: mockUserId },
-        select: { id: true },
       });
-      expect(prisma.bookPlacement.count).toHaveBeenCalledWith({
-        where: {
-          bookId: { in: [10] },
-          tierListId: { in: ["1", "2"] },
-        },
+      expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
+        data: [{ tierListId: "1", bookId: 10, tierId: null, rank: 0 }],
       });
     });
   });

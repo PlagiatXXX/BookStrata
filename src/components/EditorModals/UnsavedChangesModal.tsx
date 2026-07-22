@@ -81,7 +81,6 @@ export function UnsavedChangesModal({
             <button
               onClick={onClose}
               disabled={isUpdatingBook || isSaving}
-              autoFocus
               className="nb-heavy-border flex-1 cursor-pointer bg-transparent px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[#b4b4b4] transition-all hover:-translate-y-0.5 hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Остаться

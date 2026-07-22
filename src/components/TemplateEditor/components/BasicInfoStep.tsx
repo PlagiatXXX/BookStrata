@@ -34,7 +34,6 @@ export function BasicInfoStep({
           maxLength={80}
           onChange={(event) => onTitleChange(event.target.value)}
           placeholder="Например, Лучшие фэнтези книги"
-          autoFocus
         />
         {titleError && (
           <p className="text-xs text-red-500 mt-1">{titleError}</p>

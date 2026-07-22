@@ -13,6 +13,8 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: vi.fn().mockResolvedValue([]),
     },
     book: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      count: vi.fn().mockResolvedValue(1),
       create: vi.fn(),
     },
     bookPlacement: {
@@ -23,7 +25,7 @@ vi.mock("../../lib/prisma.js", () => ({
     tierList: {
       update: vi.fn(),
       findMany: vi.fn().mockResolvedValue([{ id: 1 }]),
-      findUnique: vi.fn().mockResolvedValue({ id: 1 }),
+      findUnique: vi.fn().mockResolvedValue({ id: "1" }),
     },
   },
 }));
@@ -31,11 +33,12 @@ vi.mock("../../lib/prisma.js", () => ({
 describe("Tier List BOLA Security Tests - New", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (prisma.$transaction as any).mockImplementation((cb: any) => cb(prisma));
   });
 
   describe("saveTiers BOLA", () => {
     it("should ensure tier updates include tierListId in the where clause", async () => {
-      const myTierListId = 1;
+      const myTierListId = "1";
       const tierId = 999;
 
       const payload = [
@@ -53,7 +56,7 @@ describe("Tier List BOLA Security Tests - New", () => {
 
   describe("saveAll BOLA", () => {
     it("should ensure tier updates in saveAll include tierListId in the where clause", async () => {
-      const myTierListId = 1;
+      const myTierListId = "1";
       const tierId = 999;
 
       const payload = {
@@ -69,32 +72,28 @@ describe("Tier List BOLA Security Tests - New", () => {
       }));
     });
 
-    it("should THROW an error if bookId in placements does not belong to the tier list", async () => {
-      const myTierListId = 1;
-      const someoneElsesBookId = 888;
-
-      (prisma.bookPlacement.count as any).mockResolvedValue(0); // None of the books found in this list
+    it("should allow placing a bookId that exists in DB even if user hasn't used it before", async () => {
+      const myTierListId = "1";
+      const anyBookId = 888;
 
       const payload = {
         placements: [
-          { bookId: someoneElsesBookId, tierId: null, rank: 0 }
+          { bookId: anyBookId, tierId: null, rank: 0 }
         ]
       };
 
-      await expect(service.saveAll(myTierListId, 1, payload)).rejects.toThrow("One or more books do not belong to this user");
-
-      expect(prisma.bookPlacement.createMany).not.toHaveBeenCalled();
+      // Книги глобальные — проверка владения удалена
+      await expect(service.saveAll(myTierListId, 1, payload)).resolves.toBeDefined();
+      expect(prisma.bookPlacement.createMany).toHaveBeenCalled();
     });
 
-    it("should proceed if bookId belongs to the tier list", async () => {
-      const myTierListId = 1;
-      const myBookId = 777;
-
-      (prisma.bookPlacement.count as any).mockResolvedValue(1); // One book found
+    it("should proceed with any existing bookId (global books)", async () => {
+      const myTierListId = "1";
+      const anyBookId = 777;
 
       const payload = {
         placements: [
-          { bookId: myBookId, tierId: null, rank: 0 }
+          { bookId: anyBookId, tierId: null, rank: 0 }
         ]
       };
 

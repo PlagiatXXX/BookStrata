@@ -31,7 +31,7 @@ describe("CreateTierListModal", () => {
     expect(screen.getByText("Введите название для вашего нового рейтинга")).toBeInTheDocument();
   });
 
-  it("должен рендерить input с autoFocus и правильными атрибутами", () => {
+  it("должен рендерить input с правильными атрибутами", () => {
     render(<CreateTierListModal {...defaultProps} />);
 
     const input = screen.getByRole("textbox", {

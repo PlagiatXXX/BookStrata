@@ -884,7 +884,6 @@ export default function AdminUsersPage() {
                 onChange={(e) => setAdminPassword(e.target.value)}
                 placeholder="Введите секретный код"
                 className="w-full bg-white/10 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50"
-                autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && adminPassword) {
                     handleRoleChange()

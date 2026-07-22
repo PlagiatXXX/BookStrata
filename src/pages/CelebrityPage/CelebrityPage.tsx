@@ -34,11 +34,12 @@ export default function CelebrityPage() {
   }, []);
 
   // Статистика
+  const books = celebrity?.books;
   const stats = useMemo(() => {
-    if (!celebrity?.books) return { totalBooks: 0 };
-    const bookList = Object.values(celebrity.books) as Book[];
+    if (!books) return { totalBooks: 0 };
+    const bookList = Object.values(books) as Book[];
     return { totalBooks: bookList.length };
-  }, [celebrity?.books]);
+  }, [books]);
 
   const categoryLabel = celebrity ? (CELEBRITY_CATEGORIES[celebrity.category] || celebrity.category) : "";
 
