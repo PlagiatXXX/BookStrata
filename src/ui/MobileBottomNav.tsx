@@ -36,6 +36,7 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
           return (
             <button
               key={item.label}
+              data-analytics={`nav.mobile.${item.label.toLowerCase()}`}
               onClick={() => navigate(item.path)}
               className={`flex flex-1 flex-col items-center justify-center gap-0.5 transition-[transform,color] duration-100 ease-out cursor-pointer active:scale-[0.93] ${
                 isActive

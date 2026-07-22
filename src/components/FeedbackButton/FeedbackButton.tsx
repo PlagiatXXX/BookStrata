@@ -61,6 +61,7 @@ function FeedbackForm({ onClose }: { onClose: () => void }) {
           {sent ? "Отправлено!" : "Обратная связь"}
         </h2>
         <button
+          data-analytics="cta.feedback.close"
           onClick={onClose}
           className="text-gray-400 hover:text-white transition-colors cursor-pointer"
           aria-label="Закрыть"
@@ -150,6 +151,7 @@ function FeedbackForm({ onClose }: { onClose: () => void }) {
           )}
 
           <button
+            data-analytics="cta.feedback.submit"
             onClick={handleSubmit}
             disabled={sending || !message.trim()}
             className="w-full py-3 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-xl font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:from-violet-500 hover:to-fuchsia-500 transition-all cursor-pointer"
@@ -223,6 +225,7 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
                   О проекте
                 </span>
                 <button
+                  data-analytics="cta.feedback.about"
                   onClick={handleAbout}
                   className="w-14 h-14 bg-linear-to-r from-sky-500 to-indigo-500 rounded-full shadow-2xl shadow-sky-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer shrink-0"
                   aria-label="О проекте"
@@ -245,6 +248,7 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
                   Обратная связь
                 </span>
                 <button
+                  data-analytics="cta.feedback.open"
                   onClick={handleFeedback}
                   className="w-14 h-14 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-2xl shadow-violet-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer shrink-0"
                   aria-label="Обратная связь"
@@ -259,6 +263,7 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
 
         {/* Кнопка-триггер */}
         <button
+          data-analytics="cta.feedback.toggle_menu"
           onClick={toggleMenu}
           className="w-14 h-14 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-2xl shadow-violet-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer relative"
           aria-label={isMenuOpen ? "Закрыть меню" : "Меню"}

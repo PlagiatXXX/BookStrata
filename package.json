@@ -43,6 +43,7 @@
     "metal-fx": "^1.0.4",
     "motion": "^12.40.0",
     "nsfwjs": "^4.3.0",
+    "posthog-js": "^1.407.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-dropzone": "^14.3.8",

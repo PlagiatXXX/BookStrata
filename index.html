@@ -18,10 +18,11 @@
     <meta property="og:site_name" content="BookStrata" />
     <meta property="og:locale" content="ru_RU" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="telegram:channel" content="@bookstrata" />
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://smartcaptcha.yandexcloud.net https://mc.yandex.ru https://yastatic.net;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://smartcaptcha.yandexcloud.net;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://smartcaptcha.yandexcloud.net https://mc.yandex.ru https://yastatic.net https://cdn.jsdelivr.net;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://smartcaptcha.yandexcloud.net https://cdn.jsdelivr.net;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: https: blob:;
       frame-src https://smartcaptcha.yandexcloud.net https://mc.yandex.ru;
@@ -32,6 +33,182 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://re406cj9uj.cdn.twcstorage.ru" />
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous" />
+
+    <!-- Cookie Consent by orestbida -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3.1.0/dist/cookieconsent.css" crossorigin="anonymous" />
+    <style>
+      #cc-main {
+        --cc-bg: #0f172a;
+        --cc-primary-color: #f1f5f9;
+        --cc-secondary-color: #94a3b8;
+
+        --cc-btn-primary-bg: #d94f2b;
+        --cc-btn-primary-color: #fff;
+        --cc-btn-primary-hover-bg: #c04020;
+        --cc-btn-primary-border-color: transparent;
+
+        --cc-btn-secondary-bg: #1e293b;
+        --cc-btn-secondary-color: #cbd5e1;
+        --cc-btn-secondary-hover-bg: #334155;
+        --cc-btn-secondary-border-color: transparent;
+
+        --cc-separator-border-color: #1e293b;
+
+        --cc-toggle-on-bg: #d94f2b;
+        --cc-toggle-off-bg: #475569;
+        --cc-toggle-on-knob-bg: #fff;
+        --cc-toggle-off-knob-bg: #94a3b8;
+
+        --cc-checkbox-category-bg: #1e293b;
+        --cc-checkbox-category-border: #475569;
+        --cc-checkbox-category-checked-bg: #d94f2b;
+        --cc-checkbox-category-checked-border: #d94f2b;
+        --cc-checkbox-category-checked-color: #fff;
+
+        --cc-cookie-category-block-bg: #1e293b;
+        --cc-cookie-category-block-border: #334155;
+        --cc-cookie-category-block-hover-bg: #0f172a;
+        --cc-cookie-category-block-hover-border: #475569;
+        --cc-cookie-category-block-expanded-bg: #0f172a;
+        --cc-cookie-category-block-expanded-border: #475569;
+        --cc-cookie-category-description-text: #94a3b8;
+
+        --cc-overlay-bg: rgba(0, 0, 0, 0.65);
+
+        --cc-footer-bg: #0b0f1f;
+        --cc-footer-color: #64748b;
+        --cc-footer-border-color: #1e293b;
+        --cc-footer-hover-color: #d94f2b;
+
+        --cc-consent-modal-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+        font-family: "Manrope", system-ui, -apple-system, sans-serif;
+      }
+
+      /* ── Consent modal ── */
+      #cc-main .cm__dialog {
+        max-width: 440px;
+        border: 1px solid rgba(217, 79, 43, 0.15);
+        border-radius: 16px;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(217, 79, 43, 0.08);
+        animation: cm-scale-in 0.25s ease-out;
+      }
+
+      @keyframes cm-scale-in {
+        from {
+          opacity: 0;
+          transform: scale(0.92) translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      #cc-main .cm__title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: #f1f5f9;
+      }
+
+      #cc-main .cm__desc {
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: #94a3b8;
+      }
+
+      #cc-main .cm__btn {
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.625rem 1.25rem;
+        transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+      }
+
+      #cc-main .cm__btn--primary {
+        background: linear-gradient(135deg, #d94f2b 0%, #c04020 100%);
+        box-shadow: 0 4px 14px rgba(217, 79, 43, 0.35);
+      }
+      #cc-main .cm__btn--primary:hover {
+        background: linear-gradient(135deg, #e05a35 0%, #c94524 100%);
+        box-shadow: 0 6px 20px rgba(217, 79, 43, 0.45);
+      }
+
+      #cc-main .cm__btn--secondary {
+        background: #1e293b;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+      }
+      #cc-main .cm__btn--secondary:hover {
+        background: #293548;
+        border-color: rgba(148, 163, 184, 0.2);
+      }
+
+      #cc-main .cm__footer {
+        padding: 1rem 1.5rem 1.5rem;
+      }
+
+      /* ── Preferences modal ── */
+      #cc-main .pm__dialog {
+        border-radius: 16px;
+        border: 1px solid rgba(217, 79, 43, 0.10);
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      }
+
+      #cc-main .pm__header {
+        padding: 1.5rem 1.5rem 0.75rem;
+      }
+      #cc-main .pm__title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      #cc-main .pm__desc {
+        font-size: 0.8125rem;
+        color: #64748b;
+      }
+
+      #cc-main .pm__section {
+        border-radius: 10px;
+        margin: 0 1.25rem 0.5rem;
+      }
+      #cc-main .pm__section-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+      #cc-main .pm__section-desc {
+        font-size: 0.8125rem;
+      }
+
+      #cc-main .pm__btn {
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.8125rem;
+        transition: background 0.2s ease;
+      }
+      #cc-main .pm__btn--primary {
+        background: linear-gradient(135deg, #d94f2b 0%, #c04020 100%);
+        box-shadow: 0 4px 14px rgba(217, 79, 43, 0.3);
+      }
+
+      #cc-main .pm__section-arrow svg {
+        stroke: #94a3b8;
+      }
+
+      #cc-main .pm__footer {
+        padding: 0.75rem 1.5rem 1.5rem;
+      }
+
+      /* ── Overlay ── */
+      #cc-main .cc--anim .cm__overlay,
+      #cc-main .cc--anim .pm__overlay {
+        animation: cm-fade-in 0.2s ease-out;
+      }
+      @keyframes cm-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    </style>
 
     <!-- Inline лоадер — виден сразу, пока React не загрузился и не заменил содержимое #root -->
     <style>

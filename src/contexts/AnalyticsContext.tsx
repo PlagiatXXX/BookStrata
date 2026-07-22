@@ -10,18 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-const COOKIE_NAME = "cookie_consent";
-
-function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-function setCookie(name: string, value: string, days: number) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
-}
+import { initPosthog } from "@/lib/posthog";
 
 declare global {
   interface Window {
@@ -55,6 +44,13 @@ function initMetrika() {
   });
 }
 
+/** Загружает все аналитические сервисы, требующие согласия */
+function loadAnalytics() {
+  initMetrika();
+  // PostHog — динамический import, не блокируем загрузку метрики
+  initPosthog().catch(() => {});
+}
+
 interface AnalyticsContextValue {
   accept: () => void;
   isConsented: boolean;
@@ -63,21 +59,157 @@ interface AnalyticsContextValue {
 const AnalyticsContext = createContext<AnalyticsContextValue | null>(null);
 
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
-  const [isConsented, setIsConsented] = useState(
-    () => getCookie(COOKIE_NAME) === "1",
-  );
+  const [isConsented, setIsConsented] = useState(false);
   const metrikaLoadedRef = useRef(false);
 
-  // Инициализируем метрику сразу при загрузке (с defer), без ожидания согласия
   useEffect(() => {
-    if (metrikaLoadedRef.current) return;
-    metrikaLoadedRef.current = true;
-    initMetrika();
+    let cancelled = false;
+
+    const script = document.createElement("script");
+    script.src =
+      "https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3.1.0/dist/cookieconsent.umd.js";
+    script.async = true;
+
+    script.onload = () => {
+      if (cancelled) return;
+
+      const CookieConsent = (window as unknown as { CookieConsent?: Record<string, unknown> }).CookieConsent as {
+        getCookie: () => { categories?: string[] } | null;
+        run: (config: Record<string, unknown>) => void;
+        acceptCategory: (categories: string[]) => void;
+        show: () => void;
+      } | undefined;
+      if (!CookieConsent) return;
+
+      // Проверяем, нет ли уже сохранённого согласия
+      try {
+        const existingConsent = CookieConsent.getCookie();
+        if (existingConsent?.categories?.includes("analytics")) {
+          setIsConsented(true);
+          if (!metrikaLoadedRef.current) {
+            metrikaLoadedRef.current = true;
+            loadAnalytics();
+          }
+        }
+      } catch {
+        // ignore — первый запуск, куки нет
+      }
+
+      CookieConsent.run({
+        categories: {
+          necessary: {
+            enabled: true,
+            readOnly: true,
+          },
+          analytics: {
+            enabled: false,
+            readOnly: false,
+          },
+        },
+        language: {
+          default: "ru",
+          translations: {
+            ru: {
+              consentModal: {
+                title: "Мы используем cookie",
+                description:
+                  "Собираем обезличенную аналитику, чтобы улучшать вашу работу с сайтом. Вы можете отказаться в любой момент.",
+                acceptAllBtn: "Принять все",
+                acceptNecessaryBtn: "Только необходимое",
+                showPreferencesBtn: "Настроить",
+                closeIconLabel: "Закрыть",
+              },
+              preferencesModal: {
+                title: "Настройка cookie",
+                acceptAllBtn: "Принять все",
+                acceptNecessaryBtn: "Только необходимое",
+                savePreferencesBtn: "Сохранить настройки",
+                closeIconLabel: "Закрыть",
+                sections: [
+                  {
+                    title: "Файлы cookie",
+                    description:
+                      "Здесь можно настроить, какие cookie вы разрешаете.",
+                  },
+                  {
+                    title: "Строго необходимые",
+                    description:
+                      "Обеспечивают базовую работу сайта (авторизация, безопасность). Отключить нельзя.",
+                    linkedCategory: "necessary",
+                  },
+                  {
+                    title: "Аналитика",
+                    description:
+                      "Помогают понять, как вы используете сайт, чтобы улучшать его.",
+                    linkedCategory: "analytics",
+                  },
+                ],
+              },
+            },
+          },
+        },
+        guiOptions: {
+          consentModal: {
+            layout: "box",
+            position: "bottom",
+            flipButtons: false,
+            equalWeightButtons: true,
+          },
+          preferencesModal: {
+            layout: "box",
+            position: "right",
+            flipButtons: false,
+            equalWeightButtons: true,
+          },
+        },
+        cookie: {
+          name: "cc_cookie",
+          expiresAfterDays: 365,
+        },
+        onConsent: ({ cookie }: { cookie?: { categories?: string[] } }) => {
+          if (cancelled) return;
+          if (cookie?.categories?.includes("analytics")) {
+            setIsConsented(true);
+            if (!metrikaLoadedRef.current) {
+              metrikaLoadedRef.current = true;
+              loadAnalytics();
+            }
+          } else {
+            setIsConsented(false);
+          }
+        },
+        onChange: ({ cookie }: { cookie?: { categories?: string[] } }) => {
+          if (cancelled) return;
+          if (cookie?.categories?.includes("analytics")) {
+            setIsConsented(true);
+            if (!metrikaLoadedRef.current) {
+              metrikaLoadedRef.current = true;
+              loadAnalytics();
+            }
+          } else {
+            setIsConsented(false);
+          }
+        },
+        autoShow: true,
+        hideFromBots: true,
+      } as Record<string, unknown>);
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const accept = useCallback(() => {
-    setCookie(COOKIE_NAME, "1", 365);
-    setIsConsented(true);
+    const cc = (window as unknown as { CookieConsent?: Record<string, unknown> }).CookieConsent as {
+      acceptCategory: (categories: string[]) => void;
+    } | undefined;
+    if (cc) {
+      cc.acceptCategory(["analytics"]);
+      setIsConsented(true);
+    }
   }, []);
 
   const value = useMemo(() => ({ accept, isConsented }), [accept, isConsented]);

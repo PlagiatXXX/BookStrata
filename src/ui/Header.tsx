@@ -132,9 +132,12 @@ export const Header = ({
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-0">
-            {navItems.map((item) => (
+            {navItems.map((item) => {
+              const analyticsName = `nav.main.${item.label.toLowerCase().replace(/\s+/g, "_")}`;
+              return (
               <button
                 key={item.label}
+                data-analytics={analyticsName}
                 onClick={item.onClick}
                 aria-current={activeItem === item.label ? "page" : undefined}
                 className={`group relative px-3 py-2 rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
@@ -157,7 +160,8 @@ export const Header = ({
                 {/* Hover indicator */}
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-cyan-400 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left rounded-full"></div>
               </button>
-            ))}
+            );
+            })}
           </nav>
 
           {/* Right Section - Search & Settings */}
@@ -176,6 +180,7 @@ export const Header = ({
                 {/* Logout Button (Desktop) */}
                 {!hideLogout && (
                   <button
+                    data-analytics="auth.logout"
                     onClick={handleLogout}
                     className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                     title="Выйти"
@@ -189,6 +194,7 @@ export const Header = ({
                 {/* Mobile logout */}
                 {!hideLogout && (
                   <button
+                    data-analytics="auth.logout_mobile"
                     onClick={handleLogout}
                     className="md:hidden p-3.5 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                     aria-label="Выйти"
@@ -199,6 +205,7 @@ export const Header = ({
 
                 {/* User Avatar */}
                 <button
+                  data-analytics="nav.main.profile"
                   onClick={() => navigate("/profile")}
                   className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                   title="Профиль"
@@ -214,6 +221,7 @@ export const Header = ({
               </>
             ) : (
               <button
+                data-analytics="auth.login_header"
                 onClick={() => navigate("/auth?mode=login")}
                 className="flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-400 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 title="Войти"

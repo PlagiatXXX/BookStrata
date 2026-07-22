@@ -187,6 +187,7 @@ export function AuthForm() {
                 return (
                   <button
                     key={m}
+                    data-analytics={`auth.tab_${m}`}
                     onClick={() => { setMode(m); dispatch({ type: "SET_ERROR", error: null }) }}
                     className={`relative w-32 py-3 text-center transition-colors duration-200 cursor-pointer ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
                   >
@@ -253,7 +254,7 @@ export function AuthForm() {
               </div>
               {mode === "login" && (
                 <div className="flex justify-end -mt-4">
-                  <Link to="/forgot-password" className="text-xs text-slate-500 hover:text-orange-500 transition-colors">
+                  <Link data-analytics="auth.forgot_password" to="/forgot-password" className="text-xs text-slate-500 hover:text-orange-500 transition-colors">
                     Забыли пароль?
                   </Link>
                 </div>
@@ -287,6 +288,7 @@ export function AuthForm() {
 
               <Button
                 type="submit"
+                data-analytics={`auth.submit_${mode}`}
                 isLoading={state.loading}
                 className="w-full -mt-5 rounded-full bg-orange-500/80 hover:bg-orange-500 tracking-wider focus-visible:ring-2 focus-visible:ring-orange-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent transition-colors duration-200 text-sm py-3 text-white"
               >

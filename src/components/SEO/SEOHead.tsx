@@ -102,6 +102,8 @@ export function SEOHead({
     setMeta('meta[property="og:title"]', "content", pageTitle);
     setMeta('meta[property="og:description"]', "content", description);
     setMeta('meta[property="og:image"]', "content", imageUrl);
+    setMeta('meta[property="og:image:width"]', "content", "1200");
+    setMeta('meta[property="og:image:height"]', "content", "630");
     setMeta('meta[property="og:url"]', "content", pageUrl);
     setMeta('meta[property="og:type"]', "content", type);
     setMeta('meta[name="twitter:title"]', "content", pageTitle);
@@ -170,6 +172,8 @@ export function SEOHead({
       <meta property="og:title" content={pageTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={imageUrl} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:url" content={pageUrl} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content="ru_RU" />

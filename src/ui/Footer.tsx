@@ -217,13 +217,15 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
             <div className="flex flex-col sm:flex-row sm:items-start gap-6">
               <nav aria-label="Основная навигация футера" className="shrink-0">
                 <ul className="flex flex-col gap-3">
-                  {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
+                   {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
                     const isScroll = "sectionId" in link && link.sectionId
                     const key = isScroll ? link.sectionId! : ("href" in link ? link.href! : "")
+                    const analyticsName = `nav.footer.${link.label.toLowerCase().replace(/[\s]+/g, "_").replace(/[^a-zа-я0-9_]/g, "")}`
                     return (
                       <li key={key}>
                         {isScroll ? (
                           <button
+                            data-analytics={analyticsName}
                             onClick={() => scrollToSection(link.sectionId!)}
                             className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1 cursor-pointer"
                           >
@@ -234,6 +236,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                           </button>
                         ) : (
                           <Link
+                            data-analytics={analyticsName}
                             to={"href" in link ? link.href! : ""}
                             className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
                           >
@@ -273,6 +276,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
               <button
                 type="button"
                 id="donate-button"
+                data-analytics="cta.footer.donate"
                 onClick={toggleDonate}
                 className="group relative z-20 inline-flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-2.5 sm:px-3 py-2 text-xs md:text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden max-w-full"
                 aria-expanded={isDonateOpen}
@@ -314,6 +318,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                       {cardNumber}
                     </span>
                     <button
+                      data-analytics="donate.footer.copy_card"
                       onClick={handleCopyCard}
                       className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 px-2 py-1.5 sm:py-1 text-[10px] font-medium text-amber-200 transition-colors hover:bg-amber-500/20 shrink-0"
                       type="button"

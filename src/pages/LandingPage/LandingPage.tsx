@@ -75,23 +75,24 @@ function LandingNav() {
         <Logo onClick={() => navigate("/")} />
 
         <div className={`landing-nav__links ${mobileOpen ? "landing-nav__links--open" : ""}`}>
-          <button onClick={() => scrollTo("scenarios")} className="landing-nav__link" type="button">Возможности</button>
-          <Link to="/rankings" className="landing-nav__link">Рейтинг книг</Link>
-          <Link to="/what-to-read" className="landing-nav__link">Что почитать</Link>
-          <Link to="/celebrities" className="landing-nav__link">Знаменитости</Link>
-          <Link to="/blog" className="landing-nav__link">Блог</Link>
-          <button onClick={() => scrollTo("pricing")} className="landing-nav__link" type="button">Тарифы</button>
-          <a href="https://t.me/bookstrata" target="_blank" rel="noopener noreferrer" className="landing-nav__link">Telegram</a>
+          <button data-analytics="nav.landing.features" onClick={() => scrollTo("scenarios")} className="landing-nav__link" type="button">Возможности</button>
+          <Link data-analytics="nav.landing.rankings" to="/rankings" className="landing-nav__link">Рейтинг книг</Link>
+          <Link data-analytics="nav.landing.what_to_read" to="/what-to-read" className="landing-nav__link">Что почитать</Link>
+          <Link data-analytics="nav.landing.celebrities" to="/celebrities" className="landing-nav__link">Знаменитости</Link>
+          <Link data-analytics="nav.landing.blog" to="/blog" className="landing-nav__link">Блог</Link>
+          <button data-analytics="nav.landing.pricing" onClick={() => scrollTo("pricing")} className="landing-nav__link" type="button">Тарифы</button>
+          <a data-analytics="nav.landing.telegram" href="https://t.me/bookstrata" target="_blank" rel="noopener noreferrer" className="landing-nav__link">Telegram</a>
 
           <div className="landing-nav__auth">
-            <button onClick={() => navigate("/auth")} className="landing-nav__link" type="button">Войти</button>
-            <button onClick={() => navigate("/auth?mode=register")} className="landing-nav__cta landing-nav__cta--primary" type="button">
+            <button data-analytics="auth.login_landing" onClick={() => navigate("/auth")} className="landing-nav__link" type="button">Войти</button>
+            <button data-analytics="cta.landing.register_header" onClick={() => navigate("/auth?mode=register")} className="landing-nav__cta landing-nav__cta--primary" type="button">
               Регистрация
             </button>
           </div>
         </div>
 
         <button
+          data-analytics="ui.landing.menu_toggle"
           onClick={() => setMobileOpen((v) => !v)}
           className="landing-nav__burger"
           type="button"
@@ -378,6 +379,7 @@ export default function LandingPage() {
 
           <div className="landing-hero__actions">
             <button
+              data-analytics="cta.landing.start_free_hero"
               onClick={() => navigate("/auth?mode=register")}
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
@@ -386,6 +388,7 @@ export default function LandingPage() {
               <ArrowRight size={18} />
             </button>
             <button
+              data-analytics="cta.landing.how_it_looks"
               onClick={() => document.getElementById("screenshots")?.scrollIntoView({ behavior: "smooth" })}
               className="landing-hero__btn landing-hero__btn--secondary"
               type="button"
@@ -438,6 +441,7 @@ export default function LandingPage() {
 
           <RevealBox className="landing-section__action">
             <button
+              data-analytics="cta.landing.view_all_featured"
               onClick={() => navigate("/auth?mode=register")}
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
@@ -497,6 +501,7 @@ export default function LandingPage() {
           <RevealBox><p className="landing-cta__subtitle">Начните бесплатно — без ограничений и скрытых платежей.</p></RevealBox>
           <RevealBox>
             <button
+              data-analytics="cta.landing.create_account_final"
               onClick={() => navigate("/auth?mode=register")}
               className="landing-cta__btn"
               type="button"
@@ -646,6 +651,7 @@ export default function LandingPage() {
           </blockquote>
 
           <Link
+            data-analytics="cta.landing.read_history"
             to="/history"
             className="mt-6 inline-flex items-center gap-2 text-sm font-semibold transition-colors"
             style={{ color: "#fb923c" }}
@@ -722,6 +728,7 @@ export default function LandingPage() {
                 )}
 
                 <button
+                  data-analytics={plan.donate ? "cta.landing.donate" : "cta.landing.start_now"}
                   onClick={() => plan.donate ? (apiTrackEvent('donate_page_open'), setIsDonateOpen(true)) : navigate("/auth?mode=register")}
                   className={`landing-pricing__cta ${plan.donate ? "landing-pricing__cta--donate" : ""}`}
                   type="button"
@@ -756,6 +763,7 @@ export default function LandingPage() {
 
       {/* Scroll-to-top button */}
       <motion.button
+        data-analytics="ui.landing.scroll_to_top"
         animate={{ opacity: showScrollTop ? 0.35 : 0, pointerEvents: showScrollTop ? "auto" : "none" }}
         whileHover={{ opacity: 0.7 }}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

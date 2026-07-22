@@ -36,6 +36,7 @@ export function DashboardHeroSection({
 
             <div className="new-hero__actions">
               <button
+                data-analytics="cta.dashboard.create_tierlist"
                 onClick={onCreateClick}
                 className="new-hero__btn new-hero__btn--primary"
                 type="button"
@@ -45,6 +46,7 @@ export function DashboardHeroSection({
               </button>
 
               <button
+                data-analytics="cta.dashboard.view_trends"
                 onClick={onCommunityClick}
                 className="new-hero__btn new-hero__btn--secondary"
                 type="button"
