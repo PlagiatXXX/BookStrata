@@ -73,6 +73,7 @@ const ROUTES = [
   { path: "/history",    name: "История" },
   { path: "/what-to-read", name: "Что почитать" },
   { path: "/templates",  name: "Шаблоны" },
+  { path: "/celebrities", name: "Знаменитости" },
   { path: "/forum",      name: "Форум" },
   { path: "/about",      name: "О проекте" },
   { path: "/pricing",    name: "Тарифы" },
@@ -89,6 +90,30 @@ const BACKEND_URL = process.env.API_URL || "http://localhost:8080";
  * Собирает тело запроса, отправляет fetch, собирает ответ — и отдаёт целиком.
  */
 function proxyApiRequest(req, res) {
+  // --- ЗАГЛУШКИ НА УРОВНЕ ПРОКСИ-СЕРВЕРА (до реальных вызовов к бэкенду) ---
+
+  // Авторизация: при пререндере пользователь всегда гость
+  if (req.url.includes('/api/auth/')) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Unauthorized (Prerender)' }));
+    return;
+  }
+
+  // Донатеры: не нужны для индексации SEO
+  if (req.url.includes('/api/donors')) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify([]));
+    return;
+  }
+
+  // Логи фронтенда: глушим
+  if (req.url.includes('/api/log')) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{}');
+    return;
+  }
+
+  // --- ДАЛЕЕ ИДЁТ ОСТАЛЬНАЯ ЛОГИКА ПРОКСИ ---
   let done = false;
   const send = (status, headers, body) => {
     if (done) return;
