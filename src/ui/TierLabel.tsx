@@ -1,60 +1,14 @@
 import { memo, useState, useRef, useEffect } from "react";
 import { Palette } from "lucide-react";
-import { TIER_COLORS } from "@/constants/colors";
 import type { Tier } from "@/types";
 import { getTextColorForBackground } from "@/utils/colorUtils";
+import { ColorPickerPopover } from "@/ui/ColorPickerPopover";
 
 const weightClasses: Record<NonNullable<Tier["labelWeight"]>, string> = {
   thin: "font-thin",
   normal: "font-normal",
   bold: "font-bold",
   black: "font-black",
-};
-
-const COLOR_NAMES: Record<string, string> = {
-  '#FF6B6B': 'Коралловый',
-  '#FF8C69': 'Лососевый',
-  '#DC143C': 'Малиновый',
-  '#B22222': 'Кирпичный',
-  '#800000': 'Тёмно-бордовый',
-  '#FF8C00': 'Тёмно-оранжевый',
-  '#FFA500': 'Оранжевый',
-  '#FFC107': 'Янтарный',
-  '#F36223': 'Морковный',
-  '#FFD700': 'Золотистый',
-  '#FFEB3B': 'Жёлтый',
-  '#FFDB58': 'Горчичный',
-  '#32CD32': 'Лаймово-зелёный',
-  '#00FF00': 'Лаймовый',
-  '#50C878': 'Изумрудный',
-  '#228B22': 'Лесной зелёный',
-  '#2E7D32': 'Тёмно-зелёный',
-  '#30D5C8': 'Бирюзовый',
-  '#008080': 'Тёмный бирюзовый',
-  '#20B2AA': 'Морской зелёный',
-  '#00CED1': 'Тёмный циан',
-  '#00BFFF': 'Глубокий голубой',
-  '#1E90FF': 'Ярко-голубой',
-  '#6495ED': 'Васильковый',
-  '#4169E1': 'Королевский синий',
-  '#0000CD': 'Средний синий',
-  '#191970': 'Полуночный синий',
-  '#C8A2C8': 'Сиреневый',
-  '#9370DB': 'Средний пурпурный',
-  '#6A0DAD': 'Королевский пурпурный',
-  '#4B0082': 'Индиго',
-  '#FF69B4': 'Ярко-розовый',
-  '#FF1493': 'Глубокий розовый',
-  '#FF00FF': 'Маджента',
-  '#DB7093': 'Бледный фиолетово-красный',
-  '#D2B48C': 'Желто-коричневый',
-  '#A0522D': 'Сиенна',
-  '#8B4513': 'Коричневый',
-  '#C0C0C0': 'Серебристый',
-  '#F5F5F5': 'Белый',
-  '#708090': 'Серо-голубой',
-  '#2F4F4F': 'Тёмный серо-зелёный',
-  '#000000': 'Чёрный',
 };
 
 interface TierLabelProps {
@@ -266,36 +220,13 @@ export const TierLabel = memo(
           </div>
         )}
         {onChangeColor && isPaletteOpen && (
-          <div
-            role="group"
-            aria-label="Цветовая палитра"
-            className="nb-heavy-border absolute left-full top-0 z-50 ml-2 flex w-40 flex-wrap gap-1 bg-white p-2 shadow-[4px_4px_0_0_#000000]"
-          >
-            {TIER_COLORS.map((swatchColor) => {
-              const colorName = COLOR_NAMES[swatchColor as keyof typeof COLOR_NAMES] ||
-                               COLOR_NAMES[swatchColor.toUpperCase() as keyof typeof COLOR_NAMES] ||
-                               COLOR_NAMES[swatchColor.toLowerCase() as keyof typeof COLOR_NAMES] ||
-                               swatchColor;
-              return (
-                <button
-                  key={swatchColor}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChangeColor(tierId, swatchColor);
-                    setIsPaletteOpen(false);
-                  }}
-                  style={{ backgroundColor: swatchColor }}
-                  className={`size-5 cursor-pointer border border-black hover:scale-110 transition-transform focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1 outline-none ${
-                    color.toLowerCase() === swatchColor.toLowerCase()
-                      ? "ring-2 ring-cyan-200 ring-offset-2"
-                      : ""
-                  }`}
-                  aria-label={`Выбрать цвет: ${colorName}`}
-                  title={colorName}
-                />
-              );
-            })}
-          </div>
+          <ColorPickerPopover
+            currentColor={color}
+            onChangeColor={(newColor) => {
+              onChangeColor(tierId, newColor);
+            }}
+            onClose={() => setIsPaletteOpen(false)}
+          />
         )}
       </div>
     );
