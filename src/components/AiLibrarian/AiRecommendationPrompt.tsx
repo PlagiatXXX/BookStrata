@@ -30,7 +30,7 @@ export function AiRecommendationPrompt({
 
   const dismissAndSave = useCallback(() => {
     setDismissed(true)
-    try { localStorage.setItem(LS_KEY, '1') } catch {}
+    try { localStorage.setItem(LS_KEY, '1') } catch { /* localStorage may be unavailable */ }
   }, [])
 
   const dismissWithToast = useCallback(() => {
@@ -52,12 +52,12 @@ export function AiRecommendationPrompt({
 
   return (
     <div
-      className="group relative mx-auto my-6 max-w-3xl overflow-hidden rounded-xl border border-violet-500/20 bg-gradient-to-r from-violet-500/5 via-fuchsia-500/5 to-indigo-500/5 px-5 py-4 sm:px-6 sm:py-5"
+      className="group relative mx-auto my-6 max-w-3xl overflow-hidden rounded-xl border border-violet-500/20 bg-linear-to-r from-violet-500/5 via-fuchsia-500/5 to-indigo-500/5 px-5 py-4 sm:px-6 sm:py-5"
       role="status"
       aria-live="polite"
     >
       {/* Декоративная полоса слева */}
-      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-violet-500 to-fuchsia-500" />
+      <div className="absolute inset-y-0 left-0 w-1 bg-linear-to-b from-violet-500 to-fuchsia-500" />
 
       <div className="flex items-start gap-4">
         {/* Иконка */}
