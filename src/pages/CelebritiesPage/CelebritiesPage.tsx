@@ -63,6 +63,10 @@ export default function CelebritiesPage() {
         title="Что читают знаменитости? — BookStrata"
         description="Узнайте, какие книги читают известные люди: актёры, музыканты, предприниматели, спортсмены и другие знаменитости. Тир-листы любимых книг."
         url="/celebrities"
+        breadcrumbs={[
+          { name: "Главная", url: "/" },
+          { name: "Что читают знаменитости", url: "/celebrities" },
+        ]}
       />
       <DashboardLayout showSearch={false} activeItem="Знаменитости">
         <div className="px-6 pt-6 pb-4">

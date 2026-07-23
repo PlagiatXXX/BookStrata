@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Users, Swords, MessageSquare, MessageSquareText, Plus, Pin, Trash2 } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BattleList } from "./components/BattleList";
 import { DiscussionSection } from "@/components/DiscussionSection/DiscussionSection";
@@ -162,7 +163,14 @@ goToTab("forum");
         title="Форум и битвы шаблонов"
         description="Участвуйте в битвах шаблонов тир-листов, обсуждайте книжные рейтинги и находите единомышленников в сообществе BookStrata."
         url="/forum"
+        breadcrumbs={[
+          { name: "Главная", url: "/" },
+          { name: "Форум", url: "/forum" },
+        ]}
       />
+      <div className="px-6 pt-6 pb-2">
+        <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Форум" }]} />
+      </div>
       <div className="forum-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 py-14 pb-20 cursor-default text-(--ink-0)">
           {/* Forum Header / Hero */}

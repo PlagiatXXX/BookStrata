@@ -2,6 +2,7 @@ import { useEffect, useState, memo } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { CollectionGrid } from "@/components/CommunityComponents/CollectionGrid";
@@ -96,7 +97,14 @@ export default function CommunityPage() {
         title="Новости и сообщество книжных рейтингов"
         description="Подборки книг, редакционные статьи, новости книжного мира. Найдите вдохновение для следующего тир-листа в сообществе BookStrata."
         url="/community"
+        breadcrumbs={[
+          { name: "Главная", url: "/" },
+          { name: "Новости и сообщество", url: "/community" },
+        ]}
       />
+      <div className="px-6 pt-6 pb-2">
+        <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Новости и сообщество" }]} />
+      </div>
       <div className="community-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 pb-20 cursor-default text-(--ink-0)">
           <MemoizedHeroSection

@@ -11,6 +11,10 @@ export default function BlogPage() {
         title="Блог"
         description="Статьи о разработке BookStrata: архитектура, SSR, почему мы не копировали Goodreads и другие инженерные заметки."
         url="/blog"
+        breadcrumbs={[
+          { name: "Главная", url: "/" },
+          { name: "Блог", url: "/blog" },
+        ]}
       />
 
       {/* Nav */}

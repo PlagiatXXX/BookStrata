@@ -1,12 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { getAuthToken } from "@/lib/authApi";
 import { apiTrackEvent } from "@/lib/analyticsApi";
 import { capturePosthogEvent } from "@/lib/posthog";
-
-function isAuthenticated(): boolean {
-  return getAuthToken() !== null;
-}
 
 // Минимальный интервал между page_view для одного и того же пути (сек)
 const PAGE_VIEW_DEBOUNCE_MS = 10_000;
@@ -72,11 +67,9 @@ export function useAnalyticsTracker() {
     return setupAnalyticsClickListener();
   }, []);
 
-  // Трекинг просмотра страницы — только для авторизованных,
+  // Трекинг просмотра страницы — для всех пользователей,
   // не чаще раза в 10 секунд для одного и того же пути
   useEffect(() => {
-    if (!isAuthenticated()) return;
-
     const now = Date.now();
     const last = lastTrackedRef.current;
 
@@ -89,7 +82,21 @@ export function useAnalyticsTracker() {
     }
 
     lastTrackedRef.current = { path: pathname, time: now };
+
+    // 1. Отправка во внутреннюю БД и PostHog
     apiTrackEvent("page_view", { path: pathname }, window.location.href);
     capturePosthogEvent("page_view", { path: pathname });
+
+    // 2. Отправка хита в Яндекс.Метрику для отслеживания SPA-переходов
+    try {
+      if (typeof window.ym === "function") {
+        const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
+        if (counterId) {
+          window.ym(Number(counterId), "hit", window.location.href);
+        }
+      }
+    } catch {
+      // Тихий fallback
+    }
   }, [pathname]);
 }

@@ -40,7 +40,6 @@ function initMetrika() {
     accurateTrackBounce: true,
     webvisor: true,
     defer: true,
-    trackHash: true,
   });
 }
 
