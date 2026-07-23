@@ -8,8 +8,6 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { UserActivityStats } from "@/components/DashboardHeroSection/components/UserActivityStats";
 import { DashboardAchievements } from "@/components/DashboardHeroSection/components/DashboardAchievements";
 import { TrendingNow } from "@/components/DashboardHeroSection/components/TrendingNow";
-import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
-import { AiLibrarianCard } from "@/components/AiLibrarian/AiLibrarianCard";
 import { TierListGrid } from "./components/TierListGrid";
 import { BookCard } from "./components/BookCard";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
@@ -42,7 +40,6 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const [isAiLibrarianOpen, setAiLibrarianOpen] = useState(false);
   const [activeStat, setActiveStat] = useState<'tierlists' | 'published' | 'drafts' | 'books' | null>(null);
   const [viewingBook, setViewingBook] = useState<MyBook | null>(null);
   const [showBooks, setShowBooks] = useState(true);
@@ -117,14 +114,6 @@ export default function DashboardPage() {
   }, [navigate, isGuest]);
 
   const handleCommunityClick = useCallback(() => navigate("/community"), [navigate]);
-  const handleAiLibrarianOpen = useCallback(() => {
-    if (isGuest) {
-      navigate("/auth?mode=register");
-      return;
-    }
-    setAiLibrarianOpen(true);
-  }, [navigate, isGuest]);
-  const handleAiLibrarianClose = useCallback(() => setAiLibrarianOpen(false), []);
 
   const handleOpenTierList = useCallback((id: string) => {
     navigate(`/tier-lists/${id}`);
@@ -151,13 +140,6 @@ export default function DashboardPage() {
         />
 
         <div className="dashboard-home__container">
-          {/* AI Librarian Card — обновлённый дизайн */}
-          <div className="mx-auto my-8 sm:my-12 max-w-3xl px-1 sm:px-0">
-            <AiLibrarianCard
-              isGuest={isGuest}
-              onAskClick={handleAiLibrarianOpen}
-            />
-          </div>
 
           {isGuest ? (
             /* Гостевой блок: CTA */
@@ -276,14 +258,6 @@ export default function DashboardPage() {
           <TrendingNow />
         </div>
       </section>
-
-      {!isGuest && (
-        <AiLibrarianModal
-          isOpen={isAiLibrarianOpen}
-          onClose={handleAiLibrarianClose}
-          variant="sidebar"
-        />
-      )}
 
       <BookViewModal
         book={viewingBook}

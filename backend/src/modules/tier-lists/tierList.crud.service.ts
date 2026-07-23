@@ -205,6 +205,11 @@ export async function getTierListMetadata(id: string) {
 }
 
 // GET /api/tier-lists/:id/taste-match — сравнение вкуса с автором просматриваемого тир-листа
+// Нормализация ключа книги для сравнения (автор + название)
+function normalizeBookKey(title: string, author: string | null): string {
+  return `${title.toLowerCase().trim()}|${(author ?? "").toLowerCase().trim()}`;
+}
+
 export async function getTierListTasteMatch(
   tierListIdOrSlug: string,
   currentUserId?: number,
@@ -229,7 +234,12 @@ export async function getTierListTasteMatch(
     return { matchPercent: 0, commonBooks: 0, totalBooks: 0, matches: [] };
   }
 
-  const totalBooks = tierList.placements.length;
+  // Количество уникальных книг в просматриваемом тир-листе (по автору+названию)
+  const listBookKeys = new Set<string>();
+  for (const p of tierList.placements) {
+    listBookKeys.add(normalizeBookKey(p.book.title, p.book.author));
+  }
+  const totalBooks = listBookKeys.size;
 
   // Если пользователь не авторизован — возвращаем только количество книг
   if (!currentUserId) {
@@ -245,14 +255,6 @@ export async function getTierListTasteMatch(
   // Берём только bookId из просматриваемого тир-листа — вместо всех книг пользователя
   const listBookIds = [...new Set(tierList.placements.map((p: { bookId: number }) => p.bookId))];
 
-  // Лёгкий запрос: считаем все уникальные книги пользователя (нужно для Jaccard similarity)
-  const userUniqueBooks = await prisma.bookPlacement.groupBy({
-    by: ["bookId"],
-    where: { tierListId: { in: userListIds } },
-    _count: { bookId: true },
-  });
-  const userBookKeys = userUniqueBooks.length;
-
   const userPlacements = await prisma.bookPlacement.findMany({
     where: {
       tierListId: { in: userListIds },
@@ -264,14 +266,17 @@ export async function getTierListTasteMatch(
     },
   });
 
-  // Строим map книг пользователя по bookId (первое вхождение — приоритет)
+  // Строим map книг пользователя по автору+названию (первое вхождение — приоритет)
   const userBookMap = new Map<
-    number,
+    string,
     { tierId: number | null; tierTitle: string | null; tierRank: number | null }
   >();
+  const userBookKeys = new Set<string>();
   for (const p of userPlacements) {
-    if (!userBookMap.has(p.bookId)) {
-      userBookMap.set(p.bookId, {
+    const key = normalizeBookKey(p.book.title, p.book.author);
+    userBookKeys.add(key);
+    if (!userBookMap.has(key)) {
+      userBookMap.set(key, {
         tierId: p.tier?.id ?? null,
         tierTitle: p.tier?.title ?? null,
         tierRank: p.tier?.rank ?? null,
@@ -279,7 +284,7 @@ export async function getTierListTasteMatch(
     }
   }
 
-  // Собираем совпадения по bookId — без нормализации строк
+  // Собираем совпадения по автору+названию
   const matches: Array<{
     book: { title: string; author: string | null; coverImageUrl: string };
     tierInList: string | null;
@@ -291,7 +296,8 @@ export async function getTierListTasteMatch(
   }> = [];
 
   for (const p of tierList.placements) {
-    const userMatch = userBookMap.get(p.bookId);
+    const key = normalizeBookKey(p.book.title, p.book.author);
+    const userMatch = userBookMap.get(key);
     if (userMatch) {
       matches.push({
         book: {
@@ -310,7 +316,7 @@ export async function getTierListTasteMatch(
   }
 
   const commonBooks = matches.length;
-  const totalUnique = totalBooks + userBookKeys - commonBooks;
+  const totalUnique = totalBooks + userBookKeys.size - commonBooks;
 
   return {
     matchPercent: totalUnique > 0 ? Math.round((commonBooks / totalUnique) * 100) : 0,

@@ -19,6 +19,9 @@ import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
+import { AiLibrarianCard } from "@/components/AiLibrarian/AiLibrarianCard";
+import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
+import { AiRecommendationPrompt } from "@/components/AiLibrarian/AiRecommendationPrompt";
 import { useNsfwCheck } from "@/hooks/useNsfwCheck";
 import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
 import { apiCreateFlag } from "@/lib/moderationApi";
@@ -111,6 +114,11 @@ const TierListEditorContent = () => {
 
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(apiData?.coverImageUrl ?? null)
   const [theme, setTheme] = useState<string>(apiData?.theme ?? "default")
+  const [isAiLibrarianOpen, setAiLibrarianOpen] = useState(false);
+
+  const handleAiLibrarianOpen = useCallback(() => setAiLibrarianOpen(true), []);
+  const handleAiLibrarianClose = useCallback(() => setAiLibrarianOpen(false), []);
+
   const [bookNsfwState, setBookNsfwState] = useState<{
     checking: boolean;
     result: NsfwResult | null;
@@ -258,7 +266,23 @@ const TierListEditorContent = () => {
       return;
     }
 
+    // Собираем existingKeys заранее, чтобы не показывать тост на дубликаты
+    const existingKeys = new Set(
+      Object.values(listData.books).map(
+        (b) => `${b.title.toLowerCase()}|${(b.author || "").toLowerCase()}`,
+      ),
+    );
+
+    let addedCount = 0;
     for (const file of files) {
+      const title = file.name.replace(/\.[^/.]+$/, "");
+      const author = "Неизвестен";
+      const key = `${title.toLowerCase()}|${author.toLowerCase()}`;
+
+      // Пропускаем дубликаты
+      if (existingKeys.has(key)) continue;
+      existingKeys.add(key);
+
       const coverImageUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -271,26 +295,53 @@ const TierListEditorContent = () => {
           newBooks: [
             {
               id: bookId,
-              title: file.name.replace(/\.[^/.]+$/, ""),
-              author: "Неизвестен",
+              title,
+              author,
               coverImageUrl,
             },
           ],
         },
       });
       setHasUnsavedChanges(true);
+      addedCount++;
     }
 
-    const n = files.length;
+    if (addedCount === 0) {
+      if (files.length === 1) {
+        sileo.info({
+          title: "Книга уже добавлена",
+          description: "Эта книга уже есть в тир-листе",
+          duration: 2500,
+        });
+      } else {
+        const d = files.length % 10;
+        const dd = files.length % 100;
+        const w = d === 1 && dd !== 11 ? 'книга'
+          : d >= 2 && d <= 4 && (dd < 12 || dd > 14) ? 'книги'
+          : 'книг';
+        sileo.info({
+          title: "Книги уже добавлены",
+          description: `Все ${files.length} ${w} уже есть в тир-листе`,
+          duration: 2500,
+        });
+      }
+      return;
+    }
+
+    const skipped = files.length - addedCount;
+    const n = addedCount;
     const lastDigit = n % 10;
     const lastTwoDigits = n % 100;
     const prefix = lastDigit === 1 && lastTwoDigits !== 11 ? "Загружена" : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14) ? "Загружены" : "Загружено";
     const word = lastDigit === 1 && lastTwoDigits !== 11 ? "книга" : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14) ? "книги" : "книг";
+    const title = skipped > 0
+      ? `${prefix} ${n} ${word} (${skipped} ${skipped === 1 ? 'уже была' : 'уже были'})`
+      : `${prefix} ${n} ${word}`;
     sileo.success({
-      title: `${prefix} ${n} ${word}`,
+      title,
       duration: 3000,
     });
-  }, [dispatch, setHasUnsavedChanges])
+  }, [dispatch, setHasUnsavedChanges, listData.books])
 
   const handleUploadBooks = useCallback(async (files: File[]) => {
     if (files.length === 0) return
@@ -639,6 +690,15 @@ const TierListEditorContent = () => {
           isReadOnly={isReadOnly}
           authorUsername={apiData?.user?.username}
         />
+
+        {/* Приветственный промпт AI — один раз при добавлении 3+ книг */}
+        {!isReadOnly && Object.keys(listData.books).length >= 3 && (
+          <AiRecommendationPrompt
+            totalBooks={Object.keys(listData.books).length}
+            onOpenAiLibrarian={handleAiLibrarianOpen}
+          />
+        )}
+
         <EditorMainContent
           listData={listData}
           isReadOnly={isReadOnly}
@@ -672,6 +732,16 @@ const TierListEditorContent = () => {
           hasUnsavedChanges={hasUnsavedChanges}
           onSave={handleSave}
         />
+
+        {/* AI-библиотекарь: всегда виден внизу редактора */}
+        {!isReadOnly && (
+          <div className="mx-auto my-8 max-w-3xl w-full px-1">
+            <AiLibrarianCard
+              isGuest={false}
+              onAskClick={handleAiLibrarianOpen}
+            />
+          </div>
+        )}
       </EditorLayout>
 
       {/* Модальные окна */}
@@ -721,6 +791,14 @@ const TierListEditorContent = () => {
         isReadOnly={isReadOnly}
         tierListTheme={theme}
       />
+
+      {!isReadOnly && (
+        <AiLibrarianModal
+          isOpen={isAiLibrarianOpen}
+          onClose={handleAiLibrarianClose}
+          variant="sidebar"
+        />
+      )}
 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-sm w-full px-4">
         <NsfwWarning

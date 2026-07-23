@@ -76,17 +76,13 @@ function LandingNav() {
 
         <div className={`landing-nav__links ${mobileOpen ? "landing-nav__links--open" : ""}`}>
           <button data-analytics="nav.landing.features" onClick={() => scrollTo("scenarios")} className="landing-nav__link" type="button">Возможности</button>
-          <Link data-analytics="nav.landing.rankings" to="/rankings" className="landing-nav__link">Рейтинг книг</Link>
-          <Link data-analytics="nav.landing.what_to_read" to="/what-to-read" className="landing-nav__link">Что почитать</Link>
+          <button data-analytics="nav.landing.featured" onClick={() => scrollTo("featured")} className="landing-nav__link" type="button">Популярные тир-листы</button>
           <Link data-analytics="nav.landing.celebrities" to="/celebrities" className="landing-nav__link">Знаменитости</Link>
-          <Link data-analytics="nav.landing.blog" to="/blog" className="landing-nav__link">Блог</Link>
-          <button data-analytics="nav.landing.pricing" onClick={() => scrollTo("pricing")} className="landing-nav__link" type="button">Тарифы</button>
-          <a data-analytics="nav.landing.telegram" href="https://t.me/bookstrata" target="_blank" rel="noopener noreferrer" className="landing-nav__link">Telegram</a>
 
           <div className="landing-nav__auth">
             <button data-analytics="auth.login_landing" onClick={() => navigate("/auth")} className="landing-nav__link" type="button">Войти</button>
-            <button data-analytics="cta.landing.register_header" onClick={() => navigate("/auth?mode=register")} className="landing-nav__cta landing-nav__cta--primary" type="button">
-              Регистрация
+            <button data-analytics="cta.landing.create_tierlist_header" onClick={() => navigate("/auth?mode=register")} className="landing-nav__cta landing-nav__cta--primary" type="button">
+              Создать тир-лист
             </button>
           </div>
         </div>
@@ -324,8 +320,8 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <SEOHead
-        title="BookStrata — крупнейшая библиотека пользовательских рейтингов книг"
-        description="BookStrata — крупнейшая библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите личную библиотеку, находите книги по вкусу с ИИ и общайтесь с единомышленниками."
+        title="BookStrata — создавай рейтинги книг и тир-листы онлайн"
+        description="BookStrata — бесплатный сервис для рейтингов книг, визуальных тир-листов и поиска единомышленников. Создавай подборки любимых книг, делись с друзьями и открывай новое."
         image="/hero-bg.webp"
         url="/"
       />
@@ -353,23 +349,23 @@ export default function LandingPage() {
           </div>
 
           <h1 className="landing-hero__title">
-            BookStrata — крупнейшая
+            BookStrata — твои книжные топы в красивых тир-листах.
             <br />
-            библиотека пользовательских
-            <br />
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={phraseIndex}
-                className="landing-hero__gradient-text"
-                initial={{ opacity: 0, filter: 'blur(4px)' }}
-                animate={{ opacity: 1, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, filter: 'blur(4px)' }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                style={{ display: 'inline-block' }}
-              >
-                {heroPhrases[phraseIndex]}
-              </motion.span>
-            </AnimatePresence>
+            <span className="landing-hero__carousel">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={phraseIndex}
+                  className="landing-hero__gradient-text"
+                  initial={{ opacity: 0, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  style={{ display: 'inline-block' }}
+                >
+                  {heroPhrases[phraseIndex]}
+                </motion.span>
+              </AnimatePresence>
+            </span>
           </h1>
 
           <p className="landing-hero__subtitle">
@@ -668,11 +664,11 @@ export default function LandingPage() {
 
       <div className="landing-divider" />
 
-      {/* ============ PRICING ============ */}
+      {/* ============ FREE / DONATE ============ */}
       <section className="landing-section landing-section--alt" id="pricing">
         <div className="landing-section__container">
-          <RevealBox><h2 className="landing-section__title">Выберите свой план</h2></RevealBox>
-          <RevealBox><p className="landing-section__subtitle">Всё бесплатно, без ограничений</p></RevealBox>
+          <RevealBox><h2 className="landing-section__title">Всё полностью бесплатно</h2></RevealBox>
+          <RevealBox><p className="landing-section__subtitle">Никаких планов и подписок — все функции доступны сразу.</p></RevealBox>
 
           <RevealBox className="landing-pricing">
             {plans.map((plan) => (

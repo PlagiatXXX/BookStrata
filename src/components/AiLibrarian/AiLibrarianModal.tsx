@@ -11,12 +11,56 @@ import { apiTrackEvent } from '@/lib/analyticsApi'
 
 /* ─── Suggestion chips ─── */
 
-const SUGGESTIONS = [
-  { emoji: '📚', label: 'Что почитать из классики?' },
-  { emoji: '🔥', label: 'Посоветуй бестселлер' },
-  { emoji: '🎯', label: 'Подбери книгу под настроение' },
-  { emoji: '✨', label: 'Что нового я могу открыть?' },
-] as const
+interface Suggestion {
+  emoji: string
+  label: string
+}
+
+const SUGGESTIONS_BY_CONTEXT: Record<string, readonly Suggestion[]> = {
+  collection: [
+    { emoji: '📖', label: 'Какие книги в этой подборке?' },
+    { emoji: '🔍', label: 'Почему эти книги здесь?' },
+    { emoji: '🎯', label: 'Что почитать, если нравится эта подборка?' },
+    { emoji: '⭐', label: 'Какая книга самая популярная?' },
+  ] as const,
+  celebrity: [
+    { emoji: '📚', label: 'Какие книги рекомендует эта знаменитость?' },
+    { emoji: '🔥', label: 'Что почитать из этой подборки?' },
+    { emoji: '🎯', label: 'Почему эти книги в подборке?' },
+    { emoji: '📋', label: 'Какие жанры представлены?' },
+  ] as const,
+  rankings: [
+    { emoji: '📚', label: 'Что почитать из классики?' },
+    { emoji: '🔥', label: 'Посоветуй бестселлер' },
+    { emoji: '🎯', label: 'Подбери книгу под настроение' },
+    { emoji: '✨', label: 'Что нового я могу открыть?' },
+  ] as const,
+  default: [
+    { emoji: '📚', label: 'Что почитать из классики?' },
+    { emoji: '🔥', label: 'Посоветуй бестселлер' },
+    { emoji: '🎯', label: 'Подбери книгу под настроение' },
+    { emoji: '✨', label: 'Что нового я могу открыть?' },
+  ] as const,
+}
+
+function getSuggestions(context?: AiLibrarianContext): readonly Suggestion[] {
+  if (!context) return SUGGESTIONS_BY_CONTEXT.default
+  return SUGGESTIONS_BY_CONTEXT[context.pageType] ?? SUGGESTIONS_BY_CONTEXT.default
+}
+
+/* ─── Welcome messages ─── */
+
+const WELCOME_BY_CONTEXT: Record<string, string> = {
+  collection: 'Я проанализировал эту подборку и могу рассказать, какие книги в неё входят и почему они здесь.',
+  celebrity: 'Я проанализировал подборку этой знаменитости и могу рассказать, какие книги в неё вошли.',
+  rankings: 'Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.',
+  default: 'Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.',
+}
+
+function getWelcomeMessage(context?: AiLibrarianContext): string {
+  if (!context) return WELCOME_BY_CONTEXT.default
+  return WELCOME_BY_CONTEXT[context.pageType] ?? WELCOME_BY_CONTEXT.default
+}
 
 /* ─── Draft statuses (pre-first-token) ─── */
 
@@ -263,14 +307,13 @@ function StreamingBubble({
       <div className="max-w-[80%] flex flex-col items-start">
         <div className="rounded-xl rounded-tl-sm border border-black/10 bg-[#171717] px-4 py-2.5 text-sm leading-relaxed text-[#d4d4d4]">
           {content ? (
-            <motion.p
-              key={content}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="whitespace-pre-wrap break-words"
-            >
+            <div className="whitespace-pre-wrap break-words leading-relaxed">
               {content}
-            </motion.p>
+              <span
+                className="inline-block ml-0.5 w-0.5 h-[1em] bg-[#c1fffe] animate-pulse align-text-bottom"
+                aria-hidden="true"
+              />
+            </div>
           ) : (
             <p className="flex items-center gap-1.5 text-sm text-[#7d8688]">
               <span className="flex gap-0.5">
@@ -290,9 +333,11 @@ function StreamingBubble({
 /* ─── SuggestionChips ─── */
 
 function SuggestionChips({
+  suggestions,
   onSelect,
   disabled,
 }: {
+  suggestions: readonly Suggestion[]
   onSelect: (text: string) => void
   disabled: boolean
 }) {
@@ -303,7 +348,7 @@ function SuggestionChips({
       transition={{ duration: 0.3, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
       className="flex flex-wrap items-center justify-center gap-2"
     >
-      {SUGGESTIONS.map((s) => (
+      {suggestions.map((s) => (
         <button
           key={s.label}
           type="button"
@@ -347,6 +392,8 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isMobile = useIsMobile()
+  const suggestions = getSuggestions(context)
+  const welcomeMessage = getWelcomeMessage(context)
 
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
@@ -550,9 +597,9 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
                       Привет, я Букстраж
                     </h3>
                     <p className="mb-5 mx-auto max-w-sm text-sm text-[#a8abad] leading-relaxed">
-                      Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.
+                      {welcomeMessage}
                     </p>
-                    <SuggestionChips onSelect={handleSuggestion} disabled={isStreaming} />
+                    <SuggestionChips suggestions={suggestions} onSelect={handleSuggestion} disabled={isStreaming} />
                   </motion.div>
                 )}
               </div>

@@ -165,13 +165,6 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Смотреть тренды")).toBeInTheDocument();
   });
 
-  it("должен показывать AI Librarian карточку", () => {
-    render(<DashboardPage />, { wrapper: createWrapper() });
-
-    expect(screen.getByText("Букстраж")).toBeInTheDocument();
-    expect(screen.getByText("Спросить")).toBeInTheDocument();
-  });
-
   it("должен рендериться без пользователя (isLoading) без ошибок", () => {
     vi.mocked(authContextModule.useAuth).mockReturnValue({
       user: null,
@@ -185,18 +178,6 @@ describe("DashboardPage", () => {
 
     // Страница не падает, приветствие без username
     expect(screen.getByText("Панель управления")).toBeInTheDocument();
-  });
-
-  it("должен открывать AI Librarian модалку при клике на карточку", async () => {
-    render(<DashboardPage />, { wrapper: createWrapper() });
-
-    // Кликаем по кнопке "Спросить"
-    fireEvent.click(screen.getByText("Спросить"));
-
-    // Модалка открывается — проверяем наличие заголовка
-    await waitFor(() => {
-      expect(screen.getByText("Твой личный ИИ-библиотекарь")).toBeInTheDocument();
-    });
   });
 
   it("должен переходить в библиотеку при клике 'Создать тир-лист'", () => {

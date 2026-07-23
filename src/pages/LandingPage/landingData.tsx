@@ -102,9 +102,9 @@ export const plans: Plan[] = [
 
 /* ---------- Hero rotating phrases ---------- */
 export const heroPhrases = [
-  "рейтингов книг",
-  "тир-листов",
-  "личных подборок",
+  "Создавай.",
+  "Делись.",
+  "Сравнивай.",
 ];
 
 /* ---------- Target audience ---------- */

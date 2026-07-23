@@ -314,10 +314,11 @@ export async function refreshAccessToken(): Promise<string> {
       return newAccessToken;
     })
     .catch((error) => {
-      authLogger.error(
-        error instanceof Error ? error : new Error(String(error)),
-        { action: "refresh access token" },
-      );
+      // Это штатная ситуация для неавторизованных пользователей
+      authLogger.warn("Ошибка refresh токена", {
+        action: "refresh access token",
+        error: error instanceof Error ? error.message : String(error),
+      });
       handleUnauthorized();
       throw error; // reject — все ждущие промисы упадут с этой ошибкой
     });
