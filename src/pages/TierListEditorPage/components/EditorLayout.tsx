@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSensors, useSensor } from "@dnd-kit/core";
 import { MouseSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
 import { DndContext, DragOverlay, pointerWithin, rectIntersection, type CollisionDetection } from "@dnd-kit/core";
@@ -7,7 +8,7 @@ import type {
   DragEndEvent,
   DragOverEvent,
 } from "@dnd-kit/core";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
 import { TierLabel } from "@/ui/TierLabel";
@@ -74,6 +75,7 @@ export const EditorLayout = ({
   currentUserId,
   breadcrumbItems,
 }: EditorLayoutProps) => {
+  const [isTopCollapsed, setIsTopCollapsed] = useState(false);
   const activeBook: Book | null =
     activeItem && "coverImageUrl" in activeItem ? (activeItem as Book) : null;
   const activeTier: Tier | null =
@@ -124,32 +126,63 @@ export const EditorLayout = ({
             <Breadcrumbs items={breadcrumbItems} />
           </div>
         )}
-        <EditorHeader {...headerProps} />
-        {!isReadOnly && (
-          <div className="flex flex-wrap gap-3 items-start mb-6">
-            {tierListId && !hideCover && (
-              <TierListCoverEditor
-                tierListId={tierListId}
-                coverImageUrl={coverImageUrl}
-                title={headerProps.title}
-                booksCount={booksCount}
-                isReadOnly={isReadOnly}
-                onCoverUpdated={(url) => onCoverUpdated?.(url)}
-                ownerUserId={ownerUserId}
-                currentUserId={currentUserId}
-              />
-            )}
-            {tierListId && (
-              <div className="pl-4 flex-1 min-w-0 mt-0.5">
-                <ThemePicker
-                  tierListId={tierListId}
-                  currentTheme={theme}
-                  onThemeChanged={(t) => onThemeChanged?.(t)}
-                />
+        {/* Верхняя секция: название + обложка + тема — сворачиваемая */}
+        <div
+          className={`overflow-hidden transition-[grid-template-rows] duration-300 ease-in-out ${
+            isTopCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
+          }`}
+          style={{ display: "grid" }}
+        >
+          <div className="min-h-0">
+            <EditorHeader {...headerProps} />
+            {!isReadOnly && (
+              <div className="flex flex-wrap gap-3 items-start mb-6">
+                {tierListId && !hideCover && (
+                  <TierListCoverEditor
+                    tierListId={tierListId}
+                    coverImageUrl={coverImageUrl}
+                    title={headerProps.title}
+                    booksCount={booksCount}
+                    isReadOnly={isReadOnly}
+                    onCoverUpdated={(url) => onCoverUpdated?.(url)}
+                    ownerUserId={ownerUserId}
+                    currentUserId={currentUserId}
+                  />
+                )}
+                {tierListId && (
+                  <div className="pl-4 flex-1 min-w-0 mt-0.5">
+                    <ThemePicker
+                      tierListId={tierListId}
+                      currentTheme={theme}
+                      onThemeChanged={(t) => onThemeChanged?.(t)}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
+        </div>
+
+        {/* Кнопка-стрелка для сворачивания/разворачивания верхней секции */}
+        {!isReadOnly && (
+          <button
+            onClick={() => setIsTopCollapsed((v) => !v)}
+            className="flex items-center justify-center w-full py-1.5 text-gray-500 hover:text-gray-300 transition-colors cursor-pointer group"
+            type="button"
+            aria-label={isTopCollapsed ? "Развернуть" : "Свернуть"}
+          >
+            <span className="flex items-center gap-1 text-xs font-medium tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              {isTopCollapsed ? "Название и настройки" : "Свернуть"}
+            </span>
+            <ChevronUp
+              size={18}
+              className={`transition-transform duration-300 ease-in-out ${
+                isTopCollapsed ? "rotate-180" : ""
+              }`}
+            />
+          </button>
         )}
+
         {children}
       </main>
     </DashboardLayout>
