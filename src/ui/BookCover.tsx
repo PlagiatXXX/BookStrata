@@ -101,7 +101,6 @@ export const BookCover = memo(
       // Сбрасываем ошибку загрузки при смене URL
       useEffect(() => {
         if (!hasCover) return;
-        setCoverError(false);
 
         const img = new Image();
         img.onload = () => setCoverError(false);

@@ -271,7 +271,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
           }`}
         >
           {isUser ? (
-            <p className="whitespace-pre-wrap break-words">{message.content}</p>
+            <p className="whitespace-pre-wrap wrap-break-word">{message.content}</p>
           ) : (
             renderMarkdown(message.content)
           )}
@@ -307,7 +307,7 @@ function StreamingBubble({
       <div className="max-w-[80%] flex flex-col items-start">
         <div className="rounded-xl rounded-tl-sm border border-black/10 bg-[#171717] px-4 py-2.5 text-sm leading-relaxed text-[#d4d4d4]">
           {content ? (
-            <div className="whitespace-pre-wrap break-words leading-relaxed">
+            <div className="whitespace-pre-wrap wrap-break-word leading-relaxed">
               {content}
               <span
                 className="inline-block ml-0.5 w-0.5 h-[1em] bg-[#c1fffe] animate-pulse align-text-bottom"
@@ -549,7 +549,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
       ) : (
         <>
           {/* ── Messages ── */}
-          <div className="flex-1 overflow-y-auto [overscroll-behavior:contain] bg-[#111111] px-5 py-4">
+          <div className="flex-1 overflow-y-auto overscroll-contain bg-[#111111] px-5 py-4">
             {!hasMessages && !isStreaming ? (
               <div className="flex h-full flex-col items-center justify-start pt-6 text-center">
                 <motion.div
@@ -685,7 +685,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 z-60 flex items-center justify-center p-4"
         >
           {/* Overlay */}
           <motion.div
@@ -720,7 +720,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[60] flex justify-start"
+          className="fixed inset-0 z-60 flex justify-start"
         >
           {/* Overlay */}
           <motion.div
@@ -742,7 +742,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
             role="dialog"
             aria-modal="true"
             aria-labelledby="ai-librarian-title"
-            className="relative flex h-full w-1/2 min-w-[360px] max-w-[640px] flex-col border-r border-white/10 bg-[#111111] text-[#f6f1e8] shadow-2xl shadow-black/60"
+            className="relative flex h-full w-1/2 min-w-90 max-w-160 flex-col border-r border-white/10 bg-[#111111] text-[#f6f1e8] shadow-2xl shadow-black/60"
           >
             {panelContent}
           </motion.div>

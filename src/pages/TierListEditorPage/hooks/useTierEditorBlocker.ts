@@ -20,7 +20,7 @@ interface UseTierEditorBlockerParams {
   setIgnoreUnsavedBlocker: (value: boolean) => void;
   setDeletedTierIds: React.Dispatch<React.SetStateAction<number[]>>;
   setIsSavingBeforeLeave: (value: boolean) => void;
-  forceSave: () => Promise<void>;
+  forceSave: () => Promise<unknown>;
   navigate: (path: string) => void;
   logger: {
     error: (error: Error, context: { action: string }) => void;

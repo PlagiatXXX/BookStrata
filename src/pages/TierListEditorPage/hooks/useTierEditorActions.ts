@@ -25,10 +25,12 @@ interface UseTierEditorActionsParams {
   setHasUnsavedChanges: (value: boolean) => void;
   setDeletedTierIds: React.Dispatch<React.SetStateAction<number[]>>;
   navigate: NavigateFunction;
+  /** В демо-режиме открывает модалку регистрации вместо навигации на /auth */
+  onRequireAuth?: () => void;
 }
 
 interface AddedBookPayload {
-  id: number;
+  id: number | string;
   title: string;
   author: string | null;
   coverImageUrl: string;
@@ -41,6 +43,7 @@ export function useTierEditorActions({
   setHasUnsavedChanges,
   setDeletedTierIds,
   navigate,
+  onRequireAuth,
 }: UseTierEditorActionsParams) {
   const queryClient = useQueryClient();
   const [isTogglingPublic, setIsTogglingPublic] = useState(false);
@@ -49,6 +52,14 @@ export function useTierEditorActions({
   const togglePublic = useCallback(
     async (isPublic: boolean) => {
       if (!tierListId) return;
+
+      // В демо-режиме открываем модалку регистрации (как при сохранении)
+      if (tierListId === "new") {
+        if (onRequireAuth) {
+          onRequireAuth();
+        }
+        return;
+      }
 
       // Optimistic update
       const queryKey = ['tierList', tierListId];
@@ -92,7 +103,7 @@ export function useTierEditorActions({
         setIsTogglingPublic(false);
       }
     },
-    [tierListId, queryClient]
+    [tierListId, queryClient, onRequireAuth]
   );
 
   const handleSaveBook = useCallback(

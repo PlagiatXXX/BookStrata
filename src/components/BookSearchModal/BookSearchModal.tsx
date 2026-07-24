@@ -1,4 +1,6 @@
 import { useReducer, useCallback, useState, memo, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { Search, X, BookOpen, Plus, Eye, User, Upload } from "lucide-react";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 import { batchAddBooksFromSearch, addBookFromGoogleBooks, importFromLiveLib, type OpenLibraryBook, type LiveLibBook } from '@/lib/bookSearchApi';
@@ -18,15 +20,20 @@ interface BookSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   tierListId: string;
+  /** В локальном режиме книги не добавляются на сервер, а возвращаются через onBookAdded с временными ID */
+  localMode?: boolean;
   onBookAdded?: (
     books: Array<{
-      id: number;
+      /** В обычном режиме — числовой ID от сервера, в localMode — строка с префиксом local- */
+      id: string | number;
       title: string;
       author: string | null;
       coverImageUrl: string;
     }> | null,
   ) => void;
   onUploadBooks?: (files: File[]) => void;
+  /** Вместо тоста с переходом на /auth — вызвать этот колбэк (для открытия модалки регистрации на месте) */
+  onRequireAuth?: () => void;
 }
 
 interface SearchState {
@@ -247,10 +254,13 @@ export const BookSearchModal = ({
   isOpen,
   onClose,
   tierListId,
+  localMode = false,
   onBookAdded,
   onUploadBooks,
+  onRequireAuth,
 }: BookSearchModalProps) => {
   useBodyScrollLock(isOpen)
+  const navigate = useNavigate();
 
   const [state, dispatch] = useReducer(searchReducer, initialSearchState);
   const [viewBook, setViewBook] = useState<OpenLibraryBook | null>(null);
@@ -304,11 +314,28 @@ export const BookSearchModal = ({
   const handleSearch = useCallback(async () => {
     if (!state.query.trim() || state.query.length < 2) return;
 
+    if (localMode) {
+      if (onRequireAuth) {
+        onRequireAuth();
+      } else {
+        sileo.action({
+          title: 'Требуется регистрация',
+          description: 'Зарегистрируйтесь, чтобы искать книги в каталоге',
+          duration: 10000,
+          button: {
+            title: 'Создать аккаунт',
+            onClick: () => navigate('/auth?mode=register&redirect=/tier-lists/new'),
+          },
+        });
+      }
+      return;
+    }
+
     dispatch({ type: "SET_SEARCHED" });
     window.ym?.(109755750, 'reachGoal', 'book_search')
     apiTrackEvent('book_search', { query: state.query })
     await search(state.query);
-  }, [state.query, search]);
+  }, [state.query, search, localMode, onRequireAuth, navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -328,6 +355,23 @@ export const BookSearchModal = ({
   const handleLiveLibImport = async () => {
     const username = liveLibUsername.trim();
     if (!username) return;
+
+    if (localMode) {
+      if (onRequireAuth) {
+        onRequireAuth();
+      } else {
+        sileo.action({
+          title: 'Требуется регистрация',
+          description: 'Зарегистрируйтесь, чтобы импортировать книги с LiveLib',
+          duration: 10000,
+          button: {
+            title: 'Создать аккаунт',
+            onClick: () => navigate('/auth?mode=register&redirect=/tier-lists/new'),
+          },
+        });
+      }
+      return;
+    }
 
     setLiveLibLoading(true);
     setLiveLibError(null);
@@ -379,6 +423,33 @@ export const BookSearchModal = ({
     setIsAddingBooks(true);
 
     try {
+      if (localMode) {
+        // В локальном режиме не вызываем сервер — генерируем временные ID
+        const localBooks = allBooks.map((book) => ({
+          id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          title: book.title,
+          author: book.author || null,
+          coverImageUrl: book.coverUrlLarge || book.coverUrl || '',
+        }));
+
+        dispatch({ type: "CLEAR_SELECTION" });
+        setLiveLibSelected(new Set());
+        setIsAddingBooks(false);
+
+        const n = localBooks.length;
+        const lastDigit = n % 10;
+        const lastTwoDigits = n % 100;
+        const prefix = lastDigit === 1 && lastTwoDigits !== 11 ? "Добавлена" : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14) ? "Добавлены" : "Добавлено";
+        const word = lastDigit === 1 && lastTwoDigits !== 11 ? "книга" : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14) ? "книги" : "книг";
+        sileo.success({
+          title: `${prefix} ${n} ${word}`,
+          duration: 3000,
+        });
+        onBookAdded?.(localBooks);
+        handleClose();
+        return;
+      }
+
       const addedBooks = await batchAddBooksFromSearch(tierListId, allBooks);
 
       dispatch({ type: "CLEAR_SELECTION" });
@@ -415,6 +486,20 @@ export const BookSearchModal = ({
   const handleAddBookFromView = async (book: OpenLibraryBook) => {
     setIsViewAdding(true);
     try {
+      if (localMode) {
+        const localBook = {
+          id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          title: book.title,
+          author: book.author || null,
+          coverImageUrl: book.coverUrlLarge || book.coverUrl || '',
+        };
+        sileo.success({ title: "Книга добавлена", duration: 3000 });
+        onBookAdded?.([localBook]);
+        setViewBook(null);
+        handleClose();
+        return;
+      }
+
       const result = await addBookFromGoogleBooks(tierListId, book);
       sileo.success({ title: "Книга добавлена", duration: 3000 });
       onBookAdded?.(result ? [result] : null);

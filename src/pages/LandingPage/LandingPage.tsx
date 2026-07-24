@@ -81,7 +81,7 @@ function LandingNav() {
 
           <div className="landing-nav__auth">
             <button data-analytics="auth.login_landing" onClick={() => navigate("/auth")} className="landing-nav__link" type="button">Войти</button>
-            <button data-analytics="cta.landing.create_tierlist_header" onClick={() => navigate("/auth?mode=register")} className="landing-nav__cta landing-nav__cta--primary" type="button">
+            <button data-analytics="cta.landing.create_tierlist_header" onClick={() => navigate("/tier-lists/new")} className="landing-nav__cta landing-nav__cta--primary" type="button">
               Создать тир-лист
             </button>
           </div>
@@ -376,11 +376,11 @@ export default function LandingPage() {
           <div className="landing-hero__actions">
             <button
               data-analytics="cta.landing.start_free_hero"
-              onClick={() => navigate("/auth?mode=register")}
+              onClick={() => navigate("/tier-lists/new")}
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
             >
-              Начать бесплатно
+              Создать свой тир-лист
               <ArrowRight size={18} />
             </button>
             <button
@@ -438,11 +438,11 @@ export default function LandingPage() {
           <RevealBox className="landing-section__action">
             <button
               data-analytics="cta.landing.view_all_featured"
-              onClick={() => navigate("/auth?mode=register")}
+              onClick={() => navigate("/tier-lists/new")}
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
             >
-              Смотреть все
+              Создать свой тир-лист
               <ChevronRight size={18} />
             </button>
           </RevealBox>
@@ -725,7 +725,7 @@ export default function LandingPage() {
 
                 <button
                   data-analytics={plan.donate ? "cta.landing.donate" : "cta.landing.start_now"}
-                  onClick={() => plan.donate ? (apiTrackEvent('donate_page_open'), setIsDonateOpen(true)) : navigate("/auth?mode=register")}
+                  onClick={() => plan.donate ? (apiTrackEvent('donate_page_open'), setIsDonateOpen(true)) : navigate("/tier-lists/new")}
                   className={`landing-pricing__cta ${plan.donate ? "landing-pricing__cta--donate" : ""}`}
                   type="button"
                 >

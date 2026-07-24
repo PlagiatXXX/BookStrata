@@ -15,6 +15,8 @@ export interface EditorHeaderProps {
   ownerUserId?: number;
   currentUserId?: number;
   isReadOnly?: boolean;
+  /** Демо-режим (без авторизации) */
+  isDemo?: boolean;
   hideFork?: boolean;
   coverImageUrl?: string | null;
   booksCount?: number;
@@ -30,6 +32,7 @@ export const EditorHeader = ({
   ownerUserId,
   currentUserId,
   isReadOnly = false,
+  isDemo = false,
   hideFork = false,
   coverImageUrl,
   booksCount = 0,
@@ -156,9 +159,16 @@ export const EditorHeader = ({
         </div>
       ) : (
         /* Edit mode: заголовок по центру (без обложки) */
-        <h1 className="text-center nb-display-lg text-white">
-          {title}
-        </h1>
+        <div className="text-center">
+          <h1 className="nb-display-lg text-white">
+            {title}
+          </h1>
+          {isDemo && (
+            <span className="inline-block mt-1 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400">
+              Демо-режим
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

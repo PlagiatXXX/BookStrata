@@ -130,7 +130,7 @@ export function useTierEditorQueries(
     queryKey: ['likedTierListIds'],
     queryFn: () => apiGetLikedTierListIds(),
     staleTime: 5 * 60 * 1000,
-    enabled: !isPrerender,
+    enabled: !isPrerender && !isNew,
   });
 
   const likedIdsSet = useMemo(

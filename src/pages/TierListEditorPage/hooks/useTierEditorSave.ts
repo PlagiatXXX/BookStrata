@@ -12,7 +12,7 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error";
 export interface UseTierEditorSaveResult {
   saveStatus: SaveStatus;
   lastSaved: Date | null;
-  handleSave: () => Promise<void>;
+  handleSave: () => Promise<boolean>;
   getSavePayload: () => AtomicSavePayload;
   hasChangesToSave: () => boolean;
 }
@@ -87,8 +87,8 @@ export function useTierEditorSave({
     return savedSnapshotRef.current !== currentSerialized;
   }, [listData]);
 
-  const handleSave = useCallback(async () => {
-    if (!tierListId || isLoading || isReadOnly) return;
+  const handleSave = useCallback(async (): Promise<boolean> => {
+    if (!tierListId || isLoading || isReadOnly) return false;
 
     setSaveStatus("saving");
     try {
@@ -156,12 +156,15 @@ export function useTierEditorSave({
 
       // Через 3 секунды возвращаем статус в idle
       setTimeout(() => setSaveStatus("idle"), 3000);
+
+      return true;
     } catch (error) {
       setSaveStatus("error");
       logger.error(error instanceof Error ? error : new Error(String(error)), {
         tierListId,
         action: "manual-save",
       });
+      return false;
     }
   }, [tierListId, isLoading, isReadOnly, getSavePayload, setHasUnsavedChanges, dispatch, queryClient, logger, theme, listData]);
 

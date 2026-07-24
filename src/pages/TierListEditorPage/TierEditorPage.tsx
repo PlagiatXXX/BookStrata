@@ -28,8 +28,11 @@ import { apiCreateFlag } from "@/lib/moderationApi";
 import type { NsfwResult } from "@/hooks/useNsfwCheck";
 import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";
+
+import { useDemoStorage } from "./hooks/useDemoStorage";
+import { AuthOnSaveModal } from "./components/AuthOnSaveModal";
 import "./TierEditorPage.css";
-import type { Book, Tier } from "@/types";
+import type { Book, Tier, TierListData } from "@/types";
 
 const isUuid = (value: string) =>
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value);
@@ -112,8 +115,13 @@ const TierListEditorContent = () => {
     initialDataForHook,
   } = useTierEditorQueries(tierListId, forkSlug, forkReadIds);
 
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(apiData?.coverImageUrl ?? null)
-  const [theme, setTheme] = useState<string>(apiData?.theme ?? "default")
+  // Переопределения от пользователя (null = не менял, берём из apiData)
+  const [userCoverOverride, setUserCoverOverride] = useState<string | null>(null);
+  const [userThemeOverride, setUserThemeOverride] = useState<string | null>(null);
+
+  const displayCoverImageUrl = userCoverOverride !== null ? userCoverOverride : (apiData?.coverImageUrl ?? null);
+  const displayTheme = userThemeOverride !== null ? userThemeOverride : (apiData?.theme ?? "default");
+
   const [isAiLibrarianOpen, setAiLibrarianOpen] = useState(false);
 
   const handleAiLibrarianOpen = useCallback(() => setAiLibrarianOpen(true), []);
@@ -125,15 +133,6 @@ const TierListEditorContent = () => {
     pendingFiles: File[] | null;
   }>({ checking: false, result: null, pendingFiles: null })
   const { checkImage } = useNsfwCheck()
-
-  useEffect(() => {
-    if (apiData?.coverImageUrl) {
-      setCoverImageUrl(apiData.coverImageUrl) // eslint-disable-line react-hooks/set-state-in-effect
-    }
-    if (apiData?.theme) {
-      setTheme(apiData.theme)
-    }
-  }, [apiData?.coverImageUrl, apiData?.theme])
 
   // Заменяем UUID на slug в URL после загрузки данных
   useEffect(() => {
@@ -150,6 +149,23 @@ const TierListEditorContent = () => {
   // Режим просмотра (если не владелец и список публичный)
   const isReadOnly = !isOwner && isPublic;
 
+  // ========== ДЕМО-РЕЖИМ (часть 1: инициализация) ==========
+  const isDemo = tierListId === "new" && !isAuthenticated;
+  const { loadDemo, saveDemo, clearDemo } = useDemoStorage();
+
+  // Если есть сохранённый черновик в localStorage — используем его (для демо и после регистрации)
+  const [demoInitialData] = useState<TierListData | null>(() => {
+    if (tierListId === "new") return loadDemo() ?? null;
+    return null;
+  });
+
+  const effectiveInitialData = demoInitialData ?? initialDataForHook;
+
+  // Состояние для модалки регистрации (используется в части 2)
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [demoTitle, setDemoTitle] = useState(initialDataForHook.title || "Новый тир-лист");
+  // ========== КОНЕЦ ДЕМО-РЕЖИМ (часть 1) ==========
+
   // Получаем функции из хука useTierList
   const {
     listData,
@@ -163,7 +179,35 @@ const TierListEditorContent = () => {
     clearRows,
     removeTier,
     updateBook,
-  } = useTierList(initialDataForHook, !hasUnsavedChanges);
+  } = useTierList(effectiveInitialData, !hasUnsavedChanges);
+
+  // ========== ДЕМО-РЕЖИМ (часть 2: автосохранение и сохранение на сервер) ==========
+  const saveDemoRef = useRef(saveDemo);
+  useEffect(() => {
+    saveDemoRef.current = saveDemo;
+  });
+
+  // Тост о восстановлении черновика после регистрации
+  useEffect(() => {
+    if (tierListId === "new" && isAuthenticated && demoInitialData) {
+      sileo.success({
+        title: 'Черновик восстановлен',
+        description: 'Вы можете продолжить редактирование и сохранить тир-лист',
+        duration: 5000,
+      });
+    }
+  }, [tierListId, isAuthenticated, demoInitialData]);
+
+  // Автосохранение демо-черновика в localStorage (с debounce)
+  useEffect(() => {
+    if (!isDemo) return;
+    const timer = setTimeout(() => {
+      saveDemoRef.current(listData);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [isDemo, listData]);
+
+  // ========== КОНЕЦ ДЕМО-РЕЖИМ (часть 2) ==========
 
   // ========== ОПТИМИЗИРОВАННОЕ АВТОСОХРАНЕНИЕ ==========
   const {
@@ -178,40 +222,40 @@ const TierListEditorContent = () => {
     isReadOnly,
     setHasUnsavedChanges,
     logger,
-    theme,
+    theme: displayTheme,
   });
 
-  // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
+  // Ref на handleSave для использования после обновления состояния (регистрация)
+  const handleSaveRef = useRef(handleSave);
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Check if Ctrl (Windows/Linux) or Meta (Mac) is pressed along with 's'
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        // ALWAYS prevent browser's default "Save Page" dialog/screenshot
-        e.preventDefault();
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
 
-        // Only save if there are changes and we're not already saving/readonly
-        if (!isReadOnly && hasUnsavedChanges && saveStatus !== "saving") {
-          handleSave();
-        } else if (isReadOnly) {
-          // User is viewing (read-only mode) - just prevent default
-          logger.info("Ctrl+S pressed in read-only mode, prevented default");
-        } else if (saveStatus === "saving") {
-          // Already saving - just prevent default
-          logger.info("Ctrl+S pressed while saving, prevented default");
-        } else if (!hasUnsavedChanges) {
-          // No unsaved changes - just prevent default
-          logger.info("Ctrl+S pressed with no unsaved changes, prevented default");
-        }
+  // При успешной регистрации:
+  // 1. Применяем название, которое пользователь ввёл в модалке
+  // 2. Закрываем модалку
+  // 3. Автоматически сохраняем тир-лист на сервер
+  const handleDemoSaveSuccess = useCallback(async () => {
+    // Шаг 1: применяем название к данным редактора
+    dispatch({ type: "SET_TITLE", payload: demoTitle });
+
+    // Шаг 2: закрываем модалку
+    setShowAuthModal(false);
+
+    // Шаг 3: после того как React обработает dispatch (название применится),
+    // запускаем сохранение на сервер. Используем setTimeout, чтобы гарантировать,
+    // что handleSave прочитает уже обновлённый listData.title.
+    setTimeout(async () => {
+      const saved = await handleSaveRef.current();
+      if (saved) {
+        clearDemo();
       }
-    };
+    }, 50);
+  }, [demoTitle, dispatch, clearDemo]);
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSave, isReadOnly, hasUnsavedChanges, saveStatus]);
-
-  // Автосохранение по таймеру (каждые 30 сек)
+  // Автосохранение по таймеру (каждые 30 сек) — не в демо-режиме
   useEffect(() => {
-    if (isReadOnly || !tierListId) return;
+    if (isReadOnly || !tierListId || isDemo) return;
 
     const interval = setInterval(() => {
       if (hasUnsavedChanges && saveStatus !== "saving") {
@@ -220,8 +264,44 @@ const TierListEditorContent = () => {
     }, 30_000);
 
     return () => clearInterval(interval);
-  }, [handleSave, isReadOnly, hasUnsavedChanges, saveStatus, tierListId]);
+  }, [handleSave, isReadOnly, hasUnsavedChanges, saveStatus, tierListId, isDemo]);
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
+
+  // Перехват сохранения: в демо-режиме открываем регистрацию, иначе стандартный save
+  const handleSaveOrRegister = useCallback(async () => {
+    if (isDemo) {
+      setDemoTitle(listData.title || "Новый тир-лист");
+      setShowAuthModal(true);
+    } else {
+      // При сохранении с "new" на сервер — чистим localStorage от демо-данных
+      await handleSave();
+      if (tierListId === "new") {
+        clearDemo();
+      }
+    }
+  }, [isDemo, listData.title, handleSave, tierListId, clearDemo]);
+
+  // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+
+        if (!isReadOnly && hasUnsavedChanges && saveStatus !== "saving") {
+          handleSaveOrRegister();
+        } else if (isReadOnly) {
+          logger.info("Ctrl+S pressed in read-only mode, prevented default");
+        } else if (saveStatus === "saving") {
+          logger.info("Ctrl+S pressed while saving, prevented default");
+        } else if (!hasUnsavedChanges) {
+          logger.info("Ctrl+S pressed with no unsaved changes, prevented default");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSaveOrRegister, isReadOnly, hasUnsavedChanges, saveStatus]);
 
   // Получаем функции из хука действий
   const {
@@ -240,6 +320,7 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges,
     setDeletedTierIds,
     navigate,
+    onRequireAuth: () => setShowAuthModal(true),
   });
 
   const processBookFiles = useCallback(async (files: File[]) => {
@@ -515,6 +596,11 @@ const TierListEditorContent = () => {
   };
 
   const handleConfirmDeleteRating = async () => {
+    if (isDemo) {
+      clearDemo();
+      navigate('/');
+      return;
+    }
     await deleteRatingFromServer();
     setShowDeleteRatingModal(false);
   };
@@ -527,10 +613,10 @@ const TierListEditorContent = () => {
     setBookToView(book);
   };
 
-  // Логика блокировщика перехода
+  // Логика блокировщика перехода (в демо-режиме не блокируем)
   const { handleConfirmLeave, handleSaveBeforeLeave, handleCancelLeave } =
     useTierEditorBlocker({
-      isReadOnly,
+      isReadOnly: isReadOnly || isDemo,
       ignoreUnsavedBlocker,
       hasUnsavedChanges,
       saveStatus,
@@ -569,8 +655,9 @@ const TierListEditorContent = () => {
   };
 
   // Пропсы для EditorHeader
-  const headerProps = {
+  const headerProps: import("./components/EditorHeader").EditorHeaderProps = {
     title: listData.title,
+    isDemo,
     ...(isReadOnly && {
       author: apiData?.user,
       likesCount: likesData?.likesCount || 0,
@@ -580,7 +667,7 @@ const TierListEditorContent = () => {
       currentUserId,
       isReadOnly: true,
       hideFork: fromBattle,
-      coverImageUrl: coverImageUrl ?? apiData?.coverImageUrl,
+      coverImageUrl: displayCoverImageUrl,
       booksCount: Object.keys(listData.books).length,
     }),
   };
@@ -672,12 +759,12 @@ const TierListEditorContent = () => {
         onMyRatingsClick={handleMyRatingsClick}
         isReadOnly={isReadOnly}
         tierListId={tierListId}
-        coverImageUrl={coverImageUrl}
+        coverImageUrl={displayCoverImageUrl}
         hideCover={fromBattle}
-        theme={theme}
+        theme={displayTheme}
         booksCount={Object.keys(listData.books).length}
-        onCoverUpdated={setCoverImageUrl}
-        onThemeChanged={setTheme}
+        onCoverUpdated={setUserCoverOverride}
+        onThemeChanged={setUserThemeOverride}
         ownerUserId={ownerUserId}
         currentUserId={currentUserId}
         breadcrumbItems={[
@@ -730,7 +817,7 @@ const TierListEditorContent = () => {
           saveStatus={saveStatus}
           lastSaved={lastSaved}
           hasUnsavedChanges={hasUnsavedChanges}
-          onSave={handleSave}
+            onSave={handleSaveOrRegister}
         />
 
         {/* AI-библиотекарь: всегда виден внизу редактора */}
@@ -743,6 +830,15 @@ const TierListEditorContent = () => {
           </div>
         )}
       </EditorLayout>
+
+      {/* Модалка регистрации при сохранении в демо-режиме */}
+      <AuthOnSaveModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleDemoSaveSuccess}
+        initialTitle={demoTitle}
+        onTitleChange={setDemoTitle}
+      />
 
       {/* Модальные окна */}
       <EditorModals
@@ -777,19 +873,21 @@ const TierListEditorContent = () => {
         isUpdatingBook={isUpdatingBook}
         isExportModalOpen={isExportModalOpen}
         onCloseExport={() => setIsExportModalOpen(false)}
-        onConfirmExport={async (theme) => {
-          if (hasUnsavedChanges) {
+        onConfirmExport={async (exportTheme) => {
+          if (hasUnsavedChanges && !isDemo) {
             try {
               await handleSave();
             } catch {
               // Ошибка сохранения — не блокируем экспорт
             }
           }
-          onDownloadImage(theme, authUser?.username);
+          onDownloadImage(exportTheme, authUser?.username);
         }}
         username={authUser?.username || "user"}
         isReadOnly={isReadOnly}
-        tierListTheme={theme}
+        localMode={isDemo}
+        tierListTheme={displayTheme}
+        onRequireAuth={() => setShowAuthModal(true)}
       />
 
       {!isReadOnly && (

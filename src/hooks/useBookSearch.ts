@@ -193,6 +193,8 @@ export function useBookSearch(
       logger.error(err instanceof Error ? err : new Error(String(err)), {
         action: "bookSearchLoadMore",
       });
+      // Останавливаем autoload при ошибке (например 429 rate limit)
+      setHasMore(false);
     } finally {
       setIsLoadingMore(false);
     }

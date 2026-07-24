@@ -65,8 +65,10 @@ interface EditorModalsProps {
   onConfirmLeave: () => void;
   onSaveAndLeave: () => void;
   onSaveBook: (bookId: string, data: { title?: string; author?: string; description?: string; thoughts?: string; coverImageUrl?: string; genre?: string; tags?: string[] }) => void;
+  /** В локальном режиме (демо) id может быть строкой с префиксом local- */
+  localMode?: boolean;
   onBookAdded: (books: Array<{
-    id: number;
+    id: string | number;
     title: string;
     author: string | null;
     coverImageUrl: string;
@@ -79,6 +81,8 @@ interface EditorModalsProps {
   username: string;
   isReadOnly?: boolean;
   tierListTheme?: string;
+  /** Вместо тоста с переходом на /auth — открыть модалку регистрации на месте */
+  onRequireAuth?: () => void;
 }
 
 export const EditorModals = ({
@@ -107,6 +111,7 @@ export const EditorModals = ({
   onConfirmLeave,
   onSaveAndLeave,
   onSaveBook,
+  localMode = false,
   onBookAdded,
   isSavingBeforeLeave = false,
   isUpdatingBook,
@@ -117,6 +122,7 @@ export const EditorModals = ({
   isReadOnly = false,
   tierListTheme,
   onUploadBooks,
+  onRequireAuth,
 }: EditorModalsProps) => {
   return (
     <>
@@ -175,8 +181,10 @@ export const EditorModals = ({
           isOpen={isSearchModalOpen}
           onClose={onCloseSearch}
           tierListId={tierListId!}
+          localMode={localMode}
           onBookAdded={onBookAdded}
           onUploadBooks={onUploadBooks}
+          onRequireAuth={onRequireAuth}
         />
       </Suspense>
 
