@@ -56,6 +56,7 @@ const TemplateLibrary: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   const urlSection = searchParams.get("section") as SectionKey | null;
+  const urlPage = Number(searchParams.get("page")) || 1;
   const defaultSection: SectionKey = isAuthenticated ? "private" : "public";
   const initialSection: SectionKey =
     urlSection && VALID_SECTIONS.has(urlSection) ? urlSection : defaultSection;
@@ -63,7 +64,11 @@ const TemplateLibrary: React.FC = () => {
   const [state, dispatch] = useReducer(
     templateLibraryReducer,
     null,
-    () => ({ ...initialState, activeSection: initialSection }),
+    () => ({
+      ...initialState,
+      activeSection: initialSection,
+      publicPage: initialSection === 'public' ? urlPage : 1,
+    }),
   );
 
   const { activeSection, publicPage } = state;
@@ -156,9 +161,14 @@ const TemplateLibrary: React.FC = () => {
   const handlePageChange = useCallback(
     (page: number) => {
       dispatch({ type: "SET_PUBLIC_PAGE", payload: page });
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (page > 1) { next.set("page", String(page)); } else { next.delete("page"); }
+        return next;
+      }, { replace: true });
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
-    [],
+    [setSearchParams],
   );
 
   // ===== Data fetching =====

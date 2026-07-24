@@ -6,11 +6,12 @@ import { createAnalyticsService } from './analytics.service.js'
 export const analyticsRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const analytics = createAnalyticsService(fastify.prisma)
 
-  // POST /api/analytics/track — запись события (авторизованные пользователи)
+  // POST /api/analytics/track — запись события (публичная ручка)
+  // Не требует авторизации — аналитика работает для всех.
+  // Если пользователь авторизован — userId заполняется, иначе null.
   fastify.post(
     '/track',
     {
-      preHandler: [authMiddleware],
       schema: {
         body: {
           type: 'object',
@@ -24,14 +25,14 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
       },
     },
     async (request, reply) => {
-      const user = request.user as { userId: number }
+      const user = (request.user as { userId?: number } | undefined)
       const body = request.body as { event: string; meta?: Record<string, unknown>; url?: string }
       const ip = request.ip
       const userAgent = request.headers['user-agent']
 
       // Аналитика не должна ломать запрос — fire and forget
       analytics.trackEvent({
-        userId: user.userId,
+        userId: user?.userId ?? null,
         event: body.event,
         meta: body.meta,
         url: body.url || request.url,
