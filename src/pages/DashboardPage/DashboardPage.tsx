@@ -12,6 +12,8 @@ import { TierListGrid } from "./components/TierListGrid";
 import { BookCard } from "./components/BookCard";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { SkeletonGrid, SkeletonCard } from "@/ui/Skeleton";
+import { AiLibrarianCard } from "@/components/AiLibrarian/AiLibrarianCard";
+import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 
 import "./DashboardPage.css";
 import logger from "@/lib/logger";
@@ -43,6 +45,7 @@ export default function DashboardPage() {
   const [activeStat, setActiveStat] = useState<'tierlists' | 'published' | 'drafts' | 'books' | null>(null);
   const [viewingBook, setViewingBook] = useState<MyBook | null>(null);
   const [showBooks, setShowBooks] = useState(true);
+  const [isAiLibrarianOpen, setIsAiLibrarianOpen] = useState(false);
 
   // Data fetching - User stats
   const { data: stats } = useQuery({
@@ -114,6 +117,10 @@ export default function DashboardPage() {
   }, [navigate, isGuest]);
 
   const handleCommunityClick = useCallback(() => navigate("/community"), [navigate]);
+
+  const handleAiLibrarianOpen = useCallback(() => {
+    setIsAiLibrarianOpen(true);
+  }, []);
 
   const handleOpenTierList = useCallback((id: string) => {
     navigate(`/tier-lists/${id}`);
@@ -251,6 +258,12 @@ export default function DashboardPage() {
 
               {/* Achievements & XP */}
               <DashboardAchievements />
+
+              {/* AI-библиотекарь */}
+              <AiLibrarianCard
+                isGuest={false}
+                onAskClick={handleAiLibrarianOpen}
+              />
             </>
           )}
 
@@ -263,6 +276,11 @@ export default function DashboardPage() {
         book={viewingBook}
         isOpen={!!viewingBook}
         onClose={handleCloseViewBook}
+      />
+
+      <AiLibrarianModal
+        isOpen={isAiLibrarianOpen}
+        onClose={() => setIsAiLibrarianOpen(false)}
       />
     </DashboardLayout>
   );

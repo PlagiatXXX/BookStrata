@@ -34,7 +34,12 @@ function AppShell() {
       </Suspense>
       <Toaster position="top-center" theme="system" />
       <AchievementNotification achievement={newAchievement} onClose={clearNotification} />
-      <FeedbackButton raised={pathname.match(/^\/tier-lists\/[^/]+\/?$/)? true : false} withNavMargin={pathname !== "/"} />
+      {!pathname.match(/^\/tier-lists\/[^/]+\/?$/) && (
+        <FeedbackButton
+          raised={false}
+          withNavMargin={pathname !== "/"}
+        />
+      )}
     </AppProviders>
   );
 }

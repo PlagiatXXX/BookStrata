@@ -19,8 +19,8 @@ import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
-import { AiLibrarianCard } from "@/components/AiLibrarian/AiLibrarianCard";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
+import { AiLibrarianWidget } from "@/components/AiLibrarian/AiLibrarianWidget";
 import { AiRecommendationPrompt } from "@/components/AiLibrarian/AiRecommendationPrompt";
 import { useNsfwCheck } from "@/hooks/useNsfwCheck";
 import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
@@ -820,15 +820,6 @@ const TierListEditorContent = () => {
             onSave={handleSaveOrRegister}
         />
 
-        {/* AI-библиотекарь: всегда виден внизу редактора */}
-        {!isReadOnly && (
-          <div className="mx-auto my-8 max-w-3xl w-full px-1">
-            <AiLibrarianCard
-              isGuest={false}
-              onAskClick={handleAiLibrarianOpen}
-            />
-          </div>
-        )}
       </EditorLayout>
 
       {/* Модалка регистрации при сохранении в демо-режиме */}
@@ -896,6 +887,13 @@ const TierListEditorContent = () => {
           onClose={handleAiLibrarianClose}
           variant="sidebar"
         />
+      )}
+
+      {/* Плавающий виджет Букстража — заменяет FeedbackButton на странице редактора */}
+      {!isReadOnly && (
+        <div className="fixed right-6 z-50 bottom-[80px] md:bottom-6">
+          <AiLibrarianWidget onClick={handleAiLibrarianOpen} />
+        </div>
       )}
 
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-sm w-full px-4">
