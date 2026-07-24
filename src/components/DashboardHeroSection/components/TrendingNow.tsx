@@ -15,7 +15,7 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
     >
       <img
         src={item.imageUrl ?? PLACEHOLDER}
-        alt=""
+        alt={item.title}
         className="trending-card__img"
         loading="lazy"
       />

@@ -445,8 +445,8 @@ const TemplateLibrary: React.FC = () => {
   return (
     <div className="min-h-screen bg-background-dark">
       <SEOHead
-        title="Тир-листы"
-        description="Тир-листы BookStrata. Создавайте и публикуйте рейтинги книг, находите вдохновение в работах сообщества."
+        title="Тир-листы книг — рейтинги и визуальные подборки"
+        description="Тир-листы BookStrata — рейтинги книг по жанрам, настроению и темам. Создавайте и публикуйте собственные подборки, находите вдохновение в работах сообщества."
         url="/templates"
       />
       <Header

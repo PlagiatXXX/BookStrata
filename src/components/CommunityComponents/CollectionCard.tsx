@@ -48,7 +48,7 @@ export const CollectionCard = memo(({ collection, className = '' }: CollectionCa
       {coverImage ? (
         <div className="absolute inset-0">
           <img
-            alt=""
+            alt={collection.title}
             className="h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
             src={proxyImageUrl(coverImage)}
             onError={(e) => { e.currentTarget.src = FALLBACK; }}

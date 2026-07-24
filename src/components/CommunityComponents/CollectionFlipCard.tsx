@@ -71,7 +71,7 @@ export const CollectionFlipCard = memo(({ collection, className = '' }: Collecti
         <div className="absolute inset-0 rounded-sm overflow-hidden [backface-visibility:hidden] [transform:translateZ(0)]">
           {coverImage ? (
             <img
-              alt=""
+              alt={`Подборка: ${collection.title}`}
               className="h-full w-full object-cover"
               src={proxyImageUrl(coverImage)}
               onError={(e) => { e.currentTarget.src = FALLBACK; }}
