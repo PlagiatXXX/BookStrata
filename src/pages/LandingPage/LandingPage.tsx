@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { motion, AnimatePresence } from "motion/react"
+
 import { useAuth } from "@/hooks/useAuthContext"
 import {
   ArrowRight, Heart, Layers, Sparkles, Zap,
@@ -145,12 +145,9 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
   onOpen?: () => void
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-      className={`group ${src || videoSrc ? "cursor-pointer" : ""}`}
+    <RevealBox className={`group ${src || videoSrc ? "cursor-pointer" : ""}`}>
+    <div
+      style={{ animationDelay: `${index * 0.1}s` }}
       onClick={onOpen}
     >
       <div
@@ -170,12 +167,14 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
             src={src}
             srcSet={`
               ${src.replace('.webp', '-400.webp')} 400w,
+              ${src.replace('.webp', '-640.webp')} 640w,
               ${src.replace('.webp', '-800.webp')} 800w,
               ${src} 1200w
             `}
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, calc(100vw - 32px)"
             alt={title}
             loading="lazy"
+            fetchPriority={index === 0 ? "high" : undefined}
             className="h-full w-full object-contain rounded-2xl"
           />
         ) : (
@@ -199,7 +198,8 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
         <h3 className="text-sm font-semibold text-[#e2e8f0]">{title}</h3>
         <p className="text-xs text-[#94a3b8] mt-0.5">{description}</p>
       </div>
-    </motion.div>
+      </div>
+    </RevealBox>
   )
 }
 
@@ -264,14 +264,15 @@ export default function LandingPage() {
   const { data: tierListsData } = useQuery({
     queryKey: ["landing-tierlists"],
     queryFn: () => getPublicTierLists(1, 4, "likes"),
-    staleTime: 60_000,
+    staleTime: 120_000,
+    gcTime: 300_000,
   })
 
   const { data: forumStats } = useQuery({
     queryKey: ["landing-stats"],
     queryFn: () => getForumStats(),
-    staleTime: 30_000,
-    refetchInterval: 30_000,
+    staleTime: 120_000,
+    gcTime: 300_000,
   })
 
   const tierLists = tierListsData?.data
@@ -352,19 +353,12 @@ export default function LandingPage() {
             BookStrata — твои книжные топы в красивых тир-листах.
             <br />
             <span className="landing-hero__carousel">
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={phraseIndex}
-                  className="landing-hero__gradient-text"
-                  initial={{ opacity: 0, filter: 'blur(4px)' }}
-                  animate={{ opacity: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, filter: 'blur(4px)' }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  style={{ display: 'inline-block' }}
-                >
-                  {heroPhrases[phraseIndex]}
-                </motion.span>
-              </AnimatePresence>
+              <span
+                key={phraseIndex}
+                className="landing-hero__gradient-text landing-hero__phrase"
+              >
+                {heroPhrases[phraseIndex]}
+              </span>
             </span>
           </h1>
 
@@ -572,20 +566,13 @@ export default function LandingPage() {
 
           <div className="grid sm:grid-cols-3 gap-6">
             {audienceItems.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.4 }}
-                className="p-8 text-center rounded-2xl border border-white/[0.06] bg-[rgba(15,30,50,0.4)] backdrop-blur-[12px] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-300"
-              >
+              <RevealBox key={i} className="p-8 text-center rounded-2xl border border-white/[0.06] bg-[rgba(15,30,50,0.4)] backdrop-blur-[12px] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-[rgba(6,188,249,0.1)] text-[#06bcf9] flex items-center justify-center mx-auto mb-4">
                   <item.icon size={24} />
                 </div>
                 <h3 className="text-lg font-semibold text-[#e2e8f0] mb-2">{item.title}</h3>
                 <p className="text-sm text-[#94a3b8] leading-relaxed">{item.desc}</p>
-              </motion.div>
+              </RevealBox>
             ))}
           </div>
         </div>
@@ -597,17 +584,7 @@ export default function LandingPage() {
       <section className="landing-banner" id="author-note">
         <div className="landing-banner__bg" />
         <Pointer>
-          <motion.div
-            animate={{
-              scale: [0.8, 1.15, 0.8],
-              rotate: [0, 8, -8, 0],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
+          <div className="animate-heart-bounce">
             <svg
               width="36"
               height="36"
@@ -616,18 +593,12 @@ export default function LandingPage() {
               xmlns="http://www.w3.org/2000/svg"
               className="text-pink-400 drop-shadow-lg"
             >
-              <motion.path
+              <path
                 d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
                 fill="currentColor"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{
-                  duration: 0.8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
               />
             </svg>
-          </motion.div>
+          </div>
         </Pointer>
         <div className="landing-banner__content">
           <span className="landing-banner__quote-mark">"</span>
@@ -758,17 +729,16 @@ export default function LandingPage() {
       )}
 
       {/* Scroll-to-top button */}
-      <motion.button
+      <button
         data-analytics="ui.landing.scroll_to_top"
-        animate={{ opacity: showScrollTop ? 0.35 : 0, pointerEvents: showScrollTop ? "auto" : "none" }}
-        whileHover={{ opacity: 0.7 }}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="fixed left-3 bottom-6 z-40 flex size-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/10 text-white backdrop-blur-sm transition-all"
+        className="fixed left-3 bottom-6 z-40 flex size-9 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/10 text-white backdrop-blur-sm transition-all hover:opacity-70"
+        style={{ opacity: showScrollTop ? 0.35 : 0, pointerEvents: showScrollTop ? "auto" : "none" }}
         aria-label="Наверх"
         type="button"
       >
         <ChevronUp size={18} />
-      </motion.button>
+      </button>
 
       <Footer variant="landing" />
     </div>

@@ -177,6 +177,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
+        reply.header("Cache-Control", "public, max-age=30, s-maxage=120");
         logger.debug("GET /public вызван", { query: request.query });
         const tierLists = await service.getPublicTierLists(request.query);
         logger.debug("Возвращаем публичные тир-листы", {

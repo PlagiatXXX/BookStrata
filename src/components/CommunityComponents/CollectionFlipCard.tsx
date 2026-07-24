@@ -7,13 +7,15 @@ import { proxyImageUrl } from '@/utils/imageProxy';
 interface CollectionFlipCardProps {
   collection: CollectionItem;
   className?: string;
+  /** Приоритетная загрузка — для LCP-изображений */
+  priority?: boolean;
 }
 
 const FALLBACK = '/images/placeholder.svg';
 
 const DEFAULT_ACCENT = 'var(--accent-main)';
 
-export const CollectionFlipCard = memo(({ collection, className = '' }: CollectionFlipCardProps) => {
+export const CollectionFlipCard = memo(({ collection, className = '', priority = false }: CollectionFlipCardProps) => {
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,7 +77,8 @@ export const CollectionFlipCard = memo(({ collection, className = '' }: Collecti
               className="h-full w-full object-cover"
               src={proxyImageUrl(coverImage)}
               onError={(e) => { e.currentTarget.src = FALLBACK; }}
-              loading="lazy"
+              loading={priority ? undefined : "lazy"}
+              fetchPriority={priority ? "high" : undefined}
             />
           ) : (
             <div

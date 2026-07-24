@@ -23,7 +23,8 @@ export default function RankingsPage() {
   } = useQuery({
     queryKey: ["featured-collections"],
     queryFn: getFeaturedCollections,
-    staleTime: 0,
+    staleTime: 120_000,
+    gcTime: 300_000,
     retry: 2,
   });
 
@@ -90,14 +91,14 @@ export default function RankingsPage() {
             <>
               {/* Коллекции с редакционной заметкой — двухколоночная сетка */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {featuredWithNotes.map((collection) => (
+                {featuredWithNotes.map((collection, index) => (
                   <div key={collection.id} className="flex flex-col gap-3">
                     {collection.editorialNote && (
                       <div className="text-sm text-(--ink-2) italic leading-relaxed line-clamp-3">
                         {collection.editorialNote}
                       </div>
                     )}
-                    <CollectionFlipCard collection={collection} />
+                    <CollectionFlipCard collection={collection} priority={index === 0} />
                   </div>
                 ))}
               </div>

@@ -31,6 +31,7 @@ export async function collectionRoutes(fastify: FastifyInstance) {
 
   // GET / — получить все опубликованные коллекции
   fastify.get("/", async (request, reply) => {
+    reply.header("Cache-Control", "public, max-age=60, s-maxage=300");
     const query = request.query as { type?: string; categoryId?: string; isFeatured?: string; tag?: string; page?: string; pageSize?: string };
     const result = await service.getCollections({
       type: query.type,

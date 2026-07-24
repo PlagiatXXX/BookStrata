@@ -32,10 +32,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://re406cj9uj.cdn.twcstorage.ru" />
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous" />
+    <link rel="preload" as="image" href="/library-bg.webp" fetchpriority="high" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'; this.onload=null;" crossorigin="anonymous" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" crossorigin="anonymous" /></noscript>
 
-    <!-- Cookie Consent by orestbida -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3.1.0/dist/cookieconsent.css" crossorigin="anonymous" />
+    <!-- Cookie Consent styles — загружается асинхронно через JS -->
     <style>
       #cc-main {
         --cc-bg: #0f172a;

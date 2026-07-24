@@ -64,6 +64,14 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
+    // Асинхронно загружаем CSS для cookieconsent
+    const cssLink = document.createElement("link");
+    cssLink.rel = "stylesheet";
+    cssLink.href =
+      "https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3.1.0/dist/cookieconsent.css";
+    cssLink.crossOrigin = "anonymous";
+    document.head.appendChild(cssLink);
+
     const script = document.createElement("script");
     script.src =
       "https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3.1.0/dist/cookieconsent.umd.js";

@@ -6,6 +6,7 @@ import { getDonors, addDonor, deleteDonor } from './donors.service.js'
 
 export async function donorRoutes(fastify: FastifyInstance) {
   fastify.get('/', async (_request, reply) => {
+    reply.header("Cache-Control", "public, max-age=60, s-maxage=300")
     const donors = await getDonors()
     return reply.code(200).send({ data: donors })
   })
