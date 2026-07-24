@@ -117,12 +117,17 @@ export class TierListRepository {
 
   async findPublic(options: { page: number; pageSize: number; sortBy?: string }) {
     const skip = (options.page - 1) * options.pageSize;
-    const orderBy =
+
+    // Стабильная сортировка: основное поле + tiebreaker по id,
+    // чтобы избежать дубликатов при offset-пагинации
+    const primaryOrder =
       options.sortBy === "likes"
         ? { likesCount: "desc" as const }
         : options.sortBy === "updatedAt" || options.sortBy === "updated_at"
           ? { updatedAt: "desc" as const }
           : { createdAt: "desc" as const };
+
+    const orderBy = [primaryOrder, { id: "desc" as const }];
 
     return Promise.all([
       this.db.tierList.findMany({
