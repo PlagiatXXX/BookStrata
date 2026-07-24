@@ -445,14 +445,14 @@ const TemplateLibrary: React.FC = () => {
   return (
     <div className="min-h-screen bg-background-dark">
       <SEOHead
-        title="Шаблоны тир-листов и библиотека"
-        description="Библиотека шаблонов тир-листов BookStrata. Создавайте и публикуйте рейтинги книг, находите вдохновение в работах сообщества."
+        title="Тир-листы"
+        description="Тир-листы BookStrata. Создавайте и публикуйте рейтинги книг, находите вдохновение в работах сообщества."
         url="/templates"
       />
       <Header
         onMyRatingsClick={handleGoBack}
         showTemplatesNav
-        activeItem="Библиотека"
+        activeItem="Тир-листы"
       />
       <section className="relative min-h-screen pt-16 pb-16 md:pb-0">
         <div className="absolute inset-0 bg-[linear-gradient(165deg,rgba(4,25,38,0.95)_0%,rgba(7,31,43,0.92)_35%,rgba(2,19,32,0.95)_100%)]" />
@@ -461,8 +461,8 @@ const TemplateLibrary: React.FC = () => {
         <div className="relative px-4 pb-12 pt-8 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <TemplateLibraryHeader
-              title="Библиотека"
-              description="Тир-листы сообщества и ваши персональные подборки книг."
+              title="Тир-листы"
+              description="Коллекция тир-листов сообщества BookStrata."
               onBackClick={handleGoBack}
             />
 

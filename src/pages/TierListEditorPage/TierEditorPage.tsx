@@ -689,7 +689,7 @@ const TierListEditorContent = () => {
           noindex={apiData ? !isPublic : undefined}
           breadcrumbs={[
             { name: "Главная", url: "/" },
-            { name: "Библиотека", url: "/templates" },
+            { name: "Тир-листы", url: "/templates" },
             { name: apiData?.title || "Тир-лист", url: `/tier-lists/${pageUrl}` },
           ]}
         />
@@ -768,7 +768,7 @@ const TierListEditorContent = () => {
         ownerUserId={ownerUserId}
         currentUserId={currentUserId}
         breadcrumbItems={[
-          { label: "Библиотека", href: "/templates" },
+          { label: "Тир-листы", href: "/templates" },
           { label: apiData?.title || "Тир-лист" },
         ]}
       >

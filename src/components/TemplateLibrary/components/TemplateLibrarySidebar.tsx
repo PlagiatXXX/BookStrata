@@ -20,7 +20,7 @@ export const TemplateLibrarySidebar = memo(({
     <aside className="rounded-2xl border border-[#0b3f52]/70 bg-[#071f2b]/85 p-4 lg:sticky lg:top-22 lg:h-fit">
       {/* Навигация по секциям */}
       <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
-        Библиотека
+        Тир-листы
       </p>
       <div className="space-y-2">
         {sections.map(({ key, icon: Icon }) => (

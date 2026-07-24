@@ -16,13 +16,13 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
   const NAV_ITEMS = [
     { label: "Главная", icon: List, path: isAuthenticated ? "/dashboard" : "/" },
     { label: "Рейтинг", icon: BarChart3, path: "/rankings" },
-    { label: "Библиотека", icon: Library, path: "/templates" },
+    { label: "Тир-листы", icon: Library, path: "/templates" },
     { label: "Новости", icon: Globe, path: "/community" },
   ] as const;
 
   const items = showTemplatesNav
     ? NAV_ITEMS
-    : NAV_ITEMS.filter((item) => item.label !== "Библиотека");
+    : NAV_ITEMS.filter((item) => item.label !== "Тир-листы");
 
   return (
     <nav className="fixed left-0 right-0 z-50 md:hidden border-t border-white/[0.06] bg-black/85 backdrop-blur-2xl" style={{ bottom: bottomOffset }}>

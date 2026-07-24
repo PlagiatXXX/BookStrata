@@ -46,7 +46,7 @@ const mainLinks = [
   { href: "/rankings", label: "Рейтинг книг", icon: <BarChart3 size={14} /> },
   { href: "/what-to-read", label: "Что почитать", icon: <BookOpen size={14} /> },
   { href: "/celebrities", label: "Знаменитости", icon: <Star size={14} /> },
-  { href: "/templates", label: "Библиотека", icon: <Folder size={14} /> },
+  { href: "/templates", label: "Тир-листы", icon: <Folder size={14} /> },
   { href: "/community", label: "Сообщество", icon: <Users size={14} /> },
 ];
 

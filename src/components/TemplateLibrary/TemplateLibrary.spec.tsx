@@ -117,10 +117,10 @@ describe("TemplateLibrary", () => {
     );
   });
 
-  it("должен рендериться с заголовком Библиотека", () => {
+  it("должен рендериться с заголовком Тир-листы", () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    const heading = screen.getByRole("heading", { name: "Библиотека" });
+    const heading = screen.getByRole("heading", { name: "Тир-листы" });
     expect(heading).toBeInTheDocument();
   });
 

@@ -158,7 +158,8 @@ return DOMPurify.sanitize(collection.content);
   const seoBreadcrumbs = slug
     ? [
         { name: "Главная", url: "/" },
-        { name: "Подборки", url: "/community" },
+        { name: "Сообщество", url: "/community" },
+        { name: "Коллекции", url: "/collections" },
         { name: seoTitle || "Подборка", url: `/collections/${slug}` },
       ]
     : undefined;
@@ -255,7 +256,7 @@ return DOMPurify.sanitize(collection.content);
     >
       {/* Breadcrumbs + Назад — на левый край */}
       <div className="px-4 sm:px-6 pt-6 pb-4 space-y-1">
-        <Breadcrumbs items={[{ label: "Подборки", href: "/community" }, { label: collection.title }]} />
+        <Breadcrumbs items={[{ label: "Сообщество", href: "/community" }, { label: "Коллекции" }, { label: collection.title }]} />
         <button
           onClick={() => {
             if (window.history.length > 1) {

@@ -53,7 +53,7 @@ export const Header = ({
       if (path === "/rankings") return "Рейтинг книг";
       if (path === "/community") return "Новости";
       if (path === "/templates" || path.startsWith("/templates/"))
-        return "Библиотека";
+        return "Тир-листы";
       if (path === "/" || path === "/dashboard") return "Главная";
       return undefined;
     })();
@@ -98,7 +98,7 @@ export const Header = ({
     ...(showTemplatesNav
       ? [
           {
-            label: "Библиотека",
+            label: "Тир-листы",
             onClick: () => navigate("/templates"),
             icon: <Library size={18} />,
             description: "Готовые шаблоны",
