@@ -52,7 +52,7 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
               type: 'object',
               required: ['pageType'],
               properties: {
-                pageType: { type: 'string', enum: ['rankings', 'collection', 'book-description'] },
+                pageType: { type: 'string', enum: ['rankings', 'collection', 'book-description', 'celebrity'] },
                 slug: { type: 'string' },
               },
             },
