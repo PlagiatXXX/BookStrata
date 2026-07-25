@@ -5,6 +5,7 @@ import { Spinner } from "@/components/Spinner";
 import { AchievementNotification } from "@/components/AchievementNotification/AchievementNotification";
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
 import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
+import { CookieConsent } from "@/components/CookieConsent";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { AppProviders } from "./AppProviders";
 import "../styles/sileo-custom.css";
@@ -34,6 +35,7 @@ function AppShell() {
       </Suspense>
       <Toaster position="top-center" theme="system" />
       <AchievementNotification achievement={newAchievement} onClose={clearNotification} />
+      <CookieConsent />
       {!pathname.match(/^\/tier-lists\/[^/]+\/?$/) && (
         <FeedbackButton
           raised={false}

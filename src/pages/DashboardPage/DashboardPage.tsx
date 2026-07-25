@@ -138,7 +138,7 @@ export default function DashboardPage() {
   return (
     <>
       <SEOHead
-        title="Мой дашборд — BookStrata"
+        title="Мой дашборд"
         description="Управляйте своими тир-листами книг, отслеживайте статистику, создавайте новые подборки и находите книги по вкусу с ИИ на BookStrata."
         url="/dashboard"
         noindex

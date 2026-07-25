@@ -154,7 +154,7 @@ export default function PricingPage() {
   return (
     <div className="pricing-page">
       <SEOHead
-        title="Поддержать проект — BookStrata"
+        title="Поддержать проект"
         description="BookStrata полностью бесплатен. Поддержите проект донатом, если он вам полезен. Все функции уже доступны без ограничений."
         url="/pricing"
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Поддержать", url: "/pricing" }]}

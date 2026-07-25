@@ -60,7 +60,7 @@ export default function CelebritiesPage() {
   return (
     <>
       <SEOHead
-        title="Что читают знаменитости? — BookStrata"
+        title="Что читают знаменитости?"
         description="Узнайте, какие книги читают известные люди: актёры, музыканты, предприниматели, спортсмены и другие знаменитости. Тир-листы любимых книг."
         url="/celebrities"
         breadcrumbs={[
