@@ -7,6 +7,7 @@ import { apiGetPublicUser, apiGetUserTierLists, apiGetTasteMatch } from "@/lib/u
 import { useAuth } from "@/hooks/useAuthContext"
 import { Spinner } from "@/components/Spinner"
 import { SEOHead } from "@/components/SEO/SEOHead"
+import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 import { ModerationPanel } from "@/components/ModerationPanel/ModerationPanel"
 import { DonorBadge } from "@/components/DonorBadge/DonorBadge"
 import type { TierListShort } from "@/lib/tierListApi"
@@ -91,10 +92,13 @@ export default function UserProfilePage() {
         image={profile.avatarUrl || undefined}
         url={`/users/${id}`}
         type="profile"
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: profile.username, url: `/users/${id}` }]}
       />
       <DashboardLayout showSearch={false}>
       <div className="min-h-screen cursor-default">
         <div className="max-w-4xl mx-auto px-6 py-14 pb-20 text-(--ink-0)">
+          {/* Breadcrumbs */}
+          <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: profile.username }]} />
           {/* Back button */}
           <button
             onClick={handleBack}

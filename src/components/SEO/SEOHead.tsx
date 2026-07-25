@@ -48,6 +48,27 @@ const websiteJsonLd = {
   },
 };
 
+// SiteNavigationElement — основные разделы для быстрых ссылок в поиске
+const siteNavigationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SiteNavigationElement",
+  "@id": `${SITE_URL}#sitenav`,
+  name: "Основные разделы",
+  description: "Навигация по разделам BookStrata",
+  url: SITE_URL,
+  hasPart: [
+    { "@type": "SiteNavigationElement", name: "Главная", url: `${SITE_URL}/` },
+    { "@type": "SiteNavigationElement", name: "Рейтинг книг", url: `${SITE_URL}/rankings` },
+    { "@type": "SiteNavigationElement", name: "Что почитать", url: `${SITE_URL}/what-to-read` },
+    { "@type": "SiteNavigationElement", name: "Коллекции", url: `${SITE_URL}/collections` },
+    { "@type": "SiteNavigationElement", name: "Новости и сообщество", url: `${SITE_URL}/community` },
+    { "@type": "SiteNavigationElement", name: "Знаменитости", url: `${SITE_URL}/celebrities` },
+    { "@type": "SiteNavigationElement", name: "Поддержать проект", url: `${SITE_URL}/pricing` },
+    { "@type": "SiteNavigationElement", name: "О проекте", url: `${SITE_URL}/about` },
+    { "@type": "SiteNavigationElement", name: "Контакты", url: `${SITE_URL}/contact` },
+  ],
+};
+
 export function SEOHead({
   title,
   description = DEFAULT_DESC,
@@ -198,6 +219,9 @@ export function SEOHead({
       </script>
       <script type="application/ld+json">
         {JSON.stringify(websiteJsonLd)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(siteNavigationJsonLd)}
       </script>
       {breadcrumbJsonLd && (
         <script type="application/ld+json">

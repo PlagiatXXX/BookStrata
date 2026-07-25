@@ -98,7 +98,7 @@ describe("UserProfilePage", () => {
     renderWithRoute("2")
 
     await waitFor(() => {
-      expect(screen.getByText("fedor")).toBeDefined()
+      expect(screen.getAllByText("fedor").length).toBeGreaterThanOrEqual(1)
     })
     expect(screen.getByText("Админ")).toBeDefined()
     expect(screen.getByText(/Страничный глотатель/)).toBeDefined()
@@ -132,7 +132,7 @@ describe("UserProfilePage", () => {
     renderWithRoute("1")
 
     await waitFor(() => {
-      expect(screen.getByText("fedor")).toBeDefined()
+      expect(screen.getAllByText("fedor").length).toBeGreaterThanOrEqual(1)
     })
     const matchSection = screen.queryByText(/Совпадение вкусов/)
     expect(matchSection).toBeNull()

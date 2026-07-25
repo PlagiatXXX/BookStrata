@@ -42,6 +42,7 @@ export default function WhatToReadPage() {
         title="Что почитать — подборки книг по настроению | BookStrata"
         description="Подбери книгу под настроение: фэнтези, детективы, классика, романтика, ужасы. Интерактивные рейтинги книг в формате тир-листов."
         url="/what-to-read"
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Что почитать", url: "/what-to-read" }]}
       />
       <DashboardLayout showSearch={false} activeItem="Новости">
         <div className="px-6 pt-6 pb-4">

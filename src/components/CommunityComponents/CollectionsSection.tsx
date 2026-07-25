@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getCommunityCollections } from "@/lib/collectionsApi";
@@ -17,10 +17,33 @@ export const CollectionsSection = memo(() => {
     [collections],
   );
 
+  const sectionRef = useRef<HTMLElement>(null);
+  const hasLiteraryCollections = literaryCollections.length > 0;
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    // Наблюдаем появление секции через IntersectionObserver,
+    // т.к. она рендерится динамически после загрузки данных
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("reveal--visible");
+          observer.unobserve(el);
+        }
+      },
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.15 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasLiteraryCollections]);
+
   if (literaryCollections.length === 0) return null;
 
   return (
-    <section className="mt-20 brutal-card brutal-border p-8 reveal" data-reveal>
+    <section ref={sectionRef} className="mt-20 brutal-card brutal-border p-8 reveal">
       <div className="flex items-center justify-between gap-4 flex-wrap mb-8">
         <div>
           <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">

@@ -44,6 +44,7 @@ export default function RankingsPage() {
         title="Рейтинг книг — лучшие книги и что почитать"
         description="Редакционные подборки BookStrata: лучшие книги в жанрах, составленные редакцией. Детективы, нон-фикшн, классика и новинки 2026 — найдите, что почитать."
         url="/rankings"
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Рейтинг книг", url: "/rankings" }]}
       />
       <DashboardLayout showSearch={false}>
         <div className="max-w-7xl mx-auto px-6 pb-12">

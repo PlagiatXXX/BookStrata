@@ -1,4 +1,4 @@
-import { getAuthHeader, refreshAccessToken, handleUnauthorized } from "./authApi";
+import { getAuthHeader, refreshAccessToken } from "./authApi";
 import { checkResponseForAchievements } from "./achievementApi";
 import { API_BASE_URL } from "./config";
 import { notifyError } from "./notifyError";
@@ -86,9 +86,6 @@ async function request<T>(
           // refresh не удался — чистка сессии
         }
       }
-
-      // Первая попытка уже была с refresh'ом, а 401 снова — сессию не восстановить
-      handleUnauthorized();
 
       // Не показываем тост для auth/refresh — при пререндере нет сессии, это штатная ситуация.
       // Также скрываем тост если страница в Prerendering API (Google/Yandex боты)

@@ -15,6 +15,7 @@ import { SkeletonGrid, SkeletonCard } from "@/ui/Skeleton";
 import { AiLibrarianCard } from "@/components/AiLibrarian/AiLibrarianCard";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 
+import { SEOHead } from "@/components/SEO/SEOHead";
 import "./DashboardPage.css";
 import logger from "@/lib/logger";
 import type { TierListShort } from "@/lib/tierListApi";
@@ -135,9 +136,16 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <DashboardLayout
-      showSearch={false}
-    >
+    <>
+      <SEOHead
+        title="Мой дашборд — BookStrata"
+        description="Управляйте своими тир-листами книг, отслеживайте статистику, создавайте новые подборки и находите книги по вкусу с ИИ на BookStrata."
+        url="/dashboard"
+        noindex
+      />
+      <DashboardLayout
+        showSearch={false}
+      >
       <section className="dashboard-home">
         <MemoizedDashboardHeader
           username={isGuest ? "Гость" : (user?.username || "")}
@@ -283,5 +291,6 @@ export default function DashboardPage() {
         onClose={() => setIsAiLibrarianOpen(false)}
       />
     </DashboardLayout>
+    </>
   );
 }

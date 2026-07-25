@@ -299,8 +299,7 @@ export async function refreshAccessToken(): Promise<string> {
   })
     .then(async (response) => {
       if (!response.ok) {
-        authLogger.warn("Refresh token failed, redirecting to login");
-        handleUnauthorized();
+        // 401 — refresh не удался, чистим сессию (один раз, в catch)
         throw new Error("Refresh token failed");
       }
 

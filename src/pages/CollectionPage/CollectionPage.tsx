@@ -148,8 +148,11 @@ return DOMPurify.sanitize(collection.content);
   // захватил meta-теги. Пока данные не загружены — используем slug из URL.
   // Пока данные не загружены — используем читаемый заголовок из COLLECTION_TITLES
   const seoTitle = collection?.title || COLLECTION_TITLES[slug || ''] || slug || '';
+  const truncate = (text: string, max = 155) =>
+    text.length <= max ? text : text.slice(0, text.lastIndexOf(' ', max)) + '…';
+
   const seoDesc = COLLECTION_SEO[slug || '']
-    || collection?.excerpt
+    || (collection?.excerpt ? truncate(collection.excerpt) : null)
     || `Подборка "${seoTitle}" на BookStrata — лучшие книги по жанру, рейтинг и рекомендации читателей`;
   const seoImage = collection?.coverImageUrl
     ? (proxyImageUrl(collection.coverImageUrl) || undefined)
