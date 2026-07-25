@@ -15,7 +15,8 @@ export async function getCollections(): Promise<CollectionItem[]> {
 
 // Получить все коллекции для админки (включая черновики)
 export async function getAllCollectionsForAdmin(): Promise<CollectionItem[]> {
-  return apiClient.get<CollectionItem[]>("/collections/admin");
+  const res = await apiClient.get<{ data: CollectionItem[]; meta: unknown }>("/collections/admin");
+  return (res.data || []).sort((a, b) => a.order - b.order);
 }
 
 // Получить коллекцию по ID (для админки)
