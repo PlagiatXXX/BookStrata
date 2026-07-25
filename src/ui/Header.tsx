@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Library, Globe, LogOut, BarChart3 } from "lucide-react";
+import { List, Library, Globe, LogOut, BarChart3, Star, ChevronDown } from "lucide-react";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -36,6 +36,8 @@ export const Header = ({
   hideLogout = false,
 }: HeaderProps = {}) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [ratingsOpen, setRatingsOpen] = useState(false);
+  const ratingsRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, user: authUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,13 +52,44 @@ export const Header = ({
     activeItemProp ||
     (() => {
       const path = location.pathname;
-      if (path === "/rankings") return "Рейтинг книг";
+      if (path === "/rankings") return "Рейтинги";
+      if (path === "/celebrities" || path.startsWith("/celebrities/"))
+        return "Рейтинги";
       if (path === "/community") return "Новости";
       if (path === "/templates" || path.startsWith("/templates/"))
         return "Тир-листы";
       if (path === "/" || path === "/dashboard") return "Главная";
       return undefined;
     })();
+
+  // Закрытие дропдауна по Escape и клику вне
+  const closeRatings = useCallback(() => setRatingsOpen(false), []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeRatings();
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ratingsRef.current && !ratingsRef.current.contains(e.target as Node)) {
+        closeRatings();
+      }
+    };
+    if (ratingsOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [ratingsOpen, closeRatings]);
+
+  const handleRatingsClick = () => setRatingsOpen((prev) => !prev);
+
+  const handleRatingsSubNav = (path: string) => {
+    navigate(path);
+    setRatingsOpen(false);
+  };
 
   const handleSearchChange = (query: string) => {
     onSearch?.(query);
@@ -84,8 +117,8 @@ export const Header = ({
       description: "Управление рейтингами",
     },
     {
-      label: "Рейтинг книг",
-      onClick: () => navigate("/rankings"),
+      label: "Рейтинги",
+      onClick: handleRatingsClick,
       icon: <BarChart3 size={18} />,
       description: "Редакционные подборки",
     },
@@ -127,33 +160,66 @@ export const Header = ({
           <nav className="hidden md:flex items-center gap-0">
             {navItems.map((item) => {
               const analyticsName = `nav.main.${item.label.toLowerCase().replace(/\s+/g, "_")}`;
+              const isRatings = item.label === "Рейтинги";
               return (
-              <button
-                key={item.label}
-                data-analytics={analyticsName}
-                onClick={item.onClick}
-                aria-current={activeItem === item.label ? "page" : undefined}
-                className={`group relative px-3 py-2 rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                  item.onClick ? "cursor-pointer" : "cursor-not-allowed"
-                } ${
-                  activeItem === item.label
-                    ? "text-cyan-400"
-                    : "text-gray-300 hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  {item.icon}
-                  <span className="text-sm font-medium">{item.label}</span>
-                  {item.badge && (
-                    <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-300 border border-yellow-400/30">
-                      {item.badge}
-                    </span>
+                <div key={item.label} className="relative" ref={isRatings ? ratingsRef : undefined}>
+                  <button
+                    data-analytics={analyticsName}
+                    onClick={item.onClick}
+                    aria-current={activeItem === item.label ? "page" : undefined}
+                    aria-expanded={isRatings ? ratingsOpen : undefined}
+                    className={`group relative px-3 py-2 rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                      item.onClick ? "cursor-pointer" : "cursor-not-allowed"
+                    } ${
+                      activeItem === item.label
+                        ? "text-cyan-400"
+                        : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {item.icon}
+                      <span className="text-sm font-medium">{item.label}</span>
+                      {isRatings && (
+                        <ChevronDown
+                          size={14}
+                          className={`transition-transform duration-200 ${
+                            ratingsOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      )}
+                      {item.badge && (
+                        <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-300 border border-yellow-400/30">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    {/* Hover indicator */}
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-cyan-400 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left rounded-full"></div>
+                  </button>
+
+                  {/* Dropdown для «Рейтинги» */}
+                  {isRatings && ratingsOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-56 rounded-xl border border-slate-700/50 bg-[#0f1525]/95 backdrop-blur-xl shadow-2xl shadow-black/60 py-1.5 z-50">
+                      <button
+                        data-analytics="nav.main.ratings_books"
+                        onClick={() => handleRatingsSubNav("/rankings")}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer"
+                      >
+                        <BarChart3 size={16} className="text-cyan-400 shrink-0" />
+                        <span>Лучшие книги 2026</span>
+                      </button>
+                      <button
+                        data-analytics="nav.main.ratings_celebrities"
+                        onClick={() => handleRatingsSubNav("/celebrities")}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer"
+                      >
+                        <Star size={16} className="text-amber-400 shrink-0" />
+                        <span>Топ знаменитостей</span>
+                      </button>
+                    </div>
                   )}
                 </div>
-                {/* Hover indicator */}
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-cyan-400 to-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left rounded-full"></div>
-              </button>
-            );
+              );
             })}
           </nav>
 
