@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -11,12 +10,15 @@ import {
   type ReactNode,
 } from "react";
 import { initPosthog } from "@/lib/posthog";
+import { motion, AnimatePresence } from "framer-motion";
 
 declare global {
   interface Window {
     ym: (id: number, action: string, ...args: unknown[]) => void;
   }
 }
+
+const DISMISS_KEY = "bookstrata-cookie-notice";
 
 function initMetrika() {
   const counterId = import.meta.env.VITE_YM_COUNTER_ID;
@@ -43,187 +45,78 @@ function initMetrika() {
   });
 }
 
-/** Загружает все аналитические сервисы, требующие согласия */
 function loadAnalytics() {
   initMetrika();
-  // PostHog — динамический import, не блокируем загрузку метрики
   initPosthog().catch(() => {});
 }
 
 interface AnalyticsContextValue {
-  accept: () => void;
   isConsented: boolean;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextValue | null>(null);
 
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
-  const [isConsented, setIsConsented] = useState(false);
-  const metrikaLoadedRef = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    // Асинхронно загружаем CSS для cookieconsent
-    const cssLink = document.createElement("link");
-    cssLink.rel = "stylesheet";
-    cssLink.href =
-      "https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3.1.0/dist/cookieconsent.css";
-    cssLink.crossOrigin = "anonymous";
-    document.head.appendChild(cssLink);
-
-    const script = document.createElement("script");
-    script.src =
-      "https://cdn.jsdelivr.net/npm/vanilla-cookieconsent@3.1.0/dist/cookieconsent.umd.js";
-    script.async = true;
-
-    script.onload = () => {
-      if (cancelled) return;
-
-      const CookieConsent = (window as unknown as { CookieConsent?: Record<string, unknown> }).CookieConsent as {
-        getCookie: () => { categories?: string[] } | null;
-        run: (config: Record<string, unknown>) => void;
-        acceptCategory: (categories: string[]) => void;
-        show: () => void;
-      } | undefined;
-      if (!CookieConsent) return;
-
-      // Проверяем, нет ли уже сохранённого согласия
-      try {
-        const existingConsent = CookieConsent.getCookie();
-        if (existingConsent?.categories?.includes("analytics")) {
-          setIsConsented(true);
-          if (!metrikaLoadedRef.current) {
-            metrikaLoadedRef.current = true;
-            loadAnalytics();
-          }
-        }
-      } catch {
-        // ignore — первый запуск, куки нет
-      }
-
-      CookieConsent.run({
-        categories: {
-          necessary: {
-            enabled: true,
-            readOnly: true,
-          },
-          analytics: {
-            enabled: false,
-            readOnly: false,
-          },
-        },
-        language: {
-          default: "ru",
-          translations: {
-            ru: {
-              consentModal: {
-                title: "Мы используем cookie",
-                description:
-                  "Собираем обезличенную аналитику, чтобы улучшать вашу работу с сайтом. Вы можете отказаться в любой момент.",
-                acceptAllBtn: "Принять все",
-                acceptNecessaryBtn: "Только необходимое",
-                showPreferencesBtn: "Настроить",
-                closeIconLabel: "Закрыть",
-              },
-              preferencesModal: {
-                title: "Настройка cookie",
-                acceptAllBtn: "Принять все",
-                acceptNecessaryBtn: "Только необходимое",
-                savePreferencesBtn: "Сохранить настройки",
-                closeIconLabel: "Закрыть",
-                sections: [
-                  {
-                    title: "Файлы cookie",
-                    description:
-                      "Здесь можно настроить, какие cookie вы разрешаете.",
-                  },
-                  {
-                    title: "Строго необходимые",
-                    description:
-                      "Обеспечивают базовую работу сайта (авторизация, безопасность). Отключить нельзя.",
-                    linkedCategory: "necessary",
-                  },
-                  {
-                    title: "Аналитика",
-                    description:
-                      "Помогают понять, как вы используете сайт, чтобы улучшать его.",
-                    linkedCategory: "analytics",
-                  },
-                ],
-              },
-            },
-          },
-        },
-        guiOptions: {
-          consentModal: {
-            layout: "box",
-            position: "bottom",
-            flipButtons: false,
-            equalWeightButtons: true,
-          },
-          preferencesModal: {
-            layout: "box",
-            position: "right",
-            flipButtons: false,
-            equalWeightButtons: true,
-          },
-        },
-        cookie: {
-          name: "cc_cookie",
-          expiresAfterDays: 365,
-        },
-        onConsent: ({ cookie }: { cookie?: { categories?: string[] } }) => {
-          if (cancelled) return;
-          if (cookie?.categories?.includes("analytics")) {
-            setIsConsented(true);
-            if (!metrikaLoadedRef.current) {
-              metrikaLoadedRef.current = true;
-              loadAnalytics();
-            }
-          } else {
-            setIsConsented(false);
-          }
-        },
-        onChange: ({ cookie }: { cookie?: { categories?: string[] } }) => {
-          if (cancelled) return;
-          if (cookie?.categories?.includes("analytics")) {
-            setIsConsented(true);
-            if (!metrikaLoadedRef.current) {
-              metrikaLoadedRef.current = true;
-              loadAnalytics();
-            }
-          } else {
-            setIsConsented(false);
-          }
-        },
-        autoShow: true,
-        hideFromBots: true,
-      } as Record<string, unknown>);
-    };
-
-    document.head.appendChild(script);
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const accept = useCallback(() => {
-    const cc = (window as unknown as { CookieConsent?: Record<string, unknown> }).CookieConsent as {
-      acceptCategory: (categories: string[]) => void;
-    } | undefined;
-    if (cc) {
-      cc.acceptCategory(["analytics"]);
-      setIsConsented(true);
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(DISMISS_KEY) === "1";
+    } catch {
+      return false;
     }
+  });
+  const analyticsLoaded = useRef(false);
+
+  // Аналитика грузится сразу — implied consent
+  useEffect(() => {
+    if (analyticsLoaded.current) return;
+    analyticsLoaded.current = true;
+    loadAnalytics();
   }, []);
 
-  const value = useMemo(() => ({ accept, isConsented }), [accept, isConsented]);
+  const handleDismiss = () => {
+    try {
+      localStorage.setItem(DISMISS_KEY, "1");
+    } catch {
+      // ignore — приватный режим
+    }
+    setDismissed(true);
+  };
+
+  const value = useMemo(() => ({ isConsented: true }), []);
 
   return (
     <AnalyticsContext.Provider value={value}>
       {children}
+
+      <AnimatePresence>
+        {!dismissed && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.23, 1, 0.32, 1] }}
+            className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 pointer-events-none"
+          >
+            <div className="mx-auto max-w-4xl rounded-2xl border border-[#2a2a2a] bg-[#121212]/95 backdrop-blur-md p-4 md:p-5 shadow-2xl pointer-events-auto">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5">
+                <div className="flex-1 text-sm leading-relaxed text-[#b8b1a3]">
+                  <span className="text-[#f3efe6] font-medium">
+                    Используем куки и рекомендательные технологии.
+                  </span>{" "}
+                  Это чтобы сайт работал лучше. Оставаясь с нами, вы
+                  соглашаетесь на использование файлов куки.
+                </div>
+                <button
+                  onClick={handleDismiss}
+                  className="shrink-0 cursor-pointer rounded-lg bg-[#d94f2b] px-5 py-2 text-sm font-medium text-white transition-all hover:bg-[#c04424] active:scale-95"
+                >
+                  Хорошо
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AnalyticsContext.Provider>
   );
 }
