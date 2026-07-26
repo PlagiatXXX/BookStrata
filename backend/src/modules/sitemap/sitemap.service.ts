@@ -25,6 +25,7 @@ export async function generateSitemap(): Promise<string> {
     { url: `${SITE_URL}/blog`, priority: "0.7", changefreq: "weekly" },
     { url: `${SITE_URL}/blog/why-not-goodreads`, priority: "0.6", changefreq: "monthly" },
     { url: `${SITE_URL}/blog/ssr-without-nextjs`, priority: "0.6", changefreq: "monthly" },
+    { url: `${SITE_URL}/celebrities`, priority: "0.7", changefreq: "weekly" },
     { url: `${SITE_URL}/privacy`, priority: "0.3", changefreq: "yearly" },
     { url: `${SITE_URL}/terms`, priority: "0.3", changefreq: "yearly" },
   ];
@@ -57,6 +58,19 @@ export async function generateSitemap(): Promise<string> {
     // таблица collections ещё не создана — пропускаем
   }
 
+  // Знаменитости — опционально: таблицы может не быть в тестовой БД
+  let celebrities: { slug: string; updatedAt: Date }[] = [];
+  try {
+    celebrities = await prisma.celebrity.findMany({
+      where: { isPublished: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { order: "asc" },
+      take: 200,
+    });
+  } catch {
+    // таблица celebrities ещё не создана — пропускаем
+  }
+
   const newsUrls = newsArticles.map((a) =>
     xmlTag(
       `${SITE_URL}/news/${a.id}`,
@@ -80,6 +94,15 @@ export async function generateSitemap(): Promise<string> {
     xmlTag(
       `${SITE_URL}/collections/${c.slug}`,
       "0.7",
+      "weekly",
+      c.updatedAt.toISOString().split("T")[0],
+    ),
+  );
+
+  const celebrityUrls = celebrities.map((c) =>
+    xmlTag(
+      `${SITE_URL}/celebrities/${c.slug}`,
+      "0.6",
       "weekly",
       c.updatedAt.toISOString().split("T")[0],
     ),
@@ -111,6 +134,6 @@ export async function generateSitemap(): Promise<string> {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...topicUrls].join("\n")}
+${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...celebrityUrls, ...topicUrls].join("\n")}
 </urlset>`;
 }

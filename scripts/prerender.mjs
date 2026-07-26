@@ -250,6 +250,42 @@ async function addTopicRoutes() {
 }
 
 /**
+ * Пытается получить список опубликованных знаменитостей с бэкенда.
+ * Если бэкенд доступен — добавляет их URL в ROUTES для prerender'а.
+ */
+async function addPublicCelebrityRoutes() {
+  try {
+    log(`📡 Fetching public celebrities from ${BACKEND_URL}/api/celebrities…`);
+    const res = await fetch(`${BACKEND_URL}/api/celebrities?pageSize=100`);
+    if (!res.ok) {
+      log(`⚠️  API responded with ${res.status}, skipping celebrity prerender`);
+      return;
+    }
+    const body = await res.json();
+    const items = body.data || [];
+    if (items.length === 0) {
+      log("⚠️  No published celebrities found, skipping");
+      return;
+    }
+    for (const item of items) {
+      const slug = item.slug;
+      if (!slug) {
+        log(`  ⚠️  Celebrity "${item.name}" has no slug, skipping`);
+        continue;
+      }
+      const path = `/celebrities/${slug}`;
+      ROUTES.push({ path, name: `Знаменитость: ${item.name}` });
+      log(`  → ${path} (${item.name})`);
+    }
+    log(`✅ Added ${items.filter(i => i.slug).length} celebrities to prerender`);
+    backendAvailable = true;
+  } catch (err) {
+    log(`⚠️  Cannot reach backend (${BACKEND_URL}): ${err.message}`);
+    log("⚠️  Celebrity prerender skipped (will work on server during deploy)");
+  }
+}
+
+/**
  * Пытается получить список опубликованных коллекций с бэкенда.
  * Если бэкенд доступен — добавляет их URL в ROUTES для prerender'а.
  */
@@ -530,6 +566,7 @@ async function processRoute(browser, route) {
   const url = `${BASE}${route.path}`;
   const isTierList = route.path.startsWith("/tier-lists/");
   const isCollection = route.path.startsWith("/collections/");
+  const isCelebrity = route.path.startsWith("/celebrities/");
   const isTopic = route.path.startsWith("/topics/");
   const isRankings = route.path.startsWith("/rankings");
 
@@ -707,7 +744,7 @@ async function processRoute(browser, route) {
 
     // ── Ждём реальный контент (проверка каждые 500 мс) ──
     // Для динамических страниц (тир-листы, коллекции) даём больше времени
-    const contentTimeout = (isTierList || isCollection || isTopic) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
+    const contentTimeout = (isTierList || isCollection || isCelebrity || isTopic) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
     const contentLoaded = await waitForContent(page, contentTimeout, route.path);
 
     // ── Дополнительно ждём обновления title (useEffect SEOHead) ──
@@ -852,6 +889,21 @@ async function processRoute(browser, route) {
   <h1>${categoryName}</h1>
   <p>${fallbackDesc}</p>
 </main>`;
+      } else if (isCelebrity) {
+        const celebrityName = route.name.replace("Знаменитость: ", "");
+        fallbackTitle = `${celebrityName} — что читает, любимые книги | BookStrata`;
+        fallbackDesc = `Любимые книги ${celebrityName} — подборка книг, которые читает знаменитость. Книжные рекомендации на BookStrata.`;
+        canonicalPath = route.path;
+        fallbackBodyHtml = `
+<article itemscope itemtype="https://schema.org/Person">
+  <h1 itemprop="name">${celebrityName}</h1>
+  <p itemprop="description">${fallbackDesc}</p>
+  <p>Книги знаменитости временно недоступны. Зайдите позже.</p>
+  <nav>
+    <a href="/">BookStrata — главная</a> |
+    <a href="/celebrities">Все знаменитости</a>
+  </nav>
+</article>`;
       } else {
         // Статические страницы (главная, контакты, privacy, etc.)
         const pageName = route.name || "BookStrata";
@@ -1051,8 +1103,9 @@ async function prerender() {
       return;
     }
 
-    // Получаем публичные тир-листы, коллекции и темы для prerender'а (если бэкенд доступен)
+    // Получаем публичные тир-листы, коллекции, знаменитостей и темы для prerender'а (если бэкенд доступен)
     await addPublicTierListRoutes();
+    await addPublicCelebrityRoutes();
     await addPublicCollectionRoutes();
     await addTopicRoutes();
 
