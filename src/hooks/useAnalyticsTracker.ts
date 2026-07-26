@@ -37,20 +37,22 @@ function setupAnalyticsClickListener() {
     // Отправка в PostHog (если инициализирован)
     capturePosthogEvent(eventName, meta);
 
-    // Отправка в Яндекс.Метрику как цель (reachGoal)
-    try {
-      if (typeof window.ym === "function") {
-        const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
-        if (counterId) {
-          // Нормализуем имя: cta.dashboard.create_tierlist → dashboard_create_tierlist
-          const goalName = eventName.replace(/^[^.]+\./, "");
-          window.ym(Number(counterId), "reachGoal", goalName, {
-            params: { full_event: eventName, ...meta },
-          });
+    // Отправка в Яндекс.Метрику как цель (reachGoal) — только в production
+    if (!import.meta.env.DEV) {
+      try {
+        if (typeof window.ym === "function") {
+          const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
+          if (counterId) {
+            // Нормализуем имя: cta.dashboard.create_tierlist → dashboard_create_tierlist
+            const goalName = eventName.replace(/^[^.]+\./, "");
+            window.ym(Number(counterId), "reachGoal", goalName, {
+              params: { full_event: eventName, ...meta },
+            });
+          }
         }
+      } catch {
+        // Тихий fallback
       }
-    } catch {
-      // Тихий fallback
     }
   };
 
@@ -87,16 +89,18 @@ export function useAnalyticsTracker() {
     apiTrackEvent("page_view", { path: pathname }, window.location.href);
     capturePosthogEvent("page_view", { path: pathname });
 
-    // 2. Отправка хита в Яндекс.Метрику для отслеживания SPA-переходов
-    try {
-      if (typeof window.ym === "function") {
-        const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
-        if (counterId) {
-          window.ym(Number(counterId), "hit", window.location.href);
+    // 2. Отправка хита в Яндекс.Метрику для отслеживания SPA-переходов — только в production
+    if (!import.meta.env.DEV) {
+      try {
+        if (typeof window.ym === "function") {
+          const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
+          if (counterId) {
+            window.ym(Number(counterId), "hit", window.location.href);
+          }
         }
+      } catch {
+        // Тихий fallback
       }
-    } catch {
-      // Тихий fallback
     }
   }, [pathname]);
 }

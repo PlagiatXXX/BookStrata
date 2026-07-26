@@ -46,7 +46,9 @@ function initMetrika() {
 }
 
 function loadAnalytics() {
-  initMetrika();
+  if (!import.meta.env.DEV) {
+    initMetrika();
+  }
   initPosthog().catch(() => {});
 }
 
