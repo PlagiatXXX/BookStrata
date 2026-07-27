@@ -17,6 +17,7 @@ import { createLogger } from "@/lib/logger";
 import { Header } from "@/ui/Header";
 import { Footer } from "@/ui/Footer";
 import { MobileBottomNav } from "@/ui/MobileBottomNav";
+import { AmbientSettingsModal } from "@/components/AmbientSound/AmbientSettingsModal";
 
 const logger = createLogger("ProfilePage", { color: "blue" });
 
@@ -54,6 +55,7 @@ export default function ProfilePage() {
   } = useProfileActions();
 
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const username = authUser?.username || user?.username;
 
@@ -149,9 +151,7 @@ export default function ProfilePage() {
           <ProfileActions
             onEditAvatar={() => setShowAvatarSelector(true)}
             onPasswordChange={togglePasswordForm}
-            onSettingsClick={() =>
-              sileo.show({ title: "Настройки скоро появятся", icon: "⚙️" })
-            }
+            onSettingsClick={() => setShowSettings(true)}
             onAdminPanelClick={() => navigate("/admin")}
             userRole={authUser?.role}
           />
@@ -197,6 +197,11 @@ export default function ProfilePage() {
           onClose={() => setShowAvatarSelector(false)}
         />
       )}
+
+      <AmbientSettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </div>
   );
 }

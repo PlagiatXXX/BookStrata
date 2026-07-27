@@ -4,7 +4,9 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Library, Globe, LogOut, BarChart3, Star, ChevronDown } from "lucide-react";
+import { List, Library, Globe, LogOut, BarChart3, Star, ChevronDown, Pause, Play } from "lucide-react";
+import { motion } from "framer-motion";
+import { useAmbientSound } from "@/hooks/useAmbientSound";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -41,6 +43,10 @@ export const Header = ({
   const { isAuthenticated, user: authUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const ambient = useAmbientSound();
+  const ambientIsPlaying = ambient.isPlaying;
+  const ambientActive = ambient.category !== null;
 
   // Дефолтная навигация для "Главная": авторизованные → дашборд, гости → лендинг
   const handleDefaultMyRatings = () => {
@@ -262,21 +268,47 @@ export const Header = ({
                   </button>
                 )}
 
-                {/* User Avatar */}
-                <button
-                  data-analytics="nav.main.profile"
-                  onClick={() => navigate("/profile")}
-                  className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                  title="Профиль"
-                  aria-label="Перейти в профиль"
-                >
-                  <Avatar
-                    url={authUser?.avatarUrl}
-                    username={authUser?.username}
-                    size="sm"
-                    className="size-8"
-                  />
-                </button>
+                {/* User Avatar + Ambient badge */}
+                <div className="relative flex items-center">
+                  {/* Пульсирующее кольцо вокруг аватарки — пока есть активный плейлист */}
+                  {ambientActive && (
+                    <motion.div
+                      className="absolute inset-0 rounded-full ring-2 ring-[#c1fffe] pointer-events-none"
+                      animate={ambientIsPlaying ? { scale: [1, 1.08, 1], opacity: [0.6, 0.2, 0.6] } : { scale: 1, opacity: 0.3 }}
+                      transition={{ duration: 2, repeat: ambientIsPlaying ? Infinity : 0, ease: "easeInOut" }}
+                    />
+                  )}
+                  <button
+                    data-analytics="nav.main.profile"
+                    onClick={() => navigate("/profile")}
+                    className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                    title="Профиль"
+                    aria-label="Перейти в профиль"
+                  >
+                    <Avatar
+                      url={authUser?.avatarUrl}
+                      username={authUser?.username}
+                      size="sm"
+                      className="size-8"
+                    />
+                  </button>
+
+                  {/* Бейдж управления — пока есть активный плейлист */}
+                  {ambientActive && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        ambient.toggle();
+                      }}
+                      className="absolute -bottom-1 -right-1 z-20 flex size-5 items-center justify-center rounded-full border border-[#c1fffe] bg-black/90 text-[#c1fffe] transition-transform hover:scale-110 cursor-pointer"
+                      title={ambient.isPlaying ? "Пауза" : "Возобновить"}
+                      aria-label={ambient.isPlaying ? "Пауза" : "Возобновить"}
+                    >
+                      {ambient.isPlaying ? <Pause size={10} /> : <Play size={10} />}
+                    </button>
+                  )}
+                </div>
               </>
             ) : (
               <button

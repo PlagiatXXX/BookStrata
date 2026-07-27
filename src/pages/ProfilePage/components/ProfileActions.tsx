@@ -1,4 +1,4 @@
-import { Camera, Lock, Settings, Shield } from "lucide-react";
+import { Camera, Lock, Headphones, Shield } from "lucide-react";
 
 interface ProfileActionsProps {
   onEditAvatar: () => void;
@@ -43,9 +43,9 @@ export function ProfileActions({
         className="group flex flex-col items-center gap-2 p-4 rounded-xl bg-linear-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/30 hover:border-emerald-500/60 hover:from-emerald-500/30 hover:to-emerald-500/10 transition-colors cursor-pointer"
       >
         <div className="p-3 rounded-full bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
-          <Settings size={20} className="text-emerald-500" />
+          <Headphones size={20} className="text-emerald-500" />
         </div>
-        <span className="text-sm font-medium text-emerald-500">Настройки</span>
+        <span className="text-sm font-medium text-emerald-500">Плеер</span>
       </button>
 
       {isAdmin && onAdminPanelClick && (
