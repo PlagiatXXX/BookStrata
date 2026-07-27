@@ -9,6 +9,7 @@ import {
 
 interface LiveLibImportQuery {
   username: string;
+  forceRefresh?: boolean;
 }
 
 export async function livelibRoutes(fastify: FastifyInstance) {
@@ -29,15 +30,19 @@ export async function livelibRoutes(fastify: FastifyInstance) {
               minLength: 1,
               description: "LiveLib username",
             },
+            forceRefresh: {
+              type: "boolean",
+              description: "Сбросить кэш и загрузить заново",
+            },
           },
         },
       },
     },
     async (request, reply) => {
-      const { username } = request.body;
+      const { username, forceRefresh } = request.body;
 
       try {
-        const books = await fetchUserBooks(username);
+        const books = await fetchUserBooks(username, forceRefresh);
         return reply
           .code(200)
           .send(createSuccessResponse({ books, username }));

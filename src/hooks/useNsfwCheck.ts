@@ -32,7 +32,7 @@ export function useNsfwCheck() {
 
         await tf.setBackend("webgl").catch(() => tf.setBackend("cpu"))
 
-        const model = await nsfw.load()
+        const model = await nsfw.load("https://cdn.jsdelivr.net/npm/nsfwjs@4.3.0/dist/")
         modelRef.current = model
         return model
       })()

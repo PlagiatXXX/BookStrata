@@ -102,12 +102,13 @@ export interface LiveLibBook {
 
 export async function importFromLiveLib(
   username: string,
+  forceRefresh?: boolean,
 ): Promise<LiveLibBook[]> {
-  bookSearchLogger.info("Импорт книг из LiveLib", { username });
+  bookSearchLogger.info("Импорт книг из LiveLib", { username, forceRefresh });
   try {
     const result = await apiClient.post<{ books: LiveLibBook[]; username: string }>(
       "/books/livelib-import",
-      { username },
+      { username, forceRefresh },
     );
     bookSearchLogger.info("Импорт из LiveLib завершён", {
       username,

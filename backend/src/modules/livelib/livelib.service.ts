@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import { createLogger } from "../../lib/logger.js";
-import { getFromCache, setToCache } from "../../lib/cache.js";
+import { getFromCache, setToCache, deleteFromCache } from "../../lib/cache.js";
 import type { BookSearchResult } from "../books/books.service.js";
 
 const logger = createLogger("LiveLib", { color: "magenta" });
@@ -372,8 +372,16 @@ async function fetchListWithPagination(
  */
 export async function fetchUserBooks(
   username: string,
+  forceRefresh?: boolean,
 ): Promise<BookSearchResult[]> {
   const cacheKey = `livelib:user:${username.toLowerCase()}`;
+
+  // Принудительно сбрасываем кэш, если запрошено обновление
+  if (forceRefresh) {
+    logger.info(`Force refresh for LiveLib user "${username}" — clearing cache`);
+    await deleteFromCache(cacheKey);
+  }
+
   const cached = await getFromCache<BookSearchResult[]>(cacheKey);
   if (cached) {
     logger.info(

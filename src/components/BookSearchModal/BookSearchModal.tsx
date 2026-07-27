@@ -818,28 +818,63 @@ export const BookSearchModal = ({
                     <span className="text-sm text-[#a8abad]">
                       {liveLibResults.length} книг из LiveLib
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const allSelected = liveLibResults.every((b) =>
-                          liveLibSelected.has(b.openLibraryKey),
-                        );
-                        if (allSelected) {
-                          setLiveLibSelected(new Set());
-                        } else {
-                          setLiveLibSelected(
-                            new Set(liveLibResults.map((b) => b.openLibraryKey)),
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setLiveLibLoading(true);
+                          setLiveLibError(null);
+                          try {
+                            const books = await importFromLiveLib(
+                              liveLibUsername,
+                              true,
+                            );
+                            setLiveLibResults(books);
+                            setLiveLibSelected(new Set());
+                          } catch (err) {
+                            const message =
+                              err instanceof Error
+                                ? err.message
+                                : "Не удалось обновить";
+                            setLiveLibError(message);
+                            logger.error(err as Error, {
+                              action: "handleLiveLibRefresh",
+                              username: liveLibUsername,
+                            });
+                          } finally {
+                            setLiveLibLoading(false);
+                          }
+                        }}
+                        disabled={liveLibLoading}
+                        className="cursor-pointer text-xs font-bold text-[#7d8688] transition-colors hover:text-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none disabled:opacity-50"
+                      >
+                        {liveLibLoading ? "Загрузка..." : "🔄 Обновить"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allSelected = liveLibResults.every((b) =>
+                            liveLibSelected.has(b.openLibraryKey),
                           );
-                        }
-                      }}
-                      className="cursor-pointer text-xs font-bold text-[#c1fffe] transition-colors hover:text-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
-                    >
-                      {liveLibResults.every((b) =>
-                        liveLibSelected.has(b.openLibraryKey),
-                      )
-                        ? "Снять всё"
-                        : "Выбрать всё"}
-                    </button>
+                          if (allSelected) {
+                            setLiveLibSelected(new Set());
+                          } else {
+                            setLiveLibSelected(
+                              new Set(
+                                liveLibResults.map((b) => b.openLibraryKey),
+                              ),
+                            );
+                          }
+                        }}
+                        className="cursor-pointer text-xs font-bold text-[#c1fffe] transition-colors hover:text-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                      >
+                        {liveLibResults.every((b) =>
+                          liveLibSelected.has(b.openLibraryKey),
+                        )
+                          ? "Снять всё"
+                          : "Выбрать всё"}
+                      </button>
+                    </div>
                   </div>
                 )}
 
