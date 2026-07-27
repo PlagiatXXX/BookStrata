@@ -12,6 +12,7 @@ import { config } from "../../config/env.js";
 
 const GOOGLE_BOOKS_API_KEY = config.GOOGLE_BOOKS_API_KEY;
 const GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes";
+const OPEN_LIBRARY_API_URL = "https://openlibrary.org/search.json";
 
 /** Таймаут на один fetch-запрос к Google Books API (10 секунд) */
 const FETCH_TIMEOUT_MS = 10_000;
@@ -67,7 +68,7 @@ export interface BookSearchResult {
 }
 
 /**
- * Поиск книг в Google Books API
+ * Поиск книг: сначала Google Books API, при квоте/рейт-лимите — fallback на OpenLibrary
  */
 export async function searchBooks(
   query: string,
@@ -79,91 +80,198 @@ export async function searchBooks(
     return [];
   }
 
-  if (!GOOGLE_BOOKS_API_KEY) {
-    throw new Error("Google Books API key not configured");
+  // ——— Попытка 1: Google Books API ———
+  const googleCacheKey = `gbooks:search:${normalizedQuery.toLowerCase()}:${startIndex}`;
+  const googleCached = await getFromCache<BookSearchResult[]>(googleCacheKey);
+  if (googleCached) {
+    logger.info(`Google Books CACHE HIT for "${normalizedQuery}" (offset ${startIndex}): ${googleCached.length} books`);
+    return googleCached;
   }
 
-  const cacheKey = `gbooks:search:${normalizedQuery.toLowerCase()}:${startIndex}`;
+  if (GOOGLE_BOOKS_API_KEY) {
+    try {
+      const url = new URL(GOOGLE_BOOKS_API_URL);
+      url.searchParams.append("q", `intitle:${normalizedQuery}`);
+      url.searchParams.append("key", GOOGLE_BOOKS_API_KEY);
+      url.searchParams.append("maxResults", "20");
+      url.searchParams.append("startIndex", startIndex.toString());
+
+      const response = await fetchWithRetry(url.toString(), 3);
+      if (!response.ok) {
+        let errorBody = "";
+        try {
+          errorBody = await response.text();
+        } catch {
+          // ignore
+        }
+
+        const isQuotaError = response.status === 429 || response.status === 403;
+
+        logger.warn(
+          `Google Books API недоступен после ретраев: ${response.status} ${response.statusText}`,
+          errorBody ? { responseBody: errorBody.slice(0, 500) } : undefined,
+        );
+
+        if (isQuotaError || response.status >= 500) {
+          // Проблемы на стороне Google (квота, рейт-лимит, серверная ошибка) — fallback на OpenLibrary
+          logger.info(`Google Books недоступен (${response.status}), falling back to OpenLibrary for "${normalizedQuery}"`);
+          return searchOpenLibrary(normalizedQuery, startIndex);
+        }
+
+        // Клиентская ошибка (400, 404 и т.п.) — возвращаем пустой массив
+        logger.warn(`Google Books вернул ${response.status}, возвращаем пустой результат`);
+        return [];
+      }
+
+      const data = (await response.json()) as {
+        items?: GoogleBookResponse[];
+        totalItems?: number;
+      };
+
+      const books: BookSearchResult[] = (data.items || [])
+        .filter((book): book is GoogleBookResponse => !!book?.volumeInfo)
+        .map((book) => {
+          const result: BookSearchResult = {
+            openLibraryKey: book.id,
+            title: book.volumeInfo.title,
+            author: book.volumeInfo.authors?.[0] || "Неизвестен",
+            coverUrl:
+              book.volumeInfo.imageLinks?.thumbnail?.replace("http:", "https:") ||
+              null,
+            coverUrlLarge:
+              book.volumeInfo.imageLinks?.large?.replace("http:", "https:") ||
+              book.volumeInfo.imageLinks?.medium?.replace("http:", "https:") ||
+              book.volumeInfo.imageLinks?.thumbnail?.replace("http:", "https:") ||
+              null,
+          };
+
+          if (book.volumeInfo.publishedDate) {
+            result.publishYear = parseInt(
+              book.volumeInfo.publishedDate.substring(0, 4),
+            );
+          }
+          if (book.volumeInfo.pageCount) {
+            result.numberOfPages = book.volumeInfo.pageCount;
+          }
+          if (book.volumeInfo.categories) {
+            result.subjects = book.volumeInfo.categories;
+          }
+
+          return result;
+        })
+        // Фильтруем только книги с обложками
+        .filter((book) => book.coverUrl || book.coverUrlLarge);
+
+      // Дедупликация по openLibraryKey (Google Books может возвращать дубликаты)
+      const uniqueBooks = Array.from(
+        new Map(books.map((book) => [book.openLibraryKey, book])).values(),
+      );
+
+      logger.info(
+        `Google Books — fetched ${uniqueBooks.length} unique books (from ${books.length} total)`,
+      );
+
+      const ttl = uniqueBooks.length > 0 ? SEARCH_CACHE_TTL : SEARCH_CACHE_TTL_EMPTY;
+      await setToCache(googleCacheKey, uniqueBooks, ttl);
+
+      return uniqueBooks;
+    } catch (error) {
+      // Сетевая ошибка или другая неожиданность — fallback на OpenLibrary
+      logger.warn("Google Books search failed, trying OpenLibrary", error instanceof Error ? { function: "searchBooks", message: error.message } : undefined);
+      return searchOpenLibrary(normalizedQuery, startIndex);
+    }
+  }
+
+  // ——— Попытка 2: OpenLibrary (если нет Google API key или Google упал) ———
+  return searchOpenLibrary(normalizedQuery, startIndex);
+}
+
+/**
+ * Поиск книг через OpenLibrary API.
+ * Используется как fallback при недоступности Google Books API.
+ */
+async function searchOpenLibrary(
+  query: string,
+  _startIndex = 0,
+): Promise<BookSearchResult[]> {
+  const cacheKey = `openlib:search:${query.toLowerCase()}`;
   const cached = await getFromCache<BookSearchResult[]>(cacheKey);
   if (cached) {
-    logger.info(`Cache HIT for "${normalizedQuery}" (offset ${startIndex}): ${cached.length} books`);
+    logger.info(`OpenLibrary CACHE HIT for "${query}": ${cached.length} books`);
     return cached;
   }
 
   try {
-    const url = new URL(GOOGLE_BOOKS_API_URL);
-    url.searchParams.append("q", `intitle:${normalizedQuery}`);
-    url.searchParams.append("key", GOOGLE_BOOKS_API_KEY);
-    url.searchParams.append("maxResults", "20");
-    url.searchParams.append("startIndex", startIndex.toString());
+    const url = new URL(OPEN_LIBRARY_API_URL);
+    url.searchParams.append("q", query);
+    url.searchParams.append("limit", "20");
 
-    
-    const response = await fetchWithRetry(url.toString(), 3);
-    if (!response.ok) {
-      // Пытаемся прочитать тело ошибки от Google для диагностики
-      let errorBody = "";
-      try {
-        errorBody = await response.text();
-      } catch {
-        // ignore
-      }
-      // Финальный фейл после ретраев. Логируем как warn, не как error,
-      // потому что это проблема стороннего API, а не нашей.
-      logger.warn(
-        `Google Books API недоступен после ретраев: ${response.status} ${response.statusText}`,
-        errorBody ? { responseBody: errorBody.slice(0, 500) } : undefined,
-      );
-      // Не кешируем фейл и возвращаем пустой массив — фронт сам покажет "ничего не найдено"
-      throw new Error(
-        `Google Books API error: ${response.status} ${response.statusText}`,
-      );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    let response: Response;
+    try {
+      response = await fetch(url.toString(), { signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
     }
+
+    if (!response.ok) {
+      logger.warn(
+        `OpenLibrary API error: ${response.status} ${response.statusText}`,
+      );
+      return [];
+    }
+
     const data = (await response.json()) as {
-      items?: GoogleBookResponse[];
-      totalItems?: number;
+      docs?: Array<{
+        key: string;
+        title?: string;
+        author_name?: string[];
+        first_publish_year?: number;
+        number_of_pages_median?: number;
+        cover_i?: number;
+        subject?: string[];
+        isbn?: string[];
+      }>;
     };
 
-    const books: BookSearchResult[] = (data.items || [])
-      .filter((book): book is GoogleBookResponse => !!book?.volumeInfo)
-      .map((book) => {
+    const books: BookSearchResult[] = (data.docs || [])
+      .filter((doc) => doc.title)
+      .map((doc) => {
+        const coverId = doc.cover_i;
         const result: BookSearchResult = {
-          openLibraryKey: book.id,
-          title: book.volumeInfo.title,
-          author: book.volumeInfo.authors?.[0] || "Неизвестен",
-          coverUrl:
-            book.volumeInfo.imageLinks?.thumbnail?.replace("http:", "https:") ||
-            null,
-          coverUrlLarge:
-            book.volumeInfo.imageLinks?.large?.replace("http:", "https:") ||
-            book.volumeInfo.imageLinks?.medium?.replace("http:", "https:") ||
-            book.volumeInfo.imageLinks?.thumbnail?.replace("http:", "https:") ||
-            null,
+          openLibraryKey: doc.key.replace("/works/", ""),
+          title: doc.title || "Без названия",
+          author: doc.author_name?.[0] || "Неизвестен",
+          coverUrl: coverId
+            ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`
+            : null,
+          coverUrlLarge: coverId
+            ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+            : null,
         };
 
-        if (book.volumeInfo.publishedDate) {
-          result.publishYear = parseInt(
-            book.volumeInfo.publishedDate.substring(0, 4),
-          );
+        if (doc.first_publish_year) {
+          result.publishYear = doc.first_publish_year;
         }
-        if (book.volumeInfo.pageCount) {
-          result.numberOfPages = book.volumeInfo.pageCount;
+        if (doc.number_of_pages_median) {
+          result.numberOfPages = doc.number_of_pages_median;
         }
-        if (book.volumeInfo.categories) {
-          result.subjects = book.volumeInfo.categories;
+        if (doc.subject?.length) {
+          result.subjects = doc.subject.slice(0, 10);
         }
 
         return result;
       })
-      // Фильтруем только книги с обложками
       .filter((book) => book.coverUrl || book.coverUrlLarge);
 
-    // Дедупликация по openLibraryKey (Google Books может возвращать дубликаты)
+    // OpenLibrary не возвращает дубликаты с одинаковым key, но на всякий случай
     const uniqueBooks = Array.from(
       new Map(books.map((book) => [book.openLibraryKey, book])).values(),
     );
 
     logger.info(
-      `Cache MISS — fetched ${uniqueBooks.length} unique books from Google Books (from ${books.length} total)`,
+      `OpenLibrary — fetched ${uniqueBooks.length} books for "${query}"`,
     );
 
     const ttl = uniqueBooks.length > 0 ? SEARCH_CACHE_TTL : SEARCH_CACHE_TTL_EMPTY;
@@ -171,8 +279,8 @@ export async function searchBooks(
 
     return uniqueBooks;
   } catch (error) {
-    logger.error(error as Error, { function: "searchGoogleBooks" });
-    throw error;
+    logger.error(error as Error, { function: "searchOpenLibrary" });
+    return [];
   }
 }
 

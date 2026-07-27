@@ -158,20 +158,153 @@ describe("books.service", () => {
       );
     });
 
-    it("должен бросить ошибку после исчерпания ретраев", async () => {
+    it("должен вернуть пустой массив при не-retryable ошибке Google (400)", async () => {
       mockFetch.mockResolvedValue({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+        text: async () => '{"error":{"message":"Bad Request"}}',
+      });
+
+      const result = await booksService.searchBooks(mockQuery);
+
+      // 400 — не ретраится, сразу возвращается. OpenLibrary не вызывается.
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(result).toEqual([]);
+    });
+
+    it("должен вернуть книги из OpenLibrary при 403 от Google (quota exceeded)", async () => {
+      // Google Books — 403 (3 ретрая)
+      for (let i = 0; i < 3; i++) {
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status: 403,
+          statusText: "Forbidden",
+          text: async () => '{"error":{"message":"Quota exceeded"}}',
+        });
+      }
+      // OpenLibrary — успех
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          docs: [
+            {
+              key: "/works/OL123W",
+              title: "Open Book Title",
+              author_name: ["Open Author"],
+              first_publish_year: 2005,
+              number_of_pages_median: 300,
+              cover_i: 999,
+              subject: ["Fiction", "Drama"],
+            },
+          ],
+        }),
+      });
+
+      const result = await booksService.searchBooks(mockQuery);
+
+      // 3 попытки Google + 1 OpenLibrary = 4
+      expect(mockFetch).toHaveBeenCalledTimes(4);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        openLibraryKey: "OL123W",
+        title: "Open Book Title",
+        author: "Open Author",
+        publishYear: 2005,
+        numberOfPages: 300,
+        subjects: ["Fiction", "Drama"],
+      });
+      expect(result[0].coverUrl).toBe("https://covers.openlibrary.org/b/id/999-M.jpg");
+      expect(result[0].coverUrlLarge).toBe("https://covers.openlibrary.org/b/id/999-L.jpg");
+    });
+
+    it("должен вернуть книги из OpenLibrary при 429 от Google (rate limit)", async () => {
+      // Google Books — 429 (3 ретрая)
+      for (let i = 0; i < 3; i++) {
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status: 429,
+          statusText: "Too Many Requests",
+          text: async () => '{"error":{"message":"Rate limited"}}',
+        });
+      }
+      // OpenLibrary — успех
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          docs: [
+            {
+              key: "/works/OL456W",
+              title: "Another Open Book",
+              author_name: ["Another Author"],
+              cover_i: 888,
+            },
+          ],
+        }),
+      });
+
+      const result = await booksService.searchBooks(mockQuery);
+
+      expect(mockFetch).toHaveBeenCalledTimes(4);
+      expect(result).toHaveLength(1);
+      expect(result[0].openLibraryKey).toBe("OL456W");
+      expect(result[0].coverUrl).toBe("https://covers.openlibrary.org/b/id/888-M.jpg");
+    });
+
+    it("должен вернуть книги из OpenLibrary при недоступности Google", async () => {
+      // Google — 403
+      mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 403,
         statusText: "Forbidden",
         text: async () => '{"error":{"message":"Quota exceeded"}}',
       });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: async () => '{"error":{"message":"Quota exceeded"}}',
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: async () => '{"error":{"message":"Quota exceeded"}}',
+      });
+      // OpenLibrary — успех
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          docs: [
+            {
+              key: "/works/OL123W",
+              title: "Open Book Title",
+              author_name: ["Open Author"],
+              first_publish_year: 2005,
+              number_of_pages_median: 300,
+              cover_i: 999,
+              subject: ["Fiction", "Drama"],
+            },
+          ],
+        }),
+      });
 
-      await expect(booksService.searchBooks(mockQuery)).rejects.toThrow(
-        "Google Books API error: 403 Forbidden",
-      );
+      const result = await booksService.searchBooks(mockQuery);
 
-      // Должно быть 3 попытки (исходная + 2 ретрая)
-      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        openLibraryKey: "OL123W",
+        title: "Open Book Title",
+        author: "Open Author",
+        publishYear: 2005,
+        numberOfPages: 300,
+        subjects: ["Fiction", "Drama"],
+      });
+      expect(result[0].coverUrl).toBe("https://covers.openlibrary.org/b/id/999-M.jpg");
+      expect(result[0].coverUrlLarge).toBe("https://covers.openlibrary.org/b/id/999-L.jpg");
     });
 
     it("должен использовать правильный URL для API запроса", async () => {
