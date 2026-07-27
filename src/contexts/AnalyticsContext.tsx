@@ -21,6 +21,10 @@ declare global {
 const DISMISS_KEY = "bookstrata-cookie-notice";
 
 function initMetrika() {
+  // Не инициализируем метрику при prerender'е — иначе Яндекс.Метрика
+  // засчитывает просмотры с 127.0.0.1:4173 (локальный сервер пререндера)
+  if (typeof window !== 'undefined' && window.__PRERENDER__) return;
+
   const counterId = import.meta.env.VITE_YM_COUNTER_ID;
   if (!counterId) return;
 

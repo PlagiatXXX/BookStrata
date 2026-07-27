@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, Navigate, useNavigate } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 
 import { useAuth } from "@/hooks/useAuthContext"
@@ -13,6 +13,7 @@ import { Footer } from "@/ui/Footer"
 import { RevealBox } from "@/ui/RevealBox"
 import { Pointer } from "@/components/ui/pointer"
 import { apiTrackEvent } from "@/lib/analyticsApi"
+import { Spinner } from "@/components/Spinner"
 import { BorderBeam } from "@/components/ui/border-beam"
 import { DonateModal } from "@/components/DonateModal/DonateModal"
 import { SEOHead } from "@/components/SEO/SEOHead"
@@ -254,13 +255,6 @@ export default function LandingPage() {
   const navigate = useNavigate()
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth()
 
-  // Редирект авторизованных пользователей на дашборд
-  useEffect(() => {
-    if (!isAuthLoading && isAuthenticated) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [isAuthenticated, isAuthLoading, navigate]);
-
   const { data: tierListsData } = useQuery({
     queryKey: ["landing-tierlists"],
     queryFn: () => getPublicTierLists(1, 4, "likes"),
@@ -316,7 +310,19 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  if (isAuthenticated && !isAuthLoading) return null;
+  // Пока проверяется сессия — не рендерим контент, чтобы не моргал
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  // Авторизованные пользователи — редирект на дашборд
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="landing-page">

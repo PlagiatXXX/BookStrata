@@ -71,7 +71,7 @@ export async function generateAvatar(
     const encodedPrompt = encodeURIComponent(prompt);
     const seed = Math.floor(Math.random() * 1000000);
 
-    const baseImageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=${POLLINATIONS_MODEL || "flux"}&width=512&height=512&seed=${seed}&nologo=true`;
+    const baseImageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=${POLLINATIONS_MODEL || "klein"}&width=512&height=512&seed=${seed}&nologo=true`;
     const imageUrl = POLLINATIONS_API_KEY
       ? `${baseImageUrl}&key=${POLLINATIONS_API_KEY}`
       : baseImageUrl;

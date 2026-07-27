@@ -37,8 +37,8 @@ function setupAnalyticsClickListener() {
     // Отправка в PostHog (если инициализирован)
     capturePosthogEvent(eventName, meta);
 
-    // Отправка в Яндекс.Метрику как цель (reachGoal) — только в production
-    if (!import.meta.env.DEV) {
+    // Отправка в Яндекс.Метрику как цель (reachGoal) — только в production, не в prerender
+    if (!import.meta.env.DEV && !window.__PRERENDER__) {
       try {
         if (typeof window.ym === "function") {
           const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
@@ -89,8 +89,8 @@ export function useAnalyticsTracker() {
     apiTrackEvent("page_view", { path: pathname }, window.location.href);
     capturePosthogEvent("page_view", { path: pathname });
 
-    // 2. Отправка хита в Яндекс.Метрику для отслеживания SPA-переходов — только в production
-    if (!import.meta.env.DEV) {
+    // 2. Отправка хита в Яндекс.Метрику для отслеживания SPA-переходов — только в production, не в prerender
+    if (!import.meta.env.DEV && !window.__PRERENDER__) {
       try {
         if (typeof window.ym === "function") {
           const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
