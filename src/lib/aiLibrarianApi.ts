@@ -25,6 +25,20 @@ export interface AiLibrarianContext {
   slug?: string
 }
 
+/**
+ * Удаляет вопросительные предложения из ответа AI.
+ * Оставляет только текст описания без вопросов и вовлекающих фраз.
+ */
+function trimQuestions(text: string): string {
+  // Разбиваем на предложения (по точке, восклицательному или вопросительному знаку)
+  const sentences = text.split(/(?<=[.!?])\s+/)
+  // Оставляем только предложения без вопросительного знака
+  const filtered = sentences.filter((s) => !s.includes('?'))
+  // Если все предложения содержат вопросы — возвращаем исходный текст
+  if (filtered.length === 0) return text
+  return filtered.join(' ').trim()
+}
+
 export async function generateBookDescription(
   title: string,
   author: string,
@@ -49,7 +63,7 @@ export async function generateBookDescription(
             break
           case 'done':
             settled = true
-            resolve(fullResponse.trim())
+            resolve(trimQuestions(fullResponse.trim()))
             break
           case 'error':
             settled = true
