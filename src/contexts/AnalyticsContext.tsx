@@ -53,7 +53,15 @@ function loadAnalytics() {
   if (!import.meta.env.DEV) {
     initMetrika();
   }
-  initPosthog().catch(() => {});
+
+  // PostHog — отложенная инициализация, не блокирует LCP и первый рендер.
+  // requestIdleCallback срабатывает в ближайший простой браузера, но не позже timeout.
+  if (typeof window.requestIdleCallback !== "undefined") {
+    requestIdleCallback(() => initPosthog().catch(() => {}), { timeout: 3000 });
+  } else {
+    // fallback для старых браузеров
+    setTimeout(() => initPosthog().catch(() => {}), 2000);
+  }
 }
 
 interface AnalyticsContextValue {

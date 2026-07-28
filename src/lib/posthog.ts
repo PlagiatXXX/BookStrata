@@ -33,6 +33,7 @@ export async function initPosthog() {
       capture_performance: false,  // не грузим Performance API без нужды
       autocapture: false,          // используем свой data-analytics слой
       disable_session_recording: false,
+      disable_surveys: true,       // опросы не используются → не грузим surveys.js
       persistence: "localStorage",
       loaded: () => {
         posthog.startSessionRecording();
