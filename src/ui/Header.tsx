@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
 import { Avatar } from "@/components/Avatar";
-import { List, Library, Globe, LogOut, BarChart3, Star, ChevronDown, Pause, Play } from "lucide-react";
+import { List, Library, Globe, LogOut, BarChart3, Star, ChevronDown, Pause, Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAmbientSound } from "@/hooks/useAmbientSound";
 import { ConfirmModal } from "@/ui/ConfirmModal";
@@ -269,7 +269,7 @@ export const Header = ({
                 )}
 
                 {/* User Avatar + Ambient badge */}
-                <div className="relative flex items-center">
+                <div className="relative flex items-center group">
                   {/* Пульсирующее кольцо вокруг аватарки — пока есть активный плейлист */}
                   {ambientActive && (
                     <motion.div

@@ -658,6 +658,7 @@ const TierListEditorContent = () => {
   const headerProps: import("./components/EditorHeader").EditorHeaderProps = {
     title: listData.title,
     isDemo,
+    onBackClick: handleMyRatingsClick,
     ...(isReadOnly && {
       author: apiData?.user,
       likesCount: likesData?.likesCount || 0,

@@ -263,7 +263,7 @@ export function getAuthHeader(): Record<string, string> {
  * Обработка 401 ошибки — очищает токен и триггерит перепроверку AuthProvider
  */
 export function handleUnauthorized() {
-  authLogger.warn(
+  authLogger.info(
     "Неавторизованный доступ — очистка сессии",
   );
   removeAuthToken();
@@ -313,8 +313,8 @@ export async function refreshAccessToken(): Promise<string> {
       return newAccessToken;
     })
     .catch((error) => {
-      // Это штатная ситуация для неавторизованных пользователей
-      authLogger.warn("Ошибка refresh токена", {
+      // Штатная ситуация для неавторизованных пользователей
+      authLogger.info("Refresh токена не удался (штатно для гостя)", {
         action: "refresh access token",
         error: error instanceof Error ? error.message : String(error),
       });

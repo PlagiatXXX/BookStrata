@@ -170,13 +170,18 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
 
   const toggle = useCallback(() => {
     const sound = soundRef.current;
-    if (!sound) return;
+    if (!sound) {
+      if (category !== null) {
+        playRef.current(category, currentTrackIndex);
+      }
+      return;
+    }
     if (sound.playing()) {
       sound.pause();
     } else {
       sound.play();
     }
-  }, []);
+  }, [category, currentTrackIndex]);
 
   /* ── stop ── */
 

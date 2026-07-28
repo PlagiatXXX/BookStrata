@@ -225,7 +225,7 @@ main.grid:has(> .neo-brutalist-editor) {
 
 /* BOOK CARD */
 .nb-book-card {
-  width: 90px;
+  width: clamp(56px, 12vw, 90px);
   aspect-ratio: 2/3;
   background-size: cover;
   background-position: center;
@@ -241,22 +241,31 @@ main.grid:has(> .neo-brutalist-editor) {
 
 @media (max-width: 767px) {
   .nb-book-card {
-    width: 64px;
+    width: clamp(48px, 18vw, 64px);
+  }
+  .neo-brutalist-editor .nb-tier-row {
+    min-height: clamp(68px, 18vw, 90px);
   }
   .neo-brutalist-editor .nb-book-track {
-    gap: 0.1rem;
-    padding: 0.15rem;
-    min-height: 65px;
+    gap: clamp(0.08rem, 0.8vw, 0.15rem);
+    padding: clamp(0.1rem, 0.75vw, 0.2rem);
+    min-height: clamp(68px, 18vw, 90px);
   }
   .neo-brutalist-editor .nb-rank-box {
-    width: 70px;
+    width: clamp(56px, 18vw, 70px);
   }
   .neo-brutalist-editor .nb-tier-actions {
-    width: 36px;
+    width: clamp(30px, 10vw, 36px);
+    gap: clamp(0.1rem, 0.8vw, 0.15rem);
+  }
+  .neo-brutalist-editor .nb-tier-actions button svg {
+    width: clamp(12px, 4vw, 14px);
+    height: clamp(12px, 4vw, 14px);
   }
   .palette-toggle {
-    width: 18px;
-    height: 18px;
+    width: clamp(16px, 4vw, 18px);
+    height: clamp(16px, 4vw, 18px);
+    transform: translate(2px, 2px);
   }
 }
 

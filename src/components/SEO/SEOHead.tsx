@@ -148,6 +148,7 @@ export function SEOHead({
     ? {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
+        "@id": `${pageUrl}#breadcrumb`,
         itemListElement: breadcrumbs.map((crumb, i) => ({
           "@type": "ListItem",
           position: i + 1,

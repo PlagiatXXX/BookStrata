@@ -350,7 +350,7 @@ export const BookEditModal = ({
       <Modal
         isOpen={isOpen}
         onClose={handleSaveAndClose}
-        className="max-w-[65vw] min-w-[700px] max-md:min-w-0 max-md:max-w-full max-md:mx-2"
+        className="w-full max-w-[min(92vw,720px)] max-md:mx-2 max-md:min-w-0"
         titleId="book-edit-title"
       >
       <div
@@ -367,7 +367,7 @@ export const BookEditModal = ({
         </button>
 
         <div className="border-b-2 border-black bg-[#181818] px-5 py-4 max-md:px-3 max-md:py-3">
-          <div className="pr-12">
+          <div className="pr-12 max-md:pr-0">
             <p
               id="book-edit-title"
               className="mb-1.5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]"
@@ -378,7 +378,7 @@ export const BookEditModal = ({
               </span>
             </p>
 
-            {/* Строка: Название + Жанр */}
+            {/* Строка: Название + Автор */}
             <div className="grid grid-cols-[1fr_1fr] gap-4 max-md:grid-cols-1">
               <div>
                 <label
@@ -405,32 +405,32 @@ export const BookEditModal = ({
               </div>
               <div>
                 <label
-                  htmlFor="book-genre-input"
+                  htmlFor="book-author-input"
                   className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
                 >
-                  Жанр
+                  Автор
                 </label>
-                <input
-                  id="book-genre-input"
-                  type="text"
-                  value={genre}
-                  onChange={(e) =>
-                    dispatch({ type: "SET_GENRE", genre: e.target.value })
+                <AuthorInput
+                  value={author}
+                  onChange={(val) =>
+                    dispatch({ type: "SET_AUTHOR", author: val })
                   }
-                  maxLength={50}
-                  className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
-                  placeholder="Фантастика, детектив..."
-                  aria-label="Жанр книги"
+                  maxLength={100}
+                  inputClass={inputClass}
+                  placeholder="Автор книги"
                 />
+                <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  {author.length}/100
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto bg-[#111111] p-6 max-md:p-3">
-          <div className="flex flex-col gap-6">
-            <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)]">
-              <section className="border-2 border-black bg-[#171717] p-3">
+          <div className="flex flex-col gap-6 max-md:gap-4">
+            <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] max-md:grid-cols-1">
+              <section className="border-2 border-black bg-[#171717] p-3 max-md:p-2">
                 <p className={`${sectionTitleClass} text-center`}>Обложка</p>
                 <div className="relative mx-auto h-64 w-40 overflow-hidden border-2 border-black bg-[#0a0a0a] max-sm:h-56">
                   {coverImageUrl ? (
@@ -449,7 +449,7 @@ export const BookEditModal = ({
                     <BookCoverPlaceholder />
                   </div>
                 </div>
-                <div className="mt-3 flex flex-col gap-2">
+                <div className="mt-3 flex flex-col gap-2 max-md:gap-1.5">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -493,33 +493,32 @@ export const BookEditModal = ({
               </section>
 
               <div className="grid gap-6">
-                {/* Строка: Автор + Теги */}
-                <div className="grid grid-cols-[1fr_1fr] gap-4 max-md:grid-cols-1">
-                  <section className="border-2 border-black bg-[#171717] p-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
                     <label
-                      htmlFor="book-author-input"
-                      className={sectionTitleClass}
+                      htmlFor="book-genre-input"
+                      className={`${sectionTitleClass} max-md:text-[9px]`}
                     >
-                      Автор
+                      Жанр
                     </label>
-                    <AuthorInput
-                      value={author}
-                      onChange={(val) =>
-                        dispatch({ type: "SET_AUTHOR", author: val })
+                    <input
+                      id="book-genre-input"
+                      type="text"
+                      value={genre}
+                      onChange={(e) =>
+                        dispatch({ type: "SET_GENRE", genre: e.target.value })
                       }
-                      maxLength={100}
-                      inputClass={inputClass}
-                      placeholder="Автор книги"
+                      maxLength={50}
+                      className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
+                      placeholder="Фантастика, детектив..."
+                      aria-label="Жанр книги"
                     />
-                    <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                      {author.length}/100
-                    </span>
                   </section>
 
-                  <section className="border-2 border-black bg-[#171717] p-4">
+                  <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
                     <label
                       htmlFor="book-tags-input"
-                      className={sectionTitleClass}
+                      className={`${sectionTitleClass} max-md:text-[9px]`}
                     >
                       <span className="flex items-center gap-1.5">
                         <Hash size={12} />
@@ -543,8 +542,8 @@ export const BookEditModal = ({
                   </section>
                 </div>
 
-                <section className="border-2 border-black bg-[#171717] p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
+                  <div className="flex items-center justify-between mb-3 max-md:flex-col max-md:items-start max-md:gap-2">
                     <label
                       htmlFor="book-description-input"
                       className={sectionTitleClass}
@@ -576,7 +575,7 @@ export const BookEditModal = ({
                         description: e.target.value,
                       })
                     }
-                    className={`${textareaClass} min-h-40 focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                    className={`${textareaClass} min-h-40 max-md:min-h-[180px] focus-visible:ring-2 focus-visible:ring-cyan-400`}
                     placeholder="Краткое описание книги"
                     aria-label="Описание книги"
                   />
@@ -584,10 +583,10 @@ export const BookEditModal = ({
               </div>
             </div>
 
-            <section className="border-2 border-black bg-[#171717] p-4">
+            <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
               <label
                 htmlFor="book-thoughts-input"
-                className={sectionTitleClass}
+                className={`${sectionTitleClass} max-md:text-[9px]`}
               >
                 Мои мысли
               </label>
@@ -605,8 +604,8 @@ export const BookEditModal = ({
             </section>
 
             {/* Rating Section */}
-            <section className="border-2 border-black bg-[#171717] p-4">
-              <span className={`${sectionTitleClass} flex items-center gap-2`}>
+            <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
+              <span className={`${sectionTitleClass} flex items-center gap-2 max-md:text-[9px]`}>
                 <Star size={14} />
                 Оценка книги
               </span>
@@ -697,7 +696,7 @@ export const BookEditModal = ({
           <Button
             variant="ghost"
             onClick={handleSaveAndClose}
-            className="border-2 border-black bg-transparent px-4 py-2 text-sm font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-pink-500"
+            className="border-2 border-black bg-transparent px-4 py-2 text-sm font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-pink-500 max-md:w-full"
             aria-label="Закрыть"
           >
             Закрыть

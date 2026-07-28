@@ -41,10 +41,21 @@ interface TierLabelTextProps {
 }
 
 const TierLabelText = memo(
-  ({ title, textColor, dynamicSizeClass, weightClass, isItalic, customColor }: TierLabelTextProps) => {
+  ({
+    title,
+    textColor,
+    dynamicSizeClass,
+    weightClass,
+    isItalic,
+    customColor,
+  }: TierLabelTextProps) => {
     const words = title.split(/\s+/);
     const isMultiWord = words.length >= 2;
-    const colorClass = customColor ? "" : textColor === "black" ? "text-black" : "text-white";
+    const colorClass = customColor
+      ? ""
+      : textColor === "black"
+        ? "text-black"
+        : "text-white";
     const fontClass = `${weightClass} ${isItalic ? "italic" : ""}`;
 
     if (isMultiWord) {
@@ -174,9 +185,7 @@ export const TierLabel = memo(
             : undefined
         }
         title={
-          onRename || onChangeColor
-            ? "Кликните для переименования"
-            : undefined
+          onRename || onChangeColor ? "Кликните для переименования" : undefined
         }
       >
         {isEditing ? (
@@ -189,7 +198,11 @@ export const TierLabel = memo(
             className={`w-full min-w-0 bg-transparent text-center outline-none break-words ${
               textColor === "black" ? "text-black" : "text-white"
             }`}
-            style={{ fontSize: "inherit", fontWeight: "inherit", fontStyle: "inherit" }}
+            style={{
+              fontSize: "inherit",
+              fontWeight: "inherit",
+              fontStyle: "inherit",
+            }}
           />
         ) : (
           <TierLabelText
@@ -203,7 +216,7 @@ export const TierLabel = memo(
         )}
 
         {onChangeColor && (
-          <div className="absolute bottom-2 right-2 z-20 opacity-0 transition-opacity group-hover/label:opacity-100 focus-within:opacity-100 max-md:opacity-100">
+          <div className="absolute bottom-2 right-2 z-20 opacity-0 transition-opacity group-hover/label:opacity-100 focus-within:opacity-100 max-md:bottom-1 max-md:right-1 max-md:opacity-100">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -212,7 +225,7 @@ export const TierLabel = memo(
               aria-label="Изменить цвет уровня"
               aria-expanded={isPaletteOpen}
               aria-haspopup="true"
-              className="nb-heavy-border flex size-6 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 palette-toggle"
+              className="nb-heavy-border flex size-6 max-md:size-5 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 palette-toggle"
               title="Изменить цвет"
             >
               <Palette size={12} aria-hidden="true" />

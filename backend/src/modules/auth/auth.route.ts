@@ -166,12 +166,11 @@ export async function authRoutes(fastify: FastifyInstance) {
   );
 
   // POST /api/auth/refresh
-  fastify.post("/refresh", {
-    // Fastify 5 требует тело для POST с Content-Type: application/json.
-    // Браузер может сам добавить этот заголовок даже без тела.
-    // bodyLimit: 1 отключает парсинг тела для пустых запросов — refresh работает только по куке.
-    bodyLimit: 1,
-  }, async (request, reply) => {
+  // Работает только по HttpOnly cookie (refreshToken), тело не требуется.
+  // bodyLimit намеренно не ставим — Fastify 5 может выбросить
+  // FST_ERR_CTP_BODY_TOO_LARGE/EMPTY_JSON_BODY, который попадёт в catch
+  // и превратится в 401 вместо штатной обработки.
+  fastify.post("/refresh", {}, async (request, reply) => {
     try {
       const refreshToken = request.cookies.refreshToken;
 

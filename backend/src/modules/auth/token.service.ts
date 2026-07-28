@@ -22,8 +22,18 @@ export interface AuthToken {
 
 async function getRefreshVersion(userId: number): Promise<number> {
   try {
-    const val = await redis.get(`${REFRESH_VERSION_PREFIX}${userId}`);
-    return val ? parseInt(val, 10) : 0;
+    const key = `${REFRESH_VERSION_PREFIX}${userId}`;
+    const val = await redis.get(key);
+    if (val != null) {
+      // Продлеваем TTL при каждом обращении — чтобы ключ не истёк,
+      // пока у пользователя есть активные refresh-токены.
+      // Без этого через 30 дней после incrementRefreshVersion (сброс пароля)
+      // ключ исчезнет, getRefreshVersion начнёт возвращать 0,
+      // и все токены с refreshVersion > 0 станут невалидны (401).
+      await redis.expire(key, REFRESH_VERSION_TTL);
+      return parseInt(val, 10);
+    }
+    return 0;
   } catch {
     logger.warn("Redis unavailable, refresh version check skipped");
     return 0;

@@ -22,6 +22,8 @@ interface DashboardLayoutProps {
   hideLogout?: boolean;
   /** Вариант фона: "gradient" — сине-фиолетовый градиент (по умолчанию), "dark" — нейтральный тёмный для нео-бруталист страниц */
   bgVariant?: BgVariant;
+  /** Переопределение отступа сверху для контента по отношению к фиксированному хедеру */
+  contentTopPadding?: string;
 }
 
 const BG_STYLES: Record<BgVariant, React.CSSProperties> = {
@@ -50,6 +52,7 @@ export function DashboardLayout({
   hideMobileNav = false,
   hideLogout = false,
   bgVariant = "gradient",
+  contentTopPadding,
 }: DashboardLayoutProps) {
   return (
     <div
@@ -65,7 +68,7 @@ export function DashboardLayout({
         activeItem={activeItem}
         hideLogout={hideLogout}
       />
-      <main className={`grid flex-1 grid-cols-1 pt-24 overflow-x-hidden ${
+      <main className={`grid flex-1 grid-cols-1 ${contentTopPadding || "pt-24"} overflow-x-hidden ${
         hideMobileNav ? "" : "pb-16 md:pb-0"
       }`}>
         {fullWidth ? (

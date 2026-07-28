@@ -1,10 +1,10 @@
-import { GitFork } from 'lucide-react';
-import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { forkTierList } from '@/lib/tierListApi';
-import { sileo } from 'sileo';
-import { LikeButton } from '@/components/LikeButton';
-import { TierListCover } from '@/components/DashboardHeroSection/components/TierListCover';
+import { GitFork, ArrowLeft } from "lucide-react";
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { forkTierList } from "@/lib/tierListApi";
+import { sileo } from "sileo";
+import { LikeButton } from "@/components/LikeButton";
+import { TierListCover } from "@/components/DashboardHeroSection/components/TierListCover";
 
 export interface EditorHeaderProps {
   title: string;
@@ -21,6 +21,8 @@ export interface EditorHeaderProps {
   coverImageUrl?: string | null;
   booksCount?: number;
   onFork?: () => Promise<void>;
+  /** Колбэк для кнопки «На главную» на мобилках */
+  onBackClick?: () => void;
 }
 
 export const EditorHeader = ({
@@ -37,18 +39,20 @@ export const EditorHeader = ({
   coverImageUrl,
   booksCount = 0,
   onFork,
+  onBackClick,
 }: EditorHeaderProps) => {
   const navigate = useNavigate();
   const [isForking, setIsForking] = useState(false);
 
   const showAuthPrompt = useCallback(() => {
     sileo.action({
-      title: 'Создайте свою версию',
-      description: 'Зарегистрируйтесь, чтобы копировать любые тир-листы и редактировать их под себя.',
+      title: "Создайте свою версию",
+      description:
+        "Зарегистрируйтесь, чтобы копировать любые тир-листы и редактировать их под себя.",
       duration: 10000,
       button: {
-        title: 'Создать аккаунт',
-        onClick: () => navigate('/auth?mode=register'),
+        title: "Создать аккаунт",
+        onClick: () => navigate("/auth?mode=register"),
       },
     });
   }, [navigate]);
@@ -66,16 +70,16 @@ export const EditorHeader = ({
       } else {
         const newTierList = await forkTierList(tierListId);
         sileo.success({
-          title: 'Версия создана',
-          description: 'Теперь вы можете редактировать этот список под себя',
+          title: "Версия создана",
+          description: "Теперь вы можете редактировать этот список под себя",
         });
         navigate(`/tier-lists/${newTierList.id}`);
       }
     } catch (error) {
       console.error(error);
       sileo.error({
-        title: 'Ошибка копирования',
-        description: 'Не удалось создать вашу версию списка',
+        title: "Ошибка копирования",
+        description: "Не удалось создать вашу версию списка",
       });
     } finally {
       setIsForking(false);
@@ -89,9 +93,7 @@ export const EditorHeader = ({
         <div>
           {/* Мобилка: название над обложкой, под кнопкой «На главную» */}
           <div className="md:hidden text-center mb-4">
-            <h1 className="text-lg font-bold text-white">
-              {title}
-            </h1>
+            <h1 className="text-lg font-bold text-white">{title}</h1>
             {author && (
               <button
                 onClick={() => navigate(`/users/${author.id}`)}
@@ -119,9 +121,7 @@ export const EditorHeader = ({
 
             {/* Десктоп: название и автор — по центру горизонтали */}
             <div className="hidden min-w-0 flex-1 text-center md:block">
-              <h1 className="text-lg font-bold text-white">
-                {title}
-              </h1>
+              <h1 className="text-lg font-bold text-white">{title}</h1>
               {author && (
                 <button
                   onClick={() => navigate(`/users/${author.id}`)}
@@ -139,32 +139,50 @@ export const EditorHeader = ({
                   onClick={handleFork}
                   disabled={isForking}
                   className="nb-btn-primary flex items-center gap-1.5"
-                  title={currentUserId ? 'Создать свою версию' : 'Войдите, чтобы скопировать'}
+                  title={
+                    currentUserId
+                      ? "Создать свою версию"
+                      : "Войдите, чтобы скопировать"
+                  }
                 >
                   <GitFork size={18} />
-                  {isForking ? 'Копирую...' : 'Своя версия'}
+                  {isForking ? "Копирую..." : "Своя версия"}
                 </button>
               )}
-            <LikeButton
-              id={tierListId!}
-              type="tierlist"
-              initialLikes={likesCount || 0}
-              initialLiked={initialLiked || false}
-              authorId={ownerUserId}
-              currentUserId={currentUserId}
-              size="sm"
-            />
+              <LikeButton
+                id={tierListId!}
+                type="tierlist"
+                initialLikes={likesCount || 0}
+                initialLiked={initialLiked || false}
+                authorId={ownerUserId}
+                currentUserId={currentUserId}
+                size="sm"
+              />
             </div>
           </div>
         </div>
       ) : (
         /* Edit mode: заголовок по центру (без обложки) */
-        <div className="text-center">
-          <h1 className="nb-display-lg text-white">
-            {title}
-          </h1>
+        <div>
+          {/* Мобилка: absolute кнопка, заголовок строго по центру */}
+          <div className="relative">
+            {onBackClick && (
+              <button
+                onClick={onBackClick}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 md:hidden flex items-center gap-1 text-sm text-cyan-300 hover:text-white transition-colors cursor-pointer"
+                type="button"
+              >
+                <ArrowLeft size={18} />
+              </button>
+            )}
+            <h1
+              className={`text-center nb-display-lg max-md:text-xl! max-md:leading-tight! max-md:normal-case! text-white wrap-break-word px-4 sm:px-9 min-w-0 max-w-full${isDemo ? " max-md:text-lg!" : ""}`}
+            >
+              {title}
+            </h1>
+          </div>
           {isDemo && (
-            <span className="inline-block mt-1 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400">
+            <span className="block w-fit mx-auto mt-1 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400">
               Демо-режим
             </span>
           )}

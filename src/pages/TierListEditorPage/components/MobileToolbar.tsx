@@ -1,7 +1,7 @@
 import { memo, useState, useRef, useEffect, useCallback } from "react";
 import {
-  Plus, Search, ImageDown, Share2, Check, Copy, Trash2, Globe, Save, Ellipsis,
-  Minus, Type, CaseSensitive, Italic, Palette, Sliders,
+  Plus, Search, Trash2, Globe, Save, Ellipsis, ImageDown, Share2, Copy, Sliders,
+  Minus, Type, CaseSensitive, Italic, Palette,
 } from "lucide-react";
 import type { SaveStatus } from "../hooks/useTierEditorSave";
 import type { Tier } from "@/types";
@@ -207,127 +207,23 @@ export const MobileToolbar = memo(function MobileToolbar({
               type="button"
               onClick={() => onFindBook()}
               className={`${btnBase} ${btnInactive} border-r border-white/[0.06]`}
-              aria-label="Найти книгу"
+              aria-label="Найти книги"
             >
               <Search size={20} />
-              <span>Поиск книг</span>
+              <span className="text-[9px]">Найти книги</span>
             </button>
           )}
-
-          {/* Add Tier */}
-          {onAddRow && (
-            <button
-              type="button"
-              onClick={() => onAddRow()}
-              className={`${btnBase} ${btnInactive} border-r border-white/[0.06]`}
-              aria-label="Добавить блок"
-            >
-              <Plus size={20} />
-              <span>Блок</span>
-            </button>
-          )}
-
-          {/* Tier Settings (только когда на мобильном) */}
-          <button
-            ref={tierBtnRef}
-            type="button"
-            onClick={() => {
-              if (activeTier) {
-                setShowTierPanel((v) => !v);
-                setShowMore(false);
-              }
-            }}
-            className={`${btnBase} border-r border-white/[0.06] ${
-              activeTier
-                ? showTierPanel
-                  ? btnActive
-                  : "text-white/40 hover:text-white"
-                : "text-white/20"
-            }`}
-            aria-label="Настройки полки"
-          >
-            <Sliders size={20} />
-            <span>Полка</span>
-          </button>
 
           {/* Export */}
           <button
             type="button"
             onClick={onDownloadImage}
             className={`${btnBase} ${btnInactive} border-r border-white/[0.06]`}
-            aria-label="Скачать тир-лист"
+            aria-label="Экспорт"
           >
             <ImageDown size={20} />
             <span>Экспорт</span>
           </button>
-
-          {/* Share */}
-          {shareUrl && (
-            <button
-              type="button"
-              onClick={() => setShowSharePopover((v) => !v)}
-              className={`${btnBase} ${copied || showSharePopover ? btnActive : btnInactive} border-r border-white/[0.06] relative`}
-              aria-label="Поделиться"
-            >
-              {copied ? <Check size={20} /> : <Share2 size={20} />}
-
-              {showSharePopover && (
-                <div className="fixed left-1/2 z-50 w-64 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50" style={{ bottom: bottomOffset + 60 }}>
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Telegram */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const t = title || "Тир-лист";
-                        shareTo(getShareUrls({ url: shareUrl, title: t }).telegram);
-                        setShowSharePopover(false);
-                      }}
-                      className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-[0.97] transition-[transform,background] duration-100 ease-out"
-                      title="Telegram"
-                    >
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-7 text-[#c1fffe]">
-                        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0Zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635Z"/>
-                      </svg>
-                      <span className="text-xs uppercase font-bold text-gray-400">Telegram</span>
-                    </button>
-
-                    {/* VK */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const t = title || "Тир-лист";
-                        shareTo(getShareUrls({ url: shareUrl, title: t }).vk);
-                        setShowSharePopover(false);
-                      }}
-                      className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-[0.97] transition-[transform,background] duration-100 ease-out"
-                      title="VK"
-                    >
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-7 text-[#c1fffe]">
-                        <path d="M11.7 18h1.4s.4-.05.6-.2c.2-.15.2-.45.2-.45s-.03-1.3.6-1.5c.6-.2 1.4 1.3 2.2 1.8.6.4 1 .3 1 .3l2.2-.03s1.15-.07.6-.95c-.04-.07-.3-.65-1.6-1.85-1.3-1.2-1.1-1 .45-3.15 1-1.3 1.4-2.1 1.2-2.45-.1-.25-.8-.2-.8-.2l-2.3.02s-.17-.02-.3.07c-.13.08-.2.23-.2.23s-.3.8-.7 1.5c-.8 1.4-1.1 1.5-1.25 1.4-.3-.2-.2-.85-.2-1.3 0-1.4.2-2-.4-2.15-.2-.07-.5-.1-.8-.1-1.2 0-2.2.75-2.2.75s-.45.25-.6.35c0 0-.07.03-.1.05h-.02v.02s0-.02-.02-.02c-.07-.07-.1-.1-.1-.1s-.6-.65-1-.9C9.5 6.3 8.9 6 8.9 6s-.75-.2-.4.3c.25.4.8 1.2 1.1 1.6.4.6.5.9.5.9s.2.35.1.65c-.15.4-.8 1.7-1.1 2-.2.2-.5.2-.7.15-.5-.1-1.1-.75-1.6-1.5C6.4 9.5 6 8.8 6 8.8s-.1-.25-.25-.35c-.2-.1-.5-.1-.5-.1l-2.2.02s-.33.01-.45.15c-.1.15 0 .45 0 .45s1.3 3.1 2.9 4.7c1.4 1.4 3 1.3 3 1.3h.7z"/>
-                      </svg>
-                      <span className="text-xs uppercase font-bold text-gray-400">VK</span>
-                    </button>
-                  </div>
-
-                {/* Copy link */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copyLink(shareUrl);
-                    setShowSharePopover(false);
-                  }}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#c1fffe]/20 px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-white/60 transition-[transform,background] duration-100 ease-out hover:bg-white/5 active:scale-[0.97]"
-                >
-                  <Copy size={14} className="text-[#c1fffe]" />
-                  {copied ? "Скопировано" : "Копировать ссылку"}
-                </button>
-                </div>
-              )}
-            </button>
-          )}
 
           {/* More */}
           <button
@@ -347,9 +243,44 @@ export const MobileToolbar = memo(function MobileToolbar({
       {showMore && (
         <div
           ref={moreRef}
-          className="fixed left-1/2 z-50 w-64 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden" style={{ bottom: bottomOffset + 60 }}
+          className="fixed left-1/2 z-50 w-[min(90vw,18rem)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden"
+          style={{ bottom: bottomOffset + 60 }}
         >
           <div className="flex flex-col gap-2">
+            {/* Tier Settings */}
+            <button
+              ref={tierBtnRef}
+              type="button"
+              onClick={() => {
+                if (activeTier) {
+                  setShowMore(false);
+                  setShowTierPanel(true);
+                }
+              }}
+              className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-[11px] font-black uppercase tracking-wider transition-[transform,background] duration-100 ease-out active:scale-[0.97] ${
+                activeTier
+                  ? "border-white/10 text-white/60 hover:bg-white/5"
+                  : "border-white/5 text-white/20"
+              }`}
+            >
+              <Sliders size={16} className="text-[#ffbd58]" />
+              Настройки полки
+            </button>
+
+            {/* Share */}
+            {shareUrl && (
+              <button
+                type="button"
+                onClick={() => { setShowSharePopover(true); setShowMore(false); }}
+                className="flex items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-white/60 transition-[transform,background] duration-100 ease-out hover:bg-white/5 active:scale-[0.97]"
+              >
+                <Share2 size={16} className="text-[#c1fffe]" />
+                Поделиться
+              </button>
+            )}
+
+            <hr className="border-white/10" />
+
             {/* Clear All */}
             {onClearRows && (
               <button
@@ -403,11 +334,70 @@ export const MobileToolbar = memo(function MobileToolbar({
         </div>
       )}
 
+      {/* Share popover — отображается поверх по клику на "Поделиться" в "Ещё" */}
+      {showSharePopover && shareUrl && (
+        <div className="fixed left-1/2 z-[60] w-[min(90vw,16rem)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden" style={{ bottom: bottomOffset + 60 }}>
+          <div className="relative">
+            {/* Close hint */}
+            <button
+              type="button"
+              onClick={() => setShowSharePopover(false)}
+              className="absolute -top-1 -right-1 size-5 flex items-center justify-center text-white/30 hover:text-white/70 transition-colors"
+              aria-label="Закрыть"
+            >
+              ×
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const t = title || "Тир-лист";
+                shareTo(getShareUrls({ url: shareUrl, title: t }).telegram);
+                setShowSharePopover(false);
+              }}
+              className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-[0.97] transition-[transform,background] duration-100 ease-out"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-7 text-[#c1fffe]">
+                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0Zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635Z"/>
+              </svg>
+              <span className="text-xs uppercase font-bold text-gray-400">Telegram</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const t = title || "Тир-лист";
+                shareTo(getShareUrls({ url: shareUrl, title: t }).vk);
+                setShowSharePopover(false);
+              }}
+              className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-[0.97] transition-[transform,background] duration-100 ease-out"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-7 text-[#c1fffe]">
+                <path d="M11.7 18h1.4s.4-.05.6-.2c.2-.15.2-.45.2-.45s-.03-1.3.6-1.5c.6-.2 1.4 1.3 2.2 1.8.6.4 1 .3 1 .3l2.2-.03s1.15-.07.6-.95c-.04-.07-.3-.65-1.6-1.85-1.3-1.2-1.1-1 .45-3.15 1-1.3 1.4-2.1 1.2-2.45-.1-.25-.8-.2-.8-.2l-2.3.02s-.17-.02-.3.07c-.13.08-.2.23-.2.23s-.3.8-.7 1.5c-.8 1.4-1.1 1.5-1.25 1.4-.3-.2-.2-.85-.2-1.3 0-1.4.2-2-.4-2.15-.2-.07-.5-.1-.8-.1-1.2 0-2.2.75-2.2.75s-.45.25-.6.35c0 0-.07.03-.1.05h-.02v.02s0-.02-.02-.02c-.07-.07-.1-.1-.1-.1s-.6-.65-1-.9C9.5 6.3 8.9 6 8.9 6s-.75-.2-.4.3c.25.4.8 1.2 1.1 1.6.4.6.5.9.5.9s.2.35.1.65c-.15.4-.8 1.7-1.1 2-.2.2-.5.2-.7.15-.5-.1-1.1-.75-1.6-1.5C6.4 9.5 6 8.8 6 8.8s-.1-.25-.25-.35c-.2-.1-.5-.1-.5-.1l-2.2.02s-.33.01-.45.15c-.1.15 0 .45 0 .45s1.3 3.1 2.9 4.7c1.4 1.4 3 1.3 3 1.3h.7z"/>
+              </svg>
+              <span className="text-xs uppercase font-bold text-gray-400">VK</span>
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              copyLink(shareUrl);
+              setShowSharePopover(false);
+            }}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#c1fffe]/20 px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-white/60 transition-[transform,background] duration-100 ease-out hover:bg-white/5 active:scale-[0.97]"
+          >
+            <Copy size={14} className="text-[#c1fffe]" />
+            {copied ? "Скопировано" : "Копировать ссылку"}
+          </button>
+        </div>
+      )}
+
       {/* Dropdown настроек полки */}
       {showTierPanel && activeTier && onUpdateTier && (
         <div
           ref={tierPanelRef}
-          className="fixed left-1/2 z-50 w-72 -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden" style={{ bottom: bottomOffset + 60 }}
+          className="fixed left-1/2 z-50 w-[min(90vw,18rem)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden"
+          style={{ bottom: bottomOffset + 60 }}
         >
           <div className="mb-3 text-[10px] font-black uppercase tracking-widest text-[#ffbd58]">
             {activeTier.title}

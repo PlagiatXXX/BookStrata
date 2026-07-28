@@ -1,14 +1,20 @@
 import { useState } from "react";
 import { useSensors, useSensor } from "@dnd-kit/core";
 import { MouseSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
-import { DndContext, DragOverlay, pointerWithin, rectIntersection, type CollisionDetection } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragOverlay,
+  pointerWithin,
+  rectIntersection,
+  type CollisionDetection,
+} from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type {
   DragStartEvent,
   DragEndEvent,
   DragOverEvent,
 } from "@dnd-kit/core";
-import { ArrowLeft, ChevronUp } from "lucide-react";
+import { ChevronUp } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
 import { TierLabel } from "@/ui/TierLabel";
@@ -79,7 +85,10 @@ export const EditorLayout = ({
   const activeBook: Book | null =
     activeItem && "coverImageUrl" in activeItem ? (activeItem as Book) : null;
   const activeTier: Tier | null =
-    activeItem && "color" in activeItem && "title" in activeItem && !("coverImageUrl" in activeItem)
+    activeItem &&
+    "color" in activeItem &&
+    "title" in activeItem &&
+    !("coverImageUrl" in activeItem)
       ? (activeItem as Tier)
       : null;
 
@@ -110,77 +119,79 @@ export const EditorLayout = ({
       fullWidth={!isReadOnly}
       hideMobileNav={!isReadOnly}
       hideLogout={true}
+      contentTopPadding="pt-16"
     >
-      <main className={`neo-brutalist-editor flex-1 overflow-x-clip ${isReadOnly ? "px-4 lg:px-8 pb-4 lg:pb-8 pt-1" : "p-4 lg:p-8 pb-24 lg:pb-8"}`} data-theme={theme}>
-        {/* Кнопка «На главную» только на мобилках, т.к. нижний нав скрыт и логотип неочевиден */}
-        <button
-          onClick={onMyRatingsClick}
-          className="md:hidden flex items-center gap-1.5 text-sm text-cyan-300 hover:text-white transition-colors mb-3 cursor-pointer"
-          type="button"
-        >
-          <ArrowLeft size={16} />
-          На главную
-        </button>
+      <main
+        className={`neo-brutalist-editor flex-1 overflow-x-clip ${isReadOnly ? "px-4 lg:px-8 pb-4 lg:pb-8 pt-1" : "p-4 lg:p-8 pb-24 lg:pb-8"}`}
+        data-theme={theme}
+      >
         {breadcrumbItems && (
           <div className="mb-4">
             <Breadcrumbs items={breadcrumbItems} />
           </div>
         )}
-        {/* Верхняя секция: название + обложка + тема — сворачиваемая */}
-        <div
-          className={`overflow-hidden transition-[grid-template-rows] duration-300 ease-in-out ${
-            isTopCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
-          }`}
-          style={{ display: "grid" }}
-        >
-          <div className="min-h-0">
-            <EditorHeader {...headerProps} />
-            {!isReadOnly && (
-              <div className="flex flex-wrap gap-3 items-start mb-6">
-                {tierListId && !hideCover && (
-                  <TierListCoverEditor
-                    tierListId={tierListId}
-                    coverImageUrl={coverImageUrl}
-                    title={headerProps.title}
-                    booksCount={booksCount}
-                    isReadOnly={isReadOnly}
-                    onCoverUpdated={(url) => onCoverUpdated?.(url)}
-                    ownerUserId={ownerUserId}
-                    currentUserId={currentUserId}
-                  />
-                )}
-                {tierListId && (
-                  <div className="pl-4 flex-1 min-w-0 mt-0.5">
-                    <ThemePicker
-                      tierListId={tierListId}
-                      currentTheme={theme}
-                      onThemeChanged={(t) => onThemeChanged?.(t)}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+        {/* Верхняя секция: название */}
+        <div className="min-h-0 min-w-0">
+          <EditorHeader {...headerProps} />
         </div>
 
-        {/* Кнопка-стрелка для сворачивания/разворачивания верхней секции */}
+        {/* Панель обложки и темы с триггером под темами */}
         {!isReadOnly && (
-          <button
-            onClick={() => setIsTopCollapsed((v) => !v)}
-            className="flex items-center justify-center w-full py-1.5 text-gray-500 hover:text-gray-300 transition-colors cursor-pointer group"
-            type="button"
-            aria-label={isTopCollapsed ? "Развернуть" : "Свернуть"}
-          >
-            <span className="flex items-center gap-1 text-xs font-medium tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              {isTopCollapsed ? "Название и настройки" : "Свернуть"}
-            </span>
-            <ChevronUp
-              size={18}
-              className={`transition-transform duration-300 ease-in-out ${
-                isTopCollapsed ? "rotate-180" : ""
-              }`}
-            />
-          </button>
+          <div className="space-y-3">
+            <div
+              className={`overflow-hidden transition-[grid-template-rows] duration-300 ease-in-out ${
+                isTopCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
+              } min-w-0`}
+              style={{ display: "grid" }}
+            >
+              <div className="min-h-0">
+                <div className="flex flex-wrap gap-3 items-start mb-2">
+                  {tierListId && !hideCover && (
+                    <TierListCoverEditor
+                      tierListId={tierListId}
+                      coverImageUrl={coverImageUrl}
+                      title={headerProps.title}
+                      booksCount={booksCount}
+                      isReadOnly={isReadOnly}
+                      onCoverUpdated={(url) => onCoverUpdated?.(url)}
+                      ownerUserId={ownerUserId}
+                      currentUserId={currentUserId}
+                    />
+                  )}
+                  {tierListId && (
+                    <div className="pl-4 flex-1 min-w-0 mt-0.5">
+                      <ThemePicker
+                        tierListId={tierListId}
+                        currentTheme={theme}
+                        onThemeChanged={(t) => onThemeChanged?.(t)}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-center -mt-4 mb-6">
+              <button
+                onClick={() => setIsTopCollapsed((v) => !v)}
+                className="cursor-pointer text-sm font-semibold text-cyan-200 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                type="button"
+                aria-label={
+                  isTopCollapsed
+                    ? "Развернуть панель обложки и темы"
+                    : "Свернуть панель обложки и темы"
+                }
+                aria-expanded={!isTopCollapsed}
+                title={
+                  isTopCollapsed
+                    ? "Развернуть панель обложки и темы"
+                    : "Скрыть панель обложки и темы"
+                }
+              >
+                {isTopCollapsed ? "Показать панель" : "Скрыть панель"}
+              </button>
+            </div>
+          </div>
         )}
 
         {children}
