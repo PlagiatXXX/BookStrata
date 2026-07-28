@@ -5,6 +5,7 @@ vi.stubGlobal("fetch", mockFetch)
 
 vi.mock("@/lib/authApi", () => ({
   getAuthHeader: vi.fn(() => ({ Authorization: "Bearer test-token" })),
+  getAuthToken: vi.fn(() => "test-token"),
   refreshAccessToken: vi.fn(),
   handleUnauthorized: vi.fn(),
   isRefreshFailed: vi.fn(() => false),

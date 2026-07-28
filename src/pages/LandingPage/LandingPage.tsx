@@ -291,16 +291,7 @@ export default function LandingPage() {
     video.setAttribute("fetchpriority", "high")
   }, [])
 
-  // Preload LCP-изображение (poster видео)
-  useEffect(() => {
-    const link = document.createElement("link")
-    link.rel = "preload"
-    link.as = "image"
-    link.href = "/library-bg.webp"
-    link.setAttribute("fetchpriority", "high")
-    document.head.appendChild(link)
-    return () => link.remove()
-  }, [])
+  // Preload LCP-изображение (poster видео) — уже сделан в index.html через <link rel="preload">
 
   useEffect(() => {
     const onScroll = () => {

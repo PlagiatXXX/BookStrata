@@ -1,4 +1,4 @@
-import { getAuthHeader, refreshAccessToken, isRefreshFailed, markRefreshFailed, resetRefreshFailed } from "./authApi";
+import { getAuthHeader, getAuthToken, refreshAccessToken, isRefreshFailed, markRefreshFailed, resetRefreshFailed } from "./authApi";
 import { checkResponseForAchievements } from "./achievementApi";
 import { API_BASE_URL } from "./config";
 import { notifyError } from "./notifyError";
@@ -85,12 +85,19 @@ async function request<T>(
       }
 
       if (attempt === 0) {
-        try {
-          await refreshAccessToken();
-          resetRefreshFailed(); // успешный refresh — сбрасываем флаг
-          continue; // повторяем запрос с новым токеном
-        } catch {
-          markRefreshFailed(); // refresh не удался — больше не пробуем до логина
+        // Нет access-токена → пользователь точно гость (или сессия уже сброшена).
+        // Не пытаемся refresh — сразу помечаем как failed, чтобы не плодить 401
+        // от параллельных запросов при старте страницы.
+        if (!getAuthToken()) {
+          markRefreshFailed();
+        } else {
+          try {
+            await refreshAccessToken();
+            resetRefreshFailed(); // успешный refresh — сбрасываем флаг
+            continue; // повторяем запрос с новым токеном
+          } catch {
+            markRefreshFailed(); // refresh не удался — больше не пробуем до логина
+          }
         }
       }
 
