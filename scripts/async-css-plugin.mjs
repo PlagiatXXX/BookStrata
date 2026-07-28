@@ -46,7 +46,7 @@ export default function asyncCSSPlugin(opts = {}) {
             const attrs = `${before}${after}`.trim();
             return (
               `<link rel="stylesheet" ${attrs} media="print" onload="this.onload=null;this.media='all'">` +
-              `<noscript><link rel="stylesheet" ${attrs}>`
+              `<noscript><link rel="stylesheet" ${attrs}></noscript>`
             );
           },
         );
