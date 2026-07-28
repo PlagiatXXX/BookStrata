@@ -2,8 +2,11 @@
  * Vite plugin — асинхронная загрузка CSS, не блокирует рендеринг.
  *
  * Преобразует <link rel="stylesheet" href="..."> в:
- *   <link rel="preload" as="style" href="..." onload="this.onload=null;this.rel='stylesheet'">
+ *   <link rel="stylesheet" href="..." media="print" onload="this.onload=null;this.media='all'">
  *   <noscript><link rel="stylesheet" href="..."></noscript>
+ *
+ * Используется media="print" вместо rel="preload", чтобы избежать
+ * предупреждения браузера "preloaded but not used within a few seconds".
  *
  * Должен быть зарегистрирован ПОСЛЕ sri-plugin (чтобы integrity хеш был уже проставлен).
  */
@@ -42,8 +45,8 @@ export default function asyncCSSPlugin(opts = {}) {
           (_, before, after) => {
             const attrs = `${before}${after}`.trim();
             return (
-              `<link rel="preload" as="style" ${attrs} onload="this.onload=null;this.rel='stylesheet'">` +
-              `<noscript><link rel="stylesheet" ${attrs}></noscript>`
+              `<link rel="stylesheet" ${attrs} media="print" onload="this.onload=null;this.media='all'">` +
+              `<noscript><link rel="stylesheet" ${attrs}>`
             );
           },
         );

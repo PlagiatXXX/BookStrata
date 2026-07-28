@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, type ReactNode } from "react";
 import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
-import { getAuthToken, removeAuthToken, refreshAccessToken, apiLogout } from "@/lib/authApi";
+import { getAuthToken, removeAuthToken, refreshAccessToken, apiLogout, hasSession } from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { createLogger } from "@/lib/logger";
@@ -77,7 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const restoreSession = async () => {
       // При старте access-токен хранится только в памяти.
       // Если его нет — пробуем восстановить сессию через refresh-токен (HttpOnly cookie).
-      if (!getAuthToken()) {
+      // Предварительно проверяем флаг сессии, чтобы не делать лишний 401-запрос
+      // для новых посетителей, у которых никогда не было сессии.
+      if (!getAuthToken() && hasSession()) {
         try {
           authLogger.info("Сессия не найдена в памяти, пробуем refresh");
           await refreshAccessToken();

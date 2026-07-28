@@ -10,7 +10,12 @@ const authLogger = createLogger("AuthApi", { color: "cyan" });
  * Токен НЕ сохраняется в localStorage — это исключает XSS-кражу токена.
  * При перезагрузке страницы сессия восстанавливается через refresh-токен
  * (HttpOnly cookie), который отправляется автоматически.
+ *
+ * Флаг SESSION_ACTIVE_KEY в localStorage указывает, что у пользователя
+ * ранее была сессия. Это позволяет избежать лишнего 401 на /auth/refresh
+ * для новых посетителей при загрузке страницы.
  */
+const SESSION_ACTIVE_KEY = "bookstrata_session_active";
 let inMemoryToken: string | null = null;
 
 /**
@@ -257,6 +262,7 @@ export async function apiValidateToken(
 export function setAuthToken(token: string) {
   inMemoryToken = token;
   resetRefreshFailed(); // новый токен — новая сессия, сбрасываем флаг
+  localStorage.setItem(SESSION_ACTIVE_KEY, "true");
   window.dispatchEvent(new Event("auth-token-changed"));
 }
 
@@ -272,7 +278,16 @@ export function getAuthToken(): string | null {
  */
 export function removeAuthToken() {
   inMemoryToken = null;
+  localStorage.removeItem(SESSION_ACTIVE_KEY);
   window.dispatchEvent(new Event("auth-token-changed"));
+}
+
+/**
+ * Был ли у пользователя ранее активная сессия (для этого устройства/браузера).
+ * Позволяет не делать лишний запрос /auth/refresh для новых посетителей.
+ */
+export function hasSession(): boolean {
+  return localStorage.getItem(SESSION_ACTIVE_KEY) === "true";
 }
 
 /**
