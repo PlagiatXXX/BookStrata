@@ -14,8 +14,6 @@ import {
   ChevronDown,
   Pause,
   Play,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAmbientSound } from "@/hooks/useAmbientSound";
