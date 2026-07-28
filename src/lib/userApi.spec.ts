@@ -7,6 +7,9 @@ vi.mock("@/lib/authApi", () => ({
   getAuthHeader: vi.fn(() => ({ Authorization: "Bearer test-token" })),
   refreshAccessToken: vi.fn(),
   handleUnauthorized: vi.fn(),
+  isRefreshFailed: vi.fn(() => false),
+  markRefreshFailed: vi.fn(),
+  resetRefreshFailed: vi.fn(),
 }))
 
 vi.mock("@/lib/config", () => ({

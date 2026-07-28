@@ -1,4 +1,4 @@
-import { getAuthHeader, refreshAccessToken } from "./authApi";
+import { getAuthHeader, refreshAccessToken, isRefreshFailed, markRefreshFailed, resetRefreshFailed } from "./authApi";
 import { checkResponseForAchievements } from "./achievementApi";
 import { API_BASE_URL } from "./config";
 import { notifyError } from "./notifyError";
@@ -78,12 +78,19 @@ async function request<T>(
 
     // 401 — пытаемся refresh токен и повторяем запрос
     if (response.status === 401) {
+      // Если refresh уже падал в этой сессии — не повторяем, сразу ошибка.
+      // Это предотвращает ретрей-цикл (auth-token-changed → fetchUser → 401 → ...).
+      if (isRefreshFailed()) {
+        throw new ApiRequestError("unauthorized", "Требуется авторизация", 401);
+      }
+
       if (attempt === 0) {
         try {
           await refreshAccessToken();
+          resetRefreshFailed(); // успешный refresh — сбрасываем флаг
           continue; // повторяем запрос с новым токеном
         } catch {
-          // refresh не удался — чистка сессии
+          markRefreshFailed(); // refresh не удался — больше не пробуем до логина
         }
       }
 

@@ -111,7 +111,7 @@ export function AmbientSettingsModal({ isOpen, onClose }: AmbientSettingsModalPr
         {/* ── Header ── */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#c1fffe]/30 to-purple-500/20">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-[#c1fffe]/30 to-purple-500/20">
               <Headphones size={18} className="text-[#c1fffe]" />
             </div>
             <div className="flex items-baseline gap-2">
@@ -295,7 +295,7 @@ export function AmbientSettingsModal({ isOpen, onClose }: AmbientSettingsModalPr
                       <button
                         type="button"
                         onClick={handleMasterPlay}
-                        className="flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-[#c1fffe] to-[#a0e0e0] text-black shadow-lg shadow-[#c1fffe]/20 hover:scale-105 transition-transform cursor-pointer"
+                        className="flex size-11 items-center justify-center rounded-full bg-linear-to-br from-[#c1fffe] to-[#a0e0e0] text-black shadow-lg shadow-[#c1fffe]/20 hover:scale-105 transition-transform cursor-pointer"
                         title={isActivePlaylist && isPlaying ? "Пауза" : "Воспроизвести"}
                       >
                         {isActivePlaylist && isPlaying ? (

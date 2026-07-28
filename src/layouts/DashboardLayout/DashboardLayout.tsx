@@ -68,16 +68,16 @@ export function DashboardLayout({
         activeItem={activeItem}
         hideLogout={hideLogout}
       />
-      <main className={`grid flex-1 grid-cols-1 ${contentTopPadding || "pt-24"} overflow-x-hidden ${
-        hideMobileNav ? "" : "pb-16 md:pb-0"
-      }`}>
-        {fullWidth ? (
-          children
-        ) : (
-          <PageContainer>{children}</PageContainer>
-        )}
+      <main
+        className={`grid flex-1 grid-cols-1 ${contentTopPadding || "pt-24"} overflow-x-hidden ${
+          hideMobileNav ? "" : "pb-16 md:pb-0"
+        }`}
+      >
+        {fullWidth ? children : <PageContainer>{children}</PageContainer>}
       </main>
-      {!hideMobileNav && <MobileBottomNav showTemplatesNav={showTemplatesNav} />}
+      {!hideMobileNav && (
+        <MobileBottomNav showTemplatesNav={showTemplatesNav} />
+      )}
       <Footer />
     </div>
   );

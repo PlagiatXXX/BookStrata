@@ -14,6 +14,29 @@ const authLogger = createLogger("AuthApi", { color: "cyan" });
 let inMemoryToken: string | null = null;
 
 /**
+ * Флаг: попытка refresh-токена уже failed при текущей сессии.
+ * Предотвращает ретрей-цикл: api-client → 401 → refresh → 401 → handleUnauthorized → fetchUser → 401 → ...
+ * Сбрасывается при логине (setAuthToken) и при успешном refresh.
+ * Автоматически сбрасывается при перезагрузке страницы (in-memory).
+ */
+let _refreshFailed = false;
+
+/** Проверить, падал ли refresh в этой сессии */
+export function isRefreshFailed(): boolean {
+  return _refreshFailed;
+}
+
+/** Установить флаг «refresh не удался» */
+export function markRefreshFailed(): void {
+  _refreshFailed = true;
+}
+
+/** Сбросить флаг (при логине или успешном refresh) */
+export function resetRefreshFailed(): void {
+  _refreshFailed = false;
+}
+
+/**
  * Разворачивает { data: ... } из ответа API (безопасно, без циклических импортов)
  */
 function unwrapData<T>(json: unknown): T {
@@ -233,6 +256,7 @@ export async function apiValidateToken(
  */
 export function setAuthToken(token: string) {
   inMemoryToken = token;
+  resetRefreshFailed(); // новый токен — новая сессия, сбрасываем флаг
   window.dispatchEvent(new Event("auth-token-changed"));
 }
 
@@ -266,6 +290,7 @@ export function handleUnauthorized() {
   authLogger.info(
     "Неавторизованный доступ — очистка сессии",
   );
+  markRefreshFailed(); // refresh не удался — больше не пробуем до логина
   removeAuthToken();
   window.dispatchEvent(new Event("auth-token-changed"));
 }

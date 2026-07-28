@@ -11,7 +11,10 @@ import {
 import { Howl } from "howler";
 import type { ReactNode } from "react";
 import { TRACKS_BY_CATEGORY } from "@/components/AmbientSound/ambient-tracks";
-import type { AmbientCategory, AmbientTrack } from "@/components/AmbientSound/ambient-tracks";
+import type {
+  AmbientCategory,
+  AmbientTrack,
+} from "@/components/AmbientSound/ambient-tracks";
 
 /* ─── Types ─────────────────────────────────────────── */
 
@@ -103,7 +106,7 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
 
   const currentTrack: AmbientTrack | null =
     category && currentCategoryTracks.length > 0
-      ? currentCategoryTracks[currentTrackIndex] ?? null
+      ? (currentCategoryTracks[currentTrackIndex] ?? null)
       : null;
 
   const destroySound = useCallback(() => {
@@ -159,12 +162,9 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
     playRef.current = playFn;
   });
 
-  const play = useCallback(
-    (cat: AmbientCategory, trackIndex = 0) => {
-      playRef.current(cat, trackIndex);
-    },
-    [],
-  );
+  const play = useCallback((cat: AmbientCategory, trackIndex = 0) => {
+    playRef.current(cat, trackIndex);
+  }, []);
 
   /* ── toggle ── */
 
@@ -208,8 +208,7 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
     if (category !== "music") return;
     const tracks = TRACKS_BY_CATEGORY["music"];
     if (tracks.length === 0) return;
-    const prevIndex =
-      (currentTrackIndex - 1 + tracks.length) % tracks.length;
+    const prevIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
     play("music", prevIndex);
   }, [category, currentTrackIndex, play]);
 

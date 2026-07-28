@@ -5,7 +5,12 @@ import { Button } from "@/ui/Button";
 import type { Book } from "@/types";
 import { createLogger } from "@/lib/logger";
 import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
-import { RATING_CATEGORIES, rateBook, getBookRatings, getUserBookRating } from "@/lib/ratingsApi";
+import {
+  RATING_CATEGORIES,
+  rateBook,
+  getBookRatings,
+  getUserBookRating,
+} from "@/lib/ratingsApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
 import { useAuth } from "@/hooks/useAuthContext";
@@ -137,8 +142,15 @@ const inputClass =
 const textareaClass = `${inputClass} resize-none`;
 
 /** Показывает теги в виде цветных плашек */
-function TagPills({ tags, size = "sm" }: { tags: string[]; size?: "sm" | "xs" }) {
-  const sizeClass = size === "sm" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-[10px]";
+function TagPills({
+  tags,
+  size = "sm",
+}: {
+  tags: string[];
+  size?: "sm" | "xs";
+}) {
+  const sizeClass =
+    size === "sm" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-[10px]";
   if (tags.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -155,20 +167,27 @@ function TagPills({ tags, size = "sm" }: { tags: string[]; size?: "sm" | "xs" })
 }
 
 function StarDisplay({ value, size = 14 }: { value: number; size?: number }) {
-  const stars = []
-  const normalized = value / 2
+  const stars = [];
+  const normalized = value / 2;
   for (let i = 0; i < 5; i++) {
-    const fill = Math.min(1, Math.max(0, normalized - i))
+    const fill = Math.min(1, Math.max(0, normalized - i));
     stars.push(
-      <span key={i} className="relative inline-block" style={{ width: size, height: size }}>
+      <span
+        key={i}
+        className="relative inline-block"
+        style={{ width: size, height: size }}
+      >
         <Star size={size} className="absolute inset-0 text-[#444]" />
-        <span className="absolute inset-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+        <span
+          className="absolute inset-0 overflow-hidden"
+          style={{ width: `${fill * 100}%` }}
+        >
           <Star size={size} className="text-amber-400" fill="#fbbf24" />
         </span>
       </span>,
-    )
+    );
   }
-  return <span className="inline-flex items-center gap-0.5">{stars}</span>
+  return <span className="inline-flex items-center gap-0.5">{stars}</span>;
 }
 
 export const BookEditModal = ({
@@ -183,7 +202,15 @@ export const BookEditModal = ({
   const [uploading, setUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { title, author, genre, tagsInput, description, thoughts, coverImageUrl } = state;
+  const {
+    title,
+    author,
+    genre,
+    tagsInput,
+    description,
+    thoughts,
+    coverImageUrl,
+  } = state;
 
   // Rating state
   const [pollRatings, setPollRatings] = useState<Record<string, number>>({});
@@ -195,21 +222,23 @@ export const BookEditModal = ({
   const { user } = useAuth();
 
   const loadRatings = useCallback(async () => {
-    if (!book?.id) return
+    if (!book?.id) return;
     const bookIdNum = Number(book.id);
     if (!Number.isFinite(bookIdNum)) return;
     try {
       const [avg, mine] = await Promise.all([
         getBookRatings(bookIdNum),
         user ? getUserBookRating(bookIdNum) : Promise.resolve(null),
-      ])
-      if (avg) setAverages(avg)
+      ]);
+      if (avg) setAverages(avg);
       if (mine) {
         setHasVoted(true);
         setPollRatings(mine.ratings || {});
       }
-    } catch { /* ignore */ }
-  }, [book, user])
+    } catch {
+      /* ignore */
+    }
+  }, [book, user]);
 
   useEffect(() => {
     if (!isOpen || !book) return;
@@ -223,56 +252,63 @@ export const BookEditModal = ({
   }, [isOpen, book, loadRatings]);
 
   const handleRate = (category: string, value: number) => {
-    setPollRatings((prev) => ({ ...prev, [category]: value }))
-  }
+    setPollRatings((prev) => ({ ...prev, [category]: value }));
+  };
 
   const handleSubmitRating = async () => {
-    if (!user || !book?.id) return
+    if (!user || !book?.id) return;
     const bookIdNum = Number(book.id);
     if (!Number.isFinite(bookIdNum)) return;
-    const entries = Object.entries(pollRatings)
-    if (entries.length === 0) return
-    setSubmitting(true)
-    setVoteError("")
+    const entries = Object.entries(pollRatings);
+    if (entries.length === 0) return;
+    setSubmitting(true);
+    setVoteError("");
     try {
-      await rateBook(bookIdNum, pollRatings)
-      setHasVoted(true)
-      setReVoting(false)
-      loadRatings()
+      await rateBook(bookIdNum, pollRatings);
+      setHasVoted(true);
+      setReVoting(false);
+      loadRatings();
     } catch {
-      setVoteError("Ошибка при отправке оценки")
+      setVoteError("Ошибка при отправке оценки");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleChangeRating = () => {
-    setReVoting(true)
-    setHasVoted(false)
-  }
+    setReVoting(true);
+    setHasVoted(false);
+  };
 
   const allCategories = RATING_CATEGORIES.map((c) => ({
     ...c,
     userValue: pollRatings[c.key],
     avgValue: averages?.averages?.[c.key],
-  }))
+  }));
 
-  const pollComplete = allCategories.some((c) => c.userValue !== undefined) &&
-    allCategories.filter((c) => c.userValue !== undefined).length >= 1
+  const pollComplete =
+    allCategories.some((c) => c.userValue !== undefined) &&
+    allCategories.filter((c) => c.userValue !== undefined).length >= 1;
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !book || !tierListId) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      sileo.error({ title: "Файл слишком большой", description: "Максимум 5 MB" });
+      sileo.error({
+        title: "Файл слишком большой",
+        description: "Максимум 5 MB",
+      });
       return;
     }
 
     setUploading(true);
     try {
       const result = await uploadBookCover(tierListId, book.id, file);
-      dispatch({ type: "SET_COVER_IMAGE_URL", coverImageUrl: result.coverImageUrl });
+      dispatch({
+        type: "SET_COVER_IMAGE_URL",
+        coverImageUrl: result.coverImageUrl,
+      });
       sileo.success({ title: "Обложка обновлена" });
     } catch {
       sileo.error({ title: "Ошибка загрузки обложки" });
@@ -301,25 +337,25 @@ export const BookEditModal = ({
 
   const handleAiDescribe = useCallback(async () => {
     if (!title.trim()) {
-      sileo.warning({ title: "Сначала введите название книги" })
-      return
+      sileo.warning({ title: "Сначала введите название книги" });
+      return;
     }
-    setAiLoading(true)
+    setAiLoading(true);
     try {
-      const desc = await generateBookDescription(title.trim(), author.trim())
+      const desc = await generateBookDescription(title.trim(), author.trim());
       if (desc) {
-        dispatch({ type: "SET_DESCRIPTION", description: desc })
-        sileo.success({ title: "Описание сгенерировано" })
+        dispatch({ type: "SET_DESCRIPTION", description: desc });
+        sileo.success({ title: "Описание сгенерировано" });
       }
     } catch (err) {
       logger.error(err instanceof Error ? err : new Error(String(err)), {
-        action: 'generateBookDescription',
-      })
-      sileo.error({ title: "Не удалось сгенерировать описание" })
+        action: "generateBookDescription",
+      });
+      sileo.error({ title: "Не удалось сгенерировать описание" });
     } finally {
-      setAiLoading(false)
+      setAiLoading(false);
     }
-  }, [title, author])
+  }, [title, author]);
 
   const handleClose = () => {
     dispatch({ type: "RESET" });
@@ -347,12 +383,12 @@ export const BookEditModal = ({
   const parsedTags = parseTags(tagsInput);
 
   return (
-      <Modal
-        isOpen={isOpen}
-        onClose={handleSaveAndClose}
-        className="w-full max-w-[min(92vw,720px)] max-md:mx-2 max-md:min-w-0"
-        titleId="book-edit-title"
-      >
+    <Modal
+      isOpen={isOpen}
+      onClose={handleSaveAndClose}
+      className="w-full max-w-[min(92vw,720px)] max-md:mx-2 max-md:min-w-0"
+      titleId="book-edit-title"
+    >
       <div
         className="relative flex max-h-[90vh] w-full flex-col overflow-hidden bg-[#111111] text-[#f6f1e8]"
         onKeyDown={handleKeyDown}
@@ -385,7 +421,10 @@ export const BookEditModal = ({
                   htmlFor="book-title-input"
                   className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
                 >
-                  Название <span className="text-pink-500" aria-hidden="true">*</span>
+                  Название{" "}
+                  <span className="text-pink-500" aria-hidden="true">
+                    *
+                  </span>
                 </label>
                 <input
                   id="book-title-input"
@@ -441,11 +480,15 @@ export const BookEditModal = ({
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = "none";
-                        target.parentElement?.querySelector(".placeholder-fallback")?.classList.remove("hidden");
+                        target.parentElement
+                          ?.querySelector(".placeholder-fallback")
+                          ?.classList.remove("hidden");
                       }}
                     />
                   ) : null}
-                  <div className={`placeholder-fallback ${coverImageUrl ? "hidden" : ""} absolute inset-0`}>
+                  <div
+                    className={`placeholder-fallback ${coverImageUrl ? "hidden" : ""} absolute inset-0`}
+                  >
                     <BookCoverPlaceholder />
                   </div>
                 </div>
@@ -530,7 +573,10 @@ export const BookEditModal = ({
                       type="text"
                       value={tagsInput}
                       onChange={(e) =>
-                        dispatch({ type: "SET_TAGS_INPUT", tagsInput: e.target.value })
+                        dispatch({
+                          type: "SET_TAGS_INPUT",
+                          tagsInput: e.target.value,
+                        })
                       }
                       className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
                       placeholder="#фантастика #приключения"
@@ -563,7 +609,7 @@ export const BookEditModal = ({
                       ) : (
                         <Sparkles size={12} />
                       )}
-                      {aiLoading ? 'Генерация...' : 'AI'}
+                      {aiLoading ? "Генерация..." : "AI"}
                     </button>
                   </div>
                   <textarea
@@ -605,7 +651,9 @@ export const BookEditModal = ({
 
             {/* Rating Section */}
             <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
-              <span className={`${sectionTitleClass} flex items-center gap-2 max-md:text-[9px]`}>
+              <span
+                className={`${sectionTitleClass} flex items-center gap-2 max-md:text-[9px]`}
+              >
                 <Star size={14} />
                 Оценка книги
               </span>
@@ -615,7 +663,10 @@ export const BookEditModal = ({
                   {averages ? (
                     <div className="space-y-2">
                       {allCategories.map((cat) => (
-                        <div key={cat.key} className="flex items-center justify-between text-sm">
+                        <div
+                          key={cat.key}
+                          className="flex items-center justify-between text-sm"
+                        >
                           <span className="text-[#a0a0a0]">{cat.label}</span>
                           <span className="flex items-center gap-2">
                             <StarDisplay value={cat.avgValue ?? 0} size={12} />
@@ -644,7 +695,9 @@ export const BookEditModal = ({
                       <div className="flex items-center justify-between text-xs mb-1">
                         <span className="text-[#a0a0a0]">{cat.label}</span>
                         <span className="text-[#c1fffe] font-semibold text-xs">
-                          {cat.userValue !== undefined ? cat.userValue.toFixed(1) : "—"}
+                          {cat.userValue !== undefined
+                            ? cat.userValue.toFixed(1)
+                            : "—"}
                         </span>
                       </div>
                       <input
@@ -653,7 +706,9 @@ export const BookEditModal = ({
                         max={10}
                         step={0.1}
                         value={cat.userValue ?? 0}
-                        onChange={(e) => handleRate(cat.key, parseFloat(e.target.value))}
+                        onChange={(e) =>
+                          handleRate(cat.key, parseFloat(e.target.value))
+                        }
                         className="w-full h-1 rounded-full appearance-none cursor-pointer
                           bg-[#2a2a2a] accent-[#c1fffe]
                           [&::-webkit-slider-thumb]:appearance-none
@@ -714,7 +769,7 @@ export const BookEditModal = ({
         title="Удалить обложку?"
         titleId="delete-cover-title"
         confirmLabel="Удалить"
-          description={
+        description={
           <p>Обложка будет удалена из книги после сохранения изменений.</p>
         }
       />
