@@ -61,7 +61,7 @@ const TierLabelText = memo(
     if (isMultiWord) {
       return (
         <span
-          className={`nb-label-text break-words [hyphens:auto] overflow-hidden ${colorClass} ${dynamicSizeClass} ${fontClass}`}
+          className={`nb-label-text wrap-break-word [hyphens:auto] overflow-hidden ${colorClass} ${dynamicSizeClass} ${fontClass}`}
           style={customColor ? { color: customColor } : undefined}
         >
           {words[0]}
@@ -73,7 +73,7 @@ const TierLabelText = memo(
 
     return (
       <span
-        className={`nb-label-text break-words [hyphens:auto] ${colorClass} ${dynamicSizeClass} ${fontClass}`}
+        className={`nb-label-text wrap-break-word [hyphens:auto] ${colorClass} ${dynamicSizeClass} ${fontClass}`}
         title={title}
         style={customColor ? { color: customColor } : undefined}
       >
@@ -195,7 +195,7 @@ export const TierLabel = memo(
             onChange={(e) => setInputValue(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className={`w-full min-w-0 bg-transparent text-center outline-none break-words ${
+            className={`w-full min-w-0 bg-transparent text-center outline-none wrap-break-word ${
               textColor === "black" ? "text-black" : "text-white"
             }`}
             style={{

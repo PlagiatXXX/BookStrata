@@ -621,7 +621,7 @@ export const BookEditModal = ({
                         description: e.target.value,
                       })
                     }
-                    className={`${textareaClass} min-h-40 max-md:min-h-[180px] focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                    className={`${textareaClass} min-h-40 max-md:min-h-45 focus-visible:ring-2 focus-visible:ring-cyan-400`}
                     placeholder="Краткое описание книги"
                     aria-label="Описание книги"
                   />

@@ -892,7 +892,7 @@ const TierListEditorContent = () => {
 
       {/* Плавающий виджет Букстража — заменяет FeedbackButton на странице редактора */}
       {!isReadOnly && (
-        <div className="fixed right-6 z-50 bottom-[80px] md:bottom-6">
+        <div className="fixed right-6 z-50 bottom-20 md:bottom-6">
           <AiLibrarianWidget onClick={handleAiLibrarianOpen} />
         </div>
       )}

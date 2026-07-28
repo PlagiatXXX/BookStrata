@@ -70,7 +70,7 @@ export const MobileToolbar = memo(function MobileToolbar({
   lastSaved,
   hasUnsavedChanges,
   onFindBook,
-  onAddRow,
+  onAddRow: _onAddRow,
   onDownloadImage,
   shareUrl,
   title,
@@ -219,7 +219,7 @@ export const MobileToolbar = memo(function MobileToolbar({
     <>
       {/* Основная панель */}
       <div
-        className="fixed left-0 right-0 z-50 block border-t border-white/[0.06] bg-black/85 backdrop-blur-2xl lg:hidden"
+        className="fixed left-0 right-0 z-50 block border-t border-white/6 bg-black/85 backdrop-blur-2xl lg:hidden"
         style={{ bottom: bottomOffset }}
       >
         {/* Индикатор времени последнего сохранения — как на iPhone (Dynamic Island style) */}
@@ -238,7 +238,7 @@ export const MobileToolbar = memo(function MobileToolbar({
             type="button"
             onClick={onSave}
             disabled={saveStatus === "saving"}
-            className={`${btnBase} ${saveColor()} border-r border-white/[0.06]`}
+            className={`${btnBase} ${saveColor()} border-r border-white/6`}
             aria-label="Сохранить"
           >
             {saveIcon()}
@@ -250,7 +250,7 @@ export const MobileToolbar = memo(function MobileToolbar({
             <button
               type="button"
               onClick={() => onFindBook()}
-              className={`${btnBase} ${btnInactive} border-r border-white/[0.06]`}
+              className={`${btnBase} ${btnInactive} border-r border-white/6`}
               aria-label="Найти книги"
             >
               <Search size={20} />
@@ -262,7 +262,7 @@ export const MobileToolbar = memo(function MobileToolbar({
           <button
             type="button"
             onClick={onDownloadImage}
-            className={`${btnBase} ${btnInactive} border-r border-white/[0.06]`}
+            className={`${btnBase} ${btnInactive} border-r border-white/6`}
             aria-label="Экспорт"
           >
             <ImageDown size={20} />
@@ -390,7 +390,7 @@ export const MobileToolbar = memo(function MobileToolbar({
       {/* Share popover — отображается поверх по клику на "Поделиться" в "Ещё" */}
       {showSharePopover && shareUrl && (
         <div
-          className="fixed left-1/2 z-[60] w-[min(90vw,16rem)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden"
+          className="fixed left-1/2 z-60 w-[min(90vw,16rem)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden"
           style={{ bottom: bottomOffset + 60 }}
         >
           <div className="relative">

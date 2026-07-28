@@ -14,7 +14,7 @@ import type {
   DragEndEvent,
   DragOverEvent,
 } from "@dnd-kit/core";
-import { ChevronUp } from "lucide-react";
+
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { BookCover } from "@/ui/BookCover";
 import { TierLabel } from "@/ui/TierLabel";
@@ -226,7 +226,7 @@ export const EditorLayout = ({
           </div>
         ) : activeTier ? (
           <div
-            className="flex items-center gap-2 rounded-lg px-4 py-2 shadow-2xl min-w-[200px] cursor-grabbing select-none"
+            className="flex items-center gap-2 rounded-lg px-4 py-2 shadow-2xl min-w-50 cursor-grabbing select-none"
             style={{
               backgroundColor: activeTier.color || "#808080",
               transform: "rotate(1.5deg) scale(1.02)",
