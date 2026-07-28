@@ -192,21 +192,15 @@ export default function AdminDashboard() {
                 </p>
               </div>
               <div>
-                <p className="text-gray-400">Pro пользователей</p>
-                <p className="text-2xl font-bold text-amber-500 mt-1">
-                  {isLoading ? '…' : error ? '—' : stats?.proUsers}
+                <p className="text-gray-400">Тир-листов</p>
+                <p className="text-2xl font-bold text-white mt-1">
+                    {isLoading ? '…' : error ? '—' : stats?.tierLists}
                 </p>
               </div>
               <div>
                 <p className="text-gray-400">Активных новостей</p>
                 <p className="text-2xl font-bold text-blue-500 mt-1">
                   {isLoading ? '…' : error ? '—' : stats?.activeNews}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-400">Коллекций</p>
-                <p className="text-2xl font-bold text-green-500 mt-1">
-                  {isLoading ? '…' : error ? '—' : stats?.tierLists}
                 </p>
               </div>
               <div>

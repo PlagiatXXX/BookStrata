@@ -97,6 +97,10 @@ export async function apiTrackEvent(
   meta?: Record<string, unknown>,
   url?: string,
 ) {
+  // Не отправляем события при prerender'е — они засоряют аналитику
+  // просмотрами с 127.0.0.1:4173 (локальный сервер пререндера)
+  if (typeof window !== 'undefined' && window.__PRERENDER__) return
+
   try {
     await apiClient.post('/analytics/track', { event, meta, url })
   } catch {
