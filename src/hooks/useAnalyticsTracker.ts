@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { apiTrackEvent } from "@/lib/analyticsApi";
-import { capturePosthogEvent } from "@/lib/posthog";
 
 // Минимальный интервал между page_view для одного и того же пути (сек)
 const PAGE_VIEW_DEBOUNCE_MS = 10_000;
@@ -33,9 +32,6 @@ function setupAnalyticsClickListener() {
 
     // Отправка во внутреннюю аналитику
     apiTrackEvent(eventName, meta, window.location.href);
-
-    // Отправка в PostHog (если инициализирован)
-    capturePosthogEvent(eventName, meta);
 
     // Отправка в Яндекс.Метрику как цель (reachGoal) — только в production, не в prerender
     if (!import.meta.env.DEV && !window.__PRERENDER__) {
@@ -85,9 +81,8 @@ export function useAnalyticsTracker() {
 
     lastTrackedRef.current = { path: pathname, time: now };
 
-    // 1. Отправка во внутреннюю БД и PostHog
+    // 1. Отправка во внутреннюю БД
     apiTrackEvent("page_view", { path: pathname }, window.location.href);
-    capturePosthogEvent("page_view", { path: pathname });
 
     // 2. Отправка хита в Яндекс.Метрику для отслеживания SPA-переходов — только в production, не в prerender
     if (!import.meta.env.DEV && !window.__PRERENDER__) {

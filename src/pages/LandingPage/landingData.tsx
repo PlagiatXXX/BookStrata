@@ -155,7 +155,7 @@ export const screenshots: ScreenshotItem[] = [
     description: "Drag-and-drop тир-листа",
     gradient: "bg-linear-to-br from-slate-800 to-slate-900/90",
     icon: <Layers size={28} />,
-    videoSrc: "/screenshots/tier-list.mp4",
+    videoSrc: "/screenshots/editor-compressed.mp4",
   },
   {
     title: "Баттлы",

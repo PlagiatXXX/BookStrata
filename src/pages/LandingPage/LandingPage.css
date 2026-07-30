@@ -128,7 +128,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.4;
 }
 
 .landing-hero__gradient {
@@ -136,8 +135,8 @@
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(11, 22, 32, 0.1) 0%,
-    rgba(11, 22, 32, 0.5) 40%,
+    rgba(11, 22, 32, 0.45) 0%,
+    rgba(11, 22, 32, 0.65) 40%,
     rgba(11, 22, 32, 0.95) 80%,
     #0b1620 100%
   );

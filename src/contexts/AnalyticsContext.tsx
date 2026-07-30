@@ -5,11 +5,9 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { initPosthog } from "@/lib/posthog";
 import { motion, AnimatePresence } from "framer-motion";
 
 declare global {
@@ -54,14 +52,7 @@ function loadAnalytics() {
     initMetrika();
   }
 
-  // PostHog — отложенная инициализация, не блокирует LCP и первый рендер.
-  // requestIdleCallback срабатывает в ближайший простой браузера, но не позже timeout.
-  if (typeof window.requestIdleCallback !== "undefined") {
-    requestIdleCallback(() => initPosthog().catch(() => {}), { timeout: 3000 });
-  } else {
-    // fallback для старых браузеров
-    setTimeout(() => initPosthog().catch(() => {}), 2000);
-  }
+
 }
 
 interface AnalyticsContextValue {
@@ -78,13 +69,14 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       return false;
     }
   });
-  const analyticsLoaded = useRef(false);
-
-  // Аналитика грузится сразу — implied consent
+  // Аналитика грузится отложенно — после загрузки страницы или в requestIdleCallback
   useEffect(() => {
-    if (analyticsLoaded.current) return;
-    analyticsLoaded.current = true;
-    loadAnalytics();
+    const ric = (window as Window & typeof globalThis).requestIdleCallback;
+    if (typeof ric === "function") {
+      ric(() => loadAnalytics(), { timeout: 3000 });
+    } else {
+      window.addEventListener("load", () => loadAnalytics(), { once: true });
+    }
   }, []);
 
   const handleDismiss = () => {

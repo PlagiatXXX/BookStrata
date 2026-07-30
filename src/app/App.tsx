@@ -5,14 +5,12 @@ import { Spinner } from "@/components/Spinner";
 import { AchievementNotification } from "@/components/AchievementNotification/AchievementNotification";
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
 import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
-import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { AppProviders } from "./AppProviders";
 import "../styles/sileo-custom.css";
 
 function AppShell() {
   const { pathname } = useLocation();
   const { newAchievement, clearNotification } = useAchievementNotifications();
-  useAnalyticsTracker();
 
   useEffect(() => {
     window.scrollTo(0, 0);
