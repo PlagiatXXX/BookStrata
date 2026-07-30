@@ -4,8 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 // @ts-expect-error — нет типов, это JS-файл
 import sri from "./scripts/sri-plugin.mjs";
-// @ts-expect-error — нет типов, это JS-файл
-import asyncCSS from "./scripts/async-css-plugin.mjs";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -21,9 +19,6 @@ export default defineConfig({
     // crossorigin добавляется ТОЛЬКО для кросс-оригинных ресурсов (Google Fonts и т.п.),
     // чтобы не требовать CORS-заголовков от nginx для статики и не ломать prerender.
     sri({ publicPath: "/" }),
-    // Асинхронная загрузка CSS — не блокирует рендеринг.
-    // Должен быть ПОСЛЕ sri, чтобы integrity-хеш был уже проставлен.
-    asyncCSS({ publicPath: "/" }),
   ],
   optimizeDeps: {
     exclude: ["nsfwjs"],

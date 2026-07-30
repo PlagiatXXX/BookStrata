@@ -105,13 +105,10 @@ export function proxyImageUrl(
   const isLocal = url.startsWith("/");
   const finalWidth = width ? clampWidth(width) : undefined;
 
-  // S3 → CDN (без прокси — CDN уже быстрый, ресайз только если запрошен)
+  // S3 → CDN (без прокси — CDN уже быстрый, ресайз не нужен,
+  // round-trip к прокси убивает LCP: +1.5-2s к Resource load delay)
   if (url.startsWith(S3_BASE)) {
-    const cdnUrl = url.replace(S3_BASE, CDN_BASE);
-    if (finalWidth && !isServerSide()) {
-      return `/api/images/proxy?url=${encodeURIComponent(cdnUrl)}&width=${finalWidth}&quality=80`;
-    }
-    return cdnUrl;
+    return url.replace(S3_BASE, CDN_BASE);
   }
 
   // Локальные URL — не трогаем (будут нарезаны статически)
@@ -119,11 +116,10 @@ export function proxyImageUrl(
     return url;
   }
 
-  // CDN-изображения (загруженные файлы) — ресайз через прокси при необходимости
+  // CDN-изображения (загруженные файлы) — прямой URL без прокси.
+  // CDN уже быстрый, а ресайз через прокси добавляет latency;
+  // object-cover на клиенте решает проблему размеров.
   if (url.startsWith(CDN_BASE)) {
-    if (finalWidth && !isServerSide()) {
-      return `/api/images/proxy?url=${encodeURIComponent(url)}&width=${finalWidth}&quality=80`;
-    }
     return url;
   }
 
