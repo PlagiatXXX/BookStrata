@@ -30,7 +30,9 @@ export const TemplateCard = memo(({ template, onPreview }: TemplateCardProps) =>
       <img
         alt={template.title}
         className="absolute inset-0 w-full h-full object-cover opacity-45 transition-all duration-500 group-hover:opacity-60 parallax-img"
-        src={template.image}
+        src={template.image.replace('.webp', '@730.webp')}
+        srcSet={`${template.image} 1408w, ${template.image.replace('.webp', '@730.webp')} 730w`}
+        sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 22vw"
         onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
       />
 

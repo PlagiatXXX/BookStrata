@@ -37,7 +37,7 @@ export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: Collec
       );
     }
 
-    // Фильтрация по категории (прямое поле categoryId)
+    // Фильтрация по категории
     if (activeCategory && activeCategory !== "all") {
       filtered = filtered.filter((c) => c.categoryId === activeCategory);
     }
@@ -68,10 +68,11 @@ export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: Collec
 
   return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
-        {filteredCollections.map((collection) => (
+        {filteredCollections.map((collection, index) => (
         <CollectionCard
           key={collection.id}
           collection={collection}
+          priority={index < 4}
         />
       ))}
     </div>

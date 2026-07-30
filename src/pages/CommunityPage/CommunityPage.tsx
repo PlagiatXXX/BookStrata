@@ -1,4 +1,4 @@
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, lazy, Suspense } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
@@ -7,18 +7,29 @@ import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { CollectionGrid } from "@/components/CommunityComponents/CollectionGrid";
 import { HeroSection } from "@/components/CommunityComponents/HeroSection";
-import { NewsSection } from "@/components/CommunityComponents/NewsSection";
-import { ExternalNewsSection } from "@/components/CommunityComponents/ExternalNewsSection";
-import { CollectionsSection } from "@/components/CommunityComponents/CollectionsSection";
 import "./CommunityPage.css";
 
-// Мемоизируем компоненты для предотвращения лишних ререндеров
+// Мемоизируем компоненты выше фолда
 const MemoizedHeroSection = memo(HeroSection);
 const MemoizedCategoryTabs = memo(CategoryTabs);
 const MemoizedCollectionGrid = memo(CollectionGrid);
-const MemoizedNewsSection = memo(NewsSection);
-const MemoizedExternalNewsSection = memo(ExternalNewsSection);
-const MemoizedCollectionsSection = memo(CollectionsSection);
+
+// Lazy-load секции ниже фолда (TBT)
+const LazyNewsSection = lazy(() =>
+  import("@/components/CommunityComponents/NewsSection").then((m) => ({
+    default: m.NewsSection,
+  })),
+);
+const LazyExternalNewsSection = lazy(() =>
+  import("@/components/CommunityComponents/ExternalNewsSection").then((m) => ({
+    default: m.ExternalNewsSection,
+  })),
+);
+const LazyCollectionsSection = lazy(() =>
+  import("@/components/CommunityComponents/CollectionsSection").then((m) => ({
+    default: m.CollectionsSection,
+  })),
+);
 
 export default function CommunityPage() {
   const location = useLocation();
@@ -141,11 +152,17 @@ export default function CommunityPage() {
             <div className="community-rule flex-1" />
           </div>
 
-          <MemoizedNewsSection searchQuery={searchQuery} />
+          <Suspense fallback={<div className="h-48" />}>
+            <LazyNewsSection searchQuery={searchQuery} />
+          </Suspense>
 
-          <MemoizedExternalNewsSection />
+          <Suspense fallback={<div className="h-48" />}>
+            <LazyExternalNewsSection />
+          </Suspense>
 
-          <MemoizedCollectionsSection />
+          <Suspense fallback={<div className="h-32" />}>
+            <LazyCollectionsSection />
+          </Suspense>
         </main>
       </div>
     </DashboardLayout>

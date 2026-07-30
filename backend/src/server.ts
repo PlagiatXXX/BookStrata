@@ -98,36 +98,13 @@ fastify.register(cors, {
   credentials: true, // Разрешаем отправку cookie
 });
 
+// Максимально строгий CSP для API (defense in depth).
+// API возвращает JSON, а не HTML — поэтому никакие ресурсы не нужны.
+// Если ошибка приведёт к выплёвыванию HTML, он не сможет ничего загрузить.
 const cspDirectives = {
-  defaultSrc: ["'self'"],
-  scriptSrc: [
-    "'self'",
-    "https://smartcaptcha.yandexcloud.net",
-    "https://mc.yandex.ru",
-    "https://yastatic.net",
-  ],
-  styleSrc: [
-    "'self'",
-    "'unsafe-inline'",
-    "https://fonts.googleapis.com",
-    "https://smartcaptcha.yandexcloud.net",
-  ],
-  fontSrc: ["'self'", "https://fonts.gstatic.com"],
-  imgSrc: ["'self'", "data:", "https:", "blob:"],
-  frameSrc: [
-    "https://smartcaptcha.yandexcloud.net",
-    "https://mc.yandex.ru",
-  ],
-  connectSrc: [
-    "'self'",
-    "https://smartcaptcha.yandexcloud.net",
-    "https://api.telegram.org",
-    "https://mc.yandex.ru",
-    "wss://mc.yandex.ru",
-    "https://*.ingest.sentry.io",
-    "https://*.ingest.de.sentry.io",
-  ],
-  workerSrc: ["'self'", "blob:"],
+  defaultSrc: ["'none'"],
+  baseUri: ["'none'"],
+  formAction: ["'none'"],
 };
 
 await fastify.register(helmet, {
@@ -135,7 +112,7 @@ await fastify.register(helmet, {
     directives: cspDirectives,
   },
   strictTransportSecurity: {
-    maxAge: 63072000,
+    maxAge: 31536000,
     includeSubDomains: true,
     preload: true,
   },

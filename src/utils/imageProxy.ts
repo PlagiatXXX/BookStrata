@@ -4,10 +4,33 @@
  * 1. S3 → CDN (замена базового URL)
  * 2. Внешние обложки (Amazon, Goodreads, Livelib) → WebP-конвертация через /api/images/proxy
  * 3. Локальные URL — как есть
+ *
+ * Если передан width — изображение ресайзится через /api/images/proxy
+ * и кэшируется на S3 (повторные запросы — с CDN, без нагрузки на бэкенд).
  */
 
 const S3_BASE = "https://s3.twcstorage.ru/bookstrata";
 const CDN_BASE = "https://re406cj9uj.cdn.twcstorage.ru";
+
+/** Допустимые ширины ресайза (защита от перебора S3 разными размерами) */
+const ALLOWED_RESIZE_WIDTHS = [64, 300, 730] as const;
+type AllowedResizeWidth = typeof ALLOWED_RESIZE_WIDTHS[number];
+
+function clampWidth(width: number): AllowedResizeWidth {
+  // Округляем до ближайшего разрешённого значения
+  const sorted = [...ALLOWED_RESIZE_WIDTHS].sort((a, b) => a - b);
+  let closest = sorted[0];
+  let minDiff = Math.abs(width - closest);
+
+  for (const w of sorted) {
+    const diff = Math.abs(width - w);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = w;
+    }
+  }
+  return closest as AllowedResizeWidth;
+}
 
 /** Домены внешних источников, которые можно проксировать через WebP */
 const EXTERNAL_DOMAINS = [
@@ -44,7 +67,7 @@ const EXTERNAL_DOMAINS = [
  * Проверяет, выполняется ли код на сервере (prerender/SSR).
  */
 function isServerSide(): boolean {
-  return typeof window === "undefined" || !!(window as any).__PRERENDER__;
+  return typeof window === "undefined" || !!(window as Window & { __PRERENDER__?: boolean }).__PRERENDER__;
 }
 
 /**
@@ -68,28 +91,49 @@ function isExternalUrl(url: string): boolean {
  * - Внешние обложки (Amazon, Goodreads, Livelib) → /api/images/proxy
  * - Локальные — без изменений
  *
- * На сервере (prerender) внешние URL не проксируются — отдаются как есть.
+ * Если передан width — изображение ресайзится под нужную ширину
+ * через /api/images/proxy (с кэшированием на S3).
+ *
+ * На сервере (prerender) прокси не вызывается — отдаём оригинал.
  */
-export function proxyImageUrl(url: string | null | undefined): string {
+export function proxyImageUrl(
+  url: string | null | undefined,
+  width?: number,
+): string {
   if (!url) return "";
 
-  // S3 → CDN
+  const isLocal = url.startsWith("/");
+  const finalWidth = width ? clampWidth(width) : undefined;
+
+  // S3 → CDN (без прокси — CDN уже быстрый, ресайз только если запрошен)
   if (url.startsWith(S3_BASE)) {
-    return url.replace(S3_BASE, CDN_BASE);
+    const cdnUrl = url.replace(S3_BASE, CDN_BASE);
+    if (finalWidth && !isServerSide()) {
+      return `/api/images/proxy?url=${encodeURIComponent(cdnUrl)}&width=${finalWidth}&quality=80`;
+    }
+    return cdnUrl;
   }
 
-  // Локальные URL (начинаются с /) — не трогаем
-  if (url.startsWith("/")) {
+  // Локальные URL — не трогаем (будут нарезаны статически)
+  if (isLocal) {
+    return url;
+  }
+
+  // CDN-изображения (загруженные файлы) — ресайз через прокси при необходимости
+  if (url.startsWith(CDN_BASE)) {
+    if (finalWidth && !isServerSide()) {
+      return `/api/images/proxy?url=${encodeURIComponent(url)}&width=${finalWidth}&quality=80`;
+    }
     return url;
   }
 
   // Внешние URL — через WebP-прокси (только на клиенте)
   if (isExternalUrl(url)) {
     if (isServerSide()) {
-      // При prerender'е бэкенд может не быть доступен — отдаём оригинал
       return url;
     }
-    return `/api/images/proxy?url=${encodeURIComponent(url)}&width=300&quality=80`;
+    const w = finalWidth ?? 300;
+    return `/api/images/proxy?url=${encodeURIComponent(url)}&width=${w}&quality=80`;
   }
 
   return url;
@@ -100,7 +144,8 @@ export function proxyImageUrl(url: string | null | undefined): string {
  */
 export function proxyImageUrlOrNull(
   url: string | null | undefined,
+  width?: number,
 ): string | null {
   if (!url) return null;
-  return proxyImageUrl(url) || null;
+  return proxyImageUrl(url, width) || null;
 }

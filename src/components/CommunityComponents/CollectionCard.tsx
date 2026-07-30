@@ -7,13 +7,15 @@ import { proxyImageUrl } from '@/utils/imageProxy';
 interface CollectionCardProps {
   collection: CollectionItem;
   className?: string;
+  /** Первый экран: приоритетная загрузка (fetchpriority="high", loading="eager") */
+  priority?: boolean;
 }
 
 const FALLBACK = '/images/placeholder.svg';
 
 const DEFAULT_ACCENT = 'var(--accent-main)';
 
-export const CollectionCard = memo(({ collection, className = '' }: CollectionCardProps) => {
+export const CollectionCard = memo(({ collection, className = '', priority = false }: CollectionCardProps) => {
   const navigate = useNavigate();
 
   const handleClick = useCallback(() => {
@@ -50,9 +52,10 @@ export const CollectionCard = memo(({ collection, className = '' }: CollectionCa
           <img
             alt={collection.title}
             className="h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
-            src={proxyImageUrl(coverImage)}
+            src={proxyImageUrl(coverImage, 730)}
             onError={(e) => { e.currentTarget.src = FALLBACK; }}
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : undefined}
           />
         </div>
       ) : (
