@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { Tag, Calendar, BookOpen, Sparkles } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -17,6 +17,7 @@ import type { CollectionItem } from "@/types/collection";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { COLLECTION_SEO, COLLECTION_TITLES } from "@/data/collection-seo";
+import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
 import "./CollectionPage.css";
 
 export default function CollectionPage() {
@@ -339,15 +340,21 @@ return DOMPurify.sanitize(collection.content);
           </div>
         )}
 
-        {/* Editorial note — как составлялась подборка */}
-        {collection.editorialNote && (
-          <div className="brutal-card brutal-border p-6 mb-8">
-            <h2 className="text-lg font-black tracking-tight mb-3 uppercase">Как составлялась подборка</h2>
-            <p className="text-base text-(--ink-1) leading-relaxed">
-              {collection.editorialNote}
+        {/* Editorial note или excerpt — один текстовый блок перед тир-листом */}
+        <div className="brutal-card brutal-border p-6 mb-8">
+          {collection.editorialNote ? (
+            <>
+              <h2 className="text-lg font-black tracking-tight mb-3 uppercase">Как составлялась подборка</h2>
+              <p className="text-base text-(--ink-1) leading-relaxed">
+                {collection.editorialNote}
+              </p>
+            </>
+          ) : collection.excerpt ? (
+            <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
+              {collection.excerpt}
             </p>
-          </div>
-        )}
+          ) : null}
+        </div>
 
         {/* Value callout — пока нет отметок, над тир-листом */}
         {collection.type === "curated" && markedCount === 0 && (
@@ -420,15 +427,6 @@ return DOMPurify.sanitize(collection.content);
           </div>
         </div>
 
-        {/* Excerpt */}
-        {collection.excerpt && (
-          <div className="brutal-card brutal-border p-6 mb-8">
-            <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
-              {collection.excerpt}
-            </p>
-          </div>
-        )}
-
         {/* Last updated */}
         <div className="flex items-center gap-2 mb-8 text-sm text-(--ink-2)">
           <Calendar size={14} />
@@ -467,11 +465,25 @@ return DOMPurify.sanitize(collection.content);
           <div className="flex items-center gap-2 flex-wrap">
             <Tag size={16} className="text-(--ink-1)" />
             <span className="text-sm text-(--ink-1)">Теги:</span>
-            {collection.tags.map((tag) => (
-              <span key={tag} className="text-sm text-(--accent-main)">
-                #{tag}
-              </span>
-            ))}
+            {collection.tags.map((tag) => {
+              const categoryId = TAG_TO_CATEGORY[tag];
+              if (categoryId) {
+                return (
+                  <Link
+                    key={tag}
+                    to={`/community?category=${categoryId}#collections`}
+                    className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
+                  >
+                    #{tag}
+                  </Link>
+                );
+              }
+              return (
+                <span key={tag} className="text-sm text-(--accent-main)">
+                  #{tag}
+                </span>
+              );
+            })}
           </div>
         </footer>
       </article>

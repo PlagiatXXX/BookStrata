@@ -35,6 +35,7 @@ import { rolesRoutes } from "../src/modules/roles/roles.route.js";
 import { subscriptionsRoutes } from "../src/modules/subscriptions/subscriptions.routes.js";
 import { aiLibrarianRoutes } from "../src/modules/ai-librarian/ai-librarian.route.js";
 import { proxyRoutes } from "../src/modules/proxy/proxy.route.js";
+import { imageProxyRoutes } from "../src/modules/image-proxy/image-proxy.route.js";
 import { collectionRoutes } from "../src/modules/collections/collection.route.js";
 import { topicRoutes } from "../src/modules/collections/topic.route.js";
 import { celebrityRoutes } from "../src/modules/celebrities/celebrity.route.js";
@@ -458,6 +459,7 @@ fastify.register(aiLibrarianRoutes, { prefix: "/api/ai" });
 fastify.register(moderationRoutes, { prefix: "/api/moderation" });
 
 fastify.register(proxyRoutes, { prefix: "/api/proxy" });
+fastify.register(imageProxyRoutes, { prefix: "/api/images" });
 fastify.register(collectionRoutes, { prefix: "/api/collections" });
 fastify.register(topicRoutes, { prefix: "/api/topics" });
 fastify.register(celebrityRoutes, { prefix: "/api/celebrities" });

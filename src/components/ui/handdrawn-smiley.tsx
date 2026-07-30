@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import rough from "roughjs"
 
 interface HanddrawnSmileyProps {
   className?: string
@@ -15,68 +14,82 @@ export function HanddrawnSmiley({ className = "", size = 80 }: HanddrawnSmileyPr
     const svg = svgRef.current
     if (!svg) return
 
-    svg.innerHTML = ""
-    const rc = rough.svg(svg)
-    const s = svg
+    let cancelled = false
 
-    const cx = size / 2
-    const cy = size / 2
-    const r = size * 0.38
-    const strokeWidth = 1.8
-    const color = "#c97d60"
-    const fill = "transparent"
-    const options = {
-      stroke: color,
-      strokeWidth,
-      roughness: 1.8,
-      fill,
-      bowing: 0.6,
-    }
+    // Динамический импорт roughjs — не грузим в основном бандле
+    import("roughjs").then((mod) => {
+      const rough = mod.default || mod;
+      if (cancelled || !svg) return
 
-    // Голова — неровный круг
-    const head = rc.circle(cx, cy, r * 2, {
-      ...options,
-      roughness: 2.2,
+      svg.innerHTML = ""
+      const rc = rough.svg(svg)
+      const s = svg
+
+      const cx = size / 2
+      const cy = size / 2
+      const r = size * 0.38
+      const strokeWidth = 1.8
+      const color = "#c97d60"
+      const fill = "transparent"
+      const options = {
+        stroke: color,
+        strokeWidth,
+        roughness: 1.8,
+        fill,
+        bowing: 0.6,
+      }
+
+      // Голова — неровный круг
+      const head = rc.circle(cx, cy, r * 2, {
+        ...options,
+        roughness: 2.2,
+      })
+      s.appendChild(head)
+
+      // Глаза — два X
+      const eyeHalf = size * 0.04
+      const eyeY = cy - r * 0.25
+      const eyeOffsetX = r * 0.32
+
+      function drawX(ex: number, ey: number, half: number) {
+        // top-left → bottom-right
+        s.appendChild(
+          rc.line(ex - half, ey - half, ex + half, ey + half, {
+            ...options,
+            roughness: 1.5,
+            strokeWidth: 2.4,
+          }),
+        )
+        // top-right → bottom-left
+        s.appendChild(
+          rc.line(ex + half, ey - half, ex - half, ey + half, {
+            ...options,
+            roughness: 1.5,
+            strokeWidth: 2.4,
+          }),
+        )
+      }
+
+      drawX(cx - eyeOffsetX, eyeY, eyeHalf)
+      drawX(cx + eyeOffsetX, eyeY, eyeHalf)
+
+      // Рот — простая линия чуть на боку
+      const mouthY = cy + r * 0.22
+      const mouthLen = r * 0.4
+      const tilt = r * 0.06
+      const mouth = rc.line(
+        cx - mouthLen, mouthY - tilt,
+        cx + mouthLen, mouthY + tilt,
+        { ...options, roughness: 1.5, strokeWidth: 2 },
+      )
+      s.appendChild(mouth)
+    }).catch(() => {
+      // Если roughjs не загрузился — ничего не рисуем, просто пустой SVG
     })
-    s.appendChild(head)
 
-    // Глаза — два X
-    const eyeHalf = size * 0.04
-    const eyeY = cy - r * 0.25
-    const eyeOffsetX = r * 0.32
-
-    function drawX(ex: number, ey: number, half: number) {
-      // top-left → bottom-right
-      s.appendChild(
-        rc.line(ex - half, ey - half, ex + half, ey + half, {
-          ...options,
-          roughness: 1.5,
-          strokeWidth: 2.4,
-        }),
-      )
-      // top-right → bottom-left
-      s.appendChild(
-        rc.line(ex + half, ey - half, ex - half, ey + half, {
-          ...options,
-          roughness: 1.5,
-          strokeWidth: 2.4,
-        }),
-      )
+    return () => {
+      cancelled = true
     }
-
-    drawX(cx - eyeOffsetX, eyeY, eyeHalf)
-    drawX(cx + eyeOffsetX, eyeY, eyeHalf)
-
-    // Рот — простая линия чуть на боку
-    const mouthY = cy + r * 0.22
-    const mouthLen = r * 0.4
-    const tilt = r * 0.06
-    const mouth = rc.line(
-      cx - mouthLen, mouthY - tilt,
-      cx + mouthLen, mouthY + tilt,
-      { ...options, roughness: 1.5, strokeWidth: 2 },
-    )
-    s.appendChild(mouth)
   }, [size])
 
   return (

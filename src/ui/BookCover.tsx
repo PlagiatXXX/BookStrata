@@ -1,4 +1,4 @@
-import { memo, forwardRef, useState, useEffect, useRef } from "react";
+import { memo, forwardRef, useState, useRef, useCallback } from "react";
 import { X, Edit2, Eye } from "lucide-react";
 import type { Book } from "@/types";
 import type { ReadStatus } from "@/hooks/useReadStatus";
@@ -13,11 +13,13 @@ interface BookCoverProps {
   onView?: (book: Book) => void;
   readStatus?: ReadStatus | null;
   onToggleStatus?: () => void;
+  /** Если true — ставит fetchpriority="high" (для first-view книг) */
+  priority?: boolean;
 }
 
 export const BookCover = memo(
   forwardRef<HTMLDivElement, BookCoverProps>(
-    ({ book, isDraggable = true, onDelete, onEdit, onView, readStatus, onToggleStatus }, ref) => {
+    ({ book, isDraggable = true, onDelete, onEdit, onView, readStatus, onToggleStatus, priority = false }, ref) => {
       const [showActions, setShowActions] = useState(false);
       const [isHovered, setIsHovered] = useState(false);
       const [coverError, setCoverError] = useState(false);
@@ -30,12 +32,13 @@ export const BookCover = memo(
       const label = `${book.title} - ${book.author}`;
       const hasActions = Boolean(onDelete || onEdit || onView);
       const showActionsFinal = isHovered || showActions;
+      const hasCover = !!book.coverImageUrl;
+      const showCover = hasCover && !coverError;
+      const imgUrl = showCover ? proxyImageUrl(book.coverImageUrl) : undefined;
 
       const handleClick = (e: React.MouseEvent) => {
-        // На десктопе не показываем кнопки по клику
         if (window.innerWidth >= 768) return;
 
-        // На мобильных: сначала скрываем кнопки на всех других книгах
         const allBooks = document.querySelectorAll("[data-book-id]");
         allBooks.forEach((bookEl) => {
           if (bookEl.getAttribute("data-book-id") !== book.id) {
@@ -43,7 +46,6 @@ export const BookCover = memo(
           }
         });
 
-        // Toggle на этой книге
         e.preventDefault();
         e.stopPropagation();
         setShowActions((prev) => !prev);
@@ -55,7 +57,6 @@ export const BookCover = memo(
         onView?.(book);
       };
 
-      // Обработка двойного тапа для мобильных
       const handleTouchEnd = (e: React.TouchEvent) => {
         const now = Date.now();
         if (now - lastTapTime.current < 300) {
@@ -64,57 +65,22 @@ export const BookCover = memo(
         lastTapTime.current = now;
       };
 
-      // Закрываем кнопки при клике вне книги ИЛИ при клике на другую книгу
-      useEffect(() => {
+      const handleClickOutside = useCallback((e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        const clickedBookId = target
+          .closest("[data-book-id]")
+          ?.getAttribute("data-book-id");
+
+        if (clickedBookId === book.id) return;
+        setShowActions(false);
+      }, [book.id]);
+
+      // Закрываем кнопки при клике вне книги
+      useState(() => {
         if (!showActions) return;
-
-        const handleClickOutside = (e: MouseEvent) => {
-          const target = e.target as HTMLElement;
-          const clickedBookId = target
-            .closest("[data-book-id]")
-            ?.getAttribute("data-book-id");
-
-          if (clickedBookId === book.id) {
-            return; // Клик по этой книге - не закрываем
-          }
-
-          setShowActions(false);
-        };
-
         document.addEventListener("click", handleClickOutside);
         return () => document.removeEventListener("click", handleClickOutside);
-      }, [showActions, book.id]);
-
-      // Синхронизируем data-book-actions с состоянием showActionsFinal
-      useEffect(() => {
-        const element = innerRef.current;
-        if (element) {
-          element.setAttribute(
-            "data-book-actions",
-            showActionsFinal ? "visible" : "hidden",
-          );
-        }
-      }, [showActionsFinal]);
-
-      const hasCover = !!book.coverImageUrl;
-
-      // Сбрасываем ошибку загрузки при смене URL
-      useEffect(() => {
-        if (!hasCover) return;
-
-        const img = new Image();
-        img.onload = () => setCoverError(false);
-        img.onerror = () => setCoverError(true);
-        img.src = proxyImageUrl(book.coverImageUrl);
-
-        return () => {
-          img.onload = null;
-          img.onerror = null;
-        };
-      }, [book.coverImageUrl, hasCover]);
-
-      const showCover = hasCover && !coverError;
-      const bgImageUrl = showCover ? proxyImageUrl(book.coverImageUrl) : undefined;
+      });
 
       return (
         <div
@@ -126,7 +92,6 @@ export const BookCover = memo(
               ref.current = node;
             }
           }}
-          style={bgImageUrl ? { backgroundImage: `url(${bgImageUrl})` } : undefined}
           onClick={handleClick}
           onTouchEnd={handleTouchEnd}
           onMouseEnter={() => setIsHovered(true)}
@@ -134,15 +99,31 @@ export const BookCover = memo(
           data-book-id={book.id}
           data-book-actions={showActionsFinal ? "visible" : "hidden"}
           className={`nb-book-card relative ${cursorClass}`}
-          role={showCover ? "img" : undefined}
-          aria-label={showCover ? label : undefined}
+          data-testid="book-cover"
           onDoubleClick={() => onView?.(book)}
         >
+          {showCover ? (
+            <img
+              src={imgUrl}
+              alt={`Обложка: ${label}`}
+              loading={priority ? "eager" : "lazy"}
+              fetchPriority={priority ? "high" : undefined}
+              onError={() => setCoverError(true)}
+              onLoad={() => setCoverError(false)}
+              className="pointer-events-none"
+              draggable={false}
+            />
+          ) : (
+            <div className="absolute inset-0">
+              <BookCoverPlaceholder compact />
+            </div>
+          )}
+
           {showCover && hasActions && (
             <div className="pointer-events-none absolute inset-0 border border-[#c1fffe]/15" />
           )}
 
-          {/* Read status badge — плашка снизу с текстом */}
+          {/* Read status badge */}
           {onToggleStatus && (
             <button
               onClick={(e) => {
@@ -169,12 +150,6 @@ export const BookCover = memo(
                 <span className="text-(--ink-3) leading-none">+ Отметить</span>
               )}
             </button>
-          )}
-
-          {!showCover && (
-            <div className="absolute inset-0">
-              <BookCoverPlaceholder compact />
-            </div>
           )}
 
           {onDelete && (

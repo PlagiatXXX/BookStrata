@@ -3,8 +3,6 @@
 import { useLayoutEffect, useRef } from "react"
 import type React from "react"
 import { useInView } from "motion/react"
-import { annotate } from "rough-notation"
-import { type RoughAnnotation } from "rough-notation/lib/model"
 
 type AnnotationAction =
   | "highlight"
@@ -50,8 +48,8 @@ export function Highlighter({
 
   useLayoutEffect(() => {
     const element = elementRef.current
-    let annotation: RoughAnnotation | null = null
     let resizeObserver: ResizeObserver | null = null
+    let cleanup: (() => void) | null = null
 
     if (shouldShow && element) {
       const annotationConfig = {
@@ -64,24 +62,32 @@ export function Highlighter({
         multiline,
       }
 
-      const currentAnnotation = annotate(element, annotationConfig)
-      annotation = currentAnnotation
-      currentAnnotation.show()
+      // Динамический импорт rough-notation — не грузим в основном бандле
+      import("rough-notation").then(({ annotate }) => {
+        const annotation = annotate(element, annotationConfig)
+        annotation.show()
 
-      resizeObserver = new ResizeObserver(() => {
-        currentAnnotation.hide()
-        currentAnnotation.show()
+        resizeObserver = new ResizeObserver(() => {
+          annotation.hide()
+          annotation.show()
+        })
+
+        resizeObserver.observe(element)
+        resizeObserver.observe(document.body)
+
+        cleanup = () => {
+          annotation.remove()
+          if (resizeObserver) {
+            resizeObserver.disconnect()
+          }
+        }
+      }).catch(() => {
+        // Если rough-notation не загрузился — просто показываем без анимации
       })
-
-      resizeObserver.observe(element)
-      resizeObserver.observe(document.body)
     }
 
     return () => {
-      annotation?.remove()
-      if (resizeObserver) {
-        resizeObserver.disconnect()
-      }
+      cleanup?.()
     }
   }, [
     shouldShow,

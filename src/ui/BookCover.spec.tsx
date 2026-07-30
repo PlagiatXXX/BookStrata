@@ -12,18 +12,32 @@ const mockBook = {
 describe("BookCover", () => {
   it("renders the book cover image", () => {
     render(<BookCover book={mockBook} />);
-    const card = screen.getByRole("img");
-    expect(card).toHaveStyle(`background-image: url("${mockBook.coverImageUrl}")`);
-    expect(card).toHaveAttribute("aria-label", `${mockBook.title} - ${mockBook.author}`);
+    const img = screen.getByAltText(`Обложка: ${mockBook.title} - ${mockBook.author}`);
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("src", mockBook.coverImageUrl);
+    expect(img).toHaveAttribute("loading", "lazy");
+  });
+
+  it("sets fetchpriority=high when priority prop is true", () => {
+    render(<BookCover book={mockBook} priority />);
+    const img = screen.getByAltText(`Обложка: ${mockBook.title} - ${mockBook.author}`);
+    expect(img).toHaveAttribute("fetchpriority", "high");
+    expect(img).toHaveAttribute("loading", "eager");
+  });
+
+  it("renders placeholder when no coverImageUrl", () => {
+    render(<BookCover book={{ ...mockBook, coverImageUrl: "" }} />);
+    // Placeholder рендерится, img не должен быть
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("renders the View button when onView is provided", () => {
     const onView = vi.fn();
     render(<BookCover book={mockBook} onView={onView} />);
-    
+
     const viewButton = screen.getByLabelText(`Просмотреть "${mockBook.title}"`);
     expect(viewButton).toBeInTheDocument();
-    
+
     fireEvent.click(viewButton);
     expect(onView).toHaveBeenCalledWith(mockBook);
   });
@@ -37,17 +51,17 @@ describe("BookCover", () => {
         onView={() => {}} 
       />
     );
-    
+
     const deleteButton = screen.getByLabelText(`Удалить "${mockBook.title}"`);
     const editButton = screen.getByLabelText(`Редактировать "${mockBook.title}"`);
     const viewButton = screen.getByLabelText(`Просмотреть "${mockBook.title}"`);
-    
+
     expect(deleteButton).toHaveClass("focus-visible:ring-2");
     expect(deleteButton).toHaveClass("focus-visible:ring-cyan-400");
-    
+
     expect(editButton).toHaveClass("focus-visible:ring-2");
     expect(editButton).toHaveClass("focus-visible:ring-cyan-400");
-    
+
     expect(viewButton).toHaveClass("focus-visible:ring-2");
     expect(viewButton).toHaveClass("focus-visible:ring-cyan-400");
   });
@@ -55,23 +69,26 @@ describe("BookCover", () => {
   it("triggers onView on double click of the cover", () => {
     const onView = vi.fn();
     render(<BookCover book={mockBook} onView={onView} />);
-    
-    const card = screen.getByRole("img");
+
+    const card = screen.getByTestId("book-cover");
     fireEvent.doubleClick(card);
-    
+
     expect(onView).toHaveBeenCalledWith(mockBook);
   });
 
   describe("hover — изолированный от родительского group", () => {
+    function getCard() {
+      return screen.getByTestId("book-cover");
+    }
+
     it("изначально data-book-actions hidden", () => {
       render(<BookCover book={mockBook} onDelete={() => {}} />);
-      const card = screen.getByRole("img");
-      expect(card).toHaveAttribute("data-book-actions", "hidden");
+      expect(getCard()).toHaveAttribute("data-book-actions", "hidden");
     });
 
     it("mouseEnter → data-book-actions visible, mouseLeave → hidden", () => {
       render(<BookCover book={mockBook} onDelete={() => {}} onView={() => {}} />);
-      const card = screen.getByRole("img");
+      const card = getCard();
 
       fireEvent.mouseEnter(card);
       expect(card).toHaveAttribute("data-book-actions", "visible");
@@ -89,7 +106,7 @@ describe("BookCover", () => {
           onView={() => {}}
         />
       );
-      const card = screen.getByRole("img");
+      const card = getCard();
 
       fireEvent.mouseEnter(card);
 
@@ -111,7 +128,7 @@ describe("BookCover", () => {
           onView={() => {}}
         />
       );
-      const card = screen.getByRole("img");
+      const card = getCard();
 
       fireEvent.mouseEnter(card);
       fireEvent.mouseLeave(card);
@@ -128,7 +145,7 @@ describe("BookCover", () => {
         </div>
       );
 
-      const cards = screen.getAllByRole("img");
+      const cards = screen.getAllByTestId("book-cover");
       expect(cards).toHaveLength(2);
 
       fireEvent.mouseEnter(cards[0]);

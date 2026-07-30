@@ -40,7 +40,7 @@ export const StaticTierView = memo(({
   return (
     <div className="static-tier-view">
       <div className="flex flex-col">
-        {tierOrder.map((tierId) => {
+        {tierOrder.map((tierId, tierIndex) => {
           const tier = tiers[tierId];
           if (!tier) return null;
 
@@ -61,7 +61,7 @@ export const StaticTierView = memo(({
                 labelColor={tier.labelColor}
               />
               <div className="nb-book-track relative flex flex-1 flex-wrap content-start items-center transition-colors">
-                {tierBooks.map((book) => (
+                {tierBooks.map((book, bookIndex) => (
                   <BookCover
                     key={book.id}
                     book={book}
@@ -69,6 +69,8 @@ export const StaticTierView = memo(({
                     onView={onViewBook}
                     readStatus={statuses?.[book.id] ?? null}
                     onToggleStatus={onToggleStatus ? () => onToggleStatus(book.id) : undefined}
+                    // Первые 6 книг первого tier'а — fetchpriority="high" (above the fold)
+                    priority={tierIndex === 0 && bookIndex < 6}
                   />
                 ))}
                 {tierBooks.length === 0 && (

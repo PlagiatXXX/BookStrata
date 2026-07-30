@@ -118,6 +118,7 @@ export default function CommunityPage() {
           />
 
           <div
+            id="collections"
             className="flex items-end justify-between mb-6 reveal"
             data-reveal
           >
