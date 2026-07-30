@@ -37,7 +37,7 @@ export function AiRecommendationPrompt({
     dismissAndSave()
     sileo.success({
       title: 'Букстраж рядом',
-      description: 'Если захочешь подобрать книги — карточка ждёт тебя внизу редактора',
+      description: 'Если захочешь подобрать книги — Букстраж всегда в правом нижнем углу',
     })
   }, [dismissAndSave])
 

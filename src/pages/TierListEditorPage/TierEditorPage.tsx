@@ -18,6 +18,7 @@ import { useTierEditorQueries } from "./hooks/useTierEditorQueries";
 import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
+import { getDemoInitialData } from "./_initialData";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { AiLibrarianWidget } from "@/components/AiLibrarian/AiLibrarianWidget";
@@ -31,6 +32,7 @@ import { SEOHead } from "@/components/SEO/SEOHead";
 
 import { useDemoStorage } from "./hooks/useDemoStorage";
 import { AuthOnSaveModal } from "./components/AuthOnSaveModal";
+import { DemoOnboarding } from "./components/DemoOnboarding";
 import "./TierEditorPage.css";
 import type { Book, Tier, TierListData } from "@/types";
 
@@ -159,11 +161,30 @@ const TierListEditorContent = () => {
     return null;
   });
 
-  const effectiveInitialData = demoInitialData ?? initialDataForHook;
+  // Если демо-режим без форка и без сохранённого черновика — показываем предзаполненные книги
+  const effectiveInitialData = demoInitialData ?? (isDemo && !forkSlug ? getDemoInitialData(tierListId, 'Новый тир-лист') : initialDataForHook);
 
   // Состояние для модалки регистрации (используется в части 2)
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [demoTitle, setDemoTitle] = useState(initialDataForHook.title || "Новый тир-лист");
+
+  // ========== ОНБОРДИНГ ДЕМО-РЕЖИМА ==========
+  const [onboardingStep, setOnboardingStep] = useState<0 | 1 | 2 | 3 | null>(
+    isDemo ? 0 : null,
+  );
+
+  const handleOnboardingNext = useCallback(() => {
+    setOnboardingStep((prev) => {
+      if (prev === null) return null;
+      return prev >= 3 ? null : ((prev + 1) as 0 | 1 | 2 | 3 | null);
+    });
+  }, []);
+
+  const handleOnboardingSkip = useCallback(() => {
+    setOnboardingStep(null);
+  }, []);
+  // ========== КОНЕЦ ОНБОРДИНГА ==========
+
   // ========== КОНЕЦ ДЕМО-РЕЖИМ (часть 1) ==========
 
   // Получаем функции из хука useTierList
@@ -644,6 +665,17 @@ const TierListEditorContent = () => {
     handleDragEndWithUnsaved,
   });
 
+  // При первом перетаскивании — завершаем онбординг
+  const wrappedHandleDragStart = useCallback(
+    (event: Parameters<typeof handleDragStart>[0]) => {
+      handleDragStart(event);
+      if (onboardingStep !== null) {
+        setOnboardingStep(null);
+      }
+    },
+    [handleDragStart, onboardingStep],
+  );
+
   const handleConfirmDelete = () => {
     if (tierToDelete) removeTierWithUnsaved(tierToDelete);
     setTierToDelete(null);
@@ -752,7 +784,7 @@ const TierListEditorContent = () => {
       >
       <EditorLayout
         activeItem={activeItem}
-        onDragStart={handleDragStart}
+        onDragStart={wrappedHandleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEndAndClear}
         onDragCancel={() => setActiveItem(null)}
@@ -818,7 +850,8 @@ const TierListEditorContent = () => {
           saveStatus={saveStatus}
           lastSaved={lastSaved}
           hasUnsavedChanges={hasUnsavedChanges}
-            onSave={handleSaveOrRegister}
+          onSave={handleSaveOrRegister}
+          onboardingStep={onboardingStep}
         />
 
       </EditorLayout>
@@ -881,6 +914,15 @@ const TierListEditorContent = () => {
         tierListTheme={displayTheme}
         onRequireAuth={() => setShowAuthModal(true)}
       />
+
+      {/* Онбординг демо-режима */}
+      {onboardingStep !== null && (
+        <DemoOnboarding
+          step={onboardingStep}
+          onNext={handleOnboardingNext}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
 
       {!isReadOnly && (
         <AiLibrarianModal

@@ -705,3 +705,34 @@ main.grid:has(> .neo-brutalist-editor) {
   color: #c1fffe;
   border-radius: 0;
 }
+
+/* ========== ОНБОРДИНГ ДЕМО-РЕЖИМА ========== */
+
+/* Пульсация книг на шаге 3 — лёгкое покачивание */
+@keyframes onboarding-book-pulse {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-4px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-2px);
+  }
+}
+
+[data-onboarding-pulse="true"] .nb-book-card {
+  animation: onboarding-book-pulse 1.5s ease-in-out infinite;
+  animation-delay: calc(var(--book-index, 0) * 0.1s);
+}
+
+/* Подсветка областей — свечение границы */
+.onboarding-highlight-tiers .nb-tier-row:first-child {
+  box-shadow:
+    0 0 20px 4px rgba(193, 255, 254, 0.3),
+    inset 0 0 20px 4px rgba(193, 255, 254, 0.05);
+  transition: box-shadow 0.3s ease;
+}

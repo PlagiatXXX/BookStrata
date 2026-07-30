@@ -1,6 +1,63 @@
-import type { TierListData } from '@/types';
+import type { Book, TierListData } from '@/types';
 
-// Функция для создания начальных данных для нового тир-листа
+// Версия демо-данных. При изменении набора книг — увеличивать,
+// чтобы у пользователей сбрасывался старый черновик в localStorage.
+export const DEMO_DATA_VERSION = 1;
+
+// 8 популярных книг для демо-режима (чтобы новички сразу могли попробовать перетаскивание)
+// Используем обложки из public/images/books/ — все файлы физически присутствуют
+const DEMO_BOOKS: Book[] = [
+  {
+    id: 'demo-master-i-margarita',
+    title: 'Мастер и Маргарита',
+    author: 'Михаил Булгаков',
+    coverImageUrl: '/images/books/master-i-margarita.webp',
+  },
+  {
+    id: 'demo-prestuplenie-i-nakazanie',
+    title: 'Преступление и наказание',
+    author: 'Фёдор Достоевский',
+    coverImageUrl: '/images/books/prestuplenie-i-nakazanie.webp',
+  },
+  {
+    id: 'demo-anna-karenina',
+    title: 'Анна Каренина',
+    author: 'Лев Толстой',
+    coverImageUrl: '/images/books/anna-karenina.webp',
+  },
+  {
+    id: 'demo-bratya-karamazovy',
+    title: 'Братья Карамазовы',
+    author: 'Фёдор Достоевский',
+    coverImageUrl: '/images/books/bratya-karamazovy.webp',
+  },
+  {
+    id: 'demo-shantaram',
+    title: 'Шантарам',
+    author: 'Грегори Дэвид Робертс',
+    coverImageUrl: '/images/books/shantaram.webp',
+  },
+  {
+    id: 'demo-sto-let-odinochestva',
+    title: 'Сто лет одиночества',
+    author: 'Габриэль Гарсиа Маркес',
+    coverImageUrl: '/images/books/sto-let-odinochestva.webp',
+  },
+  {
+    id: 'demo-voyna-i-mir',
+    title: 'Война и мир',
+    author: 'Лев Толстой',
+    coverImageUrl: '/images/books/voyna-i-mir.webp',
+  },
+  {
+    id: 'demo-shadow-wind',
+    title: 'Тень ветра',
+    author: 'Карлос Руис Сафон',
+    coverImageUrl: '/images/books/shadow-wind.webp',
+  },
+];
+
+// Функция для создания начальных данных нового тир-листа
 export function getInitialData(id: string, title: string): TierListData {
   return {
     id,
@@ -24,5 +81,22 @@ export function getInitialData(id: string, title: string): TierListData {
     // Книги, которые еще не были распределены по тирам
     unrankedBookIds: [],
     tierIdToTempIdMap: {},
+  };
+}
+
+// Функция для создания начальных данных демо-тир-листа (с предзаполненными книгами)
+export function getDemoInitialData(id: string, title: string): TierListData {
+  const books: Record<string, Book> = {};
+  const unrankedBookIds: string[] = [];
+
+  for (const book of DEMO_BOOKS) {
+    books[book.id] = book;
+    unrankedBookIds.push(book.id);
+  }
+
+  return {
+    ...getInitialData(id, title),
+    books,
+    unrankedBookIds,
   };
 }

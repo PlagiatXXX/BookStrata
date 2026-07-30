@@ -12,6 +12,7 @@ interface EditorMainContentProps {
   isReadOnly: boolean;
   hideUnranked?: boolean;
   tierGridRef: React.RefObject<HTMLDivElement | null>;
+  onboardingStep?: 0 | 1 | 2 | 3 | null;
   // Обработчики для TierGrid
   onDeleteBook?: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
@@ -46,6 +47,7 @@ export const EditorMainContent = memo(
     isReadOnly,
     hideUnranked = false,
     tierGridRef,
+    onboardingStep,
     onDeleteBook,
     onEditBook,
     onViewBook,
@@ -70,6 +72,19 @@ export const EditorMainContent = memo(
     hasUnsavedChanges,
     onSave,
   }: EditorMainContentProps) => {
+    // Классы для подсветки областей во время онбординга
+    const tierGridHighlight =
+      onboardingStep === 1
+        ? "ring-2 ring-[#c1fffe] ring-offset-2 ring-offset-black/80 rounded-none transition-all duration-300"
+        : "";
+    const unrankedHighlight =
+      onboardingStep === 0
+        ? "ring-2 ring-[#c1fffe] ring-offset-2 ring-offset-black/80 rounded-none transition-all duration-300"
+        : "";
+    const booksPulse =
+      onboardingStep === 2
+        ? "animate-[onboarding-book-pulse_1.5s_ease-in-out_infinite]"
+        : "";
     // Memoize derived data to prevent unnecessary re-renders
     const unrankedBooks = useMemo(
       () =>
@@ -146,28 +161,32 @@ export const EditorMainContent = memo(
       <>
         <div className="flex flex-col gap-6 lg:flex-row lg:justify-center">
           <div className="flex max-w-full flex-1 flex-col gap-4">
-            <TierGrid
-              ref={tierGridRef}
-              listData={listData}
-              onDeleteBook={isReadOnly ? undefined : onDeleteBook}
-              onEditBook={isReadOnly ? undefined : onEditBook}
-              onViewBook={onViewBook}
-              activeTierId={activeTierId}
-              onAddRow={isReadOnly ? undefined : handleAddRow}
-              onChangeTierColor={isReadOnly ? undefined : handleChangeTierColor}
-              onRenameTier={isReadOnly ? undefined : handleRenameTier}
-              onDeleteTier={isReadOnly ? undefined : handleDeleteTier}
-              onSetActiveTier={handleSetActiveTier}
-            />
-
-            {!hideUnranked && (
-              <UnrankedItems
-                books={unrankedBooks}
-                booksCount={totalBooksCount}
+            <div className={tierGridHighlight} data-onboarding-target="tiers">
+              <TierGrid
+                ref={tierGridRef}
+                listData={listData}
                 onDeleteBook={isReadOnly ? undefined : onDeleteBook}
                 onEditBook={isReadOnly ? undefined : onEditBook}
                 onViewBook={onViewBook}
+                activeTierId={activeTierId}
+                onAddRow={isReadOnly ? undefined : handleAddRow}
+                onChangeTierColor={isReadOnly ? undefined : handleChangeTierColor}
+                onRenameTier={isReadOnly ? undefined : handleRenameTier}
+                onDeleteTier={isReadOnly ? undefined : handleDeleteTier}
+                onSetActiveTier={handleSetActiveTier}
               />
+            </div>
+
+            {!hideUnranked && (
+              <div className={`${unrankedHighlight} ${booksPulse}`} data-onboarding-target="unranked">
+                <UnrankedItems
+                  books={unrankedBooks}
+                  booksCount={totalBooksCount}
+                  onDeleteBook={isReadOnly ? undefined : onDeleteBook}
+                  onEditBook={isReadOnly ? undefined : onEditBook}
+                  onViewBook={onViewBook}
+                />
+              </div>
             )}
           </div>
 
