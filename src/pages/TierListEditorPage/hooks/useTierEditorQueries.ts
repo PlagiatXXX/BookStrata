@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchTierList, transformApiToState } from '@/lib/tierListApi';
 import { getCollectionBySlug } from '@/lib/collectionsApi';
 import { apiGetTierListLikes, apiGetLikedTierListIds } from '@/lib/likesApi';
-import { getInitialData } from '../_initialData';
+import { getInitialData, getTemplateInitialData } from '../_initialData';
+import { TEMPLATES } from '@/data/mockData';
 import type { TierListData, Book, Tier } from '@/types';
 
 const emptyData: TierListData = {
@@ -87,8 +88,15 @@ export function useTierEditorQueries(
   tierListId: string | undefined,
   forkSlug?: string | null,
   forkReadIds?: string[] | null,
+  templateId?: string | null,
 ): TierEditorQueriesResult {
   const isNew = tierListId === "new";
+
+  // Шаблон из mockData (для /tier-lists/new?template=N)
+  const template = useMemo(() => {
+    if (!isNew || !templateId) return undefined;
+    return TEMPLATES.find((t) => String(t.id) === templateId);
+  }, [isNew, templateId]);
 
   // Загрузка данных с сервера (только если не "new")
   const {
@@ -140,6 +148,10 @@ export function useTierEditorQueries(
 
   // Трансформация данных (API -> UI)
   const initialDataForHook = useMemo((): TierListData => {
+    // Шаблон из mockData (для /tier-lists/new?template=N)
+    if (isNew && template) {
+      return getTemplateInitialData(tierListId!, template.templateData);
+    }
     // Форк из коллекции
     if (isNew && forkCollection) {
       return collectionToTierListData(forkCollection, forkReadIds ?? undefined);
@@ -159,7 +171,7 @@ export function useTierEditorQueries(
       return getInitialData(tierListId!, 'Новый тир-лист');
     }
     return emptyData;
-  }, [apiData, isTierListError, tierListId, isNew, forkCollection, forkReadIds]);
+  }, [apiData, isTierListError, tierListId, isNew, forkCollection, forkReadIds, template]);
 
   const isLoading = isNew ? isForkLoading : isTierListLoading;
   const isError = isNew ? isForkError : isTierListError;

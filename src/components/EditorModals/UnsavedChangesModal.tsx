@@ -25,7 +25,7 @@ export function UnsavedChangesModal({
       maxWidth="sm"
       titleId="unsaved-changes-title"
     >
-      <div className="relative flex w-full flex-col overflow-hidden bg-[#111111] text-[#f6f1e8]">
+      <div className="relative flex w-full flex-col overflow-hidden nb-heavy-border bg-[#111111] text-[#f6f1e8]">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-20 flex size-8 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8]"

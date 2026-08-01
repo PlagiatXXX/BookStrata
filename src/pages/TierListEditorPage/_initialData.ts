@@ -1,4 +1,5 @@
-import type { Book, TierListData } from '@/types';
+import type { Book, Tier, TierListData } from '@/types';
+import type { CreateTemplateData } from '@/types/templates';
 
 // Версия демо-данных. При изменении набора книг — увеличивать,
 // чтобы у пользователей сбрасывался старый черновик в localStorage.
@@ -98,5 +99,48 @@ export function getDemoInitialData(id: string, title: string): TierListData {
     ...getInitialData(id, title),
     books,
     unrankedBookIds,
+  };
+}
+
+/**
+ * Создаёт начальные данные тир-листа из шаблона (для /tier-lists/new?template=N).
+ * Все книги складываются в «Книги без рейтинга» — пользователь сам распределяет их
+ * по полкам (как в демо-режиме). Полки создаются из тиров шаблона, но пустые.
+ * Префикс "tpl-" гарантирует, что бэкенд создаст книги и тиры как новые (temp-IDs).
+ */
+export function getTemplateInitialData(id: string, template: CreateTemplateData): TierListData {
+  const books: Record<string, Book> = {};
+  const tiers: Record<string, Tier> = {};
+  const tierOrder: string[] = [];
+  const unrankedBookIds: string[] = [];
+  const tierIdToTempIdMap: Record<string, string> = {};
+
+  for (const t of template.tiers) {
+    const tempTierId = `tpl-${t.id}`;
+    tierIdToTempIdMap[t.id] = tempTierId;
+    tiers[tempTierId] = { id: tempTierId, title: t.name, color: t.color, bookIds: [] };
+    tierOrder.push(tempTierId);
+  }
+
+  (template.defaultBooks || []).forEach((b, index) => {
+    const tempBookId = `tpl-book-${index}`;
+    books[tempBookId] = {
+      id: tempBookId,
+      title: b.title,
+      author: b.author || '',
+      coverImageUrl: b.coverImageUrl || '',
+    };
+    unrankedBookIds.push(tempBookId);
+  });
+
+  return {
+    id,
+    title: template.title,
+    books,
+    tiers,
+    tierOrder,
+    unrankedBookIds,
+    isPublic: false,
+    tierIdToTempIdMap,
   };
 }

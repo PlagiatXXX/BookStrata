@@ -4,6 +4,7 @@ import { Toaster } from "sileo";
 import { Spinner } from "@/components/Spinner";
 import { AchievementNotification } from "@/components/AchievementNotification/AchievementNotification";
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
+import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
 import { AppProviders } from "./AppProviders";
 import "../styles/sileo-custom.css";
@@ -11,6 +12,7 @@ import "../styles/sileo-custom.css";
 function AppShell() {
   const { pathname } = useLocation();
   const { newAchievement, clearNotification } = useAchievementNotifications();
+  useAnalyticsTracker();
 
   useEffect(() => {
     window.scrollTo(0, 0);

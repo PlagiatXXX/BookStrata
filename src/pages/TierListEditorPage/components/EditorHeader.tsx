@@ -93,11 +93,11 @@ export const EditorHeader = ({
         <div>
           {/* Мобилка: название над обложкой, под кнопкой «На главную» */}
           <div className="md:hidden text-center mb-4">
-            <h1 className="text-lg font-bold text-white">{title}</h1>
+            <h1 className="text-lg font-bold text-(--theme-text)">{title}</h1>
             {author && (
               <button
                 onClick={() => navigate(`/users/${author.id}`)}
-                className="text-sm text-[#c1fffe] hover:text-white transition-colors cursor-pointer"
+                className="text-sm text-(--theme-accent-primary) hover:text-(--theme-text) transition-colors cursor-pointer"
               >
                 автор: {author.username}
               </button>
@@ -108,7 +108,7 @@ export const EditorHeader = ({
           <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6">
             {/* Обложка тир-листа (как в редакторе — 7rem) */}
             <div className="shrink-0 max-w-52 w-full">
-              <p className="nb-label-xs mb-2 text-[#64748b] uppercase tracking-wider">
+              <p className="nb-label-xs mb-2 text-(--theme-text-muted) uppercase tracking-wider">
                 Обложка тир-листа
               </p>
               <TierListCover
@@ -121,11 +121,11 @@ export const EditorHeader = ({
 
             {/* Десктоп: название и автор — по центру горизонтали */}
             <div className="hidden min-w-0 flex-1 text-center md:block">
-              <h1 className="text-lg font-bold text-white">{title}</h1>
+              <h1 className="text-lg font-bold text-(--theme-text)">{title}</h1>
               {author && (
                 <button
                   onClick={() => navigate(`/users/${author.id}`)}
-                  className="text-sm text-[#c1fffe] hover:text-white transition-colors cursor-pointer"
+                  className="text-sm text-(--theme-accent-primary) hover:text-(--theme-text) transition-colors cursor-pointer"
                 >
                   автор: {author.username}
                 </button>
@@ -169,14 +169,14 @@ export const EditorHeader = ({
             {onBackClick && (
               <button
                 onClick={onBackClick}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 md:hidden flex items-center gap-1 text-sm text-cyan-300 hover:text-white transition-colors cursor-pointer"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 md:hidden flex items-center gap-1 text-sm text-(--theme-accent-primary) hover:text-(--theme-text) transition-colors cursor-pointer"
                 type="button"
               >
                 <ArrowLeft size={18} />
               </button>
             )}
             <h1
-              className={`text-center nb-display-lg max-md:text-xl! max-md:leading-tight! max-md:normal-case! text-white wrap-break-word px-4 sm:px-9 min-w-0 max-w-full${isDemo ? " max-md:text-lg!" : ""}`}
+              className={`text-center nb-display-lg max-md:text-xl! max-md:leading-tight! max-md:normal-case! text-(--theme-text) wrap-break-word px-4 sm:px-9 min-w-0 max-w-full${isDemo ? " max-md:text-lg!" : ""}`}
             >
               {title}
             </h1>

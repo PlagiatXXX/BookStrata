@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { BookCover } from "./BookCover";
 
@@ -57,13 +57,13 @@ describe("BookCover", () => {
     const viewButton = screen.getByLabelText(`Просмотреть "${mockBook.title}"`);
 
     expect(deleteButton).toHaveClass("focus-visible:ring-2");
-    expect(deleteButton).toHaveClass("focus-visible:ring-cyan-400");
+    expect(deleteButton).toHaveClass("focus-visible:ring-(--theme-focus)");
 
     expect(editButton).toHaveClass("focus-visible:ring-2");
-    expect(editButton).toHaveClass("focus-visible:ring-cyan-400");
+    expect(editButton).toHaveClass("focus-visible:ring-(--theme-focus)");
 
     expect(viewButton).toHaveClass("focus-visible:ring-2");
-    expect(viewButton).toHaveClass("focus-visible:ring-cyan-400");
+    expect(viewButton).toHaveClass("focus-visible:ring-(--theme-focus)");
   });
 
   it("triggers onView on double click of the cover", () => {
@@ -152,6 +152,69 @@ describe("BookCover", () => {
 
       expect(cards[0]).toHaveAttribute("data-book-actions", "visible");
       expect(cards[1]).toHaveAttribute("data-book-actions", "hidden");
+    });
+  });
+
+  describe("mobile — клик по книге", () => {
+    let originalInnerWidth: number;
+
+    beforeEach(() => {
+      originalInnerWidth = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", {
+        writable: true,
+        configurable: true,
+        value: 390,
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(window, "innerWidth", {
+        writable: true,
+        configurable: true,
+        value: originalInnerWidth,
+      });
+    });
+
+    it("клик по книге открывает кнопки, повторный клик закрывает", () => {
+      render(
+        <BookCover book={mockBook} onDelete={() => {}} onEdit={() => {}} onView={() => {}} />
+      );
+      const card = screen.getByTestId("book-cover");
+
+      fireEvent.click(card);
+      expect(card).toHaveAttribute("data-book-actions", "visible");
+
+      fireEvent.click(card);
+      expect(card).toHaveAttribute("data-book-actions", "hidden");
+    });
+
+    it("клик по другой книге закрывает кнопки первой", () => {
+      render(
+        <div>
+          <BookCover book={{ ...mockBook, id: "1" }} onDelete={() => {}} />
+          <BookCover book={{ ...mockBook, id: "2", title: "Other" }} onDelete={() => {}} />
+        </div>
+      );
+
+      const cards = screen.getAllByTestId("book-cover");
+
+      fireEvent.click(cards[0]);
+      expect(cards[0]).toHaveAttribute("data-book-actions", "visible");
+
+      fireEvent.click(cards[1]);
+      expect(cards[0]).toHaveAttribute("data-book-actions", "hidden");
+      expect(cards[1]).toHaveAttribute("data-book-actions", "visible");
+    });
+
+    it("клик по пустому месту закрывает кнопки", () => {
+      render(<BookCover book={mockBook} onDelete={() => {}} />);
+      const card = screen.getByTestId("book-cover");
+
+      fireEvent.click(card);
+      expect(card).toHaveAttribute("data-book-actions", "visible");
+
+      fireEvent.click(document.body);
+      expect(card).toHaveAttribute("data-book-actions", "hidden");
     });
   });
 });

@@ -3,6 +3,7 @@ import {
   S3Client,
   HeadObjectCommand,
   PutObjectCommand,
+  S3ServiceException,
 } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import { createLogger } from "../../lib/logger.js";
@@ -118,13 +119,20 @@ async function existsOnS3(key: string): Promise<boolean> {
       }),
     );
     return true;
-  } catch (err: any) {
+  } catch (err: unknown) {
     // 404 = не найдено, всё остальное — ошибка
-    if (err?.name === "NotFound" || err?.$metadata?.httpStatusCode === 404) {
+    if (
+      err instanceof S3ServiceException &&
+      (err.name === "NotFound" || err.$metadata.httpStatusCode === 404)
+    ) {
       return false;
     }
     // При других ошибках (сеть, нет доступа) — логируем и считаем что не найдено
-    logger.warn(`S3 HeadObject error for ${key}: ${err.message}`);
+    logger.warn(
+      `S3 HeadObject error for ${key}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
     return false;
   }
 }

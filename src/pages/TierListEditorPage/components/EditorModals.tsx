@@ -1,4 +1,4 @@
-import { ExportModal, type ExportTheme } from './ExportModal';
+import { ExportModal } from './ExportModal';
 import { lazy, Suspense } from 'react';
 import type { Book, TierListData } from '@/types';
 import {
@@ -77,7 +77,7 @@ interface EditorModalsProps {
   isUpdatingBook: boolean;
   isExportModalOpen: boolean;
   onCloseExport: () => void;
-  onConfirmExport: (theme: ExportTheme) => Promise<void>;
+  onConfirmExport: () => Promise<void>;
   username: string;
   isReadOnly?: boolean;
   tierListTheme?: string;

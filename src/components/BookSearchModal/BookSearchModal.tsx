@@ -90,14 +90,14 @@ function BookSearchSkeleton() {
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-4 border-2 border-black bg-[#171717] p-3 shadow-[4px_4px_0_0_#000000]"
+          className="flex items-center gap-4 nb-heavy-border bg-(--theme-surface-2) p-3 shadow-(--theme-shadow)"
         >
-          <div className="h-24 w-16 shrink-0 border-2 border-black bg-[#232323] animate-pulse" />
+          <div className="h-24 w-16 shrink-0 nb-heavy-border bg-(--theme-surface-4) animate-pulse" />
           <div className="flex-1 min-w-0">
-            <div className="mb-2 h-5 w-3/4 border-2 border-black bg-[#232323] animate-pulse" />
-            <div className="h-4 w-1/2 border-2 border-black bg-[#232323] animate-pulse" />
+            <div className="mb-2 h-5 w-3/4 nb-heavy-border bg-(--theme-surface-4) animate-pulse" />
+            <div className="h-4 w-1/2 nb-heavy-border bg-(--theme-surface-4) animate-pulse" />
           </div>
-          <div className="h-10 w-10 border-2 border-black bg-[#232323] animate-pulse" />
+          <div className="h-10 w-10 nb-heavy-border bg-(--theme-surface-4) animate-pulse" />
         </div>
       ))}
     </div>
@@ -107,13 +107,13 @@ function BookSearchSkeleton() {
 // Skeleton для бесконечного скролла
 function BookSkeletonItem() {
   return (
-    <div className="flex items-center gap-4 border-2 border-black bg-[#171717] p-3 shadow-[4px_4px_0_0_#000000]">
-      <div className="h-24 w-16 shrink-0 border-2 border-black bg-[#232323] animate-pulse" />
+    <div className="flex items-center gap-4 nb-heavy-border bg-(--theme-surface-2) p-3 shadow-(--theme-shadow)">
+      <div className="h-24 w-16 shrink-0 nb-heavy-border bg-(--theme-surface-4) animate-pulse" />
       <div className="flex-1 min-w-0">
-        <div className="mb-2 h-5 w-3/4 border-2 border-black bg-[#232323] animate-pulse" />
-        <div className="h-4 w-1/2 border-2 border-black bg-[#232323] animate-pulse" />
+        <div className="mb-2 h-5 w-3/4 nb-heavy-border bg-(--theme-surface-4) animate-pulse" />
+        <div className="h-4 w-1/2 nb-heavy-border bg-(--theme-surface-4) animate-pulse" />
       </div>
-      <div className="h-10 w-10 border-2 border-black bg-[#232323] animate-pulse" />
+      <div className="h-10 w-10 nb-heavy-border bg-(--theme-surface-4) animate-pulse" />
     </div>
   );
 }
@@ -139,10 +139,10 @@ const BookItem = memo(({
 
   return (
     <div
-      className={`flex cursor-pointer items-center gap-4 border-2 p-3 shadow-[4px_4px_0_0_#000000] transition-[transform,border-color,background-color,color] duration-150 animate-fade-in ${
+      className={`flex cursor-pointer items-center gap-4 border-2 p-3 shadow-(--theme-shadow) transition-[transform,border-color,background-color,color] duration-150 animate-fade-in ${
         isSelected
-          ? "border-[#c1fffe] bg-[#1d2323]"
-          : "border-black bg-[#171717] hover:-translate-y-0.5 hover:border-[#c1fffe]"
+          ? "border-(--theme-accent-primary) bg-(--theme-surface-2)"
+          : "border-(--theme-border) bg-(--theme-surface-2) hover:-translate-y-0.5 hover:border-(--theme-accent-primary)"
       }`}
     >
       {/* Cover с lazy loading */}
@@ -150,7 +150,7 @@ const BookItem = memo(({
         role="button"
         tabIndex={0}
         aria-label={`Просмотреть информацию о книге ${book.title}`}
-        className="relative h-24 w-16 shrink-0 cursor-pointer overflow-hidden border-2 border-black bg-[#0a0a0a] transition-transform hover:scale-[1.02]"
+        className="relative h-24 w-16 shrink-0 cursor-pointer overflow-hidden nb-heavy-border bg-(--theme-surface-4) transition-transform hover:scale-[1.02]"
         onClick={(e) => {
           e.stopPropagation();
           onView(book);
@@ -166,7 +166,7 @@ const BookItem = memo(({
         {hasCover ? (
           <>
             {!imageLoaded && (
-              <div className="h-full w-full bg-[#232323] animate-pulse" />
+              <div className="h-full w-full bg-(--theme-surface-4) animate-pulse" />
             )}
             <img
               key={coverUrl}
@@ -190,12 +190,12 @@ const BookItem = memo(({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="truncate text-sm font-semibold text-[#f6f1e8]">
+        <h3 className="truncate text-sm font-semibold text-(--theme-text)">
           {book.title}
         </h3>
-        <p className="truncate text-xs text-[#a8abad]">{book.author}</p>
+        <p className="truncate text-xs text-(--theme-text-muted)">{book.author}</p>
         {book.publishYear && (
-          <p className="mt-1 text-xs text-[#7d8688]">{book.publishYear}</p>
+          <p className="mt-1 text-xs text-(--theme-text-muted)">{book.publishYear}</p>
         )}
       </div>
 
@@ -207,7 +207,7 @@ const BookItem = memo(({
             e.stopPropagation();
             onView(book);
           }}
-          className="cursor-pointer border-2 border-black bg-[#0d0d0d] p-2 text-[#a8abad] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+          className="cursor-pointer nb-heavy-border bg-(--theme-surface-4) p-2 text-(--theme-text-muted) transition-colors hover:border-(--theme-accent-primary) hover:text-(--theme-text) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
           title="Подробнее"
           aria-label="Подробнее"
         >
@@ -221,10 +221,10 @@ const BookItem = memo(({
             onToggle(book);
           }}
           aria-label={isSelected ? "Убрать из выбранного" : "Добавить в выбранное"}
-          className={`flex h-10 w-10 cursor-pointer items-center justify-center border-2 transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none ${
+          className={`flex h-10 w-10 cursor-pointer items-center justify-center border-2 transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
             isSelected
-              ? "border-black bg-[#c1fffe] text-black"
-              : "border-black bg-[#0d0d0d] text-[#f6f1e8] hover:border-[#c1fffe] hover:bg-[#171717]"
+              ? "border-(--theme-border) bg-(--theme-accent-primary) text-(--theme-on-accent)"
+              : "border-(--theme-border) bg-(--theme-surface-4) text-(--theme-text) hover:border-(--theme-accent-primary) hover:bg-(--theme-surface-2)"
           }`}
         >
           {isSelected ? (
@@ -566,20 +566,20 @@ export const BookSearchModal = ({
           aria-modal="true"
           aria-labelledby="book-search-modal-title"
           tabIndex={-1}
-          className="relative mx-4 flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000] animate-scale-in"
+          className="relative mx-4 flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden nb-heavy-border bg-(--theme-surface-3) text-(--theme-text) shadow-(--theme-shadow-lg) animate-scale-in"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b-2 border-black bg-[#181818] p-5">
+          <div className="flex items-center justify-between border-b-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-2) p-5">
             <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-0.5">
-              <div className="row-span-2 flex size-10 items-center justify-center border-2 border-black bg-[#c1fffe] text-black">
+              <div className="row-span-2 flex size-10 items-center justify-center nb-heavy-border bg-(--theme-accent-primary) text-(--theme-on-accent)">
                 <BookOpen className="h-4 w-4" />
               </div>
-              <p className="col-start-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]">
+              <p className="col-start-2 text-[11px] font-bold uppercase tracking-[0.16em] text-(--theme-accent-primary)">
                 Библиотека поиска
               </p>
               <h2
                 id="book-search-modal-title"
-                className="col-start-2 text-xl font-black tracking-[-0.02em] text-[#f6f1e8]"
+                className="col-start-2 text-xl font-black tracking-[-0.02em] text-(--theme-text)"
               >
                 Найти книгу
               </h2>
@@ -587,7 +587,7 @@ export const BookSearchModal = ({
             <button
               type="button"
               onClick={handleClose}
-              className="flex size-10 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+              className="flex size-10 cursor-pointer items-center justify-center nb-heavy-border bg-(--theme-surface-4) text-(--theme-text-muted) transition-colors hover:border-(--theme-accent-primary) hover:text-(--theme-text) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
               aria-label="Закрыть"
             >
               <X className="h-4 w-4" />
@@ -595,14 +595,14 @@ export const BookSearchModal = ({
           </div>
 
           {/* Tabs — компактные пилюли + кнопка добавления */}
-          <div className="flex items-center gap-1.5 border-b-2 border-black bg-[#141414] px-5 py-2.5">
+          <div className="flex items-center gap-1.5 border-b-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-2) px-5 py-2.5">
             <button
               type="button"
               onClick={() => setActiveTab("search")}
-              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none ${
+              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
                 activeTab === "search"
-                  ? "bg-[#c1fffe] text-black"
-                  : "text-[#7d8688] hover:text-[#f6f1e8]"
+                  ? "bg-(--theme-accent-primary) text-(--theme-on-accent)"
+                  : "text-(--theme-text-muted) hover:text-(--theme-text)"
               }`}
             >
               <Search className="h-3 w-3 hidden sm:block" />
@@ -612,10 +612,10 @@ export const BookSearchModal = ({
             <button
               type="button"
               onClick={() => setActiveTab("livelib")}
-              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none ${
+              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
                 activeTab === "livelib"
-                  ? "bg-[#c1fffe] text-black"
-                  : "text-[#7d8688] hover:text-[#f6f1e8]"
+                  ? "bg-(--theme-accent-primary) text-(--theme-on-accent)"
+                  : "text-(--theme-text-muted) hover:text-(--theme-text)"
               }`}
             >
               <User className="h-3 w-3 hidden sm:block" />
@@ -627,10 +627,10 @@ export const BookSearchModal = ({
               <button
                 type="button"
                 onClick={() => setActiveTab("upload")}
-                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none ${
+                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
                   activeTab === "upload"
-                    ? "bg-[#c1fffe] text-black"
-                    : "text-[#7d8688] hover:text-[#f6f1e8]"
+                    ? "bg-(--theme-accent-primary) text-(--theme-on-accent)"
+                    : "text-(--theme-text-muted) hover:text-(--theme-text)"
                 }`}
               >
                 <Upload className="h-3 w-3 hidden sm:block" />
@@ -642,10 +642,10 @@ export const BookSearchModal = ({
 
           {/* Search Tab */}
           {activeTab === "search" && (
-            <div className="border-b-2 border-black bg-[#141414] px-5 py-4">
+            <div className="border-b-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-2) px-5 py-4">
               <div className="flex gap-2">
                 <div className="flex-1 relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7d8688]" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--theme-text-muted)" />
                   <input
                     type="text"
                     value={state.query}
@@ -653,13 +653,13 @@ export const BookSearchModal = ({
                     onKeyDown={handleKeyDown}
                     placeholder="Название или автор..."
                     aria-label="Поиск книг"
-                    className="w-full border-2 border-black bg-[#0a0a0a] py-2.5 pl-9 pr-9 text-sm text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
+                    className="w-full nb-heavy-border bg-(--theme-surface-4) py-2.5 pl-9 pr-9 text-sm text-(--theme-text) placeholder:text-(--theme-text-muted) outline-none transition-colors focus:border-(--theme-accent-primary) focus-within:ring-2 focus-within:ring-(--theme-focus)"
                   />
                   {state.query && (
                     <button
                       type="button"
                       onClick={() => dispatch({ type: "SET_QUERY", query: "" })}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-[#7d8688] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-(--theme-text-muted) hover:text-(--theme-text) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
                       aria-label="Очистить поиск"
                     >
                       <X size={14} />
@@ -670,7 +670,7 @@ export const BookSearchModal = ({
                   type="button"
                   onClick={handleSearch}
                   disabled={isLoading || isAddingBooks || state.query.length < 2}
-                  className="flex cursor-pointer items-center gap-1.5 border-2 border-black bg-[#c1fffe] px-5 py-2.5 text-sm font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                  className="flex cursor-pointer items-center gap-1.5 nb-heavy-border bg-(--theme-accent-primary) px-5 py-2.5 text-sm font-black text-(--theme-on-accent) transition-colors hover:bg-(--theme-accent-primary)/85 disabled:cursor-not-allowed disabled:bg-(--theme-accent-primary)/40 disabled:text-(--theme-on-accent) disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
                 >
                   {isLoading ? <Spinner size="sm" /> : "Найти"}
                 </button>
@@ -680,10 +680,10 @@ export const BookSearchModal = ({
 
           {/* LiveLib Tab */}
           {activeTab === "livelib" && (
-            <div className="border-b-2 border-black bg-[#141414] px-5 py-4">
+            <div className="border-b-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-2) px-5 py-4">
               <div className="flex gap-2">
                 <div className="flex-1 relative">
-                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7d8688]" />
+                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--theme-text-muted)" />
                   <input
                     type="text"
                     value={liveLibUsername}
@@ -693,32 +693,32 @@ export const BookSearchModal = ({
                     }}
                     placeholder="Username на LiveLib..."
                     aria-label="LiveLib username"
-                    className="w-full border-2 border-black bg-[#0a0a0a] py-2.5 pl-9 pr-9 text-sm text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
+                    className="w-full nb-heavy-border bg-(--theme-surface-4) py-2.5 pl-9 pr-9 text-sm text-(--theme-text) placeholder:text-(--theme-text-muted) outline-none transition-colors focus:border-(--theme-accent-primary) focus-within:ring-2 focus-within:ring-(--theme-focus)"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleLiveLibImport}
                   disabled={liveLibLoading || !liveLibUsername.trim()}
-                  className="flex cursor-pointer items-center gap-1.5 border-2 border-black bg-[#c1fffe] px-5 py-2.5 text-sm font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                  className="flex cursor-pointer items-center gap-1.5 nb-heavy-border bg-(--theme-accent-primary) px-5 py-2.5 text-sm font-black text-(--theme-on-accent) transition-colors hover:bg-(--theme-accent-primary)/85 disabled:cursor-not-allowed disabled:bg-(--theme-accent-primary)/40 disabled:text-(--theme-on-accent) disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
                 >
                   {liveLibLoading ? <Spinner size="sm" /> : "Загрузить"}
                 </button>
               </div>
               {liveLibError && (
-                <p className="mt-2 text-xs text-red-400">{liveLibError}</p>
+                <p className="mt-2 text-xs text-(--theme-danger)">{liveLibError}</p>
               )}
             </div>
           )}
 
           {/* Results */}
-          <div className="max-h-[55vh] min-h-[250px] overflow-y-auto bg-[#111111] p-5">
+          <div className="max-h-[55vh] min-h-[250px] overflow-y-auto bg-(--theme-surface-3) p-5">
             {activeTab === "search" && (
               <>
                 {/* Toolbar */}
                 {results.length > 0 && (
-                  <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
-                    <span className="text-sm text-[#a8abad]">
+                  <div className="mb-4 flex items-center justify-between nb-heavy-border bg-(--theme-surface-2) px-4 py-3 animate-fade-in">
+                    <span className="text-sm text-(--theme-text-muted)">
                       Найдено: {totalResults}
                     </span>
                     <button
@@ -743,7 +743,7 @@ export const BookSearchModal = ({
                           });
                         }
                       }}
-                      className="cursor-pointer text-xs font-bold text-[#c1fffe] transition-colors hover:text-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                      className="cursor-pointer text-xs font-bold text-(--theme-accent-primary) transition-colors hover:text-(--theme-accent-primary)/85 focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
                     >
                       {results.every((b) => b.openLibraryKey in state.selectedBooks)
                         ? "Снять всё"
@@ -786,10 +786,10 @@ export const BookSearchModal = ({
 
                     {/* Empty State */}
                     {results.length === 0 && !isLoading && state.hasSearched && (
-                      <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
-                        <BookOpen className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
-                        <p className="text-[#f6f1e8]">Ничего не найдено</p>
-                        <p className="mt-1 text-sm text-[#8b9092]">
+                      <div className="border-2 border-dashed border-(--theme-border) bg-(--theme-surface-2) py-12 text-center">
+                        <BookOpen className="mx-auto mb-3 h-12 w-12 text-(--theme-text-muted)" />
+                        <p className="text-(--theme-text)">Ничего не найдено</p>
+                        <p className="mt-1 text-sm text-(--theme-text-muted)">
                           Проверьте правильность названия или попробуйте другой
                           запрос
                         </p>
@@ -798,9 +798,9 @@ export const BookSearchModal = ({
 
                     {/* Initial State */}
                     {results.length === 0 && !isLoading && !state.hasSearched && (
-                      <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
-                        <Search className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
-                        <p className="text-[#f6f1e8]">
+                      <div className="border-2 border-dashed border-(--theme-border) bg-(--theme-surface-2) py-12 text-center">
+                        <Search className="mx-auto mb-3 h-12 w-12 text-(--theme-text-muted)" />
+                        <p className="text-(--theme-text)">
                           Введите название книги или автора
                         </p>
                       </div>
@@ -814,8 +814,8 @@ export const BookSearchModal = ({
               <>
                 {/* Toolbar */}
                 {liveLibResults.length > 0 && (
-                  <div className="mb-4 flex items-center justify-between border-2 border-black bg-[#171717] px-4 py-3 animate-fade-in">
-                    <span className="text-sm text-[#a8abad]">
+                  <div className="mb-4 flex items-center justify-between nb-heavy-border bg-(--theme-surface-2) px-4 py-3 animate-fade-in">
+                    <span className="text-sm text-(--theme-text-muted)">
                       {liveLibResults.length} книг из LiveLib
                     </span>
                     <div className="flex items-center gap-3">
@@ -846,7 +846,7 @@ export const BookSearchModal = ({
                           }
                         }}
                         disabled={liveLibLoading}
-                        className="cursor-pointer text-xs font-bold text-[#7d8688] transition-colors hover:text-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none disabled:opacity-50"
+                        className="cursor-pointer text-xs font-bold text-(--theme-text-muted) transition-colors hover:text-(--theme-accent-primary) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none disabled:opacity-50"
                       >
                         {liveLibLoading ? "Загрузка..." : "🔄 Обновить"}
                       </button>
@@ -866,7 +866,7 @@ export const BookSearchModal = ({
                             );
                           }
                         }}
-                        className="cursor-pointer text-xs font-bold text-[#c1fffe] transition-colors hover:text-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                        className="cursor-pointer text-xs font-bold text-(--theme-accent-primary) transition-colors hover:text-(--theme-accent-primary)/85 focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
                       >
                         {liveLibResults.every((b) =>
                           liveLibSelected.has(b.openLibraryKey),
@@ -900,12 +900,12 @@ export const BookSearchModal = ({
 
                     {/* Empty State */}
                     {liveLibResults.length === 0 && !liveLibLoading && !liveLibError && (
-                      <div className="border-2 border-dashed border-black bg-[#171717] py-12 text-center">
-                        <User className="mx-auto mb-3 h-12 w-12 text-[#7d8688]" />
-                        <p className="text-[#f6f1e8]">
+                      <div className="border-2 border-dashed border-(--theme-border) bg-(--theme-surface-2) py-12 text-center">
+                        <User className="mx-auto mb-3 h-12 w-12 text-(--theme-text-muted)" />
+                        <p className="text-(--theme-text)">
                           Введите ваш username на LiveLib
                         </p>
-                        <p className="mt-1 text-sm text-[#8b9092]">
+                        <p className="mt-1 text-sm text-(--theme-text-muted)">
                           LiveLib — крупнейшее сообщество читателей в Рунете
                         </p>
                       </div>
@@ -918,10 +918,10 @@ export const BookSearchModal = ({
             {activeTab === "upload" && onUploadBooks && (
               <div className="flex flex-col items-center justify-center py-8">
                 <ImageUploader onUpload={onUploadBooks} />
-                <p className="mt-4 text-sm text-[#7d8688] text-center max-w-xs">
+                <p className="mt-4 text-sm text-(--theme-text-muted) text-center max-w-xs">
                   Загрузите изображения книг с вашего устройства
                 </p>
-                <p className="mt-1 text-xs text-[#5f6667] text-center">
+                <p className="mt-1 text-xs text-(--theme-text-muted) text-center">
                   JPEG, PNG, WebP, GIF. До 5 MB на файл
                 </p>
               </div>
@@ -929,15 +929,15 @@ export const BookSearchModal = ({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between gap-3 border-t-2 border-black bg-[#0a0a0a] px-5 py-3">
+          <div className="flex items-center justify-between gap-3 border-t-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-4) px-5 py-3">
             <div className="flex items-center gap-3">
               {totalSelectedCount > 0 && (
                 <button
                   type="button"
                   onClick={handleAddAllSelected}
                   disabled={isAddingBooks || overLimit}
-                  className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-2 text-xs font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none animate-fade-in ${
-                    overLimit ? "bg-[#ef4444]" : "bg-[#c1fffe]"
+                  className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-2 text-xs font-black text-(--theme-on-accent) transition-colors hover:bg-(--theme-accent-primary)/85 disabled:cursor-not-allowed disabled:bg-(--theme-accent-primary)/40 disabled:text-(--theme-on-accent) disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none animate-fade-in ${
+                    overLimit ? "bg-(--theme-danger)" : "bg-(--theme-accent-primary)"
                   }`}
                 >
                   {isAddingBooks ? (
@@ -956,7 +956,7 @@ export const BookSearchModal = ({
             <button
               type="button"
               onClick={handleClose}
-              className="cursor-pointer border-2 border-[#4a4a4a] bg-[#1a1a1a] px-5 py-2 text-sm font-semibold text-[#d4d4d4] transition-colors hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+              className="cursor-pointer nb-heavy-border bg-(--theme-surface-4) px-5 py-2 text-sm font-semibold text-(--theme-text) transition-colors hover:border-(--theme-accent-primary) hover:bg-(--theme-surface-2) hover:text-(--theme-text) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
             >
               Отмена
             </button>

@@ -142,11 +142,11 @@ export const TierRow = memo(
         </SortableContext>
 
         {onDelete !== undefined && (
-          <div className="nb-tier-actions absolute right-0 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-2 border-l-2 border-black bg-[#0e0e0e] transition-opacity opacity-0 group-hover:opacity-100 focus-within:opacity-100 max-md:opacity-100">
+          <div className="nb-tier-actions absolute right-0 top-0 bottom-0 z-10 flex w-12 flex-col items-center justify-center gap-2 border-l-(--theme-border-width) border-(--theme-border) bg-(--theme-bg) transition-opacity opacity-0 group-hover:opacity-100 focus-within:opacity-100 max-md:opacity-100">
             <button
               title="Переместить"
               aria-label="Переместить уровень"
-              className="cursor-grab text-gray-400 active:cursor-grabbing hover:text-[#c1fffe] transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none rounded-sm"
+              className="cursor-grab text-(--theme-text-muted) active:cursor-grabbing hover:text-(--theme-accent-primary) transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none rounded-sm"
               {...attributes}
               {...listeners}
             >
@@ -156,7 +156,7 @@ export const TierRow = memo(
               onClick={() => onSetActive(tier.id)}
               title="Настройки"
               aria-label="Настройки блока"
-              className="text-gray-400 hover:text-[#c1fffe] cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none rounded-sm"
+              className="text-(--theme-text-muted) hover:text-(--theme-accent-primary) cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none rounded-sm"
             >
               <Settings size={18} />
             </button>
@@ -164,7 +164,7 @@ export const TierRow = memo(
               onClick={() => onDelete(tier.id)}
               title="Удалить блок"
               aria-label="Удалить блок"
-              className="text-gray-400 hover:text-[#ff51fa] cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none rounded-sm"
+              className="text-(--theme-text-muted) hover:text-(--theme-accent-secondary) cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none rounded-sm"
             >
               <Trash2 size={18} />
             </button>

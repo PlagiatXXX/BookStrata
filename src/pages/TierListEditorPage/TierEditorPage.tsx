@@ -8,6 +8,7 @@ import { useTierList } from "@/hooks/useTierList";
 import type { Action } from "@/hooks/useTierList";
 import { useAuth } from "@/hooks/useAuthContext";
 import { createLogger } from "@/lib/logger";
+import { normalizeTheme } from "@/lib/tierListApi";
 import { EditorModals } from "./components/EditorModals";
 import { EditorLayout } from "./components/EditorLayout";
 import { EditorMainContent } from "./components/EditorMainContent";
@@ -57,6 +58,7 @@ const TierListEditorContent = () => {
   const [searchParams] = useSearchParams();
   const fromBattle = searchParams.get("context") === "battle";
   const forkSlug = searchParams.get("fork");
+  const templateId = searchParams.get("template");
   const forkReadIds = useMemo(() => {
     const raw = searchParams.get("readIds");
     return raw ? raw.split(",").filter(Boolean) : null;
@@ -115,7 +117,7 @@ const TierListEditorContent = () => {
     likesData,
     isPublic,
     initialDataForHook,
-  } = useTierEditorQueries(tierListId, forkSlug, forkReadIds);
+  } = useTierEditorQueries(tierListId, forkSlug, forkReadIds, templateId);
 
   // Переопределения от пользователя (null = не менял, берём из apiData)
   const [userCoverOverride, setUserCoverOverride] = useState<string | null>(null);
@@ -123,6 +125,9 @@ const TierListEditorContent = () => {
 
   const displayCoverImageUrl = userCoverOverride !== null ? userCoverOverride : (apiData?.coverImageUrl ?? null);
   const displayTheme = userThemeOverride !== null ? userThemeOverride : (apiData?.theme ?? "default");
+
+  // Старые темы из БД (midnight, frost и т.д.) приводятся к "default"
+  const normalizedDisplayTheme = displayTheme !== null ? normalizeTheme(displayTheme) : "default";
 
   const [isAiLibrarianOpen, setAiLibrarianOpen] = useState(false);
 
@@ -155,14 +160,15 @@ const TierListEditorContent = () => {
   const isDemo = tierListId === "new" && !isAuthenticated;
   const { loadDemo, saveDemo, clearDemo } = useDemoStorage();
 
-  // Если есть сохранённый черновик в localStorage — используем его (для демо и после регистрации)
+  // Если есть сохранённый черновик в localStorage — используем его (для демо и после регистрации).
+  // При открытии по ссылке с шаблоном (?template=N) черновик игнорируем — показываем шаблон.
   const [demoInitialData] = useState<TierListData | null>(() => {
-    if (tierListId === "new") return loadDemo() ?? null;
+    if (tierListId === "new" && !templateId) return loadDemo() ?? null;
     return null;
   });
 
-  // Если демо-режим без форка и без сохранённого черновика — показываем предзаполненные книги
-  const effectiveInitialData = demoInitialData ?? (isDemo && !forkSlug ? getDemoInitialData(tierListId, 'Новый тир-лист') : initialDataForHook);
+  // Если демо-режим без форка, шаблона и без сохранённого черновика — показываем предзаполненные книги
+  const effectiveInitialData = demoInitialData ?? (isDemo && !forkSlug && !templateId ? getDemoInitialData(tierListId, 'Новый тир-лист') : initialDataForHook);
 
   // Состояние для модалки регистрации (используется в части 2)
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -243,7 +249,7 @@ const TierListEditorContent = () => {
     isReadOnly,
     setHasUnsavedChanges,
     logger,
-    theme: displayTheme,
+    theme: normalizedDisplayTheme,
   });
 
   // Ref на handleSave для использования после обновления состояния (регистрация)
@@ -708,6 +714,83 @@ const TierListEditorContent = () => {
   const pageUrl = apiData?.slug || tierListId;
   const shareUrl = `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}/tier-lists/${pageUrl}`;
 
+  /* Модальные окна — рендерятся внутри main[data-theme] через EditorLayout,
+     чтобы наследовать токены текущей темы */
+  const modals = (
+    <>
+      {/* Модалка регистрации при сохранении в демо-режиме */}
+      <AuthOnSaveModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleDemoSaveSuccess}
+        initialTitle={demoTitle}
+        onTitleChange={setDemoTitle}
+      />
+
+      {/* Модальные окна */}
+      <EditorModals
+        tierToDelete={tierToDelete}
+        bookToDelete={bookToDelete}
+        isClearAllModalOpen={isClearAllModalOpen}
+        showUnsavedModal={showUnsavedModal}
+        showDeleteRatingModal={showDeleteRatingModal}
+        bookToEdit={bookToEdit}
+        bookToView={bookToView}
+        isSearchModalOpen={isSearchModalOpen}
+        tierListId={tierListId}
+        listData={listData}
+        onCloseDeleteTier={() => setTierToDelete(null)}
+        onCloseDeleteBook={() => setBookToDelete(null)}
+        onCloseClearAll={() => setIsClearAllModalOpen(false)}
+        onCloseUnsaved={handleCancelLeave}
+        onCloseDeleteRating={() => setShowDeleteRatingModal(false)}
+        onCloseEditBook={() => setBookToEdit(null)}
+        onCloseViewBook={() => setBookToView(null)}
+        onCloseSearch={() => setIsSearchModalOpen(false)}
+        onConfirmDeleteTier={handleConfirmDelete}
+        onConfirmDeleteBook={handleConfirmDeleteBook}
+        onConfirmClearAll={handleConfirmClearAll}
+        onConfirmDeleteRating={handleConfirmDeleteRating}
+        onConfirmLeave={handleConfirmLeave}
+        onSaveAndLeave={handleSaveBeforeLeave}
+        onSaveBook={handleSaveBook}
+        onUploadBooks={handleUploadBooks}
+        onBookAdded={handleBookAdded}
+        isSavingBeforeLeave={isSavingBeforeLeave}
+        isUpdatingBook={isUpdatingBook}
+        isExportModalOpen={isExportModalOpen}
+        onCloseExport={() => setIsExportModalOpen(false)}
+        onConfirmExport={async () => {
+          if (hasUnsavedChanges && !isDemo) {
+            try {
+              await handleSave();
+            } catch {
+              // Ошибка сохранения — не блокируем экспорт
+            }
+          }
+          onDownloadImage(authUser?.username);
+        }}
+        username={authUser?.username || "user"}
+        isReadOnly={isReadOnly}
+        localMode={isDemo}
+        tierListTheme={displayTheme}
+        onRequireAuth={() => setShowAuthModal(true)}
+      />
+
+      {/* Онбординг демо-режима — внутри main[data-theme], наследует токены темы */}
+      {onboardingStep !== null && (
+        <DemoOnboarding
+          step={onboardingStep}
+          onNext={handleOnboardingNext}
+          onSkip={handleOnboardingSkip}
+          tierNames={listData.tierOrder
+            .map((id) => listData.tiers[id]?.title)
+            .filter((t): t is string => !!t)}
+        />
+      )}
+    </>
+  );
+
   return (
     <>
       {/* Не рендерим SEOHead пока грузятся данные — чтобы избежать пустых мета-тегов */}
@@ -794,7 +877,7 @@ const TierListEditorContent = () => {
         tierListId={tierListId}
         coverImageUrl={displayCoverImageUrl}
         hideCover={fromBattle}
-        theme={displayTheme}
+        theme={normalizedDisplayTheme}
         booksCount={Object.keys(listData.books).length}
         onCoverUpdated={setUserCoverOverride}
         onThemeChanged={setUserThemeOverride}
@@ -854,75 +937,9 @@ const TierListEditorContent = () => {
           onboardingStep={onboardingStep}
         />
 
+        {/* Модалки внутри main[data-theme] — наследуют токены темы */}
+        {modals}
       </EditorLayout>
-
-      {/* Модалка регистрации при сохранении в демо-режиме */}
-      <AuthOnSaveModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onSuccess={handleDemoSaveSuccess}
-        initialTitle={demoTitle}
-        onTitleChange={setDemoTitle}
-      />
-
-      {/* Модальные окна */}
-      <EditorModals
-        tierToDelete={tierToDelete}
-        bookToDelete={bookToDelete}
-        isClearAllModalOpen={isClearAllModalOpen}
-        showUnsavedModal={showUnsavedModal}
-        showDeleteRatingModal={showDeleteRatingModal}
-        bookToEdit={bookToEdit}
-        bookToView={bookToView}
-        isSearchModalOpen={isSearchModalOpen}
-        tierListId={tierListId}
-        listData={listData}
-        onCloseDeleteTier={() => setTierToDelete(null)}
-        onCloseDeleteBook={() => setBookToDelete(null)}
-        onCloseClearAll={() => setIsClearAllModalOpen(false)}
-        onCloseUnsaved={handleCancelLeave}
-        onCloseDeleteRating={() => setShowDeleteRatingModal(false)}
-        onCloseEditBook={() => setBookToEdit(null)}
-        onCloseViewBook={() => setBookToView(null)}
-        onCloseSearch={() => setIsSearchModalOpen(false)}
-        onConfirmDeleteTier={handleConfirmDelete}
-        onConfirmDeleteBook={handleConfirmDeleteBook}
-        onConfirmClearAll={handleConfirmClearAll}
-        onConfirmDeleteRating={handleConfirmDeleteRating}
-        onConfirmLeave={handleConfirmLeave}
-        onSaveAndLeave={handleSaveBeforeLeave}
-        onSaveBook={handleSaveBook}
-        onUploadBooks={handleUploadBooks}
-        onBookAdded={handleBookAdded}
-        isSavingBeforeLeave={isSavingBeforeLeave}
-        isUpdatingBook={isUpdatingBook}
-        isExportModalOpen={isExportModalOpen}
-        onCloseExport={() => setIsExportModalOpen(false)}
-        onConfirmExport={async (exportTheme) => {
-          if (hasUnsavedChanges && !isDemo) {
-            try {
-              await handleSave();
-            } catch {
-              // Ошибка сохранения — не блокируем экспорт
-            }
-          }
-          onDownloadImage(exportTheme, authUser?.username);
-        }}
-        username={authUser?.username || "user"}
-        isReadOnly={isReadOnly}
-        localMode={isDemo}
-        tierListTheme={displayTheme}
-        onRequireAuth={() => setShowAuthModal(true)}
-      />
-
-      {/* Онбординг демо-режима */}
-      {onboardingStep !== null && (
-        <DemoOnboarding
-          step={onboardingStep}
-          onNext={handleOnboardingNext}
-          onSkip={handleOnboardingSkip}
-        />
-      )}
 
       {!isReadOnly && (
         <AiLibrarianModal

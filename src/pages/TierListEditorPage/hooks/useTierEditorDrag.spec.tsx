@@ -314,6 +314,49 @@ describe('useTierEditorDrag', () => {
       expect(mockToPng).toHaveBeenCalledWith(mockElement, expect.any(Object));
     });
 
+    it('должен использовать фон темы редактора из data-theme предка', async () => {
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      // main[data-theme] предок как в реальном редакторе
+      const themeRoot = document.createElement('main');
+      themeRoot.setAttribute('data-theme', 'vintage');
+      themeRoot.appendChild(el);
+
+      await result.current.onDownloadImage();
+
+      expect(mockToPng).toHaveBeenCalledWith(
+        el,
+        expect.objectContaining({ backgroundColor: '#f4ecd8' }),
+      );
+    });
+
+    it('должен использовать тёмный фон по умолчанию без data-theme предка', async () => {
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      await result.current.onDownloadImage();
+
+      expect(mockToPng).toHaveBeenCalledWith(
+        el,
+        expect.objectContaining({ backgroundColor: '#0e0e0e' }),
+      );
+    });
+
+    it('не должен добавлять export-theme классы (стиль берётся из редактора)', async () => {
+      const { result } = renderHookWithRef();
+      const el = result.current.tierGridRef.current!;
+
+      const themeRoot = document.createElement('main');
+      themeRoot.setAttribute('data-theme', 'cyberpunk');
+      themeRoot.appendChild(el);
+
+      await result.current.onDownloadImage();
+
+      expect(el.classList.contains('is-exporting')).toBe(false);
+      expect(el.className).not.toContain('export-theme-');
+    });
+
     it('должен инлайнить background-image через прокси перед toPng', async () => {
       const mockBlob = new Blob(['fake-image'], { type: 'image/jpeg' });
       globalThis.fetch = vi.fn().mockResolvedValue({

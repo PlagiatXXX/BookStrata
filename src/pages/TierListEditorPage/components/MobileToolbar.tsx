@@ -9,7 +9,6 @@ import {
   ImageDown,
   Share2,
   Copy,
-  Sliders,
   Minus,
   Type,
   CaseSensitive,
@@ -42,6 +41,8 @@ interface MobileToolbarProps {
     tierId: string,
     settings: Partial<Omit<Tier, "id" | "bookIds">>,
   ) => void;
+  /** Снять активность полки (клик вне панели настроек) */
+  onDeactivateTier?: () => void;
 }
 
 const LABEL_COLORS = [
@@ -81,6 +82,7 @@ export const MobileToolbar = memo(function MobileToolbar({
   isTogglingPublic,
   activeTier,
   onUpdateTier,
+  onDeactivateTier,
 }: MobileToolbarProps) {
   const height = activeTier?.height || 130;
   const labelSize = activeTier?.labelSize || "sm";
@@ -142,13 +144,16 @@ export const MobileToolbar = memo(function MobileToolbar({
   const moreRef = useRef<HTMLDivElement>(null);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
 
-  const [showTierPanel, setShowTierPanel] = useState(false);
   const tierPanelRef = useRef<HTMLDivElement>(null);
-  const tierBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Клик по шестерёнке полки активирует тир — на мобильных открываем панель настроек сразу,
+  // без лишнего шага через «Ещё» → «Настройки полки». Клик вне панели снимает активность
+  // полки (onDeactivateTier) и закрывает панель; следующий тап по шестерёнке открывает её заново.
+  const tierPanelOpen = window.innerWidth < 1024 && activeTier !== undefined;
 
   // Закрываем выпадашки при клике вне
   useEffect(() => {
-    if (!showMore && !showTierPanel) return;
+    if (!showMore && !tierPanelOpen) return;
 
     const handleClick = (e: MouseEvent) => {
       // "Ещё"
@@ -162,15 +167,13 @@ export const MobileToolbar = memo(function MobileToolbar({
           setShowMore(false);
         }
       }
-      // Полка
-      if (showTierPanel) {
-        if (
-          tierPanelRef.current &&
-          !tierPanelRef.current.contains(e.target as Node) &&
-          tierBtnRef.current &&
-          !tierBtnRef.current.contains(e.target as Node)
-        ) {
-          setShowTierPanel(false);
+      // Полка: клик вне панели снимает активность полки (панель закрывается сама,
+      // т.к. activeTier становится undefined)
+      if (tierPanelOpen) {
+        const clickedInsidePanel =
+          tierPanelRef.current?.contains(e.target as Node) ?? false;
+        if (!clickedInsidePanel) {
+          onDeactivateTier?.();
         }
       }
     };
@@ -183,7 +186,7 @@ export const MobileToolbar = memo(function MobileToolbar({
       clearTimeout(timer);
       document.removeEventListener("click", handleClick);
     };
-  }, [showMore, showTierPanel]);
+  }, [showMore, tierPanelOpen, activeTier?.id, onDeactivateTier]);
 
   const saveLabel = () => {
     switch (saveStatus) {
@@ -291,26 +294,6 @@ export const MobileToolbar = memo(function MobileToolbar({
           style={{ bottom: bottomOffset + 60 }}
         >
           <div className="flex flex-col gap-2">
-            {/* Tier Settings */}
-            <button
-              ref={tierBtnRef}
-              type="button"
-              onClick={() => {
-                if (activeTier) {
-                  setShowMore(false);
-                  setShowTierPanel(true);
-                }
-              }}
-              className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 text-[11px] font-black uppercase tracking-wider transition-[transform,background] duration-100 ease-out active:scale-[0.97] ${
-                activeTier
-                  ? "border-white/10 text-white/60 hover:bg-white/5"
-                  : "border-white/5 text-white/20"
-              }`}
-            >
-              <Sliders size={16} className="text-[#ffbd58]" />
-              Настройки полки
-            </button>
-
             {/* Share */}
             {shareUrl && (
               <button
@@ -461,7 +444,7 @@ export const MobileToolbar = memo(function MobileToolbar({
       )}
 
       {/* Dropdown настроек полки */}
-      {showTierPanel && activeTier && onUpdateTier && (
+      {tierPanelOpen && activeTier && onUpdateTier && (
         <div
           ref={tierPanelRef}
           className="fixed left-1/2 z-50 w-[min(90vw,18rem)] -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0e0e0e]/95 backdrop-blur-xl p-4 shadow-lg shadow-black/50 lg:hidden"

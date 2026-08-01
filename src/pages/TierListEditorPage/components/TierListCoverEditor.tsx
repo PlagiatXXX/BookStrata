@@ -107,7 +107,7 @@ export function TierListCoverEditor({
 
   return (
     <div>
-      <p className="nb-label-xs mb-2 text-[#64748b] uppercase tracking-wider">
+      <p className="nb-label-xs mb-2 text-(--theme-text-muted) uppercase tracking-wider">
         Обложка тир-листа
       </p>
       <div className="tier-list-cover-editor max-w-52">

@@ -5,24 +5,53 @@ import { createLogger } from './logger';
 
 const tierListLogger = createLogger('TierListApi', { color: 'magenta' });
 
-export type TierListTheme = 'default' | 'midnight' | 'sunset' | 'forest' | 'ocean' | 'cyberpunk' | 'candlelight' | 'frost' | 'burgundy' | 'lunar' | 'sapphire' | 'moss'
+export type TierListTheme =
+  // Цветовые темы
+  | 'default'
+  | 'sunset'
+  | 'forest'
+  | 'ocean'
+  | 'cyberpunk'
+  | 'burgundy'
+  // Стили (кардинально меняют оформление)
+  | 'dark-academia'
+  | 'pixel'
+  | 'vintage'
+  | 'y2k'
+  | 'clay'
+  | 'soft'
 
-export const PRO_THEMES: TierListTheme[] = ['midnight', 'sunset', 'forest', 'ocean', 'cyberpunk', 'candlelight', 'frost', 'burgundy', 'lunar', 'sapphire', 'moss']
-export const FREE_THEMES: TierListTheme[] = ['default']
+// Устаревшие темы, удалённые из списка (маппинг на default при чтении из БД)
+export const LEGACY_THEMES: string[] = ['midnight', 'candlelight', 'frost', 'lunar', 'sapphire', 'moss']
+
+/** Приводит произвольное значение темы из БД к актуальному списку. */
+export function normalizeTheme(theme: string | null | undefined): TierListTheme {
+  if (theme && (THEME_LABELS as Record<string, string | undefined>)[theme]) {
+    return theme as TierListTheme
+  }
+  return 'default'
+}
+
+// Все темы бесплатны
+export const PRO_THEMES: TierListTheme[] = []
+export const FREE_THEMES: TierListTheme[] = [
+  'default', 'sunset', 'forest', 'ocean', 'cyberpunk', 'burgundy',
+  'dark-academia', 'pixel', 'vintage', 'y2k', 'clay', 'soft',
+]
 
 export const THEME_LABELS: Record<TierListTheme, string> = {
   default: 'Классическая',
-  midnight: 'Полночь',
   sunset: 'Закат',
   forest: 'Лес',
   ocean: 'Океан',
   cyberpunk: 'Киберпанк',
-  candlelight: 'Свеча',
-  frost: 'Иней',
   burgundy: 'Бордо',
-  lunar: 'Луна',
-  sapphire: 'Сапфир',
-  moss: 'Мох',
+  'dark-academia': 'Тёмная академия',
+  pixel: 'Пиксель',
+  vintage: 'Винтаж',
+  y2k: 'Y2K',
+  clay: 'Пластилин',
+  soft: 'Мягкий',
 }
 
 /**
@@ -34,17 +63,17 @@ export const THEME_LABELS: Record<TierListTheme, string> = {
  */
 export const THEME_COLORS: Record<TierListTheme, { bg: string; tier: string; text: string }> = {
   default: { bg: '#0e0e0e', tier: '#c1fffe', text: '#ffffff' },
-  midnight: { bg: '#0f172a', tier: '#818cf8', text: '#e2e8f0' },
   sunset: { bg: '#1c0f0a', tier: '#fb923c', text: '#ffedd5' },
   forest: { bg: '#0a1f0f', tier: '#4ade80', text: '#dcfce7' },
   ocean: { bg: '#0a1628', tier: '#38bdf8', text: '#e0f2fe' },
   cyberpunk: { bg: '#0a0a1a', tier: '#ff51fa', text: '#f0f0ff' },
-  candlelight: { bg: '#2a1a08', tier: '#FFF4DD', text: '#fef3c7' },
-  frost: { bg: '#0f1a24', tier: '#c1dcec', text: '#e0f2fe' },
-  burgundy: { bg: '#1a0a0a', tier: '#7B1113', text: '#fef3c7' },
-  lunar: { bg: '#121212', tier: '#a3a3a3', text: '#fafafa' },
-  sapphire: { bg: '#0c1222', tier: '#082567', text: '#eff6ff' },
-  moss: { bg: '#141a0e', tier: '#a3e635', text: '#f7fee7' },
+  burgundy: { bg: '#1a0a0a', tier: '#d4af37', text: '#fef3c7' },
+  'dark-academia': { bg: '#1c1713', tier: '#c9a227', text: '#ece6da' },
+  pixel: { bg: '#0d0d34', tier: '#00ff9c', text: '#d9f7e9' },
+  vintage: { bg: '#f4ecd8', tier: '#a0522d', text: '#3e2723' },
+  y2k: { bg: '#c1e0f5', tier: '#ff5fa2', text: '#0a3d62' },
+  clay: { bg: '#cdeee1', tier: '#7c4df7', text: '#3b3226' },
+  soft: { bg: '#fdf6ee', tier: '#58cc02', text: '#3c3c3c' },
 }
 
 export interface TierListShort {

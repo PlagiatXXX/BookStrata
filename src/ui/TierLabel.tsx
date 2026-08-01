@@ -174,7 +174,7 @@ export const TierLabel = memo(
       <div
         ref={droppableRef || wrapperRef}
         style={{ backgroundColor: color }}
-        className={`nb-rank-box group/label relative flex items-center justify-center px-1.5 focus-within:opacity-100 tier-label ${onRename || onChangeColor ? "cursor-text" : ""} outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-inset`}
+        className={`nb-rank-box group/label relative flex items-center justify-center px-1.5 focus-within:opacity-100 tier-label ${onRename || onChangeColor ? "cursor-text" : ""} outline-none focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus-visible:ring-inset`}
         onClick={handleStartEditing}
         onKeyDown={handleKeyDownContainer}
         tabIndex={(onRename || onChangeColor) && !isEditing ? 0 : -1}
@@ -225,7 +225,7 @@ export const TierLabel = memo(
               aria-label="Изменить цвет уровня"
               aria-expanded={isPaletteOpen}
               aria-haspopup="true"
-              className="nb-heavy-border flex size-6 max-md:size-5 cursor-pointer items-center justify-center bg-black text-white hover:bg-white hover:text-black transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 palette-toggle"
+              className="nb-heavy-border flex size-6 max-md:size-5 cursor-pointer items-center justify-center bg-(--theme-surface-4) text-(--theme-text) hover:bg-(--theme-surface-bright) hover:text-(--theme-border) transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) palette-toggle"
               title="Изменить цвет"
             >
               <Palette size={12} aria-hidden="true" />

@@ -7,8 +7,8 @@ import type {
 import type { Book, Tier, TierListData } from "@/types";
 import { createLogger } from "@/lib/logger";
 import { StorageService } from "@/lib/storage";
-import type { ExportTheme } from "../components/ExportModal";
 import { sileo } from "sileo";
+import { THEME_COLORS, normalizeTheme } from "@/lib/tierListApi";
 
 // Логгер для хука drag-and-drop
 const logger = createLogger("TierEditorDrag", { color: "orange" });
@@ -33,7 +33,6 @@ export interface UseTierEditorDragResult {
   handleDragOver: (event: DragOverEvent) => void;
   handleDragEndAndClear: (event: DragEndEvent) => void;
   onDownloadImage: (
-    theme?: ExportTheme,
     username?: string,
   ) => Promise<void>;
 }
@@ -81,10 +80,16 @@ export function useTierEditorDrag({
 
   const onDownloadImage = useCallback(
     async (
-      theme: ExportTheme = "default",
       username = "",
     ) => {
       if (tierGridRef.current === null) return;
+
+      // Тема редактора — из data-theme на предке (main[data-theme])
+      const themeAttr =
+        tierGridRef.current.closest?.("[data-theme]")?.getAttribute("data-theme") ??
+        "default";
+      const theme = normalizeTheme(themeAttr);
+      const themeBg = THEME_COLORS[theme]?.bg ?? THEME_COLORS.default.bg;
 
       logger.info("Downloading tier list as image", {
         title: listData.title,
@@ -138,11 +143,8 @@ export function useTierEditorDrag({
           }
         }
 
-        // 2. Применяем стили экспорта
+        // 2. Помечаем режим экспорта (скрывает кнопки редактора)
         element.classList.add("is-exporting");
-        if (theme !== "default") {
-          element.classList.add(`export-theme-${theme}`);
-        }
 
         // 3. Добавляем заголовок тир-листа сверху
         titleBar = document.createElement("div");
@@ -171,12 +173,7 @@ export function useTierEditorDrag({
         // 6. Генерируем PNG
         const dataUrl = await toPng(element, {
           cacheBust: true,
-          backgroundColor:
-            theme === "minimalist"
-              ? "#ffffff"
-              : theme === "vintage"
-                ? "#f4ecd8"
-                : "#000000",
+          backgroundColor: themeBg,
           style: {
             transform: "scale(1)",
           },
@@ -184,9 +181,6 @@ export function useTierEditorDrag({
 
         // 7. Очищаем временные изменения
         element.classList.remove("is-exporting");
-        if (theme !== "default") {
-          element.classList.remove(`export-theme-${theme}`);
-        }
         if (titleBar) {
           element.removeChild(titleBar);
         }
@@ -200,7 +194,7 @@ export function useTierEditorDrag({
 
         // 7. Скачиваем файл
         const link = document.createElement("a");
-        link.download = `${listData.title.replace(/\s+/g, "-")}-${theme}.png`;
+        link.download = `${listData.title.replace(/\s+/g, "-")}.png`;
         link.href = dataUrl;
         link.click();
 
@@ -210,10 +204,6 @@ export function useTierEditorDrag({
       } catch (err) {
         // Пытаемся очистить в случае ошибки
         element.classList.remove("is-exporting");
-        element.className = element.className
-          .split(" ")
-          .filter((c) => !c.startsWith("export-theme-"))
-          .join(" ");
         if (titleBar && element.contains(titleBar)) {
           element.removeChild(titleBar);
         }

@@ -27,7 +27,7 @@ export function DeleteTierModal({
             {tierTitle ? (
               <>
                 Вы уверены, что хотите удалить блок{" "}
-                <span className="font-bold text-[#f6f1e8]">"{tierTitle}"</span>?
+                <span className="font-bold text-(--theme-text)">"{tierTitle}"</span>?
               </>
             ) : (
               "Вы уверены, что хотите удалить этот блок?"

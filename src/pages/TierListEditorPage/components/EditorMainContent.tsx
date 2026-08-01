@@ -75,11 +75,11 @@ export const EditorMainContent = memo(
     // Классы для подсветки областей во время онбординга
     const tierGridHighlight =
       onboardingStep === 1
-        ? "ring-2 ring-[#c1fffe] ring-offset-2 ring-offset-black/80 rounded-none transition-all duration-300"
+        ? "ring-2 ring-(--theme-accent-primary) ring-offset-2 ring-offset-(--theme-border)/80 rounded-none transition-all duration-300"
         : "";
     const unrankedHighlight =
       onboardingStep === 0
-        ? "ring-2 ring-[#c1fffe] ring-offset-2 ring-offset-black/80 rounded-none transition-all duration-300"
+        ? "ring-2 ring-(--theme-accent-primary) ring-offset-2 ring-offset-(--theme-border)/80 rounded-none transition-all duration-300"
         : "";
     const booksPulse =
       onboardingStep === 2
@@ -237,16 +237,16 @@ export const EditorMainContent = memo(
                     : "Скрыть боковую панель"
                 }
               >
-                <div className="w-4 min-h-80 bg-black border-l-2 border-[#c1fffe]/20 shadow-[inset_0_0_12px_0_rgba(193,255,254,0.12),0_0_15px_3px_rgba(193,255,254,0.1)] group-hover:border-[#c1fffe]/60 group-hover:shadow-[inset_0_0_18px_0_rgba(193,255,254,0.25),0_0_25px_6px_rgba(193,255,254,0.2)] transition-all duration-500" />
+                <div className="nb-editor-toggle-line w-4 min-h-80 bg-(--theme-bg) group-hover:shadow-[inset_0_0_18px_0_color-mix(in_srgb,var(--theme-accent-primary)_25%,transparent),0_0_25px_6px_color-mix(in_srgb,var(--theme-accent-primary)_20%,transparent)] transition-all duration-500" />
                 {sidebarCollapsed ? (
                   <PanelRightOpen
                     size={16}
-                    className="text-[#c1fffe] ml-1.5 group-hover:brightness-150 transition-all duration-300"
+                    className="text-(--theme-accent-primary) ml-1.5 group-hover:brightness-150 transition-all duration-300"
                   />
                 ) : (
                   <PanelRightClose
                     size={16}
-                    className="text-[#c1fffe] ml-1.5 group-hover:brightness-150 transition-all duration-300"
+                    className="text-(--theme-accent-primary) ml-1.5 group-hover:brightness-150 transition-all duration-300"
                   />
                 )}
               </button>
@@ -272,6 +272,9 @@ export const EditorMainContent = memo(
             isTogglingPublic={isTogglingPublic}
             activeTier={activeTierData || undefined}
             onUpdateTier={isReadOnly ? undefined : onUpdateTier}
+            onDeactivateTier={
+              isReadOnly ? undefined : () => onSetActiveTier(null)
+            }
           />
         )}
       </>

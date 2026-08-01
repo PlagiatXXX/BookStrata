@@ -99,10 +99,10 @@ export function AuthOnSaveModal({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.2 }}
-        className="relative mx-4 w-full max-w-md border-2 border-black bg-[#111111] text-[#f6f1e8] shadow-[8px_8px_0_0_#000000]"
+        className="relative mx-4 w-full max-w-md nb-heavy-border bg-(--theme-surface-3) text-(--theme-text) shadow-(--theme-shadow-lg)"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b-2 border-black bg-[#181818] p-5">
+        <div className="flex items-center justify-between border-b-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-2) p-5">
           <h2 className="text-lg font-black tracking-[-0.02em]">
             {step === "title" ? "Назовите тир-лист" : "Создать аккаунт"}
           </h2>
@@ -110,7 +110,7 @@ export function AuthOnSaveModal({
             type="button"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="flex size-8 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none disabled:opacity-50"
+            className="flex size-8 cursor-pointer items-center justify-center nb-heavy-border bg-(--theme-surface-4) text-(--theme-text-muted) transition-colors hover:border-(--theme-accent-primary) hover:text-(--theme-text) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none disabled:opacity-50"
             aria-label="Закрыть"
           >
             <X className="h-4 w-4" />
@@ -121,7 +121,7 @@ export function AuthOnSaveModal({
         <div className="p-6">
           {step === "title" ? (
             <div className="space-y-4">
-              <p className="text-sm text-[#a8abad]">
+              <p className="text-sm text-(--theme-text-muted)">
                 Ваш тир-лист пока сохранён только в браузере. Дайте ему название, чтобы после регистрации он получил красивый адрес.
               </p>
               <input
@@ -131,34 +131,34 @@ export function AuthOnSaveModal({
                 placeholder="Название тир-листа"
                 maxLength={100}
                 autoFocus
-                className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-3 text-sm text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
+                className="nb-input w-full px-4 py-3 text-sm placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus)"
               />
               <button
                 type="button"
                 onClick={handleContinue}
-                className="w-full cursor-pointer border-2 border-black bg-[#c1fffe] px-5 py-3 text-sm font-black text-black transition-colors hover:bg-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                className="nb-btn-primary w-full px-5 py-3 text-sm focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
               >
                 Продолжить
               </button>
             </div>
           ) : (
             <form onSubmit={handleRegister} className="space-y-4">
-              <p className="text-sm text-[#a8abad]">
+              <p className="text-sm text-(--theme-text-muted)">
                 Создайте аккаунт, чтобы сохранить тир-лист «{title}» и получить доступ ко всем возможностям BookStrata.
               </p>
 
               {error && (
-                <div className="border-2 border-red-500/50 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+                <div className="border-2 border-(--theme-danger)/50 bg-(--theme-danger)/10 px-4 py-2 text-sm text-(--theme-danger)">
                   {error}
                 </div>
               )}
 
               <div className="space-y-1">
-                <label htmlFor="auth-username" className="text-xs font-bold uppercase tracking-[0.1em] text-[#c1fffe]">
+                <label htmlFor="auth-username" className="text-xs font-bold uppercase tracking-[0.1em] text-(--theme-accent-primary)">
                   Имя пользователя
                 </label>
                 <div className="relative">
-                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7d8688]" />
+                  <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--theme-text-muted)" />
                   <input
                     id="auth-username"
                     type="text"
@@ -166,41 +166,41 @@ export function AuthOnSaveModal({
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="username"
                     autoFocus
-                    className="w-full border-2 border-black bg-[#0a0a0a] py-3 pl-10 pr-4 text-sm text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
+                    className="nb-input w-full py-3 pl-10 pr-4 text-sm placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus)"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="auth-email" className="text-xs font-bold uppercase tracking-[0.1em] text-[#c1fffe]">
+                <label htmlFor="auth-email" className="text-xs font-bold uppercase tracking-[0.1em] text-(--theme-accent-primary)">
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7d8688]" />
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--theme-text-muted)" />
                   <input
                     id="auth-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full border-2 border-black bg-[#0a0a0a] py-3 pl-10 pr-4 text-sm text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
+                    className="nb-input w-full py-3 pl-10 pr-4 text-sm placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus)"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="auth-password" className="text-xs font-bold uppercase tracking-[0.1em] text-[#c1fffe]">
+                <label htmlFor="auth-password" className="text-xs font-bold uppercase tracking-[0.1em] text-(--theme-accent-primary)">
                   Пароль
                 </label>
                 <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7d8688]" />
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--theme-text-muted)" />
                   <input
                     id="auth-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Не менее 6 символов"
-                    className="w-full border-2 border-black bg-[#0a0a0a] py-3 pl-10 pr-4 text-sm text-[#f6f1e8] placeholder:text-[#6f7577] outline-none transition-colors focus:border-[#c1fffe] focus-within:ring-2 focus-within:ring-cyan-400"
+                    className="nb-input w-full py-3 pl-10 pr-4 text-sm placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus)"
                   />
                 </div>
               </div>
@@ -210,20 +210,20 @@ export function AuthOnSaveModal({
                   type="checkbox"
                   checked={acceptedTerms}
                   onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="mt-1 h-4 w-4 cursor-pointer accent-[#c1fffe]"
+                  className="mt-1 h-4 w-4 cursor-pointer accent-(--theme-accent-primary)"
                 />
-                <span className="text-xs text-[#a8abad]">
+                <span className="text-xs text-(--theme-text-muted)">
                   Я принимаю{' '}
-                  <a href="/terms" target="_blank" className="text-[#c1fffe] underline" rel="noreferrer">условия использования</a>
+                  <a href="/terms" target="_blank" className="text-(--theme-accent-primary) underline" rel="noreferrer">условия использования</a>
                   {' '}и{' '}
-                  <a href="/privacy" target="_blank" className="text-[#c1fffe] underline" rel="noreferrer">политику конфиденциальности</a>
+                  <a href="/privacy" target="_blank" className="text-(--theme-accent-primary) underline" rel="noreferrer">политику конфиденциальности</a>
                 </span>
               </label>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-black bg-[#c1fffe] px-5 py-3 text-sm font-black text-black transition-colors hover:bg-[#9cf5f3] disabled:cursor-not-allowed disabled:bg-[#5f6667] disabled:text-black disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                className="nb-btn-primary flex w-full cursor-pointer items-center justify-center gap-2 px-5 py-3 text-sm disabled:cursor-not-allowed disabled:bg-(--theme-text-muted)/50 disabled:text-(--theme-on-accent) disabled:opacity-100 focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none"
               >
                 {isSubmitting ? (
                   <>
@@ -242,7 +242,7 @@ export function AuthOnSaveModal({
                   setError(null)
                 }}
                 disabled={isSubmitting}
-                className="w-full cursor-pointer text-center text-xs text-[#7d8688] underline transition-colors hover:text-[#a8abad] disabled:opacity-50"
+                className="w-full cursor-pointer text-center text-xs text-(--theme-text-muted) underline transition-colors hover:text-(--theme-text) disabled:opacity-50"
               >
                 ← Назад к названию
               </button>

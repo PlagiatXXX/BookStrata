@@ -11,6 +11,11 @@ import { scenarios, plans, audienceItems, screenshots, type ScreenshotItem } fro
 import { proxyImageUrl } from "@/utils/imageProxy"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import type { TierListShort } from "@/lib/tierListApi"
+import { TEMPLATES, type TemplateItem } from "@/data/mockData"
+
+// Готовые шаблоны для секции «Попробуйте прямо сейчас» (см. mockData.ts)
+const LANDING_TEMPLATE_IDS = [101, 102, 103]
+const LANDING_TEMPLATES = TEMPLATES.filter((t) => LANDING_TEMPLATE_IDS.includes(t.id))
 
 /* ---------- Tier list mini card ---------- */
 function MiniTierCard({ item }: { item: TierListShort }) {
@@ -196,6 +201,37 @@ function Lightbox({ screenshot, onClose }: {
   )
 }
 
+/* ---------- Landing template card (готовый тир-лист для пробы) ---------- */
+function LandingTemplateCard({ template }: { template: TemplateItem }) {
+  const covers = (template.templateData.defaultBooks || []).slice(0, 5)
+  return (
+    <Link
+      to={`/tier-lists/new?template=${template.id}`}
+      data-analytics={`cta.landing.try_template_${template.id}`}
+      className="landing-template-card"
+    >
+      <div className="landing-template-card__covers">
+        {covers.map((b, i) => (
+          <img
+            key={i}
+            src={b.coverImageUrl}
+            alt={b.title}
+            loading="lazy"
+            className="landing-template-card__cover"
+          />
+        ))}
+      </div>
+      <div className="landing-template-card__body">
+        <h3 className="landing-template-card__title">{template.templateData.title}</h3>
+        <p className="landing-template-card__desc">{template.templateData.description}</p>
+        <span className="landing-template-card__cta">
+          Открыть в редакторе <ChevronRightIcon />
+        </span>
+      </div>
+    </Link>
+  )
+}
+
 /* ---------- Landing Body (секции ниже фолда) ---------- */
 interface LandingBodyProps {
   tierLists: TierListShort[] | undefined
@@ -244,6 +280,33 @@ export default function LandingBody({ tierLists, forumStats }: LandingBodyProps)
             >
               Создать свой тир-лист
               <ChevronRightIcon />
+            </button>
+          </RevealBox>
+        </div>
+      </section>
+
+      {/* ============ TRY TEMPLATES (пробные тир-листы) ============ */}
+      <section className="landing-section landing-section--alt" id="try-templates">
+        <div className="landing-section__container">
+          <RevealBox><h2 className="landing-section__title">Попробуйте прямо сейчас</h2></RevealBox>
+          <RevealBox><p className="landing-section__subtitle">Готовые тир-листы: откройте, подвигайте книги и сохраните картинку. Без регистрации.</p></RevealBox>
+
+          <div className="landing-templates">
+            {LANDING_TEMPLATES.map((t) => (
+              <RevealBox key={t.id}>
+                <LandingTemplateCard template={t} />
+              </RevealBox>
+            ))}
+          </div>
+
+          <RevealBox className="landing-section__action">
+            <button
+              data-analytics="cta.landing.try_templates_all"
+              onClick={() => navigate("/templates")}
+              className="landing-hero__btn landing-hero__btn--secondary"
+              type="button"
+            >
+              Смотреть все шаблоны
             </button>
           </RevealBox>
         </div>

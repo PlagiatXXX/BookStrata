@@ -58,6 +58,8 @@ interface EditorLayoutProps {
   ownerUserId?: number;
   currentUserId?: number | null;
   breadcrumbItems?: { label: string; href?: string }[];
+  /** Модалки, которым нужны токены темы (рендерятся внутри main[data-theme]) */
+  modals?: React.ReactNode;
 }
 
 export const EditorLayout = ({
@@ -80,6 +82,7 @@ export const EditorLayout = ({
   ownerUserId,
   currentUserId,
   breadcrumbItems,
+  modals,
 }: EditorLayoutProps) => {
   const [isTopCollapsed, setIsTopCollapsed] = useState(false);
   const activeBook: Book | null =
@@ -144,7 +147,7 @@ export const EditorLayout = ({
               } min-w-0`}
               style={{ display: "grid" }}
             >
-              <div className="min-h-0">
+              <div className="min-h-0 min-w-0">
                 <div className="flex flex-wrap gap-3 items-start mb-2">
                   {tierListId && !hideCover && (
                     <TierListCoverEditor
@@ -159,7 +162,7 @@ export const EditorLayout = ({
                     />
                   )}
                   {tierListId && (
-                    <div className="pl-4 flex-1 min-w-0 mt-0.5">
+                    <div className="pl-4 flex-1 min-w-0 mt-0.5 max-md:basis-full max-md:pl-0">
                       <ThemePicker
                         tierListId={tierListId}
                         currentTheme={theme}
@@ -174,7 +177,7 @@ export const EditorLayout = ({
             <div className="flex justify-center -mt-4 mb-6">
               <button
                 onClick={() => setIsTopCollapsed((v) => !v)}
-                className="cursor-pointer text-sm font-semibold text-cyan-200 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                className="cursor-pointer text-sm font-semibold text-(--theme-accent-primary) hover:text-(--theme-text) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--theme-focus)"
                 type="button"
                 aria-label={
                   isTopCollapsed
@@ -195,6 +198,9 @@ export const EditorLayout = ({
         )}
 
         {children}
+
+        {/* Модалки внутри main[data-theme] — наследуют токены темы */}
+        {modals}
       </main>
     </DashboardLayout>
   );

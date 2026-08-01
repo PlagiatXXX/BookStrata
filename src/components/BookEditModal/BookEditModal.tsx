@@ -134,10 +134,10 @@ const INITIAL_STATE: BookFormState = {
 };
 
 const sectionTitleClass =
-  "mb-3 block text-[11px] font-bold uppercase tracking-[0.14em] text-[#c1fffe]";
+  "mb-3 block text-[11px] font-bold uppercase tracking-[0.14em] text-(--theme-accent-primary)";
 
 const inputClass =
-  "w-full border-2 border-black bg-[#0a0a0a] px-4 py-3 text-sm text-[#f6f1e8] placeholder:text-[#676767] outline-none transition-colors focus:border-[#c1fffe] max-md:px-3 max-md:py-2 max-md:text-xs";
+  "w-full nb-input px-4 py-3 text-sm placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus) max-md:px-3 max-md:py-2 max-md:text-xs";
 
 const textareaClass = `${inputClass} resize-none`;
 
@@ -157,7 +157,7 @@ function TagPills({
       {tags.map((tag) => (
         <span
           key={tag}
-          className={`inline-flex items-center gap-1 rounded-full border border-cyan-400/30 bg-cyan-400/10 font-medium text-cyan-300 ${sizeClass}`}
+          className={`inline-flex items-center gap-1 rounded-full border-(--theme-accent-primary)/30 bg-(--theme-accent-primary)/10 font-medium text-(--theme-accent-primary) ${sizeClass}`}
         >
           #{tag}
         </span>
@@ -177,7 +177,7 @@ function StarDisplay({ value, size = 14 }: { value: number; size?: number }) {
         className="relative inline-block"
         style={{ width: size, height: size }}
       >
-        <Star size={size} className="absolute inset-0 text-[#444]" />
+        <Star size={size} className="absolute inset-0 text-(--theme-text-muted)/60" />
         <span
           className="absolute inset-0 overflow-hidden"
           style={{ width: `${fill * 100}%` }}
@@ -390,26 +390,26 @@ export const BookEditModal = ({
       titleId="book-edit-title"
     >
       <div
-        className="relative flex max-h-[90vh] w-full flex-col overflow-hidden bg-[#111111] text-[#f6f1e8]"
+        className="relative flex max-h-[90vh] w-full flex-col overflow-hidden nb-heavy-border bg-(--theme-surface-3) text-(--theme-text)"
         onKeyDown={handleKeyDown}
       >
         <button
           onClick={handleSaveAndClose}
-          className="absolute right-4 top-4 z-20 flex size-7 cursor-pointer items-center justify-center border-2 border-black bg-[#0a0a0a] text-[#9aa1a3] transition-colors hover:border-[#c1fffe] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-pink-500 outline-none"
+          className="absolute right-4 top-4 z-20 flex size-7 cursor-pointer items-center justify-center nb-heavy-border bg-(--theme-surface-4) text-(--theme-text-muted) transition-colors hover:border-(--theme-accent-primary) hover:text-(--theme-text) focus-visible:ring-2 focus-visible:ring-(--theme-danger) outline-none"
           title="Закрыть"
           aria-label="Закрыть модальное окно"
         >
           <X size={14} />
         </button>
 
-        <div className="border-b-2 border-black bg-[#181818] px-5 py-4 max-md:px-3 max-md:py-3">
+        <div className="border-b-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-2) px-5 py-4 max-md:px-3 max-md:py-3">
           <div className="pr-12 max-md:pr-0">
             <p
               id="book-edit-title"
-              className="mb-1.5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[#c1fffe]"
+              className="mb-1.5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.16em] text-(--theme-accent-primary)"
             >
               Редактирование книги
-              <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300/70">
+              <span className="inline-flex items-center gap-1 rounded-full border-(--theme-accent-primary)/20 bg-(--theme-accent-primary)/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-(--theme-accent-primary)/70">
                 автосохранение
               </span>
             </p>
@@ -419,7 +419,7 @@ export const BookEditModal = ({
               <div>
                 <label
                   htmlFor="book-title-input"
-                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-(--theme-text-muted)"
                 >
                   Название{" "}
                   <span className="text-pink-500" aria-hidden="true">
@@ -434,7 +434,7 @@ export const BookEditModal = ({
                     dispatch({ type: "SET_TITLE", title: e.target.value })
                   }
                   maxLength={100}
-                  className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
+                  className="w-full nb-input px-4 py-2 text-lg font-black placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus) max-md:text-base"
                   placeholder="Введите название книги"
                   aria-label="Название книги"
                 />
@@ -445,7 +445,7 @@ export const BookEditModal = ({
               <div>
                 <label
                   htmlFor="book-author-input"
-                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#9aa1a3]"
+                  className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-(--theme-text-muted)"
                 >
                   Автор
                 </label>
@@ -466,12 +466,12 @@ export const BookEditModal = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-[#111111] p-6 max-md:p-3">
+        <div className="flex-1 overflow-y-auto bg-(--theme-surface-3) p-6 max-md:p-3">
           <div className="flex flex-col gap-6 max-md:gap-4">
             <div className="grid gap-6 lg:grid-cols-[180px_minmax(0,1fr)] max-md:grid-cols-1">
-              <section className="border-2 border-black bg-[#171717] p-3 max-md:p-2">
+              <section className="nb-heavy-border bg-(--theme-surface-2) p-3 max-md:p-2">
                 <p className={`${sectionTitleClass} text-center`}>Обложка</p>
-                <div className="relative mx-auto h-64 w-40 overflow-hidden border-2 border-black bg-[#0a0a0a] max-sm:h-56">
+                <div className="relative mx-auto h-64 w-40 overflow-hidden nb-heavy-border bg-(--theme-surface-4) max-sm:h-56">
                   {coverImageUrl ? (
                     <img
                       src={proxyImageUrl(coverImageUrl)}
@@ -507,7 +507,7 @@ export const BookEditModal = ({
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#c1fffe] transition-colors hover:border-[#5cf0e8] hover:bg-[#171717] focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full cursor-pointer nb-heavy-border bg-(--theme-surface-4) px-3 py-2 text-sm font-semibold text-(--theme-accent-primary) transition-colors hover:border-(--theme-accent-primary) hover:bg-(--theme-surface-2) focus-visible:ring-2 focus-visible:ring-(--theme-focus) outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                         aria-label="Изменить обложку"
                       >
                         {uploading ? "Загрузка..." : "Изменить"}
@@ -515,7 +515,7 @@ export const BookEditModal = ({
                       <button
                         type="button"
                         onClick={() => setIsCoverDeleteModalOpen(true)}
-                        className="w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#ff9db7] transition-colors hover:border-[#ff5c8a] hover:bg-[#171717] hover:text-[#ffd4df] focus-visible:ring-2 focus-visible:ring-pink-500 outline-none"
+                        className="w-full cursor-pointer nb-heavy-border bg-(--theme-surface-4) px-3 py-2 text-sm font-semibold text-(--theme-danger) transition-colors hover:border-(--theme-danger) hover:bg-(--theme-surface-2) hover:text-(--theme-danger) focus-visible:ring-2 focus-visible:ring-(--theme-danger) outline-none"
                         aria-label="Удалить текущую обложку"
                       >
                         Удалить обложку
@@ -526,7 +526,7 @@ export const BookEditModal = ({
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="w-full cursor-pointer border-2 border-black bg-[#0a0a0a] px-3 py-2 text-sm font-semibold text-[#c1fffe] transition-colors hover:border-[#5cf0e8] hover:bg-[#171717] focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full cursor-pointer nb-heavy-border bg-(--theme-surface-4) px-3 py-2 text-sm font-semibold text-(--theme-accent-primary) transition-colors hover:border-(--theme-accent-primary) hover:bg-(--theme-surface-2) focus-visible:ring-2 focus-visible:ring-(--theme-focus) outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label="Добавить обложку"
                     >
                       {uploading ? "Загрузка..." : "Добавить"}
@@ -537,7 +537,7 @@ export const BookEditModal = ({
 
               <div className="grid gap-6">
                 <div className="grid grid-cols-1 gap-4">
-                  <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
+                  <section className="nb-heavy-border bg-(--theme-surface-2) p-4 max-md:p-3">
                     <label
                       htmlFor="book-genre-input"
                       className={`${sectionTitleClass} max-md:text-[9px]`}
@@ -552,13 +552,13 @@ export const BookEditModal = ({
                         dispatch({ type: "SET_GENRE", genre: e.target.value })
                       }
                       maxLength={50}
-                      className="w-full border-2 border-black bg-[#0a0a0a] px-4 py-2 text-lg font-black text-[#f6f1e8] placeholder:text-[#5e5e5e] outline-none transition-colors focus:border-[#c1fffe] focus-visible:ring-2 focus-visible:ring-cyan-400 max-md:text-base"
+                      className="w-full nb-input px-4 py-2 text-lg font-black placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus) max-md:text-base"
                       placeholder="Фантастика, детектив..."
                       aria-label="Жанр книги"
                     />
                   </section>
 
-                  <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
+                  <section className="nb-heavy-border bg-(--theme-surface-2) p-4 max-md:p-3">
                     <label
                       htmlFor="book-tags-input"
                       className={`${sectionTitleClass} max-md:text-[9px]`}
@@ -578,7 +578,7 @@ export const BookEditModal = ({
                           tagsInput: e.target.value,
                         })
                       }
-                      className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                      className={`${inputClass} focus-visible:ring-2 focus-visible:ring-(--theme-focus)`}
                       placeholder="#фантастика #приключения"
                       aria-label="Теги книги"
                     />
@@ -588,7 +588,7 @@ export const BookEditModal = ({
                   </section>
                 </div>
 
-                <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
+                <section className="nb-heavy-border bg-(--theme-surface-2) p-4 max-md:p-3">
                   <div className="flex items-center justify-between mb-3 max-md:flex-col max-md:items-start max-md:gap-2">
                     <label
                       htmlFor="book-description-input"
@@ -600,7 +600,7 @@ export const BookEditModal = ({
                       type="button"
                       onClick={handleAiDescribe}
                       disabled={aiLoading || !title.trim()}
-                      className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-cyan-400/30 bg-cyan-400/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300 transition-colors hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex cursor-pointer items-center gap-1.5 rounded border-(--theme-accent-primary)/30 bg-(--theme-accent-primary)/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-(--theme-accent-primary) transition-colors hover:bg-(--theme-accent-primary)/20 disabled:cursor-not-allowed disabled:opacity-40"
                       title="Сгенерировать описание через AI"
                       aria-label="Сгенерировать описание через AI"
                     >
@@ -621,7 +621,7 @@ export const BookEditModal = ({
                         description: e.target.value,
                       })
                     }
-                    className={`${textareaClass} min-h-40 max-md:min-h-45 focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                    className={`${textareaClass} min-h-40 max-md:min-h-45 focus-visible:ring-2 focus-visible:ring-(--theme-focus)`}
                     placeholder="Краткое описание книги"
                     aria-label="Описание книги"
                   />
@@ -629,7 +629,7 @@ export const BookEditModal = ({
               </div>
             </div>
 
-            <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
+            <section className="nb-heavy-border bg-(--theme-surface-2) p-4 max-md:p-3">
               <label
                 htmlFor="book-thoughts-input"
                 className={`${sectionTitleClass} max-md:text-[9px]`}
@@ -642,7 +642,7 @@ export const BookEditModal = ({
                 onChange={(e) =>
                   dispatch({ type: "SET_THOUGHTS", thoughts: e.target.value })
                 }
-                className={`${textareaClass} min-h-36 focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                className={`${textareaClass} min-h-36 focus-visible:ring-2 focus-visible:ring-(--theme-focus)`}
                 rows={5}
                 placeholder="Ваши мысли, заметки и впечатления о книге"
                 aria-label="Ваши мысли о книге"
@@ -650,7 +650,7 @@ export const BookEditModal = ({
             </section>
 
             {/* Rating Section */}
-            <section className="border-2 border-black bg-[#171717] p-4 max-md:p-3">
+            <section className="nb-heavy-border bg-(--theme-surface-2) p-4 max-md:p-3">
               <span
                 className={`${sectionTitleClass} flex items-center gap-2 max-md:text-[9px]`}
               >
@@ -667,10 +667,10 @@ export const BookEditModal = ({
                           key={cat.key}
                           className="flex items-center justify-between text-sm"
                         >
-                          <span className="text-[#a0a0a0]">{cat.label}</span>
+                          <span className="text-(--theme-text-muted)">{cat.label}</span>
                           <span className="flex items-center gap-2">
                             <StarDisplay value={cat.avgValue ?? 0} size={12} />
-                            <span className="text-[#f6f1e8] font-medium w-8 text-right text-xs">
+                            <span className="text-(--theme-text) font-medium w-8 text-right text-xs">
                               {cat.avgValue?.toFixed(1) ?? "—"}
                             </span>
                           </span>
@@ -678,12 +678,12 @@ export const BookEditModal = ({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-[#555] mt-2">Нет оценок</p>
+                    <p className="text-sm text-(--theme-text-muted) mt-2">Нет оценок</p>
                   )}
                   <button
                     type="button"
                     onClick={handleChangeRating}
-                    className="mt-2 cursor-pointer text-xs text-[#c1fffe] underline underline-offset-2 transition-colors hover:text-[#9cf5f3] focus-visible:ring-2 focus-visible:ring-cyan-400 outline-none"
+                    className="mt-2 cursor-pointer text-xs text-(--theme-accent-primary) underline underline-offset-2 transition-colors hover:text-(--theme-accent-primary) focus-visible:ring-2 focus-visible:ring-(--theme-focus) outline-none"
                   >
                     Изменить оценку
                   </button>
@@ -693,8 +693,8 @@ export const BookEditModal = ({
                   {allCategories.map((cat) => (
                     <div key={cat.key}>
                       <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-[#a0a0a0]">{cat.label}</span>
-                        <span className="text-[#c1fffe] font-semibold text-xs">
+                        <span className="text-(--theme-text-muted)">{cat.label}</span>
+                        <span className="text-(--theme-accent-primary) font-semibold text-xs">
                           {cat.userValue !== undefined
                             ? cat.userValue.toFixed(1)
                             : "—"}
@@ -710,14 +710,14 @@ export const BookEditModal = ({
                           handleRate(cat.key, parseFloat(e.target.value))
                         }
                         className="w-full h-1 rounded-full appearance-none cursor-pointer
-                          bg-[#2a2a2a] accent-[#c1fffe]
+                          bg-(--theme-surface-2) accent-(--theme-accent-primary)
                           [&::-webkit-slider-thumb]:appearance-none
                           [&::-webkit-slider-thumb]:w-3.5
                           [&::-webkit-slider-thumb]:h-3.5
                           [&::-webkit-slider-thumb]:rounded-full
-                          [&::-webkit-slider-thumb]:bg-[#c1fffe]
+                          [&::-webkit-slider-thumb]:bg-(--theme-accent-primary)
                           [&::-webkit-slider-thumb]:border-2
-                          [&::-webkit-slider-thumb]:border-black"
+                          [&::-webkit-slider-thumb]:border-(--theme-border)"
                       />
                     </div>
                   ))}
@@ -730,14 +730,14 @@ export const BookEditModal = ({
                     <button
                       onClick={handleSubmitRating}
                       disabled={!pollComplete || submitting}
-                      className="w-full mt-1 py-2 bg-[#c1fffe] text-black font-semibold rounded-sm text-xs
-                        hover:bg-[#a0f0f0] transition-colors
+                      className="w-full mt-1 py-2 bg-(--theme-accent-primary) text-black font-semibold rounded-sm text-xs
+                        hover:bg-(--theme-accent-primary)/90 transition-colors
                         disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {submitting ? "Отправка..." : "Оценить"}
                     </button>
                   ) : (
-                    <p className="text-xs text-[#555] mt-2">
+                    <p className="text-xs text-(--theme-text-muted) mt-2">
                       Войдите, чтобы оценить книгу
                     </p>
                   )}
@@ -747,11 +747,11 @@ export const BookEditModal = ({
           </div>
         </div>
 
-        <div className="flex shrink-0 justify-end border-t-2 border-black bg-[#0a0a0a] px-5 py-3 max-md:px-3 max-md:py-2">
+        <div className="flex shrink-0 justify-end border-t-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-4) px-5 py-3 max-md:px-3 max-md:py-2">
           <Button
             variant="ghost"
             onClick={handleSaveAndClose}
-            className="border-2 border-black bg-transparent px-4 py-2 text-sm font-semibold text-[#b4b4b4] hover:border-[#c1fffe] hover:bg-[#171717] hover:text-[#f6f1e8] focus-visible:ring-2 focus-visible:ring-pink-500 max-md:w-full"
+            className="nb-heavy-border bg-transparent px-4 py-2 text-sm font-semibold text-(--theme-text-muted) hover:border-(--theme-accent-primary) hover:bg-(--theme-surface-2) hover:text-(--theme-text) focus-visible:ring-2 focus-visible:ring-(--theme-danger) max-md:w-full"
             aria-label="Закрыть"
           >
             Закрыть

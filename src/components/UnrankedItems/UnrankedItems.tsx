@@ -39,22 +39,18 @@ export const UnrankedItems = memo(
         }`}
       >
         <div className="nb-section-header">
-          <h3 className="nb-label-md text-[#c1fffe]">
+          <h3 className="nb-label-md text-(--theme-accent-primary)">
             Книги без рейтинга
           </h3>
         </div>
 
         <div className="p-4">
-          <div className="mb-8">
-            <BookCounter booksCount={displayBooksCount} />
-          </div>
-
           <SortableContext
             id={UNRANKED_AREA_ID}
             items={books.map((b) => `book-${b.id}`)}
             strategy={rectSortingStrategy}
           >
-            <div className="relative flex flex-wrap gap-4">
+            <div className="nb-unranked-track relative flex flex-wrap gap-3">
               {showEndInsertIndicator ? (
                 <div
                   className="nb-book-track-end-indicator"
@@ -71,9 +67,12 @@ export const UnrankedItems = memo(
                   containerId={UNRANKED_AREA_ID}
                 />
               ))}
-              
             </div>
           </SortableContext>
+
+          <div className="mt-8">
+            <BookCounter booksCount={displayBooksCount} />
+          </div>
         </div>
       </div>
     );

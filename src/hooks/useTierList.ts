@@ -57,7 +57,8 @@ const tierListReducer = (state: TierListData, action: Action): TierListData => {
         title: action.payload.title,
         color: action.payload.color,
         bookIds: [],
-        height: 140,
+        // Высота не задана — блок по высоте контента (CSS min-height),
+        // выше можно сделать слайдером «Высота» в настройках блока
         labelSize: "md",
       };
       return {

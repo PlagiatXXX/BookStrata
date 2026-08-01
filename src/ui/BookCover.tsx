@@ -1,4 +1,4 @@
-import { memo, forwardRef, useState, useRef, useCallback } from "react";
+import { memo, forwardRef, useState, useRef, useCallback, useEffect } from "react";
 import { X, Edit2, Eye } from "lucide-react";
 import type { Book } from "@/types";
 import type { ReadStatus } from "@/hooks/useReadStatus";
@@ -31,7 +31,12 @@ export const BookCover = memo(
         : "";
       const label = `${book.title} - ${book.author}`;
       const hasActions = Boolean(onDelete || onEdit || onView);
-      const showActionsFinal = isHovered || showActions;
+      // На мобильных браузер синтезирует mouseenter после тапа —
+      // hover-состояние мешает закрытию кнопок, поэтому учитываем его только на десктопе
+      const isMobile = window.innerWidth < 768;
+      const showActionsFinal = isMobile
+        ? showActions
+        : isHovered || showActions;
       const hasCover = !!book.coverImageUrl;
       const showCover = hasCover && !coverError;
       const imgUrl = showCover ? proxyImageUrl(book.coverImageUrl) : undefined;
@@ -39,15 +44,9 @@ export const BookCover = memo(
       const handleClick = (e: React.MouseEvent) => {
         if (window.innerWidth >= 768) return;
 
-        const allBooks = document.querySelectorAll("[data-book-id]");
-        allBooks.forEach((bookEl) => {
-          if (bookEl.getAttribute("data-book-id") !== book.id) {
-            bookEl.setAttribute("data-book-actions", "hidden");
-          }
-        });
-
+        // Без stopPropagation: клик по другой книге или мимо неё всплывает
+        // до document, и handleClickOutside закрывает чужие кнопки
         e.preventDefault();
-        e.stopPropagation();
         setShowActions((prev) => !prev);
       };
 
@@ -75,12 +74,13 @@ export const BookCover = memo(
         setShowActions(false);
       }, [book.id]);
 
-      // Закрываем кнопки при клике вне книги
-      useState(() => {
+      // Закрываем кнопки при клике вне книги (в т.ч. по другой книге
+      // или пустому месту). Подписываемся только пока кнопки открыты.
+      useEffect(() => {
         if (!showActions) return;
         document.addEventListener("click", handleClickOutside);
         return () => document.removeEventListener("click", handleClickOutside);
-      });
+      }, [showActions, handleClickOutside]);
 
       return (
         <div
@@ -120,7 +120,7 @@ export const BookCover = memo(
           )}
 
           {showCover && hasActions && (
-            <div className="pointer-events-none absolute inset-0 border border-[#c1fffe]/15" />
+            <div className="pointer-events-none absolute inset-0 border border-(--theme-accent-primary)/15" />
           )}
 
           {/* Read status badge */}
@@ -133,10 +133,10 @@ export const BookCover = memo(
               }}
               className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 flex h-5 items-center justify-center gap-1
                          rounded-t px-2
-                         bg-black/70 text-[9px] font-bold uppercase leading-none tracking-wider
+                         bg-(--theme-border)/70 text-[9px] font-bold uppercase leading-none tracking-wider
                          transition-all duration-150
-                         hover:bg-black/90 hover:h-6
-                         focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
+                         hover:bg-(--theme-border)/90 hover:h-6
+                         focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus-visible:z-20
                          max-md:pointer-events-auto"
               title={readStatus === "read" ? "Прочитал" : "Нажмите, чтобы отметить книгу как прочитанную"}
               aria-label={readStatus === "read" ? "Убрать отметку" : "Отметить как прочитанное"}
@@ -161,14 +161,14 @@ export const BookCover = memo(
                 onDelete(book.id);
               }}
               className="absolute right-0 top-0 z-10 flex size-6 items-center justify-center
-                         bg-[#ff51fa] text-black
+                         bg-(--theme-accent-secondary) text-(--theme-on-accent)
                          nb-heavy-border border-b-0 border-r-0
                          transition-all duration-200
                          opacity-0
                          focus-visible:opacity-100
                          data-[visible=true]:opacity-100
                          hover:scale-105
-                         focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
+                         focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus-visible:z-20
                          max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
               data-visible={showActionsFinal}
               title={`Удалить "${book.title}"`}
@@ -186,14 +186,14 @@ export const BookCover = memo(
                 onView(book);
               }}
               className="absolute left-0 top-0 z-10 flex size-6 items-center justify-center
-                         bg-[#ffbd58] text-black
+                         bg-(--theme-accent-tertiary) text-(--theme-on-accent)
                          nb-heavy-border border-b-0 border-l-0
                          transition-all duration-200
                          opacity-0
                          focus-visible:opacity-100
                          data-[visible=true]:opacity-100
                          hover:scale-105
-                         focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
+                         focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus-visible:z-20
                          max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
               data-visible={showActionsFinal}
               title={`Просмотреть "${book.title}"`}
@@ -211,14 +211,14 @@ export const BookCover = memo(
                 onEdit(book);
               }}
               className="absolute right-0 bottom-0 z-10 flex size-6 items-center justify-center
-                         bg-[#c1fffe] text-black
+                         bg-(--theme-accent-primary) text-(--theme-on-accent)
                          nb-heavy-border border-t-0 border-r-0
                          transition-all duration-200
                          opacity-0
                          focus-visible:opacity-100
                          data-[visible=true]:opacity-100
                          hover:scale-105
-                         focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:z-20
+                         focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus-visible:z-20
                          max-md:pointer-events-none max-md:data-[visible=true]:pointer-events-auto"
               data-visible={showActionsFinal}
               title={`Редактировать "${book.title}"`}

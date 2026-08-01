@@ -70,13 +70,13 @@ export async function imageProxyRoutes(fastify: FastifyInstance) {
           .header("Vary", "Accept")
           .header("X-Proxy-Source", "live-convert")
           .send(buffer);
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error(error, { action: "proxyImage", url });
 
         // Если ошибка конвертации — можно попробовать вернуть оригинал через существующий proxy
         return reply.code(502).send({
           error: "Failed to process image",
-          message: error.message,
+          message: error instanceof Error ? error.message : String(error),
         });
       }
     },

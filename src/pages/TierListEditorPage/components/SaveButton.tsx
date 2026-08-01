@@ -23,7 +23,7 @@ export const SaveButton = ({
       case 'saving':
         return (
           <>
-            <div className="h-3 w-3 animate-spin border-2 border-black border-t-transparent rounded-full" />
+            <div className="h-3 w-3 animate-spin border-2 border-(--theme-border) border-t-transparent rounded-full" />
             <span>Сохранение...</span>
           </>
         );
@@ -37,14 +37,14 @@ export const SaveButton = ({
   };
 
   const getButtonClass = () => {
-    const base = "flex items-center gap-2 nb-heavy-border px-4 py-2 text-sm font-bold transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c1fffe] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0e0e0e]";
+    const base = "flex items-center gap-2 nb-heavy-border px-4 py-2 text-sm font-bold transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-(--theme-accent-primary) focus-visible:ring-offset-2 focus-visible:ring-offset-(--theme-bg)";
 
-    if (status === 'saving') return `${base} bg-white text-black opacity-80 cursor-wait shadow-none`;
-    if (status === 'saved') return `${base} bg-[#c1fffe] text-black shadow-[4px_4px_0_0_#000000]`;
-    if (status === 'error') return `${base} bg-[#ff51fa] text-black shadow-[4px_4px_0_0_#000000]`;
-    if (hasUnsavedChanges) return `${base} bg-[#ffbd58] text-black shadow-[4px_4px_0_0_#000000]`;
+    if (status === 'saving') return `${base} bg-(--theme-surface-bright) text-(--theme-border) opacity-80 cursor-wait shadow-none`;
+    if (status === 'saved') return `${base} bg-(--theme-accent-primary) text-(--theme-on-accent) shadow-(--theme-shadow)`;
+    if (status === 'error') return `${base} bg-(--theme-accent-secondary) text-(--theme-on-accent) shadow-(--theme-shadow)`;
+    if (hasUnsavedChanges) return `${base} bg-(--theme-accent-tertiary) text-(--theme-on-accent) shadow-(--theme-shadow)`;
 
-    return `${base} bg-white text-black shadow-[4px_4px_0_0_#000000] opacity-60 hover:opacity-100`;
+    return `${base} bg-(--theme-surface-bright) text-(--theme-border) shadow-(--theme-shadow) opacity-60 hover:opacity-100`;
   };
 
   return (
@@ -60,7 +60,7 @@ export const SaveButton = ({
         </div>
       </button>
       {lastSaved && status !== 'saving' && (
-        <span className="text-[10px] text-gray-500 uppercase font-bold">
+        <span className="text-[10px] text-(--theme-text-muted) uppercase font-bold">
           Последнее: {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </span>
       )}
