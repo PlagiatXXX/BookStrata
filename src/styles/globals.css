@@ -22,6 +22,55 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* ── GTC design tokens: дефолтная (тёмная) тема ──
+     Используется модалками вне редактора (BookViewModal, EditorConfirmModal
+     на страницах коллекций, админке и т.д.). В редакторе переопределяется
+     в .neo-brutalist-editor (TierEditorPage.css) под выбранную тему. */
+  --global-border: #000000;
+  --global-border-width: 2px;
+  --global-shadow-offset: 2px;
+  --global-font-display: "Space Grotesk", sans-serif;
+  --global-font-body: "Manrope", sans-serif;
+  --global-surface-lowest: #000000;
+  --global-surface-low: #1a1a1a;
+  --global-surface-mid: #111111;
+  --global-surface-mid-2: #181818;
+  --global-surface-input: #0a0a0a;
+  --global-surface-high: #3a3a3a;
+  --global-surface-bright: #ffffff;
+
+  --theme-bg: #0e0e0e;
+  --theme-surface: var(--global-surface-low);
+  --theme-surface-2: var(--global-surface-mid-2);
+  --theme-surface-3: var(--global-surface-mid);
+  --theme-surface-4: var(--global-surface-input);
+  --theme-surface-bright: var(--global-surface-bright);
+
+  --theme-border: var(--global-border);
+  --theme-border-width: var(--global-border-width);
+
+  --theme-accent-primary: #c1fffe;
+  --theme-accent-secondary: #ff51fa;
+  --theme-accent-tertiary: #ffbd58;
+  --theme-on-accent: var(--global-border);
+
+  --theme-text: #ffffff;
+  --theme-text-muted: #94a3b8;
+  --theme-danger: #ff5c8a;
+  --theme-success: #22c55e;
+  --theme-focus: #22d3ee;
+
+  --theme-radius: 0px;
+  --theme-shadow: 4px 4px 0 0 var(--global-border);
+  --theme-shadow-sm: 2px 2px 0 0 var(--global-border);
+  --theme-shadow-lg: 8px 8px 0 0 var(--global-border);
+  --theme-shadow-hover: 2px 2px 0 0 var(--theme-accent-secondary);
+  --theme-glow: var(--theme-accent-primary);
+
+  --theme-font-display: var(--global-font-display);
+  --theme-font-body: var(--global-font-body);
+  --theme-on-background: var(--theme-text);
 }
 
 @theme {
