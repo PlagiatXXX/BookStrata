@@ -91,6 +91,9 @@ const envSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().default(""),
   S3_SECRET_ACCESS_KEY: z.string().default(""),
   S3_PUBLIC_HOST: z.string().default("storage.yandexcloud.net"),
+  /** Хост CDN, зеркалирующий S3-бакет (для раздачи изображений клиентам).
+   *  CDN глобально доступен, в отличие от raw-S3 (недоступен из-за VPN/гео). */
+  CDN_PUBLIC_HOST: z.string().default("re406cj9uj.cdn.twcstorage.ru"),
 
   // --- Monitoring ---
   SENTRY_DSN: z.string().optional(),

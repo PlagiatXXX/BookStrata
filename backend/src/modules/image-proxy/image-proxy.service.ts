@@ -65,8 +65,13 @@ const s3Client = new S3Client({
   forcePathStyle: false,
 });
 
+// ── Публичный хост для раздачи закэшированных изображений ──
+// CDN, а не raw-S3: s3.twcstorage.ru — одиночный РФ-IP и недоступен
+// клиентам через зарубежные VPN (картинки падали в плейсхолдеры).
+const CDN_PUBLIC_HOST = config.CDN_PUBLIC_HOST;
+
 function publicUrl(key: string): string {
-  return `https://${config.S3_PUBLIC_HOST}/${S3_BUCKET}/${key}`;
+  return `https://${CDN_PUBLIC_HOST}/${key}`;
 }
 
 // ── In-memory кэш URL → S3 URL ──
