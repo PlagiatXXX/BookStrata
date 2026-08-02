@@ -45,7 +45,12 @@ export function DemoOnboarding({ step, onNext, onSkip, tierNames }: DemoOnboardi
     if (!target) return
     const el = document.querySelector(`[data-onboarding-target="${target}"]`)
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      // Откладываем на следующий кадр: эффект родителей (AppShell) делает
+      // window.scrollTo(0, 0) при смене маршрута, что отменяет плавный скролл.
+      const rafId = requestAnimationFrame(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "center" })
+      })
+      return () => cancelAnimationFrame(rafId)
     }
   }, [step])
   const current = STEPS[step]
@@ -66,7 +71,7 @@ export function DemoOnboarding({ step, onNext, onSkip, tierNames }: DemoOnboardi
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none"
+        className="fixed inset-0 z-9999 flex items-center justify-center pointer-events-none"
       >
         {/* Затемнение фона */}
         <motion.div
@@ -187,8 +192,8 @@ export function DemoOnboarding({ step, onNext, onSkip, tierNames }: DemoOnboardi
                          border-2 border-(--theme-accent-primary)
                          shadow-[2px_2px_0_0_rgba(0,0,0,0.8)]
                          hover:shadow-[1px_1px_0_0_rgba(0,0,0,0.8)]
-                         hover:translate-x-[1px] hover:translate-y-[1px]
-                         active:shadow-none active:translate-x-[2px] active:translate-y-[2px]
+                         hover:translate-x-px hover:translate-y-px
+                         active:shadow-none active:translate-x-0.5 active:translate-y-0.5
                          transition-all duration-100 cursor-pointer"
               type="button"
             >
