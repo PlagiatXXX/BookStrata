@@ -12,6 +12,7 @@ interface CelebrityFormData {
   category: string;
   isPublished: boolean;
   order: number;
+  tags: string;
 }
 
 interface CelebrityFormModalProps {
@@ -190,6 +191,18 @@ export function CelebrityFormModal({
                   onChange={(e) => onChangeForm((prev) => ({ ...prev, order: Number(e.target.value) }))}
                   min={0}
                 />
+              </div>
+
+              <div className="celebrity-form-row">
+                <label className="celebrity-form-label">Теги</label>
+                <input
+                  type="text"
+                  className="celebrity-form-input"
+                  value={formData.tags}
+                  onChange={(e) => onChangeForm((prev) => ({ ...prev, tags: e.target.value }))}
+                  placeholder="Фэнтези, Классика, Литературное кафе..."
+                />
+                <span className="celebrity-form-hint">Через запятую. Используются для перелинковки на странице знаменитости.</span>
               </div>
             </div>
 

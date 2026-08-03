@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { BookOpen, Sparkles, Calendar, Quote } from "lucide-react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { BookOpen, Sparkles, Calendar, Quote, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
@@ -10,6 +10,7 @@ import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { Spinner } from "@/components/Spinner";
 import { getCelebrityBySlug, CELEBRITY_CATEGORIES } from "@/lib/celebritiesApi";
+import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import "./CelebrityPage.css";
@@ -193,6 +194,35 @@ export default function CelebrityPage() {
               day: "numeric", month: "long", year: "numeric",
             })}</span>
           </div>
+
+          {/* Теги — перелинковка на категории сообщества */}
+          {celebrity.tags.length > 0 && (
+            <footer className="mt-8 pt-6 border-t border-(--line-soft)">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Tag size={16} className="text-(--ink-1)" />
+                <span className="text-sm text-(--ink-1)">Теги:</span>
+                {celebrity.tags.map((tag) => {
+                  const categoryId = TAG_TO_CATEGORY[tag];
+                  if (categoryId) {
+                    return (
+                      <Link
+                        key={tag}
+                        to={`/community?category=${categoryId}#collections`}
+                        className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
+                      >
+                        #{tag}
+                      </Link>
+                    );
+                  }
+                  return (
+                    <span key={tag} className="text-sm text-(--accent-main)">
+                      #{tag}
+                    </span>
+                  );
+                })}
+              </div>
+            </footer>
+          )}
         </article>
 
         {/* Модалки */}

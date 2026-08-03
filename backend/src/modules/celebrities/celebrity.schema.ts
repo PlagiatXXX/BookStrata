@@ -28,6 +28,7 @@ export const createCelebritySchema = z.object({
   category: z.string().optional().default(""),
   isPublished: z.boolean().optional().default(false),
   order: z.number().int().optional().default(0),
+  tags: z.array(z.string()).optional().default([]),
   // Tier list data
   tiers: z.record(z.string(), tierObjectSchema).optional(),
   tierOrder: z.array(z.string()).optional(),

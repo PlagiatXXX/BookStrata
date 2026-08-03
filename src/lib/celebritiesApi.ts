@@ -10,6 +10,7 @@ export interface CelebrityItem {
   category: string;
   isPublished: boolean;
   order: number;
+  tags: string[];
   // Tier list data (curated)
   tiers?: Record<string, Tier>;
   tierOrder?: string[];
@@ -31,6 +32,7 @@ export type CreateCelebrityInput = {
   category?: string;
   isPublished?: boolean;
   order?: number;
+  tags?: string[];
   tiers?: Record<string, Tier>;
   tierOrder?: string[];
   books?: Record<string, Book>;

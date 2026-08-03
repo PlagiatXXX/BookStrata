@@ -101,6 +101,7 @@ export async function createCelebrity(input: CreateCelebrityInput) {
       category: input.category || "",
       isPublished: input.isPublished ?? false,
       order: input.order ?? 0,
+      tags: input.tags || [],
       tiers: toJsonValue(input.tiers),
       tierOrder: input.tierOrder || [],
       books: toJsonValue(input.books),
@@ -118,6 +119,7 @@ export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
   if (input.category !== undefined) data.category = input.category || "";
   if (input.isPublished !== undefined) data.isPublished = input.isPublished;
   if (input.order !== undefined) data.order = input.order;
+  if (input.tags !== undefined) data.tags = input.tags;
   if (input.tiers !== undefined) data.tiers = toJsonValue(input.tiers);
   if (input.tierOrder !== undefined) data.tierOrder = input.tierOrder;
   if (input.books !== undefined) data.books = toJsonValue(input.books);

@@ -349,6 +349,7 @@ model Celebrity {
   category        String   @default("") // singer, actor, financier, sportsman, writer, tv-host, scientist, philosopher, director, musician, blogger, other
   isPublished     Boolean  @default(false) @map("is_published")
   order           Int      @default(0)
+  tags            String[] @default([])
   // Tier list data (JSON, как в коллекциях)
   tiers           Json?    // Record<string, Tier>
   tierOrder       String[] @map("tier_order")
