@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { apiLogin, apiRegister, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
+import { pushDataLayerEvent } from "@/lib/gtm";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 
@@ -152,6 +153,7 @@ export function AuthForm() {
         window.dispatchEvent(new Event("auth-token-changed"))
         await new Promise((resolve) => setTimeout(resolve, 200))
         window.ym?.(109755750, 'reachGoal', 'register')
+        pushDataLayerEvent("sign_up", { method: "email" })
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
       }

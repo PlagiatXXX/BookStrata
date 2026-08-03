@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/tierListApi";
 import type { PaginatedTierListsResponse, TierListShort } from "@/lib/tierListApi";
 import { createLogger } from "@/lib/logger";
+import { pushDataLayerEvent } from "@/lib/gtm";
 import { sileo } from "sileo";
 
 // Логгер для хука действий тир-листов
@@ -38,6 +39,10 @@ export function useTierListActions({
         id: tierList.id,
         slug: tierList.slug,
         title: tierList.title,
+      });
+      pushDataLayerEvent("create_tier_list", {
+        tier_list_id: tierList.id,
+        tier_list_title: tierList.title,
       });
       // Инвалидируем кэш статистики пользователя
       await Promise.all([

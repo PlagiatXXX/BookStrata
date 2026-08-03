@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createTierList, saveTierListAtomic } from "@/lib/tierListApi";
 import { apiClient } from "@/lib/api-client";
+import { pushDataLayerEvent } from "@/lib/gtm";
 import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
 import { stableStringify } from "@/utils/stableStringify";
 import type { TierListData } from "@/types";
@@ -102,6 +103,10 @@ export function useTierEditorSave({
         // Создаём новый тир-лист
         const created = await createTierList(listData.title || "Новый тир-лист");
         effectiveId = String(created.id);
+        pushDataLayerEvent("create_tier_list", {
+          tier_list_id: effectiveId,
+          tier_list_title: listData.title || "Новый тир-лист",
+        });
 
         // Обновляем URL на slug (человекочитаемый), если он есть
         const urlPath = created.slug
