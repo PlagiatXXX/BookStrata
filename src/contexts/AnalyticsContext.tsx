@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -17,43 +16,6 @@ declare global {
 }
 
 const DISMISS_KEY = "bookstrata-cookie-notice";
-
-function initMetrika() {
-  // Не инициализируем метрику при prerender'е — иначе Яндекс.Метрика
-  // засчитывает просмотры с 127.0.0.1:4173 (локальный сервер пререндера)
-  if (typeof window !== 'undefined' && window.__PRERENDER__) return;
-
-  const counterId = import.meta.env.VITE_YM_COUNTER_ID;
-  if (!counterId) return;
-
-  const script = document.createElement("script");
-  script.src = "https://mc.yandex.ru/metrika/tag.js";
-  script.async = true;
-  document.head.appendChild(script);
-
-  window.ym = window.ym || function (...args: unknown[]) {
-    (window.ym as unknown as { a: unknown[]; l: number }).a =
-      (window.ym as unknown as { a: unknown[]; l: number }).a || [];
-    (window.ym as unknown as { a: unknown[] }).a.push(args);
-  };
-  (window.ym as unknown as { l: number }).l = Date.now();
-
-  window.ym(Number(counterId), "init", {
-    clickmap: true,
-    trackLinks: true,
-    accurateTrackBounce: true,
-    webvisor: true,
-    defer: true,
-  });
-}
-
-function loadAnalytics() {
-  if (!import.meta.env.DEV) {
-    initMetrika();
-  }
-
-
-}
 
 interface AnalyticsContextValue {
   isConsented: boolean;
@@ -69,15 +31,9 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       return false;
     }
   });
-  // Аналитика грузится отложенно — после загрузки страницы или в requestIdleCallback
-  useEffect(() => {
-    const ric = (window as Window & typeof globalThis).requestIdleCallback;
-    if (typeof ric === "function") {
-      ric(() => loadAnalytics(), { timeout: 3000 });
-    } else {
-      window.addEventListener("load", () => loadAnalytics(), { once: true });
-    }
-  }, []);
+  // Счётчик Яндекс.Метрики подключается в index.html (см. head), а не через
+  // JS-бандл — так тег видят роботы и охват тега во всех страницах.
+  // Здесь — только баннер согласия на куки.
 
   const handleDismiss = () => {
     try {
