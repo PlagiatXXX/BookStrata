@@ -10,6 +10,7 @@ import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { ImageUploader } from "@/components/ImageUploader/ImageUploader";
 import { useBookSearch } from "@/hooks/useBookSearch";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { RetryableImage } from "@/ui/RetryableImage";
 import { Spinner } from "@/components/Spinner";
 import { apiTrackEvent } from "@/lib/analyticsApi";
 
@@ -168,7 +169,7 @@ const BookItem = memo(({
             {!imageLoaded && (
               <div className="h-full w-full bg-(--theme-surface-4) animate-pulse" />
             )}
-            <img
+            <RetryableImage
               key={coverUrl}
               src={coverUrl}
               alt={book.title}
@@ -566,7 +567,7 @@ export const BookSearchModal = ({
           aria-modal="true"
           aria-labelledby="book-search-modal-title"
           tabIndex={-1}
-          className="relative mx-4 flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden nb-heavy-border bg-(--theme-surface-3) text-(--theme-text) shadow-(--theme-shadow-lg) animate-scale-in"
+          className="relative mx-4 flex w-full max-w-3xl max-h-[90dvh] flex-col overflow-hidden nb-heavy-border bg-(--theme-surface-3) text-(--theme-text) shadow-(--theme-shadow-lg) animate-scale-in"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b-(--theme-border-width) border-(--theme-border) bg-(--theme-surface-2) p-5">
@@ -712,7 +713,7 @@ export const BookSearchModal = ({
           )}
 
           {/* Results */}
-          <div className="max-h-[55vh] min-h-[250px] overflow-y-auto bg-(--theme-surface-3) p-5">
+          <div className="max-h-[55dvh] min-h-[250px] overflow-y-auto bg-(--theme-surface-3) p-5">
             {activeTab === "search" && (
               <>
                 {/* Toolbar */}

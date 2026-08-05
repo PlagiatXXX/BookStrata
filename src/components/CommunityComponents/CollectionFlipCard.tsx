@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import type { CollectionItem } from '@/types/collection';
 import { proxyImageUrl } from '@/utils/imageProxy';
+import { RetryableImage } from '@/ui/RetryableImage';
 
 interface CollectionFlipCardProps {
   collection: CollectionItem;
@@ -72,11 +73,11 @@ export const CollectionFlipCard = memo(({ collection, className = '', priority =
         {/* ===== Лицевая сторона ===== */}
         <div className="absolute inset-0 rounded-sm overflow-hidden [backface-visibility:hidden] [transform:translateZ(0)]">
           {coverImage ? (
-            <img
+            <RetryableImage
               alt={`Подборка: ${collection.title}`}
               className="h-full w-full object-cover"
               src={proxyImageUrl(coverImage)}
-              onError={(e) => { e.currentTarget.src = FALLBACK; }}
+              fallbackSrc={FALLBACK}
               loading={priority ? undefined : "lazy"}
               fetchPriority={priority ? "high" : undefined}
             />

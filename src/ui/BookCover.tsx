@@ -17,12 +17,22 @@ interface BookCoverProps {
   priority?: boolean;
 }
 
+/** Сколько раз повторно пытаемся загрузить обложку после сетевого обрыва */
+const MAX_COVER_RETRIES = 2;
+
+/** Меняет src при ретрае, чтобы браузер не взял закэшированную ошибку */
+function withRetryParam(url: string, attempt: number): string {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}bs_retry=${attempt}`;
+}
+
 export const BookCover = memo(
   forwardRef<HTMLDivElement, BookCoverProps>(
     ({ book, isDraggable = true, onDelete, onEdit, onView, readStatus, onToggleStatus, priority = false }, ref) => {
       const [showActions, setShowActions] = useState(false);
       const [isHovered, setIsHovered] = useState(false);
       const [coverError, setCoverError] = useState(false);
+      const [retryCount, setRetryCount] = useState(0);
       const lastTapTime = useRef<number>(0);
       const innerRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +49,42 @@ export const BookCover = memo(
         : isHovered || showActions;
       const hasCover = !!book.coverImageUrl;
       const showCover = hasCover && !coverError;
-      const imgUrl = showCover ? proxyImageUrl(book.coverImageUrl) : undefined;
+      const baseImgUrl = hasCover ? proxyImageUrl(book.coverImageUrl) : undefined;
+
+      // Сброс при смене книги (компонент переиспользуется, например в длинных
+      // списках без key). Паттерн «storing information from previous renders».
+      const [prevCoverUrl, setPrevCoverUrl] = useState<typeof baseImgUrl>(baseImgUrl);
+      if (baseImgUrl !== prevCoverUrl) {
+        setPrevCoverUrl(baseImgUrl);
+        setRetryCount(0);
+        setCoverError(false);
+      }
+
+      const imgUrl = showCover && baseImgUrl
+        ? retryCount > 0
+          ? withRetryParam(baseImgUrl, retryCount)
+          : baseImgUrl
+        : undefined;
+
+      // Обрыв сети на мобильных — частая история: первая попытка падает,
+      // картинка на самом деле доступна. Пробуем ещё раз с новым src,
+      // и только потом окончательно показываем placeholder.
+      const handleCoverError = () => {
+        setRetryCount((prev) => {
+          if (prev >= MAX_COVER_RETRIES) {
+            setCoverError(true);
+            return prev;
+          }
+          return prev + 1;
+        });
+      };
+
+      const handleCoverLoad = () => {
+        // Не сбрасываем retryCount: если обложка загрузилась через ретрай
+        // (с ?bs_retry=N), в кэше браузера зафиксирован именно этот URL
+        // (Cache-Control: immutable). Оставляем его в DOM, чтобы следующий
+        // показ взял обложку из кэша, а не снова падал на каноничном URL.
+      };
 
       const handleClick = (e: React.MouseEvent) => {
         if (window.innerWidth >= 768) return;
@@ -108,8 +153,8 @@ export const BookCover = memo(
               alt={`Обложка: ${label}`}
               loading={priority ? "eager" : "lazy"}
               fetchPriority={priority ? "high" : undefined}
-              onError={() => setCoverError(true)}
-              onLoad={() => setCoverError(false)}
+              onError={handleCoverError}
+              onLoad={handleCoverLoad}
               className="pointer-events-none"
               draggable={false}
             />

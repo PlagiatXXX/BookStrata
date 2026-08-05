@@ -1,6 +1,7 @@
 import { memo } from "react"
 import type { BattleTierList } from "@/types/battles"
 import { proxyImageUrl } from "@/utils/imageProxy"
+import { RetryableImage } from "@/ui/RetryableImage"
 
 interface TierListPreviewProps {
   tierList: BattleTierList
@@ -49,12 +50,12 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
                     style={{ width: 48, aspectRatio: "2/3" }}
                     title={item.book.title}
                   >
-                    <img
+                    <RetryableImage
                       src={proxyImageUrl(item.book.coverImageUrl)}
                       alt={item.book.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
-                      onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+                      fallbackSrc="/images/placeholder.svg"
                     />
                   </div>
                 ))}
@@ -105,12 +106,12 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
                   style={{ width: 80, aspectRatio: "2/3" }}
                   title={item.book.title}
                 >
-                  <img
+                  <RetryableImage
                     src={proxyImageUrl(item.book.coverImageUrl)}
                     alt={item.book.title}
                     className="w-full h-full object-cover"
                     loading="lazy"
-                    onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+                    fallbackSrc="/images/placeholder.svg"
                   />
                 </div>
               ))}

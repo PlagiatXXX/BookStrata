@@ -1,6 +1,7 @@
 import { memo, type CSSProperties } from 'react';
 import type { TemplateItem } from '../../data/mockData';
 import { Reveal } from '@/components/Reveal/Reveal';
+import { RetryableImage } from '@/ui/RetryableImage';
 
 interface TemplateCardProps {
   template: TemplateItem;
@@ -27,13 +28,13 @@ export const TemplateCard = memo(({ template, onPreview }: TemplateCardProps) =>
       className={`group relative overflow-hidden brutal-card brutal-border border-l-4 transition-all duration-300 hover-lift ${getGridClass(template.size)}`}
       style={{ borderLeftColor: borderColorStyle } as CSSProperties}
     >
-      <img
+      <RetryableImage
         alt={template.title}
         className="absolute inset-0 w-full h-full object-cover opacity-45 transition-all duration-500 group-hover:opacity-60 parallax-img"
         src={template.image.replace('.webp', '@730.webp')}
         srcSet={`${template.image} 1408w, ${template.image.replace('.webp', '@730.webp')} 730w`}
         sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 22vw"
-        onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+        fallbackSrc="/images/placeholder.svg"
       />
 
       <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent p-6 flex flex-col justify-end">

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getCommunityCollections } from "@/lib/collectionsApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import { RetryableImage } from "@/ui/RetryableImage";
 
 export const CollectionsSection = memo(() => {
   const { data: collections = [] } = useQuery({
@@ -69,22 +70,22 @@ export const CollectionsSection = memo(() => {
                     key={`${img}-${idx}`}
                     className="flex-1 h-20 bg-(--bg-0) border border-(--line-soft) rounded-sm overflow-hidden"
                   >
-                    <img
+                    <RetryableImage
                       alt={`Cover ${idx + 1}`}
                       className="w-full h-full object-cover"
                       src={img}
-                      onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+                      fallbackSrc="/images/placeholder.svg"
                     />
                   </div>
                 ))}
               </div>
             ) : collection.coverImageUrl ? (
               <div className="mb-4 h-20 bg-(--bg-0) border border-(--line-soft) rounded-sm overflow-hidden">
-                <img
+                <RetryableImage
                   alt={collection.title}
                   className="w-full h-full object-cover"
                   src={proxyImageUrl(collection.coverImageUrl)}
-                  onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+                  fallbackSrc="/images/placeholder.svg"
                 />
               </div>
             ) : null}

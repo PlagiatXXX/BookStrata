@@ -7,6 +7,7 @@ import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
+import { RetryableImage } from "@/ui/RetryableImage";
 import { CATEGORIES } from "@/data/mockData";
 import { CATEGORY_SEO } from "@/data/category-seo";
 import type { CollectionItem } from "@/types/collection";
@@ -181,7 +182,7 @@ export default function TopicPage() {
                 </div>
                 {singleCollection.coverImageUrl && (
                   <div className="shrink-0 w-20 h-28 rounded-sm overflow-hidden border border-(--line-soft)">
-                    <img
+                    <RetryableImage
                       src={singleCollection.coverImageUrl}
                       alt={singleCollection.title}
                       className="w-full h-full object-cover"

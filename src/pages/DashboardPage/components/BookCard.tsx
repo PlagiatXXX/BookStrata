@@ -2,6 +2,7 @@ import { memo, useCallback, useState } from "react";
 import { BookOpen, Eye } from "lucide-react";
 import type { MyBook } from "@/lib/userApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import { RetryableImage } from "@/ui/RetryableImage";
 
 export interface BookCardProps {
   book: MyBook;
@@ -25,7 +26,7 @@ export const BookCard = memo(({ book, onView }: BookCardProps) => {
         aria-label={`Просмотреть: ${book.title}`}
       >
         {coverUrl && !imgError ? (
-          <img
+          <RetryableImage
             src={coverUrl}
             alt={book.title}
             className="h-full w-full object-cover"

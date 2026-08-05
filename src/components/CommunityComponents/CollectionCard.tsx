@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import type { CollectionItem } from '@/types/collection';
 import { proxyImageUrl } from '@/utils/imageProxy';
+import { RetryableImage } from '@/ui/RetryableImage';
 
 interface CollectionCardProps {
   collection: CollectionItem;
@@ -49,11 +50,11 @@ export const CollectionCard = memo(({ collection, className = '', priority = fal
       {/* ===== Фон: обложка или градиент ===== */}
       {coverImage ? (
         <div className="absolute inset-0">
-          <img
+          <RetryableImage
             alt={collection.title}
             className="h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
             src={proxyImageUrl(coverImage, 730)}
-            onError={(e) => { e.currentTarget.src = FALLBACK; }}
+            fallbackSrc={FALLBACK}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : undefined}
           />

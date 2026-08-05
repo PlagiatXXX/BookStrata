@@ -2,6 +2,7 @@ import { useState } from "react";
 import { getInitials, getInitialsColor } from "./presets";
 import { createLogger } from "@/lib/logger";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import { RetryableImage } from "@/ui/RetryableImage";
 
 const logger = createLogger("Avatar", { color: "blue" });
 
@@ -86,7 +87,7 @@ export function Avatar({
       {initials}
     </div>
   ) : (
-    <img
+    <RetryableImage
       src={proxyImageUrl(url, 64)}
       alt={username ? `${username}'s avatar` : "Avatar"}
       className={`${sizeClasses[size]} rounded-full object-cover ring-2 ring-surface-border bg-surface-light dark:bg-[#200f24] light:bg-gray-100 ${className}`}

@@ -2,6 +2,7 @@ import { memo } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { GripVertical, Edit3, Trash2 } from "lucide-react";
 import type { CuratedBook, CuratedTier } from "./types";
+import { RetryableImage } from "@/ui/RetryableImage";
 
 interface BookRowProps {
   book: CuratedBook;
@@ -129,7 +130,7 @@ export const BookRow = memo(function BookRow({
       </div>
       {book.coverImageUrl && (
         <div className="curated-editor-book-cover-preview">
-          <img
+          <RetryableImage
             src={book.coverImageUrl}
             alt=""
             onError={(e) => {

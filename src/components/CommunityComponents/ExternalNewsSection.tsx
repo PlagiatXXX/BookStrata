@@ -3,6 +3,7 @@ import { ExternalLink, Globe, BookOpen } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getExternalNews, type ExternalNewsItem } from "@/lib/externalNewsApi"
 import { Reveal } from "@/components/Reveal/Reveal"
+import { RetryableImage } from "@/ui/RetryableImage"
 
 const fetchExternalNews = async (): Promise<ExternalNewsItem[]> => {
   return getExternalNews(6)
@@ -25,12 +26,12 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
   return (
     <div className="group brutal-card brutal-border overflow-hidden hover-lift block">
       <div className="relative aspect-[16/9] overflow-hidden bg-(--bg-0)">
-        <img
+        <RetryableImage
           src={item.imageUrl ?? PLACEHOLDER}
           alt={item.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
-          onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+          fallbackSrc="/images/placeholder.svg"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-(--bg-0)/80 via-transparent to-transparent pointer-events-none" />
         <div className="absolute top-3 left-3 flex items-center gap-1.5 max-w-[80%] z-10">

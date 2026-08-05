@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { presetCategories, getInitials, type AvatarPreset } from "../presets";
 import type { PresetsTabProps } from "../types";
+import { RetryableImage } from "@/ui/RetryableImage";
 
 export function PresetsTab({
   activeCategory,
@@ -65,7 +66,7 @@ interface PresetImageProps {
 
 function PresetImage({ preset }: PresetImageProps) {
   return (
-    <img
+    <RetryableImage
       src={preset.full}
       alt={preset.name}
       className="w-full h-full object-cover"

@@ -13,6 +13,7 @@ import {
 } from "@/lib/ratingsApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
+import { RetryableImage } from "@/ui/RetryableImage";
 import { useAuth } from "@/hooks/useAuthContext";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 import { uploadBookCover } from "@/lib/tierListApi";
@@ -390,7 +391,7 @@ export const BookEditModal = ({
       titleId="book-edit-title"
     >
       <div
-        className="relative flex max-h-[90vh] w-full flex-col overflow-hidden nb-heavy-border bg-(--theme-surface-3) text-(--theme-text)"
+        className="relative flex max-h-[90dvh] w-full flex-col overflow-hidden nb-heavy-border bg-(--theme-surface-3) text-(--theme-text)"
         onKeyDown={handleKeyDown}
       >
         <button
@@ -473,7 +474,7 @@ export const BookEditModal = ({
                 <p className={`${sectionTitleClass} text-center`}>Обложка</p>
                 <div className="relative mx-auto h-64 w-40 overflow-hidden nb-heavy-border bg-(--theme-surface-4) max-sm:h-56">
                   {coverImageUrl ? (
-                    <img
+                    <RetryableImage
                       src={proxyImageUrl(coverImageUrl)}
                       alt={(book?.title ?? title) || "Обложка книги"}
                       className="h-full w-full object-cover"

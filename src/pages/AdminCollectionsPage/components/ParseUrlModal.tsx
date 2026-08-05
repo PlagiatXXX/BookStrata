@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { RetryableImage } from "@/ui/RetryableImage";
 
 interface ParseUrlModalProps {
   url: string;
@@ -88,7 +89,7 @@ export function ParseUrlModal({
                   >
                     <span style={{ color: "#9ca3af", minWidth: "20px" }}>{i + 1}.</span>
                     {book.coverImageUrl && (
-                      <img
+                      <RetryableImage
                         src={book.coverImageUrl}
                         alt=""
                         style={{ width: 28, height: 42, objectFit: "cover", borderRadius: 3, flexShrink: 0 }}

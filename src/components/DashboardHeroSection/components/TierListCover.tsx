@@ -1,5 +1,6 @@
 import { booksCountText } from "@/lib/plural"
 import { proxyImageUrl } from "@/utils/imageProxy"
+import { RetryableImage } from "@/ui/RetryableImage"
 
 interface TierListCoverProps {
   coverImageUrl?: string | null
@@ -12,12 +13,12 @@ export function TierListCover({ coverImageUrl, title, booksCount, className = ""
   if (coverImageUrl) {
     return (
       <div className={`tier-list-cover ${className}`}>
-        <img
+        <RetryableImage
           src={proxyImageUrl(coverImageUrl)}
           alt={title}
           className="tier-list-cover__img"
           loading="lazy"
-          onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+          fallbackSrc="/images/placeholder.svg"
         />
       </div>
     )

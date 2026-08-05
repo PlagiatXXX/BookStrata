@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import type { Template } from '@/types/templates';
 import { Button } from '@/ui/Button';
+import { RetryableImage } from '@/ui/RetryableImage';
 
 export interface TemplateCardProps {
   template: Template;
@@ -19,11 +20,11 @@ const TemplateCard = memo(({ template, onEdit, onDelete, viewMode = 'grid' }: Te
     <div className={`brutal-card p-4 flex ${isList ? 'flex-row items-center justify-between' : 'flex-col gap-3'}`}>
       <div className="flex items-center gap-4">
         {imageUrl && (
-          <img 
+          <RetryableImage 
             src={imageUrl} 
             alt={template.title} 
             className="w-12 h-12 object-cover brutal-border" 
-            onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+            fallbackSrc="/images/placeholder.svg"
           />
         )}
         <div>

@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import type { CuratedBook } from "./types";
+import { RetryableImage } from "@/ui/RetryableImage";
 
 interface EditBookModalProps {
   editForm: CuratedBook;
@@ -79,7 +80,7 @@ export function EditBookModal({ editForm, onFieldChange, onSave, onClose }: Edit
             />
             {editForm.coverImageUrl && (
               <div className="curated-edit-cover-preview">
-                <img
+                <RetryableImage
                   src={editForm.coverImageUrl}
                   alt=""
                   onError={(e) => {

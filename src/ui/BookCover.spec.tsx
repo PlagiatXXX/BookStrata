@@ -31,6 +31,45 @@ describe("BookCover", () => {
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
+  describe("retry загрузки обложки (обрыв сети на мобильных)", () => {
+    it("при ошибке загрузки повторно пытается с новым src (bs_retry=1)", () => {
+      render(<BookCover book={mockBook} />);
+      const img = screen.getByAltText(`Обложка: ${mockBook.title} - ${mockBook.author}`);
+
+      fireEvent.error(img);
+
+      // img остался, src получил retry-параметр
+      const retried = screen.getByAltText(`Обложка: ${mockBook.title} - ${mockBook.author}`);
+      expect(retried).toHaveAttribute(
+        "src",
+        `${mockBook.coverImageUrl}?bs_retry=1`,
+      );
+    });
+
+    it("после MAX_COVER_RETRIES ошибок показывает placeholder", () => {
+      render(<BookCover book={mockBook} />);
+
+      for (let i = 0; i < 3; i++) {
+        const img = screen.getByAltText(`Обложка: ${mockBook.title} - ${mockBook.author}`);
+        fireEvent.error(img);
+      }
+
+      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    });
+
+    it("после успешной загрузки src с retry-параметром остаётся (закрепляет кэш)", () => {
+      render(<BookCover book={mockBook} />);
+
+      fireEvent.error(screen.getByAltText(`Обложка: ${mockBook.title} - ${mockBook.author}`));
+      fireEvent.load(screen.getByAltText(`Обложка: ${mockBook.title} - ${mockBook.author}`));
+
+      // placeholder не показан, src остаётся с retry-параметром —
+      // этот URL уже в кэше браузера (immutable), следующий показ возьмёт его оттуда
+      const img = screen.getByAltText(`Обложка: ${mockBook.title} - ${mockBook.author}`);
+      expect(img).toHaveAttribute("src", `${mockBook.coverImageUrl}?bs_retry=1`);
+    });
+  });
+
   it("renders the View button when onView is provided", () => {
     const onView = vi.fn();
     render(<BookCover book={mockBook} onView={onView} />);

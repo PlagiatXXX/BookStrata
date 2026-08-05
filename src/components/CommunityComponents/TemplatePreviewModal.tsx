@@ -3,6 +3,7 @@ import { X, BookOpen, Layers, Tag } from 'lucide-react';
 import type { TemplateItem } from '../../data/mockData';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { proxyImageUrl } from '@/utils/imageProxy';
+import { RetryableImage } from '@/ui/RetryableImage';
 
 interface TemplatePreviewModalProps {
   template: TemplateItem;
@@ -37,7 +38,7 @@ export const TemplatePreviewModal = memo(({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="brutal-card brutal-border w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="brutal-card brutal-border w-full max-w-4xl max-h-[90dvh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -120,11 +121,11 @@ export const TemplatePreviewModal = memo(({
                             >
                               <div className="w-16 h-24 flex-shrink-0 overflow-hidden rounded shadow-md">
                                 {book.coverImageUrl ? (
-                                  <img
+                                  <RetryableImage
                                     src={proxyImageUrl(book.coverImageUrl)}
                                     alt={book.title}
                                     className="w-full h-full object-cover"
-                                    onError={(e) => { e.currentTarget.src = '/images/placeholder.svg' }}
+                                    fallbackSrc="/images/placeholder.svg"
                                   />
                                 ) : (
                                   <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-800" />

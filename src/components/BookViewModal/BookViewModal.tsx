@@ -7,6 +7,7 @@ import type { BookRatingsResult } from "@/lib/ratingsApi";
 import { getBookRatings } from "@/lib/ratingsApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
+import { RetryableImage } from "@/ui/RetryableImage";
 
 export interface BookViewModalProps {
   book: any | null;
@@ -108,7 +109,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
     >
         <div
           ref={scrollRef}
-          className="max-h-[90vh] overflow-y-auto nb-heavy-border bg-(--theme-surface-3) text-(--theme-text)"
+          className="max-h-[90dvh] overflow-y-auto nb-heavy-border bg-(--theme-surface-3) text-(--theme-text)"
         >
           <div className="relative border-b-(--theme-border-width) border-(--theme-border) p-4 sm:p-6">
             <button
@@ -150,7 +151,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
             <div className="grid gap-5 sm:gap-6 sm:grid-cols-[120px_minmax(0,1fr)] lg:grid-cols-[140px_minmax(0,1fr)]">
               <div className="flex flex-col items-center gap-2 sm:gap-3">
                 {coverUrl && !imageError ? (
-                  <img
+                  <RetryableImage
                     src={coverUrl}
                     alt={book.title}
                     onError={() => setImageError(true)}
