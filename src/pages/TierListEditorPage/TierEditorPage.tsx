@@ -32,6 +32,7 @@ import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";
 
 import { useDemoStorage } from "./hooks/useDemoStorage";
+import { useDemoOnboarding } from "./hooks/useDemoOnboarding";
 import { AuthOnSaveModal } from "./components/AuthOnSaveModal";
 import { DemoOnboarding } from "./components/DemoOnboarding";
 import "./TierEditorPage.css";
@@ -175,20 +176,12 @@ const TierListEditorContent = () => {
   const [demoTitle, setDemoTitle] = useState(initialDataForHook.title || "Новый тир-лист");
 
   // ========== ОНБОРДИНГ ДЕМО-РЕЖИМА ==========
-  const [onboardingStep, setOnboardingStep] = useState<0 | 1 | 2 | 3 | null>(
-    isDemo ? 0 : null,
-  );
-
-  const handleOnboardingNext = useCallback(() => {
-    setOnboardingStep((prev) => {
-      if (prev === null) return null;
-      return prev >= 3 ? null : ((prev + 1) as 0 | 1 | 2 | 3 | null);
-    });
-  }, []);
-
-  const handleOnboardingSkip = useCallback(() => {
-    setOnboardingStep(null);
-  }, []);
+  // Показывается один раз на браузер (флаг в localStorage), а не при каждом заходе в демо-режим
+  const {
+    step: onboardingStep,
+    next: handleOnboardingNext,
+    skip: handleOnboardingSkip,
+  } = useDemoOnboarding(isDemo);
   // ========== КОНЕЦ ОНБОРДИНГА ==========
 
   // ========== КОНЕЦ ДЕМО-РЕЖИМ (часть 1) ==========
@@ -671,15 +664,15 @@ const TierListEditorContent = () => {
     handleDragEndWithUnsaved,
   });
 
-  // При первом перетаскивании — завершаем онбординг
+  // При первом перетаскивании — завершаем онбординг (и помечаем просмотренным)
   const wrappedHandleDragStart = useCallback(
     (event: Parameters<typeof handleDragStart>[0]) => {
       handleDragStart(event);
       if (onboardingStep !== null) {
-        setOnboardingStep(null);
+        handleOnboardingSkip();
       }
     },
-    [handleDragStart, onboardingStep],
+    [handleDragStart, onboardingStep, handleOnboardingSkip],
   );
 
   const handleConfirmDelete = () => {
