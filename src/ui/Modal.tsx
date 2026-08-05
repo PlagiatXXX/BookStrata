@@ -51,7 +51,7 @@ export const Modal = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`nb-modal w-full ${maxWidthClass} ${className} max-h-[90vh] overflow-y-auto`}
+        className={`nb-modal w-full ${maxWidthClass} ${className} max-h-[90dvh] overflow-y-auto`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

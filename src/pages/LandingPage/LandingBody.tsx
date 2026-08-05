@@ -178,14 +178,14 @@ function Lightbox({ screenshot, onClose }: {
             loop
             playsInline
             controls
-            className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
+            className="max-h-[85dvh] max-w-[90vw] rounded-xl shadow-2xl"
           />
         ) : (
           <img
             src={screenshot.src}
             alt={screenshot.title}
             loading="lazy"
-            className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl object-contain"
+            className="max-h-[85dvh] max-w-[90vw] rounded-xl shadow-2xl object-contain"
           />
         )}
         <button

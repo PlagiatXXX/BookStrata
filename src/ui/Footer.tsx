@@ -294,7 +294,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
               <div
                 id="donate-menu"
-                className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] max-h-[60vh] overflow-y-auto rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 origin-bottom-right ${
+                className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] max-h-[60dvh] overflow-y-auto rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 origin-bottom-right ${
                   popupDirection === "below"
                     ? "top-full mt-1"
                     : "bottom-full mb-1"

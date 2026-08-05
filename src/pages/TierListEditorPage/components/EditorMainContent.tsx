@@ -204,7 +204,7 @@ export const EditorMainContent = memo(
                   sidebarCollapsed ? "w-0" : "w-80"
                 }`}
               >
-                <div className="max-h-[calc(100vh-8rem)] overflow-y-auto">
+                <div className="max-h-[calc(100dvh-8rem)] overflow-y-auto">
                   <SettingsSidebar
                     key={activeTierData?.id}
                     activeTier={activeTierData || undefined}

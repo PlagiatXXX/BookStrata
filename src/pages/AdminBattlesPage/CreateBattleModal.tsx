@@ -59,7 +59,7 @@ export function CreateBattleModal({ approvedApplications, onClose, onCreated }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="brutal-card brutal-border w-full max-w-lg mx-4 p-8 relative max-h-[90vh] overflow-y-auto">
+      <div className="brutal-card brutal-border w-full max-w-lg mx-4 p-8 relative max-h-[90dvh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-(--ink-1) hover:text-(--ink-0) transition-colors"

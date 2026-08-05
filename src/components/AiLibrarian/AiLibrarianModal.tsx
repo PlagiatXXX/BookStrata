@@ -707,7 +707,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
             role="dialog"
             aria-modal="true"
             aria-labelledby="ai-librarian-title"
-            className="relative mx-auto flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl border border-white/10 bg-[#111111] text-[#f6f1e8] shadow-2xl shadow-black/60"
+            className="relative mx-auto flex max-h-[85dvh] w-full max-w-2xl flex-col rounded-2xl border border-white/10 bg-[#111111] text-[#f6f1e8] shadow-2xl shadow-black/60"
           >
             {panelContent}
           </motion.div>

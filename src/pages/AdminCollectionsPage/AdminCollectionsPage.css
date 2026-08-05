@@ -287,7 +287,7 @@
   border-radius: 0.75rem;
   width: 100%;
   max-width: 700px;
-  max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
@@ -612,7 +612,7 @@
   /* модалка — компактнее */
   .admin-collections-modal {
     margin: 0;
-    max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
   }
 
