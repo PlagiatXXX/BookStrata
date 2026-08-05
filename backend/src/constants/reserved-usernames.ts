@@ -104,7 +104,6 @@ export const RESERVED_USERNAMES: readonly string[] = [
   "mailer",
   // Популярные имена, вводящие в заблуждение
   "bookstrata",
-  "bookstratapro",
   "strata",
   "tierlist",
   "tiermaker",

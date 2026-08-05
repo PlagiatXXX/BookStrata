@@ -357,7 +357,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
             <div className="flex items-center gap-2">
               <span className="h-1 w-1 rounded-full bg-cyan-500 opacity-80" />
               <p className="text-[11px] font-medium text-[#8f8a80]">
-                © {new Date().getFullYear()} BookStrata Pro. Все права защищены.
+                © {new Date().getFullYear()} BookStrata. Все права защищены.
               </p>
             </div>
 

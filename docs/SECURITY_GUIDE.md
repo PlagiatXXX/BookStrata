@@ -1,4 +1,4 @@
-﻿# 🔐 SECURITY GUIDE — BookStrata Pro
+﻿# 🔐 SECURITY GUIDE — BookStrata
 
 **Целевой уровень**: OWASP Top 10 + CWE Top 25  
 **Версия**: 1.0  
@@ -313,7 +313,7 @@ fastify.get<{ Querystring: { q: string } }>(
       `https://www.googleapis.com/books/v1/volumes?${params.toString()}`,
       {
         headers: {
-          'User-Agent': 'BookStrata-Pro/1.0',
+          'User-Agent': 'BookStrata/1.0',
         },
         timeout: 10000, // 10 сек timeout
       }

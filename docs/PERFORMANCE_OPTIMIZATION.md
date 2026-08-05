@@ -1,4 +1,4 @@
-﻿# ⚡ PERFORMANCE OPTIMIZATION GUIDE — BookStrata Pro
+﻿# ⚡ PERFORMANCE OPTIMIZATION GUIDE — BookStrata
 
 **Целевой уровень**: PageSpeed 90+, LCP <2.5s, FID <100ms  
 **Версия**: 1.0  

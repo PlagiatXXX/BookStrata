@@ -1,4 +1,4 @@
-# Swagger API Documentation — BookStrata Pro
+# Swagger API Documentation — BookStrata
 
 ## 📍 Обзор
 
@@ -14,7 +14,7 @@ Swagger документация доступна по адресу: **http://lo
 await fastify.register(swagger, {
   swagger: {
     info: {
-      title: 'BookStrata Pro API',
+      title: 'BookStrata API',
       description: 'API для создания и управления ранжирующими списками книг',
       version: '1.0.0',
     },

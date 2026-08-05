@@ -7,12 +7,12 @@ export const Logo = ({ onClick }: LogoProps) => {
     <button
       onClick={onClick}
       className="flex items-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-lg"
-      aria-label="BookStrata Pro - Рейтинг всего"
+      aria-label="BookStrata - Рейтинг всего"
     >
       <svg
         viewBox="0 0 180 48"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 w-[120px] xs:w-[140px] sm:w-[160px] md:w-[180px] h-auto"
+        className="shrink-0 w-30 xs:w-35 sm:w-40 md:w-45 h-auto"
       >
         {/* ICON - Animated tier bars */}
         <g transform="translate(4, 10)">
@@ -81,7 +81,7 @@ export const Logo = ({ onClick }: LogoProps) => {
           fontWeight="600"
           fill="url(#textGradient)"
         >
-          BookStrata Pro
+          BookStrata
         </text>
 
         {/* TEXT - Subtitle */}

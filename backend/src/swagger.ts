@@ -1,5 +1,5 @@
 /**
- * Swagger definitions для BookStrata Pro API
+ * Swagger definitions для BookStrata API
  * 
  * Эти определения используются для генерации OpenAPI/Swagger документации
  * Добавляйте @openapi аннотации в роуты для автоматической генерации

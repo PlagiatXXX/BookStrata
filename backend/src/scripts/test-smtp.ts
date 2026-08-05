@@ -17,7 +17,7 @@ async function test() {
   try {
     await sendEmail({
       to: process.env.SMTP_USER || "", // Send to yourself
-      subject: "Тестовое письмо BookStrata Pro",
+      subject: "Тестовое письмо BookStrata",
       text: "Если вы видите это письмо, значит SMTP настроен верно!",
       html: "<h1>Успех!</h1><p>Ваш SMTP сервер работает корректно.</p>"
     });

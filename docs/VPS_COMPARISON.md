@@ -1,4 +1,4 @@
-# Сравнение VPS — BookStrata Pro
+# Сравнение VPS — BookStrata
 
 ## Минимальные требования
 

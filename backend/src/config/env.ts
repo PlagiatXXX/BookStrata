@@ -57,7 +57,7 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z
     .string()
-    .default('"BookStrata Pro" <noreply@bookstrata.pro>'),
+    .default('"BookStrata" <noreply@bookstrata.pro>'),
   ERROR_NOTIFY_EMAIL: z.string().optional(),
 
   // --- OAuth ---

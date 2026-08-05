@@ -38,13 +38,13 @@ const getResetPasswordTemplate = (username: string, token: string) => {
   <div class="container">
     <h1>Сброс пароля</h1>
     <p>Здравствуйте, <strong>${safeUsername}</strong>!</p>
-    <p>Вы получили это письмо, потому что запросили сброс пароля для вашего аккаунта BookStrata Pro.</p>
+    <p>Вы получили это письмо, потому что запросили сброс пароля для вашего аккаунта BookStrata.</p>
     <p>Для установки нового пароля нажмите на кнопку ниже:</p>
     <a href="${resetLink}" class="btn">Сбросить пароль</a>
     <p>Эта ссылка действительна в течение 1 часа. Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>
     <p class="link-text">Если кнопка не работает, скопируйте и вставьте эту ссылку в браузер:<br>${resetLink}</p>
     <div class="footer">
-      <p>© ${new Date().getFullYear()} BookStrata Pro. Все права защищены.</p>
+      <p>© ${new Date().getFullYear()} BookStrata. Все права защищены.</p>
     </div>
   </div>
 </body>
@@ -61,7 +61,7 @@ export async function sendResetPasswordEmail(email: string, username: string, to
 
   await sendEmail({
     to: email,
-    subject: "Сброс пароля BookStrata Pro",
+    subject: "Сброс пароля BookStrata",
     text,
     html,
   });

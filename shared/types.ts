@@ -1,5 +1,5 @@
 /**
- * Shared types for BookStrata Pro
+ * Shared types for BookStrata
  */
 
 export interface User {

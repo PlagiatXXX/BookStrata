@@ -320,9 +320,9 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
 await fastify.register(swagger, {
   swagger: {
     info: {
-      title: "BookStrata Pro API",
+      title: "BookStrata API",
       description: `
-## API Documentation for BookStrata Pro
+## API Documentation for BookStrata
 
 ### Error Response Format
 All errors follow a standardized format:
