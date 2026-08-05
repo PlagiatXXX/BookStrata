@@ -2,6 +2,7 @@ import { memo } from "react"
 import { ExternalLink, Globe, BookOpen } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getExternalNews, type ExternalNewsItem } from "@/lib/externalNewsApi"
+import { Reveal } from "@/components/Reveal/Reveal"
 
 const fetchExternalNews = async (): Promise<ExternalNewsItem[]> => {
   return getExternalNews(6)
@@ -104,7 +105,7 @@ export const ExternalNewsSection = memo(() => {
 
   if (isLoading) {
     return (
-      <section className="mb-12 reveal" data-reveal>
+      <Reveal as="section" className="mb-12">
         <div className="flex items-end justify-between mb-6">
           <div>
             <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
@@ -128,7 +129,7 @@ export const ExternalNewsSection = memo(() => {
             </div>
           ))}
         </div>
-      </section>
+      </Reveal>
     )
   }
 
@@ -137,7 +138,7 @@ export const ExternalNewsSection = memo(() => {
   }
 
   return (
-    <section className="mb-12 reveal" data-reveal>
+    <Reveal as="section" className="mb-12">
       <div className="flex items-end justify-between mb-6">
         <div className="flex items-center gap-3">
           <BookOpen size={28} className="text-(--accent-main) shrink-0" />
@@ -159,6 +160,6 @@ export const ExternalNewsSection = memo(() => {
           <NewsCard key={item.id} item={item} />
         ))}
       </div>
-    </section>
+    </Reveal>
   )
 })

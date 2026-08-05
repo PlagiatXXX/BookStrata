@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search, Users, Loader2, User, X } from "lucide-react";
 import { apiSearchUsers, type UserSearchResult } from "@/lib/userApi";
 import { Avatar } from "@/components/Avatar";
+import { Reveal } from "@/components/Reveal/Reveal";
 
 export function UserSearchSection() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export function UserSearchSection() {
   };
 
   return (
-    <div data-reveal className="user-search-section">
+    <Reveal className="user-search-section">
       {/* Заголовок */}
       <div className="flex items-center gap-2 mb-6">
         <Users size={20} className="text-(--accent-main)" />
@@ -136,6 +137,6 @@ export function UserSearchSection() {
           </p>
         </div>
       )}
-    </div>
+    </Reveal>
   );
 }

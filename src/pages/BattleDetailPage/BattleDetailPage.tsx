@@ -7,6 +7,7 @@ import {
 import { sileo } from "sileo"
 import { MetalFx } from "metal-fx"
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout"
+import { Reveal } from "@/components/Reveal/Reveal"
 import { getBattleById, voteInBattle } from "@/lib/battlesApi"
 import { useAuth } from "@/hooks/useAuthContext"
 import { TierListPreview } from "@/components/TierListPreview"
@@ -208,35 +209,6 @@ export default function BattleDetailPage() {
     return () => clearInterval(interval)
   }, [battle, fetchBattle])
 
-  // Scroll-reveal observer
-  useEffect(() => {
-    const elements = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-reveal]"),
-    )
-    if (elements.length === 0) return
-
-    // Если пользователь предпочитает уменьшенное движение — показываем сразу
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      elements.forEach((el) => el.classList.add('reveal--visible'))
-      return
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("reveal--visible")
-            observer.unobserve(entry.target)
-          }
-        })
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.15 },
-    )
-
-    elements.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-  }, [battle])
-
   const handleVote = async (participant: BattleParticipant) => {
     if (!isAuthenticated || !battle || voteState === "voting") return
     setVoteState("voting")
@@ -337,7 +309,7 @@ export default function BattleDetailPage() {
           </button>
 
           {/* Battle header */}
-          <section className="mb-12 reveal" data-reveal>
+          <Reveal as="section" className="mb-12">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-4">
@@ -381,13 +353,13 @@ export default function BattleDetailPage() {
                 </div>
               </div>
             </div>
-          </section>
+          </Reveal>
 
           <div className="community-rule mb-12" />
 
           {/* Winner announcement */}
           {winner && (
-            <section className="mb-12 reveal" data-reveal>
+            <Reveal as="section" className="mb-12">
               <div className="brutal-card brutal-border p-8 bg-gradient-to-r from-yellow-500/10 via-yellow-500/5 to-transparent border-yellow-500/30">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center shrink-0">
@@ -420,11 +392,11 @@ export default function BattleDetailPage() {
                   </div>
                 </div>
               </div>
-            </section>
+            </Reveal>
           )}
 
           {/* Participants */}
-          <section className="reveal" data-reveal>
+          <Reveal as="section" className="">
             <h2 className="community-heading text-2xl font-black mb-8 flex items-center gap-3">
               <Users size={20} className="text-(--accent-main)" />
               Участники
@@ -488,7 +460,7 @@ export default function BattleDetailPage() {
                 })}
               </div>
             )}
-          </section>
+          </Reveal>
 
           {/* Discussion section */}
           <DiscussionSection variant="battle" battleId={battle.id} />

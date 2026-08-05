@@ -1,5 +1,6 @@
 import { memo, type CSSProperties } from 'react';
 import type { TemplateItem } from '../../data/mockData';
+import { Reveal } from '@/components/Reveal/Reveal';
 
 interface TemplateCardProps {
   template: TemplateItem;
@@ -22,10 +23,9 @@ export const TemplateCard = memo(({ template, onPreview }: TemplateCardProps) =>
     : `var(--${template.borderColor})`;
 
   return (
-    <div
-      className={`group relative overflow-hidden brutal-card brutal-border border-l-4 transition-all duration-300 reveal hover-lift ${getGridClass(template.size)}`}
+    <Reveal
+      className={`group relative overflow-hidden brutal-card brutal-border border-l-4 transition-all duration-300 hover-lift ${getGridClass(template.size)}`}
       style={{ borderLeftColor: borderColorStyle } as CSSProperties}
-      data-reveal
     >
       <img
         alt={template.title}
@@ -59,6 +59,6 @@ export const TemplateCard = memo(({ template, onPreview }: TemplateCardProps) =>
           Посмотреть
         </button>
       </div>
-    </div>
+    </Reveal>
   );
 });

@@ -399,6 +399,30 @@ body {
   }
 }
 
+/* ── Reveal-анимация (компонент <Reveal />) ──
+   Элемент скрыт до первого пересечения с вьюпортом.
+   При prefers-reduced-motion — виден сразу (без анимации). */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.38s ease, transform 0.38s ease;
+  will-change: opacity, transform;
+}
+
+.reveal--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal--visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* Скрываем иконку Яндекс.Метрики в правом нижнем углу */
 .ym-informer-widget,
 .ym-informer,

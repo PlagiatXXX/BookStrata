@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getPublishedNews, type NewsArticle } from "@/lib/newsApi";
 import { FileText } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Reveal } from "@/components/Reveal/Reveal";
 
 const fetchNews = async (): Promise<NewsArticle[]> => {
   return getPublishedNews(6);
@@ -39,7 +40,7 @@ export const NewsSection = memo(({ searchQuery = "" }: NewsSectionProps) => {
 
   if (isLoading) {
     return (
-      <section id="news" className="mb-12 reveal" data-reveal>
+      <Reveal as="section" id="news" className="mb-12">
         <div className="flex items-end justify-between mb-6">
           <div>
             <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
@@ -65,11 +66,11 @@ export const NewsSection = memo(({ searchQuery = "" }: NewsSectionProps) => {
             </div>
           ))}
         </div>
-      </section>
+      </Reveal>
     );
   }
 
-  if (error || !news || !Array.isArray(news) || news.length === 0) {
+  if (error || !news || !Array.isArray(news)) {
     if (!searchQuery.trim()) return null;
   }
 
@@ -78,7 +79,7 @@ export const NewsSection = memo(({ searchQuery = "" }: NewsSectionProps) => {
   }
 
   return (
-    <section id="news" className="mb-12 reveal" data-reveal>
+    <Reveal as="section" id="news" className="mb-12">
       <div className="flex items-end justify-between mb-6">
         <div>
           <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
@@ -138,6 +139,6 @@ export const NewsSection = memo(({ searchQuery = "" }: NewsSectionProps) => {
           <p>Новостей пока нет</p>
         </div>
       )}
-    </section>
+    </Reveal>
   );
 });

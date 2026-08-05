@@ -1,6 +1,7 @@
 import { Search as SearchIcon, X } from "lucide-react";
 import { useRef, memo } from "react";
 import BookScene from "./BookScene/BookScene";
+import { Reveal } from "@/components/Reveal/Reveal";
 
 interface HeroSectionProps {
   searchQuery: string;
@@ -12,11 +13,8 @@ export const HeroSection = memo(
     const containerRef = useRef<HTMLDivElement>(null);
 
     return (
-      <section
-        ref={containerRef}
-        className="relative py-14 md:py-18 reveal"
-        data-reveal
-      >
+      <Reveal className="relative py-14 md:py-18">
+        <section ref={containerRef}>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 lg:gap-12">
           {/* Left Content */}
           <div className="flex-1">
@@ -79,7 +77,8 @@ export const HeroSection = memo(
             <BookScene containerRef={containerRef} />
           </div>
         </div>
-      </section>
+        </section>
+      </Reveal>
     );
   },
 );

@@ -1,10 +1,11 @@
-import { useEffect, memo, useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Users, Swords, MessageSquare, MessageSquareText, Plus, Pin, Trash2 } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
+import { Reveal } from "@/components/Reveal/Reveal";
 import { BattleList } from "./components/BattleList";
 import { DiscussionSection } from "@/components/DiscussionSection/DiscussionSection";
 import { CuratorApplyModal } from "@/components/CuratorApplyModal/CuratorApplyModal";
@@ -41,34 +42,6 @@ export default function ForumPage() {
     enabled: activeTab === "discussions" || activeTab === "forum",
     staleTime: 30_000,
   });
-
-  useEffect(() => {
-    const elements = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-reveal]"),
-    );
-    if (elements.length === 0) return;
-
-    // Если пользователь предпочитает уменьшенное движение — показываем сразу
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      elements.forEach((el) => el.classList.add('reveal--visible'));
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("reveal--visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.15 },
-    );
-
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
 
   const { data: forumStats, isLoading: statsLoading } = useQuery({
     queryKey: ["forumStats"],
@@ -174,7 +147,7 @@ goToTab("forum");
       <div className="forum-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 py-14 pb-20 cursor-default text-(--ink-0)">
           {/* Forum Header / Hero */}
-          <section className="mb-16 reveal" data-reveal>
+          <Reveal as="section" className="mb-16">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-4 text-[10px] font-bold uppercase tracking-[0.3em] text-(--accent-main)">
@@ -214,10 +187,10 @@ goToTab("forum");
                 </div>
               </div>
             </div>
-          </section>
+          </Reveal>
 
           {/* Activity Tabs */}
-          <div className="flex items-center gap-6 mb-12 border-b border-(--line-soft) overflow-x-auto no-scrollbar reveal" data-reveal>
+          <Reveal className="flex items-center gap-6 mb-12 border-b border-(--line-soft) overflow-x-auto no-scrollbar">
              <button
                 onClick={() => { goToTab("battles"); setSelectedTopic(null); }}
                className={`forum-tab flex items-center gap-2 py-4 px-2 text-xs font-bold uppercase tracking-widest border-b-4 transition-colors ${
@@ -261,8 +234,8 @@ goToTab("forum");
              >
                 <MessageSquareText size={16} />
                 Форум
-             </button>
-          </div>
+              </button>
+          </Reveal>
 
           <div className="forum-tab-content">
           {activeTab === "battles" ? (

@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CATEGORIES } from '@/data/mockData';
+import { Reveal } from '@/components/Reveal/Reveal';
 
 const SCROLL_AMOUNT = 240;
 
@@ -56,7 +57,7 @@ export const CategoryTabs = memo(({ activeCategory, setActiveCategory }: Categor
   };
 
   return (
-    <section className="mb-12 reveal relative group" data-reveal>
+    <Reveal as="section" className="mb-12 relative group">
       {/* Левая стрелка */}
       <button
         type="button"
@@ -109,6 +110,6 @@ export const CategoryTabs = memo(({ activeCategory, setActiveCategory }: Categor
       >
         <ChevronRight size={18} className="text-(--ink-1)" />
       </button>
-    </section>
+    </Reveal>
   );
 });

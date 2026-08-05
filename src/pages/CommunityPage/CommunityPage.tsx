@@ -3,6 +3,7 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
+import { Reveal } from "@/components/Reveal/Reveal";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { CategoryTabs } from "@/components/CommunityComponents/CategoryTabs";
 import { CollectionGrid } from "@/components/CommunityComponents/CollectionGrid";
@@ -69,34 +70,6 @@ export default function CommunityPage() {
     );
   }, [activeCategory, setSearchParams]);
 
-  useEffect(() => {
-    const elements = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-reveal]"),
-    );
-    if (elements.length === 0) return;
-
-    // Если пользователь предпочитает уменьшенное движение — показываем сразу
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      elements.forEach((el) => el.classList.add('reveal--visible'));
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("reveal--visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.15 },
-    );
-
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [activeCategory, searchQuery]);
-
   return (
     <DashboardLayout
       showTemplatesNav={true}
@@ -128,29 +101,28 @@ export default function CommunityPage() {
             setActiveCategory={setActiveCategory}
           />
 
-          <div
+          <Reveal
             id="collections"
-            className="flex items-end justify-between mb-6 reveal"
-            data-reveal
+            className="flex items-end justify-between mb-6"
           >
             <h2 className="community-heading text-2xl md:text-3xl font-black tracking-tight flex items-center gap-2">
               <TrendingUp className="text-(--accent-main)" size={28} />
               Подборки BookStrata
             </h2>
-          </div>
+          </Reveal>
 
           <MemoizedCollectionGrid
             activeCategory={activeCategory}
             searchQuery={searchQuery}
           />
 
-          <div className="flex items-center gap-4 my-12 reveal" data-reveal>
+          <Reveal className="flex items-center gap-4 my-12">
             <div className="community-rule flex-1" />
             <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-(--ink-1)">
               Далее
             </span>
             <div className="community-rule flex-1" />
-          </div>
+          </Reveal>
 
           <Suspense fallback={<div className="h-48" />}>
             <LazyNewsSection searchQuery={searchQuery} />
