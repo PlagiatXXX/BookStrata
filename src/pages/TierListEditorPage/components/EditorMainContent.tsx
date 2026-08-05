@@ -10,6 +10,8 @@ import type { SaveStatus } from "../hooks/useTierEditorSave";
 interface EditorMainContentProps {
   listData: TierListData;
   isReadOnly: boolean;
+  /** Демо-режим: гость без авторизации создаёт тир-лист — показываем панель настроек сразу */
+  isDemo?: boolean;
   hideUnranked?: boolean;
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   onboardingStep?: 0 | 1 | 2 | 3 | null;
@@ -45,6 +47,7 @@ export const EditorMainContent = memo(
   ({
     listData,
     isReadOnly,
+    isDemo = false,
     hideUnranked = false,
     tierGridRef,
     onboardingStep,
@@ -105,6 +108,9 @@ export const EditorMainContent = memo(
     );
 
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+      // В демо-режиме панель настроек всегда открыта по умолчанию,
+      // даже если в localStorage сохранено свёрнутое состояние
+      if (isDemo) return false;
       try {
         return localStorage.getItem("tier-editor-sidebar-collapsed") === "true";
       } catch {

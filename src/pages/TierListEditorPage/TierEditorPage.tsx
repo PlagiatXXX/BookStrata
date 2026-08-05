@@ -905,6 +905,7 @@ const TierListEditorContent = () => {
         <EditorMainContent
           listData={listData}
           isReadOnly={isReadOnly}
+          isDemo={isDemo}
           tierGridRef={tierGridRef}
           hideUnranked={fromBattle}
           onDeleteBook={setBookToDelete}

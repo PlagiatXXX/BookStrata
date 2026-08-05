@@ -108,6 +108,18 @@ describe("EditorMainContent — sidebarCollapsed", () => {
     expect(transitionWrapper.className).toContain("w-0");
   });
 
+  it("в демо-режиме панель открыта по умолчанию, даже если в localStorage свёрнута", () => {
+    localStorage.setItem("tier-editor-sidebar-collapsed", "true");
+
+    render(<EditorMainContent {...defaultProps} isDemo={true} />);
+
+    // Пропускаем localStorage: панель настроек видна сразу
+    expect(screen.getByTestId("settings-sidebar")).toBeInTheDocument();
+    const transitionWrapper = screen.getByTestId("sidebar-transition-wrapper");
+    expect(transitionWrapper.className).toContain("w-80");
+    expect(transitionWrapper.className).not.toContain("w-0");
+  });
+
   it("переключает collapsed по клику на кнопку", () => {
     render(<EditorMainContent {...defaultProps} />);
 
