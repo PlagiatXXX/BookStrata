@@ -108,6 +108,21 @@ export function useTierEditorSave({
           tier_list_title: listData.title || "Новый тир-лист",
         });
 
+        // Отправка в Яндекс.Метрику: успешное создание нового тир-листа.
+        // Цель в Метрике: тип «JavaScript-событие», идентификатор tierlist_create.
+        if (!import.meta.env.DEV && !window.__PRERENDER__) {
+          try {
+            if (typeof window.ym === "function") {
+              const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
+              if (counterId) {
+                window.ym(Number(counterId), "reachGoal", "tierlist_create");
+              }
+            }
+          } catch {
+            // Тихий fallback — аналитика не должна ломать сохранение
+          }
+        }
+
         // Обновляем URL на slug (человекочитаемый), если он есть
         const urlPath = created.slug
           ? `/tier-lists/${created.slug}`
