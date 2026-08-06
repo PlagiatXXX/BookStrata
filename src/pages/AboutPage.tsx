@@ -1,5 +1,5 @@
 import { useCallback } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { motion } from "motion/react"
 import { ArrowLeft } from "lucide-react"
 import {
@@ -14,6 +14,7 @@ import {
   Send,
   Pen,
   Share2,
+  CircleHelp,
 } from "lucide-react"
 import { Helmet } from "react-helmet-async"
 import { SEOHead } from "@/components/SEO/SEOHead"
@@ -364,6 +365,13 @@ export default function AboutPage() {
               <Send size={18} />
               @bookstrata
             </a>
+            <Link
+              to="/faq"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold hover:bg-white/20 transition-colors border border-white/10"
+            >
+              <CircleHelp size={18} />
+              Частые вопросы
+            </Link>
           </motion.div>
 
           <p className="text-slate-500 text-sm mt-8">

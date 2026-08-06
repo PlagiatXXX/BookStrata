@@ -1,4 +1,5 @@
 import { Mail } from "lucide-react"
+import { Link } from "react-router-dom"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
@@ -24,6 +25,12 @@ export default function ContactPage() {
           <Mail size={16} />
           fedorpasyada@yandex.ru
         </a>
+        <p className="text-sm text-(--ink-2)">
+          Или посмотрите{" "}
+          <Link to="/faq" className="text-(--accent-main) hover:underline">
+            частые вопросы
+          </Link>
+        </p>
       </div>
     </div>
   )

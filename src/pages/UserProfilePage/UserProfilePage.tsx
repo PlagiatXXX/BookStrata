@@ -92,6 +92,10 @@ export default function UserProfilePage() {
         image={profile.avatarUrl || undefined}
         url={`/users/${id}`}
         type="profile"
+        person={{
+          name: profile.username,
+          image: profile.avatarUrl || undefined,
+        }}
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: profile.username, url: `/users/${id}` }]}
       />
       <DashboardLayout showSearch={false}>

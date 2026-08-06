@@ -20,6 +20,7 @@ export async function generateSitemap(): Promise<string> {
     { url: `${SITE_URL}/forum`, priority: "0.6", changefreq: "weekly" },
     { url: `${SITE_URL}/what-to-read`, priority: "0.8", changefreq: "weekly" },
     { url: `${SITE_URL}/about`, priority: "0.7", changefreq: "monthly" },
+    { url: `${SITE_URL}/faq`, priority: "0.5", changefreq: "monthly" },
     { url: `${SITE_URL}/pricing`, priority: "0.7", changefreq: "monthly" },
     { url: `${SITE_URL}/contact`, priority: "0.5", changefreq: "monthly" },
     { url: `${SITE_URL}/blog`, priority: "0.7", changefreq: "weekly" },

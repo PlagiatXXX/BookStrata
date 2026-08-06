@@ -815,7 +815,11 @@ const TierListEditorContent = () => {
               description: `Тир-лист «${apiData.title}» — визуальный рейтинг книг, созданный на BookStrata`,
               url: `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}/tier-lists/${pageUrl}`,
               author: apiData.user
-                ? { "@type": "Person", name: apiData.user.username || "Anonymous" }
+                ? {
+                    "@type": "Person",
+                    name: apiData.user.username || "Anonymous",
+                    url: `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}/users/${apiData.user.id}`,
+                  }
                 : undefined,
               itemListElement: listData.tierOrder
                 .map((tierId) => {

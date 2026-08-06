@@ -16,6 +16,13 @@ interface SEOHeadProps {
   author?: string;
   noindex?: boolean;
   breadcrumbs?: { name: string; url: string }[];
+  /** Данные для Person JSON-LD (страницы людей: профили, знаменитости) */
+  person?: {
+    name: string;
+    image?: string;
+    description?: string;
+    knowsAbout?: string;
+  };
 }
 
 const organizationJsonLd = {
@@ -79,6 +86,7 @@ export function SEOHead({
   author,
   noindex,
   breadcrumbs,
+  person,
 }: SEOHeadProps) {
   // Убираем дублирование бренда: если title уже содержит | BookStrata, не добавляем повторно.
   const cleanTitle = title?.replace(new RegExp(`\\s*\\|\\s*${SITE_NAME}\\s*$`), "");
@@ -172,6 +180,19 @@ export function SEOHead({
         }
       : null;
 
+  // Person JSON-LD — для страниц людей (профили пользователей, знаменитости)
+  const personJsonLd = person
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: person.name,
+        url: pageUrl,
+        image: person.image || imageUrl,
+        description: person.description || description,
+        ...(person.knowsAbout ? { knowsAbout: person.knowsAbout } : {}),
+      }
+    : null;
+
   // WebPage JSON-LD — базовая разметка для всех страниц
   const webpageJsonLd = {
     "@context": "https://schema.org",
@@ -232,6 +253,11 @@ export function SEOHead({
       {articleJsonLd && (
         <script type="application/ld+json">
           {JSON.stringify(articleJsonLd)}
+        </script>
+      )}
+      {personJsonLd && (
+        <script type="application/ld+json">
+          {JSON.stringify(personJsonLd)}
         </script>
       )}
       <script type="application/ld+json">

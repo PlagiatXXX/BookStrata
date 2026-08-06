@@ -15,6 +15,7 @@ import {
   ScrollText,
   Shield,
   Info,
+  CircleHelp,
   BarChart3,
   BookOpen,
 } from "lucide-react";
@@ -59,6 +60,7 @@ const userLinks = [
   { href: "/profile", label: "Профиль", icon: <User size={14} /> },
   { href: "/about", label: "О проекте", icon: <Info size={14} /> },
   { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
+  { href: "/faq", label: "Вопросы и ответы", icon: <CircleHelp size={14} /> },
   { href: "/privacy", label: "Политика", icon: <ScrollText size={14} /> },
   { href: "/terms", label: "Условия", icon: <Shield size={14} /> },
 ];
@@ -68,6 +70,7 @@ const landingUserLinks: { label: string; icon: React.ReactNode; href?: string; i
   { href: "/terms", label: "Условия использования", icon: <Shield size={14} /> },
   { href: "/about", label: "О проекте", icon: <Info size={14} /> },
   { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
+  { href: "/faq", label: "Вопросы и ответы", icon: <CircleHelp size={14} /> },
 ];
 
 const combinedLinks = [...mainLinks, ...userLinks];

@@ -32,6 +32,7 @@ const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"));
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const FaqPage = lazy(() => import("@/pages/FaqPage/FaqPage"));
 const HistoryPage = lazy(() => import("@/pages/HistoryPage"));
 const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage"));
 const UserProfilePage = lazy(() => import("@/pages/UserProfilePage/UserProfilePage"));
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
       { path: "/privacy", element: <PrivacyPage /> },
       { path: "/terms", element: <TermsPage /> },
       { path: "/about", element: <AboutPage /> },
+      { path: "/faq", element: <FaqPage /> },
       { path: "/history", element: <HistoryPage /> },
       { path: "/oauth/callback", element: <OAuthCallbackPage /> },
       { path: "/contact", element: <ContactPage /> },

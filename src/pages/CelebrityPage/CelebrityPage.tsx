@@ -86,6 +86,12 @@ export default function CelebrityPage() {
         }
         image={proxyImageUrl(celebrity.photoUrl) || undefined}
         url={`/celebrities/${slug}`}
+        person={{
+          name: celebrity.name,
+          image: celebrity.photoUrl ? proxyImageUrl(celebrity.photoUrl) : undefined,
+          description: celebrity.biography || undefined,
+          knowsAbout: categoryLabel || undefined,
+        }}
         breadcrumbs={[{ name: "Знаменитости", url: "/celebrities" }, { name: celebrity.name, url: `/celebrities/${slug}` }]}
       />
 

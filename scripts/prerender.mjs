@@ -77,6 +77,7 @@ const ROUTES = [
   { path: "/celebrities", name: "Знаменитости" },
   { path: "/forum",      name: "Форум" },
   { path: "/about",      name: "О проекте" },
+  { path: "/faq",        name: "Вопросы и ответы" },
   { path: "/pricing",    name: "Тарифы" },
   { path: "/contact",    name: "Контакты" },
   { path: "/privacy",    name: "Политика конфиденциальности" },
