@@ -45,7 +45,6 @@ export default defineConfig({
     minify: "esbuild",
     target: "esnext",
     rollupOptions: {
-      external: [/nsfwjs\/dist\/models/],
       output: {
         manualChunks: {
           "react-vendor": ["react", "react-dom", "react-router-dom"],

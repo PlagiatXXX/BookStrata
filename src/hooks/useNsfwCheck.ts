@@ -24,15 +24,22 @@ export function useNsfwCheck() {
 
     if (!loadPromiseRef.current) {
       loadPromiseRef.current = (async () => {
-        const [tf, , nsfw] = await Promise.all([
+        const [tf, , { load: loadNsfw }, { MobileNetV2Model }] = await Promise.all([
           import("@tensorflow/tfjs-core"),
           import("@tensorflow/tfjs-backend-webgl"),
-          import("nsfwjs"),
+          // core, а не index: index тянет default_models.js с тремя моделями
+          // (MobileNetV2, Mid, Inception) — они раздували бандл на десятки МБ.
+          // Через subpath-экспорт подключаем только нужную модель.
+          import("nsfwjs/core"),
+          import("nsfwjs/models/mobilenet_v2"),
         ])
 
         await tf.setBackend("webgl").catch(() => tf.setBackend("cpu"))
 
-        const model = await nsfw.load("https://cdn.jsdelivr.net/npm/nsfwjs@4.3.0/dist/")
+        // nsfwjs v4: модель встроена в пакет, динамический импорт весов
+        // собирается Vite в lazy-чанк. Передавать CDN-URL нельзя: в v4 нет
+        // dist/model.json (v3-путь → 404).
+        const model = await loadNsfw("MobileNetV2", { modelDefinitions: [MobileNetV2Model] })
         modelRef.current = model
         return model
       })()
