@@ -105,14 +105,35 @@ describe("BookCover", () => {
     expect(viewButton).toHaveClass("focus-visible:ring-(--theme-focus)");
   });
 
-  it("triggers onView on double click of the cover", () => {
+  it("triggers onView on single click of the cover", () => {
     const onView = vi.fn();
     render(<BookCover book={mockBook} onView={onView} />);
 
     const card = screen.getByTestId("book-cover");
-    fireEvent.doubleClick(card);
+    fireEvent.pointerDown(card, { clientX: 10, clientY: 10 });
+    fireEvent.click(card, { clientX: 10, clientY: 10 });
 
     expect(onView).toHaveBeenCalledWith(mockBook);
+  });
+
+  it("не открывает книгу, если курсор сдвинулся от точки нажатия (drag, а не клик)", () => {
+    const onView = vi.fn();
+    render(<BookCover book={mockBook} onView={onView} />);
+
+    const card = screen.getByTestId("book-cover");
+    fireEvent.pointerDown(card, { clientX: 10, clientY: 10 });
+    fireEvent.click(card, { clientX: 60, clientY: 60 });
+
+    expect(onView).not.toHaveBeenCalled();
+  });
+
+  it("не открывает книгу без события pointerdown (служебный клик)", () => {
+    const onView = vi.fn();
+    render(<BookCover book={mockBook} onView={onView} />);
+
+    fireEvent.click(screen.getByTestId("book-cover"));
+
+    expect(onView).not.toHaveBeenCalled();
   });
 
   describe("hover — изолированный от родительского group", () => {

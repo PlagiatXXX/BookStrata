@@ -274,3 +274,66 @@ export async function getWebP(
 
   return { buffer: webpBuffer, s3Url: null };
 }
+
+/**
+ * Переводит внешнюю картинку на наш S3/CDN (формат WebP).
+ * Используется при создании/обновлении коллекций и знаменитостей,
+ * а также в скрипте миграции — чтобы обложки отдавались со своего CDN,
+ * а не с чужих (Amazon, LiveLib, wikimedia и т.д.).
+ *
+ * - Если URL уже на нашем CDN/S3 или локальный — возвращает как есть.
+ * - Если уже закэширован (по хэшу URL) — возвращает существующий CDN-URL.
+ * - Иначе скачивает, конвертирует в WebP (до 730px) и загружает на S3.
+ *
+ * Возвращает null, если картинку не удалось скачать/сконвертировать.
+ */
+export async function externalToCdnUrl(
+  url: string,
+  width: number = 730,
+): Promise<string | null> {
+  if (!url) return null;
+
+  // Свои/локальные — не трогаем
+  if (
+    url.startsWith("/") ||
+    url.includes("cdn.twcstorage.ru") ||
+    url.includes("s3.twcstorage.ru") ||
+    url.includes("res.cloudinary.com")
+  ) {
+    return url;
+  }
+
+  if (!ALLOWED_PROTOCOLS.some((p) => url.startsWith(p))) return null;
+
+  const hash = urlHash(url);
+  const key = cacheKey(hash);
+
+  // Уже закэширован (в памяти или на S3)
+  const memoryCached = urlCache.get(hash);
+  if (memoryCached) return memoryCached;
+
+  try {
+    const exists = await existsOnS3(key);
+    if (exists) {
+      const s3Url = publicUrl(key);
+      urlCache.set(hash, s3Url);
+      return s3Url;
+    }
+  } catch (err) {
+    logger.warn(
+      `externalToCdnUrl: S3 check failed for ${url}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+
+  try {
+    const webpBuffer = await convertToWebP(url, width, 85);
+    const s3Url = await uploadToS3(webpBuffer, key);
+    urlCache.set(hash, s3Url);
+    return s3Url;
+  } catch (err) {
+    logger.error(err as Error, { action: "externalToCdnUrl", url });
+    return null;
+  }
+}

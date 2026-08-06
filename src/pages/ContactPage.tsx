@@ -1,14 +1,34 @@
-import { Mail } from "lucide-react"
-import { Link } from "react-router-dom"
+import { useCallback } from "react"
+import { ArrowLeft, Mail } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
 export default function ContactPage() {
+  const navigate = useNavigate();
+
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  }, [navigate]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6">
       <SEOHead title="Контакты BookStrata — связь с создателями тир лист книг" description="Свяжитесь с командой BookStrata по вопросам сотрудничества, предложениям, рекламе или удалению контента. Создавайте тир лист книг и будьте на связи." url="/contact" breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Контакты", url: "/contact" }]} />
       <div className="w-full max-w-3xl">
-        <Breadcrumbs items={[{ label: "Контакты" }]} theme="light" />
+        <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Контакты" }]} theme="light" />
+
+        {/* Назад */}
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-(--ink-1) hover:text-(--ink-0) mb-8 transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={14} />
+          Назад
+        </button>
       </div>
       <div className="max-w-lg w-full text-center space-y-6">
         <div className="w-16 h-16 rounded-2xl bg-(--accent-main)/10 border border-(--accent-main)/20 flex items-center justify-center mx-auto">

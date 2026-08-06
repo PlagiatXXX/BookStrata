@@ -9,6 +9,11 @@ import {
 } from "./collection.schema.js";
 import { createAuthorService } from "../authors/authors.service.js";
 import { config } from "../../config/env.js";
+import {
+  migrateBookCovers,
+  migrateUrlToCdn,
+  migrateUrlsArray,
+} from "../../lib/external-covers.js";
 
 const authorService = createAuthorService(prisma);
 
@@ -124,6 +129,14 @@ export async function createCollection(input: CreateCollectionInput) {
     await registerAuthorsFromCollectionBooks(input.books);
   }
 
+  // Внешние обложки переводим на свой CDN (WebP через image-proxy),
+  // чтобы не зависеть от чужих CDN (Amazon, LiveLib, Google и т.д.)
+  const [coverImageUrl, bookCovers, books] = await Promise.all([
+    input.coverImageUrl ? migrateUrlToCdn(input.coverImageUrl) : Promise.resolve(""),
+    input.bookCovers?.length ? migrateUrlsArray(input.bookCovers) : Promise.resolve([]),
+    input.books ? migrateBookCovers(input.books) : Promise.resolve(undefined),
+  ]);
+
   return prisma.collection.create({
     data: {
       slug,
@@ -132,8 +145,8 @@ export async function createCollection(input: CreateCollectionInput) {
       content: input.content || null,
       excerpt: input.excerpt || null,
       categoryId: input.categoryId || null,
-      coverImageUrl: input.coverImageUrl || "",
-      bookCovers: input.bookCovers || [],
+      coverImageUrl,
+      bookCovers,
       tags: input.tags || [],
       isPublished: input.isPublished ?? false,
       isFeatured: input.isFeatured ?? false,
@@ -142,7 +155,7 @@ export async function createCollection(input: CreateCollectionInput) {
       editorialNote: input.editorialNote || null,
       tiers: toJsonValue(input.tiers),
       tierOrder: input.tierOrder || [],
-      books: toJsonValue(input.books),
+      books: toJsonValue(books),
       unrankedBookIds: input.unrankedBookIds || [],
     },
   });
@@ -151,13 +164,25 @@ export async function createCollection(input: CreateCollectionInput) {
 export async function updateCollection(id: number, input: UpdateCollectionInput) {
   const data: Prisma.CollectionUpdateInput = {};
 
+  // Внешние обложки переводим на свой CDN (WebP через image-proxy)
+  if (input.coverImageUrl !== undefined) {
+    data.coverImageUrl = await migrateUrlToCdn(input.coverImageUrl || "");
+  }
+  if (input.bookCovers !== undefined) {
+    data.bookCovers = await migrateUrlsArray(input.bookCovers);
+  }
+  if (input.books !== undefined) {
+    const books = await migrateBookCovers(input.books);
+    data.books = toJsonValue(books);
+    // Регистрируем авторов из книг коллекции в реестре
+    await registerAuthorsFromCollectionBooks(books);
+  }
+
   if (input.title !== undefined) data.title = input.title;
   if (input.type !== undefined) data.type = input.type;
   if (input.content !== undefined) data.content = input.content || null;
   if (input.excerpt !== undefined) data.excerpt = input.excerpt || null;
   if (input.categoryId !== undefined) data.categoryId = input.categoryId || null;
-  if (input.coverImageUrl !== undefined) data.coverImageUrl = input.coverImageUrl || "";
-  if (input.bookCovers !== undefined) data.bookCovers = input.bookCovers;
   if (input.tags !== undefined) data.tags = input.tags;
   if (input.isPublished !== undefined) data.isPublished = input.isPublished;
   if (input.isFeatured !== undefined) data.isFeatured = input.isFeatured;
@@ -166,11 +191,6 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
   if (input.editorialNote !== undefined) data.editorialNote = input.editorialNote || null;
   if (input.tiers !== undefined) data.tiers = toJsonValue(input.tiers);
   if (input.tierOrder !== undefined) data.tierOrder = input.tierOrder;
-  if (input.books !== undefined) {
-    data.books = toJsonValue(input.books);
-    // Регистрируем авторов из книг коллекции в реестре
-    await registerAuthorsFromCollectionBooks(input.books);
-  }
   if (input.unrankedBookIds !== undefined) data.unrankedBookIds = input.unrankedBookIds;
 
   return prisma.collection.update({

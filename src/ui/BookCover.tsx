@@ -20,6 +20,14 @@ interface BookCoverProps {
 /** Сколько раз повторно пытаемся загрузить обложку после сетевого обрыва */
 const MAX_COVER_RETRIES = 2;
 
+/**
+ * Порог смещения указателя от точки нажатия.
+ * Если курсор сдвинулся дальше — это было перетаскивание (drag),
+ * а не клик, открывать книгу не нужно.
+ * Совпадает с activationConstraint { distance: 8 } у dnd-kit в редакторе.
+ */
+const CLICK_MOVE_THRESHOLD = 8;
+
 /** Меняет src при ретрае, чтобы браузер не взял закэшированную ошибку */
 function withRetryParam(url: string, attempt: number): string {
   const sep = url.includes("?") ? "&" : "?";
@@ -34,6 +42,7 @@ export const BookCover = memo(
       const [coverError, setCoverError] = useState(false);
       const [retryCount, setRetryCount] = useState(0);
       const lastTapTime = useRef<number>(0);
+      const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
       const innerRef = useRef<HTMLDivElement>(null);
 
       const cursorClass = isDraggable
@@ -86,11 +95,30 @@ export const BookCover = memo(
         // показ взял обложку из кэша, а не снова падал на каноничном URL.
       };
 
-      const handleClick = (e: React.MouseEvent) => {
-        if (window.innerWidth >= 768) return;
+      const handlePointerDown = (e: React.PointerEvent) => {
+        // Запоминаем точку нажатия, чтобы в click отличить клик от drag
+        pointerDownPos.current = { x: e.clientX, y: e.clientY };
+      };
 
-        // Без stopPropagation: клик по другой книге или мимо неё всплывает
-        // до document, и handleClickOutside закрывает чужие кнопки
+      const handleClick = (e: React.MouseEvent) => {
+        if (window.innerWidth >= 768) {
+          // Десктоп: одиночный клик открывает книгу.
+          // Защита от ложного срабатывания после drag-n-drop: если курсор
+          // сдвинулся от точки нажатия дальше порога — это перетаскивание,
+          // а не клик, открывать не нужно.
+          const pos = pointerDownPos.current;
+          if (!pos) return;
+          if (
+            Math.abs(e.clientX - pos.x) > CLICK_MOVE_THRESHOLD ||
+            Math.abs(e.clientY - pos.y) > CLICK_MOVE_THRESHOLD
+          ) {
+            return;
+          }
+          onView?.(book);
+          return;
+        }
+
+        // Мобильные: переключение кнопок действий
         e.preventDefault();
         setShowActions((prev) => !prev);
       };
@@ -138,6 +166,7 @@ export const BookCover = memo(
             }
           }}
           onClick={handleClick}
+          onPointerDown={handlePointerDown}
           onTouchEnd={handleTouchEnd}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -145,7 +174,6 @@ export const BookCover = memo(
           data-book-actions={showActionsFinal ? "visible" : "hidden"}
           className={`nb-book-card relative ${cursorClass}`}
           data-testid="book-cover"
-          onDoubleClick={() => onView?.(book)}
         >
           {showCover ? (
             <img

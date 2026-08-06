@@ -7,6 +7,10 @@ import {
   type CreateCelebrityInput,
   type UpdateCelebrityInput,
 } from "./celebrity.schema.js";
+import {
+  migrateBookCovers,
+  migrateUrlToCdn,
+} from "../../lib/external-covers.js";
 
 function slugify(text: string): string {
   const cyrillicToLatin: Record<string, string> = {
@@ -92,11 +96,17 @@ export async function getCelebrityById(id: number) {
 export async function createCelebrity(input: CreateCelebrityInput) {
   const slug = slugify(input.name);
 
+  // Внешние обложки переводим на свой CDN (WebP через image-proxy)
+  const [photoUrl, books] = await Promise.all([
+    input.photoUrl ? migrateUrlToCdn(input.photoUrl) : Promise.resolve(""),
+    input.books ? migrateBookCovers(input.books) : Promise.resolve(undefined),
+  ]);
+
   return prisma.celebrity.create({
     data: {
       slug,
       name: input.name,
-      photoUrl: input.photoUrl || "",
+      photoUrl,
       biography: input.biography || null,
       category: input.category || "",
       isPublished: input.isPublished ?? false,
@@ -104,7 +114,7 @@ export async function createCelebrity(input: CreateCelebrityInput) {
       tags: input.tags || [],
       tiers: toJsonValue(input.tiers),
       tierOrder: input.tierOrder || [],
-      books: toJsonValue(input.books),
+      books: toJsonValue(books),
       unrankedBookIds: input.unrankedBookIds || [],
     },
   });
@@ -113,8 +123,15 @@ export async function createCelebrity(input: CreateCelebrityInput) {
 export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
   const data: Prisma.CelebrityUpdateInput = {};
 
+  // Внешние обложки переводим на свой CDN (WebP через image-proxy)
+  if (input.photoUrl !== undefined) {
+    data.photoUrl = await migrateUrlToCdn(input.photoUrl || "");
+  }
+  if (input.books !== undefined) {
+    data.books = toJsonValue(await migrateBookCovers(input.books));
+  }
+
   if (input.name !== undefined) data.name = input.name;
-  if (input.photoUrl !== undefined) data.photoUrl = input.photoUrl || "";
   if (input.biography !== undefined) data.biography = input.biography || null;
   if (input.category !== undefined) data.category = input.category || "";
   if (input.isPublished !== undefined) data.isPublished = input.isPublished;
@@ -122,7 +139,6 @@ export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
   if (input.tags !== undefined) data.tags = input.tags;
   if (input.tiers !== undefined) data.tiers = toJsonValue(input.tiers);
   if (input.tierOrder !== undefined) data.tierOrder = input.tierOrder;
-  if (input.books !== undefined) data.books = toJsonValue(input.books);
   if (input.unrankedBookIds !== undefined) data.unrankedBookIds = input.unrankedBookIds;
 
   return prisma.celebrity.update({
