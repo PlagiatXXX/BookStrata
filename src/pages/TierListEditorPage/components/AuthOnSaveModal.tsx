@@ -55,8 +55,8 @@ export function AuthOnSaveModal({
       setError("Примите условия использования")
       return
     }
-    if (password.length < 6) {
-      setError("Пароль должен быть не менее 6 символов")
+    if (password.length < 8) {
+      setError("Пароль должен быть не менее 8 символов")
       return
     }
 
@@ -199,7 +199,7 @@ export function AuthOnSaveModal({
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Не менее 6 символов"
+                    placeholder="Не менее 8 символов"
                     className="nb-input w-full py-3 pl-10 pr-4 text-sm placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus)"
                   />
                 </div>

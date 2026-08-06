@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
 import { Spinner } from "@/components/Spinner";
 
@@ -7,11 +7,13 @@ import { Spinner } from "@/components/Spinner";
  *
  * Используется как layout-компонент в React Router v6+:
  * - Отображает Spinner во время загрузки
- * - Перенаправляет на /dashboard если авторизован
+ * - Перенаправляет на redirect (или /dashboard) если авторизован
  * - Рендерит дочерние маршруты через Outlet
  */
 export function GuestRoute() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
 
   if (isLoading) {
     return (
@@ -22,7 +24,7 @@ export function GuestRoute() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={redirectTo || "/dashboard"} replace />;
   }
 
   return <Outlet />;

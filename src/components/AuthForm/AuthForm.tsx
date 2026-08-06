@@ -5,6 +5,7 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { apiLogin, apiRegister, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
 import { pushDataLayerEvent } from "@/lib/gtm";
+import { useAuth } from "@/hooks/useAuthContext";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 
@@ -94,6 +95,7 @@ function validateField(name: string, value: string, mode: FormMode): string | nu
 export function AuthForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { refreshUser } = useAuth();
   const [mode, setMode] = useState<FormMode>(() => {
     return searchParams.get("mode") === "register" ? "register" : "login"
   });
@@ -137,7 +139,9 @@ export function AuthForm() {
         setAuthToken(result.accessToken)
         StorageService.setString("username", result.username)
         window.dispatchEvent(new Event("auth-token-changed"))
-        await new Promise((resolve) => setTimeout(resolve, 200))
+        // Ждём, пока AuthContext реально подтвердит вход — иначе ProtectedRoute
+        // может успеть выкинуть пользователя обратно на /auth (гонка)
+        await refreshUser()
         window.ym?.(109755750, 'reachGoal', 'login')
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
@@ -151,7 +155,8 @@ export function AuthForm() {
         setAuthToken(result.accessToken)
         StorageService.setString("username", result.username)
         window.dispatchEvent(new Event("auth-token-changed"))
-        await new Promise((resolve) => setTimeout(resolve, 200))
+        // То же самое для регистрации: дожидаемся фактического входа до редиректа
+        await refreshUser()
         window.ym?.(109755750, 'reachGoal', 'register')
         pushDataLayerEvent("sign_up", { method: "email" })
         navigate(redirectTo)
