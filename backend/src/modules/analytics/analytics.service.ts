@@ -1,4 +1,35 @@
 import type { PrismaClient, Prisma } from '@prisma/client'
+import { config } from '../../config/env.js'
+
+// Исключённые из аналитики пользователи (по username из конфига, CSV).
+// Их действия не пишутся в БД и не учитываются ни в одной метрике.
+const EXCLUDED_USERNAMES = config.ANALYTICS_EXCLUDE_USERNAMES.split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+// Фильтр при чтении: события исключённых пользователей скрываются из
+// ленты и всех агрегатов (старые записи остаются в БД, но не засоряют отчёты).
+const excludedUserFilter: Prisma.AnalyticsEventWhereInput | undefined =
+  EXCLUDED_USERNAMES.length > 0
+    ? { NOT: { user: { username: { in: EXCLUDED_USERNAMES } } } }
+    : undefined
+
+// Кэш userId исключённых пользователей (lazy, один запрос к БД).
+let excludedUserIdsCache: Set<number> | null = null
+
+async function getExcludedUserIds(prisma: PrismaClient): Promise<Set<number>> {
+  if (excludedUserIdsCache) return excludedUserIdsCache
+  if (EXCLUDED_USERNAMES.length === 0) {
+    excludedUserIdsCache = new Set()
+    return excludedUserIdsCache
+  }
+  const users = await prisma.user.findMany({
+    where: { username: { in: EXCLUDED_USERNAMES } },
+    select: { id: true },
+  })
+  excludedUserIdsCache = new Set(users.map((u) => u.id))
+  return excludedUserIdsCache
+}
 
 export interface TrackPayload {
   userId?: number | null
@@ -81,6 +112,12 @@ const RETENTION_EVENTS = [
 export function createAnalyticsService(prisma: PrismaClient) {
   const trackEvent = async (payload: TrackPayload): Promise<void> => {
     try {
+      // Не пишем события исключённых пользователей (владелец, тестировщики и т.п.)
+      if (payload.userId) {
+        const excludedIds = await getExcludedUserIds(prisma)
+        if (excludedIds.has(payload.userId)) return
+      }
+
       await prisma.analyticsEvent.create({
         data: {
           userId: payload.userId ?? null,
@@ -124,6 +161,11 @@ export function createAnalyticsService(prisma: PrismaClient) {
 
     if (query.to) {
       AND.push({ createdAt: { lte: new Date(query.to) } })
+    }
+
+    // Скрываем события исключённых пользователей (владелец и т.п.)
+    if (excludedUserFilter) {
+      AND.push(excludedUserFilter)
     }
 
     if (AND.length > 0) {
@@ -179,17 +221,17 @@ export function createAnalyticsService(prisma: PrismaClient) {
         .sort((a, b) => b.count - a.count)
 
     const [todayTotal, todayByEvent, weekTotal, weekByEvent] = await Promise.all([
-      prisma.analyticsEvent.count({ where: { createdAt: { gte: todayStart } } }),
+      prisma.analyticsEvent.count({ where: { createdAt: { gte: todayStart }, ...excludedUserFilter } }),
       prisma.analyticsEvent.groupBy({
         by: ['event'],
-        where: { createdAt: { gte: todayStart } },
+        where: { createdAt: { gte: todayStart }, ...excludedUserFilter },
         _count: { event: true },
         orderBy: { _count: { event: 'desc' } },
       }),
-      prisma.analyticsEvent.count({ where: { createdAt: { gte: weekStart } } }),
+      prisma.analyticsEvent.count({ where: { createdAt: { gte: weekStart }, ...excludedUserFilter } }),
       prisma.analyticsEvent.groupBy({
         by: ['event'],
-        where: { createdAt: { gte: weekStart } },
+        where: { createdAt: { gte: weekStart }, ...excludedUserFilter },
         _count: { event: true },
         orderBy: { _count: { event: 'desc' } },
       }),
@@ -231,19 +273,19 @@ export function createAnalyticsService(prisma: PrismaClient) {
     const [dau, mau, prevActiveUsers] = await Promise.all([
       // DAU: уникальные userId за сегодня (не null)
       prisma.analyticsEvent.findMany({
-        where: { userId: { not: null }, createdAt: { gte: todayStart } },
+        where: { userId: { not: null }, createdAt: { gte: todayStart }, ...excludedUserFilter },
         select: { userId: true },
         distinct: ['userId'],
       }),
       // MAU: уникальные userId за последние 30 дней
       prisma.analyticsEvent.findMany({
-        where: { userId: { not: null }, createdAt: { gte: last30Start } },
+        where: { userId: { not: null }, createdAt: { gte: last30Start }, ...excludedUserFilter },
         select: { userId: true },
         distinct: ['userId'],
       }),
       // Пользователи, активные в предыдущие 30 дней (31-60 дней назад)
       prisma.analyticsEvent.findMany({
-        where: { userId: { not: null }, createdAt: { gte: prev30Start, lt: last30Start } },
+        where: { userId: { not: null }, createdAt: { gte: prev30Start, lt: last30Start }, ...excludedUserFilter },
         select: { userId: true },
         distinct: ['userId'],
       }),
@@ -278,7 +320,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
 
     const countUsersWithEvent = async (event: string): Promise<number> => {
       const rows = await prisma.analyticsEvent.findMany({
-        where: { event, userId: { not: null }, createdAt: { gte: since } },
+        where: { event, userId: { not: null }, createdAt: { gte: since }, ...excludedUserFilter },
         select: { userId: true },
         distinct: ['userId'],
       })
@@ -311,6 +353,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
           event: 'user_register',
           userId: { not: null },
           createdAt: { gte: registeredBefore, lt: since },
+          ...excludedUserFilter,
         },
         select: { userId: true, createdAt: true },
         distinct: ['userId'],
@@ -337,6 +380,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
           userId: { in: userIds },
           event: { in: RETENTION_EVENTS },
           createdAt: { gte: globalStart, lt: globalEnd },
+          ...excludedUserFilter,
         },
         select: { userId: true, createdAt: true },
       })

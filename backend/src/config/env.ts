@@ -98,6 +98,11 @@ const envSchema = z.object({
   // --- Monitoring ---
   SENTRY_DSN: z.string().optional(),
 
+  // --- Analytics ---
+  // Имена пользователей (через запятую), чьи действия НЕ пишутся в аналитику
+  // и исключаются из всех отчётов (лента, сводка, DAU/MAU, воронка, retention).
+  ANALYTICS_EXCLUDE_USERNAMES: z.string().default("fedor"),
+
   // --- Logging ---
   LOG_DIR: z.string().default("/var/log/tiermaker"),
 
