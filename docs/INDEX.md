@@ -17,6 +17,13 @@
 ## 🛠️ Дополнительные материалы
 - **[Контекстный логгер](LOGGER.md)** — Как работает система логирования.
 - **[Спецификация Аватаров](AVATAR_FEATURE_SPEC.md)** — Детали реализации системы профилей.
+- **[CDN Setup](CDN_SETUP.md)** — Настройка Yandex Cloud CDN + Object Storage.
+- **[Гайд по безопасности](SECURITY_GUIDE.md)** — Аудит безопасности и рекомендации.
+- **[Оптимизация производительности](PERFORMANCE_OPTIMIZATION.md)** — Замеры и оптимизации.
+- **[Сравнение VPS](VPS_COMPARISON.md)** — Выбор хостинга для продакшена.
+- **[Аудит файлов](AUDIT_FILES_GUIDE.md)** — Результаты аудита кодовой базы.
+- **[Swagger API](backend/SWAGGER_DOCS.md)** — Документация по API (Swagger/OpenAPI).
+- **[CHANGELOG](CHANGELOG.md)** — История изменений.
 
 ## 🚀 Как пользоваться этой документацией
 Если вы новый разработчик: начните с **ARCHITECTURE.md** и **FILE_MANIFEST.md**.

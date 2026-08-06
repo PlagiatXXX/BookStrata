@@ -72,7 +72,15 @@ Response: { success: true }
 
 ## AI Provider Integration
 
-### OpenAI DALL-E 3 (Recommended)
+> **Актуальная реализация (2026):** генерация аватаров выполняется через **Pollinations** (`POLLINATIONS_API_KEY` в `avatars/avatar.service.ts`), лимит — 10 генераций в день.
+
+### Pollinations (используется)
+```typescript
+// backend/src/modules/avatars/avatar.service.ts
+// const response = await fetch(`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`)
+```
+
+### OpenAI DALL-E 3 (альтернатива, не используется)
 ```typescript
 // backend/src/modules/avatar/aiproviders/openai.ts
 import OpenAI from 'openai';
@@ -98,12 +106,6 @@ export async function generateAvatar(prompt: string, style: string): Promise<str
 }
 ```
 
-### Stability AI (Alternative)
-```typescript
-// backend/src/modules/avatar/aiproviders/stability.ts
-// Stable Diffusion API for more control
-```
-
 ## Preset System
 
 ### Preset Categories
@@ -113,7 +115,7 @@ export async function generateAvatar(prompt: string, style: string): Promise<str
 4. **Abstract** - Artistic patterns
 
 ### Preset Storage
-- Store in Cloudinary with transformations
+- Store in Cloudinary (или S3-совместимое хранилище / локальную ФС — выбор через `STORAGE_PROVIDER`)
 - Serve multiple sizes: 32x32, 64x64, 128x128, 256x256
 
 ## Frontend Components

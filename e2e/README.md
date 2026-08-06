@@ -60,6 +60,7 @@ e2e/
 │   ├── discussions.spec.ts # 3 сценария
 │   ├── subscriptions.spec.ts # 3 сценария
 │   ├── templates.spec.ts   # 2 сценария
-│   └── search.spec.ts      # 2 сценария
+│   ├── search.spec.ts      # 2 сценария
+│   └── responsive.spec.ts  # адаптивная вёрстка (мобильные/планшеты)
 └── reports/                # HTML-отчёты (создаются после прогона)
 ```

@@ -6,14 +6,14 @@
 ## 2. Стек технологий и требования
 
 ### Системные требования
-- **Node.js**: v18.0.0 или выше.
+- **Node.js**: v20.0 или выше (см. `backend/Dockerfile`).
 - **PostgreSQL**: v14.0 или выше.
 - **Пакетный менеджер**: npm или pnpm.
 
 ### Основной стек
 - **Frontend**: React 19, TypeScript 5.9, Vite 7, TailwindCSS 4, TanStack Query 5.
 - **Backend**: Fastify 5.7, Prisma ORM, Zod, JWT.
-- **Инфраструктура**: Cloudinary (изображения), Google Books API (данные).
+- **Инфраструктура**: Cloudinary (изображения по умолчанию, или S3-совместимое хранилище / локальная ФС через `STORAGE_PROVIDER`), Google Books API (поиск книг), OpenRouter / кастомный AI-провайдер (AI-библиотекарь), Redis (кэш, rate limiting).
 
 ## 3. Модульная структура и логика
 

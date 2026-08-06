@@ -4,8 +4,9 @@
 - **Fastify**: Высокопроизводительный веб-фреймворк для Node.js.
 - **Prisma ORM**: Типобезопасный доступ к базе данных PostgreSQL.
 - **Zod**: Валидация входных данных (body, query, params) и схем ответов.
-- **JWT**: Аутентификация на основе токенов.
-- **Cloudinary SDK**: Интеграция для облачного хранения изображений.
+- **JWT**: Аутентификация на основе токенов (access — 7 дней, refresh — дольше, `token.service.ts`).
+- **Image Storage**: Абстракция `lib/storage` с провайдерами — Cloudinary (по умолчанию), S3-совместимые (в т.ч. Yandex Object Storage), локальная ФС. Выбор через env `STORAGE_PROVIDER`.
+- **Redis**: Кэширование и хранилище rate limiting (`lib/redis.ts`, `RedisRateLimitStore`).
 
 ## 2. Архитектура модулей (`backend/src/modules`)
 Бэкенд разделен на независимые модули, каждый из которых отвечает за свою доменную область.
@@ -28,6 +29,14 @@
 ### Books (`books/`)
 Прокси-слой для поиска книг через Google Books API с кэшированием результатов.
 
+### Прочие модули
+- `collections/`, `celebrities/`, `authors/` — редакционные подборки, страницы знаменитостей и авторов.
+- `ai-librarian/` — ИИ-рекомендации («Букстраж»): провайдеры OpenRouter / кастомный (OpenAI-совместимый) с failover и стримингом, in-memory кэш.
+- `battles/`, `discussions/` (форум и чат), `news/`, `external-news/`, `rss/` — сообщество и контент.
+- `livelib/` — импорт книг из LiveLib.
+- `image-proxy/`, `proxy/` — проксирование внешних изображений и API.
+- `analytics/`, `rankings/` (в `ratings/`), `achievements/`, `subscriptions/`, `donors/`, `sitemap/` — остальные подсистемы.
+
 ## 3. Плагины и Middleware (`backend/src/plugins`)
 - `auth.ts`: Плагин для проверки JWT и прикрепления пользователя к запросу (`request.user`).
 - `requestContext.ts`: Позволяет хранить метаданные запроса, доступные в любой части приложения.
@@ -40,6 +49,7 @@
 - `Tier`: Уровни (S, A, B и т.д.), привязанные к тир-листу.
 - `Book`: Информация о книге (название, автор, обложка).
 - `BookPlacement`: Связующая таблица между книгой, уровнем и позицией.
+- Плюс: `Collection`, `Celebrity`, `Author` (редакционные подборки и знаменитости), `Battle` + `BattleVote`, `Discussion`/`DiscussionMessage` (форум и чат), `NewsArticle`, `Template`, `Donor`, `Achievement`, `AnalyticsEvent`, `BookRating`, `ContentFlag` (модерация) и др.
 
 ## 5. Обработка ошибок
 Используется централизованный механизм обработки ошибок через Fastify hooks. Каждая ошибка возвращает стандартизированный JSON-ответ с кодом ошибки и понятным сообщением.

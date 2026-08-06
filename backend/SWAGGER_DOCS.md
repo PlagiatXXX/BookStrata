@@ -106,7 +106,9 @@ fastify.get('/', handler);
 - `PUT /api/tier-lists/:id` — Обновить
 - `DELETE /api/tier-lists/:id` — Удалить
 - `GET /api/tier-lists/public` — Публичные тир-листы
-- `POST /api/tier-lists/:id/books` — Добавить книги (макс. 20)
+- `POST /api/tier-lists/:id/books` — Добавить книги
+- `POST /api/tier-lists/:id/books/search` — Добавить книгу по данным из внешнего источника
+- `DELETE /api/tier-lists/:id/books/:bookId` — Удалить книгу
 - `PUT /api/tier-lists/:id/placements` — Сохранить позиции
 - `PUT /api/tier-lists/:id/tiers` — Сохранить тиры
 
@@ -147,15 +149,13 @@ Authorization: Bearer <your-jwt-token>
 ## 📊 Лимиты
 
 ### Книги в тир-листе
-- **Бесплатно:** Максимум 20 книг
-- **Pro:** Без ограничений (в разработке)
+- **Без лимитов** — все функции бесплатны, Pro-тариф отменён (страница «Поддержать проект» `/pricing`)
 
 ### AI аватары
-- **Бесплатно:** 10 генераций в день
-- **Pro:** Без ограничений (в разработке)
+- **Лимит:** 10 генераций в день (`DAILY_LIMIT` в `avatars/avatar.service.ts`)
 
 ### Rate Limiting
-- **Лимит:** 100 запросов в минуту
+- **Лимит:** 200 запросов в минуту для авторизованных, 30 для гостей (переопределяется env `RATE_LIMIT_MAX`; fallback на in-memory store без Redis)
 - **Ответ при превышении:** 429 Too Many Requests
 
 ### Размер запроса
@@ -176,7 +176,7 @@ curl -X POST "http://localhost:8080/api/tier-lists" \
   -H "Content-Type: application/json" \
   -d '{"title":"Мои любимые книги 2024"}'
 
-# Добавить книги (макс. 20)
+# Добавить книги
 curl -X POST "http://localhost:8080/api/tier-lists/1/books" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
@@ -258,5 +258,5 @@ curl -X POST "http://localhost:8080/api/tier-lists/1/books" \
 
 ---
 
-**Last Updated:** 13 марта 2026 г.  
+**Last Updated:** 6 августа 2026 г.  
 **Version:** 1.0.0
