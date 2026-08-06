@@ -10,7 +10,7 @@
 
 import { chromium } from "playwright";
 import { createServer } from "http";
-import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, copyFileSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, copyFileSync, readdirSync } from "fs";
 import { resolve, dirname, extname } from "path";
 import { fileURLToPath } from "url";
 
@@ -73,6 +73,7 @@ const ROUTES = [
   { path: "/history",    name: "История" },
   { path: "/what-to-read", name: "Что почитать" },
   { path: "/templates",  name: "Шаблоны" },
+  { path: "/blog",       name: "Блог" },
   { path: "/celebrities", name: "Знаменитости" },
   { path: "/forum",      name: "Форум" },
   { path: "/about",      name: "О проекте" },
@@ -345,6 +346,62 @@ async function addPublicCollectionRoutes() {
   log(`✅ Added ${items.filter(i => i.slug).length} collections to prerender`);
 }
 
+/**
+ * Добавляет страницы статей блога (/blog/:slug) в ROUTES для prerender'а.
+ * Slug'и берутся из .md-файлов в src/content/articles/ — единый источник.
+ */
+async function addBlogArticleRoutes() {
+  const articlesDir = resolve(ROOT, "src", "content", "articles");
+  try {
+    const files = readdirSync(articlesDir).filter((f) => f.endsWith(".md"));
+    if (files.length === 0) {
+      log("⚠️  No blog articles found, skipping");
+      return;
+    }
+    for (const file of files) {
+      const slug = file.replace(/\.md$/, "");
+      const path = `/blog/${slug}`;
+      ROUTES.push({ path, name: `Статья: ${slug}` });
+      log(`  → ${path}`);
+    }
+    log(`✅ Added ${files.length} blog articles to prerender`);
+  } catch (err) {
+    log(`⚠️  Cannot read blog articles directory: ${err.message}`);
+  }
+}
+
+/**
+ * Добавляет страницы новостей (/news/:id) в ROUTES для prerender'а.
+ * Список берётся с бэкенда (только опубликованные).
+ */
+async function addNewsRoutes() {
+  try {
+    log(`📡 Fetching news from ${BACKEND_URL}/api/news…`);
+    const res = await fetch(`${BACKEND_URL}/api/news?limit=200`);
+    if (!res.ok) {
+      log(`⚠️  API responded with ${res.status}, skipping news prerender`);
+      return;
+    }
+    const body = await res.json();
+    const items = body.data || [];
+    if (items.length === 0) {
+      log("⚠️  No published news found, skipping");
+      return;
+    }
+    for (const item of items) {
+      const id = item.id;
+      if (!id) continue;
+      const path = `/news/${id}`;
+      ROUTES.push({ path, name: `Новость: ${item.title || id}` });
+      log(`  → ${path}`);
+    }
+    log(`✅ Added ${items.filter(i => i.id).length} news to prerender`);
+    backendAvailable = true;
+  } catch (err) {
+    log(`⚠️  Cannot reach backend for news (${BACKEND_URL}): ${err.message}`);
+  }
+}
+
 const PORT = 4173;
 const HOST = '127.0.0.1';
 const BASE = `http://${HOST}:${PORT}`;
@@ -568,6 +625,7 @@ async function processRoute(browser, route) {
   const isCollection = route.path.startsWith("/collections/");
   const isCelebrity = route.path.startsWith("/celebrities/");
   const isTopic = route.path.startsWith("/topics/");
+  const isNews = route.path.startsWith("/news/");
   const isRankings = route.path.startsWith("/rankings");
 
   const context = await browser.newContext({
@@ -744,7 +802,7 @@ async function processRoute(browser, route) {
 
     // ── Ждём реальный контент (проверка каждые 500 мс) ──
     // Для динамических страниц (тир-листы, коллекции) даём больше времени
-    const contentTimeout = (isTierList || isCollection || isCelebrity || isTopic) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
+    const contentTimeout = (isTierList || isCollection || isCelebrity || isTopic || isNews) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
     const contentLoaded = await waitForContent(page, contentTimeout, route.path);
 
     // ── Дополнительно ждём обновления title (useEffect SEOHead) ──
@@ -1103,11 +1161,14 @@ async function prerender() {
       return;
     }
 
-    // Получаем публичные тир-листы, коллекции, знаменитостей и темы для prerender'а (если бэкенд доступен)
+    // Получаем публичные тир-листы, коллекции, знаменитостей, темы,
+    // статьи блога и новости для prerender'а (если бэкенд доступен)
     await addPublicTierListRoutes();
     await addPublicCelebrityRoutes();
     await addPublicCollectionRoutes();
     await addTopicRoutes();
+    await addBlogArticleRoutes();
+    await addNewsRoutes();
 
     // Параллельная обработка страниц (CONCURRENCY за раз)
     for (let i = 0; i < ROUTES.length; i += CONCURRENCY) {

@@ -47,6 +47,8 @@ export default function BlogArticlePage() {
         title={meta.title}
         description={meta.description}
         url={`/blog/${meta.slug}`}
+        type="article"
+        publishedTime={meta.date}
         breadcrumbs={[
           { name: "Главная", url: "/" },
           { name: "Блог", url: "/blog" },
