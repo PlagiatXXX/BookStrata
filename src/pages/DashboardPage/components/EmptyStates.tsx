@@ -10,6 +10,9 @@ export function EmptyStates({
   onCreateClick,
   onClearSearch,
   error,
+  emptyTitle = "У вас еще нет тир-листов",
+  emptyDescription = "Начните с создания первого рейтинга",
+  emptyActionLabel = "Создать первый тир-лист",
 }: EmptyStatesProps) {
   // Загрузка
   if (isLoading) {
@@ -67,14 +70,14 @@ export function EmptyStates({
     return (
       <div className="dashboard-state dashboard-state--centered">
         <List size={56} />
-        <h2>У вас еще нет тир-листов</h2>
-        <p>Начните с создания первого рейтинга</p>
+        <h2>{emptyTitle}</h2>
+        <p>{emptyDescription}</p>
         <button
           onClick={onCreateClick}
           className="dashboard-btn dashboard-btn--primary"
           type="button"
         >
-          Создать первый тир-лист
+          {emptyActionLabel}
         </button>
       </div>
     );

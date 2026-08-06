@@ -73,6 +73,12 @@ export interface EmptyStatesProps {
   onCreateClick: () => void;
   onClearSearch: () => void;
   error?: Error | null;
+  /** Кастомный заголовок для пустого списка (по умолчанию — «У вас еще нет тир-листов») */
+  emptyTitle?: string;
+  /** Кастомное описание для пустого списка */
+  emptyDescription?: string;
+  /** Кастомный текст кнопки создания */
+  emptyActionLabel?: string;
 }
 
 export interface CreateModalProps {

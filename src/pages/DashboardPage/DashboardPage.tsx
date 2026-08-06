@@ -10,6 +10,9 @@ import { DashboardAchievements } from "@/components/DashboardHeroSection/compone
 import { TrendingNow } from "@/components/DashboardHeroSection/components/TrendingNow";
 import { TierListGrid } from "./components/TierListGrid";
 import { BookCard } from "./components/BookCard";
+import { EmptyStates } from "./components/EmptyStates";
+import { CreateTierListModal } from "./components/CreateTierListModal";
+import { useTierListActions } from "./hooks/useTierListActions";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { SkeletonGrid, SkeletonCard } from "@/ui/Skeleton";
 import { AiLibrarianCard } from "@/components/AiLibrarian/AiLibrarianCard";
@@ -47,6 +50,8 @@ export default function DashboardPage() {
   const [viewingBook, setViewingBook] = useState<MyBook | null>(null);
   const [showBooks, setShowBooks] = useState(true);
   const [isAiLibrarianOpen, setIsAiLibrarianOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createTitle, setCreateTitle] = useState("");
 
   // Data fetching - User stats
   const { data: stats } = useQuery({
@@ -113,9 +118,32 @@ export default function DashboardPage() {
     navigate("/", { replace: true });
   }, [logout, navigate]);
 
-  const handleCreateTierList = useCallback(() => {
-    navigate(isGuest ? "/auth?mode=register" : "/templates");
-  }, [navigate, isGuest]);
+  // Открытие модалки создания: гостя — на регистрацию, авторизованного — на ввод названия
+  const openCreateModal = useCallback(() => {
+    if (isGuest) {
+      navigate("/auth?mode=register");
+      return;
+    }
+    setCreateTitle("");
+    setIsCreateModalOpen(true);
+  }, [isGuest, navigate]);
+
+  // После создания — сразу в редактор нового тир-листа (минуя /templates)
+  const handleCreateSuccess = useCallback(
+    (tierListId?: string) => {
+      setIsCreateModalOpen(false);
+      setCreateTitle("");
+      if (tierListId) {
+        navigate(`/tier-lists/${tierListId}`);
+      }
+    },
+    [navigate],
+  );
+
+  const { createNewTierList, isCreating } = useTierListActions({
+    onSuccess: handleCreateSuccess,
+    onRefetch: () => {},
+  });
 
   const handleCommunityClick = useCallback(() => navigate("/community"), [navigate]);
 
@@ -149,7 +177,7 @@ export default function DashboardPage() {
       <section className="dashboard-home">
         <MemoizedDashboardHeader
           username={isGuest ? "Гость" : (user?.username || "")}
-          onCreateClick={handleCreateTierList}
+          onCreateClick={openCreateModal}
           onCommunityClick={handleCommunityClick}
           onLogoutClick={handleLogout}
         />
@@ -205,7 +233,34 @@ export default function DashboardPage() {
                     {isTierListsLoading ? (
                       <SkeletonGrid count={6} />
                     ) : filteredTierLists.length === 0 ? (
-                      <p className="text-[#94a3b8] text-sm">Нет тир-листов</p>
+                      <EmptyStates
+                        isLoading={false}
+                        hasError={false}
+                        hasSearchQuery={false}
+                        isEmpty={true}
+                        onRetry={() => {}}
+                        onCreateClick={openCreateModal}
+                        onClearSearch={() => {}}
+                        emptyTitle={
+                          activeStat === 'tierlists'
+                            ? 'У вас ещё нет тир-листов'
+                            : activeStat === 'published'
+                              ? 'Опубликованных тир-листов пока нет'
+                              : 'Черновиков пока нет'
+                        }
+                        emptyDescription={
+                          activeStat === 'tierlists'
+                            ? 'Создайте первый рейтинг — добавьте книги и расставьте их по блокам S, A, B, C, D'
+                            : activeStat === 'published'
+                              ? 'Создайте тир-лист и опубликуйте его, чтобы поделиться вкусом с читателями'
+                              : 'Создайте тир-лист — он появится здесь, пока вы его не опубликуете'
+                        }
+                        emptyActionLabel={
+                          activeStat === 'tierlists'
+                            ? 'Создать первый тир-лист'
+                            : 'Создать тир-лист'
+                        }
+                      />
                     ) : (
                       <TierListGrid
                         tierLists={filteredTierLists}
@@ -289,6 +344,15 @@ export default function DashboardPage() {
       <AiLibrarianModal
         isOpen={isAiLibrarianOpen}
         onClose={() => setIsAiLibrarianOpen(false)}
+      />
+
+      <CreateTierListModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={createNewTierList}
+        createTitle={createTitle}
+        onTitleChange={setCreateTitle}
+        isPending={isCreating}
       />
     </DashboardLayout>
     </>

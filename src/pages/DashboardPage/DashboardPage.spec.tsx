@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import DashboardPage from "./DashboardPage";
 import * as userApiModule from "@/lib/userApi";
 import * as authContextModule from "@/hooks/useAuthContext";
+import * as tierListApiModule from "@/lib/tierListApi";
 import type { Mock } from "vitest";
 
 const { mockNavigate } = vi.hoisted(() => ({
@@ -19,6 +20,16 @@ vi.mock("@/lib/userApi", () => ({
   apiGetMyTierLists: vi.fn(),
   apiGetMyBooks: vi.fn(),
 }));
+
+vi.mock("@/lib/tierListApi", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/tierListApi")>(
+    "@/lib/tierListApi",
+  );
+  return {
+    ...actual,
+    createTierList: vi.fn(),
+  };
+});
 
 vi.mock("@/hooks/useAuthContext", () => ({
   useAuth: vi.fn(),
@@ -180,12 +191,71 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Панель управления")).toBeInTheDocument();
   });
 
-  it("должен переходить в библиотеку при клике 'Создать тир-лист'", () => {
+  it("должен открывать модалку создания при клике 'Создать тир-лист' в шапке", () => {
     render(<DashboardPage />, { wrapper: createWrapper() });
 
     fireEvent.click(screen.getByText("Создать тир-лист"));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/templates");
+    expect(screen.getByText("Создать новый тир-лист")).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalledWith("/templates");
+  });
+
+  it("должен показывать CTA и открывать модалку при пустом списке тир-листов", async () => {
+    vi.mocked(userApiModule.apiGetMyTierLists as Mock).mockResolvedValue({
+      data: [],
+      meta: { totalItems: 0, itemCount: 0, itemsPerPage: 100, totalPages: 0, currentPage: 1 },
+    });
+
+    render(<DashboardPage />, { wrapper: createWrapper() });
+
+    fireEvent.click(screen.getByText("Создано тир-листов"));
+
+    await waitFor(() => {
+      expect(screen.getByText("У вас ещё нет тир-листов")).toBeInTheDocument();
+      expect(screen.getByText("Создать первый тир-лист")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Создать первый тир-лист"));
+
+    expect(screen.getByText("Создать новый тир-лист")).toBeInTheDocument();
+  });
+
+  it("должен создавать тир-лист по названию и переходить в его редактор", async () => {
+    vi.mocked(userApiModule.apiGetMyTierLists as Mock).mockResolvedValue({
+      data: [],
+      meta: { totalItems: 0, itemCount: 0, itemsPerPage: 100, totalPages: 0, currentPage: 1 },
+    });
+    vi.mocked(tierListApiModule.createTierList as Mock).mockResolvedValue({
+      id: "1",
+      title: "Мой рейтинг",
+      year: null,
+      isPublic: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      user: { id: 1, username: "testuser" },
+      likesCount: 0,
+      tiers: [],
+      unrankedBooks: [],
+    });
+
+    render(<DashboardPage />, { wrapper: createWrapper() });
+
+    fireEvent.click(screen.getByText("Создано тир-листов"));
+    await waitFor(() => {
+      expect(screen.getByText("У вас ещё нет тир-листов")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Создать первый тир-лист"));
+
+    fireEvent.change(screen.getByLabelText("Название тир-листа"), {
+      target: { value: "Мой рейтинг" },
+    });
+    fireEvent.click(screen.getByText("Создать"));
+
+    await waitFor(() => {
+      expect(tierListApiModule.createTierList).toHaveBeenCalledWith("Мой рейтинг");
+      expect(mockNavigate).toHaveBeenCalledWith("/tier-lists/1");
+    });
   });
 
   it("должен переходить на страницу сообщества при клике 'Смотреть тренды'", () => {
