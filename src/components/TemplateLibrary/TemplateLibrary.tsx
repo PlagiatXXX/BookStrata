@@ -448,6 +448,10 @@ const TemplateLibrary: React.FC = () => {
         title="Тир-листы книг — рейтинги и визуальные подборки"
         description="Тир-листы BookStrata — рейтинги книг по жанрам, настроению и темам. Создавайте и публикуйте собственные подборки, находите вдохновение в работах сообщества."
         url="/templates"
+        breadcrumbs={[
+          { name: "Главная", url: "/" },
+          { name: "Тир-листы", url: "/templates" },
+        ]}
       />
       <Header
         onMyRatingsClick={handleGoBack}

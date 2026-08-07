@@ -552,7 +552,7 @@ export const BookSearchModal = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center">
+      <div className="fixed inset-0 z-60 flex items-center justify-center">
         {/* Overlay */}
         <div
           className="absolute inset-0 cursor-pointer bg-black/75"
@@ -600,7 +600,7 @@ export const BookSearchModal = ({
             <button
               type="button"
               onClick={() => setActiveTab("search")}
-              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
+              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
                 activeTab === "search"
                   ? "bg-(--theme-accent-primary) text-(--theme-on-accent)"
                   : "text-(--theme-text-muted) hover:text-(--theme-text)"
@@ -613,7 +613,7 @@ export const BookSearchModal = ({
             <button
               type="button"
               onClick={() => setActiveTab("livelib")}
-              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
+              className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
                 activeTab === "livelib"
                   ? "bg-(--theme-accent-primary) text-(--theme-on-accent)"
                   : "text-(--theme-text-muted) hover:text-(--theme-text)"
@@ -628,7 +628,7 @@ export const BookSearchModal = ({
               <button
                 type="button"
                 onClick={() => setActiveTab("upload")}
-                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
+                className={`flex cursor-pointer items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none ${
                   activeTab === "upload"
                     ? "bg-(--theme-accent-primary) text-(--theme-on-accent)"
                     : "text-(--theme-text-muted) hover:text-(--theme-text)"
@@ -713,7 +713,7 @@ export const BookSearchModal = ({
           )}
 
           {/* Results */}
-          <div className="max-h-[55dvh] min-h-[250px] overflow-y-auto bg-(--theme-surface-3) p-5">
+          <div className="max-h-[55dvh] min-h-62.5 overflow-y-auto bg-(--theme-surface-3) p-5">
             {activeTab === "search" && (
               <>
                 {/* Toolbar */}

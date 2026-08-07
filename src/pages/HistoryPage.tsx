@@ -24,6 +24,10 @@ export default function HistoryPage() {
         title="История проекта BookStrata"
         description="Как появился BookStrata — история создания социальной сети для читателей. Личный рассказ основателя проекта."
         url="/history"
+        breadcrumbs={[
+          { name: "Главная", url: "/" },
+          { name: "История проекта", url: "/history" },
+        ]}
       />
 
       {/* ======== ОБЪЕДИНЁННЫЙ HERO + КОНТЕНТ ======== */}
