@@ -1,5 +1,4 @@
 import type { ImageStorageService, UploadResult } from './types.js'
-import { CloudinaryStorage } from './cloudinary-storage.js'
 import { createLogger } from '../logger.js'
 import { config } from '../../config/env.js'
 
@@ -12,8 +11,7 @@ const provider = config.STORAGE_PROVIDER
 let storage: ImageStorageService
 
 switch (provider) {
-  case 's3':
-  case 'yandex': {
+  case 's3': {
     logger.info('Using S3-compatible storage')
     const { S3Storage } = await import('./s3-storage.js')
     storage = new S3Storage()
@@ -25,11 +23,12 @@ switch (provider) {
     storage = new LocalStorage()
     break
   }
-  case 'cloudinary':
   default: {
-    logger.info('Using Cloudinary storage')
-    storage = new CloudinaryStorage()
-    break
+    logger.error(
+      `Unknown STORAGE_PROVIDER="${provider}", falling back to S3 storage`,
+    )
+    const { S3Storage } = await import('./s3-storage.js')
+    storage = new S3Storage()
   }
 }
 

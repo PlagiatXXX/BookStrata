@@ -71,26 +71,20 @@ const envSchema = z.object({
 
   // --- Image Storage ---
   STORAGE_PROVIDER: z
-    .enum(["cloudinary", "s3", "yandex", "local"])
-    .default("cloudinary"),
+    .enum(["s3", "local"])
+    .default("s3"),
   UPLOADS_DIR: z.string().optional(),
   UPLOADS_BASE_URL: z.string().default("/uploads"),
-
-  // --- Cloudinary ---
-  CLOUDINARY_URL: z.string().optional(),
-  CLOUDINARY_CLOUD_NAME: z.string().optional(),
-  CLOUDINARY_API_KEY: z.string().optional(),
-  CLOUDINARY_API_SECRET: z.string().optional(),
 
   // --- S3 ---
   S3_BUCKET: z.string().optional(),
   S3_ENDPOINT: z
     .string()
-    .default("https://storage.yandexcloud.net"),
-  S3_REGION: z.string().default("ru-central1"),
+    .default("https://s3.twcstorage.ru"),
+  S3_REGION: z.string().default("ru-1"),
   S3_ACCESS_KEY_ID: z.string().default(""),
   S3_SECRET_ACCESS_KEY: z.string().default(""),
-  S3_PUBLIC_HOST: z.string().default("storage.yandexcloud.net"),
+  S3_PUBLIC_HOST: z.string().default("s3.twcstorage.ru"),
   /** Хост CDN, зеркалирующий S3-бакет (для раздачи изображений клиентам).
    *  CDN глобально доступен, в отличие от raw-S3 (недоступен из-за VPN/гео). */
   CDN_PUBLIC_HOST: z.string().default("re406cj9uj.cdn.twcstorage.ru"),
@@ -102,6 +96,13 @@ const envSchema = z.object({
   // Имена пользователей (через запятую), чьи действия НЕ пишутся в аналитику
   // и исключаются из всех отчётов (лента, сводка, DAU/MAU, воронка, retention).
   ANALYTICS_EXCLUDE_USERNAMES: z.string().default("fedor"),
+
+  // --- NSFW-проверка (серверная) ---
+  NSFW_CHECK_ENABLED: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
+  NSFW_THRESHOLD: z.coerce.number().min(0).max(1).default(0.8),
 
   // --- Logging ---
   LOG_DIR: z.string().default("/var/log/tiermaker"),

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
-import { uploadBase64 } from "../../lib/cloudinary.js";
+import { uploadBase64 } from "../../lib/upload.js";
 import { validateImageSize } from "../../lib/validators.js";
 import { createApiError, ErrorCodes } from "../../lib/api-response.js";
 import { prisma } from "../../lib/prisma.js";

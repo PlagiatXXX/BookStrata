@@ -134,7 +134,8 @@ export const BookRow = memo(function BookRow({
             src={book.coverImageUrl}
             alt=""
             onError={(e) => {
-              e.currentTarget.style.display = "none";
+              const img = e.currentTarget;
+              if (img) img.style.display = "none";
             }}
           />
         </div>

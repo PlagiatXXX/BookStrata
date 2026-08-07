@@ -24,10 +24,6 @@ import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { AiLibrarianWidget } from "@/components/AiLibrarian/AiLibrarianWidget";
 import { AiRecommendationPrompt } from "@/components/AiLibrarian/AiRecommendationPrompt";
-import { useNsfwCheck } from "@/hooks/useNsfwCheck";
-import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning";
-import { apiCreateFlag } from "@/lib/moderationApi";
-import type { NsfwResult } from "@/hooks/useNsfwCheck";
 import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";
 
@@ -134,13 +130,6 @@ const TierListEditorContent = () => {
 
   const handleAiLibrarianOpen = useCallback(() => setAiLibrarianOpen(true), []);
   const handleAiLibrarianClose = useCallback(() => setAiLibrarianOpen(false), []);
-
-  const [bookNsfwState, setBookNsfwState] = useState<{
-    checking: boolean;
-    result: NsfwResult | null;
-    pendingFiles: File[] | null;
-  }>({ checking: false, result: null, pendingFiles: null })
-  const { checkImage } = useNsfwCheck()
 
   // Заменяем UUID на slug в URL после загрузки данных
   useEffect(() => {
@@ -447,44 +436,8 @@ const TierListEditorContent = () => {
   const handleUploadBooks = useCallback(async (files: File[]) => {
     if (files.length === 0) return
 
-    setBookNsfwState({ checking: true, result: null, pendingFiles: files })
-
-    try {
-      const results = await Promise.all(files.map((f) => checkImage(f)))
-      const nsfwResult = results.find((r) => r.isNsfw)
-
-      if (nsfwResult) {
-        setBookNsfwState({ checking: false, result: nsfwResult, pendingFiles: files })
-        return
-      }
-
-      setBookNsfwState({ checking: false, result: null, pendingFiles: null })
-      await processBookFiles(files)
-    } catch {
-      setBookNsfwState({ checking: false, result: null, pendingFiles: null })
-      await processBookFiles(files)
-    }
-  }, [checkImage, processBookFiles])
-
-  const handleBookNsfwOverride = useCallback(() => {
-    if (bookNsfwState.pendingFiles) {
-      const maxScore = bookNsfwState.result
-        ? Math.max(...bookNsfwState.result.predictions.map((p) => p.probability))
-        : null
-      apiCreateFlag({
-        imageUrl: bookNsfwState.pendingFiles[0]?.name ?? "unknown",
-        flagType: "book-cover",
-        targetId: tierListId,
-        nsfwScore: maxScore,
-      }).catch(() => {})
-      processBookFiles(bookNsfwState.pendingFiles)
-    }
-    setBookNsfwState({ checking: false, result: null, pendingFiles: null })
-  }, [bookNsfwState.pendingFiles, bookNsfwState.result, processBookFiles, tierListId])
-
-  const handleBookNsfwDismiss = useCallback(() => {
-    setBookNsfwState({ checking: false, result: null, pendingFiles: null })
-  }, [])
+    await processBookFiles(files)
+  }, [processBookFiles])
 
   const pendingDeletedBooksRef = useRef<Map<string, PendingDeletedBook>>(
     new Map(),
@@ -953,16 +906,6 @@ const TierListEditorContent = () => {
           <AiLibrarianWidget onClick={handleAiLibrarianOpen} />
         </div>
       )}
-
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-sm w-full px-4">
-        <NsfwWarning
-          isChecking={bookNsfwState.checking}
-          isNsfw={bookNsfwState.result?.isNsfw ?? false}
-          predictions={bookNsfwState.result?.predictions}
-          onOverride={handleBookNsfwOverride}
-          onDismiss={handleBookNsfwDismiss}
-        />
-      </div>
     </EditorScreens>
     </>
   );

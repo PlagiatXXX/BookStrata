@@ -3,11 +3,8 @@ import { ImagePlus } from "lucide-react"
 import { sileo } from "sileo"
 import { uploadTierListCover } from "@/lib/tierListApi"
 import { TierListCover } from "@/components/DashboardHeroSection/components/TierListCover"
-import { useNsfwCheck } from "@/hooks/useNsfwCheck"
-import { NsfwWarning } from "@/components/NsfwWarning/NsfwWarning"
-import { apiCreateFlag } from "@/lib/moderationApi"
-import type { NsfwResult } from "@/hooks/useNsfwCheck"
 
+// NSFW-проверка обложки выполняется на сервере при загрузке.
 interface TierListCoverEditorProps {
   tierListId: string
   coverImageUrl?: string | null
@@ -34,13 +31,6 @@ export function TierListCoverEditor({
   const canEdit = !isReadOnly && isOwner
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
-  const [nsfwState, setNsfwState] = useState<{
-    checking: boolean;
-    result: NsfwResult | null;
-    pendingFile: File | null;
-  }>({ checking: false, result: null, pendingFile: null })
-
-  const { checkImage } = useNsfwCheck()
 
   const doUpload = async (file: File) => {
     setUploading(true)
@@ -48,8 +38,12 @@ export function TierListCoverEditor({
       const result = await uploadTierListCover(tierListId, file)
       onCoverUpdated(result.coverImageUrl)
       sileo.success({ title: "Обложка обновлена" })
-    } catch {
-      sileo.error({ title: "Ошибка загрузки" })
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Ошибка загрузки. Изображение не прошло проверку или превышает лимит."
+      sileo.error({ title: message })
     } finally {
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ""
@@ -65,44 +59,7 @@ export function TierListCoverEditor({
       return
     }
 
-    setNsfwState({ checking: true, result: null, pendingFile: file })
-
-    try {
-      const result = await checkImage(file)
-
-      if (result.isNsfw) {
-        setNsfwState({ checking: false, result, pendingFile: file })
-        return
-      }
-
-      setNsfwState({ checking: false, result: null, pendingFile: null })
-      await doUpload(file)
-    } catch {
-      setNsfwState({ checking: false, result: null, pendingFile: null })
-      await doUpload(file)
-    }
-  }
-
-  const handleNsfwOverride = () => {
-    if (nsfwState.pendingFile) {
-      const maxScore = nsfwState.result
-        ? Math.max(...nsfwState.result.predictions.map((p) => p.probability))
-        : null
-      apiCreateFlag({
-        imageUrl: nsfwState.pendingFile.name,
-        flagType: "tier-cover",
-        targetId: tierListId,
-        nsfwScore: maxScore,
-      }).catch(() => {})
-      doUpload(nsfwState.pendingFile)
-    }
-    setNsfwState({ checking: false, result: null, pendingFile: null })
-    if (inputRef.current) inputRef.current.value = ""
-  }
-
-  const handleNsfwDismiss = () => {
-    setNsfwState({ checking: false, result: null, pendingFile: null })
-    if (inputRef.current) inputRef.current.value = ""
+    await doUpload(file)
   }
 
   return (
@@ -147,16 +104,6 @@ export function TierListCoverEditor({
             />
           </>
         )}
-      </div>
-
-      <div className="mt-3">
-        <NsfwWarning
-          isChecking={nsfwState.checking}
-          isNsfw={nsfwState.result?.isNsfw ?? false}
-          predictions={nsfwState.result?.predictions}
-          onOverride={handleNsfwOverride}
-          onDismiss={handleNsfwDismiss}
-        />
       </div>
     </div>
   )

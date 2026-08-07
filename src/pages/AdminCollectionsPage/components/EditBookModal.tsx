@@ -84,7 +84,8 @@ export function EditBookModal({ editForm, onFieldChange, onSave, onClose }: Edit
                   src={editForm.coverImageUrl}
                   alt=""
                   onError={(e) => {
-                    e.currentTarget.style.display = "none";
+                    const img = e.currentTarget;
+                    if (img) img.style.display = "none";
                   }}
                 />
               </div>

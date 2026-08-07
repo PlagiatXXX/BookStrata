@@ -48,16 +48,4 @@ export async function setupApiMocks(page: Page) {
       }),
     });
   });
-
-  // Cloudinary upload (frontend direct)
-  await page.route("*/**/cloudinary*/upload*", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        secure_url: "https://example.com/mocked-upload.jpg",
-        public_id: "mocked_upload",
-      }),
-    });
-  });
 }

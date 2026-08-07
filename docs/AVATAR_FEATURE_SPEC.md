@@ -12,7 +12,7 @@ model User {
   id            Int        @id @default(autoincrement())
   email         String     @unique
   username      String?    @unique
-  avatar_url    String?    // NEW: Avatar URL (Cloudinary/S3)
+  avatar_url    String?    // NEW: Avatar URL (S3/CDN)
   password_hash String
   tier_lists    TierList[]
   templates     Template[]
@@ -115,7 +115,7 @@ export async function generateAvatar(prompt: string, style: string): Promise<str
 4. **Abstract** - Artistic patterns
 
 ### Preset Storage
-- Store in Cloudinary (или S3-совместимое хранилище / локальную ФС — выбор через `STORAGE_PROVIDER`)
+- Store in S3-compatible storage / local FS — выбор через `STORAGE_PROVIDER`
 - Serve multiple sizes: 32x32, 64x64, 128x128, 256x256
 
 ## Frontend Components
@@ -290,9 +290,12 @@ export function getInitials(username?: string | null): string {
 ```env
 # Backend (.env)
 OPENAI_API_KEY=sk-...
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
+STORAGE_PROVIDER=s3
+S3_BUCKET=...
+S3_ACCESS_KEY_ID=...
+S3_SECRET_ACCESS_KEY=...
+S3_PUBLIC_HOST=s3.twcstorage.ru
+CDN_PUBLIC_HOST=...
 ```
 
 ## Implementation Priority

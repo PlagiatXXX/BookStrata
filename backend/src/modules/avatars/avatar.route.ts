@@ -3,7 +3,8 @@ import type { FastifyInstance } from "fastify";
 import { generateAvatar, getAvatarLimit } from "./avatar.service.js";
 import { updateAvatar as updateUserAvatar } from "../users/users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
-import { uploadBase64, uploadFromUrl } from "../../lib/cloudinary.js";
+import { uploadBase64, uploadFromUrl } from "../../lib/upload.js";
+import { assertImageAllowed } from "../../lib/nsfw-check.js";
 import { validateImageSize } from "../../lib/validators.js";
 import { createApiError, ErrorCodes } from "../../lib/api-response.js";
 import {
@@ -65,7 +66,7 @@ export async function avatarRoutes(fastify: FastifyInstance) {
         return reply.code(401).send({ error: "Unauthorized" });
       }
 
-      // Валидация размера base64 перед отправкой в Cloudinary
+      // Валидация размера base64 перед отправкой в хранилище
       if (avatar.startsWith("data:")) {
         const sizeError = validateImageSize(avatar);
         if (sizeError) {
@@ -74,12 +75,18 @@ export async function avatarRoutes(fastify: FastifyInstance) {
       }
 
       // Если это локальный preset (относительный путь), сохраняем напрямую в БД
-      const isLocalPreset = avatar.startsWith("/avatars/");
-      const finalAvatarUrl = isLocalPreset
-        ? avatar
-        : avatar.startsWith("data:")
-          ? (await uploadBase64(avatar, "tiermaker-pro/avatars")).url
-          : (await uploadFromUrl(avatar, "tiermaker-pro/avatars")).url;
+      let finalAvatarUrl: string;
+      if (avatar.startsWith("/avatars/")) {
+        finalAvatarUrl = avatar;
+      } else if (avatar.startsWith("data:")) {
+        const nsfwError = await assertImageAllowed(avatar);
+        if (nsfwError) {
+          return reply.code(400).send(createApiError(ErrorCodes.NSFW_CONTENT, nsfwError));
+        }
+        finalAvatarUrl = (await uploadBase64(avatar, "tiermaker-pro/avatars")).url;
+      } else {
+        finalAvatarUrl = (await uploadFromUrl(avatar, "tiermaker-pro/avatars")).url;
+      }
 
       const user = await updateUserAvatar(userId, finalAvatarUrl);
 

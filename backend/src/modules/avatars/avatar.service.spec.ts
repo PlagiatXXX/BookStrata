@@ -9,12 +9,12 @@ vi.mock("../../lib/prisma.js", () => ({
   },
 }));
 
-vi.mock("../../lib/cloudinary.js", () => ({
+vi.mock("../../lib/upload.js", () => ({
   uploadFromUrl: vi.fn(),
 }));
 
 import * as avatarService from "./avatar.service.js";
-import { uploadFromUrl } from "../../lib/cloudinary.js";
+import { uploadFromUrl } from "../../lib/upload.js";
 import { prisma } from "../../lib/prisma.js";
 
 process.env.POLLINATIONS_API_KEY = "test-pollinations-key";
@@ -26,7 +26,7 @@ describe("avatar.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(uploadFromUrl).mockResolvedValue({
-      url: "https://res.cloudinary.com/test/image.webp",
+      url: "https://storage.example.com/test/image.webp",
       publicId: "test_id",
     });
   });
@@ -97,9 +97,9 @@ describe("avatar.service", () => {
       );
     });
 
-    it("proxies the Pollinations URL through Cloudinary to hide the API key", async () => {
+    it("proxies the Pollinations URL through the storage to hide the API key", async () => {
       const prompt = "cyberpunk portrait with neon glasses";
-      const mockCloudinaryUrl = "https://res.cloudinary.com/demo/image/upload/v1/generated.webp";
+      const mockStoredUrl = "https://storage.example.com/demo/image/upload/v1/generated.webp";
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
@@ -107,12 +107,12 @@ describe("avatar.service", () => {
         lastAvatarResetAt: new Date(),
       } as never);
       vi.mocked(prisma.user.update).mockResolvedValue({} as never);
-      vi.mocked(uploadFromUrl).mockResolvedValue({ url: mockCloudinaryUrl, publicId: "test" });
+      vi.mocked(uploadFromUrl).mockResolvedValue({ url: mockStoredUrl, publicId: "test" });
 
       const result = await avatarService.generateAvatar(prompt, mockUserId);
 
       expect(result.success).toBe(true);
-      expect(result.imageUrl).toBe(mockCloudinaryUrl);
+      expect(result.imageUrl).toBe(mockStoredUrl);
 
       // Verify that uploadFromUrl was called with the correct Pollinations URL (including key)
       expect(uploadFromUrl).toHaveBeenCalledWith(
@@ -123,13 +123,13 @@ describe("avatar.service", () => {
       expect(callUrl).toContain(`key=test-pollinations-key`);
     });
 
-    it("does not increment the counter if Cloudinary upload fails", async () => {
+    it("does not increment the counter if upload fails", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,
         aiAvatarsGenerated: 5,
         lastAvatarResetAt: new Date(),
       } as never);
-      vi.mocked(uploadFromUrl).mockRejectedValue(new Error("Cloudinary error"));
+      vi.mocked(uploadFromUrl).mockRejectedValue(new Error("Upload error"));
 
       const result = await avatarService.generateAvatar("test prompt", mockUserId);
 

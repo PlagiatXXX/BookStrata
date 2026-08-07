@@ -71,7 +71,8 @@ function PresetImage({ preset }: PresetImageProps) {
       alt={preset.name}
       className="w-full h-full object-cover"
       onError={(event) => {
-        const target = event.target as HTMLImageElement;
+        const target = (event.currentTarget ?? (event.target as HTMLImageElement | null)) as HTMLImageElement | null;
+        if (!target) return;
         target.style.display = "none";
         const parent = target.parentElement;
         if (parent && !parent.querySelector(".avatar-fallback")) {

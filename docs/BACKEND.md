@@ -5,7 +5,7 @@
 - **Prisma ORM**: Типобезопасный доступ к базе данных PostgreSQL.
 - **Zod**: Валидация входных данных (body, query, params) и схем ответов.
 - **JWT**: Аутентификация на основе токенов (access — 7 дней, refresh — дольше, `token.service.ts`).
-- **Image Storage**: Абстракция `lib/storage` с провайдерами — Cloudinary (по умолчанию), S3-совместимые (в т.ч. Yandex Object Storage), локальная ФС. Выбор через env `STORAGE_PROVIDER`.
+- **Image Storage**: Абстракция `lib/storage` с провайдерами — S3-совместимые (по умолчанию `s3`, Timeweb Cloud S3), локальная ФС. Выбор через env `STORAGE_PROVIDER`.
 - **Redis**: Кэширование и хранилище rate limiting (`lib/redis.ts`, `RedisRateLimitStore`).
 
 ## 2. Архитектура модулей (`backend/src/modules`)

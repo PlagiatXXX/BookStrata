@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
-import { uploadBase64 } from "../../lib/cloudinary.js";
+import { uploadBase64 } from "../../lib/upload.js";
 import { validateImageSize } from "../../lib/validators.js";
 import { createApiError, ErrorCodes } from "../../lib/api-response.js";
 import * as service from "./collection.service.js";
@@ -188,7 +188,7 @@ export async function collectionRoutes(fastify: FastifyInstance) {
         return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Invalid image format"));
       }
 
-      // Валидация размера перед отправкой в Cloudinary
+      // Валидация размера перед отправкой в хранилище
       const sizeError = validateImageSize(coverImageUrl);
       if (sizeError) {
         return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, sizeError));

@@ -122,7 +122,7 @@ export async function apiGetTasteMatch(userId: string): Promise<TasteMatchResult
 }
 
 export async function apiUploadAvatar(base64Image: string): Promise<User> {
-  userLogger.info("Загрузка аватара на Cloudinary");
+  userLogger.info("Загрузка аватара");
   const result = await apiClient.post<{ success: boolean; avatarUrl: string; user: User }>(
     "/avatars/upload",
     { avatar: base64Image }

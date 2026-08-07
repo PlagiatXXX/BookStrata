@@ -2,6 +2,25 @@ import { useCallback, useEffect, useRef } from "react";
 import type { ImgHTMLAttributes, SyntheticEvent } from "react";
 import { useRetryableImage } from "@/hooks/useRetryableImage";
 
+/** Событие ошибки после исчерпания ретраев: у нового `Event` нет currentTarget,
+ *  поэтому переносим актуальный DOM-узел, чтобы onError-обработчики могли
+ *  обратиться к обложке (скрыть её и показать фолбэк). */
+function createExhaustedEvent(img: HTMLImageElement | null): SyntheticEvent<HTMLImageElement> {
+  return {
+    currentTarget: img,
+    target: img,
+    nativeEvent: new Event("error"),
+    type: "error",
+    bubbles: false,
+    cancelable: false,
+    defaultPrevented: false,
+    preventDefault() {},
+    stopPropagation() {},
+    isPropagationStopped: () => false,
+    timeStamp: 0,
+  } as unknown as SyntheticEvent<HTMLImageElement>;
+}
+
 interface RetryableImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "onError" | "onLoad"> {
   src?: string | null;
   /** Сколько повторных попыток загрузки (по умолчанию 2) */
@@ -34,6 +53,9 @@ export function RetryableImage({
 }: RetryableImageProps) {
   const { imgSrc, handleError, handleLoad, failed } = useRetryableImage(src ?? null, maxRetries);
 
+  // DOM-узел текущего <img> — для onError-обработчиков после исчерпания ретраев
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
   // Один вызов onError/onExhausted после исчерпания попыток
   const notifiedRef = useRef(false);
   useEffect(() => {
@@ -44,7 +66,7 @@ export function RetryableImage({
     if (notifiedRef.current) return;
     notifiedRef.current = true;
     if (fallbackSrc) return;
-    onError?.(new Event("error") as unknown as React.SyntheticEvent<HTMLImageElement>);
+    onError?.(createExhaustedEvent(imgRef.current));
     onExhausted?.();
   }, [failed, fallbackSrc, onError, onExhausted]);
 
@@ -68,8 +90,8 @@ export function RetryableImage({
   );
 
   if (failed && fallbackSrc) {
-    return <img src={fallbackSrc} {...rest} />;
+    return <img ref={imgRef} src={fallbackSrc} {...rest} />;
   }
 
-  return <img src={imgSrc ?? undefined} onError={handleImgError} onLoad={handleImgLoad} {...rest} />;
+  return <img ref={imgRef} src={imgSrc ?? undefined} onError={handleImgError} onLoad={handleImgLoad} {...rest} />;
 }

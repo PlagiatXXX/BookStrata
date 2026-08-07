@@ -93,7 +93,10 @@ export function ParseUrlModal({
                         src={book.coverImageUrl}
                         alt=""
                         style={{ width: 28, height: 42, objectFit: "cover", borderRadius: 3, flexShrink: 0 }}
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        onError={(e) => {
+                          const img = (e.currentTarget ?? (e.target as HTMLImageElement | null)) as HTMLImageElement | null;
+                          if (img) img.style.display = "none";
+                        }}
                       />
                     )}
                     <strong>{book.title}</strong>

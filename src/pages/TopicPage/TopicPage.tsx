@@ -186,7 +186,10 @@ export default function TopicPage() {
                       src={singleCollection.coverImageUrl}
                       alt={singleCollection.title}
                       className="w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.style.display = "none" }}
+                      onError={(e) => {
+                        const img = e.currentTarget;
+                        if (img) img.style.display = "none";
+                      }}
                     />
                   </div>
                 )}

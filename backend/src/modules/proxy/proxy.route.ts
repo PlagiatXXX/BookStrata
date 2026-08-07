@@ -11,7 +11,6 @@ const ALLOWED_HOSTS = [
   "books.google.com",
   "covers.openlibrary.org",
   "i.gr-assets.com",
-  "res.cloudinary.com",
   "lh3.googleusercontent.com",
   "googleapis.com",
   "googleusercontent.com",

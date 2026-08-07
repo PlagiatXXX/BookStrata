@@ -6,7 +6,9 @@ import { authMiddleware } from "../auth/auth.middleware.js";
 import { createLogger } from "../../lib/logger.js";
 import * as service from "./tierList.service.js";
 import * as schema from "./tierList.schema.js";
-import { uploadBase64, uploadFromUrl } from "../../lib/cloudinary.js";
+import { uploadBase64, uploadFromUrl } from "../../lib/upload.js";
+import { config } from "../../config/env.js";
+import { assertImageAllowed } from "../../lib/nsfw-check.js";
 import { validateImageSize } from "../../lib/validators.js";
 import type {
   GetTierListsQuery,
@@ -477,7 +479,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           const url = book.coverImageUrl;
           if (!url) return book;
 
-          // data: → uploadBase64
+          // data: → загрузка в хранилище (NSFW-проверка для книг не применяется)
           if (url.startsWith("data:")) {
             const sizeError = validateImageSize(url);
             if (sizeError) {
@@ -493,8 +495,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
             }
           }
 
-          // Внешний URL → uploadFromUrl (скачать и загрузить в Cloudinary)
-          if (url.startsWith("http") && !url.includes("cloudinary.com")) {
+          // Внешний URL → uploadFromUrl (скачать и загрузить в собственное хранилище).
+          // URL уже размещённые в нашем S3/CDN не перезаливаем повторно.
+          const ourHosts = [config.S3_PUBLIC_HOST, config.CDN_PUBLIC_HOST];
+          const isExternalUrl = url.startsWith("http") && !ourHosts.some((h) => url.includes(h));
+          if (isExternalUrl) {
             try {
               const uploadResult = await uploadFromUrl(url, "tiermaker-pro/book-covers");
               return { ...book, coverImageUrl: uploadResult.url };
@@ -608,7 +613,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       }
 
       try {
-        // Загружаем изображение на Cloudinary
+        // Загружаем изображение в собственное хранилище
         const uploadResult = await uploadBase64(
           coverImageUrl,
           "tiermaker-pro/book-covers",
@@ -659,6 +664,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         return reply.code(400).send(createApiError(ErrorCodes.INVALID_INPUT, sizeError));
       }
 
+      const nsfwError = await assertImageAllowed(coverImageUrl);
+      if (nsfwError) {
+        return reply.code(400).send(createApiError(ErrorCodes.NSFW_CONTENT, nsfwError));
+      }
+
       try {
         const uploadResult = await uploadBase64(
           coverImageUrl,
@@ -703,7 +713,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       }
 
       try {
-        // Загружаем обложку на Cloudinary
+        // Загружаем обложку в собственное хранилище
         const uploadResult = await uploadFromUrl(
           coverUrl,
           "tiermaker-pro/book-covers",

@@ -68,7 +68,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc pl-5 space-y-1">
               <li>По требованию уполномоченных органов РФ (в соответствии с 152-ФЗ)</li>
-              <li>Для обработки изображений: Cloudinary (хостинг изображений), TensorFlow.js (NSFW-проверка на стороне клиента)</li>
+              <li>Для обработки изображений: собственное S3-хранилище и CDN (Timeweb Cloud, Российская Федерация), TensorFlow.js (NSFW-проверка на стороне клиента)</li>
               <li>Для отправки email: Яндекс.Почта (Российская Федерация)</li>
             </ul>
           </section>

@@ -49,6 +49,7 @@ export const ErrorCodes = {
   PRO_REQUIRED: "pro_required",
   BOOK_NOT_FOUND: "book_not_found",
   TIER_LIST_NOT_FOUND: "tier_list_not_found",
+  NSFW_CONTENT: "nsfw_content",
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

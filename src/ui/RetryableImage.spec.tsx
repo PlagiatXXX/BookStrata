@@ -53,6 +53,40 @@ describe("RetryableImage", () => {
     expect(onError).toHaveBeenCalledTimes(1);
   });
 
+  it("onError после исчерпания ретраев передаёт событие с currentTarget (не null)", () => {
+    const onError = vi.fn();
+    render(<RetryableImage src="https://example.com/cover.jpg" alt="cover" maxRetries={1} onError={onError} />);
+    const img = screen.getByAltText("cover");
+
+    fireEvent.error(img); // bs_retry=1
+    fireEvent.error(img); // exhausted
+
+    const event = onError.mock.calls[0][0] as { currentTarget: HTMLElement | null };
+    // Раньше сюда прилетал new Event("error") с currentTarget = null,
+    // и обработчики вида e.currentTarget.style.display падали с TypeError
+    expect(event.currentTarget).toBe(img);
+  });
+
+  it("обработчик скрытия обложки не падает при null currentTarget", () => {
+    render(
+      <RetryableImage
+        src="https://example.com/broken.jpg"
+        alt="cover"
+        maxRetries={1}
+        onError={(e) => {
+          const img = e.currentTarget;
+          if (img) img.style.display = "none";
+        }}
+      />,
+    );
+    const img = screen.getByAltText("cover");
+
+    fireEvent.error(img); // bs_retry=1
+    fireEvent.error(img); // exhausted
+
+    expect(img).toBeInTheDocument();
+  });
+
   it("onLoad пробрасывается на успешную загрузку", () => {
     const onLoad = vi.fn();
     render(<RetryableImage src="https://example.com/cover.jpg" alt="cover" onLoad={onLoad} />);

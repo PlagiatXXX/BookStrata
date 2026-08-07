@@ -1,6 +1,5 @@
-// Backward-compatible re-export
-// Меняйте STORAGE_PROVIDER=cloudinary|yandex в .env для переключения провайдера
-// Все новые модули могут импортить напрямую: import { storage } from '../storage/index.js'
+// Прокси-обёртка над активным хранилищем (STORAGE_PROVIDER=s3|local)
+// Новые модули могут импортить напрямую: import { storage } from './storage/index.js'
 import { storage } from './storage/index.js'
 import type { UploadResult } from './storage/types.js'
 

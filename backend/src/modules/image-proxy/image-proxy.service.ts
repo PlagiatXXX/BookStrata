@@ -21,7 +21,6 @@ const ALLOWED_HOSTS = [
   "s2.livelib.ru",
   "s3.livelib.ru",
   "s4.livelib.ru",
-  "res.cloudinary.com",
   "lh3.googleusercontent.com",
   "books.google.com",
   "googleapis.com",
@@ -297,8 +296,7 @@ export async function externalToCdnUrl(
   if (
     url.startsWith("/") ||
     url.includes("cdn.twcstorage.ru") ||
-    url.includes("s3.twcstorage.ru") ||
-    url.includes("res.cloudinary.com")
+    url.includes("s3.twcstorage.ru")
   ) {
     return url;
   }

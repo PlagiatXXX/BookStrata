@@ -47,7 +47,7 @@ test.describe("3. Профиль и пользователи", () => {
 
     const avatarUpload = page.locator("input[type=\"file\"]");
     if (await avatarUpload.isVisible()) {
-      test.skip(true, "Cloudinary mocked — пропускаем загрузку");
+      test.skip(true, "Загрузка аватарки в e2e пропускается");
     }
   });
 });

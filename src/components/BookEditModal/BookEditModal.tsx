@@ -479,7 +479,8 @@ export const BookEditModal = ({
                       alt={(book?.title ?? title) || "Обложка книги"}
                       className="h-full w-full object-cover"
                       onError={(e) => {
-                        const target = e.target as HTMLImageElement;
+                        const target = (e.currentTarget ?? (e.target as HTMLImageElement | null)) as HTMLImageElement | null;
+                        if (!target) return;
                         target.style.display = "none";
                         target.parentElement
                           ?.querySelector(".placeholder-fallback")
