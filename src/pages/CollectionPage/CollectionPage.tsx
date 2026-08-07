@@ -16,7 +16,8 @@ import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectio
 import type { CollectionItem } from "@/types/collection";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
-import { COLLECTION_SEO, COLLECTION_TITLES } from "@/data/collection-seo";
+import { COLLECTION_TITLES } from "@/data/collection-seo";
+import { buildCollectionSeoDesc, buildCollectionSeoTitle } from "./seo";
 import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
 import "./CollectionPage.css";
 
@@ -146,15 +147,13 @@ return DOMPurify.sanitize(collection.content);
 }, [collection?.content]);
 
   // SEO — всегда, даже при загрузке/ошибке, чтобы prerender гарантированно
-  // захватил meta-теги. Пока данные не загружены — используем slug из URL.
-  // Пока данные не загружены — используем читаемый заголовок из COLLECTION_TITLES
-  const seoTitle = collection?.title || COLLECTION_TITLES[slug || ''] || slug || '';
-  const truncate = (text: string, max = 155) =>
-    text.length <= max ? text : text.slice(0, text.lastIndexOf(' ', max)) + '…';
+  // захватил meta-теги. Пока данные не загружены — используем читаемый заголовок из COLLECTION_TITLES.
+  // Приоритет: админка → шаблон → slug.
+  const seoTitle = buildCollectionSeoTitle(collection?.title, slug || "", COLLECTION_TITLES[slug || ""] || "");
 
-  const seoDesc = COLLECTION_SEO[slug || '']
-    || (collection?.excerpt ? truncate(collection.excerpt) : null)
-    || `Подборка "${seoTitle}" на BookStrata — лучшие книги по жанру, рейтинг и рекомендации читателей`;
+  // Приоритет: данные из админки (excerpt) → шаблонный SEO-текст → фолбэк.
+  // Админ заполнил описание — отдаём его текст в выдачу, шаблон только как дефолт.
+  const seoDesc = buildCollectionSeoDesc(collection?.excerpt, slug || "", seoTitle);
   const seoImage = collection?.coverImageUrl
     ? (proxyImageUrl(collection.coverImageUrl) || undefined)
     : undefined;
@@ -340,8 +339,13 @@ return DOMPurify.sanitize(collection.content);
           </div>
         )}
 
-        {/* Editorial note или excerpt — один текстовый блок перед тир-листом */}
-        <div className="brutal-card brutal-border p-6 mb-8">
+        {/* Описание подборки (excerpt) + редакционная заметка — оба текста видны */}
+        <div className="brutal-card brutal-border p-6 mb-8 space-y-4">
+          {collection.excerpt ? (
+            <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
+              {collection.excerpt}
+            </p>
+          ) : null}
           {collection.editorialNote ? (
             <>
               <h2 className="text-lg font-black tracking-tight mb-3 uppercase">Как составлялась подборка</h2>
@@ -349,10 +353,6 @@ return DOMPurify.sanitize(collection.content);
                 {collection.editorialNote}
               </p>
             </>
-          ) : collection.excerpt ? (
-            <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
-              {collection.excerpt}
-            </p>
           ) : null}
         </div>
 
