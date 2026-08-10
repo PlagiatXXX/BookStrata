@@ -35,6 +35,23 @@ vi.mock("@/hooks/useAuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
+vi.mock("@/hooks/useBookshelf", () => ({
+  useBookshelf: vi.fn(() => ({
+    shelf: {},
+    guestBookMeta: {},
+    isLoading: false,
+    totalCount: 0,
+    readCount: 0,
+    wantToReadCount: 0,
+    toggleStatus: vi.fn(),
+    setStatus: vi.fn(),
+    removeStatus: vi.fn(),
+    removeBooks: vi.fn(),
+    clearShelf: vi.fn(),
+    importLocalShelf: vi.fn(),
+  })),
+}));
+
 vi.mock("@/hooks/useAiLibrarian", () => ({
   useAiLibrarian: vi.fn(() => ({
     messages: [],

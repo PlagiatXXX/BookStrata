@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { List, Globe, Library, BarChart3, Star, ChevronDown } from "lucide-react";
+import { List, Globe, Library, BarChart3, Star, ChevronDown, BookMarked } from "lucide-react";
 import { useAuth } from "@/hooks/useAuthContext";
+import { useBookshelf } from "@/hooks/useBookshelf";
 import { useBottomSafeOffset } from "@/hooks/useBottomSafeOffset";
 
 interface MobileBottomNavProps {
@@ -12,6 +13,7 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();
+  const { totalCount } = useBookshelf();
   const bottomOffset = useBottomSafeOffset();
   const [ratingsOpen, setRatingsOpen] = useState(false);
   const ratingsRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,7 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
     { label: "Главная", icon: List, path: isAuthenticated ? "/dashboard" : "/" },
     { label: "Рейтинги", icon: BarChart3 },
     { label: "Тир-листы", icon: Library, path: "/templates" },
+    { label: "Полка", icon: BookMarked, path: "/shelf", badge: totalCount },
     { label: "Новости", icon: Globe, path: "/community" },
   ] as const;
 
@@ -98,6 +101,11 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
               >
                 <span className="relative">
                   <Icon size={20} />
+                  {"badge" in item && item.badge != null && item.badge > 0 && (
+                    <span className="absolute -right-2 -top-1 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-cyan-400 px-1 text-[9px] font-bold text-black">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  )}
                   {isRatings && (
                     <ChevronDown
                       size={10}

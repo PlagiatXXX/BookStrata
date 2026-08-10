@@ -1,0 +1,199 @@
+/* ── My Shelf: пластилин (clay) ─────────────────────────────
+   Перенос языка clay-темы редактора на страницу /shelf:
+   тёплый крем, пухлые кнопки с глянцем и объёмными тенями,
+   мягкие «пластилиновые» карточки. */
+
+.clay-shelf {
+  /* Переменные — как в clay-теме редактора, чтобы ui-компоненты
+     (BookCover-бейджи, Button, Modal) получили тот же язык */
+  --theme-bg: #cdeee1;
+  --theme-surface: #f5efe2;
+  --theme-surface-2: #efe7d6;
+  --theme-surface-3: #f8f2e7;
+  --theme-surface-4: #e9dfc9;
+  --theme-surface-bright: #ffffff;
+  --theme-border: #5c4b3a;
+  --theme-border-width: 0px;
+  --theme-accent-primary: #7c4df7;
+  --theme-accent-secondary: #ff8c5a;
+  --theme-accent-tertiary: #4ecdc4;
+  --theme-on-accent: #ffffff;
+  --theme-text: #3b3226;
+  --theme-text-muted: #8a7d6b;
+  --theme-danger: #e85d4f;
+  --theme-success: #3a9d6e;
+  --theme-focus: #7c4df7;
+  --theme-radius: 22px;
+  --theme-shadow: 0 6px 0 rgba(92, 75, 58, 0.22), 0 14px 24px rgba(92, 75, 58, 0.18);
+  --theme-shadow-sm: 0 4px 0 rgba(92, 75, 58, 0.2);
+  --theme-shadow-lg: 0 10px 0 rgba(92, 75, 58, 0.2), 0 24px 40px rgba(92, 75, 58, 0.22);
+  --theme-shadow-hover: 0 8px 0 rgba(124, 77, 247, 0.3), 0 18px 28px rgba(92, 75, 58, 0.2);
+  --theme-glow: #7c4df7;
+  --theme-font-display: 'Comfortaa', sans-serif;
+  --theme-font-body: 'Nunito', sans-serif;
+
+  color: var(--theme-text);
+  font-family: var(--theme-font-body);
+}
+
+/* Заголовки — округлый Comfortaa, как в clay-теме редактора */
+.clay-shelf h1,
+.clay-shelf h2 {
+  font-family: var(--theme-font-display);
+}
+
+/* Карточки: глянцевая «пластилиновая подушка» */
+.clay-card {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-surface-3) 92%, white) 0%,
+    var(--theme-surface-3) 45%,
+    color-mix(in srgb, var(--theme-surface-3) 80%, #5c4b3a) 100%
+  );
+  border-radius: var(--theme-radius);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    0 6px 0 rgba(92, 75, 58, 0.16),
+    0 16px 26px rgba(92, 75, 58, 0.14);
+}
+
+/* ── Пухлые кнопки ── */
+.clay-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 16px;
+  padding: 0.65em 1.2em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.clay-btn:active {
+  transform: translateY(3px);
+}
+
+/* Компактный вариант — для кнопок в шапке страницы */
+.clay-btn-sm {
+  font-size: 0.72rem;
+  padding: 0.5em 0.95em;
+  border-radius: 13px;
+  letter-spacing: 0.04em;
+}
+
+.clay-btn-primary {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-accent-primary) 82%, white) 0%,
+    var(--theme-accent-primary) 48%,
+    color-mix(in srgb, var(--theme-accent-primary) 78%, black) 100%
+  );
+  color: var(--theme-on-accent);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.18),
+    0 6px 0 color-mix(in srgb, var(--theme-accent-primary) 55%, #5c4b3a);
+}
+
+.clay-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.18),
+    0 8px 0 color-mix(in srgb, var(--theme-accent-primary) 60%, #5c4b3a);
+}
+
+.clay-btn-primary:active {
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.22),
+    0 3px 0 color-mix(in srgb, var(--theme-accent-primary) 55%, #5c4b3a);
+}
+
+/* Контурная кнопка — «пластилин с поверхности» */
+.clay-btn-soft {
+  background: color-mix(in srgb, var(--theme-surface-2) 75%, transparent);
+  color: var(--theme-text);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.08),
+    0 5px 0 color-mix(in srgb, var(--theme-border) 18%, transparent);
+}
+
+.clay-btn-soft:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.08),
+    0 7px 0 color-mix(in srgb, var(--theme-border) 22%, transparent);
+}
+
+/* Чип-счётчик — пластилиновый кружок */
+.clay-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--theme-on-accent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-accent-primary) 75%, white) 0%,
+    var(--theme-accent-primary) 100%
+  );
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.45),
+    0 2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.clay-chip-warm {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-accent-secondary) 75%, white) 0%,
+    var(--theme-accent-secondary) 100%
+  );
+}
+
+/* Заголовок секции с «пластилиновым шариком» */
+.clay-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.clay-section::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--theme-accent-primary);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 2px 0 rgba(0, 0, 0, 0.18);
+}
+
+/* Карточки книг — глянцевые «пластилиновые брусочки» (как в редакторе) */
+.clay-shelf .nb-book-card {
+  width: clamp(70px, 12vw, 96px);
+  border-radius: 13px;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    0 4px 0 rgba(92, 75, 58, 0.12),
+    0 8px 14px rgba(92, 75, 58, 0.1);
+}
+
+@media (max-width: 767px) {
+  .clay-shelf .nb-book-card {
+    width: clamp(60px, 19vw, 76px);
+    border-radius: 11px;
+  }
+}

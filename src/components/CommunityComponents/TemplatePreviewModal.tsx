@@ -55,7 +55,7 @@ export const TemplatePreviewModal = memo(({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-(--line-soft) rounded transition-colors"
+            className="cursor-pointer p-2 hover:bg-(--line-soft) rounded transition-colors"
             aria-label="Закрыть"
           >
             <X size={20} className="text-(--ink-1)" />

@@ -55,7 +55,7 @@ function FeedbackForm({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="w-full max-w-md bg-background-dark rounded-2xl border border-slate-700/50 shadow-2xl">
+    <div className="w-full max-w-md bg-[#0b0f1f] rounded-2xl border border-slate-700/50 shadow-2xl">
       <div className="flex items-center justify-between p-5 border-b border-slate-700/50">
         <h2 className="text-lg font-semibold text-white">
           {sent ? "Отправлено!" : "Обратная связь"}

@@ -1,7 +1,7 @@
 import { memo, forwardRef, useState, useRef, useCallback, useEffect } from "react";
-import { X, Edit2, Eye } from "lucide-react";
+import { X, Edit2, Eye, Heart } from "lucide-react";
 import type { Book } from "@/types";
-import type { ReadStatus } from "@/hooks/useReadStatus";
+import type { ShelfStatus } from "@/lib/shelfApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 
@@ -11,8 +11,7 @@ interface BookCoverProps {
   onDelete?: (bookId: string) => void;
   onEdit?: (book: Book) => void;
   onView?: (book: Book) => void;
-  readStatus?: ReadStatus | null;
-  onToggleStatus?: () => void;
+  shelfStatus?: ShelfStatus | null;
   /** Если true — ставит fetchpriority="high" (для first-view книг) */
   priority?: boolean;
 }
@@ -36,7 +35,7 @@ function withRetryParam(url: string, attempt: number): string {
 
 export const BookCover = memo(
   forwardRef<HTMLDivElement, BookCoverProps>(
-    ({ book, isDraggable = true, onDelete, onEdit, onView, readStatus, onToggleStatus, priority = false }, ref) => {
+    ({ book, isDraggable = true, onDelete, onEdit, onView, shelfStatus, priority = false }, ref) => {
       const [showActions, setShowActions] = useState(false);
       const [isHovered, setIsHovered] = useState(false);
       const [coverError, setCoverError] = useState(false);
@@ -196,33 +195,27 @@ export const BookCover = memo(
             <div className="pointer-events-none absolute inset-0 border border-(--theme-accent-primary)/15" />
           )}
 
-          {/* Read status badge */}
-          {onToggleStatus && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onToggleStatus();
-              }}
-              className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 flex h-5 items-center justify-center gap-1
-                         rounded-t px-2
-                         bg-(--theme-border)/70 text-[9px] font-bold uppercase leading-none tracking-wider
-                         transition-all duration-150
-                         hover:bg-(--theme-border)/90 hover:h-6
-                         focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus-visible:z-20
-                         max-md:pointer-events-auto"
-              title={readStatus === "read" ? "Прочитал" : "Нажмите, чтобы отметить книгу как прочитанную"}
-              aria-label={readStatus === "read" ? "Убрать отметку" : "Отметить как прочитанное"}
+          {/* Shelf status badge (не кликабельный — отметка в модалке книги) */}
+          {shelfStatus !== null && shelfStatus !== undefined && (
+            <span
+              className="pointer-events-none absolute bottom-0 left-1/2 z-10 flex h-5 -translate-x-1/2 items-center justify-center gap-1
+                         rounded-t bg-(--theme-border)/70 px-2
+                         text-[9px] font-bold uppercase leading-none tracking-wider"
+              title={shelfStatus === "read" ? "Прочитал" : "Хочу прочитать"}
+              aria-label={shelfStatus === "read" ? "Прочитал" : "Хочу прочитать"}
             >
-              {readStatus === "read" ? (
+              {shelfStatus === "read" ? (
                 <>
                   <span className="text-green-400 leading-none">✓</span>
                   <span className="text-green-300">Прочитал</span>
                 </>
               ) : (
-                <span className="text-(--ink-3) leading-none">+ Отметить</span>
+                <>
+                  <Heart size={9} className="text-cyan-400" fill="currentColor" />
+                  <span className="text-cyan-300">В планах</span>
+                </>
               )}
-            </button>
+            </span>
           )}
 
           {onDelete && (

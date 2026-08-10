@@ -189,7 +189,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   if (isHidden) return null;
 
   return (
-    <footer className="relative overflow-x-hidden border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%),#0b0f1f] px-6 py-12">
+    <footer className="relative overflow-x-hidden border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%)] bg-[#0b0f1f] px-6 py-12">
       <style>{marqueeStyle}</style>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <Meteors number={40} angle={255} minDuration={10} maxDuration={22} minDelay={0} maxDelay={1.5} />

@@ -30,7 +30,7 @@ export function ConfirmModal({
         <button
           onClick={onClose}
           disabled={isLoading}
-          className="absolute top-4 right-4 z-10 flex size-8 items-center justify-center rounded-full bg-black/20 text-slate-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full bg-black/20 text-slate-400 hover:text-white transition-colors"
           aria-label="Закрыть"
         >
           <X size={16} />

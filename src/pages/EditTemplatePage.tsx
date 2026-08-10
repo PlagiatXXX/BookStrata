@@ -33,7 +33,7 @@ const EditTemplatePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background-dark">
+      <div className="flex min-h-screen items-center justify-center bg-[#0b0f1f]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
       </div>
     );
@@ -41,7 +41,7 @@ const EditTemplatePage: React.FC = () => {
 
   if (isError || !template) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background-dark">
+      <div className="flex min-h-screen items-center justify-center bg-[#0b0f1f]">
         <div className="text-center">
           <p className="text-red-400 mb-4">
             Ошибка загрузки шаблона или шаблон не найден.
@@ -62,7 +62,7 @@ const EditTemplatePage: React.FC = () => {
       showTemplatesNav={false}
       showSearch={false}
     >
-      <main className="flex-1 overflow-y-auto bg-linear-to-br from-purple-900/40 via-background-dark to-cyan-900/40">
+      <main className="flex-1 overflow-y-auto bg-linear-to-br from-purple-900/40 via-[#0b0f1f] to-cyan-900/40">
         {/* Header Section */}
         <div className="relative overflow-hidden px-4 lg:px-8 pt-8 pb-4">
           {/* Decorative gradient blobs */}

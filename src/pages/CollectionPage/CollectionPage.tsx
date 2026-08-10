@@ -10,7 +10,8 @@ import { StaticTierView } from "@/components/StaticTierView";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { useAuth } from "@/hooks/useAuthContext";
-import { useReadStatus } from "@/hooks/useReadStatus";
+import { useBookshelf } from "@/hooks/useBookshelf";
+import type { ReadStatus } from "@/contexts/bookshelf.context";
 import { sileo } from "sileo";
 import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/types/collection";
@@ -37,7 +38,18 @@ export default function CollectionPage() {
   const currentUserId = authUser?.userId ?? null;
   const [filterGenre, setFilterGenre] = useState<string | null>(null);
 
-  const { statuses, toggleStatus, markedCount } = useReadStatus(slug);
+  const { shelf } = useBookshelf();
+
+  // «Прочитал» — только статус read из полки (совместимость со старым кодом)
+  const statuses = useMemo(() => {
+    const result: Record<string, ReadStatus> = {};
+    for (const [bookId, status] of Object.entries(shelf)) {
+      if (status === "read") result[bookId] = "read";
+    }
+    return result;
+  }, [shelf]);
+
+  const markedCount = Object.keys(statuses).length;
 
   // Тост-фидбек при отметке прочитанного
   const prevStatusesRef = useRef(statuses);
@@ -361,7 +373,7 @@ return DOMPurify.sanitize(collection.content);
           <div className="brutal-card brutal-border p-5 mb-8 border-l-4" style={{ borderLeftColor: "var(--accent-main)" }}>
             <p className="text-sm text-(--ink-1) leading-relaxed">
               <span className="font-bold">Отмечайте книги, которые читали</span> —{' '}
-              нажмите на плашку <span className="text-(--ink-0)">+ Отметить</span> внизу обложки.{' '}
+              нажмите на книгу и отметьте её как прочитанную.{' '}
               Потом сможете собрать свой рейтинг из отмеченных книг.
             </p>
           </div>
@@ -376,8 +388,7 @@ return DOMPurify.sanitize(collection.content);
               books={collection.books as Record<string, import("@/types").Book>}
               onViewBook={handleViewBook}
               filterGenre={filterGenre}
-              statuses={statuses}
-              onToggleStatus={toggleStatus}
+              statuses={shelf}
               unrankedBookIds={collection.unrankedBookIds}
             />
           </div>

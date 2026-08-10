@@ -5,10 +5,14 @@ import { RouterProvider } from "react-router-dom";
 import "../styles/globals.css";
 import { router } from "./router";
 import { initSentry } from "../lib/sentry";
+import { initYandexMetrika } from "../lib/ym";
 import { AppErrorBoundary } from "../components/ErrorBoundary/AppErrorBoundary";
 
 // Инициализация Sentry — до React
 initSentry();
+
+// Инициализация Яндекс.Метрики — до React (в dev и prerender не запускается)
+initYandexMetrika();
 
 const queryClient = new QueryClient({
   defaultOptions: {

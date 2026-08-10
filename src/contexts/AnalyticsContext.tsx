@@ -9,12 +9,6 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-declare global {
-  interface Window {
-    ym: (id: number, action: string, ...args: unknown[]) => void;
-  }
-}
-
 const DISMISS_KEY = "bookstrata-cookie-notice";
 
 interface AnalyticsContextValue {

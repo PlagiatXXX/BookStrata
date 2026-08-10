@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchTierList, transformApiToState } from '@/lib/tierListApi';
 import { getCollectionBySlug } from '@/lib/collectionsApi';
+import { getCelebrityBySlug } from '@/lib/celebritiesApi';
 import { apiGetTierListLikes, apiGetLikedTierListIds } from '@/lib/likesApi';
 import { getInitialData, getTemplateInitialData } from '../_initialData';
 import { TEMPLATES } from '@/data/mockData';
@@ -18,8 +19,18 @@ const emptyData: TierListData = {
   tierIdToTempIdMap: {},
 };
 
-function collectionToTierListData(
-  collection: NonNullable<Awaited<ReturnType<typeof getCollectionBySlug>>>,
+/** Источник для форка: коллекция или знаменитость (структура тиров одинаковая) */
+interface ForkableTierSource {
+  slug: string;
+  title: string;
+  tiers?: Record<string, Tier>;
+  tierOrder?: string[];
+  books?: Record<string, Book>;
+  unrankedBookIds?: string[];
+}
+
+function tierSourceToTierListData(
+  source: ForkableTierSource,
   readIds?: string[],
 ): TierListData {
   const idMap = new Map<string, string>();
@@ -29,7 +40,7 @@ function collectionToTierListData(
 
   // Префикс "fork-" гарантирует, что бэкенд создаст книги как новые (temp-IDs)
   const books: Record<string, Book> = {};
-  Object.entries(collection.books || {}).forEach(([origId, book]) => {
+  Object.entries(source.books || {}).forEach(([origId, book]) => {
     // Если фильтруем по readIds — пропускаем неотмеченные
     if (readIdsSet && !readIdsSet.has(origId)) return;
     const tempId = `fork-${origId}`;
@@ -40,7 +51,7 @@ function collectionToTierListData(
   // То же для tier ID — префикс "fork-" чтобы бэкенд создал новые тиры
   const tierIdToTempIdMap: Record<string, string> = {};
   const tiers: Record<string, Tier> = {};
-  Object.entries(collection.tiers || {}).forEach(([origTierId, tier]) => {
+  Object.entries(source.tiers || {}).forEach(([origTierId, tier]) => {
     const tempTierId = `fork-${origTierId}`;
     tierIdToTempIdMap[origTierId] = tempTierId;
     tiers[tempTierId] = {
@@ -53,12 +64,12 @@ function collectionToTierListData(
 
   return {
     tierIdToTempIdMap,
-    id: `fork-${collection.slug}`,
-    title: collection.title,
+    id: `fork-${source.slug}`,
+    title: source.title,
     books,
     tiers,
-    tierOrder: (collection.tierOrder || []).map((id) => `fork-${id}`),
-    unrankedBookIds: (collection.unrankedBookIds || [])
+    tierOrder: (source.tierOrder || []).map((id) => `fork-${id}`),
+    unrankedBookIds: (source.unrankedBookIds || [])
       .map((bookId) => idMap.get(bookId))
       .filter((id): id is string => !!id),
     isPublic: false,
@@ -89,6 +100,7 @@ export function useTierEditorQueries(
   forkSlug?: string | null,
   forkReadIds?: string[] | null,
   templateId?: string | null,
+  celebrityForkSlug?: string | null,
 ): TierEditorQueriesResult {
   const isNew = tierListId === "new";
 
@@ -123,6 +135,18 @@ export function useTierEditorQueries(
     staleTime: 60_000,
   });
 
+  // Загрузка знаменитости для форка (только если "new" + celebrityForkSlug)
+  const {
+    data: forkCelebrity,
+    isLoading: isCelebrityForkLoading,
+    isError: isCelebrityForkError,
+  } = useQuery({
+    queryKey: ['forkCelebrity', celebrityForkSlug],
+    queryFn: () => getCelebrityBySlug(celebrityForkSlug!),
+    enabled: isNew && !!celebrityForkSlug,
+    staleTime: 60_000,
+  });
+
   // При пререндере не делаем запросы, требующие авторизации
   const isPrerender = typeof window !== 'undefined' && window.__PRERENDER__ === true;
 
@@ -152,9 +176,13 @@ export function useTierEditorQueries(
     if (isNew && template) {
       return getTemplateInitialData(tierListId!, template.templateData);
     }
+    // Форк из знаменитости
+    if (isNew && forkCelebrity) {
+      return tierSourceToTierListData({ ...forkCelebrity, title: forkCelebrity.name }, forkReadIds ?? undefined);
+    }
     // Форк из коллекции
     if (isNew && forkCollection) {
-      return collectionToTierListData(forkCollection, forkReadIds ?? undefined);
+      return tierSourceToTierListData(forkCollection, forkReadIds ?? undefined);
     }
     // Новый пустой тир-лист
     if (isNew) {
@@ -171,10 +199,10 @@ export function useTierEditorQueries(
       return getInitialData(tierListId!, 'Новый тир-лист');
     }
     return emptyData;
-  }, [apiData, isTierListError, tierListId, isNew, forkCollection, forkReadIds, template]);
+  }, [apiData, isTierListError, tierListId, isNew, forkCollection, forkCelebrity, forkReadIds, template]);
 
-  const isLoading = isNew ? isForkLoading : isTierListLoading;
-  const isError = isNew ? isForkError : isTierListError;
+  const isLoading = isNew ? (isForkLoading || isCelebrityForkLoading) : isTierListLoading;
+  const isError = isNew ? (isForkError || isCelebrityForkError) : isTierListError;
 
   // Получаем isPublic из API данных
   const isPublic = apiData?.isPublic ?? false;

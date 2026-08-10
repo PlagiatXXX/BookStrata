@@ -3,6 +3,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AiLibrarianProvider } from "@/contexts/AiLibrarianContext";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { AmbientProvider } from "@/contexts/ambient/AmbientContext";
+import { BookshelfProvider } from "@/contexts/BookshelfContext";
 import type { ReactNode } from "react";
 
 interface AppProvidersProps {
@@ -13,13 +14,13 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <HelmetProvider>
       <AuthProvider>
-        <AiLibrarianProvider>
-          <AnalyticsProvider>
-            <AmbientProvider>
-              {children}
-            </AmbientProvider>
-          </AnalyticsProvider>
-        </AiLibrarianProvider>
+        <BookshelfProvider>
+          <AiLibrarianProvider>
+            <AnalyticsProvider>
+              <AmbientProvider>{children}</AmbientProvider>
+            </AnalyticsProvider>
+          </AiLibrarianProvider>
+        </BookshelfProvider>
       </AuthProvider>
     </HelmetProvider>
   );

@@ -141,6 +141,19 @@ export async function getUserTierLists(page = 1, pageSize = 10): Promise<Paginat
   return result;
 }
 
+const ALL_TIER_LISTS_PAGE_SIZE = 50;
+
+/** Все свои тир-листы (для выбора «добавить в существующий») — ходит по страницам */
+export async function fetchAllMyTierLists(): Promise<TierListShort[]> {
+  const first = await getUserTierLists(1, ALL_TIER_LISTS_PAGE_SIZE);
+  let lists = first.data;
+  for (let page = 2; page <= first.meta.totalPages; page += 1) {
+    const next = await getUserTierLists(page, ALL_TIER_LISTS_PAGE_SIZE);
+    lists = lists.concat(next.data);
+  }
+  return lists;
+}
+
 export async function fetchTierList(id: string): Promise<ApiTierListResponse> {
   tierListLogger.info('Получение рейтингового списка', { tierListId: id });
   const result = await apiClient.get<ApiTierListResponse>(`/tier-lists/${id}`);

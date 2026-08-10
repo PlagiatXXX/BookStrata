@@ -47,6 +47,7 @@ achievements         UserAchievement[]
   discussionMessages   DiscussionMessage[]
   feedback             Feedback[]
   bookRatings          BookRating[]
+  bookStatuses         BookStatus[]
   role                 Role?      @relation(fields: [roleId], references: [id])
 roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
 chatBannedAt         DateTime?  @map("chat_banned_at")
@@ -77,6 +78,7 @@ genre           String?
 tags            String[]
   placements      BookPlacement[]
   ratings         BookRating[]
+  statuses        BookStatus[]
   authorRel       Author?         @relation(fields: [authorId], references: [id], onDelete: Restrict)
   createdAt       DateTime        @default(now()) @map("created_at")
 
@@ -98,6 +100,21 @@ model BookRating {
 
   @@unique([bookId, userId])
   @@map("book_ratings")
+}
+
+model BookStatus {
+  id        Int      @id @default(autoincrement())
+  bookId    Int
+  userId    Int
+  status    String   // "read" | "want_to_read"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, userId])
+  @@index([userId, status])
+  @@map("book_statuses")
 }
  
 model TierList {

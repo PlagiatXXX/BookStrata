@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { BookOpen, Sparkles, Calendar, Quote, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { sileo } from "sileo";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
@@ -9,6 +10,8 @@ import { StaticTierView } from "@/components/StaticTierView";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { Spinner } from "@/components/Spinner";
+import { useBookshelf } from "@/hooks/useBookshelf";
+import { useAuth } from "@/hooks/useAuthContext";
 import { getCelebrityBySlug, CELEBRITY_CATEGORIES } from "@/lib/celebritiesApi";
 import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
 import type { Book } from "@/types";
@@ -30,9 +33,58 @@ export default function CelebrityPage() {
     retry: 1,
   });
 
+  const { user: authUser } = useAuth();
+  const { shelf } = useBookshelf();
+
+  // «Прочитал» — только статус read из полки (совместимость со старым кодом)
+  const statuses = useMemo(() => {
+    const result: Record<string, "read"> = {};
+    for (const [bookId, status] of Object.entries(shelf)) {
+      if (status === "read") result[bookId] = "read";
+    }
+    return result;
+  }, [shelf]);
+
+  const markedCount = Object.keys(statuses).length;
+
+  // Тост-фидбек при отметке прочитанного (как в коллекциях)
+  const prevStatusesRef = useRef(statuses);
+  useEffect(() => {
+    const prev = prevStatusesRef.current;
+    for (const bookId of Object.keys(statuses)) {
+      if (!(bookId in prev)) {
+        sileo.success({ title: "✓ Добавлено в прочитанные", duration: 2000 });
+      }
+    }
+    prevStatusesRef.current = statuses;
+  }, [statuses]);
+
   const handleViewBook = useCallback((book: Book) => {
     setViewedBook(book);
   }, []);
+
+  // Собрать свой рейтинг из отмеченных книг знаменитости
+  const handleForkCelebrity = useCallback(() => {
+    if (!authUser) {
+      sileo.action({
+        title: 'Сохраните свою версию',
+        description: 'Зарегистрируйтесь, чтобы создать свой рейтинг и сохранить его в личной библиотеке.',
+        duration: 10000,
+        button: {
+          title: 'Создать аккаунт',
+          onClick: () => navigate('/auth?mode=register'),
+        },
+      });
+      return;
+    }
+    const readIds = Object.keys(statuses);
+    const params = new URLSearchParams();
+    params.set('celebrityFork', slug || '');
+    if (readIds.length > 0) {
+      params.set('readIds', readIds.join(','));
+    }
+    window.location.href = `/tier-lists/new?${params.toString()}`;
+  }, [authUser, navigate, slug, statuses]);
 
   // Статистика
   const books = celebrity?.books;
@@ -179,6 +231,7 @@ export default function CelebrityPage() {
                 tierOrder={celebrity.tierOrder}
                 books={celebrity.books as Record<string, import("@/types").Book>}
                 onViewBook={handleViewBook}
+                statuses={shelf}
                 unrankedBookIds={celebrity.unrankedBookIds}
               />
             </div>
@@ -192,6 +245,30 @@ export default function CelebrityPage() {
               </p>
             </div>
           )}
+
+          {/* CTA — когда есть отметки, под тир-листом */}
+          <div className="overflow-hidden transition-all duration-500 ease-in-out" style={{ maxHeight: markedCount > 0 ? '500px' : '0px' }}>
+            <div
+              className="overflow-hidden transition-all duration-500 ease-in-out"
+              style={{ maxHeight: markedCount > 0 ? '500px' : '0px', opacity: markedCount > 0 ? 1 : 0 }}
+            >
+              <div className="brutal-card brutal-border p-6 mb-8 text-center">
+                <p className="text-lg font-bold mb-2">
+                  Не согласны с выбором {celebrity.name}?
+                </p>
+                <p className="text-sm text-(--ink-2) mb-4">
+                  Вы читали {markedCount} из {stats.totalBooks} книг этой подборки —{' '}
+                  у вас уже есть своё мнение. Расставьте их по своим уровням.
+                </p>
+                <button
+                  onClick={handleForkCelebrity}
+                  className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
+                >
+                  Составить свой рейтинг
+                </button>
+              </div>
+            </div>
+          </div>
 
           {/* Дата обновления */}
           <div className="flex items-center gap-2 mt-8 text-sm text-(--ink-2)">

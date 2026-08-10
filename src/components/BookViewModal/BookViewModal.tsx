@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from "react";
-import { X, Star, FileText, Calendar, BookOpen } from "lucide-react";
+import { X, Star, FileText, Calendar, BookOpen, Check, Heart } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
 import { getBookRatings } from "@/lib/ratingsApi";
+import { useBookshelf } from "@/hooks/useBookshelf";
+import type { ShelfStatus } from "@/lib/shelfApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 import { RetryableImage } from "@/ui/RetryableImage";
+import { sileo } from "sileo";
 
 export interface BookViewModalProps {
   book: any | null;
@@ -57,6 +60,39 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [imageError, setImageError] = useState(false);
   const [apiRatings, setApiRatings] = useState<BookRatingsResult | null>(null);
+  const { shelf, toggleStatus } = useBookshelf();
+
+  // Статус книги в «Моей полке» (read / want_to_read / null)
+  const currentStatus: ShelfStatus | null = book
+    ? (shelf[book.id] ?? null)
+    : null;
+
+  const handleToggleStatus = (status: ShelfStatus) => {
+    if (!book) return;
+    const isRemoving = currentStatus === status;
+    // Для книг коллекций (строковые id) сервер создаёт Book по этим данным
+    toggleStatus(book.id, status, {
+      title: book.title,
+      author: book.author || book.author_name,
+      coverImageUrl:
+        book.coverImageUrl ||
+        book.image_url ||
+        book.cover_image_url ||
+        book.coverUrlLarge ||
+        book.coverUrl,
+      genre: book.genre,
+      description: book.description,
+    });
+    sileo.success({
+      title: isRemoving ? "Отметка снята" : "Добавлено в полку",
+      description: isRemoving
+        ? `«${book.title}» убрана из полки`
+        : `«${book.title}» — ${
+            status === "read" ? "прочитано" : "в планах прочитать"
+          }`,
+      duration: 3000,
+    });
+  };
 
   // Рейтинг для отображения: из данных книги (коллекции) или с сервера
   const displayRating = book?.rating != null
@@ -114,7 +150,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
           <div className="relative border-b-(--theme-border-width) border-(--theme-border) p-4 sm:p-6">
             <button
               onClick={onClose}
-              className="absolute right-3 top-3 rounded-sm nb-heavy-border bg-(--theme-surface-4) p-1 text-(--theme-text) transition-colors hover:border-(--theme-accent-primary) hover:text-(--theme-accent-primary) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none sm:right-4 sm:top-4"
+              className="absolute right-3 top-3 cursor-pointer rounded-sm nb-heavy-border bg-(--theme-surface-4) p-1 text-(--theme-text) transition-colors hover:border-(--theme-accent-primary) hover:text-(--theme-accent-primary) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none sm:right-4 sm:top-4"
               aria-label="Закрыть"
             >
               <X size={18} />
@@ -236,7 +272,40 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
             </div>
           </div>
 
-        <div className="flex items-center justify-end gap-2 border-t-(--theme-border-width) border-(--theme-border) px-5 py-3">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t-(--theme-border-width) border-(--theme-border) px-5 py-3">
+          {/* Кнопки статусов «Моей полки» (при клике по активному — снимают отметку) */}
+          <div className="mr-auto flex items-center gap-2">
+            <Button
+              onClick={() => handleToggleStatus("read")}
+              variant={currentStatus === "read" ? "outline" : "ghost"}
+              size="sm"
+              className={`text-xs font-black focus-visible:ring-2 focus-visible:ring-(--theme-focus) ${
+                currentStatus === "read"
+                  ? "border-(--theme-success) bg-(--theme-success) text-white hover:border-(--theme-success)! hover:bg-(--theme-success)! hover:text-white! shadow-[inset_0_2px_0_rgba(255,255,255,0.35)]"
+                  : "text-(--theme-text-muted) hover:text-(--theme-success)"
+              }`}
+              title={currentStatus === "read" ? "Убрать отметку" : "Отметить как прочитанное"}
+              aria-label={currentStatus === "read" ? "Убрать отметку прочитанного" : "Отметить книгу как прочитанную"}
+            >
+              <Check size={14} fill="currentColor" />
+              {currentStatus === "read" ? "Прочитал" : "Прочитал?"}
+            </Button>
+            <Button
+              onClick={() => handleToggleStatus("want_to_read")}
+              variant={currentStatus === "want_to_read" ? "outline" : "ghost"}
+              size="sm"
+              className={`text-xs font-black focus-visible:ring-2 focus-visible:ring-(--theme-focus) ${
+                currentStatus === "want_to_read"
+                  ? "border-(--theme-accent-secondary) bg-(--theme-accent-secondary) text-white hover:border-(--theme-accent-secondary)! hover:bg-(--theme-accent-secondary)! hover:text-white! shadow-[inset_0_2px_0_rgba(255,255,255,0.35)]"
+                  : "text-(--theme-text-muted) hover:text-(--theme-accent-secondary)"
+              }`}
+              title={currentStatus === "want_to_read" ? "Убрать из планов" : "Добавить в «Хочу прочитать»"}
+              aria-label={currentStatus === "want_to_read" ? "Убрать из планов" : "Добавить в «Хочу прочитать»"}
+            >
+              <Heart size={14} fill="currentColor" />
+              {currentStatus === "want_to_read" ? "В планах" : "Хочу прочитать"}
+            </Button>
+          </div>
           <Button
             variant="ghost"
             onClick={onClose}

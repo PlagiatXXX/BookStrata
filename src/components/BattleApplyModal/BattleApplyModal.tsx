@@ -60,7 +60,7 @@ export function BattleApplyModal({ battleId, battleTitle, onClose, onSuccess }: 
       <div className="brutal-card brutal-border w-full max-w-lg mx-4 p-8 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-(--ink-1) hover:text-(--ink-0) transition-colors"
+          className="absolute top-4 right-4 cursor-pointer text-(--ink-1) hover:text-(--ink-0) transition-colors"
         >
           <X size={20} />
         </button>

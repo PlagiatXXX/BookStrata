@@ -49,6 +49,7 @@ const AdminCelebritiesPage = lazy(() => import("@/pages/AdminCelebritiesPage/Adm
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() => import("@/pages/TierListEditorPage/TierEditorPage"));
+const ShelfPage = lazy(() => import("@/pages/ShelfPage/ShelfPage"));
 export const router = createBrowserRouter([
   {
     element: <AppShell />,
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
       { path: "/collections/:slug", element: <CollectionPage /> },
       { path: "/tier-lists/:id", element: <TierListEditorPage /> },
       { path: "/templates", element: <TemplateLibrary /> },
+      { path: "/shelf", element: <ShelfPage /> },
       { path: "/community", element: <CommunityPage /> },
       { path: "/celebrities", element: <CelebritiesPage /> },
       { path: "/celebrities/:slug", element: <CelebrityPage /> },

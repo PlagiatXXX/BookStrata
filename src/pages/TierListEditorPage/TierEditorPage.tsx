@@ -56,6 +56,7 @@ const TierListEditorContent = () => {
   const fromBattle = searchParams.get("context") === "battle";
   const forkSlug = searchParams.get("fork");
   const templateId = searchParams.get("template");
+  const celebrityForkSlug = searchParams.get("celebrityFork");
   const forkReadIds = useMemo(() => {
     const raw = searchParams.get("readIds");
     return raw ? raw.split(",").filter(Boolean) : null;
@@ -114,7 +115,7 @@ const TierListEditorContent = () => {
     likesData,
     isPublic,
     initialDataForHook,
-  } = useTierEditorQueries(tierListId, forkSlug, forkReadIds, templateId);
+  } = useTierEditorQueries(tierListId, forkSlug, forkReadIds, templateId, celebrityForkSlug);
 
   // Переопределения от пользователя (null = не менял, берём из apiData)
   const [userCoverOverride, setUserCoverOverride] = useState<string | null>(null);

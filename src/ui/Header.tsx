@@ -14,9 +14,11 @@ import {
   ChevronDown,
   Pause,
   Play,
+  BookMarked,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAmbientSound } from "@/hooks/useAmbientSound";
+import { useBookshelf } from "@/hooks/useBookshelf";
 import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
@@ -38,6 +40,27 @@ interface HeaderProps {
   hideLogout?: boolean;
 }
 
+/** Светлая ли тема под хедером: проверяем --theme-bg у контейнера темы (редактор/полка) */
+function detectLightTheme(): boolean {
+  const themed = document.querySelector<HTMLElement>("main[data-theme], .clay-shelf");
+  const root = themed ?? document.documentElement;
+  const bg = getComputedStyle(root).getPropertyValue("--theme-bg").trim();
+  const hex = bg.match(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})/)?.[1];
+  if (!hex) return false;
+  const full =
+    hex.length === 3
+      ? hex
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : hex;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55;
+}
+
 export const Header = ({
   onMyRatingsClick,
   onSearch,
@@ -51,8 +74,30 @@ export const Header = ({
   const [ratingsOpen, setRatingsOpen] = useState(false);
   const ratingsRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, user: authUser, logout } = useAuth();
+  const { totalCount } = useBookshelf();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Светлая тема под хедером (полка/редактор) → тёмный текст на светлом стекле
+  const [isLightTheme, setIsLightTheme] = useState(() => detectLightTheme());
+
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      const themedChanged = mutations.some((m) =>
+        [m.target, ...Array.from(m.addedNodes)]
+          .some((n) => n instanceof Element && (n.matches?.("[data-theme], .clay-shelf") || n.querySelector?.("[data-theme], .clay-shelf"))),
+      );
+      if (themedChanged) setIsLightTheme(detectLightTheme());
+    });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
+
+  // Пересчёт при переходе между страницами (после отрисовки нового роута)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setIsLightTheme(detectLightTheme()));
+    return () => cancelAnimationFrame(id);
+  }, [location.pathname]);
 
   const ambient = useAmbientSound();
   const ambientIsPlaying = ambient.isPlaying;
@@ -74,6 +119,7 @@ export const Header = ({
       if (path === "/community") return "Новости";
       if (path === "/templates" || path.startsWith("/templates/"))
         return "Тир-листы";
+      if (path === "/shelf") return "Полка";
       if (path === "/" || path === "/dashboard") return "Главная";
       return undefined;
     })();
@@ -158,6 +204,13 @@ export const Header = ({
         ]
       : []),
     {
+      label: "Полка",
+      onClick: () => navigate("/shelf"),
+      icon: <BookMarked size={18} />,
+      description: "Книги, которые вы читали или хотите прочитать",
+      badge: totalCount > 0 ? String(totalCount) : undefined,
+    },
+    {
       label: "Поддержать",
       onClick: () => navigate("/pricing"),
       icon: (
@@ -171,12 +224,16 @@ export const Header = ({
 
   return (
     <>
-      <header className="fixed top-2 xs:top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] xs:w-[calc(100%-2rem)] max-w-6xl bg-background-dark/90 backdrop-blur-xl rounded-xl xs:rounded-2xl shadow-2xl shadow-black/40 border border-slate-700/50">
+      <header className={`fixed top-2 xs:top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] xs:w-[calc(100%-2rem)] max-w-6xl backdrop-blur-xl rounded-xl xs:rounded-2xl shadow-2xl border ${
+        isLightTheme
+          ? "bg-white/30 border-slate-200/50 shadow-black/5"
+          : "bg-[#0b0f1f]/40 border-slate-700/30 shadow-black/25"
+      }`}>
         <div className="px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 xs:h-16">
             {/* Logo & Brand */}
             <div className="flex items-center gap-2 xs:gap-3 shrink-0">
-              <Logo onClick={onMyRatingsClick ?? handleDefaultMyRatings} />
+              <Logo onClick={onMyRatingsClick ?? handleDefaultMyRatings} light={isLightTheme} />
             </div>
 
             {/* Desktop Navigation */}
@@ -201,12 +258,27 @@ export const Header = ({
                         item.onClick ? "cursor-pointer" : "cursor-not-allowed"
                       } ${
                         activeItem === item.label
-                          ? "text-cyan-400"
-                          : "text-gray-300 hover:text-white"
+                          ? isLightTheme
+                            ? "text-cyan-700"
+                            : "text-cyan-400"
+                          : isLightTheme
+                            ? "text-slate-700 hover:text-slate-950"
+                            : "text-gray-300 hover:text-white"
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        {item.icon}
+                        <span className="relative shrink-0">
+                          {item.icon}
+                          {item.badge && (
+                            <span className={`absolute -top-1.5 -right-1.5 z-10 flex size-4 items-center justify-center rounded-full border text-[9px] font-bold leading-none ${
+                              isLightTheme
+                                ? "bg-yellow-400 text-yellow-950 border-yellow-600/60"
+                                : "bg-yellow-500/90 text-yellow-950 border-yellow-300/60"
+                            }`}>
+                              {item.badge}
+                            </span>
+                          )}
+                        </span>
                         <span className="text-sm font-medium">
                           {item.label}
                         </span>
@@ -217,11 +289,6 @@ export const Header = ({
                               ratingsOpen ? "rotate-180" : ""
                             }`}
                           />
-                        )}
-                        {item.badge && (
-                          <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-300 border border-yellow-400/30">
-                            {item.badge}
-                          </span>
                         )}
                       </div>
                       {/* Hover indicator */}
@@ -275,7 +342,11 @@ export const Header = ({
                     <button
                       data-analytics="auth.logout"
                       onClick={handleLogout}
-                      className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                      className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                        isLightTheme
+                          ? "text-slate-700 hover:bg-slate-200/70 hover:text-slate-950"
+                          : "text-gray-300 hover:bg-slate-800/50 hover:text-white"
+                      }`}
                       title="Выйти"
                       aria-label="Выйти"
                     >
@@ -289,7 +360,11 @@ export const Header = ({
                     <button
                       data-analytics="auth.logout_mobile"
                       onClick={handleLogout}
-                      className="md:hidden p-3.5 rounded-lg hover:bg-slate-800/50 text-gray-400 hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                      className={`md:hidden p-3.5 rounded-lg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                        isLightTheme
+                          ? "text-slate-600 hover:bg-slate-200/70 hover:text-slate-950"
+                          : "hover:bg-slate-800/50 text-gray-400 hover:text-white"
+                      }`}
                       aria-label="Выйти"
                     >
                       <LogOut size={18} />

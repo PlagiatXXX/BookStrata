@@ -39,6 +39,7 @@ import { imageProxyRoutes } from "../src/modules/image-proxy/image-proxy.route.j
 import { collectionRoutes } from "../src/modules/collections/collection.route.js";
 import { topicRoutes } from "../src/modules/collections/topic.route.js";
 import { celebrityRoutes } from "../src/modules/celebrities/celebrity.route.js";
+import { shelfRoutes } from "../src/modules/shelf/shelf.route.js";
 import { moderationRoutes } from "../src/modules/moderation/moderation.route.js";
 import templatesPlugin from "../src/modules/templates/templates.plugin.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
@@ -440,6 +441,7 @@ fastify.register(imageProxyRoutes, { prefix: "/api/images" });
 fastify.register(collectionRoutes, { prefix: "/api/collections" });
 fastify.register(topicRoutes, { prefix: "/api/topics" });
 fastify.register(celebrityRoutes, { prefix: "/api/celebrities" });
+fastify.register(shelfRoutes, { prefix: "/api/shelf" });
 
 // Admin: очистка load test пользователей
 import { adminCleanupRoutes } from "../src/modules/admin/admin-cleanup.route.js";

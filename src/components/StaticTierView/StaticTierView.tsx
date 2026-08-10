@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { Tier, Book } from "@/types";
-import type { ReadStatus } from "@/hooks/useReadStatus";
+import type { ShelfStatus } from "@/lib/shelfApi";
 import { TierLabel } from "@/ui/TierLabel";
 import { BookCover } from "@/ui/BookCover";
 import "./StaticTierView.css";
@@ -11,8 +11,7 @@ interface StaticTierViewProps {
   books: Record<string, Book>;
   onViewBook?: (book: Book) => void;
   filterGenre?: string | null;
-  statuses?: Record<string, ReadStatus>;
-  onToggleStatus?: (bookId: string) => void;
+  statuses?: Record<string, ShelfStatus>;
   unrankedBookIds?: string[];
 }
 
@@ -29,7 +28,6 @@ export const StaticTierView = memo(({
   onViewBook,
   filterGenre,
   statuses,
-  onToggleStatus,
   unrankedBookIds,
 }: StaticTierViewProps) => {
   const unrankedBooks = unrankedBookIds
@@ -67,8 +65,7 @@ export const StaticTierView = memo(({
                     book={book}
                     isDraggable={false}
                     onView={onViewBook}
-                    readStatus={statuses?.[book.id] ?? null}
-                    onToggleStatus={onToggleStatus ? () => onToggleStatus(book.id) : undefined}
+                    shelfStatus={statuses?.[book.id] ?? null}
                     // Первые 6 книг первого tier'а — fetchpriority="high" (above the fold)
                     priority={tierIndex === 0 && bookIndex < 6}
                   />
@@ -96,8 +93,7 @@ export const StaticTierView = memo(({
                   book={book}
                   isDraggable={false}
                   onView={onViewBook}
-                  readStatus={statuses?.[book.id] ?? null}
-                  onToggleStatus={onToggleStatus ? () => onToggleStatus(book.id) : undefined}
+                  shelfStatus={statuses?.[book.id] ?? null}
                 />
               ))}
             </div>

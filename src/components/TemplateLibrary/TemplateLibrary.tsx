@@ -443,7 +443,7 @@ const TemplateLibrary: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-dark">
+    <div className="min-h-screen bg-[#0b0f1f]">
       <SEOHead
         title="Тир-листы книг — рейтинги и визуальные подборки"
         description="Тир-листы BookStrata — рейтинги книг по жанрам, настроению и темам. Создавайте и публикуйте собственные подборки, находите вдохновение в работах сообщества."

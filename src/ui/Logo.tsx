@@ -1,8 +1,10 @@
 interface LogoProps {
   onClick?: () => void;
+  /** Светлый вариант (для прозрачного хедера на светлых темах) */
+  light?: boolean;
 }
 
-export const Logo = ({ onClick }: LogoProps) => {
+export const Logo = ({ onClick, light = false }: LogoProps) => {
   return (
     <button
       onClick={onClick}
@@ -101,7 +103,7 @@ export const Logo = ({ onClick }: LogoProps) => {
         <defs>
           <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#22d3ee" />
-            <stop offset="100%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor={light ? "#0f172a" : "#ffffff"} />
           </linearGradient>
           <linearGradient
             id="textGradientSecondary"
@@ -110,8 +112,8 @@ export const Logo = ({ onClick }: LogoProps) => {
             x2="100%"
             y2="0%"
           >
-            <stop offset="0%" stopColor="#9ca3af" />
-            <stop offset="100%" stopColor="#6b7280" />
+            <stop offset="0%" stopColor={light ? "#475569" : "#9ca3af"} />
+            <stop offset="100%" stopColor={light ? "#334155" : "#6b7280"} />
           </linearGradient>
         </defs>
       </svg>

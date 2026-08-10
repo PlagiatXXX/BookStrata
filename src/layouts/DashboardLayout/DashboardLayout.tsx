@@ -4,7 +4,7 @@ import { Footer } from "@/ui/Footer";
 import { MobileBottomNav } from "@/ui/MobileBottomNav";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 
-type BgVariant = "gradient" | "dark";
+type BgVariant = "gradient" | "dark" | "clay";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -37,6 +37,15 @@ const BG_STYLES: Record<BgVariant, React.CSSProperties> = {
   },
   dark: {
     backgroundColor: "#121212",
+  },
+  clay: {
+    background: [
+      "radial-gradient(circle at 15% 0%, rgba(255,255,255,0.5) 0%, transparent 40%)",
+      "radial-gradient(circle at 85% 30%, rgba(124,77,247,0.12) 0%, transparent 45%)",
+      "radial-gradient(circle at 50% 100%, rgba(255,140,90,0.12) 0%, transparent 50%)",
+      "linear-gradient(180deg, #d9f2e7 0%, #cdeee1 55%, #c2e6d8 100%)",
+    ].join(", "),
+    backgroundAttachment: "fixed",
   },
 };
 
