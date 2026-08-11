@@ -364,7 +364,7 @@
   max-width: 1000px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   background: rgba(15, 30, 50, 0.5);
   backdrop-filter: blur(16px);
@@ -1208,7 +1208,7 @@
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
   .landing-stats__grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
   }
 
@@ -1314,6 +1314,10 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
     padding: 24px 16px;
+  }
+
+  .landing-stats__grid > .landing-stat:last-child:nth-child(3) {
+    grid-column: 1 / -1;
   }
 
   .landing-section {

@@ -11,6 +11,8 @@ import { scenarios, plans, audienceItems, screenshots, type ScreenshotItem } fro
 import { proxyImageUrl } from "@/utils/imageProxy"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import type { TierListShort } from "@/lib/tierListApi"
+import { CollectionFlipCard } from "@/components/CommunityComponents/CollectionFlipCard"
+import type { CollectionItem } from "@/types/collection"
 import { TEMPLATES, type TemplateItem } from "@/data/mockData"
 
 // Готовые шаблоны для секции «Попробуйте прямо сейчас» (см. mockData.ts)
@@ -235,15 +237,15 @@ function LandingTemplateCard({ template }: { template: TemplateItem }) {
 /* ---------- Landing Body (секции ниже фолда) ---------- */
 interface LandingBodyProps {
   tierLists: TierListShort[] | undefined
+  collections: CollectionItem[] | undefined
   forumStats: {
     totalUsers: number
-    activeBattles: number
     tierLists: number
     totalBooks: number
   } | undefined
 }
 
-export default function LandingBody({ tierLists, forumStats }: LandingBodyProps) {
+export default function LandingBody({ tierLists, collections, forumStats }: LandingBodyProps) {
   const navigate = useNavigate()
   const [isDonateOpen, setIsDonateOpen] = useState(false)
   const [activeScreenshot, setActiveScreenshot] = useState<number | null>(null)
@@ -281,6 +283,42 @@ export default function LandingBody({ tierLists, forumStats }: LandingBodyProps)
               Создать свой тир-лист
               <ChevronRightIcon />
             </button>
+          </RevealBox>
+        </div>
+      </section>
+
+      <div className="landing-divider" />
+
+      {/* ============ COLLECTIONS (редакционные подборки) ============ */}
+      <section className="landing-section" id="collections">
+        <div className="landing-section__container">
+          <RevealBox><h2 className="landing-section__title">Популярные коллекции</h2></RevealBox>
+          <RevealBox><p className="landing-section__subtitle">Редакционные подборки: что почитать по жанрам — от детективов до нон-фикшн</p></RevealBox>
+
+          {collections && collections.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {collections.slice(0, 6).map((collection, index) => (
+                <RevealBox key={collection.id}>
+                  <CollectionFlipCard collection={collection} priority={index === 0} />
+                </RevealBox>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="min-h-[260px] rounded-sm bg-white/5 animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          <RevealBox className="landing-section__action">
+            <Link
+              to="/rankings"
+              data-analytics="cta.landing.view_all_collections"
+              className="landing-hero__btn landing-hero__btn--secondary"
+            >
+              Смотреть все подборки
+            </Link>
           </RevealBox>
         </div>
       </section>
@@ -363,7 +401,6 @@ export default function LandingBody({ tierLists, forumStats }: LandingBodyProps)
       <section className="landing-stats" id="stats">
         <div className="landing-stats__grid">
           <AnimatedCounter target={forumStats?.totalUsers ?? 0} suffix="+" label="Пользователей" />
-          <AnimatedCounter target={forumStats?.activeBattles ?? 0} suffix="" label="Проведено баттлов" />
           <AnimatedCounter target={forumStats?.tierLists ?? 0} suffix="" label="Создано тир-листов" />
           <AnimatedCounter target={forumStats?.totalBooks ?? 0} suffix="+" label="Книг в базе" />
         </div>

@@ -1,4 +1,4 @@
-import { BookOpen, Layers, Heart, Sparkles, Sword, MessageSquare, BarChart3 } from "lucide-react";
+import { BookOpen, Layers, Heart, Sparkles, MessageSquare, BarChart3 } from "lucide-react";
 
 /* ---------- Scenario card ---------- */
 export interface ScenarioItem {
@@ -58,7 +58,6 @@ export const allFeatures = [
   "Безлимитные тир-листы",
   "Безлимит книг в тир-листе",
   "Все темы оформления",
-  "Баттлы и обсуждения",
   "Кастомные обложки",
   "Экспорт PNG",
   "Букстраж (AI-рекомендации)",
@@ -156,13 +155,6 @@ export const screenshots: ScreenshotItem[] = [
     gradient: "bg-linear-to-br from-slate-800 to-slate-900/90",
     icon: <Layers size={28} />,
     videoSrc: "/screenshots/editor-compressed.mp4",
-  },
-  {
-    title: "Баттлы",
-    description: "Сравнение подборок",
-    gradient: "bg-linear-to-br from-rose-900/80 to-orange-900/80",
-    icon: <Sword size={28} />,
-    src: "/screenshots/battles.webp",
   },
   {
     title: "Профиль",

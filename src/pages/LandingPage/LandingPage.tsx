@@ -10,6 +10,7 @@ import { Spinner } from "@/components/Spinner"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { getPublicTierLists } from "@/lib/tierListApi"
 import { getForumStats } from "@/lib/battlesApi"
+import { getFeaturedCollections } from "@/lib/collectionsApi"
 import { heroPhrases } from "./landingData"
 import "./LandingPage.css"
 
@@ -79,6 +80,13 @@ export default function LandingPage() {
     gcTime: 300_000,
   })
 
+  const { data: collections } = useQuery({
+    queryKey: ["landing-collections"],
+    queryFn: getFeaturedCollections,
+    staleTime: 120_000,
+    gcTime: 300_000,
+  })
+
   const tierLists = tierListsData?.data
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -142,9 +150,9 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <SEOHead
-        title="BookStrata — рейтинги книг и тир-листы онлайн"
-        description="BookStrata — бесплатный сервис для рейтингов книг, визуальных тир-листов и поиска единомышленников. Создавай подборки, делись с друзьями и открывай новое."
-        image="/hero-bg.webp"
+        title="Тир-листы книг онлайн — создавай рейтинги и делись"
+        description="Создавай тир-листы книг и делись вкусами: визуальные рейтинги, личная библиотека, подборки с ИИ и сообщество читателей. Бесплатно, без ограничений."
+        image="/og-landing.webp"
         url="/"
       />
       <LandingNav />
@@ -171,7 +179,7 @@ export default function LandingPage() {
           </div>
 
           <h1 className="landing-hero__title">
-            BookStrata — твои книжные топы в красивых тир-листах.
+            Рейтинг книг и тир-листы:
             <br />
             <span className="landing-hero__carousel">
               <span
@@ -234,6 +242,7 @@ export default function LandingPage() {
         <LandingBody
           tierLists={tierLists}
           forumStats={forumStats}
+          collections={collections}
         />
       </Suspense>
 
