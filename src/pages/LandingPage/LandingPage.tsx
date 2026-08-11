@@ -35,12 +35,13 @@ function LandingNav() {
         <div className={`landing-nav__links ${mobileOpen ? "landing-nav__links--open" : ""}`}>
           <button data-analytics="nav.landing.features" onClick={() => scrollTo("scenarios")} className="landing-nav__link" type="button">Возможности</button>
           <button data-analytics="nav.landing.featured" onClick={() => scrollTo("featured")} className="landing-nav__link" type="button">Популярные тир-листы</button>
+          <Link data-analytics="nav.landing.rankings" to="/rankings" className="landing-nav__link">Рейтинг книг</Link>
           <Link data-analytics="nav.landing.celebrities" to="/celebrities" className="landing-nav__link">Знаменитости</Link>
 
           <div className="landing-nav__auth">
             <button data-analytics="auth.login_landing" onClick={() => navigate("/auth")} className="landing-nav__link" type="button">Войти</button>
-            <button data-analytics="cta.landing.create_tierlist_header" onClick={() => navigate("/tier-lists/new")} className="landing-nav__cta landing-nav__cta--primary" type="button">
-              Создать тир-лист
+            <button data-analytics="auth.register_landing" onClick={() => navigate("/auth?mode=register")} className="landing-nav__cta landing-nav__cta--primary" type="button">
+              Регистрация
             </button>
           </div>
         </div>
