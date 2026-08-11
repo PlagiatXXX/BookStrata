@@ -285,6 +285,8 @@ export default function LandingBody({ tierLists, forumStats }: LandingBodyProps)
         </div>
       </section>
 
+      <div className="landing-divider" />
+
       {/* ============ TRY TEMPLATES (пробные тир-листы) ============ */}
       <section className="landing-section landing-section--alt" id="try-templates">
         <div className="landing-section__container">
@@ -300,6 +302,19 @@ export default function LandingBody({ tierLists, forumStats }: LandingBodyProps)
           </div>
 
           <RevealBox className="landing-section__action">
+            <p className="landing-section__subtitle mb-4!">Понравилось? Зарегистрируйтесь, чтобы сохранить свою подборку</p>
+            <button
+              data-analytics="cta.landing.register_after_try"
+              onClick={() => navigate("/auth?mode=register")}
+              className="landing-hero__btn landing-hero__btn--primary"
+              type="button"
+            >
+              Зарегистрироваться бесплатно
+              <Zap size={18} />
+            </button>
+          </RevealBox>
+
+          <RevealBox className="landing-section__action">
             <button
               data-analytics="cta.landing.try_templates_all"
               onClick={() => navigate("/templates")}
@@ -311,6 +326,8 @@ export default function LandingBody({ tierLists, forumStats }: LandingBodyProps)
           </RevealBox>
         </div>
       </section>
+
+      <div className="landing-divider" />
 
       {/* ============ SCREENSHOTS ============ */}
       <section className="landing-section" id="screenshots">
@@ -339,6 +356,8 @@ export default function LandingBody({ tierLists, forumStats }: LandingBodyProps)
           </div>
         </div>
       </section>
+
+      <div className="landing-divider" />
 
       {/* ============ STATS ============ */}
       <section className="landing-stats" id="stats">
