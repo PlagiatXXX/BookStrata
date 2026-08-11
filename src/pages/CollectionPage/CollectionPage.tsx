@@ -240,6 +240,10 @@ return DOMPurify.sanitize(collection.content);
         description={seoDesc}
         image={seoImage}
         url={seoUrl}
+        publishedTime={collection.createdAt}
+        dateModified={collection.updatedAt}
+        author={collection.type === "curated" ? "Букстраж" : undefined}
+        type={collection.type === "literary" ? "article" : "website"}
         breadcrumbs={seoBreadcrumbs}
       />
 

@@ -95,6 +95,7 @@ export default function UserProfilePage() {
         person={{
           name: profile.username,
           image: profile.avatarUrl || undefined,
+          description: `Пользователь BookStrata: ${profile.stats?.tierListsCount || 0} тир-листов, ${profile.stats?.totalBooks || 0} книг в подборках.`,
         }}
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: profile.username, url: `/users/${id}` }]}
       />

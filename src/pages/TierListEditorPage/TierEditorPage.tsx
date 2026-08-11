@@ -747,7 +747,9 @@ const TierListEditorContent = () => {
           description={apiData?.title ? `Тир-лист «${apiData.title}» — визуальный рейтинг книг, созданный на BookStrata` : "Книжный тир-лист на BookStrata — рейтинг книг по уровням"}
           url={`/tier-lists/${pageUrl}`}
           image={apiData?.coverImageUrl || undefined}
-          publishedTime={apiData?.updatedAt}
+          publishedTime={apiData?.createdAt ?? apiData?.updatedAt}
+          dateModified={apiData?.updatedAt}
+          author={apiData?.user?.username}
           type="article"
           noindex={apiData ? !isPublic : undefined}
           breadcrumbs={[

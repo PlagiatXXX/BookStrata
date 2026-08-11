@@ -13,6 +13,8 @@ interface SEOHeadProps {
   url?: string;
   type?: "website" | "article" | "profile";
   publishedTime?: string;
+  /** Дата последнего изменения (article:modified_time, dateModified в JSON-LD) */
+  dateModified?: string;
   author?: string;
   noindex?: boolean;
   breadcrumbs?: { name: string; url: string }[];
@@ -83,6 +85,7 @@ export function SEOHead({
   url,
   type = "website",
   publishedTime,
+  dateModified,
   author,
   noindex,
   breadcrumbs,
@@ -176,6 +179,7 @@ export function SEOHead({
           image: imageUrl,
           author: author ? { "@type": "Person", name: author } : undefined,
           datePublished: publishedTime,
+          ...(dateModified ? { dateModified } : {}),
           publisher: { "@type": "Organization", name: SITE_NAME },
         }
       : null;
@@ -232,6 +236,9 @@ export function SEOHead({
 
       {publishedTime && (
         <meta property="article:published_time" content={publishedTime} />
+      )}
+      {dateModified && (
+        <meta property="article:modified_time" content={dateModified} />
       )}
       {author && <meta name="author" content={author} />}
       {noindex && <meta name="robots" content="noindex, nofollow" />}

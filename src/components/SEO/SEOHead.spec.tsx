@@ -16,6 +16,10 @@ function getPersonJsonLd(): JsonLdObject | undefined {
   return getJsonLdScripts().find((s) => s["@type"] === "Person");
 }
 
+function getArticleJsonLd(): JsonLdObject | undefined {
+  return getJsonLdScripts().find((s) => s["@type"] === "Article");
+}
+
 describe("SEOHead", () => {
   it("не рендерит Person JSON-LD без пропа person", () => {
     render(<SEOHead title="Тест" url="/test" />);
@@ -72,5 +76,64 @@ describe("SEOHead", () => {
     const person = getPersonJsonLd();
     expect(person).toBeDefined();
     expect(person!.knowsAbout).toBeUndefined();
+  });
+
+  it("рендерит Article JSON-LD с датами и автором", () => {
+    render(
+      <SEOHead
+        title="Тир-лист «Фантастика»"
+        url="/tier-lists/fantastika"
+        type="article"
+        publishedTime="2024-01-01T10:00:00Z"
+        dateModified="2024-05-01T10:00:00Z"
+        author="reader"
+      />,
+    );
+
+    const article = getArticleJsonLd();
+    expect(article).toBeDefined();
+    expect(article!.datePublished).toBe("2024-01-01T10:00:00Z");
+    expect(article!.dateModified).toBe("2024-05-01T10:00:00Z");
+    expect(article!.author).toEqual({ "@type": "Person", name: "reader" });
+  });
+
+  it("не добавляет dateModified в Article JSON-LD, если он не передан", () => {
+    render(
+      <SEOHead title="Статья" url="/blog/statya" type="article" publishedTime="2024-01-01T10:00:00Z" />,
+    );
+
+    const article = getArticleJsonLd();
+    expect(article).toBeDefined();
+    expect(article!.datePublished).toBe("2024-01-01T10:00:00Z");
+    expect(article!.dateModified).toBeUndefined();
+  });
+
+  it("рендерит meta article:modified_time и meta author при передаче пропсов", () => {
+    render(
+      <SEOHead
+        title="Тир-лист «Фантастика»"
+        url="/tier-lists/fantastika"
+        type="article"
+        publishedTime="2024-01-01T10:00:00Z"
+        dateModified="2024-05-01T10:00:00Z"
+        author="reader"
+      />,
+    );
+
+    expect(document.querySelector('meta[property="article:published_time"]')?.getAttribute("content")).toBe(
+      "2024-01-01T10:00:00Z",
+    );
+    expect(document.querySelector('meta[property="article:modified_time"]')?.getAttribute("content")).toBe(
+      "2024-05-01T10:00:00Z",
+    );
+    expect(document.querySelector('meta[name="author"]')?.getAttribute("content")).toBe("reader");
+  });
+
+  it("не рендерит meta article:modified_time без пропа dateModified", () => {
+    render(
+      <SEOHead title="Статья" url="/blog/statya" type="article" publishedTime="2024-01-01T10:00:00Z" />,
+    );
+
+    expect(document.querySelector('meta[property="article:modified_time"]')).toBeNull();
   });
 });
