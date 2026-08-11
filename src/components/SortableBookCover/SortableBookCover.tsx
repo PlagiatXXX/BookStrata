@@ -27,7 +27,7 @@ export const SortableBookCover = memo(
       <div
         ref={setNodeRef}
         style={style}
-        className="relative cursor-grab active:cursor-grabbing touch-none select-none"
+        className="relative cursor-grab active:cursor-grabbing select-none"
         {...attributes}
         {...listeners}
       >
