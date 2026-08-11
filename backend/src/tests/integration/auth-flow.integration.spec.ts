@@ -223,4 +223,25 @@ describe("Auth — verify-email / resend / forgot-password / reset-password / re
       expect(res.statusCode).toBe(400);
     });
   });
+
+  describe("POST /refresh — rate limit", () => {
+    it("должен вернуть 429 после превышения лимита запросов", async () => {
+      // Лимит /refresh — 60 запросов в минуту (RATE_LIMIT_REFRESH_MAX).
+      // Часть лимита уже потрачена тестами выше, поэтому идём до 429,
+      // но не больше 70 запросов, чтобы тест не висел вечно.
+      for (let i = 0; i < 70; i++) {
+        const res = await ctx.fastify.inject({
+          method: "POST",
+          url: "/api/auth/refresh",
+        });
+
+        if (res.statusCode === 429) {
+          expect(res.statusCode).toBe(429);
+          return;
+        }
+      }
+
+      expect.fail("rate limit не сработал: 70 запросов без 429");
+    });
+  });
 });

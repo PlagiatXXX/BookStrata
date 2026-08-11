@@ -26,6 +26,7 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().optional(),
   RATE_LIMIT_REGISTER_MAX: z.coerce.number().default(300),
   RATE_LIMIT_LOGIN_MAX: z.coerce.number().default(20),
+  RATE_LIMIT_REFRESH_MAX: z.coerce.number().default(60),
   ADMIN_ROLE_CHANGE_SECRET: z.string().optional(),
 
   // --- Books API ---

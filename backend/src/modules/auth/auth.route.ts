@@ -170,7 +170,17 @@ export async function authRoutes(fastify: FastifyInstance) {
   // bodyLimit намеренно не ставим — Fastify 5 может выбросить
   // FST_ERR_CTP_BODY_TOO_LARGE/EMPTY_JSON_BODY, который попадёт в catch
   // и превратится в 401 вместо штатной обработки.
-  fastify.post("/refresh", {}, async (request, reply) => {
+  fastify.post(
+    "/refresh",
+    {
+      config: {
+        rateLimit: {
+          max: config.RATE_LIMIT_REFRESH_MAX,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
     try {
       const refreshToken = request.cookies.refreshToken;
 
