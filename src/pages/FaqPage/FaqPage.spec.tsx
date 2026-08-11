@@ -105,4 +105,15 @@ describe("FaqPage", () => {
       expect(jsonLdQuestions).toContain(question);
     }
   });
+
+  it("оформляет каждый вопрос как заголовок h2 с якорем", () => {
+    renderPage();
+    FAQ_ITEMS.forEach((question, index) => {
+      const heading = screen.getByRole("heading", { name: question });
+      expect(heading.tagName).toBe("H2");
+      expect(heading).toHaveAttribute("id", `faq-question-${index}`);
+      // Кнопка аккордеона внутри заголовка — клик работает как раньше
+      expect(heading.querySelector("button")).not.toBeNull();
+    });
+  });
 });

@@ -125,23 +125,26 @@ export default function FaqPage() {
                     : "border-(--line-soft) bg-(--bg-0)"
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? null : index)}
-                  aria-expanded={isOpen}
-                  aria-controls={`faq-answer-${index}`}
-                  className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left cursor-pointer"
-                >
-                  <span className="text-sm font-semibold text-(--ink-0)">
-                    {item.question}
-                  </span>
-                  <ChevronDown
-                    size={18}
-                    className={`shrink-0 text-(--ink-2) transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
+                {/* Вопрос как заголовок h2 с якорем — для featured snippets Google ведёт клик на заголовок секции */}
+                <h2 id={`faq-question-${index}`} className="m-0">
+                  <button
+                    type="button"
+                    onClick={() => setOpenIndex(isOpen ? null : index)}
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${index}`}
+                    className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left cursor-pointer"
+                  >
+                    <span className="text-sm font-semibold text-(--ink-0)">
+                      {item.question}
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      className={`shrink-0 text-(--ink-2) transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                </h2>
                 <div
                   id={`faq-answer-${index}`}
                   className={`grid transition-[grid-template-rows] duration-300 ease-out ${
