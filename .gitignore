@@ -40,6 +40,7 @@ backups/
 
 neon_backup.sql
 AGENTS.md
+OPENCODE-INTEGRATION.md
 .opencode/*
 testsprite_tests/*
 .playwright-mcp/*
