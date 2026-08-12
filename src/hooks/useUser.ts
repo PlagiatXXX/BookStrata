@@ -3,8 +3,10 @@ import {
   apiGetMe,
   apiGetUserStats,
   apiUploadAvatar,
+  apiUpdateProfile,
   type User,
   type UserStats,
+  type UpdateProfileInput,
 } from "@/lib/userApi";
 import { getAuthToken } from "@/lib/authApi";
 
@@ -16,6 +18,7 @@ interface UseUserResult {
   stats: UserStats | undefined;
   isLoading: boolean;
   uploadAvatar: (avatarUrl: string) => Promise<User>;
+  updateProfile: (input: UpdateProfileInput) => Promise<User>;
   refreshUser: () => Promise<void>;
 }
 
@@ -45,6 +48,13 @@ export function useUser(): UseUserResult {
     },
   });
 
+  const updateProfileMutation = useMutation({
+    mutationFn: (input: UpdateProfileInput) => apiUpdateProfile(input),
+    onSuccess: async (updatedUser) => {
+      queryClient.setQueryData(USER_QUERY_KEY, updatedUser);
+    },
+  });
+
   const refreshUser = async () => {
     await Promise.all([userQuery.refetch(), statsQuery.refetch()]);
   };
@@ -54,6 +64,7 @@ export function useUser(): UseUserResult {
     stats: statsQuery.data,
     isLoading: userQuery.isLoading || statsQuery.isLoading,
     uploadAvatar: uploadAvatarMutation.mutateAsync,
+    updateProfile: updateProfileMutation.mutateAsync,
     refreshUser,
   };
 }

@@ -26,6 +26,8 @@ const mockPublicUser = {
   id: 2,
   username: "fedor",
   avatarUrl: "https://example.com/avatar.jpg",
+  bio: "Люблю книги про робототехнику",
+  socialLinks: [{ platform: "telegram", url: "https://t.me/fedor_books" }],
   isPro: true,
   isDonor: true,
   xp: 290,

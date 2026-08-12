@@ -18,6 +18,8 @@ import {
   setDonorStatus,
   heartbeat,
 } from "./users.service.js";
+
+import type { SocialLink } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { ErrorCodes, createApiError, createSuccessResponse, createPaginatedResponse } from "../../lib/api-response.js";
@@ -39,7 +41,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 
   // PUT /api/users/me
   fastify.put<{
-    Body: { username: string };
+    Body: { username: string; bio?: string | null; socialLinks?: SocialLink[] | null };
   }>(
     "/me",
     {
@@ -50,6 +52,20 @@ export async function userRoutes(fastify: FastifyInstance) {
           required: ["username"],
           properties: {
             username: { type: "string", minLength: 2, maxLength: 20 },
+            bio: { type: "string", maxLength: 500, nullable: true },
+            socialLinks: {
+              type: "array",
+              maxItems: 6,
+              items: {
+                type: "object",
+                required: ["platform", "url"],
+                properties: {
+                  platform: { type: "string", minLength: 1, maxLength: 20 },
+                  url: { type: "string", maxLength: 500 },
+                },
+              },
+              nullable: true,
+            },
           },
         },
       },
@@ -59,7 +75,7 @@ export async function userRoutes(fastify: FastifyInstance) {
       if (!userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
-      const user = await updateUser(userId, request.body.username);
+      const user = await updateUser(userId, request.body);
       fastify.log.info(
         { userId, username: request.body.username },
         "Username updated",

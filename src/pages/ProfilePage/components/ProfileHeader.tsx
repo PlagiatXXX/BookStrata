@@ -1,18 +1,15 @@
-import {
-  Camera,
-  Edit2,
-  Save,
-  X,
-  User as UserIcon,
-  Calendar,
-} from "lucide-react";
+import { Camera, Edit2, Save, X, Calendar } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { ProfileBioEditor } from "./ProfileBioEditor";
+import type { SocialLink } from "@/lib/userApi";
 
 interface ProfileHeaderProps {
   user?: {
     avatarUrl: string | null;
     email: string;
     createdAt: string;
+    bio?: string | null;
+    socialLinks?: SocialLink[] | null;
   };
   username?: string;
   isEditingUsername: boolean;
@@ -47,7 +44,21 @@ export function ProfileHeader({
   onUsernameChange,
 }: ProfileHeaderProps) {
   return (
-    <div className="rounded-2xl bg-[#1a1a2e] p-4 shadow-xl dark:bg-[#1a1a2e] light:bg-white sm:p-6 md:p-8">
+    <div className="relative rounded-2xl bg-[#1a1a2e] p-4 shadow-xl dark:bg-[#1a1a2e] light:bg-white sm:p-6 md:p-8">
+      <div className="mb-4 rounded-2xl bg-surface-light dark:bg-[#200f24] light:bg-gray-50 p-3 shadow-lg sm:mb-0 sm:absolute sm:right-4 sm:top-4 sm:p-4">
+        <div className="flex items-center gap-2">
+          <Calendar className="text-primary shrink-0" size={16} />
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400">
+              Дата регистрации
+            </p>
+            <p className="text-sm text-white dark:text-white light:text-gray-900 font-medium">
+              {user?.createdAt ? formatDate(user.createdAt) : "Неизвестно"}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Header Section - Horizontal Layout */}
       <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
         {/* Avatar - Centered on mobile, left on desktop */}
@@ -111,30 +122,17 @@ export function ProfileHeader({
               {user?.email}
             </p>
           </div>
-
-          {/* User Info Cards - Stacked on mobile, 2 columns on desktop */}
-          <div className="grid grid-cols-1 gap-2 mt-3 sm:grid-cols-2 sm:gap-3">
-            <div className="flex items-center gap-2 p-2.5 bg-surface-light dark:bg-[#200f24] light:bg-gray-50 rounded-lg sm:p-3 sm:gap-3">
-              <UserIcon className="text-primary shrink-0 sm:size-5" size={16} />
-              <div className="min-w-0">
-                <p className="text-xs text-gray-400">Имя пользователя</p>
-                <p className="text-sm text-white dark:text-white light:text-gray-900 font-medium truncate">
-                  {username || "Не указано"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 p-2.5 bg-surface-light dark:bg-[#200f24] light:bg-gray-50 rounded-lg sm:p-3 sm:gap-3">
-              <Calendar className="text-primary shrink-0 sm:size-5" size={16} />
-              <div className="min-w-0">
-                <p className="text-xs text-gray-400">Дата регистрации</p>
-                <p className="text-sm text-white dark:text-white light:text-gray-900 font-medium truncate">
-                  {user?.createdAt ? formatDate(user.createdAt) : "Неизвестно"}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 shadow-inner shadow-black/10 backdrop-blur-sm">
+        <ProfileBioEditor
+          user={{
+            username: username ?? "",
+            bio: user?.bio ?? null,
+            socialLinks: user?.socialLinks ?? null,
+          }}
+        />
       </div>
     </div>
   );

@@ -9,10 +9,38 @@ export interface User {
   email: string;
   username: string;
   avatarUrl: string | null;
+  bio: string | null;
+  socialLinks: SocialLink[] | null;
   role?: string;
   isDonor?: boolean;
   createdAt: string;
 }
+
+export interface PublicUser {
+  id: number;
+  username: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  socialLinks: SocialLink[] | null;
+  isDonor: boolean;
+  xp: number;
+  title: string | null;
+  icon: string | null;
+  role: string | null;
+  createdAt: string;
+  stats: PublicUserStats;
+}
+
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+export type UpdateProfileInput = {
+  username: string;
+  bio?: string | null;
+  socialLinks?: SocialLink[] | null;
+};
 
 export interface UserStats {
   tierListsCount: number;
@@ -32,19 +60,6 @@ export interface PublicUserStats {
   lastActivity: string | null;
 }
 
-export interface PublicUser {
-  id: number;
-  username: string;
-  avatarUrl: string | null;
-  isDonor: boolean;
-  xp: number;
-  title: string | null;
-  icon: string | null;
-  role: string | null;
-  createdAt: string;
-  stats: PublicUserStats;
-}
-
 export interface TasteMatchResult {
   matchPercent: number;
   commonBooks: number;
@@ -58,6 +73,13 @@ export async function apiGetMe(): Promise<User> {
 export async function apiUpdateAvatar(avatarUrl: string): Promise<User> {
   userLogger.info("Обновление аватара пользователя");
   return apiClient.put<User>("/users/me/avatar", { avatarUrl });
+}
+
+export async function apiUpdateProfile(
+  input: UpdateProfileInput,
+): Promise<User> {
+  userLogger.info("Обновление профиля пользователя");
+  return apiClient.put<User>("/users/me", input);
 }
 
 export async function apiDeleteAvatar(): Promise<User> {
@@ -85,7 +107,10 @@ export async function apiGetUserTierLists(
   page = 1,
   pageSize = 10,
 ) {
-  userLogger.info("Получение публичных тир-листов пользователя", { userId, page });
+  userLogger.info("Получение публичных тир-листов пользователя", {
+    userId,
+    page,
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return apiClient.get<any>(`/users/${userId}/tier-lists`, { page, pageSize });
 }
@@ -95,7 +120,10 @@ export async function apiGetMyTierLists(
   pageSize = 10,
 ): Promise<PaginatedTierListsResponse> {
   userLogger.info("Получение своих тир-листов", { page });
-  return apiClient.get<PaginatedTierListsResponse>("/users/me/tier-lists", { page, pageSize });
+  return apiClient.get<PaginatedTierListsResponse>("/users/me/tier-lists", {
+    page,
+    pageSize,
+  });
 }
 
 export interface MyBook {
@@ -116,21 +144,27 @@ export async function apiGetMyBooks(): Promise<MyBook[]> {
   return apiClient.get<MyBook[]>("/users/me/books");
 }
 
-export async function apiGetTasteMatch(userId: string): Promise<TasteMatchResult> {
+export async function apiGetTasteMatch(
+  userId: string,
+): Promise<TasteMatchResult> {
   userLogger.info("Получение совпадения вкусов", { userId });
   return apiClient.get<TasteMatchResult>(`/users/${userId}/taste-match`);
 }
 
 export async function apiUploadAvatar(base64Image: string): Promise<User> {
   userLogger.info("Загрузка аватара");
-  const result = await apiClient.post<{ success: boolean; avatarUrl: string; user: User }>(
-    "/avatars/upload",
-    { avatar: base64Image }
-  );
+  const result = await apiClient.post<{
+    success: boolean;
+    avatarUrl: string;
+    user: User;
+  }>("/avatars/upload", { avatar: base64Image });
   return result.user;
 }
 
-export async function apiSetDonorStatus(userId: number, isDonor: boolean): Promise<{ id: number; username: string; isDonor: boolean }> {
+export async function apiSetDonorStatus(
+  userId: number,
+  isDonor: boolean,
+): Promise<{ id: number; username: string; isDonor: boolean }> {
   return apiClient.patch(`/users/admin/${userId}/donor`, { isDonor });
 }
 

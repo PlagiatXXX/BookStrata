@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 
 export interface CreateFeedbackInput {
@@ -28,7 +29,7 @@ export async function getAllFeedback(params?: {
 }) {
   const { skip = 0, take = 50, status, type } = params ?? {};
 
-  const where: any = {};
+  const where: Prisma.FeedbackWhereInput = {};
   if (status) where.status = status;
   if (type) where.type = type;
 
@@ -45,10 +46,7 @@ export async function getAllFeedback(params?: {
   });
 }
 
-export async function updateFeedbackStatus(
-  id: number,
-  status: string,
-) {
+export async function updateFeedbackStatus(id: number, status: string) {
   return prisma.feedback.update({
     where: { id },
     data: { status },

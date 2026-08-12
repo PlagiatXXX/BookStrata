@@ -1,5 +1,9 @@
 import { prisma } from "../../lib/prisma.js";
-import { NotFoundError, ConflictError, ValidationError } from "../../lib/errors.js";
+import {
+  NotFoundError,
+  ConflictError,
+  ValidationError,
+} from "../../lib/errors.js";
 import bcrypt from "bcryptjs";
 import { tierListRepository } from "../../repositories/index.js";
 import { getTitleEntryByXP } from "../achievements/achievements.service.js";
@@ -11,6 +15,13 @@ export type UpdateAvatarInput = {
 
 export type UpdateUserInput = {
   username: string;
+  bio?: string | null;
+  socialLinks?: SocialLink[] | null;
+};
+
+export type SocialLink = {
+  platform: string;
+  url: string;
 };
 
 export type ChangePasswordInput = {
@@ -24,6 +35,8 @@ const userProfileSelect = {
   email: true,
   username: true,
   avatarUrl: true,
+  bio: true,
+  socialLinks: true,
   role: {
     select: { name: true },
   },
@@ -48,22 +61,29 @@ export async function getMe(userId: number) {
 }
 
 // PUT /api/users/me - обновить профиль пользователя
-export async function updateUser(userId: number, username: string) {
-  // Проверка на уникальность имени
-  const existing = await prisma.user.findFirst({
-    where: {
-      username,
-      NOT: { id: userId },
-    },
-  });
+export async function updateUser(userId: number, input: UpdateUserInput) {
+  const { username, bio, socialLinks } = input;
 
-  if (existing) {
-    throw new ConflictError("Это имя пользователя уже занято");
+  if (username) {
+    const existing = await prisma.user.findFirst({
+      where: {
+        username,
+        NOT: { id: userId },
+      },
+    });
+
+    if (existing) {
+      throw new ConflictError("Это имя пользователя уже занято");
+    }
   }
 
   return prisma.user.update({
     where: { id: userId },
-    data: { username },
+    data: {
+      ...(username && { username }),
+      bio: bio ?? undefined,
+      socialLinks: socialLinks ?? undefined,
+    },
     select: userProfileSelect,
   });
 }
@@ -136,7 +156,8 @@ export async function getUserById(params: { id: string }) {
       id: true,
       username: true,
       avatarUrl: true,
-    
+      bio: true,
+      socialLinks: true,
       xp: true,
       title: true,
       isDonor: true,
@@ -152,16 +173,17 @@ export async function getUserById(params: { id: string }) {
   }
 
   // Статистика
-  const [tierListStats, publishedCount, placementCount, lastUpdated] = await Promise.all([
-    tierListRepository.aggregateUserStats(userId),
-    prisma.tierList.count({ where: { userId, isPublic: true } }),
-    prisma.bookPlacement.count({ where: { tierList: { userId } } }),
-    prisma.tierList.findFirst({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
-      select: { updatedAt: true },
-    }),
-  ]);
+  const [tierListStats, publishedCount, placementCount, lastUpdated] =
+    await Promise.all([
+      tierListRepository.aggregateUserStats(userId),
+      prisma.tierList.count({ where: { userId, isPublic: true } }),
+      prisma.bookPlacement.count({ where: { tierList: { userId } } }),
+      prisma.tierList.findFirst({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+        select: { updatedAt: true },
+      }),
+    ]);
 
   const titleEntry = getTitleEntryByXP(user.xp);
 
@@ -169,6 +191,8 @@ export async function getUserById(params: { id: string }) {
     id: user.id,
     username: user.username,
     avatarUrl: user.avatarUrl,
+    bio: user.bio,
+    socialLinks: user.socialLinks,
     xp: user.xp,
     title: user.title,
     icon: titleEntry.icon,
@@ -200,7 +224,14 @@ export interface UserStats {
 export async function getUserStats(userId: number) {
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-  const [tierListStats, templatesCount, likesTodayCount, publishedCount, placementCount, lastUpdated] = await Promise.all([
+  const [
+    tierListStats,
+    templatesCount,
+    likesTodayCount,
+    publishedCount,
+    placementCount,
+    lastUpdated,
+  ] = await Promise.all([
     tierListRepository.aggregateUserStats(userId),
     prisma.template.count({ where: { authorId: userId } }),
     prisma.tierListLike.count({
@@ -239,7 +270,10 @@ export async function getUserPublicTierLists(
   page: number,
   pageSize: number,
 ) {
-  const [data, totalItems] = await tierListRepository.findPublicByUserId(userId, { page, pageSize });
+  const [data, totalItems] = await tierListRepository.findPublicByUserId(
+    userId,
+    { page, pageSize },
+  );
 
   const transformed = data.map((tl) => ({
     ...tl,
@@ -309,7 +343,10 @@ export async function getMyTierLists(
   page: number,
   pageSize: number,
 ) {
-  const [data, totalItems] = await tierListRepository.findByUser(userId, { page, pageSize });
+  const [data, totalItems] = await tierListRepository.findByUser(userId, {
+    page,
+    pageSize,
+  });
 
   const transformed = data.map((tl) => ({
     ...tl,
@@ -321,9 +358,13 @@ export async function getMyTierLists(
 }
 
 // GET /api/users/:id/taste-match — совпадение вкусов с текущим пользователем
-export async function getTasteMatch(targetUserId: number, currentUserId: number) {
+export async function getTasteMatch(
+  targetUserId: number,
+  currentUserId: number,
+) {
   // Получаем все ID публичных тир-листов целевого пользователя
-  const targetListIds = await tierListRepository.findUserTierListIds(targetUserId);
+  const targetListIds =
+    await tierListRepository.findUserTierListIds(targetUserId);
 
   if (targetListIds.length === 0) {
     return { matchPercent: 0, commonBooks: 0, totalBooks: 0 };
@@ -336,22 +377,30 @@ export async function getTasteMatch(targetUserId: number, currentUserId: number)
   });
 
   // Получаем все книги текущего пользователя
-  const userListIds = await tierListRepository.findUserTierListIds(currentUserId);
-  const userPlacements = userListIds.length > 0
-    ? await prisma.bookPlacement.findMany({
-        where: { tierListId: { in: userListIds } },
-        include: { book: { select: { title: true, author: true } } },
-      })
-    : [];
+  const userListIds =
+    await tierListRepository.findUserTierListIds(currentUserId);
+  const userPlacements =
+    userListIds.length > 0
+      ? await prisma.bookPlacement.findMany({
+          where: { tierListId: { in: userListIds } },
+          include: { book: { select: { title: true, author: true } } },
+        })
+      : [];
 
   // Строим Set книг текущего пользователя (normalizeKey)
   const userBookKeys = new Set(
-    userPlacements.map((p) => `${p.book.title.toLowerCase().trim()}|${(p.book.author ?? "").toLowerCase().trim()}`),
+    userPlacements.map(
+      (p) =>
+        `${p.book.title.toLowerCase().trim()}|${(p.book.author ?? "").toLowerCase().trim()}`,
+    ),
   );
 
   // Считаем совпадения среди книг целевого пользователя
   const targetBookKeys = new Set(
-    targetPlacements.map((p) => `${p.book.title.toLowerCase().trim()}|${(p.book.author ?? "").toLowerCase().trim()}`),
+    targetPlacements.map(
+      (p) =>
+        `${p.book.title.toLowerCase().trim()}|${(p.book.author ?? "").toLowerCase().trim()}`,
+    ),
   );
 
   let commonBooks = 0;
@@ -362,7 +411,8 @@ export async function getTasteMatch(targetUserId: number, currentUserId: number)
   const totalUnique = targetBookKeys.size + userBookKeys.size - commonBooks;
 
   return {
-    matchPercent: totalUnique > 0 ? Math.round((commonBooks / totalUnique) * 100) : 0,
+    matchPercent:
+      totalUnique > 0 ? Math.round((commonBooks / totalUnique) * 100) : 0,
     commonBooks,
     totalBooks: targetBookKeys.size,
   };
@@ -459,7 +509,7 @@ export async function getAllUsers() {
 }
 
 export async function getViolators() {
-  const now = new Date()
+  const now = new Date();
   const users = await prisma.user.findMany({
     where: {
       OR: [
@@ -491,46 +541,55 @@ export async function getViolators() {
       _count: { select: { warnings: true } },
     },
     orderBy: { createdAt: "desc" },
-  })
+  });
 
   return users.map((user) => {
     const actions: Array<{
-      type: "chat_ban" | "suspension" | "warning"
-      date: string
-      until: string | null
-      reason: string | null
-      moderator: { id: number; username: string } | null
-    }> = []
+      type: "chat_ban" | "suspension" | "warning";
+      date: string;
+      until: string | null;
+      reason: string | null;
+      moderator: { id: number; username: string } | null;
+    }> = [];
 
-    if (user.chatBannedAt && (!user.chatBannedUntil || user.chatBannedUntil > now)) {
+    if (
+      user.chatBannedAt &&
+      (!user.chatBannedUntil || user.chatBannedUntil > now)
+    ) {
       actions.push({
         type: "chat_ban",
         date: user.chatBannedAt.toISOString(),
         until: user.chatBannedUntil?.toISOString() ?? null,
         reason: null,
         moderator: null,
-      })
+      });
     }
 
-    if (user.suspendedAt && (!user.suspendedUntil || user.suspendedUntil > now)) {
+    if (
+      user.suspendedAt &&
+      (!user.suspendedUntil || user.suspendedUntil > now)
+    ) {
       actions.push({
         type: "suspension",
         date: user.suspendedAt.toISOString(),
         until: user.suspendedUntil?.toISOString() ?? null,
         reason: user.suspensionReason,
         moderator: null,
-      })
+      });
     }
 
-    const lastWarning = user.warnings[0]
+    const lastWarning = user.warnings[0];
     if (lastWarning) {
       actions.push({
         type: "warning" as const,
         date: lastWarning.createdAt.toISOString(),
         until: null,
         reason: lastWarning.message,
-        moderator: { id: lastWarning.moderator.id, username: lastWarning.moderator.username ?? "—" },
-      })
+        moderator: {
+          id: lastWarning.moderator.id,
+          username: lastWarning.moderator.username ?? "—",
+        },
+      });
     }
 
     return {
@@ -539,9 +598,11 @@ export async function getViolators() {
       email: user.email,
       role: user.role?.name ?? "user",
       warningsCount: user._count.warnings,
-      actions: actions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    }
-  })
+      actions: actions.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      ),
+    };
+  });
 }
 
 // POST /api/users/heartbeat — пульс активности (раз в минуту от фронта)
@@ -569,6 +630,6 @@ export async function setDonorStatus(userId: number, isDonor: boolean) {
       isDonor: true,
       donatedAt: true,
     },
-  })
-  return user
+  });
+  return user;
 }

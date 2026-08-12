@@ -93,6 +93,8 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          bio: true,
+          socialLinks: true,
           role: {
             select: {
               name: true,
@@ -147,7 +149,7 @@ describe("users.service", () => {
       (prisma.user.findFirst as any).mockResolvedValue(null);
       (prisma.user.update as any).mockResolvedValue(mockUpdatedUser);
 
-      const result = await userService.updateUser(mockUserId, mockNewUsername);
+      const result = await userService.updateUser(mockUserId, { username: mockNewUsername });
 
       expect(prisma.user.findFirst).toHaveBeenCalledWith({
         where: {
@@ -164,6 +166,8 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          bio: true,
+          socialLinks: true,
           role: {
             select: { name: true },
           },
@@ -181,7 +185,7 @@ describe("users.service", () => {
       });
 
       await expect(
-        userService.updateUser(mockUserId, mockNewUsername),
+        userService.updateUser(mockUserId, { username: mockNewUsername }),
       ).rejects.toThrow("Это имя пользователя уже занято");
     });
 
@@ -190,7 +194,7 @@ describe("users.service", () => {
       (prisma.user.findFirst as any).mockResolvedValue(null);
       (prisma.user.update as any).mockResolvedValue(currentUser);
 
-      const result = await userService.updateUser(mockUserId, "currentname");
+      const result = await userService.updateUser(mockUserId, { username: "currentname" });
 
       expect(result.username).toBe("currentname");
     });
@@ -223,6 +227,8 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          bio: true,
+          socialLinks: true,
           role: {
             select: { name: true },
           },
@@ -269,6 +275,8 @@ describe("users.service", () => {
           email: true,
           username: true,
           avatarUrl: true,
+          bio: true,
+          socialLinks: true,
           role: {
             select: { name: true },
           },
@@ -388,6 +396,8 @@ describe("users.service", () => {
       id: 1,
       username: "testuser",
       avatarUrl: "https://example.com/avatar.jpg",
+      bio: null,
+      socialLinks: null,
       isPro: true,
       proExpiresAt: new Date("2099-01-01"),
       xp: 150,
@@ -412,26 +422,30 @@ describe("users.service", () => {
 
       const result = await userService.getUserById({ id: mockUserId });
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
-        select: {
-          id: true,
-          username: true,
-          avatarUrl: true,
-          xp: true,
-          title: true,
-          isDonor: true,
-          role: {
-            select: { name: true },
-          },
-          createdAt: true,
-        },
-      });
+       expect(prisma.user.findUnique).toHaveBeenCalledWith({
+         where: { id: 1 },
+         select: {
+           id: true,
+           username: true,
+           avatarUrl: true,
+           bio: true,
+           socialLinks: true,
+           xp: true,
+           title: true,
+           isDonor: true,
+           role: {
+             select: { name: true },
+           },
+           createdAt: true,
+         },
+       });
 
       expect(result).toEqual({
         id: 1,
         username: "testuser",
         avatarUrl: "https://example.com/avatar.jpg",
+        bio: null,
+        socialLinks: null,
         xp: 150,
         title: "Книжный червь",
         icon: "📄",
