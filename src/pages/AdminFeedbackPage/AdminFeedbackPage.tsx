@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,27 +10,10 @@ import {
   XCircle,
   Loader,
   Crown,
-} from "lucide-react"
-import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal"
+} from "lucide-react";
+import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
 import { apiClient } from "@/lib/api-client";
-
-interface FeedbackUser {
-  id: number;
-  username: string | null;
-  avatarUrl: string | null;
-}
-
-interface FeedbackItem {
-  id: number;
-  type: string;
-  status: string;
-  message: string;
-  pageUrl: string | null;
-  userEmail: string | null;
-  userId: number | null;
-  user: FeedbackUser | null;
-  createdAt: string;
-}
+import { useFeedback, type FeedbackItem } from "@/hooks/useFeedback";
 
 const STATUS_CONFIG: Record<
   string,
@@ -59,35 +42,19 @@ const REWARD_OPTIONS = [
 
 export default function AdminFeedbackPage() {
   const navigate = useNavigate();
-  const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [rewardingId, setRewardingId] = useState<number | null>(null);
   const [rewardError, setRewardError] = useState<string | null>(null);
   const [rewarding, setRewarding] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
-  const fetchFeedback = async () => {
-    try {
-      const data = await apiClient.get<FeedbackItem[]>("/feedback");
-      setFeedback(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Ошибка загрузки");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useFeedback();
 
-  useEffect(() => {
-    fetchFeedback();
-  }, []);
+  const feedback: FeedbackItem[] = data?.pages.flat() ?? [];
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
       await apiClient.patch(`/feedback/${id}`, { status });
-      setFeedback((prev) =>
-        prev.map((f) => (f.id === id ? { ...f, status } : f)),
-      );
     } catch {
       // ignore
     }
@@ -96,7 +63,6 @@ export default function AdminFeedbackPage() {
   const handleDelete = async (id: number) => {
     try {
       await apiClient.delete(`/feedback/${id}`);
-      setFeedback((prev) => prev.filter((f) => f.id !== id));
       setDeleteConfirmId(null);
     } catch {
       // ignore
@@ -122,10 +88,21 @@ export default function AdminFeedbackPage() {
     return "Аноним";
   };
 
-  const previewMessage = (msg: string) =>
-    msg.length > 120 ? msg.slice(0, 120) + "…" : msg;
-
   const authorId = (item: FeedbackItem) => item.user?.id ?? item.userId;
+
+  const loadMoreRef = (node: HTMLDivElement | null) => {
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  };
 
   return (
     <div className="min-h-screen bg-[#0f0f1a] py-6 sm:py-10">
@@ -147,23 +124,24 @@ export default function AdminFeedbackPage() {
           </p>
         </div>
 
-        {loading && (
+        {isLoading && (
           <div className="text-center py-12 text-gray-400">Загрузка…</div>
         )}
 
-        {(error || rewardError) && (
+        {(isError || rewardError) && (
           <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400">
-            {error || rewardError}
+            {error instanceof Error ? error.message : "Ошибка загрузки"}
+            {rewardError}
           </div>
         )}
 
-        {!loading && !error && feedback.length === 0 && (
+        {!isLoading && !isError && feedback.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             Пока нет сообщений
           </div>
         )}
 
-        {!loading && feedback.length > 0 && (
+        {!isLoading && feedback.length > 0 && (
           <div className="space-y-3">
             {feedback.map((item) => {
               const typeCfg = TYPE_CONFIG[item.type] ?? TYPE_CONFIG.other;
@@ -192,9 +170,28 @@ export default function AdminFeedbackPage() {
                         </span>
                       </div>
 
-                      <p className="text-sm text-white whitespace-pre-wrap break-words">
-                        {previewMessage(item.message)}
+                      <p
+                        className="text-sm text-white whitespace-pre-wrap break-words select-text"
+                      >
+                        {expandedId === item.id
+                          ? item.message
+                          : item.message.length > 120
+                            ? item.message.slice(0, 120) + "…"
+                            : item.message}
                       </p>
+
+                      {item.message.length > 120 && (
+                        <button
+                          onClick={() =>
+                            setExpandedId(
+                              expandedId === item.id ? null : item.id,
+                            )
+                          }
+                          className="mt-1 text-xs text-gray-500 hover:text-cyan-400 cursor-pointer"
+                        >
+                          {expandedId === item.id ? "Скрыть" : "Показать полностью"}
+                        </button>
+                      )}
 
                       {item.pageUrl && (
                         <a
@@ -281,21 +278,34 @@ export default function AdminFeedbackPage() {
                 </div>
               );
             })}
+
+            <div ref={loadMoreRef} className="py-4 text-center">
+              {isFetchingNextPage && (
+                <span className="text-gray-500 text-sm">Загрузка…</span>
+              )}
+              {!hasNextPage && !isFetchingNextPage && feedback.length > 0 && (
+                <span className="text-gray-500 text-sm">
+                  Все сообщения загружены
+                </span>
+              )}
+            </div>
           </div>
         )}
-      </div>
 
-      <EditorConfirmModal
-        isOpen={deleteConfirmId !== null}
-        onClose={() => setDeleteConfirmId(null)}
-        onConfirm={() => deleteConfirmId && handleDelete(deleteConfirmId)}
-        title="Удалить отзыв?"
-        titleId="delete-feedback-title"
-        confirmLabel="Удалить"
-        description={
-          <p>Это действие нельзя отменить.</p>
-        }
-      />
+        <EditorConfirmModal
+          isOpen={deleteConfirmId !== null}
+          onClose={() => setDeleteConfirmId(null)}
+          onConfirm={() =>
+            deleteConfirmId && handleDelete(deleteConfirmId)
+          }
+          title="Удалить отзыв?"
+          titleId="delete-feedback-title"
+          confirmLabel="Удалить"
+          description={
+            <p>Это действие нельзя отменить.</p>
+          }
+        />
+      </div>
     </div>
   );
 }

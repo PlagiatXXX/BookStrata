@@ -62,9 +62,33 @@ export async function feedbackRoutes(fastify: FastifyInstance) {
     "/",
     {
       preHandler: [authMiddleware, requireRole("admin")],
+      schema: {
+        querystring: {
+          type: "object",
+          properties: {
+            page: { type: "integer", minimum: 1, default: 1 },
+            limit: { type: "integer", minimum: 1, maximum: 100, default: 50 },
+            status: { type: "string", enum: [...FEEDBACK_STATUSES] },
+            type: { type: "string", enum: [...FEEDBACK_TYPES] },
+          },
+        },
+      },
     },
-    async (_request, reply) => {
-      const feedback = await getAllFeedback();
+    async (request, reply) => {
+      const { page = 1, limit = 50, status, type } =
+        request.query as {
+          page?: number;
+          limit?: number;
+          status?: string;
+          type?: string;
+        };
+
+      const feedback = await getAllFeedback({
+        skip: (page - 1) * limit,
+        take: limit,
+        status,
+        type,
+      });
       return reply.send({ data: feedback });
     },
   );

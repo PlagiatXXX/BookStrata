@@ -20,8 +20,22 @@ export async function createFeedback(input: CreateFeedbackInput) {
   });
 }
 
-export async function getAllFeedback() {
+export async function getAllFeedback(params?: {
+  skip?: number;
+  take?: number;
+  status?: string;
+  type?: string;
+}) {
+  const { skip = 0, take = 50, status, type } = params ?? {};
+
+  const where: any = {};
+  if (status) where.status = status;
+  if (type) where.type = type;
+
   return prisma.feedback.findMany({
+    where,
+    skip,
+    take,
     orderBy: { createdAt: "desc" },
     include: {
       user: {

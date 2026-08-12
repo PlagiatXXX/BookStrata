@@ -62,10 +62,13 @@ describe("feedback.service", () => {
       const result = await getAllFeedback()
 
       expect(result).toHaveLength(1)
-      expect(prisma.feedback.findMany).toHaveBeenCalledWith({
-        orderBy: { createdAt: "desc" },
-        include: { user: { select: { id: true, username: true, avatarUrl: true } } },
-      })
+       expect(prisma.feedback.findMany).toHaveBeenCalledWith({
+         where: {},
+         skip: 0,
+         take: 50,
+         orderBy: { createdAt: "desc" },
+         include: { user: { select: { id: true, username: true, avatarUrl: true } } },
+       })
     })
 
     it("должен вернуть пустой массив", async () => {

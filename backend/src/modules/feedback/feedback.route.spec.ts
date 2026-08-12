@@ -108,6 +108,27 @@ describe("Feedback Routes", () => {
       expect(res.body.data).toEqual([])
     })
 
+    it("должен вернуть список с пагинацией", async () => {
+      const { prisma } = await import("../../lib/prisma.js")
+      vi.mocked(prisma.feedback.findMany).mockResolvedValue([
+        { id: 1, type: "bug", message: "...", status: "pending", pageUrl: null, userEmail: null, userId: null, createdAt: "2024-01-01T00:00:00Z" } as any,
+      ])
+
+      const res = await request(app.server)
+        .get("/api/feedback?page=1&limit=20")
+        .set("Authorization", "Bearer admin-token")
+        .expect(200)
+
+      expect(res.body.data).toHaveLength(1)
+      expect(prisma.feedback.findMany).toHaveBeenCalledWith({
+        where: {},
+        skip: 0,
+        take: 20,
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { id: true, username: true, avatarUrl: true } } },
+      })
+    })
+
     it("должен вернуть 403 для обычного пользователя", async () => {
       await request(app.server)
         .get("/api/feedback")
