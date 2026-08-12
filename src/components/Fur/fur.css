@@ -1,0 +1,21 @@
+/* fur: обёртка и канвас-обрамление. сам покров рисуется в JS. */
+
+.fur {
+  position: relative;
+  display: block;
+  /* бахрома намеренно выступает за рамку */
+  overflow: visible;
+  /* вертикальный скролл страницы работает, пока горизонтальные штрихи гладят мех */
+  touch-action: pan-y;
+}
+
+.fur-canvas {
+  position: absolute;
+  pointer-events: none;
+}
+
+.fur-content {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}

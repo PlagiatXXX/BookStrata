@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useSyncExternalStore } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Heart, Layers, Sparkles, Zap, Check, X } from "lucide-react"
 
 import { RevealBox } from "@/ui/RevealBox"
+import { Fur } from "@/components/Fur"
 import { Pointer } from "@/components/ui/pointer"
 import { BorderBeam } from "@/components/ui/border-beam"
 import { DonateModal } from "@/components/DonateModal/DonateModal"
@@ -18,6 +19,19 @@ import { TEMPLATES, type TemplateItem } from "@/data/mockData"
 // Готовые шаблоны для секции «Попробуйте прямо сейчас» (см. mockData.ts)
 const LANDING_TEMPLATE_IDS = [101, 102, 103]
 const LANDING_TEMPLATES = TEMPLATES.filter((t) => LANDING_TEMPLATE_IDS.includes(t.id))
+
+/* ─── Responsive hook: мобильные — до 767px ─── */
+function useIsMobile(): boolean {
+  return useSyncExternalStore(
+    (callback) => {
+      const mql = window.matchMedia("(max-width: 767px)")
+      mql.addEventListener("change", callback)
+      return () => mql.removeEventListener("change", callback)
+    },
+    () => window.matchMedia("(max-width: 767px)").matches,
+    () => false,
+  )
+}
 
 /* ---------- Tier list mini card ---------- */
 function MiniTierCard({ item }: { item: TierListShort }) {
@@ -247,6 +261,7 @@ interface LandingBodyProps {
 
 export default function LandingBody({ tierLists, collections, forumStats }: LandingBodyProps) {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [isDonateOpen, setIsDonateOpen] = useState(false)
   const [activeScreenshot, setActiveScreenshot] = useState<number | null>(null)
 
@@ -256,7 +271,21 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
       <div className="landing-divider" />
       <section className="landing-section landing-section--alt" id="featured">
         <div className="landing-section__container">
-          <RevealBox><h2 className="landing-section__title">Популярные тир-листы</h2></RevealBox>
+          <RevealBox>
+            {isMobile ? (
+              <h2 className="landing-section__title">Популярные тир-листы</h2>
+            ) : (
+              <Fur
+                text="Популярные тир-листы"
+                color="#a855f7"
+                className="landing-section__fur-title"
+                style={{ width: "100%", height: 88 }}
+              >
+                {/* семантический заголовок для SEO/скринридеров: визуально заменён мехом */}
+                <h2 className="sr-only">Популярные тир-листы</h2>
+              </Fur>
+            )}
+          </RevealBox>
           <RevealBox><p className="landing-section__subtitle">Что создают наши пользователи</p></RevealBox>
 
           <RevealBox className="landing-featured">
