@@ -1,4 +1,5 @@
 import { memo, forwardRef, useState, useRef, useCallback, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { X, Edit2, Eye, Heart } from "lucide-react";
 import type { Book } from "@/types";
 import type { ShelfStatus } from "@/lib/shelfApi";
@@ -14,6 +15,12 @@ interface BookCoverProps {
   shelfStatus?: ShelfStatus | null;
   /** Если true — ставит fetchpriority="high" (для first-view книг) */
   priority?: boolean;
+  /**
+   * Фаза 5.3: если true и у книги есть slug опубликованного каталога —
+   * обложка становится ссылкой на /books/{slug} вместо модалки просмотра.
+   * Используется на публичных страницах (тир-лист/коллекция/знаменитость).
+   */
+  linkToBook?: boolean;
 }
 
 /** Сколько раз повторно пытаемся загрузить обложку после сетевого обрыва */
@@ -35,20 +42,27 @@ function withRetryParam(url: string, attempt: number): string {
 
 export const BookCover = memo(
   forwardRef<HTMLDivElement, BookCoverProps>(
-    ({ book, isDraggable = true, onDelete, onEdit, onView, shelfStatus, priority = false }, ref) => {
+    ({ book, isDraggable = true, onDelete, onEdit, onView, shelfStatus, priority = false, linkToBook = false }, ref) => {
       const [showActions, setShowActions] = useState(false);
       const [isHovered, setIsHovered] = useState(false);
       const [coverError, setCoverError] = useState(false);
       const [retryCount, setRetryCount] = useState(0);
       const lastTapTime = useRef<number>(0);
       const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
-      const innerRef = useRef<HTMLDivElement>(null);
+
+      // Фаза 5.3: ссылка на страницу книги — только для опубликованных книг каталога
+      const linkUrl =
+        linkToBook && book.slug && book.status === "published"
+          ? `/books/${book.slug}`
+          : null;
 
       const cursorClass = isDraggable
         ? "cursor-grab active:cursor-grabbing"
-        : "";
+        : linkUrl
+          ? "cursor-pointer"
+          : "";
       const label = `${book.title} - ${book.author}`;
-      const hasActions = Boolean(onDelete || onEdit || onView);
+      const hasActions = Boolean(onDelete || onEdit || onView) && !linkUrl;
       // На мобильных браузер синтезирует mouseenter после тапа —
       // hover-состояние мешает закрытию кнопок, поэтому учитываем его только на десктопе
       const isMobile = window.innerWidth < 768;
@@ -100,6 +114,9 @@ export const BookCover = memo(
       };
 
       const handleClick = (e: React.MouseEvent) => {
+        // В режиме ссылки на страницу книги кликом занимается <Link>
+        if (linkUrl) return;
+
         if (window.innerWidth >= 768) {
           // Десктоп: одиночный клик открывает книгу.
           // Защита от ложного срабатывания после drag-n-drop: если курсор
@@ -129,6 +146,8 @@ export const BookCover = memo(
       };
 
       const handleTouchEnd = (e: React.TouchEvent) => {
+        // В режиме ссылки preventDefault в touch-обработчике убил бы клик по <Link>
+        if (linkUrl) return;
         const now = Date.now();
         if (now - lastTapTime.current < 300) {
           handleDoubleClick(e);
@@ -154,26 +173,30 @@ export const BookCover = memo(
         return () => document.removeEventListener("click", handleClickOutside);
       }, [showActions, handleClickOutside]);
 
-      return (
-        <div
-          ref={(node) => {
-            innerRef.current = node;
-            if (typeof ref === "function") {
-              ref(node);
-            } else if (ref) {
-              ref.current = node;
-            }
-          }}
-          onClick={handleClick}
-          onPointerDown={handlePointerDown}
-          onTouchEnd={handleTouchEnd}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          data-book-id={book.id}
-          data-book-actions={showActionsFinal ? "visible" : "hidden"}
-          className={`nb-book-card relative ${cursorClass}`}
-          data-testid="book-cover"
-        >
+      // BookCover рендерится как <div> (редактор) или как <Link> (публичные
+      // страницы, Фаза 5.3). Внешний контракт ref — HTMLDivElement.
+      const forwardCoverRef = (node: HTMLDivElement | HTMLAnchorElement | null) => {
+        if (typeof ref === "function") {
+          ref((node as unknown as HTMLDivElement) ?? null);
+        } else if (ref) {
+          ref.current = node as unknown as HTMLDivElement;
+        }
+      };
+
+      const commonProps = {
+        onClick: handleClick,
+        onPointerDown: handlePointerDown,
+        onTouchEnd: handleTouchEnd,
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+        "data-book-id": book.id,
+        "data-book-actions": showActionsFinal ? ("visible" as const) : ("hidden" as const),
+        className: `nb-book-card relative ${cursorClass}`,
+        "data-testid": "book-cover",
+      };
+
+      const cardContent = (
+        <>
           {showCover ? (
             <img
               src={imgUrl}
@@ -218,7 +241,7 @@ export const BookCover = memo(
             </span>
           )}
 
-          {onDelete && (
+          {onDelete && !linkUrl && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -244,7 +267,7 @@ export const BookCover = memo(
             </button>
           )}
 
-          {onView && (
+          {onView && !linkUrl && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -269,7 +292,7 @@ export const BookCover = memo(
             </button>
           )}
 
-          {onEdit && (
+          {onEdit && !linkUrl && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -293,6 +316,16 @@ export const BookCover = memo(
               <Edit2 size={12} />
             </button>
           )}
+        </>
+      );
+
+      return linkUrl ? (
+        <Link ref={forwardCoverRef} to={linkUrl} {...commonProps}>
+          {cardContent}
+        </Link>
+      ) : (
+        <div ref={forwardCoverRef} {...commonProps}>
+          {cardContent}
         </div>
       );
     },

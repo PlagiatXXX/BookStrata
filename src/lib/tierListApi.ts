@@ -336,6 +336,8 @@ export function transformApiToState(apiData: ApiTierListResponse): TierListData 
         coverImageUrl: placement.coverImageUrl || placement.book.coverImageUrl,
         description: placement.book.description || undefined,
         thoughts: placement.thoughts || undefined,
+        slug: placement.book.slug ?? undefined,
+        status: placement.book.status ?? undefined,
       };
     }
     return bookId;

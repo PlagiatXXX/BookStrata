@@ -13,10 +13,12 @@ interface UnrankedItemsProps {
   onDeleteBook?: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
   onViewBook?: (book: Book) => void;
+  /** Фаза 5.3: published-книги становятся ссылками на /books/{slug} (read-only просмотр) */
+  linkToBook?: boolean;
 }
 
 export const UnrankedItems = memo(
-  ({ books, booksCount, onDeleteBook, onEditBook, onViewBook }: UnrankedItemsProps) => {
+  ({ books, booksCount, onDeleteBook, onEditBook, onViewBook, linkToBook = false }: UnrankedItemsProps) => {
     const { over } = useDndContext();
     const { setNodeRef, isOver, active } = useDroppable({
       id: UNRANKED_AREA_ID,
@@ -64,6 +66,7 @@ export const UnrankedItems = memo(
                   onDelete={onDeleteBook}
                   onEdit={onEditBook}
                   onView={onViewBook}
+                  linkToBook={linkToBook}
                   containerId={UNRANKED_AREA_ID}
                 />
               ))}

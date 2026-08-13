@@ -10,10 +10,12 @@ interface SortableBookCoverProps {
   onDelete?: (bookId: string) => void;
   onEdit?: (book: Book) => void;
   onView?: (book: Book) => void;
+  /** Фаза 5.3: published-книги становятся ссылками на /books/{slug} (read-only просмотр) */
+  linkToBook?: boolean;
 }
 
 export const SortableBookCover = memo(
-  ({ book, containerId, onDelete, onEdit, onView }: SortableBookCoverProps) => {
+  ({ book, containerId, onDelete, onEdit, onView, linkToBook = false }: SortableBookCoverProps) => {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
       useSortable({ id: `book-${book.id}`, data: { type: "book", containerId, book } });
 
@@ -37,6 +39,7 @@ export const SortableBookCover = memo(
           onEdit={onEdit}
           onView={onView}
           isDraggable={false}
+          linkToBook={linkToBook}
         />
         {isOver && !isDragging && (
           <div

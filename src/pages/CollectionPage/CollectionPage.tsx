@@ -394,6 +394,7 @@ return DOMPurify.sanitize(collection.content);
               filterGenre={filterGenre}
               statuses={shelf}
               unrankedBookIds={collection.unrankedBookIds}
+              linkToBook
             />
           </div>
         )}

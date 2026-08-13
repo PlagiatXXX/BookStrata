@@ -13,6 +13,8 @@ interface StaticTierViewProps {
   filterGenre?: string | null;
   statuses?: Record<string, ShelfStatus>;
   unrankedBookIds?: string[];
+  /** Фаза 5.3: published-книги становятся ссылками на /books/{slug} */
+  linkToBook?: boolean;
 }
 
 function matchesGenre(book: Book, genre: string | null | undefined): boolean {
@@ -29,6 +31,7 @@ export const StaticTierView = memo(({
   filterGenre,
   statuses,
   unrankedBookIds,
+  linkToBook = false,
 }: StaticTierViewProps) => {
   const unrankedBooks = unrankedBookIds
     ?.map((bookId) => books[bookId])
@@ -66,6 +69,7 @@ export const StaticTierView = memo(({
                     isDraggable={false}
                     onView={onViewBook}
                     shelfStatus={statuses?.[book.id] ?? null}
+                    linkToBook={linkToBook}
                     // Первые 6 книг первого tier'а — fetchpriority="high" (above the fold)
                     priority={tierIndex === 0 && bookIndex < 6}
                   />
@@ -94,6 +98,7 @@ export const StaticTierView = memo(({
                   isDraggable={false}
                   onView={onViewBook}
                   shelfStatus={statuses?.[book.id] ?? null}
+                  linkToBook={linkToBook}
                 />
               ))}
             </div>

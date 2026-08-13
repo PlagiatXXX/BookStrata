@@ -18,6 +18,8 @@ interface TierGridProps {
   onDeleteBook?: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
   onViewBook?: (book: Book) => void;
+  /** Фаза 5.3: published-книги становятся ссылками на /books/{slug} (read-only просмотр) */
+  linkToBook?: boolean;
 }
 
 // Separate component for rendering a tier row to optimize memoization
@@ -33,6 +35,7 @@ const TierGridRow = memo(
     onEditBook,
     onViewBook,
     onSetActive,
+    linkToBook,
   }: {
     tier: Tier;
     allBooks: Record<string, Book>;
@@ -44,6 +47,7 @@ const TierGridRow = memo(
     onEditBook?: (book: Book) => void;
     onViewBook?: (book: Book) => void;
     onSetActive: (tierId: string) => void;
+    linkToBook?: boolean;
   }) => {
     // Extract book IDs to create a stable dependency for mapping
     const bookIds = tier.bookIds;
@@ -62,6 +66,7 @@ const TierGridRow = memo(
         onDeleteBook={onDeleteBook}
         onEditBook={onEditBook}
         onViewBook={onViewBook}
+        linkToBook={linkToBook}
         onSetActive={onSetActive}
         isActive={isActive}
       />
@@ -70,6 +75,7 @@ const TierGridRow = memo(
   (prevProps, nextProps) => {
     // Проверяем основные пропсы на равенство
     if (prevProps.isActive !== nextProps.isActive) return false;
+    if (prevProps.linkToBook !== nextProps.linkToBook) return false;
     if (prevProps.tier !== nextProps.tier) return false;
     if (prevProps.onChangeColor !== nextProps.onChangeColor) return false;
     if (prevProps.onRename !== nextProps.onRename) return false;
@@ -116,6 +122,7 @@ export const TierGrid = memo(
       onEditBook,
       onViewBook,
       onSetActiveTier = () => {},
+      linkToBook = false,
     } = props;
     const {
       tiers = {},
@@ -144,6 +151,7 @@ export const TierGrid = memo(
               onDeleteBook={onDeleteBook}
               onEditBook={onEditBook}
               onViewBook={onViewBook}
+              linkToBook={linkToBook}
               onSetActive={onSetActiveTier}
             />
           ))}

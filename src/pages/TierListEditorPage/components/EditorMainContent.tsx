@@ -174,6 +174,7 @@ export const EditorMainContent = memo(
                 onDeleteBook={isReadOnly ? undefined : onDeleteBook}
                 onEditBook={isReadOnly ? undefined : onEditBook}
                 onViewBook={onViewBook}
+                linkToBook={isReadOnly}
                 activeTierId={activeTierId}
                 onAddRow={isReadOnly ? undefined : handleAddRow}
                 onChangeTierColor={isReadOnly ? undefined : handleChangeTierColor}
@@ -191,6 +192,7 @@ export const EditorMainContent = memo(
                   onDeleteBook={isReadOnly ? undefined : onDeleteBook}
                   onEditBook={isReadOnly ? undefined : onEditBook}
                   onViewBook={onViewBook}
+                  linkToBook={isReadOnly}
                 />
               </div>
             )}

@@ -7,6 +7,8 @@ export interface ApiBook {
   description: string | null;
   thoughts: string | null;
   createdAt: string;
+  slug?: string | null; // Страница каталога /books/{slug} (Фаза 5.3)
+  status?: string | null; // "published" | "draft"
 }
 
 // Описывает размещение книги (BookPlacement)

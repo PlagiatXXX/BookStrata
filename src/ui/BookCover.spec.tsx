@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render as rtlRender, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { BookCover } from "./BookCover";
+
+// BookCover рендерит <Link> (react-router) — тесты оборачиваем в MemoryRouter
+function render(ui: Parameters<typeof rtlRender>[0]) {
+  return rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 const mockBook = {
   id: "1",
@@ -275,6 +281,64 @@ describe("BookCover", () => {
 
       fireEvent.click(document.body);
       expect(card).toHaveAttribute("data-book-actions", "hidden");
+    });
+  });
+
+  describe("linkToBook — ссылка на страницу книги (Фаза 5.3)", () => {
+    const publishedBook = {
+      ...mockBook,
+      slug: "anna-karenina",
+      status: "published",
+    };
+
+    it("published-книга со slug рендерится ссылкой на /books/{slug}", () => {
+      render(<BookCover book={publishedBook} linkToBook />);
+      const card = screen.getByTestId("book-cover");
+      expect(card.tagName).toBe("A");
+      expect(card).toHaveAttribute("href", "/books/anna-karenina");
+    });
+
+    it("клик по ссылке не открывает модалку просмотра", () => {
+      const onView = vi.fn();
+      render(<BookCover book={publishedBook} onView={onView} linkToBook />);
+
+      const card = screen.getByTestId("book-cover");
+      fireEvent.pointerDown(card, { clientX: 10, clientY: 10 });
+      fireEvent.click(card, { clientX: 10, clientY: 10 });
+
+      expect(onView).not.toHaveBeenCalled();
+      expect(card).toHaveAttribute("href", "/books/anna-karenina");
+    });
+
+    it("кнопки действий не показываются для published-книги со ссылкой", () => {
+      render(
+        <BookCover
+          book={publishedBook}
+          onDelete={() => {}}
+          onEdit={() => {}}
+          onView={() => {}}
+          linkToBook
+        />,
+      );
+      expect(screen.queryByLabelText(`Просмотреть "${mockBook.title}"`)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(`Удалить "${mockBook.title}"`)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(`Редактировать "${mockBook.title}"`)).not.toBeInTheDocument();
+    });
+
+    it("draft-книга не становится ссылкой", () => {
+      render(<BookCover book={{ ...mockBook, slug: "draft-kniga", status: "draft" }} linkToBook />);
+      const card = screen.getByTestId("book-cover");
+      expect(card.tagName).toBe("DIV");
+    });
+
+    it("без status не становится ссылкой (снимки без каталога)", () => {
+      render(<BookCover book={{ ...mockBook, slug: "tolko-slug" }} linkToBook />);
+      expect(screen.getByTestId("book-cover").tagName).toBe("DIV");
+    });
+
+    it("без linkToBook остаётся обычной карточкой даже для published", () => {
+      render(<BookCover book={publishedBook} />);
+      expect(screen.getByTestId("book-cover").tagName).toBe("DIV");
     });
   });
 });

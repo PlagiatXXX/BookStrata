@@ -233,6 +233,7 @@ export default function CelebrityPage() {
                 onViewBook={handleViewBook}
                 statuses={shelf}
                 unrankedBookIds={celebrity.unrankedBookIds}
+                linkToBook
               />
             </div>
           )}

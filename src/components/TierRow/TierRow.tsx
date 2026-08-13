@@ -22,6 +22,8 @@ interface TierRowProps {
   onDeleteBook?: (bookId: string) => void;
   onEditBook?: (book: Book) => void;
   onViewBook?: (book: Book) => void;
+  /** Фаза 5.3: published-книги становятся ссылками на /books/{slug} (read-only просмотр) */
+  linkToBook?: boolean;
 }
 
 const TierDropIndicator = memo(({ tierId }: { tierId: string }) => {
@@ -68,6 +70,7 @@ export const TierRow = memo(
     onDeleteBook,
     onEditBook,
     onViewBook,
+    linkToBook = false,
   }: TierRowProps) => {
     const {
       attributes,
@@ -132,6 +135,7 @@ export const TierRow = memo(
                 onDelete={onDeleteBook}
                 onEdit={onEditBook}
                 onView={onViewBook}
+                linkToBook={linkToBook}
                 containerId={tier.id}
               />
             ))}

@@ -4,6 +4,7 @@ import { requireRole } from "../../middleware/requireRole.js";
 import { uploadBase64 } from "../../lib/upload.js";
 import { validateImageSize } from "../../lib/validators.js";
 import { createApiError, ErrorCodes } from "../../lib/api-response.js";
+import { enrichBookSnapshots } from "../books/bookSnapshots.service.js";
 import * as service from "./collection.service.js";
 import {
   type CreateCollectionInput,
@@ -94,6 +95,9 @@ export async function collectionRoutes(fastify: FastifyInstance) {
       if (!collection || !collection.isPublished) {
         return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Collection not found"));
       }
+      // Фаза 5.3: снимки книг обогащаем slug'ами опубликованных книг каталога,
+      // чтобы карточки на странице коллекции ссылались на /books/{slug}
+      collection.books = (await enrichBookSnapshots(collection.books)) as typeof collection.books;
       return reply.code(200).send({ data: collection });
     },
   );

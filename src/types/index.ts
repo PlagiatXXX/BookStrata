@@ -9,6 +9,8 @@ export interface Book {
   genre?: string;
   tags?: string[];
   year?: number; // Год издания (карточка коллекции/знаменитости → Book.publishedYear)
+  slug?: string | null; // Slug каталоговой страницы /books/{slug} (Фаза 5.3, только published)
+  status?: string | null; // "published" | "draft" | null — из каталога Book
 }
 
 export interface Tier {

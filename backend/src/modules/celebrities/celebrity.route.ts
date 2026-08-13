@@ -5,6 +5,7 @@ import { uploadBase64 } from "../../lib/upload.js";
 import { validateImageSize } from "../../lib/validators.js";
 import { createApiError, ErrorCodes } from "../../lib/api-response.js";
 import { prisma } from "../../lib/prisma.js";
+import { enrichBookSnapshots } from "../books/bookSnapshots.service.js";
 import * as service from "./celebrity.service.js";
 import {
   type CreateCelebrityInput,
@@ -78,6 +79,9 @@ export async function celebrityRoutes(fastify: FastifyInstance) {
       if (!celebrity || !celebrity.isPublished) {
         return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Celebrity not found"));
       }
+      // Фаза 5.3: снимки книг обогащаем slug'ами опубликованных книг каталога,
+      // чтобы карточки на странице знаменитости ссылались на /books/{slug}
+      celebrity.books = (await enrichBookSnapshots(celebrity.books)) as typeof celebrity.books;
       return reply.code(200).send({ data: celebrity });
     },
   );
