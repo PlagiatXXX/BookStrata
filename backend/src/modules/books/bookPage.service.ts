@@ -37,6 +37,7 @@ export interface BookPageData {
     status: string;
     rating: number | null;
     likesCount: number;
+    publishedYear: number | null;
     contextChain: unknown;
   };
   author: { id: number; name: string; slug: string | null } | null;
@@ -73,6 +74,7 @@ export async function getBookPageData(
       status: true,
       rating: true,
       likesCount: true,
+      publishedYear: true,
       contextChain: true,
       authorRel: { select: { id: true, name: true, slug: true } },
     },
@@ -169,6 +171,7 @@ export async function getBookPageData(
       status: book.status,
       rating: book.rating,
       likesCount: book.likesCount,
+      publishedYear: book.publishedYear,
       contextChain: book.contextChain,
     },
     author: book.authorRel,
