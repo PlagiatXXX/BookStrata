@@ -454,6 +454,10 @@ fastify.register(analyticsRoutes, { prefix: "/api/analytics" });
 // Admin: аналитика
 fastify.register(analyticsRoutes, { prefix: "/api/admin/analytics" });
 
+// Admin: каталог книг (Фаза 7, seobook.md)
+import { adminBooksRoutes } from "../src/modules/admin-books/admin-books.route.js";
+fastify.register(adminBooksRoutes, { prefix: "/api/admin/books" });
+
 // Sitemap (без /api префикса, доступен по /sitemap.xml)
 import { sitemapRoutes } from "../src/modules/sitemap/sitemap.route.js";
 fastify.register(sitemapRoutes);
