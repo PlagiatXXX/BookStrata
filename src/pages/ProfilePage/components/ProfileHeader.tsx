@@ -89,7 +89,6 @@ export function ProfileHeader({
                   onChange={(e) => onUsernameChange(e.target.value)}
                   className="w-full sm:w-auto rounded-lg bg-surface-light px-4 py-2 text-center text-white focus:outline-none focus:ring-2 focus:ring-primary dark:bg-[#2d2d44] dark:text-white light:bg-gray-100 light:text-gray-900"
                   placeholder="Введите имя"
-                  maxLength={20}
                 />
                 <button
                   onClick={onSaveUsername}

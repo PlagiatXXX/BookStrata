@@ -51,7 +51,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           type: "object",
           required: ["username"],
           properties: {
-            username: { type: "string", minLength: 2, maxLength: 20 },
+            username: { type: "string", minLength: 2 },
             bio: { type: "string", maxLength: 500, nullable: true },
             socialLinks: {
               type: "array",
