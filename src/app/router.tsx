@@ -47,6 +47,7 @@ const BlogArticlePage = lazy(() => import("@/pages/BlogPage/BlogArticlePage"));
 const CelebritiesPage = lazy(() => import("@/pages/CelebritiesPage/CelebritiesPage"));
 const CelebrityPage = lazy(() => import("@/pages/CelebrityPage/CelebrityPage"));
 const AdminCelebritiesPage = lazy(() => import("@/pages/AdminCelebritiesPage/AdminCelebritiesPage"));
+const AdminBooksPage = lazy(() => import("@/pages/AdminBooksPage/AdminBooksPage"));
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() => import("@/pages/TierListEditorPage/TierEditorPage"));
@@ -117,6 +118,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminCollectionsPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/books",
+        element: (
+          <AdminGuard>
+            <AdminBooksPage />
           </AdminGuard>
         ),
       },
