@@ -50,6 +50,14 @@ services:
       - "127.0.0.1:8080:8080"
     env_file:
       - .env
+    environment:
+      # Пререндеренные страницы книг и spa-каркас (SEO-фолбэк) для
+      # публичного GET /books/:slug (Фаза 6); dist смонтирован ниже.
+      DIST_DIR: /app/dist
+    volumes:
+      # Статика фронта — для отдачи пререндеренных /books/* (тот же dist,
+      # что монтируется в nginx). Атомарный swap на деплое затрагивает оба.
+      - ../dist:/app/dist:ro
     depends_on:
       postgres:
         condition: service_healthy

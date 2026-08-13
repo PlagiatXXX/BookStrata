@@ -64,6 +64,10 @@ const DIST = resolve(ROOT, "dist");
 // Путь к JSON со slug'ами коллекций (fallback, если API бэкенда недоступен)
 const COLLECTION_ROUTES_PATH = resolve(ROOT, "src", "data", "collection-routes.json");
 
+// Путь к JSON со slug'ами опубликованных книг (Фаза 6): обновляется
+// backend/scripts/export-book-routes.ts на деплое (deploy-server.sh)
+const BOOK_ROUTES_PATH = resolve(ROOT, "src", "data", "book-routes.json");
+
 // Публичные маршруты для индексации
 const ROUTES = [
   { path: "/",           name: "Главная" },
@@ -345,6 +349,37 @@ async function addPublicCollectionRoutes() {
     log(`  → ${path} (${item.title})`);
   }
   log(`✅ Added ${items.filter(i => i.slug).length} collections to prerender`);
+}
+
+/**
+ * Добавляет страницы книг каталога (/books/:slug) в ROUTES для prerender'а.
+ * Список published-книг берётся из src/data/book-routes.json (Фаза 6) —
+ * публичного API листинга книг нет, файл обновляется на деплое
+ * (backend/scripts/export-book-routes.ts).
+ */
+async function addPublicBookRoutes() {
+  try {
+    const raw = readFileSync(BOOK_ROUTES_PATH, "utf-8");
+    const items = JSON.parse(raw);
+    if (!Array.isArray(items) || items.length === 0) {
+      log("⚠️  book-routes.json is empty, skipping");
+      return;
+    }
+    for (const item of items) {
+      const slug = item.slug;
+      if (!slug) {
+        log(`  ⚠️  Book "${item.title}" has no slug, skipping`);
+        continue;
+      }
+      const path = `/books/${slug}`;
+      ROUTES.push({ path, name: `Книга: ${item.title}` });
+      log(`  → ${path} (${item.title})`);
+    }
+    log(`✅ Added ${items.filter(i => i.slug).length} books to prerender`);
+  } catch (err) {
+    log(`⚠️  Cannot read book-routes.json: ${err.message}`);
+    log("⚠️  Book prerender skipped (run backend/scripts/export-book-routes.ts)");
+  }
 }
 
 /**
@@ -1167,6 +1202,7 @@ async function prerender() {
     await addPublicTierListRoutes();
     await addPublicCelebrityRoutes();
     await addPublicCollectionRoutes();
+    await addPublicBookRoutes();
     await addTopicRoutes();
     await addBlogArticleRoutes();
     await addNewsRoutes();

@@ -77,6 +77,13 @@ const envSchema = z.object({
   UPLOADS_DIR: z.string().optional(),
   UPLOADS_BASE_URL: z.string().default("/uploads"),
 
+  // --- Prerender (Фаза 6, seobook.md) ---
+  // Директория со статикой фронта (dist/). В docker-контейнере монтируется
+  // томом; используется публичным GET /books/:slug для отдачи пререндеренных
+  // страниц книг и spa-каркаса (SEO-фолбэк). В dev не задана — фолбэк
+  // отдаёт минимальный standalone HTML с meta-тегами.
+  DIST_DIR: z.string().optional(),
+
   // --- S3 ---
   S3_BUCKET: z.string().optional(),
   S3_ENDPOINT: z

@@ -462,6 +462,11 @@ fastify.register(sitemapRoutes);
 import { rssRoutes } from "../src/modules/rss/rss.route.js";
 fastify.register(rssRoutes);
 
+// Публичные страницы книг (без /api префикса): 301 по истории slug +
+// SEO-фолбэк для непререндеренных книг (nginx проксирует /books/* на бэк)
+import { bookRedirectRoutes } from "../src/modules/bookPages/bookRedirect.route.js";
+fastify.register(bookRedirectRoutes);
+
 // Инициализация подписок на события
 registerAchievementSubscriptions();
 registerAnalyticsSubscriptions();

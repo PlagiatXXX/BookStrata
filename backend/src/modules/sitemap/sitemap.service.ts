@@ -109,6 +109,31 @@ export async function generateSitemap(): Promise<string> {
     ),
   );
 
+  // Книги каталога — только published (Фаза 6): slug обязателен (страница /books/:slug)
+  let books: { slug: string; updatedAt: Date }[] = [];
+  try {
+    const bookRecords = await prisma.book.findMany({
+      where: { status: "published", slug: { not: null } },
+      select: { slug: true, updatedAt: true },
+      orderBy: { publishedAt: "asc" },
+      take: 1000,
+    });
+    books = bookRecords
+      .filter((b): b is { slug: string; updatedAt: Date } => !!b.slug)
+      .map((b) => ({ slug: b.slug as string, updatedAt: b.updatedAt }));
+  } catch {
+    // таблица books ещё не создана — пропускаем
+  }
+
+  const bookUrls = books.map((b) =>
+    xmlTag(
+      `${SITE_URL}/books/${b.slug}`,
+      "0.7",
+      "weekly",
+      b.updatedAt.toISOString().split("T")[0],
+    ),
+  );
+
   // Уникальные категории из коллекций для /topics/
   let topicCategoryIds: string[] = [];
   try {
@@ -135,6 +160,6 @@ export async function generateSitemap(): Promise<string> {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...celebrityUrls, ...topicUrls].join("\n")}
+${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...celebrityUrls, ...bookUrls, ...topicUrls].join("\n")}
 </urlset>`;
 }
