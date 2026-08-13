@@ -280,17 +280,21 @@ async function findRaceCanon(
   return tx.book.findUnique({ where: { id: rows[0]!.id } });
 }
 
-export async function updateBook(
+/**
+ * Фаза 2.3 (seobook.md): разделение API «каталог vs вхождение».
+ *
+ * updateBookPlacement — личные данные вхождения (владелец тир-листа):
+ * мысли, личная обложка, позиция. Глобальная Book (каталог) НЕ трогается.
+ * coverImageUrl = null → сброс на обложку каталога.
+ */
+export async function updateBookPlacement(
   tierListId: string,
   bookId: number,
   data: {
     thoughts?: string | null;
-    description?: string | null;
-    title?: string;
-    author?: string | null;
-    genre?: string | null;
-    tags?: string[];
-    coverImageUrl?: string;
+    coverImageUrl?: string | null;
+    tierId?: number | null;
+    rank?: number;
   },
 ) {
   const tierList = await tierListRepository.findById(tierListId, {
@@ -309,23 +313,52 @@ export async function updateBook(
     throw new NotFoundError("Book does not belong to this tier list");
   }
 
-  const sanitizedData: Record<string, unknown> = { ...data };
-  if (sanitizedData.thoughts !== undefined) {
-    sanitizedData.thoughts = sanitizedData.thoughts ? sanitize(sanitizedData.thoughts as string) : null;
+  const updateData: Prisma.BookPlacementUncheckedUpdateInput = {};
+  if (data.thoughts !== undefined) {
+    updateData.thoughts = data.thoughts ? sanitize(data.thoughts) : null;
   }
+  if (data.coverImageUrl !== undefined) {
+    // null → сброс на обложку каталога
+    updateData.coverImageUrl = data.coverImageUrl || null;
+  }
+  if (data.tierId !== undefined) updateData.tierId = data.tierId;
+  if (data.rank !== undefined) updateData.rank = data.rank;
+
+  return prisma.bookPlacement.update({
+    where: { tierListId_bookId: { tierListId: tierList.id, bookId } },
+    data: updateData,
+    include: { book: true },
+  });
+}
+
+/**
+ * Фаза 2.3: обновление КАТАЛОГА (эталона). Только админка (проверка на роуте).
+ * Пользовательский редактор работает с updateBookPlacement и не имеет права
+ * менять эталон: обложка/описание/жанр «своей» книги не должны меняться у всех.
+ */
+export async function updateBookCatalog(
+  bookId: number,
+  data: {
+    title?: string;
+    author?: string | null;
+    description?: string | null;
+    genre?: string | null;
+    tags?: string[];
+    coverImageUrl?: string;
+    publishedYear?: number | null;
+  },
+) {
+  const sanitizedData: Record<string, unknown> = { ...data };
   if (sanitizedData.description !== undefined) {
     sanitizedData.description = sanitizedData.description ? sanitize(sanitizedData.description as string) : null;
   }
   if (sanitizedData.genre !== undefined) {
     sanitizedData.genre = sanitizedData.genre ? sanitize(sanitizedData.genre as string) : null;
   }
-
   if (sanitizedData.title === undefined) delete sanitizedData.title;
   if (sanitizedData.tags === undefined) delete sanitizedData.tags;
-  if (sanitizedData.coverImageUrl === undefined) {
-    delete sanitizedData.coverImageUrl;
-  }
-  // coverImageUrl в БД NOT NULL — не конвертируем в null, оставляем пустую строку
+  if (sanitizedData.coverImageUrl === undefined) delete sanitizedData.coverImageUrl;
+  if (sanitizedData.publishedYear === undefined) delete sanitizedData.publishedYear;
 
   // Если автор передан — находим или создаём в реестре
   if (sanitizedData.author !== undefined) {
@@ -344,33 +377,6 @@ export async function updateBook(
     where: { id: bookId },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: sanitizedData as any,
-  });
-}
-
-export async function updateBookCover(
-  tierListId: string,
-  bookId: number,
-  coverImageUrl: string,
-) {
-  const tierList = await tierListRepository.findById(tierListId, {
-    select: { id: true },
-  });
-
-  if (!tierList) {
-    throw new NotFoundError("Tier list not found");
-  }
-
-  const bookPlacement = await prisma.bookPlacement.findUnique({
-    where: { tierListId_bookId: { tierListId: tierList.id, bookId } },
-  });
-
-  if (!bookPlacement) {
-    throw new NotFoundError("Book does not belong to this tier list");
-  }
-
-  return prisma.book.update({
-    where: { id: bookId },
-    data: { coverImageUrl },
   });
 }
 

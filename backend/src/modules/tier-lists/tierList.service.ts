@@ -26,8 +26,8 @@ export {
 export {
   updatePlacements,
   addBooksToTierList,
-  updateBook,
-  updateBookCover,
+  updateBookPlacement,
+  updateBookCatalog,
   removeBookFromTierList,
 } from "./tierList.books.service.js";
 

@@ -12,6 +12,8 @@ export interface ApiBook {
 // Описывает размещение книги (BookPlacement)
 export interface ApiBookPlacement {
   rank: number;
+  thoughts?: string | null; // Личные мысли владельца листа (Фаза 2.3)
+  coverImageUrl?: string | null; // Личная обложка владельца (Фаза 2.3)
   book: ApiBook;
 }
 

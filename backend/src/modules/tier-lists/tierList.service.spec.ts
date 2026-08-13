@@ -630,37 +630,50 @@ describe("tierList.service", () => {
     });
   });
 
-  describe("updateBook", () => {
+  describe("updateBookPlacement (Фаза 2.3: вхождение)", () => {
     const mockBookId = 1;
-    const mockUpdateData = {
-      title: "Updated Title",
-      description: "Updated Description",
-    };
 
-    it("должен обновить книгу", async () => {
-      const mockUpdatedBook = { id: mockBookId, ...mockUpdateData };
+    it("должен обновить личные данные вхождения (thoughts/coverImageUrl)", async () => {
+      const mockUpdatedPlacement = { id: mockBookId, thoughts: "Мысли", coverImageUrl: "cover.jpg", book: {} };
       (prisma.bookPlacement.findUnique as any).mockResolvedValue({});
-      (prisma.book.update as any).mockResolvedValue(mockUpdatedBook);
+      (prisma.bookPlacement.update as any).mockResolvedValue(mockUpdatedPlacement);
 
-      const result = await service.updateBook("1", mockBookId, mockUpdateData);
+      const result = await service.updateBookPlacement("1", mockBookId, {
+        thoughts: "Мысли",
+        coverImageUrl: "cover.jpg",
+      });
 
       expect(prisma.bookPlacement.findUnique).toHaveBeenCalledWith({
         where: { tierListId_bookId: { tierListId: "1", bookId: mockBookId } },
       });
 
-      expect(prisma.book.update).toHaveBeenCalledWith({
-        where: { id: mockBookId },
-        data: mockUpdateData,
+      expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
+        where: { tierListId_bookId: { tierListId: "1", bookId: mockBookId } },
+        data: { thoughts: "Мысли", coverImageUrl: "cover.jpg" },
+        include: { book: true },
       });
 
-      expect(result).toEqual(mockUpdatedBook);
+      expect(result).toEqual(mockUpdatedPlacement);
+      // Каталог (глобальная Book) не трогается
+      expect(prisma.book.update).not.toHaveBeenCalled();
+    });
+
+    it("coverImageUrl = null → сброс на обложку каталога", async () => {
+      (prisma.bookPlacement.findUnique as any).mockResolvedValue({});
+      (prisma.bookPlacement.update as any).mockResolvedValue({});
+
+      await service.updateBookPlacement("1", mockBookId, { coverImageUrl: null });
+
+      expect(prisma.bookPlacement.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { coverImageUrl: null } }),
+      );
     });
 
     it("должен вернуть 404 если BookPlacement отсутствует", async () => {
       (prisma.bookPlacement.findUnique as any).mockResolvedValue(null);
 
       await expect(
-        service.updateBook("1", mockBookId, mockUpdateData),
+        service.updateBookPlacement("1", mockBookId, { thoughts: "Мысли" }),
       ).rejects.toMatchObject({
         message: "Book does not belong to this tier list",
         statusCode: 404,
@@ -668,38 +681,44 @@ describe("tierList.service", () => {
     });
   });
 
-  describe("updateBookCover", () => {
+  describe("updateBookCatalog (Фаза 2.3: каталог-эталон)", () => {
     const mockBookId = 1;
-    const mockCoverUrl = "https://example.com/new-cover.jpg";
 
-    it("должен обновить обложку книги", async () => {
-      (prisma.bookPlacement.findUnique as any).mockResolvedValue({});
-      (prisma.book.update as any).mockResolvedValue({
-        id: mockBookId,
-        coverImageUrl: mockCoverUrl,
+    it("должен обновить каталог без проверки вхождения", async () => {
+      const mockUpdatedBook = { id: mockBookId, title: "Updated Title" };
+      (prisma.book.update as any).mockResolvedValue(mockUpdatedBook);
+
+      const result = await service.updateBookCatalog(mockBookId, {
+        title: "Updated Title",
+        description: "Updated Description",
       });
 
-      await service.updateBookCover("1", mockBookId, mockCoverUrl);
-
-      expect(prisma.bookPlacement.findUnique).toHaveBeenCalledWith({
-        where: { tierListId_bookId: { tierListId: "1", bookId: mockBookId } },
-      });
-
+      expect(prisma.bookPlacement.findUnique).not.toHaveBeenCalled();
       expect(prisma.book.update).toHaveBeenCalledWith({
         where: { id: mockBookId },
-        data: { coverImageUrl: mockCoverUrl },
+        data: expect.objectContaining({ title: "Updated Title", description: "Updated Description" }),
       });
+      expect(result).toEqual(mockUpdatedBook);
     });
 
-    it("должен вернуть 404 если BookPlacement отсутствует", async () => {
-      (prisma.bookPlacement.findUnique as any).mockResolvedValue(null);
+    it("переданный автор резолвится в authorId реестра", async () => {
+      (prisma.author.findFirst as any).mockResolvedValue(null);
+      (prisma.author.create as any).mockResolvedValue({ id: 555 });
+      (prisma.book.update as any).mockResolvedValue({ id: mockBookId });
 
-      await expect(
-        service.updateBookCover("1", mockBookId, mockCoverUrl),
-      ).rejects.toMatchObject({
-        message: "Book does not belong to this tier list",
-        statusCode: 404,
-      });
+      await service.updateBookCatalog(mockBookId, { author: "Новый Автор" });
+
+      const updateCall = (prisma.book.update as any).mock.calls[0][0];
+      expect(updateCall.data.authorId).toBe(555);
+    });
+
+    it("author: null → authorId = null", async () => {
+      (prisma.book.update as any).mockResolvedValue({ id: mockBookId });
+
+      await service.updateBookCatalog(mockBookId, { author: null });
+
+      const updateCall = (prisma.book.update as any).mock.calls[0][0];
+      expect(updateCall.data.authorId).toBeNull();
     });
   });
 

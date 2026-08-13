@@ -20,6 +20,7 @@ import {
   getLikesWithStatus,
 } from "./likes/likes.service.js";
 import { addBooksToTierList } from "./tierList.service.js";
+import { prisma } from "../../lib/prisma.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 // Логгер для роутов тир-листов
@@ -528,7 +529,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
   );
 
-  // PUT /:id/books/:bookId -> Обновить книгу
+  // PUT /:id/books/:bookId -> Обновить книгу (Фаза 2.3: каталог vs вхождение)
   fastify.put<{
     Params: { id: string; bookId: string };
     Body: {
@@ -552,18 +553,42 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       }
 
       await service.assertOwner(tierListId, request.user!.userId);
-      const updatedBook = await service.updateBook(
-        tierListId,
-        bookId,
-        request.body,
+
+      const { thoughts, coverImageUrl, ...catalogFields } = request.body;
+
+      // 1. Личные данные вхождения (мысли, обложка) — всегда в BookPlacement.
+      //    Глобальная Book (каталог) не трогается.
+      if (thoughts !== undefined || coverImageUrl !== undefined) {
+        await service.updateBookPlacement(tierListId, bookId, {
+          thoughts,
+          coverImageUrl,
+        });
+      }
+
+      // 2. Каталоговые поля (title/author/genre/tags/description) — только для draft-книг:
+      //    начальные данные книги, которой ещё нет в каталоге. Для published-книг
+      //    каталог-эталон из пользовательского редактора не перезаписывается (защита Фазы 2.3).
+      const catalogPayload = Object.fromEntries(
+        Object.entries(catalogFields).filter(([, v]) => v !== undefined),
       );
+      if (Object.keys(catalogPayload).length > 0) {
+        const book = await prisma.book.findUnique({
+          where: { id: bookId },
+          select: { status: true },
+        });
+        if (book?.status === "draft") {
+          await service.updateBookCatalog(bookId, catalogPayload);
+        }
+      }
+
+      const updated = await service.updateBookPlacement(tierListId, bookId, {});
       let newAchievements: unknown[] = [];
       if (request.body.thoughts) {
         newAchievements = await eventBus.emit("review:written", {
           userId: request.user!.userId,
         });
       }
-      return reply.code(200).send({ data: { ...updatedBook, newAchievements } });
+      return reply.code(200).send({ data: { ...updated, newAchievements } });
     },
   );
 
@@ -621,8 +646,10 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           "tiermaker-pro/book-covers",
         );
 
-        // Обновляем обложку в базе данных
-        await service.updateBookCover(tierListId, bookId, uploadResult.url);
+        // Обновляем обложку книги (личная обложка вхождения, Фаза 2.3 — каталог не трогаем)
+        await service.updateBookPlacement(tierListId, bookId, {
+          coverImageUrl: uploadResult.url,
+        });
 
         fastify.log.info(
           { bookId, coverUrl: uploadResult.url },

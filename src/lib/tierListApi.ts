@@ -333,9 +333,9 @@ export function transformApiToState(apiData: ApiTierListResponse): TierListData 
         id: bookId,
         title: placement.book.title,
         author: placement.book.author || 'Неизвестен',
-        coverImageUrl: placement.book.coverImageUrl,
+        coverImageUrl: placement.coverImageUrl || placement.book.coverImageUrl,
         description: placement.book.description || undefined,
-        thoughts: placement.book.thoughts || undefined,
+        thoughts: placement.thoughts || undefined,
       };
     }
     return bookId;
