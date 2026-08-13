@@ -58,6 +58,10 @@ async function fetchWithRetry(
 
 export interface BookSearchResult {
   openLibraryKey: string;
+  /** Источник внешнего идентификатора (Фаза 2.1): google_books | open_library | livelib */
+  source?: "google_books" | "open_library" | "livelib";
+  /** ID книги в источнике (volumeId / OpenLibrary key / LiveLib id) */
+  externalId?: string;
   title: string;
   author: string;
   coverUrl: string | null;
@@ -133,6 +137,8 @@ export async function searchBooks(
         .map((book) => {
           const result: BookSearchResult = {
             openLibraryKey: book.id,
+            source: "google_books",
+            externalId: book.id,
             title: book.volumeInfo.title,
             author: book.volumeInfo.authors?.[0] || "Неизвестен",
             coverUrl:
@@ -241,6 +247,8 @@ async function searchOpenLibrary(
         const coverId = doc.cover_i;
         const result: BookSearchResult = {
           openLibraryKey: doc.key.replace("/works/", ""),
+          source: "open_library",
+          externalId: doc.key.replace("/works/", ""),
           title: doc.title || "Без названия",
           author: doc.author_name?.[0] || "Неизвестен",
           coverUrl: coverId

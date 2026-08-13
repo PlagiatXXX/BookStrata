@@ -19,6 +19,7 @@ const bookObjectSchema = z.object({
   genre: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
   rating: z.number().optional(),
+  year: z.number().int().min(1000).max(2100).optional(), // Год издания карточки → Book.publishedYear (решение 13.08)
 });
 
 export const createCelebritySchema = z.object({

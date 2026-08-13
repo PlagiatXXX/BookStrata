@@ -103,6 +103,23 @@ export function EditBookModal({ editForm, onFieldChange, onSave, onClose }: Edit
           </div>
 
           <div className="admin-collections-form-group">
+              <label>Год издания</label>
+              <input
+                type="number"
+                min={1000}
+                max={2100}
+                value={editForm.year ?? ""}
+                onChange={(e) =>
+                  set("year", e.target.value ? parseInt(e.target.value, 10) : undefined)
+                }
+                placeholder="1925"
+              />
+              <span className="admin-collections-form-hint">
+                Обязателен для публикации книги в каталоге (Google Books: publishedDate)
+              </span>
+            </div>
+
+          <div className="admin-collections-form-group">
             <label>Средняя оценка (1–10)</label>
             <input
               type="number"

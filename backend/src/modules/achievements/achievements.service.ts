@@ -210,11 +210,16 @@ async function checkAchievements(userId: number, action: 'create_tier_list' | 'a
       break;
     }
     case 'write_review': {
+      // Фаза 1.2: мысли — личные данные вхождения (BookPlacement.thoughts)
       const reviewCount = await prisma.book.count({
         where: {
-          placements: { some: { tierList: { userId } } },
-          thoughts: { not: null, notIn: [''] }
-        }
+          placements: {
+            some: {
+              tierList: { userId },
+              AND: [{ thoughts: { not: null } }, { thoughts: { not: '' } }],
+            },
+          },
+        },
       });
       const criticThresholds: [number, AchievementId][] = [
         [3, 'critic_1'],

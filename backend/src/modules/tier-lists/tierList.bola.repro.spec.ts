@@ -2,22 +2,27 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prisma } from "../../lib/prisma.js";
 import * as service from "./tierList.service.js";
 
-vi.mock("../../lib/prisma.js", () => ({
-  prisma: {
-    $transaction: vi.fn((promises) => Promise.all(promises)),
+vi.mock("../../lib/prisma.js", () => {
+  const prismaMock = {
+    $transaction: vi.fn(async (arg: any) =>
+      typeof arg === "function" ? arg(prismaMock) : Promise.all(arg),
+    ),
     tierList: {
       findUnique: vi.fn().mockResolvedValue({ id: "1" }),
     },
     bookPlacement: {
+      findMany: vi.fn().mockResolvedValue([]),
+      update: vi.fn().mockResolvedValue({}),
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
       createMany: vi.fn().mockResolvedValue({ count: 1 }),
       count: vi.fn(),
     },
     tier: {
       count: vi.fn(),
-    }
-  },
-}));
+    },
+  };
+  return { prisma: prismaMock };
+});
 
 describe("Tier List BOLA Reproduction", () => {
   beforeEach(() => {

@@ -20,7 +20,9 @@ vi.mock("../../lib/prisma.js", () => ({
     bookPlacement: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),
+      update: vi.fn(),
       count: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
     },
     tierList: {
       update: vi.fn(),

@@ -153,7 +153,6 @@ export async function saveAll(
               authorId: bookData.authorId,
               coverImageUrl: bookData.coverImageUrl,
               description: bookData.description ? sanitize(bookData.description) : null,
-              thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
               genre: bookData.genre ? sanitize(bookData.genre) : null,
               tags: bookData.tags ?? [],
             },
@@ -210,16 +209,31 @@ export async function saveAll(
         }
       }
 
-      await tx.bookPlacement.deleteMany({
+      // Фаза 2.4: update/upsert вместо delete/recreate — reorder не должен
+      // уничтожать личные данные вхождений (thoughts, coverImageUrl)
+      const existingPlacements = await tx.bookPlacement.findMany({
         where: { tierListId: realTierListId },
+        select: { bookId: true, thoughts: true, coverImageUrl: true },
       });
+      const existingPlacementMap = new Map(
+        existingPlacements.map((p) => [p.bookId, p]),
+      );
 
-      const placementData = payload.placements.map((p) => {
+      // Thoughts новых книг (из newBooks) — личные данные вхождения
+      const thoughtsByTempId = new Map(
+        (payload.newBooks ?? [])
+          .filter((b) => b.thoughts)
+          .map((b) => [b.tempId, sanitize(b.thoughts as string)]),
+      );
+
+      const finalPlacements = payload.placements.map((p) => {
         let finalBookId: number;
+        let isTempBook = false;
         if (typeof p.bookId === "string" && p.bookId.includes("-")) {
           const realId = bookReplacementMap.get(p.bookId);
           if (!realId) throw new Error(`Real ID not found for temp book ID: ${p.bookId}`);
           finalBookId = parseInt(realId, 10);
+          isTempBook = true;
         } else {
           finalBookId = typeof p.bookId === "string" ? parseInt(p.bookId, 10) : p.bookId;
         }
@@ -240,10 +254,43 @@ export async function saveAll(
           bookId: finalBookId,
           tierId: finalTierId,
           rank: p.rank,
+          ...(isTempBook && thoughtsByTempId.has(p.bookId as string)
+            ? { thoughts: thoughtsByTempId.get(p.bookId as string) }
+            : {}),
         };
       });
 
-      await tx.bookPlacement.createMany({ data: placementData });
+      // Существующие — UPDATE (thoughts/coverImageUrl не перезаписываются —
+      // личные данные вхождения, в finalPlacements их нет для существующих книг)
+      for (const p of finalPlacements) {
+        const existing = existingPlacementMap.get(p.bookId);
+        if (!existing) continue;
+        await tx.bookPlacement.update({
+          where: {
+            tierListId_bookId: { tierListId: realTierListId, bookId: p.bookId },
+          },
+          data: { tierId: p.tierId, rank: p.rank },
+        });
+      }
+
+      // Новые — CREATE
+      const newPlacements = finalPlacements.filter(
+        (p) => !existingPlacementMap.has(p.bookId),
+      );
+      if (newPlacements.length > 0) {
+        await tx.bookPlacement.createMany({ data: newPlacements });
+      }
+
+      // Исчезнувшие из итогового состояния — DELETE
+      const finalBookIds = new Set(finalPlacements.map((p) => p.bookId));
+      const deletedIds = existingPlacements
+        .filter((p) => !finalBookIds.has(p.bookId))
+        .map((p) => p.bookId);
+      if (deletedIds.length > 0) {
+        await tx.bookPlacement.deleteMany({
+          where: { tierListId: realTierListId, bookId: { in: deletedIds } },
+        });
+      }
     }
 
     // --- 4. УДАЛЕНИЕ КНИГ И СБОРКА МУСОРА ---

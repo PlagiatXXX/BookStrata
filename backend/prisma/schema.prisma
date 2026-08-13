@@ -50,6 +50,9 @@ achievements         UserAchievement[]
   feedback             Feedback[]
   bookRatings          BookRating[]
   bookStatuses         BookStatus[]
+  bookComments         BookComment[]
+  bookCommentLikes     BookCommentLike[]
+  bookLikes            BookLike[]
   role                 Role?      @relation(fields: [roleId], references: [id])
 roleId               Int?       @map("role_id") // many-to-one: многие пользователи → одна роль
 chatBannedAt         DateTime?  @map("chat_banned_at")
@@ -68,6 +71,24 @@ suspensionReason     String?    @map("suspension_reason")
 @@index([roleId])
 }
  
+// ⚠️ Имя — BookCatalogStatus, а не BookStatus: модель BookStatus уже занята
+// (личные статусы чтения «read»/«want_to_read») — в Prisma model и enum
+// делят одно пространство имён, конфликт не сгенерируется.
+enum BookCatalogStatus {
+  draft
+  published
+}
+
+enum BookSource {
+  google_books
+  open_library
+  livelib
+  local
+  // Семантика: источник ВНЕШНЕГО ИДЕНТИФИКАТОРА книги,
+  // НЕ «источник появления записи в каталоге».
+  // source = null / local ⇔ внешнего идентификатора нет (identity — по partial unique index)
+}
+
 model Book {
 id              Int             @id @default(autoincrement())
 title           String
@@ -75,19 +96,97 @@ author          String?
 authorId        Int?
 coverImageUrl   String          @map("cover_image_url")
 description     String?
-thoughts        String?
 genre           String?
 tags            String[]
-  placements      BookPlacement[]
-  ratings         BookRating[]
-  statuses        BookStatus[]
-  authorRel       Author?         @relation(fields: [authorId], references: [id], onDelete: Restrict)
-  createdAt       DateTime        @default(now()) @map("created_at")
+slug            String?         @unique
+externalId      String?         // ID внешнего источника (Google Books volumeId / OpenLibrary key / LiveLib id)
+source          BookSource?     // см. enum
+status          BookCatalogStatus @default(draft)
+publishedAt     DateTime?       // дата ПЕРВОГО перехода в published; не перезаписывается
+isbn            String?         // ISBN издания (для affiliate — этап 3 Roadmap)
+publishedYear   Int?            // Год издания; обязателен для published (решение 13.08)
+rating          Float?          // Рейтинг каталога 0–10; синхронизируется из последней сохранённой коллекции/знаменитости (last write wins)
+likesCount      Int             @default(0) // Счётчик лайков (денормализация)
+mergedIntoId    Int?            // Аудит дедупа: id книги-канона, поглотившего эту запись (иная запись)
+contextChain    Json?           // Редакторский блок «Погружение в контекст»: [{ icon, title, text }]
+placements      BookPlacement[]
+ratings         BookRating[]
+statuses        BookStatus[]
+slugHistory     BookSlugHistory[]
+comments        BookComment[]
+likes           BookLike[]
+collectionBooks CollectionBook[]
+celebrityBooks  CelebrityBook[]
+authorRel       Author?         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+createdAt       DateTime        @default(now()) @map("created_at")
+updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
 
-  @@index([genre])
-  @@index([tags], type: Gin)
-  @@index([title, author])
-  @@index([authorId])
+@@unique([source, externalId]) // DB-level: один внешний ID = одна книга (P2002 → retry → link)
+@@index([genre])
+@@index([tags], type: Gin)
+@@index([title, author])
+@@index([authorId])
+@@index([status])
+}
+
+// История slug: смена slug у published-книги не теряет проиндексированный URL (301)
+model BookSlugHistory {
+  id        Int      @id @default(autoincrement())
+  oldSlug   String   @unique
+  bookId    Int
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("book_slug_history")
+}
+
+// Обсуждение книг (комментарии к published-книгам)
+model BookComment {
+  id         Int             @id @default(autoincrement())
+  bookId     Int
+  userId     Int
+  content    String          // текст комментария (Markdown или plain text)
+  parentId   Int?            // для ответов на комментарии (threading)
+  likesCount Int             @default(0)
+  editedAt   DateTime?       // дата последнего редактирования; null = не редактировался
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  book       Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent     BookComment?    @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    BookComment[]   @relation("CommentReplies")
+  likes      BookCommentLike[]
+
+  @@index([bookId, createdAt]) // быстрая выборка комментариев книги
+  @@index([userId])
+  @@map("book_comments")
+}
+
+model BookCommentLike {
+  id        Int         @id @default(autoincrement())
+  commentId Int
+  userId    Int
+  createdAt DateTime    @default(now())
+  comment   BookComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId]) // один лайк на пользователя
+  @@index([commentId])
+  @@map("book_comment_likes")
+}
+
+// Лайк книги (binary: нравится / не нравится)
+model BookLike {
+  id        Int      @id @default(autoincrement())
+  bookId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, userId]) // один лайк на пользователя
+  @@index([bookId])
+  @@map("book_likes")
 }
 
 model BookRating {
@@ -164,14 +263,16 @@ items        BookPlacement[]
 }
  
 model BookPlacement {
-tierList   TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
-tierListId String
-book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-bookId     Int
-tier       Tier?    @relation(fields: [tierId], references: [id], onDelete: SetNull)
-tierId     Int?
-rank       Int
- 
+tierList       TierList @relation(fields: [tierListId], references: [id], onDelete: Cascade)
+tierListId     String
+book           Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+bookId         Int
+tier           Tier?    @relation(fields: [tierId], references: [id], onDelete: SetNull)
+tierId         Int?
+rank           Int
+thoughts       String?  // ЛИЧНЫЕ мысли пользователя о книге в ЭТОМ тир-листе (перенесено с Book)
+coverImageUrl  String?  // ЛИЧНАЯ обложка вхождения; NULL = обложка каталога (fallback: placement.coverImageUrl ?? book.coverImageUrl)
+
 @@id([tierListId, bookId])
 @@index([tierId, rank])
 @@index([bookId])
@@ -352,10 +453,29 @@ model Collection {
   tierOrder       String[] @map("tier_order")
   books           Json?    // Record<string, Book>
   unrankedBookIds String[] @map("unranked_book_ids")
+  catalogBooks    CollectionBook[] // связь с каталогом Book (решение 12.08: реляционная таблица вместо catalogBookId в JSON)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("collections")
+}
+
+// Связь «коллекция ↔ каталог книг» (решение 12.08: реляционные таблицы вместо catalogBookId в JSON;
+// JSON-снимки остаются legacy-источником отображения/редактирования на страницах коллекций)
+model CollectionBook {
+  id           Int        @id @default(autoincrement())
+  collectionId Int
+  bookId       Int
+  tierId       String?    // ключ тира из JSON tiers коллекции
+  rank         Int
+  rating       Float?     // редакторская оценка карточки (НЕ путать с Book.rating; в каталог не идёт)
+  createdAt    DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  book         Book       @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, bookId])
+  @@index([bookId])
+  @@map("collection_books")
 }
 
 // Знаменитости (что читают знаменитости)
@@ -374,10 +494,28 @@ model Celebrity {
   tierOrder       String[] @map("tier_order")
   books           Json?    // Record<string, Book>
   unrankedBookIds String[] @map("unranked_book_ids")
+  catalogBooks    CelebrityBook[] // связь с каталогом Book (решение 12.08)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("celebrities")
+}
+
+// Связь «знаменитость ↔ каталог книг» (аналогично CollectionBook)
+model CelebrityBook {
+  id          Int       @id @default(autoincrement())
+  celebrityId Int
+  bookId      Int
+  tierId      String?   // ключ тира из JSON tiers знаменитости
+  rank        Int
+  rating      Float?    // редакторская оценка карточки
+  createdAt   DateTime  @default(now())
+  celebrity   Celebrity @relation(fields: [celebrityId], references: [id], onDelete: Cascade)
+  book        Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([celebrityId, bookId])
+  @@index([bookId])
+  @@map("celebrity_books")
 }
 
 // Достижения

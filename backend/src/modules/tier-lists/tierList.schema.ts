@@ -184,6 +184,8 @@ export const addBooksSchema = {
             thoughts: { type: ['string', 'null'], maxLength: 2000 },
             genre: { type: ['string', 'null'], maxLength: 100 },
             tags: { type: 'array', items: { type: 'string', maxLength: 50 }, maxItems: 20 },
+            externalId: { type: ['string', 'null'], maxLength: 255, description: 'ID книги во внешнем источнике (Фаза 2.1)' },
+            source: { type: ['string', 'null'], enum: ['google_books', 'open_library', 'livelib'], description: 'Источник внешнего ID (Фаза 2.1)' },
           },
         },
       },

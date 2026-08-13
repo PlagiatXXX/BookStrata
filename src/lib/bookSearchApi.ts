@@ -5,6 +5,10 @@ const bookSearchLogger = createLogger('BookSearch', { color: 'yellow' });
 
 export interface OpenLibraryBook {
   openLibraryKey: string;
+  /** Источник внешнего ID (Фаза 2.1): google_books | open_library | livelib */
+  source?: 'google_books' | 'open_library' | 'livelib';
+  /** ID книги в источнике (volumeId / OpenLibrary key / LiveLib id) */
+  externalId?: string;
   title: string;
   author: string;
   coverUrl: string | null;
@@ -39,7 +43,8 @@ export async function addBookFromGoogleBooks(
     const result = await apiClient.post<{ book: { id: number; title: string; author: string | null; coverImageUrl: string } }>(
       `/tier-lists/${tierListId}/books/search`,
       {
-        openLibraryKey: book.openLibraryKey,
+        externalId: book.openLibraryKey,
+        source: 'google_books',
         title: book.title,
         author: book.author,
         coverUrl: book.coverUrlLarge || book.coverUrl,
@@ -65,6 +70,8 @@ export async function batchAddBooksFromSearch(
     `/tier-lists/${tierListId}/books`,
     {
       books: books.map((b) => ({
+        externalId: b.externalId ?? b.openLibraryKey,
+        source: b.source,
         title: b.title,
         author: b.author,
         coverImageUrl: b.coverUrlLarge || b.coverUrl || '',
@@ -132,7 +139,8 @@ export async function addBookFromOpenLibrary(
     const result = await apiClient.post<{ book: { id: number; title: string; author: string | null; coverImageUrl: string } }>(
       `/tier-lists/${tierListId}/books/search`,
       {
-        openLibraryKey: book.openLibraryKey,
+        externalId: book.openLibraryKey,
+        source: 'open_library',
         title: book.title,
         author: book.author,
         coverUrl: book.coverUrlLarge || book.coverUrl,

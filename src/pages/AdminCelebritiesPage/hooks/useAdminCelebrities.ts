@@ -131,6 +131,7 @@ export function useAdminCelebrities() {
                 rating: book.rating,
                 genre: book.genre,
                 tags: book.tags?.join(", "),
+                year: book.year,
                 tierId: tierId,
               });
             }
@@ -150,6 +151,7 @@ export function useAdminCelebrities() {
             rating: book.rating,
             genre: book.genre,
             tags: book.tags?.join(", "),
+            year: book.year,
             tierId: null,
           });
         }
@@ -207,7 +209,7 @@ export function useAdminCelebrities() {
 
         const tiersMap: Record<string, { id: string; title: string; color: string; bookIds: string[] }> = {};
         const tierOrder: string[] = [];
-        const booksMap: Record<string, { id: string; title: string; author: string; coverImageUrl: string; description?: string; rating?: number; genre?: string; tags?: string[] }> = {};
+        const booksMap: Record<string, { id: string; title: string; author: string; coverImageUrl: string; description?: string; rating?: number; genre?: string; tags?: string[]; year?: number }> = {};
         const unrankedBookIds: string[] = [];
 
         curatedTiers.forEach((t) => {
@@ -227,6 +229,7 @@ export function useAdminCelebrities() {
             rating: b.rating != null ? Number(b.rating) : undefined,
             genre: b.genre?.trim(),
             tags: b.tags ? b.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : undefined,
+            year: b.year != null ? Number(b.year) : undefined,
           };
           if (b.tierId && tiersMap[b.tierId]) {
             tiersMap[b.tierId].bookIds.push(bookId);

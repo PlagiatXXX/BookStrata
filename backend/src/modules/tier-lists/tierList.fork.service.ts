@@ -72,13 +72,15 @@ export async function forkTierList(id: string, userId: number) {
               },
             }
           : {}),
+        // Фаза 1.2: мысли — личные данные вхождения (BookPlacement.thoughts),
+        // копируем их из оригинального вхождения, а не из каталога
+        thoughts: placement.thoughts ?? null,
         book: {
           create: {
             title: placement.book.title,
             author: placement.book.author,
             coverImageUrl: placement.book.coverImageUrl,
             description: placement.book.description,
-            thoughts: placement.book.thoughts,
           },
         },
       };

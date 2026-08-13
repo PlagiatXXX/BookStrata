@@ -20,7 +20,9 @@ vi.mock('../../lib/prisma.js', () => ({
     bookPlacement: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),
+      update: vi.fn(),
       count: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
     },
     tierList: {
       update: vi.fn(),
@@ -66,13 +68,17 @@ describe('tierList.service.saveAll', () => {
     expect(prisma.tier.updateMany).toHaveBeenCalled();
     expect(prisma.tier.create).toHaveBeenCalled();
     expect(prisma.book.create).toHaveBeenCalled();
-    expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledWith({ where: { tierListId } });
+    expect(prisma.bookPlacement.findMany).toHaveBeenCalledWith({
+      where: { tierListId },
+      select: { bookId: true, thoughts: true, coverImageUrl: true },
+    });
     expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
       data: [
         { tierListId, bookId: 201, tierId: 101, rank: 0 },
         { tierListId, bookId: 200, tierId: 10, rank: 1 }
       ]
     });
+    expect(prisma.bookPlacement.deleteMany).not.toHaveBeenCalled();
 
     expect(result.tierReplacements).toContainEqual({ tempId: 'tier-1', realId: '101' });
     expect(result.bookReplacements).toContainEqual({ tempId: 'local-1', realId: '201' });

@@ -122,7 +122,7 @@ export const EditorLayout = ({
       fullWidth={!isReadOnly}
       hideMobileNav={!isReadOnly}
       hideLogout={true}
-      contentTopPadding="pt-16"
+      contentTopPadding="pt-24"
     >
       <main
         className={`neo-brutalist-editor flex-1 overflow-x-clip ${isReadOnly ? "px-4 lg:px-8 pb-4 lg:pb-8 pt-1" : "p-4 lg:p-8 pb-24 lg:pb-8"}`}

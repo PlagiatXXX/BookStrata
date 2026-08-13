@@ -13,6 +13,7 @@ export interface CuratedBook {
   rating?: number;
   genre?: string;
   tags?: string;
+  year?: number; // Год издания (решение 13.08): обязателен для published в каталоге
   tierId: string | null; // null = unranked
 }
 

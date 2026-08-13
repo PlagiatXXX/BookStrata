@@ -8,6 +8,7 @@ export interface Book {
   rating?: number;
   genre?: string;
   tags?: string[];
+  year?: number; // Год издания (карточка коллекции/знаменитости → Book.publishedYear)
 }
 
 export interface Tier {

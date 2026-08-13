@@ -230,7 +230,16 @@ export async function saveTierListTiers(
 
 export async function addBooksToTierList(
   id: string,
-  books: { title: string; author?: string; coverImageUrl: string; description?: string | null; thoughts?: string | null }[]
+  books: {
+    title: string;
+    author?: string;
+    coverImageUrl: string;
+    description?: string | null;
+    thoughts?: string | null;
+    /** Внешний ID книги (Фаза 2.1): google volumeId / OpenLibrary key / LiveLib id */
+    externalId?: string | null;
+    source?: 'google_books' | 'open_library' | 'livelib' | null;
+  }[]
 ): Promise<ApiTierListResponse> {
   tierListLogger.info('Добавление книг в рейтинговый список', { tierListId: id, booksCount: books.length });
   const result = await apiClient.post<ApiTierListResponse>(`/tier-lists/${id}/books`, { books });

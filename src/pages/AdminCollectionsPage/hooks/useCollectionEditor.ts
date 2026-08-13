@@ -123,6 +123,7 @@ export function useCollectionEditor(
       rating: undefined,
       genre: "",
       tags: "",
+      year: undefined,
       tierId: null,
     };
     onBooksChange([...books, newBook]);
@@ -315,6 +316,7 @@ export function useCollectionEditor(
         description: obj.description ? String(obj.description).trim() : undefined,
         genre: obj.genre ? String(obj.genre).trim() : undefined,
         rating: typeof obj.rating === "number" ? obj.rating : undefined,
+        year: typeof obj.year === "number" ? obj.year : undefined,
         tags: obj.tags ? String(obj.tags) : undefined,
         tierId: null,
       });

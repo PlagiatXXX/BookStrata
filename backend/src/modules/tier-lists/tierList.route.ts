@@ -463,6 +463,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         thoughts?: string | null;
         genre?: string | null;
         tags?: string[];
+        externalId?: string | null;
+        source?: "google_books" | "open_library" | "livelib" | null;
       }[];
     };
   }>(
@@ -691,14 +693,20 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   // POST /:id/books/search -> Добавить книгу по данным из внешнего источника
   fastify.post<{
     Params: { id: string };
-    Body: { title: string; author?: string | null; coverUrl: string };
+    Body: {
+      title: string;
+      author?: string | null;
+      coverUrl: string;
+      externalId?: string | null;
+      source?: "google_books" | "open_library" | "livelib" | null;
+    };
   }>(
     "/:id/books/search",
     { preHandler: [authMiddleware] },
     async (request, reply) => {
       const tierListId = request.params.id;
       const { requestId, userId } = request.context;
-      const { title, author, coverUrl } = request.body;
+      const { title, author, coverUrl, externalId, source } = request.body;
 
       // Проверяем права
       const tierList = await service.getFullTierList(tierListId);
@@ -727,6 +735,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
             coverImageUrl: uploadResult.url,
             description: null,
             thoughts: null,
+            externalId: externalId || null,
+            source: source || null,
           },
         ]);
         const newAchievements = await eventBus.emit("tier-list:book-added", {

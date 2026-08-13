@@ -21,6 +21,6 @@
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["src/**/*", "prisma/**/*.ts"],
+  "include": ["src/**/*", "prisma/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
