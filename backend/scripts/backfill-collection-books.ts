@@ -104,6 +104,17 @@ async function matchBook(
     }
   }
 
+  // 4. Автор не нашёлся по строке (в карточках разные написания:
+  // «Достоевский Фёдор» vs «Фёдор Достоевский») — если по названию
+  // ровно один кандидат, это канон. Без этого создаются дубли.
+  const byTitle = await db.book.findMany({
+    where: { title: { equals: card.title, mode: "insensitive" } },
+    select: { id: true, authorId: true },
+  });
+  if (byTitle.length === 1 && byTitle[0]) {
+    return { id: byTitle[0].id, authorId: byTitle[0].authorId };
+  }
+
   return null;
 }
 
@@ -306,9 +317,13 @@ async function runAll(db: Db): Promise<void> {
 async function main() {
   if (DRY_RUN) {
     try {
-      await prisma.$transaction(async (tx) => {
-        await runAll(tx);
-      });
+      await prisma.$transaction(
+        async (tx) => {
+          await runAll(tx);
+        },
+        // Скрипт делает сотни запросов — дефолтные 5 секунд не хватает
+        { maxWait: 300_000, timeout: 300_000 },
+      );
       console.log("\n(dry-run: транзакция завершилась без отката — что-то пошло не так)");
     } catch (error) {
       if (error instanceof RollbackSignal) {
