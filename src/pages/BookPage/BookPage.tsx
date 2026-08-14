@@ -7,6 +7,8 @@
 // «У знаменитостей», «Обсуждение».
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
@@ -18,9 +20,11 @@ import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useAddBookToTierList, useBook, useMyTierLists } from "@/hooks/useBook";
 import { useBookshelf } from "@/hooks/useBookshelf";
+import { createTierList } from "@/lib/tierListApi";
 import { BookCover3D } from "./BookCover3D";
 import { BookRatingPanel } from "./BookRatingPanel";
 import { BookContextChain } from "./BookContextChain";
+import { ContentLock } from "./ContentLock";
 import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
 import "./BookPage.css";
@@ -36,6 +40,13 @@ export default function BookPage() {
   const [descExpanded, setDescExpanded] = useState(false);
   const [tierDropdownOpen, setTierDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  // Создание нового тир-листа прямо из выпадашки «В тир-лист»
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newListTitle, setNewListTitle] = useState("");
+  const [creatingList, setCreatingList] = useState(false);
+  const [createListError, setCreateListError] = useState<string | null>(null);
 
   // Список листов пользователя для кнопки «В тир-лист» (грузится при открытии)
   const myTierListsQuery = useMyTierLists(tierDropdownOpen && Boolean(user));
@@ -98,10 +109,7 @@ export default function BookPage() {
   const isWantToRead = Boolean(book && shelf[book.id] === "want_to_read");
 
   const handleWantToRead = () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    // Полка доступна и гостям: локальная полка импортируется в аккаунт при входе
     toggleStatus(String(book.id), "want_to_read", {
       title: book.title,
       author: book.author ?? undefined,
@@ -114,6 +122,28 @@ export default function BookPage() {
   const handleAddToTierList = (tierListId: string) => {
     setTierDropdownOpen(false);
     addToTierList.mutate(tierListId);
+  };
+
+  const handleCreateAndAdd = async () => {
+    const title = newListTitle.trim();
+    if (!title || creatingList) return;
+    setCreatingList(true);
+    setCreateListError(null);
+    try {
+      const created = await createTierList(title);
+      setTierDropdownOpen(false);
+      setShowCreateForm(false);
+      setNewListTitle("");
+      // Новый лист должен появиться в списке при следующем открытии
+      void queryClient.invalidateQueries({ queryKey: ["myTierLists"] });
+      addToTierList.mutate(created.id);
+    } catch (error) {
+      setCreateListError(
+        error instanceof Error ? error.message : "Не удалось создать тир-лист",
+      );
+    } finally {
+      setCreatingList(false);
+    }
   };
 
   return (
@@ -205,7 +235,7 @@ export default function BookPage() {
                 </h2>
               )}
 
-              {/* Описание с fade-out */}
+{/* Описание с fade-out — видно всем */}
               {book.description && (
                 <div className="bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl mb-8">
                   <div className="relative">
@@ -227,13 +257,10 @@ export default function BookPage() {
                       onClick={() => setDescExpanded((v) => !v)}
                       className="mt-4 flex items-center gap-2 text-[var(--bp-primary)] hover:text-white transition-colors bp-label-caps tracking-widest"
                     >
-                      {descExpanded ? "Свернуть" : "Читать полностью"}
-                      <span
-                        className="ms-icon text-sm transition-transform duration-300"
-                        style={{ transform: descExpanded ? "rotate(180deg)" : "rotate(0deg)" }}
-                      >
-                        expand_more
+                      <span className="ms-icon text-sm">
+                        {descExpanded ? "expand_less" : "expand_more"}
                       </span>
+                      {descExpanded ? "Свернуть" : "Читать полностью"}
                     </button>
                   </div>
                 </div>
@@ -261,7 +288,7 @@ export default function BookPage() {
                     type="button"
                     onClick={() => {
                       if (!user) {
-                        navigate("/auth");
+                        navigate(`/auth?mode=register&redirect=${encodeURIComponent(`/books/${slug}`)}`);
                         return;
                       }
                       setTierDropdownOpen((v) => !v);
@@ -285,10 +312,7 @@ export default function BookPage() {
                       )}
                       {!myTierListsQuery.isLoading && myTierLists?.length === 0 && (
                         <p className="px-4 py-3 text-sm text-white/60">
-                          Нет тир-листов.{" "}
-                          <Link to="/dashboard" className="text-[var(--bp-primary)] hover:text-white">
-                            Создайте первый
-                          </Link>
+                          Нет тир-листов. Создайте первый ниже.
                         </p>
                       )}
                       {!myTierListsQuery.isLoading &&
@@ -303,10 +327,69 @@ export default function BookPage() {
                             {tl.title}
                           </button>
                         ))}
+
+                      {/* Создание нового тир-листа прямо из выпадашки */}
+                      <div className="border-t border-white/10 mt-1">
+                        {!showCreateForm ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowCreateForm(true)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-[var(--bp-primary)] hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                          >
+                            <span className="ms-icon text-base">add</span>
+                            Новый тир-лист
+                          </button>
+                        ) : (
+                          <div className="px-3 py-2 space-y-2">
+                            <input
+                              autoFocus
+                              value={newListTitle}
+                              onChange={(e) => setNewListTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") void handleCreateAndAdd();
+                                if (e.key === "Escape") {
+                                  setShowCreateForm(false);
+                                  setNewListTitle("");
+                                  setCreateListError(null);
+                                }
+                              }}
+                              placeholder="Название тир-листа"
+                              className="w-full px-3 py-2 text-sm bg-black/30 border border-white/15 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[var(--bp-primary)]"
+                            />
+                            {createListError && (
+                              <p className="text-xs text-red-400">{createListError}</p>
+                            )}
+                            <button
+                              type="button"
+                              disabled={!newListTitle.trim() || creatingList}
+                              onClick={() => void handleCreateAndAdd()}
+                              className="w-full px-3 py-2 text-sm rounded-lg bg-[var(--bp-primary)] text-[var(--bp-on-primary)] hover:bg-[var(--bp-primary-container)] disabled:opacity-50 transition-colors"
+                            >
+                              {creatingList ? "Создание..." : "Создать и добавить"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Scroll indicator: «Листай дальше» — сразу под кнопками действий */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="mt-12 flex flex-col items-center gap-1 text-white/30 select-none"
+              >
+                <span className="text-xs">Листай дальше</span>
+                <motion.div
+                  animate={{ y: [0, 6, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <span className="ms-icon text-base">expand_more</span>
+                </motion.div>
+              </motion.div>
             </div>
 
             {/* Сайдбар: рейтинг + «Где читать» */}
@@ -357,99 +440,105 @@ export default function BookPage() {
           </div>
         </header>
 
-        {/* ── Погружение в контекст ── */}
-        {contextChain.length > 0 && <BookContextChain items={contextChain} />}
+        {/* ── Нижний контент: гость видит вместо него замок с CTA ── */}
+        <ContentLock
+          description="Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы"
+          redirectTo={`/books/${slug}`}
+        >
+          {/* ── Погружение в контекст ── */}
+          {contextChain.length > 0 && <BookContextChain items={contextChain} />}
 
-        {/* ── Другие книги автора ── */}
-        {otherBooksByAuthor.length > 0 && (
-          <section className="relative py-12">
-            <div className="max-w-[1100px] mx-auto px-4 md:px-5">
-              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Другие книги автора</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {otherBooksByAuthor.map((b) => (
-                  <BookCardLink key={b.id} book={b} />
-                ))}
+          {/* ── Другие книги автора ── */}
+          {otherBooksByAuthor.length > 0 && (
+            <section className="relative py-12">
+              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Другие книги автора</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {otherBooksByAuthor.map((b) => (
+                    <BookCardLink key={b.id} book={b} />
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
-        {/* ── Похожие книги ── */}
-        {similarBooks.length > 0 && (
-          <section className="relative py-12 border-t border-primary/20">
-            <div className="max-w-[1100px] mx-auto px-4 md:px-5">
-              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Похожие книги</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {similarBooks.map((b) => (
-                  <BookCardLink key={b.id} book={b} />
-                ))}
+          {/* ── Похожие книги ── */}
+          {similarBooks.length > 0 && (
+            <section className="relative py-12 border-t border-primary/20">
+              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Похожие книги</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {similarBooks.map((b) => (
+                    <BookCardLink key={b.id} book={b} />
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
-        {/* ── Встречается в тир-листах ── */}
-        {tierLists.length > 0 && (
-          <section className="relative pt-4 pb-12 border-t border-primary/20">
-            <div className="max-w-[1100px] mx-auto px-4 md:px-5">
-              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Встречается в тир-листах</h2>
-              <div className="flex flex-wrap gap-3">
-                {tierLists.map((tl) => (
-                  <Link
-                    key={tl.id}
-                    to={`/tier-lists/${tl.id}`}
-                    className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
-                  >
-                    {tl.title}
-                  </Link>
-                ))}
+          {/* ── Встречается в тир-листах ── */}
+          {tierLists.length > 0 && (
+            <section className="relative pt-4 pb-12 border-t border-primary/20">
+              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Встречается в тир-листах</h2>
+                <div className="flex flex-wrap gap-3">
+                  {tierLists.map((tl) => (
+                    <Link
+                      key={tl.id}
+                      to={`/tier-lists/${tl.id}`}
+                      className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
+                    >
+                      {tl.title}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
-        {/* ── В подборках ── */}
-        {collections.length > 0 && (
-          <section className="relative pt-4 pb-12 border-t border-primary/20">
-            <div className="max-w-[1100px] mx-auto px-4 md:px-5">
-              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">В подборках</h2>
-              <div className="flex flex-wrap gap-3">
-                {collections.map((c) => (
-                  <Link
-                    key={c.id}
-                    to={`/collections/${c.slug}`}
-                    className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
-                  >
-                    {c.title}
-                  </Link>
-                ))}
+          {/* ── В подборках ── */}
+          {collections.length > 0 && (
+            <section className="relative pt-4 pb-12 border-t border-primary/20">
+              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">В подборках</h2>
+                <div className="flex flex-wrap gap-3">
+                  {collections.map((c) => (
+                    <Link
+                      key={c.id}
+                      to={`/collections/${c.slug}`}
+                      className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
+                    >
+                      {c.title}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
-        {/* ── У знаменитостей ── */}
-        {celebrities.length > 0 && (
-          <section className="relative py-12 border-t border-primary/20">
-            <div className="max-w-[1100px] mx-auto px-4 md:px-5">
-              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">У знаменитостей</h2>
-              <div className="flex flex-wrap gap-3">
-                {celebrities.map((c) => (
-                  <Link
-                    key={c.id}
-                    to={`/celebrities/${c.slug}`}
-                    className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
-                  >
-                    {c.name}
-                  </Link>
-                ))}
+          {/* ── У знаменитостей ── */}
+          {celebrities.length > 0 && (
+            <section className="relative py-12 border-t border-primary/20">
+              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">У знаменитостей</h2>
+                <div className="flex flex-wrap gap-3">
+                  {celebrities.map((c) => (
+                    <Link
+                      key={c.id}
+                      to={`/celebrities/${c.slug}`}
+                      className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
+                    >
+                      {c.name}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
 
-        {/* ── Обсуждение ── */}
-        <BookComments slug={slug!} initialItems={comments.items} initialTotal={comments.total} />
+          {/* ── Обсуждение ── */}
+          <BookComments slug={slug!} initialItems={comments.items} initialTotal={comments.total} />
+        </ContentLock>
       </main>
 
       <Footer />

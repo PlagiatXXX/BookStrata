@@ -52,9 +52,14 @@ vi.mock("@/hooks/useBook", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/tierListApi", () => ({
+  createTierList: vi.fn(),
+}));
+
 import { useBook } from "@/hooks/useBook";
 import { useBookshelf } from "@/hooks/useBookshelf";
 import { useAuth } from "@/hooks/useAuthContext";
+import { createTierList } from "@/lib/tierListApi";
 
 const mockedUseBook = vi.mocked(useBook);
 const mockedUseBookshelf = vi.mocked(useBookshelf);
@@ -140,11 +145,16 @@ describe("BookPage", () => {
     // Кнопка «Хочу прочитать» вместо лайка
     expect(screen.getByText("Хочу прочитать")).toBeTruthy();
     expect(screen.queryByText("12 лайков")).toBeNull();
-    // Блоки связей
-    expect(screen.getByText("Топ-100 классики")).toBeTruthy();
-    expect(screen.getByText("Великие романы")).toBeTruthy();
-    expect(screen.getByText("Стивен Кинг")).toBeTruthy();
-    expect(screen.getByText("Обсуждение")).toBeTruthy();
+    // Описание (лонгрид) видно всем, включая гостя
+    expect(screen.getByText("Роман, ставший символом века джаза.")).toBeTruthy();
+    expect(screen.getByText("Читать полностью")).toBeTruthy();
+    // Scroll-индикатор после hero
+    expect(screen.getByText("Листай дальше")).toBeTruthy();
+    // Гостю нижний контент (тир-листы, подборки, знаменитости, обсуждение) скрыт
+    expect(screen.queryByText("Топ-100 классики")).toBeNull();
+    expect(screen.queryByText("Великие романы")).toBeNull();
+    expect(screen.queryByText("Стивен Кинг")).toBeNull();
+    expect(screen.queryByText("Обсуждение")).toBeNull();
   });
 
   it("«Хочу прочитать» добавляет книгу на полку (want_to_read)", async () => {
@@ -163,6 +173,23 @@ describe("BookPage", () => {
 
     expect(toggleStatusMock).toHaveBeenCalledWith("1", "want_to_read", expect.objectContaining({ title: "Великий Гэтсби" }));
     mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
+  });
+
+  it("гость тоже может добавить книгу на полку (локальная полка, без редиректа)", async () => {
+    toggleStatusMock.mockClear();
+    mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    const button = await screen.findByText("Хочу прочитать");
+    await userEvent.click(button);
+
+    expect(toggleStatusMock).toHaveBeenCalledWith("1", "want_to_read", expect.objectContaining({ title: "Великий Гэтсби" }));
   });
 
   it("книга уже на полке → кнопка «Уже в плане»", async () => {
@@ -206,6 +233,7 @@ describe("BookPage", () => {
   });
 
   it("не zero: разворачивает описание по кнопке «Читать полностью»", async () => {
+    mockedUseAuth.mockReturnValue({ user: { id: 1 } as never, isLoading: false } as never);
     mockedUseBook.mockReturnValue({
       data: bookPageData,
       isLoading: false,
@@ -217,6 +245,98 @@ describe("BookPage", () => {
     const toggleBtn = await screen.findByText("Читать полностью");
     await userEvent.click(toggleBtn);
     expect(screen.getByText("Свернуть")).toBeTruthy();
+    // Авторизованному не показывается замок
+    expect(screen.queryByText("Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы")).toBeNull();
+  });
+
+  it("гостю: вместо всего нижнего контента — цепь с замком и CTA", async () => {
+    mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    // Верх (описание) виден без ограничений
+    await waitFor(() => {
+      expect(screen.getByText("Роман, ставший символом века джаза.")).toBeTruthy();
+    });
+    expect(screen.getByText("Читать полностью")).toBeTruthy();
+    // Один замок на всю ширину с надписью «зарегистрируйтесь»
+    expect(
+      screen.getAllByText("Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы").length,
+    ).toBe(1);
+    expect(screen.getAllByText("Создать аккаунт").length).toBe(1);
+    expect(screen.getAllByText("Войти").length).toBe(1);
+    // Весь нижний контент исчез: ни тир-листов, ни подборок, ни обсуждения
+    expect(screen.queryByText("Топ-100 классики")).toBeNull();
+    expect(screen.queryByText("Великие романы")).toBeNull();
+    expect(screen.queryByText("Стивен Кинг")).toBeNull();
+    expect(screen.queryByText("Обсуждение")).toBeNull();
+  });
+
+  it("авторизованному виден весь нижний контент без CTA регистрации", async () => {
+    mockedUseAuth.mockReturnValue({ user: { id: 1 } as never, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    expect(await screen.findByText("Топ-100 классики")).toBeTruthy();
+    expect(screen.getByText("Великие романы")).toBeTruthy();
+    expect(screen.getByText("Стивен Кинг")).toBeTruthy();
+    expect(screen.getByText("Обсуждение")).toBeTruthy();
+    // Замка нет: ни надписи, ни CTA
+    expect(screen.queryByText("Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы")).toBeNull();
+    expect(screen.queryByText("Создать аккаунт")).toBeNull();
+  });
+
+  it("создаёт новый тир-лист из выпадашки и добавляет в него книгу", async () => {
+    const mutateMock = vi.fn();
+    vi.mocked(createTierList).mockResolvedValue({
+      id: "tl-new",
+      title: "Любимое фэнтези",
+      slug: "lyubimoe-fentezi",
+      isPublic: false,
+    } as never);
+
+    // Подменяем моки: авторизованный пользователь + пустой список листов
+    vi.mocked(useAuth).mockReturnValue({ user: { id: 1 } as never, isLoading: false } as never);
+    vi.mocked(useBook).mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    const useBookModule = await import("@/hooks/useBook");
+    vi.mocked(useBookModule.useMyTierLists).mockReturnValue({
+      data: [],
+      isLoading: false,
+    } as never);
+    vi.mocked(useBookModule.useAddBookToTierList).mockReturnValue({
+      mutate: mutateMock,
+    } as never);
+
+    renderPage();
+
+    await userEvent.click(await screen.findByText("В тир-лист"));
+    await userEvent.click(await screen.findByText("Новый тир-лист"));
+    await userEvent.type(await screen.findByPlaceholderText("Название тир-листа"), "Любимое фэнтези");
+    await userEvent.click(await screen.findByText("Создать и добавить"));
+
+    await waitFor(() => {
+      expect(createTierList).toHaveBeenCalledWith("Любимое фэнтези");
+      expect(mutateMock).toHaveBeenCalledWith("tl-new");
+    });
+    // Выпадашка закрылась после успеха
+    await waitFor(() => {
+      expect(screen.queryByText("Создать и добавить")).toBeNull();
+    });
   });
 
   it("JSON-LD без aggregateRating (решение 14.08: риск спам-фильтра rich-результатов)", () => {

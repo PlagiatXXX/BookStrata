@@ -8,7 +8,11 @@ import { BookRatingPanel } from "./BookRatingPanel";
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
-  return { ...actual, useNavigate: () => navigateMock };
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+    useLocation: () => ({ pathname: "/books/velikij-getssbi" }),
+  };
 });
 
 const useAuthMock = vi.fn(() => ({ user: { id: 1 } as { id: number } | null, isLoading: false }));
@@ -69,11 +73,14 @@ describe("BookRatingPanel", () => {
     expect(slider.value).toBe("5.5");
   });
 
-  it("без авторизации кнопка ведёт на /auth, оценка не отправляется", () => {
+  it("без авторизации кнопка заблокирована и ведёт на /auth с redirect, оценка не отправляется", () => {
     useAuthMock.mockReturnValue({ user: null, isLoading: false });
     renderPanel();
-    fireEvent.click(screen.getByText("Поставить оценку"));
-    expect(navigateMock).toHaveBeenCalledWith("/auth");
+    const lockedBtn = screen.getByText("Сначала войти");
+    // Заблокированный вид: иконка замка + aria-disabled
+    expect(lockedBtn.closest("button")?.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(lockedBtn);
+    expect(navigateMock).toHaveBeenCalledWith("/auth?redirect=%2Fbooks%2Fvelikij-getssbi");
     expect(mutateMock).not.toHaveBeenCalled();
     useAuthMock.mockReturnValue({ user: { id: 1 }, isLoading: false });
   });

@@ -2,7 +2,7 @@
 // «Оценить книгу»: слайдер 0–10 (шаг 0.1), дефолт — редакционная оценка,
 // одна оценка на пользователя (upsert), память в localStorage, среднее читателей.
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBookRatings, useMyBookRating, useRateBook } from "@/hooks/useBookRating";
 
@@ -26,6 +26,7 @@ function readLocalRating(bookId: number): number | null {
 
 export function BookRatingPanel({ bookId, defaultRating }: BookRatingPanelProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const isAuthed = Boolean(user);
 
@@ -54,7 +55,8 @@ export function BookRatingPanel({ bookId, defaultRating }: BookRatingPanelProps)
 
   const handleSubmit = () => {
     if (!isAuthed) {
-      navigate("/auth");
+      // Вернуть на ту же страницу после входа
+      navigate(`/auth?redirect=${encodeURIComponent(location.pathname)}`);
       return;
     }
     try {
@@ -89,10 +91,23 @@ export function BookRatingPanel({ bookId, defaultRating }: BookRatingPanelProps)
         type="button"
         onClick={handleSubmit}
         disabled={rateMutation.isPending}
-        className="w-full h-11 whitespace-nowrap bg-[var(--bp-primary)] hover:bg-[var(--bp-primary-container)] text-[var(--bp-on-primary)] bp-label-caps px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)]"
+        aria-disabled={!isAuthed}
+        className={`w-full h-11 whitespace-nowrap bp-label-caps px-4 rounded-lg transition-all flex items-center justify-center gap-2 ${
+          isAuthed
+            ? "bg-[var(--bp-primary)] hover:bg-[var(--bp-primary-container)] text-[var(--bp-on-primary)] shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)]"
+            : "bg-white/5 border border-white/10 text-white/50 cursor-not-allowed"
+        }`}
       >
-        <span className="ms-icon text-sm">star</span>
-        {rateMutation.isPending ? "Сохраняем..." : hasVoted ? "Изменить оценку" : "Поставить оценку"}
+        {!isAuthed && (
+          <span className="ms-icon text-sm">lock</span>
+        )}
+        {rateMutation.isPending
+          ? "Сохраняем..."
+          : isAuthed
+            ? hasVoted
+              ? "Изменить оценку"
+              : "Поставить оценку"
+            : "Сначала войти"}
       </button>
 
       {average !== null && votes > 0 && (
