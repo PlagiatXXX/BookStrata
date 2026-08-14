@@ -1,5 +1,6 @@
 // backend/src/modules/books/bookPublish.service.ts
 import { prisma } from "../../lib/prisma.js";
+import type { Prisma } from "@prisma/client";
 
 /** Поля, обязательные для перехода книги в published */
 export const PUBLISH_REQUIRED_FIELDS = [
@@ -27,30 +28,32 @@ export class IncompleteBookError extends Error {
  * Внутри транзакции проверяет полноту обязательных полей, проставляет status и publishedAt.
  * publishedAt — дата ПЕРВОГО перехода в published, не перезаписывается при повторной публикации.
  */
-export async function publishBook(bookId: number) {
-  return prisma.$transaction(async (tx) => {
-    const book = await tx.book.findUnique({ where: { id: bookId } });
-    if (!book) {
-      throw new Error("book_not_found");
-    }
+export async function publishBookTx(tx: Prisma.TransactionClient, bookId: number) {
+  const book = await tx.book.findUnique({ where: { id: bookId } });
+  if (!book) {
+    throw new Error("book_not_found");
+  }
 
-    const missing = PUBLISH_REQUIRED_FIELDS.filter((field) => {
-      const value = book[field];
-      if (Array.isArray(value)) return value.length === 0;
-      return !value;
-    });
-    if (missing.length > 0) {
-      throw new IncompleteBookError(missing as PublishRequiredField[]);
-    }
-
-    return tx.book.update({
-      where: { id: bookId },
-      data: {
-        status: "published",
-        publishedAt: book.publishedAt ?? new Date(),
-      },
-    });
+  const missing = PUBLISH_REQUIRED_FIELDS.filter((field) => {
+    const value = book[field];
+    if (Array.isArray(value)) return value.length === 0;
+    return !value;
   });
+  if (missing.length > 0) {
+    throw new IncompleteBookError(missing as PublishRequiredField[]);
+  }
+
+  return tx.book.update({
+    where: { id: bookId },
+    data: {
+      status: "published",
+      publishedAt: book.publishedAt ?? new Date(),
+    },
+  });
+}
+
+export async function publishBook(bookId: number) {
+  return prisma.$transaction((tx) => publishBookTx(tx, bookId));
 }
 
 /**

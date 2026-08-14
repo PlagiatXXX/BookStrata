@@ -11,6 +11,10 @@ import {
   migrateBookCovers,
   migrateUrlToCdn,
 } from "../../lib/external-covers.js";
+import {
+  syncCatalogCards,
+  gcOrphanBooks,
+} from "../books/bookCatalogSync.service.js";
 
 function slugify(text: string): string {
   const cyrillicToLatin: Record<string, string> = {
@@ -102,7 +106,7 @@ export async function createCelebrity(input: CreateCelebrityInput) {
     input.books ? migrateBookCovers(input.books) : Promise.resolve(undefined),
   ]);
 
-  return prisma.celebrity.create({
+  const created = await prisma.celebrity.create({
     data: {
       slug,
       name: input.name,
@@ -118,6 +122,13 @@ export async function createCelebrity(input: CreateCelebrityInput) {
       unrankedBookIds: input.unrankedBookIds || [],
     },
   });
+
+  // Рантайм-синхронизация карточек с каталогом (Фаза 2.2, seobook.md)
+  if (input.books) {
+    await syncCatalogCards("celebrity", created.id, input.books);
+  }
+
+  return created;
 }
 
 export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
@@ -141,14 +152,28 @@ export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
   if (input.tierOrder !== undefined) data.tierOrder = input.tierOrder;
   if (input.unrankedBookIds !== undefined) data.unrankedBookIds = input.unrankedBookIds;
 
-  return prisma.celebrity.update({
+  const updated = await prisma.celebrity.update({
     where: { id },
     data,
   });
+
+  // Рантайм-синхронизация карточек с каталогом (Фаза 2.2, seobook.md)
+  if (input.books !== undefined) {
+    await syncCatalogCards("celebrity", id, input.books);
+  }
+
+  return updated;
 }
 
 export async function deleteCelebrity(id: number) {
-  return prisma.celebrity.delete({ where: { id } });
+  // Собираем книги до удаления: каскад чистит CelebrityBook,
+  // осиротевшие книги убираем GC (Фаза 2.2, seobook.md)
+  const links = await prisma.celebrityBook.findMany({
+    where: { celebrityId: id },
+    select: { bookId: true },
+  });
+  await prisma.celebrity.delete({ where: { id } });
+  await gcOrphanBooks(links.map((l) => l.bookId));
 }
 
 export async function togglePublish(id: number) {

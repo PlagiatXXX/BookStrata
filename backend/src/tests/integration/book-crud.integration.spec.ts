@@ -164,4 +164,70 @@ describe("Book CRUD", () => {
       expect(res.statusCode).toBe(403);
     });
   });
+
+  describe("Комментарии книги — удаление и каскадная чистка БД", () => {
+    let publishedBookId: number;
+    let commentId: number;
+    let replyId: number;
+
+    beforeAll(async () => {
+      // Комментарии доступны только у published-книг — публикуем книгу напрямую
+      const added = await ctx.fastify.inject({
+        method: "POST",
+        url: `/api/tier-lists/${listId}/books`,
+        headers: { Authorization: `Bearer ${token}` },
+        payload: {
+          books: [{ title: "Книга для комментариев", coverImageUrl: "https://example.com/c2.jpg" }],
+        },
+      });
+      publishedBookId = JSON.parse(added.body).data.results[0].book.id;
+      await ctx.prisma.book.update({
+        where: { id: publishedBookId },
+        data: { status: "published", slug: "kniga-dlya-kommentariev" },
+      });
+
+      const createRes = await ctx.fastify.inject({
+        method: "POST",
+        url: "/api/books/kniga-dlya-kommentariev/comments",
+        headers: { Authorization: `Bearer ${token}` },
+        payload: { content: "Родительский комментарий" },
+      });
+      commentId = JSON.parse(createRes.body).data.comment.id;
+
+      // Ответ на комментарий (проверка каскада replies)
+      const replyRes = await ctx.fastify.inject({
+        method: "POST",
+        url: "/api/books/kniga-dlya-kommentariev/comments",
+        headers: { Authorization: `Bearer ${token}` },
+        payload: { content: "Ответ на комментарий", parentId: commentId },
+      });
+      replyId = JSON.parse(replyRes.body).data.comment.id;
+
+      // Лайк от другого пользователя (свой лайкнуть нельзя)
+      await ctx.fastify.inject({
+        method: "POST",
+        url: `/api/books/kniga-dlya-kommentariev/comments/${commentId}/like`,
+        headers: { Authorization: `Bearer ${tokenB}` },
+      });
+    });
+
+    it("удаляет комментарий и каскадно чистит ответы и лайки из БД", async () => {
+      const res = await ctx.fastify.inject({
+        method: "DELETE",
+        url: `/api/books/kniga-dlya-kommentariev/comments/${commentId}`,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(res.statusCode).toBe(200);
+
+      const remainingComments = await ctx.prisma.bookComment.count({
+        where: { id: { in: [commentId, replyId] } },
+      });
+      const remainingLikes = await ctx.prisma.bookCommentLike.count({
+        where: { commentId },
+      });
+
+      expect(remainingComments).toBe(0);
+      expect(remainingLikes).toBe(0);
+    });
+  });
 });

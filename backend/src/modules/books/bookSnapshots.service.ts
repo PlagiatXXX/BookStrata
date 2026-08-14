@@ -37,14 +37,17 @@ export async function enrichBookSnapshots(
   // Один запрос на все опубликованные книги каталога (их мало — единицы/десятки)
   const catalog = await prisma.book.findMany({
     where: { status: "published", slug: { not: null } },
-    select: { title: true, author: true, slug: true },
+    select: { title: true, author: true, slug: true, coverImageUrl: true },
   });
 
-  const slugByKey = new Map<string, string>();
+  const matchByKey = new Map<string, { slug: string; coverImageUrl: string }>();
   for (const b of catalog) {
     if (!b.slug) continue;
     const author = b.author ? normalizeSnapshotText(b.author) : "";
-    slugByKey.set(`${normalizeSnapshotText(b.title)}|${author}`, b.slug);
+    matchByKey.set(`${normalizeSnapshotText(b.title)}|${author}`, {
+      slug: b.slug,
+      coverImageUrl: b.coverImageUrl,
+    });
   }
 
   let enriched = false;
@@ -52,9 +55,15 @@ export async function enrichBookSnapshots(
   for (const [key, snap] of entries) {
     const title = normalizeSnapshotText(String(snap.title));
     const author = typeof snap.author === "string" ? normalizeSnapshotText(snap.author) : "";
-    const slug = slugByKey.get(`${title}|${author}`);
-    if (slug) {
-      result[key] = { ...snap, slug, status: "published" };
+    const match = matchByKey.get(`${title}|${author}`);
+    if (match) {
+      result[key] = {
+        ...snap,
+        slug: match.slug,
+        status: "published",
+        // Обложка — из каталога (единый источник), фолбэк — редакторская карточка
+        coverImageUrl: match.coverImageUrl || (snap as { coverImageUrl?: unknown }).coverImageUrl,
+      };
       enriched = true;
     } else {
       result[key] = snap;

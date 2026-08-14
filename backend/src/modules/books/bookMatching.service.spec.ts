@@ -132,6 +132,26 @@ describe("matchBook: точное совпадение (ступень 2)", () =
     expect(result.book?.id).toBe(5);
   });
 
+  it("3b: автор с «ё» при резолвнутом authorId (книга backfill без authorId) → HIGH по строке", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([]); // 3a по authorId пусто
+    (prisma.$queryRaw as any).mockResolvedValueOnce([
+      { ...candidate({ id: 5, title: "Война и мир", author: "Фёдор Достоевский", authorId: null }), score: 1 },
+    ]);
+
+    const result = await matchBook(prisma as any, {
+      title: "Война и мир",
+      author: "Фёдор Достоевский",
+      authorId: 10,
+    });
+
+    expect(result.confidence).toBe("HIGH");
+    expect(result.book?.id).toBe(5);
+    // запрос снимает «ё→е» на стороне SQL (translate)
+    const sql = String((prisma.$queryRaw as any).mock.calls[0]?.[0]);
+    expect(sql).toContain("translate(author");
+  });
+
   it("3c: безавторная — ровно один кандидат по normTitle → HIGH", async () => {
     (prisma.book.findFirst as any).mockResolvedValue(null);
     (prisma.$queryRaw as any).mockResolvedValueOnce([
@@ -162,6 +182,23 @@ describe("matchBook: точное совпадение (ступень 2)", () =
 
 describe("matchBook: fuzzy (ступень 3)", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("fuzzy: кандидат с authorId=null, но совпавшей строкой автора → HIGH (книги backfill)", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([]); // точных по authorId нет
+    (prisma.$queryRaw as any).mockResolvedValue([
+      { ...candidate({ id: 9, title: "Война и миръ", authorId: null, author: "Лев Толстой" }), score: 0.95 },
+    ]);
+
+    const result = await matchBook(prisma as any, {
+      title: "Война и мир",
+      author: "Лев Толстой",
+      authorId: 10,
+    });
+
+    expect(result.confidence).toBe("HIGH");
+    expect(result.book?.id).toBe(9);
+  });
 
   it("score ≥ 0.9 и автор совпал по authorId → HIGH", async () => {
     (prisma.book.findFirst as any).mockResolvedValue(null);

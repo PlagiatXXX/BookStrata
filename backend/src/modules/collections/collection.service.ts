@@ -10,6 +10,10 @@ import {
 import { createAuthorService } from "../authors/authors.service.js";
 import { config } from "../../config/env.js";
 import {
+  syncCatalogCards,
+  gcOrphanBooks,
+} from "../books/bookCatalogSync.service.js";
+import {
   migrateBookCovers,
   migrateUrlToCdn,
   migrateUrlsArray,
@@ -137,7 +141,7 @@ export async function createCollection(input: CreateCollectionInput) {
     input.books ? migrateBookCovers(input.books) : Promise.resolve(undefined),
   ]);
 
-  return prisma.collection.create({
+  const created = await prisma.collection.create({
     data: {
       slug,
       title: input.title,
@@ -159,6 +163,13 @@ export async function createCollection(input: CreateCollectionInput) {
       unrankedBookIds: input.unrankedBookIds || [],
     },
   });
+
+  // Рантайм-синхронизация карточек с каталогом (Фаза 2.2, seobook.md)
+  if (input.books) {
+    await syncCatalogCards("collection", created.id, input.books);
+  }
+
+  return created;
 }
 
 export async function updateCollection(id: number, input: UpdateCollectionInput) {
@@ -193,10 +204,17 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
   if (input.tierOrder !== undefined) data.tierOrder = input.tierOrder;
   if (input.unrankedBookIds !== undefined) data.unrankedBookIds = input.unrankedBookIds;
 
-  return prisma.collection.update({
+  const updated = await prisma.collection.update({
     where: { id },
     data,
   });
+
+  // Рантайм-синхронизация карточек с каталогом (Фаза 2.2, seobook.md)
+  if (input.books !== undefined) {
+    await syncCatalogCards("collection", id, input.books);
+  }
+
+  return updated;
 }
 
 export async function getCollectionBySlugAdmin(slug: string) {
@@ -242,7 +260,14 @@ export async function getAllTags(): Promise<string[]> {
 }
 
 export async function deleteCollection(id: number) {
-  return prisma.collection.delete({ where: { id } });
+  // Собираем книги коллекции до удаления: каскад чистит CollectionBook,
+  // осиротевшие книги убираем GC (Фаза 2.2, seobook.md)
+  const links = await prisma.collectionBook.findMany({
+    where: { collectionId: id },
+    select: { bookId: true },
+  });
+  await prisma.collection.delete({ where: { id } });
+  await gcOrphanBooks(links.map((l) => l.bookId));
 }
 
 interface ParsedBook {

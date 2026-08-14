@@ -28,11 +28,11 @@ describe("enrichBookSnapshots", () => {
 
   it("добавляет slug и status published в снимки опубликованных книг", async () => {
     mockFindMany.mockResolvedValue([
-      { title: "Анна Каренина", author: "Лев Толстой", slug: "anna-karenina" },
+      { title: "Анна Каренина", author: "Лев Толстой", slug: "anna-karenina", coverImageUrl: "https://catalog/anna.jpg" },
     ]);
 
     const result = await enrichBookSnapshots({
-      a1: { id: "a1", title: "Анна Каренина", author: "Лев Толстой" },
+      a1: { id: "a1", title: "Анна Каренина", author: "Лев Толстой", coverImageUrl: "https://card/anna-old.jpg" },
       a2: { id: "a2", title: "Другая книга", author: "Кто-то" },
     });
 
@@ -41,6 +41,7 @@ describe("enrichBookSnapshots", () => {
         id: "a1",
         title: "Анна Каренина",
         author: "Лев Толстой",
+        coverImageUrl: "https://catalog/anna.jpg",
         slug: "anna-karenina",
         status: "published",
       },
@@ -48,8 +49,32 @@ describe("enrichBookSnapshots", () => {
     });
     expect(mockFindMany).toHaveBeenCalledWith({
       where: { status: "published", slug: { not: null } },
-      select: { title: true, author: true, slug: true },
+      select: { title: true, author: true, slug: true, coverImageUrl: true },
     });
+  });
+
+  it("обложка каталога перезаписывает обложку карточки (единый источник)", async () => {
+    mockFindMany.mockResolvedValue([
+      { title: "Война и мир", author: "Лев Толстой", slug: "voyna-i-mir", coverImageUrl: "https://catalog/vim.jpg" },
+    ]);
+
+    const result = await enrichBookSnapshots({
+      b1: { id: "b1", title: "Война и мир", author: "Лев Толстой", coverImageUrl: "https://card/old.jpg" },
+    });
+
+    expect((result as Record<string, Record<string, unknown>>).b1.coverImageUrl).toBe("https://catalog/vim.jpg");
+  });
+
+  it("пустая обложка каталога не затирает обложку карточки (фолбэк)", async () => {
+    mockFindMany.mockResolvedValue([
+      { title: "Война и мир", author: "Лев Толстой", slug: "voyna-i-mir", coverImageUrl: "" },
+    ]);
+
+    const result = await enrichBookSnapshots({
+      b1: { id: "b1", title: "Война и мир", author: "Лев Толстой", coverImageUrl: "https://card/old.jpg" },
+    });
+
+    expect((result as Record<string, Record<string, unknown>>).b1.coverImageUrl).toBe("https://card/old.jpg");
   });
 
   it("не трогает снимок, если книга в каталоге draft", async () => {

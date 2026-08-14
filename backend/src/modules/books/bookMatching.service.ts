@@ -3,6 +3,7 @@
 // Используется тир-листами, коллекциями и знаменитостями.
 // Каскад уверенности: externalId → точное совпадение → fuzzy (top-N + автор).
 // Сомнение → draft (book = null), не рискуем.
+import { Prisma } from "@prisma/client";
 import type { PrismaClient } from "@prisma/client";
 
 export type BookSourceValue = "google_books" | "open_library" | "livelib";
@@ -99,6 +100,7 @@ function toCandidate(row: {
 }
 
 const ENTITY = "Book";
+const ENTITY_SQL = Prisma.raw(`"${ENTITY}"`);
 
 /**
  * Каскад уверенности (по seobook.md):
@@ -151,56 +153,55 @@ async function findExactMatch(
     const exact = byAuthorId.filter((b) => normalizeTitle(b.title) === normTitle);
     if (exact.length === 1) return resultHigh(exact[0]!);
     if (exact.length > 1) return { book: null, confidence: "MEDIUM", candidates: exact.map(toCandidate) };
-    // fallthrough → 3b (строка) и дальше fuzzy (автор уже резолвнут — строка та же)
+    // fallthrough → 3b (строка): кандидаты с authorId = null (книги backfill
+    // создавались до реестра авторов) матчатся по нормализованной строке
   }
-  if (!hasAuthorResolved) {
-    if (input.author) {
-      // 3b. (normTitle, норм-строка автора) — fallback для нерезолвнутых
-      const normAuthor = normalizeTitle(input.author);
-      const rows = await prisma.$queryRaw<
-        Array<{
-          id: number;
-          title: string;
-          author: string | null;
-          authorId: number | null;
-          coverImageUrl: string;
-          slug: string | null;
-          status: string;
-          source: string | null;
-          externalId: string | null;
-          publishedYear: number | null;
-          rating: number | null;
-        }>
-      >`SELECT id, title, author, "authorId", "coverImageUrl", slug, status, source, "externalId", "publishedYear", rating
-        FROM ${ENTITY} WHERE lower(trim(author)) = ${normAuthor}`;
-      const exact = rows.filter((b) => normalizeTitle(b.title) === normTitle);
-      if (exact.length === 1) return resultHigh(toCandidate(exact[0]!));
-      if (exact.length > 1) {
-        return { book: null, confidence: "MEDIUM", candidates: exact.map(toCandidate) };
-      }
-    } else {
-      // 3c. безавторные: только по normTitle И ровно один кандидат
-      const rows = await prisma.$queryRaw<
-        Array<{
-          id: number;
-          title: string;
-          author: string | null;
-          authorId: number | null;
-          coverImageUrl: string;
-          slug: string | null;
-          status: string;
-          source: string | null;
-          externalId: string | null;
-          publishedYear: number | null;
-          rating: number | null;
-        }>
-      >`SELECT id, title, author, "authorId", "coverImageUrl", slug, status, source, "externalId", "publishedYear", rating
-        FROM ${ENTITY} WHERE "authorId" IS NULL`;
-      const exact = rows.filter((b) => normalizeTitle(b.title) === normTitle);
-      if (exact.length === 1) return resultHigh(toCandidate(exact[0]!));
-      if (exact.length > 1) {
-        return { book: null, confidence: "MEDIUM", candidates: exact.map(toCandidate) };
-      }
+  if (input.author) {
+    // 3b. (normTitle, норм-строка автора) — fallback по строке (также при резолвнутом authorId)
+    const normAuthor = normalizeTitle(input.author);
+    const rows = await prisma.$queryRaw<
+      Array<{
+        id: number;
+        title: string;
+        author: string | null;
+        authorId: number | null;
+        coverImageUrl: string;
+        slug: string | null;
+        status: string;
+        source: string | null;
+        externalId: string | null;
+        publishedYear: number | null;
+        rating: number | null;
+      }>
+    >`SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating
+      FROM ${ENTITY_SQL} WHERE lower(trim(translate(author, 'Ёё', 'Ее'))) = ${normAuthor}`;
+    const exact = rows.filter((b) => normalizeTitle(b.title) === normTitle);
+    if (exact.length === 1) return resultHigh(toCandidate(exact[0]!));
+    if (exact.length > 1) {
+      return { book: null, confidence: "MEDIUM", candidates: exact.map(toCandidate) };
+    }
+  } else {
+    // 3c. безавторные: только по normTitle И ровно один кандидат
+    const rows = await prisma.$queryRaw<
+      Array<{
+        id: number;
+        title: string;
+        author: string | null;
+        authorId: number | null;
+        coverImageUrl: string;
+        slug: string | null;
+        status: string;
+        source: string | null;
+        externalId: string | null;
+        publishedYear: number | null;
+        rating: number | null;
+      }>
+    >`SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating
+      FROM ${ENTITY_SQL} WHERE "authorId" IS NULL`;
+    const exact = rows.filter((b) => normalizeTitle(b.title) === normTitle);
+    if (exact.length === 1) return resultHigh(toCandidate(exact[0]!));
+    if (exact.length > 1) {
+      return { book: null, confidence: "MEDIUM", candidates: exact.map(toCandidate) };
     }
   }
   return null;
@@ -228,19 +229,22 @@ async function findFuzzyMatch(
 ): Promise<MatchResult> {
   // top-N по триграммному сходству; GIN-индекс books_trgm_idx на title
   const rows = await prisma.$queryRaw<FuzzyRow[]>`
-    SELECT id, title, author, "authorId", "coverImageUrl", slug, status, source, "externalId", "publishedYear", rating,
+    SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating,
            similarity(title, ${normTitle}) AS score
-    FROM ${ENTITY}
+    FROM ${ENTITY_SQL}
     WHERE title % ${normTitle}
     ORDER BY score DESC
     LIMIT 5`;
 
-  // Автор обязан совпасть: по authorId при резолве, иначе по нормализованной строке
+  // Автор обязан совпасть: по authorId при резолве (кандидаты с authorId = null,
+  // созданные до реестра авторов, матчатся по строке), иначе по нормализованной строке
   const normAuthor = input.author ? normalizeTitle(input.author) : null;
   const candidates = rows.filter((row) => {
     if (normTitle === normalizeTitle(row.title)) return false; // точные уже разобраны
     if (typeof input.authorId === "number") {
-      return row.authorId === input.authorId;
+      if (row.authorId === input.authorId) return true;
+      // Книги backfill: authorId = null, но строка автора совпадает
+      return row.authorId === null && normAuthor !== null && !!row.author && normalizeTitle(row.author) === normAuthor;
     }
     if (normAuthor && row.author) {
       return normalizeTitle(row.author) === normAuthor;

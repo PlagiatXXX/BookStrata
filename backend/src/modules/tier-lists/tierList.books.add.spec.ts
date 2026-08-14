@@ -112,8 +112,9 @@ describe("addBooksToTierList: конкурентная защита (P2002 → r
       p2002(["Book_lower_trim_title_authorId_idx"]),
     );
     // findRaceCanon: raw-запрос вернул id победителя, findUnique отдал канон.
-    // Важно: $queryRaw сначала вызывается fuzzy-матчингом (пусто), затем findRaceCanon
+    // Порядок $queryRaw: 3b (точные по строке автора) → fuzzy → findRaceCanon
     (prisma.$queryRaw as any)
+      .mockResolvedValueOnce([]) // 3b: точных по строке автора нет
       .mockResolvedValueOnce([]) // fuzzy: кандидатов нет
       .mockResolvedValueOnce([{ id: 9 }]); // findRaceCanon: победитель гонки
     (prisma.book.findUnique as any).mockResolvedValueOnce(canonBook(9));
