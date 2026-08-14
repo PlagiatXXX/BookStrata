@@ -5,6 +5,7 @@
 // обогащение из Google Books, топ по просмотрам, модерация комментариев.
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
+import { excludedUserFilter } from "../analytics/analytics.service.js";
 import { publishBook, unpublishBook } from "../books/bookPublish.service.js";
 import { searchBooks } from "../books/books.service.js";
 import {
@@ -333,29 +334,43 @@ export async function topBooksByViews(limit = 10) {
     by: ["url"],
     where: {
       event: "page_view",
-      url: { startsWith: "/books/" },
+      // url может быть как полным href (https://bookstrata.ru/books/x),
+      // так и путём (/books/x) — ищем вхождение
+      url: { contains: "/books/" },
+      // Просмотры исключённых пользователей (владелец и т.п.) не считаем
+      ...excludedUserFilter,
     },
     _count: { url: true },
     orderBy: { _count: { url: "desc" } },
-    take: Math.min(limit, 50),
+    // Берём с запасом: разные форматы url одной книги сливаются ниже
+    take: 200,
   });
 
-  const slugs = groups
-    .map((g) => g.url?.replace(/^\/books\//, "").split("/")[0])
-    .filter((s): s is string => !!s && /^[a-z0-9-]+$/.test(s));
+  // Сливаем варианты url одной книги (href и путь) в один slug
+  const viewsBySlug = new Map<string, number>();
+  for (const g of groups) {
+    const slug = g.url?.split("/books/")[1]?.split("/")[0];
+    if (slug && /^[a-z0-9-]+$/.test(slug)) {
+      viewsBySlug.set(slug, (viewsBySlug.get(slug) ?? 0) + g._count.url);
+    }
+  }
 
-  if (slugs.length === 0) return [];
+  const topSlugs = [...viewsBySlug.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, Math.min(limit, 50))
+    .map(([slug]) => slug);
+
+  if (topSlugs.length === 0) return [];
 
   const books = await prisma.book.findMany({
-    where: { slug: { in: slugs } },
+    where: { slug: { in: topSlugs } },
     select: BOOK_LIST_SELECT,
   });
 
-  return groups
-    .map((g) => {
-      const slug = g.url?.replace(/^\/books\//, "").split("/")[0];
+  return topSlugs
+    .map((slug) => {
       const book = books.find((b) => b.slug === slug);
-      return book ? { book, views: g._count.url } : null;
+      return book ? { book, views: viewsBySlug.get(slug) ?? 0 } : null;
     })
     .filter((x): x is { book: (typeof books)[number]; views: number } => x !== null);
 }

@@ -85,8 +85,10 @@ export function useAnalyticsTracker() {
 
     lastTrackedRef.current = { path: pathname, time: now };
 
-    // 1. Отправка во внутреннюю БД
-    apiTrackEvent("page_view", { path: pathname }, window.location.href);
+    // 1. Отправка во внутреннюю БД.
+    //    url — pathname (не href): топ книг по просмотрам и фильтры
+    //    в админке ожидают /books/:slug, а не https://bookstrata.ru/books/:slug
+    apiTrackEvent("page_view", { path: pathname }, pathname);
 
     // 2. Google Tag Manager: page_view для SPA-переходов.
     //    Первая загрузка уже покрыта триггером All Pages в GTM, поэтому

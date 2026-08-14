@@ -9,7 +9,7 @@ const EXCLUDED_USERNAMES = config.ANALYTICS_EXCLUDE_USERNAMES.split(',')
 
 // Фильтр при чтении: события исключённых пользователей скрываются из
 // ленты и всех агрегатов (старые записи остаются в БД, но не засоряют отчёты).
-const excludedUserFilter: Prisma.AnalyticsEventWhereInput | undefined =
+export const excludedUserFilter: Prisma.AnalyticsEventWhereInput | undefined =
   EXCLUDED_USERNAMES.length > 0
     ? { NOT: { user: { username: { in: EXCLUDED_USERNAMES } } } }
     : undefined

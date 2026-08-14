@@ -3,6 +3,8 @@
 import type { FastifyPluginAsync } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
+import { uploadBase64 } from "../../lib/upload.js";
+import { validateImageSize } from "../../lib/validators.js";
 import { createApiError, createSuccessResponse, ErrorCodes, type ErrorCode } from "../../lib/api-response.js";
 import {
   AdminBookError,
@@ -128,6 +130,38 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.send(createSuccessResponse(book));
       } catch (error) {
         return handleError(error, reply);
+      }
+    },
+  );
+
+  // POST /upload-cover — загрузить обложку книги (base64 → S3/CDN)
+  fastify.post<{ Body: { coverImageUrl: string } }>(
+    "/upload-cover",
+    async (request, reply) => {
+      const { coverImageUrl } = request.body;
+
+      if (!coverImageUrl || !coverImageUrl.startsWith("data:")) {
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Invalid image format"));
+      }
+
+      const sizeError = validateImageSize(coverImageUrl);
+      if (sizeError) {
+        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, sizeError));
+      }
+
+      try {
+        const uploadResult = await uploadBase64(
+          coverImageUrl,
+          "tiermaker-pro/book-covers",
+        );
+        return reply.code(200).send({ data: { coverImageUrl: uploadResult.url } });
+      } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'statusCode' in error) {
+          const err = error as { statusCode: number; message: string };
+          return reply.code(err.statusCode).send(createApiError(ErrorCodes.INTERNAL_ERROR, err.message));
+        }
+        fastify.log.error({ error: String(error) }, "Failed to upload book cover");
+        return reply.code(500).send(createApiError(ErrorCodes.UPLOAD_FAILED, "Failed to upload image"));
       }
     },
   );

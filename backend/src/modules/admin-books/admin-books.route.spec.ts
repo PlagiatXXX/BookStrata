@@ -396,9 +396,39 @@ describe("Admin Books Routes", () => {
       expect(res.body.data.items[0].views).toBe(42);
       expect(mocks.prisma.analyticsEvent.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { event: "page_view", url: { startsWith: "/books/" } },
+          where: { event: "page_view", url: { contains: "/books/" } },
         }),
       );
+    });
+
+    it("извлекает slug и из полного href (старые события)", async () => {
+      mocks.prisma.analyticsEvent.groupBy.mockResolvedValue([
+        { url: "https://bookstrata.ru/books/anna-karenina-lev-tolstoj", _count: { url: 7 } },
+      ]);
+      mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
+
+      const res = await request(app.server)
+        .get("/api/admin/books/top-views")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items[0].views).toBe(7);
+    });
+
+    it("сливает href и путь одной книги в одну строку топа", async () => {
+      mocks.prisma.analyticsEvent.groupBy.mockResolvedValue([
+        { url: "https://bookstrata.ru/books/anna-karenina-lev-tolstoj", _count: { url: 14 } },
+        { url: "/books/anna-karenina-lev-tolstoj", _count: { url: 2 } },
+      ]);
+      mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
+
+      const res = await request(app.server)
+        .get("/api/admin/books/top-views")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toHaveLength(1);
+      expect(res.body.data.items[0].views).toBe(16);
     });
   });
 

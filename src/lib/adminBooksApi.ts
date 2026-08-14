@@ -109,6 +109,26 @@ export async function enrichAdminBook(id: number): Promise<{ updated: string[] }
   return apiClient.post<{ updated: string[] }>(`/admin/books/${id}/enrich`);
 }
 
+// Загрузить обложку книги (файл → base64 → S3/CDN)
+export async function uploadBookCover(
+  file: File,
+): Promise<{ coverImageUrl: string }> {
+  const base64 = await fileToBase64(file);
+  return apiClient.post<{ coverImageUrl: string }>(
+    "/admin/books/upload-cover",
+    { coverImageUrl: base64 },
+  );
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export async function mergeAdminBooks(dupId: number, targetId: number) {
   return apiClient.post(`/admin/books/${dupId}/merge`, { targetId });
 }

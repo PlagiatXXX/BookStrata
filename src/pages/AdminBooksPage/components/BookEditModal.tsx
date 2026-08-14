@@ -2,9 +2,10 @@
 // Редактор книги (Фаза 7): поля SEO-карточки, slug с историей, статус
 // (publish через инвариант полноты), обогащение из Google Books, merge,
 // редактор contextChain ({ icon, title, text }) с иконками Material Symbols.
-import { useState } from "react";
-import { ArrowUp, ArrowDown, Plus, Trash2, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowUp, ArrowDown, Plus, Trash2, X, Upload } from "lucide-react";
 import type { AdminBookDetail, BookUpdateInput, ContextChainItem } from "@/lib/adminBooksApi";
+import { uploadBookCover } from "@/lib/adminBooksApi";
 
 const MATERIAL_SYMBOLS = [
   "menu_book", "movie", "theaters", "music_note", "public", "school",
@@ -12,6 +13,34 @@ const MATERIAL_SYMBOLS = [
   "flag", "rocket_launch", "castle", "science", "sports_esports", "palette",
   "code", "translate", "eco", "groups", "emoji_objects", "travel_explore",
 ];
+
+// Русские названия иконок для выбора в админке
+const ICON_LABELS: Record<string, string> = {
+  menu_book: "Книга",
+  movie: "Фильм",
+  theaters: "Театр",
+  music_note: "Музыка",
+  public: "Мир",
+  school: "Образование",
+  psychology: "Психология",
+  lightbulb: "Идея",
+  history_edu: "История",
+  forum: "Обсуждение",
+  newspaper: "Пресса",
+  star: "Звезда",
+  flag: "Достижение",
+  rocket_launch: "Инновации",
+  castle: "Замок",
+  science: "Наука",
+  sports_esports: "Игры",
+  palette: "Искусство",
+  code: "Технологии",
+  translate: "Перевод",
+  eco: "Природа",
+  groups: "Сообщество",
+  emoji_objects: "Заметка",
+  travel_explore: "Путешествия",
+};
 
 interface Props {
   book: AdminBookDetail;
@@ -36,6 +65,23 @@ export function BookEditModal({
 }: Props) {
   const [form, setForm] = useState<BookUpdateInput>({});
   const [chain, setChain] = useState<ContextChainItem[]>(book.contextChain ?? []);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCoverUpload = async (file: File | undefined) => {
+    if (!file) return;
+    setCoverUploading(true);
+    setCoverError(null);
+    try {
+      const { coverImageUrl } = await uploadBookCover(file);
+      set("coverImageUrl", coverImageUrl);
+    } catch {
+      setCoverError("Не удалось загрузить обложку");
+    } finally {
+      setCoverUploading(false);
+    }
+  };
 
   const set = <K extends keyof BookUpdateInput>(key: K, value: BookUpdateInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -134,11 +180,36 @@ export function BookEditModal({
           </label>
           <label className="block">
             <span className="mb-1 block text-sm text-[var(--ink-1)]">Обложка (URL)</span>
-            <input
-              value={form.coverImageUrl ?? book.coverImageUrl}
-              onChange={(e) => set("coverImageUrl", e.target.value)}
-              className="w-full rounded-lg border border-[var(--ink-3)] bg-[var(--bg-0)] px-3 py-2 text-sm text-[var(--ink-0)] outline-none focus:border-[var(--accent-main)]"
-            />
+            <div className="flex gap-2">
+              <input
+                value={form.coverImageUrl ?? book.coverImageUrl}
+                onChange={(e) => set("coverImageUrl", e.target.value)}
+                placeholder="/images/books/... или http(s)://"
+                className="w-full rounded-lg border border-[var(--ink-3)] bg-[var(--bg-0)] px-3 py-2 text-sm text-[var(--ink-0)] outline-none focus:border-[var(--accent-main)]"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  handleCoverUpload(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={coverUploading}
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--ink-3)] px-3 py-2 text-sm text-[var(--ink-0)] hover:bg-[var(--ink-3)] disabled:opacity-50 cursor-pointer"
+              >
+                <Upload size={14} />
+                {coverUploading ? "Загрузка…" : "Загрузить"}
+              </button>
+            </div>
+            {coverError && (
+              <p className="mt-1 text-xs text-red-400">{coverError}</p>
+            )}
           </label>
           <label className="block md:col-span-2">
             <span className="mb-1 block text-sm text-[var(--ink-1)]">Описание *</span>
@@ -176,7 +247,9 @@ export function BookEditModal({
                   className="rounded-lg border border-[var(--ink-3)] bg-[var(--bg-0)] px-2 py-1.5 text-sm text-[var(--ink-0)] outline-none"
                 >
                   {MATERIAL_SYMBOLS.map((icon) => (
-                    <option key={icon} value={icon}>{icon}</option>
+                    <option key={icon} value={icon}>
+                      {ICON_LABELS[icon]} ({icon})
+                    </option>
                   ))}
                 </select>
                 <input
