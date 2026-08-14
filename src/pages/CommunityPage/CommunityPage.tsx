@@ -38,7 +38,6 @@ export default function CommunityPage() {
   const [activeCategory, setActiveCategory] = useState(
     () => searchParams.get("category") || "all",
   );
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Прокрутка к якорю при переходе с других страниц
   useEffect(() => {
@@ -91,10 +90,7 @@ export default function CommunityPage() {
       </div>
       <div className="community-shell min-h-screen">
         <main className="max-w-7xl mx-auto px-6 pb-20 cursor-default text-(--ink-0)">
-          <MemoizedHeroSection
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
+          <MemoizedHeroSection />
 
           <MemoizedCategoryTabs
             activeCategory={activeCategory}
@@ -113,7 +109,6 @@ export default function CommunityPage() {
 
           <MemoizedCollectionGrid
             activeCategory={activeCategory}
-            searchQuery={searchQuery}
           />
 
           <Reveal className="flex items-center gap-4 my-12">
@@ -125,7 +120,7 @@ export default function CommunityPage() {
           </Reveal>
 
           <Suspense fallback={<div className="h-48" />}>
-            <LazyNewsSection searchQuery={searchQuery} />
+            <LazyNewsSection />
           </Suspense>
 
           <Suspense fallback={<div className="h-48" />}>

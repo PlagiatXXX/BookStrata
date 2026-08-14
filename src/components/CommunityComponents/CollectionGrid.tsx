@@ -5,10 +5,9 @@ import { CollectionCard } from './CollectionCard';
 
 interface CollectionGridProps {
   activeCategory: string;
-  searchQuery?: string;
 }
 
-export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: CollectionGridProps) => {
+export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => {
   const {
     data: collections = [],
     isLoading,
@@ -27,23 +26,13 @@ export const CollectionGrid = memo(({ activeCategory, searchQuery = "" }: Collec
 
     let filtered = curated;
 
-    // Фильтрация по поисковому запросу
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter((c) =>
-        c.title.toLowerCase().includes(q) ||
-        (c.excerpt || "").toLowerCase().includes(q) ||
-        (c.tags || []).some((tag) => tag.toLowerCase().includes(q))
-      );
-    }
-
     // Фильтрация по категории
     if (activeCategory && activeCategory !== "all") {
       filtered = filtered.filter((c) => c.categoryId === activeCategory);
     }
 
     return filtered;
-  }, [collections, activeCategory, searchQuery]);
+  }, [collections, activeCategory]);
 
   if (isLoading) {
     return (
