@@ -9,7 +9,7 @@
  * Матчинг (консервативный, без fuzzy — fuzzy только в runtime-матчинге Фазы 2):
  *   1. точное (normalized title, authorId) — если автор уже в реестре;
  *   2. точное (normalized title, normalized authorString) — fallback;
- *   3. не найдено → создаём Book.
+ *   3. не найдено → создаём Book (с резолвом автора через findOrCreate).
  *
  * Полнота (строгий порог Фазы 0): title+author+genre+tags+description+cover+publishedYear
  * → published, иначе draft. Поле year в карточках появится после правок редактора
@@ -17,10 +17,20 @@
  *
  * Эталонные поля (жанр/теги/описание) карточка перезаписывает в каталоге.
  * rating карточки — в CollectionBook.rating, в Book.rating НЕ пишется.
+ *
+ * --dry-run: ВСЁ выполняется в одной транзакции, в конце — откат (rollback).
+ * Реальные записи в БД не остаются.
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
+import { createAuthorService } from "../src/modules/authors/authors.service.js";
+
+type Db = PrismaClient | Prisma.TransactionClient;
 
 const prisma = new PrismaClient();
+const DRY_RUN = process.argv.includes("--dry-run");
+
+/** Сигнал отката dry-run-транзакции (Prisma rollback при брошенном исключении). */
+class RollbackSignal extends Error {}
 
 function normalizeAuthor(name: string): string {
   return name.toLowerCase().trim().replace(/ё/g, "е").replace(/\s+/g, " ");
@@ -56,47 +66,50 @@ function isComplete(book: CuratedBook): boolean {
 async function matchBook(
   card: CuratedBook,
   authorRegistry: Map<string, number | null>,
-): Promise<number | null> {
+  db: Db,
+): Promise<{ id: number; authorId: number | null } | null> {
   const normAuthor = normalizeAuthor(card.author);
   const authorId = authorRegistry.get(normAuthor) ?? null;
 
   // 1. По authorId (автор резолвнут)
   if (authorId !== null) {
-    const byAuthor = await prisma.book.findFirst({
+    const byAuthor = await db.book.findFirst({
       where: { title: { equals: card.title, mode: "insensitive" }, authorId },
-      select: { id: true },
+      select: { id: true, authorId: true },
     });
-    if (byAuthor) return byAuthor.id;
+    if (byAuthor) return { id: byAuthor.id, authorId: byAuthor.authorId };
   }
 
   // 2. По нормализованной строке автора
   if (normAuthor) {
-    const byString = await prisma.book.findMany({
+    const byString = await db.book.findMany({
       where: { title: { equals: card.title, mode: "insensitive" } },
-      select: { id: true, author: true },
+      select: { id: true, author: true, authorId: true },
     });
     const exact = byString.find(
       (b) => b.author && normalizeAuthor(b.author) === normAuthor,
     );
-    if (exact) return exact.id;
+    if (exact) return { id: exact.id, authorId: exact.authorId };
   }
 
   // 3. Книги без автора — только по точному title и ровно один кандидат
   if (!card.author) {
-    const candidates = await prisma.book.findMany({
+    const candidates = await db.book.findMany({
       where: { title: { equals: card.title, mode: "insensitive" } },
-      select: { id: true },
+      select: { id: true, authorId: true },
     });
     const first = candidates[0];
-    if (candidates.length === 1 && first) return first.id;
+    if (candidates.length === 1 && first) {
+      return { id: first.id, authorId: first.authorId };
+    }
   }
 
   return null;
 }
 
-async function buildAuthorRegistry(): Promise<Map<string, number | null>> {
+async function buildAuthorRegistry(db: Db): Promise<Map<string, number | null>> {
   const registry = new Map<string, number | null>();
-  const authors = await prisma.author.findMany({
+  const authors = await db.author.findMany({
     select: { id: true, name: true },
   });
   for (const a of authors) {
@@ -109,31 +122,64 @@ async function processCard(
   card: CuratedBook,
   rank: number,
   authorRegistry: Map<string, number | null>,
+  authorService: ReturnType<typeof createAuthorService>,
+  db: Db,
 ): Promise<number> {
-  const existingId = await matchBook(card, authorRegistry);
+  const existingId = await matchBook(card, authorRegistry, db);
 
   if (existingId) {
     // Карточка — эталон: перезаписываем genre/tags/description (Фаза 0), НЕ title/author/cover
-    if (card.genre || card.tags?.length || card.description) {
-      await prisma.book.update({
-        where: { id: existingId },
-        data: {
-          ...(card.genre ? { genre: card.genre } : {}),
-          ...(card.tags?.length ? { tags: card.tags } : {}),
-          ...(card.description ? { description: card.description } : {}),
-        },
-      });
+    const updates: Record<string, unknown> = {};
+    if (card.genre) updates.genre = card.genre;
+    if (card.tags?.length) updates.tags = card.tags;
+    if (card.description) updates.description = card.description;
+
+    // Долечивание authorId у книг, созданных старым скриптом (без автора):
+    // матч по строке автора есть, а FK не проставлен — проставляем.
+    const normAuthor = normalizeAuthor(card.author);
+    const authorId = authorRegistry.get(normAuthor) ?? null;
+    if (authorId !== null && existingId.authorId === null) {
+      updates.authorId = authorId;
     }
-    return existingId;
+
+    if (Object.keys(updates).length > 0) {
+      try {
+        await db.book.update({ where: { id: existingId.id }, data: updates });
+      } catch (error) {
+        // P2002 на (title, authorId) — значит, рядом уже есть книга с тем же
+        // названием и автором (канон). Склейка — отдельная задача (dedupe).
+        if ((error as { code?: string })?.code === "P2002") {
+          console.log(`  ⚠ долечивание authorId #${existingId.id} пропущено (дубль)`);
+        } else {
+          throw error;
+        }
+      }
+    }
+    return existingId.id;
+  }
+
+  // Автор: резолвим через findOrCreate (та же логика, что в рантайме) —
+  // книги из коллекций получают authorId, а не NULL (books_local_identity_idx).
+  let authorId: number | null = null;
+  if (card.author) {
+    const normAuthor = normalizeAuthor(card.author);
+    if (authorRegistry.has(normAuthor)) {
+      authorId = authorRegistry.get(normAuthor)!;
+    } else {
+      const author = await authorService.findOrCreate(card.author);
+      authorRegistry.set(normAuthor, author.id);
+      authorId = author.id;
+    }
   }
 
   const complete = isComplete(card);
   let created: { id: number };
   try {
-    created = await prisma.book.create({
+    created = await db.book.create({
       data: {
         title: card.title,
         author: card.author || null,
+        authorId,
         coverImageUrl: card.coverImageUrl || "",
         description: card.description ?? null,
         genre: card.genre ?? null,
@@ -148,18 +194,22 @@ async function processCard(
     // гонку выиграл конкурентный INSERT. Retry: перезапрос канона → link (Фаза 2.1).
     const code = (error as { code?: string } | null)?.code;
     if (code === "P2002") {
-      const candidates = await prisma.book.findMany({
+      const candidates = await db.book.findMany({
         where: { title: { equals: card.title, mode: "insensitive" } },
-        select: { id: true, author: true },
+        select: { id: true, author: true, authorId: true },
       });
-      // Единственный кандидат по названию — это канон (автор пишется по-разному:
-      // «Лев Толстой» vs «Толстой Лев Николаевич» — издательские расхождения)
-      let canon = candidates.length === 1 ? candidates[0] : undefined;
+      // Приоритет: автор уже резолвнут → ищем по authorId; иначе по строке автора
+      // (пишется по-разному: «Лев Толстой» vs «Толстой Лев Николаевич»);
+      // иначе единственный кандидат по названию.
+      let canon = authorId !== null
+        ? candidates.find((b) => b.authorId === authorId)
+        : undefined;
       if (!canon) {
         canon = candidates.find(
           (b) => b.author && normalizeAuthor(b.author) === normalizeAuthor(card.author),
         );
       }
+      if (!canon && candidates.length === 1) canon = candidates[0];
       if (!canon) throw error;
       console.log(`  ⇄ P2002-retry: link #${canon.id} ${card.title}`);
       return canon.id;
@@ -175,14 +225,15 @@ async function processCard(
   return created.id;
 }
 
-async function main() {
-  const authorRegistry = await buildAuthorRegistry();
+async function runAll(db: Db): Promise<void> {
+  const authorRegistry = await buildAuthorRegistry(db);
+  const authorService = createAuthorService(db as unknown as PrismaClient);
 
-  const collections = await prisma.collection.findMany({
+  const collections = await db.collection.findMany({
     select: { id: true, title: true, books: true },
   });
 
-  const celebrities = await prisma.celebrity.findMany({
+  const celebrities = await db.celebrity.findMany({
     select: { id: true, name: true, books: true },
   });
 
@@ -199,8 +250,8 @@ async function main() {
     if (entries.length === 0) continue;
 
     for (const [index, card] of entries.entries()) {
-      const bookId = await processCard(card, index, authorRegistry);
-      await prisma.collectionBook.upsert({
+      const bookId = await processCard(card, index, authorRegistry, authorService, db);
+      await db.collectionBook.upsert({
         where: {
           collectionId_bookId: { collectionId: collection.id, bookId },
         },
@@ -228,8 +279,8 @@ async function main() {
     if (entries.length === 0) continue;
 
     for (const [index, card] of entries.entries()) {
-      const bookId = await processCard(card, index, authorRegistry);
-      await prisma.celebrityBook.upsert({
+      const bookId = await processCard(card, index, authorRegistry, authorService, db);
+      await db.celebrityBook.upsert({
         where: {
           celebrityId_bookId: { celebrityId: celebrity.id, bookId },
         },
@@ -248,6 +299,27 @@ async function main() {
   }
 
   console.log(`\nГотово! Связей CollectionBook: ${linkedCollections}, CelebrityBook: ${linkedCelebrities}`);
+
+  if (DRY_RUN) throw new RollbackSignal();
+}
+
+async function main() {
+  if (DRY_RUN) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        await runAll(tx);
+      });
+      console.log("\n(dry-run: транзакция завершилась без отката — что-то пошло не так)");
+    } catch (error) {
+      if (error instanceof RollbackSignal) {
+        console.log("(dry-run: изменения откачены, в БД ничего не записано)");
+        return;
+      }
+      throw error;
+    }
+  } else {
+    await runAll(prisma);
+  }
 }
 
 main()
