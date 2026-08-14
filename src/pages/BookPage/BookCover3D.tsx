@@ -75,7 +75,7 @@ export function BookCover3D({ coverImageUrl, title, className = "" }: BookCover3
       )}
       <div
         ref={innerRef}
-        className="book-3d-parallax-inner relative w-48 md:w-full max-w-[280px] aspect-[2/3]"
+        className="book-3d-parallax-inner relative w-56 md:w-full max-w-[320px] aspect-[2/3]"
         style={{ transition: "transform 0.5s ease-out" }}
       >
         <div className="book-3d relative w-full h-full rounded-r-lg overflow-visible">
