@@ -64,6 +64,9 @@ export function BookEditModal({
 }: Props) {
   const [form, setForm] = useState<BookUpdateInput>({});
   const [chain, setChain] = useState<ContextChainItem[]>(book.contextChain ?? []);
+  // Сырая строка тегов: парсится в массив только при сохранении, иначе
+  // запятая мгновенно отфильтровывается как пустой тег и не вводится
+  const [tagsInput, setTagsInput] = useState((book.tags ?? []).join(", "));
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -172,8 +175,8 @@ export function BookEditModal({
           <label className="block">
             <span className="mb-1 block text-sm text-(--ink-1)">Теги (через запятую)</span>
             <input
-              value={(form.tags ?? book.tags).join(", ")}
-              onChange={(e) => set("tags", e.target.value.split(",").map((t) => t.trim()).filter(Boolean))}
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
               className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
             />
           </label>
@@ -287,7 +290,13 @@ export function BookEditModal({
 
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-(--ink-3) pt-4">
           <button
-            onClick={() => onSave({ ...form, contextChain: chain })}
+            onClick={() =>
+              onSave({
+                ...form,
+                tags: tagsInput.split(",").map((t) => t.trim()).filter(Boolean),
+                contextChain: chain,
+              })
+            }
             disabled={saving}
             className="rounded-lg bg-(--accent-main) px-4 py-2 text-sm font-semibold text-(--bg-0) hover:opacity-90 disabled:opacity-50 cursor-pointer"
           >
