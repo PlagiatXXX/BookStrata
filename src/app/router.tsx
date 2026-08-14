@@ -89,12 +89,13 @@ export const router = createBrowserRouter([
       { path: "/forum", element: <ForumPage /> },
       { path: "/forum/battles/:id", element: <BattleDetailPage /> },
       { path: "/news/:id", element: <NewsPage /> },
+      // Публичный профиль пользователя — доступен всем, в т.ч. неавторизованным
+      { path: "/users/:id", element: <UserProfilePage /> },
       {
         element: <ProtectedRoute />,
         children: [
           { path: "/dashboard", element: <DashboardPage /> },
           { path: "/profile", element: <ProfilePage /> },
-          { path: "/users/:id", element: <UserProfilePage /> },
         ],
       },
       {

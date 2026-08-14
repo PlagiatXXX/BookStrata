@@ -729,6 +729,14 @@ describe("users.service", () => {
 
       expect(result).toEqual({ matchPercent: 100, commonBooks: 2, totalBooks: 2 })
     })
+
+    it("должен вернуть нулевое совпадение для неавторизованного посетителя (currentUserId = null)", async () => {
+      const result = await userService.getTasteMatch(targetUserId, null)
+
+      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 0 })
+      expect(mockFindUserTierListIds).not.toHaveBeenCalled()
+      expect(prisma.bookPlacement.findMany).not.toHaveBeenCalled()
+    })
   })
 
   describe("searchUsers", () => {

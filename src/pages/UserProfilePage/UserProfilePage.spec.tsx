@@ -122,6 +122,27 @@ describe("UserProfilePage", () => {
     expect(screen.getByText("25%")).toBeDefined()
   })
 
+  it("должен показать профиль неавторизованному посетителю без совпадения вкусов", async () => {
+    vi.mocked(authContextModule.useAuth).mockReturnValue({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      logout: vi.fn(),
+      refreshUser: vi.fn(),
+    } as any)
+    renderWithRoute("2")
+
+    await waitFor(() => {
+      expect(screen.getAllByText("fedor").length).toBeGreaterThanOrEqual(1)
+    })
+    // Профиль и тир-листы видны
+    expect(screen.getByText(/Страничный глотатель/)).toBeDefined()
+    expect(screen.getByText("Top Sci-Fi Books")).toBeDefined()
+    // Гостю совпадение вкусов не грузится и не показывается
+    expect(userApiModule.apiGetTasteMatch).not.toHaveBeenCalled()
+    expect(screen.queryByText(/Совпадение вкусов/)).toBeNull()
+  })
+
   it("не должен отображать совпадение вкусов для своего профиля", async () => {
     vi.mocked(authContextModule.useAuth).mockReturnValue({
       user: { userId: 1, username: "current", avatarUrl: null, role: "user", isPro: false },

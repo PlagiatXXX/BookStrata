@@ -145,12 +145,12 @@ export async function userRoutes(fastify: FastifyInstance) {
   );
 
   // GET /api/users/:id/tier-lists — публичные тир-листы пользователя
+  // (доступно без авторизации: профили открыты для просмотра всем)
   fastify.get<{
     Params: { id: string };
     Querystring: { page?: number; pageSize?: number };
   }>(
     "/:id/tier-lists",
-    { preHandler: [authMiddleware] },
     async (request, reply) => {
       const userId = parseInt(request.params.id);
       const page = Number(request.query.page) || 1;
@@ -175,12 +175,12 @@ export async function userRoutes(fastify: FastifyInstance) {
   );
 
   // GET /api/users/:id/taste-match — совпадение вкусов
+  // Публичный: без авторизации текущий пользователь неизвестен → нулевое совпадение
   fastify.get<{ Params: { id: string } }>(
     "/:id/taste-match",
-    { preHandler: [authMiddleware] },
     async (request, reply) => {
       const targetUserId = parseInt(request.params.id);
-      const currentUserId = (request as any).user?.userId;
+      const currentUserId = (request as any).user?.userId ?? null;
       const match = await getTasteMatch(targetUserId, currentUserId);
       return reply.send(createSuccessResponse(match));
     },
@@ -199,10 +199,9 @@ export async function userRoutes(fastify: FastifyInstance) {
     },
   );
 
-  // GET /api/users/:id
+  // GET /api/users/:id — публичный профиль (открыт всем, без авторизации)
   fastify.get<{ Params: { id: string } }>(
     "/:id",
-    { preHandler: [authMiddleware] },
     async (request, reply) => {
       const user = await getUserById(request.params);
       return reply.code(200).send(createSuccessResponse(user));

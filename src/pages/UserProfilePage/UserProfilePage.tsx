@@ -51,7 +51,8 @@ export default function UserProfilePage() {
   const { data: tasteMatch } = useQuery({
     queryKey: ["tasteMatch", id],
     queryFn: () => apiGetTasteMatch(id!),
-    enabled: !!id && !isOwnProfile && !isPrerender,
+    // Гостю совпадение вкусов не показываем (нет текущего пользователя)
+    enabled: !!id && !isOwnProfile && !!currentUser && !isPrerender,
     staleTime: 60_000,
   });
 

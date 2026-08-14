@@ -360,8 +360,13 @@ export async function getMyTierLists(
 // GET /api/users/:id/taste-match — совпадение вкусов с текущим пользователем
 export async function getTasteMatch(
   targetUserId: number,
-  currentUserId: number,
+  currentUserId: number | null,
 ) {
+  // Неавторизованный посетитель — текущего пользователя нет, совпадение нулевое
+  if (!currentUserId) {
+    return { matchPercent: 0, commonBooks: 0, totalBooks: 0 };
+  }
+
   // Получаем все ID публичных тир-листов целевого пользователя
   const targetListIds =
     await tierListRepository.findUserTierListIds(targetUserId);
