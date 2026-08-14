@@ -4,6 +4,8 @@
 // TanStack Query, мутации — useMutation с инвалидацией.
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { sileo } from "sileo";
+import { ApiRequestError } from "@/lib/api-client";
 import {
   listAdminBooks,
   getAdminBook,
@@ -73,13 +75,29 @@ export function useAdminBooks() {
       updateAdminBook(id, patch),
     onSuccess: () => {
       invalidateLists();
-      setEditingId(null);
+      sileo.success({ title: "Изменения сохранены" });
+    },
+    onError: (err) => {
+      sileo.error({
+        title: "Не удалось сохранить",
+        description: err instanceof ApiRequestError ? err.message : undefined,
+      });
     },
   });
 
   const publishMutation = useMutation({
     mutationFn: (id: number) => publishAdminBook(id),
-    onSuccess: () => invalidateLists(),
+    onSuccess: () => {
+      invalidateLists();
+      setEditingId(null);
+      sileo.success({ title: "Книга опубликована" });
+    },
+    onError: (err) => {
+      sileo.error({
+        title: "Не удалось опубликовать",
+        description: err instanceof ApiRequestError ? err.message : undefined,
+      });
+    },
   });
 
   const unpublishMutation = useMutation({

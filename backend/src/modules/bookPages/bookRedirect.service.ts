@@ -112,11 +112,14 @@ export function buildSeoFallbackHtml(book: PublishedBookMeta): string {
 
   const spaShell = getSpaIndexHtml();
   if (spaShell) {
-    const withTitle = spaShell.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`);
-    if (!withTitle.includes("<title>")) {
-      // В каркасе нет <title> — вставляем первым в <head>
-      return withTitle.replace(/<head[^>]*>/, `$&\n    <title>${escapeHtml(title)}</title>`);
+    // В index.html нет <title> — его ставит на клиенте SEOHead (document.title),
+    // поэтому каркас может прийти без <title>: тогда вставляем и title, и metaTags
+    // в начало <head>, иначе — title на место старого, metaTags перед </head>.
+    if (!/<title>[^<]*<\/title>/.test(spaShell)) {
+      const head = `<title>${escapeHtml(title)}</title>\n    ${metaTags}`;
+      return spaShell.replace(/<head[^>]*>/, `$&\n    ${head}`);
     }
+    const withTitle = spaShell.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`);
     return withTitle.replace(/<\/head>/, `    ${metaTags}\n  </head>`);
   }
 

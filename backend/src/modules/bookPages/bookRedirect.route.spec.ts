@@ -123,6 +123,26 @@ describe("GET /books/:slug (публичный роут)", () => {
     expect(res.text).toContain('<div id="root"></div>');
   });
 
+  it("каркас без <title> (как продовый index.html) → title и metaTags вставляются в head", async () => {
+    mocks.prisma.bookSlugHistory.findUnique.mockResolvedValue(null);
+    mocks.prisma.book.findUnique.mockResolvedValue(publishedBook);
+    // Пререндера книги нет, spa-каркас доступен; в каркасе НЕТ <title>
+    mocks.fs.existsSync.mockImplementation((p: string) => String(p).endsWith("spa-index.html"));
+    mocks.fs.readFileSync.mockReturnValue(
+      '<!DOCTYPE html><html><head><meta charset="utf-8" /></head><body><div id="root"></div></body></html>',
+    );
+
+    const res = await request(app.server).get("/books/anna-karenina-lev-tolstoj");
+
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой — описание и рейтинг</title>");
+    expect(res.text).toContain('<meta name="description" content="Роман о любви и обществе." />');
+    expect(res.text).toContain('<link rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj" />');
+    expect(res.text).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой — описание и рейтинг" />');
+    expect(res.text).toContain('<meta name="robots" content="index, follow" />');
+    expect(res.text).toContain('<div id="root"></div>');
+  });
+
   it("SEO-фолбэк без DIST_DIR (dev) → standalone HTML с meta", async () => {
     mocks.config.DIST_DIR = undefined as unknown as string;
     mocks.prisma.bookSlugHistory.findUnique.mockResolvedValue(null);

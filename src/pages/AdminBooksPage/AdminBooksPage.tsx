@@ -10,7 +10,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Search, Eye, MessageSquare } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { listAdminBooks } from "@/lib/adminBooksApi";
-import { ApiRequestError } from "@/lib/api-client";
 import { useAdminBooks } from "./hooks/useAdminBooks";
 import { BookEditModal } from "./components/BookEditModal";
 import { MergeModal } from "./components/MergeModal";
@@ -21,7 +20,6 @@ export default function AdminBooksPage() {
   const h = useAdminBooks();
 
   const [mergeQuery, setMergeQuery] = useState("");
-  const [publishError, setPublishError] = useState<string | null>(null);
 
   const mergeCandidatesQuery = useQuery({
     queryKey: ["admin-books-merge", mergeQuery],
@@ -32,12 +30,7 @@ export default function AdminBooksPage() {
 
   const handlePublish = () => {
     if (h.editingId === null) return;
-    setPublishError(null);
-    h.publishMutation.mutate(h.editingId, {
-      onError: (err) => {
-        setPublishError(err instanceof ApiRequestError ? err.message : "Не удалось опубликовать");
-      },
-    });
+    h.publishMutation.mutate(h.editingId);
   };
 
   const editingBook = h.detail;
@@ -257,7 +250,6 @@ export default function AdminBooksPage() {
             publishing={h.publishMutation.isPending}
             unpublishing={h.unpublishMutation.isPending}
             enriching={h.enrichMutation.isPending}
-            publishError={publishError}
             enrichResult={h.enrichMutation.data?.updated ?? null}
             onSave={(patch) => h.saveMutation.mutate({ id: editingBook.id, patch })}
             onPublish={handlePublish}

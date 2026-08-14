@@ -30,6 +30,9 @@ vi.mock("@/lib/adminBooksApi", () => ({
   deleteAdminComment: vi.fn(),
 }));
 
+const sileoMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("sileo", () => ({ sileo: sileoMock }));
+
 const bookRow: AdminBookListItem = {
   id: 10,
   title: "Анна Каренина",
@@ -159,6 +162,41 @@ describe("AdminBooksPage (Фаза 7)", () => {
 
     await waitFor(() => {
       expect(mockedPublish).toHaveBeenCalledWith(10);
+    });
+  });
+
+  it("«Сохранить» не закрывает редактор и показывает тост успеха", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("Анна Каренина");
+
+    await user.click(screen.getByRole("button", { name: "Редактировать" }));
+    await user.click(await screen.findByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => {
+      expect(mockedUpdate).toHaveBeenCalled();
+    });
+    // Редактор остаётся открытым
+    expect(screen.getByText("«Погружение в контекст» (contextChain)")).toBeInTheDocument();
+    expect(sileoMock.success).toHaveBeenCalledWith({ title: "Изменения сохранены" });
+  });
+
+  it("«Опубликовать» закрывает редактор и показывает тост успеха", async () => {
+    const user = userEvent.setup();
+    mockedList.mockResolvedValue({ items: [{ ...bookRow, status: "draft" }], total: 1 });
+    mockedDetail.mockResolvedValue({ ...bookDetail, status: "draft" });
+    renderPage();
+    await screen.findByText("Анна Каренина");
+
+    await user.click(screen.getByRole("button", { name: "Редактировать" }));
+    await user.click(await screen.findByRole("button", { name: "Опубликовать" }));
+
+    await waitFor(() => {
+      expect(sileoMock.success).toHaveBeenCalledWith({ title: "Книга опубликована" });
+    });
+    // Редактор закрыт
+    await waitFor(() => {
+      expect(screen.queryByText("«Погружение в контекст» (contextChain)")).not.toBeInTheDocument();
     });
   });
 
