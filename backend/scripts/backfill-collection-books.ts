@@ -153,6 +153,12 @@ async function processCard(
       updates.authorId = authorId;
     }
 
+    // Рейтинг карточки — редакторский рейтинг книги (как в bookCatalogSync,
+    // last write wins). Без этого Book.rating пуст и рейтинг не показывается.
+    if (card.rating != null) {
+      updates.rating = card.rating;
+    }
+
     if (Object.keys(updates).length > 0) {
       try {
         await db.book.update({ where: { id: existingId.id }, data: updates });
@@ -196,6 +202,7 @@ async function processCard(
         genre: card.genre ?? null,
         tags: Array.isArray(card.tags) ? card.tags : [],
         publishedYear: card.year ?? null,
+        rating: card.rating ?? null,
         status: complete ? "published" : "draft",
         publishedAt: complete ? new Date() : null,
       },
