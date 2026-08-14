@@ -96,6 +96,73 @@ describe("ratings.service", () => {
         overall: 8,
       })
     })
+
+    it("пользовательские голоса (overall) не смешиваются с редакторскими категориями", async () => {
+      vi.mocked(prisma.bookRating.findMany).mockResolvedValue([
+        { ratings: { plot: 8, style: 7 } }, // редактор
+        { ratings: { overall: 5 } },        // пользователь 1
+        { ratings: { overall: 7 } },        // пользователь 2
+      ] as any)
+
+      const result = await getBookRatings(10)
+
+      expect(result).toEqual({
+        count: 2,
+        averages: { plot: 8, style: 7 },
+        overall: 6,
+      })
+    })
+
+    it("только пользовательские голоса: overall = их среднее, averages пуст", async () => {
+      vi.mocked(prisma.bookRating.findMany).mockResolvedValue([
+        { ratings: { overall: 8 } },
+        { ratings: { overall: 6.5 } },
+      ] as any)
+
+      const result = await getBookRatings(10)
+
+      expect(result).toEqual({
+        count: 2,
+        averages: {},
+        overall: 7.3,
+      })
+    })
+
+    it("оценка редакции усредняется с голосами пользователей (начальная точка)", async () => {
+      vi.mocked(prisma.bookRating.findMany).mockResolvedValue([
+        { ratings: { overall: 5 } },
+        { ratings: { overall: 7 } },
+      ] as any)
+
+      // админ поставил 8.4: (8.4 + 5 + 7) / 3 = 6.8
+      const result = await getBookRatings(10, 8.4)
+
+      expect(result).toEqual({
+        count: 2,
+        averages: {},
+        overall: 6.8,
+      })
+    })
+
+    it("без пользовательских голосов overall = оценка редакции", async () => {
+      vi.mocked(prisma.bookRating.findMany).mockResolvedValue([] as any)
+
+      const result = await getBookRatings(10, 8.4)
+
+      expect(result).toEqual({
+        count: 0,
+        averages: {},
+        overall: 8.4,
+      })
+    })
+
+    it("без оценок и без админской — null (как раньше)", async () => {
+      vi.mocked(prisma.bookRating.findMany).mockResolvedValue([] as any)
+
+      const result = await getBookRatings(10)
+
+      expect(result).toBeNull()
+    })
   })
 
   describe("getUserBookRating", () => {

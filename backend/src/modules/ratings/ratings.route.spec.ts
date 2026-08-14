@@ -4,6 +4,7 @@ import Fastify from "fastify"
 
 vi.mock("../../lib/prisma.js", () => {
   const tx = {
+    book: { findUnique: vi.fn() },
     bookRating: { findUnique: vi.fn(), upsert: vi.fn(), findMany: vi.fn() },
   }
   return { prisma: tx }
@@ -94,6 +95,7 @@ describe("Ratings Routes", () => {
   describe("GET /api/ratings/:bookId", () => {
     it("должен вернуть средние оценки", async () => {
       const { prisma } = await import("../../lib/prisma.js")
+      vi.mocked(prisma.book.findUnique).mockResolvedValue({ rating: 8.4 } as any)
       vi.mocked(prisma.bookRating.findMany).mockResolvedValue([
         { ratings: { plot: 8, style: 7 } },
       ] as any)
@@ -108,6 +110,7 @@ describe("Ratings Routes", () => {
 
     it("должен вернуть нули если нет оценок", async () => {
       const { prisma } = await import("../../lib/prisma.js")
+      vi.mocked(prisma.book.findUnique).mockResolvedValue({ rating: null } as any)
       vi.mocked(prisma.bookRating.findMany).mockResolvedValue([])
 
       const res = await request(app.server)

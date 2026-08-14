@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { ErrorCodes, createApiError } from "../../lib/api-response.js";
+import { prisma } from "../../lib/prisma.js";
 import {
   rateBook,
   getBookRatings,
@@ -50,7 +51,13 @@ export async function ratingsRoutes(fastify: FastifyInstance) {
     if (!Number.isFinite(bookIdNum)) {
       return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Invalid bookId"));
     }
-    const ratings = await getBookRatings(bookIdNum);
+    // Оценка редакции (Book.rating) — начальная точка усреднения с голосами пользователей
+    const book = await prisma.book.findUnique({
+      where: { id: bookIdNum },
+      select: { rating: true },
+    });
+    const adminRating = book?.rating ?? null;
+    const ratings = await getBookRatings(bookIdNum, adminRating);
     const data = ratings ?? { count: 0, averages: {}, overall: 0 };
     return reply.send({ data: { ...data, categories: CATEGORY_LABELS } });
   });
