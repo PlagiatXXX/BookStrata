@@ -69,6 +69,10 @@ async function request<T>(
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method,
+      // Отключаем браузерный HTTP-кэш: кэшированием занимается TanStack Query.
+      // Иначе GET-ответы с Cache-Control (public, max-age=60) на бэке возвращаются
+      // из кэша браузера, и после мутаций refetch показывает устаревшие данные.
+      cache: "no-store",
       headers: {
         ...(data !== undefined ? { "Content-Type": "application/json" } : {}),
         ...getAuthHeader(),
