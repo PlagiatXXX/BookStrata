@@ -1,6 +1,6 @@
 // src/hooks/useBook.ts
 // TanStack Query хуки страницы книги: данные, лайки, комментарии, «В тир-лист».
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sileo } from "sileo";
 import {
   addBookToTierList,
@@ -30,16 +30,13 @@ export function useBook(slug: string | undefined) {
   });
 }
 
-/** Комментарии книги с пагинацией (страница = offset*limit). */
-export function useBookComments(slug: string | undefined, pageSize = 10) {
-  return useInfiniteQuery({
-    queryKey: commentsKey(slug ?? ""),
-    queryFn: ({ pageParam }) => getBookComments(slug!, pageParam * pageSize, pageSize),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, pages) => {
-      const loaded = pages.reduce((sum, p) => sum + p.items.length, 0);
-      return loaded < lastPage.total ? pages.length : undefined;
-    },
+/** Комментарии книги (newest first). Показываются 4 последних;
+ *  «Показать ещё» запрашивает все (limit = total). Ключ включает limit —
+ *  при переключении свежий запрос, при уходе со страницы кэш/стейт сбрасываются. */
+export function useBookComments(slug: string | undefined, limit = 4) {
+  return useQuery({
+    queryKey: [...commentsKey(slug ?? ""), limit],
+    queryFn: () => getBookComments(slug!, 0, limit),
     enabled: Boolean(slug),
     staleTime: 60 * 1000,
   });

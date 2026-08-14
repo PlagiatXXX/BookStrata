@@ -69,7 +69,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { slug } = request.params as { slug: string };
       // request.user ставится глобальным auth-плагином опционально (гость = undefined)
-      const userId = (request as { user?: { id?: number } }).user?.id;
+      const userId = (request as { user?: { userId?: number } }).user?.userId;
       const page = await getBookPageData(slug, userId);
       if (!page) {
         return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Книга не найдена"));
@@ -85,7 +85,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
     { preHandler: [authMiddleware] },
     async (request, reply) => {
       const { slug } = request.params;
-      const userId = (request as { user?: { id?: number } }).user?.id;
+      const userId = (request as { user?: { userId?: number } }).user?.userId;
       if (!userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
@@ -108,7 +108,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { slug } = request.params;
       const { tierListId } = request.body;
-      const userId = (request as { user?: { id?: number } }).user?.id;
+      const userId = (request as { user?: { userId?: number } }).user?.userId;
       if (!userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
@@ -198,7 +198,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { slug } = request.params;
       const { content, parentId } = request.body;
-      const userId = (request as { user?: { id?: number } }).user?.id;
+      const userId = (request as { user?: { userId?: number } }).user?.userId;
       if (!userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
@@ -227,12 +227,12 @@ export async function booksRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const commentId = Number(request.params.commentId);
       const { content } = request.body;
-      const user = (request as { user?: { id?: number; role?: string } }).user;
-      if (!user?.id) {
+      const user = (request as { user?: { userId?: number; role?: string } }).user;
+      if (!user?.userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       try {
-        const comment = await updateBookComment(commentId, user.id, user.role ?? "user", content);
+        const comment = await updateBookComment(commentId, user.userId, user.role ?? "user", content);
         return reply.send(createSuccessResponse({ comment }));
       } catch (error) {
         if (error instanceof CommentNotFoundError) {
@@ -255,12 +255,12 @@ export async function booksRoutes(fastify: FastifyInstance) {
     { preHandler: [authMiddleware] },
     async (request, reply) => {
       const commentId = Number(request.params.commentId);
-      const user = (request as { user?: { id?: number; role?: string } }).user;
-      if (!user?.id) {
+      const user = (request as { user?: { userId?: number; role?: string } }).user;
+      if (!user?.userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }
       try {
-        const result = await deleteBookComment(commentId, user.id, user.role ?? "user");
+        const result = await deleteBookComment(commentId, user.userId, user.role ?? "user");
         return reply.send(createSuccessResponse(result));
       } catch (error) {
         if (error instanceof CommentNotFoundError) {
@@ -280,7 +280,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
     { preHandler: [authMiddleware] },
     async (request, reply) => {
       const commentId = Number(request.params.commentId);
-      const userId = (request as { user?: { id?: number } }).user?.id;
+      const userId = (request as { user?: { userId?: number } }).user?.userId;
       if (!userId) {
         return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
       }

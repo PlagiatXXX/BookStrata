@@ -41,6 +41,22 @@
   letter-spacing: -0.02em;
 }
 
+/* Все кликабельные элементы страницы — cursor-pointer
+   (кнопки по умолчанию в браузере показывают cursor: default) */
+.book-page button:not(:disabled),
+.book-page a,
+.book-page [role="button"] {
+  cursor: pointer;
+}
+.book-page button:disabled {
+  cursor: not-allowed;
+}
+
+/* Иконки лонгрида — hover/тап без визуального «кнопочного» курсора */
+.book-page button.bp-btn-pulse:not(:disabled) {
+  cursor: default;
+}
+
 /* Label-caps: мелкие подписи с трекингом */
 .bp-label-caps {
   font-family: var(--bp-font-body);
@@ -49,6 +65,18 @@
   line-height: 1;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+/* Теги: мельче стандартного label-caps (должен идти после .bp-label-caps) */
+.bp-tag-caps {
+  font-size: 10px;
+}
+
+/* Мобильный заголовок тултипа лонгрида: чуть меньше (bp-label-caps = 12px) */
+@media (max-width: 767px) {
+  .bp-tip-title {
+    font-size: 10px;
+  }
 }
 
 /* ── Material Symbols в строке ── */

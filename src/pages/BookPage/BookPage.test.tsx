@@ -4,8 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter, useParams } from "react-router-dom";
 import BookPage from "./BookPage";
+import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import type { BookPageData } from "@/lib/bookApi";
 
 vi.mock("react-router-dom", async (importOriginal) => {
@@ -18,6 +20,17 @@ vi.mock("react-router-dom", async (importOriginal) => {
 
 vi.mock("@/hooks/useAuthContext", () => ({
   useAuth: vi.fn(() => ({ user: null, isLoading: false })),
+}));
+
+vi.mock("@/hooks/useBookRating", () => ({
+  useBookRatings: vi.fn(() => ({ data: null })),
+  useMyBookRating: vi.fn(() => ({ data: null })),
+  useRateBook: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}));
+
+const toggleStatusMock = vi.fn();
+vi.mock("@/hooks/useBookshelf", () => ({
+  useBookshelf: vi.fn(() => ({ shelf: {}, toggleStatus: toggleStatusMock })),
 }));
 
 // Мокаем «тяжёлые» общие компоненты — они не относятся к странице книги
@@ -40,8 +53,12 @@ vi.mock("@/hooks/useBook", async (importOriginal) => {
 });
 
 import { useBook } from "@/hooks/useBook";
+import { useBookshelf } from "@/hooks/useBookshelf";
+import { useAuth } from "@/hooks/useAuthContext";
 
 const mockedUseBook = vi.mocked(useBook);
+const mockedUseBookshelf = vi.mocked(useBookshelf);
+const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseParams = vi.mocked(useParams);
 
 const bookPageData: BookPageData = {
@@ -77,7 +94,9 @@ function renderPage() {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={["/books/velikij-getssbi"]}>
-        <BookPage />
+        <HelmetProvider>
+          <BookPage />
+        </HelmetProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -115,14 +134,52 @@ describe("BookPage", () => {
     });
     expect(screen.getAllByText("Ф. Скотт Фицджеральд").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Роман").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("1925").length).toBeGreaterThan(0);
-    expect(screen.getByText("Классика")).toBeTruthy();
-    expect(screen.getByText("8.4")).toBeTruthy();
+    expect(screen.getAllByText("1925 г.").length).toBeGreaterThan(0);
+    expect(screen.getByText("#Классика")).toBeTruthy();
+    expect(screen.getAllByText("8.4").length).toBeGreaterThan(0);
+    // Кнопка «Хочу прочитать» вместо лайка
+    expect(screen.getByText("Хочу прочитать")).toBeTruthy();
+    expect(screen.queryByText("12 лайков")).toBeNull();
     // Блоки связей
     expect(screen.getByText("Топ-100 классики")).toBeTruthy();
     expect(screen.getByText("Великие романы")).toBeTruthy();
     expect(screen.getByText("Стивен Кинг")).toBeTruthy();
     expect(screen.getByText("Обсуждение")).toBeTruthy();
+  });
+
+  it("«Хочу прочитать» добавляет книгу на полку (want_to_read)", async () => {
+    toggleStatusMock.mockClear();
+    mockedUseAuth.mockReturnValue({ user: { id: 1 } as never, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    const button = await screen.findByText("Хочу прочитать");
+    await userEvent.click(button);
+
+    expect(toggleStatusMock).toHaveBeenCalledWith("1", "want_to_read", expect.objectContaining({ title: "Великий Гэтсби" }));
+    mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
+  });
+
+  it("книга уже на полке → кнопка «Уже в плане»", async () => {
+    mockedUseBookshelf.mockReturnValue({
+      shelf: { "1": "want_to_read" },
+      toggleStatus: toggleStatusMock,
+    } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    expect(await screen.findByText("Уже в плане")).toBeTruthy();
+    mockedUseBookshelf.mockReturnValue({ shelf: {}, toggleStatus: toggleStatusMock } as never);
   });
 
   it("показывает ошибку с кнопкой повтора при сбое загрузки", () => {
@@ -160,5 +217,43 @@ describe("BookPage", () => {
     const toggleBtn = await screen.findByText("Читать полностью");
     await userEvent.click(toggleBtn);
     expect(screen.getByText("Свернуть")).toBeTruthy();
+  });
+
+  it("JSON-LD без aggregateRating (решение 14.08: риск спам-фильтра rich-результатов)", () => {
+    const ld = buildBookJsonLd({
+      title: "Великий Гэтсби",
+      author: "Ф. Скотт Фицджеральд",
+      coverImageUrl: "https://example.com/cover.jpg",
+      description: "Роман, ставший символом века джаза.",
+      genre: "Роман",
+      publishedYear: 1925,
+    });
+
+    expect(ld["@type"]).toBe("Book");
+    expect(ld.name).toBe("Великий Гэтсби");
+    expect(ld.datePublished).toBe("1925");
+    expect(ld).not.toHaveProperty("aggregateRating");
+  });
+});
+
+describe("buildDescriptionSnippet", () => {
+  it("короткое описание возвращает как есть", () => {
+    expect(
+      buildDescriptionSnippet({ title: "Дюна", author: "Фрэнк Герберт", description: "Роман о пустынной планете." }),
+    ).toBe("Роман о пустынной планете.");
+  });
+
+  it("длинное описание обрезает по границе слова с многоточием", () => {
+    const long = `Роман, ставший символом века джаза. ${"Далее длинный текст сюжета. ".repeat(10)}конец`;
+    const result = buildDescriptionSnippet({ title: "Гэтсби", author: null, description: long });
+    expect(result.length).toBeLessThanOrEqual(158);
+    expect(result.endsWith("…")).toBe(true);
+    expect(result.endsWith("…конец")).toBe(false);
+  });
+
+  it("без описания — fallback-шаблон с названием и автором", () => {
+    expect(buildDescriptionSnippet({ title: "Дюна", author: "Фрэнк Герберт", description: null })).toBe(
+      "Книга Дюна Фрэнк Герберт: описание, жанр, рейтинг. Найди книги в тир-листах и подборках BookStrata.",
+    );
   });
 });

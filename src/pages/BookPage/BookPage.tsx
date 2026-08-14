@@ -16,9 +16,12 @@ import { MobileBottomNav } from "@/ui/MobileBottomNav";
 import { Spinner } from "@/components/Spinner";
 import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage";
 import { useAuth } from "@/hooks/useAuthContext";
-import { useAddBookToTierList, useBook, useMyTierLists, useToggleBookLike } from "@/hooks/useBook";
+import { useAddBookToTierList, useBook, useMyTierLists } from "@/hooks/useBook";
+import { useBookshelf } from "@/hooks/useBookshelf";
 import { BookCover3D } from "./BookCover3D";
+import { BookRatingPanel } from "./BookRatingPanel";
 import { BookContextChain } from "./BookContextChain";
+import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
 import "./BookPage.css";
 
@@ -27,8 +30,8 @@ export default function BookPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useBook(slug);
-  const toggleLike = useToggleBookLike(slug);
   const addToTierList = useAddBookToTierList(slug);
+  const { shelf, toggleStatus } = useBookshelf();
 
   const [descExpanded, setDescExpanded] = useState(false);
   const [tierDropdownOpen, setTierDropdownOpen] = useState(false);
@@ -78,7 +81,7 @@ export default function BookPage() {
     return <NotFoundPage />;
   }
 
-  const { book, tierLists, collections, celebrities, similarBooks, otherBooksByAuthor, comments, userLike } = data;
+  const { book, tierLists, collections, celebrities, similarBooks, otherBooksByAuthor, comments } = data;
   const rating = book.rating;
   const contextChain = book.contextChain ?? [];
   const hasTags = book.tags.length > 0;
@@ -89,36 +92,23 @@ export default function BookPage() {
     { name: book.title, url: `/books/${slug}` },
   ];
 
-  const bookJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Book",
-    name: book.title,
-    ...(book.author ? { author: { "@type": "Person", name: book.author } } : {}),
-    ...(book.coverImageUrl ? { image: book.coverImageUrl } : {}),
-    ...(book.description ? { description: book.description } : {}),
-    ...(book.genre ? { genre: book.genre } : {}),
-    ...(book.publishedYear ? { datePublished: String(book.publishedYear) } : {}),
-    // aggregateRating — только из Book.rating (решение 12.08: честная шкала 0–10)
-    ...(rating !== null && rating !== undefined
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: rating,
-            bestRating: 10,
-            worstRating: 0,
-            ratingCount: 1,
-            reviewCount: 1,
-          },
-        }
-      : {}),
-  };
+  const bookJsonLd = buildBookJsonLd(book);
 
-  const handleLike = () => {
+  // Статус книги в «Моей полке» (want_to_read / read / null)
+  const isWantToRead = Boolean(book && shelf[book.id] === "want_to_read");
+
+  const handleWantToRead = () => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    toggleLike.mutate();
+    toggleStatus(String(book.id), "want_to_read", {
+      title: book.title,
+      author: book.author ?? undefined,
+      coverImageUrl: book.coverImageUrl || undefined,
+      genre: book.genre ?? undefined,
+      description: book.description ?? undefined,
+    });
   };
 
   const handleAddToTierList = (tierListId: string) => {
@@ -130,7 +120,7 @@ export default function BookPage() {
     <div className="book-page">
       <SEOHead
         title={`${book.title}${book.author ? ` — ${book.author}` : ""} — описание и рейтинг`}
-        description={`Книга ${book.title}${book.author ? ` ${book.author}` : ""}: описание, жанр, рейтинг. Найди книги в тир-листах и подборках BookStrata.`}
+        description={buildDescriptionSnippet(book)}
         image={book.coverImageUrl}
         url={`/books/${slug}`}
         type="article"
@@ -145,7 +135,7 @@ export default function BookPage() {
 
       <main className="relative">
         {/* ── HERO ── */}
-        <header className="relative min-h-screen flex flex-col justify-center gap-8 md:gap-12 pt-24 pb-16 overflow-hidden">
+        <header className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center gap-8 md:gap-12 pt-24 pb-16 overflow-x-clip">
           {/* Cinematic backdrop: размытая обложка + градиент */}
           {book.coverImageUrl && (
             <div aria-hidden className="absolute inset-0">
@@ -173,7 +163,7 @@ export default function BookPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
             {/* Левая колонка: 3D-обложка */}
             <div className="md:col-span-4 flex justify-center md:justify-end">
               <BookCover3D coverImageUrl={book.coverImageUrl} title={book.title} />
@@ -189,7 +179,7 @@ export default function BookPage() {
                 )}
                 {book.publishedYear && (
                   <span className="bp-label-caps text-[var(--bp-on-surface-variant)] tracking-widest">
-                    {book.publishedYear}
+                    {book.publishedYear} г.
                   </span>
                 )}
                 {hasTags && (
@@ -197,8 +187,8 @@ export default function BookPage() {
                     <div className="h-3 w-px bg-white/10" />
                     <div className="flex flex-wrap gap-4">
                       {book.tags.slice(0, 5).map((tag) => (
-                        <span key={tag} className="bp-label-caps text-[var(--bp-on-surface-variant)] tracking-widest">
-                          {tag}
+                        <span key={tag} className="bp-label-caps bp-tag-caps text-[var(--bp-on-surface-variant)] tracking-widest">
+                          #{tag}
                         </span>
                       ))}
                     </div>
@@ -253,19 +243,16 @@ export default function BookPage() {
               <div className="flex flex-wrap gap-4">
                 <button
                   type="button"
-                  onClick={handleLike}
-                  className="bg-black/40 backdrop-blur-md border border-white/20 hover:border-white/50 text-white bp-label-caps px-4 py-3 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:bg-white/5"
+                  onClick={handleWantToRead}
+                  className="h-12 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/20 hover:border-white/50 text-white bp-label-caps px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:bg-white/5"
                 >
                   <span
-                    className="ms-icon text-sm text-[#ef4444]"
-                    style={{ fontVariationSettings: userLike ? "'FILL' 1" : "'FILL' 0" }}
+                    className="ms-icon text-sm text-[var(--bp-primary)]"
+                    style={{ fontVariationSettings: isWantToRead ? "'FILL' 1" : "'FILL' 0" }}
                   >
-                    favorite
+                    bookmarks
                   </span>
-                  {userLike ? "Вам нравится" : "Лайк"}
-                  {book.likesCount > 0 && (
-                    <span className="text-white/50 text-xs">{book.likesCount}</span>
-                  )}
+                  {isWantToRead ? "Уже в плане" : "Хочу прочитать"}
                 </button>
 
                 {/* «В тир-лист» — выпадающий список листов */}
@@ -279,7 +266,7 @@ export default function BookPage() {
                       }
                       setTierDropdownOpen((v) => !v);
                     }}
-                    className="bg-[var(--bp-primary)] hover:bg-[var(--bp-primary-container)] text-[var(--bp-on-primary)] bp-label-caps px-6 py-3 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
+                    className="h-12 whitespace-nowrap bg-[var(--bp-primary)] hover:bg-[var(--bp-primary-container)] text-[var(--bp-on-primary)] bp-label-caps px-6 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
                   >
                     <span className="ms-icon text-sm">format_list_bulleted</span>
                     В тир-лист
@@ -289,7 +276,7 @@ export default function BookPage() {
                   </button>
 
                   {tierDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-72 rounded-xl border border-primary/30 bg-[var(--bp-surface-container-high)] backdrop-blur-xl shadow-2xl z-50 py-2">
+                    <div className="absolute top-full right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-primary/30 bg-[var(--bp-surface-container-high)] backdrop-blur-xl shadow-2xl z-[60] py-2">
                       <p className="bp-label-caps text-white/50 px-4 py-2 tracking-widest">
                         Добавить в тир-лист
                       </p>
@@ -337,33 +324,31 @@ export default function BookPage() {
                   </div>
                 )}
 
-                {/* «Где читать» — ссылки-заглушки (решение 13.08: рендерится в MVP,
-                    affiliate по ISBN — этап 3 Roadmap) */}
+                {/* Оценить книгу: слайдер 0–10, одна оценка на пользователя */}
+                <BookRatingPanel bookId={book.id} defaultRating={rating} />
+
+                {/* «Где читать» — две кнопки-пустышки (без рекламы; affiliate — этап 3 Roadmap) */}
                 <div>
                   <h3 className="bp-label-caps text-white/80 tracking-widest mb-4">Где читать</h3>
                   <div className="flex flex-col gap-3">
-                    <a
-                      href="https://www.amazon.com/kindle-dbs/entity/redirect?token=bookstrata"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
                       className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg"
                     >
-                      <div className="w-10 h-10 bg-black/40 rounded-md flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-colors">
+                      <div className="w-10 h-10 bg-black/40 rounded-md flex items-center justify-center border border-white/5">
                         <span className="ms-icon text-white text-base">book</span>
                       </div>
-                      <span className="text-[15px] text-white font-medium">Amazon Kindle</span>
-                    </a>
-                    <a
-                      href="https://www.audible.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      <span className="text-[15px] text-white font-medium">BookStrata</span>
+                    </button>
+                    <button
+                      type="button"
                       className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg"
                     >
-                      <div className="w-10 h-10 bg-black/40 rounded-md flex items-center justify-center border border-white/5 group-hover:border-white/20 transition-colors">
+                      <div className="w-10 h-10 bg-black/40 rounded-md flex items-center justify-center border border-white/5">
                         <span className="ms-icon text-white text-base">headphones</span>
                       </div>
-                      <span className="text-[15px] text-white font-medium">Audible</span>
-                    </a>
+                      <span className="text-[15px] text-white font-medium">BookStrata</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -405,7 +390,7 @@ export default function BookPage() {
 
         {/* ── Встречается в тир-листах ── */}
         {tierLists.length > 0 && (
-          <section className="relative py-12 border-t border-primary/20">
+          <section className="relative pt-4 pb-12 border-t border-primary/20">
             <div className="max-w-[1100px] mx-auto px-4 md:px-5">
               <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Встречается в тир-листах</h2>
               <div className="flex flex-wrap gap-3">
@@ -425,7 +410,7 @@ export default function BookPage() {
 
         {/* ── В подборках ── */}
         {collections.length > 0 && (
-          <section className="relative py-12 border-t border-primary/20">
+          <section className="relative pt-4 pb-12 border-t border-primary/20">
             <div className="max-w-[1100px] mx-auto px-4 md:px-5">
               <h2 className="bp-display text-white text-xl md:text-2xl mb-6">В подборках</h2>
               <div className="flex flex-wrap gap-3">
@@ -473,29 +458,74 @@ export default function BookPage() {
   );
 }
 
-/** Звёзды рейтинга: Book.rating (0–10) → заливка rating/2 из 5 (шаг 0.1). */
+/** Звёзды рейтинга: Book.rating (0–10) → 5 звёзд (rating/2). Десятые — видимой
+ *  заливкой по глифу последней частичной звезды (background-clip: text). */
 function RatingStars({ rating }: { rating: number }) {
-  const fillPercent = Math.min(Math.max((rating / 2 / 5) * 100, 0), 100);
+  const stars = Math.min(Math.max(rating / 2, 0), 5);
+  const full = Math.floor(stars);
+  const fraction = stars - full; // доля следующей звезды 0..1
+
   return (
     <div className="relative inline-block" aria-label={`Рейтинг ${rating.toFixed(1)} из 10`}>
-      {/* Пустые звёзды */}
-      <div className="flex items-center gap-1 text-white/30">
-        {Array.from({ length: 5 }, (_, i) => (
-          <span key={i} className="ms-icon text-xl">star</span>
-        ))}
-      </div>
-      {/* Дробная заливка (0.1 шаг) */}
-      <div
-        className="absolute inset-0 flex items-center gap-1 text-[var(--bp-primary)] overflow-hidden whitespace-nowrap drop-shadow-[0_0_8px_rgba(255,183,135,0.5)]"
-        style={{ width: `${fillPercent}%` }}
-      >
-        {Array.from({ length: 5 }, (_, i) => (
-          <span key={i} className="ms-icon text-xl shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
-            star
-          </span>
-        ))}
+      <div className="flex items-center gap-1">
+        {Array.from({ length: 5 }, (_, i) => {
+          if (i < full) return <StarGlyph key={i} variant="full" />;
+          if (i === full && fraction > 0.01) {
+            return <StarGlyph key={i} variant="partial" fraction={fraction} />;
+          }
+          return <StarGlyph key={i} variant="empty" />;
+        })}
       </div>
     </div>
+  );
+}
+
+/** Одна звезда: полная / пустая / частичная (заливка ровно по глифу). */
+function StarGlyph({
+  variant,
+  fraction,
+}: {
+  variant: "full" | "empty" | "partial";
+  fraction?: number;
+}) {
+  if (variant === "full") {
+    return (
+      <span
+        className="ms-icon text-xl shrink-0 text-[var(--bp-primary)] drop-shadow-[0_0_8px_rgba(255,183,135,0.5)]"
+        style={{ fontVariationSettings: "'FILL' 1" }}
+      >
+        star
+      </span>
+    );
+  }
+  if (variant === "empty") {
+    return <span className="ms-icon text-xl shrink-0 text-white/30">star</span>;
+  }
+  // Частичная: внизу пустой контур, сверху — градиентная заливка по глифу
+  const pct = Math.round((fraction ?? 0) * 100 * 10) / 10;
+  return (
+    <span className="ms-icon text-xl shrink-0 relative inline-block">
+      <span
+        className="ms-icon absolute inset-0 text-white/30"
+        aria-hidden
+        style={{ fontVariationSettings: "'FILL' 0" }}
+      >
+        star
+      </span>
+      <span
+        className="ms-icon relative"
+        aria-hidden
+        style={{
+          fontVariationSettings: "'FILL' 1",
+          backgroundImage: `linear-gradient(to right, var(--bp-primary) ${pct}%, transparent ${pct}%)`,
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          color: "transparent",
+        }}
+      >
+        star
+      </span>
+    </span>
   );
 }
 

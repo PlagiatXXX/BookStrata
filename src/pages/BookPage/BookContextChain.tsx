@@ -2,7 +2,10 @@
 // «Погружение в контекст» — интерактивная цепочка иконок (редакторский
 // контент Book.contextChain): при наведении — анимированный тултип строго
 // над иконкой, свечение активного звена, анимированная линия связи.
+// На тач-устройствах (нет hover) тултип открывается тапом по иконке,
+// повторный тап или клик вне — закрывает.
 // Рендерится только при непустом contextChain (проверка в BookPage).
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { BookContextChainItem } from "@/lib/bookApi";
 
 interface BookContextChainProps {
@@ -10,6 +13,59 @@ interface BookContextChainProps {
 }
 
 export function BookContextChain({ items }: BookContextChainProps) {
+  // Индекс открытого тапом тултипа (mobile/touch); null — всё закрыто
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  // Горизонтальный сдвиг тултипа (px) от центрированной позиции —
+  // чтобы тултип не выходил за края экрана на мобильных
+  const [tooltipShift, setTooltipShift] = useState<Record<number, number>>({});
+  const btnRefs = useRef<Map<number, HTMLButtonElement | null>>(new Map());
+  const tipRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
+
+  // Закрываем тултип при клике вне цепочки (клики внутри — stopPropagation)
+  useEffect(() => {
+    if (activeIdx === null) return;
+    const close = () => setActiveIdx(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [activeIdx]);
+
+  // Выравнивание тултипа: центрируем по иконке, но прижимаем к краю viewport,
+  // чтобы контент не обрезался (отступ 12px). Сдвиг — в px поверх -translate-x-1/2.
+  const alignTooltip = useCallback((idx: number) => {
+    const btn = btnRefs.current.get(idx);
+    const tip = tipRefs.current.get(idx);
+    if (!btn || !tip) return;
+    const btnRect = btn.getBoundingClientRect();
+    const tipRect = tip.getBoundingClientRect();
+    // jsdom и другие окружения без реальной геометрии — пропускаем
+    if (!btnRect.width || !tipRect.width) return;
+    const margin = 12;
+    const naturalLeft = btnRect.left + btnRect.width / 2 - tipRect.width / 2;
+    const clampedLeft = Math.max(
+      margin,
+      Math.min(naturalLeft, window.innerWidth - tipRect.width - margin),
+    );
+    const dx = Math.round(clampedLeft - naturalLeft);
+    setTooltipShift((prev) => (prev[idx] === dx ? prev : { ...prev, [idx]: dx }));
+  }, []);
+
+  // Пересчёт при изменении ширины окна (поворот экрана), пока тултип открыт
+  useEffect(() => {
+    if (activeIdx === null) return;
+    const onResize = () => alignTooltip(activeIdx);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [activeIdx, alignTooltip]);
+
+  const handleToggle = (idx: number) => {
+    if (activeIdx === idx) {
+      setActiveIdx(null);
+      return;
+    }
+    setActiveIdx(idx);
+    alignTooltip(idx);
+  };
+
   // Фильтруем невалидные элементы (защита от мусора в JSON из админки)
   const valid = items.filter(
     (i) => i && typeof i.icon === "string" && i.icon && i.title && i.text,
@@ -27,10 +83,10 @@ export function BookContextChain({ items }: BookContextChainProps) {
         </div>
 
         <div className="relative flex flex-wrap justify-center items-center gap-8 md:gap-16">
-          {/* Анимированная соединительная линия (десктоп) */}
+          {/* Анимированная соединительная линия */}
           <svg
             aria-hidden
-            className="absolute top-1/2 left-0 w-full h-1 -translate-y-1/2 pointer-events-none hidden md:block z-0"
+            className="absolute top-1/2 left-0 w-full h-1 -translate-y-1/2 pointer-events-none z-0"
             preserveAspectRatio="none"
           >
             <line
@@ -45,22 +101,51 @@ export function BookContextChain({ items }: BookContextChainProps) {
           </svg>
 
           {valid.map((item, idx) => (
-            <div key={idx} className="group relative flex justify-center z-10 bg-[var(--bp-surface-container-lowest)] rounded-full p-2">
-              <button
-                type="button"
-                aria-label={item.title}
-                className="bp-btn-pulse w-16 h-16 rounded-full border-2 border-primary/40 flex items-center justify-center text-[var(--bp-primary)] hover:bg-[var(--bp-primary)] hover:text-[var(--bp-background)] transition-all duration-500 bg-[var(--bp-surface-container-lowest)] shadow-[0_0_15px_rgba(255,183,135,0.2)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)]"
+            <div
+                key={idx}
+                className="group relative flex justify-center z-10 bg-[var(--bp-surface-container-lowest)] rounded-full p-2"
+                onClick={(e) => e.stopPropagation()}
               >
-                <span className="ms-icon text-3xl">{item.icon}</span>
-              </button>
-              {/* Тултип строго над иконкой */}
-              <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 p-4 bg-[var(--bp-surface-container-high)] border border-primary/30 rounded-xl shadow-2xl backdrop-blur-xl z-50 opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 ease-out">
-                <p className="bp-label-caps text-[var(--bp-primary)] mb-2 tracking-widest uppercase">
+                <button
+                  ref={(el) => { btnRefs.current.set(idx, el); }}
+                  type="button"
+                  aria-label={item.title}
+                  aria-expanded={activeIdx === idx}
+                  onMouseEnter={() => alignTooltip(idx)}
+                  onClick={() => handleToggle(idx)}
+                  className="bp-btn-pulse w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-primary/40 flex items-center justify-center text-[var(--bp-primary)] hover:bg-[var(--bp-primary)] hover:text-[var(--bp-background)] transition-all duration-500 bg-[var(--bp-surface-container-lowest)] shadow-[0_0_15px_rgba(255,183,135,0.2)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)]"
+                >
+                  <span className="ms-icon text-2xl md:text-3xl">{item.icon}</span>
+                </button>
+                {/* Тултип строго над иконкой: hover (десктоп) или тап (touch) */}
+                <div
+                  ref={(el) => { tipRefs.current.set(idx, el); }}
+                  className={`absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 max-w-[calc(100vw-2rem)] p-4 bg-[var(--bp-surface-container-high)] border border-primary/30 rounded-xl shadow-2xl backdrop-blur-xl z-50 opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 ease-out ${
+                    activeIdx === idx
+                      ? "opacity-100 translate-y-0 pointer-events-auto"
+                      : ""
+                  }`}
+                  style={{
+                    transform:
+                      tooltipShift[idx] !== undefined
+                        ? `translateX(${tooltipShift[idx]}px)`
+                        : undefined,
+                  }}
+                >
+                <p className="bp-label-caps bp-tip-title text-[var(--bp-primary)] mb-2 tracking-widest uppercase">
                   {item.title}
                 </p>
-                <p className="text-sm text-white/90 leading-relaxed">{item.text}</p>
-                {/* Стрелочка тултипа */}
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[var(--bp-surface-container-high)]" />
+                <p className="text-xs md:text-sm text-white/90 leading-relaxed">{item.text}</p>
+                {/* Стрелочка тултипа: сдвигаем обратно, чтобы оставалась над иконкой */}
+                <div
+                  className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[var(--bp-surface-container-high)]"
+                  style={{
+                    transform:
+                      tooltipShift[idx] !== undefined
+                        ? `translateX(${-tooltipShift[idx]}px)`
+                        : undefined,
+                  }}
+                />
               </div>
             </div>
           ))}

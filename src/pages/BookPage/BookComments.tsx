@@ -3,7 +3,7 @@
 // ромбовидные аватары — по reference/code.html). Список с пагинацией
 // (useInfiniteQuery), форма добавления, редактирование/удаление своих,
 // лайки чужих. Матрица прав — по плану (Фаза 5).
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
 import {
@@ -13,6 +13,7 @@ import {
   useToggleCommentLike,
   useUpdateBookComment,
 } from "@/hooks/useBook";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import type { BookComment as BookCommentType } from "@/lib/bookApi";
 import { formatRelativeTime } from "@/utils/timeFormat";
 
@@ -28,13 +29,17 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  // Комментарий, ожидающий подтверждения удаления (модалка вместо window.confirm)
+  const [deleteTarget, setDeleteTarget] = useState<BookCommentType | null>(null);
+  // Лимит списка: 4 последних; «Показать ещё» выставляет total (все).
+  // State живёт в компоненте — при уходе со страницы сбрасывается на 4.
+  const [commentsLimit, setCommentsLimit] = useState(4);
 
   const {
     data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useBookComments(slug);
+    isFetching,
+  } = useBookComments(slug, commentsLimit);
+  const total = data?.total ?? initialTotal;
 
   const createComment = useCreateBookComment(slug);
   const updateComment = useUpdateBookComment(slug);
@@ -42,9 +47,7 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
   const toggleLike = useToggleCommentLike(slug);
 
   // Комментарии из кэша (если уже подгружены) или initialData из страницы
-  const comments =
-    data?.pages.flatMap((p) => p.items) ?? initialItems;
-  const total = data?.pages[0]?.total ?? initialTotal;
+  const comments = data?.items ?? initialItems;
 
   const currentUserId = user?.userId ?? null;
   const isAdminOrModerator = user?.role === "admin" || user?.role === "moderator";
@@ -56,7 +59,17 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
   const submitCreate = () => {
     const content = draft.trim();
     if (!content || createComment.isPending) return;
-    createComment.mutate({ content }, { onSuccess: () => setDraft("") });
+    createComment.mutate(
+      { content },
+      {
+        onSuccess: () => {
+          setDraft("");
+          // Если показаны все — сдвигаем лимит на 1, чтобы новый комментарий
+          // не вытеснил самый старый из списка (limit остаётся прежним total)
+          setCommentsLimit((prev) => (prev > 4 ? prev + 1 : prev));
+        },
+      },
+    );
   };
 
   const submitEdit = (c: BookCommentType) => {
@@ -187,11 +200,7 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
                       {canDelete(c) && (
                         <button
                           type="button"
-                          onClick={() => {
-                            if (window.confirm("Удалить комментарий?")) {
-                              deleteComment.mutate(c.id);
-                            }
-                          }}
+                          onClick={() => setDeleteTarget(c)}
                           className="flex items-center gap-1 text-[10px] text-white/40 hover:text-[var(--bp-error)] transition-colors bp-label-caps"
                         >
                           <span className="ms-icon text-sm">delete</span>
@@ -204,14 +213,14 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
               </article>
             ))}
 
-            {hasNextPage && (
+            {commentsLimit === 4 && total > 4 && (
               <button
                 type="button"
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
+                onClick={() => setCommentsLimit(total)}
+                disabled={isFetching}
                 className="self-center bp-label-caps text-[var(--bp-primary)] hover:text-white border border-primary/40 rounded-lg px-6 py-3 transition-colors disabled:opacity-50"
               >
-                {isFetchingNextPage ? "Загрузка..." : "Показать ещё"}
+                {isFetching ? "Загрузка..." : `Показать ещё (${total - 4})`}
               </button>
             )}
           </div>
@@ -256,6 +265,91 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
           </div>
         </div>
       </div>
+
+      {/* Модалка подтверждения удаления (вместо window.confirm) */}
+      {deleteTarget && (
+        <DeleteCommentModal
+          comment={deleteTarget}
+          isPending={deleteComment.isPending}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            deleteComment.mutate(deleteTarget.id);
+            setDeleteTarget(null);
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+/** Модалка «Удалить комментарий?» — подтверждение перед необратимым удалением. */
+function DeleteCommentModal({
+  comment,
+  isPending,
+  onCancel,
+  onConfirm,
+}: {
+  comment: BookCommentType;
+  isPending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  useBodyScrollLock(true);
+
+  // Закрытие по Esc
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      onClick={onCancel}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Удаление комментария"
+        className="w-full max-w-md bg-[var(--bp-surface-container-high)] border border-primary/30 rounded-xl shadow-2xl p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-4 mb-4">
+          <span className="ms-icon text-2xl text-[var(--bp-error)] mt-0.5">delete</span>
+          <div>
+            <h3 className="bp-display text-white text-lg mb-1">Удалить комментарий?</h3>
+            <p className="text-sm text-white/60 leading-relaxed">
+              Комментарий будет удалён без возможности восстановления. Ответы на него
+              (если есть) и лайки удалятся вместе с ним.
+            </p>
+          </div>
+        </div>
+        <div className="bp-glass-panel p-4 rounded-lg border border-white/10 mb-6">
+          <p className="text-sm text-white/80 line-clamp-2">{comment.content}</p>
+        </div>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isPending}
+            className="bp-label-caps text-white/60 hover:text-white px-4 py-2.5 rounded-lg transition-colors disabled:opacity-40"
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isPending}
+            className="bp-label-caps bg-[var(--bp-error)] hover:bg-red-600 text-[var(--bp-on-error)] px-5 py-2.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-2"
+          >
+            {isPending && <span className="ms-icon text-sm animate-spin">progress_activity</span>}
+            Удалить
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
