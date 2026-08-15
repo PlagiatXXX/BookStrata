@@ -165,14 +165,42 @@ export async function authRoutes(fastify: FastifyInstance) {
     },
   );
 
-  // POST /api/auth/refresh
-  // Работает только по HttpOnly cookie (refreshToken), тело не требуется.
-  // bodyLimit намеренно не ставим — Fastify 5 может выбросить
-  // FST_ERR_CTP_BODY_TOO_LARGE/EMPTY_JSON_BODY, который попадёт в catch
-  // и превратится в 401 вместо штатной обработки.
   fastify.post(
     "/refresh",
     {
+      preHandler: [
+        async (request, reply) => {
+          const origin = request.headers.origin;
+          const referer = request.headers.referer;
+          let source: string | undefined;
+          if (origin) {
+            source = origin;
+          } else if (referer) {
+            try {
+              source = new URL(referer).origin;
+            } catch {
+              source = undefined;
+            }
+          }
+          if (source) {
+            // Нормализуем входящий origin (браузеры не шлют trailing slash,
+            // но строгая нормализация через new URL надёжнее прямого сравнения).
+            let parsedSource: string;
+            try {
+              parsedSource = new URL(source).origin;
+            } catch {
+              return reply
+                .code(403)
+                .send(createApiError(ErrorCodes.FORBIDDEN, "Запрос с неразрешённого источника"));
+            }
+            if (parsedSource !== new URL(config.CLIENT_URL).origin) {
+              return reply
+                .code(403)
+                .send(createApiError(ErrorCodes.FORBIDDEN, "Запрос с неразрешённого источника"));
+            }
+          }
+        },
+      ],
       config: {
         rateLimit: {
           max: config.RATE_LIMIT_REFRESH_MAX,
