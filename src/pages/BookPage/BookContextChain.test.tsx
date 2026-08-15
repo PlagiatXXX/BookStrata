@@ -76,4 +76,17 @@ describe("BookContextChain", () => {
     const { container } = render(<BookContextChain items={[...bad, items[0]]} />);
     expect(container.querySelectorAll("button").length).toBe(1);
   });
+
+  it("текст тултипа переносит длинные слова по слогам (wrap-break-word + hyphens:auto), не вылезая за края", () => {
+    const longText = "кккккlgglkrgvkkvgkvgkmmvkggvrkmgvkmvgmkvgmvmgkmvkmvkmkvmkvmkvmk";
+    render(<BookContextChain items={[{ icon: "movie", title: "Кино", text: longText }]} />);
+
+    const textEl = screen.getByText(longText);
+    expect(textEl.className).toContain("wrap-break-word");
+    expect(textEl.className).toContain("hyphens:auto");
+    // Заголовок тултипа тоже защищён (в DOM — исходный регистр, uppercase делает CSS)
+    const titleEl = screen.getByText("Кино");
+    expect(titleEl.className).toContain("wrap-break-word");
+    expect(titleEl.className).toContain("hyphens:auto");
+  });
 });

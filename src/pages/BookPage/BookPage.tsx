@@ -177,7 +177,7 @@ export default function BookPage() {
             </div>
           )}
 
-          <div className="relative z-10 w-full max-w-[1100px] mx-auto px-4 md:px-5">
+          <div className="relative z-30 w-full max-w-[1100px] mx-auto px-4 md:px-5">
             {/* Кнопка «Назад» + хлебные крошки */}
             <div className="flex items-center justify-between mb-8">
               <button

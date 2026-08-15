@@ -73,7 +73,7 @@ export function BookContextChain({ items }: BookContextChainProps) {
   if (valid.length === 0) return null;
 
   return (
-    <section className="relative bg-[var(--bp-surface-container-lowest)] border-y border-primary/20 py-12 overflow-hidden">
+    <section className="relative bg-[var(--bp-surface-container-lowest)] border-y border-primary/20 py-12">
       <div className="max-w-[1100px] mx-auto px-4 md:px-5 relative z-10">
         <div className="text-center mb-10">
           <h2 className="bp-display text-white tracking-[0.2em] uppercase text-xl md:text-2xl mb-2">
@@ -132,10 +132,10 @@ export function BookContextChain({ items }: BookContextChainProps) {
                         : undefined,
                   }}
                 >
-                <p className="bp-label-caps bp-tip-title text-[var(--bp-primary)] mb-2 tracking-widest uppercase">
+                <p className="bp-label-caps bp-tip-title text-[var(--bp-primary)] mb-2 tracking-widest uppercase wrap-break-word [hyphens:auto]">
                   {item.title}
                 </p>
-                <p className="text-xs md:text-sm text-white/90 leading-relaxed">{item.text}</p>
+                <p className="text-xs md:text-sm text-white/90 leading-relaxed wrap-break-word [hyphens:auto]">{item.text}</p>
                 {/* Стрелочка тултипа: сдвигаем обратно, чтобы оставалась над иконкой */}
                 <div
                   className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[var(--bp-surface-container-high)]"
