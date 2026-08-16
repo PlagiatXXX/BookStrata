@@ -72,7 +72,7 @@ const siteNavigationJsonLd = {
     { "@type": "SiteNavigationElement", name: "Коллекции", url: `${SITE_URL}/collections` },
     { "@type": "SiteNavigationElement", name: "Новости и сообщество", url: `${SITE_URL}/community` },
     { "@type": "SiteNavigationElement", name: "Знаменитости", url: `${SITE_URL}/celebrities` },
-    { "@type": "SiteNavigationElement", name: "Поддержать проект", url: `${SITE_URL}/pricing` },
+    { "@type": "SiteNavigationElement", name: "Угостить автора", url: `${SITE_URL}/pricing` },
     { "@type": "SiteNavigationElement", name: "О проекте", url: `${SITE_URL}/about` },
     { "@type": "SiteNavigationElement", name: "Контакты", url: `${SITE_URL}/contact` },
   ],

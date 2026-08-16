@@ -47,6 +47,19 @@ const BOOK_LIST_SELECT = {
   _count: { select: { comments: true } },
 } satisfies Prisma.BookSelect;
 
+/** Сворачивает группы AnalyticsEvent в map slug → просмотры.
+ *  url бывает полным href (https://bookstrata.ru/books/x) и путём (/books/x). */
+function collectViewsBySlug(groups: Array<{ url: string | null; _count: { url: number } }>) {
+  const viewsBySlug = new Map<string, number>();
+  for (const g of groups) {
+    const slug = g.url?.split("/books/")[1]?.split("/")[0];
+    if (slug && /^[a-z0-9-]+$/.test(slug)) {
+      viewsBySlug.set(slug, (viewsBySlug.get(slug) ?? 0) + g._count.url);
+    }
+  }
+  return viewsBySlug;
+}
+
 export async function listBooks(params: BookListParams) {
   const where: Prisma.BookWhereInput = {};
   if (params.q) {
@@ -69,7 +82,8 @@ export async function listBooks(params: BookListParams) {
           ? { title: "asc" }
           : { updatedAt: "desc" };
 
-  const [items, total] = await Promise.all([
+  // Просмотры считаем одной агрегацией по всем /books/ и привязываем по slug
+  const [items, total, viewGroups] = await Promise.all([
     prisma.book.findMany({
       where,
       orderBy,
@@ -78,9 +92,23 @@ export async function listBooks(params: BookListParams) {
       select: BOOK_LIST_SELECT,
     }),
     prisma.book.count({ where }),
+    prisma.analyticsEvent.groupBy({
+      by: ["url"],
+      where: {
+        event: "page_view",
+        url: { contains: "/books/" },
+        ...excludedUserFilter,
+      },
+      _count: { url: true },
+    }),
   ]);
 
-  return { items, total };
+  const viewsBySlug = collectViewsBySlug(viewGroups);
+
+  return {
+    items: items.map((book) => ({ ...book, views: viewsBySlug.get(book.slug ?? "") ?? 0 })),
+    total,
+  };
 }
 
 /** Полная книга для редактора (contextChain, история slug). */
@@ -346,14 +374,7 @@ export async function topBooksByViews(limit = 10) {
     take: 200,
   });
 
-  // Сливаем варианты url одной книги (href и путь) в один slug
-  const viewsBySlug = new Map<string, number>();
-  for (const g of groups) {
-    const slug = g.url?.split("/books/")[1]?.split("/")[0];
-    if (slug && /^[a-z0-9-]+$/.test(slug)) {
-      viewsBySlug.set(slug, (viewsBySlug.get(slug) ?? 0) + g._count.url);
-    }
-  }
+  const viewsBySlug = collectViewsBySlug(groups);
 
   const topSlugs = [...viewsBySlug.entries()]
     .sort((a, b) => b[1] - a[1])

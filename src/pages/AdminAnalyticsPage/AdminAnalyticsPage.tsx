@@ -19,7 +19,7 @@ const EVENT_LABELS: Record<string, string> = {
   book_search: 'Поиск книг',
   ai_librarian_message: 'Сообщение Букстражу',
   ai_avatar: 'Генерация аватара',
-  donate_page_open: 'Открытие страницы поддержки',
+  donate_page_open: 'Открытие страницы угощения',
   donate_copy: 'Копирование реквизитов',
   review_write: 'Написание ревью',
   battle_participate: 'Участие в битве',

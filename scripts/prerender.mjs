@@ -223,7 +223,8 @@ async function addPublicTierListRoutes() {
         continue;
       }
       const path = `/tier-lists/${slug}`;
-      ROUTES.push({ path, name: `Тир-лист: ${item.title}` });
+      // authorName сохраняем отдельно — используется в SEO-fallback ниже
+      ROUTES.push({ path, name: `Тир-лист: ${item.title}`, authorName: item.authorName });
       log(`  → ${path} (${item.title})`);
     }
     log(`✅ Added ${items.filter(i => i.slug).length} tier lists to prerender`);
@@ -945,8 +946,10 @@ async function processRoute(browser, route) {
         const slug = route.path.replace("/tier-lists/", "");
         // Используем name из ROUTES (там реальное название из API), а не deslugify
         const readableTitle = route.name.replace("Тир-лист: ", "") || deslugify(slug);
-        fallbackTitle = `${readableTitle} — книжный тир-лист | BookStrata`;
-        fallbackDesc = `Тир-лист «${readableTitle}» — визуальный рейтинг книг, составленный читателем на BookStrata. Оценивайте и сортируйте любимые книги.`;
+        // Автор в title/description уникализирует тир-листы с одинаковыми названиями
+        const authorPart = route.authorName && route.authorName !== "Anonymous" ? ` от @${route.authorName}` : "";
+        fallbackTitle = `${readableTitle} — книжный тир-лист${authorPart} | BookStrata`;
+        fallbackDesc = `Тир-лист «${readableTitle}»${authorPart ? ` от пользователя ${authorPart}` : ""} — визуальный рейтинг книг, составленный читателем на BookStrata. Оценивайте и сортируйте любимые книги.`;
         canonicalPath = route.path;
         fallbackBodyHtml = `
 <article itemscope itemtype="https://schema.org/ItemList">

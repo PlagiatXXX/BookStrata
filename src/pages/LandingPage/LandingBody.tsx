@@ -628,7 +628,7 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
                 )}
 
                 <h3 className="landing-pricing__name">
-                  {plan.name === "Донат" ? (
+                  {plan.name === "Угощение" ? (
                     <Heart size={18} className="text-amber-300" />
                   ) : (
                     <Sparkles size={18} className="text-cyan-400" />
@@ -652,7 +652,7 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
                   className={`landing-pricing__cta ${plan.donate ? "landing-pricing__cta--donate" : ""}`}
                   type="button"
                 >
-                  {plan.donate ? "Поддержать" : "Начать сейчас"}
+                  {plan.donate ? "Угостить" : "Начать сейчас"}
                 </button>
 
                 <ul className="landing-pricing__features">

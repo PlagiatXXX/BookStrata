@@ -1,13 +1,13 @@
 // src/pages/AdminBooksPage/AdminBooksPage.tsx
 // Админка каталога книг (Фаза 7, seobook.md): таблица с поиском и
-// фильтрами (status/genre/дубли), топ по просмотрам, редактор книги
-// (поля, slug с историей, contextChain, публикация через инвариант
-// полноты, обогащение Google Books), ручной merge дублей, модерация
-// комментариев.
+// фильтрами (status/genre/дубли) и аналитикой (просмотры из AnalyticsEvent),
+// редактор книги (поля, slug с историей, contextChain, публикация через
+// инвариант полноты, обогащение Google Books), ручной merge дублей,
+// модерация комментариев.
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Search, Eye, MessageSquare } from "lucide-react";
+import { ArrowLeft, Search, MessageSquare, Pencil } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { listAdminBooks } from "@/lib/adminBooksApi";
 import { useAdminBooks } from "./hooks/useAdminBooks";
@@ -47,37 +47,11 @@ export default function AdminBooksPage() {
           <span className="text-sm">Назад в админку</span>
         </button>
 
-        <div className="mb-6">
+        <div className="mb-4">
           <h1 className="text-2xl font-extrabold text-[var(--ink-0)]">Каталог книг</h1>
           <p className="mt-1 text-sm text-[var(--ink-1)]">
             {h.total} книг · публикация — только при полном наборе обязательных полей
           </p>
-        </div>
-
-        {/* Топ по просмотрам */}
-        <div className="mb-6 rounded-xl border border-[var(--ink-3)] bg-[var(--bg-1)] p-4">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--ink-0)]">
-            <Eye size={15} className="text-[var(--accent-main)]" /> Топ по просмотрам
-          </h2>
-          {h.topViewsLoading ? (
-            <p className="text-xs text-[var(--ink-2)]">Загрузка…</p>
-          ) : h.topViews.length === 0 ? (
-            <p className="text-xs text-[var(--ink-2)]">Просмотров страниц книг пока нет</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-              {h.topViews.map(({ book, views }, i) => (
-                <a
-                  key={book.id}
-                  href={book.status === "published" && book.slug ? `/books/${book.slug}` : undefined}
-                  className="flex items-center gap-2 rounded-lg border border-[var(--ink-3)] bg-[var(--bg-0)] px-3 py-2 hover:border-[var(--accent-main)]"
-                >
-                  <span className="w-4 shrink-0 text-xs font-bold text-[var(--ink-2)]">{i + 1}</span>
-                  <span className="min-w-0 flex-1 truncate text-xs text-[var(--ink-0)]">{book.title}</span>
-                  <span className="shrink-0 text-xs font-medium text-[var(--accent-main)]">{views}</span>
-                </a>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Фильтры */}
@@ -136,27 +110,28 @@ export default function AdminBooksPage() {
 
         {/* Таблица */}
         <div className="overflow-x-auto rounded-xl border border-[var(--ink-3)] bg-[var(--bg-1)]">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[var(--ink-3)] text-xs uppercase tracking-wide text-[var(--ink-2)]">
-                <th className="px-3 py-2.5 font-medium">Книга</th>
-                <th className="px-3 py-2.5 font-medium">Статус</th>
-                <th className="px-3 py-2.5 font-medium">Рейтинг</th>
-                <th className="px-3 py-2.5 font-medium">Лайки</th>
-                <th className="px-3 py-2.5 font-medium">Коммент.</th>
-                <th className="px-3 py-2.5 font-medium">Обновлено</th>
-                <th className="px-3 py-2.5 text-right font-medium">Действия</th>
+                <th className="whitespace-nowrap px-1.5 py-1.5 font-medium">Книга</th>
+                <th className="whitespace-nowrap px-1.5 py-1.5 font-medium">Статус</th>
+                <th className="whitespace-nowrap px-1.5 py-1.5 font-medium">Рейт.</th>
+                <th className="whitespace-nowrap px-1.5 py-1.5 font-medium">Лайки</th>
+                <th className="whitespace-nowrap px-1.5 py-1.5 font-medium">Комм.</th>
+                <th className="whitespace-nowrap px-1.5 py-1.5 font-medium">Обновл.</th>
+                <th className="whitespace-nowrap px-1.5 py-1.5 text-right font-medium">Просм.</th>
+                <th className="whitespace-nowrap px-1.5 py-1.5 text-right font-medium">Действ.</th>
               </tr>
             </thead>
             <tbody>
               {h.loading ? (
-                <tr><td colSpan={7} className="px-3 py-10 text-center text-[var(--ink-2)]">Загрузка…</td></tr>
+                <tr><td colSpan={8} className="px-3 py-10 text-center text-[var(--ink-2)]">Загрузка…</td></tr>
               ) : h.items.length === 0 ? (
-                <tr><td colSpan={7} className="px-3 py-10 text-center text-[var(--ink-2)]">Ничего не найдено</td></tr>
+                <tr><td colSpan={8} className="px-3 py-10 text-center text-[var(--ink-2)]">Ничего не найдено</td></tr>
               ) : (
                 h.items.map((b) => (
                   <tr key={b.id} className="border-b border-[var(--ink-3)]/50 last:border-0 hover:bg-[var(--ink-3)]/30">
-                    <td className="px-3 py-2.5">
+                    <td className="px-1.5 py-1.5">
                       <div className="flex items-center gap-3">
                         <img
                           src={b.coverImageUrl || undefined}
@@ -171,40 +146,42 @@ export default function AdminBooksPage() {
                           </p>
                           <p className="truncate text-xs text-[var(--ink-2)]">
                             {b.author ?? "—"}
-                            {b.slug ? ` · ${b.slug}` : " · slug не задан"}
                             {b.genre ? ` · ${b.genre}` : ""}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-1.5 py-1.5">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        className={`whitespace-nowrap rounded-full px-1.5 py-0.5 text-[11px] font-medium ${
                           b.status === "published"
                             ? "bg-emerald-500/15 text-emerald-300"
                             : "bg-amber-500/15 text-amber-300"
                         }`}
                       >
-                        {b.status === "published" ? "published" : "draft"}
+                        {b.status === "published" ? "Опубл." : "Черн."}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-[var(--ink-0)]">{b.rating ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-[var(--ink-0)]">{b.likesCount}</td>
-                    <td className="px-3 py-2.5 text-[var(--ink-0)]">{b._count.comments}</td>
-                    <td className="px-3 py-2.5 text-xs text-[var(--ink-2)]">
-                      {new Date(b.updatedAt).toLocaleDateString("ru-RU")}
+                    <td className="px-1.5 py-1.5 text-[var(--ink-0)]">{b.rating ?? "—"}</td>
+                    <td className="px-1.5 py-1.5 text-[var(--ink-0)]">{b.likesCount}</td>
+                    <td className="px-1.5 py-1.5 text-[var(--ink-0)]">{b._count.comments}</td>
+                    <td className="px-1.5 py-1.5 text-xs text-[var(--ink-2)]">
+                      {new Date(b.updatedAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                     </td>
-                    <td className="px-3 py-2.5 text-right">
-                      <div className="flex justify-end gap-1.5">
+                    <td className="px-1.5 py-1.5 text-right font-medium text-[var(--accent-main)]">{b.views}</td>
+                    <td className="px-1.5 py-1.5 text-right">
+                      <div className="flex justify-end gap-1">
                         <button
                           onClick={() => h.setEditingId(b.id)}
-                          className="rounded-lg border border-[var(--ink-3)] px-2.5 py-1 text-xs text-[var(--ink-0)] hover:bg-[var(--ink-3)] cursor-pointer"
+                          title="Редактировать"
+                          aria-label="Редактировать"
+                          className="rounded-lg border border-[var(--ink-3)] px-1.5 py-1 text-[var(--ink-0)] hover:bg-[var(--ink-3)] cursor-pointer"
                         >
-                          Редактировать
+                          <Pencil size={12} />
                         </button>
                         <button
                           onClick={() => h.setCommentsBook({ id: b.id, title: b.title })}
-                          className="flex items-center gap-1 rounded-lg border border-[var(--ink-3)] px-2.5 py-1 text-xs text-[var(--ink-0)] hover:bg-[var(--ink-3)] cursor-pointer"
+                          className="flex items-center gap-1 rounded-lg border border-[var(--ink-3)] px-1.5 py-1 text-[var(--ink-0)] hover:bg-[var(--ink-3)] cursor-pointer"
                         >
                           <MessageSquare size={12} /> {b._count.comments}
                         </button>

@@ -247,6 +247,38 @@
   animation: donateBurst 0.52s cubic-bezier(0.18, 0.88, 0.26, 1) both;
 }
 
+/* Чашка кофе: дымок поднимается из чашки и тает (CoffeeCup) */
+.coffee-steam path {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: steamRise 2.4s ease-in-out infinite;
+}
+
+.coffee-steam path:nth-child(2) {
+  animation-delay: 0.8s;
+}
+
+.coffee-steam path:nth-child(3) {
+  animation-delay: 1.6s;
+}
+
+@keyframes steamRise {
+  0% {
+    opacity: 0;
+    transform: translateY(1.5px) scale(0.8);
+  }
+  30% {
+    opacity: 0.85;
+  }
+  70% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-3px) scale(1.2);
+  }
+}
+
 /* Skeleton shimmer effect */
 .animate-shimmer {
   background: linear-gradient(

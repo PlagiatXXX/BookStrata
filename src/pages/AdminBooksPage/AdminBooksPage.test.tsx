@@ -24,7 +24,6 @@ vi.mock("@/lib/adminBooksApi", () => ({
   unpublishAdminBook: vi.fn(),
   enrichAdminBook: vi.fn(),
   mergeAdminBooks: vi.fn(),
-  getTopViewedBooks: vi.fn(),
   listAdminComments: vi.fn(),
   updateAdminComment: vi.fn(),
   deleteAdminComment: vi.fn(),
@@ -44,6 +43,7 @@ const bookRow: AdminBookListItem = {
   coverImageUrl: "/cover.jpg",
   rating: 9.1,
   likesCount: 5,
+  views: 42,
   publishedAt: "2026-01-01T00:00:00Z",
   updatedAt: "2026-01-02T00:00:00Z",
   mergedIntoId: null,
@@ -78,7 +78,6 @@ function renderPage() {
 }
 
 const mockedList = vi.mocked(adminBooksApi.listAdminBooks);
-const mockedTop = vi.mocked(adminBooksApi.getTopViewedBooks);
 const mockedDetail = vi.mocked(adminBooksApi.getAdminBook);
 const mockedComments = vi.mocked(adminBooksApi.listAdminComments);
 const mockedPublish = vi.mocked(adminBooksApi.publishAdminBook);
@@ -90,9 +89,6 @@ describe("AdminBooksPage (Фаза 7)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedList.mockResolvedValue({ items: [bookRow], total: 1 });
-    mockedTop.mockResolvedValue({
-      items: [{ book: { ...bookRow, id: 11, title: "Война и мир", author: "Лев Толстой" }, views: 42 }],
-    });
     mockedDetail.mockResolvedValue(bookDetail);
     mockedComments.mockResolvedValue({ items: [], total: 0 });
     mockedPublish.mockResolvedValue({ ...bookRow, status: "published" } as never);
@@ -101,11 +97,12 @@ describe("AdminBooksPage (Фаза 7)", () => {
     mockedUpdate.mockResolvedValue(bookDetail);
   });
 
-  it("рендерит таблицу книг и топ по просмотрам", async () => {
+  it("рендерит таблицу книг с просмотрами", async () => {
     renderPage();
 
     expect(await screen.findByText("Анна Каренина")).toBeInTheDocument();
     expect(screen.getByText(/Лев Толстой/)).toBeInTheDocument();
+    // Просмотры из AnalyticsEvent — колонка в общей таблице
     expect(screen.getByText("42")).toBeInTheDocument();
     expect(mockedList).toHaveBeenCalledWith(
       expect.objectContaining({ limit: 50 }),

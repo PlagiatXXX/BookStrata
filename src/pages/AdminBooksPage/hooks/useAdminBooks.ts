@@ -14,7 +14,6 @@ import {
   unpublishAdminBook,
   enrichAdminBook,
   mergeAdminBooks,
-  getTopViewedBooks,
   listAdminComments,
   updateAdminComment,
   deleteAdminComment,
@@ -53,11 +52,6 @@ export function useAdminBooks() {
     placeholderData: (prev) => prev,
   });
 
-  const topViewsQuery = useQuery({
-    queryKey: ["admin-books-top-views"],
-    queryFn: () => getTopViewedBooks(10),
-  });
-
   const detailQuery = useQuery({
     queryKey: ["admin-book", editingId],
     queryFn: () => (editingId !== null ? getAdminBook(editingId) : Promise.resolve(null)),
@@ -67,7 +61,6 @@ export function useAdminBooks() {
   const invalidateLists = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-books"] });
     queryClient.invalidateQueries({ queryKey: ["admin-book"] });
-    queryClient.invalidateQueries({ queryKey: ["admin-books-top-views"] });
   };
 
   const saveMutation = useMutation({
@@ -163,9 +156,6 @@ export function useAdminBooks() {
     offset, setOffset,
     pageSize,
     genres,
-    // топ просмотров
-    topViews: topViewsQuery.data?.items ?? [],
-    topViewsLoading: topViewsQuery.isLoading,
     // редактирование
     editingId, setEditingId,
     detail: detailQuery.data ?? null,

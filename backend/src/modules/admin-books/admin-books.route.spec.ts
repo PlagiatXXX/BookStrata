@@ -113,6 +113,8 @@ describe("Admin Books Routes", () => {
     mocks.publishBook.mockImplementation(() => Promise.resolve({ id: 10, status: "published" }));
     mocks.unpublishBook.mockImplementation(() => Promise.resolve({ id: 10, status: "draft" }));
     mocks.findOrCreate.mockImplementation((name: string) => Promise.resolve({ id: 99, name }));
+    // По умолчанию просмотров нет; top-views тесты переопределяют ниже
+    mocks.prisma.analyticsEvent.groupBy.mockResolvedValue([]);
     app = await createApp();
   });
 
@@ -178,6 +180,27 @@ describe("Admin Books Routes", () => {
 
       expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { mergedIntoId: { not: null } } }),
+      );
+    });
+
+    it("views — просмотры из AnalyticsEvent, привязанные по slug", async () => {
+      mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
+      mocks.prisma.book.count.mockResolvedValue(1);
+      mocks.prisma.analyticsEvent.groupBy.mockResolvedValue([
+        { url: "https://bookstrata.ru/books/anna-karenina-lev-tolstoj", _count: { url: 9 } },
+        { url: "/books/anna-karenina-lev-tolstoj", _count: { url: 3 } },
+      ]);
+
+      const res = await request(app.server)
+        .get("/api/admin/books")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items[0].views).toBe(12);
+      expect(mocks.prisma.analyticsEvent.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { event: "page_view", url: { contains: "/books/" } },
+        }),
       );
     });
   });

@@ -20,6 +20,7 @@ import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import { getDemoInitialData } from "./_initialData";
+import { buildTierListSeoDescription, buildTierListSeoTitle } from "./seo";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { AiLibrarianWidget } from "@/components/AiLibrarian/AiLibrarianWidget";
@@ -743,8 +744,8 @@ const TierListEditorContent = () => {
       {/* Не рендерим SEOHead пока грузятся данные — чтобы избежать пустых мета-тегов */}
       {(isLoading && !apiData) ? null : (
         <SEOHead
-          title={apiData?.title ? `${apiData.title} — книжный тир-лист` : "Книжный тир-лист"}
-          description={apiData?.title ? `Тир-лист «${apiData.title}» — визуальный рейтинг книг, созданный на BookStrata` : "Книжный тир-лист на BookStrata — рейтинг книг по уровням"}
+          title={buildTierListSeoTitle(apiData?.title, apiData?.user?.username)}
+          description={buildTierListSeoDescription(apiData?.title, apiData?.user?.username)}
           url={`/tier-lists/${pageUrl}`}
           image={apiData?.coverImageUrl || undefined}
           publishedTime={apiData?.createdAt ?? apiData?.updatedAt}

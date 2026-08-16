@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
 import { SearchBar } from "@/components/SearchBar/SearchBar";
 import { Logo } from "./Logo";
+import { CoffeeCup } from "./CoffeeCup";
 import { Avatar } from "@/components/Avatar";
 import {
   List,
@@ -27,6 +28,8 @@ interface NavItem {
   icon: React.ReactNode;
   description: string;
   badge?: string;
+  /** Иконка справа от текста (чашка «Угостить») */
+  iconAfter?: boolean;
 }
 
 interface HeaderProps {
@@ -211,14 +214,11 @@ export const Header = ({
       badge: totalCount > 0 ? String(totalCount) : undefined,
     },
     {
-      label: "Поддержать",
+      label: "Угостить",
       onClick: () => navigate("/pricing"),
-      icon: (
-        <span className="inline-block text-xl leading-none animate-dove-flight">
-          🕊️
-        </span>
-      ),
-      description: "Поддержать проект",
+      icon: <CoffeeCup className="h-5 w-5 text-amber-400" />,
+      description: "Угостить автора кофе",
+      iconAfter: true,
     },
   ];
 
@@ -266,7 +266,7 @@ export const Header = ({
                             : "text-gray-300 hover:text-white"
                       }`}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className={`flex items-center gap-2 ${item.iconAfter ? "flex-row-reverse" : ""}`}>
                         <span className="relative shrink-0">
                           {item.icon}
                           {item.badge && (

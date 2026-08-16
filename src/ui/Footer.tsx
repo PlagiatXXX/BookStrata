@@ -21,7 +21,9 @@ import {
 } from "lucide-react";
 import { Meteors } from "./Meteors";
 import { SocialIcons } from "./SocialIcons";
+import { CoffeeCup } from "./CoffeeCup";
 import { apiClient } from "@/lib/api-client";
+import { getCollections } from "@/lib/collectionsApi";
 
 const marqueeStyle = `
 @keyframes marquee {
@@ -92,6 +94,15 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
       apiClient.get<Array<{ id: number; name: string }>>('/donors')
         .then((data) => data.map((d) => d.name)),
     staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  // Популярные подборки — перелинковка коллекций со всех страниц (SEO).
+  // Тот же queryKey, что на странице коллекции — общий кэш.
+  const { data: collections = [] } = useQuery({
+    queryKey: ["all-collections"],
+    queryFn: getCollections,
+    staleTime: 60 * 1000,
     retry: 2,
   });
 
@@ -212,12 +223,12 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
             </div>
           </div>
 
-          {/* Central Zone: Main Links + SocialIcons (под одной шапкой) */}
+          {/* Central Zone: Main Links + Популярные подборки */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
               Основное
             </h4>
-            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-10">
               <nav aria-label="Основная навигация футера" className="shrink-0">
                 <ul className="flex flex-col gap-3">
                    {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
@@ -255,26 +266,31 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 </ul>
               </nav>
 
-              {/* SocialIcons — бургер рядом с Основное */}
+              {/* Популярные подборки — SEO-перелинковка коллекций */}
               <div className="flex flex-col items-start">
                 <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
-                  Соцсети
+                  Подборки
                 </span>
-                <SocialIcons
-                  links={{
-                    telegram: TELEGRAM_URL,
-                    vk: VK_URL,
-                    github: "https://github.com/PlagiatXXX",
-                    yandexMail: "mailto:fedorpasyada@yandex.ru",
-                    youtube: "https://www.youtube.com/@fedor1994",
-                  }}
-                />
+                <nav aria-label="Популярные подборки" className="shrink-0">
+                  <ul className="flex flex-col gap-3">
+                    {collections.slice(0, 8).map((collection) => (
+                      <li key={collection.id}>
+                        <Link
+                          to={`/collections/${collection.slug}`}
+                          className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
+                        >
+                          {collection.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
               </div>
             </div>
           </div>
 
-          {/* Right Zone: Donate Block */}
-          <div className="flex flex-col items-end self-end text-right">
+          {/* Right Zone: Donate Block + SocialIcons (соцсети — крайние справа, сетка иконок раскрывается над пустотой) */}
+          <div className="flex flex-col items-end justify-between text-right gap-8">
             <div className="relative max-w-full">
               <button
                 type="button"
@@ -285,8 +301,10 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 aria-expanded={isDonateOpen}
                 aria-controls="donate-menu"
               >
-                <span className="inline-block text-amber-400 text-sm sm:text-base leading-none animate-dove-flight shrink-0">🕊️</span>
-                <span className="truncate">Поддержка проекта</span>
+                <span className="inline-block text-amber-400 shrink-0">
+                  <CoffeeCup className="h-4 w-4 sm:h-5 sm:w-5" />
+                </span>
+                <span className="truncate">Угостить автора</span>
                 <ChevronDown
                   size={16}
                   className={`transition-transform duration-300 shrink-0 ${
@@ -309,10 +327,10 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
               >
                 <div className="relative p-5">
                   <h3 className="text-base font-bold text-white">
-                    Поддержать проект
+                    Угостить автора
                   </h3>
                   <p className="mt-2 text-xs text-amber-50/70 leading-relaxed text-left">
-                    Ваша поддержка помогает оплачивать сервера и делать BookStrata
+                    Ваше угощение помогает оплачивать сервера и делать BookStrata
                     лучше. Спасибо, что вы с нами!
                   </p>
 
@@ -340,6 +358,22 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Соцсети — крайняя правая колонка, сетка иконок раскрывается над пустотой */}
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
+                Соцсети
+              </span>
+              <SocialIcons
+                links={{
+                  telegram: TELEGRAM_URL,
+                  vk: VK_URL,
+                  github: "https://github.com/PlagiatXXX",
+                  yandexMail: "mailto:fedorpasyada@yandex.ru",
+                  youtube: "https://www.youtube.com/@fedor1994",
+                }}
+              />
             </div>
           </div>
         </div>

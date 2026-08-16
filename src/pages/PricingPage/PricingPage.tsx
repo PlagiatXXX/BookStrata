@@ -57,7 +57,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
             <Heart className="h-5 w-5 text-amber-300" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Поддержать проект</h2>
+            <h2 className="text-lg font-bold text-white">Угостить автора</h2>
             <p className="text-sm text-gray-400">
               Любая сумма на развитие
             </p>
@@ -154,10 +154,10 @@ export default function PricingPage() {
   return (
     <div className="pricing-page">
       <SEOHead
-        title="Поддержать проект"
-        description="BookStrata полностью бесплатен. Поддержите проект донатом, если он вам полезен. Все функции уже доступны без ограничений."
+        title="Угостить автора"
+        description="BookStrata полностью бесплатен. Угостите автора чашкой кофе, если проект вам полезен. Все функции уже доступны без ограничений."
         url="/pricing"
-        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Поддержать", url: "/pricing" }]}
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Угостить", url: "/pricing" }]}
       />
       <div className="pricing-page__container">
         <div className="pricing-page__header">
@@ -169,12 +169,12 @@ export default function PricingPage() {
             <ArrowLeft size={14} />
             Назад
           </button>
-          <Breadcrumbs items={[{ label: "Поддержать" }]} />
-          <h1 className="pricing-page__title">Поддержать проект</h1>
+          <Breadcrumbs items={[{ label: "Угостить" }]} />
+          <h1 className="pricing-page__title">Угостить автора</h1>
           <p className="pricing-page__subtitle">
             BookStrata полностью бесплатен — все функции доступны без ограничений.
             <br />
-            Если проект вам полезен, поддержите его развитие любым донатом.
+            Если проект вам полезен, угостите автора чашкой кофе.
           </p>
         </div>
 
@@ -215,21 +215,21 @@ export default function PricingPage() {
             <div className="pricing-card__body">
               <div className="pricing-card__name">
                 <Heart size={18} className="text-amber-300" />
-                Донат
+                Угощение
               </div>
               <div className="pricing-card__price">
                 <span className="pricing-card__amount">Любая</span>
                 <span className="pricing-card__period">сумма</span>
               </div>
               <p className="pricing-card__description">
-                Поддержите развитие проекта
+                Угостите автора кофе
               </p>
               <button
                 onClick={() => { apiTrackEvent('donate_page_open'); setShowDonateModal(true) }}
                 className="pricing-card__cta pricing-card__cta--donate cursor-pointer"
                 type="button"
               >
-                Поддержать
+                Угостить
               </button>
               <ul className="pricing-card__features">
                 <li className="pricing-card__feature">

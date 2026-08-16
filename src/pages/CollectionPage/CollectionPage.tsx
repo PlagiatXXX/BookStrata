@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Tag, Calendar, BookOpen, Sparkles } from "lucide-react";
 import DOMPurify from "dompurify";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -9,16 +10,18 @@ import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { StaticTierView } from "@/components/StaticTierView";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
+import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBookshelf } from "@/hooks/useBookshelf";
 import type { ReadStatus } from "@/contexts/bookshelf.context";
 import { sileo } from "sileo";
-import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectionsApi";
+import { getCollectionBySlug, getCollectionPreviewBySlug, getCollections } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/types/collection";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { COLLECTION_TITLES } from "@/data/collection-seo";
 import { buildCollectionSeoDesc, buildCollectionSeoTitle } from "./seo";
+import { pickRelatedCollections } from "./related";
 import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
 import "./CollectionPage.css";
 
@@ -83,6 +86,21 @@ export default function CollectionPage() {
       totalBooks: bookList.length,
     };
   }, [collection?.books]);
+
+  // Похожие подборки — перекрёстная перелинковка коллекций (SEO + UX).
+  // Грузим только когда текущая коллекция известна.
+  const { data: allCollections = [] } = useQuery({
+    queryKey: ["all-collections"],
+    queryFn: getCollections,
+    staleTime: 60 * 1000,
+    retry: 2,
+    enabled: !!collection,
+  });
+
+  const relatedCollections = useMemo(
+    () => (collection ? pickRelatedCollections(collection, allCollections, 6) : []),
+    [collection, allCollections],
+  );
 
   useEffect(() => {
     const loadCollection = async () => {
@@ -475,6 +493,27 @@ return DOMPurify.sanitize(collection.content);
           onClose={handleAiClose}
           context={{ pageType: 'collection', slug }}
         />
+
+        {/* Похожие подборки — перекрёстные ссылки между коллекциями (SEO-перелинковка) */}
+        {relatedCollections.length > 0 && (
+          <section className="mt-12">
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+              <div>
+                <h2 className="community-heading text-xl font-black leading-tight sm:text-2xl">
+                  Похожие подборки
+                </h2>
+                <p className="text-(--ink-1) mt-1 text-sm">
+                  Ещё подборки книг, которые могут вам понравиться
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+              {relatedCollections.map((related) => (
+                <CollectionCard key={related.id} collection={related} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t border-(--line-soft)">

@@ -57,7 +57,7 @@ export function DonateModal({ onClose }: DonateModalProps) {
             <Heart className="h-5 w-5 text-amber-300" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Поддержать проект</h2>
+            <h2 className="text-lg font-bold text-white">Угостить автора</h2>
             <p className="text-sm text-gray-400">
               Любая сумма на развитие
             </p>

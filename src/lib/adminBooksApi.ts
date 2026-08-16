@@ -21,6 +21,7 @@ export interface AdminBookListItem {
   coverImageUrl: string;
   rating: number | null;
   likesCount: number;
+  views: number;
   publishedAt: string | null;
   updatedAt: string;
   mergedIntoId: number | null;
@@ -131,12 +132,6 @@ function fileToBase64(file: File): Promise<string> {
 
 export async function mergeAdminBooks(dupId: number, targetId: number) {
   return apiClient.post(`/admin/books/${dupId}/merge`, { targetId });
-}
-
-export async function getTopViewedBooks(limit = 10) {
-  return apiClient.get<{ items: { book: AdminBookListItem; views: number }[] }>(
-    `/admin/books/top-views?limit=${limit}`,
-  );
 }
 
 export async function listAdminComments(params: {
