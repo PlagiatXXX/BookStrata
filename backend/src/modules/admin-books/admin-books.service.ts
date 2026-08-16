@@ -13,6 +13,8 @@ import {
   type DedupeBook,
 } from "../books/bookDedupe.service.js";
 import { createAuthorService } from "../authors/authors.service.js";
+import { ValidationError } from "../../lib/errors.js";
+import { validateRemoteImageDimensions } from "../../lib/validators.js";
 
 const authorService = createAuthorService(prisma);
 
@@ -184,6 +186,12 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
     updateData.tags = data.tags.map((t) => t.trim()).filter(Boolean);
   }
   if (data.coverImageUrl !== undefined) {
+    // Проверяем только при смене URL — старые книги с мелкой обложкой
+    // можно редактировать без замены картинки
+    if (data.coverImageUrl.trim() !== book.coverImageUrl) {
+      const coverError = await validateRemoteImageDimensions(data.coverImageUrl);
+      if (coverError) throw new ValidationError(coverError);
+    }
     updateData.coverImageUrl = data.coverImageUrl.trim();
   }
   if (data.publishedYear !== undefined) updateData.publishedYear = data.publishedYear;

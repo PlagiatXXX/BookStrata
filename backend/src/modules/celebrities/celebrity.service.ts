@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-import { NotFoundError } from "../../lib/errors.js";
+import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { Prisma } from "@prisma/client";
 import {
   createCelebritySchema,
@@ -15,6 +15,7 @@ import {
   syncCatalogCards,
   gcOrphanBooks,
 } from "../books/bookCatalogSync.service.js";
+import { validateRemoteImageDimensions } from "../../lib/validators.js";
 
 function slugify(text: string): string {
   const cyrillicToLatin: Record<string, string> = {
@@ -100,6 +101,12 @@ export async function getCelebrityById(id: number) {
 export async function createCelebrity(input: CreateCelebrityInput) {
   const slug = slugify(input.name);
 
+  // Фото должно быть не меньше минимума (иначе мылится на сайте)
+  if (input.photoUrl) {
+    const photoError = await validateRemoteImageDimensions(input.photoUrl);
+    if (photoError) throw new ValidationError(photoError);
+  }
+
   // Внешние обложки переводим на свой CDN (WebP через image-proxy)
   const [photoUrl, books] = await Promise.all([
     input.photoUrl ? migrateUrlToCdn(input.photoUrl) : Promise.resolve(""),
@@ -136,6 +143,16 @@ export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
 
   // Внешние обложки переводим на свой CDN (WebP через image-proxy)
   if (input.photoUrl !== undefined) {
+    // Проверяем только при смене URL — старые записи с мелким фото
+    // можно редактировать без замены картинки
+    const current = await prisma.celebrity.findUnique({
+      where: { id },
+      select: { photoUrl: true },
+    });
+    if (input.photoUrl.trim() !== (current?.photoUrl ?? "")) {
+      const photoError = await validateRemoteImageDimensions(input.photoUrl || "");
+      if (photoError) throw new ValidationError(photoError);
+    }
     data.photoUrl = await migrateUrlToCdn(input.photoUrl || "");
   }
   if (input.books !== undefined) {

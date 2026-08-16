@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { validateImageSize } from "./validators.js";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import sharp from "sharp";
+import { validateImageSize, validateRemoteImageDimensions } from "./validators.js";
 
 describe("validateImageSize", () => {
   const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -50,5 +51,111 @@ describe("validateImageSize", () => {
     expect(validateImageSize(dataUrl, 6 * 1024 * 1024)).toBe(
       "Размер изображения превышает лимит 6MB",
     );
+  });
+});
+
+describe("validateRemoteImageDimensions", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function pngBuffer(width: number, height: number): Promise<Buffer> {
+    return sharp({
+      create: {
+        width,
+        height,
+        channels: 3,
+        background: { r: 120, g: 80, b: 40 },
+      },
+    })
+      .png()
+      .toBuffer();
+  }
+
+  function stubFetch(
+    buffer: Buffer,
+    options: { ok?: boolean; contentType?: string } = {},
+  ) {
+    const { ok = true, contentType = "image/png" } = options;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok,
+      headers: new Headers({ "content-type": contentType }),
+      arrayBuffer: async () => buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("пропускает локальные пути, data URL и свой CDN без запроса", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(validateRemoteImageDimensions("/images/cover.jpg")).resolves.toBeNull();
+    await expect(validateRemoteImageDimensions("data:image/png;base64,AA==")).resolves.toBeNull();
+    await expect(validateRemoteImageDimensions("https://cdn.twcstorage.ru/x.webp")).resolves.toBeNull();
+    await expect(validateRemoteImageDimensions("")).resolves.toBeNull();
+    await expect(validateRemoteImageDimensions("ftp://example.com/x.jpg")).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("пропускает большую картинку (800×1200)", async () => {
+    const buffer = await pngBuffer(800, 1200);
+    const fetchMock = stubFetch(buffer);
+
+    await expect(validateRemoteImageDimensions("https://example.com/large.jpg")).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("блокирует маленькую картинку (100×150) с текстом ошибки", async () => {
+    const buffer = await pngBuffer(100, 150);
+    stubFetch(buffer);
+
+    const error = await validateRemoteImageDimensions("https://example.com/small.jpg");
+    expect(error).toContain("100×150");
+    expect(error).toContain("Минимум 400×600");
+  });
+
+  it("учитывает кастомный порог", async () => {
+    const buffer = await pngBuffer(300, 400);
+    stubFetch(buffer);
+
+    // 300×400 — мало для 400×600, но проходит для 250×350
+    await expect(
+      validateRemoteImageDimensions("https://example.com/mid.jpg", 250, 350),
+    ).resolves.toBeNull();
+    const error = await validateRemoteImageDimensions("https://example.com/mid.jpg", 400, 600);
+    expect(error).toContain("Минимум 400×600");
+  });
+
+  it("кэширует результат — повторная проверка не качает картинку", async () => {
+    const buffer = await pngBuffer(800, 1200);
+    const fetchMock = stubFetch(buffer);
+
+    await validateRemoteImageDimensions("https://example.com/cached.jpg");
+    await validateRemoteImageDimensions("https://example.com/cached.jpg");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("пропускает картинку при сетевой ошибке (не блокируем сохранение)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("ECONNREFUSED")),
+    );
+
+    await expect(validateRemoteImageDimensions("https://example.com/down.jpg")).resolves.toBeNull();
+  });
+
+  it("пропускает при HTTP-ошибке и не-image content type", async () => {
+    const buffer = await pngBuffer(800, 1200);
+    stubFetch(buffer, { ok: false });
+    await expect(validateRemoteImageDimensions("https://example.com/404.jpg")).resolves.toBeNull();
+
+    stubFetch(buffer, { contentType: "text/html" });
+    await expect(validateRemoteImageDimensions("https://example.com/html.jpg")).resolves.toBeNull();
+  });
+
+  it("пропускает битый файл, который не читается sharp'ом", async () => {
+    stubFetch(Buffer.from("not an image at all"));
+    await expect(validateRemoteImageDimensions("https://example.com/broken.jpg")).resolves.toBeNull();
   });
 });

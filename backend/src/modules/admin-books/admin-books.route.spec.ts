@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   searchBooks: vi.fn(),
   mergeGroup: vi.fn(),
   findOrCreate: vi.fn(),
+  validateRemoteImageDimensions: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("../../lib/prisma.js", () => ({ prisma: mocks.prisma }));
@@ -38,6 +39,10 @@ vi.mock("../books/bookDedupe.service.js", () => ({
 }));
 vi.mock("../authors/authors.service.js", () => ({
   createAuthorService: () => ({ findOrCreate: mocks.findOrCreate }),
+}));
+vi.mock("../../lib/validators.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/validators.js")>()),
+  validateRemoteImageDimensions: mocks.validateRemoteImageDimensions,
 }));
 vi.mock("../auth/auth.middleware.js", () => ({
   authMiddleware: vi.fn((request: any, _reply: any, done: any) => {
@@ -277,6 +282,48 @@ describe("Admin Books Routes", () => {
           }),
         }),
       );
+    });
+
+    it("мелкая обложка (< 400×600) → 400 с текстом ошибки", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.validateRemoteImageDimensions.mockResolvedValueOnce(
+        "Картинка слишком маленькая (182×277). Минимум 400×600",
+      );
+
+      const res = await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ coverImageUrl: "https://example.com/small.jpg" });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain("Картинка слишком маленькая");
+      expect(mocks.prisma.book.update).not.toHaveBeenCalled();
+    });
+
+    it("пустой coverImageUrl (удаление обложки) не блокируется", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.update.mockResolvedValue({ ...bookRow, coverImageUrl: "" });
+
+      const res = await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ coverImageUrl: "" });
+
+      expect(res.status).toBe(200);
+      expect(mocks.validateRemoteImageDimensions).toHaveBeenCalledWith("");
+    });
+
+    it("та же обложка → проверка не вызывается (вариант Б)", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.update.mockResolvedValue({ ...bookRow });
+
+      const res = await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ title: "Новое название", coverImageUrl: "/cover.jpg" });
+
+      expect(res.status).toBe(200);
+      expect(mocks.validateRemoteImageDimensions).not.toHaveBeenCalled();
     });
   });
 

@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
-import { NotFoundError } from "../../lib/errors.js";
+import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { Prisma } from "@prisma/client";
 import {
   createCollectionSchema,
@@ -18,6 +18,7 @@ import {
   migrateUrlToCdn,
   migrateUrlsArray,
 } from "../../lib/external-covers.js";
+import { validateRemoteImageDimensions } from "../../lib/validators.js";
 
 const authorService = createAuthorService(prisma);
 
@@ -133,6 +134,12 @@ export async function createCollection(input: CreateCollectionInput) {
     await registerAuthorsFromCollectionBooks(input.books);
   }
 
+  // Обложка должна быть не меньше минимума (иначе мылится на сайте)
+  if (input.coverImageUrl) {
+    const coverError = await validateRemoteImageDimensions(input.coverImageUrl);
+    if (coverError) throw new ValidationError(coverError);
+  }
+
   // Внешние обложки переводим на свой CDN (WebP через image-proxy),
   // чтобы не зависеть от чужих CDN (Amazon, LiveLib, Google и т.д.)
   const [coverImageUrl, bookCovers, books] = await Promise.all([
@@ -177,6 +184,16 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
 
   // Внешние обложки переводим на свой CDN (WebP через image-proxy)
   if (input.coverImageUrl !== undefined) {
+    // Проверяем только при смене URL — старые записи с мелкой обложкой
+    // можно редактировать без замены картинки
+    const current = await prisma.collection.findUnique({
+      where: { id },
+      select: { coverImageUrl: true },
+    });
+    if (input.coverImageUrl.trim() !== (current?.coverImageUrl ?? "")) {
+      const coverError = await validateRemoteImageDimensions(input.coverImageUrl || "");
+      if (coverError) throw new ValidationError(coverError);
+    }
     data.coverImageUrl = await migrateUrlToCdn(input.coverImageUrl || "");
   }
   if (input.bookCovers !== undefined) {

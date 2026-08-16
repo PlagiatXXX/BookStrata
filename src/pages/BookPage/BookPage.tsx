@@ -79,7 +79,7 @@ export default function BookPage() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="bg-[var(--bp-primary)] text-[var(--bp-on-primary)] px-5 py-2.5 rounded-lg"
+          className="bg-(--bp-primary) text-(--bp-on-primary) px-5 py-2.5 rounded-lg"
         >
           Попробовать снова
         </button>
@@ -173,11 +173,11 @@ export default function BookPage() {
                 className="absolute inset-0 bg-cover bg-center w-full h-full filter blur-xl opacity-40 scale-110"
                 style={{ backgroundImage: `url(${book.coverImageUrl})` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-[var(--bp-background)]/30 via-[var(--bp-background)]/80 to-[var(--bp-background)]" />
+              <div className="absolute inset-0 bg-linear-to-b from-(--bp-background)/30 via-(--bp-background)/80 to-(--bp-background)" />
             </div>
           )}
 
-          <div className="relative z-30 w-full max-w-[1100px] mx-auto px-4 md:px-5">
+          <div className="relative z-30 w-full max-w-275 mx-auto px-4 md:px-5">
             {/* Кнопка «Назад» + хлебные крошки */}
             <div className="flex items-center justify-between mb-8">
               <button
@@ -203,12 +203,12 @@ export default function BookPage() {
             <div className="md:col-span-5 flex flex-col justify-center relative z-20 md:pl-8">
               <div className="flex flex-wrap items-center gap-4 mb-2">
                 {book.genre && (
-                  <span className="bp-label-caps text-[var(--bp-primary)] tracking-widest">
+                  <span className="bp-label-caps text-(--bp-primary) tracking-widest">
                     {book.genre}
                   </span>
                 )}
                 {book.publishedYear && (
-                  <span className="bp-label-caps text-[var(--bp-on-surface-variant)] tracking-widest">
+                  <span className="bp-label-caps text-(--bp-on-surface-variant) tracking-widest">
                     {book.publishedYear} г.
                   </span>
                 )}
@@ -217,7 +217,7 @@ export default function BookPage() {
                     <div className="h-3 w-px bg-white/10" />
                     <div className="flex flex-wrap gap-4">
                       {book.tags.slice(0, 5).map((tag) => (
-                        <span key={tag} className="bp-label-caps bp-tag-caps text-[var(--bp-on-surface-variant)] tracking-widest">
+                        <span key={tag} className="bp-label-caps bp-tag-caps text-(--bp-on-surface-variant) tracking-widest">
                           #{tag}
                         </span>
                       ))}
@@ -230,7 +230,7 @@ export default function BookPage() {
                 {book.title}
               </h1>
               {book.author && (
-                <h2 className="text-lg text-[var(--bp-primary)]/90 drop-shadow-md mb-3">
+                <h2 className="text-lg text-(--bp-primary)/90 drop-shadow-md mb-3">
                   {book.author}
                 </h2>
               )}
@@ -247,7 +247,7 @@ export default function BookPage() {
                       {book.description}
                       <span
                         aria-hidden
-                        className={`absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-black/80 to-transparent pointer-events-none transition-opacity duration-500 ${
+                        className={`absolute bottom-0 left-0 w-full h-12 bg-linear-to-t from-black/80 to-transparent pointer-events-none transition-opacity duration-500 ${
                           descExpanded ? "opacity-0" : "opacity-100"
                         }`}
                       />
@@ -255,7 +255,7 @@ export default function BookPage() {
                     <button
                       type="button"
                       onClick={() => setDescExpanded((v) => !v)}
-                      className="mt-4 flex items-center gap-2 text-[var(--bp-primary)] hover:text-white transition-colors bp-label-caps tracking-widest"
+                      className="mt-4 flex items-center gap-2 text-(--bp-primary) hover:text-white transition-colors bp-label-caps tracking-widest"
                     >
                       <span className="ms-icon text-sm">
                         {descExpanded ? "expand_less" : "expand_more"}
@@ -274,7 +274,7 @@ export default function BookPage() {
                   className="h-12 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/20 hover:border-white/50 text-white bp-label-caps px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:bg-white/5"
                 >
                   <span
-                    className="ms-icon text-sm text-[var(--bp-primary)]"
+                    className="ms-icon text-sm text-(--bp-primary)"
                     style={{ fontVariationSettings: isWantToRead ? "'FILL' 1" : "'FILL' 0" }}
                   >
                     bookmarks
@@ -293,7 +293,7 @@ export default function BookPage() {
                       }
                       setTierDropdownOpen((v) => !v);
                     }}
-                    className="h-12 whitespace-nowrap bg-[var(--bp-primary)] hover:bg-[var(--bp-primary-container)] text-[var(--bp-on-primary)] bp-label-caps px-6 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
+                    className="h-12 whitespace-nowrap bg-(--bp-primary) hover:bg-(--bp-primary-container) text-(--bp-on-primary) bp-label-caps px-6 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
                   >
                     <span className="ms-icon text-sm">format_list_bulleted</span>
                     В тир-лист
@@ -303,7 +303,7 @@ export default function BookPage() {
                   </button>
 
                   {tierDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-primary/30 bg-[var(--bp-surface-container-high)] backdrop-blur-xl shadow-2xl z-[60] py-2">
+                    <div className="absolute top-full right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-primary/30 bg-(--bp-surface-container-high) backdrop-blur-xl shadow-2xl z-60 py-2">
                       <p className="bp-label-caps text-white/50 px-4 py-2 tracking-widest">
                         Добавить в тир-лист
                       </p>
@@ -323,7 +323,7 @@ export default function BookPage() {
                             onClick={() => handleAddToTierList(tl.id)}
                             className="w-full text-left px-4 py-2.5 text-sm text-white/85 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
                           >
-                            <span className="ms-icon text-base text-[var(--bp-primary)]">list_alt</span>
+                            <span className="ms-icon text-base text-(--bp-primary)">list_alt</span>
                             {tl.title}
                           </button>
                         ))}
@@ -334,7 +334,7 @@ export default function BookPage() {
                           <button
                             type="button"
                             onClick={() => setShowCreateForm(true)}
-                            className="w-full text-left px-4 py-2.5 text-sm text-[var(--bp-primary)] hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
+                            className="w-full text-left px-4 py-2.5 text-sm text-(--bp-primary) hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
                           >
                             <span className="ms-icon text-base">add</span>
                             Новый тир-лист
@@ -354,7 +354,7 @@ export default function BookPage() {
                                 }
                               }}
                               placeholder="Название тир-листа"
-                              className="w-full px-3 py-2 text-sm bg-black/30 border border-white/15 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-[var(--bp-primary)]"
+                              className="w-full px-3 py-2 text-sm bg-black/30 border border-white/15 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-(--bp-primary)"
                             />
                             {createListError && (
                               <p className="text-xs text-red-400">{createListError}</p>
@@ -363,7 +363,7 @@ export default function BookPage() {
                               type="button"
                               disabled={!newListTitle.trim() || creatingList}
                               onClick={() => void handleCreateAndAdd()}
-                              className="w-full px-3 py-2 text-sm rounded-lg bg-[var(--bp-primary)] text-[var(--bp-on-primary)] hover:bg-[var(--bp-primary-container)] disabled:opacity-50 transition-colors"
+                              className="w-full px-3 py-2 text-sm rounded-lg bg-(--bp-primary) text-(--bp-on-primary) hover:bg-(--bp-primary-container) disabled:opacity-50 transition-colors"
                             >
                               {creatingList ? "Создание..." : "Создать и добавить"}
                             </button>
@@ -399,7 +399,7 @@ export default function BookPage() {
                   <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="bp-label-caps text-white/80 tracking-widest">Рейтинг</h3>
-                      <span className="text-4xl font-bold text-[var(--bp-primary)] drop-shadow-md">
+                      <span className="text-4xl font-bold text-(--bp-primary) drop-shadow-md">
                         {rating.toFixed(1)}
                       </span>
                     </div>
@@ -451,7 +451,7 @@ export default function BookPage() {
           {/* ── Другие книги автора ── */}
           {otherBooksByAuthor.length > 0 && (
             <section className="relative py-12">
-              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+              <div className="max-w-275 mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Другие книги автора</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   {otherBooksByAuthor.map((b) => (
@@ -465,7 +465,7 @@ export default function BookPage() {
           {/* ── Похожие книги ── */}
           {similarBooks.length > 0 && (
             <section className="relative py-12 border-t border-primary/20">
-              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+              <div className="max-w-275 mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Похожие книги</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   {similarBooks.slice(0, 4).map((b) => (
@@ -479,7 +479,7 @@ export default function BookPage() {
           {/* ── Встречается в тир-листах ── */}
           {tierLists.length > 0 && (
             <section className="relative pt-4 pb-12 border-t border-primary/20">
-              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+              <div className="max-w-275 mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Встречается в тир-листах</h2>
                 <div className="flex flex-wrap gap-3">
                   {tierLists.map((tl) => (
@@ -499,7 +499,7 @@ export default function BookPage() {
           {/* ── В подборках ── */}
           {collections.length > 0 && (
             <section className="relative pt-4 pb-12 border-t border-primary/20">
-              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+              <div className="max-w-275 mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">В подборках</h2>
                 <div className="flex flex-wrap gap-3">
                   {collections.map((c) => (
@@ -519,7 +519,7 @@ export default function BookPage() {
           {/* ── У знаменитостей ── */}
           {celebrities.length > 0 && (
             <section className="relative py-12 border-t border-primary/20">
-              <div className="max-w-[1100px] mx-auto px-4 md:px-5">
+              <div className="max-w-275 mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">У знаменитостей</h2>
                 <div className="flex flex-wrap gap-3">
                   {celebrities.map((c) => (
@@ -580,7 +580,7 @@ function StarGlyph({
   if (variant === "full") {
     return (
       <span
-        className="ms-icon text-xl shrink-0 text-[var(--bp-primary)] drop-shadow-[0_0_8px_rgba(255,183,135,0.5)]"
+        className="ms-icon text-xl shrink-0 text-(--bp-primary) drop-shadow-[0_0_8px_rgba(255,183,135,0.5)]"
         style={{ fontVariationSettings: "'FILL' 1" }}
       >
         star
@@ -626,16 +626,16 @@ function BookCardLink({ book }: { book: { slug: string | null; title: string; co
       to={`/books/${book.slug}`}
       className="group block hover:-translate-y-3 hover:scale-[1.02] transition-all duration-500 ease-out"
     >
-      <div className="aspect-[2/3] rounded-lg overflow-hidden mb-3 border border-white/10 shadow-lg bp-book-hover-lift">
+      <div className="aspect-2/3 rounded-lg overflow-hidden mb-3 border border-white/10 shadow-lg bp-book-hover-lift">
         {book.coverImageUrl ? (
           <img src={book.coverImageUrl} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
         ) : (
-          <div className="w-full h-full bg-[var(--bp-surface-container-high)] flex items-center justify-center">
+          <div className="w-full h-full bg-(--bp-surface-container-high) flex items-center justify-center">
             <span className="text-white/50 text-sm text-center px-4">{book.title}</span>
           </div>
         )}
       </div>
-      <h3 className="text-white/90 group-hover:text-[var(--bp-primary)] transition-colors line-clamp-1 text-sm font-semibold">
+      <h3 className="text-white/90 group-hover:text-(--bp-primary) transition-colors line-clamp-1 text-sm font-semibold">
         {book.title}
       </h3>
     </Link>
