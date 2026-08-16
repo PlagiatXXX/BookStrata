@@ -37,6 +37,10 @@ const EXTERNAL_DOMAINS = [
   "m.media-amazon.com",
   "images-na.ssl-images-amazon.com",
   "i.gr-assets.com",
+  "covers.openlibrary.org",
+  "lh3.googleusercontent.com",
+  "books.google.com",
+  "googleapis.com",
   "s1.livelib.ru",
   "s2.livelib.ru",
   "s3.livelib.ru",
@@ -45,6 +49,8 @@ const EXTERNAL_DOMAINS = [
   "cdn1.litres.ru",
   "www.litres.ru",
   "litres.ru",
+  "upload.wikimedia.org",
+  "wikimedia.org",
   "encrypted-tbn0.gstatic.com",
   "encrypted-tbn1.gstatic.com",
   "encrypted-tbn2.gstatic.com",
@@ -61,6 +67,8 @@ const EXTERNAL_DOMAINS = [
   "labirint.ru",
   "cdn.eksmo.ru",
   "eksmo.ru",
+  "fantlab.ru",
+  "mnogobookaf.ru",
 ];
 
 /**

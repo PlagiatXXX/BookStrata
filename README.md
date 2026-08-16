@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-1200%2B_passed-brightgreen)](./README.md)
+[![Tests](https://img.shields.io/badge/Tests-1570%2B_passed-brightgreen)](./README.md)
 
 ---
 
@@ -18,11 +18,8 @@
 - [🛠️ Технологии](#️-технологии)
 - [🚀 Быстрый старт](#-быстрый-старт)
 - [🏗️ Архитектура](#️-архитектура)
-- [🗄️ База данных](#️-база-данных)
-- [🌐 API](#-api)
 - [🧪 Тестирование](#-тестирование)
-- [🔐 Безопасность](#-безопасность)
-- [💎 Монетизация (Pro)](#-монетизация-pro)
+- [💛 Поддержка проекта](#-поддержка-проекта)
 - [🤝 Вклад](#-вклад)
 - [📞 Контакты](#-контакты)
 
@@ -56,6 +53,12 @@
 - **Поиск пользователей** — Поиск по нику на странице актива, просмотр публичных профилей с тир-листами, статистикой и совпадением вкусов.
 - **LiveLib импорт** — Загрузка книг из списков «прочитанное» и «хочу прочитать» с LiveLib (с пагинацией до ~100–125 книг).
 - **Прогресс-бар заполнения тир-листа** — счётчик добавленных книг в редакторе.
+- **Страницы книг** — Детальные страницы (`/books/:slug`) с 3D-обложкой, рейтингом, комментариями и похожими книгами.
+- **Рейтинги** — Топ книг на странице `/rankings` для поиска «что почитать».
+- **Что почитать** — Подборки книг по настроению (`/what-to-read`).
+- **Полка** — Личная полка книг для авторизованных пользователей (`/shelf`).
+- **Достижения** — Ачивки пользователей с сеткой на профиле (модуль `achievements`).
+- **Вход через соцсети** — OAuth-авторизация через VK и Google (`/oauth/callback`).
 
 ### 🤖 AI-библиотекарь
 - **AI-рекомендации** — Персональные подборки книг на основе ваших тир-листов.
@@ -138,7 +141,7 @@ cd backend && npm run build  # Сборка бэкенда
 Проект следует принципам **чистой архитектуры** и модульности:
 
 - **Frontend:** Разделение на `pages/`, `components/`, `hooks/`, `contexts/`. Логика редактора вынесена в специализированные хуки (`useTierEditorState`, `useTierEditorSave`, `useTierEditorDraft` и др.).
-- **Backend:** Модульный подход (`modules/`). 30 модулей: `auth`, `users`, `books`, `tier-lists`, `battles`, `discussions`, `forum`, `news`, `feedback`, `templates`, `avatars`, `achievements`, `ai-librarian`, `livelib`, `moderation`, `ratings`, `subscriptions`, `donors`, `roles`, `admin`, `admin-stats`, `external-news`, `sitemap`, `proxy`, `image-proxy`, `authors`, `celebrities`, `collections`, `analytics`, `rss`.
+- **Backend:** Модульный подход (`modules/`). 33 модуля: `auth`, `users`, `books`, `bookPages`, `tier-lists`, `battles`, `discussions`, `forum`, `news`, `feedback`, `templates`, `avatars`, `achievements`, `ai-librarian`, `livelib`, `moderation`, `ratings`, `subscriptions`, `donors`, `roles`, `admin`, `admin-books`, `admin-stats`, `external-news`, `sitemap`, `proxy`, `image-proxy`, `authors`, `celebrities`, `collections`, `analytics`, `rss`, `shelf`.
 - **API:** RESTful API с автоматической Swagger-документацией на `/documentation`.
 - **Discussions:** Общий чат, топики форума, комментарии к битвам. CRUD сообщений, закрепление/удаление топиков (admin/mod).
 
@@ -146,7 +149,7 @@ cd backend && npm run build  # Сборка бэкенда
 
 ## 🧪 Тестирование
 
-Проект покрыт **1200+ тестами** (509 фронтенд + ~700 бэкенд) — Vitest + React Testing Library + Playwright (e2e).
+Проект покрыт **1570+ тестами** (624 фронтенд + 743 бэкенд unit + 174 интеграционных + 30 e2e) — Vitest + React Testing Library + Playwright (e2e).
 
 ```bash
 # Запуск всех тестов
@@ -154,10 +157,11 @@ npm test && cd backend && npm test
 
 # Отдельно
 npm test              # Фронтенд
-cd backend && npm test  # Бэкенд
+cd backend && npm test  # Бэкенд unit
+cd backend && npm run test:integration  # Интеграционные (нужна БД)
 npm run test:e2e      # Playwright e2e
 ```
-*Статус: **1200+/1200+** тестов проходят успешно ✅*
+*Статус: **1570+/1570+** тестов проходят успешно ✅*
 
 ---
 
@@ -181,14 +185,6 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-## 📸 Скриншоты
-
-Скриншоты проекта находятся в директории [`screenshots/`](./screenshots/).
-
-*(Добавить скриншоты)*
-
----
-
 ## 🤝 Вклад
 
 Мы приветствуем Pull Requests! Пожалуйста, следуйте стандартам ESLint и используйте Conventional Commits.
@@ -202,6 +198,6 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 6 августа 2026 г.
-**Статус:** Коллекции, знаменитости, блог, FAQ-страница, AI-библиотекарь, LiveLib импорт, NSFW Detection (1200+ тестов)
+**Последнее обновление:** 17 августа 2026 г.
+**Статус:** Страницы книг, рейтинги, «Что почитать», полка, OAuth (VK/Google), коллекции, знаменитости, блог, FAQ-страница, AI-библиотекарь, LiveLib импорт, NSFW Detection (1570+ тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)

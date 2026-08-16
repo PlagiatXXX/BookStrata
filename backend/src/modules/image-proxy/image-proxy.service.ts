@@ -47,6 +47,10 @@ const ALLOWED_HOSTS = [
   "labirint.ru",
   "cdn.eksmo.ru",
   "eksmo.ru",
+  "upload.wikimedia.org",
+  "wikimedia.org",
+  "fantlab.ru",
+  "mnogobookaf.ru",
 ];
 
 // ── Разрешённые протоколы ──

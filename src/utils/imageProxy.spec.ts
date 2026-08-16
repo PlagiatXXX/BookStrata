@@ -29,6 +29,26 @@ describe("proxyImageUrl", () => {
     expect(proxied).toContain(encodeURIComponent("https://i.gr-assets.com/images/x.jpg"));
   });
 
+  it("fantlab и mnogobookaf проксируются через /api/images/proxy", () => {
+    const fantlab = proxyImageUrl("https://fantlab.ru/images/editions/orig/227824?r=1530008358");
+    expect(fantlab).toMatch(/^\/api\/images\/proxy\?url=/);
+    expect(fantlab).toContain(encodeURIComponent("https://fantlab.ru/images/editions/orig/227824?r=1530008358"));
+
+    const mnogobookaf = proxyImageUrl("https://mnogobookaf.ru/images/thumbnails/960/1572/detailed/34/123841.jpg");
+    expect(mnogobookaf).toMatch(/^\/api\/images\/proxy\?url=/);
+  });
+
+  it("openlibrary, google books и wikimedia проксируются через /api/images/proxy", () => {
+    const openlibrary = proxyImageUrl("https://covers.openlibrary.org/b/id/123-L.jpg");
+    expect(openlibrary).toMatch(/^\/api\/images\/proxy\?url=/);
+
+    const google = proxyImageUrl("https://books.google.com/books/content?id=abc&printsec=frontcover");
+    expect(google).toMatch(/^\/api\/images\/proxy\?url=/);
+
+    const wiki = proxyImageUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Example.jpg");
+    expect(wiki).toMatch(/^\/api\/images\/proxy\?url=/);
+  });
+
   it("data: URL не трогается", () => {
     expect(proxyImageUrl("data:image/png;base64,AAAA")).toBe(
       "data:image/png;base64,AAAA",
