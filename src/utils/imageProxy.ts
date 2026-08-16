@@ -132,6 +132,16 @@ export function proxyImageUrl(
     return `/api/images/proxy?url=${encodeURIComponent(url)}&width=${w}&quality=80`;
   }
 
+  // Относительный путь без ведущего слэша (битые данные в БД) —
+  // нормализуем, иначе браузер резолвит его от текущего маршрута (404)
+  if (
+    !url.startsWith("/") &&
+    !url.startsWith("data:") &&
+    !/^[a-z][a-z0-9+.-]*:\/\//i.test(url)
+  ) {
+    return `/${url}`;
+  }
+
   return url;
 }
 

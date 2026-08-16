@@ -468,7 +468,7 @@ export default function BookPage() {
               <div className="max-w-[1100px] mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Похожие книги</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {similarBooks.map((b) => (
+                  {similarBooks.slice(0, 4).map((b) => (
                     <BookCardLink key={b.id} book={b} />
                   ))}
                 </div>
