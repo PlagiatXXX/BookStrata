@@ -43,6 +43,20 @@ export interface MatchResult {
   candidates: BookCandidate[];
 }
 
+export interface MatchOptions {
+  /** Фильтр по статусу книги-кандидата. Каталог (коллекции/знаменитости)
+   *  матчит только "published" — пользовательские draft из тир-листов
+   *  не участвуют в склейке (решение 17.08). По умолчанию — все статусы. */
+  statusFilter?: "draft" | "published";
+}
+
+/** SQL-хвост для raw-запросов: фильтр по статусу (enum → text для сравнения).
+ *  Значение из фиксированного набора ("draft" | "published") — литерал безопасен. */
+function statusFilterSql(options?: MatchOptions): Prisma.Sql {
+  if (!options?.statusFilter) return Prisma.empty;
+  return Prisma.raw(`AND status::text = '${options.statusFilter}'`);
+}
+
 const BOOK_SELECT = {
   id: true,
   title: true,
@@ -114,6 +128,7 @@ const ENTITY_SQL = Prisma.raw(`"${ENTITY}"`);
 export async function matchBook(
   prisma: PrismaClient,
   input: MatchInput,
+  options?: MatchOptions,
 ): Promise<MatchResult> {
   const normTitle = normalizeTitle(input.title);
   if (!normTitle) return { book: null, confidence: null, candidates: [] };
@@ -121,7 +136,11 @@ export async function matchBook(
   // ——— 1. externalId (сильнейший сигнал) ———
   if (input.externalId && input.source) {
     const byExternalId = await prisma.book.findFirst({
-      where: { source: input.source as never, externalId: input.externalId },
+      where: {
+        source: input.source as never,
+        externalId: input.externalId,
+        ...(options?.statusFilter ? { status: options.statusFilter } : {}),
+      },
       select: BOOK_SELECT,
     });
     if (byExternalId) {
@@ -130,24 +149,28 @@ export async function matchBook(
   }
 
   // ——— 2. Точное совпадение ———
-  const exact = await findExactMatch(prisma, input, normTitle);
+  const exact = await findExactMatch(prisma, input, normTitle, options);
   if (exact) return exact;
 
   // ——— 3. Fuzzy (pg_trgm similarity) ———
-  return findFuzzyMatch(prisma, input, normTitle);
+  return findFuzzyMatch(prisma, input, normTitle, options);
 }
 
 async function findExactMatch(
   prisma: PrismaClient,
   input: MatchInput,
   normTitle: string,
+  options?: MatchOptions,
 ): Promise<MatchResult | null> {
   const hasAuthorResolved = typeof input.authorId === "number";
 
   if (hasAuthorResolved && input.authorId !== null) {
     // 3a. точное (normTitle, authorId)
     const byAuthorId = await prisma.book.findMany({
-      where: { authorId: input.authorId as number },
+      where: {
+        authorId: input.authorId as number,
+        ...(options?.statusFilter ? { status: options.statusFilter } : {}),
+      },
       select: BOOK_SELECT,
     });
     const exact = byAuthorId.filter((b) => normalizeTitle(b.title) === normTitle);
@@ -174,7 +197,7 @@ async function findExactMatch(
         rating: number | null;
       }>
     >`SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating
-      FROM ${ENTITY_SQL} WHERE lower(trim(translate(author, 'Ёё', 'Ее'))) = ${normAuthor}`;
+      FROM ${ENTITY_SQL} WHERE lower(trim(translate(author, 'Ёё', 'Ее'))) = ${normAuthor} ${statusFilterSql(options)}`;
     const exact = rows.filter((b) => normalizeTitle(b.title) === normTitle);
     if (exact.length === 1) return resultHigh(toCandidate(exact[0]!));
     if (exact.length > 1) {
@@ -197,7 +220,7 @@ async function findExactMatch(
         rating: number | null;
       }>
     >`SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating
-      FROM ${ENTITY_SQL} WHERE "authorId" IS NULL`;
+      FROM ${ENTITY_SQL} WHERE "authorId" IS NULL ${statusFilterSql(options)}`;
     const exact = rows.filter((b) => normalizeTitle(b.title) === normTitle);
     if (exact.length === 1) return resultHigh(toCandidate(exact[0]!));
     if (exact.length > 1) {
@@ -226,13 +249,14 @@ async function findFuzzyMatch(
   prisma: PrismaClient,
   input: MatchInput,
   normTitle: string,
+  options?: MatchOptions,
 ): Promise<MatchResult> {
   // top-N по триграммному сходству; GIN-индекс books_trgm_idx на title
   const rows = await prisma.$queryRaw<FuzzyRow[]>`
     SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating,
            similarity(title, ${normTitle}) AS score
     FROM ${ENTITY_SQL}
-    WHERE title % ${normTitle}
+    WHERE title % ${normTitle} ${statusFilterSql(options)}
     ORDER BY score DESC
     LIMIT 5`;
 

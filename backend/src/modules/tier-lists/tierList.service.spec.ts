@@ -48,6 +48,7 @@ vi.mock("../../lib/prisma.js", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     $queryRaw: vi.fn().mockResolvedValue([]),
     author: {
@@ -69,7 +70,7 @@ import { DefaultArgs } from "@prisma/client/runtime/index.js";
 describe("tierList.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (prisma.tierList.findUnique as any).mockResolvedValue({ id: "1" });
+    (prisma.tierList.findUnique as any).mockResolvedValue({ id: "1", userId: 5 });
     (prisma.user.findUnique as any).mockResolvedValue({ isPro: false });
     // author mock по умолчанию
     (prisma.author.findFirst as any).mockResolvedValue(null);
@@ -79,6 +80,9 @@ describe("tierList.service", () => {
     );
     // book.count по умолчанию — книги существуют
     (prisma.book.count as any).mockResolvedValue(1);
+    // book.findMany/findFirst по умолчанию — своих книг у пользователя нет
+    (prisma.book.findMany as any).mockResolvedValue([]);
+    (prisma.book.findFirst as any).mockResolvedValue(null);
     // $queryRaw по умолчанию — дедуп среди draft ничего не находит
     (prisma.$queryRaw as any).mockResolvedValue([]);
   });
@@ -554,30 +558,69 @@ describe("tierList.service", () => {
       );
     });
 
-    it("локальная книга не матчится по (title, author) — создаётся свой оригинал, каталог не участвует", async () => {
-      // В каталоге есть published-книга с тем же названием (mock findMany),
-      // и draft с тем же названием ($queryRaw нашёл бы её) — но локальные книги
-      // не матчатся: каждому пользователю свой оригинал (решение 17.08)
-      (prisma.book.findMany as any).mockResolvedValue([
-        {
-          id: 320,
-          title: "Book 1",
-          author: "Author 1",
-          authorId: 999,
-          coverImageUrl: "/catalog.jpg",
-          slug: "book-1",
-          status: "published",
-          source: null,
-          externalId: null,
-          publishedYear: 2000,
-          rating: 8,
-        },
-      ]);
-      (prisma.$queryRaw as any).mockResolvedValue([{ id: 7 }]);
+    it("своя локальная книга матчится по (title, author) → link, каталог не участвует", async () => {
+      // findExistingUserBook ищет СВОИ draft по (userId, normTitle, authorId):
+      // свои книги возвращаем по draft-фильтру, published-каталог — остальным
+      (prisma.book.findMany as any).mockImplementation(({ where }: any) => {
+        if (where?.userId && where?.status === "draft") {
+          return Promise.resolve([{ id: 7, title: "Book 1" }]);
+        }
+        return Promise.resolve([
+          {
+            id: 320,
+            title: "Book 1",
+            author: "Author 1",
+            authorId: 999,
+            coverImageUrl: "/catalog.jpg",
+            slug: "book-1",
+            status: "published",
+          },
+        ]);
+      });
+
+      const result = await service.addBooksToTierList(mockTierListId, [mockBooks[0]]);
+
+      expect(prisma.book.create).not.toHaveBeenCalled();
+      expect(prisma.bookPlacement.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ bookId: 7, thoughts: "Thoughts 1" }),
+        }),
+      );
+      expect(result[0]?.book?.id).toBe(7);
+    });
+
+    it("своей книги нет → создаётся личный оригинал (userId владельца), каталог не участвует", async () => {
+      // В каталоге есть published-книга с тем же названием, своих draft нет →
+      // create личной книги с userId, каталог не используется
+      (prisma.book.findMany as any).mockImplementation(({ where }: any) => {
+        if (where?.userId && where?.status === "draft") {
+          return Promise.resolve([]);
+        }
+        return Promise.resolve([
+          {
+            id: 320,
+            title: "Book 1",
+            author: "Author 1",
+            authorId: 999,
+            coverImageUrl: "/catalog.jpg",
+            slug: "book-1",
+            status: "published",
+          },
+        ]);
+      });
 
       const result = await service.addBooksToTierList(mockTierListId, [mockBooks[0]]);
 
       expect(prisma.book.create).toHaveBeenCalledTimes(1);
+      expect(prisma.book.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: "draft",
+            userId: 5,
+            slug: expect.any(String),
+          }),
+        }),
+      );
       expect(prisma.bookPlacement.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ bookId: 100, thoughts: "Thoughts 1" }),
@@ -763,14 +806,51 @@ describe("tierList.service", () => {
   describe("deleteTierList", () => {
     const mockTierListId = "1";
 
-    it("должен удалить тир-лист", async () => {
+    it("должен удалить тир-лист и личные книги без других привязок", async () => {
+      // 1-й findUnique — resolveTierListId (id); 2-й — владелец + вхождения
+      (prisma.tierList.findUnique as any).mockResolvedValueOnce({ id: "1" });
+      (prisma.tierList.findUnique as any).mockResolvedValueOnce({
+        id: "1",
+        userId: 5,
+        placements: [{ bookId: 10 }, { bookId: 11 }, { bookId: 11 }],
+      });
       (prisma.tierList.delete as any).mockResolvedValue({});
 
       await service.deleteTierList(mockTierListId);
 
+      // Владелец листа известен → чистим его личные книги без хвостов
       expect(prisma.tierList.delete).toHaveBeenCalledWith({
         where: { id: mockTierListId },
       });
+      expect(prisma.book.deleteMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: [10, 11] },
+          userId: 5,
+          placements: { none: {} },
+        },
+      });
+    });
+
+    it("удаление без вхождений → deleteMany не вызывается", async () => {
+      (prisma.tierList.findUnique as any).mockResolvedValueOnce({ id: "1" });
+      (prisma.tierList.findUnique as any).mockResolvedValueOnce({
+        id: "1",
+        userId: 5,
+        placements: [],
+      });
+      (prisma.tierList.delete as any).mockResolvedValue({});
+
+      await service.deleteTierList(mockTierListId);
+
+      expect(prisma.tierList.delete).toHaveBeenCalledTimes(1);
+      expect(prisma.book.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it("несуществующий тир-лист → NotFoundError, delete не вызывается", async () => {
+      (prisma.tierList.findUnique as any).mockResolvedValueOnce(null);
+
+      await expect(service.deleteTierList("999")).rejects.toThrow("not found");
+      expect(prisma.tierList.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -1129,6 +1209,10 @@ describe("tierList.service", () => {
               author: "Author 1",
               coverImageUrl: "cover1.jpg",
               description: "Desc 1",
+              // Модель «личные книги»: форк принадлежит новому владельцу,
+              // статус draft (не published), slug не копируется
+              userId: mockUserId,
+              status: "draft",
             },
           },
         },
@@ -1141,6 +1225,8 @@ describe("tierList.service", () => {
               author: null,
               coverImageUrl: "cover2.jpg",
               description: null,
+              userId: mockUserId,
+              status: "draft",
             },
           },
         },
@@ -1204,6 +1290,7 @@ describe("tierList.service", () => {
 
       // Моки для книг
       (prisma.book.create as any).mockResolvedValue({ id: 200 });
+      (prisma.book.findMany as any).mockResolvedValue([]);
 
       // Моки для размещений (Фаза 2.4: update/upsert вместо delete/recreate)
       (prisma.bookPlacement.findMany as any).mockResolvedValue([]);
@@ -1296,6 +1383,7 @@ describe("tierList.service", () => {
       (prisma.bookPlacement.createMany as any).mockResolvedValue({ count: 1 });
       (prisma.bookPlacement.deleteMany as any).mockResolvedValue({ count: 0 });
       (prisma.tierList.update as any).mockResolvedValue({});
+      (prisma.book.findMany as any).mockResolvedValue([]);
 
       const payload = {
         placements: [{ bookId: 10, tierId: null, rank: 0 }],

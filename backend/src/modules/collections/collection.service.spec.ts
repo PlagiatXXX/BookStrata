@@ -59,6 +59,7 @@ describe("matchCatalogBook (автозаполнение карточки под
     expect(mockedMatch).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ title: "Правда о деле Гарри Квеберта" }),
+      { statusFilter: "published" },
     );
     expect(mockedFindUnique).toHaveBeenCalledWith({
       where: { id: 1 },
@@ -100,6 +101,7 @@ describe("matchCatalogBook (автозаполнение карточки под
     expect(mockedMatch).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ author: null, authorId: null }),
+      { statusFilter: "published" },
     );
   });
 });

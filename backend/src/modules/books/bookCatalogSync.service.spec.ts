@@ -206,7 +206,7 @@ describe("syncCatalogCards", () => {
 
   it("канон найден → эталонное обновление (genre/tags/description/year), НЕ title/author/cover", async () => {
     matchBookMock.mockResolvedValue({
-      book: canon(),
+      book: canon({ status: "published" }),
       confidence: "HIGH",
       candidates: [],
     });
@@ -239,10 +239,50 @@ describe("syncCatalogCards", () => {
         update: expect.objectContaining({ rating: 8.8, rank: 0 }),
       }),
     );
-    // Канон был draft, карточка полная → публикуем
-    expect(publishBookTxMock).toHaveBeenCalledWith(mockTx, 7);
+    // Канон уже published → повторной публикации не нужно
+    expect(publishBookTxMock).not.toHaveBeenCalled();
     // Новой книги не создаём
     expect(mockTx.book.create).not.toHaveBeenCalled();
+  });
+
+  it("канон — draft-книга пользователя → НЕ линкуемся, создаём новую каталоговую книгу", async () => {
+    // matchBook вернул draft (книга из чужого тир-листа) — каталог не должен
+    // трогать/публиковать пользовательскую книгу (решение 17.08)
+    matchBookMock.mockResolvedValue({
+      book: canon({ status: "draft" }),
+      confidence: "HIGH",
+      candidates: [],
+    });
+
+    const result = await syncCatalogCards("collection", 5, { k1: FULL_CARD });
+
+    // Создаётся СВОЯ книга каталога
+    expect(mockTx.book.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ title: "Дюна", status: "draft" }),
+      }),
+    );
+    // Публикуется новая книга (карточка полная)
+    expect(publishBookTxMock).toHaveBeenCalledWith(mockTx, 42);
+    // Пользовательская draft НЕ патчится
+    expect(mockTx.book.update).not.toHaveBeenCalled();
+    // Связь ведёт на новую книгу
+    expect(mockTx.collectionBook.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { collectionId_bookId: { collectionId: 5, bookId: 42 } },
+      }),
+    );
+    expect(result).toEqual({ created: 1, linked: 0, deleted: 0, published: 1 });
+  });
+
+  it("матчинг каталога вызывается с statusFilter: published", async () => {
+    await syncCatalogCards("collection", 5, { k1: { title: "Книга", author: "Автор" } });
+
+    expect(matchBookMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ title: "Книга", author: "Автор" }),
+      { statusFilter: "published" },
+    );
   });
 
   it("канон уже published → повторная публикация не вызывается", async () => {
@@ -259,7 +299,7 @@ describe("syncCatalogCards", () => {
 
   it("карточка без rating не трогает Book.rating", async () => {
     matchBookMock.mockResolvedValue({
-      book: canon(),
+      book: canon({ status: "published" }),
       confidence: "HIGH",
       candidates: [],
     });

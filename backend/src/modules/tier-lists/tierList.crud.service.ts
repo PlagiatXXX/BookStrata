@@ -3,6 +3,7 @@ import {
   resolveTierListId,
 } from "./tierList.utils.js";
 import { prisma } from "./tierList.utils.js";
+import { NotFoundError } from "../../lib/errors.js";
 import { generateUniqueSlug } from "../../utils/slugify.js";
 import type { GetTierListsQuery } from "./tierList.schema.js";
 
@@ -175,7 +176,31 @@ export async function updateTierListCover(id: string, coverImageUrl: string) {
 }
 
 export async function deleteTierList(id: string) {
-  return tierListRepository.delete(id);
+  // getWhereClause не экспортируется — резолвим через resolveTierListId:
+  // вызываем findUnique один раз, с select, чтобы не съесть лишний запрос
+  const realId = await resolveTierListId(id);
+  const tierList = await prisma.tierList.findUnique({
+    where: { id: realId },
+    select: { userId: true, placements: { select: { bookId: true } } },
+  });
+  if (!tierList) throw new NotFoundError("Tier list not found");
+
+  const bookIds = Array.from(new Set(tierList.placements.map((p) => p.bookId)));
+
+  await tierListRepository.delete(realId);
+
+  // Модель «личные книги» (18.08): без хвостов — личные книги листа
+  // удаляются вместе с ним (если не используются в других тир-листах).
+  // Каталог (published) и чужие книги не трогаем.
+  if (bookIds.length > 0) {
+    await prisma.book.deleteMany({
+      where: {
+        id: { in: bookIds },
+        userId: tierList.userId,
+        placements: { none: {} },
+      },
+    });
+  }
 }
 
 export async function togglePublic(tierListId: string, isPublic: boolean) {

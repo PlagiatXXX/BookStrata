@@ -25,6 +25,9 @@ export interface BookListParams {
   status?: string;
   genre?: string;
   duplicatesOnly?: boolean;
+  /** Происхождение книги: "tier-list" — есть вхождения в тир-листы пользователей,
+   *  "catalog" — тир-листов нет (каталог/коллекции/знаменитости). */
+  origin?: "tier-list" | "catalog";
   sort?: string;
   offset?: number;
   limit?: number;
@@ -46,7 +49,7 @@ const BOOK_LIST_SELECT = {
   mergedIntoId: true,
   source: true,
   externalId: true,
-  _count: { select: { comments: true } },
+  _count: { select: { comments: true, placements: true } },
 } satisfies Prisma.BookSelect;
 
 /** Сворачивает группы AnalyticsEvent в map slug → просмотры.
@@ -64,15 +67,25 @@ function collectViewsBySlug(groups: Array<{ url: string | null; _count: { url: n
 
 export async function listBooks(params: BookListParams) {
   const where: Prisma.BookWhereInput = {};
+  const orFilters: Prisma.BookWhereInput[] = [];
   if (params.q) {
-    where.OR = [
+    orFilters.push(
       { title: { contains: params.q, mode: "insensitive" } },
       { author: { contains: params.q, mode: "insensitive" } },
-    ];
+    );
   }
   if (params.status) where.status = params.status as Prisma.BookWhereInput["status"];
   if (params.genre) where.genre = params.genre;
   if (params.duplicatesOnly) where.mergedIntoId = { not: null };
+  // «Из тир-листов»: личные книги (userId) + легаси-общие, у которых есть вхождения
+  if (params.origin === "tier-list") {
+    orFilters.push({ userId: { not: null } }, { placements: { some: {} } });
+  }
+  if (params.origin === "catalog") {
+    where.placements = { none: {} };
+    where.userId = null;
+  }
+  if (orFilters.length > 0) where.OR = orFilters;
 
   const sort = params.sort ?? "updatedAt";
   const orderBy: Prisma.BookOrderByWithRelationInput =
@@ -238,6 +251,19 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
 
 /** Публикация только через publishBook() — инвариант полноты полей. */
 export async function publishBookById(id: number) {
+  // Модель «личные книги» (18.08): книги из тир-листов не попадают в каталог.
+  // Публикация пользовательских книг (личных userId или с вхождениями) запрещена.
+  const book = await prisma.book.findUnique({
+    where: { id },
+    select: { userId: true, _count: { select: { placements: true } } },
+  });
+  if (!book) throw new AdminBookError("Книга не найдена", "book_not_found");
+  if (book.userId !== null || book._count.placements > 0) {
+    throw new AdminBookError(
+      "Книга из тир-листа пользователя — публикация в каталог запрещена",
+      "book_from_tier_list",
+    );
+  }
   return publishBook(id);
 }
 

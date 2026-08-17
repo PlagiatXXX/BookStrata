@@ -68,11 +68,17 @@ export async function matchCatalogBook(input: MatchBookInput): Promise<{
   candidates: CatalogBookMatch[];
 }> {
   const authorId = input.author ? (await authorService.findByName(input.author))?.id ?? null : null;
-  const result = await matchBook(prisma, {
-    title: input.title,
-    author: input.author ?? null,
-    authorId,
-  });
+  // Каталог матчит только published: пользовательские draft из тир-листов
+  // не участвуют в автозаполнении карточки (решение 17.08)
+  const result = await matchBook(
+    prisma,
+    {
+      title: input.title,
+      author: input.author ?? null,
+      authorId,
+    },
+    { statusFilter: "published" },
+  );
 
   if (result.book) {
     const book = await readCatalogBook(result.book.id);

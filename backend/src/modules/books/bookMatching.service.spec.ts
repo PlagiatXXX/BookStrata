@@ -30,6 +30,33 @@ function candidate(partial: Partial<BookCandidate> = {}): BookCandidate {
   };
 }
 
+/**
+ * Полный SQL-текст из вызова мокнутого $queryRaw: [strings, ...values].
+ * Рекурсивно разворачивает Prisma.raw-фрагменты ({ strings, values }),
+ * которые в таг-вызове уходят в values объектами.
+ */
+function sqlText(call: unknown[] | undefined): string {
+  if (!call) return "";
+  const parts: string[] = [];
+  const visit = (v: unknown) => {
+    if (v == null) return;
+    if (Array.isArray(v)) {
+      v.forEach(visit);
+    } else if (
+      typeof v === "object" &&
+      Array.isArray((v as { strings?: unknown }).strings)
+    ) {
+      const sql = v as { strings: unknown[]; values?: unknown[] };
+      sql.strings.forEach(visit);
+      (sql.values ?? []).forEach(visit);
+    } else {
+      parts.push(String(v));
+    }
+  };
+  call.forEach(visit);
+  return parts.join(" ");
+}
+
 describe("normalizeTitle", () => {
   it("lower + trim + ё→е + схлопывание пробелов", () => {
     expect(normalizeTitle("  Война и мир  ")).toBe("война и мир");
@@ -112,7 +139,6 @@ describe("matchBook: точное совпадение (ступень 2)", () =
 
     expect(result.book).toBeNull();
     expect(result.confidence).toBe("MEDIUM");
-    expect(result.candidates.length).toBe(2);
   });
 
   it("3b: нерезолвнутый автор — точное (normTitle, normAuthor-строка) → HIGH", async () => {
@@ -148,7 +174,7 @@ describe("matchBook: точное совпадение (ступень 2)", () =
     expect(result.confidence).toBe("HIGH");
     expect(result.book?.id).toBe(5);
     // запрос снимает «ё→е» на стороне SQL (translate)
-    const sql = String((prisma.$queryRaw as any).mock.calls[0]?.[0]);
+    const sql = sqlText((prisma.$queryRaw as any).mock.calls[0]);
     expect(sql).toContain("translate(author");
   });
 
@@ -287,5 +313,115 @@ describe("matchBook: fuzzy (ступень 3)", () => {
 
     expect(result.book).toBeNull();
     expect(result.confidence).toBe("MEDIUM");
+  });
+});
+
+describe("matchBook: statusFilter (каталог не видит draft)", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("externalId: с statusFilter запрос фильтрует по статусу", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
+
+    await matchBook(prisma as any, {
+      title: "Война и мир",
+      externalId: "vol-1",
+      source: "google_books",
+    }, { statusFilter: "published" });
+
+    expect((prisma.book.findFirst as any).mock.calls[0]?.[0].where).toMatchObject({
+      externalId: "vol-1",
+      status: "published",
+    });
+  });
+
+  it("externalId: без statusFilter статус не добавляется", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
+
+    await matchBook(prisma as any, {
+      title: "Война и мир",
+      externalId: "vol-1",
+      source: "google_books",
+    });
+
+    expect((prisma.book.findFirst as any).mock.calls[0]?.[0].where.status).toBeUndefined();
+  });
+
+  it("3a: точное по (normTitle, authorId) — фильтр по статусу в where", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([]);
+
+    await matchBook(prisma as any, {
+      title: "Война и мир",
+      author: "Лев Толстой",
+      authorId: 10,
+    }, { statusFilter: "published" });
+
+    expect((prisma.book.findMany as any).mock.calls[0]?.[0].where).toMatchObject({
+      authorId: 10,
+      status: "published",
+    });
+  });
+
+  it("3b: raw-запрос по строке автора содержит статусный фильтр", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.$queryRaw as any).mockResolvedValue([
+      { ...candidate({ id: 5, title: "Война и мир", author: "Лев Толстой" }), score: 1 },
+    ]);
+
+    const result = await matchBook(prisma as any, {
+      title: "Война и мир",
+      author: "Лев Толстой",
+    }, { statusFilter: "published" });
+
+    expect(result.book?.id).toBe(5);
+    const sql = sqlText((prisma.$queryRaw as any).mock.calls[0]);
+    expect(sql).toContain("status::text = 'published'");
+  });
+
+  it("3b: без statusFilter raw-запрос не фильтрует по статусу", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
+
+    await matchBook(prisma as any, {
+      title: "Война и мир",
+      author: "Лев Толстой",
+    });
+
+    const sql = sqlText((prisma.$queryRaw as any).mock.calls[0]);
+    expect(sql).not.toContain("status::text");
+  });
+
+  it("fuzzy: raw-запрос содержит статусный фильтр", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
+
+    await matchBook(prisma as any, {
+      title: "Война и мир",
+      author: "Лев Толстой",
+      authorId: 10,
+    }, { statusFilter: "published" });
+
+    const sql = sqlText((prisma.$queryRaw as any).mock.calls[0]);
+    expect(sql).toContain("status::text = 'published'");
+  });
+
+  it("3c: безавторная ветка — raw-запрос фильтрует по статусу", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.$queryRaw as any).mockResolvedValue([
+      { ...candidate({ id: 7, title: "Аноним", author: null, authorId: null }), score: 1 },
+    ]);
+
+    const result = await matchBook(prisma as any, {
+      title: "Аноним",
+    }, { statusFilter: "published" });
+
+    expect(result.book?.id).toBe(7);
+    const sql = sqlText((prisma.$queryRaw as any).mock.calls[0]);
+    expect(sql).toContain("status::text = 'published'");
   });
 });

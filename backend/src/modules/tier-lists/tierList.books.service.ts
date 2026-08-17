@@ -106,27 +106,28 @@ export async function updatePlacements(
 }
 
 /**
- * Поиск существующей ПОЛЬЗОВАТЕЛЬСКОЙ книги (draft) для link-or-create.
- * Каталоговые (published) книги в матчинге НЕ участвуют — тир-листы не
- * склеиваются с каталогом (решение 17.08: в тир-листах — только книги
- * пользователей, каталог — только в коллекциях и у знаменитостей).
+ * Поиск СВОЕЙ книги пользователя для link-or-create (модель «личные книги», 18.08).
+ * Каталог (published) и чужие книги в матчинге НЕ участвуют.
+ *   - внешние (source + externalId): матч по (userId, source, externalId);
+ *   - локальные (без внешнего ID): матч по (userId, normTitle, authorId) —
+ *     повторное добавление своей книги не дублирует запись.
  */
 export async function findExistingUserBook(
   db: PrismaClient | Prisma.TransactionClient,
+  userId: number,
   bookData: {
     title: string;
     author?: string | null;
+    authorId?: number | null;
     externalId?: string | null;
     source?: string | null;
   },
 ): Promise<{ id: number } | null> {
-  // Матчим ТОЛЬКО по внешнему ID (source + externalId) среди draft:
-  // Google Books и другие внешние источники — общий справочник, одна книга на всех.
-  // Локальные книги (без внешнего ID) НЕ матчатся: каждое добавление создаёт
-  // пользователю свой оригинал (возврат к поведению до b98efc8, решение 17.08).
+  // Внешние книги: один внешний ID = одна книга пользователя
   if (bookData.source && bookData.externalId) {
     const byExternalId = await db.book.findFirst({
       where: {
+        userId,
         source: bookData.source as never,
         externalId: bookData.externalId,
         status: "draft",
@@ -134,9 +135,24 @@ export async function findExistingUserBook(
       select: { id: true },
     });
     if (byExternalId) return byExternalId;
+    return null;
   }
 
-  return null;
+  // Локальные книги: свои, по нормализованным (title, authorId)
+  const normTitle = normTitleForSql(bookData.title);
+  if (!normTitle) return null;
+  const locals = await db.book.findMany({
+    where: {
+      userId,
+      status: "draft",
+      source: null,
+      ...(bookData.authorId != null ? { authorId: bookData.authorId } : {}),
+    },
+    select: { id: true, title: true },
+    orderBy: { id: "asc" },
+  });
+  const exact = locals.filter((b) => normTitleForSql(b.title) === normTitle);
+  return exact.length > 0 ? exact[0]! : null;
 }
 
 export async function addBooksToTierList(
@@ -158,6 +174,12 @@ export async function addBooksToTierList(
   if (books.length === 0) return [];
 
   const realTierListId = await resolveTierListId(tierListId);
+  const tierList = await prisma.tierList.findUnique({
+    where: { id: realTierListId },
+    select: { userId: true },
+  });
+  if (!tierList) throw new NotFoundError("Tier list not found");
+  const ownerId = tierList.userId;
 
   // Batch: находим или создаём всех авторов за один проход
   const authorNames = books.map((b) => b.author).filter(Boolean) as string[];
@@ -169,14 +191,12 @@ export async function addBooksToTierList(
     authorId: bookData.author ? (authorMap.get(bookData.author)?.id ?? null) : null,
   }));
 
-  // Пре-фаза ВНЕ транзакции: матчим существующие книги ТОЛЬКО по внешнему ID
-  // (Google Books и т.п.). Локальные книги (без внешнего ID) не матчатся —
-  // каждое добавление создаёт пользователю свой оригинал (решение 17.08).
-  // Каталог (published) в матчинге не участвует — тир-листы не склеиваются.
+  // Пре-фаза ВНЕ транзакции: матчим ТОЛЬКО свои книги (модель «личные книги»).
+  // Каталог (published) и чужие книги не участвуют — тир-листы не склеиваются.
   const matched = await Promise.all(
     booksWithAuthors.map(async (bookData) => ({
       bookData,
-      existing: await findExistingUserBook(prisma, bookData),
+      existing: await findExistingUserBook(prisma, ownerId, bookData),
     })),
   );
 
@@ -225,9 +245,9 @@ export async function addBooksToTierList(
         continue;
       }
 
-      // Пользовательской книги нет → create draft + авто-slug;
-      // P2002 (гонка) → retry → link к пользовательскому канону (не каталогу)
-      placements.push(await linkOrCreate(tx, realTierListId, bookData, rank));
+      // Пользовательской книги нет → create draft (личная, с владельцем) + авто-slug;
+      // P2002 (гонка) → retry → link к своей книге (не к каталогу)
+      placements.push(await linkOrCreate(tx, realTierListId, ownerId, bookData, rank));
     }
 
     return placements;
@@ -237,14 +257,15 @@ export async function addBooksToTierList(
 }
 
 /**
- * Создание книги (draft + авто-slug) и её вхождения.
+ * Создание ЛИЧНОЙ книги (draft + userId + авто-slug) и её вхождения.
  * Конкурентная защита: два одновременных запроса могут оба создать внешнюю
- * книгу → INSERT падает с P2002 (unique [source, externalId] / slug) →
- * перезапрос канона → link. Локальные книги не матчатся (см. findExistingUserBook).
+ * книгу → INSERT падает с P2002 (unique [userId, source, externalId] / slug) →
+ * перезапрос канона → link. Чужая книга или каталог не линкуются (см. ниже).
  */
 async function linkOrCreate(
   tx: Prisma.TransactionClient,
   tierListId: string,
+  userId: number,
   bookData: {
     title: string;
     author?: string | null;
@@ -280,18 +301,21 @@ async function linkOrCreate(
       tags: bookData.tags ?? [],
       externalId: bookData.externalId ?? null,
       source: bookData.source ?? null,
+      userId,
       status: "draft",
     });
     return createPlacement(book.id);
   } catch (error) {
     if (!isPrismaP2002(error)) throw error;
     // Гонка: книга создана параллельным запросом → перезапрос → link вместо дубля
-    const canon = await findRaceCanon(tx, bookData);
+    const canon = await findRaceCanon(tx, userId, bookData);
     if (!canon) throw error;
-    if (canon.status === "draft") return createPlacement(canon.id);
-    // Канон — КАТАЛОГОВАЯ книга (published): не линкуемся (тир-листы не
-    // склеиваются с каталогом) — создаём локальную копию без внешнего ID,
-    // чтобы не нарушить unique (source, externalId)
+    if (canon.status === "draft" && canon.userId === userId) {
+      return createPlacement(canon.id);
+    }
+    // Канон — каталог (published) или ЧУЖАЯ книга: не линкуемся — создаём
+    // свою локальную копию без внешнего ID (чтобы не нарушить unique),
+    // личная (userId) — как и положено в модели «каждому своё»
     const local = await createBookWithSlug(tx, {
       title: bookData.title,
       author: bookData.author ?? null,
@@ -302,16 +326,18 @@ async function linkOrCreate(
       tags: bookData.tags ?? [],
       externalId: null,
       source: null,
+      userId,
       status: "draft",
     });
     return createPlacement(local.id);
   }
 }
 
-/** Перезапрос канона после P2002 (гонка): только для внешних книг по unique (source, externalId).
- *  Локальные книги не линкуются (решение 17.08): identity-индекс снят, P2002 для них невозможен. */
+/** Перезапрос канона после P2002 (гонка): только для СВОИХ внешних книг
+ *  по unique (userId, source, externalId). Чужой канон не линкуется. */
 async function findRaceCanon(
   tx: Prisma.TransactionClient,
+  userId: number,
   bookData: {
     title: string;
     authorId?: number | null;
@@ -321,7 +347,11 @@ async function findRaceCanon(
 ) {
   if (!bookData.source || !bookData.externalId) return null;
   return tx.book.findFirst({
-    where: { source: bookData.source as never, externalId: bookData.externalId },
+    where: {
+      userId,
+      source: bookData.source as never,
+      externalId: bookData.externalId,
+    },
   });
 }
 

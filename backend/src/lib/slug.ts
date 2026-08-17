@@ -34,16 +34,26 @@ export function isPrismaP2002(error: unknown): boolean {
   );
 }
 
+export interface CreateBookWithSlugOptions {
+  /**
+   * Каталог всегда получает ЧИСТЫЙ slug (решение 18.08): если чистый slug
+   * занят draft-книгой (личной из тир-листа или черновиком) — переименовываем
+   * её (slug = null), каталог забирает URL. published не трогаем — суффикс.
+   */
+  reclaimFromDraft?: boolean;
+}
+
 /**
  * Создание книги с уникальным slug: retry-цикл с суффиксами (-2, -3, …).
  * Если slug-суффиксы исчерпаны — случайный суффикс (крайний случай).
- * Конкурентная гонка по partial unique index / unique(source, externalId)
+ * Конкурентная гонка по partial unique index / unique(userId, source, externalId)
  * ловится на уровне P2002 и обрабатывается в addBooksToTierList (retry → link).
  */
 export async function createBookWithSlug(
   tx: Prisma.TransactionClient,
   data: Prisma.BookUncheckedCreateInput,
   base?: string,
+  options?: CreateBookWithSlugOptions,
 ): Promise<{ id: number }> {
   const slugBase = base ?? slugify([data.title, data.author].filter(Boolean).join("-"));
   const candidate = (n: number) => (n === 1 ? slugBase : `${slugBase}-${n}`);
@@ -61,8 +71,23 @@ export async function createBookWithSlug(
         const isSlugConflict = Array.isArray(target)
           ? target.includes("slug")
           : String(target ?? "").includes("slug");
-        if (isSlugConflict) continue;
-        throw error;
+        if (!isSlugConflict) throw error;
+
+        // Каталог забирает чистый slug у draft-книги (страниц у draft нет)
+        if (options?.reclaimFromDraft && attempt === 1) {
+          const occupant = await tx.book.findUnique({
+            where: { slug },
+            select: { id: true, status: true },
+          });
+          if (occupant && occupant.status === "draft") {
+            await tx.book.update({
+              where: { id: occupant.id },
+              data: { slug: null },
+            });
+            continue; // пробуем снова тот же slug
+          }
+        }
+        continue;
       }
       throw error;
     }

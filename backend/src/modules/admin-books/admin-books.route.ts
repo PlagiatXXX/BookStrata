@@ -34,6 +34,7 @@ const handleError = (error: unknown, reply: {
       already_merged: 409,
       google_empty: 404,
       invalid_comment_content: 400,
+      book_from_tier_list: 409,
     };
     return reply.code(map[error.code] ?? 400).send(
       createApiError(error.code as ErrorCode, error.message),
@@ -53,16 +54,21 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
       status?: string;
       genre?: string;
       duplicatesOnly?: string;
+      origin?: string;
       sort?: string;
       offset?: string;
       limit?: string;
     };
   }>("/", async (request, reply) => {
+    const origin = request.query.origin === "tier-list" || request.query.origin === "catalog"
+      ? request.query.origin
+      : undefined;
     const result = await listBooks({
       q: request.query.q,
       status: request.query.status,
       genre: request.query.genre,
       duplicatesOnly: request.query.duplicatesOnly === "true",
+      origin,
       sort: request.query.sort,
       offset: Number(request.query.offset ?? 0),
       limit: Number(request.query.limit ?? 50),
@@ -177,7 +183,7 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
           createApiError(ErrorCodes.VALIDATION_ERROR, error.message),
         );
       }
-      throw error;
+      return handleError(error, reply);
     }
   });
 

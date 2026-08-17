@@ -128,16 +128,27 @@ export async function syncCatalogCards(
   const authorMap =
     authorNames.length > 0 ? await authorService.findOrCreateMany(authorNames) : new Map();
 
-  // Пре-фаза матчинга ВНЕ транзакции (каскад уверенности, Фаза 2.1)
+  // Пре-фаза матчинга ВНЕ транзакции (каскад уверенности, Фаза 2.1).
+  // Каталог матчит ТОЛЬКО published-книги: пользовательские draft из тир-листов
+  // не участвуют в склейке (решение 17.08) — каталог и тир-листы не пересекаются.
   const matched = await Promise.all(
     entries.map(async (card) => {
       const authorId = card.author ? (authorMap.get(card.author)?.id ?? null) : null;
-      const result = await matchBook(prisma, {
-        title: card.title,
-        author: card.author ?? null,
+      const result = await matchBook(
+        prisma,
+        {
+          title: card.title,
+          author: card.author ?? null,
+          authorId,
+        },
+        { statusFilter: "published" },
+      );
+      return {
+        card,
         authorId,
-      });
-      return { card, authorId, canon: result.book };
+        // Страховка: даже если матчинг вернул draft — не линкуемся (см. выше)
+        canon: result.book?.status === "published" ? result.book : null,
+      };
     }),
   );
 
@@ -173,6 +184,7 @@ export async function syncCatalogCards(
         // Канона нет → создаём Book (draft + авто-slug); полная карточка → публикация ниже.
         // P2002 (гонка: канон создан параллельным запросом) abort'ит транзакцию —
         // не обрабатываем внутри, вся транзакция перезапускается (retry ниже).
+        // Каталог забирает чистый slug: draft-книга с таким slug переименовывается.
         const createdBook = await createBookWithSlug(tx, {
           title: card.title,
           author: card.author ?? null,
@@ -183,7 +195,7 @@ export async function syncCatalogCards(
           tags: toTags(card.tags),
           publishedYear: card.year ?? null,
           status: "draft",
-        });
+        }, undefined, { reclaimFromDraft: true });
         bookId = createdBook.id;
         result.created++;
       }

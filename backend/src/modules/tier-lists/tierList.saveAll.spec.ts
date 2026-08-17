@@ -14,6 +14,7 @@ vi.mock('../../lib/prisma.js', () => ({
     },
     book: {
       findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(1),
       create: vi.fn().mockResolvedValue({ id: 201 }),
     },
@@ -83,5 +84,70 @@ describe('tierList.service.saveAll', () => {
 
     expect(result.tierReplacements).toContainEqual({ tempId: 'tier-1', realId: '101' });
     expect(result.bookReplacements).toContainEqual({ tempId: 'local-1', realId: '201' });
+  });
+
+  it('should detach foreign books: personal copy with draft status, thoughts moved to new placement', async () => {
+    // В листе лежит «чужая» книга (userId = null — легаси-общая / каталоговая)
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([
+      { bookId: 200, thoughts: 'мои мысли о книге', coverImageUrl: 'cov-url' },
+    ]);
+    (prisma.book.findMany as any)
+      .mockResolvedValueOnce([{ id: 200, userId: null }]) // детект чужих книг
+      .mockResolvedValueOnce([{ // полные foreign-книги
+        id: 200,
+        title: 'Война и мир',
+        author: 'Толстой',
+        authorId: 5,
+        coverImageUrl: 'url',
+        description: null,
+        genre: 'роман',
+        tags: [],
+        slug: 'voyna-i-mir',
+        externalId: 'abc',
+        source: 'google_books',
+        status: 'published', // легаси: каталоговая книга в тир-листе
+        publishedYear: 1869,
+        rating: 9.5,
+        likesCount: 3,
+        mergedIntoId: null,
+        contextChain: null,
+      }]);
+    (prisma.book.create as any).mockResolvedValue({ id: 999 });
+
+    const payload = {
+      placements: [{ bookId: 200, tierId: null, rank: 0 }],
+    };
+
+    await service.saveAll(tierListId, userId, payload);
+
+    // Копия — личная, статус ВСЕГДА draft (не published как легаси-оригинал)
+    expect(prisma.book.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userId,
+          status: 'draft',
+          slug: null,
+          externalId: 'abc',
+          source: 'google_books',
+        }),
+      }),
+    );
+    // Вхождение перепривязано на копию, мысли/обложка перенесены
+    expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          tierListId,
+          bookId: 999,
+          tierId: null,
+          rank: 0,
+          thoughts: 'мои мысли о книге',
+          coverImageUrl: 'cov-url',
+        },
+      ],
+    });
+    // Старое вхождение (на foreign-книге) удалено
+    expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledWith({
+      where: { tierListId, bookId: { in: [200] } },
+    });
   });
 });

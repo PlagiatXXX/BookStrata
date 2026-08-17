@@ -76,6 +76,16 @@ export default function AdminBooksPage() {
             <option value="draft">Черновики</option>
           </select>
           <select
+            value={h.origin}
+            onChange={(e) => { h.setOrigin(e.target.value as typeof h.origin); h.setOffset(0); }}
+            aria-label="Фильтр по происхождению"
+            className="rounded-lg border border-[var(--ink-3)] bg-[var(--bg-1)] px-3 py-2 text-sm text-[var(--ink-0)] outline-none"
+          >
+            <option value="all">Все книги</option>
+            <option value="catalog">Каталог</option>
+            <option value="tier-list">Из тир-листов</option>
+          </select>
+          <select
             value={h.genre}
             onChange={(e) => { h.setGenre(e.target.value); h.setOffset(0); }}
             aria-label="Фильтр по жанру"
@@ -158,6 +168,14 @@ export default function AdminBooksPage() {
                             {b.mergedIntoId ? <span className="mr-1 text-xs text-red-400">[дубль]</span> : null}
                             {b.title}
                           </button>
+                          {b._count.placements > 0 && (
+                            <span
+                              title="Книга добавлена в тир-листы пользователей"
+                              className="inline-block whitespace-nowrap rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-medium text-sky-300"
+                            >
+                              в тир-листах: {b._count.placements}
+                            </span>
+                          )}
                           <p className="truncate text-xs text-[var(--ink-2)]">
                             {b.author ?? "—"}
                             {b.genre ? ` · ${b.genre}` : ""}

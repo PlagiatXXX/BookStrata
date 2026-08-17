@@ -24,6 +24,8 @@ const prismaMock = {
   },
   book: {
     create: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
   },
   bookPlacement: {
     create: vi.fn(),
@@ -123,5 +125,128 @@ describe("Tier List forkTierList BOLA Security Tests", () => {
     await forkTierList(tierListId, userId);
 
     expect(prismaMock.tierList.create).toHaveBeenCalled();
+  });
+
+  it("should link own book with the same external ID instead of creating a duplicate (P2002 guard)", async () => {
+    const userId = 7;
+
+    (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue({
+      id: 10,
+      userId: 99,
+      title: "Public List",
+      isPublic: true,
+      tiers: [{ id: 1, title: "S", color: "#ffffff", rank: 0 }],
+      placements: [{
+        tierId: 1,
+        rank: 0,
+        thoughts: null,
+        book: {
+          title: "Война и мир",
+          author: "Толстой",
+          authorId: 5,
+          coverImageUrl: "u",
+          description: "d",
+          genre: null,
+          tags: [],
+          publishedYear: 1869,
+          externalId: "abc",
+          source: "google_books",
+          userId: 99,
+          status: "draft",
+        },
+      }],
+    });
+
+    prismaMock.tierList.create.mockResolvedValue({
+      id: 200,
+      userId,
+      title: "Public List (копия)",
+      tiers: [{ id: 11, title: "S", color: "#ffffff", rank: 0 }],
+    });
+
+    // У форкающего УЖЕ есть своя книга с тем же внешним ID
+    (prismaMock.book.findFirst as any).mockResolvedValue({ id: 555 });
+    prismaMock.book.findMany.mockResolvedValue([]);
+
+    await forkTierList(10, userId);
+
+    // Дубль не создаётся — линкуемся на свою книгу
+    expect(prismaMock.book.create).not.toHaveBeenCalled();
+    expect(prismaMock.tierList.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          placements: expect.objectContaining({
+            create: [expect.objectContaining({ book: { connect: { id: 555 } } })],
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("should create a personal copy when user has no own book", async () => {
+    const userId = 8;
+
+    (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue({
+      id: 11,
+      userId: 99,
+      title: "Public List 2",
+      isPublic: true,
+      tiers: [],
+      placements: [{
+        tierId: null,
+        rank: 0,
+        thoughts: "мысль",
+        book: {
+          title: "Анна Каренина",
+          author: "Толстой",
+          authorId: 5,
+          coverImageUrl: "u",
+          description: "d",
+          genre: null,
+          tags: [],
+          publishedYear: 1877,
+          externalId: "xyz",
+          source: "google_books",
+          userId: 99,
+          status: "draft",
+        },
+      }],
+    });
+
+    prismaMock.tierList.create.mockResolvedValue({
+      id: 201,
+      userId,
+      title: "Public List 2 (копия)",
+      tiers: [],
+    });
+
+    // Своей книги нет
+    (prismaMock.book.findFirst as any).mockResolvedValue(null);
+    prismaMock.book.findMany.mockResolvedValue([]);
+
+    await forkTierList(11, userId);
+
+    // Книга создаётся nested-ом внутри placements.create (Prisma-запрос),
+    // поэтому проверяем данные копии в tierList.update
+    expect(prismaMock.tierList.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          placements: expect.objectContaining({
+            create: [
+              expect.objectContaining({
+                book: {
+                  create: expect.objectContaining({
+                    userId,
+                    status: 'draft',
+                    externalId: 'xyz',
+                    source: 'google_books',
+                  }),
+                },
+              }),
+            ],
+          }),
+        }),
+      }),
+    );
   });
 });

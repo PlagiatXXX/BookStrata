@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { sanitize } from "../../lib/sanitizer.js";
 import { createAuthorService, type AuthorResult } from "../authors/authors.service.js";
 import { findExistingUserBook } from "./tierList.books.service.js";
+import { Prisma } from "@prisma/client";
 
 const authorService = createAuthorService(prisma);
 
@@ -133,12 +134,11 @@ export async function saveAll(
       }));
 
       // Оптимизация: Параллельный поиск/создание книг.
-      // ВАЖНО (решение 17.08): ищем ТОЛЬКО среди пользовательских книг (draft) —
-      // каталог с тир-листами не склеивается. Если пользовательской книги нет —
-      // всегда создаём draft, даже если в каталоге есть published-книга с тем же названием.
+      // Модель «личные книги» (18.08): ищем ТОЛЬКО свои (userId), каталог
+      // и чужие книги не трогаем — при отсутствии своей всегда создаём draft.
       const bookResults = await Promise.all(
         booksWithAuthors.map(async (bookData) => {
-          const existing = await findExistingUserBook(tx, bookData);
+          const existing = await findExistingUserBook(tx, userId, bookData);
 
           if (existing) {
             return { tempId: bookData.tempId, realId: String(existing.id) };
@@ -153,6 +153,7 @@ export async function saveAll(
               description: bookData.description ? sanitize(bookData.description) : null,
               genre: bookData.genre ? sanitize(bookData.genre) : null,
               tags: bookData.tags ?? [],
+              userId,
             },
           });
           return { tempId: bookData.tempId, realId: String(created.id) };
@@ -224,7 +225,14 @@ export async function saveAll(
           .map((b) => [b.tempId, sanitize(b.thoughts as string)]),
       );
 
-      const finalPlacements = payload.placements.map((p) => {
+      const finalPlacements: Array<{
+        tierListId: string;
+        bookId: number;
+        tierId: number | null;
+        rank: number;
+        thoughts?: string | null;
+        coverImageUrl?: string | null;
+      }> = payload.placements.map((p) => {
         let finalBookId: number;
         let isTempBook = false;
         if (typeof p.bookId === "string" && p.bookId.includes("-")) {
@@ -257,6 +265,69 @@ export async function saveAll(
             : {}),
         };
       });
+
+      // Модель «личные книги» (18.08): все книги листа должны быть СВОИМИ.
+      // Легаси-книги (ничьи userId = null или чужие — форки старой модели)
+      // детачим: создаём личную копию и перепривязываем вхождение.
+      const detachBookIds = Array.from(
+        new Set(finalPlacements.map((p) => p.bookId)),
+      );
+      if (detachBookIds.length > 0) {
+        const placementsBooks = await tx.book.findMany({
+          where: { id: { in: detachBookIds } },
+          select: { id: true, userId: true },
+        });
+        const foreignIds = placementsBooks
+          .filter((b) => b.userId !== userId)
+          .map((b) => b.id);
+        if (foreignIds.length > 0) {
+          const foreignBooks = await tx.book.findMany({
+            where: { id: { in: foreignIds } },
+          });
+          const copyByBookId = new Map<number, number>();
+          for (const fb of foreignBooks) {
+            const copy = await tx.book.create({
+              data: {
+                title: fb.title,
+                author: fb.author,
+                authorId: fb.authorId,
+                coverImageUrl: fb.coverImageUrl,
+                description: fb.description,
+                genre: fb.genre,
+                tags: fb.tags,
+                publishedYear: fb.publishedYear,
+                externalId: fb.externalId,
+                source: fb.source,
+                mergedIntoId: fb.mergedIntoId,
+                rating: fb.rating,
+                likesCount: fb.likesCount,
+                // Копия — личная: владелец, без slug и контекста (своя история).
+                // Статус ВСЕГДА draft: каталоговая (published) книга в тир-листе —
+                // легаси, её копия не может быть опубликованной (инвариант:
+                // published = каталог, userId = null)
+                userId,
+                slug: null,
+                status: "draft" as const,
+                contextChain: (fb.contextChain ?? Prisma.DbNull) as Prisma.InputJsonValue,
+              },
+            });
+            copyByBookId.set(fb.id, copy.id);
+          }
+          for (const p of finalPlacements) {
+            const copyId = copyByBookId.get(p.bookId);
+            if (copyId) {
+              // Личные данные вхождения (мысли/обложка) переносим с исходного
+              // placement'а на новый, иначе они потеряются при детаче
+              const old = existingPlacementMap.get(p.bookId);
+              p.bookId = copyId;
+              if (old) {
+                if (old.thoughts != null) p.thoughts = old.thoughts;
+                if (old.coverImageUrl != null) p.coverImageUrl = old.coverImageUrl;
+              }
+            }
+          }
+        }
+      }
 
       // Существующие — UPDATE (thoughts/coverImageUrl не перезаписываются —
       // личные данные вхождения, в finalPlacements их нет для существующих книг)
@@ -309,11 +380,11 @@ export async function saveAll(
       const orphanedBookIds = payload.deletedBookIds.filter(id => !booksStillInUse.includes(id));
 
       // Удаляем только те книги, которые нигде больше не используются.
-      // ВАЖНО (решение 17.08): удаляем ТОЛЬКО пользовательские (draft) —
-      // каталоговые (published) книги никогда не удаляются из тир-листов.
+      // ВАЖНО (решение 18.08): удаляем ТОЛЬКО свои (userId) — каталоговые
+      // (published) и чужие книги никогда не удаляются из тир-листов.
       if (orphanedBookIds.length > 0) {
         await tx.book.deleteMany({
-          where: { id: { in: orphanedBookIds }, status: "draft" },
+          where: { id: { in: orphanedBookIds }, status: "draft", userId },
         });
       }
     }

@@ -22,11 +22,14 @@ import {
 
 export type StatusFilter = "all" | "published" | "draft";
 
+export type OriginFilter = "all" | "tier-list" | "catalog";
+
 export function useAdminBooks() {
   const queryClient = useQueryClient();
 
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [origin, setOrigin] = useState<OriginFilter>("all");
   const [genre, setGenre] = useState("");
   const [duplicatesOnly, setDuplicatesOnly] = useState(false);
   const [sort, setSort] = useState("updatedAt");
@@ -38,11 +41,12 @@ export function useAdminBooks() {
   const [commentsBook, setCommentsBook] = useState<{ id: number; title: string } | null>(null);
 
   const listQuery = useQuery({
-    queryKey: ["admin-books", q, status, genre, duplicatesOnly, sort, offset],
+    queryKey: ["admin-books", q, status, origin, genre, duplicatesOnly, sort, offset],
     queryFn: () =>
       listAdminBooks({
         q: q || undefined,
         status: status === "all" ? undefined : status,
+        origin: origin === "all" ? undefined : origin,
         genre: genre || undefined,
         duplicatesOnly,
         sort,
@@ -156,6 +160,7 @@ export function useAdminBooks() {
     loading: listQuery.isLoading,
     q, setQ,
     status, setStatus,
+    origin, setOrigin,
     genre, setGenre,
     duplicatesOnly, setDuplicatesOnly,
     sort, setSort,

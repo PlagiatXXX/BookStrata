@@ -27,7 +27,7 @@ export interface AdminBookListItem {
   mergedIntoId: number | null;
   source: string | null;
   externalId: string | null;
-  _count: { comments: number };
+  _count: { comments: number; placements: number };
 }
 
 export interface AdminBookDetail extends AdminBookListItem {
@@ -46,6 +46,8 @@ export interface BookListParams {
   status?: string;
   genre?: string;
   duplicatesOnly?: boolean;
+  /** Происхождение книги: "tier-list" — есть вхождения в тир-листы пользователей */
+  origin?: "tier-list" | "catalog";
   sort?: string;
   offset?: number;
   limit?: number;
@@ -80,6 +82,7 @@ export async function listAdminBooks(params: BookListParams = {}) {
   if (params.status) query.set("status", params.status);
   if (params.genre) query.set("genre", params.genre);
   if (params.duplicatesOnly) query.set("duplicatesOnly", "true");
+  if (params.origin) query.set("origin", params.origin);
   if (params.sort) query.set("sort", params.sort);
   if (params.offset) query.set("offset", String(params.offset));
   if (params.limit) query.set("limit", String(params.limit));

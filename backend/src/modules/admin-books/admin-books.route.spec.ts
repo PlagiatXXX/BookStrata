@@ -188,6 +188,54 @@ describe("Admin Books Routes", () => {
       );
     });
 
+    it("origin=tier-list → личные книги (userId) + книги с вхождениями в тир-листы", async () => {
+      mocks.prisma.book.findMany.mockResolvedValue([]);
+      mocks.prisma.book.count.mockResolvedValue(0);
+
+      await request(app.server)
+        .get("/api/admin/books?origin=tier-list")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { userId: { not: null } },
+              { placements: { some: {} } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it("origin=catalog → каталоговые книги без userId и вхождений", async () => {
+      mocks.prisma.book.findMany.mockResolvedValue([]);
+      mocks.prisma.book.count.mockResolvedValue(0);
+
+      await request(app.server)
+        .get("/api/admin/books?origin=catalog")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { placements: { none: {} }, userId: null },
+        }),
+      );
+    });
+
+    it("неизвестный origin игнорируется (все книги)", async () => {
+      mocks.prisma.book.findMany.mockResolvedValue([]);
+      mocks.prisma.book.count.mockResolvedValue(0);
+
+      await request(app.server)
+        .get("/api/admin/books?origin=foo")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+    });
+
     it("views — просмотры из AnalyticsEvent, привязанные по slug", async () => {
       mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
       mocks.prisma.book.count.mockResolvedValue(1);
@@ -329,6 +377,11 @@ describe("Admin Books Routes", () => {
 
   describe("публикация", () => {
     it("POST /:id/publish → вызывает publishBook()", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({
+        userId: null,
+        _count: { placements: 0 },
+      });
+
       const res = await request(app.server)
         .post("/api/admin/books/10/publish")
         .set("Authorization", "Bearer admin-token");
@@ -338,6 +391,10 @@ describe("Admin Books Routes", () => {
     });
 
     it("неполная книга → 422 (инвариант publishBook)", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({
+        userId: null,
+        _count: { placements: 0 },
+      });
       const err = new Error("Книга неполная для публикации: publishedYear, description");
       err.name = "IncompleteBookError";
       mocks.publishBook.mockRejectedValue(err);
@@ -348,6 +405,46 @@ describe("Admin Books Routes", () => {
 
       expect(res.status).toBe(422);
       expect(res.body.error.message).toContain("publishedYear");
+    });
+
+    it("личная книга из тир-листа (userId) → 409, publishBook не вызывается", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({
+        userId: 5,
+        _count: { placements: 3 },
+      });
+
+      const res = await request(app.server)
+        .post("/api/admin/books/10/publish")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(409);
+      expect(res.body.error.message).toContain("тир-листа");
+      expect(mocks.publishBook).not.toHaveBeenCalled();
+    });
+
+    it("книга с вхождениями, но без userId (легаси) → 409", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({
+        userId: null,
+        _count: { placements: 2 },
+      });
+
+      const res = await request(app.server)
+        .post("/api/admin/books/10/publish")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(409);
+      expect(mocks.publishBook).not.toHaveBeenCalled();
+    });
+
+    it("книга не найдена → 404", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce(null);
+
+      const res = await request(app.server)
+        .post("/api/admin/books/999/publish")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(404);
+      expect(mocks.publishBook).not.toHaveBeenCalled();
     });
   });
 

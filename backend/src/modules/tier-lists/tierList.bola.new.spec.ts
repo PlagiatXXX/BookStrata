@@ -14,6 +14,7 @@ vi.mock("../../lib/prisma.js", () => ({
     },
     book: {
       findFirst: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(1),
       create: vi.fn(),
     },
@@ -74,34 +75,70 @@ describe("Tier List BOLA Security Tests - New", () => {
       }));
     });
 
-    it("should allow placing a bookId that exists in DB even if user hasn't used it before", async () => {
+    it("своя книга (userId = владелец) размещается напрямую", async () => {
       const myTierListId = "1";
-      const anyBookId = 888;
+      const myBookId = 888;
 
       const payload = {
         placements: [
-          { bookId: anyBookId, tierId: null, rank: 0 }
+          { bookId: myBookId, tierId: null, rank: 0 }
         ]
       };
 
-      // Книги глобальные — проверка владения удалена
+      // Модель «личные книги»: своя книга детач не требует
+      (prisma.book.findMany as any).mockResolvedValue([{ id: myBookId, userId: 1 }]);
+
       await expect(service.saveAll(myTierListId, 1, payload)).resolves.toBeDefined();
-      expect(prisma.bookPlacement.createMany).toHaveBeenCalled();
+      expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
+        data: [{ tierListId: "1", bookId: myBookId, tierId: null, rank: 0 }],
+      });
+      expect(prisma.book.create).not.toHaveBeenCalled();
     });
 
-    it("should proceed with any existing bookId (global books)", async () => {
+    it("глобальная книга (userId null) детачится в личную копию владельца", async () => {
       const myTierListId = "1";
-      const anyBookId = 777;
+      const globalBookId = 777;
 
       const payload = {
         placements: [
-          { bookId: anyBookId, tierId: null, rank: 0 }
+          { bookId: globalBookId, tierId: null, rank: 0 }
         ]
       };
+
+      (prisma.book.findMany as any).mockResolvedValue([
+        {
+          id: globalBookId,
+          userId: null,
+          title: "Глобальная",
+          author: null,
+          authorId: null,
+          coverImageUrl: "img.jpg",
+          description: null,
+          genre: null,
+          tags: [],
+          publishedYear: null,
+          externalId: null,
+          source: null,
+          status: "draft",
+          mergedIntoId: null,
+          rating: 0,
+          likesCount: 0,
+          contextChain: null,
+        },
+      ]);
+      (prisma.book.create as any).mockResolvedValue({ id: 500 });
 
       await service.saveAll(myTierListId, 1, payload);
 
-      expect(prisma.bookPlacement.createMany).toHaveBeenCalled();
+      // Чужая книга НЕ привязывается: создаётся личная копия и вхождение — на неё
+      expect(prisma.book.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 1, slug: null }),
+        }),
+      );
+      expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
+        data: [{ tierListId: "1", bookId: 500, tierId: null, rank: 0 }],
+      });
     });
   });
 });

@@ -41,6 +41,7 @@ templates            Template[]
 tierListLikes        TierListLike[]
 templateLikes        TemplateLike[]
 newsArticles         NewsArticle[]
+books                Book[] // Личные книги пользователя (из тир-листов; каталог — userId = null)
 passwordResetTokens  PasswordResetToken[]
 achievements         UserAchievement[]
   battleVotes          BattleVote[]
@@ -96,6 +97,10 @@ id              Int             @id @default(autoincrement())
 title           String
 author          String?
 authorId        Int?
+// Владелец ЛИЧНОЙ книги (из тир-листов). Каталог (published) всегда userId = null.
+// Модель «каждому пользователю своя запись» (решение 18.08): книги тир-листов —
+// личное имущество, каталог с ними не пересекается.
+userId          Int?            @map("user_id")
 coverImageUrl   String          @map("cover_image_url")
 description     String?
 genre           String?
@@ -111,6 +116,7 @@ rating          Float?          // Рейтинг каталога 0–10; си�
 likesCount      Int             @default(0) // Счётчик лайков (денормализация)
 mergedIntoId    Int?            // Аудит дедупа: id книги-канона, поглотившего эту запись (иная запись)
 contextChain    Json?           // Редакторский блок «Погружение в контекст»: [{ icon, title, text }]
+user            User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
 placements      BookPlacement[]
 ratings         BookRating[]
 statuses        BookStatus[]
@@ -123,7 +129,10 @@ authorRel       Author?         @relation(fields: [authorId], references: [id], 
 createdAt       DateTime        @default(now()) @map("created_at")
 updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
 
-@@unique([source, externalId]) // DB-level: один внешний ID = одна книга (P2002 → retry → link)
+// Уникальность внешнего ID разделена по мирум (partial unique, в миграции):
+// каталог (userId IS NULL) — один (source, externalId) на всех;
+// личные книги — один (userId, source, externalId) на пользователя.
+@@index([userId])
 @@index([genre])
 @@index([tags], type: Gin)
 @@index([title, author])

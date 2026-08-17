@@ -49,7 +49,7 @@ const bookRow: AdminBookListItem = {
   mergedIntoId: null,
   source: "local",
   externalId: null,
-  _count: { comments: 2 },
+  _count: { comments: 2, placements: 0 },
 };
 
 const bookDetail = {
@@ -120,6 +120,36 @@ describe("AdminBooksPage (Фаза 7)", () => {
         expect.objectContaining({ status: "draft" }),
       );
     });
+  });
+
+  it("фильтр по происхождению передаётся в API", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("Анна Каренина");
+
+    await user.selectOptions(screen.getByLabelText("Фильтр по происхождению"), "tier-list");
+    await waitFor(() => {
+      expect(mockedList).toHaveBeenLastCalledWith(
+        expect.objectContaining({ origin: "tier-list" }),
+      );
+    });
+  });
+
+  it("бейдж «в тир-листах» показывается для книг с вхождениями", async () => {
+    mockedList.mockResolvedValue({
+      items: [{ ...bookRow, _count: { comments: 0, placements: 3 } }],
+      total: 1,
+    });
+    renderPage();
+
+    expect(await screen.findByText("в тир-листах: 3")).toBeInTheDocument();
+  });
+
+  it("без вхождений бейдж «в тир-листах» не показывается", async () => {
+    renderPage();
+    await screen.findByText("Анна Каренина");
+
+    expect(screen.queryByText(/в тир-листах/)).not.toBeInTheDocument();
   });
 
   it("поиск по названию передаёт q в API", async () => {
