@@ -183,6 +183,7 @@
 
 /* Карточки книг — глянцевые «пластилиновые брусочки» (как в редакторе) */
 .clay-shelf .nb-book-card {
+  display: block;
   width: clamp(70px, 12vw, 96px);
   border-radius: 13px;
   box-shadow:

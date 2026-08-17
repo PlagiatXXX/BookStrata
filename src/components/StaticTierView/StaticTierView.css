@@ -55,6 +55,10 @@
 
 /* BookCover — общие стили для книжных карточек */
 .nb-book-card {
+  /* display: block — критично: карточки-ссылки (<a>, published-книги)
+     иначе inline → width/height игнорируются → обложка рендерится
+     в натуральном размере картинки и растягивает полки */
+  display: block;
   width: 90px;
   aspect-ratio: 2/3;
   background-size: cover;
