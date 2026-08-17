@@ -56,30 +56,33 @@ export function MergeModal({ book, searching, candidates, merging, onSearch, onM
         </div>
 
         <div className="max-h-80 space-y-2 overflow-y-auto">
-          {candidates.map((c) => (
-            <div key={c.id} className="flex items-center gap-3 rounded-lg border border-[var(--ink-3)] bg-[var(--bg-0)] p-3">
-              <img
-                src={c.coverImageUrl || undefined}
-                alt=""
-                className="h-12 w-8 shrink-0 rounded object-cover"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-[var(--ink-0)]">{c.title}</p>
-                <p className="truncate text-xs text-[var(--ink-2)]">
-                  {c.author ?? "—"} · {c.status === "published" ? "опубликована" : "черновик"} · #{c.id}
-                </p>
+          {/* Сам дубль в кандидатах не показываем (иначе merge сам с собой → 400) */}
+          {candidates
+            .filter((c) => c.id !== book.id)
+            .map((c) => (
+              <div key={c.id} className="flex items-center gap-3 rounded-lg border border-[var(--ink-3)] bg-[var(--bg-0)] p-3">
+                <img
+                  src={c.coverImageUrl || undefined}
+                  alt=""
+                  className="h-12 w-8 shrink-0 rounded object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-[var(--ink-0)]">{c.title}</p>
+                  <p className="truncate text-xs text-[var(--ink-2)]">
+                    {c.author ?? "—"} · {c.status === "published" ? "опубликована" : "черновик"} · #{c.id}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onMerge(c.id)}
+                  disabled={merging}
+                  className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/10 disabled:opacity-50 cursor-pointer"
+                >
+                  {merging ? "…" : "Склеить"}
+                </button>
               </div>
-              <button
-                onClick={() => onMerge(c.id)}
-                disabled={merging}
-                className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/10 disabled:opacity-50 cursor-pointer"
-              >
-                {merging ? "…" : "Склеить"}
-              </button>
-            </div>
-          ))}
-          {!searching && candidates.length === 0 && q && (
+            ))}
+          {!searching && q && candidates.filter((c) => c.id !== book.id).length === 0 && (
             <p className="text-center text-sm text-[var(--ink-2)]">Ничего не найдено</p>
           )}
         </div>

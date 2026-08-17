@@ -273,6 +273,31 @@ describe("AdminBooksPage (Фаза 7)", () => {
     });
   });
 
+  it("merge: кандидат-сам-дубль скрыт из списка (защита от склейки с собой)", async () => {
+    const user = userEvent.setup();
+    mockedList
+      .mockResolvedValueOnce({ items: [bookRow], total: 1 })
+      .mockResolvedValue({ items: [bookRow, { ...bookRow, id: 77, title: "Anna Karenina" }], total: 2 });
+    renderPage();
+    await screen.findByText("Анна Каренина");
+
+    await user.click(screen.getByRole("button", { name: "Редактировать" }));
+    await user.click(await screen.findByRole("button", { name: "Склеить с дублем…" }));
+
+    const searchInput = screen.getByPlaceholderText("Название книги-канона… (Enter)");
+    await user.type(searchInput, "anna");
+    await user.keyboard("{Enter}");
+
+    // Кандидат с id дубля (10) скрыт, остаётся только 77
+    const buttons = await screen.findAllByRole("button", { name: "Склеить" });
+    expect(buttons).toHaveLength(1);
+
+    await user.click(buttons[0]);
+    await waitFor(() => {
+      expect(mockedMerge).toHaveBeenCalledWith(10, 77);
+    });
+  });
+
   it("пагинация: «Вперёд» увеличивает offset", async () => {
     const user = userEvent.setup();
     mockedList.mockResolvedValue({ items: [], total: 120 });

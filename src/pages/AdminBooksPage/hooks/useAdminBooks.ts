@@ -113,6 +113,12 @@ export function useAdminBooks() {
       invalidateLists();
       setMergeBook(null);
     },
+    onError: (err) => {
+      sileo.error({
+        title: "Не удалось склеить",
+        description: err instanceof ApiRequestError ? err.message : undefined,
+      });
+    },
   });
 
   const commentsQuery = useQuery({
