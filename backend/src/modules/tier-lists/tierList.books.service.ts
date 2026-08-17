@@ -120,7 +120,10 @@ export async function findExistingUserBook(
     source?: string | null;
   },
 ): Promise<{ id: number } | null> {
-  // 1. Внешний ID (если есть) — сильнейший сигнал, но только среди draft
+  // Матчим ТОЛЬКО по внешнему ID (source + externalId) среди draft:
+  // Google Books и другие внешние источники — общий справочник, одна книга на всех.
+  // Локальные книги (без внешнего ID) НЕ матчатся: каждое добавление создаёт
+  // пользователю свой оригинал (возврат к поведению до b98efc8, решение 17.08).
   if (bookData.source && bookData.externalId) {
     const byExternalId = await db.book.findFirst({
       where: {
@@ -133,20 +136,7 @@ export async function findExistingUserBook(
     if (byExternalId) return byExternalId;
   }
 
-  // 2. Нормализованные (title, author) среди draft
-  const normTitle = normTitleForSql(bookData.title);
-  if (!normTitle) return null;
-  const normAuthor = bookData.author ? normTitleForSql(bookData.author) : null;
-  const rows = await db.$queryRaw<Array<{ id: number }>>`
-    SELECT id FROM "Book"
-    WHERE status = 'draft'
-      AND lower(trim(regexp_replace(translate(title, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${normTitle}
-      AND (${normAuthor}::text IS NULL
-           OR (author IS NOT NULL AND lower(trim(regexp_replace(translate(author, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${normAuthor}))
-    ORDER BY id
-    LIMIT 1
-  `;
-  return rows[0] ?? null;
+  return null;
 }
 
 export async function addBooksToTierList(
@@ -179,8 +169,10 @@ export async function addBooksToTierList(
     authorId: bookData.author ? (authorMap.get(bookData.author)?.id ?? null) : null,
   }));
 
-  // Пре-фаза ВНЕ транзакции: ищем существующие пользовательские книги (draft)
-  // для link-or-create. Каталог (published) не участвует — тир-листы не склеиваются.
+  // Пре-фаза ВНЕ транзакции: матчим существующие книги ТОЛЬКО по внешнему ID
+  // (Google Books и т.п.). Локальные книги (без внешнего ID) не матчатся —
+  // каждое добавление создаёт пользователю свой оригинал (решение 17.08).
+  // Каталог (published) в матчинге не участвует — тир-листы не склеиваются.
   const matched = await Promise.all(
     booksWithAuthors.map(async (bookData) => ({
       bookData,
@@ -246,9 +238,9 @@ export async function addBooksToTierList(
 
 /**
  * Создание книги (draft + авто-slug) и её вхождения.
- * Конкурентная защита (Фаза 2.1): два одновременных запроса могут оба не найти
- * канон и создать дубль → INSERT падает с P2002 (unique [source, externalId] /
- * partial unique index books_local_identity_idx / slug) → перезапрос канона → link.
+ * Конкурентная защита: два одновременных запроса могут оба создать внешнюю
+ * книгу → INSERT падает с P2002 (unique [source, externalId] / slug) →
+ * перезапрос канона → link. Локальные книги не матчатся (см. findExistingUserBook).
  */
 async function linkOrCreate(
   tx: Prisma.TransactionClient,
@@ -316,7 +308,8 @@ async function linkOrCreate(
   }
 }
 
-/** Перезапрос канона после P2002: по unique (source, externalId) или partial unique index */
+/** Перезапрос канона после P2002 (гонка): только для внешних книг по unique (source, externalId).
+ *  Локальные книги не линкуются (решение 17.08): identity-индекс снят, P2002 для них невозможен. */
 async function findRaceCanon(
   tx: Prisma.TransactionClient,
   bookData: {
@@ -326,20 +319,10 @@ async function findRaceCanon(
     source?: string | null;
   },
 ) {
-  if (bookData.source && bookData.externalId) {
-    return tx.book.findFirst({
-      where: { source: bookData.source as never, externalId: bookData.externalId },
-    });
-  }
-  // local-книги: books_local_identity_idx (lower(trim(title)), COALESCE(authorId, 0)) WHERE source IS NULL
-  const rows = await tx.$queryRaw<Array<{ id: number }>>`
-    SELECT id FROM "Book"
-    WHERE lower(trim(title)) = ${bookData.title.toLowerCase().trim()}
-      AND COALESCE("authorId", 0) = ${bookData.authorId ?? 0}
-      AND source IS NULL
-  `;
-  if (rows.length === 0) return null;
-  return tx.book.findUnique({ where: { id: rows[0]!.id } });
+  if (!bookData.source || !bookData.externalId) return null;
+  return tx.book.findFirst({
+    where: { source: bookData.source as never, externalId: bookData.externalId },
+  });
 }
 
 /**

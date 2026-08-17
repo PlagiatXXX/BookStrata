@@ -554,9 +554,10 @@ describe("tierList.service", () => {
       );
     });
 
-    it("найдена пользовательская книга (draft) → link: Book не создаётся, каталог не участвует", async () => {
+    it("локальная книга не матчится по (title, author) — создаётся свой оригинал, каталог не участвует", async () => {
       // В каталоге есть published-книга с тем же названием (mock findMany),
-      // но матчинг идёт ТОЛЬКО среди draft (решение 17.08) — $queryRaw находит draft
+      // и draft с тем же названием ($queryRaw нашёл бы её) — но локальные книги
+      // не матчатся: каждому пользователю свой оригинал (решение 17.08)
       (prisma.book.findMany as any).mockResolvedValue([
         {
           id: 320,
@@ -576,18 +577,19 @@ describe("tierList.service", () => {
 
       const result = await service.addBooksToTierList(mockTierListId, [mockBooks[0]]);
 
-      expect(prisma.book.create).not.toHaveBeenCalled();
+      expect(prisma.book.create).toHaveBeenCalledTimes(1);
       expect(prisma.bookPlacement.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ bookId: 7, thoughts: "Thoughts 1" }),
+          data: expect.objectContaining({ bookId: 100, thoughts: "Thoughts 1" }),
         }),
       );
-      expect(result[0]?.book?.id).toBe(7);
+      expect(result[0]?.book?.id).toBe(100);
     });
 
-    it("книга уже есть в листе → обновляет позицию, не создаёт дубль вхождения", async () => {
+    it("внешняя книга уже есть в листе → обновляет позицию, не создаёт дубль вхождения", async () => {
       (prisma.bookPlacement.findMany as any).mockResolvedValue([{ bookId: 7, rank: 0 }]);
-      (prisma.$queryRaw as any).mockResolvedValue([{ id: 7 }]);
+      // Дедуп по (source, externalId): книга найдена среди draft
+      (prisma.book.findFirst as any).mockResolvedValueOnce({ id: 7 });
       (prisma.bookPlacement.update as any).mockResolvedValue({
         tierListId: mockTierListId,
         bookId: 7,
@@ -595,7 +597,15 @@ describe("tierList.service", () => {
         book: { id: 7 },
       });
 
-      await service.addBooksToTierList(mockTierListId, [mockBooks[0]]);
+      await service.addBooksToTierList(mockTierListId, [
+        {
+          title: "Book 1",
+          author: "Author 1",
+          coverImageUrl: "cover1.jpg",
+          externalId: "vol-123",
+          source: "google_books",
+        },
+      ]);
 
       expect(prisma.bookPlacement.update).toHaveBeenCalled();
       expect(prisma.bookPlacement.create).not.toHaveBeenCalled();
