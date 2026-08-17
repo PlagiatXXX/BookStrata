@@ -78,7 +78,10 @@ describe("getBookPageData", () => {
     expect((prisma.collection.findMany as any).mock.calls[0][0].where.catalogBooks.some.bookId).toBe(1);
     // SQL-запрос тир-листов: только публичные + нормализованные title/author книги
     const sqlCall = (prisma.$queryRaw as any).mock.calls[0];
-    expect(sqlCall[0].join(" ")).toContain('"isPublic" = true');
+    // Таблица tier_lists и колонки is_public/likes_count (snake_case через @map в Prisma)
+    expect(sqlCall[0].join(" ")).toContain("FROM tier_lists tl");
+    expect(sqlCall[0].join(" ")).toContain("tl.is_public = true");
+    expect(sqlCall[0].join(" ")).toContain("ORDER BY tl.likes_count DESC");
     expect(sqlCall[0].join(" ")).toContain("regexp_replace");
     // Нормализованные значения title/author передаются параметрами
     expect(sqlCall).toContain("война и мир");

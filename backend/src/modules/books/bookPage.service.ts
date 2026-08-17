@@ -114,15 +114,15 @@ export async function getBookPageData(
     // каталог с ними не склеивается — страница книги находит тир-листы,
     // где такая книга есть, по названию и автору.
     prisma.$queryRaw<Array<{ id: string; slug: string | null; title: string; isPublic: boolean }>>`
-      SELECT DISTINCT tl.id, tl.slug, tl.title, tl."isPublic"
-      FROM "TierList" tl
+      SELECT DISTINCT tl.id, tl.slug, tl.title, tl.is_public
+      FROM tier_lists tl
       JOIN "BookPlacement" bp ON bp."tierListId" = tl.id
       JOIN "Book" b ON b.id = bp."bookId"
-      WHERE tl."isPublic" = true
+      WHERE tl.is_public = true
         AND lower(trim(regexp_replace(translate(b.title, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${normTitleForSql(book.title)}
         AND (${book.author ? normTitleForSql(book.author) : null}::text IS NULL
              OR (b.author IS NOT NULL AND lower(trim(regexp_replace(translate(b.author, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${book.author ? normTitleForSql(book.author) : null}))
-      ORDER BY tl."likesCount" DESC
+      ORDER BY tl.likes_count DESC
     `,
     prisma.collection.findMany({
       where: { catalogBooks: { some: { bookId: id } }, isPublished: true },
