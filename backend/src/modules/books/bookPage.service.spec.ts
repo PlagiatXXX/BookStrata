@@ -53,7 +53,7 @@ describe("getBookPageData", () => {
     (prisma.book.findUnique as any).mockResolvedValue(publishedBook);
     // Тир-листы матчатся по названию+автору через $queryRaw (решение 17.08)
     (prisma.$queryRaw as any).mockResolvedValue([
-      { id: "t1", slug: "t-1", title: "Лист", isPublic: true },
+      { id: "t1", slug: "t-1", title: "Лист", isPublic: true, likesCount: 5 },
     ]);
     (prisma.collection.findMany as any).mockResolvedValue([
       { id: 5, slug: "col-5", title: "Подборка", type: "literary" },

@@ -113,8 +113,8 @@ export async function getBookPageData(
     // (решение 17.08): в тир-листах книги пользовательские (draft-копии),
     // каталог с ними не склеивается — страница книги находит тир-листы,
     // где такая книга есть, по названию и автору.
-    prisma.$queryRaw<Array<{ id: string; slug: string | null; title: string; isPublic: boolean }>>`
-      SELECT DISTINCT tl.id, tl.slug, tl.title, tl.is_public
+    prisma.$queryRaw<Array<{ id: string; slug: string | null; title: string; isPublic: boolean; likesCount: number }>>`
+      SELECT DISTINCT tl.id, tl.slug, tl.title, tl.is_public, tl.likes_count
       FROM tier_lists tl
       JOIN "BookPlacement" bp ON bp."tierListId" = tl.id
       JOIN "Book" b ON b.id = bp."bookId"
