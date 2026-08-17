@@ -482,10 +482,10 @@ export default function BookPage() {
               <div className="max-w-275 mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Встречается в тир-листах</h2>
                 <div className="flex flex-wrap gap-3">
-                  {tierLists.map((tl) => (
+{tierLists.map((tl) => (
                     <Link
                       key={tl.id}
-                      to={`/tier-lists/${tl.id}`}
+                      to={`/tier-lists/${tl.slug || tl.id}`}
                       className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
                     >
                       {tl.title}
