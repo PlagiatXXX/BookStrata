@@ -147,6 +147,31 @@ describe("AdminBooksPage (Фаза 7)", () => {
     expect(screen.getByDisplayValue("1877")).toBeInTheDocument();
   });
 
+  it("клик по названию открывает модалку редактирования", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("Анна Каренина");
+
+    await user.click(
+      screen.getByRole("button", { name: "Редактировать название: Анна Каренина" }),
+    );
+
+    expect(await screen.findByText("«Погружение в контекст» (contextChain)")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1877")).toBeInTheDocument();
+  });
+
+  it("клик по обложке открывает модалку редактирования", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("Анна Каренина");
+
+    await user.click(
+      screen.getByRole("button", { name: "Редактировать обложку: Анна Каренина" }),
+    );
+
+    expect(await screen.findByText("«Погружение в контекст» (contextChain)")).toBeInTheDocument();
+  });
+
   it("кнопка «Опубликовать» вызывает publishAdminBook", async () => {
     const user = userEvent.setup();
     mockedList.mockResolvedValue({ items: [{ ...bookRow, status: "draft" }], total: 1 });

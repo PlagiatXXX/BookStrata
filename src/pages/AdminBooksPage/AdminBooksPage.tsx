@@ -133,17 +133,31 @@ export default function AdminBooksPage() {
                   <tr key={b.id} className="border-b border-[var(--ink-3)]/50 last:border-0 hover:bg-[var(--ink-3)]/30">
                     <td className="px-1.5 py-1.5">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={b.coverImageUrl || undefined}
-                          alt=""
-                          className="h-14 w-10 shrink-0 rounded object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
+                        <button
+                          type="button"
+                          onClick={() => h.setEditingId(b.id)}
+                          title="Редактировать книгу"
+                          aria-label={`Редактировать обложку: ${b.title}`}
+                          className="shrink-0 cursor-pointer overflow-hidden rounded transition-opacity hover:opacity-75"
+                        >
+                          <img
+                            src={b.coverImageUrl || undefined}
+                            alt=""
+                            className="h-14 w-10 rounded object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                        </button>
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-[var(--ink-0)]">
+                          <button
+                            type="button"
+                            onClick={() => h.setEditingId(b.id)}
+                            title="Редактировать книгу"
+                            aria-label={`Редактировать название: ${b.title}`}
+                            className="block w-full cursor-pointer truncate text-left font-medium text-[var(--ink-0)] transition-colors hover:text-white"
+                          >
                             {b.mergedIntoId ? <span className="mr-1 text-xs text-red-400">[дубль]</span> : null}
                             {b.title}
-                          </p>
+                          </button>
                           <p className="truncate text-xs text-[var(--ink-2)]">
                             {b.author ?? "—"}
                             {b.genre ? ` · ${b.genre}` : ""}

@@ -51,6 +51,9 @@ const ALLOWED_HOSTS = [
   "wikimedia.org",
   "fantlab.ru",
   "mnogobookaf.ru",
+  "corpus.ru",
+  "irecommend.ru",
+  "moscowbooks.ru",
 ];
 
 // ── Разрешённые протоколы ──

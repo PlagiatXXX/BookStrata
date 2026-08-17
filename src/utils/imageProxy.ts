@@ -69,6 +69,9 @@ const EXTERNAL_DOMAINS = [
   "eksmo.ru",
   "fantlab.ru",
   "mnogobookaf.ru",
+  "corpus.ru",
+  "irecommend.ru",
+  "moscowbooks.ru",
 ];
 
 /**

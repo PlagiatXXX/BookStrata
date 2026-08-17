@@ -49,6 +49,17 @@ describe("proxyImageUrl", () => {
     expect(wiki).toMatch(/^\/api\/images\/proxy\?url=/);
   });
 
+  it("corpus, irecommend и moscowbooks проксируются через /api/images/proxy", () => {
+    const corpus = proxyImageUrl("https://www.corpus.ru/picts/products/Dicker-Pravda-1000.jpg");
+    expect(corpus).toMatch(/^\/api\/images\/proxy\?url=/);
+
+    const irecommend = proxyImageUrl("https://irecommend.ru/sites/default/files/product-images/44881/2324078_36867_3524218_368225.jpg");
+    expect(irecommend).toMatch(/^\/api\/images\/proxy\?url=/);
+
+    const moscowbooks = proxyImageUrl("https://www.moscowbooks.ru/image/book/792/orig/i792245.jpg?cu=20231011161520");
+    expect(moscowbooks).toMatch(/^\/api\/images\/proxy\?url=/);
+  });
+
   it("data: URL не трогается", () => {
     expect(proxyImageUrl("data:image/png;base64,AAAA")).toBe(
       "data:image/png;base64,AAAA",
