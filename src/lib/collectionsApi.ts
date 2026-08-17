@@ -122,6 +122,32 @@ export async function fetchCoversForBooks(
   );
 }
 
+/** Полные данные книги каталога для автозаполнения карточки подборки */
+export interface CatalogBookMatch {
+  id: number;
+  title: string;
+  author: string | null;
+  coverImageUrl: string;
+  publishedYear: number | null;
+  genre: string | null;
+  tags: string[];
+  description: string | null;
+  slug: string | null;
+  status: string;
+  rating: number | null;
+}
+
+// Найти книгу в каталоге по названию+автору (автозаполнение карточки подборки)
+export async function matchCatalogBookLookup(
+  title: string,
+  author: string,
+): Promise<{ book: CatalogBookMatch | null; candidates: CatalogBookMatch[] }> {
+  return apiClient.post<{ book: CatalogBookMatch | null; candidates: CatalogBookMatch[] }>(
+    "/collections/admin/match-book",
+    { title, author },
+  );
+}
+
 // Загрузить обложку коллекции
 export async function uploadCollectionCover(
   file: File,

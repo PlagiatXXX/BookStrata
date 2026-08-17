@@ -119,6 +119,14 @@ export const parseUrlSchema = z.object({
 
 export type ParseUrlInput = z.infer<typeof parseUrlSchema>;
 
+/** Поиск книги в каталоге по названию+автору (автозаполнение карточки подборки) */
+export const matchBookSchema = z.object({
+  title: z.string().trim().min(1, "Укажите название"),
+  author: z.string().trim().optional(),
+});
+
+export type MatchBookInput = z.infer<typeof matchBookSchema>;
+
 export const deleteCollectionJsonSchema = {
   description: "Delete a collection",
   tags: ["Collections"],

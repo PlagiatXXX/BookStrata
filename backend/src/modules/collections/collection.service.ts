@@ -8,6 +8,8 @@ import {
   type UpdateCollectionInput,
 } from "./collection.schema.js";
 import { createAuthorService } from "../authors/authors.service.js";
+import { matchBook } from "../books/bookMatching.service.js";
+import type { MatchBookInput } from "./collection.schema.js";
 import { config } from "../../config/env.js";
 import {
   syncCatalogCards,
@@ -21,6 +23,70 @@ import {
 import { validateRemoteImageDimensions } from "../../lib/validators.js";
 
 const authorService = createAuthorService(prisma);
+
+/** Полные данные книги каталога для автозаполнения карточки подборки */
+export interface CatalogBookMatch {
+  id: number;
+  title: string;
+  author: string | null;
+  coverImageUrl: string;
+  publishedYear: number | null;
+  genre: string | null;
+  tags: string[];
+  description: string | null;
+  slug: string | null;
+  status: string;
+  rating: number | null;
+}
+
+const MATCH_BOOK_SELECT = {
+  id: true,
+  title: true,
+  author: true,
+  coverImageUrl: true,
+  publishedYear: true,
+  genre: true,
+  tags: true,
+  description: true,
+  slug: true,
+  status: true,
+  rating: true,
+} as const;
+
+async function readCatalogBook(id: number): Promise<CatalogBookMatch | null> {
+  return prisma.book.findUnique({ where: { id }, select: MATCH_BOOK_SELECT });
+}
+
+/**
+ * Поиск книги в каталоге по названию+автору для автозаполнения карточки подборки.
+ * Использует тот же каскад matchBook, что и синк, — поведение согласовано:
+ * точное совпадение → канон, похожие → кандидаты на выбор, ничего → null.
+ * В отличие от синка, авторов НЕ создаёт (только ищет по реестру).
+ */
+export async function matchCatalogBook(input: MatchBookInput): Promise<{
+  book: CatalogBookMatch | null;
+  candidates: CatalogBookMatch[];
+}> {
+  const authorId = input.author ? (await authorService.findByName(input.author))?.id ?? null : null;
+  const result = await matchBook(prisma, {
+    title: input.title,
+    author: input.author ?? null,
+    authorId,
+  });
+
+  if (result.book) {
+    const book = await readCatalogBook(result.book.id);
+    return { book, candidates: [] };
+  }
+
+  if (result.candidates.length > 0) {
+    const candidates = (await Promise.all(result.candidates.map((c) => readCatalogBook(c.id))))
+      .filter((b): b is CatalogBookMatch => b !== null);
+    return { book: null, candidates };
+  }
+
+  return { book: null, candidates: [] };
+}
 
 function slugify(text: string): string {
   const cyrillicToLatin: Record<string, string> = {

@@ -10,6 +10,8 @@ import {
   type CreateCollectionInput,
   type UpdateCollectionInput,
   parseUrlSchema,
+  matchBookSchema,
+  type MatchBookInput,
 } from "./collection.schema.js";
 
 export async function collectionRoutes(fastify: FastifyInstance) {
@@ -144,6 +146,18 @@ export async function collectionRoutes(fastify: FastifyInstance) {
       const id = Number((request.params as { id: string }).id);
       const collection = await service.togglePublish(id);
       return reply.code(200).send({ data: collection });
+    },
+  );
+
+  // POST /admin/match-book — найти книгу в каталоге по названию+автору
+  // (автозаполнение карточки подборки: не плодим дубли, не склеиваем потом)
+  fastify.post<{ Body: MatchBookInput }>(
+    "/admin/match-book",
+    { preHandler: [authMiddleware, requireRole("admin", "moderator")] },
+    async (request, reply) => {
+      const input = matchBookSchema.parse(request.body);
+      const data = await service.matchCatalogBook(input);
+      return reply.code(200).send({ data });
     },
   );
 
