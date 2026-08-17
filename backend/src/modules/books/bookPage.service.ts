@@ -1,6 +1,7 @@
 // backend/src/modules/books/bookPage.service.ts
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
+import { normTitleForSql } from "../tier-lists/tierList.books.service.js";
 
 /** Компактная выборка книги для карточек (similarBooks / otherBooksByAuthor) */
 const bookCardSelect = {
@@ -108,11 +109,21 @@ export async function getBookPageData(
     commentsTotal,
     userLike,
   ] = await Promise.all([
-    prisma.tierList.findMany({
-      where: { placements: { some: { bookId: id } }, isPublic: true },
-      select: { id: true, slug: true, title: true, isPublic: true },
-      orderBy: { likesCount: "desc" },
-    }),
+    // Тир-листы матчатся по НОРМАЛИЗОВАННЫМ (title, author), а не по bookId
+    // (решение 17.08): в тир-листах книги пользовательские (draft-копии),
+    // каталог с ними не склеивается — страница книги находит тир-листы,
+    // где такая книга есть, по названию и автору.
+    prisma.$queryRaw<Array<{ id: string; slug: string | null; title: string; isPublic: boolean }>>`
+      SELECT DISTINCT tl.id, tl.slug, tl.title, tl."isPublic"
+      FROM "TierList" tl
+      JOIN "BookPlacement" bp ON bp."tierListId" = tl.id
+      JOIN "Book" b ON b.id = bp."bookId"
+      WHERE tl."isPublic" = true
+        AND lower(trim(regexp_replace(translate(b.title, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${normTitleForSql(book.title)}
+        AND (${book.author ? normTitleForSql(book.author) : null}::text IS NULL
+             OR (b.author IS NOT NULL AND lower(trim(regexp_replace(translate(b.author, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${book.author ? normTitleForSql(book.author) : null}))
+      ORDER BY tl."likesCount" DESC
+    `,
     prisma.collection.findMany({
       where: { catalogBooks: { some: { bookId: id } }, isPublished: true },
       select: { id: true, slug: true, title: true, type: true },

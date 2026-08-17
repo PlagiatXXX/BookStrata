@@ -17,6 +17,7 @@ vi.mock('../../lib/prisma.js', () => ({
       count: vi.fn().mockResolvedValue(1),
       create: vi.fn().mockResolvedValue({ id: 201 }),
     },
+    $queryRaw: vi.fn().mockResolvedValue([]),
     bookPlacement: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),

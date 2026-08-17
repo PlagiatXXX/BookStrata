@@ -3,9 +3,17 @@ import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { sanitize } from "../../lib/sanitizer.js";
 import { createAuthorService, type AuthorResult } from "../authors/authors.service.js";
-import { matchBook } from "../books/bookMatching.service.js";
 import { createBookWithSlug, isPrismaP2002 } from "../../lib/slug.js";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
+
+/**
+ * Лёгкая нормализация названия/автора для SQL-матчинга:
+ * lower, trim, ё→е, схлопывание пробелов. Семантически совпадает
+ * с SQL-выражением lower(trim(regexp_replace(translate(x, 'Ёё', 'Ее'), '\s+', ' ', 'g'))).
+ */
+export function normTitleForSql(text: string): string {
+  return text.toLowerCase().trim().replace(/ё/g, "е").replace(/\s+/g, " ");
+}
 
 const logger = createLogger("TierListsBooks", { color: "cyan" });
 const authorService = createAuthorService(prisma);
@@ -97,6 +105,50 @@ export async function updatePlacements(
   });
 }
 
+/**
+ * Поиск существующей ПОЛЬЗОВАТЕЛЬСКОЙ книги (draft) для link-or-create.
+ * Каталоговые (published) книги в матчинге НЕ участвуют — тир-листы не
+ * склеиваются с каталогом (решение 17.08: в тир-листах — только книги
+ * пользователей, каталог — только в коллекциях и у знаменитостей).
+ */
+export async function findExistingUserBook(
+  db: PrismaClient | Prisma.TransactionClient,
+  bookData: {
+    title: string;
+    author?: string | null;
+    externalId?: string | null;
+    source?: string | null;
+  },
+): Promise<{ id: number } | null> {
+  // 1. Внешний ID (если есть) — сильнейший сигнал, но только среди draft
+  if (bookData.source && bookData.externalId) {
+    const byExternalId = await db.book.findFirst({
+      where: {
+        source: bookData.source as never,
+        externalId: bookData.externalId,
+        status: "draft",
+      },
+      select: { id: true },
+    });
+    if (byExternalId) return byExternalId;
+  }
+
+  // 2. Нормализованные (title, author) среди draft
+  const normTitle = normTitleForSql(bookData.title);
+  if (!normTitle) return null;
+  const normAuthor = bookData.author ? normTitleForSql(bookData.author) : null;
+  const rows = await db.$queryRaw<Array<{ id: number }>>`
+    SELECT id FROM "Book"
+    WHERE status = 'draft'
+      AND lower(trim(regexp_replace(translate(title, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${normTitle}
+      AND (${normAuthor}::text IS NULL
+           OR (author IS NOT NULL AND lower(trim(regexp_replace(translate(author, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${normAuthor}))
+    ORDER BY id
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
 export async function addBooksToTierList(
   tierListId: string,
   books: {
@@ -127,20 +179,13 @@ export async function addBooksToTierList(
     authorId: bookData.author ? (authorMap.get(bookData.author)?.id ?? null) : null,
   }));
 
-  // ⚠️ Фаза 2.1: пре-фаза матчинга ВНЕ транзакции (каскад уверенности, seobook.md).
-  // Все кандидаты батча матчатся до открытия транзакции — одна транзакция на
-  // link-or-create всех книг (атомарность «всё или ничего», как раньше).
+  // Пре-фаза ВНЕ транзакции: ищем существующие пользовательские книги (draft)
+  // для link-or-create. Каталог (published) не участвует — тир-листы не склеиваются.
   const matched = await Promise.all(
-    booksWithAuthors.map(async (bookData) => {
-      const result = await matchBook(prisma, {
-        title: bookData.title,
-        author: bookData.author,
-        authorId: bookData.authorId,
-        externalId: bookData.externalId,
-        source: bookData.source,
-      });
-      return { bookData, canon: result.book };
-    }),
+    booksWithAuthors.map(async (bookData) => ({
+      bookData,
+      existing: await findExistingUserBook(prisma, bookData),
+    })),
   );
 
   // Существующие placements листа: чтобы при повторном добавлении книги
@@ -162,33 +207,34 @@ export async function addBooksToTierList(
     }> = [];
 
     for (let i = 0; i < matched.length; i++) {
-      const { bookData, canon } = matched[i]!;
+      const { bookData, existing } = matched[i]!;
       const rank = startRank + i;
 
-      if (canon) {
-        // Найден канон → link: личные данные вхождения (мысли/обложка) — в placement,
-        // глобальная Book.coverImageUrl/thoughts НЕ трогаются
+      if (existing) {
+        // Найдена пользовательская книга → link: личные данные вхождения
+        // (мысли/обложка) — в placement, глобальная Book НЕ трогается
         const personal = {
           thoughts: bookData.thoughts ? sanitize(bookData.thoughts) : null,
           coverImageUrl: bookData.coverImageUrl || null,
         };
-        const placement = existingBookIds.has(canon.id)
+        const placement = existingBookIds.has(existing.id)
           ? await tx.bookPlacement.update({
               where: {
-                tierListId_bookId: { tierListId: realTierListId, bookId: canon.id },
+                tierListId_bookId: { tierListId: realTierListId, bookId: existing.id },
               },
               data: { rank, ...personal },
               include: { book: true },
             })
           : await tx.bookPlacement.create({
-              data: { tierListId: realTierListId, bookId: canon.id, rank, ...personal },
+              data: { tierListId: realTierListId, bookId: existing.id, rank, ...personal },
               include: { book: true },
             });
         placements.push(placement);
         continue;
       }
 
-      // Канона нет → create c status = draft и авто-slug; P2002 (гонка) → retry → link
+      // Пользовательской книги нет → create draft + авто-slug;
+      // P2002 (гонка) → retry → link к пользовательскому канону (не каталогу)
       placements.push(await linkOrCreate(tx, realTierListId, bookData, rank));
     }
 
@@ -247,10 +293,26 @@ async function linkOrCreate(
     return createPlacement(book.id);
   } catch (error) {
     if (!isPrismaP2002(error)) throw error;
-    // Гонка: канон создан параллельным запросом → перезапрос → link вместо дубля
+    // Гонка: книга создана параллельным запросом → перезапрос → link вместо дубля
     const canon = await findRaceCanon(tx, bookData);
     if (!canon) throw error;
-    return createPlacement(canon.id);
+    if (canon.status === "draft") return createPlacement(canon.id);
+    // Канон — КАТАЛОГОВАЯ книга (published): не линкуемся (тир-листы не
+    // склеиваются с каталогом) — создаём локальную копию без внешнего ID,
+    // чтобы не нарушить unique (source, externalId)
+    const local = await createBookWithSlug(tx, {
+      title: bookData.title,
+      author: bookData.author ?? null,
+      authorId: bookData.authorId ?? null,
+      coverImageUrl: bookData.coverImageUrl,
+      description: bookData.description ? sanitize(bookData.description) : null,
+      genre: bookData.genre ? sanitize(bookData.genre) : null,
+      tags: bookData.tags ?? [],
+      externalId: null,
+      source: null,
+      status: "draft",
+    });
+    return createPlacement(local.id);
   }
 }
 

@@ -2,6 +2,7 @@ import { prisma, getTierListWhereClause } from "./tierList.utils.js";
 import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { sanitize } from "../../lib/sanitizer.js";
 import { createAuthorService, type AuthorResult } from "../authors/authors.service.js";
+import { findExistingUserBook } from "./tierList.books.service.js";
 
 const authorService = createAuthorService(prisma);
 
@@ -131,16 +132,13 @@ export async function saveAll(
         authorId: bookData.author ? (authorMap.get(bookData.author)?.id ?? null) : null,
       }));
 
-      // Оптимизация: Параллельный поиск/создание книг
+      // Оптимизация: Параллельный поиск/создание книг.
+      // ВАЖНО (решение 17.08): ищем ТОЛЬКО среди пользовательских книг (draft) —
+      // каталог с тир-листами не склеивается. Если пользовательской книги нет —
+      // всегда создаём draft, даже если в каталоге есть published-книга с тем же названием.
       const bookResults = await Promise.all(
         booksWithAuthors.map(async (bookData) => {
-          const existing = await tx.book.findFirst({
-            where: {
-              title: bookData.title,
-              author: bookData.author ?? null,
-            },
-            select: { id: true },
-          });
+          const existing = await findExistingUserBook(tx, bookData);
 
           if (existing) {
             return { tempId: bookData.tempId, realId: String(existing.id) };
@@ -310,10 +308,12 @@ export async function saveAll(
       const booksStillInUse = remainingPlacements.map(p => p.bookId);
       const orphanedBookIds = payload.deletedBookIds.filter(id => !booksStillInUse.includes(id));
 
-      // Удаляем только те книги, которые нигде больше не используются
+      // Удаляем только те книги, которые нигде больше не используются.
+      // ВАЖНО (решение 17.08): удаляем ТОЛЬКО пользовательские (draft) —
+      // каталоговые (published) книги никогда не удаляются из тир-листов.
       if (orphanedBookIds.length > 0) {
         await tx.book.deleteMany({
-          where: { id: { in: orphanedBookIds } },
+          where: { id: { in: orphanedBookIds }, status: "draft" },
         });
       }
     }

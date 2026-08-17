@@ -141,8 +141,10 @@ export async function booksRoutes(fastify: FastifyInstance) {
           return reply.code(403).send(createApiError(ErrorCodes.FORBIDDEN, "Можно добавлять только в свои тир-листы"));
         }
 
-        // Link-or-create по каскаду матчинга (Фаза 2.1): книга уже в каталоге →
-        // создаётся только BookPlacement; личные данные вхождения — пустые
+        // Решение 17.08: тир-листы не склеиваются с каталогом — со страницы
+        // книги добавляется ПОЛЬЗОВАТЕЛЬСКАЯ копия (draft): каталоговые данные
+        // (externalId/source) не наследуются, чтобы не конфликтовать с каталогом
+        // и не линковать тир-лист на каталоговую книгу.
         const results = await addBooksToTierList(tierListId, [
           {
             title: book.title,
@@ -150,9 +152,8 @@ export async function booksRoutes(fastify: FastifyInstance) {
             coverImageUrl: book.coverImageUrl,
             description: null,
             thoughts: null,
-            externalId: book.externalId,
-            // source = local ⇔ внешнего ID нет (семантика схемы) → null
-            source: book.source === "local" ? null : book.source,
+            externalId: null,
+            source: null,
           },
         ]);
 

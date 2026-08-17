@@ -79,6 +79,8 @@ describe("tierList.service", () => {
     );
     // book.count по умолчанию — книги существуют
     (prisma.book.count as any).mockResolvedValue(1);
+    // $queryRaw по умолчанию — дедуп среди draft ничего не находит
+    (prisma.$queryRaw as any).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -552,15 +554,16 @@ describe("tierList.service", () => {
       );
     });
 
-    it("канон найден → link: создаёт только вхождение, Book не создаёт", async () => {
-      // matchBook: точное совпадение по authorId (3a) — HIGH
+    it("найдена пользовательская книга (draft) → link: Book не создаётся, каталог не участвует", async () => {
+      // В каталоге есть published-книга с тем же названием (mock findMany),
+      // но матчинг идёт ТОЛЬКО среди draft (решение 17.08) — $queryRaw находит draft
       (prisma.book.findMany as any).mockResolvedValue([
         {
-          id: 7,
+          id: 320,
           title: "Book 1",
           author: "Author 1",
           authorId: 999,
-          coverImageUrl: "/canon.jpg",
+          coverImageUrl: "/catalog.jpg",
           slug: "book-1",
           status: "published",
           source: null,
@@ -569,6 +572,7 @@ describe("tierList.service", () => {
           rating: 8,
         },
       ]);
+      (prisma.$queryRaw as any).mockResolvedValue([{ id: 7 }]);
 
       const result = await service.addBooksToTierList(mockTierListId, [mockBooks[0]]);
 
@@ -583,21 +587,7 @@ describe("tierList.service", () => {
 
     it("книга уже есть в листе → обновляет позицию, не создаёт дубль вхождения", async () => {
       (prisma.bookPlacement.findMany as any).mockResolvedValue([{ bookId: 7, rank: 0 }]);
-      (prisma.book.findMany as any).mockResolvedValue([
-        {
-          id: 7,
-          title: "Book 1",
-          author: "Author 1",
-          authorId: 999,
-          coverImageUrl: "/canon.jpg",
-          slug: "book-1",
-          status: "published",
-          source: null,
-          externalId: null,
-          publishedYear: 2000,
-          rating: 8,
-        },
-      ]);
+      (prisma.$queryRaw as any).mockResolvedValue([{ id: 7 }]);
       (prisma.bookPlacement.update as any).mockResolvedValue({
         tierListId: mockTierListId,
         bookId: 7,

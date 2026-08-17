@@ -6,11 +6,11 @@ vi.mock("../../lib/prisma.js", () => ({
       findUnique: vi.fn(),
       findMany: vi.fn(),
     },
-    tierList: { findMany: vi.fn() },
     collection: { findMany: vi.fn() },
     celebrity: { findMany: vi.fn() },
     bookComment: { findMany: vi.fn(), count: vi.fn() },
     bookLike: { findUnique: vi.fn() },
+    $queryRaw: vi.fn(),
   },
 }));
 
@@ -51,7 +51,8 @@ describe("getBookPageData", () => {
 
   it("собирает tierLists/collections/celebrities только публичные", async () => {
     (prisma.book.findUnique as any).mockResolvedValue(publishedBook);
-    (prisma.tierList.findMany as any).mockResolvedValue([
+    // Тир-листы матчатся по названию+автору через $queryRaw (решение 17.08)
+    (prisma.$queryRaw as any).mockResolvedValue([
       { id: "t1", slug: "t-1", title: "Лист", isPublic: true },
     ]);
     (prisma.collection.findMany as any).mockResolvedValue([
@@ -72,18 +73,22 @@ describe("getBookPageData", () => {
     expect(page!.collections).toHaveLength(1);
     expect(page!.celebrities).toHaveLength(1);
     // Фильтры видимости в where
-    expect((prisma.tierList.findMany as any).mock.calls[0][0].where.isPublic).toBe(true);
     expect((prisma.collection.findMany as any).mock.calls[0][0].where.isPublished).toBe(true);
     expect((prisma.celebrity.findMany as any).mock.calls[0][0].where.isPublished).toBe(true);
-    // Фильтр по bookId в relation-таблицах
-    expect((prisma.tierList.findMany as any).mock.calls[0][0].where.placements.some.bookId).toBe(1);
     expect((prisma.collection.findMany as any).mock.calls[0][0].where.catalogBooks.some.bookId).toBe(1);
+    // SQL-запрос тир-листов: только публичные + нормализованные title/author книги
+    const sqlCall = (prisma.$queryRaw as any).mock.calls[0];
+    expect(sqlCall[0].join(" ")).toContain('"isPublic" = true');
+    expect(sqlCall[0].join(" ")).toContain("regexp_replace");
+    // Нормализованные значения title/author передаются параметрами
+    expect(sqlCall).toContain("война и мир");
+    expect(sqlCall).toContain("лев толстой");
   });
 
   it("similarBooks: AND статуса + OR по жанру/тегам, лимит 8", async () => {
     (prisma.book.findUnique as any).mockResolvedValue(publishedBook);
     (prisma.book.findMany as any).mockResolvedValue([{ id: 3 }]);
-    (prisma.tierList.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
     (prisma.collection.findMany as any).mockResolvedValue([]);
     (prisma.celebrity.findMany as any).mockResolvedValue([]);
     (prisma.bookComment.findMany as any).mockResolvedValue([]);
@@ -103,7 +108,7 @@ describe("getBookPageData", () => {
     const bare = { ...publishedBook, genre: null, tags: [] };
     (prisma.book.findUnique as any).mockResolvedValue(bare);
     (prisma.book.findMany as any).mockResolvedValue([]);
-    (prisma.tierList.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
     (prisma.collection.findMany as any).mockResolvedValue([]);
     (prisma.celebrity.findMany as any).mockResolvedValue([]);
     (prisma.bookComment.findMany as any).mockResolvedValue([]);
@@ -122,7 +127,7 @@ describe("getBookPageData", () => {
     (prisma.book.findMany as any)
       .mockResolvedValueOnce([]) // similarBooks
       .mockResolvedValueOnce([{ id: 11 }]); // otherBooksByAuthor
-    (prisma.tierList.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
     (prisma.collection.findMany as any).mockResolvedValue([]);
     (prisma.celebrity.findMany as any).mockResolvedValue([]);
     (prisma.bookComment.findMany as any).mockResolvedValue([]);
@@ -142,7 +147,7 @@ describe("getBookPageData", () => {
     const noAuthor = { ...publishedBook, authorId: null };
     (prisma.book.findUnique as any).mockResolvedValue(noAuthor);
     (prisma.book.findMany as any).mockResolvedValue([]);
-    (prisma.tierList.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
     (prisma.collection.findMany as any).mockResolvedValue([]);
     (prisma.celebrity.findMany as any).mockResolvedValue([]);
     (prisma.bookComment.findMany as any).mockResolvedValue([]);
@@ -157,7 +162,7 @@ describe("getBookPageData", () => {
   it("comments: 10 первых, total из count, автор с username/avatarUrl", async () => {
     (prisma.book.findUnique as any).mockResolvedValue(publishedBook);
     (prisma.book.findMany as any).mockResolvedValue([]);
-    (prisma.tierList.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
     (prisma.collection.findMany as any).mockResolvedValue([]);
     (prisma.celebrity.findMany as any).mockResolvedValue([]);
     (prisma.bookComment.findMany as any).mockResolvedValue([
@@ -175,7 +180,7 @@ describe("getBookPageData", () => {
   it("userLike: true когда лайк есть, false для гостя без запроса к БД", async () => {
     (prisma.book.findUnique as any).mockResolvedValue(publishedBook);
     (prisma.book.findMany as any).mockResolvedValue([]);
-    (prisma.tierList.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
     (prisma.collection.findMany as any).mockResolvedValue([]);
     (prisma.celebrity.findMany as any).mockResolvedValue([]);
     (prisma.bookComment.findMany as any).mockResolvedValue([]);
