@@ -73,7 +73,7 @@ export const EditorHeader = ({
           title: "Версия создана",
           description: "Теперь вы можете редактировать этот список под себя",
         });
-        navigate(`/tier-lists/${newTierList.id}`);
+        navigate(`/tier-lists/${newTierList.slug ?? newTierList.id}`);
       }
     } catch (error) {
       console.error(error);

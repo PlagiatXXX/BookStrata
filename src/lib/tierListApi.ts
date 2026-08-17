@@ -1,6 +1,6 @@
 import type { TierListData, Tier } from '@/types';
 import type { ApiTierListResponse, ApiBookPlacement } from '@/types/api';
-import { apiClient } from './api-client';
+import { apiClient, ApiRequestError } from './api-client';
 import { createLogger } from './logger';
 
 const tierListLogger = createLogger('TierListApi', { color: 'magenta' });
@@ -157,6 +157,12 @@ export async function fetchAllMyTierLists(): Promise<TierListShort[]> {
 export async function fetchTierList(id: string): Promise<ApiTierListResponse> {
   tierListLogger.info('Получение рейтингового списка', { tierListId: id });
   const result = await apiClient.get<ApiTierListResponse>(`/tier-lists/${id}`);
+
+  // Страховка от не-JSON ответа (например, SPA-фолбэк вместо данных):
+  // не даём упасть ниже с непонятным "reading 'tiers'".
+  if (!result || typeof result !== "object") {
+    throw new ApiRequestError("parse_error", "Тир-лист не найден", 200);
+  }
 
   const totalBooksCount =
     (result.tiers?.reduce((sum, tier) => sum + (tier.items?.length || 0), 0) || 0) +

@@ -132,6 +132,21 @@ async function request<T>(
         notifyError("Ошибка запроса", msg);
         throw new ApiRequestError("parse_error", msg, response.status);
       }
+      // 200, но тело не JSON: бэкенд вернул 301-редирект (uuid → slug) на
+      // фронтовый путь /tier-lists/<slug>, fetch прошёл по нему и получил
+      // SPA-страницу (index.html). Повторяем GET по финальному пути — через
+      // /api там уже будет JSON.
+      const contentType = response.headers.get("content-type") ?? "";
+      if (method === "GET" && contentType.includes("text/html")) {
+        try {
+          const finalPath = new URL(response.url, window.location.origin).pathname;
+          if (finalPath && finalPath !== path && !finalPath.startsWith("/api/")) {
+            return request<T>(method, finalPath);
+          }
+        } catch {
+          // response.url недоступен — оставляем исходное поведение
+        }
+      }
       return json as T;
     }
 
