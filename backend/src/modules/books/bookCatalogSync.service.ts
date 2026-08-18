@@ -10,6 +10,7 @@
 //   • rating карточки → CollectionBook.rating + Book.rating (last write wins);
 //   • исчезнувшие карточки → удаление связи, осиротевшие книги → GC (Фаза 2.2).
 import { prisma } from "../../lib/prisma.js";
+import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 import { createAuthorService } from "../authors/authors.service.js";
 import { matchBook } from "./bookMatching.service.js";
 import { publishBookTx, IncompleteBookError } from "./bookPublish.service.js";
@@ -103,7 +104,13 @@ export async function gcOrphanBooks(bookIds: number[]): Promise<number> {
   let deleted = 0;
   for (const bookId of bookIds) {
     if (await isOrphanBook(prisma, bookId)) {
+      const doomed = await prisma.book.findUnique({
+        where: { id: bookId },
+        select: { coverImageUrl: true },
+      });
       await prisma.book.delete({ where: { id: bookId } });
+      // Обложка удалённой книги осиротела (если была нашей) — чистим
+      await deleteIfOrphaned(doomed?.coverImageUrl);
       deleted++;
     }
   }
@@ -153,12 +160,14 @@ export async function syncCatalogCards(
   );
 
   const result: CatalogSyncResult = { created: 0, linked: 0, deleted: 0, published: 0 };
+  let orphanCovers: string[] = [];
 
   // Retry всей транзакции при гонке: P2002 abort'ит interactive-транзакцию Prisma 4,
   // поэтому link-or-create с retry внутри tx невозможен — повторяем транзакцию целиком
   const MAX_TX_ATTEMPTS = 3;
   for (let attempt = 1; attempt <= MAX_TX_ATTEMPTS; attempt++) {
     try {
+      orphanCovers = [];
       await prisma.$transaction(async (tx) => {
         const newBookIds: number[] = [];
 
@@ -283,7 +292,12 @@ export async function syncCatalogCards(
       }
       for (const bookId of removedBookIds) {
         if (await isOrphanBook(tx, bookId)) {
+          const doomed = await tx.book.findUnique({
+            where: { id: bookId },
+            select: { coverImageUrl: true },
+          });
           await tx.book.delete({ where: { id: bookId } });
+          if (doomed?.coverImageUrl) orphanCovers.push(doomed.coverImageUrl);
           result.deleted++;
         }
       }
@@ -298,6 +312,11 @@ export async function syncCatalogCards(
       result.deleted = 0;
       result.published = 0;
     }
+  }
+
+  // Обложки удалённых в транзакции книг осиротели (если были нашими) — чистим
+  if (orphanCovers.length > 0) {
+    await Promise.all(orphanCovers.map((url) => deleteIfOrphaned(url)));
   }
 
   return result;

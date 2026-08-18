@@ -67,7 +67,12 @@ export class LocalStorage implements ImageStorageService {
   }
 
   async deleteAvatar(publicId: string): Promise<void> {
-    // publicId = /uploads/avatars/uuid.webp — убираем /uploads, получаем путь от UPLOADS_DIR
+    await this.deleteFile(publicId)
+  }
+
+  /** Удаляет файл по publicId/URL вида /uploads/... (или /uploads/без/префикса). */
+  async deleteFile(publicId: string): Promise<void> {
+    // publicId = /uploads/folder/uuid.ext — убираем /uploads, получаем путь от UPLOADS_DIR
     const relativePath = publicId.replace(/^\/uploads\//, '')
     const filePath = join(UPLOADS_DIR, relativePath)
     try {

@@ -54,13 +54,15 @@ export interface BookPageData {
 /**
  * Публичные данные страницы книги (GET /api/books/:slug).
  * Возвращает null, если книга не найдена или не опубликована → 404.
+ * Возвращает { redirectTo }, если slug устарел (slugHistory) или книга
+ * поглощена каноном (mergedIntoId) → роутер отдаёт 301 на актуальный URL.
  * Все связанные выборки — параллельно (Promise.all), без N+1.
  */
 export async function getBookPageData(
   slug: string,
   userId?: number,
-): Promise<BookPageData | null> {
-  const book = await prisma.book.findUnique({
+): Promise<BookPageData | { redirectTo: string } | null> {
+  let book = await prisma.book.findUnique({
     where: { slug },
     select: {
       id: true,
@@ -77,11 +79,42 @@ export async function getBookPageData(
       likesCount: true,
       publishedYear: true,
       contextChain: true,
+      mergedIntoId: true,
       authorRel: { select: { id: true, name: true, slug: true } },
     },
   });
 
-  if (!book || book.status !== "published") {
+  // Slug из истории (смена slug у published-книги) → 301 на актуальный URL
+  if (!book) {
+    const history = await prisma.bookSlugHistory.findUnique({
+      where: { oldSlug: slug },
+      select: { bookId: true },
+    });
+    if (history) {
+      const canon = await prisma.book.findUnique({
+        where: { id: history.bookId },
+        select: { slug: true, status: true },
+      });
+      if (canon?.slug && canon.slug !== slug && canon.status === "published") {
+        return { redirectTo: `/books/${canon.slug}` };
+      }
+    }
+    return null;
+  }
+
+  // Поглощённая книга (дедуп/склейка) → 301 на канон, если он опубликован
+  if (book.mergedIntoId) {
+    const canon = await prisma.book.findUnique({
+      where: { id: book.mergedIntoId },
+      select: { slug: true, status: true },
+    });
+    if (canon?.slug && canon.status === "published") {
+      return { redirectTo: `/books/${canon.slug}` };
+    }
+    return null;
+  }
+
+  if (book.status !== "published") {
     return null;
   }
 

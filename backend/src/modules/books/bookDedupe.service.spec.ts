@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const mocks = vi.hoisted(() => ({
+  deleteIfOrphaned: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("../../lib/storage/file-cleanup.js", () => ({
+  deleteIfOrphaned: mocks.deleteIfOrphaned,
+}));
+
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     book: {
@@ -34,6 +42,9 @@ vi.mock("../../lib/prisma.js", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    bookSlugHistory: {
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -50,6 +61,7 @@ interface RawBook {
   id: number;
   title: string;
   authorId: number | null;
+  slug: string | null;
   coverImageUrl: string;
   description: string | null;
   publishedAt: Date | null;
@@ -68,6 +80,7 @@ function rawBook(partial: Partial<RawBook>): RawBook {
     id: 1,
     title: "Война и мир",
     authorId: 10,
+    slug: null,
     coverImageUrl: "/cover.jpg",
     description: "desc",
     publishedAt: null,
@@ -151,6 +164,7 @@ describe("pickCanon", () => {
     id: 1,
     title: "t",
     authorId: 1,
+    slug: null,
     coverImageUrl: "",
     description: null,
     publishedAt: null,
@@ -201,6 +215,7 @@ describe("mergeGroup", () => {
     id,
     title: `book-${id}`,
     authorId: 1,
+    slug: null,
     coverImageUrl: "/a.jpg",
     description: null,
     publishedAt: null,
@@ -263,6 +278,18 @@ describe("mergeGroup", () => {
       data: { bookId: 1 },
     });
     expect(prisma.book.delete).toHaveBeenCalledWith({ where: { id: 2 } });
+  });
+
+  it("удаление дубля чистит его осиротевшую обложку", async () => {
+    const withCover = groupBook(2);
+    withCover.coverImageUrl = "https://s3.twcstorage.ru/bookstrata-bucket/tiermaker-pro/book-covers/dup.webp";
+
+    await mergeGroup({ key: "local:book:1", books: [groupBook(1), withCover] });
+
+    expect(prisma.book.delete).toHaveBeenCalledWith({ where: { id: 2 } });
+    expect(mocks.deleteIfOrphaned).toHaveBeenCalledWith(
+      "https://s3.twcstorage.ru/bookstrata-bucket/tiermaker-pro/book-covers/dup.webp",
+    );
   });
 
   it("BookRating: при конфликте пользователя остаётся новейшая оценка", async () => {
@@ -358,5 +385,73 @@ describe("mergeGroup", () => {
       where: { id: 2 },
       data: { mergedIntoId: 1 },
     });
+  });
+
+  it("forceCanonId: канон — явно указанная книга, даже если pickCanon выбрал бы другую", async () => {
+    // Равные по score книги: pickCanon выбрал бы #1 (стабильный порядок),
+    // но админ указал #2 — его выбор имеет приоритет (фикс бага «Ртути»)
+    await mergeGroup(group, { forceCanonId: 2 });
+
+    expect(prisma.book.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { mergedIntoId: 2 },
+    });
+  });
+
+  it("НЕ поглощает published-книгу черновиком (дубль пропускается)", async () => {
+    const g: DuplicateGroup = {
+      key: "local:book:1",
+      books: [groupBook(1), { ...groupBook(2), status: "published" }],
+    };
+
+    await mergeGroup(g, { forceCanonId: 1 });
+
+    // Дубль #2 (published) в канон #1 (draft) не слит: ни mergedIntoId, ни удаления
+    expect(prisma.book.update).not.toHaveBeenCalled();
+    expect(prisma.book.delete).not.toHaveBeenCalled();
+  });
+
+  it("slug поглощаемой книги пишется в slugHistory канона (301)", async () => {
+    const g: DuplicateGroup = {
+      key: "local:book:1",
+      books: [
+        { ...groupBook(1), slug: "rtut-kelly-hart" },
+        { ...groupBook(2), slug: "rtut-kelli-hart" },
+      ],
+    };
+
+    await mergeGroup(g);
+
+    expect(prisma.bookSlugHistory.create).toHaveBeenCalledWith({
+      data: { oldSlug: "rtut-kelli-hart", bookId: 1 },
+    });
+  });
+
+  it("если у канона нет slug — забирает slug дубля (URL не теряется)", async () => {
+    const g: DuplicateGroup = {
+      key: "local:book:1",
+      books: [groupBook(1), { ...groupBook(2), slug: "rtut-kelli-hart" }],
+    };
+
+    await mergeGroup(g);
+
+    expect(prisma.book.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { slug: "rtut-kelli-hart" },
+    });
+  });
+
+  it("одинаковые slug канона и дубля не пишутся в историю", async () => {
+    const g: DuplicateGroup = {
+      key: "local:book:1",
+      books: [
+        { ...groupBook(1), slug: "rtut" },
+        { ...groupBook(2), slug: "rtut" },
+      ],
+    };
+
+    await mergeGroup(g);
+
+    expect(prisma.bookSlugHistory.create).not.toHaveBeenCalled();
   });
 });

@@ -13,6 +13,7 @@ import {
   type DedupeBook,
 } from "../books/bookDedupe.service.js";
 import { createAuthorService } from "../authors/authors.service.js";
+import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 import { ValidationError } from "../../lib/errors.js";
 import { validateRemoteImageDimensions } from "../../lib/validators.js";
 
@@ -246,7 +247,17 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
     updateData.slug = newSlug;
   }
 
-  return prisma.book.update({ where: { id }, data: updateData });
+  const oldCover = book.coverImageUrl;
+
+  const updated = await prisma.book.update({ where: { id }, data: updateData });
+
+  // Старый файл обложки (наш S3/CDN/локальный) осиротел — чистим,
+  // если на него никто больше не ссылается
+  if (oldCover && oldCover !== updated.coverImageUrl) {
+    await deleteIfOrphaned(oldCover);
+  }
+
+  return updated;
 }
 
 /** Публикация только через publishBook() — инвариант полноты полей. */
@@ -318,6 +329,11 @@ export async function enrichBookFromGoogle(id: number): Promise<{ updated: strin
     return { updated: [] };
   }
   await prisma.book.update({ where: { id }, data: updateData });
+
+  // Обложка заменилась на внешнюю (Google Books) — старый файл чистим
+  if (updateData.coverImageUrl !== undefined) {
+    await deleteIfOrphaned(book.coverImageUrl);
+  }
   return { updated };
 }
 
@@ -341,11 +357,20 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
     throw new AdminBookError("Книга уже поглощена другим каноном", "already_merged");
   }
 
+  // Защита от потери published-страницы: черновик не может поглотить
+  // опубликованную книгу (иначе её URL умирает, как в баге со склейкой «Ртути»).
+  if (dup.status === "published" && canon.status !== "published") {
+    throw new AdminBookError(
+      "Нельзя поглотить опубликованную книгу черновиком: сначала опубликуйте книгу-канон",
+      "cannot_merge_published_into_draft",
+    );
+  }
+
   const fetchDedupeBook = async (b: typeof dup): Promise<DedupeBook> => {
     const withCounts = await prisma.book.findUniqueOrThrow({
       where: { id: b.id },
       select: {
-        id: true, title: true, authorId: true, coverImageUrl: true,
+        id: true, title: true, authorId: true, slug: true, coverImageUrl: true,
         description: true, publishedAt: true, status: true, createdAt: true,
         updatedAt: true,
         _count: {
@@ -361,6 +386,7 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
       id: withCounts.id,
       title: withCounts.title,
       authorId: withCounts.authorId,
+      slug: withCounts.slug,
       coverImageUrl: withCounts.coverImageUrl,
       description: withCounts.description,
       publishedAt: withCounts.publishedAt,
@@ -382,10 +408,16 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
     fetchDedupeBook(canon),
   ]);
 
-  await mergeGroup({
-    key: `manual:${dupId}->${canonId}`,
-    books: [canonBook, dupBook],
-  });
+  // Выбор канона из админки имеет приоритет: mergeGroup не перевыбирает
+  // его через pickCanon (баг: склейка «Ртути» поглотила published-книгу
+  // черновиком, потому что score черновика оказался выше).
+  await mergeGroup(
+    {
+      key: `manual:${dupId}->${canonId}`,
+      books: [canonBook, dupBook],
+    },
+    { forceCanonId: canonId },
+  );
 
   return prisma.book.findUnique({ where: { id: canonId } });
 }

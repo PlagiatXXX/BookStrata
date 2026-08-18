@@ -10,12 +10,23 @@ vi.mock("../../lib/prisma.js", () => ({
     celebrity: { findMany: vi.fn() },
     bookComment: { findMany: vi.fn(), count: vi.fn() },
     bookLike: { findUnique: vi.fn() },
+    bookSlugHistory: { findUnique: vi.fn() },
     $queryRaw: vi.fn(),
   },
 }));
 
 import { prisma } from "../../lib/prisma.js";
-import { getBookPageData } from "./bookPage.service.js";
+import { getBookPageData, type BookPageData } from "./bookPage.service.js";
+
+/** Сужает объединённый тип (данные | redirect) до данных — для проверок полей. */
+function asBookPage(
+  page: BookPageData | { redirectTo: string } | null,
+): BookPageData {
+  if (!page || "redirectTo" in page) {
+    throw new Error("expected BookPageData, got redirect");
+  }
+  return page;
+}
 
 const publishedBook = {
   id: 1,
@@ -69,9 +80,9 @@ describe("getBookPageData", () => {
     const page = await getBookPageData("voyna-i-mir", 1);
 
     expect(page).not.toBeNull();
-    expect(page!.tierLists).toHaveLength(1);
-    expect(page!.collections).toHaveLength(1);
-    expect(page!.celebrities).toHaveLength(1);
+    expect(asBookPage(page).tierLists).toHaveLength(1);
+    expect(asBookPage(page).collections).toHaveLength(1);
+    expect(asBookPage(page).celebrities).toHaveLength(1);
     // Фильтры видимости в where
     expect((prisma.collection.findMany as any).mock.calls[0][0].where.isPublished).toBe(true);
     expect((prisma.celebrity.findMany as any).mock.calls[0][0].where.isPublished).toBe(true);
@@ -104,7 +115,7 @@ describe("getBookPageData", () => {
     expect(similarArgs.where.id.not).toBe(1);
     expect(similarArgs.where.OR).toHaveLength(2); // genre + tags
     expect(similarArgs.take).toBe(8);
-    expect(page!.similarBooks).toHaveLength(1);
+    expect(asBookPage(page).similarBooks).toHaveLength(1);
   });
 
   it("без жанра и тегов similarBooks не запрашиваются с пустым OR", async () => {
@@ -122,7 +133,7 @@ describe("getBookPageData", () => {
     // первый findMany — это similarBooks с take 8; OR отсутствует в where
     const [similarWhere] = (prisma.book.findMany as any).mock.calls[0];
     expect(similarWhere.OR).toBeUndefined();
-    expect(page!.similarBooks).toEqual([]);
+    expect(asBookPage(page).similarBooks).toEqual([]);
   });
 
   it("otherBooksByAuthor: только если authorId, лимит 4, без текущей книги", async () => {
@@ -143,7 +154,7 @@ describe("getBookPageData", () => {
     expect(otherArgs[0].where.id.not).toBe(1);
     expect(otherArgs[0].where.status).toBe("published");
     expect(otherArgs[0].take).toBe(4);
-    expect(page!.otherBooksByAuthor).toHaveLength(1);
+    expect(asBookPage(page).otherBooksByAuthor).toHaveLength(1);
   });
 
   it("без authorId другие книги автора не запрашиваются", async () => {
@@ -159,7 +170,7 @@ describe("getBookPageData", () => {
     const page = await getBookPageData("voyna-i-mir");
 
     expect((prisma.book.findMany as any).mock.calls).toHaveLength(1); // только similarBooks
-    expect(page!.otherBooksByAuthor).toEqual([]);
+    expect(asBookPage(page).otherBooksByAuthor).toEqual([]);
   });
 
   it("comments: 10 первых, total из count, автор с username/avatarUrl", async () => {
@@ -176,8 +187,8 @@ describe("getBookPageData", () => {
     const page = await getBookPageData("voyna-i-mir");
 
     expect((prisma.bookComment.findMany as any).mock.calls[0][0].take).toBe(10);
-    expect(page!.comments.items[0].user.username).toBe("vasya");
-    expect(page!.comments.total).toBe(42);
+    expect(asBookPage(page).comments.items[0].user.username).toBe("vasya");
+    expect(asBookPage(page).comments.total).toBe(42);
   });
 
   it("userLike: true когда лайк есть, false для гостя без запроса к БД", async () => {
@@ -192,13 +203,57 @@ describe("getBookPageData", () => {
     // Авторизованный пользователь с лайком
     (prisma.bookLike.findUnique as any).mockResolvedValue({ id: 99 });
     const liked = await getBookPageData("voyna-i-mir", 7);
-    expect(liked!.userLike).toBe(true);
+    expect(asBookPage(liked).userLike).toBe(true);
     expect((prisma.bookLike.findUnique as any).mock.calls[0][0].where.bookId_userId).toEqual({ bookId: 1, userId: 7 });
 
     // Гость — запроса к БД нет
     (prisma.bookLike.findUnique as any).mockClear();
     const guest = await getBookPageData("voyna-i-mir");
-    expect(guest!.userLike).toBe(false);
+    expect(asBookPage(guest).userLike).toBe(false);
     expect(prisma.bookLike.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("slug из slugHistory → { redirectTo } на актуальный URL (301)", async () => {
+    // Книги по старому slug нет, в истории — канон с новым slug
+    (prisma.book.findUnique as any)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ slug: "rtut-kelly-hart", status: "published" });
+    (prisma.bookSlugHistory.findUnique as any).mockResolvedValue({ bookId: 5 });
+
+    const page = await getBookPageData("rtut-kelli-hart", 1);
+
+    expect(page).toEqual({ redirectTo: "/books/rtut-kelly-hart" });
+    expect((prisma.bookSlugHistory.findUnique as any).mock.calls[0][0]).toEqual({
+      where: { oldSlug: "rtut-kelli-hart" },
+      select: { bookId: true },
+    });
+  });
+
+  it("slugHistory без опубликованного канона → null (404)", async () => {
+    (prisma.book.findUnique as any)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ slug: "rtut-kelly-hart", status: "draft" });
+    (prisma.bookSlugHistory.findUnique as any).mockResolvedValue({ bookId: 5 });
+
+    expect(await getBookPageData("rtut-kelli-hart", 1)).toBeNull();
+  });
+
+  it("поглощённая книга (mergedIntoId) → { redirectTo } на канон (301)", async () => {
+    // Остаток после склейки: книга найдена по slug, но поглощена каноном
+    (prisma.book.findUnique as any)
+      .mockResolvedValueOnce({ ...publishedBook, mergedIntoId: 5 })
+      .mockResolvedValueOnce({ slug: "rtut-kelly-hart", status: "published" });
+
+    const page = await getBookPageData("rtut-kelli-hart", 1);
+
+    expect(page).toEqual({ redirectTo: "/books/rtut-kelly-hart" });
+  });
+
+  it("поглощённая книга без опубликованного канона → null (404)", async () => {
+    (prisma.book.findUnique as any)
+      .mockResolvedValueOnce({ ...publishedBook, mergedIntoId: 5 })
+      .mockResolvedValueOnce({ slug: null, status: "draft" });
+
+    expect(await getBookPageData("rtut-kelli-hart", 1)).toBeNull();
   });
 });

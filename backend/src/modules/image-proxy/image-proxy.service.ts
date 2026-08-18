@@ -54,6 +54,7 @@ const ALLOWED_HOSTS = [
   "corpus.ru",
   "irecommend.ru",
   "moscowbooks.ru",
+  "api.bookmate.ru",
 ];
 
 // ── Разрешённые протоколы ──
@@ -197,7 +198,10 @@ async function convertToWebP(
   }
 
   const contentType = response.headers.get("content-type") || "";
-  if (!contentType.startsWith("image/")) {
+  // Некоторые CDN (cdn.litres.ru и др.) отдают картинки БЕЗ заголовка
+  // Content-Type вовсе — пустой тип не блокируем, sharp определит формат
+  // по содержимому. Блокируем только явные не-image типы (HTML-капча и т.п.).
+  if (contentType && !contentType.startsWith("image/")) {
     throw new Error(`Non-image content type: ${contentType}`);
   }
 

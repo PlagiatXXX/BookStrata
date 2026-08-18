@@ -19,6 +19,7 @@
  * скрипт scripts/dedupe-books.ts — тонкий раннер поверх сервиса.
  */
 import { prisma } from "../../lib/prisma.js";
+import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 
 export function normalizeTitle(title: string): string {
   return title.toLowerCase().trim().replace(/ё/g, "е").replace(/\s+/g, " ");
@@ -28,6 +29,7 @@ export interface DedupeBook {
   id: number;
   title: string;
   authorId: number | null;
+  slug: string | null;
   coverImageUrl: string;
   description: string | null;
   publishedAt: Date | null;
@@ -48,12 +50,24 @@ export interface DuplicateGroup {
   books: DedupeBook[];
 }
 
+/** Ошибка склейки (например, поглощение published-книги черновиком). */
+export class MergeError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "MergeError";
+  }
+}
+
 export async function collectDuplicateGroups(): Promise<DuplicateGroup[]> {
   const books = await prisma.book.findMany({
     select: {
       id: true,
       title: true,
       authorId: true,
+      slug: true,
       coverImageUrl: true,
       description: true,
       publishedAt: true,
@@ -96,6 +110,7 @@ export async function collectDuplicateGroups(): Promise<DuplicateGroup[]> {
       id: b.id,
       title: b.title,
       authorId: b.authorId,
+      slug: b.slug,
       coverImageUrl: b.coverImageUrl,
       description: b.description,
       publishedAt: b.publishedAt,
@@ -144,11 +159,60 @@ export function pickCanon(books: DedupeBook[]) {
   return top.book;
 }
 
-export async function mergeGroup(group: DuplicateGroup): Promise<void> {
-  const canon = pickCanon(group.books);
+export interface MergeGroupOptions {
+  /** Явный канон (ручной merge из админки). Если задан — pickCanon не вызывается,
+   *  каноном становится книга с этим id (выбор администратора имеет приоритет). */
+  forceCanonId?: number;
+  /** Разрешить поглощение published-книги черновиком (по умолчанию запрещено:
+   *  такой дубль пропускается, чтобы не терять опубликованные страницы). */
+  allowPublishedIntoDraft?: boolean;
+}
+
+export async function mergeGroup(
+  group: DuplicateGroup,
+  options: MergeGroupOptions = {},
+): Promise<void> {
+  const canon = options.forceCanonId
+    ? (group.books.find((b) => b.id === options.forceCanonId) ??
+      (() => {
+        throw new MergeError(
+          "canon_not_in_group",
+          `Канон #${options.forceCanonId} не найден в группе склейки`,
+        );
+      })())
+    : pickCanon(group.books);
   const duplicates = group.books.filter((b) => b.id !== canon.id);
 
   for (const dup of duplicates) {
+    // Защита от потери published-книг: черновик не может поглотить опубликованную
+    // страницу (иначе URL книги умирает). При авто-дедупе такой дубль пропускаем,
+    // ручной merge проверяет это раньше (mergeBooksByIds) и возвращает ошибку.
+    if (!options.allowPublishedIntoDraft && dup.status === "published" && canon.status !== "published") {
+      continue;
+    }
+
+    // 0. Slug: сохраняем URL поглощаемой книги (301-перенос).
+    //    У канона нет slug → забираем slug дубля (старый URL продолжает работать);
+    //    у канона slug есть → пишем историю oldSlug → 301 на актуальный URL.
+    if (dup.slug && dup.slug !== canon.slug) {
+      if (canon.slug) {
+        try {
+          await prisma.bookSlugHistory.create({
+            data: { oldSlug: dup.slug, bookId: canon.id },
+          });
+        } catch (error) {
+          // oldSlug уже в истории (повторная склейка/гонка) — не критично
+          const e = error as { code?: string };
+          if (e?.code !== "P2002") throw error;
+        }
+      } else {
+        await prisma.book.update({
+          where: { id: canon.id },
+          data: { slug: dup.slug },
+        });
+      }
+    }
+
     // 1. BookPlacement: переносим, конфликты (P2002) пропускаем
     const dupPlacements = await prisma.bookPlacement.findMany({
       where: { bookId: dup.id },
@@ -277,6 +341,8 @@ export async function mergeGroup(group: DuplicateGroup): Promise<void> {
       remaining._count.likes === 0
     ) {
       await prisma.book.delete({ where: { id: dup.id } });
+      // Обложка удалённого дубля осиротела (если была нашей) — чистим
+      await deleteIfOrphaned(dup.coverImageUrl);
     }
   }
 }

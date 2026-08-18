@@ -21,6 +21,7 @@ import {
   migrateUrlsArray,
 } from "../../lib/external-covers.js";
 import { validateRemoteImageDimensions } from "../../lib/validators.js";
+import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 
 const authorService = createAuthorService(prisma);
 
@@ -253,6 +254,7 @@ export async function createCollection(input: CreateCollectionInput) {
 
 export async function updateCollection(id: number, input: UpdateCollectionInput) {
   const data: Prisma.CollectionUpdateInput = {};
+  let oldCover: string | undefined;
 
   // Внешние обложки переводим на свой CDN (WebP через image-proxy)
   if (input.coverImageUrl !== undefined) {
@@ -262,6 +264,7 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
       where: { id },
       select: { coverImageUrl: true },
     });
+    oldCover = current?.coverImageUrl ?? undefined;
     if (input.coverImageUrl.trim() !== (current?.coverImageUrl ?? "")) {
       const coverError = await validateRemoteImageDimensions(input.coverImageUrl || "");
       if (coverError) throw new ValidationError(coverError);
@@ -297,6 +300,11 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
     where: { id },
     data,
   });
+
+  // Старая обложка осиротела (если она была нашей) — чистим
+  if (data.coverImageUrl !== undefined) {
+    await deleteIfOrphaned(oldCover);
+  }
 
   // Рантайм-синхронизация карточек с каталогом (Фаза 2.2, seobook.md)
   if (input.books !== undefined) {
@@ -355,8 +363,14 @@ export async function deleteCollection(id: number) {
     where: { collectionId: id },
     select: { bookId: true },
   });
+  const collection = await prisma.collection.findUnique({
+    where: { id },
+    select: { coverImageUrl: true },
+  });
   await prisma.collection.delete({ where: { id } });
   await gcOrphanBooks(links.map((l) => l.bookId));
+  // Обложка удалённой коллекции осиротела (если она была нашей) — чистим
+  await deleteIfOrphaned(collection?.coverImageUrl);
 }
 
 interface ParsedBook {

@@ -112,19 +112,37 @@ describe("validateRemoteImageDimensions", () => {
 
     const error = await validateRemoteImageDimensions("https://example.com/small.jpg");
     expect(error).toContain("100×150");
-    expect(error).toContain("Минимум 400×600");
+    expect(error).toContain("Минимум 390×590");
+  });
+
+  it("пропускает картинку ровно на пороге (390×590)", async () => {
+    const buffer = await pngBuffer(390, 590);
+    stubFetch(buffer);
+
+    await expect(
+      validateRemoteImageDimensions("https://example.com/edge.jpg"),
+    ).resolves.toBeNull();
+  });
+
+  it("блокирует картинку чуть меньше порога (389×589)", async () => {
+    const buffer = await pngBuffer(389, 589);
+    stubFetch(buffer);
+
+    const error = await validateRemoteImageDimensions("https://example.com/small2.jpg");
+    expect(error).toContain("389×589");
+    expect(error).toContain("Минимум 390×590");
   });
 
   it("учитывает кастомный порог", async () => {
     const buffer = await pngBuffer(300, 400);
     stubFetch(buffer);
 
-    // 300×400 — мало для 400×600, но проходит для 250×350
+    // 300×400 — мало для 390×590, но проходит для 250×350
     await expect(
       validateRemoteImageDimensions("https://example.com/mid.jpg", 250, 350),
     ).resolves.toBeNull();
-    const error = await validateRemoteImageDimensions("https://example.com/mid.jpg", 400, 600);
-    expect(error).toContain("Минимум 400×600");
+    const error = await validateRemoteImageDimensions("https://example.com/mid.jpg", 390, 590);
+    expect(error).toContain("Минимум 390×590");
   });
 
   it("кэширует результат — повторная проверка не качает картинку", async () => {

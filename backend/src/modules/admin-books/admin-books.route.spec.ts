@@ -26,9 +26,13 @@ const mocks = vi.hoisted(() => ({
   mergeGroup: vi.fn(),
   findOrCreate: vi.fn(),
   validateRemoteImageDimensions: vi.fn().mockResolvedValue(null),
+  deleteIfOrphaned: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("../../lib/prisma.js", () => ({ prisma: mocks.prisma }));
+vi.mock("../../lib/storage/file-cleanup.js", () => ({
+  deleteIfOrphaned: mocks.deleteIfOrphaned,
+}));
 vi.mock("../books/bookPublish.service.js", () => ({
   publishBook: mocks.publishBook,
   unpublishBook: mocks.unpublishBook,
@@ -332,10 +336,10 @@ describe("Admin Books Routes", () => {
       );
     });
 
-    it("мелкая обложка (< 400×600) → 400 с текстом ошибки", async () => {
+    it("мелкая обложка (< 390×590) → 400 с текстом ошибки", async () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
       mocks.validateRemoteImageDimensions.mockResolvedValueOnce(
-        "Картинка слишком маленькая (182×277). Минимум 400×600",
+        "Картинка слишком маленькая (182×277). Минимум 390×590",
       );
 
       const res = await request(app.server)
@@ -372,6 +376,24 @@ describe("Admin Books Routes", () => {
 
       expect(res.status).toBe(200);
       expect(mocks.validateRemoteImageDimensions).not.toHaveBeenCalled();
+      // Обложка не менялась — старый файл не чистим
+      expect(mocks.deleteIfOrphaned).not.toHaveBeenCalled();
+    });
+
+    it("смена обложки → старый файл чистится как осиротевший", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.update.mockResolvedValue({
+        ...bookRow,
+        coverImageUrl: "/new-cover.jpg",
+      });
+
+      const res = await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ coverImageUrl: "/new-cover.jpg" });
+
+      expect(res.status).toBe(200);
+      expect(mocks.deleteIfOrphaned).toHaveBeenCalledWith("/cover.jpg");
     });
   });
 
@@ -476,7 +498,22 @@ describe("Admin Books Routes", () => {
       expect(res.status).toBe(200);
       expect(mocks.mergeGroup).toHaveBeenCalledWith(
         expect.objectContaining({ key: "manual:20->10", books: expect.any(Array) }),
+        { forceCanonId: 10 },
       );
+    });
+
+    it("published-дубль в draft-канон → 409, mergeGroup не вызывается", async () => {
+      mocks.prisma.book.findUnique
+        .mockResolvedValueOnce({ ...bookRow, id: 20, status: "published" }) // дубль
+        .mockResolvedValueOnce({ ...bookRow, id: 10, status: "draft" }); // канон
+
+      const res = await request(app.server)
+        .post("/api/admin/books/20/merge")
+        .set("Authorization", "Bearer admin-token")
+        .send({ targetId: 10 });
+
+      expect(res.status).toBe(409);
+      expect(mocks.mergeGroup).not.toHaveBeenCalled();
     });
 
     it("уже поглощённая книга → 409", async () => {

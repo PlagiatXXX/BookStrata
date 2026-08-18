@@ -7,6 +7,9 @@ import sharp from 'sharp'
 import crypto from 'node:crypto'
 import type { ImageStorageService, UploadResult } from './types.js'
 import { config } from '../../config/env.js'
+import { createLogger } from '../logger.js'
+
+const logger = createLogger('S3Storage', { color: 'yellow' })
 
 const S3_BUCKET = config.S3_BUCKET
 if (!S3_BUCKET) {
@@ -89,9 +92,28 @@ export class S3Storage implements ImageStorageService {
   }
 
   async deleteAvatar(publicId: string): Promise<void> {
+    await this.deleteFile(publicId)
+  }
+
+  /** Удаляет объект по key (или key, извлечённому из нашего URL). */
+  async deleteFile(publicId: string): Promise<void> {
+    let key = publicId
+    if (publicId.startsWith('http')) {
+      try {
+        const parsed = new URL(publicId)
+        key = parsed.pathname.replace(/^\//, '')
+        // S3-URL вида {host}/{bucket}/{key} — срезаем имя бакета
+        if (key.startsWith(`${S3_BUCKET!}/`)) {
+          key = key.slice(S3_BUCKET!.length + 1)
+        }
+      } catch {
+        logger.warn(`deleteFile: не удалось разобрать URL "${publicId}"`)
+        return
+      }
+    }
     const command = new DeleteObjectCommand({
       Bucket: S3_BUCKET,
-      Key: publicId,
+      Key: key,
     })
     await client.send(command)
   }

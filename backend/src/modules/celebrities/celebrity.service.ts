@@ -16,6 +16,7 @@ import {
   gcOrphanBooks,
 } from "../books/bookCatalogSync.service.js";
 import { validateRemoteImageDimensions } from "../../lib/validators.js";
+import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 
 function slugify(text: string): string {
   const cyrillicToLatin: Record<string, string> = {
@@ -140,6 +141,7 @@ export async function createCelebrity(input: CreateCelebrityInput) {
 
 export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
   const data: Prisma.CelebrityUpdateInput = {};
+  let oldPhoto: string | undefined;
 
   // Внешние обложки переводим на свой CDN (WebP через image-proxy)
   if (input.photoUrl !== undefined) {
@@ -149,6 +151,7 @@ export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
       where: { id },
       select: { photoUrl: true },
     });
+    oldPhoto = current?.photoUrl ?? undefined;
     if (input.photoUrl.trim() !== (current?.photoUrl ?? "")) {
       const photoError = await validateRemoteImageDimensions(input.photoUrl || "");
       if (photoError) throw new ValidationError(photoError);
@@ -174,6 +177,11 @@ export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
     data,
   });
 
+  // Старое фото осиротело (если было нашим) — чистим
+  if (data.photoUrl !== undefined) {
+    await deleteIfOrphaned(oldPhoto);
+  }
+
   // Рантайм-синхронизация карточек с каталогом (Фаза 2.2, seobook.md)
   if (input.books !== undefined) {
     await syncCatalogCards("celebrity", id, input.books);
@@ -189,8 +197,14 @@ export async function deleteCelebrity(id: number) {
     where: { celebrityId: id },
     select: { bookId: true },
   });
+  const celebrity = await prisma.celebrity.findUnique({
+    where: { id },
+    select: { photoUrl: true },
+  });
   await prisma.celebrity.delete({ where: { id } });
   await gcOrphanBooks(links.map((l) => l.bookId));
+  // Фото удалённой знаменитости осиротело (если было нашим) — чистим
+  await deleteIfOrphaned(celebrity?.photoUrl);
 }
 
 export async function togglePublish(id: number) {

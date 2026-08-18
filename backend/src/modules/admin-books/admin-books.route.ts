@@ -32,6 +32,7 @@ const handleError = (error: unknown, reply: {
       slug_exists: 409,
       invalid_merge: 400,
       already_merged: 409,
+      cannot_merge_published_into_draft: 409,
       google_empty: 404,
       invalid_comment_content: 400,
       book_from_tier_list: 409,

@@ -74,6 +74,10 @@ export async function booksRoutes(fastify: FastifyInstance) {
       if (!page) {
         return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Книга не найдена"));
       }
+      // Устаревший slug (slugHistory) или поглощённая книга (mergedIntoId) → 301
+      if ("redirectTo" in page) {
+        return reply.redirect(page.redirectTo, 301);
+      }
       reply.header("Cache-Control", "public, max-age=60, s-maxage=300");
       return reply.send(createSuccessResponse(page));
     },

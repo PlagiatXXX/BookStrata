@@ -19,7 +19,8 @@
     "seed:export": "tsx scripts/export-collections.ts",
     "export:collection-routes": "tsx scripts/export-collection-routes.ts",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "cleanup:load-test": "tsx scripts/cleanup-load-test-users.ts"
+    "cleanup:load-test": "tsx scripts/cleanup-load-test-users.ts",
+    "cleanup:orphans": "tsx src/scripts/cleanup-orphaned-files.ts"
   },
   "keywords": [],
   "author": "",

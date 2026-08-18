@@ -9,8 +9,8 @@ const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const REMOTE_IMAGE_TIMEOUT_MS = 15_000;
 const REMOTE_IMAGE_MAX_BYTES = 10 * 1024 * 1024; // 10 MB — защита от «тяжёлых» картинок
-export const MIN_IMAGE_WIDTH = 400;
-export const MIN_IMAGE_HEIGHT = 600;
+export const MIN_IMAGE_WIDTH = 390;
+export const MIN_IMAGE_HEIGHT = 590;
 
 // Кэш размеров уже проверенных URL (картинка по URL не меняется —
 // повторные сохранения не качают её заново)

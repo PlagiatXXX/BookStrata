@@ -5,6 +5,7 @@ import {
 import { prisma } from "./tierList.utils.js";
 import { NotFoundError } from "../../lib/errors.js";
 import { generateUniqueSlug } from "../../utils/slugify.js";
+import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 import type { GetTierListsQuery } from "./tierList.schema.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -172,7 +173,14 @@ export async function updateTierList(
 }
 
 export async function updateTierListCover(id: string, coverImageUrl: string) {
-  return tierListRepository.update(id, { coverImageUrl });
+  const realId = await resolveTierListId(id);
+  const current = await prisma.tierList.findUnique({
+    where: { id: realId },
+    select: { coverImageUrl: true },
+  });
+  await tierListRepository.update(realId, { coverImageUrl });
+  // Старая обложка осиротела (если была нашей) — чистим
+  await deleteIfOrphaned(current?.coverImageUrl);
 }
 
 export async function deleteTierList(id: string) {
@@ -181,7 +189,11 @@ export async function deleteTierList(id: string) {
   const realId = await resolveTierListId(id);
   const tierList = await prisma.tierList.findUnique({
     where: { id: realId },
-    select: { userId: true, placements: { select: { bookId: true } } },
+    select: {
+      userId: true,
+      coverImageUrl: true,
+      placements: { select: { bookId: true, coverImageUrl: true } },
+    },
   });
   if (!tierList) throw new NotFoundError("Tier list not found");
 
@@ -201,6 +213,13 @@ export async function deleteTierList(id: string) {
       },
     });
   }
+
+  // Обложки удалённого листа и его вхождений осиротели (если были нашими) — чистим
+  const orphanCovers = [
+    tierList.coverImageUrl,
+    ...tierList.placements.map((p) => p.coverImageUrl),
+  ].filter(Boolean);
+  await Promise.all(orphanCovers.map((url) => deleteIfOrphaned(url)));
 }
 
 export async function togglePublic(tierListId: string, isPublic: boolean) {
