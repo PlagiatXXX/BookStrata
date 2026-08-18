@@ -9,9 +9,10 @@
  *     если ни один из них не используется в БД.
  *
  * Запуск:
- *   npx tsx src/scripts/cleanup-orphaned-files.ts            # dry-run (по умолчанию)
- *   npx tsx src/scripts/cleanup-orphaned-files.ts --delete    # реальное удаление
+ *   npm run cleanup:orphans                             # dry-run (по умолчанию)
+ *   npm run cleanup:orphans -- --delete                 # реальное удаление
  */
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import {
   S3Client,
