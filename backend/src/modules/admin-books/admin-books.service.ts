@@ -53,6 +53,27 @@ const BOOK_LIST_SELECT = {
   _count: { select: { comments: true, placements: true } },
 } satisfies Prisma.BookSelect;
 
+/** Строка результата $queryRaw в searchBooksByRelevance. */
+interface BookSearchRow {
+  id: number;
+  title: string;
+  author: string | null;
+  slug: string | null;
+  status: string;
+  genre: string | null;
+  tags: string[];
+  cover_image_url: string;
+  rating: number | null;
+  likesCount: number;
+  publishedAt: Date | null;
+  updatedAt: Date;
+  mergedIntoId: number | null;
+  source: string | null;
+  externalId: string | null;
+  comments: number;
+  placements: number;
+}
+
 /** Сворачивает группы AnalyticsEvent в map slug → просмотры.
  *  url бывает полным href (https://bookstrata.ru/books/x) и путём (/books/x). */
 function collectViewsBySlug(groups: Array<{ url: string | null; _count: { url: number } }>) {
@@ -66,7 +87,87 @@ function collectViewsBySlug(groups: Array<{ url: string | null; _count: { url: n
   return viewsBySlug;
 }
 
+/** Поиск по названию/автору с релевантной сортировкой: точное совпадение →
+ *  начало названия → начало автора → подстрока. Без неё при LIMIT 50 книга
+ *  по подстроке «тонет» в выдаче, отсортированной по updatedAt desc, и
+ *  создаётся впечатление, что поиск не находит (помогает только полное имя). */
+async function searchBooksByRelevance(params: BookListParams) {
+  const q = params.q!.trim().toLowerCase();
+  const limit = Math.min(params.limit ?? 50, 200);
+  const offset = params.offset ?? 0;
+
+  const where: Prisma.BookWhereInput = {
+    OR: [
+      { title: { contains: q, mode: "insensitive" } },
+      { author: { contains: q, mode: "insensitive" } },
+    ],
+  };
+  if (params.status) where.status = params.status as Prisma.BookWhereInput["status"];
+  if (params.genre) where.genre = params.genre;
+  if (params.duplicatesOnly) where.mergedIntoId = { not: null };
+  // «Из тир-листов»: личные книги (userId) + легаси-общие, у которых есть вхождения
+  if (params.origin === "tier-list") {
+    (where.OR as Prisma.BookWhereInput[]).push(
+      { userId: { not: null } },
+      { placements: { some: {} } },
+    );
+  }
+  if (params.origin === "catalog") {
+    where.placements = { none: {} };
+    where.userId = null;
+  }
+
+  const [total, rows] = await Promise.all([
+    prisma.book.count({ where }),
+    prisma.$queryRaw<BookSearchRow[]>(Prisma.sql`
+      SELECT b.id, b.title, b.author, b.slug, b.status, b.genre, b.tags,
+             b.cover_image_url, b.rating, b."likesCount", b."publishedAt",
+             b."updatedAt", b."mergedIntoId", b.source, b."externalId",
+             (SELECT COUNT(*)::int FROM "book_comments" c WHERE c."bookId" = b.id) AS comments,
+             (SELECT COUNT(*)::int FROM "BookPlacement" p WHERE p."bookId" = b.id) AS placements
+      FROM "Book" b
+      WHERE (lower(b.title) LIKE ${`%${q}%`} OR lower(coalesce(b.author, '')) LIKE ${`%${q}%`})
+        ${params.status ? Prisma.sql`AND b.status = ${params.status}` : Prisma.empty}
+        ${params.genre ? Prisma.sql`AND b.genre = ${params.genre}` : Prisma.empty}
+        ${params.duplicatesOnly ? Prisma.sql`AND b."mergedIntoId" IS NOT NULL` : Prisma.empty}
+        ${params.origin === "tier-list" ? Prisma.sql`AND (b.user_id IS NOT NULL OR EXISTS (SELECT 1 FROM "BookPlacement" p2 WHERE p2."bookId" = b.id))` : Prisma.empty}
+        ${params.origin === "catalog" ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM "BookPlacement" p3 WHERE p3."bookId" = b.id) AND b.user_id IS NULL` : Prisma.empty}
+      ORDER BY CASE
+          WHEN lower(b.title) = ${q} THEN 0
+          WHEN lower(b.title) LIKE ${`${q}%`} THEN 1
+          WHEN lower(coalesce(b.author, '')) LIKE ${`${q}%`} THEN 2
+          ELSE 3
+        END, b.title ASC
+      LIMIT ${limit} OFFSET ${offset}
+    `),
+  ]);
+
+  return {
+    items: rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      author: r.author,
+      slug: r.slug,
+      status: r.status,
+      genre: r.genre,
+      tags: r.tags,
+      coverImageUrl: r.cover_image_url,
+      rating: r.rating,
+      likesCount: r.likesCount,
+      publishedAt: r.publishedAt,
+      updatedAt: r.updatedAt,
+      mergedIntoId: r.mergedIntoId,
+      source: r.source,
+      externalId: r.externalId,
+      _count: { comments: r.comments, placements: r.placements },
+    })),
+    total,
+  };
+}
+
 export async function listBooks(params: BookListParams) {
+  const searchResult = params.q?.trim() ? await searchBooksByRelevance(params) : null;
+
   const where: Prisma.BookWhereInput = {};
   const orFilters: Prisma.BookWhereInput[] = [];
   if (params.q) {
@@ -99,25 +200,39 @@ export async function listBooks(params: BookListParams) {
           : { updatedAt: "desc" };
 
   // Просмотры считаем одной агрегацией по всем /books/ и привязываем по slug
-  const [items, total, viewGroups] = await Promise.all([
-    prisma.book.findMany({
-      where,
-      orderBy,
-      skip: params.offset ?? 0,
-      take: Math.min(params.limit ?? 50, 200),
-      select: BOOK_LIST_SELECT,
-    }),
-    prisma.book.count({ where }),
-    prisma.analyticsEvent.groupBy({
-      by: ["url"],
-      where: {
-        event: "page_view",
-        url: { contains: "/books/" },
-        ...excludedUserFilter,
-      },
-      _count: { url: true },
-    }),
-  ]);
+  const [items, total, viewGroups] = searchResult
+    ? [
+        searchResult.items,
+        searchResult.total,
+        await prisma.analyticsEvent.groupBy({
+          by: ["url"],
+          where: {
+            event: "page_view",
+            url: { contains: "/books/" },
+            ...excludedUserFilter,
+          },
+          _count: { url: true },
+        }),
+      ]
+    : await Promise.all([
+        prisma.book.findMany({
+          where,
+          orderBy,
+          skip: params.offset ?? 0,
+          take: Math.min(params.limit ?? 50, 200),
+          select: BOOK_LIST_SELECT,
+        }),
+        prisma.book.count({ where }),
+        prisma.analyticsEvent.groupBy({
+          by: ["url"],
+          where: {
+            event: "page_view",
+            url: { contains: "/books/" },
+            ...excludedUserFilter,
+          },
+          _count: { url: true },
+        }),
+      ]);
 
   const viewsBySlug = collectViewsBySlug(viewGroups);
 

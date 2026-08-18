@@ -9,6 +9,7 @@ import Fastify from "fastify";
 
 const mocks = vi.hoisted(() => ({
   prisma: {
+    $queryRaw: vi.fn(),
     book: {
       findMany: vi.fn(),
       count: vi.fn(),
@@ -102,6 +103,7 @@ describe("Admin Books Routes", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mocks.prisma.$queryRaw.mockReset();
     // Сбрасываем очереди mockResolvedValueOnce между тестами
     mocks.prisma.book.findUnique.mockReset();
     mocks.prisma.book.findUniqueOrThrow.mockReset();
@@ -158,15 +160,17 @@ describe("Admin Books Routes", () => {
   });
 
   describe("листинг и фильтры", () => {
-    it("q → поиск по title/author (case-insensitive)", async () => {
-      mocks.prisma.book.findMany.mockResolvedValue([]);
+    it("q → поиск по title/author через raw с релевантной сортировкой", async () => {
+      mocks.prisma.$queryRaw.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
       await request(app.server)
         .get("/api/admin/books?q=толстой&status=published")
         .set("Authorization", "Bearer admin-token");
 
-      expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
+      expect(mocks.prisma.$queryRaw).toHaveBeenCalled();
+      expect(mocks.prisma.book.findMany).not.toHaveBeenCalled();
+      expect(mocks.prisma.book.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
             OR: [
@@ -177,6 +181,47 @@ describe("Admin Books Routes", () => {
           },
         }),
       );
+    });
+
+    it("q → маппит raw-строки в items с _count", async () => {
+      mocks.prisma.$queryRaw.mockResolvedValue([
+        {
+          id: 10,
+          title: "Война и мир",
+          author: null,
+          slug: "vojna-i-mir",
+          status: "published",
+          genre: "Роман",
+          tags: ["классика"],
+          cover_image_url: "/cover.jpg",
+          rating: 9.1,
+          likesCount: 5,
+          publishedAt: new Date("2026-01-01"),
+          updatedAt: new Date("2026-01-02"),
+          mergedIntoId: null,
+          source: "local",
+          externalId: null,
+          comments: 2,
+          placements: 3,
+        },
+      ]);
+      mocks.prisma.book.count.mockResolvedValue(1);
+
+      const res = await request(app.server)
+        .get("/api/admin/books?q=война")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toEqual([
+        expect.objectContaining({
+          id: 10,
+          title: "Война и мир",
+          coverImageUrl: "/cover.jpg",
+          author: null,
+          _count: { comments: 2, placements: 3 },
+        }),
+      ]);
+      expect(res.body.data.total).toBe(1);
     });
 
     it("duplicatesOnly=true → только поглощённые книги", async () => {

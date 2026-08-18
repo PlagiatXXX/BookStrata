@@ -51,7 +51,9 @@ export function useAdminBooks() {
         duplicatesOnly,
         sort,
         offset,
-        limit: pageSize,
+        // При поиске поднимаем лимит: при 50 строках и сортировке по
+        // updatedAt нужная книга может «тонуть» в выдаче за пределами страницы
+        limit: q ? 200 : pageSize,
       }),
     placeholderData: (prev) => prev,
   });
