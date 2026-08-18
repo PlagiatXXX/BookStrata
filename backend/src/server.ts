@@ -99,19 +99,8 @@ fastify.register(cors, {
   credentials: true, // Разрешаем отправку cookie
 });
 
-// Максимально строгий CSP для API (defense in depth).
-// API возвращает JSON, а не HTML — поэтому никакие ресурсы не нужны.
-// Если ошибка приведёт к выплёвыванию HTML, он не сможет ничего загрузить.
-const cspDirectives = {
-  defaultSrc: ["'none'"],
-  baseUri: ["'none'"],
-  formAction: ["'none'"],
-};
-
 await fastify.register(helmet, {
-  contentSecurityPolicy: {
-    directives: cspDirectives,
-  },
+  contentSecurityPolicy: false,
   strictTransportSecurity: {
     maxAge: 31536000,
     includeSubDomains: true,
