@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+// Изолируем тест от окружения: VITE_API_URL на разных машинах разный
+// (пустой/не задан), а тест проверяет перезапрос по финальному пути.
+vi.mock("./config", () => ({ API_BASE_URL: "/api" }));
 import { apiClient } from "./api-client";
 
 /**
