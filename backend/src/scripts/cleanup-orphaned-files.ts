@@ -48,29 +48,56 @@ async function collectUsedUrls(): Promise<Set<string>> {
     if (u) urls.add(u);
   };
 
-  const [books, collections, celebrities, tierLists, placements, news, users, flags] =
+  // Рекурсивно собирает все строки-URL из JSON-снимков (Collection.books/tiers,
+  // Celebrity.books/tiers, Template.defaultBooks): карточки хранят наши CDN-обложки.
+  // Лишние строки в Set безопасны — они лишь защищают файлы от удаления.
+  const addJsonUrls = (value: unknown) => {
+    if (typeof value === "string") {
+      if (value.startsWith("http") || value.startsWith("/uploads")) add(value);
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach(addJsonUrls);
+      return;
+    }
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(addJsonUrls);
+    }
+  };
+
+  const [books, collections, celebrities, tierLists, placements, news, users, flags, templates] =
     await Promise.all([
       prisma.book.findMany({ select: { coverImageUrl: true } }),
-      prisma.collection.findMany({ select: { coverImageUrl: true, bookCovers: true } }),
-      prisma.celebrity.findMany({ select: { photoUrl: true } }),
+      prisma.collection.findMany({
+        select: { coverImageUrl: true, bookCovers: true, books: true, tiers: true },
+      }),
+      prisma.celebrity.findMany({ select: { photoUrl: true, books: true, tiers: true } }),
       prisma.tierList.findMany({ select: { coverImageUrl: true } }),
       prisma.bookPlacement.findMany({ select: { coverImageUrl: true } }),
       prisma.newsArticle.findMany({ select: { imageUrl: true } }),
       prisma.user.findMany({ select: { avatarUrl: true } }),
       prisma.contentFlag.findMany({ select: { imageUrl: true } }),
+      prisma.template.findMany({ select: { defaultBooks: true } }),
     ]);
 
   books.forEach((b) => add(b.coverImageUrl));
   collections.forEach((c) => {
     add(c.coverImageUrl);
     c.bookCovers.forEach(add);
+    addJsonUrls(c.books);
+    addJsonUrls(c.tiers);
   });
-  celebrities.forEach((c) => add(c.photoUrl));
+  celebrities.forEach((c) => {
+    add(c.photoUrl);
+    addJsonUrls(c.books);
+    addJsonUrls(c.tiers);
+  });
   tierLists.forEach((t) => add(t.coverImageUrl));
   placements.forEach((p) => add(p.coverImageUrl));
   news.forEach((n) => add(n.imageUrl));
   users.forEach((u) => add(u.avatarUrl));
   flags.forEach((f) => add(f.imageUrl));
+  templates.forEach((t) => addJsonUrls(t.defaultBooks));
 
   return urls;
 }
