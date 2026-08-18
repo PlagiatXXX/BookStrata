@@ -74,7 +74,7 @@ export function BookContextChain({ items }: BookContextChainProps) {
 
   return (
     <section className="relative bg-[var(--bp-surface-container-lowest)] border-y border-primary/20 py-12">
-      <div className="max-w-[1100px] mx-auto px-4 md:px-5 relative z-10">
+      <div className="max-w-[1100px] mx-auto px-4 md:px-5 relative z-40">
         <div className="text-center mb-10">
           <h2 className="bp-display text-white tracking-[0.2em] uppercase text-xl md:text-2xl mb-2">
             Погружение в контекст
@@ -103,7 +103,7 @@ export function BookContextChain({ items }: BookContextChainProps) {
           {valid.map((item, idx) => (
             <div
                 key={idx}
-                className="group relative flex justify-center z-10 bg-[var(--bp-surface-container-lowest)] rounded-full p-2"
+                className="group relative flex justify-center z-40 bg-[var(--bp-surface-container-lowest)] rounded-full p-2"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -120,7 +120,7 @@ export function BookContextChain({ items }: BookContextChainProps) {
                 {/* Тултип строго над иконкой: hover (десктоп) или тап (touch) */}
                 <div
                   ref={(el) => { tipRefs.current.set(idx, el); }}
-                  className={`absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 max-w-[calc(100vw-2rem)] p-4 bg-[var(--bp-surface-container-high)] border border-primary/30 rounded-xl shadow-2xl backdrop-blur-xl z-50 opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 ease-out ${
+                  className={`absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 max-w-[calc(100vw-2rem)] p-4 bg-[var(--bp-surface-container-high)] border border-primary/30 rounded-xl shadow-2xl z-[100] opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 ease-out ${
                     activeIdx === idx
                       ? "opacity-100 translate-y-0 pointer-events-auto"
                       : ""
