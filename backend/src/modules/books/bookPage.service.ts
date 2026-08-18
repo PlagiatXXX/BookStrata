@@ -120,10 +120,13 @@ export async function getBookPageData(
 
   const { id, authorId, genre, tags } = book;
 
-  // Похожие: тот же жанр или пересечение тегов (если нет ни одного — пусто)
+  // Похожие: тот же жанр или пересечение тегов (если нет ни одного — пусто).
+  // Книги автора исключаются — они уже показаны в «Другие книги автора»,
+  // чтобы разделы не пересекались (вариативность для пользователя).
   const similarWhere: Prisma.BookWhereInput = {
     status: "published",
     id: { not: id },
+    ...(authorId ? { authorId: { not: authorId } } : {}),
   };
   if (genre || tags.length > 0) {
     similarWhere.OR = [

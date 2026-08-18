@@ -99,7 +99,7 @@ describe("getBookPageData", () => {
     expect(sqlCall).toContain("лев толстой");
   });
 
-  it("similarBooks: AND статуса + OR по жанру/тегам, лимит 8", async () => {
+  it("similarBooks: AND статуса + OR по жанру/тегам, лимит 8, без книг автора", async () => {
     (prisma.book.findUnique as any).mockResolvedValue(publishedBook);
     (prisma.book.findMany as any).mockResolvedValue([{ id: 3 }]);
     (prisma.$queryRaw as any).mockResolvedValue([]);
@@ -113,6 +113,8 @@ describe("getBookPageData", () => {
     const similarArgs = (prisma.book.findMany as any).mock.calls[0][0];
     expect(similarArgs.where.status).toBe("published");
     expect(similarArgs.where.id.not).toBe(1);
+    // Книги автора исключаются — они уходят в «Другие книги автора» (разделы не пересекаются)
+    expect(similarArgs.where.authorId.not).toBe(10);
     expect(similarArgs.where.OR).toHaveLength(2); // genre + tags
     expect(similarArgs.take).toBe(8);
     expect(asBookPage(page).similarBooks).toHaveLength(1);
@@ -130,9 +132,11 @@ describe("getBookPageData", () => {
 
     const page = await getBookPageData("book");
 
-    // первый findMany — это similarBooks с take 8; OR отсутствует в where
-    const [similarWhere] = (prisma.book.findMany as any).mock.calls[0];
-    expect(similarWhere.OR).toBeUndefined();
+    // первый findMany — это similarBooks с take 8; OR отсутствует в where,
+    // но книги автора всё равно исключаются
+    const [similarArgs] = (prisma.book.findMany as any).mock.calls[0];
+    expect(similarArgs.where.OR).toBeUndefined();
+    expect(similarArgs.where.authorId.not).toBe(10);
     expect(asBookPage(page).similarBooks).toEqual([]);
   });
 
@@ -170,6 +174,9 @@ describe("getBookPageData", () => {
     const page = await getBookPageData("voyna-i-mir");
 
     expect((prisma.book.findMany as any).mock.calls).toHaveLength(1); // только similarBooks
+    // у similarBooks нет фильтра по автору (автора у книги нет)
+    const [similarWhere] = (prisma.book.findMany as any).mock.calls[0];
+    expect(similarWhere.authorId).toBeUndefined();
     expect(asBookPage(page).otherBooksByAuthor).toEqual([]);
   });
 
