@@ -122,12 +122,12 @@ async function searchBooksByRelevance(params: BookListParams) {
     prisma.$queryRaw<BookSearchRow[]>(Prisma.sql`
       SELECT b.id, b.title, b.author, b.slug, b.status, b.genre, b.tags,
              b.cover_image_url, b.rating, b."likesCount", b."publishedAt",
-             b."updatedAt", b."mergedIntoId", b.source, b."externalId",
+             b."updated_at", b."mergedIntoId", b.source, b."externalId",
              (SELECT COUNT(*)::int FROM "book_comments" c WHERE c."bookId" = b.id) AS comments,
              (SELECT COUNT(*)::int FROM "BookPlacement" p WHERE p."bookId" = b.id) AS placements
       FROM "Book" b
       WHERE (lower(b.title) LIKE ${`%${q}%`} OR lower(coalesce(b.author, '')) LIKE ${`%${q}%`})
-        ${params.status ? Prisma.sql`AND b.status = ${params.status}` : Prisma.empty}
+        ${params.status ? Prisma.sql`AND b.status::text = ${params.status}` : Prisma.empty}
         ${params.genre ? Prisma.sql`AND b.genre = ${params.genre}` : Prisma.empty}
         ${params.duplicatesOnly ? Prisma.sql`AND b."mergedIntoId" IS NOT NULL` : Prisma.empty}
         ${params.origin === "tier-list" ? Prisma.sql`AND (b.user_id IS NOT NULL OR EXISTS (SELECT 1 FROM "BookPlacement" p2 WHERE p2."bookId" = b.id))` : Prisma.empty}

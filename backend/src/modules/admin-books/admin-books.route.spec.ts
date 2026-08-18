@@ -169,6 +169,19 @@ describe("Admin Books Routes", () => {
         .set("Authorization", "Bearer admin-token");
 
       expect(mocks.prisma.$queryRaw).toHaveBeenCalled();
+      // enum-колонка status сравнивается через ::text — иначе Postgres падает
+      // с «operator does not exist: BookCatalogStatus = text»
+      // Prisma.Sql: { strings, values } — восстанавливаем текст запроса
+      const call = mocks.prisma.$queryRaw.mock.calls[0][0] as {
+        strings: string[];
+        values: unknown[];
+      };
+      const sql = call.strings.join("$");
+      expect(sql).toContain("b.status::text = $");
+      // колонки с @map (snake_case) — иначе Postgres: column does not exist
+      expect(sql).toContain('b."updated_at"');
+      expect(sql).not.toContain('b."updatedAt"');
+      expect(sql).toContain("b.cover_image_url");
       expect(mocks.prisma.book.findMany).not.toHaveBeenCalled();
       expect(mocks.prisma.book.count).toHaveBeenCalledWith(
         expect.objectContaining({
