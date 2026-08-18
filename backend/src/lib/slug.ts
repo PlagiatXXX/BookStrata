@@ -58,36 +58,46 @@ export async function createBookWithSlug(
   const slugBase = base ?? slugify([data.title, data.author].filter(Boolean).join("-"));
   const candidate = (n: number) => (n === 1 ? slugBase : `${slugBase}-${n}`);
 
+  // Занятость slug проверяем ДО create: P2002 abort'ит interactive-транзакцию
+  // Prisma 4 (все последующие запросы падают с E25P02 «transaction is aborted»),
+  // поэтому конфликт по slug нельзя обработать после create — только до.
+  // Исключение — конкурентная гонка (P2002 всё же возможен между findUnique и
+  // create): его пробрасываем наверх, там транзакция перезапускается целиком.
   for (let attempt = 1; attempt <= 10; attempt++) {
     const slug = candidate(attempt);
+
+    const occupant = await tx.book.findUnique({
+      where: { slug },
+      select: { id: true, status: true },
+    });
+
+    if (occupant) {
+      // Каталог забирает чистый slug у draft-книги (страниц у draft нет);
+      // published не трогаем — переходим к следующему суффиксу.
+      if (options?.reclaimFromDraft && attempt === 1 && occupant.status === "draft") {
+        await tx.book.update({
+          where: { id: occupant.id },
+          data: { slug: null },
+        });
+        try {
+          return await tx.book.create({ data: { ...data, slug } });
+        } catch (error) {
+          // Гонка на том же slug (другой запрос переименовал/создал) —
+          // транзакция aborted, обработка только наверху (retry целиком).
+          if (isPrismaP2002(error)) throw error;
+          throw error;
+        }
+      }
+      continue;
+    }
+
     try {
       return await tx.book.create({ data: { ...data, slug } });
     } catch (error) {
       if (isPrismaP2002(error)) {
-        // Конфликт именно по slug → занят существующей книгой/гонкой → следующий суффикс.
-        // Конфликт по unique (source, externalId) / partial unique index — не про slug:
-        // пробрасываем наверх, там linkOrCreate перезапрашивает канон (P2002 → retry → link).
-        const target = (error as { meta?: { target?: unknown } }).meta?.target;
-        const isSlugConflict = Array.isArray(target)
-          ? target.includes("slug")
-          : String(target ?? "").includes("slug");
-        if (!isSlugConflict) throw error;
-
-        // Каталог забирает чистый slug у draft-книги (страниц у draft нет)
-        if (options?.reclaimFromDraft && attempt === 1) {
-          const occupant = await tx.book.findUnique({
-            where: { slug },
-            select: { id: true, status: true },
-          });
-          if (occupant && occupant.status === "draft") {
-            await tx.book.update({
-              where: { id: occupant.id },
-              data: { slug: null },
-            });
-            continue; // пробуем снова тот же slug
-          }
-        }
-        continue;
+        // Гонка (slug/unique) → транзакция aborted, продолжить нельзя —
+        // пробрасываем наверх: там retry транзакции целиком.
+        throw error;
       }
       throw error;
     }

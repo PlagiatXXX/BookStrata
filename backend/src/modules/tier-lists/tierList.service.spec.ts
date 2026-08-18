@@ -45,6 +45,7 @@ vi.mock("../../lib/prisma.js", () => ({
       findFirst: vi.fn().mockResolvedValue(null),
       findMany: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(1),
+      findUnique: vi.fn().mockResolvedValue(null), // pre-check занятости slug в createBookWithSlug
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),

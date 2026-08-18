@@ -130,13 +130,17 @@ describe("addBooksToTierList: конкурентная защита (P2002 → r
   });
 
   it("конфликт именно по slug → retry-цикл с суффиксом (-2), без link", async () => {
-    (prisma.book.create as any)
-      .mockRejectedValueOnce(p2002(["slug"])) // base-slug занят
-      .mockImplementationOnce(({ data }: any) => Promise.resolve({ id: 100, ...data }));
+    // Slug занят существующей книгой — pre-check (findUnique до create)
+    // находит её, createBookWithSlug сразу переходит на суффикс -2
+    // (без P2002, который abort'ил бы транзакцию)
+    (prisma.book.findUnique as any).mockResolvedValueOnce(userBook(50));
+    (prisma.book.create as any).mockImplementationOnce(({ data }: any) =>
+      Promise.resolve({ id: 100, ...data }),
+    );
 
     const result = await addBooksToTierList("1", [book]);
 
-    expect(prisma.book.create).toHaveBeenCalledTimes(2);
+    expect(prisma.book.create).toHaveBeenCalledTimes(1);
     expect(prisma.book.create).toHaveBeenLastCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ slug: expect.stringMatching(/-2$/) }),

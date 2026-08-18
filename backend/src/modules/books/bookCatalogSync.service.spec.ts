@@ -364,6 +364,52 @@ describe("syncCatalogCards", () => {
     );
   });
 
+  it("slug занят published-книгой → создаётся с суффиксом (-2) без P2002/E25P02", async () => {
+    // Регрессия: сохранение коллекции падало 500, когда книга каталога уже
+    // занимала slug (P2002 abort'ил транзакцию, E25P02 на следующем запросе).
+    // Pre-check findUnique находит занятый slug → сразу суффикс, create не падает.
+    (mockTx.book.findUnique as any).mockResolvedValueOnce({ id: 50, status: "published" });
+    (mockTx.book.create as any).mockResolvedValue({ id: 42 });
+
+    const result = await syncCatalogCards("collection", 5, {
+      k1: { title: "Алхимизированные", author: "СенЛинЮ" },
+    });
+
+    expect(mockTx.book.create).toHaveBeenCalledTimes(1);
+    expect(mockTx.book.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ slug: expect.stringMatching(/-2$/) }),
+      }),
+    );
+    expect(mockTx.book.update).not.toHaveBeenCalled();
+    expect(result.created).toBe(1);
+    expect(mockTx.collectionBook.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { collectionId_bookId: { collectionId: 5, bookId: 42 } },
+      }),
+    );
+  });
+
+  it("slug занят draft-книгой → draft переименовывается, каталог забирает чистый slug", async () => {
+    (mockTx.book.findUnique as any).mockResolvedValueOnce({ id: 50, status: "draft" });
+    (mockTx.book.create as any).mockResolvedValue({ id: 42 });
+
+    const result = await syncCatalogCards("collection", 5, {
+      k1: { title: "Дюна", author: "Фрэнк Герберт" },
+    });
+
+    expect(mockTx.book.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 50 }, data: { slug: null } }),
+    );
+    expect(mockTx.book.create).toHaveBeenCalledTimes(1);
+    expect(mockTx.book.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ slug: "dyuna-frenk-gerbert" }),
+      }),
+    );
+    expect(result.created).toBe(1);
+  });
+
   it("celebrity: связи идут в celebrityBook", async () => {
     await syncCatalogCards("celebrity", 3, { k1: { title: "Книга" } });
 

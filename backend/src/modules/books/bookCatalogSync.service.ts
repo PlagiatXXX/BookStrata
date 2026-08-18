@@ -128,46 +128,50 @@ export async function syncCatalogCards(
 ): Promise<CatalogSyncResult> {
   const entries = normalizeCards(cards);
 
-  // Авторы карточек — в реестр (find-or-create), как при сохранении коллекции
-  const authorNames = Array.from(
-    new Set(entries.map((c) => c.author).filter((a): a is string => Boolean(a && a.trim()))),
-  );
-  const authorMap =
-    authorNames.length > 0 ? await authorService.findOrCreateMany(authorNames) : new Map();
-
-  // Пре-фаза матчинга ВНЕ транзакции (каскад уверенности, Фаза 2.1).
-  // Каталог матчит ТОЛЬКО published-книги: пользовательские draft из тир-листов
-  // не участвуют в склейке (решение 17.08) — каталог и тир-листы не пересекаются.
-  const matched = await Promise.all(
-    entries.map(async (card) => {
-      const authorId = card.author ? (authorMap.get(card.author)?.id ?? null) : null;
-      const result = await matchBook(
-        prisma,
-        {
-          title: card.title,
-          author: card.author ?? null,
-          authorId,
-        },
-        { statusFilter: "published" },
-      );
-      return {
-        card,
-        authorId,
-        // Страховка: даже если матчинг вернул draft — не линкуемся (см. выше)
-        canon: result.book?.status === "published" ? result.book : null,
-      };
-    }),
-  );
-
   const result: CatalogSyncResult = { created: 0, linked: 0, deleted: 0, published: 0 };
   let orphanCovers: string[] = [];
 
   // Retry всей транзакции при гонке: P2002 abort'ит interactive-транзакцию Prisma 4,
-  // поэтому link-or-create с retry внутри tx невозможен — повторяем транзакцию целиком
+  // поэтому link-or-create с retry внутри tx невозможен — повторяем транзакцию целиком.
+  // Матчинг канонов выполняется ВНУТРИ цикла попыток: после гонки параллельный запрос
+  // мог создать/опубликовать книгу — при перезапуске она должна стать каноном,
+  // иначе P2002 будет воспроизводиться вечно (500 вместо сохранения).
   const MAX_TX_ATTEMPTS = 3;
   for (let attempt = 1; attempt <= MAX_TX_ATTEMPTS; attempt++) {
     try {
       orphanCovers = [];
+
+      // Авторы карточек — в реестр (find-or-create), как при сохранении коллекции
+      const authorNames = Array.from(
+        new Set(entries.map((c) => c.author).filter((a): a is string => Boolean(a && a.trim()))),
+      );
+      const authorMap =
+        authorNames.length > 0 ? await authorService.findOrCreateMany(authorNames) : new Map();
+
+      // Пре-фаза матчинга ВНЕ транзакции (каскад уверенности, Фаза 2.1).
+      // Каталог матчит ТОЛЬКО published-книги: пользовательские draft из тир-листов
+      // не участвуют в склейке (решение 17.08) — каталог и тир-листы не пересекаются.
+      const matched = await Promise.all(
+        entries.map(async (card) => {
+          const authorId = card.author ? (authorMap.get(card.author)?.id ?? null) : null;
+          const result = await matchBook(
+            prisma,
+            {
+              title: card.title,
+              author: card.author ?? null,
+              authorId,
+            },
+            { statusFilter: "published" },
+          );
+          return {
+            card,
+            authorId,
+            // Страховка: даже если матчинг вернул draft — не линкуемся (см. выше)
+            canon: result.book?.status === "published" ? result.book : null,
+          };
+        }),
+      );
+
       await prisma.$transaction(async (tx) => {
         const newBookIds: number[] = [];
 
