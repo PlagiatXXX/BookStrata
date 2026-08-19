@@ -2,15 +2,20 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { sileo } from "sileo";
 import "./WysiwygEditor.css";
 
 interface WysiwygEditorProps {
   value: string;
   onChange: (value: string) => void;
+  /** Загрузка изображения файлом; кнопка «Файл» видна только при переданном пропе */
+  onUploadImage?: (base64: string) => Promise<{ imageUrl: string }>;
 }
 
-export function WysiwygEditor({ value, onChange }: WysiwygEditorProps) {
+export function WysiwygEditor({ value, onChange, onUploadImage }: WysiwygEditorProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -49,6 +54,30 @@ export function WysiwygEditor({ value, onChange }: WysiwygEditorProps) {
     return null;
   }
 
+  const handleFileSelect = async (file: File) => {
+    if (!onUploadImage) return;
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const { imageUrl } = await onUploadImage(reader.result as string);
+          editor.chain().focus().setImage({ src: imageUrl }).run();
+        } catch (error) {
+          console.error(error);
+          sileo.error({
+            title: "Ошибка загрузки",
+            description: "Не удалось загрузить изображение",
+            duration: 4000,
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="wysiwyg-editor">
       <div className="tiptap-toolbar">
@@ -75,14 +104,6 @@ export function WysiwygEditor({ value, onChange }: WysiwygEditorProps) {
           title="Зачёркнутый"
         >
           <s>S</s>
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={editor.isActive("heading", { level: 1 }) ? "is-active" : ""}
-          title="Заголовок H1"
-        >
-          H1
         </button>
         <button
           type="button"
@@ -116,6 +137,16 @@ export function WysiwygEditor({ value, onChange }: WysiwygEditorProps) {
         >
           1. Список
         </button>
+        {onUploadImage && (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            title="Загрузить файл"
+          >
+            🖼️ Файл
+          </button>
+        )}
         <button
           type="button"
           onClick={() => {
@@ -124,10 +155,21 @@ export function WysiwygEditor({ value, onChange }: WysiwygEditorProps) {
               editor.chain().focus().setImage({ src: url }).run();
             }
           }}
-          title="Вставить изображение"
+          title="Вставить изображение по URL"
         >
-          🖼️ Изображение
+          🔗 По URL
         </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleFileSelect(file);
+            e.target.value = "";
+          }}
+        />
         <button
           type="button"
           onClick={() => {

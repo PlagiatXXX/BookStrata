@@ -36,6 +36,11 @@
   border-color: var(--accent-main);
 }
 
+.tiptap-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 .tiptap-editor {
   min-height: 300px;
   padding: 16px;
