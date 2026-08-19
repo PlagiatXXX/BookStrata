@@ -15,8 +15,7 @@
  * Неканон удаляется, если после переноса не имеет ни одной привязки
  * (placements/ratings/statuses/связи коллекций/комментарии/лайки).
  *
- * Чистые функции (normalizeTitle, pickCanon) покрыты unit-тестами (bookDedupe.service.spec.ts);
- * скрипт scripts/dedupe-books.ts — тонкий раннер поверх сервиса.
+ * Чистые функции (normalizeTitle, pickCanon) покрыты unit-тестами (bookDedupe.service.spec.ts).
  */
 import { prisma } from "../../lib/prisma.js";
 import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
