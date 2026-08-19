@@ -13,9 +13,10 @@ describe("uploadNewsImage", () => {
 
   it("постит base64 на /news/upload-image и возвращает URL", async () => {
     const { api } = await import("./api-client");
+    // api.post уже разворачивает { data: ... } → мокаем развёрнутый результат
     vi.mocked(api.post).mockResolvedValue({
-      data: { imageUrl: "https://cdn.example.com/news/1.webp" },
-    });
+      imageUrl: "https://cdn.example.com/news/1.webp",
+    } as never);
 
     const result = await uploadNewsImage("data:image/png;base64,AAA");
 
