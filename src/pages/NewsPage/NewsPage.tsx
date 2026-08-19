@@ -126,16 +126,37 @@ export default function NewsPage() {
             {article.authorName && (
               <div className="flex items-center gap-2">
                 <User size={16} />
-                <span>{article.authorName}</span>
+                {article.authorId ? (
+                  <Link
+                    to={`/users/${article.authorId}`}
+                    className="text-(--accent-main) hover:underline cursor-pointer"
+                  >
+                    {article.authorName}
+                  </Link>
+                ) : (
+                  <span>{article.authorName}</span>
+                )}
               </div>
             )}
           </div>
         </header>
 
+        {/* Обложка — компактный баннер как у тир-листов */}
+        {article.imageUrl && (
+          <div className="news-cover">
+            <img
+              src={article.imageUrl}
+              alt={article.title}
+              className="news-cover__img"
+              loading="lazy"
+            />
+          </div>
+        )}
+
         {/* Excerpt */}
         {article.excerpt && (
           <div className="brutal-card brutal-border p-6 mb-8">
-            <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
+            <p className="text-lg font-medium text-(--ink-0) leading-relaxed break-words">
               {article.excerpt}
             </p>
           </div>

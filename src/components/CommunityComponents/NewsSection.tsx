@@ -83,32 +83,42 @@ export const NewsSection = memo(() => {
         {news.map((article) => (
           <article
             key={article.id}
-            className="brutal-card brutal-border p-6 hover-lift"
+            className="brutal-card brutal-border hover-lift overflow-hidden"
           >
-            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--ink-1) mb-3">
-              {article.tags.length > 0 && (
-                <span className="brutal-label px-2 py-0.5">
-                  {article.tags[0]}
+            {article.imageUrl && (
+              <img
+                src={article.imageUrl}
+                alt={article.title}
+                className="w-full h-auto"
+                loading="lazy"
+              />
+            )}
+            <div className="p-6">
+              <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-(--ink-1) mb-3">
+                {article.tags.length > 0 && (
+                  <span className="brutal-label px-2 py-0.5">
+                    {article.tags[0]}
+                  </span>
+                )}
+                <span>
+                  {new Date(article.publishedAt).toLocaleDateString("ru-RU", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </span>
-              )}
-              <span>
-                {new Date(article.publishedAt).toLocaleDateString("ru-RU", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </span>
+              </div>
+              <h3 className="community-heading text-xl font-bold leading-snug mb-2">
+                {article.title}
+              </h3>
+              <p className="text-(--ink-1) text-sm mb-4 break-words">{article.excerpt}</p>
+              <Link
+                to={`/news/${article.id}`}
+                className="text-(--ink-0) text-xs font-semibold uppercase tracking-[0.12em] border-b border-(--line-soft) hover:border-(--line-strong) cursor-pointer"
+              >
+                Открыть
+              </Link>
             </div>
-            <h3 className="community-heading text-xl font-bold leading-snug mb-2">
-              {article.title}
-            </h3>
-            <p className="text-(--ink-1) text-sm mb-4">{article.excerpt}</p>
-            <Link
-              to={`/news/${article.id}`}
-              className="text-(--ink-0) text-xs font-semibold uppercase tracking-[0.12em] border-b border-(--line-soft) hover:border-(--line-strong) cursor-pointer"
-            >
-              Открыть
-            </Link>
           </article>
         ))}
       </div>

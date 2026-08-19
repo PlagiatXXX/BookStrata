@@ -5,3 +5,20 @@
   margin: 0 auto;
   padding: 1.5rem;
 }
+
+/* Обложка новости — компактный баннер как у обложек тир-листов */
+.news-cover {
+  width: 100%;
+  height: 14rem;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.news-cover__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
