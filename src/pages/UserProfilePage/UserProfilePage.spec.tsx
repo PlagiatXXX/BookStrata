@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import UserProfilePage from "./UserProfilePage"
@@ -208,5 +208,22 @@ describe("UserProfilePage", () => {
     expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText("18")).toBeDefined()
+  })
+
+  it("показывает заглушку с буквой, если аватарка не загрузилась", async () => {
+    const { container } = renderWithRoute("2")
+
+    await waitFor(() => {
+      expect(container.querySelector("img")).toBeTruthy()
+    })
+
+    const img = container.querySelector("img")!
+    for (let i = 0; i < 5; i++) {
+      fireEvent.error(img)
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText("F")).toBeDefined()
+    })
   })
 })

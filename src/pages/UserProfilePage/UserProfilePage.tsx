@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -21,6 +21,8 @@ import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { ModerationPanel } from "@/components/ModerationPanel/ModerationPanel";
 import { DonorBadge } from "@/components/DonorBadge/DonorBadge";
+import { RetryableImage } from "@/ui/RetryableImage";
+import { proxyImageUrl } from "@/utils/imageProxy";
 import type { TierListShort } from "@/lib/tierListApi";
 
 export default function UserProfilePage() {
@@ -28,6 +30,7 @@ export default function UserProfilePage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const isOwnProfile = currentUser && id && String(currentUser.userId) === id;
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   const {
     data: profile,
@@ -144,11 +147,12 @@ export default function UserProfilePage() {
             {/* Profile Header */}
             <div className="mx-auto flex max-w-xl flex-col items-center text-center sm:flex-row sm:justify-center sm:items-center sm:text-center gap-4 mb-10">
               <div className="w-20 h-20 rounded-full overflow-hidden bg-(--bg-2) flex-shrink-0">
-                {profile.avatarUrl ? (
-                  <img
-                    src={profile.avatarUrl}
+                {profile.avatarUrl && !avatarFailed ? (
+                  <RetryableImage
+                    src={proxyImageUrl(profile.avatarUrl, 160)}
                     alt=""
                     className="w-full h-full object-cover"
+                    onError={() => setAvatarFailed(true)}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-(--ink-1)">
