@@ -4,12 +4,20 @@
 // только через publishBook() (инвариант полноты), ручной merge дублей,
 // обогащение из Google Books, топ по просмотрам, модерация комментариев.
 import { Prisma } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { excludedUserFilter } from "../analytics/analytics.service.js";
-import { publishBook, unpublishBook } from "../books/bookPublish.service.js";
+import {
+  publishBook,
+  unpublishBook,
+  PUBLISH_REQUIRED_FIELDS,
+  IncompleteBookError,
+  type PublishRequiredField,
+} from "../books/bookPublish.service.js";
 import { searchBooks } from "../books/books.service.js";
 import {
   mergeGroup,
+  normalizeTitle,
   type DedupeBook,
 } from "../books/bookDedupe.service.js";
 import { createAuthorService } from "../authors/authors.service.js";
@@ -50,6 +58,7 @@ const BOOK_LIST_SELECT = {
   mergedIntoId: true,
   source: true,
   externalId: true,
+  userId: true,
   _count: { select: { comments: true, placements: true } },
 } satisfies Prisma.BookSelect;
 
@@ -70,6 +79,7 @@ interface BookSearchRow {
   mergedIntoId: number | null;
   source: string | null;
   externalId: string | null;
+  user_id: number | null;
   comments: number;
   placements: number;
 }
@@ -85,6 +95,44 @@ function collectViewsBySlug(groups: Array<{ url: string | null; _count: { url: n
     }
   }
   return viewsBySlug;
+}
+
+/** Полный срез книги для mergeGroup (counts обязательны для pickCanon). */
+async function fetchDedupeBook(b: { id: number }): Promise<DedupeBook> {
+  const withCounts = await prisma.book.findUniqueOrThrow({
+    where: { id: b.id },
+    select: {
+      id: true, title: true, authorId: true, slug: true, coverImageUrl: true,
+      description: true, publishedAt: true, status: true, createdAt: true,
+      updatedAt: true,
+      _count: {
+        select: {
+          placements: true, ratings: true, statuses: true,
+          collectionBooks: true, celebrityBooks: true,
+          comments: true, likes: true,
+        },
+      },
+    },
+  });
+  return {
+    id: withCounts.id,
+    title: withCounts.title,
+    authorId: withCounts.authorId,
+    slug: withCounts.slug,
+    coverImageUrl: withCounts.coverImageUrl,
+    description: withCounts.description,
+    publishedAt: withCounts.publishedAt,
+    status: withCounts.status,
+    createdAt: withCounts.createdAt,
+    updatedAt: withCounts.updatedAt,
+    placementsCount: withCounts._count.placements,
+    ratingsCount: withCounts._count.ratings,
+    statusesCount: withCounts._count.statuses,
+    collectionBooksCount: withCounts._count.collectionBooks,
+    celebrityBooksCount: withCounts._count.celebrityBooks,
+    commentsCount: withCounts._count.comments,
+    likesCount: withCounts._count.likes,
+  };
 }
 
 /** Поиск по названию/автору с релевантной сортировкой: точное совпадение →
@@ -123,6 +171,7 @@ async function searchBooksByRelevance(params: BookListParams) {
       SELECT b.id, b.title, b.author, b.slug, b.status, b.genre, b.tags,
              b.cover_image_url, b.rating, b."likesCount", b."publishedAt",
              b."updated_at", b."mergedIntoId", b.source, b."externalId",
+             b.user_id,
              (SELECT COUNT(*)::int FROM "book_comments" c WHERE c."bookId" = b.id) AS comments,
              (SELECT COUNT(*)::int FROM "BookPlacement" p WHERE p."bookId" = b.id) AS placements
       FROM "Book" b
@@ -159,10 +208,54 @@ async function searchBooksByRelevance(params: BookListParams) {
       mergedIntoId: r.mergedIntoId,
       source: r.source,
       externalId: r.externalId,
+      userId: r.user_id,
       _count: { comments: r.comments, placements: r.placements },
     })),
     total,
   };
+}
+
+/** Владелец (username) и тир-листы (названия, ≤5) для книг из тир-листов.
+ *  Двумя запросами: user.findMany (по userId) и bookPlacement.findMany
+ *  (только для книг с вхождениями). Для каталога (userId = null) —
+ *  без запросов: ownerUsername = null, tierListNames = []. */
+async function enrichWithOwnerAndTierLists(
+  items: Array<{
+    id: number;
+    userId: number | null;
+    slug: string | null;
+    _count: { placements: number };
+  }>,
+) {
+  const userIds = [...new Set(items.map((i) => i.userId).filter((v): v is number => v != null))];
+  const ownerById = new Map<number, string>();
+  if (userIds.length > 0) {
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, username: true },
+    });
+    for (const u of users) ownerById.set(u.id, u.username);
+  }
+
+  const withPlacements = items.filter((i) => i._count.placements > 0);
+  const tierListNames = new Map<number, string[]>();
+  if (withPlacements.length > 0) {
+    const rows = await prisma.bookPlacement.findMany({
+      where: { bookId: { in: withPlacements.map((i) => i.id) } },
+      select: { bookId: true, tierList: { select: { title: true } } },
+    });
+    for (const r of rows) {
+      const list = tierListNames.get(r.bookId) ?? [];
+      if (list.length < 5) list.push(r.tierList.title);
+      tierListNames.set(r.bookId, list);
+    }
+  }
+
+  return items.map((i) => ({
+    ...i,
+    ownerUsername: i.userId != null ? (ownerById.get(i.userId) ?? null) : null,
+    tierListNames: tierListNames.get(i.id) ?? [],
+  }));
 }
 
 export async function listBooks(params: BookListParams) {
@@ -236,8 +329,11 @@ export async function listBooks(params: BookListParams) {
 
   const viewsBySlug = collectViewsBySlug(viewGroups);
 
+  // Владелец (для draft) и тир-листы — единый каталог (19.08)
+  const enriched = await enrichWithOwnerAndTierLists(items);
+
   return {
-    items: items.map((book) => ({ ...book, views: viewsBySlug.get(book.slug ?? "") ?? 0 })),
+    items: enriched.map((book) => ({ ...book, views: viewsBySlug.get(book.slug ?? "") ?? 0 })),
     total,
   };
 }
@@ -375,21 +471,181 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
   return updated;
 }
 
-/** Публикация только через publishBook() — инвариант полноты полей. */
+/**
+ * Чужие draft-дубли канона (единый каталог, 19.08):
+ * 1) (source, externalId); 2) (нормализованные title + authorId).
+ * Только чужие (userId не null), только draft, не сам канон.
+ */
+async function findDraftDuplicates(
+  db: PrismaClient | Prisma.TransactionClient,
+  canon: {
+    id: number;
+    title: string;
+    authorId: number | null;
+    source: string | null;
+    externalId: string | null;
+  },
+): Promise<Array<{ id: number; title: string; authorId: number | null }>> {
+  const found = new Map<number, { id: number; title: string; authorId: number | null }>();
+  const add = (rows: Array<{ id: number; title: string; authorId: number | null }>) => {
+    for (const r of rows) found.set(r.id, r);
+  };
+
+  if (canon.source && canon.externalId) {
+    const byExternal = await db.book.findMany({
+      where: {
+        source: canon.source as never,
+        externalId: canon.externalId,
+        status: "draft",
+        userId: { not: null },
+        id: { not: canon.id },
+      },
+      select: { id: true, title: true, authorId: true },
+    });
+    add(byExternal);
+  }
+
+  if (canon.authorId != null) {
+    const normTitle = normalizeTitle(canon.title);
+    const byTitle = await db.book.findMany({
+      where: {
+        authorId: canon.authorId,
+        status: "draft",
+        userId: { not: null },
+        id: { not: canon.id },
+      },
+      select: { id: true, title: true, authorId: true },
+    });
+    add(byTitle.filter((b) => normalizeTitle(b.title) === normTitle));
+  }
+
+  return Array.from(found.values());
+}
+
+/** Published-книга каталога (userId null), дублирующая публикуемую: по
+ *  (source, externalId) или по (authorId, нормализованное название). Нужно,
+ *  чтобы публикация не создавала второй published-дубликат и не падала на
+ *  partial unique books_catalog_ext_key (P2002) после уже выполненного merge. */
+async function findCatalogPublished(
+  db: PrismaClient | Prisma.TransactionClient,
+  canon: {
+    id: number;
+    title: string;
+    authorId: number | null;
+    source: string | null;
+    externalId: string | null;
+  },
+): Promise<{ id: number; title: string } | null> {
+  if (canon.source && canon.externalId) {
+    const byExternal = await db.book.findFirst({
+      where: {
+        source: canon.source as never,
+        externalId: canon.externalId,
+        status: "published",
+        userId: null,
+        id: { not: canon.id },
+      },
+      select: { id: true, title: true },
+    });
+    if (byExternal) return byExternal;
+  }
+
+  if (canon.authorId != null) {
+    const normTitle = normalizeTitle(canon.title);
+    const byTitle = await db.book.findFirst({
+      where: {
+        authorId: canon.authorId,
+        status: "published",
+        userId: null,
+        id: { not: canon.id },
+      },
+      select: { id: true, title: true },
+    });
+    if (byTitle && normalizeTitle(byTitle.title) === normTitle) return byTitle;
+  }
+
+  return null;
+}
+
+/** Публикация через publishBook() — инвариант полноты полей.
+ *  Единый каталог (19.08): публикация книги из тир-листа разрешена; чужие
+ *  draft-дубли поглощаются каноном (mergeGroup), userId снимается — книга
+ *  становится общей. Последовательность вне единой транзакции: mergeGroup
+ *  работает с глобальным prisma (как ручной merge). Повторный вызов
+ *  идемпотентен: дубли уже поглощены, userId уже null.
+ *
+ *  Порядок операций важен (19.08, фикс): полнота полей проверяется ДО любых
+ *  мутаций (раньше — на последнем шаге, и неполная книга оставалась без
+ *  владельца с уже поглощёнными дублями). Если каталог уже содержит
+ *  published-книгу той же книги — текущая запись вливается в неё, а не
+ *  публикуется как новый дубликат. */
 export async function publishBookById(id: number) {
-  // Модель «личные книги» (18.08): книги из тир-листов не попадают в каталог.
-  // Публикация пользовательских книг (личных userId или с вхождениями) запрещена.
   const book = await prisma.book.findUnique({
     where: { id },
-    select: { userId: true, _count: { select: { placements: true } } },
+    select: {
+      id: true,
+      title: true,
+      author: true,
+      authorId: true,
+      genre: true,
+      tags: true,
+      description: true,
+      coverImageUrl: true,
+      publishedYear: true,
+      source: true,
+      externalId: true,
+      userId: true,
+      slug: true,
+      status: true,
+    },
   });
   if (!book) throw new AdminBookError("Книга не найдена", "book_not_found");
-  if (book.userId !== null || book._count.placements > 0) {
-    throw new AdminBookError(
-      "Книга из тир-листа пользователя — публикация в каталог запрещена",
-      "book_from_tier_list",
+
+  // 0. Инвариант полноты полей — сухой прогон ДО мутаций. Провал не трогает
+  //    ни дубли, ни владельца: книга остаётся у пользователя.
+  const missing = PUBLISH_REQUIRED_FIELDS.filter((field) => {
+    const value = book[field];
+    if (Array.isArray(value)) return value.length === 0;
+    return !value;
+  });
+  if (missing.length > 0) {
+    throw new IncompleteBookError(missing as PublishRequiredField[]);
+  }
+
+  // 1. Каталог уже содержит published-книгу той же книги? Тогда вливаем
+  //    текущую запись в каталоговый канон (его связи выигрывают как у
+  //    published) — вместо создания второго published-дубликата.
+  if (book.status !== "published") {
+    const catalogBook = await findCatalogPublished(prisma, book);
+    if (catalogBook) {
+      const [canonBook, dupBook] = await Promise.all([
+        fetchDedupeBook(catalogBook),
+        fetchDedupeBook(book),
+      ]);
+      await mergeGroup(
+        { key: `publish-catalog:${id}`, books: [canonBook!, dupBook!] },
+        { forceCanonId: catalogBook.id },
+      );
+      return prisma.book.findUniqueOrThrow({ where: { id: catalogBook.id } });
+    }
+  }
+
+  // 2. Поглощение чужих draft (до снятия userId)
+  const dupes = await findDraftDuplicates(prisma, book);
+  if (dupes.length > 0) {
+    const [canonBook, ...dupBooks] = await Promise.all(
+      [book, ...dupes].map((b) => fetchDedupeBook(b)),
+    );
+    await mergeGroup(
+      { key: `publish:${id}`, books: [canonBook!, ...dupBooks] },
+      { forceCanonId: id },
     );
   }
+
+  // 3. Книга становится общей (каталоговой)
+  await prisma.book.update({ where: { id }, data: { userId: null } });
+
+  // 4. Публикация (поля проверены в шаге 0)
   return publishBook(id);
 }
 
@@ -480,43 +736,6 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
       "cannot_merge_published_into_draft",
     );
   }
-
-  const fetchDedupeBook = async (b: typeof dup): Promise<DedupeBook> => {
-    const withCounts = await prisma.book.findUniqueOrThrow({
-      where: { id: b.id },
-      select: {
-        id: true, title: true, authorId: true, slug: true, coverImageUrl: true,
-        description: true, publishedAt: true, status: true, createdAt: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            placements: true, ratings: true, statuses: true,
-            collectionBooks: true, celebrityBooks: true,
-            comments: true, likes: true,
-          },
-        },
-      },
-    });
-    return {
-      id: withCounts.id,
-      title: withCounts.title,
-      authorId: withCounts.authorId,
-      slug: withCounts.slug,
-      coverImageUrl: withCounts.coverImageUrl,
-      description: withCounts.description,
-      publishedAt: withCounts.publishedAt,
-      status: withCounts.status,
-      createdAt: withCounts.createdAt,
-      updatedAt: withCounts.updatedAt,
-      placementsCount: withCounts._count.placements,
-      ratingsCount: withCounts._count.ratings,
-      statusesCount: withCounts._count.statuses,
-      collectionBooksCount: withCounts._count.collectionBooks,
-      celebrityBooksCount: withCounts._count.celebrityBooks,
-      commentsCount: withCounts._count.comments,
-      likesCount: withCounts._count.likes,
-    };
-  };
 
   const [dupBook, canonBook] = await Promise.all([
     fetchDedupeBook(dup),

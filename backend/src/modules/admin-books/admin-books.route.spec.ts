@@ -15,11 +15,14 @@ const mocks = vi.hoisted(() => ({
       count: vi.fn(),
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
+      findFirst: vi.fn(),
       update: vi.fn(),
     },
     bookSlugHistory: { create: vi.fn() },
     analyticsEvent: { groupBy: vi.fn() },
     bookComment: { findMany: vi.fn(), count: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    user: { findMany: vi.fn() },
+    bookPlacement: { findMany: vi.fn() },
   },
   publishBook: vi.fn(),
   unpublishBook: vi.fn(),
@@ -37,10 +40,26 @@ vi.mock("../../lib/storage/file-cleanup.js", () => ({
 vi.mock("../books/bookPublish.service.js", () => ({
   publishBook: mocks.publishBook,
   unpublishBook: mocks.unpublishBook,
+  PUBLISH_REQUIRED_FIELDS: [
+    "title",
+    "author",
+    "genre",
+    "tags",
+    "description",
+    "coverImageUrl",
+    "publishedYear",
+  ],
+  IncompleteBookError: class IncompleteBookError extends Error {
+    constructor(public missingFields: string[]) {
+      super(`Книга неполная для публикации: ${missingFields.join(", ")}`);
+      this.name = "IncompleteBookError";
+    }
+  },
 }));
 vi.mock("../books/books.service.js", () => ({ searchBooks: mocks.searchBooks }));
 vi.mock("../books/bookDedupe.service.js", () => ({
   mergeGroup: mocks.mergeGroup,
+  normalizeTitle: (t: string) => t.toLowerCase().trim().replace(/ё/g, "е").replace(/\s+/g, " "),
 }));
 vi.mock("../authors/authors.service.js", () => ({
   createAuthorService: () => ({ findOrCreate: mocks.findOrCreate }),
@@ -107,6 +126,7 @@ describe("Admin Books Routes", () => {
     // Сбрасываем очереди mockResolvedValueOnce между тестами
     mocks.prisma.book.findUnique.mockReset();
     mocks.prisma.book.findUniqueOrThrow.mockReset();
+    mocks.prisma.book.findFirst.mockReset();
     mocks.prisma.book.findMany.mockReset();
     mocks.prisma.book.update.mockReset();
     mocks.prisma.book.count.mockReset();
@@ -116,6 +136,10 @@ describe("Admin Books Routes", () => {
     mocks.prisma.bookComment.count.mockReset();
     mocks.prisma.analyticsEvent.groupBy.mockReset();
     mocks.prisma.bookSlugHistory.create.mockReset();
+    mocks.prisma.user.findMany.mockReset();
+    mocks.prisma.user.findMany.mockResolvedValue([]);
+    mocks.prisma.bookPlacement.findMany.mockReset();
+    mocks.prisma.bookPlacement.findMany.mockResolvedValue([]);
     mocks.searchBooks.mockReset();
     mocks.mergeGroup.mockReset();
     mocks.publishBook.mockReset();
@@ -235,6 +259,50 @@ describe("Admin Books Routes", () => {
         }),
       ]);
       expect(res.body.data.total).toBe(1);
+    });
+
+    it("q → draft-книга с владельцем и тир-листами (единый каталог, 19.08)", async () => {
+      mocks.prisma.$queryRaw.mockResolvedValue([
+        {
+          id: 10,
+          title: "Моя книга",
+          author: "Я",
+          slug: null,
+          status: "draft",
+          genre: null,
+          tags: [],
+          cover_image_url: "/cover.jpg",
+          rating: null,
+          likesCount: 0,
+          publishedAt: null,
+          updatedAt: new Date("2026-01-02"),
+          mergedIntoId: null,
+          source: null,
+          externalId: null,
+          user_id: 7,
+          comments: 0,
+          placements: 3,
+        },
+      ]);
+      mocks.prisma.book.count.mockResolvedValue(1);
+      mocks.prisma.user.findMany.mockResolvedValue([{ id: 7, username: "reader" }]);
+      mocks.prisma.bookPlacement.findMany.mockResolvedValue([
+        { bookId: 10, tierList: { title: "Классика" } },
+        { bookId: 10, tierList: { title: "На лето" } },
+      ]);
+
+      const res = await request(app.server)
+        .get("/api/admin/books?q=моя")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items[0]).toEqual(
+        expect.objectContaining({
+          id: 10,
+          ownerUsername: "reader",
+          tierListNames: ["Классика", "На лето"],
+        }),
+      );
     });
 
     it("duplicatesOnly=true → только поглощённые книги", async () => {
@@ -456,11 +524,30 @@ describe("Admin Books Routes", () => {
   });
 
   describe("публикация", () => {
+    // Канон для publishBookById (единый каталог, 19.08): полный срез —
+    // dry-run полноты полей выполняется ДО мутаций (фикс 19.08)
+    const canonForPublish = {
+      id: 10,
+      title: "Анна Каренина",
+      author: "Лев Толстой",
+      authorId: 1,
+      genre: "Роман",
+      tags: ["классика"],
+      description: "Описание романа",
+      coverImageUrl: "/cover.jpg",
+      publishedYear: 1877,
+      source: null,
+      externalId: null,
+      userId: null,
+      slug: "anna-karenina",
+      status: "draft",
+    };
+
     it("POST /:id/publish → вызывает publishBook()", async () => {
-      mocks.prisma.book.findUnique.mockResolvedValueOnce({
-        userId: null,
-        _count: { placements: 0 },
-      });
+      mocks.prisma.book.findUnique.mockResolvedValueOnce(canonForPublish);
+      mocks.prisma.book.findFirst.mockResolvedValueOnce(null); // каталог без published-дубля
+      mocks.prisma.book.findMany.mockResolvedValueOnce([]); // дублей нет
+      mocks.prisma.book.update.mockResolvedValueOnce({ id: 10 });
 
       const res = await request(app.server)
         .post("/api/admin/books/10/publish")
@@ -470,14 +557,15 @@ describe("Admin Books Routes", () => {
       expect(res.status).toBe(200);
     });
 
-    it("неполная книга → 422 (инвариант publishBook)", async () => {
+    it("неполная книга → 422 ДО мутаций: владелец и дубли не тронуты", async () => {
+      // Личная книга без publishedYear/description — самый частый сценарий:
+      // админ жмёт «Опубликовать», получает 422. Книга должна остаться у владельца.
       mocks.prisma.book.findUnique.mockResolvedValueOnce({
-        userId: null,
-        _count: { placements: 0 },
+        ...canonForPublish,
+        publishedYear: null,
+        description: null,
+        userId: 5, // владелец тир-листа
       });
-      const err = new Error("Книга неполная для публикации: publishedYear, description");
-      err.name = "IncompleteBookError";
-      mocks.publishBook.mockRejectedValue(err);
 
       const res = await request(app.server)
         .post("/api/admin/books/10/publish")
@@ -485,35 +573,156 @@ describe("Admin Books Routes", () => {
 
       expect(res.status).toBe(422);
       expect(res.body.error.message).toContain("publishedYear");
+      // Никаких мутаций: дубли не искались, userId не снимался, publishBook не вызван
+      expect(mocks.prisma.book.findMany).not.toHaveBeenCalled();
+      expect(mocks.prisma.book.update).not.toHaveBeenCalled();
+      expect(mocks.mergeGroup).not.toHaveBeenCalled();
+      expect(mocks.publishBook).not.toHaveBeenCalled();
     });
 
-    it("личная книга из тир-листа (userId) → 409, publishBook не вызывается", async () => {
+    it("личная книга из тир-листа (userId) → публикуется: userId снимается, publishBook вызван", async () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({
-        userId: 5,
-        _count: { placements: 3 },
+        ...canonForPublish,
+        userId: 5, // владелец тир-листа
       });
+      mocks.prisma.book.findFirst.mockResolvedValueOnce(null); // каталог без published-дубля
+      mocks.prisma.book.findMany.mockResolvedValueOnce([]); // дублей нет
+      mocks.prisma.book.update.mockResolvedValueOnce({ id: 10, userId: null });
 
       const res = await request(app.server)
         .post("/api/admin/books/10/publish")
         .set("Authorization", "Bearer admin-token");
 
-      expect(res.status).toBe(409);
-      expect(res.body.error.message).toContain("тир-листа");
-      expect(mocks.publishBook).not.toHaveBeenCalled();
+      expect(res.status).toBe(200);
+      // Книга становится общей (каталоговой)
+      expect(mocks.prisma.book.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ userId: null }) }),
+      );
+      expect(mocks.publishBook).toHaveBeenCalledWith(10);
     });
 
-    it("книга с вхождениями, но без userId (легаси) → 409", async () => {
+    it("каталог уже содержит published с тем же externalId → книга вливается в канон, publishBook не вызывается", async () => {
+      // Личный draft пользователя с (source, externalId), которые уже есть
+      // в каталоге (published #30). Раньше публикация падала на P2002
+      // books_catalog_ext_key ПОСЛЕ merge — состояние было испорчено.
       mocks.prisma.book.findUnique.mockResolvedValueOnce({
-        userId: null,
-        _count: { placements: 2 },
+        ...canonForPublish,
+        source: "google",
+        externalId: "vol-1984",
+        userId: 7,
       });
+      // findCatalogPublished: published #30 в каталоге с тем же externalId
+      mocks.prisma.book.findFirst.mockResolvedValueOnce({ id: 30, title: "Анна Каренина" });
+      // fetchDedupeBook × 2: канон #30 и поглощаемый draft #10
+      mocks.prisma.book.findUniqueOrThrow
+        .mockResolvedValueOnce({
+          id: 30,
+          title: "Анна Каренина",
+          authorId: 1,
+          slug: "anna-karenina",
+          coverImageUrl: "/cover.jpg",
+          description: "Описание",
+          publishedAt: new Date("2026-01-01"),
+          status: "published",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          _count: { placements: 3, ratings: 1, statuses: 0, collectionBooks: 0, celebrityBooks: 0, comments: 0, likes: 0 },
+        })
+        .mockResolvedValueOnce({
+          id: 10,
+          title: "Анна Каренина",
+          authorId: 1,
+          slug: null,
+          coverImageUrl: "/cover.jpg",
+          description: "Описание",
+          publishedAt: null,
+          status: "draft",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          _count: { placements: 1, ratings: 0, statuses: 0, collectionBooks: 0, celebrityBooks: 0, comments: 0, likes: 0 },
+        });
+      // Возврат: findUniqueOrThrow каталогового канона
+      mocks.prisma.book.findUniqueOrThrow.mockResolvedValueOnce({ id: 30, status: "published" });
 
       const res = await request(app.server)
         .post("/api/admin/books/10/publish")
         .set("Authorization", "Bearer admin-token");
 
-      expect(res.status).toBe(409);
+      expect(res.status).toBe(200);
+      // Вливание в каталоговый канон #30, а не публикация новой книги
+      expect(mocks.mergeGroup).toHaveBeenCalledWith(
+        expect.objectContaining({
+          books: expect.arrayContaining([
+            expect.objectContaining({ id: 30 }),
+            expect.objectContaining({ id: 10 }),
+          ]),
+        }),
+        { forceCanonId: 30 },
+      );
       expect(mocks.publishBook).not.toHaveBeenCalled();
+      // userId у draft НЕ снимается отдельным update — книга поглощена каноном
+      expect(mocks.prisma.book.update).not.toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ userId: null }) }),
+      );
+    });
+
+    it("публикация поглощает чужой draft по (title, author) → mergeGroup с forceCanonId", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({
+        ...canonForPublish,
+        userId: 7, // владелец тир-листа
+      });
+      mocks.prisma.book.findFirst.mockResolvedValueOnce(null); // каталог без published-дубля
+      // findDraftDuplicates: чужой draft #20 с тем же (authorId, title)
+      mocks.prisma.book.findMany.mockResolvedValueOnce([
+        { id: 20, title: "Анна Каренина", authorId: 1 },
+      ]);
+      mocks.prisma.book.findUniqueOrThrow
+        .mockResolvedValueOnce({ // канон #10
+          id: 10,
+          title: "Анна Каренина",
+          authorId: 1,
+          slug: "anna-karenina",
+          coverImageUrl: "",
+          description: null,
+          publishedAt: null,
+          status: "draft",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          _count: { placements: 0, ratings: 0, statuses: 0, collectionBooks: 0, celebrityBooks: 0, comments: 0, likes: 0 },
+        })
+        .mockResolvedValueOnce({ // поглощаемый дубль #20
+          id: 20,
+          title: "Анна Каренина",
+          authorId: 1,
+          slug: "anna-karenina-2",
+          coverImageUrl: "",
+          description: null,
+          publishedAt: null,
+          status: "draft",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          _count: { placements: 0, ratings: 0, statuses: 0, collectionBooks: 0, celebrityBooks: 0, comments: 0, likes: 0 },
+        });
+      mocks.prisma.book.update.mockResolvedValueOnce({ id: 10, userId: null });
+
+      const res = await request(app.server)
+        .post("/api/admin/books/10/publish")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(mocks.mergeGroup).toHaveBeenCalledWith(
+        expect.objectContaining({
+          books: expect.arrayContaining([
+            expect.objectContaining({ id: 10 }),
+            expect.objectContaining({ id: 20 }),
+          ]),
+        }),
+        { forceCanonId: 10 },
+      );
+      expect(mocks.prisma.book.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ userId: null }) }),
+      );
+      expect(mocks.publishBook).toHaveBeenCalledWith(10);
     });
 
     it("книга не найдена → 404", async () => {
