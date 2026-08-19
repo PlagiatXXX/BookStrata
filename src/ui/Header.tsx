@@ -184,6 +184,16 @@ export const Header = ({
       icon: <List size={18} />,
       description: "Управление рейтингами",
     },
+    ...(showTemplatesNav
+      ? [
+          {
+            label: "Тир-листы",
+            onClick: () => navigate("/templates"),
+            icon: <Library size={18} />,
+            description: "Готовые шаблоны",
+          },
+        ]
+      : []),
     {
       label: "Рейтинги",
       onClick: handleRatingsClick,
@@ -196,16 +206,6 @@ export const Header = ({
       icon: <Globe size={18} />,
       description: "Новости сообщества",
     },
-    ...(showTemplatesNav
-      ? [
-          {
-            label: "Тир-листы",
-            onClick: () => navigate("/templates"),
-            icon: <Library size={18} />,
-            description: "Готовые шаблоны",
-          },
-        ]
-      : []),
     {
       label: "Полка",
       onClick: () => navigate("/shelf"),
