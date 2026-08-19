@@ -23,6 +23,7 @@ import {
   updateNews,
   deleteNews,
   togglePublish,
+  uploadNewsImage,
   type NewsArticle,
   type CreateNewsInput,
   type UpdateNewsInput,
@@ -487,12 +488,14 @@ export default function AdminNewsPage() {
                     onChange={(content) =>
                       setFormData({ ...formData, content })
                     }
+                    onUploadImage={uploadNewsImage}
                   />
                 </div>
 
                 <div className="admin-news-form-row">
-                  <div className="admin-news-form-group">
-                    <label htmlFor="imageUrl">URL изображения</label>
+                <div className="admin-news-form-group">
+                  <label htmlFor="imageUrl">URL изображения</label>
+                  <div className="admin-news-cover-upload">
                     <input
                       id="imageUrl"
                       type="url"
@@ -502,7 +505,52 @@ export default function AdminNewsPage() {
                       }
                       placeholder="https://example.com/image.jpg"
                     />
+                    <button
+                      type="button"
+                      className="admin-news-upload-btn"
+                      onClick={() =>
+                        document.getElementById("news-cover-file")?.click()
+                      }
+                    >
+                      Загрузить файл
+                    </button>
+                    <input
+                      id="news-cover-file"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = async () => {
+                          try {
+                            const { imageUrl } = await uploadNewsImage(
+                              reader.result as string,
+                            );
+                            setFormData((prev) => ({ ...prev, imageUrl }));
+                          } catch (error) {
+                            console.error(error);
+                            sileo.error({
+                              title: "Ошибка загрузки",
+                              description: "Не удалось загрузить обложку",
+                              duration: 4000,
+                            });
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                        e.target.value = "";
+                      }}
+                    />
                   </div>
+                  {formData.imageUrl && (
+                    <img
+                      src={formData.imageUrl}
+                      alt="Превью обложки новости"
+                      className="admin-news-cover-preview"
+                    />
+                  )}
+                </div>
 
                   <div className="admin-news-form-group">
                     <label htmlFor="tags">Теги</label>
