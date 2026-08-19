@@ -124,3 +124,12 @@ export const togglePublish = async (
     { isPublished },
   );
 };
+
+/**
+ * Загрузить изображение для новости (base64) — возвращает URL
+ */
+export const uploadNewsImage = async (
+  imageUrl: string,
+): Promise<{ imageUrl: string }> => {
+  return api.post<{ imageUrl: string }>("/news/upload-image", { imageUrl });
+};
