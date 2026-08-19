@@ -15,6 +15,8 @@ interface WysiwygEditorProps {
 
 export function WysiwygEditor({ value, onChange, onUploadImage }: WysiwygEditorProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editor = useEditor({
     extensions: [
@@ -76,6 +78,27 @@ export function WysiwygEditor({ value, onChange, onUploadImage }: WysiwygEditorP
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const openLinkPopover = () => {
+    const previousUrl = editor.getAttributes("link").href ?? "";
+    setLinkUrl(typeof previousUrl === "string" ? previousUrl : "");
+    setIsLinkPopoverOpen(true);
+    editor.chain().focus().run();
+  };
+
+  const applyLink = () => {
+    if (linkUrl.trim()) {
+      editor.chain().focus().setLink({ href: linkUrl.trim() }).run();
+    } else {
+      editor.chain().focus().unsetLink().run();
+    }
+    setIsLinkPopoverOpen(false);
+  };
+
+  const removeLink = () => {
+    editor.chain().focus().unsetLink().run();
+    setIsLinkPopoverOpen(false);
   };
 
   return (
@@ -147,18 +170,6 @@ export function WysiwygEditor({ value, onChange, onUploadImage }: WysiwygEditorP
             🖼️ Файл
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => {
-            const url = window.prompt("Введите URL изображения:");
-            if (url) {
-              editor.chain().focus().setImage({ src: url }).run();
-            }
-          }}
-          title="Вставить изображение по URL"
-        >
-          🔗 По URL
-        </button>
         <input
           ref={fileInputRef}
           type="file"
@@ -172,15 +183,7 @@ export function WysiwygEditor({ value, onChange, onUploadImage }: WysiwygEditorP
         />
         <button
           type="button"
-          onClick={() => {
-            const previousUrl = editor.getAttributes("link").href;
-            const url = window.prompt("Введите URL ссылки:", previousUrl);
-            if (url === null) {
-              editor.chain().focus().unsetLink().run();
-            } else if (url) {
-              editor.chain().focus().setLink({ href: url }).run();
-            }
-          }}
+          onClick={openLinkPopover}
           className={editor.isActive("link") ? "is-active" : ""}
           title="Вставить ссылку"
         >
@@ -194,6 +197,38 @@ export function WysiwygEditor({ value, onChange, onUploadImage }: WysiwygEditorP
           ✕ Очистить
         </button>
       </div>
+      {isLinkPopoverOpen && (
+        <div className="tiptap-link-popover">
+          <input
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                applyLink();
+              }
+              if (e.key === "Escape") {
+                setIsLinkPopoverOpen(false);
+              }
+            }}
+            placeholder="https://example.com"
+            autoFocus
+          />
+          <button type="button" onClick={applyLink}>
+            Вставить
+          </button>
+          <button type="button" onClick={removeLink}>
+            Убрать
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsLinkPopoverOpen(false)}
+            title="Закрыть"
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <EditorContent editor={editor} />
     </div>
   );

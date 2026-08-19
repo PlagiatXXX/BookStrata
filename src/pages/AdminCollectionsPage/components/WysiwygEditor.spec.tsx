@@ -1,6 +1,6 @@
 // src/pages/AdminCollectionsPage/components/WysiwygEditor.spec.tsx
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { WysiwygEditor } from "./WysiwygEditor";
 
 describe("WysiwygEditor", () => {
@@ -20,8 +20,11 @@ describe("WysiwygEditor", () => {
     expect(screen.queryByTitle("Загрузить файл")).toBeNull();
   });
 
-  it("всегда показывает кнопку «По URL»", () => {
+  it("открывает попап вставки ссылки вместо window.prompt", () => {
     render(<WysiwygEditor value="" onChange={vi.fn()} />);
-    expect(screen.getByTitle("Вставить изображение по URL")).toBeTruthy();
+
+    fireEvent.click(screen.getByTitle("Вставить ссылку"));
+
+    expect(screen.getByPlaceholderText("https://example.com")).toBeTruthy();
   });
 });

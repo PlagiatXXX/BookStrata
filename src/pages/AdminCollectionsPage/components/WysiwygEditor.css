@@ -41,6 +41,48 @@
   cursor: wait;
 }
 
+.tiptap-link-popover {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  background: var(--bg-0);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.tiptap-link-popover input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line-soft);
+  background: var(--bg-1);
+  color: var(--ink-0);
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+}
+
+.tiptap-link-popover input:focus {
+  border-color: var(--accent-main);
+}
+
+.tiptap-link-popover button {
+  padding: 6px 10px;
+  border: 1px solid var(--line-soft);
+  background: var(--bg-1);
+  color: var(--ink-0);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.tiptap-link-popover button:hover {
+  background: var(--bg-0);
+  border-color: var(--ink-2);
+}
+
 .tiptap-editor {
   min-height: 300px;
   padding: 16px;
