@@ -176,6 +176,19 @@ export default function AdminBooksPage() {
                               в тир-листах: {b._count.placements}
                             </span>
                           )}
+                          {b.status === "draft" && b.ownerUsername && (
+                            <span className="inline-block whitespace-nowrap rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[11px] font-medium text-violet-300">
+                              {b.ownerUsername}
+                            </span>
+                          )}
+                          {b.status === "draft" && b.tierListNames.length > 0 && (
+                            <span
+                              title={b.tierListNames.join(", ")}
+                              className="inline-block max-w-[300px] truncate whitespace-nowrap text-[11px] text-[var(--ink-2)]"
+                            >
+                              в: {b.tierListNames.join(", ")}
+                            </span>
+                          )}
                           <p className="truncate text-xs text-[var(--ink-2)]">
                             {b.author ?? "—"}
                             {b.genre ? ` · ${b.genre}` : ""}

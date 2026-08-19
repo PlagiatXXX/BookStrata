@@ -9,6 +9,7 @@ interface AuthorInputProps {
   className?: string
   placeholder?: string
   inputClass?: string
+  disabled?: boolean
 }
 
 export default function AuthorInput({
@@ -18,6 +19,7 @@ export default function AuthorInput({
   className = '',
   placeholder = 'Автор книги',
   inputClass = '',
+  disabled = false,
 }: AuthorInputProps) {
   const [suggestions, setSuggestions] = useState<AuthorResult[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
@@ -49,6 +51,7 @@ export default function AuthorInput({
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return
     const val = e.target.value
     onChange(val)
 
@@ -115,10 +118,12 @@ export default function AuthorInput({
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         onFocus={() => {
+          if (disabled) return
           if (suggestions.length > 0) setShowDropdown(true)
         }}
         maxLength={maxLength}
-        className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400`}
+        disabled={disabled}
+        className={`${inputClass} focus-visible:ring-2 focus-visible:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed`}
         placeholder={placeholder}
         aria-label={placeholder}
         autoComplete="off"

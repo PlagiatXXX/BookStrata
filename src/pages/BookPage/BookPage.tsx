@@ -6,7 +6,7 @@
 // «Другие книги автора», «Похожие», «В тир-листах», «В подборках»,
 // «У знаменитостей», «Обсуждение».
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
@@ -34,6 +34,9 @@ const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
 export default function BookPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  // Единый каталог (19.08): переход с тир-листа (?from=) — в крошках
+  // показываем путь «Тир-лист → Книга» вместо звена по жанру
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useBook(slug);
   const addToTierList = useAddBookToTierList(slug);
@@ -99,9 +102,18 @@ export default function BookPage() {
   const contextChain = book.contextChain ?? [];
   const hasTags = book.tags.length > 0;
 
+  // Единый каталог (19.08): переход с тир-листа (?from=) — в крошках
+  // показываем путь «Тир-лист → Книга» вместо звена по жанру
+  const fromTierListId = searchParams.get("from");
+  const fromTierList = fromTierListId
+    ? tierLists.find((t) => t.id === fromTierListId || t.slug === fromTierListId)
+    : undefined;
+
   const breadcrumbs = [
     { name: "Главная", url: "/" },
-    { name: book.genre ?? "Книги", url: "/rankings" },
+    ...(fromTierList
+      ? [{ name: fromTierList.title, url: `/tier-lists/${fromTierList.id}` }]
+      : [{ name: book.genre ?? "Книги", url: "/rankings" }]),
     { name: book.title, url: `/books/${slug}` },
   ];
 

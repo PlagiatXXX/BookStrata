@@ -8,20 +8,16 @@ import type { AdminBookDetail, BookUpdateInput, ContextChainItem } from "@/lib/a
 import { uploadBookCover } from "@/lib/adminBooksApi";
 
 const MATERIAL_SYMBOLS = [
-  "menu_book", "movie", "theaters", "music_note", "public", "school",
-  "psychology", "lightbulb", "history_edu", "forum", "newspaper", "star",
-  "flag", "rocket_launch", "castle", "science", "sports_esports", "palette",
-  "code", "translate", "eco", "groups", "emoji_objects", "travel_explore",
+  "menu_book", "movie", "public", "psychology", "lightbulb", "history_edu",
+  "forum", "newspaper", "star", "flag", "code", "translate", "groups",
+  "emoji_objects", "fact_check", "format_quote",
 ];
 
 // Русские названия иконок для выбора в админке
 const ICON_LABELS: Record<string, string> = {
   menu_book: "Книга",
   movie: "Фильм",
-  theaters: "Театр",
-  music_note: "Музыка",
   public: "Мир",
-  school: "Образование",
   psychology: "Психология",
   lightbulb: "Идея",
   history_edu: "История",
@@ -29,17 +25,12 @@ const ICON_LABELS: Record<string, string> = {
   newspaper: "Пресса",
   star: "Звезда",
   flag: "Достижение",
-  rocket_launch: "Инновации",
-  castle: "Замок",
-  science: "Наука",
-  sports_esports: "Игры",
-  palette: "Искусство",
   code: "Технологии",
   translate: "Перевод",
-  eco: "Природа",
   groups: "Сообщество",
   emoji_objects: "Заметка",
-  travel_explore: "Путешествия",
+  fact_check: "Факт",
+  format_quote: "Цитата",
 };
 
 interface Props {
@@ -248,9 +239,9 @@ export function BookEditModal({
                   onChange={(e) => setChainItem(i, { icon: e.target.value })}
                   className="rounded-lg border border-(--ink-3) bg-(--bg-0) px-2 py-1.5 text-sm text-(--ink-0) outline-none"
                 >
-                  {MATERIAL_SYMBOLS.map((icon) => (
+                  {[...new Set([...MATERIAL_SYMBOLS, ...chain.map((c) => c.icon)])].map((icon) => (
                     <option key={icon} value={icon}>
-                      {ICON_LABELS[icon]} ({icon})
+                      {ICON_LABELS[icon] ?? icon} ({icon})
                     </option>
                   ))}
                 </select>

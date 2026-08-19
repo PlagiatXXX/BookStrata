@@ -27,6 +27,10 @@ export interface AdminBookListItem {
   mergedIntoId: number | null;
   source: string | null;
   externalId: string | null;
+  /** Владелец личной книги (draft из тир-листа) — единый каталог (19.08) */
+  ownerUsername: string | null;
+  /** Названия тир-листов, где книга размещена (≤5) */
+  tierListNames: string[];
   _count: { comments: number; placements: number };
 }
 

@@ -49,6 +49,8 @@ const bookRow: AdminBookListItem = {
   mergedIntoId: null,
   source: "local",
   externalId: null,
+  ownerUsername: null,
+  tierListNames: [],
   _count: { comments: 2, placements: 0 },
 };
 

@@ -93,13 +93,13 @@ const bookPageData: BookPageData = {
   userLike: false,
 };
 
-function renderPage() {
+function renderPage(initialEntries: string[] = ["/books/velikij-getssbi"]) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/books/velikij-getssbi"]}>
+      <MemoryRouter initialEntries={initialEntries}>
         <HelmetProvider>
           <BookPage />
         </HelmetProvider>
@@ -156,6 +156,38 @@ describe("BookPage", () => {
     expect(screen.queryByText("Великие романы")).toBeNull();
     expect(screen.queryByText("Стивен Кинг")).toBeNull();
     expect(screen.queryByText("Обсуждение")).toBeNull();
+  });
+
+  it("крошки показывают тир-лист при ?from= (путь Тир-лист → Книга)", async () => {
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage(["/books/velikij-getssbi?from=tl-1"]);
+
+    expect(await screen.findByRole("link", { name: "Топ-100 классики" })).toHaveAttribute(
+      "href",
+      "/tier-lists/tl-1",
+    );
+    // Звено «Книги» (по жанру) при ?from= не показывается — путь идёт от тир-листа
+    expect(screen.queryByRole("link", { name: "Роман" })).toBeNull();
+  });
+
+  it("крошки находят тир-лист и по slug в ?from=", async () => {
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage(["/books/velikij-getssbi?from=top-100"]);
+
+    expect(await screen.findByRole("link", { name: "Топ-100 классики" })).toHaveAttribute(
+      "href",
+      "/tier-lists/tl-1",
+    );
   });
 
   it("«Хочу прочитать» добавляет книгу на полку (want_to_read)", async () => {

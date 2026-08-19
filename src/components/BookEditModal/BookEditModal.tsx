@@ -203,6 +203,10 @@ export const BookEditModal = ({
   const [uploading, setUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Каталоговая (published) книга: глобальные поля редактирует только админ,
+  // пользователь — мысли и личную обложку (единый каталог, 19.08)
+  const isCatalogBook = book?.status === "published";
   const {
     title,
     author,
@@ -325,11 +329,15 @@ export const BookEditModal = ({
       return;
     }
     onSave(book.id, {
-      title: title.trim(),
-      author: author.trim(),
-      genre: genre.trim() || undefined,
-      tags: parseTags(tagsInput),
-      description: description.trim() || undefined,
+      ...(isCatalogBook
+        ? {}
+        : {
+            title: title.trim(),
+            author: author.trim(),
+            genre: genre.trim() || undefined,
+            tags: parseTags(tagsInput),
+            description: description.trim() || undefined,
+          }),
       thoughts: thoughts.trim() || undefined,
       coverImageUrl,
     });
@@ -435,7 +443,8 @@ export const BookEditModal = ({
                     dispatch({ type: "SET_TITLE", title: e.target.value })
                   }
                   maxLength={100}
-                  className="w-full nb-input px-4 py-2 text-lg font-black placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus) max-md:text-base"
+                  disabled={isCatalogBook}
+                  className="w-full nb-input px-4 py-2 text-lg font-black placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus) max-md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Введите название книги"
                   aria-label="Название книги"
                 />
@@ -458,6 +467,7 @@ export const BookEditModal = ({
                   maxLength={100}
                   inputClass={inputClass}
                   placeholder="Автор книги"
+                  disabled={isCatalogBook}
                 />
                 <span className="mt-1 block text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                   {author.length}/100
@@ -554,7 +564,8 @@ export const BookEditModal = ({
                         dispatch({ type: "SET_GENRE", genre: e.target.value })
                       }
                       maxLength={50}
-                      className="w-full nb-input px-4 py-2 text-lg font-black placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus) max-md:text-base"
+                      disabled={isCatalogBook}
+                      className="w-full nb-input px-4 py-2 text-lg font-black placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus) max-md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="Фантастика, детектив..."
                       aria-label="Жанр книги"
                     />
@@ -580,7 +591,8 @@ export const BookEditModal = ({
                           tagsInput: e.target.value,
                         })
                       }
-                      className={`${inputClass} focus-visible:ring-2 focus-visible:ring-(--theme-focus)`}
+                      disabled={isCatalogBook}
+                      className={`${inputClass} focus-visible:ring-2 focus-visible:ring-(--theme-focus) disabled:opacity-50 disabled:cursor-not-allowed`}
                       placeholder="#фантастика #приключения"
                       aria-label="Теги книги"
                     />
@@ -601,7 +613,7 @@ export const BookEditModal = ({
                     <button
                       type="button"
                       onClick={handleAiDescribe}
-                      disabled={aiLoading || !title.trim()}
+                      disabled={aiLoading || !title.trim() || isCatalogBook}
                       className="inline-flex cursor-pointer items-center gap-1.5 rounded border-(--theme-accent-primary)/30 bg-(--theme-accent-primary)/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-(--theme-accent-primary) transition-colors hover:bg-(--theme-accent-primary)/20 disabled:cursor-not-allowed disabled:opacity-40"
                       title="Сгенерировать описание через AI"
                       aria-label="Сгенерировать описание через AI"
@@ -623,7 +635,8 @@ export const BookEditModal = ({
                         description: e.target.value,
                       })
                     }
-                    className={`${textareaClass} min-h-40 max-md:min-h-45 focus-visible:ring-2 focus-visible:ring-(--theme-focus)`}
+                    disabled={isCatalogBook}
+                    className={`${textareaClass} min-h-40 max-md:min-h-45 focus-visible:ring-2 focus-visible:ring-(--theme-focus) disabled:opacity-50 disabled:cursor-not-allowed`}
                     placeholder="Краткое описание книги"
                     aria-label="Описание книги"
                   />
