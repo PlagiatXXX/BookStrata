@@ -174,6 +174,7 @@ export const EditorModals = ({
         onClose={onCloseViewBook}
         book={bookToView}
         isReadOnly={isReadOnly}
+        tierListId={tierListId}
       />
 
       <Suspense fallback={<BookSearchModalLoader />}>

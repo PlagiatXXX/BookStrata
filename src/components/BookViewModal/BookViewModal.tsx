@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from "react";
-import { X, Star, FileText, Calendar, BookOpen, Check, Heart } from "lucide-react";
+import { Link } from "react-router-dom";
+import { X, Star, FileText, Calendar, BookOpen, Check, Heart, ExternalLink } from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
@@ -21,6 +22,8 @@ export interface BookViewModalProps {
   isReadOnly?: boolean;
   className?: string;
   hideThoughts?: boolean;
+  /** Для published-книг: ?from= в ссылке на страницу книги (крошки тир-листа) */
+  tierListId?: string;
 }
 
 const sectionTitleClass =
@@ -56,6 +59,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   isAdding = false,
   hideThoughts = false,
   className = "",
+  tierListId,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [imageError, setImageError] = useState(false);
@@ -313,6 +317,16 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
           >
             Закрыть
           </Button>
+          {!isSearchPreview && book.status === "published" && book.slug && (
+            <Link
+              to={`/books/${book.slug}${tierListId ? `?from=${tierListId}` : ""}`}
+              className="inline-flex items-center gap-1.5 rounded-md border border-(--theme-accent-primary)/40 bg-(--theme-accent-primary)/10 px-3 py-2 text-sm font-bold text-(--theme-accent-primary) transition-colors hover:bg-(--theme-accent-primary)/20 focus-visible:ring-2 focus-visible:ring-(--theme-focus) outline-none"
+              aria-label="Открыть страницу книги"
+            >
+              <ExternalLink size={14} />
+              Страница книги
+            </Link>
+          )}
           {onAdd && (
             <Button
               isLoading={isAdding}
