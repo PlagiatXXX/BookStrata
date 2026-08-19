@@ -3,6 +3,7 @@ import crypto from 'node:crypto'
 import { access, mkdir, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ImageStorageService, UploadResult } from './types.js'
+import { prepareImage } from './image-processor.js'
 import { config } from '../../config/env.js'
 
 const UPLOADS_DIR = config.UPLOADS_DIR
@@ -85,16 +86,8 @@ export class LocalStorage implements ImageStorageService {
   async uploadBase64(base64Data: string, folder = UPLOADS_SUBDIR): Promise<UploadResult> {
     const buffer = bufferFromBase64(base64Data)
 
-    let bufferToWrite: Buffer
-    let ext: string
-    try {
-      const webp = await sharp(buffer).webp({ quality: 85 }).toBuffer()
-      bufferToWrite = webp
-      ext = 'webp'
-    } catch {
-      bufferToWrite = buffer
-      ext = 'png'
-    }
+    const { buffer: bufferToWrite, contentType } = await prepareImage(buffer)
+    const ext = contentType.split('/')[1] || 'png'
 
     return writeFile(bufferToWrite, folder, ext)
   }
@@ -102,16 +95,8 @@ export class LocalStorage implements ImageStorageService {
   async uploadFromUrl(url: string, folder = UPLOADS_SUBDIR): Promise<UploadResult> {
     const buffer = await fetchToBuffer(url)
 
-    let bufferToWrite: Buffer
-    let ext: string
-    try {
-      const webp = await sharp(buffer).webp({ quality: 85 }).toBuffer()
-      bufferToWrite = webp
-      ext = 'webp'
-    } catch {
-      bufferToWrite = buffer
-      ext = 'png'
-    }
+    const { buffer: bufferToWrite, contentType } = await prepareImage(buffer)
+    const ext = contentType.split('/')[1] || 'png'
 
     return writeFile(bufferToWrite, folder, ext)
   }

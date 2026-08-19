@@ -1,11 +1,8 @@
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 import crypto from 'node:crypto'
 import type { ImageStorageService, UploadResult } from './types.js'
+import { prepareImage } from './image-processor.js'
 import { config } from '../../config/env.js'
 import { createLogger } from '../logger.js'
 
@@ -121,16 +118,7 @@ export class S3Storage implements ImageStorageService {
   async uploadBase64(base64Data: string, folder = 'tiermaker-pro/uploads'): Promise<UploadResult> {
     const buffer = bufferFromBase64(base64Data)
 
-    let bufferToUpload: Buffer
-    let contentType: string
-    try {
-      const webp = await sharp(buffer).webp({ quality: 85 }).toBuffer()
-      bufferToUpload = webp
-      contentType = 'image/webp'
-    } catch {
-      bufferToUpload = buffer
-      contentType = 'image/png'
-    }
+    const { buffer: bufferToUpload, contentType } = await prepareImage(buffer)
 
     return uploadBuffer(bufferToUpload, folder, contentType)
   }
@@ -138,17 +126,8 @@ export class S3Storage implements ImageStorageService {
   async uploadFromUrl(url: string, folder = 'tiermaker-pro/uploads'): Promise<UploadResult> {
     const { buffer, contentType } = await fetchToBuffer(url)
 
-    let bufferToUpload: Buffer
-    let finalContentType: string
-    try {
-      const webp = await sharp(buffer).webp({ quality: 85 }).toBuffer()
-      bufferToUpload = webp
-      finalContentType = 'image/webp'
-    } catch {
-      bufferToUpload = buffer
-      finalContentType = contentType
-    }
+    const { buffer: bufferToUpload, contentType: finalContentType } = await prepareImage(buffer)
 
-    return uploadBuffer(bufferToUpload, folder, finalContentType)
+    return uploadBuffer(bufferToUpload, folder, finalContentType ?? contentType)
   }
 }
