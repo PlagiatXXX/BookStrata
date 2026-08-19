@@ -119,9 +119,11 @@ export const EditorHeader = ({
               />
             </div>
 
-            {/* Десктоп: название и автор — по центру горизонтали */}
+            {/* Десктоп: название и автор — по центру горизонтали.
+                Не H1: мобильная версия (md:hidden) уже содержит H1 — Google
+                индексирует мобильную вёрстку, дубль создавал h1_multiple. */}
             <div className="hidden min-w-0 flex-1 text-center md:block">
-              <h1 className="text-lg font-bold text-(--theme-text)">{title}</h1>
+              <div className="text-lg font-bold text-(--theme-text)">{title}</div>
               {author && (
                 <button
                   onClick={() => navigate(`/users/${author.id}`)}

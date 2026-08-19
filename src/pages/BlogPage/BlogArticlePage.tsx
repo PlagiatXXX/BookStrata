@@ -4,6 +4,7 @@ import { SEOHead } from "@/components/SEO/SEOHead"
 import { Footer } from "@/ui/Footer"
 import { articlesMeta } from "@/content/articles"
 import { mdToHtml } from "@/utils/mdToHtml"
+import { normalizeArticleHtml } from "./normalizeArticleHtml"
 
 // Импортируем все md-файлы как сырой текст
 const rawModules = import.meta.glob<string>(
@@ -94,7 +95,7 @@ export default function BlogArticlePage() {
 
         <div
           className="prose-custom max-w-none"
-          dangerouslySetInnerHTML={{ __html: html }}
+          dangerouslySetInnerHTML={{ __html: normalizeArticleHtml(html) }}
         />
       </article>
 
