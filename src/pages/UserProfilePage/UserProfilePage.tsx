@@ -278,6 +278,7 @@ export default function UserProfilePage() {
                   icon={<Trophy size={16} />}
                   label="Тир-листов"
                   value={profile.stats.tierListsCount}
+                  onClick={() => navigate("/templates")}
                 />
                 <StatCard
                   icon={<Star size={16} />}
@@ -363,13 +364,34 @@ function StatCard({
   icon,
   label,
   value,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
+  onClick?: () => void;
 }) {
+  const interactive = !!onClick;
   return (
-    <div className="brutal-card brutal-border p-4">
+    <div
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `${label}: ${value}` : undefined}
+      onClick={onClick}
+      onKeyDown={
+        interactive
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      className={`brutal-card brutal-border p-4 ${
+        interactive ? "cursor-pointer hover:border-(--accent-main) transition-colors" : ""
+      }`}
+    >
       <div className="flex items-center gap-2 text-(--ink-1) mb-2 text-[10px] font-bold uppercase tracking-widest">
         {icon}
         {label}

@@ -210,6 +210,29 @@ describe("UserProfilePage", () => {
     expect(screen.getByText("18")).toBeDefined()
   })
 
+  it("ведёт на /templates по клику на карточку Тир-листов в статистике", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter initialEntries={["/users/2"]}>
+          <Routes>
+            <Route path="/users/:id" element={<UserProfilePage />} />
+            <Route path="/templates" element={<div>СТРАНИЦА ШАБЛОНОВ</div>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("9")).toBeDefined()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /Тир-листов/ }))
+
+    await waitFor(() => {
+      expect(screen.getByText("СТРАНИЦА ШАБЛОНОВ")).toBeDefined()
+    })
+  })
+
   it("показывает заглушку с буквой, если аватарка не загрузилась", async () => {
     const { container } = renderWithRoute("2")
 
