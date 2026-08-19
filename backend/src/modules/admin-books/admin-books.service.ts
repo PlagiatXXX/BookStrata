@@ -140,33 +140,29 @@ async function fetchDedupeBook(b: { id: number }): Promise<DedupeBook> {
  *  по подстроке «тонет» в выдаче, отсортированной по updatedAt desc, и
  *  создаётся впечатление, что поиск не находит (помогает только полное имя). */
 async function searchBooksByRelevance(params: BookListParams) {
-  const q = params.q!.trim().toLowerCase();
+  // Нормализация ё→е: «Четвёртое крыло» должно находить «Четвертое крыло»
+  // (и наоборот) — Postgres LIKE не считает их одной буквой
+  const q = params.q!.trim().toLowerCase().replace(/ё/g, "е");
   const limit = Math.min(params.limit ?? 50, 200);
   const offset = params.offset ?? 0;
 
-  const where: Prisma.BookWhereInput = {
-    OR: [
-      { title: { contains: q, mode: "insensitive" } },
-      { author: { contains: q, mode: "insensitive" } },
-    ],
-  };
-  if (params.status) where.status = params.status as Prisma.BookWhereInput["status"];
-  if (params.genre) where.genre = params.genre;
-  if (params.duplicatesOnly) where.mergedIntoId = { not: null };
-  // «Из тир-листов»: личные книги (userId) + легаси-общие, у которых есть вхождения
-  if (params.origin === "tier-list") {
-    (where.OR as Prisma.BookWhereInput[]).push(
-      { userId: { not: null } },
-      { placements: { some: {} } },
-    );
-  }
-  if (params.origin === "catalog") {
-    where.placements = { none: {} };
-    where.userId = null;
-  }
+  // Поиск с нормализацией ё→е в колонках (replace) — count считается тем же
+  // raw-запросом, иначе total разойдётся с выдачей (Prisma contains не умеет replace)
+  const searchWhere = Prisma.sql`
+    WHERE (lower(replace(b.title, 'ё', 'е')) LIKE ${`%${q}%`}
+        OR lower(replace(coalesce(b.author, ''), 'ё', 'е')) LIKE ${`%${q}%`})
+      ${params.status ? Prisma.sql`AND b.status::text = ${params.status}` : Prisma.empty}
+      ${params.genre ? Prisma.sql`AND b.genre = ${params.genre}` : Prisma.empty}
+      ${params.duplicatesOnly ? Prisma.sql`AND b."mergedIntoId" IS NOT NULL` : Prisma.empty}
+      ${params.origin === "tier-list" ? Prisma.sql`AND (b.user_id IS NOT NULL OR EXISTS (SELECT 1 FROM "BookPlacement" p2 WHERE p2."bookId" = b.id))` : Prisma.empty}
+      ${params.origin === "catalog" ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM "BookPlacement" p3 WHERE p3."bookId" = b.id) AND b.user_id IS NULL` : Prisma.empty}
+  `;
 
   const [total, rows] = await Promise.all([
-    prisma.book.count({ where }),
+    prisma.$queryRaw<Array<{ count: number }>>(Prisma.sql`
+      SELECT COUNT(*)::int AS count FROM "Book" b
+      ${searchWhere}
+    `).then((r) => r[0]?.count ?? 0),
     prisma.$queryRaw<BookSearchRow[]>(Prisma.sql`
       SELECT b.id, b.title, b.author, b.slug, b.status, b.genre, b.tags,
              b.cover_image_url, b.rating, b."likesCount", b."publishedAt",
@@ -175,16 +171,11 @@ async function searchBooksByRelevance(params: BookListParams) {
              (SELECT COUNT(*)::int FROM "book_comments" c WHERE c."bookId" = b.id) AS comments,
              (SELECT COUNT(*)::int FROM "BookPlacement" p WHERE p."bookId" = b.id) AS placements
       FROM "Book" b
-      WHERE (lower(b.title) LIKE ${`%${q}%`} OR lower(coalesce(b.author, '')) LIKE ${`%${q}%`})
-        ${params.status ? Prisma.sql`AND b.status::text = ${params.status}` : Prisma.empty}
-        ${params.genre ? Prisma.sql`AND b.genre = ${params.genre}` : Prisma.empty}
-        ${params.duplicatesOnly ? Prisma.sql`AND b."mergedIntoId" IS NOT NULL` : Prisma.empty}
-        ${params.origin === "tier-list" ? Prisma.sql`AND (b.user_id IS NOT NULL OR EXISTS (SELECT 1 FROM "BookPlacement" p2 WHERE p2."bookId" = b.id))` : Prisma.empty}
-        ${params.origin === "catalog" ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM "BookPlacement" p3 WHERE p3."bookId" = b.id) AND b.user_id IS NULL` : Prisma.empty}
+      ${searchWhere}
       ORDER BY CASE
-          WHEN lower(b.title) = ${q} THEN 0
-          WHEN lower(b.title) LIKE ${`${q}%`} THEN 1
-          WHEN lower(coalesce(b.author, '')) LIKE ${`${q}%`} THEN 2
+          WHEN lower(replace(b.title, 'ё', 'е')) = ${q} THEN 0
+          WHEN lower(replace(b.title, 'ё', 'е')) LIKE ${`${q}%`} THEN 1
+          WHEN lower(replace(coalesce(b.author, ''), 'ё', 'е')) LIKE ${`${q}%`} THEN 2
           ELSE 3
         END, b.title ASC
       LIMIT ${limit} OFFSET ${offset}

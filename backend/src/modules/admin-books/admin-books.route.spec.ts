@@ -193,56 +193,71 @@ describe("Admin Books Routes", () => {
         .set("Authorization", "Bearer admin-token");
 
       expect(mocks.prisma.$queryRaw).toHaveBeenCalled();
+      // Первый вызов — count (raw), второй — выдача
+      const calls = mocks.prisma.$queryRaw.mock.calls;
+      const countCall = calls[0][0] as { strings: string[]; values: unknown[] };
+      const countSql = countCall.strings.join("$");
       // enum-колонка status сравнивается через ::text — иначе Postgres падает
       // с «operator does not exist: BookCatalogStatus = text»
       // Prisma.Sql: { strings, values } — восстанавливаем текст запроса
-      const call = mocks.prisma.$queryRaw.mock.calls[0][0] as {
-        strings: string[];
-        values: unknown[];
-      };
-      const sql = call.strings.join("$");
-      expect(sql).toContain("b.status::text = $");
+      expect(countSql).toContain("SELECT COUNT(*)::int AS count");
+      expect(countSql).toContain("b.status::text = $");
+      const itemsCall = calls[1][0] as { strings: string[] };
+      const sql = itemsCall.strings.join("$");
       // колонки с @map (snake_case) — иначе Postgres: column does not exist
       expect(sql).toContain('b."updated_at"');
       expect(sql).not.toContain('b."updatedAt"');
       expect(sql).toContain("b.cover_image_url");
       expect(mocks.prisma.book.findMany).not.toHaveBeenCalled();
-      expect(mocks.prisma.book.count).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            OR: [
-              { title: { contains: "толстой", mode: "insensitive" } },
-              { author: { contains: "толстой", mode: "insensitive" } },
-            ],
-            status: "published",
-          },
-        }),
-      );
+      // count считается тем же raw-запросом (без replace Prisma contains
+      // не находит «Четвёртое крыло» по «четвертое» — total разошёлся бы)
+      expect(mocks.prisma.book.count).not.toHaveBeenCalled();
+    });
+
+    it("q с «ё» → нормализация ё→е в SQL и values (Четвёртое/Четвертое крыло)", async () => {
+      mocks.prisma.$queryRaw.mockResolvedValue([]);
+      mocks.prisma.book.count.mockResolvedValue(0);
+
+      await request(app.server)
+        .get(`/api/admin/books?q=${encodeURIComponent("четвёртое крыло")}`)
+        .set("Authorization", "Bearer admin-token");
+
+      expect(mocks.prisma.$queryRaw).toHaveBeenCalled();
+      const call = mocks.prisma.$queryRaw.mock.calls[0][0] as {
+        strings: string[];
+        values: unknown[];
+      };
+      const sql = call.strings.join("$");
+      // Поиск нормализует ё→е в колонке, иначе «Четвёртое крыло» не находит
+      // «Четвертое крыло» (и наоборот): Postgres LIKE не считает их одной буквой
+      expect(sql).toContain("replace(b.title, 'ё', 'е')");
+      // Значение запроса тоже нормализовано (без ё)
+      expect(call.values).toContain("%четвертое крыло%");
     });
 
     it("q → маппит raw-строки в items с _count", async () => {
-      mocks.prisma.$queryRaw.mockResolvedValue([
-        {
-          id: 10,
-          title: "Война и мир",
-          author: null,
-          slug: "vojna-i-mir",
-          status: "published",
-          genre: "Роман",
-          tags: ["классика"],
-          cover_image_url: "/cover.jpg",
-          rating: 9.1,
-          likesCount: 5,
-          publishedAt: new Date("2026-01-01"),
-          updatedAt: new Date("2026-01-02"),
-          mergedIntoId: null,
-          source: "local",
-          externalId: null,
-          comments: 2,
-          placements: 3,
-        },
-      ]);
-      mocks.prisma.book.count.mockResolvedValue(1);
+      const row = {
+        id: 10,
+        title: "Война и мир",
+        author: null,
+        slug: "vojna-i-mir",
+        status: "published",
+        genre: "Роман",
+        tags: ["классика"],
+        cover_image_url: "/cover.jpg",
+        rating: 9.1,
+        likesCount: 5,
+        publishedAt: new Date("2026-01-01"),
+        updatedAt: new Date("2026-01-02"),
+        mergedIntoId: null,
+        source: "local",
+        externalId: null,
+        comments: 2,
+        placements: 3,
+      };
+      mocks.prisma.$queryRaw
+        .mockResolvedValueOnce([{ count: 1 }]) // count — тоже raw (нормализация ё→е)
+        .mockResolvedValueOnce([row]);
 
       const res = await request(app.server)
         .get("/api/admin/books?q=война")
