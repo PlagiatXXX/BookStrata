@@ -48,6 +48,9 @@ export interface MatchOptions {
    *  матчит только "published" — пользовательские draft из тир-листов
    *  не участвуют в склейке (решение 17.08). По умолчанию — все статусы. */
   statusFilter?: "draft" | "published";
+  /** Отключить fuzzy-этап (только externalId + точное совпадение).
+   *  Для тир-листов (правило «совпадает название и автор» — строгое). */
+  fuzzy?: boolean;
 }
 
 /** SQL-хвост для raw-запросов: фильтр по статусу (enum → text для сравнения).
@@ -126,7 +129,7 @@ const ENTITY_SQL = Prisma.raw(`"${ENTITY}"`);
  * 4. неоднозначность (равные score) → НЕ склеивать, draft.
  */
 export async function matchBook(
-  prisma: PrismaClient,
+  db: PrismaClient | Prisma.TransactionClient,
   input: MatchInput,
   options?: MatchOptions,
 ): Promise<MatchResult> {
@@ -135,7 +138,7 @@ export async function matchBook(
 
   // ——— 1. externalId (сильнейший сигнал) ———
   if (input.externalId && input.source) {
-    const byExternalId = await prisma.book.findFirst({
+    const byExternalId = await db.book.findFirst({
       where: {
         source: input.source as never,
         externalId: input.externalId,
@@ -149,15 +152,18 @@ export async function matchBook(
   }
 
   // ——— 2. Точное совпадение ———
-  const exact = await findExactMatch(prisma, input, normTitle, options);
+  const exact = await findExactMatch(db, input, normTitle, options);
   if (exact) return exact;
 
   // ——— 3. Fuzzy (pg_trgm similarity) ———
-  return findFuzzyMatch(prisma, input, normTitle, options);
+  if (options?.fuzzy === false) {
+    return { book: null, confidence: null, candidates: [] };
+  }
+  return findFuzzyMatch(db, input, normTitle, options);
 }
 
 async function findExactMatch(
-  prisma: PrismaClient,
+  db: PrismaClient | Prisma.TransactionClient,
   input: MatchInput,
   normTitle: string,
   options?: MatchOptions,
@@ -166,7 +172,7 @@ async function findExactMatch(
 
   if (hasAuthorResolved && input.authorId !== null) {
     // 3a. точное (normTitle, authorId)
-    const byAuthorId = await prisma.book.findMany({
+    const byAuthorId = await db.book.findMany({
       where: {
         authorId: input.authorId as number,
         ...(options?.statusFilter ? { status: options.statusFilter } : {}),
@@ -182,7 +188,7 @@ async function findExactMatch(
   if (input.author) {
     // 3b. (normTitle, норм-строка автора) — fallback по строке (также при резолвнутом authorId)
     const normAuthor = normalizeTitle(input.author);
-    const rows = await prisma.$queryRaw<
+    const rows = await db.$queryRaw<
       Array<{
         id: number;
         title: string;
@@ -205,7 +211,7 @@ async function findExactMatch(
     }
   } else {
     // 3c. безавторные: только по normTitle И ровно один кандидат
-    const rows = await prisma.$queryRaw<
+    const rows = await db.$queryRaw<
       Array<{
         id: number;
         title: string;
@@ -246,13 +252,13 @@ interface FuzzyRow {
 }
 
 async function findFuzzyMatch(
-  prisma: PrismaClient,
+  db: PrismaClient | Prisma.TransactionClient,
   input: MatchInput,
   normTitle: string,
   options?: MatchOptions,
 ): Promise<MatchResult> {
   // top-N по триграммному сходству; GIN-индекс books_trgm_idx на title
-  const rows = await prisma.$queryRaw<FuzzyRow[]>`
+  const rows = await db.$queryRaw<FuzzyRow[]>`
     SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating,
            similarity(title, ${normTitle}) AS score
     FROM ${ENTITY_SQL}

@@ -2,8 +2,8 @@ import { prisma, getTierListWhereClause } from "./tierList.utils.js";
 import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { sanitize } from "../../lib/sanitizer.js";
 import { createAuthorService, type AuthorResult } from "../authors/authors.service.js";
+import { matchBook } from "../books/bookMatching.service.js";
 import { findExistingUserBook } from "./tierList.books.service.js";
-import { Prisma } from "@prisma/client";
 
 const authorService = createAuthorService(prisma);
 
@@ -133,11 +133,28 @@ export async function saveAll(
         authorId: bookData.author ? (authorMap.get(bookData.author)?.id ?? null) : null,
       }));
 
-      // Оптимизация: Параллельный поиск/создание книг.
-      // Модель «личные книги» (18.08): ищем ТОЛЬКО свои (userId), каталог
-      // и чужие книги не трогаем — при отсутствии своей всегда создаём draft.
+      // Единый каталог (19.08): каталог (published) → свои книги → создать draft.
+      // Без автора каталог не матчится (правило «совпадает название и автор»).
       const bookResults = await Promise.all(
         booksWithAuthors.map(async (bookData) => {
+          const hasAuthor = Boolean(bookData.author?.trim() || bookData.authorId);
+          let catalogId: number | null = null;
+          if (hasAuthor) {
+            const match = await matchBook(
+              tx,
+              {
+                title: bookData.title,
+                author: bookData.author ?? null,
+                authorId: bookData.authorId ?? null,
+              },
+              { statusFilter: "published", fuzzy: false },
+            );
+            catalogId = match.book?.id ?? null;
+          }
+          if (catalogId != null) {
+            return { tempId: bookData.tempId, realId: String(catalogId) };
+          }
+
           const existing = await findExistingUserBook(tx, userId, bookData);
 
           if (existing) {
@@ -266,68 +283,10 @@ export async function saveAll(
         };
       });
 
-      // Модель «личные книги» (18.08): все книги листа должны быть СВОИМИ.
-      // Легаси-книги (ничьи userId = null или чужие — форки старой модели)
-      // детачим: создаём личную копию и перепривязываем вхождение.
-      const detachBookIds = Array.from(
-        new Set(finalPlacements.map((p) => p.bookId)),
-      );
-      if (detachBookIds.length > 0) {
-        const placementsBooks = await tx.book.findMany({
-          where: { id: { in: detachBookIds } },
-          select: { id: true, userId: true },
-        });
-        const foreignIds = placementsBooks
-          .filter((b) => b.userId !== userId)
-          .map((b) => b.id);
-        if (foreignIds.length > 0) {
-          const foreignBooks = await tx.book.findMany({
-            where: { id: { in: foreignIds } },
-          });
-          const copyByBookId = new Map<number, number>();
-          for (const fb of foreignBooks) {
-            const copy = await tx.book.create({
-              data: {
-                title: fb.title,
-                author: fb.author,
-                authorId: fb.authorId,
-                coverImageUrl: fb.coverImageUrl,
-                description: fb.description,
-                genre: fb.genre,
-                tags: fb.tags,
-                publishedYear: fb.publishedYear,
-                externalId: fb.externalId,
-                source: fb.source,
-                mergedIntoId: fb.mergedIntoId,
-                rating: fb.rating,
-                likesCount: fb.likesCount,
-                // Копия — личная: владелец, без slug и контекста (своя история).
-                // Статус ВСЕГДА draft: каталоговая (published) книга в тир-листе —
-                // легаси, её копия не может быть опубликованной (инвариант:
-                // published = каталог, userId = null)
-                userId,
-                slug: null,
-                status: "draft" as const,
-                contextChain: (fb.contextChain ?? Prisma.DbNull) as Prisma.InputJsonValue,
-              },
-            });
-            copyByBookId.set(fb.id, copy.id);
-          }
-          for (const p of finalPlacements) {
-            const copyId = copyByBookId.get(p.bookId);
-            if (copyId) {
-              // Личные данные вхождения (мысли/обложка) переносим с исходного
-              // placement'а на новый, иначе они потеряются при детаче
-              const old = existingPlacementMap.get(p.bookId);
-              p.bookId = copyId;
-              if (old) {
-                if (old.thoughts != null) p.thoughts = old.thoughts;
-                if (old.coverImageUrl != null) p.coverImageUrl = old.coverImageUrl;
-              }
-            }
-          }
-        }
-      }
+      // Единый каталог (19.08): placement на каталоговую (published) книгу
+      // легален — это и есть модель «общий каталог». Чужие draft в лист не
+      // попадают (матчинг их не находит, P2002-гонка пробрасывает ошибку).
+      // Детach (личные копии чужих/каталоговых книг) больше не нужен.
 
       // Существующие — UPDATE (thoughts/coverImageUrl не перезаписываются —
       // личные данные вхождения, в finalPlacements их нет для существующих книг)

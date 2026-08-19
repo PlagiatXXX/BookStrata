@@ -425,3 +425,40 @@ describe("matchBook: statusFilter (каталог не видит draft)", () =>
     expect(sql).toContain("status::text = 'published'");
   });
 });
+
+describe("matchBook: опция fuzzy", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("fuzzy: false → точное совпадение по (title, authorId) работает", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([
+      { id: 1, title: "Война и мир", author: "Лев Толстой", authorId: 10,
+        coverImageUrl: "/c.jpg", slug: "v", status: "published",
+        source: null, externalId: null, publishedYear: null, rating: null },
+    ]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
+
+    const res = await matchBook(prisma as any, { title: "Война и мир", author: "Лев Толстой", authorId: 10 }, { fuzzy: false });
+    expect(res.book?.id).toBe(1);
+    expect(prisma.$queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("fuzzy: false → без точного совпадения возвращает null, fuzzy-этап пропущен", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([]);
+    // 3b (точный по строке автора) → пусто; fuzzy-этап вернул бы HIGH-кандидата,
+    // но при fuzzy: false он не вызывается
+    (prisma.$queryRaw as any)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { id: 2, title: "Война и миръ", author: "Лев Толстой", authorId: 10,
+          coverImageUrl: "/c.jpg", slug: "v2", status: "published",
+          source: null, externalId: null, publishedYear: null, rating: null, score: 0.99 },
+      ]);
+
+    const res = await matchBook(prisma as any, { title: "Война и мир", author: "Лев Толстой", authorId: 10 }, { fuzzy: false });
+
+    expect(res.book).toBeNull();
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1); // только 3b; fuzzy не вызван
+  });
+});

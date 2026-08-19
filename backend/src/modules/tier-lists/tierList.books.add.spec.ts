@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const mocks = vi.hoisted(() => ({
+  matchBook: vi.fn(),
+}));
+
+// Мок матчинга каталога: новые ветки управляются через mocks.matchBook,
+// а существующие тесты получают «каталог не найден» (см. beforeEach)
+vi.mock("../books/bookMatching.service.js", () => ({
+  matchBook: mocks.matchBook,
+}));
+
 // Моки Prisma: минимальный набор для addBooksToTierList (решение 17.08:
 // локальные книги не матчатся — каждому пользователю свой оригинал;
 // матчинг только по внешнему ID (source + externalId) среди draft)
@@ -72,6 +82,8 @@ describe("addBooksToTierList: конкурентная защита (P2002 → r
   beforeEach(() => {
     // resetAllMocks — обязателен: clearAllMocks НЕ сбрасывает once-очереди
     vi.resetAllMocks();
+    // Каталог по умолчанию не находит книгу (существующие тесты)
+    mocks.matchBook.mockResolvedValue({ book: null, confidence: null, candidates: [] });
     (prisma.tierList.findUnique as any).mockResolvedValue({ id: "1" });
     (prisma.author.findFirst as any).mockResolvedValue(null);
     (prisma.author.findUnique as any).mockResolvedValue(null);
@@ -109,24 +121,20 @@ describe("addBooksToTierList: конкурентная защита (P2002 → r
     expect(result[0]?.book?.id).toBe(7);
   });
 
-  it("гонка: канон оказался КАТАЛОГОВЫМ (published) → не линкуемся, создаём локальную копию без externalId", async () => {
-    (prisma.book.create as any)
-      .mockRejectedValueOnce(p2002(["source", "externalId"]))
-      .mockResolvedValueOnce({ id: 100 }); // локальная копия
+  it("гонка: канон оказался КАТАЛОГОВЫМ (published) → не линкуемся, ошибка (без локальной копии)", async () => {
+    (prisma.book.create as any).mockRejectedValueOnce(p2002(["source", "externalId"]));
+    // findExistingUserBook (externalId-дедуп) не нашёл; findRaceCanon нашёл каталоговую
     (prisma.book.findFirst as any)
-      .mockResolvedValueOnce(null) // дедуп среди draft
-      .mockResolvedValueOnce(userBook(7, { status: "published", slug: "1984" })); // каталог!
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(userBook(7, { status: "published", slug: "1984" }));
 
-    const result = await addBooksToTierList("1", [book]);
-
-    // Копия создана повторно, но без внешнего ID (unique (source, externalId) не нарушен)
-    expect(prisma.book.create).toHaveBeenCalledTimes(2);
-    expect(prisma.book.create).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ externalId: null, source: null, status: "draft" }),
-      }),
+    // Каталог уже проверен matchBook до создания (не найден), значит это гонка
+    // с чужой записью — ошибка, локальная копия не создаётся (единый каталог, 19.08)
+    await expect(addBooksToTierList("1", [book])).rejects.toThrow(
+      "Unique constraint failed",
     );
-    expect(result[0]?.book?.id).toBe(100);
+    expect(prisma.book.create).toHaveBeenCalledTimes(1);
+    expect(prisma.bookPlacement.create).not.toHaveBeenCalled();
   });
 
   it("конфликт именно по slug → retry-цикл с суффиксом (-2), без link", async () => {
@@ -179,6 +187,95 @@ describe("addBooksToTierList: конкурентная защита (P2002 → r
     expect(prisma.bookPlacement.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ bookId: 100 }) }),
     );
+    expect(result[0]?.book?.id).toBe(100);
+  });
+});
+
+describe("addBooksToTierList: матчинг с каталогом (published)", () => {
+  const book = {
+    title: "1984",
+    author: "Orwell",
+    coverImageUrl: "cover.jpg",
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mocks.matchBook.mockReset();
+    mocks.matchBook.mockResolvedValue({ book: null, confidence: null, candidates: [] });
+    (prisma.tierList.findUnique as any).mockResolvedValue({ id: "1" });
+    (prisma.author.findFirst as any).mockResolvedValue(null);
+    (prisma.author.findUnique as any).mockResolvedValue(null);
+    (prisma.author.findMany as any).mockResolvedValue([]);
+    (prisma.author.create as any).mockImplementation((data: any) =>
+      Promise.resolve({ id: 999, ...data }),
+    );
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.book.findMany as any).mockResolvedValue([]);
+    (prisma.book.findUnique as any).mockResolvedValue(null);
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([]);
+    (prisma.$queryRaw as any).mockResolvedValue([]);
+    (prisma.bookPlacement.create as any).mockImplementation(({ data }: any) =>
+      Promise.resolve({ tierListId: "1", tierId: null, ...data, book: { id: data.bookId } }),
+    );
+    (prisma.$transaction as any).mockImplementation((fn: any) => fn(prisma));
+  });
+
+  it("каталог найден по (title, author) → линк на канон, draft не создаётся", async () => {
+    mocks.matchBook.mockResolvedValue({
+      book: {
+        id: 55,
+        title: "1984",
+        author: "Orwell",
+        authorId: 999,
+        coverImageUrl: "/cat.jpg",
+        slug: "1984",
+        status: "published",
+        source: null,
+        externalId: null,
+        publishedYear: null,
+        rating: null,
+      },
+      confidence: "HIGH",
+      candidates: [],
+    });
+
+    const result = await addBooksToTierList("1", [book]);
+
+    expect(mocks.matchBook).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ title: "1984", author: "Orwell", authorId: 999 }),
+      expect.objectContaining({ statusFilter: "published", fuzzy: false }),
+    );
+    expect(prisma.book.create).not.toHaveBeenCalled();
+    expect(prisma.bookPlacement.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ bookId: 55 }) }),
+    );
+    expect(result[0]?.book?.id).toBe(55);
+  });
+
+  it("каталог не найден, своя draft найдена → линк на свою (модель «личные книги»)", async () => {
+    (prisma.book.findMany as any).mockResolvedValueOnce([
+      userBook(7, { source: null, externalId: null }),
+    ]);
+
+    const result = await addBooksToTierList("1", [book]);
+
+    expect(prisma.book.create).not.toHaveBeenCalled();
+    expect(prisma.bookPlacement.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ bookId: 7 }) }),
+    );
+    expect(result[0]?.book?.id).toBe(7);
+  });
+
+  it("без автора → каталог не матчится, создаётся своя draft", async () => {
+    (prisma.book.create as any).mockResolvedValue({ id: 100, status: "draft" });
+
+    const result = await addBooksToTierList("1", [
+      { title: "1984", author: "", coverImageUrl: "cover.jpg" },
+    ]);
+
+    expect(mocks.matchBook).not.toHaveBeenCalled();
+    expect(prisma.book.create).toHaveBeenCalledTimes(1);
     expect(result[0]?.book?.id).toBe(100);
   });
 });

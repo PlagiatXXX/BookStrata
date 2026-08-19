@@ -95,7 +95,7 @@ describe("Tier List BOLA Security Tests - New", () => {
       expect(prisma.book.create).not.toHaveBeenCalled();
     });
 
-    it("глобальная книга (userId null) детачится в личную копию владельца", async () => {
+    it("глобальная (каталоговая) книга в листе легальна — копия не создаётся (единый каталог, 19.08)", async () => {
       const myTierListId = "1";
       const globalBookId = 777;
 
@@ -105,39 +105,13 @@ describe("Tier List BOLA Security Tests - New", () => {
         ]
       };
 
-      (prisma.book.findMany as any).mockResolvedValue([
-        {
-          id: globalBookId,
-          userId: null,
-          title: "Глобальная",
-          author: null,
-          authorId: null,
-          coverImageUrl: "img.jpg",
-          description: null,
-          genre: null,
-          tags: [],
-          publishedYear: null,
-          externalId: null,
-          source: null,
-          status: "draft",
-          mergedIntoId: null,
-          rating: 0,
-          likesCount: 0,
-          contextChain: null,
-        },
-      ]);
-      (prisma.book.create as any).mockResolvedValue({ id: 500 });
-
       await service.saveAll(myTierListId, 1, payload);
 
-      // Чужая книга НЕ привязывается: создаётся личная копия и вхождение — на неё
-      expect(prisma.book.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ userId: 1, slug: null }),
-        }),
-      );
+      // Каталоговая книга не детачится: личная копия не создаётся,
+      // вхождение создаётся на саму книгу
+      expect(prisma.book.create).not.toHaveBeenCalled();
       expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
-        data: [{ tierListId: "1", bookId: 500, tierId: null, rank: 0 }],
+        data: [{ tierListId: "1", bookId: globalBookId, tierId: null, rank: 0 }],
       });
     });
   });

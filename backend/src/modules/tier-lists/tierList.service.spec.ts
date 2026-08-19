@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+const mocks = vi.hoisted(() => ({
+  matchBook: vi.fn(),
+}));
+
+// Каталоговый матчинг (единый каталог, 19.08): по умолчанию каталог не
+// находит книгу — тир-лист работает со своими draft, как и раньше
+vi.mock("../books/bookMatching.service.js", () => ({
+  matchBook: mocks.matchBook,
+}));
+
 // Моки для Prisma — объявляем внутри factory для vi.mock
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
@@ -71,6 +81,7 @@ import { DefaultArgs } from "@prisma/client/runtime/index.js";
 describe("tierList.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.matchBook.mockResolvedValue({ book: null, confidence: null, candidates: [] });
     (prisma.tierList.findUnique as any).mockResolvedValue({ id: "1", userId: 5 });
     (prisma.user.findUnique as any).mockResolvedValue({ isPro: false });
     // author mock по умолчанию

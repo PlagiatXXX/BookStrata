@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { sanitize } from "../../lib/sanitizer.js";
 import { createAuthorService, type AuthorResult } from "../authors/authors.service.js";
+import { matchBook } from "../books/bookMatching.service.js";
 import { createBookWithSlug, isPrismaP2002 } from "../../lib/slug.js";
 import type { Prisma, PrismaClient } from "@prisma/client";
 
@@ -191,13 +192,36 @@ export async function addBooksToTierList(
     authorId: bookData.author ? (authorMap.get(bookData.author)?.id ?? null) : null,
   }));
 
-  // Пре-фаза ВНЕ транзакции: матчим ТОЛЬКО свои книги (модель «личные книги»).
-  // Каталог (published) и чужие книги не участвуют — тир-листы не склеиваются.
+  // Пре-фаза ВНЕ транзакции: каталог (published) → свои книги (единый каталог, 19.08).
+  // Порядок: 1) каталог по (title, author) строгим матчингом (без fuzzy);
+  //          2) свои draft (модель «личные книги»);
+  //          3) иначе — создание новой draft в linkOrCreate.
+  // Без автора каталог не матчится (правило «совпадает название и автор»).
   const matched = await Promise.all(
-    booksWithAuthors.map(async (bookData) => ({
-      bookData,
-      existing: await findExistingUserBook(prisma, ownerId, bookData),
-    })),
+    booksWithAuthors.map(async (bookData) => {
+      const hasAuthor = Boolean(bookData.author?.trim() || bookData.authorId);
+      let catalogId: number | null = null;
+      if (hasAuthor) {
+        const match = await matchBook(
+          prisma,
+          {
+            title: bookData.title,
+            author: bookData.author ?? null,
+            authorId: bookData.authorId ?? null,
+            externalId: bookData.externalId ?? null,
+            source: bookData.source ?? null,
+          },
+          { statusFilter: "published", fuzzy: false },
+        );
+        catalogId = match.book?.id ?? null;
+      }
+      return {
+        bookData,
+        existing: catalogId != null
+          ? { id: catalogId }
+          : await findExistingUserBook(prisma, ownerId, bookData),
+      };
+    }),
   );
 
   // Существующие placements листа: чтобы при повторном добавлении книги
@@ -260,7 +284,9 @@ export async function addBooksToTierList(
  * Создание ЛИЧНОЙ книги (draft + userId + авто-slug) и её вхождения.
  * Конкурентная защита: два одновременных запроса могут оба создать внешнюю
  * книгу → INSERT падает с P2002 (unique [userId, source, externalId] / slug) →
- * перезапрос канона → link. Чужая книга или каталог не линкуются (см. ниже).
+ * перезапрос канона → link. Каталог (published) и чужие книги не линкуются:
+ * каталог уже проверен matchBook до создания, значит P2002 с чужим каноном —
+ * гонка с чужой записью → ошибка (единый каталог, 19.08).
  */
 async function linkOrCreate(
   tx: Prisma.TransactionClient,
@@ -313,23 +339,9 @@ async function linkOrCreate(
     if (canon.status === "draft" && canon.userId === userId) {
       return createPlacement(canon.id);
     }
-    // Канон — каталог (published) или ЧУЖАЯ книга: не линкуемся — создаём
-    // свою локальную копию без внешнего ID (чтобы не нарушить unique),
-    // личная (userId) — как и положено в модели «каждому своё»
-    const local = await createBookWithSlug(tx, {
-      title: bookData.title,
-      author: bookData.author ?? null,
-      authorId: bookData.authorId ?? null,
-      coverImageUrl: bookData.coverImageUrl,
-      description: bookData.description ? sanitize(bookData.description) : null,
-      genre: bookData.genre ? sanitize(bookData.genre) : null,
-      tags: bookData.tags ?? [],
-      externalId: null,
-      source: null,
-      userId,
-      status: "draft",
-    });
-    return createPlacement(local.id);
+    // Канон — каталог (published) или чужой draft: каталог уже проверен
+    // matchBook до создания, значит это гонка с чужой записью — не линкуемся
+    throw error;
   }
 }
 

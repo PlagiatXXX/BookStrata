@@ -2,6 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as service from './tierList.service.js';
 import { prisma } from '../../lib/prisma.js';
 
+const mocks = vi.hoisted(() => ({
+  matchBook: vi.fn(),
+}));
+
+// Каталоговый матчинг (единый каталог, 19.08): по умолчанию каталог не находит книгу
+vi.mock('../books/bookMatching.service.js', () => ({
+  matchBook: mocks.matchBook,
+}));
+
 vi.mock('../../lib/prisma.js', () => ({
   prisma: {
     $transaction: vi.fn((cb) => cb(prisma)),
@@ -17,6 +26,12 @@ vi.mock('../../lib/prisma.js', () => ({
       findMany: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(1),
       create: vi.fn().mockResolvedValue({ id: 201 }),
+    },
+    author: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      findUnique: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([]),
+      create: vi.fn().mockImplementation((data: any) => Promise.resolve({ id: 999, ...data })),
     },
     $queryRaw: vi.fn().mockResolvedValue([]),
     bookPlacement: {
@@ -40,6 +55,7 @@ describe('tierList.service.saveAll', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.matchBook.mockResolvedValue({ book: null, confidence: null, candidates: [] });
     // Восстанавливаем реализацию транзакции, т.к. clearAllMocks сбрасывает все mockImplementation
     (prisma.$transaction as any).mockImplementation((cb: any) => cb(prisma));
   });
@@ -86,33 +102,49 @@ describe('tierList.service.saveAll', () => {
     expect(result.bookReplacements).toContainEqual({ tempId: 'local-1', realId: '201' });
   });
 
-  it('should detach foreign books: personal copy with draft status, thoughts moved to new placement', async () => {
-    // В листе лежит «чужая» книга (userId = null — легаси-общая / каталоговая)
-    (prisma.bookPlacement.findMany as any).mockResolvedValue([
-      { bookId: 200, thoughts: 'мои мысли о книге', coverImageUrl: 'cov-url' },
-    ]);
-    (prisma.book.findMany as any)
-      .mockResolvedValueOnce([{ id: 200, userId: null }]) // детект чужих книг
-      .mockResolvedValueOnce([{ // полные foreign-книги
-        id: 200,
+  it('newBooks: каталоговое совпадение → линк на канон, копия не создаётся', async () => {
+    mocks.matchBook.mockResolvedValue({
+      book: {
+        id: 300,
         title: 'Война и мир',
         author: 'Толстой',
         authorId: 5,
         coverImageUrl: 'url',
-        description: null,
-        genre: 'роман',
-        tags: [],
         slug: 'voyna-i-mir',
-        externalId: 'abc',
-        source: 'google_books',
-        status: 'published', // легаси: каталоговая книга в тир-листе
-        publishedYear: 1869,
-        rating: 9.5,
-        likesCount: 3,
-        mergedIntoId: null,
-        contextChain: null,
-      }]);
-    (prisma.book.create as any).mockResolvedValue({ id: 999 });
+        status: 'published',
+        source: null,
+        externalId: null,
+        publishedYear: null,
+        rating: null,
+      },
+      confidence: 'HIGH',
+      candidates: [],
+    });
+
+    const payload = {
+      newBooks: [
+        { tempId: 'local-1', title: 'Война и мир', author: 'Толстой', coverImageUrl: 'url' },
+      ],
+      placements: [
+        { bookId: 'local-1', tierId: null, rank: 0 },
+      ],
+    };
+
+    const result = await service.saveAll(tierListId, userId, payload);
+
+    expect(mocks.matchBook).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ title: 'Война и мир', author: 'Толстой' }),
+      expect.objectContaining({ statusFilter: 'published', fuzzy: false }),
+    );
+    expect(prisma.book.create).not.toHaveBeenCalled();
+    expect(result.bookReplacements).toContainEqual({ tempId: 'local-1', realId: '300' });
+  });
+
+  it('placement на каталоговую (published) книгу не детачится (единый каталог, 19.08)', async () => {
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([
+      { bookId: 200, thoughts: 'мои мысли', coverImageUrl: 'cov' },
+    ]);
 
     const payload = {
       placements: [{ bookId: 200, tierId: null, rank: 0 }],
@@ -120,34 +152,10 @@ describe('tierList.service.saveAll', () => {
 
     await service.saveAll(tierListId, userId, payload);
 
-    // Копия — личная, статус ВСЕГДА draft (не published как легаси-оригинал)
-    expect(prisma.book.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          userId,
-          status: 'draft',
-          slug: null,
-          externalId: 'abc',
-          source: 'google_books',
-        }),
-      }),
-    );
-    // Вхождение перепривязано на копию, мысли/обложка перенесены
-    expect(prisma.bookPlacement.createMany).toHaveBeenCalledWith({
-      data: [
-        {
-          tierListId,
-          bookId: 999,
-          tierId: null,
-          rank: 0,
-          thoughts: 'мои мысли о книге',
-          coverImageUrl: 'cov-url',
-        },
-      ],
-    });
-    // Старое вхождение (на foreign-книге) удалено
-    expect(prisma.bookPlacement.deleteMany).toHaveBeenCalledWith({
-      where: { tierListId, bookId: { in: [200] } },
-    });
+    // Никаких личных копий: каталоговая книга в листе легальна
+    expect(prisma.book.create).not.toHaveBeenCalled();
+    // Вхождение обновлено, не пересоздано
+    expect(prisma.bookPlacement.update).toHaveBeenCalled();
+    expect(prisma.bookPlacement.deleteMany).not.toHaveBeenCalled();
   });
 });
