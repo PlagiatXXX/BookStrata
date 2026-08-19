@@ -37,7 +37,8 @@ export function useAdminBooks() {
   const pageSize = 50;
 
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [mergeBook, setMergeBook] = useState<{ id: number; title: string } | null>(null);
+  // Канон (книга, на которой нажали «Склеить»): она остаётся и поглощает дубль
+  const [mergeCanon, setMergeCanon] = useState<{ id: number; title: string } | null>(null);
   const [commentsBook, setCommentsBook] = useState<{ id: number; title: string } | null>(null);
 
   const listQuery = useQuery({
@@ -117,7 +118,7 @@ export function useAdminBooks() {
       mergeAdminBooks(dupId, targetId),
     onSuccess: () => {
       invalidateLists();
-      setMergeBook(null);
+      setMergeCanon(null);
     },
     onError: (err) => {
       sileo.error({
@@ -177,8 +178,8 @@ export function useAdminBooks() {
     publishMutation,
     unpublishMutation,
     enrichMutation,
-    // merge
-    mergeBook, setMergeBook,
+    // merge: mergeCanon — книга-канон, поглощающая дубль
+    mergeCanon, setMergeCanon,
     mergeMutation,
     // комментарии
     commentsBook, setCommentsBook,

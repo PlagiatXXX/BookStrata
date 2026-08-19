@@ -1,6 +1,7 @@
 // src/pages/AdminBooksPage/components/MergeModal.tsx
-// Ручной merge дубля в канон (Фаза 7): поиск книги-кандидата и склейка
-// через mergedIntoId (перенос связей + история для аудита).
+// Ручной merge дубля в канон (Фаза 7): книга, на которой нажали «Склеить»,
+// становится каноном; здесь ищем книгу-дубль, которую канон поглотит
+// (перенос связей + mergedIntoId + история для аудита).
 import { useState } from "react";
 import { X, Search } from "lucide-react";
 import type { AdminBookListItem } from "@/lib/adminBooksApi";
@@ -26,10 +27,11 @@ export function MergeModal({ book, searching, candidates, merging, onSearch, onM
       >
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-bold text-[var(--ink-0)]">Склейка дубля</h2>
+            <h2 className="text-lg font-bold text-[var(--ink-0)]">Поглощение дубля</h2>
             <p className="mt-1 text-sm text-[var(--ink-1)]">
-              Поглощаемая книга: <span className="font-medium text-[var(--ink-0)]">«{book.title}» (#{book.id})</span>.
-              Связи (рейтинги, тир-листы, коллекции) перенесутся в канон, дубль получит метку mergedIntoId.
+              Канон: <span className="font-medium text-[var(--ink-0)]">«{book.title}» (#{book.id})</span> — эта
+              книга останется. Найдите книгу-дубль: её связи (рейтинги, тир-листы, коллекции) перенесутся
+              в канон, дубль получит метку mergedIntoId.
             </p>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--ink-1)] hover:bg-[var(--ink-3)] hover:text-white cursor-pointer" aria-label="Закрыть">
@@ -43,7 +45,7 @@ export function MergeModal({ book, searching, candidates, merging, onSearch, onM
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSearch(q)}
-            placeholder="Название книги-канона… (Enter)"
+            placeholder="Название книги-дубля… (Enter)"
             className="flex-1 bg-transparent text-sm text-[var(--ink-0)] outline-none placeholder:text-[var(--ink-2)]"
           />
           <button
@@ -56,7 +58,7 @@ export function MergeModal({ book, searching, candidates, merging, onSearch, onM
         </div>
 
         <div className="max-h-80 space-y-2 overflow-y-auto">
-          {/* Сам дубль в кандидатах не показываем (иначе merge сам с собой → 400) */}
+          {/* Сам канон в кандидатах не показываем (иначе merge сам с собой → 400) */}
           {candidates
             .filter((c) => c.id !== book.id)
             .map((c) => (
@@ -76,9 +78,10 @@ export function MergeModal({ book, searching, candidates, merging, onSearch, onM
                 <button
                   onClick={() => onMerge(c.id)}
                   disabled={merging}
+                  title="Поглотить этот дубль каноном"
                   className="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs text-red-300 hover:bg-red-500/10 disabled:opacity-50 cursor-pointer"
                 >
-                  {merging ? "…" : "Склеить"}
+                  {merging ? "…" : "Поглотить"}
                 </button>
               </div>
             ))}

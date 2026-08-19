@@ -279,7 +279,7 @@ describe("AdminBooksPage (Фаза 7)", () => {
     expect(mockedComments).toHaveBeenCalledWith({ bookId: 10, limit: 100 });
   });
 
-  it("merge: кнопка «Склеить с дублем…» открывает модалку и склеивает", async () => {
+  it("merge: кнопка «Склеить с дублем…» открывает модалку и склеивает (канон — книга, на которой нажали)", async () => {
     const user = userEvent.setup();
     mockedList
       .mockResolvedValueOnce({ items: [bookRow], total: 1 })
@@ -287,23 +287,27 @@ describe("AdminBooksPage (Фаза 7)", () => {
     renderPage();
     await screen.findByText("Анна Каренина");
 
+    // Книга 10 — канон: на неё нажали «Склеить с дублем…» в редакторе
     await user.click(screen.getByRole("button", { name: "Редактировать" }));
     await user.click(await screen.findByRole("button", { name: "Склеить с дублем…" }));
 
-    expect(await screen.findByText("Склейка дубля")).toBeInTheDocument();
-    const searchInput = screen.getByPlaceholderText("Название книги-канона… (Enter)");
+    expect(await screen.findByText("Поглощение дубля")).toBeInTheDocument();
+    expect(screen.getByText(/Канон:/)).toBeInTheDocument();
+    expect(screen.getByText(/Анна Каренина.*#10/)).toBeInTheDocument();
+    const searchInput = screen.getByPlaceholderText("Название книги-дубля… (Enter)");
     await user.type(searchInput, "anna");
     await user.keyboard("{Enter}");
 
-    const mergeBtn = await screen.findByRole("button", { name: "Склеить" });
+    // Найденная книга 77 — дубль: поглощаем её каноном 10
+    const mergeBtn = await screen.findByRole("button", { name: "Поглотить" });
     await user.click(mergeBtn);
 
     await waitFor(() => {
-      expect(mockedMerge).toHaveBeenCalledWith(10, 77);
+      expect(mockedMerge).toHaveBeenCalledWith(77, 10);
     });
   });
 
-  it("merge: кандидат-сам-дубль скрыт из списка (защита от склейки с собой)", async () => {
+  it("merge: кандидат-сам-канон скрыт из списка (защита от склейки с собой)", async () => {
     const user = userEvent.setup();
     mockedList
       .mockResolvedValueOnce({ items: [bookRow], total: 1 })
@@ -314,17 +318,17 @@ describe("AdminBooksPage (Фаза 7)", () => {
     await user.click(screen.getByRole("button", { name: "Редактировать" }));
     await user.click(await screen.findByRole("button", { name: "Склеить с дублем…" }));
 
-    const searchInput = screen.getByPlaceholderText("Название книги-канона… (Enter)");
+    const searchInput = screen.getByPlaceholderText("Название книги-дубля… (Enter)");
     await user.type(searchInput, "anna");
     await user.keyboard("{Enter}");
 
-    // Кандидат с id дубля (10) скрыт, остаётся только 77
-    const buttons = await screen.findAllByRole("button", { name: "Склеить" });
+    // Кандидат с id канона (10) скрыт, остаётся только 77
+    const buttons = await screen.findAllByRole("button", { name: "Поглотить" });
     expect(buttons).toHaveLength(1);
 
     await user.click(buttons[0]);
     await waitFor(() => {
-      expect(mockedMerge).toHaveBeenCalledWith(10, 77);
+      expect(mockedMerge).toHaveBeenCalledWith(77, 10);
     });
   });
 

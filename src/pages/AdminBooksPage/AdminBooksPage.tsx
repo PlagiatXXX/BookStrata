@@ -24,7 +24,7 @@ export default function AdminBooksPage() {
   const mergeCandidatesQuery = useQuery({
     queryKey: ["admin-books-merge", mergeQuery],
     queryFn: () => listAdminBooks({ q: mergeQuery || undefined, limit: 20 }),
-    enabled: h.mergeBook !== null && mergeQuery.trim().length >= 2,
+    enabled: h.mergeCanon !== null && mergeQuery.trim().length >= 2,
     placeholderData: (prev) => prev,
   });
 
@@ -266,22 +266,22 @@ export default function AdminBooksPage() {
             onEnrich={() => h.enrichMutation.mutate(editingBook.id)}
             onMerge={() => {
               setMergeQuery("");
-              h.setMergeBook({ id: editingBook.id, title: editingBook.title });
+              h.setMergeCanon({ id: editingBook.id, title: editingBook.title });
             }}
             onClose={() => h.setEditingId(null)}
           />
         )}
 
-        {/* Модалка merge */}
-        {h.mergeBook && (
+        {/* Модалка merge: канон выбран, ищем дубль */}
+        {h.mergeCanon && (
           <MergeModal
-            book={h.mergeBook}
+            book={h.mergeCanon}
             searching={mergeCandidatesQuery.isFetching}
             candidates={mergeCandidatesQuery.data?.items ?? []}
             merging={h.mergeMutation.isPending}
             onSearch={setMergeQuery}
-            onMerge={(targetId) => h.mergeMutation.mutate({ dupId: h.mergeBook!.id, targetId })}
-            onClose={() => h.setMergeBook(null)}
+            onMerge={(dupId) => h.mergeMutation.mutate({ dupId, targetId: h.mergeCanon!.id })}
+            onClose={() => h.setMergeCanon(null)}
           />
         )}
 
