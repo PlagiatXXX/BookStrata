@@ -30,6 +30,9 @@ export function buildBookJsonLd(book: {
   description: string | null;
   genre: string | null;
   publishedYear: number | null;
+  isbn: string | null;
+  /** Канонический URL страницы книги (для url и mainEntityOfPage) */
+  url: string;
 }): Record<string, unknown> {
   return {
     "@context": "https://schema.org",
@@ -40,5 +43,9 @@ export function buildBookJsonLd(book: {
     ...(book.description ? { description: book.description } : {}),
     ...(book.genre ? { genre: book.genre } : {}),
     ...(book.publishedYear ? { datePublished: String(book.publishedYear) } : {}),
+    ...(book.isbn ? { isbn: book.isbn } : {}),
+    inLanguage: "ru",
+    url: book.url,
+    mainEntityOfPage: { "@type": "WebPage", "@id": book.url },
   };
 }

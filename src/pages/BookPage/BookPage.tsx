@@ -29,6 +29,8 @@ import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
 import "./BookPage.css";
 
+const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
+
 export default function BookPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -103,7 +105,10 @@ export default function BookPage() {
     { name: book.title, url: `/books/${slug}` },
   ];
 
-  const bookJsonLd = buildBookJsonLd(book);
+  const bookJsonLd = buildBookJsonLd({
+    ...book,
+    url: `${SITE_URL}/books/${slug}`,
+  });
 
   // Статус книги в «Моей полке» (want_to_read / read / null)
   const isWantToRead = Boolean(book && shelf[book.id] === "want_to_read");
@@ -149,11 +154,12 @@ export default function BookPage() {
   return (
     <div className="book-page">
       <SEOHead
-        title={`${book.title}${book.author ? ` — ${book.author}` : ""} — описание и рейтинг`}
+        title={`${book.title}${book.author ? ` — ${book.author}` : ""}: описание и рейтинг`}
         description={buildDescriptionSnippet(book)}
         image={book.coverImageUrl}
         url={`/books/${slug}`}
         type="article"
+        hideSiteName
         breadcrumbs={breadcrumbs.map((b) => ({ name: b.name, url: b.url }))}
       />
       {/* JSON-LD Book (через Helmet — отдельно от SEOHead) */}

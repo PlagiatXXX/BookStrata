@@ -80,6 +80,7 @@ const bookPageData: BookPageData = {
     rating: 8.4,
     likesCount: 12,
     publishedYear: 1925,
+    isbn: null,
     contextChain: null,
   },
   author: { id: 1, name: "Ф. Скотт Фицджеральд", slug: "f-skott-fitsdzherald" },
@@ -347,12 +348,67 @@ describe("BookPage", () => {
       description: "Роман, ставший символом века джаза.",
       genre: "Роман",
       publishedYear: 1925,
+      isbn: null,
+      url: "https://bookstrata.ru/books/velikij-getssbi",
     });
 
     expect(ld["@type"]).toBe("Book");
     expect(ld.name).toBe("Великий Гэтсби");
     expect(ld.datePublished).toBe("1925");
     expect(ld).not.toHaveProperty("aggregateRating");
+  });
+
+  it("title по варианту A: «Название — Автор: описание и рейтинг» без бренда, og:title с брендом", async () => {
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    await waitFor(() => {
+      expect(document.title).toBe("Великий Гэтсби — Ф. Скотт Фицджеральд: описание и рейтинг");
+    });
+    expect(
+      document.querySelector('meta[property="og:title"]')?.getAttribute("content"),
+    ).toBe("Великий Гэтсби — Ф. Скотт Фицджеральд: описание и рейтинг | BookStrata");
+  });
+
+  it("buildBookJsonLd добавляет isbn, inLanguage, url и mainEntityOfPage", () => {
+    const ld = buildBookJsonLd({
+      title: "Дюна",
+      author: "Фрэнк Герберт",
+      coverImageUrl: "https://example.com/cover.jpg",
+      description: "Эпопея о пустынной планете.",
+      genre: "Фантастика",
+      publishedYear: 1965,
+      isbn: "978-5-17-123456-7",
+      url: "https://bookstrata.ru/books/dyuna",
+    });
+
+    expect(ld.isbn).toBe("978-5-17-123456-7");
+    expect(ld.inLanguage).toBe("ru");
+    expect(ld.url).toBe("https://bookstrata.ru/books/dyuna");
+    expect(ld.mainEntityOfPage).toEqual({
+      "@type": "WebPage",
+      "@id": "https://bookstrata.ru/books/dyuna",
+    });
+  });
+
+  it("buildBookJsonLd без isbn не добавляет поле isbn", () => {
+    const ld = buildBookJsonLd({
+      title: "Дюна",
+      author: "Фрэнк Герберт",
+      coverImageUrl: "https://example.com/cover.jpg",
+      description: "Эпопея о пустынной планете.",
+      genre: "Фантастика",
+      publishedYear: 1965,
+      isbn: null,
+      url: "https://bookstrata.ru/books/dyuna",
+    });
+
+    expect(ld).not.toHaveProperty("isbn");
   });
 });
 

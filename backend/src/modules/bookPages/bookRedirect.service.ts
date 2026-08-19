@@ -95,7 +95,7 @@ export function getPrerenderedBookPage(slug: string): string | null {
 export function buildSeoFallbackHtml(book: PublishedBookMeta): string {
   const siteUrl = config.CLIENT_URL;
   const pageUrl = `${siteUrl}/books/${book.slug}`;
-  const title = book.author ? `${book.title} — ${book.author} — описание и рейтинг` : `${book.title} — описание и рейтинг`;
+  const title = book.author ? `${book.title} — ${book.author}: описание и рейтинг` : `${book.title}: описание и рейтинг`;
   const description =
     book.description?.slice(0, 240) ??
     `Книга ${book.title}${book.author ? ` ${book.author}` : ""}: описание, жанр, рейтинг. Найди книги в тир-листах и подборках BookStrata.`;

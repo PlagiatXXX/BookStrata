@@ -58,6 +58,7 @@ export interface BookPageData {
     rating: number | null;
     likesCount: number;
     publishedYear: number | null;
+    isbn: string | null;
     contextChain: BookContextChainItem[] | null;
   };
   author: { id: number; name: string; slug: string | null } | null;

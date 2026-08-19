@@ -136,4 +136,31 @@ describe("SEOHead", () => {
 
     expect(document.querySelector('meta[property="article:modified_time"]')).toBeNull();
   });
+
+  it("при hideSiteName: title и document.title без бренда, og:title и twitter:title с брендом", () => {
+    render(
+      <SEOHead
+        title="Анна Каренина — Лев Толстой: описание и рейтинг"
+        url="/books/anna-karenina"
+        hideSiteName
+      />,
+    );
+
+    expect(document.title).toBe("Анна Каренина — Лев Толстой: описание и рейтинг");
+    expect(
+      document.querySelector('meta[property="og:title"]')?.getAttribute("content"),
+    ).toBe("Анна Каренина — Лев Толстой: описание и рейтинг | BookStrata");
+    expect(
+      document.querySelector('meta[name="twitter:title"]')?.getAttribute("content"),
+    ).toBe("Анна Каренина — Лев Толстой: описание и рейтинг | BookStrata");
+  });
+
+  it("без hideSiteName бренд добавляется и в title, и в og:title (текущее поведение)", () => {
+    render(<SEOHead title="Тир-листы книг" url="/tier-lists" />);
+
+    expect(document.title).toBe("Тир-листы книг | BookStrata");
+    expect(
+      document.querySelector('meta[property="og:title"]')?.getAttribute("content"),
+    ).toBe("Тир-листы книг | BookStrata");
+  });
 });

@@ -18,6 +18,8 @@ interface SEOHeadProps {
   author?: string;
   noindex?: boolean;
   breadcrumbs?: { name: string; url: string }[];
+  /** Не добавлять «| BookStrata» к <title> (страницы книг: место в выдаче важнее бренда). og:title/twitter:title всё равно получают бренд. */
+  hideSiteName?: boolean;
   /** Данные для Person JSON-LD (страницы людей: профили, знаменитости) */
   person?: {
     name: string;
@@ -90,10 +92,18 @@ export function SEOHead({
   noindex,
   breadcrumbs,
   person,
+  hideSiteName,
 }: SEOHeadProps) {
   // Убираем дублирование бренда: если title уже содержит | BookStrata, не добавляем повторно.
   const cleanTitle = title?.replace(new RegExp(`\\s*\\|\\s*${SITE_NAME}\\s*$`), "");
-  const pageTitle = cleanTitle ? `${cleanTitle} | ${SITE_NAME}` : `Интерактивный рейтинг книг — топ лучших книг и что почитать | ${SITE_NAME}`;
+  // <title> без бренда при hideSiteName (место в выдаче), иначе — с брендом.
+  const pageTitle = cleanTitle
+    ? hideSiteName
+      ? cleanTitle
+      : `${cleanTitle} | ${SITE_NAME}`
+    : `Интерактивный рейтинг книг — топ лучших книг и что почитать | ${SITE_NAME}`;
+  // Соцсети всегда получают бренд: узнаваемость при шаринге не зависит от сниппета.
+  const socialTitle = cleanTitle ? `${cleanTitle} | ${SITE_NAME}` : pageTitle;
   const pageUrl = url ? `${SITE_URL}${url}` : SITE_URL;
   const imageUrl = image.startsWith("http") ? image : new URL(image, SITE_URL).href;
 
@@ -131,14 +141,14 @@ export function SEOHead({
     };
 
     setMeta('meta[name="description"]', "content", description);
-    setMeta('meta[property="og:title"]', "content", pageTitle);
+    setMeta('meta[property="og:title"]', "content", socialTitle);
     setMeta('meta[property="og:description"]', "content", description);
     setMeta('meta[property="og:image"]', "content", imageUrl);
     setMeta('meta[property="og:image:width"]', "content", "1200");
     setMeta('meta[property="og:image:height"]', "content", "630");
     setMeta('meta[property="og:url"]', "content", pageUrl);
     setMeta('meta[property="og:type"]', "content", type);
-    setMeta('meta[name="twitter:title"]', "content", pageTitle);
+    setMeta('meta[name="twitter:title"]', "content", socialTitle);
     setMeta('meta[name="twitter:description"]', "content", description);
     setMeta('meta[name="twitter:image"]', "content", imageUrl);
     setMeta('meta[name="twitter:image:alt"]', "content", description);
@@ -153,7 +163,7 @@ export function SEOHead({
     }
 
     setLink('link[rel="canonical"]', "href", pageUrl);
-  }, [pageTitle, description, imageUrl, pageUrl, type, noindex, title]);
+  }, [pageTitle, socialTitle, description, imageUrl, pageUrl, type, noindex, title]);
 
   const breadcrumbJsonLd = breadcrumbs?.length
     ? {
@@ -216,7 +226,7 @@ export function SEOHead({
       <meta name="description" content={description} />
 
       <meta property="og:type" content={type} />
-      <meta property="og:title" content={pageTitle} />
+      <meta property="og:title" content={socialTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={imageUrl} />
       <meta property="og:image:width" content="1200" />
@@ -226,7 +236,7 @@ export function SEOHead({
       <meta property="og:locale" content="ru_RU" />
 
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:title" content={socialTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={imageUrl} />
       <meta name="twitter:image:alt" content={description} />

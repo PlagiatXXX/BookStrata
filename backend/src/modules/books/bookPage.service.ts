@@ -39,6 +39,7 @@ export interface BookPageData {
     rating: number | null;
     likesCount: number;
     publishedYear: number | null;
+    isbn: string | null;
     contextChain: unknown;
   };
   author: { id: number; name: string; slug: string | null } | null;
@@ -62,7 +63,7 @@ export async function getBookPageData(
   slug: string,
   userId?: number,
 ): Promise<BookPageData | { redirectTo: string } | null> {
-  let book = await prisma.book.findUnique({
+  const book = await prisma.book.findUnique({
     where: { slug },
     select: {
       id: true,
@@ -78,6 +79,7 @@ export async function getBookPageData(
       rating: true,
       likesCount: true,
       publishedYear: true,
+      isbn: true,
       contextChain: true,
       mergedIntoId: true,
       authorRel: { select: { id: true, name: true, slug: true } },
@@ -219,6 +221,7 @@ export async function getBookPageData(
       rating: book.rating,
       likesCount: book.likesCount,
       publishedYear: book.publishedYear,
+      isbn: book.isbn,
       contextChain: book.contextChain,
     },
     author: book.authorRel,

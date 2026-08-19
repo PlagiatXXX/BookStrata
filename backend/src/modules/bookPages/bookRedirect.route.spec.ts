@@ -115,9 +115,9 @@ describe("GET /books/:slug (публичный роут)", () => {
     const res = await request(app.server).get("/books/anna-karenina-lev-tolstoj");
 
     expect(res.status).toBe(200);
-    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой — описание и рейтинг</title>");
+    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой: описание и рейтинг</title>");
     expect(res.text).toContain('<link rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj" />');
-    expect(res.text).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой — описание и рейтинг" />');
+    expect(res.text).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой: описание и рейтинг" />');
     expect(res.text).toContain('content="Роман о любви и обществе."');
     expect(res.text).toContain('<meta property="og:image" content="/covers/anna.jpg" />');
     expect(res.text).toContain('<div id="root"></div>');
@@ -135,10 +135,10 @@ describe("GET /books/:slug (публичный роут)", () => {
     const res = await request(app.server).get("/books/anna-karenina-lev-tolstoj");
 
     expect(res.status).toBe(200);
-    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой — описание и рейтинг</title>");
+    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой: описание и рейтинг</title>");
     expect(res.text).toContain('<meta name="description" content="Роман о любви и обществе." />');
     expect(res.text).toContain('<link rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj" />');
-    expect(res.text).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой — описание и рейтинг" />');
+    expect(res.text).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой: описание и рейтинг" />');
     expect(res.text).toContain('<meta name="robots" content="index, follow" />');
     expect(res.text).toContain('<div id="root"></div>');
   });
@@ -151,7 +151,7 @@ describe("GET /books/:slug (публичный роут)", () => {
     const res = await request(app.server).get("/books/anna-karenina-lev-tolstoj");
 
     expect(res.status).toBe(200);
-    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой — описание и рейтинг</title>");
+    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой: описание и рейтинг</title>");
     expect(res.text).toContain('rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj"');
     mocks.config.DIST_DIR = "/app/dist";
   });
