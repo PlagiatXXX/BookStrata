@@ -21,6 +21,7 @@ import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import { getDemoInitialData } from "./_initialData";
 import { buildTierListSeoDescription, buildTierListSeoTitle } from "./seo";
+import { getBookViewAction } from "./bookClick";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { AiLibrarianWidget } from "@/components/AiLibrarian/AiLibrarianWidget";
@@ -585,6 +586,11 @@ const TierListEditorContent = () => {
   };
 
   const handleViewBook = (book: Book) => {
+    const target = getBookViewAction(book, tierListId, isReadOnly);
+    if (target.type === "navigate") {
+      navigate(target.path);
+      return;
+    }
     setBookToView(book);
   };
 
