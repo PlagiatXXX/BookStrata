@@ -17,6 +17,18 @@ vi.mock("../../lib/sanitizer.js", () => ({
   sanitize: (input: string) => input,
 }))
 
+vi.mock("../../lib/upload.js", () => ({
+  uploadBase64: vi.fn(),
+}))
+
+vi.mock("../../lib/nsfw-check.js", () => ({
+  assertImageAllowed: vi.fn(),
+}))
+
+vi.mock("../../lib/validators.js", () => ({
+  validateImageSize: vi.fn(),
+}))
+
 vi.mock("../../middleware/requireRole.js", () => ({
   requireRole: (...roles: string[]) => {
     return (request: any, _reply: any, done: any) => {
@@ -243,6 +255,94 @@ describe("News Routes", () => {
         .expect(200)
 
       expect(res.body.data.message).toBe("Статус публикации изменён")
+    })
+  })
+
+  describe("POST /api/news/upload-image", () => {
+    const base64 = "data:image/png;base64,iVBORw0KGgo="
+
+    it("должен загрузить изображение и вернуть URL (admin)", async () => {
+      const { uploadBase64 } = await import("../../lib/upload.js")
+      const { assertImageAllowed } = await import("../../lib/nsfw-check.js")
+      const { validateImageSize } = await import("../../lib/validators.js")
+
+      vi.mocked(validateImageSize).mockReturnValue(null)
+      vi.mocked(assertImageAllowed).mockResolvedValue(null)
+      vi.mocked(uploadBase64).mockResolvedValue({ url: "https://cdn.example.com/news/1.webp", publicId: "1" } as any)
+
+      const res = await request(app.server)
+        .post("/api/news/upload-image")
+        .set("Authorization", "Bearer admin-token")
+        .send({ imageUrl: base64 })
+        .expect(200)
+
+      expect(res.body.data.imageUrl).toBe("https://cdn.example.com/news/1.webp")
+      expect(uploadBase64).toHaveBeenCalledWith(base64, "tiermaker-pro/news-images")
+      expect(assertImageAllowed).toHaveBeenCalledWith(base64)
+    })
+
+    it("должен вернуть 400 при не-base64 данных", async () => {
+      const res = await request(app.server)
+        .post("/api/news/upload-image")
+        .set("Authorization", "Bearer admin-token")
+        .send({ imageUrl: "https://example.com/pic.jpg" })
+        .expect(400)
+
+      expect(res.body.error.code).toBe("invalid_format")
+    })
+
+    it("должен вернуть 400 при превышении размера", async () => {
+      const { validateImageSize } = await import("../../lib/validators.js")
+      vi.mocked(validateImageSize).mockReturnValue("Файл слишком большой")
+
+      const res = await request(app.server)
+        .post("/api/news/upload-image")
+        .set("Authorization", "Bearer admin-token")
+        .send({ imageUrl: base64 })
+        .expect(400)
+
+      expect(res.body.error.code).toBe("validation_error")
+    })
+
+    it("должен вернуть 400 при NSFW-контенте", async () => {
+      const { validateImageSize } = await import("../../lib/validators.js")
+      const { assertImageAllowed } = await import("../../lib/nsfw-check.js")
+
+      vi.mocked(validateImageSize).mockReturnValue(null)
+      vi.mocked(assertImageAllowed).mockResolvedValue("Изображение содержит NSFW-контент")
+
+      const res = await request(app.server)
+        .post("/api/news/upload-image")
+        .set("Authorization", "Bearer admin-token")
+        .send({ imageUrl: base64 })
+        .expect(400)
+
+      expect(res.body.error.code).toBe("nsfw_content")
+    })
+
+    it("должен вернуть 500 при ошибке хранилища", async () => {
+      const { validateImageSize } = await import("../../lib/validators.js")
+      const { assertImageAllowed } = await import("../../lib/nsfw-check.js")
+      const { uploadBase64 } = await import("../../lib/upload.js")
+
+      vi.mocked(validateImageSize).mockReturnValue(null)
+      vi.mocked(assertImageAllowed).mockResolvedValue(null)
+      vi.mocked(uploadBase64).mockRejectedValue(new Error("S3 down"))
+
+      const res = await request(app.server)
+        .post("/api/news/upload-image")
+        .set("Authorization", "Bearer admin-token")
+        .send({ imageUrl: base64 })
+        .expect(500)
+
+      expect(res.body.error.code).toBe("upload_failed")
+    })
+
+    it("должен вернуть 403 без роли", async () => {
+      await request(app.server)
+        .post("/api/news/upload-image")
+        .send({ imageUrl: base64 })
+        .expect(403)
     })
   })
 })

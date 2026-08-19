@@ -4,6 +4,9 @@ import { NewsService } from "./news.service.js";
 import { createLogger } from "../../lib/logger.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { ErrorCodes, createApiError } from "../../lib/api-response.js";
+import { uploadBase64 } from "../../lib/upload.js";
+import { assertImageAllowed } from "../../lib/nsfw-check.js";
+import { validateImageSize } from "../../lib/validators.js";
 
 const logger = createLogger("NewsRoute", { color: "cyan" });
 
@@ -144,6 +147,40 @@ return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошиб�
         }
 
         return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при создании новости"));
+      }
+    },
+  );
+
+  /**
+   * POST /api/news/upload-image
+   * Загрузить изображение для новости (base64 → хранилище, NSFW-проверка)
+   */
+  fastify.post(
+    "/upload-image",
+    { preHandler: requireRole("admin", "moderator") },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { imageUrl } = request.body as { imageUrl: string };
+
+        if (!imageUrl || !imageUrl.startsWith("data:")) {
+          return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Invalid image format"));
+        }
+
+        const sizeError = validateImageSize(imageUrl);
+        if (sizeError) {
+          return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, sizeError));
+        }
+
+        const nsfwError = await assertImageAllowed(imageUrl);
+        if (nsfwError) {
+          return reply.code(400).send(createApiError(ErrorCodes.NSFW_CONTENT, nsfwError));
+        }
+
+        const uploadResult = await uploadBase64(imageUrl, "tiermaker-pro/news-images");
+        return reply.code(200).send({ data: { imageUrl: uploadResult.url } });
+      } catch (error) {
+        logger.error("Ошибка загрузки изображения новости", { error });
+        return reply.code(500).send(createApiError(ErrorCodes.UPLOAD_FAILED, "Failed to upload image"));
       }
     },
   );
