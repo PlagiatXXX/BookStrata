@@ -28,6 +28,7 @@ export interface DedupeBook {
   id: number;
   title: string;
   authorId: number | null;
+  userId: number | null;
   slug: string | null;
   coverImageUrl: string;
   description: string | null;
@@ -66,6 +67,7 @@ export async function collectDuplicateGroups(): Promise<DuplicateGroup[]> {
       id: true,
       title: true,
       authorId: true,
+      userId: true,
       slug: true,
       coverImageUrl: true,
       description: true,
@@ -93,6 +95,11 @@ export async function collectDuplicateGroups(): Promise<DuplicateGroup[]> {
   const groups = new Map<string, DuplicateGroup>();
 
   for (const b of books) {
+    // Личные книги пользователей (userId != null) — имущество владельца,
+    // в дедупе каталога не участвуют: склейка уничтожила бы их обложку/запись
+    // (единый каталог, 19.08).
+    if (b.userId != null) continue;
+
     // Группировка по (source, externalId) для внешних книг
     let key: string;
     if (b.externalId && b.source) {
@@ -109,6 +116,7 @@ export async function collectDuplicateGroups(): Promise<DuplicateGroup[]> {
       id: b.id,
       title: b.title,
       authorId: b.authorId,
+      userId: b.userId,
       slug: b.slug,
       coverImageUrl: b.coverImageUrl,
       description: b.description,
@@ -224,9 +232,22 @@ export async function mergeGroup(
         select: { tierListId: true, bookId: true },
       });
       if (exists) continue; // канон уже в листе — не дублируем
+
+      // Личная обложка дубля (книга пользователя, userId) не должна потеряться
+      // при склейке: переносим её в placement, если у вхождения своей обложки
+      // нет и обложка дубля отличается от каноновой (единый каталог, 19.08).
+      const updateData: Record<string, unknown> = { bookId: canon.id };
+      if (
+        p.coverImageUrl == null &&
+        dup.userId != null &&
+        dup.coverImageUrl &&
+        dup.coverImageUrl !== canon.coverImageUrl
+      ) {
+        updateData.coverImageUrl = dup.coverImageUrl;
+      }
       await prisma.bookPlacement.update({
         where: { tierListId_bookId: { tierListId: p.tierListId, bookId: dup.id } },
-        data: { bookId: canon.id },
+        data: updateData,
       });
     }
 

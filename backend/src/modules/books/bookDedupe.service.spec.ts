@@ -61,6 +61,7 @@ interface RawBook {
   id: number;
   title: string;
   authorId: number | null;
+  userId: number | null;
   slug: string | null;
   coverImageUrl: string;
   description: string | null;
@@ -80,6 +81,7 @@ function rawBook(partial: Partial<RawBook>): RawBook {
     id: 1,
     title: "Война и мир",
     authorId: 10,
+    userId: null,
     slug: null,
     coverImageUrl: "/cover.jpg",
     description: "desc",
@@ -157,6 +159,19 @@ describe("collectDuplicateGroups", () => {
     expect(groups[0]!.key).toBe("local:аноним:0");
     expect(groups[0]!.books.map((b) => b.id).sort()).toEqual([1, 2]);
   });
+
+  it("НЕ группирует личные книги пользователей (userId != null) — они вне каталога", async () => {
+    (prisma.book.findMany as any).mockResolvedValue([
+      rawBook({ id: 1, title: "1984", authorId: 5, userId: null }),
+      rawBook({ id: 2, title: "1984", authorId: 5, userId: 7 }), // личная книга из тир-листа
+      rawBook({ id: 3, title: "1984", authorId: 5, userId: 8 }), // личная книга другого пользователя
+    ]);
+
+    const groups = await collectDuplicateGroups();
+
+    // Две личные книги с одним названием НЕ образуют группу дублей каталога
+    expect(groups.length).toBe(0);
+  });
 });
 
 describe("pickCanon", () => {
@@ -215,6 +230,7 @@ describe("mergeGroup", () => {
     id,
     title: `book-${id}`,
     authorId: 1,
+    userId: null,
     slug: null,
     coverImageUrl: "/a.jpg",
     description: null,
@@ -278,6 +294,73 @@ describe("mergeGroup", () => {
       data: { bookId: 1 },
     });
     expect(prisma.book.delete).toHaveBeenCalledWith({ where: { id: 2 } });
+  });
+
+  it("переносит личную обложку дубля (userId) в placement — обложка пользователя не теряется", async () => {
+    const dup = groupBook(2);
+    dup.userId = 7; // личная книга пользователя
+    dup.coverImageUrl = "/user-cover.jpg";
+    const canon = groupBook(1);
+    canon.coverImageUrl = "/catalog-cover.jpg";
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([
+      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
+    ]);
+
+    await mergeGroup({ key: "local:book:1", books: [canon, dup] });
+
+    expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
+      where: { tierListId_bookId: { tierListId: "tl-1", bookId: 2 } },
+      data: { bookId: 1, coverImageUrl: "/user-cover.jpg" },
+    });
+  });
+
+  it("НЕ перезаписывает обложку placement, если у вхождения уже есть своя", async () => {
+    const dup = groupBook(2);
+    dup.userId = 7;
+    dup.coverImageUrl = "/user-cover.jpg";
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([
+      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: "/my-own.jpg" },
+    ]);
+
+    await mergeGroup(group);
+
+    expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
+      where: { tierListId_bookId: { tierListId: "tl-1", bookId: 2 } },
+      data: { bookId: 1 },
+    });
+  });
+
+  it("НЕ переносит обложку дубля, если она совпадает с обложкой канона", async () => {
+    const dup = groupBook(2);
+    dup.userId = 7;
+    dup.coverImageUrl = "/same.jpg";
+    const canon = groupBook(1);
+    canon.coverImageUrl = "/same.jpg";
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([
+      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
+    ]);
+
+    await mergeGroup({ key: "local:book:1", books: [canon, dup] });
+
+    expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
+      where: { tierListId_bookId: { tierListId: "tl-1", bookId: 2 } },
+      data: { bookId: 1 },
+    });
+  });
+
+  it("НЕ переносит обложку каталогового дубля (userId = null) — канон диктует обложку", async () => {
+    const dup = groupBook(2);
+    dup.coverImageUrl = "/another-edition.jpg"; // другая обложка издания
+    (prisma.bookPlacement.findMany as any).mockResolvedValue([
+      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
+    ]);
+
+    await mergeGroup(group);
+
+    expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
+      where: { tierListId_bookId: { tierListId: "tl-1", bookId: 2 } },
+      data: { bookId: 1 },
+    });
   });
 
   it("удаление дубля чистит его осиротевшую обложку", async () => {

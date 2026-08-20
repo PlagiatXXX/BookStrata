@@ -102,7 +102,7 @@ async function fetchDedupeBook(b: { id: number }): Promise<DedupeBook> {
   const withCounts = await prisma.book.findUniqueOrThrow({
     where: { id: b.id },
     select: {
-      id: true, title: true, authorId: true, slug: true, coverImageUrl: true,
+      id: true, title: true, authorId: true, userId: true, slug: true, coverImageUrl: true,
       description: true, publishedAt: true, status: true, createdAt: true,
       updatedAt: true,
       _count: {
@@ -118,6 +118,7 @@ async function fetchDedupeBook(b: { id: number }): Promise<DedupeBook> {
     id: withCounts.id,
     title: withCounts.title,
     authorId: withCounts.authorId,
+    userId: withCounts.userId,
     slug: withCounts.slug,
     coverImageUrl: withCounts.coverImageUrl,
     description: withCounts.description,

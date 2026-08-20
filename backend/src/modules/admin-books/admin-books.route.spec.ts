@@ -798,6 +798,35 @@ describe("Admin Books Routes", () => {
       expect(mocks.mergeGroup).not.toHaveBeenCalled();
     });
 
+    it("личную книгу пользователя (userId) склеить можно — обложка сохранится в placement", async () => {
+      mocks.prisma.book.findUnique
+        .mockResolvedValueOnce({ ...bookRow, id: 20, userId: 7, status: "draft" }) // личный дубль
+        .mockResolvedValueOnce({ ...bookRow, id: 10, status: "published" }); // каталог-канон
+      mocks.prisma.book.findUniqueOrThrow.mockResolvedValue({
+        id: 20,
+        title: "Анна Каренина",
+        authorId: 1,
+        userId: 7,
+        coverImageUrl: "",
+        description: null,
+        publishedAt: null,
+        status: "draft",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        _count: { placements: 0, ratings: 0, statuses: 0, collectionBooks: 0, celebrityBooks: 0, comments: 0, likes: 0 },
+      });
+      mocks.mergeGroup.mockResolvedValue(undefined);
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+
+      const res = await request(app.server)
+        .post("/api/admin/books/20/merge")
+        .set("Authorization", "Bearer admin-token")
+        .send({ targetId: 10 });
+
+      expect(res.status).toBe(200);
+      expect(mocks.mergeGroup).toHaveBeenCalled();
+    });
+
     it("уже поглощённая книга → 409", async () => {
       mocks.prisma.book.findUnique
         .mockResolvedValueOnce({ ...bookRow, id: 20, mergedIntoId: 10 })
