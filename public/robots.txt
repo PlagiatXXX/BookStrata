@@ -6,10 +6,13 @@ Disallow: /reset-password
 Disallow: /verify-email
 Disallow: /dashboard
 Disallow: /profile
+Disallow: /shelf
 Disallow: /users/
 Disallow: /admin
 Disallow: /oauth/
 Disallow: /api/
+Clean-param: template
+Clean-param: redirect
 
 User-agent: OAI-SearchBot
 Allow: /
@@ -19,10 +22,13 @@ Disallow: /reset-password
 Disallow: /verify-email
 Disallow: /dashboard
 Disallow: /profile
+Disallow: /shelf
 Disallow: /users/
 Disallow: /admin
 Disallow: /oauth/
 Disallow: /api/
+Clean-param: template
+Clean-param: redirect
 
 User-agent: GPTBot
 Allow: /
@@ -32,9 +38,12 @@ Disallow: /reset-password
 Disallow: /verify-email
 Disallow: /dashboard
 Disallow: /profile
+Disallow: /shelf
 Disallow: /users/
 Disallow: /admin
 Disallow: /oauth/
 Disallow: /api/
+Clean-param: template
+Clean-param: redirect
 
 Sitemap: https://bookstrata.ru/sitemap.xml

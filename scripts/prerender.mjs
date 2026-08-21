@@ -640,7 +640,7 @@ async function waitForContent(page, timeout = PAGE_TIMEOUT, routePath = '') {
  * Это нужно, потому что SEOHead устанавливает title через useEffect,
  * который отрабатывает после того, как Helmet обновит canonical/head.
  */
-async function waitForTitle(page, timeout = 5000) {
+async function waitForTitle(page, timeout = 1500) {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     const title = await page.title();
@@ -772,6 +772,13 @@ async function processRoute(browser, route) {
       body: JSON.stringify([]),
     }));
 
+    // Список коллекций в сайдбаре — не нужен для SEO отдельных страниц
+    await page.route("**/api/collections", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([]),
+    }));
+
     // Блокируем внешние запросы, не нужные при пререндере
     await page.route("**/sitemap.xml", (route) => route.abort());
     await page.route("**/sentry.io/**", (route) => route.abort());
@@ -806,7 +813,7 @@ async function processRoute(browser, route) {
             pendingApiRequests.delete(req.url());
             let resp;
             try { resp = await req.response(); } catch { resp = null; }
-            const status = resp ? resp.status : 'no-resp';
+            const status = resp ? resp.status() : 'no-resp';
             log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
             if (!resp) {
               log(`  ⚠️  Response object is null — request was likely aborted or failed silently`);
@@ -845,14 +852,11 @@ async function processRoute(browser, route) {
     // ── Дополнительно ждём обновления title (useEffect SEOHead) ──
     // После того как canonical/og-теги обновились (Helmet), нужно дать время
     // на установку document.title через useEffect в SEOHead.
-    // Для корневой страницы пропускаем — её title совпадает с дефолтным.
+    // Даём всего 1.5 секунды — если title не обновился за это время,
+    // он всё равно будет установлен, просто может не попасть в prerender.
+    // Ранее тратили 5+3=8 секунд на эту проверку — главная причина долгого пререндера.
     if (contentLoaded && route.path !== '/') {
-      const titleSet = await waitForTitle(page, 5000);
-      if (!titleSet) {
-        log(`  ⚠️ Title не обновился за 5 секунд, повторная проверка…`);
-        // Даём ещё шанс — ждём появления содержательного title ещё 3 секунды
-        await waitForTitle(page, 3000);
-      }
+      await waitForTitle(page, 1500);
     }
 
     // ── Fallback: если контент не загрузился ──
