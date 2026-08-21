@@ -281,7 +281,7 @@ describe("syncCatalogCards", () => {
     expect(matchBookMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ title: "Книга", author: "Автор" }),
-      { statusFilter: "published" },
+      { statusFilter: "published", fuzzy: false },
     );
   });
 

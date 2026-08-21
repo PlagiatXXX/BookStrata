@@ -75,7 +75,7 @@ interface BookSearchRow {
   rating: number | null;
   likesCount: number;
   publishedAt: Date | null;
-  updatedAt: Date;
+  updated_at: Date;
   mergedIntoId: number | null;
   source: string | null;
   externalId: string | null;
@@ -196,7 +196,7 @@ async function searchBooksByRelevance(params: BookListParams) {
       rating: r.rating,
       likesCount: r.likesCount,
       publishedAt: r.publishedAt,
-      updatedAt: r.updatedAt,
+      updatedAt: r.updated_at,
       mergedIntoId: r.mergedIntoId,
       source: r.source,
       externalId: r.externalId,

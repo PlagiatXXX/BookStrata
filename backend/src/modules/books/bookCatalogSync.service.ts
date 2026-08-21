@@ -161,7 +161,7 @@ export async function syncCatalogCards(
               author: card.author ?? null,
               authorId,
             },
-            { statusFilter: "published" },
+            { statusFilter: "published", fuzzy: false },
           );
           return {
             card,
