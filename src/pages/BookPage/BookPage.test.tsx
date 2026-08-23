@@ -151,11 +151,11 @@ describe("BookPage", () => {
     expect(screen.getByText("Читать полностью")).toBeTruthy();
     // Scroll-индикатор после hero
     expect(screen.getByText("Листай дальше")).toBeTruthy();
-    // Гостю нижний контент (тир-листы, подборки, знаменитости, обсуждение) скрыт
-    expect(screen.queryByText("Топ-100 классики")).toBeNull();
-    expect(screen.queryByText("Великие романы")).toBeNull();
-    expect(screen.queryByText("Стивен Кинг")).toBeNull();
-    expect(screen.queryByText("Обсуждение")).toBeNull();
+    // Гостю нижний контент теперь доступен (ContentLock временно отключен)
+    expect(screen.getByText("Топ-100 классики")).toBeTruthy();
+    expect(screen.getByText("Великие романы")).toBeTruthy();
+    expect(screen.getByText("Стивен Кинг")).toBeTruthy();
+    expect(screen.getByText("Обсуждение")).toBeTruthy();
   });
 
   it("крошки показывают тир-лист при ?from= (путь Тир-лист → Книга)", async () => {
@@ -167,10 +167,9 @@ describe("BookPage", () => {
     } as never);
     renderPage(["/books/velikij-getssbi?from=tl-1"]);
 
-    expect(await screen.findByRole("link", { name: "Топ-100 классики" })).toHaveAttribute(
-      "href",
-      "/tier-lists/tl-1",
-    );
+    // Крошечная ссылка (первая) ведёт на тир-лист по id
+    const links = await screen.findAllByRole("link", { name: "Топ-100 классики" });
+    expect(links[0]).toHaveAttribute("href", "/tier-lists/tl-1");
     // Звено «Книги» (по жанру) при ?from= не показывается — путь идёт от тир-листа
     expect(screen.queryByRole("link", { name: "Роман" })).toBeNull();
   });
@@ -184,10 +183,9 @@ describe("BookPage", () => {
     } as never);
     renderPage(["/books/velikij-getssbi?from=top-100"]);
 
-    expect(await screen.findByRole("link", { name: "Топ-100 классики" })).toHaveAttribute(
-      "href",
-      "/tier-lists/tl-1",
-    );
+    // Крошечная ссылка (первая) ведёт на тир-лист по id
+    const links = await screen.findAllByRole("link", { name: "Топ-100 классики" });
+    expect(links[0]).toHaveAttribute("href", "/tier-lists/tl-1");
   });
 
   it("«Хочу прочитать» добавляет книгу на полку (want_to_read)", async () => {
@@ -282,7 +280,7 @@ describe("BookPage", () => {
     expect(screen.queryByText("Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы")).toBeNull();
   });
 
-  it("гостю: вместо всего нижнего контента — цепь с замком и CTA", async () => {
+  it("гостю: весь контент страницы доступен (ContentLock временно отключен)", async () => {
     mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
     mockedUseBook.mockReturnValue({
       data: bookPageData,
@@ -297,17 +295,14 @@ describe("BookPage", () => {
       expect(screen.getByText("Роман, ставший символом века джаза.")).toBeTruthy();
     });
     expect(screen.getByText("Читать полностью")).toBeTruthy();
-    // Один замок на всю ширину с надписью «зарегистрируйтесь»
-    expect(
-      screen.getAllByText("Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы").length,
-    ).toBe(1);
-    expect(screen.getAllByText("Создать аккаунт").length).toBe(1);
-    expect(screen.getAllByText("Войти").length).toBe(1);
-    // Весь нижний контент исчез: ни тир-листов, ни подборок, ни обсуждения
-    expect(screen.queryByText("Топ-100 классики")).toBeNull();
-    expect(screen.queryByText("Великие романы")).toBeNull();
-    expect(screen.queryByText("Стивен Кинг")).toBeNull();
-    expect(screen.queryByText("Обсуждение")).toBeNull();
+    // Нижний контент доступен: тир-листы, подборки, знаменитости, обсуждение
+    expect(screen.getByText("Топ-100 классики")).toBeTruthy();
+    expect(screen.getByText("Великие романы")).toBeTruthy();
+    expect(screen.getByText("Стивен Кинг")).toBeTruthy();
+    expect(screen.getByText("Обсуждение")).toBeTruthy();
+    // Замка и CTA регистрации нет
+    expect(screen.queryByText("Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы")).toBeNull();
+    expect(screen.queryByText("Создать аккаунт")).toBeNull();
   });
 
   it("авторизованному виден весь нижний контент без CTA регистрации", async () => {
