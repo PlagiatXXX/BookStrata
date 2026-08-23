@@ -27,6 +27,7 @@ import { BookContextChain } from "./BookContextChain";
 // import { ContentLock } from "./ContentLock"; // TODO: временно отключено для开放 доступа к страницам книг
 import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
+import { BookSignUpCta } from "./BookSignUpCta";
 import "./BookPage.css";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
@@ -557,6 +558,9 @@ export default function BookPage() {
 
           {/* ── Обсуждение ── */}
           <BookComments slug={slug!} initialItems={comments.items} initialTotal={comments.total} />
+
+          {/* ── Призыв к регистрации для гостей ── */}
+          <BookSignUpCta redirectTo={`/books/${slug}`} />
         {/* </ContentLock> */}
       </main>
 

@@ -300,9 +300,10 @@ describe("BookPage", () => {
     expect(screen.getByText("Великие романы")).toBeTruthy();
     expect(screen.getByText("Стивен Кинг")).toBeTruthy();
     expect(screen.getByText("Обсуждение")).toBeTruthy();
-    // Замка и CTA регистрации нет
+    // Старого CTA (ContentLock) нет, но есть новый BookSignUpCta
     expect(screen.queryByText("Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы")).toBeNull();
-    expect(screen.queryByText("Создать аккаунт")).toBeNull();
+    expect(screen.getByText("Присоединяйтесь к BookStrata")).toBeTruthy();
+    expect(screen.getByText("Создать аккаунт")).toBeTruthy();
   });
 
   it("авторизованному виден весь нижний контент без CTA регистрации", async () => {
