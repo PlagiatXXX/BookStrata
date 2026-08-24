@@ -53,6 +53,7 @@ const BOOK_LIST_SELECT = {
   coverImageUrl: true,
   rating: true,
   likesCount: true,
+  isTrending: true,
   publishedAt: true,
   updatedAt: true,
   mergedIntoId: true,
@@ -349,6 +350,7 @@ export async function getBookAdmin(id: number) {
       isbn: true,
       rating: true,
       likesCount: true,
+      isTrending: true,
       contextChain: true,
       source: true,
       externalId: true,
@@ -372,6 +374,7 @@ export interface BookUpdateInput {
   publishedYear?: number | null;
   slug?: string;
   contextChain?: Array<{ icon: string; title: string; text: string }> | null;
+  isTrending?: boolean;
 }
 
 export class AdminBookError extends Error {
@@ -428,6 +431,7 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
       ? (data.contextChain as unknown as Prisma.InputJsonValue)
       : Prisma.JsonNull;
   }
+  if (data.isTrending !== undefined) updateData.isTrending = data.isTrending;
 
   // Смена slug: уникальность + история для published
   if (data.slug !== undefined && data.slug.trim() !== book.slug) {

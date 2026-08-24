@@ -32,6 +32,7 @@ export interface AdminBookListItem {
   /** Названия тир-листов, где книга размещена (≤5) */
   tierListNames: string[];
   _count: { comments: number; placements: number };
+  isTrending: boolean;
 }
 
 export interface AdminBookDetail extends AdminBookListItem {
@@ -67,6 +68,7 @@ export interface BookUpdateInput {
   publishedYear?: number | null;
   slug?: string;
   contextChain?: ContextChainItem[] | null;
+  isTrending?: boolean;
 }
 
 export interface AdminComment {

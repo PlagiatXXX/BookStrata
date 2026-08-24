@@ -147,3 +147,18 @@ export async function addBookToTierList(
 ): Promise<BookPlacementResult> {
   return apiClient.post<BookPlacementResult>(`/books/${slug}/tier-lists`, { tierListId });
 }
+
+/** Книга в блоке «Тренды недели» на /rankings */
+export interface TrendingBook {
+  id: number;
+  slug: string | null;
+  title: string;
+  author: string | null;
+  coverImageUrl: string;
+}
+
+/** Получить трендовые книги (admin отмечает через isTrending) */
+export async function getTrendingBooks(): Promise<TrendingBook[]> {
+  const { books } = await apiClient.get<{ books: TrendingBook[] }>("/books/trending");
+  return books;
+}

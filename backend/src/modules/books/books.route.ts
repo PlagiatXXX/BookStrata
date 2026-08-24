@@ -1,6 +1,7 @@
 // backend/src/modules/books/books.route.ts
 import type { FastifyInstance } from "fastify";
 import { searchBooks } from "./books.service.js";
+import { getTrendingBooks } from "./trending.service.js";
 import { getBookPageData } from "./bookPage.service.js";
 import { toggleBookLike } from "./bookLike.service.js";
 import {
@@ -20,6 +21,13 @@ import { authMiddleware } from "../auth/auth.middleware.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 export async function booksRoutes(fastify: FastifyInstance) {
+  // GET /api/books/trending — трендовые книги недели
+  fastify.get("/trending", async (_request, reply) => {
+    const books = await getTrendingBooks();
+    reply.header("Cache-Control", "public, max-age=300, s-maxage=600");
+    return reply.send(createSuccessResponse({ books }));
+  });
+
   // GET /api/books/search?q=<query>
   fastify.get<{
     Querystring: { q: string; startIndex?: number };

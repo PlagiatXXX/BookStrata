@@ -279,6 +279,18 @@ export function BookEditModal({
           </p>
         )}
 
+        <label className="mt-5 flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.isTrending ?? book.isTrending ?? false}
+            onChange={(e) => setForm((prev) => ({ ...prev, isTrending: e.target.checked }))}
+            className="h-4 w-4 rounded accent-(--accent-main)"
+          />
+          <span className="text-sm text-(--ink-1)">
+            В тренде недели (блок «Тренды» на /rankings)
+          </span>
+        </label>
+
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-(--ink-3) pt-4">
           <button
             onClick={() =>

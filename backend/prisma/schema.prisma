@@ -114,6 +114,7 @@ isbn            String?         // ISBN издания (для affiliate — э�
 publishedYear   Int?            // Год издания; обязателен для published (решение 13.08)
 rating          Float?          // Рейтинг каталога 0–10; синхронизируется из последней сохранённой коллекции/знаменитости (last write wins)
 likesCount      Int             @default(0) // Счётчик лайков (денормализация)
+isTrending      Boolean         @default(false) @map("is_trending")
 mergedIntoId    Int?            // Аудит дедупа: id книги-канона, поглотившего эту запись (иная запись)
 contextChain    Json?           // Редакторский блок «Погружение в контекст»: [{ icon, title, text }]
 user            User?           @relation(fields: [userId], references: [id], onDelete: Cascade)

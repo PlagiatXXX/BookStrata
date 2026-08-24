@@ -52,6 +52,7 @@ const bookRow: AdminBookListItem = {
   ownerUsername: null,
   tierListNames: [],
   _count: { comments: 2, placements: 0 },
+  isTrending: false,
 };
 
 const bookDetail = {
