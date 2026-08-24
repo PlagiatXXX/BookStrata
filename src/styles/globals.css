@@ -30,8 +30,9 @@
   --global-border: #000000;
   --global-border-width: 2px;
   --global-shadow-offset: 2px;
-  --global-font-display: "Space Grotesk", sans-serif;
-  --global-font-body: "Manrope", sans-serif;
+  --global-font-display: "Montserrat", "Space Grotesk", sans-serif;
+  --global-font-body: "Onest", "Manrope", sans-serif;
+  --global-font-mono: "JetBrains Mono", ui-monospace, monospace;
   --global-surface-lowest: #000000;
   --global-surface-low: #1a1a1a;
   --global-surface-mid: #111111;
@@ -78,8 +79,9 @@
   --color-primary: #8b5cf6;
 
   /* ── Font families ── */
-  --font-body: "Manrope", system-ui, -apple-system, sans-serif;
-  --font-display: "Space Grotesk", "Manrope", system-ui, sans-serif;
+  --font-body: "Onest", "Manrope", system-ui, -apple-system, sans-serif;
+  --font-display: "Montserrat", "Space Grotesk", "Manrope", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* ── Fluid type scale ── */
   --text-xs: clamp(0.75rem, 0.7rem + 0.15vw, 0.8125rem);
@@ -462,4 +464,141 @@ body {
 #ym-informer,
 .ym-widget-informer {
   display: none !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   Celestial Neo-Futurism — неон-утилиты для /rankings
+   ══════════════════════════════════════════════════════ */
+
+/* Неон-рамки — яркие с сильным свечением */
+.neon-border-cyan {
+  border: 1px solid #00dbe9;
+  box-shadow: 0 0 12px rgba(0, 219, 233, 0.6), 0 0 30px rgba(0, 219, 233, 0.3), 0 0 60px rgba(0, 219, 233, 0.15);
+  transition: box-shadow 0.3s ease;
+}
+.neon-border-cyan:hover {
+  box-shadow: 0 0 15px rgba(0, 219, 233, 0.8), 0 0 40px rgba(0, 219, 233, 0.5), 0 0 80px rgba(0, 219, 233, 0.25);
+}
+
+.neon-border-pink {
+  border: 1px solid #ecb2ff;
+  box-shadow: 0 0 12px rgba(236, 178, 255, 0.6), 0 0 30px rgba(236, 178, 255, 0.3), 0 0 60px rgba(236, 178, 255, 0.15);
+  transition: box-shadow 0.3s ease;
+}
+.neon-border-pink:hover {
+  box-shadow: 0 0 15px rgba(236, 178, 255, 0.8), 0 0 40px rgba(236, 178, 255, 0.5), 0 0 80px rgba(236, 178, 255, 0.25);
+}
+
+.neon-border-magenta {
+  border: 1px solid #bd00ff;
+  box-shadow: 0 0 12px rgba(189, 0, 255, 0.6), 0 0 30px rgba(189, 0, 255, 0.3), 0 0 60px rgba(189, 0, 255, 0.15);
+  transition: box-shadow 0.3s ease;
+}
+.neon-border-magenta:hover {
+  box-shadow: 0 0 15px rgba(189, 0, 255, 0.8), 0 0 40px rgba(189, 0, 255, 0.5), 0 0 80px rgba(189, 0, 255, 0.25);
+}
+
+.neon-border-gold {
+  border: 1px solid #ffba20;
+  box-shadow: 0 0 12px rgba(255, 186, 32, 0.6), 0 0 30px rgba(255, 186, 32, 0.3), 0 0 60px rgba(255, 186, 32, 0.15);
+  transition: box-shadow 0.3s ease;
+}
+.neon-border-gold:hover {
+  box-shadow: 0 0 15px rgba(255, 186, 32, 0.8), 0 0 40px rgba(255, 186, 32, 0.5), 0 0 80px rgba(255, 186, 32, 0.25);
+}
+
+/* Текстовые свечения */
+.text-glow {
+  text-shadow: 0 0 15px rgba(236, 178, 255, 0.9), 0 0 40px rgba(236, 178, 255, 0.5), 0 0 80px rgba(236, 178, 255, 0.2);
+}
+
+.text-glow-subtle {
+  text-shadow: 0 0 10px rgba(224, 225, 244, 0.6), 0 0 25px rgba(224, 225, 244, 0.2);
+}
+
+/* Glass-эффект */
+.glass-card {
+  background: linear-gradient(180deg, rgba(31, 34, 46, 0.6) 0%, rgba(10, 13, 26, 0.9) 100%);
+  backdrop-filter: blur(12px);
+}
+
+/* Cover glow для обложек — яркое неоновое свечение */
+.cover-glow {
+  filter: drop-shadow(0 0 15px rgba(236, 178, 255, 0.6)) drop-shadow(0 0 30px rgba(236, 178, 255, 0.3));
+}
+
+/* Скрытие скроллбара */
+.rankings-no-scrollbar::-webkit-scrollbar { display: none; }
+.rankings-no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Звёздный фон для CTA-секции — CSS-космос */
+.rankings-starry-bg {
+  background:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 15%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 25%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 85% 40%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 70%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 50% 55%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 75%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 65%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 55%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 5% 85%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 80%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(ellipse at 20% 50%, rgba(189, 0, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 30%, rgba(0, 219, 233, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(236, 178, 255, 0.06) 0%, transparent 40%),
+    #0a0d1a;
+}
+
+/* Кометы */
+.rankings-comet {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rankings-comet-1 {
+  top: 20%;
+  animation: comet-fly 8s linear infinite;
+  animation-delay: 0s;
+}
+
+.rankings-comet-2 {
+  top: 60%;
+  animation: comet-fly 12s linear infinite;
+  animation-delay: 4s;
+}
+
+@keyframes comet-fly {
+  0% {
+    left: -5%;
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    left: 105%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rankings-comet {
+    animation: none;
+    opacity: 0;
+  }
 }
