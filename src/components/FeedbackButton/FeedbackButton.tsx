@@ -208,7 +208,7 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
       )}
 
       {/* Плавающее меню */}
-      <div className={`fixed right-6 z-50 flex flex-col items-end gap-3 ${withNavMargin ? "bottom-[80px] md:bottom-6" : "bottom-6"} ${raised ? "bottom-16 lg:bottom-6" : ""}`}>
+      <div className={`fixed right-6 z-50 flex flex-col items-end gap-1.5 md:gap-3 ${withNavMargin ? "bottom-[80px] md:bottom-6" : "bottom-6"} ${raised ? "bottom-16 lg:bottom-6" : ""}`}>
         <AnimatePresence>
           {isMenuOpen && (
             <>
@@ -221,17 +221,17 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="flex items-center gap-3"
               >
-                <span className="text-sm text-gray-300 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg whitespace-nowrap">
+                <span className="text-xs md:text-sm text-gray-300 bg-black/60 backdrop-blur-sm px-2 py-1 md:px-3 md:py-1.5 rounded-lg whitespace-nowrap">
                   О проекте
                 </span>
                 <button
                   data-analytics="cta.feedback.about"
                   onClick={handleAbout}
-                  className="w-14 h-14 bg-linear-to-r from-sky-500 to-indigo-500 rounded-full shadow-2xl shadow-sky-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer shrink-0"
+                  className="w-7 h-7 md:w-14 md:h-14 bg-linear-to-r from-sky-500 to-indigo-500 rounded-full shadow-2xl shadow-sky-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer shrink-0"
                   aria-label="О проекте"
                   title="О проекте"
                 >
-                  <HelpCircle size={24} className="text-white" />
+                  <HelpCircle className="w-3 h-3 md:w-6 md:h-6 text-white" />
                 </button>
               </motion.div>
 
@@ -244,17 +244,17 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
                 transition={{ duration: 0.2, ease: "easeOut", delay: 0.05 }}
                 className="flex items-center gap-3"
               >
-                <span className="text-sm text-gray-300 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg whitespace-nowrap">
+                <span className="text-xs md:text-sm text-gray-300 bg-black/60 backdrop-blur-sm px-2 py-1 md:px-3 md:py-1.5 rounded-lg whitespace-nowrap">
                   Обратная связь
                 </span>
                 <button
                   data-analytics="cta.feedback.open"
                   onClick={handleFeedback}
-                  className="w-14 h-14 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-2xl shadow-violet-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer shrink-0"
+                  className="w-7 h-7 md:w-14 md:h-14 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-2xl shadow-violet-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer shrink-0"
                   aria-label="Обратная связь"
                   title="Обратная связь"
                 >
-                  <MessageCircle size={24} className="text-white" />
+                  <MessageCircle className="w-3 h-3 md:w-6 md:h-6 text-white" />
                 </button>
               </motion.div>
             </>
@@ -265,7 +265,7 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
         <button
           data-analytics="cta.feedback.toggle_menu"
           onClick={toggleMenu}
-          className="w-14 h-14 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-2xl shadow-violet-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer relative"
+          className="w-7 h-7 md:w-14 md:h-14 bg-linear-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-2xl shadow-violet-900/50 flex items-center justify-center hover:scale-105 transition-all cursor-pointer relative"
           aria-label={isMenuOpen ? "Закрыть меню" : "Меню"}
           title={isMenuOpen ? "Закрыть" : "Меню"}
         >
@@ -278,7 +278,7 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
                 exit={{ rotate: 90, opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
-                <X size={24} className="text-white" />
+                <X className="w-3 h-3 md:w-6 md:h-6 text-white" />
               </motion.span>
             ) : (
               <motion.span
@@ -288,7 +288,7 @@ export function FeedbackButton({ raised = false, withNavMargin = true }: Feedbac
                 exit={{ rotate: -90, opacity: 0 }}
                 transition={{ duration: 0.15 }}
               >
-                <MessageCircle size={24} className="text-white" />
+                <MessageCircle className="w-3 h-3 md:w-6 md:h-6 text-white" />
               </motion.span>
             )}
           </AnimatePresence>
