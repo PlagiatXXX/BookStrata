@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Sparkles,
-  ChevronDown,
   List,
   Folder,
   Users,
@@ -19,9 +18,9 @@ import {
   BarChart3,
   BookOpen,
 } from "lucide-react";
-import { Meteors } from "./Meteors";
 import { SocialIcons } from "./SocialIcons";
 import { CoffeeCup } from "./CoffeeCup";
+import { Fur } from "@/components/Fur";
 import { apiClient } from "@/lib/api-client";
 import { getCollections } from "@/lib/collectionsApi";
 
@@ -34,6 +33,8 @@ const marqueeStyle = `
   animation: marquee 27s linear infinite;
 }
 `
+
+const glassCard = "backdrop-blur-xl rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent p-6 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.18)]";
 
 const TELEGRAM_URL = "https://t.me/PasFedor";
 const VK_URL = "https://vk.com/club237287277";
@@ -200,148 +201,177 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   if (isHidden) return null;
 
   return (
-    <footer className="relative overflow-x-hidden border-t border-white/10 bg-[radial-gradient(circle_at_10%_120%,rgba(249,115,22,0.15),transparent_45%)] bg-[#0b0f1f] px-6 py-12">
+    <footer className="relative overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#133d28] px-6 pt-16 pb-10">
       <style>{marqueeStyle}</style>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <Meteors number={40} angle={255} minDuration={10} maxDuration={22} minDelay={0} maxDelay={1.5} />
+
+      {/* Organic wave overlays at top */}
+      <div className="absolute top-0 left-0 w-full overflow-hidden leading-none">
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative block w-full h-[60px] md:h-[80px]" preserveAspectRatio="none">
+          <path d="M0,40 C180,100 360,10 540,60 C720,110 900,20 1080,60 C1260,100 1350,30 1440,50 L1440,0 L0,0 Z" fill="url(#wave1)" fillOpacity="0.4" />
+          <path d="M0,60 C240,110 480,20 720,70 C960,120 1200,30 1440,60 L1440,0 L0,0 Z" fill="url(#wave2)" fillOpacity="0.3" />
+          <defs>
+            <linearGradient id="wave1" x1="0" y1="0" x2="1440" y2="0">
+              <stop offset="0%" stopColor="#1b263b" />
+              <stop offset="50%" stopColor="#243447" />
+              <stop offset="100%" stopColor="#1b263b" />
+            </linearGradient>
+            <linearGradient id="wave2" x1="0" y1="0" x2="1440" y2="0">
+              <stop offset="0%" stopColor="#133d28" />
+              <stop offset="50%" stopColor="#1a4a32" />
+              <stop offset="100%" stopColor="#133d28" />
+            </linearGradient>
+          </defs>
+        </svg>
       </div>
+      {/* Wave inner glow border */}
+      <div className="absolute top-[55px] md;top-[75px] left-0 w-full h-px bg-white/10" />
 
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-12 relative z-10">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_1.4fr_1.2fr]">
-          {/* Left Zone: Brand & Positioning */}
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-400/80 mb-1">
-                BookStrata
-              </p>
-              <h3 className="text-xl font-bold text-[#f3efe6]">
-                Крупнейшая библиотека
-              </h3>
-              <p className="mt-2 text-sm text-[#b8b1a3] leading-relaxed max-w-xs">
-                пользовательских рейтингов книг.
-              </p>
-            </div>
-          </div>
+      {/* Floating books background */}
+      <div
+        className="absolute inset-0 opacity-[0.15] pointer-events-none"
+        style={{ backgroundImage: "url(/footer-bg.webp)", backgroundSize: "cover", backgroundPosition: "center" }}
+      />
 
-          {/* Central Zone: Main Links + Популярные подборки */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
+      {/* Subtle radial glow */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.04),transparent_70%)]" />
+
+      <div className="mx-auto flex w-full flex-col gap-8 relative z-10">
+        {/* Бренд */}
+        <div className="self-start w-56 md:w-72 h-11 md:h-14">
+          <Fur text="Букстрата" color="#a855f7" className="w-full h-full">
+            {/* семантический заголовок для SEO/скринридеров: визуально заменён мехом */}
+            <h2 className="sr-only">Букстрата</h2>
+          </Fur>
+        </div>
+
+        {/* Main content area */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Основное — слева */}
+          <div className={glassCard}>
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
               Основное
             </h4>
-            <div className="flex flex-col sm:flex-row sm:items-start gap-10">
-              <nav aria-label="Основная навигация футера" className="shrink-0">
-                <ul className="flex flex-col gap-3">
-                   {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
-                    const isScroll = "sectionId" in link && link.sectionId
-                    const key = isScroll ? link.sectionId! : ("href" in link ? link.href! : "")
-                    const analyticsName = `nav.footer.${link.label.toLowerCase().replace(/[\s]+/g, "_").replace(/[^a-zа-я0-9_]/g, "")}`
-                    return (
-                      <li key={key}>
-                        {isScroll ? (
-                          <button
-                            data-analytics={analyticsName}
-                            onClick={() => scrollToSection(link.sectionId!)}
-                            className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1 cursor-pointer"
-                          >
-                            <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
-                              {link.icon}
-                            </span>
-                            {link.label}
-                          </button>
-                        ) : (
-                          <Link
-                            data-analytics={analyticsName}
-                            to={"href" in link ? link.href! : ""}
-                            className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
-                          >
-                            <span className="text-[#b8b1a3]/50 group-hover:text-cyan-400 transition-colors">
-                              {link.icon}
-                            </span>
-                            {link.label}
-                          </Link>
-                        )}
-                      </li>
-                    )
-                  })}
-                </ul>
-              </nav>
-
-              {/* Популярные подборки — SEO-перелинковка коллекций */}
-              <div className="flex flex-col items-start">
-                <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
-                  Подборки
-                </span>
-                <nav aria-label="Популярные подборки" className="shrink-0">
-                  <ul className="flex flex-col gap-3">
-                    {collections.slice(0, 8).map((collection) => (
-                      <li key={collection.id}>
-                        <Link
-                          to={`/collections/${collection.slug}`}
-                          className="group flex items-center gap-2 text-sm text-[#b8b1a3] transition-all hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 rounded-md px-1 -mx-1"
+            <nav aria-label="Основная навигация футера">
+              <ul className="flex flex-col gap-1">
+                {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
+                  const isScroll = "sectionId" in link && link.sectionId;
+                  const key = isScroll ? link.sectionId! : ("href" in link ? link.href! : "");
+                  const analyticsName = `nav.footer.${link.label.toLowerCase().replace(/[\s]+/g, "_").replace(/[^a-zа-я0-9_]/g, "")}`;
+                  return (
+                    <li key={key}>
+                      {isScroll ? (
+                        <button
+                          data-analytics={analyticsName}
+                          onClick={() => scrollToSection(link.sectionId!)}
+                          className="group flex items-center gap-1.5 text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 -mx-1 cursor-pointer"
                         >
-                          {collection.title}
+                          <span className="text-white/40 group-hover:text-white/70 transition-colors">
+                            {link.icon}
+                          </span>
+                          {link.label}
+                        </button>
+                      ) : (
+                        <Link
+                          data-analytics={analyticsName}
+                          to={"href" in link ? link.href! : ""}
+                          className="group flex items-center gap-1.5 text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 -mx-1"
+                        >
+                          <span className="text-white/40 group-hover:text-white/70 transition-colors">
+                            {link.icon}
+                          </span>
+                          {link.label}
                         </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-              </div>
-            </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           </div>
 
-          {/* Right Zone: Donate Block + SocialIcons (соцсети — крайние справа, сетка иконок раскрывается над пустотой) */}
-          <div className="flex flex-col items-end justify-between text-right gap-8">
-            <div className="relative max-w-full">
+          {/* Подборки + Соцсети — по центру */}
+          <div className="flex-1 flex flex-col sm:flex-row gap-8 justify-center">
+            <div className={glassCard}>
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
+                Подборки
+              </h4>
+              <nav aria-label="Популярные подборки">
+                <ul className="flex flex-col gap-1">
+                  {collections.slice(0, 8).map((collection) => (
+                    <li key={collection.id}>
+                      <Link
+                        to={`/collections/${collection.slug}`}
+                        className="group text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 -mx-1"
+                      >
+                        {collection.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
+
+            {/* Соцсети + Донат */}
+            <div className="flex flex-col gap-5">
+              <div className={`${glassCard} flex flex-col items-center text-center !py-5`}>
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
+                  Соцсети
+                </h4>
+                <SocialIcons
+                  links={{
+                    telegram: TELEGRAM_URL,
+                    vk: VK_URL,
+                    github: "https://github.com/PlagiatXXX",
+                    yandexMail: "mailto:fedorpasyada@yandex.ru",
+                    youtube: "https://www.youtube.com/@fedor1994",
+                  }}
+                />
+              </div>
+
+            {/* Donate button */}
+            <div className="relative flex justify-center">
               <button
                 type="button"
                 id="donate-button"
                 data-analytics="cta.footer.donate"
                 onClick={toggleDonate}
-                className="group relative z-20 inline-flex cursor-pointer items-center gap-1.5 sm:gap-2 rounded-xl border border-amber-200/40 bg-amber-500/10 px-2.5 sm:px-3 py-2 text-xs md:text-sm font-bold text-amber-200 transition-all hover:bg-amber-500/20 hover:border-amber-200/60 overflow-hidden max-w-full"
+                className="group relative z-20 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#f6ebd7] px-5 py-2.5 text-sm font-medium text-slate-900 shadow-[0_0_25px_rgba(246,235,215,0.3)] transition-all hover:bg-white hover:scale-[1.02]"
                 aria-expanded={isDonateOpen}
                 aria-controls="donate-menu"
               >
-                <span className="inline-block text-amber-400 shrink-0">
-                  <CoffeeCup className="h-4 w-4 sm:h-5 sm:w-5" />
-                </span>
-                <span className="truncate">Угостить автора</span>
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform duration-300 shrink-0 ${
-                    isDonateOpen ? "rotate-180" : "rotate-0"
-                  }`}
-                />
+                <CoffeeCup className="h-5 w-5 text-amber-700 shrink-0" />
+                <span>Угостить автора кофе</span>
               </button>
 
               <div
                 id="donate-menu"
                 className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] max-h-[60dvh] overflow-y-auto rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 origin-bottom-right ${
                   popupDirection === "below"
-                    ? "top-full mt-1"
-                    : "bottom-full mb-1"
+                    ? "top-full mt-2"
+                    : "bottom-full mb-2"
                 } ${
                   isDonateOpen
-                    ? "pointer-events-auto scale-100 border-amber-500/40 opacity-100 shadow-[0_20px_50px_rgba(249,115,22,0.3)]"
-                    : "pointer-events-none scale-95 border-amber-500/10 opacity-0"
+                    ? "pointer-events-auto scale-100 border-white/15 opacity-100 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                    : "pointer-events-none scale-95 border-white/5 opacity-0"
                 } right-0`}
               >
                 <div className="relative p-5">
                   <h3 className="text-base font-bold text-white">
                     Угостить автора
                   </h3>
-                  <p className="mt-2 text-xs text-amber-50/70 leading-relaxed text-left">
-                    Ваше угощение помогает оплачивать сервера и делать BookStrata
+                  <p className="mt-2 text-xs text-white/60 leading-relaxed text-left">
+                    Ваша помощь помогает оплачивать сервера и делать BookStrata
                     лучше. Спасибо, что вы с нами!
                   </p>
 
-                  <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
-                    <span className="font-mono text-xs font-bold text-amber-100 tracking-wider text-center sm:text-left">
+                  <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2.5">
+                    <span className="font-mono text-xs font-bold text-white tracking-wider text-center sm:text-left">
                       {cardNumber}
                     </span>
                     <button
                       data-analytics="donate.footer.copy_card"
                       onClick={handleCopyCard}
-                      className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 px-2 py-1.5 sm:py-1 text-[10px] font-medium text-amber-200 transition-colors hover:bg-amber-500/20 shrink-0"
+                      className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-white/20 px-2 py-1.5 sm:py-1 text-[10px] font-medium text-white/80 transition-colors hover:bg-white/10 shrink-0"
                       type="button"
                       aria-label="Копировать номер карты"
                     >
@@ -353,59 +383,35 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                       {copied ? "Скопировано" : "Копировать"}
                     </button>
                   </div>
-                  <p className="mt-1.5 text-[10px] text-amber-300/60">
+                  <p className="mt-1.5 text-[10px] text-white/40">
                     Сбербанк • Федор П.
                   </p>
                 </div>
               </div>
             </div>
-
-            {/* Соцсети — крайняя правая колонка, сетка иконок раскрывается над пустотой */}
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-4">
-                Соцсети
-              </span>
-              <SocialIcons
-                links={{
-                  telegram: TELEGRAM_URL,
-                  vk: VK_URL,
-                  github: "https://github.com/PlagiatXXX",
-                  yandexMail: "mailto:fedorpasyada@yandex.ru",
-                  youtube: "https://www.youtube.com/@fedor1994",
-                }}
-              />
-            </div>
           </div>
         </div>
+        </div>
 
-        {/* Bottom Row: Donor Ticker + Copyright & Trust message */}
-        <div className="flex flex-col gap-4 border-t border-white/5 pt-8">
-          {donors.length > 0 && (
-            <div className="relative overflow-hidden w-full">
-              <div className="overflow-hidden w-full">
-                <div className="animate-marquee w-fit whitespace-nowrap text-[11px] font-medium text-amber-200/40">
-                  {donors.map((name) => `♥ ${name}`).join('  ·  ')}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-cyan-500 opacity-80" />
-              <p className="text-[11px] font-medium text-[#8f8a80]">
-                © {new Date().getFullYear()} BookStrata. Все права защищены.
-              </p>
-            </div>
-
-            <div className="relative px-4 py-1.5 rounded-full bg-white/5 border border-white/10 group overflow-hidden">
-              <div className="absolute inset-0 bg-linear-to-r from-cyan-500/10 via-fuchsia-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-shimmer" />
-              <p className="relative z-10 flex items-center gap-2 text-[11px] font-medium text-[#8f8a80]">
-                <span className="text-cyan-400">✦</span>
-                Спасибо, что развиваете проект вместе с нами
-              </p>
+        {/* Donor Marquee */}
+        {donors.length > 0 && (
+          <div className="relative overflow-hidden w-full border-t border-white/[0.06] pt-6">
+            <div className="animate-marquee w-fit whitespace-nowrap text-[11px] font-medium text-white/30">
+              {donors.map((name) => `♥ ${name}`).join('  ·  ')}
             </div>
           </div>
+        )}
+
+        {/* Bottom: Copyright + Links */}
+        <div className="flex flex-col items-center gap-2 border-t border-white/[0.06] pt-6">
+          <p className="text-[11px] text-white/50">
+            © {new Date().getFullYear()} BookStrata. Все права защищены.
+          </p>
+          <p className="text-[11px] text-white/50">
+            <Link to="/privacy" className="hover:text-white transition-colors">Политика конфиденциальности</Link>
+            {" | "}
+            <Link to="/terms" className="hover:text-white transition-colors">Условия использования</Link>
+          </p>
         </div>
       </div>
     </footer>

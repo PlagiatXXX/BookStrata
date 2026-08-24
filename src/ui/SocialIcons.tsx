@@ -14,7 +14,7 @@ interface SocialIconsProps {
 }
 
 const ICON_BASE =
-  "rounded-lg p-3 bg-white/20 backdrop-blur-md flex justify-center items-center w-full h-full hover:text-white transition-all duration-200";
+  "rounded-full p-3 bg-white/[0.08] border border-white/[0.1] backdrop-blur-md flex justify-center items-center w-full h-full hover:bg-white/[0.15] hover:border-white/[0.2] hover:text-white hover:shadow-[0_0_20px_rgba(56,189,248,0.15)] transition-all duration-300";
 
 export const SocialIcons = ({
   links = {},
