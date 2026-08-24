@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Tag, Calendar, BookOpen, Sparkles } from "lucide-react";
 import DOMPurify from "dompurify";
@@ -20,6 +20,7 @@ import type { CollectionItem } from "@/types/collection";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { COLLECTION_TITLES } from "@/data/collection-seo";
+import { CATEGORIES } from "@/data/categories";
 import { buildCollectionSeoDesc, buildCollectionSeoTitle } from "./seo";
 import { pickRelatedCollections } from "./related";
 import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
@@ -30,6 +31,11 @@ export default function CollectionPage() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
   const navigate = useNavigate();
+  const location = useLocation();
+  // Пришли изнутри приложения (location.key === "default" только при прямом заходе по ссылке)
+  const cameFromApp = location.key !== "default";
+  // Одноразовый редирект при отсутствии коллекции
+  const redirectedRef = useRef(false);
   const { user: authUser } = useAuth();
   const [collection, setCollection] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,7 +122,17 @@ export default function CollectionPage() {
             description: "Возможно, она была удалена",
             duration: 3000,
           });
-          navigate("/community");
+          // Пришли изнутри приложения (напр., со страницы жанра) — возвращаем назад,
+          // при прямом заходе по ссылке — на рейтинги.
+          // Защита от повторного срабатывания (StrictMode в dev запускает эффект дважды)
+          if (!redirectedRef.current) {
+            redirectedRef.current = true;
+            if (cameFromApp) {
+              navigate(-1);
+            } else {
+              navigate("/rankings");
+            }
+          }
           return;
         }
         setCollection(data);
@@ -143,7 +159,7 @@ export default function CollectionPage() {
     };
 
     loadCollection();
-  }, [slug, navigate, isPreview]);
+  }, [slug, navigate, isPreview, cameFromApp]);
 
   const handleViewBook = useCallback((book: Book) => {
     setViewedBook(book);
@@ -188,11 +204,20 @@ return DOMPurify.sanitize(collection.content);
     ? (proxyImageUrl(collection.coverImageUrl) || undefined)
     : undefined;
   const seoUrl = slug ? `/collections/${slug}` : undefined;
+
+  // Жанр подборки — для хлебных крошек (Главная → Рейтинги → Жанр → Подборка)
+  const genreCategory =
+    collection?.categoryId && collection.categoryId !== "all"
+      ? CATEGORIES.find((c) => c.id === collection.categoryId)
+      : undefined;
+
   const seoBreadcrumbs = slug
     ? [
         { name: "Главная", url: "/" },
-        { name: "Сообщество", url: "/community" },
-        { name: "Коллекции", url: "/collections" },
+        { name: "Рейтинги", url: "/rankings" },
+        ...(genreCategory
+          ? [{ name: genreCategory.label, url: `/topics/${genreCategory.id}` }]
+          : []),
         { name: seoTitle || "Подборка", url: `/collections/${slug}` },
       ]
     : undefined;
@@ -293,13 +318,24 @@ return DOMPurify.sanitize(collection.content);
     >
       {/* Breadcrumbs + Назад — на левый край */}
       <div className="px-4 sm:px-6 pt-6 pb-4 space-y-1">
-        <Breadcrumbs items={[{ label: "Сообщество", href: "/community" }, { label: "Коллекции" }, { label: collection.title }]} />
+        <Breadcrumbs
+          items={[
+            { label: "Главная", href: "/" },
+            { label: "Рейтинги", href: "/rankings" },
+            ...(genreCategory
+              ? [{ label: genreCategory.label, href: `/topics/${genreCategory.id}` }]
+              : []),
+            { label: collection.title },
+          ]}
+        />
         <button
           onClick={() => {
-            if (window.history.length > 1) {
+            // history.length > 1 бывает даже при заходе с внешнего сайта —
+            // надёжнее проверять, что переход был изнутри приложения
+            if (cameFromApp) {
               navigate(-1);
             } else {
-              navigate('/community');
+              navigate('/rankings');
             }
           }}
           className="text-xs text-(--ink-2) hover:text-(--accent-main) transition-colors cursor-pointer"
@@ -526,7 +562,7 @@ return DOMPurify.sanitize(collection.content);
                 return (
                   <Link
                     key={tag}
-                    to={`/community?category=${categoryId}#collections`}
+                    to={`/topics/${categoryId}`}
                     className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
                   >
                     #{tag}

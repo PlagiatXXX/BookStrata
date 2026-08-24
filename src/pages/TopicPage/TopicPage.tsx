@@ -85,10 +85,10 @@ export default function TopicPage() {
             В жанре «{categoryLabel}» пока нет подборок
           </h1>
           <Link
-            to="/community"
+            to="/rankings"
             className="inline-flex items-center gap-2 text-(--accent-main) hover:underline"
           >
-            ← Все подборки
+            ← К рейтингам
           </Link>
         </div>
       </DashboardLayout>
@@ -114,14 +114,14 @@ export default function TopicPage() {
         title={`${categoryLabel} — подборки книг и рейтинг`}
         description={description}
         url={`/topics/${slug}`}
-        breadcrumbs={[{ name: "Главная", url: "/" }, { name: categoryLabel, url: `/topics/${slug}` }]}
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Рейтинги", url: "/rankings" }, { name: categoryLabel, url: `/topics/${slug}` }]}
       />
 
       <DashboardLayout showSearch={false}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-12">
           {/* Breadcrumbs */}
           <Breadcrumbs
-            items={[{ label: "Главная", href: "/" }, { label: categoryLabel }]}
+            items={[{ label: "Главная", href: "/" }, { label: "Рейтинги", href: "/rankings" }, { label: categoryLabel }]}
             theme="light"
           />
 
