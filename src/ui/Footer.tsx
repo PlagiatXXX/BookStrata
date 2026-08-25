@@ -17,6 +17,7 @@ import {
   CircleHelp,
   BarChart3,
   BookOpen,
+  Coffee,
 } from "lucide-react";
 import { SocialIcons } from "./SocialIcons";
 import { CoffeeCup } from "./CoffeeCup";
@@ -62,6 +63,7 @@ const landingLinks: { label: string; icon: React.ReactNode; sectionId?: string; 
 const userLinks = [
   { href: "/profile", label: "Профиль", icon: <User size={14} /> },
   { href: "/about", label: "О проекте", icon: <Info size={14} /> },
+  { href: "/pricing", label: "Поддержать проект", icon: <Coffee size={14} /> },
   { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
   { href: "/faq", label: "Вопросы и ответы", icon: <CircleHelp size={14} /> },
   { href: "/privacy", label: "Политика", icon: <ScrollText size={14} /> },
