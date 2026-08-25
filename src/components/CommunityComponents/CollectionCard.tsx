@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { memo, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import type { CollectionItem } from '@/types/collection';
 import { proxyImageUrl } from '@/utils/imageProxy';
@@ -17,12 +17,6 @@ const FALLBACK = '/images/placeholder.svg';
 const DEFAULT_ACCENT = 'var(--accent-main)';
 
 export const CollectionCard = memo(({ collection, className = '', priority = false }: CollectionCardProps) => {
-  const navigate = useNavigate();
-
-  const handleClick = useCallback(() => {
-    navigate(`/collections/${collection.slug}`);
-  }, [navigate, collection.slug]);
-
   // Приоритет: coverImageUrl коллекции → первая обложка книги → null
   const coverImage = collection.coverImageUrl || collection.bookCovers?.[0] || null;
   const accentColor = collection.accentColor || DEFAULT_ACCENT;
@@ -39,12 +33,9 @@ export const CollectionCard = memo(({ collection, className = '', priority = fal
   );
 
   return (
-    <article
-      className={`group relative overflow-hidden rounded-sm transition-all duration-300 cursor-pointer min-h-[200px] ${className}`}
-      onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
+    <Link
+      to={`/collections/${collection.slug}`}
+      className={`group relative block overflow-hidden rounded-sm transition-all duration-300 cursor-pointer min-h-[200px] ${className}`}
       aria-label={`Подборка: ${collection.title}`}
     >
       {/* ===== Фон: обложка или градиент ===== */}
@@ -147,19 +138,18 @@ export const CollectionCard = memo(({ collection, className = '', priority = fal
               </div>
             )}
 
-            <button
-              onClick={(e) => { e.stopPropagation(); handleClick(); }}
+            {/* Вся карточка — ссылка, поэтому CTA декоративный (button внутри a запрещён) */}
+            <span
               className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.12em]
                          text-(--accent-main) hover:text-(--ink-0)
                          transition-colors duration-150"
-              aria-label={`Посмотреть подборку: ${collection.title}`}
             >
               Смотреть
               <ArrowRight size={11} />
-            </button>
+            </span>
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   );
 });

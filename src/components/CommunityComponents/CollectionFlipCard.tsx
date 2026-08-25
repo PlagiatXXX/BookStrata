@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import type { CollectionItem } from '@/types/collection';
 import { proxyImageUrl } from '@/utils/imageProxy';
@@ -17,7 +17,6 @@ const FALLBACK = '/images/placeholder.svg';
 const DEFAULT_ACCENT = 'var(--accent-main)';
 
 export const CollectionFlipCard = memo(({ collection, className = '', priority = false }: CollectionFlipCardProps) => {
-  const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canHoverRef = useRef(
@@ -36,10 +35,6 @@ export const CollectionFlipCard = memo(({ collection, className = '', priority =
     timerRef.current = setTimeout(() => setIsFlipped(false), 100);
   }, []);
 
-  const handleClick = useCallback(() => {
-    navigate(`/collections/${collection.slug}`);
-  }, [navigate, collection.slug]);
-
   // Приоритет: coverImageUrl коллекции → первая обложка книги → null
   const coverImage = collection.coverImageUrl || collection.bookCovers?.[0] || null;
   const accentColor = collection.accentColor || DEFAULT_ACCENT;
@@ -55,15 +50,13 @@ export const CollectionFlipCard = memo(({ collection, className = '', priority =
   );
 
   return (
-    <article
-      className={`relative min-h-[260px] [perspective:1000px] cursor-pointer ${className}`}
+    <Link
+      to={`/collections/${collection.slug}`}
+      className={`relative block min-h-[260px] [perspective:1000px] cursor-pointer ${className}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(); }}
       aria-label={`Подборка: ${collection.title}`}
+      data-analytics="cta.landing.open_collection"
     >
       <div
         className={`absolute inset-0 duration-500 [transform-style:preserve-3d] will-change-transform ${
@@ -136,20 +129,19 @@ export const CollectionFlipCard = memo(({ collection, className = '', priority =
               </div>
             )}
 
-            <button
-              onClick={(e) => { e.stopPropagation(); handleClick(); }}
+            {/* Вся карточка — ссылка, поэтому CTA декоративный (button внутри a запрещён) */}
+            <span
               className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.12em]
                          bg-white/20 hover-only:bg-white/30 text-white
                          px-3 py-1.5 rounded-sm
                          transition-colors duration-150"
-              aria-label={`Посмотреть подборку: ${collection.title}`}
             >
               Смотреть
               <ArrowRight size={12} />
-            </button>
+            </span>
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   );
 });

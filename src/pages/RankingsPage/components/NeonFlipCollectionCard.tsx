@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { BookOpen, ArrowRight } from "lucide-react";
 import { RetryableImage } from "@/ui/RetryableImage";
 import { proxyImageUrl } from "@/utils/imageProxy";
@@ -15,7 +15,6 @@ const NEON_CLASSES = ["neon-border-cyan", "neon-border-pink", "neon-border-magen
 const FALLBACK = "/images/placeholder.svg";
 
 export function NeonFlipCollectionCard({ collection, index, className = "" }: NeonFlipCollectionCardProps) {
-  const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canHoverRef = useRef(
@@ -33,10 +32,6 @@ export function NeonFlipCollectionCard({ collection, index, className = "" }: Ne
     timerRef.current = setTimeout(() => setIsFlipped(false), 100);
   }, []);
 
-  const handleClick = useCallback(() => {
-    navigate(`/collections/${collection.slug}`);
-  }, [navigate, collection.slug]);
-
   const coverImage = collection.coverImageUrl || collection.bookCovers?.[0] || null;
   const booksCount = useMemo(
     () => Object.keys(collection.books || {}).length,
@@ -46,14 +41,11 @@ export function NeonFlipCollectionCard({ collection, index, className = "" }: Ne
   const neonClass = NEON_CLASSES[index % NEON_CLASSES.length];
 
   return (
-    <article
-      className={`relative h-[260px] [perspective:1000px] cursor-pointer ${className}`}
+    <Link
+      to={`/collections/${collection.slug}`}
+      className={`relative block h-[260px] [perspective:1000px] cursor-pointer ${className}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleClick(); }}
       aria-label={`Подборка: ${collection.title}`}
     >
       <div
@@ -106,6 +98,6 @@ export function NeonFlipCollectionCard({ collection, index, className = "" }: Ne
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
