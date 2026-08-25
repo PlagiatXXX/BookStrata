@@ -440,6 +440,61 @@ describe("BookPage", () => {
   });
 });
 
+describe("BookPage: мобильная адаптивность действий (360px)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedUseParams.mockReturnValue({ slug: "velikij-getssbi" });
+    mockedUseAuth.mockReturnValue({ user: { id: 1 } as never, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+  });
+
+  it("кнопки действий помещаются в ряд на 360px: компактный gap и паддинги на мобильных", async () => {
+    renderPage();
+
+    const wantBtn = await screen.findByRole("button", { name: /Хочу прочитать/i });
+    const container = wantBtn.parentElement!;
+
+    // gap-2 (8px) на мобильных, gap-4 (16px) на sm+
+    expect(container.className).toContain("gap-2");
+    expect(container.className).toContain("sm:gap-4");
+
+    // «Хочу прочитать»: px-3 (12px) на мобильных, px-4 на sm+
+    expect(wantBtn.className).toContain("px-3");
+    expect(wantBtn.className).toContain("sm:px-4");
+
+    // «В тир-лист»: px-3 на мобильных, px-6 на sm+
+    const tierBtn = screen.getByRole("button", { name: /В тир-лист/i });
+    expect(tierBtn.className).toContain("px-3");
+    expect(tierBtn.className).toContain("sm:px-6");
+  });
+
+  it("выпадашка тир-листов выравнивается по левому краю контейнера (не обрезается слева на 360px)", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const tierBtn = await screen.findByRole("button", { name: /В тир-лист/i });
+    // Панель позиционируется от контейнера действий, а не от кнопки
+    const container = tierBtn.closest("div.relative");
+    expect(container).not.toBeNull();
+    expect(container!.className).toContain("relative");
+
+    await user.click(tierBtn);
+    const panel = await screen.findByText("Добавить в тир-лист").then((el) => el.closest("div.absolute"));
+
+    // На мобильных панель растёт вправо от левого края контейнера,
+    // на sm+ — от правого края (как раньше от кнопки)
+    expect(panel!.className).toContain("left-0");
+    expect(panel!.className).toContain("sm:left-auto");
+    expect(panel!.className).toContain("sm:right-0");
+    expect(panel!.className).not.toMatch(/(^|\s)right-0(\s|$)/);
+  });
+});
+
 describe("buildDescriptionSnippet", () => {
   it("короткое описание возвращает как есть", () => {
     expect(

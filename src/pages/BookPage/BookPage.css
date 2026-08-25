@@ -67,6 +67,16 @@
   text-transform: uppercase;
 }
 
+/* Кнопки действий: на узких экранах (<640px) компактнее, чтобы
+   «Хочу прочитать» + «В тир-лист» помещались в один ряд на 360px.
+   Должен идти после .bp-label-caps. */
+@media (max-width: 639.98px) {
+  .bp-label-caps-compact {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+}
+
 /* Теги: мельче стандартного label-caps (должен идти после .bp-label-caps) */
 .bp-tag-caps {
   font-size: 10px;

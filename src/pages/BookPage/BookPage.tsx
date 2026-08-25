@@ -285,12 +285,14 @@ export default function BookPage() {
                 </div>
               )}
 
-              {/* Действия */}
-              <div className="flex flex-wrap gap-4">
+              {/* Действия. relative — якорь для выпадашки тир-листов: на мобильных
+                  панель растёт от левого края контейнера и не обрезается экраном.
+                  gap-2/px-3 — компактные отступы, чтобы обе кнопки влезали в ряд на 360px. */}
+              <div ref={dropdownRef} className="relative flex flex-wrap gap-2 sm:gap-4">
                 <button
                   type="button"
                   onClick={handleWantToRead}
-                  className="h-12 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/20 hover:border-white/50 text-white bp-label-caps px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:bg-white/5"
+                  className="h-12 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/20 hover:border-white/50 text-white bp-label-caps bp-label-caps-compact px-3 sm:px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:bg-white/5"
                 >
                   <span
                     className="ms-icon text-sm text-(--bp-primary)"
@@ -302,27 +304,26 @@ export default function BookPage() {
                 </button>
 
                 {/* «В тир-лист» — выпадающий список листов */}
-                <div ref={dropdownRef} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!user) {
-                        navigate(`/auth?mode=register&redirect=${encodeURIComponent(`/books/${slug}`)}`);
-                        return;
-                      }
-                      setTierDropdownOpen((v) => !v);
-                    }}
-                    className="h-12 whitespace-nowrap bg-(--bp-primary) hover:bg-(--bp-primary-container) text-(--bp-on-primary) bp-label-caps px-6 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
-                  >
-                    <span className="ms-icon text-sm">format_list_bulleted</span>
-                    В тир-лист
-                    <span className="ms-icon text-sm" style={{ transform: tierDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
-                      expand_more
-                    </span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) {
+                      navigate(`/auth?mode=register&redirect=${encodeURIComponent(`/books/${slug}`)}`);
+                      return;
+                    }
+                    setTierDropdownOpen((v) => !v);
+                  }}
+                  className="h-12 whitespace-nowrap bg-(--bp-primary) hover:bg-(--bp-primary-container) text-(--bp-on-primary) bp-label-caps bp-label-caps-compact px-3 sm:px-6 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
+                >
+                  <span className="ms-icon text-sm">format_list_bulleted</span>
+                  В тир-лист
+                  <span className="ms-icon text-sm" style={{ transform: tierDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
+                    expand_more
+                  </span>
+                </button>
 
-                  {tierDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-primary/30 bg-(--bp-surface-container-high) backdrop-blur-xl shadow-2xl z-60 py-2">
+                {tierDropdownOpen && (
+                  <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-primary/30 bg-(--bp-surface-container-high) backdrop-blur-xl shadow-2xl z-60 py-2">
                       <p className="bp-label-caps text-white/50 px-4 py-2 tracking-widest">
                         Добавить в тир-лист
                       </p>
@@ -388,13 +389,12 @@ export default function BookPage() {
                             </button>
                           </div>
                         )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+                       </div>
+                     </div>
+                   )}
+               </div>
 
-              {/* Scroll indicator: «Листай дальше» — сразу под кнопками действий */}
+               {/* Scroll indicator: «Листай дальше» — сразу под кнопками действий */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
