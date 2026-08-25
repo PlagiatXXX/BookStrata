@@ -73,6 +73,7 @@ export function EditBookModal({ editForm, onFieldChange, onSave, onClose }: Edit
             genre: form.genre || res.book.genre || "",
             tags: form.tags || (res.book.tags.length > 0 ? res.book.tags.join(", ") : ""),
             description: form.description || res.book.description || "",
+            rating: form.rating ?? res.book.rating ?? undefined,
           });
         } else if (res.candidates.length > 0) {
           state = { status: "candidates", candidates: res.candidates };
@@ -102,6 +103,7 @@ export function EditBookModal({ editForm, onFieldChange, onSave, onClose }: Edit
       genre: b.genre ?? "",
       tags: b.tags.join(", "),
       description: b.description ?? "",
+      rating: b.rating ?? undefined,
     });
     setLookupResult({ key: searchKey, state: { status: "found", book: b } });
   };

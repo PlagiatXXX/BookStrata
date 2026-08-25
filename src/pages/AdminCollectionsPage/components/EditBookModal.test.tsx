@@ -86,6 +86,22 @@ describe("EditBookModal: автопоиск в каталоге", () => {
       screen.getByDisplayValue("Молодой писатель расследует старое убийство."),
     ).toBeInTheDocument();
     expect(screen.getByDisplayValue("https://cdn.example.com/kvebert.webp")).toBeInTheDocument();
+    // Оценка каталога тоже подтягивается в пустое поле
+    expect(screen.getByPlaceholderText("8.5")).toHaveValue(8.5);
+  });
+
+  it("автопоиск не затирает уже заполненную оценку", async () => {
+    mockedLookup.mockResolvedValue({ book, candidates: [] });
+    renderModal(baseForm({ rating: 9 }));
+
+    fireEvent.change(screen.getByPlaceholderText("Название книги"), {
+      target: { value: "Правда о деле Гарри Квеберта" },
+    });
+
+    expect(await screen.findByText("Книга уже в каталоге")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText("8.5")).toHaveValue(9);
+    });
   });
 
   it("похожие книги — список кандидатов, клик перезаписывает карточку", async () => {
@@ -108,6 +124,8 @@ describe("EditBookModal: автопоиск в каталоге", () => {
       expect(screen.getByDisplayValue("Дориан Грей")).toBeInTheDocument();
       expect(screen.getByDisplayValue("Оскар Уайльд")).toBeInTheDocument();
       expect(screen.getByDisplayValue("Триллер")).toBeInTheDocument();
+      // Выбор кандидата тоже переносит оценку каталога
+      expect(screen.getByPlaceholderText("8.5")).toHaveValue(8.5);
     });
   });
 
