@@ -6,6 +6,7 @@ import {
   deleteAvatar,
   getUserById,
   getUserStats,
+  getActivityTimeline,
   updateUser,
   changePassword,
   getAllUsers,
@@ -95,6 +96,29 @@ export async function userRoutes(fastify: FastifyInstance) {
       }
       const stats = await getUserStats(userId);
       return reply.code(200).send(createSuccessResponse(stats));
+    },
+  );
+
+  // GET /api/users/me/activity-timeline — активность по месяцам для графика
+  fastify.get(
+    "/me/activity-timeline",
+    {
+      preHandler: [authMiddleware],
+      schema: {
+        querystring: {
+          type: "object",
+          properties: { months: { type: "integer", minimum: 1, maximum: 12 } },
+        },
+      },
+    },
+    async (request, reply) => {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
+      }
+      const months = Number((request.query as any)?.months) || 6;
+      const timeline = await getActivityTimeline(userId, months);
+      return reply.code(200).send(createSuccessResponse(timeline));
     },
   );
 

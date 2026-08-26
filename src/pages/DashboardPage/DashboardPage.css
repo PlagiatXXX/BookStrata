@@ -8,6 +8,99 @@
   color: #e2e8f0;
 }
 
+/* Cyber-premium activity module */
+.dashboard-home section.mb-8 > .mx-auto > h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-home section.mb-8 > .mx-auto > h2::before {
+  content: "⌁";
+  color: #38bdf8;
+  font-size: 2rem;
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.95);
+}
+
+.activity-chart,
+.activity-level,
+.activity-achievements {
+  border: 1px solid rgba(148, 163, 184, 0.36);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.7));
+  box-shadow: 0 0 28px rgba(14, 165, 233, 0.08), inset 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.activity-chart {
+  overflow: hidden;
+}
+
+.activity-chart__legend {
+  color: #e2e8f0;
+}
+
+.activity-chart--loading,
+.activity-chart--empty {
+  border-radius: 1rem;
+  color: #cbd5e1;
+}
+
+.activity-stats {
+  gap: 0.75rem;
+}
+
+.activity-stat {
+  min-height: 80px;
+  border-radius: 0.85rem;
+  background: rgba(15, 23, 42, 0.62);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.08), 0 0 16px rgba(14, 165, 233, 0.08);
+}
+
+.activity-stat:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.12);
+}
+
+.activity-stat__icon {
+  border: 1px solid currentColor;
+  background: rgba(15, 23, 42, 0.58) !important;
+}
+
+.activity-level {
+  border-color: rgba(56, 189, 248, 0.48);
+  background: linear-gradient(120deg, rgba(14, 116, 144, 0.36), rgba(30, 41, 59, 0.8) 58%, rgba(126, 34, 206, 0.26));
+  box-shadow: 0 0 28px rgba(56, 189, 248, 0.18), 0 0 38px rgba(168, 85, 247, 0.1), inset 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.activity-level__progress {
+  padding: 0.18rem;
+  border: 1px solid rgba(56, 189, 248, 0.8);
+  border-radius: 0.55rem;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3), inset 0 0 8px rgba(15, 23, 42, 0.8);
+}
+
+.activity-level__segment {
+  border-radius: 2px;
+}
+
+.activity-achievements {
+  border-color: rgba(148, 163, 184, 0.42);
+}
+
+.activity-achievements__list::before {
+  background: linear-gradient(#38bdf8, #a855f7, transparent);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+.activity-achievements__item > span:first-child {
+  border-color: rgba(56, 189, 248, 0.6);
+  background: rgba(14, 116, 144, 0.22);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+}
+
 /* === Controls: Filters & Sort === */
 .dashboard-controls {
   display: flex;

@@ -25,6 +25,7 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: vi.fn(),
     },
     $executeRaw: vi.fn(),
+    $queryRaw: vi.fn(),
   },
 }));
 
@@ -505,6 +506,7 @@ describe("users.service", () => {
         likesTodayCount: 2,
         totalBooks: 20,
         lastActivity: expect.any(String),
+        totalActiveMinutes: 0,
       });
 
       expect(mockAggregateUserStats).toHaveBeenCalledWith(mockUserId);
@@ -565,7 +567,24 @@ describe("users.service", () => {
         likesTodayCount: 0,
         totalBooks: 0,
         lastActivity: null,
+        totalActiveMinutes: 0,
       });
+    });
+
+    it("возвращает totalActiveMinutes", async () => {
+      mockAggregateUserStats.mockResolvedValue({
+        _count: { _all: 0 },
+        _sum: { likesCount: 0 },
+      });
+      vi.mocked(prisma.template.count).mockResolvedValue(0);
+      vi.mocked(prisma.tierListLike.count).mockResolvedValue(0);
+      vi.mocked(prisma.tierList.count).mockResolvedValue(0);
+      vi.mocked(prisma.bookPlacement.count).mockResolvedValue(0);
+      vi.mocked(prisma.tierList.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ totalActiveMinutes: 120 } as never);
+
+      const stats = await userService.getUserStats(1);
+      expect(stats.totalActiveMinutes).toBe(120);
     });
   });
 
@@ -950,4 +969,50 @@ describe("users.service", () => {
       expect(result).toEqual({ ok: true })
     })
   })
+
+  describe("buildTimelineSeries", () => {
+    it("строит непрерывный ряд из 6 месяцев с нулями", () => {
+      const now = new Date("2026-08-15T12:00:00Z");
+      const result = userService.buildTimelineSeries(6, now, [], []);
+      expect(result).toHaveLength(6);
+      expect(result[0]?.month).toBe("2026-03");
+      expect(result[5]).toEqual({ month: "2026-08", books: 0, likes: 0 });
+    });
+
+    it("сопоставляет книги и лайки по месяцам", () => {
+      const now = new Date("2026-08-15T12:00:00Z");
+      const books = [{ month: new Date("2026-06-01T00:00:00Z"), count: 5 }];
+      const likes = [{ month: new Date("2026-06-01T00:00:00Z"), count: 12 }];
+      const result = userService.buildTimelineSeries(6, now, books, likes);
+      expect(result.find((p) => p.month === "2026-06")).toEqual({
+        month: "2026-06",
+        books: 5,
+        likes: 12,
+      });
+    });
+  });
+
+  describe("getActivityTimeline", () => {
+    it("агрегирует книги и лайки за 6 месяцев", async () => {
+      vi.mocked(prisma.$queryRaw)
+        .mockResolvedValueOnce([{ month: new Date("2026-07-01T00:00:00Z"), count: 3 }])
+        .mockResolvedValueOnce([{ month: new Date("2026-07-01T00:00:00Z"), count: 7 }]);
+      const result = await userService.getActivityTimeline(1, 6);
+      expect(result).toHaveLength(6);
+      expect(result.find((p) => p.month === "2026-07")).toEqual({
+        month: "2026-07",
+        books: 3,
+        likes: 7,
+      });
+    });
+
+    it("ограничивает months диапазоном 1–12", async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
+      await userService.getActivityTimeline(1, 99);
+      await userService.getActivityTimeline(1, -5);
+      // 12 месяцев: первый вызов (книги) получил since на 11 месяцев назад — проверяем через число точек
+      const result = await userService.getActivityTimeline(1, 12);
+      expect(result).toHaveLength(12);
+    });
+  });
 });

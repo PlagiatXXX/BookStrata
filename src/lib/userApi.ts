@@ -50,6 +50,7 @@ export interface UserStats {
   likesTodayCount: number;
   totalBooks: number;
   lastActivity: string | null;
+  totalActiveMinutes: number;
 }
 
 export interface PublicUserStats {
@@ -100,6 +101,22 @@ export async function apiGetPublicUser(id: string): Promise<PublicUser> {
 export async function apiGetUserStats(): Promise<UserStats> {
   userLogger.info("Получение статистики пользователя");
   return apiClient.get<UserStats>("/users/me/stats");
+}
+
+export interface ActivityTimelinePoint {
+  month: string; // "2026-03"
+  books: number;
+  likes: number;
+}
+
+export async function apiGetActivityTimeline(
+  months = 6,
+): Promise<ActivityTimelinePoint[]> {
+  userLogger.info("Получение таймлайна активности");
+  return apiClient.get<ActivityTimelinePoint[]>(
+    "/users/me/activity-timeline",
+    { months },
+  );
 }
 
 export async function apiGetUserTierLists(

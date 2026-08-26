@@ -284,6 +284,7 @@ tierId         Int?
 rank           Int
 thoughts       String?  // ЛИЧНЫЕ мысли пользователя о книге в ЭТОМ тир-листе (перенесено с Book)
 coverImageUrl  String?  // ЛИЧНАЯ обложка вхождения; NULL = обложка каталога (fallback: placement.coverImageUrl ?? book.coverImageUrl)
+createdAt      DateTime @default(now()) @map("created_at")
 
 @@id([tierListId, bookId])
 @@index([tierId, rank])

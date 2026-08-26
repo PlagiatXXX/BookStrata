@@ -19,12 +19,14 @@ vi.mock("@/lib/userApi", () => ({
   apiGetUserStats: vi.fn(),
   apiGetMyTierLists: vi.fn(),
   apiGetMyBooks: vi.fn(),
+  apiGetActivityTimeline: vi.fn(),
 }));
 
 vi.mock("@/lib/tierListApi", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/tierListApi")>(
-    "@/lib/tierListApi",
-  );
+  const actual =
+    await vi.importActual<typeof import("@/lib/tierListApi")>(
+      "@/lib/tierListApi",
+    );
   return {
     ...actual,
     createTierList: vi.fn(),
@@ -77,7 +79,10 @@ vi.mock("@/lib/logger", () => {
 });
 
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom",
+    );
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -126,7 +131,13 @@ describe("DashboardPage", () => {
       likesTodayCount: 0,
       totalBooks: 10,
       lastActivity: new Date().toISOString(),
+      totalActiveMinutes: 0,
     });
+
+    // Мокаем таймлайн активности (пустой — ActivityChart покажет empty state)
+    vi.mocked(userApiModule.apiGetActivityTimeline as Mock).mockResolvedValue(
+      [],
+    );
 
     // Мокаем свои тир-листы
     vi.mocked(userApiModule.apiGetMyTierLists as Mock).mockResolvedValue({
@@ -148,7 +159,13 @@ describe("DashboardPage", () => {
           booksCount: 3,
         },
       ],
-      meta: { totalItems: 2, itemCount: 2, itemsPerPage: 100, totalPages: 1, currentPage: 1 },
+      meta: {
+        totalItems: 2,
+        itemCount: 2,
+        itemsPerPage: 100,
+        totalPages: 1,
+        currentPage: 1,
+      },
     });
 
     // Мокаем свои книги
@@ -220,7 +237,13 @@ describe("DashboardPage", () => {
   it("должен показывать CTA и открывать модалку при пустом списке тир-листов", async () => {
     vi.mocked(userApiModule.apiGetMyTierLists as Mock).mockResolvedValue({
       data: [],
-      meta: { totalItems: 0, itemCount: 0, itemsPerPage: 100, totalPages: 0, currentPage: 1 },
+      meta: {
+        totalItems: 0,
+        itemCount: 0,
+        itemsPerPage: 100,
+        totalPages: 0,
+        currentPage: 1,
+      },
     });
 
     render(<DashboardPage />, { wrapper: createWrapper() });
@@ -240,7 +263,13 @@ describe("DashboardPage", () => {
   it("должен создавать тир-лист по названию и переходить в его редактор", async () => {
     vi.mocked(userApiModule.apiGetMyTierLists as Mock).mockResolvedValue({
       data: [],
-      meta: { totalItems: 0, itemCount: 0, itemsPerPage: 100, totalPages: 0, currentPage: 1 },
+      meta: {
+        totalItems: 0,
+        itemCount: 0,
+        itemsPerPage: 100,
+        totalPages: 0,
+        currentPage: 1,
+      },
     });
     vi.mocked(tierListApiModule.createTierList as Mock).mockResolvedValue({
       id: "1",
@@ -270,7 +299,9 @@ describe("DashboardPage", () => {
     fireEvent.click(screen.getByText("Создать"));
 
     await waitFor(() => {
-      expect(tierListApiModule.createTierList).toHaveBeenCalledWith("Мой рейтинг");
+      expect(tierListApiModule.createTierList).toHaveBeenCalledWith(
+        "Мой рейтинг",
+      );
       expect(mockNavigate).toHaveBeenCalledWith("/tier-lists/1");
     });
   });
@@ -293,6 +324,31 @@ describe("DashboardPage", () => {
       expect(screen.getByText("Мой публичный")).toBeInTheDocument();
       expect(screen.getByText("Мой черновик")).toBeInTheDocument();
     });
+  });
+
+  it("должен прокручивать к раскрытой секции тир-листов и книг", async () => {
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    render(<DashboardPage />, { wrapper: createWrapper() });
+
+    fireEvent.click(screen.getByText("Создано тир-листов"));
+    await waitFor(() => {
+      expect(screen.getByText("Все тир-листы")).toBeInTheDocument();
+    });
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    fireEvent.click(screen.getByText("Книг в подборках"));
+    await waitFor(() => {
+      expect(screen.getByText("Все книги в подборках")).toBeInTheDocument();
+    });
+    expect(scrollIntoView).toHaveBeenCalledTimes(2);
   });
 
   it("должен показывать только публичные при клике на 'Опубликовано'", async () => {
@@ -401,7 +457,9 @@ describe("DashboardPage", () => {
     // Закрываем секцию книг (повторный клик)
     fireEvent.click(screen.getByText("Книг в подборках"));
     await waitFor(() => {
-      expect(screen.queryByText("Все книги в подборках")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Все книги в подборках"),
+      ).not.toBeInTheDocument();
     });
 
     // Открываем снова — книги должны быть развёрнуты

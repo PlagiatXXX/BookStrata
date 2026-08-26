@@ -231,6 +231,7 @@ export async function getUserStats(userId: number) {
     publishedCount,
     placementCount,
     lastUpdated,
+    userRow,
   ] = await Promise.all([
     tierListRepository.aggregateUserStats(userId),
     prisma.template.count({ where: { authorId: userId } }),
@@ -251,6 +252,10 @@ export async function getUserStats(userId: number) {
       orderBy: { updatedAt: "desc" },
       select: { updatedAt: true },
     }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { totalActiveMinutes: true },
+    }),
   ]);
 
   return {
@@ -261,7 +266,71 @@ export async function getUserStats(userId: number) {
     likesTodayCount,
     totalBooks: placementCount,
     lastActivity: lastUpdated?.updatedAt.toISOString() ?? null,
+    totalActiveMinutes: userRow?.totalActiveMinutes ?? 0,
   };
+}
+
+// GET /api/users/me/activity-timeline — активность по месяцам (книги/лайки)
+export interface TimelineMonthRow {
+  month: Date;
+  count: number;
+}
+
+export interface TimelinePoint {
+  month: string; // "2026-03"
+  books: number;
+  likes: number;
+}
+
+/** Непрерывный ряд месяцев (пропуски → нули). Даты — UTC. */
+export function buildTimelineSeries(
+  months: number,
+  now: Date,
+  booksRows: TimelineMonthRow[],
+  likesRows: TimelineMonthRow[],
+): TimelinePoint[] {
+  const key = (d: Date) =>
+    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  const booksMap = new Map(booksRows.map((r) => [key(new Date(r.month)), Number(r.count)]));
+  const likesMap = new Map(likesRows.map((r) => [key(new Date(r.month)), Number(r.count)]));
+
+  const cursor = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  cursor.setUTCMonth(cursor.getUTCMonth() - (months - 1));
+
+  const series: TimelinePoint[] = [];
+  for (let i = 0; i < months; i++) {
+    const k = key(cursor);
+    series.push({ month: k, books: booksMap.get(k) ?? 0, likes: likesMap.get(k) ?? 0 });
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  return series;
+}
+
+export async function getActivityTimeline(userId: number, months = 6): Promise<TimelinePoint[]> {
+  const safeMonths = Math.min(Math.max(Math.trunc(months) || 6, 1), 12);
+  const since = new Date();
+  since.setUTCDate(1);
+  since.setUTCHours(0, 0, 0, 0);
+  since.setUTCMonth(since.getUTCMonth() - (safeMonths - 1));
+
+  const [booksRows, likesRows] = await Promise.all([
+    prisma.$queryRaw<TimelineMonthRow[]>`
+      SELECT date_trunc('month', bp."created_at") AS month, COUNT(*)::int AS count
+      FROM "BookPlacement" bp
+      JOIN "tier_lists" tl ON tl."id" = bp."tierListId"
+      WHERE tl."userId" = ${userId} AND bp."created_at" >= ${since}
+      GROUP BY 1 ORDER BY 1
+    `,
+    prisma.$queryRaw<TimelineMonthRow[]>`
+      SELECT date_trunc('month', l."created_at") AS month, COUNT(*)::int AS count
+      FROM "TierListLike" l
+      JOIN "tier_lists" tl ON tl."id" = l."tierListId"
+      WHERE tl."userId" = ${userId} AND l."created_at" >= ${since}
+      GROUP BY 1 ORDER BY 1
+    `,
+  ]);
+
+  return buildTimelineSeries(safeMonths, new Date(), booksRows, likesRows);
 }
 
 // GET /api/users/:id/tier-lists — публичные тир-листы пользователя
