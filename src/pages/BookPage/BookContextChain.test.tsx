@@ -2,7 +2,7 @@
 // «Погружение в контекст»: hover на десктопе, на тач-устройствах тултип
 // открывается тапом по иконке (toggle), клик вне — закрывает, невалидные
 // элементы отфильтровываются.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BookContextChain } from "./BookContextChain";
@@ -17,6 +17,40 @@ function tooltipClasses(text: string): string {
   const el = screen.getByText(text);
   return el.parentElement?.className ?? "";
 }
+
+function rect(left: number, top: number, width: number, height: number): DOMRect {
+  return {
+    left, top, right: left + width, bottom: top + height,
+    width, height, x: left, y: top, toJSON: () => ({}),
+  } as DOMRect;
+}
+
+// Мок геометрии: jsdom ничего не измеряет (все rect нулевые), а alignTooltip
+// на нулевых размерах делает early-return. Подменяем rect кнопок и тултипов.
+function mockGeometry(
+  buttonRects: Array<{ left: number; width: number }>,
+  tipWidth: number,
+  viewportWidth: number,
+) {
+  const original = HTMLElement.prototype.getBoundingClientRect;
+  vi.spyOn(window, "innerWidth", "get").mockReturnValue(viewportWidth);
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    const cls = typeof this.className === "string" ? this.className : "";
+    if (cls.includes("bp-btn-pulse")) {
+      const idx = Array.from(document.querySelectorAll("button.bp-btn-pulse")).indexOf(this);
+      const r = buttonRects[idx] ?? { left: 0, width: 48 };
+      return rect(r.left, 0, r.width, 48);
+    }
+    if (cls.includes("bottom-full")) {
+      return rect(0, 0, tipWidth, 200);
+    }
+    return original.call(this);
+  });
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("BookContextChain", () => {
   it("рендерит иконки и заголовок секции", () => {
@@ -88,5 +122,24 @@ describe("BookContextChain", () => {
     const titleEl = screen.getByText("Кино");
     expect(titleEl.className).toContain("wrap-break-word");
     expect(titleEl.className).toContain("hyphens:auto");
+  });
+
+  // Регрессия: скрытые (opacity-0) тултипы рендерятся всегда и создают
+  // scrollable overflow, если вылезают за viewport — до первого hover/тапа
+  // сдвиг не применялся, и страница получала горизонтальный скролл на мобильных.
+  it("выравнивает все тултипы сразу при маунте, не дожидаясь hover/тапа", () => {
+    // Окно 390px. Вторая иконка у правого края: центрированный тултип
+    // naturalLeft = 300 + 24 − 128 = 196, right = 196 + 256 = 452 → вылезает.
+    mockGeometry([{ left: 40, width: 48 }, { left: 300, width: 48 }], 256, 390);
+
+    render(<BookContextChain items={items} />);
+
+    // Второй тултип прижат к правому краю с отступом 12px: dx = 122 − 196 = −74
+    const tip2 = screen.getByText("Первое полное издание 1869 года.").parentElement as HTMLElement;
+    expect(tip2.style.transform).toBe("translateX(-74px)");
+
+    // Первый тултип вылезал слева (naturalLeft = 40 + 24 − 128 = −64): dx = 12 − (−64) = 76
+    const tip1 = screen.getByText("Эпоха Наполеоновских войн.").parentElement as HTMLElement;
+    expect(tip1.style.transform).toBe("translateX(76px)");
   });
 });

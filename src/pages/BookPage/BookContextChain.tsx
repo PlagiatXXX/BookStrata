@@ -1,11 +1,5 @@
 // src/pages/BookPage/BookContextChain.tsx
-// «Погружение в контекст» — интерактивная цепочка иконок (редакторский
-// контент Book.contextChain): при наведении — анимированный тултип строго
-// над иконкой, свечение активного звена, анимированная линия связи.
-// На тач-устройствах (нет hover) тултип открывается тапом по иконке,
-// повторный тап или клик вне — закрывает.
-// Рендерится только при непустом contextChain (проверка в BookPage).
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BookContextChainItem } from "@/lib/bookApi";
 
 interface BookContextChainProps {
@@ -20,6 +14,15 @@ export function BookContextChain({ items }: BookContextChainProps) {
   const [tooltipShift, setTooltipShift] = useState<Record<number, number>>({});
   const btnRefs = useRef<Map<number, HTMLButtonElement | null>>(new Map());
   const tipRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
+
+  // Фильтруем невалидные элементы (защита от мусора в JSON из админки)
+  const valid = useMemo(
+    () =>
+      items.filter(
+        (i) => i && typeof i.icon === "string" && i.icon && i.title && i.text,
+      ),
+    [items],
+  );
 
   // Закрываем тултип при клике вне цепочки (клики внутри — stopPropagation)
   useEffect(() => {
@@ -57,6 +60,27 @@ export function BookContextChain({ items }: BookContextChainProps) {
     return () => window.removeEventListener("resize", onResize);
   }, [activeIdx, alignTooltip]);
 
+  // Выравниваем ВСЕ тултипы сразу после маунта (и при resize/загрузке шрифтов).
+  // Скрытые (opacity-0) тултипы рендерятся всегда для hover-анимации, и если
+  // вылезают за viewport, создают scrollable overflow — горизонтальный скролл
+  // страницы на мобильных. Сдвиг должен применяться до первого взаимодействия.
+  useEffect(() => {
+    const alignAll = () => valid.forEach((_, idx) => alignTooltip(idx));
+    alignAll();
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(alignAll);
+    };
+    window.addEventListener("resize", onResize);
+    // Шрифты меняют ширину кнопок/тултипов — пересчитываем после загрузки
+    document.fonts?.ready.then(alignAll).catch(() => {});
+    return () => {
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(raf);
+    };
+  }, [valid, alignTooltip]);
+
   const handleToggle = (idx: number) => {
     if (activeIdx === idx) {
       setActiveIdx(null);
@@ -66,20 +90,16 @@ export function BookContextChain({ items }: BookContextChainProps) {
     alignTooltip(idx);
   };
 
-  // Фильтруем невалидные элементы (защита от мусора в JSON из админки)
-  const valid = items.filter(
-    (i) => i && typeof i.icon === "string" && i.icon && i.title && i.text,
-  );
   if (valid.length === 0) return null;
 
   return (
-    <section className="relative bg-[var(--bp-surface-container-lowest)] border-y border-primary/20 py-12">
-      <div className="max-w-[1100px] mx-auto px-4 md:px-5 relative z-40">
+    <section className="relative bg-(--bp-surface-container-lowest) border-y border-primary/20 py-12">
+      <div className="max-w-275 mx-auto px-4 md:px-5 relative z-40">
         <div className="text-center mb-10">
           <h2 className="bp-display text-white tracking-[0.2em] uppercase text-xl md:text-2xl mb-2">
             Погружение в контекст
           </h2>
-          <div className="w-24 h-px bg-[var(--bp-primary)] mx-auto" />
+          <div className="w-24 h-px bg-(--bp-primary) mx-auto" />
         </div>
 
         <div className="relative flex flex-wrap justify-center items-center gap-8 md:gap-16">
@@ -103,7 +123,7 @@ export function BookContextChain({ items }: BookContextChainProps) {
           {valid.map((item, idx) => (
             <div
                 key={idx}
-                className="group relative flex justify-center z-40 bg-[var(--bp-surface-container-lowest)] rounded-full p-2"
+                className="group relative flex justify-center z-40 bg-(--bp-surface-container-lowest) rounded-full p-2"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -113,14 +133,14 @@ export function BookContextChain({ items }: BookContextChainProps) {
                   aria-expanded={activeIdx === idx}
                   onMouseEnter={() => alignTooltip(idx)}
                   onClick={() => handleToggle(idx)}
-                  className="bp-btn-pulse w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-primary/40 flex items-center justify-center text-[var(--bp-primary)] hover:bg-[var(--bp-primary)] hover:text-[var(--bp-background)] transition-all duration-500 bg-[var(--bp-surface-container-lowest)] shadow-[0_0_15px_rgba(255,183,135,0.2)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)]"
+                  className="bp-btn-pulse w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-primary/40 flex items-center justify-center text-(--bp-primary) hover:bg-(--bp-primary) hover:text-(--bp-background) transition-all duration-500 bg-(--bp-surface-container-lowest) shadow-[0_0_15px_rgba(255,183,135,0.2)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)]"
                 >
                   <span className="ms-icon text-2xl md:text-3xl">{item.icon}</span>
                 </button>
                 {/* Тултип строго над иконкой: hover (десктоп) или тап (touch) */}
                 <div
                   ref={(el) => { tipRefs.current.set(idx, el); }}
-                  className={`absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 max-w-[calc(100vw-2rem)] p-4 bg-[var(--bp-surface-container-high)] border border-primary/30 rounded-xl shadow-2xl z-[100] opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 ease-out ${
+                  className={`absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-64 max-w-[calc(100vw-2rem)] p-4 bg-(--bp-surface-container-high) border border-primary/30 rounded-xl shadow-2xl z-100 opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300 ease-out ${
                     activeIdx === idx
                       ? "opacity-100 translate-y-0 pointer-events-auto"
                       : ""
@@ -132,13 +152,13 @@ export function BookContextChain({ items }: BookContextChainProps) {
                         : undefined,
                   }}
                 >
-                <p className="bp-label-caps bp-tip-title text-[var(--bp-primary)] mb-2 tracking-widest uppercase wrap-break-word [hyphens:auto]">
+                <p className="bp-label-caps bp-tip-title text-(--bp-primary) mb-2 tracking-widest uppercase wrap-break-word [hyphens:auto]">
                   {item.title}
                 </p>
                 <p className="text-xs md:text-sm text-white/90 leading-relaxed wrap-break-word [hyphens:auto]">{item.text}</p>
                 {/* Стрелочка тултипа: сдвигаем обратно, чтобы оставалась над иконкой */}
                 <div
-                  className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[var(--bp-surface-container-high)]"
+                  className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-(--bp-surface-container-high)"
                   style={{
                     transform:
                       tooltipShift[idx] !== undefined
