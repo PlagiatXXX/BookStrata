@@ -73,3 +73,6 @@ skills-lock.json
 backend/tmp-test-*
 reference/
 
+
+# IndexNow state (живёт только на сервере)
+.indexnow-state.json

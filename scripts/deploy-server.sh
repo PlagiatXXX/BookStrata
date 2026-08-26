@@ -214,5 +214,17 @@ if [ "$SKIP_BUILD" = false ]; then
   fi
 fi
 
+# ——— 13. IndexNow ping — уведомляем Яндекс о новых/обновлённых страницах ———
+# Sitemap отдаёт бэкенд (динамический), поэтому берём его по публичному URL.
+# Опциональный шаг: сбой пинга не должен ронять деплой.
+info "IndexNow: пинг поисковиков о новых/обновлённых URL..."
+if node "$PROJECT_DIR/scripts/indexnow-ping.mjs" \
+     --sitemap "https://bookstrata.ru/sitemap.xml" \
+     --state "$PROJECT_DIR/.indexnow-state.json"; then
+  ok "IndexNow: пинг выполнен"
+else
+  warn "IndexNow: пинг не удался (опционально) — поисковики найдут изменения сами"
+fi
+
 echo ""
 ok "Деплой завершён"

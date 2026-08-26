@@ -8,7 +8,10 @@
  *
  * Условия запуска:
  * - VITE_YM_COUNTER_ID задан (production); в dev переменная закомментирована;
- * - не prerender (window.__PRERENDER__) — чтобы не грузить счётчик для ботов.
+ * - не prerender (window.__PRERENDER__) — чтобы не грузить счётчик для ботов;
+ * - hostname из продового allowlist — иначе локальные превью (vite preview на
+ *   localhost) стреляют в продовый счётчик и портят поведенческую статистику
+ *   (за лето 2026 накопилось ~500 фейковых сессий с 127.0.0.1).
  */
 declare global {
   interface Window {
@@ -16,10 +19,17 @@ declare global {
   }
 }
 
+/** Хосты, на которых разрешена инициализация Метрики. */
+const ALLOWED_HOSTNAMES = new Set(["bookstrata.ru", "www.bookstrata.ru"]);
+
+export function isAnalyticsHost(hostname: string): boolean {
+  return ALLOWED_HOSTNAMES.has(hostname);
+}
+
 export function initYandexMetrika(): void {
   try {
     const counterId = import.meta.env.VITE_YM_COUNTER_ID;
-    if (!counterId || window.__PRERENDER__) return;
+    if (!counterId || window.__PRERENDER__ || !isAnalyticsHost(window.location.hostname)) return;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const metrikaLoader = (m: any, e: Document, t: string, r: string, i: string, k?: any, a?: any) => {

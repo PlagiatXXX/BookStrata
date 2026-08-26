@@ -108,7 +108,7 @@ function StatCard({
       onClick={onClick}
       disabled={!onClick}
       className={`activity-stat flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-all duration-200 sm:gap-4 sm:p-4 ${
-        onClick ? "cursor-pointer hover:bg-white/[0.09]" : "cursor-default"
+        onClick ? "cursor-pointer hover:bg-white/9" : "cursor-default"
       }`}
       style={{
         borderColor: isActive ? `${accent}99` : `${accent}59`,
