@@ -44,6 +44,7 @@ newsArticles         NewsArticle[]
 books                Book[] // Личные книги пользователя (из тир-листов; каталог — userId = null)
 passwordResetTokens  PasswordResetToken[]
 achievements         UserAchievement[]
+  badges               UserBadge[]
   battleVotes          BattleVote[]
   battleApplications   BattleApplication[]
   discussions          Discussion[]
@@ -653,7 +654,20 @@ achievementId String
 earnedAt      DateTime    @default(now()) @map("earned_at")
  
   @@unique([userId, achievementId])
-@@map("user_achievements")
+  @@map("user_achievements")
+}
+
+// Кастомные бейджи пользователей (назначаются админом)
+model UserBadge {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  text      String   @db.VarChar(30)
+  color     String   @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("user_badges")
 }
 
 model AnalyticsEvent {

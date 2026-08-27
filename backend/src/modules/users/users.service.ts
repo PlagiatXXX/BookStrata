@@ -165,6 +165,10 @@ export async function getUserById(params: { id: string }) {
         select: { name: true },
       },
       createdAt: true,
+      badges: {
+        select: { id: true, text: true, color: true, createdAt: true },
+        orderBy: { createdAt: "asc" as const },
+      },
     },
   });
 
@@ -562,6 +566,10 @@ export async function getAllUsers() {
         },
       },
       createdAt: true,
+      badges: {
+        select: { id: true, text: true, color: true },
+        orderBy: { createdAt: "asc" as const },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -579,6 +587,11 @@ export async function getAllUsers() {
     totalActiveMinutes: user.totalActiveMinutes,
     role: user.role?.name || "user",
     createdAt: user.createdAt.toISOString(),
+    badges: user.badges.map((b) => ({
+      id: b.id,
+      text: b.text,
+      color: b.color,
+    })),
   }));
 }
 
@@ -706,4 +719,70 @@ export async function setDonorStatus(userId: number, isDonor: boolean) {
     },
   });
   return user;
+}
+
+// ── Custom Badges ──
+
+export type BadgeColor = "purple" | "blue" | "amber" | "green" | "red" | "cyan";
+
+export type UserBadge = {
+  id: number;
+  text: string;
+  color: BadgeColor;
+  createdAt: string;
+};
+
+export async function getUserBadges(userId: number): Promise<UserBadge[]> {
+  const badges = await prisma.userBadge.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+  });
+  return badges.map((b) => ({
+    id: b.id,
+    text: b.text,
+    color: b.color as BadgeColor,
+    createdAt: b.createdAt.toISOString(),
+  }));
+}
+
+export async function addUserBadge(
+  userId: number,
+  text: string,
+  color: BadgeColor,
+): Promise<UserBadge> {
+  const count = await prisma.userBadge.count({ where: { userId } });
+  if (count >= 5) {
+    throw new ValidationError("Максимум 5 бейджей на пользователя");
+  }
+
+  const badge = await prisma.userBadge.create({
+    data: { userId, text: text.trim(), color },
+  });
+  return {
+    id: badge.id,
+    text: badge.text,
+    color: badge.color as BadgeColor,
+    createdAt: badge.createdAt.toISOString(),
+  };
+}
+
+export async function updateUserBadge(
+  badgeId: number,
+  text: string,
+  color: BadgeColor,
+): Promise<UserBadge> {
+  const badge = await prisma.userBadge.update({
+    where: { id: badgeId },
+    data: { text: text.trim(), color },
+  });
+  return {
+    id: badge.id,
+    text: badge.text,
+    color: badge.color as BadgeColor,
+    createdAt: badge.createdAt.toISOString(),
+  };
+}
+
+export async function deleteUserBadge(badgeId: number): Promise<void> {
+  await prisma.userBadge.delete({ where: { id: badgeId } });
 }

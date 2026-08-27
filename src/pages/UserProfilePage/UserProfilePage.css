@@ -1,0 +1,202 @@
+/* ══════════════════════════════════════════════════════════════
+   UserProfilePage — Obsidian Strata design system
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Scoped design tokens ── */
+.user-profile-page {
+  /* Surfaces */
+  --p-bg: #040410;
+  --p-surface: #1e2020;
+  --p-surface-container: #1e2020;
+  --p-surface-container-low: #1a1c1c;
+  --p-surface-container-high: #282a2b;
+  --p-surface-container-highest: #333535;
+
+  /* Primary (purple) */
+  --p-primary: #cdbdff;
+  --p-primary-container: #7c4dff;
+
+  /* Secondary (gold) */
+  --p-secondary: #ffd799;
+  --p-secondary-container: #feb300;
+  --p-secondary-fixed-dim: #ffba38;
+
+  /* Text */
+  --p-on-surface: #e2e2e2;
+  --p-on-surface-variant: #cac3d8;
+  --p-on-surface-muted: rgba(226, 226, 226, 0.7);
+
+  /* Outline */
+  --p-outline: #948ea1;
+  --p-outline-variant: #494455;
+
+  /* Error (moderator) */
+  --p-error: #ffb4ab;
+  --p-error-container: #93000a;
+}
+
+/* ── Background mesh ── */
+.user-profile-mesh {
+  background-color: var(--p-bg);
+  background-image:
+    radial-gradient(at 50% 0%, rgba(124, 77, 255, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 50%, rgba(0, 255, 255, 0.04) 0px, transparent 50%);
+}
+
+/* ── Neon pulse animation for avatar ── */
+@keyframes profile-neon-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(205, 189, 255, 0.6); }
+  70% { box-shadow: 0 0 0 14px rgba(205, 189, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(205, 189, 255, 0); }
+}
+
+.profile-avatar-pulse {
+  animation: profile-neon-pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ── Glassmorphism card ── */
+.profile-glass-card {
+  background: rgba(30, 32, 32, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.profile-glass-card:hover {
+  background: rgba(30, 32, 32, 0.4);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Section pill label ── */
+.profile-pill-label {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  background: var(--p-surface-container-high);
+  border: 1px solid rgba(73, 68, 85, 0.3);
+  border-radius: 9999px;
+  padding: 0.375rem 1rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--p-on-surface-variant);
+}
+
+/* ── Role badge ── */
+.profile-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(124, 77, 255, 0.2);
+  color: var(--p-primary);
+  border: 1px solid rgba(124, 77, 255, 0.5);
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Social button ── */
+.profile-social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(30, 32, 32, 0.4);
+  border: 1px solid rgba(73, 68, 85, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--p-secondary-fixed-dim);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.profile-social-btn:hover {
+  border-color: rgba(205, 189, 255, 0.5);
+  background: rgba(205, 189, 255, 0.05);
+}
+
+/* ── Stat card ── */
+.profile-stat-card {
+  background: rgba(30, 32, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s;
+}
+
+.profile-stat-card:hover {
+  background: rgba(30, 32, 32, 0.8);
+  border-color: rgba(205, 189, 255, 0.2);
+}
+
+.profile-stat-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--p-on-surface-variant);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.profile-stat-value {
+  font-family: "Manrope", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--p-on-surface);
+}
+
+/* ── Tier list card ── */
+.profile-tier-card {
+  background: rgba(30, 32, 32, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-tier-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(30, 32, 32, 0.5);
+}
+
+/* ── Taste match banner ── */
+.profile-taste-banner {
+  background: rgba(30, 32, 32, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(73, 68, 85, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: background 0.2s;
+}
+
+.profile-taste-banner:hover {
+  background: rgba(30, 32, 32, 0.4);
+}

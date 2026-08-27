@@ -24,6 +24,16 @@ export interface AuthError {
   error: string;
 }
 
+export type BadgeColor = "purple" | "blue" | "amber" | "green" | "red" | "cyan";
+
+export interface UserBadge {
+  id: number;
+  userId: number;
+  text: string;
+  color: BadgeColor;
+  createdAt: string;
+}
+
 // Тип для админки (все пользователи)
 export interface AdminUser {
   userId: number;
@@ -36,5 +46,6 @@ export interface AdminUser {
   totalActiveMinutes: number;
   role: string;
   createdAt: string;
+  badges: UserBadge[];
 }
 

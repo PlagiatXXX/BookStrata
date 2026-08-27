@@ -16,9 +16,13 @@ import {
   UserX,
   Flag,
   Heart,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react"
 import { api } from "@/lib/api-client"
-import { apiSetDonorStatus } from "@/lib/userApi"
+import { apiSetDonorStatus, apiAddUserBadge, apiUpdateUserBadge, apiDeleteUserBadge } from "@/lib/userApi"
+import type { UserBadge, BadgeColor } from "@/types/auth"
 import { useAuth } from "@/hooks/useAuthContext"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { DonorBadge } from "@/components/DonorBadge/DonorBadge"
@@ -67,6 +71,15 @@ const ACTION_COLORS: Record<ViolatorAction["type"], string> = {
   warning: "bg-amber-500/10 text-amber-400 border-amber-500/30",
 }
 
+const BADGE_COLORS: { value: BadgeColor; label: string; bg: string; text: string }[] = [
+  { value: "purple", label: "Фиолетовый", bg: "bg-purple-500/10", text: "text-purple-400" },
+  { value: "blue", label: "Синий", bg: "bg-blue-500/10", text: "text-blue-400" },
+  { value: "amber", label: "Янтарный", bg: "bg-amber-500/10", text: "text-amber-400" },
+  { value: "green", label: "Зелёный", bg: "bg-green-500/10", text: "text-green-400" },
+  { value: "red", label: "Красный", bg: "bg-red-500/10", text: "text-red-400" },
+  { value: "cyan", label: "Бирюзовый", bg: "bg-cyan-500/10", text: "text-cyan-400" },
+]
+
 export default function AdminUsersPage() {
   const navigate = useNavigate()
   const { user: currentUser } = useAuth()
@@ -83,7 +96,13 @@ export default function AdminUsersPage() {
     newRole: Role
   } | null>(null)
 
-  useBodyScrollLock(!!confirmTarget)
+  // Badge management state
+  const [editingBadgeUser, setEditingBadgeUser] = useState<number | null>(null)
+  const [badgeText, setBadgeText] = useState("")
+  const [badgeColor, setBadgeColor] = useState<BadgeColor>("purple")
+  const [editingBadge, setEditingBadge] = useState<UserBadge | null>(null)
+
+  useBodyScrollLock(!!confirmTarget || editingBadgeUser !== null)
 
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["admin-users"],
@@ -155,6 +174,77 @@ export default function AdminUsersPage() {
       sileo.error({ title: "Ошибка", description: err.message, duration: 5000 })
     },
   })
+
+  // Badge mutations
+  const addBadgeMut = useMutation({
+    mutationFn: ({ userId, text, color }: { userId: number; text: string; color: BadgeColor }) =>
+      apiAddUserBadge(String(userId), text, color),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] })
+      sileo.success({ title: "Бейдж добавлен", duration: 3000 })
+      setEditingBadgeUser(null)
+      setBadgeText("")
+      setBadgeColor("purple")
+    },
+    onError: (err: Error) => {
+      sileo.error({ title: "Ошибка", description: err.message, duration: 5000 })
+    },
+  })
+
+  const updateBadgeMut = useMutation({
+    mutationFn: ({ badgeId, text, color }: { badgeId: number; text: string; color: BadgeColor }) =>
+      apiUpdateUserBadge(badgeId, text, color),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] })
+      sileo.success({ title: "Бейдж обновлён", duration: 3000 })
+      setEditingBadgeUser(null)
+      setEditingBadge(null)
+      setBadgeText("")
+      setBadgeColor("purple")
+    },
+    onError: (err: Error) => {
+      sileo.error({ title: "Ошибка", description: err.message, duration: 5000 })
+    },
+  })
+
+  const deleteBadgeMut = useMutation({
+    mutationFn: (badgeId: number) => apiDeleteUserBadge(badgeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] })
+      sileo.success({ title: "Бейдж удалён", duration: 3000 })
+    },
+    onError: (err: Error) => {
+      sileo.error({ title: "Ошибка", description: err.message, duration: 5000 })
+    },
+  })
+
+  const handleBadgeSubmit = () => {
+    if (!editingBadgeUser || !badgeText.trim()) return
+    if (editingBadge) {
+      updateBadgeMut.mutate({ badgeId: editingBadge.id, text: badgeText.trim(), color: badgeColor })
+    } else {
+      addBadgeMut.mutate({ userId: editingBadgeUser, text: badgeText.trim(), color: badgeColor })
+    }
+  }
+
+  const startEditBadge = (user: AdminUser, badge: UserBadge) => {
+    setEditingBadgeUser(user.userId)
+    setEditingBadge(badge)
+    setBadgeText(badge.text)
+    setBadgeColor(badge.color)
+  }
+
+  const startAddBadge = (userId: number) => {
+    setEditingBadgeUser(userId)
+    setEditingBadge(null)
+    setBadgeText("")
+    setBadgeColor("purple")
+  }
+
+  const getBadgeColorClasses = (color: BadgeColor) => {
+    const found = BADGE_COLORS.find((c) => c.value === color)
+    return found ? `${found.bg} ${found.text}` : "bg-gray-500/10 text-gray-400"
+  }
 
   const canChangeRole = currentUser?.role === "admin"
 
@@ -331,6 +421,9 @@ export default function AdminUsersPage() {
                       Меценат
                     </th>
                     <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
+                      Бейджи
+                    </th>
+                    <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
                       Был(а) в сети
                     </th>
                     <th className="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden lg:table-cell">
@@ -426,6 +519,39 @@ export default function AdminUsersPage() {
                           ) : (
                             <span className="text-xs text-gray-500">—</span>
                           )}
+                        </td>
+                        <td className="px-4 py-4 hidden md:table-cell">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {(u.badges || []).map((badge) => (
+                              <span
+                                key={badge.id}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getBadgeColorClasses(badge.color)}`}
+                                style={{ borderColor: "currentColor" }}
+                              >
+                                {badge.text}
+                                <button
+                                  onClick={() => startEditBadge(u, badge)}
+                                  className="ml-0.5 opacity-60 hover:opacity-100 cursor-pointer"
+                                >
+                                  <Pencil size={9} />
+                                </button>
+                                <button
+                                  onClick={() => deleteBadgeMut.mutate(badge.id)}
+                                  className="opacity-60 hover:opacity-100 cursor-pointer"
+                                >
+                                  <Trash2 size={9} />
+                                </button>
+                              </span>
+                            ))}
+                            {(!u.badges || u.badges.length < 5) && (
+                              <button
+                                onClick={() => startAddBadge(u.userId)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-white/5 text-gray-400 border border-gray-700 hover:bg-white/10 transition-colors cursor-pointer"
+                              >
+                                <Plus size={10} />
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-400 hidden md:table-cell">
                           {formatRelativeTime(u.lastActivityAt)}
@@ -915,6 +1041,123 @@ export default function AdminUsersPage() {
                 {changingUserId === confirmTarget.userId
                   ? "Сохранение..."
                   : "Подтвердить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Badge Edit Modal */}
+      {editingBadgeUser !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => {
+            setEditingBadgeUser(null)
+            setEditingBadge(null)
+            setBadgeText("")
+            setBadgeColor("purple")
+          }}
+        >
+          <div
+            className="bg-[#1a1a2e] border border-gray-700 rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-white">
+                {editingBadge ? "Редактировать бейдж" : "Добавить бейдж"}
+              </h3>
+              <button
+                onClick={() => {
+                  setEditingBadgeUser(null)
+                  setEditingBadge(null)
+                  setBadgeText("")
+                  setBadgeColor("purple")
+                }}
+                className="text-gray-500 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1.5 font-medium">
+                  Текст (до 20 символов)
+                </label>
+                <input
+                  type="text"
+                  value={badgeText}
+                  onChange={(e) => setBadgeText(e.target.value.slice(0, 20))}
+                  placeholder="Например: VIP"
+                  className="w-full bg-white/10 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && badgeText.trim()) {
+                      handleBadgeSubmit()
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1.5 font-medium">
+                  Цвет
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {BADGE_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => setBadgeColor(c.value)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                        badgeColor === c.value
+                          ? `${c.bg} ${c.text} ring-2 ring-current`
+                          : "bg-white/5 text-gray-400 hover:bg-white/10"
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preview */}
+              {badgeText.trim() && (
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1.5 font-medium">
+                    Превью
+                  </label>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getBadgeColorClasses(badgeColor)}`}
+                    style={{ borderColor: "currentColor" }}
+                  >
+                    {badgeText.trim()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setEditingBadgeUser(null)
+                  setEditingBadge(null)
+                  setBadgeText("")
+                  setBadgeColor("purple")
+                }}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-gray-700 text-sm text-gray-300 hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleBadgeSubmit}
+                disabled={!badgeText.trim() || addBadgeMut.isPending || updateBadgeMut.isPending}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-sm font-medium text-purple-400 hover:bg-purple-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {addBadgeMut.isPending || updateBadgeMut.isPending
+                  ? "Сохранение..."
+                  : editingBadge
+                    ? "Сохранить"
+                    : "Добавить"}
               </button>
             </div>
           </div>

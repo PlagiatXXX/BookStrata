@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Heart,
-  Calendar,
   Trophy,
   BookOpen,
   Star,
+  PawPrint,
 } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import {
@@ -24,6 +24,7 @@ import { DonorBadge } from "@/components/DonorBadge/DonorBadge";
 import { RetryableImage } from "@/ui/RetryableImage";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import type { TierListShort } from "@/lib/tierListApi";
+import "./UserProfilePage.css";
 
 export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -92,11 +93,11 @@ export default function UserProfilePage() {
   if (profileError || !profile) {
     return (
       <DashboardLayout showSearch={false}>
-        <div className="min-h-screen flex flex-col items-center justify-center text-(--ink-1)">
+        <div className="min-h-screen flex flex-col items-center justify-center text-[var(--p-on-surface)]">
           <h1 className="text-lg mb-4">Пользователь не найден</h1>
           <button
             onClick={handleBack}
-            className="text-xs font-bold uppercase tracking-widest text-(--accent-main) hover:opacity-80 transition-opacity"
+            className="text-xs font-bold uppercase tracking-widest text-[var(--p-primary)] hover:opacity-80 transition-opacity"
           >
             ← Назад
           </button>
@@ -126,8 +127,8 @@ export default function UserProfilePage() {
         ]}
       />
       <DashboardLayout showSearch={false} contentTopPadding="pt-16">
-        <div className="min-h-screen cursor-default">
-          <div className="max-w-4xl mx-auto px-6 py-10 pb-16 text-(--ink-0)">
+        <div className="user-profile-page user-profile-mesh min-h-screen cursor-default">
+          <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-12 sm:pb-16">
             {/* Breadcrumbs */}
             <Breadcrumbs
               items={[
@@ -135,108 +136,133 @@ export default function UserProfilePage() {
                 { label: profile.username },
               ]}
             />
+
             {/* Back button */}
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-(--ink-1) hover:text-(--ink-0) mb-8 transition-colors"
+              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--p-on-surface-variant)] hover:text-[var(--p-on-surface)] mb-8 transition-colors"
             >
               <ArrowLeft size={14} />
               Назад
             </button>
 
-            {/* Profile Header */}
-            <div className="mx-auto flex max-w-xl flex-col items-center text-center sm:flex-row sm:justify-center sm:items-center sm:text-center gap-4 mb-10">
-              <div className="w-20 h-20 rounded-full overflow-hidden bg-(--bg-2) flex-shrink-0">
-                {profile.avatarUrl && !avatarFailed ? (
-                  <RetryableImage
-                    src={proxyImageUrl(profile.avatarUrl, 160)}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={() => setAvatarFailed(true)}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-(--ink-1)">
-                    {profile.username?.[0]?.toUpperCase() || "?"}
-                  </div>
-                )}
+            {/* ═══ Profile Header ═══ */}
+            <section className="flex flex-col items-center text-center gap-4 relative z-10 mb-8">
+              {/* Avatar */}
+              <div className="relative">
+                <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-[var(--p-secondary-container)] profile-avatar-pulse">
+                  {profile.avatarUrl && !avatarFailed ? (
+                    <RetryableImage
+                      src={proxyImageUrl(profile.avatarUrl, 320)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={() => setAvatarFailed(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl font-bold bg-[var(--p-surface-container-high)] text-[var(--p-on-surface-variant)]">
+                      {profile.username?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex-1">
-                <div className="flex flex-col items-center gap-2 sm:items-center sm:justify-center">
-                  <h1 className="text-2xl font-black tracking-tight">
+
+              {/* Name + badges */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  <h1 className="font-[Manrope] text-xl sm:text-2xl font-extrabold leading-tight tracking-tight text-[var(--p-on-surface)]">
                     {profile.username}
                   </h1>
                   {profile.role === "admin" && (
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 border border-pink-500/30">
-                      Админ
-                    </span>
+                    <span className="profile-role-badge">Админ</span>
                   )}
                   {profile.role === "moderator" && (
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    <span className="profile-role-badge" style={{ background: "rgba(59,130,246,0.2)", color: "#93c5fd", borderColor: "rgba(59,130,246,0.5)" }}>
                       Мод
                     </span>
                   )}
                   {profile.isDonor && <DonorBadge />}
+                  {profile.badges?.map((badge) => (
+                    <span
+                      key={badge.id}
+                      className={`profile-role-badge`}
+                      style={{
+                        background: badge.color === "purple" ? "rgba(168,85,247,0.2)"
+                          : badge.color === "blue" ? "rgba(59,130,246,0.2)"
+                          : badge.color === "amber" ? "rgba(245,158,11,0.2)"
+                          : badge.color === "green" ? "rgba(34,197,94,0.2)"
+                          : badge.color === "red" ? "rgba(239,68,68,0.2)"
+                          : "rgba(6,182,212,0.2)",
+                        color: badge.color === "purple" ? "#c084fc"
+                          : badge.color === "blue" ? "#93c5fd"
+                          : badge.color === "amber" ? "#fcd34d"
+                          : badge.color === "green" ? "#86efac"
+                          : badge.color === "red" ? "#fca5a5"
+                          : "#67e8f9",
+                        borderColor: badge.color === "purple" ? "rgba(168,85,247,0.5)"
+                          : badge.color === "blue" ? "rgba(59,130,246,0.5)"
+                          : badge.color === "amber" ? "rgba(245,158,11,0.5)"
+                          : badge.color === "green" ? "rgba(34,197,94,0.5)"
+                          : badge.color === "red" ? "rgba(239,68,68,0.5)"
+                          : "rgba(6,182,212,0.5)",
+                      }}
+                    >
+                      {badge.text}
+                    </span>
+                  ))}
                 </div>
+
                 {profile.title && (
-                  <p className="text-sm text-(--ink-1) mt-1">
-                    {profile.icon && (
-                      <span className="mr-1.5">{profile.icon}</span>
-                    )}
-                    {profile.title}
-                  </p>
+                  <div className="flex items-center gap-1 text-[var(--p-on-surface-variant)] text-sm mt-1">
+                    {profile.icon && <span>{profile.icon}</span>}
+                    {!profile.icon && <PawPrint size={14} />}
+                    <span>{profile.title}</span>
+                  </div>
                 )}
-                <p className="text-xs text-(--ink-2) mt-1">
+
+                <p className="text-[var(--p-on-surface-muted)] text-sm mt-1">
                   На сайте с {formatDate(profile.createdAt)}
                 </p>
               </div>
-            </div>
+            </section>
 
-            {/* Taste Match */}
-            {tasteMatch && tasteMatch.totalBooks > 0 && (
-              <div className="mb-8 rounded-md border border-(--accent-main)/30 bg-(--accent-main)/5 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <Heart size={16} className="text-pink-400" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">
-                      Совпадение вкусов:{" "}
-                      <span
-                        className={
-                          tasteMatch.matchPercent >= 50
-                            ? "text-(--accent-main)"
-                            : "text-(--ink-1)"
-                        }
-                      >
-                        {tasteMatch.matchPercent}%
-                      </span>
-                    </p>
-                    <p className="text-xs text-(--ink-1) mt-0.5">
-                      {tasteMatch.commonBooks}{" "}
-                      {tasteMatch.commonBooks === 1
-                        ? "общая книга"
+            {/* ═══ Taste Match Banner ═══ */}
+            {tasteMatch && (
+              <section className="profile-taste-banner mb-8">
+                <Heart size={20} className="text-[var(--p-primary)] shrink-0" />
+                <div className="flex flex-col">
+                  <span className="font-[Manrope] text-base font-semibold text-[var(--p-on-surface)]">
+                    Совпадение вкусов:{" "}
+                    <span className="text-[var(--p-primary)]">
+                      {tasteMatch.matchPercent}%
+                    </span>
+                  </span>
+                  <span className="text-sm text-[var(--p-on-surface-variant)]">
+                    {tasteMatch.commonBooks}{" "}
+                    {tasteMatch.commonBooks === 1
+                      ? "общая книга"
+                      : tasteMatch.commonBooks < 5
+                        ? "общих книги"
                         : "общих книг"}{" "}
-                      из {tasteMatch.totalBooks}
-                    </p>
-                  </div>
+                    из {tasteMatch.totalBooks}
+                  </span>
                 </div>
-              </div>
+              </section>
             )}
 
+            {/* ═══ About Section ═══ */}
             {profile.bio && (
-              <div className="mb-8">
-                <div className="inline-flex items-center rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-(--ink-1) mb-4">
-                  О себе
-                </div>
-                <p className="text-sm text-(--ink-1) whitespace-pre-wrap break-words">
+              <section className="flex flex-col gap-3 mb-8">
+                <span className="profile-pill-label">О СЕБЕ</span>
+                <p className="font-[Manrope] text-base leading-relaxed text-[rgba(226,226,226,0.9)] max-w-3xl">
                   {profile.bio}
                 </p>
-              </div>
+              </section>
             )}
 
+            {/* ═══ Socials Section ═══ */}
             {profile.socialLinks && profile.socialLinks.length > 0 && (
-              <div className="mb-8">
-                <div className="inline-flex items-center rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-(--ink-1) mb-4">
-                  Соцсети
-                </div>
+              <section className="flex flex-col gap-3 mb-8">
+                <span className="profile-pill-label">СОЦСЕТИ</span>
                 <div className="flex flex-wrap gap-3">
                   {profile.socialLinks.map((link, index) => (
                     <a
@@ -248,59 +274,59 @@ export default function UserProfilePage() {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 border border-gray-700 rounded-lg text-xs text-(--ink-0) hover:border-gray-600 transition-colors"
+                      className="profile-social-btn"
                     >
-                      <span className="capitalize font-medium text-(--accent-main)">
-                        {link.platform}
-                      </span>
+                      <span className="capitalize">{link.platform}</span>
                     </a>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* Moderation Panel (admin/mod only) */}
+            {/* ═══ Moderation Panel ═══ */}
             {currentUser &&
               !isOwnProfile &&
               (currentUser.role === "admin" ||
                 currentUser.role === "moderator") && (
-                <ModerationPanel
-                  userId={profile.id}
-                  username={profile.username}
-                  currentRole={profile.role || "user"}
-                />
+                <div className="mb-8">
+                  <ModerationPanel
+                    userId={profile.id}
+                    username={profile.username}
+                    currentRole={profile.role || "user"}
+                  />
+                </div>
               )}
 
-            {/* Stats */}
+            {/* ═══ Stats Grid ═══ */}
             {profile.stats && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+              <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
                 <StatCard
-                  icon={<Trophy size={16} />}
+                  icon={<Trophy size={14} />}
                   label="Тир-листов"
                   value={profile.stats.tierListsCount}
                   onClick={() => navigate("/templates")}
                 />
                 <StatCard
-                  icon={<Star size={16} />}
+                  icon={<Star size={14} />}
                   label="Опубликовано"
                   value={profile.stats.publishedCount}
                 />
                 <StatCard
-                  icon={<Heart size={16} />}
+                  icon={<Heart size={14} />}
                   label="Лайков"
                   value={profile.stats.likesCount}
                 />
                 <StatCard
-                  icon={<BookOpen size={16} />}
+                  icon={<BookOpen size={14} />}
                   label="Книг"
                   value={profile.stats.totalBooks}
                 />
-              </div>
+              </section>
             )}
 
-            {/* Public Tier Lists */}
+            {/* ═══ Public Tier Lists ═══ */}
             <section>
-              <h2 className="text-lg font-bold uppercase tracking-wider text-(--ink-1) mb-6">
+              <h2 className="font-[Manrope] text-lg font-semibold uppercase tracking-wider text-[var(--p-on-surface)] mb-6">
                 Публичные тир-листы
               </h2>
 
@@ -309,7 +335,7 @@ export default function UserProfilePage() {
                   <Spinner size="md" />
                 </div>
               ) : tierLists.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {tierLists.map((tl: TierListShort) => (
                     <div
                       key={tl.id}
@@ -322,12 +348,12 @@ export default function UserProfilePage() {
                           handleTierListClick(tl.slug || tl.id);
                         }
                       }}
-                      className="cursor-pointer bg-black/45 backdrop-blur-[2px] rounded-md p-4 border border-white/20 hover:border-white/40 transition-all duration-200"
+                      className="profile-tier-card"
                     >
-                      <h3 className="font-semibold text-(--ink-0) mb-1 text-sm line-clamp-1">
+                      <h3 className="font-semibold text-[var(--p-on-surface)] mb-1 text-sm line-clamp-1">
                         {tl.title}
                       </h3>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-(--ink-1)">
+                      <div className="flex items-center gap-3 mt-2 text-xs text-[var(--p-on-surface-variant)]">
                         <span className="flex items-center gap-1">
                           <Heart size={12} />
                           {tl.likesCount ?? 0}
@@ -336,19 +362,12 @@ export default function UserProfilePage() {
                           <BookOpen size={12} />
                           {tl.booksCount ?? 0}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar size={12} />
-                          {new Date(tl.updatedAt).toLocaleDateString("ru-RU", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-(--ink-1) text-center py-8">
+                <p className="text-sm text-[var(--p-on-surface-variant)] text-center py-8">
                   Нет публичных тир-листов
                 </p>
               )}
@@ -360,6 +379,7 @@ export default function UserProfilePage() {
   );
 }
 
+/* ═══ StatCard ═══ */
 function StatCard({
   icon,
   label,
@@ -388,15 +408,13 @@ function StatCard({
             }
           : undefined
       }
-      className={`brutal-card brutal-border p-4 ${
-        interactive ? "cursor-pointer hover:border-(--accent-main) transition-colors" : ""
-      }`}
+      className={`profile-stat-card ${interactive ? "cursor-pointer" : ""}`}
     >
-      <div className="flex items-center gap-2 text-(--ink-1) mb-2 text-[10px] font-bold uppercase tracking-widest">
+      <div className="profile-stat-label">
         {icon}
         {label}
       </div>
-      <div className="text-2xl font-black">{value}</div>
+      <div className="profile-stat-value">{value}</div>
     </div>
   );
 }

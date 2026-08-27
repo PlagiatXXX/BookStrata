@@ -18,9 +18,13 @@ import {
   getViolators,
   setDonorStatus,
   heartbeat,
+  getUserBadges,
+  addUserBadge,
+  updateUserBadge,
+  deleteUserBadge,
 } from "./users.service.js";
 
-import type { SocialLink } from "./users.service.js";
+import type { SocialLink, BadgeColor } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { ErrorCodes, createApiError, createSuccessResponse, createPaginatedResponse } from "../../lib/api-response.js";
@@ -356,6 +360,83 @@ export async function userRoutes(fastify: FastifyInstance) {
       const userId = parseInt(request.params.id);
       const result = await setDonorStatus(userId, request.body.isDonor);
       return reply.code(200).send(createSuccessResponse(result));
+    },
+  );
+
+  // ===== Кастомные бейджи =====
+
+  // GET /api/users/:id/badges — получить бейджи пользователя (публичный)
+  fastify.get<{ Params: { id: string } }>(
+    "/:id/badges",
+    async (request, reply) => {
+      const userId = parseInt(request.params.id);
+      const badges = await getUserBadges(userId);
+      return reply.code(200).send(createSuccessResponse(badges));
+    },
+  );
+
+  // POST /api/users/:id/badges — добавить бейдж (только админ)
+  fastify.post<{
+    Params: { id: string };
+    Body: { text: string; color: string };
+  }>(
+    "/:id/badges",
+    {
+      preHandler: [authMiddleware, requireRole("admin")],
+      schema: {
+        body: {
+          type: "object",
+          required: ["text", "color"],
+          properties: {
+            text: { type: "string", minLength: 1, maxLength: 20 },
+            color: { type: "string", enum: ["purple", "blue", "amber", "green", "red", "cyan"] },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const userId = parseInt(request.params.id);
+      const { text, color } = request.body;
+      const badge = await addUserBadge(userId, text, color as BadgeColor);
+      return reply.code(201).send(createSuccessResponse(badge));
+    },
+  );
+
+  // PUT /api/users/badges/:badgeId — обновить бейдж (только админ)
+  fastify.put<{
+    Params: { badgeId: string };
+    Body: { text: string; color: string };
+  }>(
+    "/badges/:badgeId",
+    {
+      preHandler: [authMiddleware, requireRole("admin")],
+      schema: {
+        body: {
+          type: "object",
+          required: ["text", "color"],
+          properties: {
+            text: { type: "string", minLength: 1, maxLength: 20 },
+            color: { type: "string", enum: ["purple", "blue", "amber", "green", "red", "cyan"] },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const badgeId = parseInt(request.params.badgeId);
+      const { text, color } = request.body;
+      const badge = await updateUserBadge(badgeId, text, color as BadgeColor);
+      return reply.code(200).send(createSuccessResponse(badge));
+    },
+  );
+
+  // DELETE /api/users/badges/:badgeId — удалить бейдж (только админ)
+  fastify.delete<{ Params: { badgeId: string } }>(
+    "/badges/:badgeId",
+    { preHandler: [authMiddleware, requireRole("admin")] },
+    async (request, reply) => {
+      const badgeId = parseInt(request.params.badgeId);
+      await deleteUserBadge(badgeId);
+      return reply.code(200).send(createSuccessResponse({ success: true }));
     },
   );
 }

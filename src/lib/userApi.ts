@@ -1,6 +1,7 @@
 import { apiClient } from "./api-client";
 import { createLogger } from "./logger";
 import type { PaginatedTierListsResponse } from "./tierListApi";
+import type { UserBadge, BadgeColor } from "@/types/auth";
 
 const userLogger = createLogger("UserApi", { color: "green" });
 
@@ -29,6 +30,7 @@ export interface PublicUser {
   role: string | null;
   createdAt: string;
   stats: PublicUserStats;
+  badges: UserBadge[];
 }
 
 export interface SocialLink {
@@ -201,4 +203,38 @@ export interface UserSearchResult {
 export async function apiSearchUsers(q: string): Promise<UserSearchResult[]> {
   userLogger.info("Поиск пользователей", { query: q });
   return apiClient.get<UserSearchResult[]>("/users/search", { q });
+}
+
+// ===== Кастомные бейджи =====
+
+// GET /api/users/:id/badges — получить бейджи пользователя
+export async function apiGetUserBadges(userId: string): Promise<UserBadge[]> {
+  userLogger.info("Получение бейджей пользователя", { userId });
+  return apiClient.get<UserBadge[]>(`/users/${userId}/badges`);
+}
+
+// POST /api/users/:id/badges — добавить бейдж (admin only)
+export async function apiAddUserBadge(
+  userId: string,
+  text: string,
+  color: BadgeColor,
+): Promise<UserBadge> {
+  userLogger.info("Добавление бейджа пользователю", { userId, text, color });
+  return apiClient.post<UserBadge>(`/users/${userId}/badges`, { text, color });
+}
+
+// PUT /api/users/badges/:badgeId — обновить бейдж (admin only)
+export async function apiUpdateUserBadge(
+  badgeId: number,
+  text: string,
+  color: BadgeColor,
+): Promise<UserBadge> {
+  userLogger.info("Обновление бейджа", { badgeId, text, color });
+  return apiClient.put<UserBadge>(`/users/badges/${badgeId}`, { text, color });
+}
+
+// DELETE /api/users/badges/:badgeId — удалить бейдж (admin only)
+export async function apiDeleteUserBadge(badgeId: number): Promise<void> {
+  userLogger.info("Удаление бейджа", { badgeId });
+  await apiClient.delete(`/users/badges/${badgeId}`);
 }
