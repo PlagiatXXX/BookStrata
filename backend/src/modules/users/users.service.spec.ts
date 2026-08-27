@@ -457,6 +457,7 @@ describe("users.service", () => {
         icon: "📄",
         isDonor: true,
         role: "admin",
+        badges: [],
         createdAt: mockUser.createdAt,
         stats: {
           tierListsCount: 5,

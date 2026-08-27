@@ -202,6 +202,7 @@ export async function getUserById(params: { id: string }) {
     icon: titleEntry.icon,
     isDonor: user.isDonor,
     role: user.role?.name ?? null,
+    badges: user.badges,
     createdAt: user.createdAt,
     stats: {
       tierListsCount: tierListStats._count._all,
