@@ -4,14 +4,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import "../styles/globals.css";
 import { router } from "./router";
-import { initSentry } from "../lib/sentry";
 import { initYandexMetrika } from "../lib/ym";
 import { AppErrorBoundary } from "../components/ErrorBoundary/AppErrorBoundary";
 
-// Инициализация Sentry — до React
-initSentry();
+// Sentry — lazy init (динамический import ~60KB, не блокирует first paint)
+import("../lib/sentry").then(({ initSentry }) => initSentry());
 
-// Инициализация Яндекс.Метрики — до React (в dev и prerender не запускается)
+// Яндекс.Метрика — lazy init (внедряет скрипт асинхронно)
 initYandexMetrika();
 
 const queryClient = new QueryClient({

@@ -50,6 +50,7 @@ export default defineConfig({
           "react-vendor": ["react", "react-dom", "react-router-dom"],
           "query-vendor": ["@tanstack/react-query"],
           "motion-vendor": ["framer-motion"],
+          "sileo-vendor": ["sileo"],
         },
       },
     },

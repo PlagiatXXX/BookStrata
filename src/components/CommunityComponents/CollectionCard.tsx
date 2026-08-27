@@ -16,6 +16,16 @@ const FALLBACK = '/images/placeholder.svg';
 
 const DEFAULT_ACCENT = 'var(--accent-main)';
 
+/** Responsive srcSet для обложек коллекций (экономит ~470 KiB) */
+function buildCollectionSrcSet(coverImage: string): string {
+  return [
+    `${proxyImageUrl(coverImage, 400)} 400w`,
+    `${proxyImageUrl(coverImage, 640)} 640w`,
+    `${proxyImageUrl(coverImage, 800)} 800w`,
+    `${proxyImageUrl(coverImage)} 1200w`,
+  ].join(', ');
+}
+
 export const CollectionCard = memo(({ collection, className = '', priority = false }: CollectionCardProps) => {
   // Приоритет: coverImageUrl коллекции → первая обложка книги → null
   const coverImage = collection.coverImageUrl || collection.bookCovers?.[0] || null;
@@ -32,6 +42,11 @@ export const CollectionCard = memo(({ collection, className = '', priority = fal
     [collection.title],
   );
 
+  const srcSet = useMemo(
+    () => coverImage ? buildCollectionSrcSet(coverImage) : '',
+    [coverImage],
+  );
+
   return (
     <Link
       to={`/collections/${collection.slug}`}
@@ -45,6 +60,8 @@ export const CollectionCard = memo(({ collection, className = '', priority = fal
             alt={collection.title}
             className="h-full w-full object-cover transition-all duration-500 group-hover:scale-[1.03]"
             src={proxyImageUrl(coverImage, 730)}
+            srcSet={srcSet}
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, calc(100vw - 32px)"
             fallbackSrc={FALLBACK}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : undefined}

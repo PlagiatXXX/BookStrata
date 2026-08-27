@@ -41,7 +41,7 @@ function MiniTierCard({ item }: { item: TierListShort }) {
         className="mini-tier-card__cover"
         style={{
           backgroundImage: item.coverImageUrl
-            ? `url(${proxyImageUrl(item.coverImageUrl)})`
+            ? `url(${proxyImageUrl(item.coverImageUrl, 400)})`
             : "linear-gradient(135deg, rgba(6,188,249,0.2), rgba(168,85,247,0.2))",
         }}
       >

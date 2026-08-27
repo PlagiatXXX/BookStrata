@@ -49,6 +49,16 @@ export const CollectionFlipCard = memo(({ collection, className = '', priority =
     [collection.title],
   );
 
+  const srcSet = useMemo(
+    () => coverImage ? [
+      `${proxyImageUrl(coverImage, 400)} 400w`,
+      `${proxyImageUrl(coverImage, 640)} 640w`,
+      `${proxyImageUrl(coverImage, 800)} 800w`,
+      `${proxyImageUrl(coverImage)} 1200w`,
+    ].join(', ') : '',
+    [coverImage],
+  );
+
   return (
     <Link
       to={`/collections/${collection.slug}`}
@@ -70,6 +80,8 @@ export const CollectionFlipCard = memo(({ collection, className = '', priority =
               alt={`Подборка: ${collection.title}`}
               className="h-full w-full object-cover"
               src={proxyImageUrl(coverImage)}
+              srcSet={srcSet}
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, calc(100vw - 32px)"
               fallbackSrc={FALLBACK}
               loading={priority ? undefined : "lazy"}
               fetchPriority={priority ? "high" : undefined}
