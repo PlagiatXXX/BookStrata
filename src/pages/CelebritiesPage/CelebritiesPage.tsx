@@ -10,7 +10,18 @@ import { getCelebrities, CELEBRITY_CATEGORIES } from "@/lib/celebritiesApi";
 import type { CelebrityItem } from "@/lib/celebritiesApi";
 import "./CelebritiesPage.css";
 
-const SCROLL_AMOUNT = 240;
+/** Паттерн расположения карточек в асимметричном гриде */
+type CardSize = "featured" | "standard" | "wide";
+
+function getCardSize(index: number, _total: number): CardSize {
+  // Паттерн: featured (0), standard (1), standard (2), wide (3), wide (4), ...
+  const pos = index % 5;
+  if (pos === 0) return "featured";
+  if (pos === 1 || pos === 2) return "standard";
+  return "wide"; // pos === 3 || pos === 4
+}
+
+const PAGE_SIZE = 5;
 
 export default function CelebritiesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -68,22 +79,23 @@ export default function CelebritiesPage() {
           { name: "Что читают знаменитости", url: "/celebrities" },
         ]}
       />
-      <DashboardLayout showSearch={false} activeItem="Знаменитости">
+      <DashboardLayout showSearch={false} activeItem="Знаменитости" bgVariant="dark">
         <div className="px-6 pt-6 pb-4">
           <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Что читают знаменитости" }]} />
         </div>
 
-        <div className="celebrities-page max-w-6xl mx-auto px-6 pb-12">
+        <div className="celebrities-page max-w-[1440px] mx-auto px-4 sm:px-6 md:px-20 pb-32">
           {/* Hero */}
-          <div className="celebrities-hero mb-8">
+          <header className="celebrities-hero mb-12">
             <h1 className="celebrities-title">
-              Что читают знаменитости?
+              Что читают<br />
+              <span className="celebrities-title-accent">знаменитости?</span>
             </h1>
             <p className="celebrities-subtitle">
-              Любимые книги известных людей: актёров, музыкантов, предпринимателей, спортсменов и других. 
-              Узнайте, что вдохновляет кумиров.
+              Любимые книги известных людей: актёров, музыкантов, предпринимателей, спортсменов и других.
+              Узнайте, что вдохновляет кумиров в нашем специальном редакционном материале.
             </p>
-          </div>
+          </header>
 
           {/* Category Tabs */}
           {!isLoading && celebrities.length > 0 && (
@@ -96,7 +108,7 @@ export default function CelebritiesPage() {
 
           {/* Loading */}
           {isLoading && (
-            <div className="flex items-center justify-center py-12 text-gray-300">
+            <div className="flex items-center justify-center py-12" style={{ color: "var(--muse-on-surface-variant)" }}>
               <Spinner size="md" className="mr-2" />
               Загрузка...
             </div>
@@ -113,7 +125,7 @@ export default function CelebritiesPage() {
             </div>
           )}
 
-          {/* Grid */}
+          {/* Grid — пустой результат фильтра */}
           {!isLoading && celebrities.length > 0 && filteredCelebrities.length === 0 && (
             <div className="celebrities-empty">
               <p className="celebrities-empty-text">
@@ -122,18 +134,22 @@ export default function CelebritiesPage() {
             </div>
           )}
 
+          {/* Asymmetric Grid */}
           {!isLoading && filteredCelebrities.length > 0 && (
-            <div className="celebrities-grid">
-              {filteredCelebrities.map((celebrity) => (
-                <CelebrityCard key={celebrity.id} celebrity={celebrity} />
-              ))}
-            </div>
+            <CelebrityGrid
+              key={activeCategory}
+              celebrities={filteredCelebrities}
+            />
           )}
         </div>
       </DashboardLayout>
     </>
   );
 }
+
+/* ═══════════════════════════════════════════════════════
+   Category Tabs
+   ═══════════════════════════════════════════════════════ */
 
 function CategoryTabs({
   activeCategory,
@@ -171,14 +187,13 @@ function CategoryTabs({
   const scrollBy = useCallback((direction: "left" | "right") => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollBy({ left: direction === "left" ? -SCROLL_AMOUNT : SCROLL_AMOUNT, behavior: "smooth" });
+    el.scrollBy({ left: direction === "left" ? -240 : 240, behavior: "smooth" });
   }, []);
 
   const categories = useMemo(() => {
     const entries = Object.entries(CELEBRITY_CATEGORIES)
       .filter(([key]) => key === "all" || (categoryStats[key] && categoryStats[key] > 0));
 
-    // Добавляем категории, которых нет в CELEBRITY_CATEGORIES, но есть в stats
     Object.entries(categoryStats).forEach(([key]) => {
       if (!CELEBRITY_CATEGORIES[key] && !entries.find(([k]) => k === key)) {
         entries.push([key, key]);
@@ -189,8 +204,7 @@ function CategoryTabs({
   }, [categoryStats]);
 
   return (
-    <section className="celebrities-tabs-section mb-8">
-      {/* Левая стрелка */}
+    <section className="celebrities-tabs-section">
       <button
         type="button"
         aria-label="Прокрутить влево"
@@ -202,7 +216,6 @@ function CategoryTabs({
         <ChevronLeft size={18} />
       </button>
 
-      {/* Контейнер с табами */}
       <div
         ref={scrollRef}
         className="celebrities-tabs-scroll"
@@ -215,19 +228,16 @@ function CategoryTabs({
             role="tab"
             aria-selected={activeCategory === key}
             onClick={() => setActiveCategory(key)}
-            className={`celebrities-tab ${
-              activeCategory === key ? "active" : ""
-            }`}
+            className={`celebrities-tab ${activeCategory === key ? "active" : ""}`}
           >
             {label}
             {key !== "all" && categoryStats[key] && (
-              <span className="celebrities-tab-count">{categoryStats[key]}</span>
+              <span className="celebrities-tab-count">({categoryStats[key]})</span>
             )}
           </button>
         ))}
       </div>
 
-      {/* Правая стрелка */}
       <button
         type="button"
         aria-label="Прокрутить вправо"
@@ -242,20 +252,92 @@ function CategoryTabs({
   );
 }
 
+/* ═══════════════════════════════════════════════════════
+   Celebrity Grid — paginated asymmetric grid
+   ═══════════════════════════════════════════════════════ */
+
+function CelebrityGrid({ celebrities }: { celebrities: CelebrityItem[] }) {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const visibleCelebrities = useMemo(
+    () => celebrities.slice(0, visibleCount),
+    [celebrities, visibleCount],
+  );
+
+  const hasMore = visibleCount < celebrities.length;
+
+  return (
+    <>
+      <div className="celebrities-grid">
+        {visibleCelebrities.map((celebrity, index) => (
+          <CelebrityCard
+            key={celebrity.id}
+            celebrity={celebrity}
+            size={getCardSize(index, visibleCelebrities.length)}
+          />
+        ))}
+      </div>
+
+      {hasMore && (
+        <div className="flex justify-center mt-12">
+          <button
+            type="button"
+            onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+            className="celebrities-show-more-btn"
+          >
+            Показать больше
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   Celebrity Card — full-bleed glassmorphic
+   ═══════════════════════════════════════════════════════ */
+
+const CATEGORY_COLORS: Record<string, string> = {
+  actor: "var(--muse-secondary)",
+  singer: "var(--muse-secondary)",
+  financier: "var(--muse-primary)",
+  other: "var(--muse-tertiary)",
+  sportsman: "var(--muse-tertiary)",
+  writer: "var(--muse-primary)",
+  scientist: "var(--muse-primary)",
+  musician: "var(--muse-secondary)",
+  blogger: "var(--muse-secondary)",
+  director: "var(--muse-primary)",
+  philosopher: "var(--muse-primary)",
+  "tv-host": "var(--muse-secondary)",
+};
+
+function getBookCountLabel(count: number): string {
+  if (count === 1) return "книга";
+  if (count >= 2 && count <= 4) return "книги";
+  return "книг";
+}
+
 const CelebrityCard = memo(function CelebrityCard({
   celebrity,
+  size,
 }: {
   celebrity: CelebrityItem;
+  size: CardSize;
 }) {
   const bookCount = celebrity.books ? Object.keys(celebrity.books).length : 0;
   const categoryLabel = CELEBRITY_CATEGORIES[celebrity.category] || celebrity.category;
+  const categoryColor = CATEGORY_COLORS[celebrity.category] || "var(--muse-on-surface-variant)";
 
   return (
     <Link
       to={`/celebrities/${celebrity.slug}`}
       className="celebrity-card"
+      data-featured={size === "featured" ? "true" : undefined}
+      data-size={size === "featured" ? undefined : size}
+      data-category={celebrity.category}
     >
-      {/* Фото */}
+      {/* Фото на всю карточку */}
       <div className="celebrity-card-photo">
         {celebrity.photoUrl ? (
           <img
@@ -271,25 +353,37 @@ const CelebrityCard = memo(function CelebrityCard({
         )}
       </div>
 
-      {/* Информация */}
-      <div className="celebrity-card-info">
-        <h3 className="celebrity-card-name">{celebrity.name}</h3>
-        {categoryLabel && (
-          <span className="celebrity-card-category">{categoryLabel}</span>
+      {/* Gradient overlay */}
+      <div className="celebrity-card-overlay" />
+
+      {/* Контент */}
+      <div className="celebrity-card-content">
+        <span className="celebrity-card-category" style={{ color: categoryColor }}>
+          {categoryLabel}
+        </span>
+
+        {size === "featured" || size === "wide" ? (
+          <div className="celebrity-card-footer">
+            <div>
+              <h2 className="celebrity-card-name">{celebrity.name}</h2>
+            </div>
+            {bookCount > 0 && (
+              <span className="celebrity-card-badge">
+                {bookCount} {getBookCountLabel(bookCount)}
+              </span>
+            )}
+          </div>
+        ) : (
+          <>
+            <h2 className="celebrity-card-name">{celebrity.name}</h2>
+            {bookCount > 0 && (
+              <span className="celebrity-card-badge">
+                {bookCount} {getBookCountLabel(bookCount)}
+              </span>
+            )}
+          </>
         )}
       </div>
-
-      {/* Количество книг */}
-      {bookCount > 0 && (
-        <div className="celebrity-card-books">
-          <span>{bookCount}</span>
-          <span className="celebrity-card-books-label">
-            {bookCount === 1 ? "книга" : bookCount < 5 ? "книги" : "книг"}
-          </span>
-        </div>
-      )}
     </Link>
   );
 });
-
-

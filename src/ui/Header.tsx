@@ -6,9 +6,6 @@ import { Logo } from "./Logo";
 import { CoffeeCup } from "./CoffeeCup";
 import { Avatar } from "@/components/Avatar";
 import {
-  List,
-  Library,
-  Globe,
   LogOut,
   BarChart3,
   Star,
@@ -25,7 +22,7 @@ import { ConfirmModal } from "@/ui/ConfirmModal";
 interface NavItem {
   label: string;
   onClick?: () => void;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   description: string;
   badge?: string;
   /** Иконка справа от текста (чашка «Угостить») */
@@ -181,7 +178,6 @@ export const Header = ({
     {
       label: "Главная",
       onClick: onMyRatingsClick ?? handleDefaultMyRatings,
-      icon: <List size={18} />,
       description: "Управление рейтингами",
     },
     ...(showTemplatesNav
@@ -189,7 +185,6 @@ export const Header = ({
           {
             label: "Тир-листы",
             onClick: () => navigate("/templates"),
-            icon: <Library size={18} />,
             description: "Готовые шаблоны",
           },
         ]
@@ -197,13 +192,11 @@ export const Header = ({
     {
       label: "Рейтинги",
       onClick: handleRatingsClick,
-      icon: <BarChart3 size={18} />,
       description: "Редакционные подборки",
     },
     {
       label: "Новости",
       onClick: () => navigate("/community"),
-      icon: <Globe size={18} />,
       description: "Новости сообщества",
     },
     {
@@ -267,18 +260,29 @@ export const Header = ({
                       }`}
                     >
                       <div className={`flex items-center gap-2 ${item.iconAfter ? "flex-row-reverse" : ""}`}>
-                        <span className="relative shrink-0">
-                          {item.icon}
-                          {item.badge && (
-                            <span className={`absolute -top-1.5 -right-1.5 z-10 flex size-4 items-center justify-center rounded-full border text-[9px] font-bold leading-none ${
-                              isLightTheme
-                                ? "bg-yellow-400 text-yellow-950 border-yellow-600/60"
-                                : "bg-yellow-500/90 text-yellow-950 border-yellow-300/60"
-                            }`}>
-                              {item.badge}
-                            </span>
-                          )}
-                        </span>
+                        {item.icon && (
+                          <span className="relative shrink-0">
+                            {item.icon}
+                            {item.badge && (
+                              <span className={`absolute -top-1.5 -right-1.5 z-10 flex size-4 items-center justify-center rounded-full border text-[9px] font-bold leading-none ${
+                                isLightTheme
+                                  ? "bg-yellow-400 text-yellow-950 border-yellow-600/60"
+                                  : "bg-yellow-500/90 text-yellow-950 border-yellow-300/60"
+                              }`}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </span>
+                        )}
+                        {!item.icon && item.badge && (
+                          <span className={`relative shrink-0 flex size-4 items-center justify-center rounded-full border text-[9px] font-bold leading-none ${
+                            isLightTheme
+                              ? "bg-yellow-400 text-yellow-950 border-yellow-600/60"
+                              : "bg-yellow-500/90 text-yellow-950 border-yellow-300/60"
+                          }`}>
+                            {item.badge}
+                          </span>
+                        )}
                         <span className="text-sm font-medium">
                           {item.label}
                         </span>

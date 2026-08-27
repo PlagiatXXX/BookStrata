@@ -134,6 +134,7 @@ describe("isCatalogCardComplete", () => {
   });
 
   it("без title — false", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { title: _, ...card } = FULL_CARD as any;
     expect(isCatalogCardComplete(card)).toBe(false);
   });
@@ -159,6 +160,7 @@ describe("isCatalogCardComplete", () => {
   });
 
   it("tags отсутствует (spread undefined) → false", () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { tags: _, ...cardWithoutTags } = FULL_CARD;
     expect(isCatalogCardComplete(cardWithoutTags)).toBe(false);
   });
