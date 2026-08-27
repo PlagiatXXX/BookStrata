@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   toggleBookCommentLike: vi.fn(),
   addBooksToTierList: vi.fn(),
   assertOwner: vi.fn(),
+  searchCatalogBooks: vi.fn(),
 }));
 
 vi.mock("../../lib/prisma.js", () => ({ prisma: mocks.prisma }));
@@ -40,6 +41,9 @@ vi.mock("./bookComment.service.js", () => ({
 }));
 vi.mock("../tier-lists/tierList.books.service.js", () => ({
   addBooksToTierList: mocks.addBooksToTierList,
+}));
+vi.mock("./catalogSearch.service.js", () => ({
+  searchCatalogBooks: mocks.searchCatalogBooks,
 }));
 vi.mock("../tier-lists/tierList.utils.js", () => ({
   assertOwner: mocks.assertOwner,
@@ -184,5 +188,21 @@ describe("books.route.ts — request.user.userId (регресс user?.id → 40
       "tl-1",
       expect.arrayContaining([expect.objectContaining({ title: "Анна Каренина" })]),
     );
+  });
+
+  it("GET /catalog-search — публичный поиск каталога", async () => {
+    mocks.searchCatalogBooks.mockResolvedValue([
+      { id: 1, title: "Дюна", author: "Герберт", slug: "dune", coverImageUrl: "/c/dune.jpg", rating: 9.0 },
+    ]);
+
+    const res = await request(app.server).get("/api/books/catalog-search?q=Дюна");
+    expect(res.status).toBe(200);
+    expect(res.body.data.books).toHaveLength(1);
+    expect(res.body.data.books[0].title).toBe("Дюна");
+  });
+
+  it("GET /catalog-search — отклоняет короткий запрос", async () => {
+    const res = await request(app.server).get("/api/books/catalog-search?q=a");
+    expect(res.status).toBe(400);
   });
 });

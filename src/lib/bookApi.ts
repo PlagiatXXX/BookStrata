@@ -162,3 +162,26 @@ export async function getTrendingBooks(): Promise<TrendingBook[]> {
   const { books } = await apiClient.get<{ books: TrendingBook[] }>("/books/trending");
   return books;
 }
+
+/** Компактная карточка для каталог-поиска */
+export interface CatalogBook {
+  id: number;
+  title: string;
+  author: string | null;
+  slug: string | null;
+  coverImageUrl: string;
+  rating: number | null;
+}
+
+/** Публичный поиск по каталогу книг (без авторизации) */
+export async function searchCatalogBooks(
+  query: string,
+  limit = 10,
+): Promise<CatalogBook[]> {
+  if (!query || query.trim().length < 2) return [];
+  const result = await apiClient.get<{ books: CatalogBook[] }>(
+    "/books/catalog-search",
+    { q: query.trim(), limit },
+  );
+  return result.books;
+}

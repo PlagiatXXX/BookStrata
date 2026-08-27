@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
+import { RankingsSearchBar } from "./RankingsSearchBar";
 
 interface RankingsHeroProps {
   onAiOpen: () => void;
@@ -18,25 +19,34 @@ export function RankingsHero({ onAiOpen }: RankingsHeroProps) {
         <div className="absolute inset-0 bg-linear-to-b from-background/60 via-background/40 to-background" />
       </div>
 
-      <div className="relative z-10">
-        <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Рейтинг книг" }]} />
+      {/* Двухколоночный грид */}
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-[1fr_380px] gap-8 items-start">
+        {/* Левая колонка — текст */}
+        <div>
+          <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Рейтинг книг" }]} />
 
-        <h1 className="font-display text-3xl md:text-5xl font-extrabold uppercase text-white text-glow mt-3">
-          Рейтинг книг
-        </h1>
+          <h1 className="font-display text-3xl md:text-5xl font-extrabold uppercase text-white text-glow mt-3">
+            Рейтинг книг
+          </h1>
 
-        <p className="text-base md:text-lg text-on-surface-variant max-w-xl mt-3">
-          Редакционные подборки BookStrata — лучшие книги по жанрам, чтобы вам было проще найти что почитать.
-        </p>
+          <p className="text-base md:text-lg text-on-surface-variant max-w-xl mt-3">
+            Редакционные подборки BookStrata — лучшие книги по жанрам, чтобы вам было проще найти что почитать.
+          </p>
 
-        <button
-          type="button"
-          onClick={onAiOpen}
-          className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-mono text-xs uppercase tracking-widest neon-border-cyan text-cyan-300 hover:bg-cyan-500/10 transition-all cursor-pointer"
-        >
-          <Sparkles size={14} />
-          Спросить у Букстража
-        </button>
+          <button
+            type="button"
+            onClick={onAiOpen}
+            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-mono text-xs uppercase tracking-widest neon-border-cyan text-cyan-300 hover:bg-cyan-500/10 transition-all cursor-pointer"
+          >
+            <Sparkles size={14} />
+            Спросить у Букстража
+          </button>
+        </div>
+
+        {/* Правая колонка — поиск */}
+        <div className="mt-2 md:mt-12">
+          <RankingsSearchBar />
+        </div>
       </div>
     </section>
   );

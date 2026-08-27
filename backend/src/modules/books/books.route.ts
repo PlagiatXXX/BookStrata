@@ -1,6 +1,7 @@
 // backend/src/modules/books/books.route.ts
 import type { FastifyInstance } from "fastify";
 import { searchBooks } from "./books.service.js";
+import { searchCatalogBooks } from "./catalogSearch.service.js";
 import { getTrendingBooks } from "./trending.service.js";
 import { getBookPageData } from "./bookPage.service.js";
 import { toggleBookLike } from "./bookLike.service.js";
@@ -68,6 +69,29 @@ export async function booksRoutes(fastify: FastifyInstance) {
         }
         throw error;
       }
+    }
+  );
+
+  // GET /api/books/catalog-search — публичный поиск по каталогу книг
+  fastify.get<{
+    Querystring: { q: string; limit?: number };
+  }>("/catalog-search",
+    {
+      schema: {
+        querystring: {
+          type: "object",
+          required: ["q"],
+          properties: {
+            q: { type: "string", minLength: 2, description: "Поисковый запрос" },
+            limit: { type: "number", minimum: 1, maximum: 20, default: 10 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { q, limit = 10 } = request.query;
+      const books = await searchCatalogBooks(q, limit);
+      return reply.code(200).send(createSuccessResponse({ books }));
     }
   );
 
