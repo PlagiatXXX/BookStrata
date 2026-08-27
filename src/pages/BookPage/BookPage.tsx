@@ -24,7 +24,7 @@ import { createTierList } from "@/lib/tierListApi";
 import { BookCover3D } from "./BookCover3D";
 import { BookRatingPanel } from "./BookRatingPanel";
 import { BookContextChain } from "./BookContextChain";
-// import { ContentLock } from "./ContentLock"; // TODO: временно отключено для开放 доступа к страницам книг
+// import { ContentLock } from "./ContentLock"; // отключено для открытого доступа к страницам книг
 import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
 import { BookSignUpCta } from "./BookSignUpCta";
@@ -460,7 +460,7 @@ export default function BookPage() {
         </header>
 
         {/* ── Нижний контент: гость видит вместо него замок с CTA ── */}
-        {/* TODO: ContentLock временно отключен для开放 доступа к страницам книг */}
+        {/* ContentLock отключён для открытого доступа к страницам книг */}
         {/* <ContentLock
           description="Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы"
           redirectTo={`/books/${slug}`}

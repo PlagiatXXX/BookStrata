@@ -132,6 +132,52 @@ describe("isCatalogCardComplete", () => {
   it("без genre — false", () => {
     expect(isCatalogCardComplete({ ...FULL_CARD, genre: undefined })).toBe(false);
   });
+
+  it("без title — false", () => {
+    const { title: _, ...card } = FULL_CARD as any;
+    expect(isCatalogCardComplete(card)).toBe(false);
+  });
+
+  it("без author — false", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, author: null })).toBe(false);
+  });
+
+  it("без description — false", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, description: null })).toBe(false);
+  });
+
+  it("без coverImageUrl — false", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, coverImageUrl: null })).toBe(false);
+  });
+
+  it("tags пустой массив → false", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, tags: [] })).toBe(false);
+  });
+
+  it("tags null → false", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, tags: null })).toBe(false);
+  });
+
+  it("tags отсутствует (spread undefined) → false", () => {
+    const { tags: _, ...cardWithoutTags } = FULL_CARD;
+    expect(isCatalogCardComplete(cardWithoutTags)).toBe(false);
+  });
+
+  it("tags строка через запятую → нормализуется", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, tags: "фантастика, классика" })).toBe(true);
+  });
+
+  it("tags пустая строка → false", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, tags: "" })).toBe(false);
+  });
+
+  it("tags строка из пробелов → false", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, tags: "  ,  " })).toBe(false);
+  });
+
+  it("year = 0 → false (год 0 falsy)", () => {
+    expect(isCatalogCardComplete({ ...FULL_CARD, year: 0 })).toBe(false);
+  });
 });
 
 describe("syncCatalogCards", () => {

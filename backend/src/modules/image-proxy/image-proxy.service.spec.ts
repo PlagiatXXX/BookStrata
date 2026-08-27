@@ -38,6 +38,51 @@ describe("isAllowedUrl (белый список)", () => {
   it("неизвестный домен блокируется", () => {
     expect(isAllowedUrl("https://evil.example.com/x.jpg")).toBe(false);
   });
+
+  // ── Bypass attempts ──
+
+  it("блокирует javascript: протокол", () => {
+    expect(isAllowedUrl("javascript:alert(1)")).toBe(false);
+  });
+
+  it("блокирует file: протокол", () => {
+    expect(isAllowedUrl("file:///etc/passwd")).toBe(false);
+  });
+
+  it("блокирует ftp: протокол", () => {
+    expect(isAllowedUrl("ftp://m.media-amazon.com/x.jpg")).toBe(false);
+  });
+
+  it("блокирует data: URI", () => {
+    expect(isAllowedUrl("data:image/png;base64,abc")).toBe(false);
+  });
+
+  it("блокирует подмену поддомена (evil-m.media-amazon.com)", () => {
+    expect(isAllowedUrl("https://evil-m.media-amazon.com/x.jpg")).toBe(false);
+  });
+
+  it("блокирует подмену домена в пути (media-amazon.com.evil.com)", () => {
+    expect(isAllowedUrl("https://media-amazon.com.evil.com/x.jpg")).toBe(false);
+  });
+
+  it("разрешает URL с портом (hostname не включает порт)", () => {
+    expect(isAllowedUrl("https://m.media-amazon.com:8080/x.jpg")).toBe(true);
+  });
+
+  it("пустая строка → false", () => {
+    expect(isAllowedUrl("")).toBe(false);
+  });
+
+  it("невалидный URL → false", () => {
+    expect(isAllowedUrl("not-a-url")).toBe(false);
+  });
+
+  it("URL с @ в userinfo (попытка подмены) → hostname корректен", () => {
+    // https://evil.com@m.media-amazon.com — hostname = m.media-amazon.com (OK)
+    expect(isAllowedUrl("https://evil.com@m.media-amazon.com/x.jpg")).toBe(true);
+    // https://m.media-amazon.com@evil.com — hostname = evil.com (blocked)
+    expect(isAllowedUrl("https://m.media-amazon.com@evil.com/x.jpg")).toBe(false);
+  });
 });
 
 describe("ImageProxy getWebP", () => {

@@ -278,13 +278,16 @@ describe("mergeGroup", () => {
   });
 
   it("переносит placements, пропуская конфликты (P2002/канон уже в листе)", async () => {
-    (prisma.bookPlacement.findMany as any).mockResolvedValue([
-      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0 },
-      { tierListId: "tl-2", bookId: 2, tierId: null, rank: 1 },
-    ]);
-    (prisma.bookPlacement.findUnique as any)
-      .mockResolvedValueOnce(null) // tl-1 свободен → переносим
-      .mockResolvedValueOnce({ tierListId: "tl-2", bookId: 1 }); // tl-2 конфликт → пропуск
+    (prisma.bookPlacement.findMany as any)
+      .mockResolvedValueOnce([
+        // dupPlacements (dup.id = 2)
+        { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0 },
+        { tierListId: "tl-2", bookId: 2, tierId: null, rank: 1 },
+      ])
+      .mockResolvedValueOnce([
+        // existingPlacements for canon (canon.id = 1)
+        { tierListId: "tl-2" }, // tl-2 конфликт → пропуск
+      ]);
 
     await mergeGroup(group);
 
@@ -302,9 +305,12 @@ describe("mergeGroup", () => {
     dup.coverImageUrl = "/user-cover.jpg";
     const canon = groupBook(1);
     canon.coverImageUrl = "/catalog-cover.jpg";
-    (prisma.bookPlacement.findMany as any).mockResolvedValue([
-      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
-    ]);
+    (prisma.bookPlacement.findMany as any)
+      .mockResolvedValueOnce([
+        // dupPlacements
+        { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
+      ])
+      .mockResolvedValueOnce([]); // existingPlacements for canon — пусто
 
     await mergeGroup({ key: "local:book:1", books: [canon, dup] });
 
@@ -318,9 +324,12 @@ describe("mergeGroup", () => {
     const dup = groupBook(2);
     dup.userId = 7;
     dup.coverImageUrl = "/user-cover.jpg";
-    (prisma.bookPlacement.findMany as any).mockResolvedValue([
-      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: "/my-own.jpg" },
-    ]);
+    (prisma.bookPlacement.findMany as any)
+      .mockResolvedValueOnce([
+        // dupPlacements
+        { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: "/my-own.jpg" },
+      ])
+      .mockResolvedValueOnce([]); // existingPlacements for canon — пусто
 
     await mergeGroup(group);
 
@@ -336,9 +345,12 @@ describe("mergeGroup", () => {
     dup.coverImageUrl = "/same.jpg";
     const canon = groupBook(1);
     canon.coverImageUrl = "/same.jpg";
-    (prisma.bookPlacement.findMany as any).mockResolvedValue([
-      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
-    ]);
+    (prisma.bookPlacement.findMany as any)
+      .mockResolvedValueOnce([
+        // dupPlacements
+        { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
+      ])
+      .mockResolvedValueOnce([]); // existingPlacements for canon — пусто
 
     await mergeGroup({ key: "local:book:1", books: [canon, dup] });
 
@@ -351,9 +363,12 @@ describe("mergeGroup", () => {
   it("НЕ переносит обложку каталогового дубля (userId = null) — канон диктует обложку", async () => {
     const dup = groupBook(2);
     dup.coverImageUrl = "/another-edition.jpg"; // другая обложка издания
-    (prisma.bookPlacement.findMany as any).mockResolvedValue([
-      { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
-    ]);
+    (prisma.bookPlacement.findMany as any)
+      .mockResolvedValueOnce([
+        // dupPlacements
+        { tierListId: "tl-1", bookId: 2, tierId: 1, rank: 0, coverImageUrl: null },
+      ])
+      .mockResolvedValueOnce([]); // existingPlacements for canon — пусто
 
     await mergeGroup(group);
 
@@ -376,16 +391,15 @@ describe("mergeGroup", () => {
   });
 
   it("BookRating: при конфликте пользователя остаётся новейшая оценка", async () => {
-    (prisma.bookRating.findMany as any).mockResolvedValue([
-      { id: 20, bookId: 2, userId: 7, createdAt: new Date("2026-01-10") },
-    ]);
-    // у канона уже есть оценка пользователя 7 — старше дубля
-    (prisma.bookRating.findUnique as any).mockResolvedValue({
-      id: 10,
-      bookId: 1,
-      userId: 7,
-      createdAt: new Date("2026-01-01"),
-    });
+    (prisma.bookRating.findMany as any)
+      .mockResolvedValueOnce([
+        // dupRatings
+        { id: 20, bookId: 2, userId: 7, createdAt: new Date("2026-01-10") },
+      ])
+      .mockResolvedValueOnce([
+        // existingRatings for canon
+        { id: 10, bookId: 1, userId: 7, createdAt: new Date("2026-01-01") },
+      ]);
 
     await mergeGroup(group);
 
@@ -398,15 +412,15 @@ describe("mergeGroup", () => {
   });
 
   it("BookRating: если оценка канона новее — дубль удаляется", async () => {
-    (prisma.bookRating.findMany as any).mockResolvedValue([
-      { id: 20, bookId: 2, userId: 7, createdAt: new Date("2026-01-01") },
-    ]);
-    (prisma.bookRating.findUnique as any).mockResolvedValue({
-      id: 10,
-      bookId: 1,
-      userId: 7,
-      createdAt: new Date("2026-01-10"),
-    });
+    (prisma.bookRating.findMany as any)
+      .mockResolvedValueOnce([
+        // dupRatings
+        { id: 20, bookId: 2, userId: 7, createdAt: new Date("2026-01-01") },
+      ])
+      .mockResolvedValueOnce([
+        // existingRatings for canon
+        { id: 10, bookId: 1, userId: 7, createdAt: new Date("2026-01-10") },
+      ]);
 
     await mergeGroup(group);
 
@@ -415,18 +429,21 @@ describe("mergeGroup", () => {
   });
 
   it("переносит CollectionBook/CelebrityBook, пропуская конфликты", async () => {
-    (prisma.collectionBook.findMany as any).mockResolvedValue([
-      { id: 30, collectionId: 5, bookId: 2, rank: 0 },
-    ]);
-    (prisma.celebrityBook.findMany as any).mockResolvedValue([
-      { id: 40, celebrityId: 8, bookId: 2, rank: 1 },
-    ]);
-    (prisma.collectionBook.findUnique as any).mockResolvedValue(null);
-    (prisma.celebrityBook.findUnique as any).mockResolvedValue({
-      id: 41,
-      celebrityId: 8,
-      bookId: 1,
-    });
+    (prisma.collectionBook.findMany as any)
+      .mockResolvedValueOnce([
+        // dupCollectionBooks
+        { id: 30, collectionId: 5, bookId: 2, rank: 0 },
+      ])
+      .mockResolvedValueOnce([]); // existingCollectionBooks for canon — пусто
+    (prisma.celebrityBook.findMany as any)
+      .mockResolvedValueOnce([
+        // dupCelebrityBooks
+        { id: 40, celebrityId: 8, bookId: 2, rank: 1 },
+      ])
+      .mockResolvedValueOnce([
+        // existingCelebrityBooks for canon
+        { celebrityId: 8 }, // конфликт → пропуск
+      ]);
 
     await mergeGroup(group);
 

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type { FastifyInstance } from "fastify";
 import { register, login } from "./auth.service.js";
 import { validateToken, validateRefreshToken, generateTokenPair, logout } from "./token.service.js";
@@ -306,16 +307,30 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // OAuth: VK
   fastify.get("/oauth/vk", async (request, reply) => {
-    const state = Math.random().toString(36).substring(2, 15);
+    const state = crypto.randomBytes(32).toString("hex");
+    reply.setCookie("oauth_state", state, {
+      path: "/",
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 10 * 60, // 10 минут
+    });
     const { getVkAuthUrl } = await import("../../lib/oauth.js");
     return reply.redirect(getVkAuthUrl(state), 301);
   });
 
   fastify.get("/oauth/vk/callback", async (request, reply) => {
-    const { code } = request.query as { code?: string };
+    const { code, state } = request.query as { code?: string; state?: string };
     if (!code) {
       return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Missing authorization code"));
     }
+
+    const savedState = request.cookies.oauth_state;
+    if (!state || !savedState || state !== savedState) {
+      return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Invalid OAuth state"));
+    }
+
+    reply.clearCookie("oauth_state", { path: "/" });
 
     try {
       const result = await oauthVk(code);
@@ -340,16 +355,30 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // OAuth: Google
   fastify.get("/oauth/google", async (request, reply) => {
-    const state = Math.random().toString(36).substring(2, 15);
+    const state = crypto.randomBytes(32).toString("hex");
+    reply.setCookie("oauth_state", state, {
+      path: "/",
+      httpOnly: true,
+      secure: config.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 10 * 60, // 10 минут
+    });
     const { getGoogleAuthUrl } = await import("../../lib/oauth.js");
     return reply.redirect(getGoogleAuthUrl(state), 301);
   });
 
   fastify.get("/oauth/google/callback", async (request, reply) => {
-    const { code } = request.query as { code?: string };
+    const { code, state } = request.query as { code?: string; state?: string };
     if (!code) {
       return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Missing authorization code"));
     }
+
+    const savedState = request.cookies.oauth_state;
+    if (!state || !savedState || state !== savedState) {
+      return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Invalid OAuth state"));
+    }
+
+    reply.clearCookie("oauth_state", { path: "/" });
 
     try {
       const result = await oauthGoogle(code);

@@ -89,7 +89,6 @@ export function LikeButton({
     const serverLikes = confirmedLikesRef.current;
     const optimisticLiked = !serverLiked;
     const optimisticLikes = serverLiked ? serverLikes - 1 : serverLikes + 1;
-    console.log('[LikeButton] Click: serverLiked=', serverLiked, 'optimisticLiked=', optimisticLiked);
 
     setLiked(optimisticLiked);
     setLikes(optimisticLikes);

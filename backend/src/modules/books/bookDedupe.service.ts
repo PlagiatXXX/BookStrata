@@ -224,14 +224,16 @@ export async function mergeGroup(
     const dupPlacements = await prisma.bookPlacement.findMany({
       where: { bookId: dup.id },
     });
+
+    // Batch-загрузка существующих placements для canon (N+1 fix)
+    const existingPlacements = await prisma.bookPlacement.findMany({
+      where: { bookId: canon.id },
+      select: { tierListId: true },
+    });
+    const existingTierListIds = new Set(existingPlacements.map((p) => p.tierListId));
+
     for (const p of dupPlacements) {
-      const exists = await prisma.bookPlacement.findUnique({
-        where: {
-          tierListId_bookId: { tierListId: p.tierListId, bookId: canon.id },
-        },
-        select: { tierListId: true, bookId: true },
-      });
-      if (exists) continue; // канон уже в листе — не дублируем
+      if (existingTierListIds.has(p.tierListId)) continue; // канон уже в листе — не дублируем
 
       // Личная обложка дубля (книга пользователя, userId) не должна потеряться
       // при склейке: переносим её в placement, если у вхождения своей обложки
@@ -255,10 +257,15 @@ export async function mergeGroup(
     const dupRatings = await prisma.bookRating.findMany({
       where: { bookId: dup.id },
     });
+
+    // Batch-загрузка существующих рейтингов для canon (N+1 fix)
+    const existingRatings = await prisma.bookRating.findMany({
+      where: { bookId: canon.id },
+    });
+    const existingRatingsByUserId = new Map(existingRatings.map((r) => [r.userId, r]));
+
     for (const r of dupRatings) {
-      const existing = await prisma.bookRating.findUnique({
-        where: { bookId_userId: { bookId: canon.id, userId: r.userId } },
-      });
+      const existing = existingRatingsByUserId.get(r.userId);
       if (existing) {
         if (existing.createdAt < r.createdAt) {
           await prisma.bookRating.delete({ where: { id: existing.id } });
@@ -281,11 +288,16 @@ export async function mergeGroup(
     const dupStatuses = await prisma.bookStatus.findMany({
       where: { bookId: dup.id },
     });
+
+    // Batch-загрузка существующих статусов для canon (N+1 fix)
+    const existingStatuses = await prisma.bookStatus.findMany({
+      where: { bookId: canon.id },
+      select: { userId: true },
+    });
+    const existingStatusUserIds = new Set(existingStatuses.map((s) => s.userId));
+
     for (const s of dupStatuses) {
-      const exists = await prisma.bookStatus.findUnique({
-        where: { bookId_userId: { bookId: canon.id, userId: s.userId } },
-      });
-      if (exists) continue;
+      if (existingStatusUserIds.has(s.userId)) continue;
       await prisma.bookStatus.update({
         where: { id: s.id },
         data: { bookId: canon.id },
@@ -297,14 +309,16 @@ export async function mergeGroup(
     const dupCollectionBooks = await prisma.collectionBook.findMany({
       where: { bookId: dup.id },
     });
+
+    // Batch-загрузка существующих связей для canon (N+1 fix)
+    const existingCollectionBooks = await prisma.collectionBook.findMany({
+      where: { bookId: canon.id },
+      select: { collectionId: true },
+    });
+    const existingCollectionIds = new Set(existingCollectionBooks.map((cb) => cb.collectionId));
+
     for (const cb of dupCollectionBooks) {
-      const exists = await prisma.collectionBook.findUnique({
-        where: {
-          collectionId_bookId: { collectionId: cb.collectionId, bookId: canon.id },
-        },
-        select: { id: true },
-      });
-      if (exists) continue;
+      if (existingCollectionIds.has(cb.collectionId)) continue;
       await prisma.collectionBook.update({
         where: { id: cb.id },
         data: { bookId: canon.id },
@@ -314,14 +328,16 @@ export async function mergeGroup(
     const dupCelebrityBooks = await prisma.celebrityBook.findMany({
       where: { bookId: dup.id },
     });
+
+    // Batch-загрузка существующих связей с знаменитостями для canon (N+1 fix)
+    const existingCelebrityBooks = await prisma.celebrityBook.findMany({
+      where: { bookId: canon.id },
+      select: { celebrityId: true },
+    });
+    const existingCelebrityIds = new Set(existingCelebrityBooks.map((cb) => cb.celebrityId));
+
     for (const cb of dupCelebrityBooks) {
-      const exists = await prisma.celebrityBook.findUnique({
-        where: {
-          celebrityId_bookId: { celebrityId: cb.celebrityId, bookId: canon.id },
-        },
-        select: { id: true },
-      });
-      if (exists) continue;
+      if (existingCelebrityIds.has(cb.celebrityId)) continue;
       await prisma.celebrityBook.update({
         where: { id: cb.id },
         data: { bookId: canon.id },
