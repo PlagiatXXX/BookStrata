@@ -406,6 +406,7 @@ describe("users.service", () => {
       isDonor: true,
       role: { name: "admin" },
       createdAt: new Date("2024-01-01"),
+      badges: [],
     };
 
     beforeEach(() => {
@@ -438,6 +439,10 @@ describe("users.service", () => {
              select: { name: true },
            },
            createdAt: true,
+           badges: {
+             select: { id: true, text: true, color: true, createdAt: true },
+             orderBy: { createdAt: "asc" },
+           },
          },
        });
 
