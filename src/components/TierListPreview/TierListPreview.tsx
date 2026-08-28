@@ -15,14 +15,14 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
 
   if (compact) {
     return (
-      <div className="flex flex-col gap-[3px]">
+      <div className="flex flex-col gap-0.75">
         {tiers.map((tier) => {
           const items = tier.items ?? []
           const visible = items.slice(0, booksPerTier)
           const overflow = items.length - booksPerTier
 
           return (
-            <div key={tier.id} className="flex items-stretch gap-[3px]">
+            <div key={tier.id} className="flex items-stretch gap-0.75">
               <div
                 className="flex items-center justify-center shrink-0 font-bold text-white leading-none"
                 style={{
@@ -42,7 +42,7 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
               >
                 {tier.title}
               </div>
-              <div className="flex items-center gap-[2px] flex-wrap min-h-[64px] flex-1">
+              <div className="flex items-center gap-0.5 flex-wrap min-h-16 flex-1">
                 {visible.map((item) => (
                   <div
                     key={`${tier.id}-${item.book.id}`}
@@ -98,11 +98,11 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
             >
               {tier.title}
             </div>
-            <div className="flex items-center gap-[3px] flex-wrap min-h-[80px] flex-1">
+            <div className="flex items-center gap-0.75 flex-wrap min-h-20 flex-1">
               {visible.map((item) => (
                 <div
                   key={`${tier.id}-${item.book.id}`}
-                  className="rounded-[4px] border border-black/10 overflow-hidden shrink-0"
+                  className="rounded-sm border border-black/10 overflow-hidden shrink-0"
                   style={{ width: 80, aspectRatio: "2/3" }}
                   title={item.book.title}
                 >
@@ -117,7 +117,7 @@ export const TierListPreview = memo(({ tierList, maxBooksPerTier, compact = fals
               ))}
               {overflow > 0 && (
                 <div
-                  className="flex items-center justify-center rounded-[4px] bg-(--bg-2) text-(--ink-1) font-bold shrink-0"
+                  className="flex items-center justify-center rounded-sm bg-(--bg-2) text-(--ink-1) font-bold shrink-0"
                   style={{ width: 80, aspectRatio: "2/3", fontSize: 13 }}
                 >
                   +{overflow}
