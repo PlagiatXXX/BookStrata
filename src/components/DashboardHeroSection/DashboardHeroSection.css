@@ -3,13 +3,13 @@
 .new-hero {
   position: relative;
   overflow: hidden;
-  padding: 2rem 0 2.5rem;
+  padding: 1rem 0 1.25rem;
   background: #0f172a;
 }
 
 @media (min-width: 640px) {
   .new-hero {
-    padding: 3rem 0 4rem;
+    padding: 1.5rem 0 2rem;
   }
 }
 
@@ -131,10 +131,16 @@
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-radius: 0;
-  border: 2px solid #000000;
+  border: 1px solid transparent;
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
   cursor: pointer;
   position: relative;
+  transition:
+    border-radius 0.4s ease,
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 /* Primary — «Создать тир-лист» (важнее, крупнее) */
@@ -142,12 +148,9 @@
 .new-hero__btn--primary {
   padding: 0.7rem 1.5rem;
   font-size: 0.875rem;
-  background: #c1fffe;
-  color: #000000;
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow:
-    4px 4px 0 0 rgba(6, 188, 249, 0.55),
-    9px 9px 0 0 rgba(0, 0, 0, 0.85);
+  background: #6feee1;
+  color: #003733;
+  box-shadow: 0 0 22px rgba(111, 238, 225, 0.22);
 }
 
 @media (min-width: 640px) {
@@ -158,26 +161,26 @@
 }
 
 .new-hero__btn--primary:hover {
-  transform: translate(1px, 1px);
-  background: #9cf5f3;
-  box-shadow: none;
+  border-radius: 40% 60% 70% 30% / 40% 70% 30% 60%;
+  transform: translateY(-2px) scale(1.035);
+  background: #8af5ea;
+  box-shadow: 0 0 30px rgba(111, 238, 225, 0.42);
 }
 
 .new-hero__btn--primary:active {
-  transform: translate(2px, 2px);
+  transform: translateY(1px) scale(0.99);
   transition-duration: 0.08s;
-  box-shadow: none;
+  box-shadow: 0 0 14px rgba(111, 238, 225, 0.24);
 }
 
 /* Secondary — «Смотреть тренды» (менее важна, компактнее) */
 .new-hero__btn--secondary {
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
-  background: transparent;
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.5);
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, border-color 0.15s ease;
-  box-shadow: 3px 3px 0 0 rgba(255, 255, 255, 0.25);
+  background: rgba(17, 19, 27, 0.42);
+  color: #e2e1ee;
+  border-color: rgba(187, 201, 198, 0.72);
+  box-shadow: 0 0 0 rgba(111, 238, 225, 0);
 }
 
 @media (min-width: 640px) {
@@ -188,21 +191,41 @@
 }
 
 .new-hero__btn--secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #ffffff;
-  transform: translate(1px, 1px);
-  box-shadow: none;
+  border-radius: 40% 60% 70% 30% / 40% 70% 30% 60%;
+  background: rgba(111, 238, 225, 0.1);
+  border-color: #6feee1;
+  color: #d4fff8;
+  transform: translateY(-2px) scale(1.035);
+  box-shadow: 0 0 22px rgba(111, 238, 225, 0.16);
 }
 
 .new-hero__btn--secondary:active {
-  transform: translate(2px, 2px);
+  transform: translateY(1px) scale(0.99);
   transition-duration: 0.08s;
-  box-shadow: none;
+  box-shadow: 0 0 12px rgba(111, 238, 225, 0.12);
 }
 
 .new-hero__btn:focus-visible {
-  outline: 2px solid #c1fffe;
+  outline: 2px solid #6feee1;
   outline-offset: 2px;
+}
+
+.new-hero__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .new-hero__btn {
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .new-hero__btn:hover,
+  .new-hero__btn:active {
+    transform: none;
+  }
 }
 
 /* Preview Card */

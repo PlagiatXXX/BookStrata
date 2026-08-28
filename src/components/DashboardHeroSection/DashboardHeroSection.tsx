@@ -22,12 +22,8 @@ export function DashboardHeroSection({
             <div className="new-hero__header">
               <span className="new-hero__chip">Панель управления</span>
               <h1 className="new-hero__title">
-                Добро пожаловать,{" "}
-                <span className="new-hero__highlight">{username}</span>
+                Привет, <span className="new-hero__highlight">{username}</span>
               </h1>
-              <p className="new-hero__subtitle">
-                В свой уютный уголок
-              </p>
               <p className="new-hero__description">
                 Создавай свои рейтинги книг в атмосфере тепла и уюта. Делись
                 впечатлениями и находи вдохновение среди единомышленников.

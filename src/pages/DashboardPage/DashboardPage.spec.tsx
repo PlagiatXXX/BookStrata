@@ -203,7 +203,7 @@ describe("DashboardPage", () => {
     // Чип
     expect(screen.getByText("Панель управления")).toBeInTheDocument();
     // Имя пользователя в приветствии (текст разбит на h1 + span)
-    expect(screen.getByText("Добро пожаловать,")).toBeInTheDocument();
+    expect(screen.getByText("Привет,")).toBeInTheDocument();
     expect(screen.getByText("testuser")).toBeInTheDocument();
     // Кнопки
     expect(screen.getByText("Создать тир-лист")).toBeInTheDocument();
