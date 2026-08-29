@@ -5,6 +5,7 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { apiLogin, apiRegister, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
 import { pushDataLayerEvent } from "@/lib/gtm";
+import { YM_GOALS } from "@/lib/ym-goals";
 import { useAuth } from "@/hooks/useAuthContext";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
@@ -142,7 +143,7 @@ export function AuthForm() {
         // Ждём, пока AuthContext реально подтвердит вход — иначе ProtectedRoute
         // может успеть выкинуть пользователя обратно на /auth (гонка)
         await refreshUser()
-        window.ym?.(109755750, 'reachGoal', 'login')
+        window.ym?.(109755750, 'reachGoal', YM_GOALS.LOGIN)
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
       } else {
@@ -157,7 +158,7 @@ export function AuthForm() {
         window.dispatchEvent(new Event("auth-token-changed"))
         // То же самое для регистрации: дожидаемся фактического входа до редиректа
         await refreshUser()
-        window.ym?.(109755750, 'reachGoal', 'register')
+        window.ym?.(109755750, 'reachGoal', YM_GOALS.REGISTER)
         pushDataLayerEvent("sign_up", { method: "email" })
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })

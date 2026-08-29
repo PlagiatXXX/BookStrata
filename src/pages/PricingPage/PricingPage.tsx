@@ -3,6 +3,7 @@ import { Heart, X, Check, Copy, Send, ArrowLeft } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { SEOHead } from "@/components/SEO/SEOHead"
+import { YM_GOALS } from "@/lib/ym-goals"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 import { ShineBorder } from "@/ui/ShineBorder"
 import { apiTrackEvent } from "@/lib/analyticsApi"
@@ -17,7 +18,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
     try {
       await navigator.clipboard.writeText(cardNumber)
       setCopied(true)
-      window.ym?.(109755750, 'reachGoal', 'donate_copy')
+      window.ym?.(109755750, 'reachGoal', YM_GOALS.DONATE_COPY)
       apiTrackEvent('donate_copy')
       setTimeout(() => setCopied(false), 2000)
     } catch {
@@ -28,7 +29,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
       document.execCommand('copy')
       document.body.removeChild(el)
       setCopied(true)
-      window.ym?.(109755750, 'reachGoal', 'donate_copy')
+      window.ym?.(109755750, 'reachGoal', YM_GOALS.DONATE_COPY)
       apiTrackEvent('donate_copy')
       setTimeout(() => setCopied(false), 2000)
     }

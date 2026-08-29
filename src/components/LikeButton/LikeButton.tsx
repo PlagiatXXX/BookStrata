@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { sileo } from 'sileo';
+import { YM_GOALS } from '@/lib/ym-goals';
 import { createLogger } from '@/lib/logger';
 import {
   apiLikeTierList,
@@ -113,7 +114,7 @@ export function LikeButton({
       confirmedLikesRef.current = response.likesCount;
       setLiked(response.isLiked);
       setLikes(response.likesCount);
-      window.ym?.(109755750, 'reachGoal', response.isLiked ? 'like' : 'unlike')
+      window.ym?.(109755750, 'reachGoal', YM_GOALS.LIKE)
       onLikeChange?.(response.likesCount, response.isLiked);
 
       // Обновляем кэш likedTierListIds напрямую через setQueryData

@@ -6,6 +6,7 @@ import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCove
 import { batchAddBooksFromSearch, addBookFromGoogleBooks, importFromLiveLib, type OpenLibraryBook, type LiveLibBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
+import { YM_GOALS } from "@/lib/ym-goals";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { ImageUploader } from "@/components/ImageUploader/ImageUploader";
 import { useBookSearch } from "@/hooks/useBookSearch";
@@ -333,7 +334,7 @@ export const BookSearchModal = ({
     }
 
     dispatch({ type: "SET_SEARCHED" });
-    window.ym?.(109755750, 'reachGoal', 'book_search')
+    window.ym?.(109755750, 'reachGoal', YM_GOALS.BOOK_SEARCH)
     apiTrackEvent('book_search', { query: state.query })
     await search(state.query);
   }, [state.query, search, localMode, onRequireAuth, navigate]);

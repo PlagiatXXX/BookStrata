@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Heart, X, Check, Copy, Send } from "lucide-react";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { apiTrackEvent } from "@/lib/analyticsApi";
+import { YM_GOALS } from "@/lib/ym-goals";
 
 interface DonateModalProps {
   onClose: () => void;
@@ -17,7 +18,7 @@ export function DonateModal({ onClose }: DonateModalProps) {
     try {
       await navigator.clipboard.writeText(CARD_NUMBER);
       setCopied(true);
-      window.ym?.(109755750, "reachGoal", "donate_copy");
+      window.ym?.(109755750, "reachGoal", YM_GOALS.DONATE_COPY);
       apiTrackEvent("donate_copy");
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -28,7 +29,7 @@ export function DonateModal({ onClose }: DonateModalProps) {
       document.execCommand("copy");
       document.body.removeChild(el);
       setCopied(true);
-      window.ym?.(109755750, "reachGoal", "donate_copy");
+      window.ym?.(109755750, "reachGoal", YM_GOALS.DONATE_COPY);
       apiTrackEvent("donate_copy");
       setTimeout(() => setCopied(false), 2000);
     }

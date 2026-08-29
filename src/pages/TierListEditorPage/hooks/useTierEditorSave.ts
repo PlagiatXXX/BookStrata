@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createTierList, saveTierListAtomic } from "@/lib/tierListApi";
 import { apiClient } from "@/lib/api-client";
 import { pushDataLayerEvent } from "@/lib/gtm";
+import { YM_GOALS } from "@/lib/ym-goals";
 import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
 import { stableStringify } from "@/utils/stableStringify";
 import type { TierListData } from "@/types";
@@ -115,7 +116,7 @@ export function useTierEditorSave({
             if (typeof window.ym === "function") {
               const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
               if (counterId) {
-                window.ym(Number(counterId), "reachGoal", "tierlist_create");
+                window.ym(Number(counterId), "reachGoal", YM_GOALS.TIERLIST_CREATE);
               }
             }
           } catch {

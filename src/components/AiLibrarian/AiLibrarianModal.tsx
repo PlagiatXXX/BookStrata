@@ -8,6 +8,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { ChatMessage, AiLibrarianContext } from '@/lib/aiLibrarianApi'
 import { getSessionKey } from '@/contexts/aiLibrarian.context'
 import { apiTrackEvent } from '@/lib/analyticsApi'
+import { YM_GOALS } from '@/lib/ym-goals'
 
 /* ─── Suggestion chips ─── */
 
@@ -446,7 +447,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
     if (!canSend) return
     const text = input
     setInput('')
-    window.ym?.(109755750, 'reachGoal', 'ai_librarian')
+    window.ym?.(109755750, 'reachGoal', YM_GOALS.AI_LIBRARIAN)
     apiTrackEvent('ai_librarian_message')
     await sendMessage(text, context)
   }
@@ -465,7 +466,7 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
 
   const handleSuggestion = (text: string) => {
     setInput('')
-    window.ym?.(109755750, 'reachGoal', 'ai_librarian')
+    window.ym?.(109755750, 'reachGoal', YM_GOALS.AI_LIBRARIAN)
     apiTrackEvent('ai_librarian_suggestion')
     sendMessage(text, context)
   }

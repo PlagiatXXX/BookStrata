@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createLogger } from "@/lib/logger";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { apiGenerateAvatar, apiGetAvatarLimit, type AvatarLimitInfo } from "@/lib/avatarApi";
+import { YM_GOALS } from "@/lib/ym-goals";
 import { cropAvatar } from "@/utils/cropAvatar";
 import { AvatarSelectorHeader } from "./components/AvatarSelectorHeader";
 import { AvatarPreview } from "./components/AvatarPreview";
@@ -106,7 +107,7 @@ export function AvatarSelector({
       return;
     }
 
-    window.ym?.(109755750, 'reachGoal', 'ai_avatar')
+    window.ym?.(109755750, 'reachGoal', YM_GOALS.AI_AVATAR)
     apiTrackEvent('ai_avatar')
     await generateAvatarMutation.mutateAsync(prompt);
     setAvatarPosition({ x: 0, y: 0 });

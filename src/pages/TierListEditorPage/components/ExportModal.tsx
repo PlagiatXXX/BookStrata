@@ -3,6 +3,7 @@ import { Modal } from '@/ui/Modal';
 import { Download } from 'lucide-react';
 import Spinner from '@/components/Spinner/Spinner';
 import { THEME_COLORS } from '@/lib/tierListApi';
+import { YM_GOALS } from '@/lib/ym-goals';
 import type { TierListTheme } from '@/lib/tierListApi';
 
 interface ExportModalProps {
@@ -20,7 +21,7 @@ export const ExportModal = ({ isOpen, onClose, onExport, tierListTheme = 'defaul
     setIsExporting(true);
     try {
       await onExport();
-      window.ym?.(109755750, 'reachGoal', 'export_png')
+      window.ym?.(109755750, 'reachGoal', YM_GOALS.EXPORT_PNG)
       onClose();
     } finally {
       setIsExporting(false);

@@ -24,6 +24,7 @@ import { CoffeeCup } from "./CoffeeCup";
 import { Fur } from "@/components/Fur";
 import { apiClient } from "@/lib/api-client";
 import { getCollections } from "@/lib/collectionsApi";
+import { YM_GOALS } from "@/lib/ym-goals";
 
 const marqueeStyle = `
 @keyframes marquee {
@@ -115,7 +116,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
     try {
       await navigator.clipboard.writeText(cardNumber);
       setCopied(true);
-      window.ym?.(109755750, 'reachGoal', 'donate_copy')
+      window.ym?.(109755750, 'reachGoal', YM_GOALS.DONATE_COPY)
       setTimeout(() => setCopied(false), 2000);
     } catch {
       const el = document.createElement("textarea");
@@ -125,7 +126,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
       document.execCommand("copy");
       document.body.removeChild(el);
       setCopied(true);
-      window.ym?.(109755750, 'reachGoal', 'donate_copy')
+      window.ym?.(109755750, 'reachGoal', YM_GOALS.DONATE_COPY)
       setTimeout(() => setCopied(false), 2000);
     }
   };

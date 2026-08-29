@@ -13,8 +13,9 @@ const PAGE_VIEW_DEBOUNCE_MS = 10_000;
  * Формат атрибута: `data-analytics="category.action"`
  * Пример: `data-analytics="cta.dashboard.create_tierlist"`
  *
- * Событие отправляется во внутреннюю аналитику (apiTrackEvent)
- * и, если доступна, в Яндекс.Метрику как цель.
+ * Событие отправляется во внутреннюю аналитику (apiTrackEvent).
+ * Конверсионные цели (login, register и т.д.) отправляются
+ * напрямую через ym() в компонентах — см. ym-goals.ts.
  */
 function setupAnalyticsClickListener() {
   const handler = (e: MouseEvent) => {
@@ -33,24 +34,6 @@ function setupAnalyticsClickListener() {
 
     // Отправка во внутреннюю аналитику
     apiTrackEvent(eventName, meta, window.location.href);
-
-    // Отправка в Яндекс.Метрику как цель (reachGoal) — только в production, не в prerender
-    if (!import.meta.env.DEV && !window.__PRERENDER__) {
-      try {
-        if (typeof window.ym === "function") {
-          const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
-          if (counterId) {
-            // Нормализуем имя: cta.dashboard.create_tierlist → dashboard_create_tierlist
-            const goalName = eventName.replace(/^[^.]+\./, "");
-            window.ym(Number(counterId), "reachGoal", goalName, {
-              params: { full_event: eventName, ...meta },
-            });
-          }
-        }
-      } catch {
-        // Тихий fallback
-      }
-    }
   };
 
   document.addEventListener("click", handler, { passive: true });
