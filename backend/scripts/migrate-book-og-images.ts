@@ -28,15 +28,24 @@ const s3 = new S3Client({
 
 const BUCKET = process.env.S3_BUCKET!;
 const PUBLIC_HOST = process.env.S3_PUBLIC_HOST!;
+const SITE_URL = process.env.SITE_URL || "https://bookstrata.ru";
 
 function publicUrl(key: string): string {
   return `https://${PUBLIC_HOST}/${BUCKET}/${key}`;
 }
 
 async function fetchBuffer(url: string): Promise<Buffer> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
-  return Buffer.from(await res.arrayBuffer());
+  // Относительные пути → prepend SITE_URL
+  const fullUrl = url.startsWith("http") ? url : `${SITE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const res = await fetch(fullUrl, { signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${fullUrl}`);
+    return Buffer.from(await res.arrayBuffer());
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function uploadBuffer(buffer: Buffer, folder: string): Promise<string> {
