@@ -753,7 +753,7 @@ const TierListEditorContent = () => {
           title={buildTierListSeoTitle(apiData?.title, apiData?.user?.username)}
           description={buildTierListSeoDescription(apiData?.title, apiData?.user?.username)}
           url={`/tier-lists/${pageUrl}`}
-          image={apiData?.coverImageUrl || undefined}
+          image={apiData?.coverImageUrl && !apiData.coverImageUrl.includes("encrypted-tbn0.gstatic.com") ? apiData.coverImageUrl : undefined}
           publishedTime={apiData?.createdAt ?? apiData?.updatedAt}
           dateModified={apiData?.updatedAt}
           author={apiData?.user?.username}

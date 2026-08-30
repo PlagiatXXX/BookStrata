@@ -88,6 +88,7 @@ describe("UserProfilePage", () => {
       isLoading: false,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     } as any)
     vi.mocked(userApiModule.apiGetPublicUser).mockResolvedValue(mockPublicUser)
     vi.mocked(userApiModule.apiGetUserTierLists).mockResolvedValue({
@@ -114,6 +115,7 @@ describe("UserProfilePage", () => {
       isLoading: false,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     } as any)
     renderWithRoute("2")
 
@@ -130,6 +132,7 @@ describe("UserProfilePage", () => {
       isLoading: false,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     } as any)
     renderWithRoute("2")
 
@@ -151,6 +154,7 @@ describe("UserProfilePage", () => {
       isLoading: false,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     } as any)
     vi.mocked(userApiModule.apiGetPublicUser).mockResolvedValue({ ...mockPublicUser, id: 1 })
     renderWithRoute("1")

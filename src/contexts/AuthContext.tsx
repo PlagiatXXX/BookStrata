@@ -3,6 +3,7 @@ import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
 import { getAuthToken, removeAuthToken, refreshAccessToken, apiLogout, hasSession } from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
+import { ApiRequestError } from "@/lib/api-client";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { createLogger } from "@/lib/logger";
 
@@ -46,8 +47,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authLogger.warn("Failed to fetch user profile", {
         error: err instanceof Error ? err.message : String(err),
       });
-      setUser(null);
-      removeAuthToken();
+      // Сбрасываем токен только при реальной ошибке авторизации (401).
+      // При 429 (rate limit) или сетевых ошибках токен остаётся валидным —
+      // иначе удаление токена превращает временный rate-limit в каскад 401.
+      const isUnauthorized =
+        err instanceof ApiRequestError && err.status === 401;
+      if (isUnauthorized) {
+        setUser(null);
+        removeAuthToken();
+      }
     }
     setIsLoading(false);
   }, []);
@@ -57,6 +65,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     await fetchUser(true);
   }, [fetchUser]);
+
+  /** Установить пользователя напрямую из данных ответа API.
+   *  Используется после регистрации/входа чтобы мгновенно сделать isAuthenticated=true
+   *  и избежать гонки: ProtectedRoute рендерится до завершения apiGetMe(). */
+  const loginWithData = useCallback((data: { userId: number; username: string; role?: string }) => {
+    authLogger.info("Login with data (optimistic)", { userId: data.userId, username: data.username });
+    setUser({
+      userId: data.userId,
+      username: data.username,
+      role: data.role || "user",
+    });
+    setIsLoading(false);
+  }, []);
 
   React.useEffect(() => {
     refreshUserDataRef.current = refreshUser;
@@ -118,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     logout,
     refreshUser,
+    loginWithData,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

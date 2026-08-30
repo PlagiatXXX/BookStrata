@@ -120,6 +120,7 @@ describe("DashboardPage", () => {
       isAuthenticated: true,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     });
 
     // Мокаем статистику
@@ -217,6 +218,7 @@ describe("DashboardPage", () => {
       isAuthenticated: false,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     });
 
     render(<DashboardPage />, { wrapper: createWrapper() });

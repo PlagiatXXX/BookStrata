@@ -59,6 +59,7 @@ describe("ModerationPanel", () => {
       isAuthenticated: true,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     })
     ;(moderationApi.apiGetModerationStatus as any).mockResolvedValue(defaultStatus)
     ;(moderationApi.apiGetWarnings as any).mockResolvedValue([])
@@ -126,6 +127,7 @@ describe("ModerationPanel — moderator role", () => {
       isAuthenticated: true,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     })
     ;(moderationApi.apiGetModerationStatus as any).mockResolvedValue(defaultStatus)
     ;(moderationApi.apiGetWarnings as any).mockResolvedValue([])

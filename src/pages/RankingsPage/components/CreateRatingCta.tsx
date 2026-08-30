@@ -29,7 +29,7 @@ export function CreateRatingCta() {
           </p>
 
           <Link
-            to={isAuthenticated ? "/templates" : "/auth?mode=register"}
+            to={isAuthenticated ? "/templates" : "/auth?mode=register&redirect=/rankings"}
             className="group relative mx-auto px-6 py-2.5 bg-white text-(--bg-0) font-bold text-sm rounded-lg hover:bg-(--global-surface-high) transition-all duration-300 inline-flex items-center gap-2 shadow-[0_0_15px_rgba(255,255,255,0.3)] active:scale-95"
           >
             Создать рейтинг

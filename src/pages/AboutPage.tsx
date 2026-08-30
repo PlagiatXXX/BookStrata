@@ -117,8 +117,8 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEOHead
-        title="О проекте"
-        description="BookStrata — крупнейшая библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите личную библиотеку, находите книги по вкусу с ИИ и общайтесь с единомышленниками. Узнайте больше о проекте."
+        title="О крупнейшем книжном рейтинге"
+        description="BookStrata — библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите библиотеку, находите книги по вкусу с ИИ."
         url="/about"
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: "О проекте", url: "/about" }]}
       />
@@ -130,7 +130,7 @@ export default function AboutPage() {
             "@context": "https://schema.org",
             "@type": "AboutPage",
             name: "О проекте BookStrata",
-            description: "BookStrata — крупнейшая библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите личную библиотеку, находите книги по вкусу с ИИ и общайтесь с единомышленниками. Узнайте больше о проекте.",
+            description: "BookStrata — библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите библиотеку, находите книги по вкусу с ИИ.",
             url: "https://bookstrata.ru/about",
             mainEntity: {
               "@type": "Organization",

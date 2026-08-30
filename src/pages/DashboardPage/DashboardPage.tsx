@@ -151,7 +151,7 @@ export default function DashboardPage() {
   // Открытие модалки создания: гостя — на регистрацию, авторизованного — на ввод названия
   const openCreateModal = useCallback(() => {
     if (isGuest) {
-      navigate("/auth?mode=register");
+      navigate("/auth?mode=register&redirect=/dashboard");
       return;
     }
     setCreateTitle("");
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                     ИИ.
                   </p>
                   <button
-                    onClick={() => navigate("/auth?mode=register")}
+                    onClick={() => navigate("/auth?mode=register&redirect=/dashboard")}
                     className="inline-flex items-center gap-2 rounded-none border-2 border-black bg-[#c1fffe] px-8 py-3 font-bold text-black text-lg shadow-[4px_4px_0_0_#000000] hover:shadow-[6px_6px_0_0_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
                     type="button"
                   >

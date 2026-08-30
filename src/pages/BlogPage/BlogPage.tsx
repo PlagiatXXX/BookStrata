@@ -8,8 +8,8 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-[#0b1620] text-[#e2e8f0]">
       <SEOHead
-        title="Блог"
-        description="Статьи о разработке BookStrata: архитектура, SSR, почему мы не копировали Goodreads и другие инженерные заметки."
+        title="Блог о разработке BookStrata и книжных технологиях"
+        description="Статьи о разработке BookStrata: архитектура, SSR, Почему мы не копировали Goodreads, ИИ-рекомендации и другие инженерные заметки из команды."
         url="/blog"
         breadcrumbs={[
           { name: "Главная", url: "/" },

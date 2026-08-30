@@ -17,7 +17,7 @@ export const articlesMeta: ArticleMeta[] = [
   {
     slug: "ssr-without-nextjs",
     title: "Как мы сделали SSR для React SPA без Next.js",
-    description: "Prerender через headless Chrome, nginx-прокси для ботов и никакой миграции. Практический опыт индексации SPA-сайта.",
+    description: "Prerender через headless Chrome, nginx-прокси для ботов и никакой миграции на Next.js. Практический опыт индексации SPA-сайта в поисковых системах.",
     date: "2026-07-17",
     readingTime: "5 мин",
   },

@@ -12,6 +12,9 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  /** Мгновенно установить пользователя из данных ответа API (регистрация/вход)
+   *  без лишнего запроса /users/me — обходит гонку с ProtectedRoute. */
+  loginWithData: (data: { userId: number; username: string; role?: string }) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

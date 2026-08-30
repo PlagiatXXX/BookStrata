@@ -173,7 +173,7 @@ export default function CollectionPage() {
         duration: 10000,
         button: {
           title: 'Создать аккаунт',
-          onClick: () => navigate('/auth?mode=register'),
+          onClick: () => navigate(`/auth?mode=register&redirect=${encodeURIComponent(`/collections/${slug}`)}`),
         },
       });
       return;

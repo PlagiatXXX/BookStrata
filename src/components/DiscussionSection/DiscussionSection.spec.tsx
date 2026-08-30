@@ -11,6 +11,7 @@ vi.mock("@/hooks/useAuthContext", () => ({
     isLoading: false,
     logout: vi.fn(),
     refreshUser: vi.fn(),
+    loginWithData: vi.fn(),
   })),
 }))
 
@@ -219,6 +220,7 @@ describe("DiscussionSection", () => {
       isLoading: false,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     })
 
     vi.mocked(discussionApi.deleteMessage).mockResolvedValue(undefined)
@@ -245,6 +247,7 @@ describe("DiscussionSection", () => {
       isLoading: false,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     })
 
     vi.mocked(discussionApi.getDiscussionByBattle).mockResolvedValue(mockDiscussion as any)

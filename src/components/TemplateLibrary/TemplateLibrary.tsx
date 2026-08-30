@@ -87,7 +87,7 @@ const TemplateLibrary: React.FC = () => {
 
   const openCreateModal = useCallback(() => {
     if (!isAuthenticated) {
-      navigate("/auth?mode=register");
+      navigate("/auth?mode=register&redirect=/templates");
       return;
     }
     setActiveModal("create");
@@ -263,7 +263,7 @@ const TemplateLibrary: React.FC = () => {
                 Создавайте собственные рейтинги книг, делитесь ими и находите единомышленников.
               </p>
               <button
-                onClick={() => navigate("/auth?mode=register")}
+                onClick={() => navigate("/auth?mode=register&redirect=/templates")}
                 className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
               >
                 Создать аккаунт
@@ -416,7 +416,7 @@ const TemplateLibrary: React.FC = () => {
                 Отмечайте понравившиеся тир-листы лайками, чтобы они появились здесь.
               </p>
               <button
-                onClick={() => navigate("/auth?mode=register")}
+                onClick={() => navigate("/auth?mode=register&redirect=/templates")}
                 className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
               >
                 Войти

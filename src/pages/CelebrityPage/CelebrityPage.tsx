@@ -72,7 +72,7 @@ export default function CelebrityPage() {
         duration: 10000,
         button: {
           title: 'Создать аккаунт',
-          onClick: () => navigate('/auth?mode=register'),
+          onClick: () => navigate(`/auth?mode=register&redirect=${encodeURIComponent(`/celebrities/${slug}`)}`),
         },
       });
       return;

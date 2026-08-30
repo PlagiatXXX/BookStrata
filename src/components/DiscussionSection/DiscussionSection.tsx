@@ -223,7 +223,7 @@ export function DiscussionSection({ variant, battleId, discussionId, title, onBa
             Войдите или создайте аккаунт, чтобы читать и участвовать в обсуждениях книжных рейтингов.
           </p>
           <button
-            onClick={() => navigate("/auth?mode=register")}
+            onClick={() => navigate(`/auth?mode=register&redirect=${encodeURIComponent(window.location.pathname)}`)}
             className="brutal-cta bg-(--bg-0) text-(--ink-0) px-8 py-3 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
           >
             Войти / Регистрация

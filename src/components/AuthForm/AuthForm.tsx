@@ -1,6 +1,5 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useReducer, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { apiLogin, apiRegister, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
@@ -96,7 +95,7 @@ function validateField(name: string, value: string, mode: FormMode): string | nu
 export function AuthForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { refreshUser } = useAuth();
+  const { loginWithData } = useAuth();
   const [mode, setMode] = useState<FormMode>(() => {
     return searchParams.get("mode") === "register" ? "register" : "login"
   });
@@ -139,10 +138,9 @@ export function AuthForm() {
         })
         setAuthToken(result.accessToken)
         StorageService.setString("username", result.username)
-        window.dispatchEvent(new Event("auth-token-changed"))
-        // Ждём, пока AuthContext реально подтвердит вход — иначе ProtectedRoute
-        // может успеть выкинуть пользователя обратно на /auth (гонка)
-        await refreshUser()
+        // Мгновенно ставим пользователя — ProtectedRoute увидит isAuthenticated=true
+        // до первого кадра и не отправит обратно на /auth (гонка с apiGetMe).
+        loginWithData({ userId: result.userId, username: result.username, role: result.role })
         window.ym?.(109755750, 'reachGoal', YM_GOALS.LOGIN)
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
@@ -155,9 +153,9 @@ export function AuthForm() {
         })
         setAuthToken(result.accessToken)
         StorageService.setString("username", result.username)
-        window.dispatchEvent(new Event("auth-token-changed"))
-        // То же самое для регистрации: дожидаемся фактического входа до редиректа
-        await refreshUser()
+        // Мгновенно ставим пользователя — ProtectedRoute увидит isAuthenticated=true
+        // до первого кадра и не отправит обратно на /auth (гонка с apiGetMe).
+        loginWithData({ userId: result.userId, username: result.username })
         window.ym?.(109755750, 'reachGoal', YM_GOALS.REGISTER)
         pushDataLayerEvent("sign_up", { method: "email" })
         navigate(redirectTo)

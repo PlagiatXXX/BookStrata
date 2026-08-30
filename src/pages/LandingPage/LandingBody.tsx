@@ -372,7 +372,7 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
             <p className="landing-section__subtitle mb-4!">Понравилось? Зарегистрируйтесь, чтобы сохранить свою подборку</p>
             <button
               data-analytics="cta.landing.register_after_try"
-              onClick={() => navigate("/auth?mode=register")}
+              onClick={() => navigate("/auth?mode=register&redirect=/")}
               className="landing-hero__btn landing-hero__btn--primary"
               type="button"
             >
@@ -446,7 +446,7 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
           <RevealBox>
             <button
               data-analytics="cta.landing.create_account_final"
-              onClick={() => navigate("/auth?mode=register")}
+              onClick={() => navigate("/auth?mode=register&redirect=/")}
               className="landing-cta__btn"
               type="button"
             >

@@ -85,6 +85,7 @@ describe("AdminUsersPage", () => {
       isAuthenticated: true,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     } as any)
     vi.mocked(api.get).mockResolvedValue(mockUsers)
   })
@@ -192,6 +193,7 @@ describe("AdminUsersPage — жалобы", () => {
       isAuthenticated: true,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     } as any)
     vi.mocked(api.get).mockResolvedValue(mockUsers)
     vi.mocked(apiGetFlags).mockResolvedValue(mockFlags)

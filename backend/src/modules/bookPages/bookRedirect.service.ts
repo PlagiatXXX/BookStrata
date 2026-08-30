@@ -100,13 +100,19 @@ export function buildSeoFallbackHtml(book: PublishedBookMeta): string {
     book.description?.slice(0, 240) ??
     `Книга ${book.title}${book.author ? ` ${book.author}` : ""}: описание, жанр, рейтинг. Найди книги в тир-листах и подборках BookStrata.`;
 
+  // Фолбэк: Google-thumbnails (encrypted-tbn0.gstatic.com) недоступны извне.
+  // Используем дефолтный OG-image, если обложка — с Google или пустая.
+  const ogImage = book.coverImageUrl && !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com")
+    ? book.coverImageUrl
+    : `${siteUrl}/og-landing.webp`;
+
   const metaTags = [
     `<meta name="description" content="${escapeHtml(description)}" />`,
     `<link rel="canonical" href="${pageUrl}" />`,
     `<meta property="og:title" content="${escapeHtml(title)}" />`,
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     `<meta property="og:url" content="${pageUrl}" />`,
-    book.coverImageUrl ? `<meta property="og:image" content="${escapeHtml(book.coverImageUrl)}" />` : "",
+    `<meta property="og:image" content="${escapeHtml(ogImage)}" />`,
     `<meta name="robots" content="index, follow" />`,
   ].filter(Boolean).join("\n    ");
 

@@ -69,7 +69,7 @@ export function LikeButton({
       duration: 6000,
       button: {
         title: "Войти",
-        onClick: () => navigate("/auth?mode=register"),
+        onClick: () => navigate(`/auth?mode=register&redirect=${encodeURIComponent(window.location.pathname)}`),
       },
     });
   }, [navigate]);

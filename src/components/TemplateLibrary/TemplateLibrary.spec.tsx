@@ -121,6 +121,7 @@ describe("TemplateLibrary", () => {
       isAuthenticated: true,
       logout: vi.fn(),
       refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
     });
 
     vi.mocked(tierListApiModule.getPublicTierLists).mockResolvedValue(

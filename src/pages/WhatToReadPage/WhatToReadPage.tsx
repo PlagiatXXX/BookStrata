@@ -108,7 +108,7 @@ export default function WhatToReadPage() {
               Собери собственную подборку любимых книг в формате тир-листа и поделись с сообществом.
             </p>
             <Link
-              to="/auth?mode=register"
+              to="/auth?mode=register&redirect=/what-to-read"
               className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100"
             >
               <BookOpen size={18} />
