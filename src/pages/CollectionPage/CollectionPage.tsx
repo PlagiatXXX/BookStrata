@@ -290,26 +290,35 @@ return DOMPurify.sanitize(collection.content);
         breadcrumbs={seoBreadcrumbs}
       />
 
-      {/* Book JSON-LD для каждой книги в коллекции */}
-      {collection.books && (
+      {/* ItemList JSON-LD — одна книга на блок вместо отдельного JSON-LD на каждую */}
+      {collection.books && Object.keys(collection.books).length > 0 && (
         <Helmet>
-          {Object.values(collection.books).map((book) => (
-            <script key={book.id} type="application/ld+json">
-              {JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Book",
-                name: book.title,
-                author: book.author
-                  ? { "@type": "Person", name: book.author }
-                  : undefined,
-                image: proxyImageUrl(book.coverImageUrl),
-                ...(book.description
-                  ? { description: book.description }
-                  : {}),
-                ...(book.genre ? { genre: book.genre } : {}),
-              })}
-            </script>
-          ))}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              name: collection.title,
+              description: seoDesc,
+              url: `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}${seoUrl}`,
+              numberOfItems: Object.keys(collection.books).length,
+              itemListElement: Object.values(collection.books).map((book, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                item: {
+                  "@type": "Book",
+                  name: book.title,
+                  author: book.author
+                    ? { "@type": "Person", name: book.author }
+                    : undefined,
+                  image: proxyImageUrl(book.coverImageUrl),
+                  ...(book.description
+                    ? { description: book.description }
+                    : {}),
+                  ...(book.genre ? { genre: book.genre } : {}),
+                },
+              })),
+            })}
+          </script>
         </Helmet>
       )}
 

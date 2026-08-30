@@ -387,7 +387,7 @@ describe("BookPage", () => {
     expect(ld).not.toHaveProperty("aggregateRating");
   });
 
-  it("title по варианту A: «Название — Автор: описание и рейтинг» без бренда, og:title с брендом", async () => {
+  it("title: «Название — Автор» без бренда, og:title с брендом", async () => {
     mockedUseBook.mockReturnValue({
       data: bookPageData,
       isLoading: false,
@@ -397,11 +397,11 @@ describe("BookPage", () => {
     renderPage();
 
     await waitFor(() => {
-      expect(document.title).toBe("Великий Гэтсби — Ф. Скотт Фицджеральд: описание и рейтинг");
+      expect(document.title).toBe("Великий Гэтсби — Ф. Скотт Фицджеральд");
     });
     expect(
       document.querySelector('meta[property="og:title"]')?.getAttribute("content"),
-    ).toBe("Великий Гэтсби — Ф. Скотт Фицджеральд: описание и рейтинг | BookStrata");
+    ).toBe("Великий Гэтсби — Ф. Скотт Фицджеральд | BookStrata");
   });
 
   it("buildBookJsonLd добавляет isbn, inLanguage, url и mainEntityOfPage", () => {

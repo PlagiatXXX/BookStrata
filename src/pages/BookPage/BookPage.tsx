@@ -167,7 +167,7 @@ export default function BookPage() {
   return (
     <div className="book-page">
       <SEOHead
-        title={`${book.title}${book.author ? ` — ${book.author}` : ""}: описание и рейтинг`}
+        title={`${book.title}${book.author ? ` — ${book.author}` : ""}`}
         description={buildDescriptionSnippet(book)}
         image={book.ogImageUrl || (book.coverImageUrl && !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com") ? book.coverImageUrl : undefined)}
         url={`/books/${slug}`}
