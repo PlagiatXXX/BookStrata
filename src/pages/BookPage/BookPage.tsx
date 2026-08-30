@@ -169,7 +169,7 @@ export default function BookPage() {
       <SEOHead
         title={`${book.title}${book.author ? ` — ${book.author}` : ""}: описание и рейтинг`}
         description={buildDescriptionSnippet(book)}
-        image={book.coverImageUrl && !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com") ? book.coverImageUrl : undefined}
+        image={book.ogImageUrl || (book.coverImageUrl && !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com") ? book.coverImageUrl : undefined)}
         url={`/books/${slug}`}
         type="article"
         hideSiteName

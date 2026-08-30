@@ -103,6 +103,7 @@ authorId        Int?
 // личное имущество, каталог с ними не пересекается.
 userId          Int?            @map("user_id")
 coverImageUrl   String          @map("cover_image_url")
+ogImageUrl      String?         @map("og_image_url")
 description     String?
 genre           String?
 tags            String[]

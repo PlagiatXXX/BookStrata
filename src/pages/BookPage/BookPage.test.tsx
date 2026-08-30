@@ -73,6 +73,7 @@ const bookPageData: BookPageData = {
     title: "Великий Гэтсби",
     author: "Ф. Скотт Фицджеральд",
     coverImageUrl: "https://example.com/cover.jpg",
+    ogImageUrl: null,
     description: "Роман, ставший символом века джаза.",
     genre: "Роман",
     tags: ["Классика", "Драма"],

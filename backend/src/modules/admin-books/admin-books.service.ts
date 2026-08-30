@@ -371,6 +371,7 @@ export interface BookUpdateInput {
   genre?: string | null;
   tags?: string[];
   coverImageUrl?: string;
+  ogImageUrl?: string | null;
   publishedYear?: number | null;
   slug?: string;
   contextChain?: Array<{ icon: string; title: string; text: string }> | null;
@@ -413,6 +414,9 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
       if (coverError) throw new ValidationError(coverError);
     }
     updateData.coverImageUrl = data.coverImageUrl.trim();
+  }
+  if (data.ogImageUrl !== undefined) {
+    updateData.ogImageUrl = data.ogImageUrl?.trim() || null;
   }
   if (data.publishedYear !== undefined) updateData.publishedYear = data.publishedYear;
 

@@ -3,7 +3,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
-import { uploadBase64 } from "../../lib/upload.js";
+import { uploadBase64WithOg } from "../../lib/upload.js";
 import { validateImageSize } from "../../lib/validators.js";
 import { createApiError, createSuccessResponse, ErrorCodes, type ErrorCode } from "../../lib/api-response.js";
 import {
@@ -157,11 +157,11 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       try {
-        const uploadResult = await uploadBase64(
+        const uploadResult = await uploadBase64WithOg(
           coverImageUrl,
           "tiermaker-pro/book-covers",
         );
-        return reply.code(200).send({ data: { coverImageUrl: uploadResult.url } });
+        return reply.code(200).send({ data: { coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl } });
       } catch (error: unknown) {
         if (error && typeof error === 'object' && 'statusCode' in error) {
           const err = error as { statusCode: number; message: string };

@@ -1,8 +1,8 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 import crypto from 'node:crypto'
-import type { ImageStorageService, UploadResult } from './types.js'
-import { prepareImage } from './image-processor.js'
+import type { ImageStorageService, UploadResult, UploadWithOgResult } from './types.js'
+import { prepareImage, prepareOgImage } from './image-processor.js'
 import { config } from '../../config/env.js'
 import { createLogger } from '../logger.js'
 
@@ -129,5 +129,29 @@ export class S3Storage implements ImageStorageService {
     const { buffer: bufferToUpload, contentType: finalContentType } = await prepareImage(buffer)
 
     return uploadBuffer(bufferToUpload, folder, finalContentType ?? contentType)
+  }
+
+  async uploadBase64WithOg(base64Data: string, folder = 'tiermaker-pro/uploads'): Promise<UploadWithOgResult> {
+    const buffer = bufferFromBase64(base64Data)
+
+    const { buffer: mainBuffer, contentType } = await prepareImage(buffer)
+    const { buffer: ogBuffer } = await prepareOgImage(buffer)
+
+    const mainResult = await uploadBuffer(mainBuffer, folder, contentType)
+    const ogResult = await uploadBuffer(ogBuffer, folder, 'image/webp')
+
+    return { ...mainResult, ogUrl: ogResult.url }
+  }
+
+  async uploadFromUrlWithOg(url: string, folder = 'tiermaker-pro/uploads'): Promise<UploadWithOgResult> {
+    const { buffer, contentType } = await fetchToBuffer(url)
+
+    const { buffer: mainBuffer, contentType: mainContentType } = await prepareImage(buffer)
+    const { buffer: ogBuffer } = await prepareOgImage(buffer)
+
+    const mainResult = await uploadBuffer(mainBuffer, folder, mainContentType ?? contentType)
+    const ogResult = await uploadBuffer(ogBuffer, folder, 'image/webp')
+
+    return { ...mainResult, ogUrl: ogResult.url }
   }
 }

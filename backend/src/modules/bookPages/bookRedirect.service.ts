@@ -18,6 +18,7 @@ export interface PublishedBookMeta {
   author: string | null;
   description: string | null;
   coverImageUrl: string;
+  ogImageUrl: string | null;
 }
 
 /**
@@ -57,6 +58,7 @@ export async function findPublishedBookBySlug(slug: string): Promise<PublishedBo
       author: true,
       description: true,
       coverImageUrl: true,
+      ogImageUrl: true,
       status: true,
     },
   });
@@ -67,6 +69,7 @@ export async function findPublishedBookBySlug(slug: string): Promise<PublishedBo
     author: book.author,
     description: book.description,
     coverImageUrl: book.coverImageUrl,
+    ogImageUrl: book.ogImageUrl,
   };
 }
 
@@ -101,10 +104,11 @@ export function buildSeoFallbackHtml(book: PublishedBookMeta): string {
     `Книга ${book.title}${book.author ? ` ${book.author}` : ""}: описание, жанр, рейтинг. Найди книги в тир-листах и подборках BookStrata.`;
 
   // Фолбэк: Google-thumbnails (encrypted-tbn0.gstatic.com) недоступны извне.
-  // Используем дефолтный OG-image, если обложка — с Google или пустая.
-  const ogImage = book.coverImageUrl && !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com")
-    ? book.coverImageUrl
-    : `${siteUrl}/og-landing.webp`;
+  // Используем OG-изображение (1200×630) если есть, иначе — дефолтный OG-image.
+  const ogImage = book.ogImageUrl
+    ?? (book.coverImageUrl && !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com")
+      ? book.coverImageUrl
+      : `${siteUrl}/og-landing.webp`);
 
   const metaTags = [
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -113,6 +117,8 @@ export function buildSeoFallbackHtml(book: PublishedBookMeta): string {
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     `<meta property="og:url" content="${pageUrl}" />`,
     `<meta property="og:image" content="${escapeHtml(ogImage)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
     `<meta name="robots" content="index, follow" />`,
   ].filter(Boolean).join("\n    ");
 

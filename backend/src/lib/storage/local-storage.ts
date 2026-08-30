@@ -2,8 +2,8 @@ import sharp from 'sharp'
 import crypto from 'node:crypto'
 import { access, mkdir, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { ImageStorageService, UploadResult } from './types.js'
-import { prepareImage } from './image-processor.js'
+import type { ImageStorageService, UploadResult, UploadWithOgResult } from './types.js'
+import { prepareImage, prepareOgImage } from './image-processor.js'
 import { config } from '../../config/env.js'
 
 const UPLOADS_DIR = config.UPLOADS_DIR
@@ -99,5 +99,31 @@ export class LocalStorage implements ImageStorageService {
     const ext = contentType.split('/')[1] || 'png'
 
     return writeFile(bufferToWrite, folder, ext)
+  }
+
+  async uploadBase64WithOg(base64Data: string, folder = UPLOADS_SUBDIR): Promise<UploadWithOgResult> {
+    const buffer = bufferFromBase64(base64Data)
+
+    const { buffer: mainBuffer, contentType } = await prepareImage(buffer)
+    const { buffer: ogBuffer } = await prepareOgImage(buffer)
+
+    const mainExt = contentType.split('/')[1] || 'png'
+    const mainResult = await writeFile(mainBuffer, folder, mainExt)
+    const ogResult = await writeFile(ogBuffer, folder, 'webp')
+
+    return { ...mainResult, ogUrl: ogResult.url }
+  }
+
+  async uploadFromUrlWithOg(url: string, folder = UPLOADS_SUBDIR): Promise<UploadWithOgResult> {
+    const buffer = await fetchToBuffer(url)
+
+    const { buffer: mainBuffer, contentType } = await prepareImage(buffer)
+    const { buffer: ogBuffer } = await prepareOgImage(buffer)
+
+    const mainExt = contentType.split('/')[1] || 'png'
+    const mainResult = await writeFile(mainBuffer, folder, mainExt)
+    const ogResult = await writeFile(ogBuffer, folder, 'webp')
+
+    return { ...mainResult, ogUrl: ogResult.url }
   }
 }

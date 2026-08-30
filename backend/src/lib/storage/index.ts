@@ -1,8 +1,8 @@
-import type { ImageStorageService, UploadResult } from './types.js'
+import type { ImageStorageService, UploadResult, UploadWithOgResult } from './types.js'
 import { createLogger } from '../logger.js'
 import { config } from '../../config/env.js'
 
-export type { ImageStorageService, UploadResult }
+export type { ImageStorageService, UploadResult, UploadWithOgResult }
 
 const logger = createLogger('Storage', { color: 'yellow' })
 

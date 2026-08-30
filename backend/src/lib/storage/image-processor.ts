@@ -6,6 +6,10 @@ import sharp from "sharp"
  *  файлы больше не храним — только лишний вес. */
 export const MAX_IMAGE_WIDTH = 1600
 
+/** Размер OG-изображения для соцсетей (рекомендация Open Graph: 1200×630). */
+export const OG_WIDTH = 1200
+export const OG_HEIGHT = 630
+
 export interface PreparedImage {
   buffer: Buffer
   contentType: string
@@ -20,6 +24,24 @@ export async function prepareImage(buffer: Buffer): Promise<PreparedImage> {
   try {
     const webp = await sharp(buffer)
       .resize(MAX_IMAGE_WIDTH, undefined, { withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toBuffer()
+    return { buffer: webp, contentType: 'image/webp' }
+  } catch {
+    return { buffer, contentType: 'image/png' }
+  }
+}
+
+/**
+ * Генерирует OG-изображение (1200×630, landscape) для Open Graph / Twitter Cards.
+ * Обрезает по центру (cover) с фокусом на attention — Sharp выберет самую
+ * «интересную» область. Используется для шаринга книг в соцсетях.
+ * Битый файл возвращается как есть (fallback на основное изображение).
+ */
+export async function prepareOgImage(buffer: Buffer): Promise<PreparedImage> {
+  try {
+    const webp = await sharp(buffer)
+      .resize(OG_WIDTH, OG_HEIGHT, { fit: 'cover', position: 'attention' })
       .webp({ quality: 85 })
       .toBuffer()
     return { buffer: webp, contentType: 'image/webp' }

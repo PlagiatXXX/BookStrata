@@ -6,7 +6,7 @@ import { authMiddleware } from "../auth/auth.middleware.js";
 import { createLogger } from "../../lib/logger.js";
 import * as service from "./tierList.service.js";
 import * as schema from "./tierList.schema.js";
-import { uploadBase64, uploadFromUrl } from "../../lib/upload.js";
+import { uploadBase64, uploadFromUrl, uploadBase64WithOg, uploadFromUrlWithOg } from "../../lib/upload.js";
 import { config } from "../../config/env.js";
 import { assertImageAllowed } from "../../lib/nsfw-check.js";
 import { validateImageSize } from "../../lib/validators.js";
@@ -490,8 +490,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
               return { ...book, coverImageUrl: "" };
             }
             try {
-              const uploadResult = await uploadBase64(url, "tiermaker-pro/book-covers");
-              return { ...book, coverImageUrl: uploadResult.url };
+              const uploadResult = await uploadBase64WithOg(url, "tiermaker-pro/book-covers");
+              return { ...book, coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl };
             } catch (error) {
               fastify.log.error({ error: String(error) }, "Failed to upload base64 image");
               return { ...book, coverImageUrl: "" };
@@ -504,8 +504,8 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           const isExternalUrl = url.startsWith("http") && !ourHosts.some((h) => url.includes(h));
           if (isExternalUrl) {
             try {
-              const uploadResult = await uploadFromUrl(url, "tiermaker-pro/book-covers");
-              return { ...book, coverImageUrl: uploadResult.url };
+              const uploadResult = await uploadFromUrlWithOg(url, "tiermaker-pro/book-covers");
+              return { ...book, coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl };
             } catch (error) {
               fastify.log.error({ error: String(error) }, "Failed to upload external cover");
               return book;
@@ -641,7 +641,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
       try {
         // Загружаем изображение в собственное хранилище
-        const uploadResult = await uploadBase64(
+        const uploadResult = await uploadBase64WithOg(
           coverImageUrl,
           "tiermaker-pro/book-covers",
         );
@@ -655,7 +655,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           { bookId, coverUrl: uploadResult.url },
           "Book cover updated",
         );
-        return reply.code(200).send({ data: { coverImageUrl: uploadResult.url } });
+        return reply.code(200).send({ data: { coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl } });
       } catch (error: any) {
         if (error?.statusCode) {
           return reply.code(error.statusCode).send(createApiError(ErrorCodes.INTERNAL_ERROR, error.message));
@@ -856,11 +856,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
                 return { ...book, coverImageUrl: "" };
               }
               try {
-                const uploadResult = await uploadBase64(
+                const uploadResult = await uploadBase64WithOg(
                   book.coverImageUrl,
                   "tiermaker-pro/book-covers",
                 );
-                return { ...book, coverImageUrl: uploadResult.url };
+                return { ...book, coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl };
               } catch {
                 return { ...book, coverImageUrl: "" };
               }

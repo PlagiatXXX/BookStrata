@@ -32,6 +32,7 @@ export interface BookPageData {
     title: string;
     author: string | null;
     coverImageUrl: string;
+    ogImageUrl: string | null;
     description: string | null;
     genre: string | null;
     tags: string[];
@@ -72,6 +73,7 @@ export async function getBookPageData(
       author: true,
       authorId: true,
       coverImageUrl: true,
+      ogImageUrl: true,
       description: true,
       genre: true,
       tags: true,
@@ -214,6 +216,7 @@ export async function getBookPageData(
       title: book.title,
       author: book.author,
       coverImageUrl: book.coverImageUrl,
+      ogImageUrl: book.ogImageUrl,
       description: book.description,
       genre: book.genre,
       tags: book.tags,
