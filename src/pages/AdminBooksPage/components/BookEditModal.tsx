@@ -4,13 +4,30 @@
 // редактор contextChain ({ icon, title, text }) с иконками Material Symbols.
 import { useRef, useState } from "react";
 import { ArrowUp, ArrowDown, Plus, Trash2, X, Upload } from "lucide-react";
-import type { AdminBookDetail, BookUpdateInput, ContextChainItem } from "@/lib/adminBooksApi";
+import type {
+  AdminBookDetail,
+  BookUpdateInput,
+  ContextChainItem,
+} from "@/lib/adminBooksApi";
 import { uploadBookCover } from "@/lib/adminBooksApi";
 
 const MATERIAL_SYMBOLS = [
-  "menu_book", "movie", "public", "psychology", "lightbulb", "history_edu",
-  "forum", "newspaper", "star", "flag", "code", "translate", "groups",
-  "emoji_objects", "fact_check", "format_quote",
+  "menu_book",
+  "movie",
+  "public",
+  "psychology",
+  "lightbulb",
+  "history_edu",
+  "forum",
+  "newspaper",
+  "star",
+  "flag",
+  "code",
+  "translate",
+  "groups",
+  "emoji_objects",
+  "fact_check",
+  "format_quote",
 ];
 
 // Русские названия иконок для выбора в админке
@@ -49,12 +66,23 @@ interface Props {
 }
 
 export function BookEditModal({
-  book, saving, publishing, unpublishing, enriching,
+  book,
+  saving,
+  publishing,
+  unpublishing,
+  enriching,
   enrichResult,
-  onSave, onPublish, onUnpublish, onEnrich, onMerge, onClose,
+  onSave,
+  onPublish,
+  onUnpublish,
+  onEnrich,
+  onMerge,
+  onClose,
 }: Props) {
   const [form, setForm] = useState<BookUpdateInput>({});
-  const [chain, setChain] = useState<ContextChainItem[]>(book.contextChain ?? []);
+  const [chain, setChain] = useState<ContextChainItem[]>(
+    book.contextChain ?? [],
+  );
   // Сырая строка тегов: парсится в массив только при сохранении, иначе
   // запятая мгновенно отфильтровывается как пустой тег и не вводится
   const [tagsInput, setTagsInput] = useState((book.tags ?? []).join(", "));
@@ -76,11 +104,15 @@ export function BookEditModal({
     }
   };
 
-  const set = <K extends keyof BookUpdateInput>(key: K, value: BookUpdateInput[K]) =>
-    setForm((f) => ({ ...f, [key]: value }));
+  const set = <K extends keyof BookUpdateInput>(
+    key: K,
+    value: BookUpdateInput[K],
+  ) => setForm((f) => ({ ...f, [key]: value }));
 
   const setChainItem = (i: number, patch: Partial<ContextChainItem>) =>
-    setChain((c) => c.map((item, idx) => (idx === i ? { ...item, ...patch } : item)));
+    setChain((c) =>
+      c.map((item, idx) => (idx === i ? { ...item, ...patch } : item)),
+    );
 
   const moveChain = (i: number, dir: -1 | 1) =>
     setChain((c) => {
@@ -94,7 +126,10 @@ export function BookEditModal({
   const isPublished = book.status === "published";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-3xl rounded-2xl border border-(--ink-3) bg-(--bg-1) p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -105,24 +140,33 @@ export function BookEditModal({
             <p className="mt-0.5 text-sm text-(--ink-1)">
               #{book.id}
               {book.slug ? ` · /books/${book.slug}` : ""} ·{" "}
-              <span className={isPublished ? "text-emerald-400" : "text-amber-400"}>
+              <span
+                className={isPublished ? "text-emerald-400" : "text-amber-400"}
+              >
                 {isPublished ? "опубликована" : "черновик"}
               </span>
             </p>
             {book.slugHistory.length > 0 && (
               <p className="mt-1 text-xs text-(--ink-2)">
-                История slug (301): {book.slugHistory.map((h) => h.oldSlug).join(", ")}
+                История slug (301):{" "}
+                {book.slugHistory.map((h) => h.oldSlug).join(", ")}
               </p>
             )}
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-(--ink-1) hover:bg-(--ink-3) hover:text-white cursor-pointer" aria-label="Закрыть">
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-(--ink-1) hover:bg-(--ink-3) hover:text-white cursor-pointer"
+            aria-label="Закрыть"
+          >
             <X size={18} />
           </button>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="block">
-            <span className="mb-1 block text-sm text-(--ink-1)">Название *</span>
+            <span className="mb-1 block text-sm text-(--ink-1)">
+              Название *
+            </span>
             <input
               value={form.title ?? book.title}
               onChange={(e) => set("title", e.target.value)}
@@ -147,11 +191,18 @@ export function BookEditModal({
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm text-(--ink-1)">Год издания *</span>
+            <span className="mb-1 block text-sm text-(--ink-1)">
+              Год издания *
+            </span>
             <input
               type="number"
               value={form.publishedYear ?? book.publishedYear ?? ""}
-              onChange={(e) => set("publishedYear", e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) =>
+                set(
+                  "publishedYear",
+                  e.target.value ? Number(e.target.value) : null,
+                )
+              }
               className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
             />
           </label>
@@ -164,7 +215,29 @@ export function BookEditModal({
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm text-(--ink-1)">Теги (через запятую)</span>
+            <span className="mb-1 block text-sm text-(--ink-1)">
+              Рейтинг каталога (0–10)
+            </span>
+            <input
+              type="number"
+              min={0}
+              max={10}
+              step={0.1}
+              value={form.rating ?? book.rating ?? ""}
+              onChange={(e) =>
+                set(
+                  "rating",
+                  e.target.value ? parseFloat(e.target.value) : null,
+                )
+              }
+              placeholder="8.5"
+              className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm text-(--ink-1)">
+              Теги (через запятую)
+            </span>
             <input
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
@@ -172,7 +245,9 @@ export function BookEditModal({
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm text-(--ink-1)">Обложка (URL)</span>
+            <span className="mb-1 block text-sm text-(--ink-1)">
+              Обложка (URL)
+            </span>
             <div className="flex gap-2">
               <input
                 value={form.coverImageUrl ?? book.coverImageUrl}
@@ -205,7 +280,9 @@ export function BookEditModal({
             )}
           </label>
           <label className="block md:col-span-2">
-            <span className="mb-1 block text-sm text-(--ink-1)">Описание *</span>
+            <span className="mb-1 block text-sm text-(--ink-1)">
+              Описание *
+            </span>
             <textarea
               rows={3}
               value={form.description ?? book.description ?? ""}
@@ -222,24 +299,39 @@ export function BookEditModal({
               «Погружение в контекст» (contextChain)
             </h3>
             <button
-              onClick={() => setChain((c) => [...c, { icon: "menu_book", title: "", text: "" }])}
+              onClick={() =>
+                setChain((c) => [
+                  ...c,
+                  { icon: "menu_book", title: "", text: "" },
+                ])
+              }
               className="flex items-center gap-1 rounded-lg bg-(--accent-main) px-2.5 py-1.5 text-xs font-medium text-(--bg-0) hover:opacity-90 cursor-pointer"
             >
               <Plus size={14} /> Добавить
             </button>
           </div>
           {chain.length === 0 && (
-            <p className="text-xs text-(--ink-2)">Пусто — блок не отображается на странице книги.</p>
+            <p className="text-xs text-(--ink-2)">
+              Пусто — блок не отображается на странице книги.
+            </p>
           )}
           <div className="space-y-2">
             {chain.map((item, i) => (
-              <div key={i} className="flex items-start gap-2 rounded-lg border border-(--ink-3) bg-(--bg-0) p-2.5">
+              <div
+                key={i}
+                className="flex items-start gap-2 rounded-lg border border-(--ink-3) bg-(--bg-0) p-2.5"
+              >
                 <select
                   value={item.icon}
                   onChange={(e) => setChainItem(i, { icon: e.target.value })}
                   className="rounded-lg border border-(--ink-3) bg-(--bg-0) px-2 py-1.5 text-sm text-(--ink-0) outline-none"
                 >
-                  {[...new Set([...MATERIAL_SYMBOLS, ...chain.map((c) => c.icon)])].map((icon) => (
+                  {[
+                    ...new Set([
+                      ...MATERIAL_SYMBOLS,
+                      ...chain.map((c) => c.icon),
+                    ]),
+                  ].map((icon) => (
                     <option key={icon} value={icon}>
                       {ICON_LABELS[icon] ?? icon} ({icon})
                     </option>
@@ -258,14 +350,30 @@ export function BookEditModal({
                   className="flex-1 rounded-lg border border-(--ink-3) bg-(--bg-0) px-2 py-1.5 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
                 />
                 <div className="flex flex-col gap-1">
-                  <button onClick={() => moveChain(i, -1)} disabled={i === 0} className="rounded p-1 text-(--ink-1) hover:bg-(--ink-3) hover:text-white disabled:opacity-30 cursor-pointer" aria-label="Вверх">
+                  <button
+                    onClick={() => moveChain(i, -1)}
+                    disabled={i === 0}
+                    className="rounded p-1 text-(--ink-1) hover:bg-(--ink-3) hover:text-white disabled:opacity-30 cursor-pointer"
+                    aria-label="Вверх"
+                  >
                     <ArrowUp size={14} />
                   </button>
-                  <button onClick={() => moveChain(i, 1)} disabled={i === chain.length - 1} className="rounded p-1 text-(--ink-1) hover:bg-(--ink-3) hover:text-white disabled:opacity-30 cursor-pointer" aria-label="Вниз">
+                  <button
+                    onClick={() => moveChain(i, 1)}
+                    disabled={i === chain.length - 1}
+                    className="rounded p-1 text-(--ink-1) hover:bg-(--ink-3) hover:text-white disabled:opacity-30 cursor-pointer"
+                    aria-label="Вниз"
+                  >
                     <ArrowDown size={14} />
                   </button>
                 </div>
-                <button onClick={() => setChain((c) => c.filter((_, idx) => idx !== i))} className="rounded p-1 text-red-400 hover:bg-red-500/10 cursor-pointer" aria-label="Удалить">
+                <button
+                  onClick={() =>
+                    setChain((c) => c.filter((_, idx) => idx !== i))
+                  }
+                  className="rounded p-1 text-red-400 hover:bg-red-500/10 cursor-pointer"
+                  aria-label="Удалить"
+                >
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -275,7 +383,10 @@ export function BookEditModal({
 
         {enrichResult && (
           <p className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
-            Обогащено из Google Books: {enrichResult.length > 0 ? enrichResult.join(", ") : "изменений нет"}
+            Обогащено из Google Books:{" "}
+            {enrichResult.length > 0
+              ? enrichResult.join(", ")
+              : "изменений нет"}
           </p>
         )}
 
@@ -283,7 +394,9 @@ export function BookEditModal({
           <input
             type="checkbox"
             checked={form.isTrending ?? book.isTrending ?? false}
-            onChange={(e) => setForm((prev) => ({ ...prev, isTrending: e.target.checked }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, isTrending: e.target.checked }))
+            }
             className="h-4 w-4 rounded accent-(--accent-main)"
           />
           <span className="text-sm text-(--ink-1)">
@@ -296,7 +409,10 @@ export function BookEditModal({
             onClick={() =>
               onSave({
                 ...form,
-                tags: tagsInput.split(",").map((t) => t.trim()).filter(Boolean),
+                tags: tagsInput
+                  .split(",")
+                  .map((t) => t.trim())
+                  .filter(Boolean),
                 contextChain: chain,
               })
             }

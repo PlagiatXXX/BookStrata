@@ -28,11 +28,14 @@ import { YM_GOALS } from "@/lib/ym-goals";
 
 const marqueeStyle = `
 @keyframes marquee {
-  from { transform: translateX(100vw); }
+  from { transform: translateX(100cqw); }
   to { transform: translateX(-100%); }
 }
 .animate-marquee {
   animation: marquee 27s linear infinite;
+}
+.marquee-container {
+  container-type: inline-size;
 }
 `
 
@@ -398,9 +401,14 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
         {/* Donor Marquee */}
         {donors.length > 0 && (
-          <div className="relative overflow-hidden w-full border-t border-white/[0.06] pt-6">
-            <div className="animate-marquee w-fit whitespace-nowrap text-[11px] font-medium text-white/30">
-              {donors.map((name) => `♥ ${name}`).join('  ·  ')}
+          <div data-testid="donor-marquee" className="flex items-center gap-4 w-full border-t border-white/[0.06] pt-6">
+            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-white/60">
+              Меценаты проекта:
+            </span>
+            <div className="marquee-container relative flex-1 overflow-hidden">
+              <div className="animate-marquee w-fit whitespace-nowrap text-[11px] font-medium text-white/30">
+                {donors.map((name) => `♥ ${name}`).join('  ·  ')}
+              </div>
             </div>
           </div>
         )}

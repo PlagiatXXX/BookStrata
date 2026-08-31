@@ -69,6 +69,8 @@ export interface BookUpdateInput {
   slug?: string;
   contextChain?: ContextChainItem[] | null;
   isTrending?: boolean;
+  /** Рейтинг каталога 0–10 */
+  rating?: number | null;
 }
 
 export interface AdminComment {
@@ -99,11 +101,16 @@ export async function listAdminBooks(params: BookListParams = {}) {
   );
 }
 
-export async function getAdminBook(id: number): Promise<AdminBookDetail | null> {
+export async function getAdminBook(
+  id: number,
+): Promise<AdminBookDetail | null> {
   return apiClient.get<AdminBookDetail>(`/admin/books/${id}`);
 }
 
-export async function updateAdminBook(id: number, patch: BookUpdateInput): Promise<AdminBookDetail> {
+export async function updateAdminBook(
+  id: number,
+  patch: BookUpdateInput,
+): Promise<AdminBookDetail> {
   return apiClient.patch<AdminBookDetail>(`/admin/books/${id}`, patch);
 }
 
@@ -115,7 +122,9 @@ export async function unpublishAdminBook(id: number) {
   return apiClient.post(`/admin/books/${id}/unpublish`);
 }
 
-export async function enrichAdminBook(id: number): Promise<{ updated: string[] }> {
+export async function enrichAdminBook(
+  id: number,
+): Promise<{ updated: string[] }> {
   return apiClient.post<{ updated: string[] }>(`/admin/books/${id}/enrich`);
 }
 

@@ -477,6 +477,50 @@ describe("Admin Books Routes", () => {
       );
     });
 
+    it("rating сохраняется в Book.rating", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.update.mockResolvedValue({ ...bookRow, rating: 8.7 });
+
+      await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ rating: 8.7 });
+
+      expect(mocks.prisma.book.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ rating: 8.7 }),
+        }),
+      );
+    });
+
+    it("rating: null сбрасывает оценку", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.update.mockResolvedValue({ ...bookRow, rating: null });
+
+      await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ rating: null });
+
+      expect(mocks.prisma.book.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ rating: null }),
+        }),
+      );
+    });
+
+    it("rating вне диапазона 0–10 → 400, update не вызывается", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+
+      const res = await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ rating: 42 });
+
+      expect(res.status).toBe(400);
+      expect(mocks.prisma.book.update).not.toHaveBeenCalled();
+    });
+
     it("мелкая обложка (< 390×590) → 400 с текстом ошибки", async () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
       mocks.validateRemoteImageDimensions.mockResolvedValueOnce(

@@ -87,7 +87,9 @@ interface BookSearchRow {
 
 /** Сворачивает группы AnalyticsEvent в map slug → просмотры.
  *  url бывает полным href (https://bookstrata.ru/books/x) и путём (/books/x). */
-function collectViewsBySlug(groups: Array<{ url: string | null; _count: { url: number } }>) {
+function collectViewsBySlug(
+  groups: Array<{ url: string | null; _count: { url: number } }>,
+) {
   const viewsBySlug = new Map<string, number>();
   for (const g of groups) {
     const slug = g.url?.split("/books/")[1]?.split("/")[0];
@@ -103,14 +105,26 @@ async function fetchDedupeBook(b: { id: number }): Promise<DedupeBook> {
   const withCounts = await prisma.book.findUniqueOrThrow({
     where: { id: b.id },
     select: {
-      id: true, title: true, authorId: true, userId: true, slug: true, coverImageUrl: true,
-      description: true, publishedAt: true, status: true, createdAt: true,
+      id: true,
+      title: true,
+      authorId: true,
+      userId: true,
+      slug: true,
+      coverImageUrl: true,
+      description: true,
+      publishedAt: true,
+      status: true,
+      createdAt: true,
       updatedAt: true,
       _count: {
         select: {
-          placements: true, ratings: true, statuses: true,
-          collectionBooks: true, celebrityBooks: true,
-          comments: true, likes: true,
+          placements: true,
+          ratings: true,
+          statuses: true,
+          collectionBooks: true,
+          celebrityBooks: true,
+          comments: true,
+          likes: true,
         },
       },
     },
@@ -161,10 +175,14 @@ async function searchBooksByRelevance(params: BookListParams) {
   `;
 
   const [total, rows] = await Promise.all([
-    prisma.$queryRaw<Array<{ count: number }>>(Prisma.sql`
+    prisma
+      .$queryRaw<Array<{ count: number }>>(
+        Prisma.sql`
       SELECT COUNT(*)::int AS count FROM "Book" b
       ${searchWhere}
-    `).then((r) => r[0]?.count ?? 0),
+    `,
+      )
+      .then((r) => r[0]?.count ?? 0),
     prisma.$queryRaw<BookSearchRow[]>(Prisma.sql`
       SELECT b.id, b.title, b.author, b.slug, b.status, b.genre, b.tags,
              b.cover_image_url, b.rating, b."likesCount", b."publishedAt",
@@ -220,7 +238,11 @@ async function enrichWithOwnerAndTierLists(
     _count: { placements: number };
   }>,
 ) {
-  const userIds = [...new Set(items.map((i) => i.userId).filter((v): v is number => v != null))];
+  const userIds = [
+    ...new Set(
+      items.map((i) => i.userId).filter((v): v is number => v != null),
+    ),
+  ];
   const ownerById = new Map<number, string>();
   if (userIds.length > 0) {
     const users = await prisma.user.findMany({
@@ -252,7 +274,9 @@ async function enrichWithOwnerAndTierLists(
 }
 
 export async function listBooks(params: BookListParams) {
-  const searchResult = params.q?.trim() ? await searchBooksByRelevance(params) : null;
+  const searchResult = params.q?.trim()
+    ? await searchBooksByRelevance(params)
+    : null;
 
   const where: Prisma.BookWhereInput = {};
   const orFilters: Prisma.BookWhereInput[] = [];
@@ -262,7 +286,8 @@ export async function listBooks(params: BookListParams) {
       { author: { contains: params.q, mode: "insensitive" } },
     );
   }
-  if (params.status) where.status = params.status as Prisma.BookWhereInput["status"];
+  if (params.status)
+    where.status = params.status as Prisma.BookWhereInput["status"];
   if (params.genre) where.genre = params.genre;
   if (params.duplicatesOnly) where.mergedIntoId = { not: null };
   // «Из тир-листов»: личные книги (userId) + легаси-общие, у которых есть вхождения
@@ -326,7 +351,10 @@ export async function listBooks(params: BookListParams) {
   const enriched = await enrichWithOwnerAndTierLists(items);
 
   return {
-    items: enriched.map((book) => ({ ...book, views: viewsBySlug.get(book.slug ?? "") ?? 0 })),
+    items: enriched.map((book) => ({
+      ...book,
+      views: viewsBySlug.get(book.slug ?? "") ?? 0,
+    })),
     total,
   };
 }
@@ -376,6 +404,8 @@ export interface BookUpdateInput {
   slug?: string;
   contextChain?: Array<{ icon: string; title: string; text: string }> | null;
   isTrending?: boolean;
+  /** Рейтинг каталога 0–10 (как в коллекциях/знаменитостях) */
+  rating?: number | null;
 }
 
 export class AdminBookError extends Error {
@@ -410,7 +440,9 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
     // Проверяем только при смене URL — старые книги с мелкой обложкой
     // можно редактировать без замены картинки
     if (data.coverImageUrl.trim() !== book.coverImageUrl) {
-      const coverError = await validateRemoteImageDimensions(data.coverImageUrl);
+      const coverError = await validateRemoteImageDimensions(
+        data.coverImageUrl,
+      );
       if (coverError) throw new ValidationError(coverError);
     }
     updateData.coverImageUrl = data.coverImageUrl.trim();
@@ -418,7 +450,14 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
   if (data.ogImageUrl !== undefined) {
     updateData.ogImageUrl = data.ogImageUrl?.trim() || null;
   }
-  if (data.publishedYear !== undefined) updateData.publishedYear = data.publishedYear;
+  if (data.publishedYear !== undefined)
+    updateData.publishedYear = data.publishedYear;
+  if (data.rating !== undefined) {
+    if (data.rating !== null && (data.rating < 0 || data.rating > 10)) {
+      throw new ValidationError("Рейтинг должен быть в диапазоне 0–10");
+    }
+    updateData.rating = data.rating;
+  }
 
   if (data.author !== undefined) {
     if (data.author?.trim()) {
@@ -431,9 +470,10 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
     }
   }
   if (data.contextChain !== undefined) {
-    updateData.contextChain = data.contextChain && data.contextChain.length > 0
-      ? (data.contextChain as unknown as Prisma.InputJsonValue)
-      : Prisma.JsonNull;
+    updateData.contextChain =
+      data.contextChain && data.contextChain.length > 0
+        ? (data.contextChain as unknown as Prisma.InputJsonValue)
+        : Prisma.JsonNull;
   }
   if (data.isTrending !== undefined) updateData.isTrending = data.isTrending;
 
@@ -448,7 +488,10 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
     }
     const existing = await prisma.book.findUnique({ where: { slug: newSlug } });
     if (existing && existing.id !== id) {
-      throw new AdminBookError("Книга с таким slug уже существует", "slug_exists");
+      throw new AdminBookError(
+        "Книга с таким slug уже существует",
+        "slug_exists",
+      );
     }
     if (book.status === "published" && book.slug) {
       await prisma.bookSlugHistory.create({
@@ -486,8 +529,13 @@ async function findDraftDuplicates(
     externalId: string | null;
   },
 ): Promise<Array<{ id: number; title: string; authorId: number | null }>> {
-  const found = new Map<number, { id: number; title: string; authorId: number | null }>();
-  const add = (rows: Array<{ id: number; title: string; authorId: number | null }>) => {
+  const found = new Map<
+    number,
+    { id: number; title: string; authorId: number | null }
+  >();
+  const add = (
+    rows: Array<{ id: number; title: string; authorId: number | null }>,
+  ) => {
     for (const r of rows) found.set(r.id, r);
   };
 
@@ -657,7 +705,9 @@ export async function unpublishBookById(id: number) {
  * Обогащение из Google Books: поиск по title+author, заполнение полей.
  * status не трогаем — публикация отдельно, через publishBook().
  */
-export async function enrichBookFromGoogle(id: number): Promise<{ updated: string[] }> {
+export async function enrichBookFromGoogle(
+  id: number,
+): Promise<{ updated: string[] }> {
   const book = await prisma.book.findUnique({ where: { id } });
   if (!book) throw new AdminBookError("Книга не найдена", "book_not_found");
 
@@ -665,7 +715,10 @@ export async function enrichBookFromGoogle(id: number): Promise<{ updated: strin
   const results = await searchBooks(query, 0);
   const best = results.find((r) => r.coverUrl || r.coverUrlLarge);
   if (!best) {
-    throw new AdminBookError("Ничего не найдено в Google Books", "google_empty");
+    throw new AdminBookError(
+      "Ничего не найдено в Google Books",
+      "google_empty",
+    );
   }
 
   const updateData: Prisma.BookUpdateInput = {};
@@ -715,7 +768,10 @@ export async function enrichBookFromGoogle(id: number): Promise<{ updated: strin
  */
 export async function mergeBooksByIds(dupId: number, canonId: number) {
   if (dupId === canonId) {
-    throw new AdminBookError("Нельзя склеить книгу с самой собой", "invalid_merge");
+    throw new AdminBookError(
+      "Нельзя склеить книгу с самой собой",
+      "invalid_merge",
+    );
   }
   const [dup, canon] = await Promise.all([
     prisma.book.findUnique({ where: { id: dupId } }),
@@ -725,7 +781,10 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
     throw new AdminBookError("Книга не найдена", "book_not_found");
   }
   if (dup.mergedIntoId) {
-    throw new AdminBookError("Книга уже поглощена другим каноном", "already_merged");
+    throw new AdminBookError(
+      "Книга уже поглощена другим каноном",
+      "already_merged",
+    );
   }
 
   // Защита от потери published-страницы: черновик не может поглотить
@@ -793,7 +852,9 @@ export async function topBooksByViews(limit = 10) {
       const book = books.find((b) => b.slug === slug);
       return book ? { book, views: viewsBySlug.get(slug) ?? 0 } : null;
     })
-    .filter((x): x is { book: (typeof books)[number]; views: number } => x !== null);
+    .filter(
+      (x): x is { book: (typeof books)[number]; views: number } => x !== null,
+    );
 }
 
 // ——— Модерация комментариев ———
