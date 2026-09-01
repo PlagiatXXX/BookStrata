@@ -45,72 +45,67 @@ async function main() {
 
   console.log("Roles ensured")
 
-  // ═══════════════════════════════════════════════════════════
-  // ВНИМАНИЕ: закомментировано для безопасного запуска seed
-  // на продакшене. Раскомментируй при первой накатке БД.
-  // ═══════════════════════════════════════════════════════════
+  // === Админы и модераторы (upsert по email) ===
+  const hash = (pw: string) => bcrypt.hash(pw, 10)
 
-  // // === Админы и модераторы (upsert по email) ===
-  // const hash = (pw: string) => bcrypt.hash(pw, 10)
-  //
-  // const hp1 = await hash(admin1Password)
-  // const hp2 = await hash(admin2Password)
-  // const hp3 = await hash(mod1Password)
-  // const hp4 = await hash(mod2Password)
-  //
-  // const admin1 = await prisma.user.upsert({
-  //   where: { email: admin1Email },
-  //   update: { passwordHash: hp1 },
-  //   create: {
-  //     email: admin1Email,
-  //     username: admin1Username,
-  //     passwordHash: hp1,
-  //     roleId: adminRole.id,
-  //     emailVerifiedAt: new Date(),
-  //     acceptedTermsAt: new Date(),
-  //   },
-  // })
-  //
-  // await prisma.user.upsert({
-  //   where: { email: admin2Email },
-  //   update: { passwordHash: hp2 },
-  //   create: {
-  //     email: admin2Email,
-  //     username: admin2Username,
-  //     passwordHash: hp2,
-  //     roleId: adminRole.id,
-  //     emailVerifiedAt: new Date(),
-  //     acceptedTermsAt: new Date(),
-  //   },
-  // })
-  //
-  // await prisma.user.upsert({
-  //   where: { email: mod1Email },
-  //   update: { passwordHash: hp3 },
-  //   create: {
-  //     email: mod1Email,
-  //     username: mod1Username,
-  //     passwordHash: hp3,
-  //     roleId: moderatorRole.id,
-  //     emailVerifiedAt: new Date(),
-  //     acceptedTermsAt: new Date(),
-  //   },
-  // })
-  //
-  // await prisma.user.upsert({
-  //   where: { email: mod2Email },
-  //   update: { passwordHash: hp4 },
-  //   create: {
-  //     email: mod2Email,
-  //     username: mod2Username,
-  //     passwordHash: hp4,
-  //     roleId: moderatorRole.id,
-  //     emailVerifiedAt: new Date(),
-  //     acceptedTermsAt: new Date(),
-  //   },
-  // })
-  //
-  // console.log("Users ensured:", { admin1: admin1.username, admin2: admin2Username, mod1: mod1Username, mod2: mod2Username })
+  const hp1 = await hash(admin1Password)
+  const hp2 = await hash(admin2Password)
+  const hp3 = await hash(mod1Password)
+  const hp4 = await hash(mod2Password)
+
+  const admin1 = await prisma.user.upsert({
+    where: { email: admin1Email },
+    update: { passwordHash: hp1 },
+    create: {
+      email: admin1Email,
+      username: admin1Username,
+      passwordHash: hp1,
+      roleId: adminRole.id,
+      emailVerifiedAt: new Date(),
+      acceptedTermsAt: new Date(),
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { email: admin2Email },
+    update: { passwordHash: hp2 },
+    create: {
+      email: admin2Email,
+      username: admin2Username,
+      passwordHash: hp2,
+      roleId: adminRole.id,
+      emailVerifiedAt: new Date(),
+      acceptedTermsAt: new Date(),
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { email: mod1Email },
+    update: { passwordHash: hp3 },
+    create: {
+      email: mod1Email,
+      username: mod1Username,
+      passwordHash: hp3,
+      roleId: moderatorRole.id,
+      emailVerifiedAt: new Date(),
+      acceptedTermsAt: new Date(),
+    },
+  })
+
+  await prisma.user.upsert({
+    where: { email: mod2Email },
+    update: { passwordHash: hp4 },
+    create: {
+      email: mod2Email,
+      username: mod2Username,
+      passwordHash: hp4,
+      roleId: moderatorRole.id,
+      emailVerifiedAt: new Date(),
+      acceptedTermsAt: new Date(),
+    },
+  })
+
+  console.log("Users ensured:", { admin1: admin1.username, admin2: admin2Username, mod1: mod1Username, mod2: mod2Username })
 
   // // === Создаём начальные новости ===
   // const newsData = [

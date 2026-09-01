@@ -1,29 +1,26 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useNavigate, useParams, useSearchParams, useLocation, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Tag, Calendar, BookOpen, Sparkles } from "lucide-react";
-import DOMPurify from "dompurify";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useSearchParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { Tag } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
-import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
-import { StaticTierView } from "@/components/StaticTierView";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
-import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
-import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
-import { useAuth } from "@/hooks/useAuthContext";
-import { useBookshelf } from "@/hooks/useBookshelf";
-import type { ReadStatus } from "@/contexts/bookshelf.context";
 import { sileo } from "sileo";
-import { getCollectionBySlug, getCollectionPreviewBySlug, getCollections } from "@/lib/collectionsApi";
+import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/types/collection";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { COLLECTION_TITLES } from "@/data/collection-seo";
 import { CATEGORIES } from "@/data/categories";
-import { buildCollectionSeoDesc, buildCollectionSeoTitle } from "./seo";
-import { pickRelatedCollections } from "./related";
 import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
+import { buildCollectionSeoDesc, buildCollectionSeoTitle } from "./seo";
+import { useBookshelf } from "@/hooks/useBookshelf";
+import { useAuth } from "@/hooks/useAuthContext";
+import { getThemeById } from "@/themes/registry";
+import { ThemeProvider } from "@/themes/ThemeProvider";
+import { ThemeSection } from "@/themes/ThemeSection";
+import { ThemeDecor } from "@/themes/ThemeDecor";
+import { DefaultCollectionLayout } from "./DefaultCollectionLayout";
 import "./CollectionPage.css";
 
 export default function CollectionPage() {
@@ -32,81 +29,21 @@ export default function CollectionPage() {
   const isPreview = searchParams.get("preview") === "1";
   const navigate = useNavigate();
   const location = useLocation();
-  // Пришли изнутри приложения (location.key === "default" только при прямом заходе по ссылке)
   const cameFromApp = location.key !== "default";
-  // Одноразовый редирект при отсутствии коллекции
   const redirectedRef = useRef(false);
-  const { user: authUser } = useAuth();
   const [collection, setCollection] = useState<CollectionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewedBook, setViewedBook] = useState<Book | null>(null);
-  const [isAiOpen, setAiOpen] = useState(false);
-  const handleAiOpen = useCallback(() => setAiOpen(true), []);
-  const handleAiClose = useCallback(() => setAiOpen(false), []);
-
-  const currentUserId = authUser?.userId ?? null;
-  const [filterGenre, setFilterGenre] = useState<string | null>(null);
-
   const { shelf } = useBookshelf();
+  const { user: authUser } = useAuth();
+  const currentUserId = authUser?.userId ?? null;
 
-  // «Прочитал» — только статус read из полки (совместимость со старым кодом)
-  const statuses = useMemo(() => {
-    const result: Record<string, ReadStatus> = {};
-    for (const [bookId, status] of Object.entries(shelf)) {
-      if (status === "read") result[bookId] = "read";
-    }
-    return result;
-  }, [shelf]);
+  const handleViewBook = useCallback((book: Book) => {
+    setViewedBook(book);
+  }, []);
 
-  const markedCount = Object.keys(statuses).length;
-
-  // Тост-фидбек при отметке прочитанного
-  const prevStatusesRef = useRef(statuses);
-  useEffect(() => {
-    const prev = prevStatusesRef.current;
-    for (const bookId of Object.keys(statuses)) {
-      if (!(bookId in prev)) {
-        sileo.success({ title: "✓ Добавлено в прочитанные", duration: 2000 });
-      }
-    }
-    // Книга убрана из статусов — ничего не показываем
-    prevStatusesRef.current = statuses;
-  }, [statuses]);
-
-  // Уникальные жанры из книг коллекции
-  const genres = useMemo(() => {
-    if (!collection?.books) return [];
-    const bookList = Object.values(collection.books) as Book[];
-    const genreSet = new Set<string>();
-    bookList.forEach((book) => {
-      if (book.genre) genreSet.add(book.genre);
-    });
-    return Array.from(genreSet).sort();
-  }, [collection?.books]);
-
-  // Статистика коллекции
-  const stats = useMemo(() => {
-    if (!collection?.books) return { totalBooks: 0 };
-    const bookList = Object.values(collection.books) as Book[];
-    return {
-      totalBooks: bookList.length,
-    };
-  }, [collection?.books]);
-
-  // Похожие подборки — перекрёстная перелинковка коллекций (SEO + UX).
-  // Грузим только когда текущая коллекция известна.
-  const { data: allCollections = [] } = useQuery({
-    queryKey: ["all-collections"],
-    queryFn: getCollections,
-    staleTime: 60 * 1000,
-    retry: 2,
-    enabled: !!collection,
-  });
-
-  const relatedCollections = useMemo(
-    () => (collection ? pickRelatedCollections(collection, allCollections, 6) : []),
-    [collection, allCollections],
-  );
+  // Theme state (filters managed by themed section or default layout)
+  const [filterGenre, setFilterGenre] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCollection = async () => {
@@ -122,9 +59,6 @@ export default function CollectionPage() {
             description: "Возможно, она была удалена",
             duration: 3000,
           });
-          // Пришли изнутри приложения (напр., со страницы жанра) — возвращаем назад,
-          // при прямом заходе по ссылке — на рейтинги.
-          // Защита от повторного срабатывания (StrictMode в dev запускает эффект дважды)
           if (!redirectedRef.current) {
             redirectedRef.current = true;
             if (cameFromApp) {
@@ -137,12 +71,8 @@ export default function CollectionPage() {
         }
         setCollection(data);
       } catch (error) {
-        // Ошибка API (сеть, таймаут, бэкенд недоступен) — при пререндеринге
-        // не редиректим, а показываем страницу с SEO-данными из slug.
-        // Это гарантирует, что пререндерер сохранит корректные meta-теги,
-        // а при гидрации React дозагрузит данные.
-        if (typeof window !== 'undefined' && window.__PRERENDER__) {
-          console.warn('[prerender] API недоступен, показываем SEO-заглушку');
+        if (typeof window !== "undefined" && window.__PRERENDER__) {
+          console.warn("[prerender] API недоступен, показываем SEO-заглушку");
         } else {
           console.error("Failed to load collection:", error);
           sileo.error({
@@ -151,8 +81,6 @@ export default function CollectionPage() {
             duration: 3000,
           });
         }
-        // Даже при ошибке показываем страницу с SEO-данными (пререндер)
-        // вместо редиректа на /community
       } finally {
         setLoading(false);
       }
@@ -161,51 +89,14 @@ export default function CollectionPage() {
     loadCollection();
   }, [slug, navigate, isPreview, cameFromApp]);
 
-  const handleViewBook = useCallback((book: Book) => {
-    setViewedBook(book);
-  }, []);
-
-  const handleFork = useCallback(() => {
-    if (!currentUserId) {
-      sileo.action({
-        title: 'Сохраните свою версию',
-        description: 'Зарегистрируйтесь, чтобы создать свой рейтинг и сохранить его в личной библиотеке.',
-        duration: 10000,
-        button: {
-          title: 'Создать аккаунт',
-          onClick: () => navigate(`/auth?mode=register&redirect=${encodeURIComponent(`/collections/${slug}`)}`),
-        },
-      });
-      return;
-    }
-    const readIds = Object.keys(statuses);
-    const params = new URLSearchParams();
-    params.set('fork', slug || '');
-    if (readIds.length > 0) {
-      params.set('readIds', readIds.join(','));
-    }
-    window.location.href = `/tier-lists/new?${params.toString()}`;
-  }, [currentUserId, navigate, slug, statuses]);
-
-  const sanitizedContent = useMemo(() => {
-if (!collection?.content) return "";
-return DOMPurify.sanitize(collection.content);
-}, [collection?.content]);
-
-  // SEO — всегда, даже при загрузке/ошибке, чтобы prerender гарантированно
-  // захватил meta-теги. Пока данные не загружены — используем читаемый заголовок из COLLECTION_TITLES.
-  // Приоритет: админка → шаблон → slug.
+  // SEO data — available even during loading/error for prerender
   const seoTitle = buildCollectionSeoTitle(collection?.title, slug || "", COLLECTION_TITLES[slug || ""] || "");
-
-  // Приоритет: данные из админки (excerpt) → шаблонный SEO-текст → фолбэк.
-  // Админ заполнил описание — отдаём его текст в выдачу, шаблон только как дефолт.
   const seoDesc = buildCollectionSeoDesc(collection?.excerpt, slug || "", seoTitle);
   const seoImage = collection?.coverImageUrl
     ? (proxyImageUrl(collection.coverImageUrl) || undefined)
     : undefined;
   const seoUrl = slug ? `/collections/${slug}` : undefined;
 
-  // Жанр подборки — для хлебных крошек (Главная → Рейтинги → Жанр → Подборка)
   const genreCategory =
     collection?.categoryId && collection.categoryId !== "all"
       ? CATEGORIES.find((c) => c.id === collection.categoryId)
@@ -222,6 +113,9 @@ return DOMPurify.sanitize(collection.content);
       ]
     : undefined;
 
+  // Resolve theme config from DB field
+  const themeConfig = collection?.theme ? getThemeById(collection.theme) : null;
+
   if (loading) {
     return (
       <>
@@ -232,9 +126,7 @@ return DOMPurify.sanitize(collection.content);
           url={seoUrl}
           breadcrumbs={seoBreadcrumbs}
         />
-        <DashboardLayout
-          showSearch={false}
-        >
+        <DashboardLayout showSearch={false}>
           <div className="max-w-4xl mx-auto px-6 py-12">
             <div className="animate-pulse">
               <div className="h-4 bg-(--bg-1) rounded w-20 mb-4" />
@@ -253,9 +145,6 @@ return DOMPurify.sanitize(collection.content);
   }
 
   if (!collection) {
-    // Коллекция не загрузилась (API недоступен) — показываем SEO-заглушку
-    // с данными из slug. При пререндеринге бот получит корректные meta-теги,
-    // а пользователь увидит сообщение о недоступности.
     return (
       <>
         <SEOHead
@@ -290,304 +179,92 @@ return DOMPurify.sanitize(collection.content);
         breadcrumbs={seoBreadcrumbs}
       />
 
-      {/* ItemList JSON-LD — одна книга на блок вместо отдельного JSON-LD на каждую */}
-      {collection.books && Object.keys(collection.books).length > 0 && (
-        <Helmet>
-          <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "ItemList",
-              name: collection.title,
-              description: seoDesc,
-              url: `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}${seoUrl}`,
-              numberOfItems: Object.keys(collection.books).length,
-              itemListElement: Object.values(collection.books).map((book, index) => ({
-                "@type": "ListItem",
-                position: index + 1,
-                item: {
-                  "@type": "Book",
-                  name: book.title,
-                  author: book.author
-                    ? { "@type": "Person", name: book.author }
-                    : undefined,
-                  image: proxyImageUrl(book.coverImageUrl),
-                  ...(book.description
-                    ? { description: book.description }
-                    : {}),
-                  ...(book.genre ? { genre: book.genre } : {}),
-                },
-              })),
-            })}
-          </script>
-        </Helmet>
-      )}
-
       <DashboardLayout
-      showSearch={false}
-    >
-      {/* Breadcrumbs + Назад — на левый край */}
-      <div className="px-4 sm:px-6 pt-6 pb-4 space-y-1">
-        <Breadcrumbs
-          items={[
-            { label: "Главная", href: "/" },
-            { label: "Рейтинги", href: "/rankings" },
-            ...(genreCategory
-              ? [{ label: genreCategory.label, href: `/topics/${genreCategory.id}` }]
-              : []),
-            { label: collection.title },
-          ]}
-        />
-        <button
-          onClick={() => {
-            // history.length > 1 бывает даже при заходе с внешнего сайта —
-            // надёжнее проверять, что переход был изнутри приложения
-            if (cameFromApp) {
-              navigate(-1);
-            } else {
-              navigate('/rankings');
-            }
-          }}
-          className="text-xs text-(--ink-2) hover:text-(--accent-main) transition-colors cursor-pointer"
-        >
-          ← Назад к подборкам
-        </button>
-      </div>
-
-      <article className="max-w-6xl mx-auto px-4 sm:px-6 pb-12">
-        {/* Header — как в публичном тир-листе: ряд (название по центру | кнопка справа) */}
-        <header className="mb-8">
-          <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6">
-            {/* Название по центру */}
-            <div className="min-w-0 flex-1 text-center">
-              <h1 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
-                {collection.title}
-              </h1>
-              {collection.type === "curated" && (
-                <div className="flex items-center justify-center gap-1 text-sm text-(--ink-1) mt-2">
-                  <span>автор:</span>
-                  <span className="text-(--accent-main)">Букстраж</span>
-                </div>
-              )}
-            </div>
-            {/* Кнопка AI-библиотекаря */}
-            <button
-              type="button"
-              onClick={handleAiOpen}
-              className="inline-flex items-center gap-2 rounded border-2 border-(--accent-main) bg-(--accent-main)/10 px-4 py-2 text-sm font-bold text-(--accent-main) transition-all hover:bg-(--accent-main)/20 cursor-pointer"
-            >
-              <Sparkles size={16} />
-              Спросить у Букстража
-            </button>
-          </div>
-        </header>
-
-        {/* Статистика + фильтр жанров */}
-        {collection.type === "curated" && (
-          <div className="flex flex-wrap items-center gap-4 mb-6">
-            <div className="flex items-center gap-2 text-sm text-(--ink-2)">
-              <BookOpen size={16} />
-              <span>{stats.totalBooks} книг</span>
-            </div>
-            {genres.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
+        showSearch={false}
+      >
+        {themeConfig ? (
+          /* ── Themed layout ── */
+          <ThemeProvider theme={themeConfig}>
+            {themeConfig.decor && <ThemeDecor name={themeConfig.decor} />}
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-12">
+              {/* Breadcrumbs */}
+              <div className="pt-6 pb-4">
+                <Breadcrumbs
+                  theme="light"
+                  items={[
+                    { label: "Главная", href: "/" },
+                    { label: "Рейтинги", href: "/rankings" },
+                    ...(genreCategory
+                      ? [{ label: genreCategory.label, href: `/topics/${genreCategory.id}` }]
+                      : []),
+                    { label: collection.title },
+                  ]}
+                />
                 <button
-                  onClick={() => setFilterGenre(null)}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors cursor-pointer ${
-                    filterGenre === null
-                      ? "bg-(--accent-main) text-white border-(--accent-main)"
-                      : "border-(--line-soft) text-(--ink-2) hover:border-(--accent-main)"
-                  }`}
+                  onClick={() => navigate(-1)}
+                  className="text-xs text-slate-500 hover:text-orange-600 transition-colors cursor-pointer mt-1"
                 >
-                  Все
+                  ← Назад к подборкам
                 </button>
-                {genres.map((genre) => (
-                  <button
-                    key={genre}
-                    onClick={() => setFilterGenre(genre)}
-                    className={`text-xs px-3 py-1 rounded-full border transition-colors cursor-pointer ${
-                      filterGenre === genre
-                        ? "bg-(--accent-main) text-white border-(--accent-main)"
-                        : "border-(--line-soft) text-(--ink-2) hover:border-(--accent-main)"
-                    }`}
-                  >
-                    {genre}
-                  </button>
-                ))}
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Описание подборки (excerpt) + редакционная заметка — оба текста видны */}
-        <div className="brutal-card brutal-border p-6 mb-8 space-y-4">
-          {collection.excerpt ? (
-            <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
-              {collection.excerpt}
-            </p>
-          ) : null}
-          {collection.editorialNote ? (
-            <>
-              <h2 className="text-lg font-black tracking-tight mb-3 uppercase">Как составлялась подборка</h2>
-              <p className="text-base text-(--ink-1) leading-relaxed">
-                {collection.editorialNote}
-              </p>
-            </>
-          ) : null}
-        </div>
+              {themeConfig.sections.map((sectionType, index) => (
+                <ThemeSection
+                  key={`${sectionType}-${index}`}
+                  type={sectionType}
+                  collection={collection}
+                  filterGenre={filterGenre ?? undefined}
+                  onFilterGenreChange={(g) => setFilterGenre(g)}
+                  onViewBook={handleViewBook}
+                  statuses={shelf}
+                  collectionSlug={collection.slug}
+                  currentUserId={currentUserId}
+                />
+              ))}
 
-        {/* Value callout — пока нет отметок, над тир-листом */}
-        {collection.type === "curated" && markedCount === 0 && (
-          <div className="brutal-card brutal-border p-5 mb-8 border-l-4" style={{ borderLeftColor: "var(--accent-main)" }}>
-            <p className="text-sm text-(--ink-1) leading-relaxed">
-              <span className="font-bold">Отмечайте книги, которые читали</span> —{' '}
-              нажмите на книгу и отметьте её как прочитанную.{' '}
-              Потом сможете собрать свой рейтинг из отмеченных книг.
-            </p>
-          </div>
-        )}
-
-        {/* Tier list for curated collections — на всю ширину */}
-        {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
-          <div className="mb-8">
-            <StaticTierView
-              tiers={collection.tiers as Record<string, import("@/types").Tier>}
-              tierOrder={collection.tierOrder}
-              books={collection.books as Record<string, import("@/types").Book>}
-              onViewBook={handleViewBook}
-              filterGenre={filterGenre}
-              statuses={shelf}
-              unrankedBookIds={collection.unrankedBookIds}
-              linkToBook
-            />
-          </div>
-        )}
-
-        {/* CTA — когда есть отметки, под тир-листом */}
-        <div className="overflow-hidden transition-all duration-500 ease-in-out" style={{ maxHeight: collection.type === "curated" && markedCount > 0 ? '500px' : '0px' }}>
-          <div
-            className="overflow-hidden transition-all duration-500 ease-in-out"
-            style={{ maxHeight: collection.type === "curated" && markedCount > 0 ? '500px' : '0px', opacity: collection.type === "curated" && markedCount > 0 ? 1 : 0 }}
-          >
-            <div className="brutal-card brutal-border p-6 mb-8 text-center">
-              {markedCount >= 4 ? (
-                <>
-                  <p className="text-lg font-bold mb-2">
-                    Не согласны с этим рейтингом?
-                  </p>
-                  <p className="text-sm text-(--ink-2) mb-4">
-                    Вы читали {markedCount} из {stats.totalBooks} книг этой подборки —{' '}
-                    у вас уже есть своё мнение. Расставьте их по своим уровням.
-                  </p>
-                  <button
-                    onClick={handleFork}
-                    className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
-                  >
-                    Составить свой рейтинг
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-lg font-bold mb-2">
-                    Не согласны с этим рейтингом?
-                  </p>
-                  <p className="text-sm text-(--ink-2) mb-4">
-                    Отмечено {markedCount} из {stats.totalBooks} книг. Отмечайте дальше или{' '}
-                    сразу соберите свой рейтинг.
-                  </p>
-                  <button
-                    onClick={handleFork}
-                    className="inline-flex items-center gap-1.5 px-6 py-2 text-sm font-medium uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
-                  >
-                    Составить свой рейтинг
-                  </button>
-                </>
+              {/* Tags footer */}
+              {collection.tags.length > 0 && (
+                <footer className="mt-12 pt-8 border-t border-(--line-soft)">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Tag size={16} className="text-(--ink-1)" />
+                    <span className="text-sm text-(--ink-1)">Теги:</span>
+                    {collection.tags.map((tag) => {
+                      const categoryId = TAG_TO_CATEGORY[tag];
+                      if (categoryId) {
+                        return (
+                          <Link
+                            key={tag}
+                            to={`/topics/${categoryId}`}
+                            className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
+                          >
+                            #{tag}
+                          </Link>
+                        );
+                      }
+                      return (
+                        <span key={tag} className="text-sm text-(--accent-main)">
+                          #{tag}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </footer>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Last updated */}
-        <div className="flex items-center gap-2 mb-8 text-sm text-(--ink-2)">
-          <Calendar size={14} />
-          <span>Обновлено: {new Date(collection.updatedAt).toLocaleDateString("ru-RU", {
-            day: "numeric", month: "long", year: "numeric",
-          })}</span>
-        </div>
-
-        {/* Content — only for literary collections */}
-        {collection.type === "literary" && sanitizedContent && (
-          <div className="prose prose-invert max-w-none">
-            <div
-              className="collection-content text-(--ink-1) text-base leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-            />
-          </div>
+          </ThemeProvider>
+        ) : (
+          /* ── Default layout (no theme) ── */
+          <DefaultCollectionLayout collection={collection} />
         )}
+      </DashboardLayout>
 
-        {/* Book View Modal */}
-        <BookViewModal
-          book={viewedBook}
-          isOpen={!!viewedBook}
-          onClose={() => setViewedBook(null)}
-          isReadOnly
-          hideThoughts
-        />
-
-        <AiLibrarianModal
-          isOpen={isAiOpen}
-          onClose={handleAiClose}
-          context={{ pageType: 'collection', slug }}
-        />
-
-        {/* Похожие подборки — перекрёстные ссылки между коллекциями (SEO-перелинковка) */}
-        {relatedCollections.length > 0 && (
-          <section className="mt-12">
-            <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
-              <div>
-                <h2 className="community-heading text-xl font-black leading-tight sm:text-2xl">
-                  Похожие подборки
-                </h2>
-                <p className="text-(--ink-1) mt-1 text-sm">
-                  Ещё подборки книг, которые могут вам понравиться
-                </p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-              {relatedCollections.map((related) => (
-                <CollectionCard key={related.id} collection={related} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-(--line-soft)">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Tag size={16} className="text-(--ink-1)" />
-            <span className="text-sm text-(--ink-1)">Теги:</span>
-            {collection.tags.map((tag) => {
-              const categoryId = TAG_TO_CATEGORY[tag];
-              if (categoryId) {
-                return (
-                  <Link
-                    key={tag}
-                    to={`/topics/${categoryId}`}
-                    className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
-                  >
-                    #{tag}
-                  </Link>
-                );
-              }
-              return (
-                <span key={tag} className="text-sm text-(--accent-main)">
-                  #{tag}
-                </span>
-              );
-            })}
-          </div>
-        </footer>
-      </article>
-    </DashboardLayout>
+      <BookViewModal
+        book={viewedBook}
+        isOpen={!!viewedBook}
+        onClose={() => setViewedBook(null)}
+        isReadOnly
+        hideThoughts
+      />
     </>
   );
 }

@@ -35,6 +35,7 @@ export const createCollectionSchema = z.object({
   isFeatured: z.boolean().optional().default(false),
   order: z.number().int().optional().default(0),
   accentColor: z.string().optional(),
+  theme: z.string().nullable().optional(),
   editorialNote: z.string().nullable().optional(),
   // Curated fields
   tiers: z.record(z.string(), tierObjectSchema).optional(),
@@ -67,6 +68,7 @@ export const createCollectionJsonSchema = {
       tags: { type: "array", items: { type: "string" } },
       isPublished: { type: "boolean" },
       order: { type: "integer" },
+      theme: { type: "string", nullable: true },
     },
   },
   response: {

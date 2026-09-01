@@ -156,7 +156,7 @@ const TierListEditorContent = () => {
   // Если есть сохранённый черновик в localStorage — используем его (для демо и после регистрации).
   // При открытии по ссылке с шаблоном (?template=N) черновик игнорируем — показываем шаблон.
   const [demoInitialData] = useState<TierListData | null>(() => {
-    if (tierListId === "new" && !templateId) return loadDemo() ?? null;
+    if (tierListId === "new" && !templateId && !forkSlug) return loadDemo() ?? null;
     return null;
   });
 

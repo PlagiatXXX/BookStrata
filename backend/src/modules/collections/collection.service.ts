@@ -236,6 +236,7 @@ export async function createCollection(input: CreateCollectionInput) {
       isFeatured: input.isFeatured ?? false,
       order: input.order ?? 0,
       accentColor: input.accentColor || null,
+      theme: input.theme || null,
       editorialNote: input.editorialNote || null,
       tiers: toJsonValue(input.tiers),
       tierOrder: input.tierOrder || [],
@@ -291,6 +292,7 @@ export async function updateCollection(id: number, input: UpdateCollectionInput)
   if (input.isFeatured !== undefined) data.isFeatured = input.isFeatured;
   if (input.order !== undefined) data.order = input.order;
   if (input.accentColor !== undefined) data.accentColor = input.accentColor || null;
+  if (input.theme !== undefined) data.theme = input.theme || null;
   if (input.editorialNote !== undefined) data.editorialNote = input.editorialNote || null;
   if (input.tiers !== undefined) data.tiers = toJsonValue(input.tiers);
   if (input.tierOrder !== undefined) data.tierOrder = input.tierOrder;

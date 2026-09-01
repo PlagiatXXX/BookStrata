@@ -460,6 +460,7 @@ model Collection {
   isPublished     Boolean  @default(false) @map("is_published")
   order           Int      @default(0)
   accentColor     String?  @map("accent_color")
+  theme           String?  @map("theme") // Тематический дизайн страницы ('autumn', 'horror', и т.д.)
   isFeatured      Boolean  @default(false) @map("is_featured")
   // Редакционная заметка (отображается на странице подборки, SEO-контент)
   editorialNote   String?  @map("editorial_note")

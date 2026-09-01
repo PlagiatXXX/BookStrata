@@ -23,6 +23,7 @@ export type CollectionItem = {
   isPublished: boolean;
   order: number;
   accentColor?: string; // Цветовая акцентная подсветка карточки (hex)
+  theme?: string | null; // Тематический дизайн страницы ('autumn', 'horror', и т.д.)
   createdAt: string;
   updatedAt: string;
 };

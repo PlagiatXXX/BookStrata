@@ -588,3 +588,16 @@ body {
     opacity: 0;
   }
 }
+
+/* Theme container base styles */
+.theme-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+.theme-texture-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}

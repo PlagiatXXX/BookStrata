@@ -1,5 +1,6 @@
 import { Eye, X } from "lucide-react";
 import { CATEGORIES, COLLECTION_ACCENTS } from "@/data/mockData";
+import { listThemes } from "@/themes/registry";
 import { WysiwygEditor } from "./WysiwygEditor";
 import { CuratedCollectionEditor } from "./CuratedCollectionEditor";
 import type { CuratedTier, CuratedBook } from "./types";
@@ -18,6 +19,7 @@ interface CollectionFormData {
   order: number;
   editorialNote: string;
   accentColor: string;
+  theme: string;
 }
 
 interface CollectionFormModalProps {
@@ -147,6 +149,24 @@ export function CollectionFormModal({
                 <option key={cat.id} value={cat.id}>{cat.label}</option>
               ))}
             </select>
+          </div>
+
+          {/* Тема дизайна */}
+          <div className="admin-collections-form-group">
+            <label htmlFor="theme">Тема дизайна</label>
+            <select
+              id="theme"
+              value={formData.theme}
+              onChange={(e) => set("theme", e.target.value)}
+            >
+              <option value="">Стандартный дизайн</option>
+              {listThemes().map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+            <span className="admin-collections-form-hint">
+              Тематический визуальный стиль страницы подборки.
+            </span>
           </div>
 
           {/* Контент */}

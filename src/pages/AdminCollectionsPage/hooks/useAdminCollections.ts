@@ -29,6 +29,7 @@ interface CollectionFormData {
   order: number;
   editorialNote: string;
   accentColor: string;
+  theme: string;
 }
 
 const emptyFormData: CollectionFormData = {
@@ -45,6 +46,7 @@ const emptyFormData: CollectionFormData = {
   order: 0,
   editorialNote: "",
   accentColor: "",
+  theme: "",
 };
 
 export function useAdminCollections() {
@@ -136,6 +138,7 @@ export function useAdminCollections() {
       order: collection.order,
       editorialNote: collection.editorialNote || "",
       accentColor: collection.accentColor || "",
+      theme: collection.theme || "",
     });
 
     if (collection.type === "curated" && collection.tiers && collection.tierOrder) {
@@ -233,6 +236,7 @@ export function useAdminCollections() {
           order: formData.order,
           editorialNote: formData.editorialNote.trim() || null,
           accentColor: formData.accentColor || undefined,
+          theme: formData.theme || null,
         };
 
         if (formData.type === "curated") {
