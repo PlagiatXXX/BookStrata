@@ -26,7 +26,7 @@ import {
 import { usePublicTierListsPagination } from "./hooks/usePublicTierListsPagination";
 import { TemplateLibraryHeader } from "./components/TemplateLibraryHeader";
 import { TemplateLibrarySidebar } from "./components/TemplateLibrarySidebar";
-import { TemplateLibraryToolbar } from "./components/TemplateLibraryToolbar";
+
 import { PublicTierListsSection } from "./components/PublicTierListsSection";
 import PublicTierListCards from "./PublicTierListCards";
 import {
@@ -44,11 +44,20 @@ import { CreateTierListModal } from "@/pages/DashboardPage/components/CreateTier
 import { RenameTierListModal } from "@/pages/DashboardPage/components/RenameTierListModal";
 import { DeleteTierListModal } from "@/pages/DashboardPage/components/DeleteTierListModal";
 import type { SortOption, FilterOption, ModalType } from "@/pages/DashboardPage/types";
-import "@/pages/DashboardPage/DashboardPage.css";
+
+// Page-specific styles (gold theme, Playfair Display)
+import "./templates-page.css";
 
 const sortBy: "updated_at" | "likes" | "created" = "likes";
 
-const VALID_SECTIONS = new Set<SectionKey>(["private", "public", "favorites"]);
+const VALID_SECTIONS = new Set<SectionKey>(["private", "public", "favorites", "new"]);
+
+const SECTION_LABELS_MOBILE: Record<SectionKey, string> = {
+  private: "Мои",
+  public: "Популярные",
+  new: "Новинки",
+  favorites: "Избранное",
+};
 
 const TemplateLibrary: React.FC = () => {
   const navigate = useNavigate();
@@ -191,9 +200,11 @@ const TemplateLibrary: React.FC = () => {
   } = useQuery<PaginatedTierListsResponse, Error>({
     queryKey: ["publicTierListsSorted", sortBy, publicPage, PUBLIC_PAGE_SIZE],
     queryFn: () => getPublicTierLists(publicPage, PUBLIC_PAGE_SIZE, sortBy),
-    staleTime: PUBLIC_TIER_LISTS_STALE_TIME_MS,
+    staleTime: 0,
     gcTime: PUBLIC_TIER_LISTS_GC_TIME_MS,
     enabled: activeSection === "public",
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // При пререндере не делаем запросы, требующие авторизации
@@ -210,7 +221,30 @@ const TemplateLibrary: React.FC = () => {
     gcTime: PUBLIC_TIER_LISTS_GC_TIME_MS,
   });
 
-  const { totalPages, hasNextPage, pageNumbers } = usePublicTierListsPagination({
+  // Новинки — публичные тир-листы за последнюю неделю
+  const {
+    data: newTierListsData,
+    isLoading: isLoadingNew,
+  } = useQuery<PaginatedTierListsResponse, Error>({
+    queryKey: ["newTierLists"],
+    queryFn: () => getPublicTierLists(1, 50, 'created'),
+    staleTime: 0,
+    gcTime: PUBLIC_TIER_LISTS_GC_TIME_MS,
+    enabled: activeSection === "new",
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
+
+  // Фильтруем за последнюю неделю
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const newTierLists = (newTierListsData?.data || []).filter((tl) => {
+    const created = new Date(tl.createdAt);
+    return created >= oneWeekAgo;
+  });
+
+  const { hasNextPage, pageNumbers } = usePublicTierListsPagination({
     meta: publicTierListsData?.meta,
     currentPage: publicPage,
   });
@@ -254,17 +288,15 @@ const TemplateLibrary: React.FC = () => {
       case "private": {
         if (!isAuthenticated) {
           return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Lock size={48} className="text-cyan-400/40 mb-4" />
-              <h3 className="text-xl font-semibold text-[#f3efe6] mb-2">
-                Войдите, чтобы управлять тир-листами
-              </h3>
-              <p className="text-[#b8b1a3] mb-6 max-w-md">
+            <div className="tpl-empty">
+              <Lock size={48} />
+              <h3>Войдите, чтобы управлять тир-листами</h3>
+              <p>
                 Создавайте собственные рейтинги книг, делитесь ими и находите единомышленников.
               </p>
               <button
                 onClick={() => navigate("/auth?mode=register&redirect=/templates")}
-                className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
+                className="tpl-empty-btn"
               >
                 Создать аккаунт
               </button>
@@ -274,7 +306,7 @@ const TemplateLibrary: React.FC = () => {
 
         if (isLoadingPrivate) {
           return (
-            <div className="flex items-center justify-center py-12 text-gray-300">
+            <div className="tpl-loading">
               <Spinner size="md" className="mr-2" />
               Загрузка...
             </div>
@@ -303,7 +335,7 @@ const TemplateLibrary: React.FC = () => {
             {/* Search, Filter, Sort */}
             <div className="dashboard-controls">
               <div className="flex items-center gap-3 flex-1">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 text-gray-400 border border-slate-700/50 transition-all focus-within:ring-2 focus-within:ring-cyan-400/50 focus-within:border-cyan-400/50">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 text-gray-400 border border-slate-700/50 transition-all focus-within:ring-2 focus-within:ring-[var(--tpl-primary)]/50 focus-within:border-[var(--tpl-primary)]/50">
                   <Search size={16} />
                   <input
                     type="text"
@@ -397,27 +429,45 @@ const TemplateLibrary: React.FC = () => {
             isLoading={isLoadingPublicTierLists}
             isFetching={isFetchingPublicTierLists}
             currentPage={publicPage}
-            totalPages={totalPages}
             pageNumbers={pageNumbers}
             hasNextPage={hasNextPage}
             onPageChange={handlePageChange}
           />
         );
 
+      case "new": {
+        if (isLoadingNew) {
+          return (
+            <div className="tpl-loading">
+              <Spinner size="md" className="mr-2" />
+              Загрузка...
+            </div>
+          );
+        }
+        if (newTierLists.length === 0) {
+          return (
+            <div className="tpl-empty">
+              <Star size={48} />
+              <h3>Новинок пока нет</h3>
+              <p>За последнюю неделю не было создано ни одного тир-листа.</p>
+            </div>
+          );
+        }
+        return <PublicTierListCards tierLists={newTierLists} likedIdsSet={new Set()} />;
+      }
+
       case "favorites": {
         if (!isAuthenticated) {
           return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Star size={48} className="text-cyan-400/40 mb-4" />
-              <h3 className="text-xl font-semibold text-[#f3efe6] mb-2">
-                Войдите, чтобы увидеть избранное
-              </h3>
-              <p className="text-[#b8b1a3] mb-6 max-w-md">
+            <div className="tpl-empty">
+              <Star size={48} />
+              <h3>Войдите, чтобы увидеть избранное</h3>
+              <p>
                 Отмечайте понравившиеся тир-листы лайками, чтобы они появились здесь.
               </p>
               <button
                 onClick={() => navigate("/auth?mode=register&redirect=/templates")}
-                className="brutal-cta bg-(--bg-0) text-(--ink-0) px-10 py-4 font-bold uppercase tracking-widest text-xs hover:bg-(--accent-main)"
+                className="tpl-empty-btn"
               >
                 Войти
               </button>
@@ -427,7 +477,7 @@ const TemplateLibrary: React.FC = () => {
 
         if (isLoadingLiked) {
           return (
-            <div className="flex items-center justify-center py-12 text-gray-300">
+            <div className="tpl-loading">
               <Spinner size="md" className="mr-2" />
               Загрузка...
             </div>
@@ -443,7 +493,7 @@ const TemplateLibrary: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f1f]">
+    <div className="templates-page">
       <SEOHead
         title="Тир-листы книг — рейтинги и визуальные подборки"
         description="Тир-листы BookStrata — рейтинги книг по жанрам, настроению и темам. Создавайте и публикуйте собственные подборки, находите вдохновение в работах сообщества."
@@ -458,65 +508,55 @@ const TemplateLibrary: React.FC = () => {
         showTemplatesNav
         activeItem="Тир-листы"
       />
-      <section className="relative min-h-screen pt-16 pb-16 md:pb-0">
-        <div className="absolute inset-0 bg-[linear-gradient(165deg,rgba(4,25,38,0.95)_0%,rgba(7,31,43,0.92)_35%,rgba(2,19,32,0.95)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_14%,rgba(0,195,255,0.12),transparent_36%),radial-gradient(circle_at_84%_80%,rgba(31,124,158,0.1),transparent_38%)]" />
+      <main className="tpl-main">
+        <TemplateLibraryHeader
+          title="Тир-листы"
+          description="Коллекция тир-листов сообщества BookStrata."
+        />
 
-        <div className="relative px-4 pb-12 pt-8 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <TemplateLibraryHeader
-              title="Тир-листы"
-              description="Коллекция тир-листов сообщества BookStrata."
-              onBackClick={handleGoBack}
+        {/* Mobile section tabs */}
+        <div className="tpl-mobile-tabs">
+          {([
+            { key: 'private' as const },
+            { key: 'public' as const },
+            { key: 'new' as const },
+            { key: 'favorites' as const },
+          ]).map(({ key }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleSectionChange(key)}
+              className={`tpl-mobile-tab ${activeSection === key ? 'tpl-mobile-tab--active' : ''}`}
+            >
+              {SECTION_LABELS_MOBILE[key]}
+            </button>
+          ))}
+        </div>
+
+        <div className="tpl-layout">
+          <div className="hidden lg:block">
+            <TemplateLibrarySidebar
+              activeSection={activeSection}
+              activeCategory="all"
+              categories={[]}
+              onSectionChange={handleSectionChange}
+              onCategoryChange={() => {}}
+              onCreateClick={openCreateModal}
             />
+          </div>
 
-            {/* Mobile section tabs */}
-            <div className="flex lg:hidden items-center gap-1 mb-4 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {([
-                { key: 'private' as const, label: 'Мои' },
-                { key: 'public' as const, label: 'Публичные' },
-                { key: 'favorites' as const, label: 'Избранное' },
-              ]).map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleSectionChange(key)}
-                  className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                    activeSection === key
-                      ? 'bg-cyan-500/25 text-cyan-100'
-                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-              <div className="hidden lg:block">
-                <TemplateLibrarySidebar
-                  activeSection={activeSection}
-                  activeCategory="all"
-                  categories={[]}
-                  onSectionChange={handleSectionChange}
-                  onCategoryChange={() => {}}
-                />
+          <div className="flex-1 min-w-0">
+            {activeSection === "public" && (
+              <div className="tpl-section-header">
+                <h2 className="tpl-heading-section">Популярные</h2>
+                <span className="tpl-section-header__right">Избранное сообщества</span>
               </div>
+            )}
 
-              <div className="w-full min-w-0">
-                <TemplateLibraryToolbar
-                  activeSection={activeSection}
-                  viewMode="compact"
-                  onViewModeChange={() => {}}
-                  onCreateClick={openCreateModal}
-                />
-
-                {renderSectionContent()}
-              </div>
-            </div>
+            {renderSectionContent()}
           </div>
         </div>
-      </section>
+      </main>
 
       {/* Modals */}
       <CreateTierListModal

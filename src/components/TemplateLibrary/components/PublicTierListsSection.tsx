@@ -1,10 +1,8 @@
 
 import { Spinner } from "@/components/Spinner";
 import PublicTierListCards from "../PublicTierListCards";
-import { Pagination } from "@/ui/Pagination";
 import { EmptyState } from "./EmptyState";
 import type { TierListShort } from "@/lib/tierListApi";
-import "@/components/DashboardHeroSection/components/RecentPublicTierLists.css";
 
 interface PublicTierListsSectionProps {
   tierLists: TierListShort[];
@@ -12,7 +10,6 @@ interface PublicTierListsSectionProps {
   isLoading: boolean;
   isFetching: boolean;
   currentPage: number;
-  totalPages: number;
   pageNumbers: (number | -1)[];
   hasNextPage: boolean;
   onPageChange: (page: number) => void;
@@ -22,16 +19,14 @@ export function PublicTierListsSection({
   tierLists,
   likedIdsSet,
   isLoading,
-  isFetching,
   currentPage,
-  totalPages,
   pageNumbers,
   hasNextPage,
   onPageChange,
 }: PublicTierListsSectionProps) {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12 text-gray-300">
+      <div className="tpl-loading">
         <Spinner size="md" className="mr-2" />
         Загрузка...
       </div>
@@ -44,23 +39,48 @@ export function PublicTierListsSection({
 
   return (
     <>
-      <section className="recent-tier-lists">
-        <div className="recent-tier-lists__container" style={{ padding: 0 }}>
-          <PublicTierListCards
-            tierLists={tierLists}
-            likedIdsSet={likedIdsSet}
-          />
-        </div>
-      </section>
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={onPageChange}
-        isFetching={isFetching}
-        pageNumbers={pageNumbers}
-        hasNextPage={hasNextPage}
+      <PublicTierListCards
+        tierLists={tierLists}
+        likedIdsSet={likedIdsSet}
       />
+
+      {/* Pagination */}
+      <nav className="tpl-pagination" aria-label="Пагинация">
+        <button
+          className="tpl-pagination__arrow"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          type="button"
+        >
+          ← Назад
+        </button>
+
+        <div className="tpl-pagination__pages">
+          {pageNumbers.map((page, idx) =>
+            page === -1 ? (
+              <span key={`dots-${idx}`} className="tpl-pagination__dots">...</span>
+            ) : (
+              <button
+                key={page}
+                className={`tpl-pagination__page ${currentPage === page ? 'tpl-pagination__page--active' : ''}`}
+                onClick={() => onPageChange(page)}
+                type="button"
+              >
+                {page}
+              </button>
+            )
+          )}
+        </div>
+
+        <button
+          className="tpl-pagination__arrow"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={!hasNextPage}
+          type="button"
+        >
+          Вперед →
+        </button>
+      </nav>
     </>
   );
 }

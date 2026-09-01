@@ -1,4 +1,4 @@
-export type SectionKey = 'private' | 'public' | 'favorites';
+export type SectionKey = 'private' | 'public' | 'favorites' | 'new';
 
 export interface TemplateLibraryState {
   activeSection: SectionKey;

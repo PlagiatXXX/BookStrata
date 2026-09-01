@@ -6,12 +6,13 @@ export const TemplateLibraryHeader = memo(({
   description,
 }: TemplateLibraryHeaderProps) => {
   return (
-    <div className="mb-8">
-      <h1 className="mb-3 font-display text-2xl font-bold tracking-tight text-[#f3efe6] md:text-4xl lg:text-5xl">
+    <div className="text-center mb-12">
+      <h1 className="tpl-heading-xl mb-6">
         {title}
       </h1>
-      <p className="text-base text-[#b8b1a3]">{description}</p>
-      <div className="mt-4 h-1 w-24 bg-linear-to-r from-cyan-400 to-transparent rounded-full" />
+      <p className="tpl-body max-w-2xl mx-auto font-light leading-relaxed">
+        {description}
+      </p>
     </div>
   );
 });

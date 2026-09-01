@@ -14,6 +14,7 @@ export interface TemplateLibrarySidebarProps {
   categories: string[];
   onSectionChange: (section: SectionKey) => void;
   onCategoryChange: (category: string) => void;
+  onCreateClick?: () => void;
 }
 
 // === Toolbar Props ===

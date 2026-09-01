@@ -1,10 +1,9 @@
 import { memo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, BookOpen } from "lucide-react";
+import { Heart } from "lucide-react";
 import type { TierListShort } from "@/lib/tierListApi";
 import { booksCountText } from "@/lib/plural";
 import { proxyImageUrl } from "@/utils/imageProxy";
-import "@/components/DashboardHeroSection/components/RecentPublicTierLists.css";
 
 interface PublicTierListCardsProps {
   tierLists: TierListShort[];
@@ -12,12 +11,12 @@ interface PublicTierListCardsProps {
 }
 
 const GRADIENTS = [
-  "linear-gradient(135deg, #06bcf9 0%, #08a8e0 100%)",
-  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+  "linear-gradient(135deg, #d4af37 0%, #b8860b 100%)",
+  "linear-gradient(135deg, #d4af37 0%, #8b6914 100%)",
+  "linear-gradient(135deg, #c9a227 0%, #a67c00 100%)",
+  "linear-gradient(135deg, #e6c35c 0%, #d4af37 100%)",
+  "linear-gradient(135deg, #b8860b 0%, #8b6914 100%)",
+  "linear-gradient(135deg, #d4af37 0%, #996515 100%)",
 ];
 
 function hashGradient(title: string): string {
@@ -35,61 +34,67 @@ const PublicTierListCards = memo(function PublicTierListCards({
   const navigate = useNavigate();
 
   return (
-    <div className="recent-tier-lists__grid">
+    <div className="tpl-card-grid">
       {tierLists.map((tierList) => {
         const isLiked = likedIdsSet.has(tierList.id);
         const gradient = hashGradient(tierList.title);
         return (
-          <button
+          <article
             key={tierList.id}
-            className="recent-tier-card"
+            className="tpl-card group"
             onClick={() =>
               navigate(`/tier-lists/${tierList.slug || tierList.id}`)
             }
-            type="button"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                navigate(`/tier-lists/${tierList.slug || tierList.id}`);
+              }
+            }}
           >
-            {tierList.coverImageUrl ? (
-              <div
-                className="recent-tier-card__bg recent-tier-card__bg--cover"
-                style={{
-                  backgroundImage: `url(${proxyImageUrl(tierList.coverImageUrl)})`,
-                }}
-              />
-            ) : (
-              <div
-                className="recent-tier-card__bg"
-                style={{ background: gradient }}
-              >
-                <span className="recent-tier-card__initial">
-                  {tierList.title.charAt(0).toUpperCase()}
-                </span>
+            <div className="tpl-card__image-wrap">
+              {tierList.coverImageUrl ? (
+                <img
+                  alt={tierList.title}
+                  className="tpl-card__image"
+                  src={proxyImageUrl(tierList.coverImageUrl)}
+                  loading="lazy"
+                />
+              ) : (
+                <div
+                  className="tpl-card__gradient"
+                  style={{ background: gradient }}
+                >
+                  <span className="tpl-card__initial">
+                    {tierList.title.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="tpl-card__meta">
+              <div className="tpl-card__info">
+                <h3 className="tpl-card__title">{tierList.title}</h3>
+                <p className="tpl-card__author">
+                  {tierList.authorName ||
+                    tierList.user?.username ||
+                    "Неизвестный автор"}
+                </p>
               </div>
-            )}
-            <div className="recent-tier-card__overlay" />
-            <div className="recent-tier-card__content">
-              <p className="recent-tier-card__title">{tierList.title}</p>
-              <p className="recent-tier-card__author">
-                {tierList.authorName ||
-                  tierList.user?.username ||
-                  "Неизвестный автор"}
-              </p>
-              <div className="recent-tier-card__stats">
-                <span className="recent-tier-card__stat">
+              <div className="tpl-card__stats">
+                <span className="tpl-card__likes">
                   <Heart
-                    size={12}
-                    className={
-                      isLiked ? "fill-pink-500 text-pink-500" : undefined
-                    }
+                    size={14}
+                    className={isLiked ? "fill-current" : ""}
                   />
                   {tierList.likesCount || 0}
                 </span>
-                <span className="recent-tier-card__stat">
-                  <BookOpen size={12} />
+                <span className="tpl-card__count">
                   {booksCountText(tierList.booksCount || 0)}
                 </span>
               </div>
             </div>
-          </button>
+          </article>
         );
       })}
     </div>

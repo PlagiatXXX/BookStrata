@@ -11,6 +11,7 @@ export const SECTION_LABELS: Record<string, string> = {
   private: 'Личные тир-листы',
   public: 'Популярные',
   favorites: 'Избранное',
+  new: 'Новинки',
 };
 
 // === Section descriptions ===
@@ -18,6 +19,7 @@ export const SECTION_DESCRIPTIONS: Record<string, string> = {
   private: 'Ваши персональные тир-листы с книгами.',
   public: 'Рейтинги сообщества, отсортированные по популярности.',
   favorites: 'Тир-листы, которые вы лайкнули.',
+  new: 'Тир-листы, созданные за последнюю неделю.',
 };
 
 // === View mode labels ===

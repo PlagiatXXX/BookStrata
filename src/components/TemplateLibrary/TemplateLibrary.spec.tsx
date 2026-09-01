@@ -162,8 +162,8 @@ describe("TemplateLibrary", () => {
   it("должен переключаться на публичные тир-листы", async () => {
     render(<TemplateLibrary />, { wrapper: createWrapper() });
 
-    const publicBtn = screen.getByText("Популярные");
-    fireEvent.click(publicBtn);
+    const publicBtns = screen.getAllByText("Популярные");
+    fireEvent.click(publicBtns[0]);
 
     await waitFor(() => {
       expect(screen.getByText("Public Tier List 1")).toBeInTheDocument();
