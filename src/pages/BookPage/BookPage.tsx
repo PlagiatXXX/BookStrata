@@ -17,6 +17,7 @@ import { Footer } from "@/ui/Footer";
 import { MobileBottomNav } from "@/ui/MobileBottomNav";
 import { Spinner } from "@/components/Spinner";
 import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage";
+import { sileo } from "sileo";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useAddBookToTierList, useBook, useMyTierLists } from "@/hooks/useBook";
 import { useBookshelf } from "@/hooks/useBookshelf";
@@ -28,6 +29,7 @@ import { BookContextChain } from "./BookContextChain";
 import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
 import { BookSignUpCta } from "./BookSignUpCta";
+import { getAffiliateLinks } from "@/lib/affiliateLinks";
 import "./BookPage.css";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
@@ -127,6 +129,7 @@ export default function BookPage() {
   const isWantToRead = Boolean(book && shelf[book.id] === "want_to_read");
 
   const handleWantToRead = () => {
+    const isAlreadyWantToRead = shelf[book.id] === "want_to_read";
     // Полка доступна и гостям: локальная полка импортируется в аккаунт при входе
     toggleStatus(String(book.id), "want_to_read", {
       title: book.title,
@@ -135,6 +138,13 @@ export default function BookPage() {
       genre: book.genre ?? undefined,
       description: book.description ?? undefined,
     });
+    if (!isAlreadyWantToRead) {
+      sileo.success({
+        title: "«Хочу прочитать»",
+        description: `«${book.title}» добавлена на полку. Вы можете продолжить подбирать книги.`,
+        duration: 5000,
+      });
+    }
   };
 
   const handleAddToTierList = (tierListId: string) => {
@@ -187,12 +197,16 @@ export default function BookPage() {
         <header className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center gap-8 md:gap-12 pt-24 pb-16 overflow-x-clip">
           {/* Cinematic backdrop: размытая обложка + градиент */}
           {book.coverImageUrl && (
-            <div aria-hidden className="absolute inset-0">
+            <div aria-hidden className="absolute inset-0 overflow-hidden">
               <div
-                className="absolute inset-0 bg-cover bg-center w-full h-full filter blur-xl opacity-40 scale-110"
-                style={{ backgroundImage: `url(${book.coverImageUrl})` }}
+                className="absolute inset-0 bg-cover bg-center w-full h-full scale-105"
+                style={{
+                  backgroundImage: `url(${book.coverImageUrl})`,
+                  filter: "blur(16px) saturate(1.4)",
+                  opacity: 0.55,
+                }}
               />
-              <div className="absolute inset-0 bg-linear-to-b from-(--bp-background)/30 via-(--bp-background)/80 to-(--bp-background)" />
+              <div className="absolute inset-0 bg-linear-to-b from-[#101418]/70 via-[#101418]/10 to-[#101418]" />
             </div>
           )}
 
@@ -394,6 +408,11 @@ export default function BookPage() {
                    )}
                </div>
 
+               {/* Подсказка о механике сайта — невзрачная, под кнопками */}
+               <p className="mt-3 text-xs text-white/30 leading-relaxed max-w-sm">
+                 Сохраняйте книги и создавайте тир-листы из прочитанных
+               </p>
+
                {/* Scroll indicator: «Листай дальше» — сразу под кнопками действий */}
               <motion.div
                 initial={{ opacity: 0 }}
@@ -429,29 +448,28 @@ export default function BookPage() {
                 {/* Оценить книгу: слайдер 0–10, одна оценка на пользователя */}
                 <BookRatingPanel bookId={book.id} defaultRating={rating} />
 
-                {/* «Где читать» — две кнопки-пустышки (без рекламы; affiliate — этап 3 Roadmap) */}
+                {/* «Где читать» — аффилиат-ссылки на Читай Город и ЛитРес */}
                 <div>
                   <h3 className="bp-label-caps text-white/80 tracking-widest mb-4">Где читать</h3>
                   <div className="flex flex-col gap-3">
-                    <button
-                      type="button"
-                      className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg"
-                    >
-                      <div className="w-10 h-10 bg-black/40 rounded-md flex items-center justify-center border border-white/5">
-                        <span className="ms-icon text-white text-base">book</span>
-                      </div>
-                      <span className="text-[15px] text-white font-medium">BookStrata</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg"
-                    >
-                      <div className="w-10 h-10 bg-black/40 rounded-md flex items-center justify-center border border-white/5">
-                        <span className="ms-icon text-white text-base">headphones</span>
-                      </div>
-                      <span className="text-[15px] text-white font-medium">BookStrata</span>
-                    </button>
+                    {getAffiliateLinks(book).map((link) => (
+                      <a
+                        key={link.name}
+                        href={link.stub ? undefined : link.url}
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                        onClick={link.stub ? (e) => e.preventDefault() : undefined}
+                        className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group"
+                      >
+                        <span className="text-[15px] text-white font-medium ml-2">{link.name}</span>
+                        <span className="ms-icon text-white/40 text-sm ml-auto group-hover:text-white/70 transition-colors">open_in_new</span>
+                      </a>
+                    ))}
                   </div>
+                  {/* Маркировка рекламы ФЗ-38 */}
+                  <p className="text-[10px] text-white/25 mt-2 leading-tight">
+                    Реклама. ООО «ЛИТРЕС», ИНН 7719571260, erid: 2VfnxyNkZrY
+                  </p>
                 </div>
               </div>
             </div>
@@ -501,14 +519,19 @@ export default function BookPage() {
             <section className="relative pt-4 pb-12 border-t border-primary/20">
               <div className="max-w-275 mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Встречается в тир-листах</h2>
-                <div className="flex flex-wrap gap-3">
-{tierLists.map((tl) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {tierLists.map((tl) => (
                     <Link
                       key={tl.id}
                       to={`/tier-lists/${tl.slug || tl.id}`}
-                      className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
+                      className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-[var(--bp-primary)]/30 bg-gradient-to-r from-[var(--bp-primary)]/5 to-transparent hover:from-[var(--bp-primary)]/10 transition-all duration-300"
                     >
-                      {tl.title}
+                      <span className="ms-icon text-[var(--bp-primary)] text-xl opacity-70 group-hover:opacity-100 transition-opacity">
+                        format_list_numbered
+                      </span>
+                      <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
+                        {tl.title}
+                      </span>
                     </Link>
                   ))}
                 </div>
@@ -521,14 +544,19 @@ export default function BookPage() {
             <section className="relative pt-4 pb-12 border-t border-primary/20">
               <div className="max-w-275 mx-auto px-4 md:px-5">
                 <h2 className="bp-display text-white text-xl md:text-2xl mb-6">В подборках</h2>
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {collections.map((c) => (
                     <Link
                       key={c.id}
                       to={`/collections/${c.slug}`}
-                      className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
+                      className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-[var(--bp-tertiary)]/30 bg-gradient-to-r from-[var(--bp-tertiary)]/5 to-transparent hover:from-[var(--bp-tertiary)]/10 transition-all duration-300"
                     >
-                      {c.title}
+                      <span className="ms-icon text-[var(--bp-tertiary)] text-xl opacity-70 group-hover:opacity-100 transition-opacity">
+                        collections_bookmark
+                      </span>
+                      <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
+                        {c.title}
+                      </span>
                     </Link>
                   ))}
                 </div>
