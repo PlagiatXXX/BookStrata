@@ -1,19 +1,20 @@
 # Backend Docker / Redis Setup
 
-Этот проект уже настроен на работу с Redis для кеширования. На macOS дополнительная настройка Docker обычно не требуется — достаточно запустить сервис Redis из папки `backend`.
+Этот проект уже настроен на работу с PostgreSQL и Redis через Docker Compose. На macOS дополнительная настройка Docker обычно не требуется — достаточно запустить сервисы из папки `backend`.
 
 ## Что уже сделано
 
-- В `backend/docker-compose.yml` добавлен сервис `redis`.
+- В `backend/docker-compose.yml` добавлены сервисы `postgres` и `redis`.
 - В `backend/.env` уже указано:
 
 ```env
+DATABASE_URL="postgresql://bookstrata:bookstrata_pass@localhost:5432/bookstrata"
 REDIS_URL=redis://localhost:6379
 ```
 
 - В `backend/src/lib/redis.ts` приложение использует `ioredis` и подключается по `REDIS_URL`.
 
-## Запуск Redis
+## Запуск
 
 Открой терминал и перейди в папку backend:
 
@@ -21,13 +22,23 @@ REDIS_URL=redis://localhost:6379
 cd /Users/fedor/Bookstrata/BookStrata/backend
 ```
 
-Запусти Redis через Docker Compose:
+Запусти сервисы через Docker Compose:
 
 ```bash
 docker compose up -d
 ```
 
-Сервис будет доступен на `localhost:6379`.
+- PostgreSQL будет доступен на `localhost:5432`
+- Redis будет доступен на `localhost:6379`
+
+## Инициализация базы данных
+
+После запуска PostgreSQL нужно применить миграции и засеять данные:
+
+```bash
+npx prisma migrate dev
+npx prisma db seed
+```
 
 ## Проверка
 
@@ -43,7 +54,7 @@ docker compose up -d
 npm run dev
 ```
 
-## Остановка Redis
+## Остановка
 
 ```bash
 docker compose down
@@ -51,15 +62,12 @@ docker compose down
 
 ## Альтернатива без docker-compose
 
-Если хочешь просто запустить контейнер Redis вручную:
+Если хочешь просто запустить контейнеры вручную:
 
 ```bash
+docker run -d --name bookstrata-postgres -p 5432:5432 -e POSTGRES_USER=bookstrata -e POSTGRES_PASSWORD=bookstrata_pass -e POSTGRES_DB=bookstrata postgres:16-alpine
 docker run -d --name bookstrata-redis -p 6379:6379 redis:7
 ```
-
-## Права доступа / настройки
-
-На macOS с Docker Desktop специальных дополнительных настроек не требуется. Если порт `6379` занят, можно изменить публикацию порта в `docker-compose.yml` или в команде `docker run`.
 
 ## Если Redis недоступен
 

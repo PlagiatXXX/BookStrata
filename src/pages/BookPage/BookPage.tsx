@@ -453,23 +453,25 @@ export default function BookPage() {
                   <h3 className="bp-label-caps text-white/80 tracking-widest mb-4">Где читать</h3>
                   <div className="flex flex-col gap-3">
                     {getAffiliateLinks(book).map((link) => (
-                      <a
-                        key={link.name}
-                        href={link.stub ? undefined : link.url}
-                        target="_blank"
-                        rel="noopener noreferrer nofollow"
-                        onClick={link.stub ? (e) => e.preventDefault() : undefined}
-                        className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group"
-                      >
-                        <span className="text-[15px] text-white font-medium ml-2">{link.name}</span>
-                        <span className="ms-icon text-white/40 text-sm ml-auto group-hover:text-white/70 transition-colors">open_in_new</span>
-                      </a>
+                      <div key={link.name}>
+                        <a
+                          href={link.stub ? undefined : link.url}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          onClick={link.stub ? (e) => e.preventDefault() : undefined}
+                          className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group"
+                        >
+                          <span className="text-[15px] text-white font-medium ml-2">{link.name}</span>
+                          <span className="ms-icon text-white/40 text-sm ml-auto group-hover:text-white/70 transition-colors">open_in_new</span>
+                        </a>
+                        {link.disclaimer && (
+                          <p className="text-[9px] text-white/20 mt-1 leading-tight px-1">
+                            {link.disclaimer}
+                          </p>
+                        )}
+                      </div>
                     ))}
                   </div>
-                  {/* Маркировка рекламы ФЗ-38 */}
-                  <p className="text-[10px] text-white/25 mt-2 leading-tight">
-                    Реклама. ООО «ЛИТРЕС», ИНН 7719571260, erid: 2VfnxyNkZrY
-                  </p>
                 </div>
               </div>
             </div>

@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-1570%2B_passed-brightgreen)](./README.md)
+[![Tests](https://img.shields.io/badge/Tests-1620%2B_passed-brightgreen)](./README.md)
 
 ---
 
@@ -80,7 +80,7 @@
 ### Backend
 - **Fastify 5.7** (высокопроизводительный Node.js фреймворк).
 - **Prisma ORM** (типобезопасная работа с PostgreSQL).
-- **Zod** (валидация схем на уровне API).
+- **Zod 4** (валидация схем на уровне API).
 - **JWT + bcryptjs** (безопасная аутентификация и хранение паролей).
 - **Sharp** (обработка изображений на сервере).
 - **AI-провайдеры** (OpenRouter / кастомный OpenAI-совместимый, failover + стриминг).
@@ -149,7 +149,7 @@ cd backend && npm run build  # Сборка бэкенда
 
 ## 🧪 Тестирование
 
-Проект покрыт **1570+ тестами** (624 фронтенд + 743 бэкенд unit + 174 интеграционных + 30 e2e) — Vitest + React Testing Library + Playwright (e2e).
+Проект покрыт **1620+ тестами** (747 фронтенд + 874 бэкенд unit + e2e) — Vitest + React Testing Library + Playwright (e2e).
 
 ```bash
 # Запуск всех тестов
@@ -161,16 +161,9 @@ cd backend && npm test  # Бэкенд unit
 cd backend && npm run test:integration  # Интеграционные (нужна БД)
 npm run test:e2e      # Playwright e2e
 ```
-*Статус: **1570+/1570+** тестов проходят успешно ✅*
+*Статус: **1620+/1620+** тестов проходят успешно ✅*
 
 ---
-
-## 🤖 AI-библиотекарь
-
-- **AI-рекомендации** — Персональные подборки книг на основе ваших тир-листов.
-- **Failover** — Автоматическое переключение между провайдерами (OpenRouter → кастомный OpenAI-совместимый) при недоступности.
-- **Кэширование** — In-memory кэш для быстрых повторных запросов.
-- **Профиль вкусов** — Анализ лайков и популярных тир-листов для точных рекомендаций.
 
 ## 💛 Поддержка проекта
 
@@ -198,6 +191,6 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 17 августа 2026 г.
-**Статус:** Страницы книг, рейтинги, «Что почитать», полка, OAuth (VK/Google), коллекции, знаменитости, блог, FAQ-страница, AI-библиотекарь, LiveLib импорт, NSFW Detection (1570+ тестов)
+**Последнее обновление:** 2 сентября 2026 г.
+**Статус:** Страницы книг, рейтинги, «Что почитать», полка, OAuth (VK/Google), коллекции, знаменитости, блог, FAQ-страница, AI-библиотекарь, LiveLib импорт, NSFW Detection, аффилиат-ссылки (Читай-город, ЛитРес) (1620+ тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)
