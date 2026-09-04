@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { sileo } from "sileo";
 import { ListPlus, Plus, X } from "lucide-react";
@@ -10,6 +10,7 @@ import {
   createTierList,
   fetchAllMyTierLists,
 } from "@/lib/tierListApi";
+import { apiRemoveShelfBooks } from "@/lib/shelfApi";
 import type { Book } from "@/types";
 
 interface CreateTierListModalProps {
@@ -44,9 +45,22 @@ export function CreateTierListModal({
   defaultTitle,
 }: CreateTierListModalProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>("new");
   const [title, setTitle] = useState("");
   const [selectedId, setSelectedId] = useState("");
+
+  /** Книги с полки: после добавления в тир-лист — убрать с полки */
+  const shelfBookIds = useMemo(
+    () => books.map((b) => b.id).filter(Boolean),
+    [books],
+  );
+
+  const removeShelfAfterAdd = async () => {
+    if (shelfBookIds.length === 0) return;
+    await apiRemoveShelfBooks(shelfBookIds);
+    await queryClient.invalidateQueries({ queryKey: ["shelf"] });
+  };
 
   // Все свои тир-листы — для выбора «в существующий»
   const { data: myTierLists = [], isLoading: isListsLoading } = useQuery({
@@ -63,6 +77,7 @@ export function CreateTierListModal({
     mutationFn: async () => {
       const tierList = await createTierList(title.trim() || defaultTitle);
       await addBooksToTierList(tierList.id, payload);
+      await removeShelfAfterAdd();
       return tierList;
     },
     onSuccess: (tierList) => {
@@ -79,7 +94,10 @@ export function CreateTierListModal({
 
   // Добавить книги в существующий тир-лист
   const addMutation = useMutation({
-    mutationFn: (tierListId: string) => addBooksToTierList(tierListId, payload),
+    mutationFn: async (tierListId: string) => {
+      await addBooksToTierList(tierListId, payload);
+      await removeShelfAfterAdd();
+    },
     onSuccess: (_result, tierListId) => {
       const target = myTierLists.find((tl) => tl.id === tierListId);
       sileo.success({

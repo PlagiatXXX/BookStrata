@@ -43,7 +43,7 @@ export async function getTrendingBooks(limit = 8) {
     SELECT
       b.slug,
       COUNT(DISTINCT COALESCE(ae."userId"::text, ae.ip)) AS unique_views
-    FROM "AnalyticsEvent" ae
+    FROM "analytics_events" ae
     JOIN "Book" b ON position('/books/' || b.slug IN ae.url) > 0
                     OR position('/books/' || b.slug || '/' IN ae.url) > 0
                     OR ae.url = '/books/' || b.slug
