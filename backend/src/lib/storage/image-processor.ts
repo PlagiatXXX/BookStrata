@@ -24,7 +24,7 @@ export async function prepareImage(buffer: Buffer): Promise<PreparedImage> {
   try {
     const webp = await sharp(buffer)
       .resize(MAX_IMAGE_WIDTH, undefined, { withoutEnlargement: true })
-      .webp({ quality: 85 })
+      .webp({ quality: 80 })
       .toBuffer()
     return { buffer: webp, contentType: 'image/webp' }
   } catch {
@@ -42,7 +42,7 @@ export async function prepareOgImage(buffer: Buffer): Promise<PreparedImage> {
   try {
     const webp = await sharp(buffer)
       .resize(OG_WIDTH, OG_HEIGHT, { fit: 'cover', position: 'attention' })
-      .webp({ quality: 85 })
+      .webp({ quality: 80 })
       .toBuffer()
     return { buffer: webp, contentType: 'image/webp' }
   } catch {
