@@ -3,7 +3,10 @@ import request from "supertest";
 import Fastify from "fastify";
 
 vi.mock("../../lib/prisma.js", () => ({
-  prisma: { book: { findMany: vi.fn() } },
+  prisma: {
+    book: { findMany: vi.fn() },
+    $queryRaw: vi.fn().mockResolvedValue([]),
+  },
 }));
 vi.mock("../auth/auth.middleware.js", () => ({
   authMiddleware: vi.fn((_req: any, _reply: any, done: any) => done()),

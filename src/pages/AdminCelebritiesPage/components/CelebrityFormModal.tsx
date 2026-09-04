@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useEffect } from "react";
 import { X, Upload } from "lucide-react";
 import { CuratedCollectionEditor } from "@/pages/AdminCollectionsPage/components/CuratedCollectionEditor";
 import type { CuratedTier, CuratedBook } from "@/pages/AdminCollectionsPage/components/types";
@@ -48,7 +48,6 @@ export function CelebrityFormModal({
   onSubmit,
   onClose,
 }: CelebrityFormModalProps) {
-  const modalRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape
   useEffect(() => {
@@ -59,16 +58,12 @@ export function CelebrityFormModal({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  // Close on backdrop click
-  const handleBackdrop = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === modalRef.current) onClose();
-    },
-    [onClose],
-  );
+  // Закрытие по клику на оверлей отключено: случайный клик вне модалки
+  // не должен терять заполненные данные формы.
+  // Закрытие — только кнопка × или Escape.
 
   return (
-    <div className="celebrity-modal-overlay" ref={modalRef} onClick={handleBackdrop}>
+    <div className="celebrity-modal-overlay">
       <div className="celebrity-modal">
         <div className="celebrity-modal-header">
           <h2>{editingCelebrity ? "Редактировать знаменитость" : "Создать знаменитость"}</h2>
