@@ -23,6 +23,7 @@ export default function CelebrityPage() {
   const navigate = useNavigate();
   const [viewedBook, setViewedBook] = useState<Book | null>(null);
   const [isAiOpen, setAiOpen] = useState(false);
+  const [bioExpanded, setBioExpanded] = useState(false);
   const handleAiOpen = useCallback(() => setAiOpen(true), []);
   const handleAiClose = useCallback(() => setAiOpen(false), []);
 
@@ -172,6 +173,9 @@ export default function CelebrityPage() {
                   src={proxyImageUrl(celebrity.photoUrl)}
                   alt={celebrity.name}
                   className="celebrity-hero-img"
+                  style={{
+                    objectPosition: `${celebrity.focalX ?? 50}% ${celebrity.focalY ?? 50}%`,
+                  }}
                 />
               ) : (
                 <div className="celebrity-hero-placeholder">
@@ -206,19 +210,50 @@ export default function CelebrityPage() {
                   Спросить у Букстража
                 </button>
               </div>
+
+              {/* Биография — внутри hero-блока */}
+              {celebrity.biography && (
+                <div className="celebrity-hero-bio">
+                  <div className="celebrity-hero-bio-header">
+                    <Quote size={14} />
+                    <span>Краткая информация</span>
+                  </div>
+                  <div className="celebrity-hero-bio-wrapper">
+                    <p
+                      className={`celebrity-hero-bio-text ${bioExpanded ? "expanded" : ""}`}
+                    >
+                      {celebrity.biography}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        // Сохраняем позицию скролла, чтобы экран не прыгал
+                        const btn = e.currentTarget as HTMLElement;
+                        const rect = btn.getBoundingClientRect();
+                        const scrollY = window.scrollY;
+                        const offsetFromTop = rect.top + scrollY;
+
+                        setBioExpanded((v) => !v);
+
+                        // Восстанавливаем позицию после перерисовки
+                        requestAnimationFrame(() => {
+                          const newRect = btn.getBoundingClientRect();
+                          const newOffsetFromTop = newRect.top + window.scrollY;
+                          window.scrollTo({
+                            top: scrollY + (newOffsetFromTop - offsetFromTop),
+                            behavior: "instant",
+                          });
+                        });
+                      }}
+                      className="celebrity-hero-bio-toggle"
+                    >
+                      {bioExpanded ? "Свернуть" : "Раскрыть"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Биография */}
-          {celebrity.biography && (
-            <div className="celebrity-bio">
-              <div className="celebrity-bio-header">
-                <Quote size={16} />
-                <span>О {celebrity.name}</span>
-              </div>
-              <p className="celebrity-bio-text">{celebrity.biography}</p>
-            </div>
-          )}
 
           {/* Тир-лист */}
           {celebrity.tiers && celebrity.tierOrder && celebrity.books && (

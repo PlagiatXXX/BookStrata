@@ -1,8 +1,9 @@
-/* Hero секция */
+/* Hero секция — двухколоночный грид */
 .celebrity-hero {
-  display: flex;
+  display: grid;
+  grid-template-columns: 200px 1fr;
   gap: 2rem;
-  align-items: flex-start;
+  align-items: start;
   margin-bottom: 2rem;
   padding: 2rem;
   background: var(--bg-0);
@@ -23,6 +24,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 30%;
 }
 
 .celebrity-hero-placeholder {
@@ -83,6 +85,66 @@
   flex-wrap: wrap;
 }
 
+/* Биография — внутри hero-блока, под кнопками */
+.celebrity-hero-bio {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.celebrity-hero-bio-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-2);
+  margin-bottom: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.celebrity-hero-bio-wrapper {
+  position: relative;
+}
+
+.celebrity-hero-bio-text {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--ink-1);
+  margin: 0;
+  /* Ограничиваем высоту, если текст очень длинный */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.celebrity-hero-bio-text.expanded {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.celebrity-hero-bio-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent-main);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.celebrity-hero-bio-toggle:hover {
+  opacity: 0.8;
+}
+
 .celebrity-hero-ai-btn {
   display: inline-flex;
   align-items: center;
@@ -102,35 +164,6 @@
   background: rgba(249, 115, 22, 0.2);
 }
 
-/* Биография */
-.celebrity-bio {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: var(--bg-0);
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  border-left: 3px solid var(--accent-main);
-}
-
-.celebrity-bio-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--ink-1);
-  margin-bottom: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.celebrity-bio-text {
-  font-size: 1rem;
-  line-height: 1.7;
-  color: var(--ink-1);
-  margin: 0;
-}
-
 /* Заголовок секции */
 .celebrity-section-title {
   font-size: 1.5rem;
@@ -147,8 +180,8 @@
 
 @media (max-width: 640px) {
   .celebrity-hero {
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: 1fr;
+    justify-items: center;
     text-align: center;
     padding: 1.5rem;
   }
@@ -156,6 +189,10 @@
   .celebrity-hero-photo {
     width: 120px;
     height: 120px;
+  }
+
+  .celebrity-hero-tags {
+    justify-content: center;
   }
 
   .celebrity-hero-name {
@@ -166,11 +203,16 @@
     justify-content: center;
   }
 
-  .celebrity-bio {
-    text-align: center;
+  .celebrity-hero-bio-header {
+    justify-content: center;
   }
 
-  .celebrity-bio-header {
+  .celebrity-hero-bio-text {
+    text-align: left;
+  }
+
+  .celebrity-hero-bio-toggle {
+    width: 100%;
     justify-content: center;
   }
 }
