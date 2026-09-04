@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect, memo } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect, memo, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -10,18 +10,26 @@ import { getCelebrities, CELEBRITY_CATEGORIES } from "@/lib/celebritiesApi";
 import type { CelebrityItem } from "@/lib/celebritiesApi";
 import "./CelebritiesPage.css";
 
-/** Паттерн расположения карточек в асимметричном гриде */
-type CardSize = "featured" | "standard" | "wide";
+/** Пастельная палитра фонов карточек */
+const CARD_BG_PALETTE = [
+  "#e8d5c4", // тёплый беж
+  "#d5c9e8", // приглушённая лаванда
+  "#c9dbe8", // пыльно-голубой
+  "#d8e8d0", // шалфей
+  "#e8d0d8", // пыльная роза
+  "#e5e0c9", // олива пастель
+  "#cfe0dd", // мята приглушённая
+  "#e0d5e8", // сирень
+  "#d8d2c8", // серо-бежевый
+  "#ccd4e5", // сумеречный голубой
+] as const;
 
-function getCardSize(index: number, _total: number): CardSize {
-  // Паттерн: featured (0), standard (1), standard (2), wide (3), wide (4), ...
-  const pos = index % 5;
-  if (pos === 0) return "featured";
-  if (pos === 1 || pos === 2) return "standard";
-  return "wide"; // pos === 3 || pos === 4
+/** Стабильный фон карточки по id знаменитости */
+function getCardBg(id: number): string {
+  return CARD_BG_PALETTE[((id % CARD_BG_PALETTE.length) + CARD_BG_PALETTE.length) % CARD_BG_PALETTE.length];
 }
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 6;
 
 export default function CelebritiesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -80,11 +88,84 @@ export default function CelebritiesPage() {
         ]}
       />
       <DashboardLayout showSearch={false} activeItem="Знаменитости" bgVariant="dark">
-        <div className="px-6 pt-6 pb-4">
+        <div className="celebrities-breadcrumbs px-6 pt-6 pb-4">
           <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Что читают знаменитости" }]} />
         </div>
 
-        <div className="celebrities-page max-w-[1440px] mx-auto px-4 sm:px-6 md:px-20 pb-32">
+        <div className="celebrities-page max-w-360 mx-auto px-4 sm:px-6 md:px-20 pb-32">
+          {/* Декоративное свечение — фоновый SVG */}
+          <div className="glow-container">
+            <svg
+              viewBox="0 0 600 500"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="glow-svg"
+            >
+              <defs>
+                <linearGradient id="arcStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#c084fc" stopOpacity="0" />
+                  <stop offset="35%" stopColor="#ffffff" stopOpacity="0.95" />
+                  <stop offset="55%" stopColor="#a855f7" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#6b21a8" stopOpacity="0.2" />
+                </linearGradient>
+
+                <linearGradient id="topStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#a855f7" stopOpacity="0" />
+                  <stop offset="30%" stopColor="#e9d5ff" stopOpacity="0.8" />
+                  <stop offset="70%" stopColor="#a855f7" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#6b21a8" stopOpacity="0.1" />
+                </linearGradient>
+
+                <filter id="blur-wide" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="60" />
+                </filter>
+
+                <filter id="blur-tight" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="10" />
+                </filter>
+              </defs>
+
+              {/* 1. Фоновое мягкое пятно */}
+              <ellipse cx="280" cy="380" rx="140" ry="80" fill="#9333ea" opacity="0.35" filter="url(#blur-wide)" />
+
+              {/* 2. Широкий рассеянный ореол — начинается от верхней грани */}
+              <path
+                d="M 200 120 C 65 240, 160 380, 360 410 C 480 425, 560 415, 570 400"
+                stroke="#a855f7"
+                strokeWidth="16"
+                fill="none"
+                filter="url(#blur-wide)"
+                opacity="0.75"
+              />
+
+              {/* 3. Сфокусированное свечение — короче нити с обоих концов */}
+              <path
+                d="M 80 180 C 85 240, 160 380, 360 410 C 500 425, 560 415, 520 410"
+                stroke="#c084fc"
+                strokeWidth="6"
+                fill="none"
+                filter="url(#blur-tight)"
+                opacity="0.9"
+              />
+
+              {/* 4. Чёткая тонкая нить */}
+              <path
+                d="M 60 120 C 65 240, 160 380, 360 410 C 480 425, 560 415, 570 410"
+                stroke="url(#arcStroke)"
+                strokeWidth="1.5"
+                fill="none"
+              />
+
+              {/* 4. Верхняя горизонтальная окантовка */}
+              <path
+                d="M 220 90 L 560 90 Q 575 90 575 105 L 575 220"
+                stroke="url(#topStroke)"
+                strokeWidth="1.2"
+                fill="none"
+              />
+            </svg>
+          </div>
+
           {/* Hero */}
           <header className="celebrities-hero mb-12">
             <h1 className="celebrities-title">
@@ -269,11 +350,11 @@ function CelebrityGrid({ celebrities }: { celebrities: CelebrityItem[] }) {
   return (
     <>
       <div className="celebrities-grid">
-        {visibleCelebrities.map((celebrity, index) => (
+        {visibleCelebrities.map((celebrity) => (
           <CelebrityCard
             key={celebrity.id}
             celebrity={celebrity}
-            size={getCardSize(index, visibleCelebrities.length)}
+            cardBg={getCardBg(celebrity.id)}
           />
         ))}
       </div>
@@ -320,10 +401,10 @@ function getBookCountLabel(count: number): string {
 
 const CelebrityCard = memo(function CelebrityCard({
   celebrity,
-  size,
+  cardBg,
 }: {
   celebrity: CelebrityItem;
-  size: CardSize;
+  cardBg: string;
 }) {
   const bookCount = celebrity.books ? Object.keys(celebrity.books).length : 0;
   const categoryLabel = CELEBRITY_CATEGORIES[celebrity.category] || celebrity.category;
@@ -333,56 +414,42 @@ const CelebrityCard = memo(function CelebrityCard({
     <Link
       to={`/celebrities/${celebrity.slug}`}
       className="celebrity-card"
-      data-featured={size === "featured" ? "true" : undefined}
-      data-size={size === "featured" ? undefined : size}
       data-category={celebrity.category}
+      style={{ "--card-bg": cardBg } as CSSProperties}
     >
-      {/* Фото на всю карточку */}
-      <div className="celebrity-card-photo">
-        {celebrity.photoUrl ? (
-          <img
-            src={celebrity.photoUrl}
-            alt={celebrity.name}
-            className="celebrity-card-img"
-            loading="lazy"
-          />
-        ) : (
-          <div className="celebrity-card-placeholder">
-            {celebrity.name.charAt(0).toUpperCase()}
-          </div>
-        )}
-      </div>
+      {/* Наклоняемая плоскость карточки: фон + рамка.
+          Силуэт и контент внутри — наклоняются вместе с ней. */}
+      <div className="celebrity-card-inner">
+        {/* Силуэт знаменитости — вырезанное фото с прозрачным фоном.
+            При hover выходит вперёд-вправо за рамки карточки. */}
+        <div className="celebrity-card-photo">
+          {celebrity.photoUrl ? (
+            <img
+              src={celebrity.photoUrl}
+              alt={celebrity.name}
+              className="celebrity-card-img"
+              loading="lazy"
+            />
+          ) : (
+            <div className="celebrity-card-placeholder">
+              {celebrity.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
 
-      {/* Gradient overlay */}
-      <div className="celebrity-card-overlay" />
-
-      {/* Контент */}
-      <div className="celebrity-card-content">
+        {/* Бейджи в левом верхнем углу */}
         <span className="celebrity-card-category" style={{ color: categoryColor }}>
           {categoryLabel}
         </span>
 
-        {size === "featured" || size === "wide" ? (
-          <div className="celebrity-card-footer">
-            <div>
-              <h2 className="celebrity-card-name">{celebrity.name}</h2>
-            </div>
-            {bookCount > 0 && (
-              <span className="celebrity-card-badge">
-                {bookCount} {getBookCountLabel(bookCount)}
-              </span>
-            )}
-          </div>
-        ) : (
-          <>
-            <h2 className="celebrity-card-name">{celebrity.name}</h2>
-            {bookCount > 0 && (
-              <span className="celebrity-card-badge">
-                {bookCount} {getBookCountLabel(bookCount)}
-              </span>
-            )}
-          </>
-        )}
+        <span className="celebrity-card-books-badge">
+          {bookCount} {getBookCountLabel(bookCount)}
+        </span>
+
+        {/* Имя — в бейдже в левом нижнем углу */}
+        <span className="celebrity-card-name-badge">
+          {celebrity.name}
+        </span>
       </div>
     </Link>
   );

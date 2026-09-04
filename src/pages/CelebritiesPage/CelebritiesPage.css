@@ -4,6 +4,8 @@
    ═══════════════════════════════════════════════════════ */
 
 .celebrities-page {
+  position: relative;
+  overflow: hidden;
   /* Цвета Obsidian Muse */
   --muse-bg: #131317;
   --muse-surface: #1f1f24;
@@ -24,27 +26,41 @@
   --muse-font-display: "Syne", system-ui, sans-serif;
   --muse-font-body: "Hanken Grotesk", system-ui, sans-serif;
 
-  /* Фон страницы — совпадает с DashboardLayout dark */
-  background: var(--muse-bg);
+  /* Фон страницы — глубокий чёрно-фиолетовый */
+  background:
+    linear-gradient(
+      to bottom,
+      #0b0813 0%,
+      #09070f 60%,
+      #06050c 100%
+    );
   min-height: 60vh;
 }
 
-/* ── Fog background — атмосферное свечение ── */
-.celebrities-page::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
+/* ── Изогнутый неоновый луч — SVG glow ── */
+.glow-container {
+  position: absolute;
+  top: -80px;
   right: 0;
-  height: 800px;
-  background: radial-gradient(
-    ellipse at 50% 0%,
-    rgba(236, 178, 255, 0.08) 0%,
-    rgba(189, 0, 255, 0.04) 30%,
-    transparent 70%
-  );
+  width: 600px;
+  height: 500px;
   pointer-events: none;
-  z-index: 0;
+  user-select: none;
+  overflow: visible;
+  transform: translateZ(0);
+}
+
+.glow-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Хлебные крошки — фон как на странице
+   ═══════════════════════════════════════════════════════ */
+
+.celebrities-breadcrumbs {
+  background: #0b0813;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -69,7 +85,8 @@
 }
 
 .celebrities-title-accent {
-  color: var(--muse-secondary);
+  color: #a855f7;
+  text-shadow: 0 0 40px rgba(168, 85, 247, 0.35);
 }
 
 .celebrities-subtitle {
@@ -182,102 +199,142 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   Asymmetric Grid — 12-col editorial layout
+   Uniform Grid — ровная сетка одинаковых карточек
    ═══════════════════════════════════════════════════════ */
 
 .celebrities-grid {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-auto-rows: minmax(280px, auto);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 
-/* Featured — col-span-8 row-span-2 */
-.celebrity-card[data-featured="true"] {
-  grid-column: span 8;
-  grid-row: span 2;
+/* z-index по колонкам: левая карточка всегда выше правой.
+   При hover силуэт выходит за рамки и ложится поверх соседа. */
+.celebrity-card:nth-child(3n+1) {
+  z-index: 3;
 }
 
-/* Standard — col-span-4 */
-.celebrity-card[data-size="standard"] {
-  grid-column: span 4;
-  grid-row: span 1;
+.celebrity-card:nth-child(3n+2) {
+  z-index: 2;
 }
 
-/* Wide — col-span-6 */
-.celebrity-card[data-size="wide"] {
-  grid-column: span 6;
-  grid-row: span 1;
+.celebrity-card:nth-child(3n+3) {
+  z-index: 1;
 }
 
 /* ═══════════════════════════════════════════════════════
-   Celebrity Card — glassmorphic full-bleed
+   Celebrity Card — 3D-карточка с силуэтом
+   Пастельный фон, при hover карточка наклоняется,
+   силуэт выходит вперёд-вправо за рамки
    ═══════════════════════════════════════════════════════ */
 
 .celebrity-card {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  overflow: hidden;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: visible;
   border-radius: 0.75rem;
-  background: var(--muse-surface);
-  border: 1px solid rgba(81, 66, 85, 0.2);
+  background: var(--card-bg, var(--muse-surface));
+  border: 1px solid rgba(81, 66, 85, 0.3);
   text-decoration: none;
   cursor: pointer;
-  transition: border-color 0.5s, transform 0.3s;
+  /* Внутренняя тень — эффект объёма «кожи» */
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.05);
+  /* Наклоняем саму карточку — без perspective-подложки */
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 0.5s;
+}
+
+/* CSS-only leather/skin texture — текстура «кожи» поверх фона карточки */
+.celebrity-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background:
+    /* Мелкие «поры» — тёмные точки */
+    radial-gradient(
+      ellipse 2px 2px at 20% 30%,
+      rgba(0, 0, 0, 0.15) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 3px 2px at 60% 70%,
+      rgba(0, 0, 0, 0.12) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 2px 3px at 80% 20%,
+      rgba(0, 0, 0, 0.1) 0%,
+      transparent 100%
+    ),
+    /* Сеть мелких морщин */
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.02) 3px,
+      rgba(0, 0, 0, 0.02) 6px
+    );
+  background-size:
+    12px 12px,
+    15px 15px,
+    18px 18px,
+    8px 8px,
+    10px 10px;
+  mix-blend-mode: multiply;
 }
 
 .celebrity-card:hover {
+  transform: translateZ(10px) rotateX(10deg) rotateY(18deg);
   border-color: rgba(236, 178, 255, 0.5);
+  z-index: 10;
 }
 
-/* Overlay — затемнение снизу для читаемости текста */
-.celebrity-card-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.85) 0%,
-    rgba(0, 0, 0, 0.6) 40%,
-    rgba(0, 0, 0, 0.2) 70%,
-    transparent 100%
-  );
-  z-index: 1;
-  transition: background 0.5s;
-}
-
-.celebrity-card:hover .celebrity-card-overlay {
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.8) 0%,
-    rgba(0, 0, 0, 0.4) 40%,
-    rgba(0, 0, 0, 0.1) 70%,
-    transparent 100%
-  );
-}
-
-/* Фото — на всю карточку */
+/* Силуэт знаменитости — PNG с прозрачным фоном.
+   В покое — внутри карточки. При hover — выезжает вправо. */
 .celebrity-card-photo {
   position: absolute;
-  inset: 0;
-  z-index: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  transform-style: preserve-3d;
+  pointer-events: none;
 }
 
 .celebrity-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
-  transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+  object-fit: contain;
+  object-position: bottom center;
+  transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  transform: scale(0.88);
 }
 
 .celebrity-card:hover .celebrity-card-img {
-  transform: scale(1.05);
+  /* Выезжает вправо за рамку карточки */
+  transform: scale(0.88) translate3d(25%, -4%, 60px);
 }
 
+/* Заглушка без фото — первая буква имени */
 .celebrity-card-placeholder {
   width: 100%;
   height: 100%;
@@ -288,111 +345,67 @@
   font-size: 4rem;
   font-weight: 800;
   color: var(--muse-outline);
-  background: var(--muse-surface-high);
 }
 
-/* Контент карточки — внизу */
-.celebrity-card-content {
-  position: relative;
-  z-index: 2;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+/* Контент карточки — удалён, используем отдельные бейджи */
 
-/* Категория */
+/* Категория — левый верхний угол */
 .celebrity-card-category {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 3;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background: rgba(31, 31, 36, 0.75);
+  border: 1px solid rgba(81, 66, 85, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   font-family: var(--muse-font-body);
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.55rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muse-secondary);
 }
 
-.celebrity-card[data-featured="true"] .celebrity-card-category {
-  color: var(--muse-secondary);
-}
-
-.celebrity-card[data-category="actor"] .celebrity-card-category {
-  color: var(--muse-secondary);
-}
-
-.celebrity-card[data-category="singer"] .celebrity-card-category {
-  color: var(--muse-secondary);
-}
-
-.celebrity-card[data-category="financier"] .celebrity-card-category {
-  color: var(--muse-primary);
-}
-
-.celebrity-card[data-category="other"] .celebrity-card-category {
-  color: var(--muse-tertiary);
-}
-
-/* Имя */
-.celebrity-card-name {
+/* Имя — бейдж в левом нижнем углу */
+.celebrity-card-name-badge {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  z-index: 3;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(31, 31, 36, 0.75);
+  border: 1px solid rgba(81, 66, 85, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   font-family: var(--muse-font-display);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--muse-on-surface);
-  margin: 0;
   line-height: 1.2;
+  text-align: center;
 }
 
-.celebrity-card[data-featured="true"] .celebrity-card-name {
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
-}
-
-/* Бейдж «N книг» */
-.celebrity-card-badge {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  padding: 0.375rem 0.875rem;
+/* Бейдж «N книг» — под бейджем категории */
+.celebrity-card-books-badge {
+  position: absolute;
+  top: 2.75rem;
+  left: 1rem;
+  z-index: 3;
+  padding: 0.25rem 0.5rem;
   border-radius: 9999px;
-  background: rgba(31, 31, 36, 0.8);
+  background: rgba(31, 31, 36, 0.75);
   border: 1px solid rgba(81, 66, 85, 0.5);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   font-family: var(--muse-font-body);
-  font-size: 0.8125rem;
+  font-size: 0.625rem;
   font-weight: 600;
-  color: var(--muse-on-surface);
-  margin-top: 0.25rem;
-}
-
-.celebrity-card[data-featured="true"] .celebrity-card-badge {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-}
-
-/* ═══════════════════════════════════════════════════════
-   Featured card layout — контент снизу-слева, бейдж справа
-   ═══════════════════════════════════════════════════════ */
-
-.celebrity-card[data-featured="true"] .celebrity-card-content {
-  padding: 2.5rem;
-  flex-direction: column;
-}
-
-.celebrity-card[data-featured="true"] .celebrity-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  width: 100%;
-}
-
-/* ═══════════════════════════════════════════════════════
-   Wide card layout — имя слева, бейдж справа
-   ═══════════════════════════════════════════════════════ */
-
-.celebrity-card[data-size="wide"] .celebrity-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  width: 100%;
+  color: #fff;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -454,64 +467,55 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   Responsive — Mobile-first
+   Reduced motion — 3D-наклон отключаем
+   ═══════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrity-card,
+  .celebrity-card-img {
+    transition: none;
+  }
+
+  .celebrity-card:hover,
+  .celebrity-card:hover .celebrity-card-img {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Responsive
    ═══════════════════════════════════════════════════════ */
 
 @media (max-width: 1024px) {
   .celebrities-grid {
-    grid-template-columns: repeat(6, 1fr);
-    grid-auto-rows: minmax(240px, auto);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
 
-  .celebrity-card[data-featured="true"] {
-    grid-column: span 6;
-    grid-row: span 2;
+  /* 2 колонки: левая (нечётная) > правая (чётная) */
+  .celebrity-card:nth-child(3n+1),
+  .celebrity-card:nth-child(3n+2) {
+    margin-right: 0;
   }
 
-  .celebrity-card[data-size="standard"] {
-    grid-column: span 3;
+  .celebrity-card:nth-child(2n+1) {
+    z-index: 2;
   }
 
-  .celebrity-card[data-size="wide"] {
-    grid-column: span 6;
+  .celebrity-card:nth-child(2n) {
+    z-index: 1;
   }
 }
 
 @media (max-width: 640px) {
   .celebrities-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-auto-rows: minmax(200px, auto);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
   }
 
-  .celebrity-card[data-featured="true"] {
-    grid-column: span 2;
-    grid-row: span 2;
-  }
-
-  .celebrity-card[data-size="standard"] {
-    grid-column: span 1;
-  }
-
-  .celebrity-card[data-size="wide"] {
-    grid-column: span 2;
-  }
-
-  .celebrity-card-content {
-    padding: 1rem;
-  }
-
-  .celebrity-card[data-featured="true"] .celebrity-card-content {
-    padding: 1.5rem;
-  }
-
-  .celebrity-card-name {
-    font-size: 1.125rem;
-  }
-
-  .celebrity-card[data-featured="true"] .celebrity-card-name {
-    font-size: 1.5rem;
+  .celebrity-card-name-badge {
+    font-size: 1rem;
+    padding: 0.375rem 0.625rem;
   }
 
   .celebrities-hero {
