@@ -13,6 +13,8 @@ interface CelebrityFormData {
   isPublished: boolean;
   order: number;
   tags: string;
+  focalX: number;
+  focalY: number;
 }
 
 interface CelebrityFormModalProps {
@@ -165,6 +167,58 @@ export function CelebrityFormModal({
                   </button>
                 </div>
               </div>
+
+              {/* Точка фокуса для аватара */}
+              {formData.photoUrl && (
+                <div className="celebrity-form-row">
+                  <label className="celebrity-form-label">
+                    Точка фокуса (для аватара-кружка)
+                  </label>
+                  <div className="celebrity-focal-point">
+                    <div className="celebrity-focal-preview">
+                      <img
+                        src={formData.photoUrl}
+                        alt="Preview"
+                        style={{
+                          objectPosition: `${formData.focalX}% ${formData.focalY}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="celebrity-focal-sliders">
+                      <div className="celebrity-focal-slider">
+                        <label>X: {formData.focalX}%</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={formData.focalX}
+                          onChange={(e) =>
+                            onChangeForm((prev) => ({
+                              ...prev,
+                              focalX: Number(e.target.value),
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="celebrity-focal-slider">
+                        <label>Y: {formData.focalY}%</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={formData.focalY}
+                          onChange={(e) =>
+                            onChangeForm((prev) => ({
+                              ...prev,
+                              focalY: Number(e.target.value),
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Настройки публикации */}

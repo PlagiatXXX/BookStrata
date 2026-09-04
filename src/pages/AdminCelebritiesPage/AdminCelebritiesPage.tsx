@@ -60,6 +60,9 @@ export default function AdminCelebritiesPage() {
                       src={celebrity.photoUrl}
                       alt={celebrity.name}
                       className="admin-celebrities-photo-img"
+                      style={{
+                        objectPosition: `${celebrity.focalX ?? 50}% ${celebrity.focalY ?? 50}%`,
+                      }}
                     />
                   ) : (
                     <div className="admin-celebrities-photo-placeholder">

@@ -24,6 +24,8 @@ interface CelebrityFormData {
   isPublished: boolean;
   order: number;
   tags: string;
+  focalX: number;
+  focalY: number;
 }
 
 const emptyFormData: CelebrityFormData = {
@@ -34,6 +36,8 @@ const emptyFormData: CelebrityFormData = {
   isPublished: false,
   order: 0,
   tags: "",
+  focalX: 50,
+  focalY: 50,
 };
 
 export function useAdminCelebrities() {
@@ -100,6 +104,8 @@ export function useAdminCelebrities() {
       isPublished: celebrity.isPublished,
       order: celebrity.order,
       tags: celebrity.tags?.join(", ") || "",
+      focalX: celebrity.focalX ?? 50,
+      focalY: celebrity.focalY ?? 50,
     });
 
     if (celebrity.tiers && celebrity.tierOrder) {
@@ -193,6 +199,8 @@ export function useAdminCelebrities() {
             .split(",")
             .map((tag) => tag.trim())
             .filter((tag) => tag.length > 0),
+          focalX: formData.focalX,
+          focalY: formData.focalY,
         };
 
         // Валидация книг без названия
