@@ -35,6 +35,8 @@ export const createCelebritySchema = z.object({
   tierOrder: z.array(z.string()).optional(),
   books: z.record(z.string(), bookObjectSchema).optional(),
   unrankedBookIds: z.array(z.string()).optional(),
+  focalX: z.number().int().min(0).max(100).optional().default(50),
+  focalY: z.number().int().min(0).max(100).optional().default(50),
 });
 
 export const updateCelebritySchema = createCelebritySchema.partial();

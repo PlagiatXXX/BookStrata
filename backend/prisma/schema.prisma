@@ -510,6 +510,8 @@ model Celebrity {
   tierOrder       String[] @map("tier_order")
   books           Json?    // Record<string, Book>
   unrankedBookIds String[] @map("unranked_book_ids")
+  focalX          Int      @default(50) @map("focal_x") // Точка фокуса X (0-100%) для аватара
+  focalY          Int      @default(50) @map("focal_y") // Точка фокуса Y (0-100%) для аватара
   catalogBooks    CelebrityBook[] // связь с каталогом Book (решение 12.08)
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")

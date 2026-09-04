@@ -128,6 +128,8 @@ export async function createCelebrity(input: CreateCelebrityInput) {
       tierOrder: input.tierOrder || [],
       books: toJsonValue(books),
       unrankedBookIds: input.unrankedBookIds || [],
+      focalX: input.focalX ?? 50,
+      focalY: input.focalY ?? 50,
     },
   });
 
@@ -171,6 +173,8 @@ export async function updateCelebrity(id: number, input: UpdateCelebrityInput) {
   if (input.tiers !== undefined) data.tiers = toJsonValue(input.tiers);
   if (input.tierOrder !== undefined) data.tierOrder = input.tierOrder;
   if (input.unrankedBookIds !== undefined) data.unrankedBookIds = input.unrankedBookIds;
+  if (input.focalX !== undefined) data.focalX = input.focalX;
+  if (input.focalY !== undefined) data.focalY = input.focalY;
 
   const updated = await prisma.celebrity.update({
     where: { id },

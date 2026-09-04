@@ -16,6 +16,8 @@ export interface CelebrityItem {
   tierOrder?: string[];
   books?: Record<string, Book>;
   unrankedBookIds?: string[];
+  focalX?: number;
+  focalY?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +39,8 @@ export type CreateCelebrityInput = {
   tierOrder?: string[];
   books?: Record<string, Book>;
   unrankedBookIds?: string[];
+  focalX?: number;
+  focalY?: number;
 };
 
 export type UpdateCelebrityInput = Partial<CreateCelebrityInput>;
