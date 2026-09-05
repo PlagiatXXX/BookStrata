@@ -3,7 +3,7 @@
 
 // Партнёрские ID — привязаны к аккаунтам
 const CHITAI_GOROD_PARTNER_ID = "1006433";
-const LITRES_ERID = "2VfnxyNkZrY";
+// const LITRES_ERID = "2VfnxyNkZrY"; // ЛитРес — скрыт временно
 
 interface BookForAffiliate {
   title: string;
@@ -33,12 +33,13 @@ export function getAffiliateLinks(book: BookForAffiliate): AffiliateLink[] {
       iconName: "chitai-gorod",
       disclaimer: "Реклама. ООО «ГРАМОТА», ИНН 7706293136, partner ID: 1006433.",
     },
-    {
-      name: "ЛитРес",
-      url: buildLitresLink(query),
-      iconName: "litres",
-      disclaimer: "Реклама. ООО «ЛИТРЕС», ИНН 7719571260, erid: 2VfnxyNkZrY.",
-    },
+    // ЛитРес — скрыт временно
+    // {
+    //   name: "ЛитРес",
+    //   url: buildLitresLink(query),
+    //   iconName: "litres",
+    //   disclaimer: "Реклама. ООО «ЛИТРЕС», ИНН 7719571260, erid: 2VfnxyNkZrY.",
+    // },
   ];
 }
 
@@ -66,18 +67,15 @@ function buildChitaiGorodLink(query: string): string {
   return `https://www.chitai-gorod.ru/search?${params.toString()}`;
 }
 
-/**
- * ЛитРес — поиск по названию/автору с erid
- * Формат: https://www.litres.ru/search/?q={query}&erid=...&utm_source=advcake&utm_medium=cpa
- */
-function buildLitresLink(query: string): string {
-  const params = new URLSearchParams({
-    q: query,
-    erid: LITRES_ERID,
-    utm_source: "advcake",
-    utm_medium: "cpa",
-    utm_campaign: "affiliate",
-  });
-
-  return `https://www.litres.ru/search/?${params.toString()}`;
-}
+// ЛитРес — скрыт временно
+// function buildLitresLink(query: string): string {
+//   const params = new URLSearchParams({
+//     q: query,
+//     erid: LITRES_ERID,
+//     utm_source: "advcake",
+//     utm_medium: "cpa",
+//     utm_campaign: "affiliate",
+//   });
+//
+//   return `https://www.litres.ru/search/?${params.toString()}`;
+// }

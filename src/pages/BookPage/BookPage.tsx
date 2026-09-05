@@ -457,8 +457,8 @@ export default function BookPage() {
                           onClick={link.stub ? (e) => e.preventDefault() : undefined}
                           className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group"
                         >
-                          <span className="text-[15px] text-white font-medium ml-2">{link.name}</span>
-                           <Icon name="open_in_new" className="text-white/40 text-sm ml-auto group-hover:text-white/70 transition-colors" />
+                           <span className="text-[15px] text-white font-medium ml-2">{link.name}</span>
+                            <Icon name="open_in_new" className="text-white/40 text-sm group-hover:text-white/70 transition-colors" />
                         </a>
                         {link.disclaimer && (
                           <p className="text-[9px] text-white/20 mt-1 leading-tight px-1">
