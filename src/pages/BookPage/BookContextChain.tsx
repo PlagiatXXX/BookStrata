@@ -1,5 +1,6 @@
 // src/pages/BookPage/BookContextChain.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Icon } from "@/components/Icon";
 import type { BookContextChainItem } from "@/lib/bookApi";
 
 interface BookContextChainProps {
@@ -135,7 +136,7 @@ export function BookContextChain({ items }: BookContextChainProps) {
                   onClick={() => handleToggle(idx)}
                   className="bp-btn-pulse w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-primary/40 flex items-center justify-center text-(--bp-primary) hover:bg-(--bp-primary) hover:text-(--bp-background) transition-all duration-500 bg-(--bp-surface-container-lowest) shadow-[0_0_15px_rgba(255,183,135,0.2)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)]"
                 >
-                  <span className="ms-icon text-2xl md:text-3xl">{item.icon}</span>
+                  <Icon name={item.icon} className="text-2xl md:text-3xl" />
                 </button>
                 {/* Тултип строго над иконкой: hover (десктоп) или тап (touch) */}
                 <div

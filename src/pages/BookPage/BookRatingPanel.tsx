@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBookRatings, useMyBookRating, useRateBook } from "@/hooks/useBookRating";
+import { Icon } from "@/components/Icon";
 
 interface BookRatingPanelProps {
   bookId: number;
@@ -99,7 +100,7 @@ export function BookRatingPanel({ bookId, defaultRating }: BookRatingPanelProps)
         }`}
       >
         {!isAuthed && (
-          <span className="ms-icon text-sm">lock</span>
+          <Icon name="lock" className="text-sm" />
         )}
         {rateMutation.isPending
           ? "Сохраняем..."

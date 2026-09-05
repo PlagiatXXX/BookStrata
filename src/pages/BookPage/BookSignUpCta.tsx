@@ -3,6 +3,7 @@
 // Glass-панель с неоновым свечением, в стиле арт-деко (как BookComments).
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
+import { Icon } from "@/components/Icon";
 
 interface BookSignUpCtaProps {
   /** Куда вернуть после входа/регистрации */
@@ -32,7 +33,7 @@ export function BookSignUpCta({ redirectTo }: BookSignUpCtaProps) {
 
           {/* Иконка */}
           <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-[var(--bp-primary)]/10 border border-[var(--bp-primary)]/30 flex items-center justify-center">
-            <span className="ms-icon text-[var(--bp-primary)] text-3xl">person_add</span>
+            <Icon name="person_add" className="text-[var(--bp-primary)] text-3xl" />
           </div>
 
           <h2 className="bp-display text-white text-xl md:text-2xl mb-3 drop-shadow-lg">
@@ -49,7 +50,7 @@ export function BookSignUpCta({ redirectTo }: BookSignUpCtaProps) {
               to={`/auth?mode=register&redirect=${redirect}`}
               className="inline-flex items-center gap-2 bg-[var(--bp-primary)] hover:bg-[var(--bp-primary-container)] text-[var(--bp-on-primary)] bp-label-caps px-7 py-3 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all"
             >
-              <span className="ms-icon text-sm">person_add</span>
+              <Icon name="person_add" className="text-sm" />
               Создать аккаунт
             </Link>
             <Link

@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { sileo } from "sileo";
+import { Icon } from "@/components/Icon";
 import { useTheme } from "../useTheme";
 
 interface ThemeSidebarProps {
@@ -98,7 +99,7 @@ export function ThemeSidebar({ collectionSlug, currentUserId }: ThemeSidebarProp
                   boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
                 }}
               >
-                <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+                <Icon name={item.icon} className="text-[18px]" />
               </div>
               <span
                 className="text-sm font-semibold"

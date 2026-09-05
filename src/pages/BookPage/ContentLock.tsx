@@ -8,6 +8,7 @@
 import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
+import { Icon } from "@/components/Icon";
 
 const isPrerendering =
   typeof window !== "undefined" && window.__PRERENDER__ === true;
@@ -17,13 +18,11 @@ function ChainLock() {
   return (
     <div aria-hidden className="flex items-center w-full max-w-md">
       <span className="flex-1 border-t-2 border-dashed border-white/40" />
-      <span className="ms-icon text-white/40 text-base -rotate-45">link</span>
-      <span className="ms-icon text-white/40 text-base rotate-45">link</span>
-      <span className="ms-icon text-[var(--bp-primary)] text-3xl mx-2 drop-shadow-[0_0_14px_rgba(255,183,135,0.6)]">
-        lock
-      </span>
-      <span className="ms-icon text-white/40 text-base rotate-45">link</span>
-      <span className="ms-icon text-white/40 text-base -rotate-45">link</span>
+      <Icon name="link" className="text-white/40 text-base -rotate-45" />
+      <Icon name="link" className="text-white/40 text-base rotate-45" />
+      <Icon name="lock" className="text-[var(--bp-primary)] text-3xl mx-2 drop-shadow-[0_0_14px_rgba(255,183,135,0.6)]" />
+      <Icon name="link" className="text-white/40 text-base rotate-45" />
+      <Icon name="link" className="text-white/40 text-base -rotate-45" />
       <span className="flex-1 border-t-2 border-dashed border-white/40" />
     </div>
   );
@@ -44,7 +43,7 @@ function RegisterCta({
         to={`/auth?mode=register&redirect=${redirect}`}
         className="inline-flex items-center gap-2 bg-[var(--bp-primary)] hover:bg-[var(--bp-primary-container)] text-[var(--bp-on-primary)] bp-label-caps px-6 py-3 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all"
       >
-        <span className="ms-icon text-sm">person_add</span>
+        <Icon name="person_add" className="text-sm" />
         {ctaLabel}
       </Link>
       <Link

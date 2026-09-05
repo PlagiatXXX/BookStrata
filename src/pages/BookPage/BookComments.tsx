@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthContext";
+import { Icon } from "@/components/Icon";
 import {
   useBookComments,
   useCreateBookComment,
@@ -113,7 +114,7 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
                     {c.user.avatarUrl ? (
                       <img src={c.user.avatarUrl} alt="" className="w-full h-full object-cover -rotate-45 scale-125" />
                     ) : (
-                      <span className="ms-icon text-[var(--bp-primary)] -rotate-45">person</span>
+                      <Icon name="person" className="text-[var(--bp-primary)] -rotate-45" />
                     )}
                   </div>
 
@@ -168,17 +169,16 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
                           onClick={() => toggleLike.mutate(c.id)}
                           className="flex items-center gap-2 text-[10px] text-white/40 hover:text-[var(--bp-primary)] transition-colors bp-label-caps"
                         >
-                          <span
-                            className="ms-icon text-sm"
+                          <Icon
+                            name="favorite"
+                            className="text-sm"
                             style={{ fontVariationSettings: c.likesCount > 0 ? "'FILL' 1" : "'FILL' 0" }}
-                          >
-                            favorite
-                          </span>
+                          />
                           {c.likesCount > 0 ? c.likesCount : "Нравится"}
                         </button>
                       ) : (
                         <span className="flex items-center gap-2 text-[10px] text-white/30 bp-label-caps">
-                          <span className="ms-icon text-sm">favorite</span>
+                          <Icon name="favorite" className="text-sm" />
                           {c.likesCount > 0 ? c.likesCount : "Нравится"}
                         </span>
                       )}
@@ -192,7 +192,7 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
                           }}
                           className="flex items-center gap-1 text-[10px] text-white/40 hover:text-white transition-colors bp-label-caps"
                         >
-                          <span className="ms-icon text-sm">edit</span>
+                          <Icon name="edit" className="text-sm" />
                           Редактировать
                         </button>
                       )}
@@ -203,7 +203,7 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
                           onClick={() => setDeleteTarget(c)}
                           className="flex items-center gap-1 text-[10px] text-white/40 hover:text-[var(--bp-error)] transition-colors bp-label-caps"
                         >
-                          <span className="ms-icon text-sm">delete</span>
+                          <Icon name="delete" className="text-sm" />
                           Удалить
                         </button>
                       )}
@@ -318,7 +318,7 @@ function DeleteCommentModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-4 mb-4">
-          <span className="ms-icon text-2xl text-[var(--bp-error)] mt-0.5">delete</span>
+          <Icon name="delete" className="text-2xl text-[var(--bp-error)] mt-0.5" />
           <div>
             <h3 className="bp-display text-white text-lg mb-1">Удалить комментарий?</h3>
             <p className="text-sm text-white/60 leading-relaxed">
@@ -345,7 +345,7 @@ function DeleteCommentModal({
             disabled={isPending}
             className="bp-label-caps bg-[var(--bp-error)] hover:bg-red-600 text-[var(--bp-on-error)] px-5 py-2.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-2"
           >
-            {isPending && <span className="ms-icon text-sm animate-spin">progress_activity</span>}
+            {isPending && <Icon name="progress_activity" className="text-sm animate-spin" />}
             Удалить
           </button>
         </div>

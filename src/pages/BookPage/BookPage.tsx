@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuthContext";
 import { useAddBookToTierList, useBook, useMyTierLists } from "@/hooks/useBook";
 import { useBookshelf } from "@/hooks/useBookshelf";
 import { createTierList } from "@/lib/tierListApi";
+import { Icon } from "@/components/Icon";
 import { BookCover3D } from "./BookCover3D";
 import { BookRatingPanel } from "./BookRatingPanel";
 import { BookContextChain } from "./BookContextChain";
@@ -218,7 +219,7 @@ export default function BookPage() {
                 onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}
                 className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm"
               >
-                <span className="ms-icon text-lg">arrow_back</span>
+                <Icon name="arrow_back" className="text-lg" />
                 Назад
               </button>
               <div className="hidden md:block">
@@ -290,9 +291,7 @@ export default function BookPage() {
                       onClick={() => setDescExpanded((v) => !v)}
                       className="mt-4 flex items-center gap-2 text-(--bp-primary) hover:text-white transition-colors bp-label-caps tracking-widest"
                     >
-                      <span className="ms-icon text-sm">
-                        {descExpanded ? "expand_less" : "expand_more"}
-                      </span>
+                      <Icon name={descExpanded ? "expand_less" : "expand_more"} className="text-sm" />
                       {descExpanded ? "Свернуть" : "Читать полностью"}
                     </button>
                   </div>
@@ -308,12 +307,11 @@ export default function BookPage() {
                   onClick={handleWantToRead}
                   className="h-12 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/20 hover:border-white/50 text-white bp-label-caps bp-label-caps-compact px-3 sm:px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:bg-white/5"
                 >
-                  <span
-                    className="ms-icon text-sm text-(--bp-primary)"
+                  <Icon
+                    name="bookmarks"
+                    className="text-sm text-(--bp-primary)"
                     style={{ fontVariationSettings: isWantToRead ? "'FILL' 1" : "'FILL' 0" }}
-                  >
-                    bookmarks
-                  </span>
+                  />
                   {isWantToRead ? "Уже в плане" : "Хочу прочитать"}
                 </button>
 
@@ -329,11 +327,9 @@ export default function BookPage() {
                   }}
                   className="h-12 whitespace-nowrap bg-(--bp-primary) hover:bg-(--bp-primary-container) text-(--bp-on-primary) bp-label-caps bp-label-caps-compact px-3 sm:px-6 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
                 >
-                  <span className="ms-icon text-sm">format_list_bulleted</span>
+                  <Icon name="format_list_bulleted" className="text-sm" />
                   В тир-лист
-                  <span className="ms-icon text-sm" style={{ transform: tierDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
-                    expand_more
-                  </span>
+                  <Icon name="expand_more" className="text-sm" style={{ transform: tierDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
                 </button>
 
                 {tierDropdownOpen && (
@@ -357,7 +353,7 @@ export default function BookPage() {
                             onClick={() => handleAddToTierList(tl.id)}
                             className="w-full text-left px-4 py-2.5 text-sm text-white/85 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
                           >
-                            <span className="ms-icon text-base text-(--bp-primary)">list_alt</span>
+                            <Icon name="list_alt" className="text-base text-(--bp-primary)" />
                             {tl.title}
                           </button>
                         ))}
@@ -370,7 +366,7 @@ export default function BookPage() {
                             onClick={() => setShowCreateForm(true)}
                             className="w-full text-left px-4 py-2.5 text-sm text-(--bp-primary) hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
                           >
-                            <span className="ms-icon text-base">add</span>
+                            <Icon name="add" className="text-base" />
                             Новый тир-лист
                           </button>
                         ) : (
@@ -425,7 +421,7 @@ export default function BookPage() {
                   animate={{ y: [0, 6, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <span className="ms-icon text-base">expand_more</span>
+                  <Icon name="expand_more" className="text-base" />
                 </motion.div>
               </motion.div>
             </div>
@@ -462,7 +458,7 @@ export default function BookPage() {
                           className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group"
                         >
                           <span className="text-[15px] text-white font-medium ml-2">{link.name}</span>
-                          <span className="ms-icon text-white/40 text-sm ml-auto group-hover:text-white/70 transition-colors">open_in_new</span>
+                           <Icon name="open_in_new" className="text-white/40 text-sm ml-auto group-hover:text-white/70 transition-colors" />
                         </a>
                         {link.disclaimer && (
                           <p className="text-[9px] text-white/20 mt-1 leading-tight px-1">
@@ -528,9 +524,7 @@ export default function BookPage() {
                       to={`/tier-lists/${tl.slug || tl.id}`}
                       className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-[var(--bp-primary)]/30 bg-gradient-to-r from-[var(--bp-primary)]/5 to-transparent hover:from-[var(--bp-primary)]/10 transition-all duration-300"
                     >
-                      <span className="ms-icon text-[var(--bp-primary)] text-xl opacity-70 group-hover:opacity-100 transition-opacity">
-                        format_list_numbered
-                      </span>
+                       <Icon name="format_list_numbered" className="text-[var(--bp-primary)] text-xl opacity-70 group-hover:opacity-100 transition-opacity" />
                       <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
                         {tl.title}
                       </span>
@@ -553,9 +547,7 @@ export default function BookPage() {
                       to={`/collections/${c.slug}`}
                       className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-[var(--bp-tertiary)]/30 bg-gradient-to-r from-[var(--bp-tertiary)]/5 to-transparent hover:from-[var(--bp-tertiary)]/10 transition-all duration-300"
                     >
-                      <span className="ms-icon text-[var(--bp-tertiary)] text-xl opacity-70 group-hover:opacity-100 transition-opacity">
-                        collections_bookmark
-                      </span>
+                       <Icon name="collections_bookmark" className="text-[var(--bp-tertiary)] text-xl opacity-70 group-hover:opacity-100 transition-opacity" />
                       <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
                         {c.title}
                       </span>
@@ -632,30 +624,29 @@ function StarGlyph({
 }) {
   if (variant === "full") {
     return (
-      <span
-        className="ms-icon text-xl shrink-0 text-(--bp-primary) drop-shadow-[0_0_8px_rgba(255,183,135,0.5)]"
+      <Icon
+        name="star"
+        className="text-xl shrink-0 text-(--bp-primary) drop-shadow-[0_0_8px_rgba(255,183,135,0.5)]"
         style={{ fontVariationSettings: "'FILL' 1" }}
-      >
-        star
-      </span>
+      />
     );
   }
   if (variant === "empty") {
-    return <span className="ms-icon text-xl shrink-0 text-white/30">star</span>;
+    return <Icon name="star" className="text-xl shrink-0 text-white/30" />;
   }
   // Частичная: внизу пустой контур, сверху — градиентная заливка по глифу
   const pct = Math.round((fraction ?? 0) * 100 * 10) / 10;
   return (
-    <span className="ms-icon text-xl shrink-0 relative inline-block">
-      <span
-        className="ms-icon absolute inset-0 text-white/30"
+    <span className="text-xl shrink-0 relative inline-block">
+      <Icon
+        name="star"
+        className="absolute inset-0 text-white/30"
         aria-hidden
         style={{ fontVariationSettings: "'FILL' 0" }}
-      >
-        star
-      </span>
-      <span
-        className="ms-icon relative"
+      />
+      <Icon
+        name="star"
+        className="relative"
         aria-hidden
         style={{
           fontVariationSettings: "'FILL' 1",
@@ -664,9 +655,7 @@ function StarGlyph({
           backgroundClip: "text",
           color: "transparent",
         }}
-      >
-        star
-      </span>
+      />
     </span>
   );
 }

@@ -76,3 +76,6 @@ reference/
 
 # IndexNow state (живёт только на сервере)
 .indexnow-state.json
+
+# Material Symbols full font backup (не коммитить — 4MB)
+public/fonts/material-symbols-outlined-latin-full.woff2

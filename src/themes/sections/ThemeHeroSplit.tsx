@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Icon } from "@/components/Icon";
 
 interface ThemeHeroSplitProps {
   breadcrumbs?: ReactNode;
@@ -102,7 +103,7 @@ export function ThemeHeroSplit({
                 fontWeight: 600,
               }}
             >
-              <span className="material-symbols-outlined text-[16px]">book</span>
+              <Icon name="book" className="text-[16px]" />
               <span>{bookCount} книг</span>
             </div>
           )}
