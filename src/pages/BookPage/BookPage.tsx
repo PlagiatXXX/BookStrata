@@ -301,7 +301,7 @@ export default function BookPage() {
               {/* Действия. relative — якорь для выпадашки тир-листов: на мобильных
                   панель растёт от левого края контейнера и не обрезается экраном.
                   gap-2/px-3 — компактные отступы, чтобы обе кнопки влезали в ряд на 360px. */}
-              <div ref={dropdownRef} className="relative flex flex-wrap gap-2 sm:gap-4">
+              <div ref={dropdownRef} className="relative flex items-center gap-2 sm:gap-4">
                 <button
                   type="button"
                   onClick={handleWantToRead}
@@ -455,10 +455,9 @@ export default function BookPage() {
                           target="_blank"
                           rel="noopener noreferrer nofollow"
                           onClick={link.stub ? (e) => e.preventDefault() : undefined}
-                          className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group"
+                          className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group overflow-hidden"
                         >
                            <span className="text-[15px] text-white font-medium ml-2">{link.name}</span>
-                            <Icon name="open_in_new" className="text-white/40 text-sm group-hover:text-white/70 transition-colors" />
                         </a>
                         {link.disclaimer && (
                           <p className="text-[9px] text-white/20 mt-1 leading-tight px-1">
@@ -522,9 +521,9 @@ export default function BookPage() {
                     <Link
                       key={tl.id}
                       to={`/tier-lists/${tl.slug || tl.id}`}
-                      className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-[var(--bp-primary)]/30 bg-gradient-to-r from-[var(--bp-primary)]/5 to-transparent hover:from-[var(--bp-primary)]/10 transition-all duration-300"
+                      className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-(--bp-primary)/30 bg-linear-to-r from-(--bp-primary)/5 to-transparent hover:from-(--bp-primary)/10 transition-all duration-300"
                     >
-                       <Icon name="format_list_numbered" className="text-[var(--bp-primary)] text-xl opacity-70 group-hover:opacity-100 transition-opacity" />
+                       <Icon name="format_list_numbered" className="text-(--bp-primary) text-xl opacity-70 group-hover:opacity-100 transition-opacity" />
                       <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
                         {tl.title}
                       </span>
@@ -545,9 +544,9 @@ export default function BookPage() {
                     <Link
                       key={c.id}
                       to={`/collections/${c.slug}`}
-                      className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-[var(--bp-tertiary)]/30 bg-gradient-to-r from-[var(--bp-tertiary)]/5 to-transparent hover:from-[var(--bp-tertiary)]/10 transition-all duration-300"
+                      className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-(--bp-tertiary)/30 bg-linear-to-r from-(--bp-tertiary)/5 to-transparent hover:from-(--bp-tertiary)/10 transition-all duration-300"
                     >
-                       <Icon name="collections_bookmark" className="text-[var(--bp-tertiary)] text-xl opacity-70 group-hover:opacity-100 transition-opacity" />
+                       <Icon name="collections_bookmark" className="text-(--bp-tertiary) text-xl opacity-70 group-hover:opacity-100 transition-opacity" />
                       <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
                         {c.title}
                       </span>
