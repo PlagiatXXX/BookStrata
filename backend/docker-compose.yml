@@ -90,6 +90,8 @@ services:
       - ../nginx/snippets:/etc/nginx/snippets:ro
       # SSL-сертификаты (если есть)
       - ../nginx/ssl:/etc/nginx/ssl:ro
+      # ACME-проверки Let's Encrypt (certbot renew --webroot, пишет на хосте)
+      - ../nginx/certbot:/var/www/certbot:ro
     depends_on:
       - app
     restart: unless-stopped
