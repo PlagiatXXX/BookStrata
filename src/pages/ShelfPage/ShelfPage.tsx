@@ -178,7 +178,7 @@ export default function ShelfPage() {
       <SEOHead
         title="Полка — прочитанное и «хочу прочитать»"
         description="Ваша полка: книги, которые вы отметили как прочитанные или хотите прочитать. Соберите из них свой рейтинг."
-        url="https://bookstrata.ru/shelf"
+        url="/shelf"
         noindex
       />
       <DashboardLayout showSearch={false} bgVariant="clay">

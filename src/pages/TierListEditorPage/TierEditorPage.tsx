@@ -758,7 +758,7 @@ const TierListEditorContent = () => {
           dateModified={apiData?.updatedAt}
           author={apiData?.user?.username}
           type="article"
-          noindex={apiData ? !isPublic : undefined}
+          noindex={tierListId === "new" || (apiData ? !isPublic : undefined)}
           breadcrumbs={[
             { name: "Главная", url: "/" },
             { name: "Тир-листы", url: "/templates" },
