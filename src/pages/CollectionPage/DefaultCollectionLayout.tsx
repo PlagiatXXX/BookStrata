@@ -1,13 +1,15 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Tag, Calendar, BookOpen, Sparkles } from "lucide-react";
+import { Tag, Calendar, BookOpen } from "lucide-react";
 import DOMPurify from "dompurify";
 import { Helmet } from "react-helmet-async";
-import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
+
 import { StaticTierView } from "@/components/StaticTierView";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
+import { NotesBlock } from "./NotesBlock";
+import { InteractiveShelfBlock } from "./InteractiveShelfBlock";
 import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBookshelf } from "@/hooks/useBookshelf";
@@ -27,10 +29,10 @@ interface DefaultCollectionLayoutProps {
 export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutProps) {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const { shelf } = useBookshelf();
+  const { shelf, slugShelf } = useBookshelf();
   const [viewedBook, setViewedBook] = useState<Book | null>(null);
   const [isAiOpen, setAiOpen] = useState(false);
-  const [filterGenre, setFilterGenre] = useState<string | null>(null);
+  const [shelfFilter, setShelfFilter] = useState<"all" | "planned">("all");
 
   const currentUserId = authUser?.userId ?? null;
 
@@ -47,21 +49,24 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
 
   const markedCount = Object.keys(statuses).length;
 
-  const genres = useMemo(() => {
-    if (!collection.books) return [];
-    const bookList = Object.values(collection.books) as Book[];
-    const genreSet = new Set<string>();
-    bookList.forEach((book) => {
-      if (book.genre) genreSet.add(book.genre);
-    });
-    return Array.from(genreSet).sort();
-  }, [collection.books]);
-
   const stats = useMemo(() => {
     if (!collection.books) return { totalBooks: 0 };
     const bookList = Object.values(collection.books) as Book[];
     return { totalBooks: bookList.length };
   }, [collection.books]);
+
+  // Фильтрация книг по статусу полки для tier view
+  const filteredBooks = useMemo(() => {
+    if (!collection.books || shelfFilter === "all") return collection.books;
+    const result: Record<string, Book> = {};
+    for (const [key, book] of Object.entries(collection.books)) {
+      const b = book as Book;
+      if (b.slug && slugShelf[b.slug] === "want_to_read") {
+        result[key] = b;
+      }
+    }
+    return result;
+  }, [collection.books, shelfFilter, slugShelf]);
 
   const { data: allCollections = [] } = useQuery({
     queryKey: ["all-collections"],
@@ -142,104 +147,136 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
         )}
       </Helmet>
 
-      {/* Breadcrumbs + Назад */}
-      <div className="px-4 sm:px-6 pt-6 pb-4 space-y-1">
-        <Breadcrumbs
-          items={[
-            { label: "Главная", href: "/" },
-            { label: "Рейтинги", href: "/rankings" },
-            ...(genreCategory
-              ? [{ label: genreCategory.label, href: `/topics/${genreCategory.id}` }]
-              : []),
-            { label: collection.title },
-          ]}
-        />
-        <button
-          onClick={() => navigate(-1)}
-          className="text-xs text-(--ink-2) hover:text-(--accent-main) transition-colors cursor-pointer"
+      {/* Main container with padding (except tier list) */}
+      <div className="max-w-container-max mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumbs + Назад */}
+        <div
+          className="pt-4 sm:pt-6 pb-3 sm:pb-4 flex flex-wrap items-center justify-between gap-2 sm:gap-3"
+          style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.8125rem' }}
         >
-          ← Назад к подборкам
-        </button>
-      </div>
+          <nav className="flex items-center flex-wrap gap-1.5 sm:gap-2" style={{ color: '#d8c3ad' }}>
+            <a href="/" className="hover:text-[#f59e0b] transition-colors flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px] sm:text-[16px]">home</span>
+              <span className="hidden sm:inline">Главная</span>
+            </a>
+            <span style={{ color: '#534434' }}>/</span>
+            <a href="/rankings" className="hover:text-[#f59e0b] transition-colors">Рейтинги</a>
+            <span style={{ color: '#534434' }}>/</span>
+            {genreCategory && (
+              <>
+                <a href={`/topics/${genreCategory.id}`} className="hover:text-[#f59e0b] transition-colors">{genreCategory.label}</a>
+                <span style={{ color: '#534434' }}>/</span>
+              </>
+            )}
+            <span className="truncate max-w-[150px] sm:max-w-[340px]" style={{ color: '#dfe2f1' }}>{collection.title}</span>
+          </nav>
 
-      <article className="max-w-6xl mx-auto px-4 sm:px-6 pb-12">
+          <a
+            href="#"
+            onClick={(e) => { e.preventDefault(); navigate(-1); }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full transition-all duration-300 shadow-sm backdrop-blur-md group"
+            style={{
+              background: 'rgba(23, 27, 38, 0.7)',
+              color: '#d8c3ad'
+            }}
+          >
+            <span className="material-symbols-outlined text-[16px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.8125rem' }}>Назад к подборкам</span>
+          </a>
+        </div>
+
         {/* Header */}
-        <header className="mb-8">
-          <div className="flex flex-col items-center gap-4 md:flex-row md:items-center md:gap-6">
-            <div className="min-w-0 flex-1 text-center">
-              <h1 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
-                {collection.title}
-              </h1>
+        <header className="mt-4 sm:mt-space-md mb-6 sm:mb-space-2xl">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-space-xl">
+            <div className="max-w-3xl flex flex-col">
               {collection.type === "curated" && (
-                <div className="flex items-center justify-center gap-1 text-sm text-(--ink-1) mt-2">
-                  <span>автор:</span>
-                  <span className="text-(--accent-main)">Букстраж</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.5625rem] font-bold tracking-widest uppercase"
+                    style={{
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      color: '#f59e0b',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif"
+                    }}
+                  >
+                    <span className="material-symbols-outlined text-[14px]">stars</span>
+                    КУРАТОРСКИЙ ВЫБОР 2026
+                  </span>
                 </div>
               )}
+              <h1
+                className="text-[1.75rem] sm:text-4xl md:text-5xl leading-[1.08] tracking-tight"
+                style={{ fontFamily: "'Newsreader', serif", color: '#dfe2f1', fontWeight: 400 }}
+              >
+                {collection.title}{' '}
+                <span
+                  className="italic font-normal"
+                  style={{
+                    background: 'linear-gradient(90deg, #ffc174, #f59e0b, #ffb783)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontFamily: "'Newsreader', serif"
+                  }}
+                >
+                  — рейтинг книг 2026
+                </span>
+              </h1>
             </div>
-            <button
-              type="button"
-              onClick={handleAiOpen}
-              className="inline-flex items-center gap-2 rounded border-2 border-(--accent-main) bg-(--accent-main)/10 px-4 py-2 text-sm font-bold text-(--accent-main) transition-all hover:bg-(--accent-main)/20 cursor-pointer"
-            >
-              <Sparkles size={16} />
-              Спросить у Букстража
-            </button>
+
+            {/* AI Assistant CTA */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 self-start lg:self-end mt-4 lg:mt-0">
+              <button
+                type="button"
+                onClick={handleAiOpen}
+                className="relative group overflow-hidden inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-sm font-semibold transition-all duration-300 active:scale-95"
+                style={{
+                  background: 'linear-gradient(90deg, #f59e0b, #d97722, #ff9837)',
+                  color: '#0b0f19',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  boxShadow: '0 0 28px rgba(245, 158, 11, 0.45)'
+                }}
+              >
+                <span className="material-symbols-outlined text-[20px]" style={{ color: '#0b0f19' }}>auto_awesome</span>
+                <span>Спросить у Букстража</span>
+                <span
+                  className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px]"
+                  style={{ background: 'rgba(10, 14, 24, 0.3)', color: '#0b0f19' }}
+                >
+                  AI
+                </span>
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* Статистика + фильтр жанров */}
+        {/* Stats bar */}
         {collection.type === "curated" && (
-          <div className="flex flex-wrap items-center gap-4 mb-6">
-            <div className="flex items-center gap-2 text-sm text-(--ink-2)">
-              <BookOpen size={16} />
-              <span>{stats.totalBooks} книг</span>
-            </div>
-            {genres.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => setFilterGenre(null)}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors cursor-pointer ${
-                    filterGenre === null
-                      ? "bg-(--accent-main) text-white border-(--accent-main)"
-                      : "border-(--line-soft) text-(--ink-2) hover:border-(--accent-main)"
-                  }`}
-                >
-                  Все
-                </button>
-                {genres.map((genre) => (
-                  <button
-                    key={genre}
-                    onClick={() => setFilterGenre(genre)}
-                    className={`text-xs px-3 py-1 rounded-full border transition-colors cursor-pointer ${
-                      filterGenre === genre
-                        ? "bg-(--accent-main) text-white border-(--accent-main)"
-                        : "border-(--line-soft) text-(--ink-2) hover:border-(--accent-main)"
-                    }`}
-                  >
-                    {genre}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="collection-stats-bar mb-6">
+            <span className="flex items-center gap-1">
+              <BookOpen size={14} />
+              {stats.totalBooks} книг в подборке
+            </span>
+            <span className="flex items-center gap-1">
+              <Calendar size={14} />
+              Сентябрь 2026
+            </span>
           </div>
         )}
 
-        {/* Описание + редакционная заметка */}
-        <div className="brutal-card brutal-border p-6 mb-8 space-y-4">
-          {collection.excerpt ? (
-            <p className="text-lg font-medium text-(--ink-0) leading-relaxed">
-              {collection.excerpt}
-            </p>
-          ) : null}
-          {collection.editorialNote ? (
-            <>
-              <h2 className="text-lg font-black tracking-tight mb-3 uppercase">Как составлялась подборка</h2>
-              <p className="text-base text-(--ink-1) leading-relaxed">
-                {collection.editorialNote}
-              </p>
-            </>
-          ) : null}
+        {/* Bento Grid: Notes + Interactive Shelf (side by side on desktop) */}
+        <div className="collection-bento-grid">
+          <NotesBlock
+            excerpt={collection.excerpt}
+            editorialNote={collection.editorialNote}
+          />
+
+          {collection.type === "curated" && (
+            <InteractiveShelfBlock
+              books={collection.books as Record<string, import("@/types").Book>}
+              shelfFilter={shelfFilter}
+              onShelfFilterChange={setShelfFilter}
+            />
+          )}
         </div>
 
         {/* Value callout */}
@@ -259,9 +296,8 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
             <StaticTierView
               tiers={collection.tiers as Record<string, import("@/types").Tier>}
               tierOrder={collection.tierOrder}
-              books={collection.books as Record<string, import("@/types").Book>}
+              books={filteredBooks as Record<string, import("@/types").Book>}
               onViewBook={handleViewBook}
-              filterGenre={filterGenre}
               statuses={shelf}
               unrankedBookIds={collection.unrankedBookIds}
               linkToBook
@@ -282,8 +318,8 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
                     Не согласны с этим рейтингом?
                   </p>
                   <p className="text-sm text-(--ink-2) mb-4">
-                    Вы читали {markedCount} из {stats.totalBooks} книг этой подборки —{' '}
-                    у вас уже есть своё мнение. Расставьте их по своим уровням.
+                    Вы добавили {markedCount} из {stats.totalBooks} книг этой подборки в свой план —{' '}
+                    соберите свой рейтинг из того, что планируете прочитать.
                   </p>
                   <button
                     onClick={handleFork}
@@ -393,7 +429,7 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
             })}
           </div>
         </footer>
-      </article>
+      </div>
     </>
   );
 }

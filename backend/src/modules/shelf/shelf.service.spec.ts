@@ -41,14 +41,14 @@ describe("Shelf Service", () => {
     it("должен маппить статусы в ShelfEntry", async () => {
       const { prisma } = await import("../../lib/prisma.js");
       vi.mocked(prisma.bookStatus.findMany).mockResolvedValue([
-        { bookId: 10, status: "read" },
-        { bookId: 11, status: "want_to_read" },
+        { bookId: 10, status: "read", book: { slug: "anna-karenina" } },
+        { bookId: 11, status: "want_to_read", book: { slug: null } },
       ] as any);
 
       const shelf = await getShelf(1);
       expect(shelf).toEqual([
-        { bookId: 10, status: "read" },
-        { bookId: 11, status: "want_to_read" },
+        { bookId: 10, status: "read", slug: "anna-karenina" },
+        { bookId: 11, status: "want_to_read", slug: null },
       ]);
     });
   });
@@ -79,15 +79,16 @@ describe("Shelf Service", () => {
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({
         bookId: 10,
         status: "want_to_read",
+        book: { slug: null },
       } as any);
 
       const entry = await setShelfStatus(1, "10", "want_to_read");
-      expect(entry).toEqual({ bookId: 10, status: "want_to_read" });
+      expect(entry).toEqual({ bookId: 10, status: "want_to_read", slug: null });
       expect(prisma.bookStatus.upsert).toHaveBeenCalledWith({
         where: { bookId_userId: { bookId: 10, userId: 1 } },
         create: { bookId: 10, userId: 1, status: "want_to_read" },
         update: { status: "want_to_read" },
-        select: { bookId: true, status: true },
+        select: { bookId: true, status: true, book: { select: { slug: true } } },
       });
     });
 
@@ -98,16 +99,18 @@ describe("Shelf Service", () => {
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({
         bookId: 42,
         status: "read",
+        book: { slug: "tsirtseya" },
       } as any);
 
       const entry = await setShelfStatus(1, "curated_1_1782461891402", "read", {
         title: "Цирцея",
         author: "Мадлен Миллер",
+        slug: "tsirtseya",
       });
 
-      expect(entry).toEqual({ bookId: 42, status: "read" });
+      expect(entry).toEqual({ bookId: 42, status: "read", slug: "tsirtseya" });
       expect(prisma.book.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ title: "Цирцея", author: "Мадлен Миллер" }),
+        data: expect.objectContaining({ title: "Цирцея", author: "Мадлен Миллер", slug: "tsirtseya" }),
         select: { id: true },
       });
       expect(prisma.bookStatus.upsert).toHaveBeenCalledWith(
@@ -123,6 +126,7 @@ describe("Shelf Service", () => {
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({
         bookId: 7,
         status: "read",
+        book: { slug: null },
       } as any);
 
       const entry = await setShelfStatus(1, "curated_x", "read", {
@@ -130,7 +134,7 @@ describe("Shelf Service", () => {
         author: "Мадлен Миллер",
       });
 
-      expect(entry).toEqual({ bookId: 7, status: "read" });
+      expect(entry).toEqual({ bookId: 7, status: "read", slug: null });
       expect(prisma.book.create).not.toHaveBeenCalled();
       expect(prisma.book.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -145,10 +149,12 @@ describe("Shelf Service", () => {
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({
         bookId: 10,
         status: "read",
+        book: { slug: "some-slug" },
       } as any);
 
       const entry = await setShelfStatus(1, "10", "read");
       expect(entry.status).toBe("read");
+      expect(entry.slug).toBe("some-slug");
       expect(prisma.bookStatus.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           update: { status: "read" },

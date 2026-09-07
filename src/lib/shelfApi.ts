@@ -6,6 +6,9 @@ export type ShelfStatus = "read" | "want_to_read";
 /** Полка как state: ключ книги (string — как во фронтовых Book.id) → статус */
 export type ShelfState = Record<string, ShelfStatus>;
 
+/** Маппинг slug → статус (для матчинга с книгами коллекций по slug) */
+export type SlugShelfState = Record<string, ShelfStatus>;
+
 /** Данные книги для find-or-create на сервере (для книг коллекций) */
 export interface ShelfBookData {
   title: string;
@@ -13,11 +16,13 @@ export interface ShelfBookData {
   coverImageUrl?: string;
   genre?: string;
   description?: string;
+  slug?: string;
 }
 
 interface ApiShelfEntry {
   bookId: number;
   status: ShelfStatus;
+  slug: string | null;
 }
 
 interface ApiImportResponse {
@@ -36,17 +41,22 @@ function toApiBookData(book: Partial<ShelfBookData>): ShelfBookData | undefined 
   if (book.coverImageUrl) data.coverImageUrl = book.coverImageUrl;
   if (book.genre) data.genre = book.genre;
   if (book.description) data.description = book.description;
+  if (book.slug) data.slug = book.slug;
   return data;
 }
 
 /** Получить полку авторизованного пользователя */
-export async function fetchShelf(): Promise<ShelfState> {
+export async function fetchShelf(): Promise<[ShelfState, SlugShelfState]> {
   const entries = await apiClient.get<ApiShelfEntry[]>("/shelf");
   const state: ShelfState = {};
+  const slugState: SlugShelfState = {};
   for (const entry of entries) {
     state[String(entry.bookId)] = entry.status;
+    if (entry.slug) {
+      slugState[entry.slug] = entry.status;
+    }
   }
-  return state;
+  return [state, slugState];
 }
 
 /** Книга полки (снимок из таблицы Book) */
@@ -83,7 +93,7 @@ export async function apiSetShelfStatus(
   bookKey: string,
   status: ShelfStatus,
   bookData?: Partial<ShelfBookData>,
-): Promise<{ bookId: number }> {
+): Promise<{ bookId: number; slug: string | null }> {
   const body: Record<string, unknown> = { status };
   const book = toApiBookData(bookData ?? {});
   if (book) body.book = book;
@@ -91,7 +101,7 @@ export async function apiSetShelfStatus(
     `/shelf/books/${encodeURIComponent(bookKey)}`,
     body,
   );
-  return { bookId: entry.bookId };
+  return { bookId: entry.bookId, slug: entry.slug ?? null };
 }
 
 /** Снять отметку с книги (по ключу; числовые ключи удаляют, остальные — no-op) */

@@ -17,6 +17,7 @@ import {
   apiImportShelf,
   type ShelfStatus,
   type ShelfState,
+  type SlugShelfState,
   type ShelfBookData,
 } from "@/lib/shelfApi";
 import { BookshelfContext, type BookshelfContextType } from "./bookshelf.context";
@@ -66,6 +67,7 @@ function toShelfBookData(
   if (bookData.coverImageUrl) data.coverImageUrl = bookData.coverImageUrl;
   if (bookData.genre) data.genre = bookData.genre;
   if (bookData.description) data.description = bookData.description;
+  if (bookData.slug) data.slug = bookData.slug;
   return data;
 }
 
@@ -142,7 +144,7 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
 
   // Серверная полка — только для авторизованных
   const {
-    data: serverShelf,
+    data: serverShelfData,
     isLoading: isServerLoading,
   } = useQuery({
     queryKey: shelfQueryKey,
@@ -150,6 +152,9 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
     enabled: isAuthenticated,
     staleTime: 60_000,
   });
+
+  const serverShelf = useMemo(() => serverShelfData?.[0] ?? {}, [serverShelfData]);
+  const serverSlugShelf = useMemo(() => serverShelfData?.[1] ?? {}, [serverShelfData]);
 
   // Merge гостевой полки после входа: гость дополняет аккаунт один раз
   const mergedRef = useRef(false);
@@ -197,6 +202,20 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
     return localShelf;
   }, [isAuthenticated, serverShelf, localShelf]);
 
+  // Полка по slug: авторизованный → серверная, гость → из meta
+  const slugShelf: SlugShelfState = useMemo(() => {
+    if (isAuthenticated) return serverSlugShelf ?? {};
+    // Гость: строим slug → status из guestBookMeta (slug хранится в meta)
+    const result: SlugShelfState = {};
+    for (const [key, status] of Object.entries(localShelf)) {
+      const meta = localShelfMeta[key];
+      if (meta?.slug) {
+        result[meta.slug] = status;
+      }
+    }
+    return result;
+  }, [isAuthenticated, serverSlugShelf, localShelf, localShelfMeta]);
+
   // Мутации для авторизованного пользователя (optimistic update)
   const setStatusMutation = useMutation({
     mutationFn: ({
@@ -208,9 +227,16 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
       status: ShelfStatus;
       bookData?: Partial<ShelfBookData>;
     }) => apiSetShelfStatus(bookKey, status, bookData),
-    onMutate: ({ bookKey, status }) => {
-      const prev = queryClient.getQueryData<ShelfState>(shelfQueryKey) ?? {};
-      const next = { ...prev, [bookKey]: status };
+    onMutate: ({ bookKey, status, bookData }) => {
+      const prev = queryClient.getQueryData<[ShelfState, SlugShelfState]>(shelfQueryKey) ?? [{}, {}];
+      const next: [ShelfState, SlugShelfState] = [
+        { ...prev[0], [bookKey]: status },
+        { ...prev[1] },
+      ];
+      // Обновить slug-кэш если есть slug
+      if (bookData?.slug) {
+        next[1][bookData.slug] = status;
+      }
       queryClient.setQueryData(shelfQueryKey, next);
       return { prev };
     },
@@ -219,13 +245,20 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
     onSuccess: (entry, { bookKey }) => {
       const serverKey = String(entry.bookId);
       if (serverKey === bookKey) return;
-      const current = queryClient.getQueryData<ShelfState>(shelfQueryKey) ?? {};
-      const status = current[bookKey];
+      const current = queryClient.getQueryData<[ShelfState, SlugShelfState]>(shelfQueryKey) ?? [{}, {}];
+      const status = current[0][bookKey];
       if (status === undefined) return;
-      const next = { ...current };
-      delete next[bookKey];
-      next[serverKey] = status;
-      queryClient.setQueryData<ShelfState>(shelfQueryKey, next);
+      const next: [ShelfState, SlugShelfState] = [
+        { ...current[0] },
+        { ...current[1] },
+      ];
+      delete next[0][bookKey];
+      next[0][serverKey] = status;
+      // Обновить slug если сервер вернул slug
+      if (entry.slug) {
+        next[1][entry.slug] = status;
+      }
+      queryClient.setQueryData(shelfQueryKey, next);
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(shelfQueryKey, ctx.prev);
@@ -236,11 +269,24 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
   });
 
   const removeStatusMutation = useMutation({
-    mutationFn: (bookId: string) => apiRemoveShelfStatus(bookId),
-    onMutate: (bookId) => {
-      const prev = queryClient.getQueryData<ShelfState>(shelfQueryKey) ?? {};
-      const next = { ...prev };
-      delete next[bookId];
+    mutationFn: ({ bookKey }: { bookKey: string }) => apiRemoveShelfStatus(bookKey),
+    onMutate: ({ bookKey }) => {
+      const prev = queryClient.getQueryData<[ShelfState, SlugShelfState]>(shelfQueryKey) ?? [{}, {}];
+      const next: [ShelfState, SlugShelfState] = [
+        { ...prev[0] },
+        { ...prev[1] },
+      ];
+      delete next[0][bookKey];
+      // Удалить slug-запись: найти slug по значению статуса (приближённо)
+      const removedStatus = prev[0][bookKey];
+      if (removedStatus) {
+        for (const [slug, status] of Object.entries(next[1])) {
+          if (status === removedStatus) {
+            delete next[1][slug];
+            break; // удаляем первое совпадение
+          }
+        }
+      }
       queryClient.setQueryData(shelfQueryKey, next);
       return { prev };
     },
@@ -256,11 +302,26 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
   const removeBooksMutation = useMutation({
     mutationFn: (bookIds: string[]) => apiRemoveShelfBooks(bookIds),
     onMutate: (bookIds) => {
-      const prev = queryClient.getQueryData<ShelfState>(shelfQueryKey) ?? {};
+      const prev = queryClient.getQueryData<[ShelfState, SlugShelfState]>(shelfQueryKey) ?? [{}, {}];
       const idSet = new Set(bookIds);
-      const next: ShelfState = {};
-      for (const [bookId, status] of Object.entries(prev)) {
-        if (!idSet.has(bookId)) next[bookId] = status;
+      // Собрать статусы удаляемых книг для очистки slugShelf
+      const removedStatuses = new Set<ShelfStatus>();
+      for (const bookId of bookIds) {
+        const s = prev[0][bookId];
+        if (s) removedStatuses.add(s);
+      }
+      const next: [ShelfState, SlugShelfState] = [
+        {},
+        {},
+      ];
+      for (const [bookId, status] of Object.entries(prev[0])) {
+        if (!idSet.has(bookId)) next[0][bookId] = status;
+      }
+      // Сохранить slug-записи только для оставшихся книг (у которых bookId ещё в next[0])
+      for (const [slug, status] of Object.entries(prev[1])) {
+        if (!removedStatuses.has(status)) {
+          next[1][slug] = status;
+        }
       }
       queryClient.setQueryData(shelfQueryKey, next);
       return { prev };
@@ -282,7 +343,7 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
       if (isAuthenticated) {
         const current = serverShelf?.[bookKey];
         if (current === status) {
-          removeStatusMutation.mutate(bookKey);
+          removeStatusMutation.mutate({ bookKey });
         } else {
           setStatusMutation.mutate({ bookKey, status, bookData });
         }
@@ -331,7 +392,7 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
   const removeStatus = useCallback(
     (bookKey: string) => {
       if (isAuthenticated) {
-        removeStatusMutation.mutate(bookKey);
+        removeStatusMutation.mutate({ bookKey });
       } else {
         setLocalShelf((prev) => {
           if (!prev[bookKey]) return prev;
@@ -383,7 +444,7 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
       if (bookKeys.length > 0) {
         removeBooksMutation.mutate(bookKeys);
       } else {
-        queryClient.setQueryData<ShelfState>(shelfQueryKey, {});
+        queryClient.setQueryData<[ShelfState, SlugShelfState]>(shelfQueryKey, [{}, {}]);
       }
     } else {
       setLocalShelf({});
@@ -431,6 +492,7 @@ export function BookshelfProvider({ children }: { children: ReactNode }) {
 
   const value: BookshelfContextType = {
     shelf,
+    slugShelf,
     guestBookMeta: localShelfMeta,
     isLoading: isAuthenticated ? isServerLoading : false,
     totalCount: counts.totalCount,

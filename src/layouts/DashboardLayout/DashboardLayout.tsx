@@ -4,7 +4,7 @@ import { Footer } from "@/ui/Footer";
 import { MobileBottomNav } from "@/ui/MobileBottomNav";
 import { PageContainer } from "@/components/PageContainer/PageContainer";
 
-type BgVariant = "gradient" | "dark" | "clay";
+type BgVariant = "gradient" | "dark" | "clay" | "collection";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -46,6 +46,9 @@ const BG_STYLES: Record<BgVariant, React.CSSProperties> = {
       "linear-gradient(180deg, #d9f2e7 0%, #cdeee1 55%, #c2e6d8 100%)",
     ].join(", "),
     backgroundAttachment: "fixed",
+  },
+  collection: {
+    backgroundColor: "#0f131d",
   },
 };
 

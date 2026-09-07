@@ -126,7 +126,7 @@ export default function CollectionPage() {
           url={seoUrl}
           breadcrumbs={seoBreadcrumbs}
         />
-        <DashboardLayout showSearch={false}>
+        <DashboardLayout showSearch={false} bgVariant="collection">
           <div className="max-w-4xl mx-auto px-6 py-12">
             <div className="animate-pulse">
               <div className="h-4 bg-(--bg-1) rounded w-20 mb-4" />
@@ -154,7 +154,7 @@ export default function CollectionPage() {
           url={seoUrl}
           breadcrumbs={seoBreadcrumbs}
         />
-        <DashboardLayout showSearch={false}>
+        <DashboardLayout showSearch={false} bgVariant="collection">
           <div className="max-w-4xl mx-auto px-6 py-12 text-center">
             <h1 className="text-2xl font-bold mb-4">{seoTitle}</h1>
             <p className="text-(--ink-2)">Коллекция временно недоступна. Попробуйте обновить страницу.</p>
@@ -181,6 +181,7 @@ export default function CollectionPage() {
 
       <DashboardLayout
         showSearch={false}
+        bgVariant="collection"
       >
         {themeConfig ? (
           /* ── Themed layout ── */

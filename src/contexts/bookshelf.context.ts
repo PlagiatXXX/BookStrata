@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import type { ShelfStatus, ShelfState, ShelfBookData } from "@/lib/shelfApi";
+import type { ShelfStatus, ShelfState, SlugShelfState, ShelfBookData } from "@/lib/shelfApi";
 
 /** Статус «Прочитал» — подтип статусов полки (для совместимости со старым кодом) */
 export type ReadStatus = Extract<ShelfStatus, "read">;
@@ -10,6 +10,8 @@ export type GuestBookMeta = Record<string, ShelfBookData>;
 export interface BookshelfContextType {
   /** Вся полка: bookId (string) → статус */
   shelf: ShelfState;
+  /** Полка по slug: slug → статус (для матчинга с книгами коллекций) */
+  slugShelf: SlugShelfState;
   /** Данные книг гостевой полки (localStorage) — для карточек неавторизованного */
   guestBookMeta: GuestBookMeta;
   isLoading: boolean;

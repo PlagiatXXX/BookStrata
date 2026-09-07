@@ -5,6 +5,7 @@ import type { ShelfStatus } from "./shelf.schema.js";
 export interface ShelfEntry {
   bookId: number;
   status: ShelfStatus;
+  slug: string | null;
 }
 
 /** Данные книги для find-or-create (когда bookId не число) */
@@ -14,6 +15,7 @@ export interface ShelfBookData {
   coverImageUrl?: string;
   genre?: string;
   description?: string;
+  slug?: string;
 }
 
 /**
@@ -54,6 +56,7 @@ async function findOrCreateBook(data: ShelfBookData): Promise<number> {
       coverImageUrl: data.coverImageUrl ?? "",
       genre: data.genre ?? null,
       description: data.description ?? null,
+      slug: data.slug ?? null,
     },
     select: { id: true },
   });
@@ -66,12 +69,13 @@ async function findOrCreateBook(data: ShelfBookData): Promise<number> {
 export async function getShelf(userId: number): Promise<ShelfEntry[]> {
   const rows = await prisma.bookStatus.findMany({
     where: { userId },
-    select: { bookId: true, status: true },
+    select: { bookId: true, status: true, book: { select: { slug: true } } },
     orderBy: { createdAt: "asc" },
   });
   return rows.map((row) => ({
     bookId: row.bookId,
     status: row.status as ShelfStatus,
+    slug: row.book.slug ?? null,
   }));
 }
 
@@ -151,10 +155,10 @@ export async function setShelfStatus(
     where: { bookId_userId: { bookId, userId } },
     create: { bookId, userId, status },
     update: { status },
-    select: { bookId: true, status: true },
+    select: { bookId: true, status: true, book: { select: { slug: true } } },
   });
 
-  return { bookId: row.bookId, status: row.status as ShelfStatus };
+  return { bookId: row.bookId, status: row.status as ShelfStatus, slug: row.book.slug ?? null };
 }
 
 /**

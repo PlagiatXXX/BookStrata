@@ -1,3 +1,7 @@
+/* ── Google Fonts for Collection Page ── */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
+
 @import "tailwindcss";
 
 :root {
@@ -15,6 +19,27 @@
   --ink-1: #b8b1a3;
   --accent-main: #d94f2b;
   --accent-alt: #2f6b5f;
+
+  /* ── Collection page colors (from reference/DESIGN.md) ── */
+  --collection-bg: #0f131d;
+  --collection-surface: rgba(28, 31, 42, 0.7);
+  --collection-surface-solid: #1c1f2a;
+  --collection-surface-high: #262a35;
+  --collection-accent: #f59e0b;
+  --collection-accent-hover: #fb923c;
+  --collection-primary: #ffc174;
+  --collection-on-primary: #472a00;
+  --collection-on-surface: #dfe2f1;
+  --collection-on-surface-variant: #d8c3ad;
+  --collection-outline: #a08e7a;
+  --collection-border: rgba(255, 255, 255, 0.07);
+  --collection-glass: rgba(17, 24, 39, 0.7);
+
+  /* ── Collection typography ── */
+  --font-display: 'Newsreader', serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
   --line-strong: #f3efe6;
   --line-soft: #3a352f;
 

@@ -30,7 +30,7 @@ vi.mock("@/hooks/useBookRating", () => ({
 
 const toggleStatusMock = vi.fn();
 vi.mock("@/hooks/useBookshelf", () => ({
-  useBookshelf: vi.fn(() => ({ shelf: {}, toggleStatus: toggleStatusMock })),
+  useBookshelf: vi.fn(() => ({ shelf: {}, slugShelf: {}, toggleStatus: toggleStatusMock })),
 }));
 
 // Мокаем «тяжёлые» общие компоненты — они не относятся к странице книги
@@ -227,6 +227,7 @@ describe("BookPage", () => {
   it("книга уже на полке → кнопка «Уже в плане»", async () => {
     mockedUseBookshelf.mockReturnValue({
       shelf: { "1": "want_to_read" },
+      slugShelf: {},
       toggleStatus: toggleStatusMock,
     } as never);
     mockedUseBook.mockReturnValue({
@@ -238,7 +239,7 @@ describe("BookPage", () => {
     renderPage();
 
     expect(await screen.findByText("Уже в плане")).toBeTruthy();
-    mockedUseBookshelf.mockReturnValue({ shelf: {}, toggleStatus: toggleStatusMock } as never);
+    mockedUseBookshelf.mockReturnValue({ shelf: {}, slugShelf: {}, toggleStatus: toggleStatusMock } as never);
   });
 
   it("показывает ошибку с кнопкой повтора при сбое загрузки", () => {

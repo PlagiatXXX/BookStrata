@@ -22,7 +22,7 @@ export default function RankingsPage() {
     staleTime: 120_000,
   });
 
-  const { data: trendingBooks = [] } = useQuery({
+  const { data: trendingBooks = [], isLoading: trendingLoading } = useQuery({
     queryKey: ["trending-books"],
     queryFn: getTrendingBooks,
     staleTime: 300_000,
@@ -39,11 +39,22 @@ export default function RankingsPage() {
       <DashboardLayout showSearch={false}>
         <RankingsHero onAiOpen={handleAiOpen} />
 
-        {trendingBooks.length > 0 && (
-          <div className="max-w-7xl mx-auto px-4 md:px-16 pt-1 pb-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-16 pt-1 pb-8">
+          {trendingLoading ? (
+            <div>
+              <h2 className="font-display text-xl md:text-2xl font-bold text-on-surface mb-6 text-glow-subtle">
+                Тренды недели
+              </h2>
+              <div className="flex gap-4 py-6 px-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="shrink-0 w-28 md:w-40 aspect-[2/3] rounded-lg animate-pulse bg-white/5" />
+                ))}
+              </div>
+            </div>
+          ) : trendingBooks.length > 0 ? (
             <TrendingBooksCarousel books={trendingBooks} />
-          </div>
-        )}
+          ) : null}
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 md:px-16 py-8">
           {collLoading ? (

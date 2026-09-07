@@ -86,6 +86,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
         book.coverUrl,
       genre: book.genre,
       description: book.description,
+      slug: book.slug ?? undefined,
     });
     sileo.success({
       title: isRemoving ? "Отметка снята" : "Добавлено в полку",

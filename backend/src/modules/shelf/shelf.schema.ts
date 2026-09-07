@@ -17,6 +17,7 @@ const setStatusBodySchema = z.object({
       coverImageUrl: z.string().max(500).optional(),
       genre: z.string().max(200).optional(),
       description: z.string().max(5000).optional(),
+      slug: z.string().max(300).optional(),
     })
     .optional(),
 });
@@ -29,15 +30,16 @@ const importBodySchema = z.object({
       z.object({
         bookKey: z.string().min(1).max(300),
         status: shelfStatusSchema,
-        book: z
-          .object({
-            title: z.string().min(1).max(500),
-            author: z.string().max(300).optional(),
-            coverImageUrl: z.string().max(500).optional(),
-            genre: z.string().max(200).optional(),
-            description: z.string().max(5000).optional(),
-          })
-          .optional(),
+            book: z
+              .object({
+                title: z.string().min(1).max(500),
+                author: z.string().max(300).optional(),
+                coverImageUrl: z.string().max(500).optional(),
+                genre: z.string().max(200).optional(),
+                description: z.string().max(5000).optional(),
+                slug: z.string().max(300).optional(),
+              })
+              .optional(),
       }),
     )
     .max(1000, "Слишком много книг в полке"),
@@ -70,6 +72,7 @@ export const setShelfStatusSchema = {
           coverImageUrl: { type: "string", maxLength: 500 },
           genre: { type: "string", maxLength: 200 },
           description: { type: "string", maxLength: 5000 },
+          slug: { type: "string", maxLength: 300 },
         },
         additionalProperties: false,
       },
@@ -102,6 +105,7 @@ export const importShelfSchema = {
                 coverImageUrl: { type: "string", maxLength: 500 },
                 genre: { type: "string", maxLength: 200 },
                 description: { type: "string", maxLength: 5000 },
+                slug: { type: "string", maxLength: 300 },
               },
               additionalProperties: false,
             },

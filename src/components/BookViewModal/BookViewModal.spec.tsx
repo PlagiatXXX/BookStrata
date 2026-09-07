@@ -8,7 +8,7 @@ vi.mock("@/ui/Modal", () => ({
   Modal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 vi.mock("@/hooks/useBookshelf", () => ({
-  useBookshelf: () => ({ shelf: {}, toggleStatus: vi.fn() }),
+  useBookshelf: () => ({ shelf: {}, slugShelf: {}, toggleStatus: vi.fn() }),
 }));
 vi.mock("@/lib/ratingsApi", () => ({
   getBookRatings: vi.fn().mockResolvedValue(null),

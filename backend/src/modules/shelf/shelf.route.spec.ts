@@ -56,8 +56,8 @@ describe("Shelf Routes", () => {
     it("должен вернуть полку пользователя", async () => {
       const { prisma } = await import("../../lib/prisma.js");
       vi.mocked(prisma.bookStatus.findMany).mockResolvedValue([
-        { bookId: 10, status: "read", createdAt: new Date() },
-        { bookId: 11, status: "want_to_read", createdAt: new Date() },
+        { bookId: 10, status: "read", createdAt: new Date(), book: { slug: "anna-karenina" } },
+        { bookId: 11, status: "want_to_read", createdAt: new Date(), book: { slug: null } },
       ] as any);
 
       const res = await request(app.server)
@@ -66,7 +66,8 @@ describe("Shelf Routes", () => {
         .expect(200);
 
       expect(res.body.data).toHaveLength(2);
-      expect(res.body.data[0]).toEqual({ bookId: 10, status: "read" });
+      expect(res.body.data[0]).toEqual({ bookId: 10, status: "read", slug: "anna-karenina" });
+      expect(res.body.data[1]).toEqual({ bookId: 11, status: "want_to_read", slug: null });
     });
 
     it("должен вернуть 401 без авторизации", async () => {
@@ -103,6 +104,7 @@ describe("Shelf Routes", () => {
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({
         bookId: 10,
         status: "read",
+        book: { slug: null },
       } as any);
 
       const res = await request(app.server)
@@ -111,7 +113,7 @@ describe("Shelf Routes", () => {
         .send({ status: "read" })
         .expect(200);
 
-      expect(res.body.data).toEqual({ bookId: 10, status: "read" });
+      expect(res.body.data).toEqual({ bookId: 10, status: "read", slug: null });
       expect(prisma.bookStatus.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { bookId_userId: { bookId: 10, userId: 1 } },
@@ -127,6 +129,7 @@ describe("Shelf Routes", () => {
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({
         bookId: 42,
         status: "read",
+        book: { slug: "astralnaya-biblioteka" },
       } as any);
 
       const res = await request(app.server)
@@ -138,11 +141,12 @@ describe("Shelf Routes", () => {
             title: "Астральная библиотека",
             author: "Кейт Куинн",
             coverImageUrl: "/images/collections/test.webp",
+            slug: "astralnaya-biblioteka",
           },
         })
         .expect(200);
 
-      expect(res.body.data).toEqual({ bookId: 42, status: "read" });
+      expect(res.body.data).toEqual({ bookId: 42, status: "read", slug: "astralnaya-biblioteka" });
       expect(prisma.book.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ title: "Астральная библиотека" }),
         select: { id: true },

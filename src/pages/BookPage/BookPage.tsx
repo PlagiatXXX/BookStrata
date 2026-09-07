@@ -138,6 +138,7 @@ export default function BookPage() {
       coverImageUrl: book.coverImageUrl || undefined,
       genre: book.genre ?? undefined,
       description: book.description ?? undefined,
+      slug: book.slug ?? undefined,
     });
     if (!isAlreadyWantToRead) {
       sileo.success({
@@ -636,7 +637,7 @@ function StarGlyph({
   // Частичная: внизу пустой контур, сверху — градиентная заливка по глифу
   const pct = Math.round((fraction ?? 0) * 100 * 10) / 10;
   return (
-    <span className="text-xl shrink-0 relative inline-block">
+    <span className="text-xl shrink-0 relative inline-flex items-center">
       <Icon
         name="star"
         className="absolute inset-0 text-white/30"

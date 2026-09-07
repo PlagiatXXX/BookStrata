@@ -40,6 +40,7 @@ vi.mock("@/hooks/useAuthContext", () => ({
 vi.mock("@/hooks/useBookshelf", () => ({
   useBookshelf: vi.fn(() => ({
     shelf: {},
+    slugShelf: {},
     guestBookMeta: {},
     isLoading: false,
     totalCount: 0,

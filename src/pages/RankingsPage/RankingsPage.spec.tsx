@@ -113,10 +113,11 @@ describe("RankingsPage", () => {
 
   it("показывает скелетон при загрузке", async () => {
     vi.mocked(getFeaturedCollections).mockReturnValue(new Promise(() => {})); // never resolves
+    vi.mocked(getTrendingBooks).mockReturnValue(new Promise(() => {})); // never resolves
     renderPage();
     expect(await screen.findByTestId("hero")).toBeTruthy();
     const skeletons = document.querySelectorAll(".animate-pulse");
-    expect(skeletons.length).toBe(6);
+    expect(skeletons.length).toBe(12); // 6 trending + 6 collections
   });
 
   it("показывает ошибку при загрузке коллекций", async () => {
