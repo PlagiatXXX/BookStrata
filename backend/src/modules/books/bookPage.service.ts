@@ -2,6 +2,8 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { normTitleForSql } from "../tier-lists/tierList.books.service.js";
+import type { ReadingGuide } from "./readingGuide.schema.js";
+import type { ReadingProfile } from "./readingProfile.schema.js";
 
 /** Компактная выборка книги для карточек (similarBooks / otherBooksByAuthor) */
 const bookCardSelect = {
@@ -42,6 +44,8 @@ export interface BookPageData {
     publishedYear: number | null;
     isbn: string | null;
     contextChain: unknown;
+    readingGuide: ReadingGuide | null;
+    readingProfile: ReadingProfile | null;
   };
   author: { id: number; name: string; slug: string | null } | null;
   tierLists: { id: string; slug: string | null; title: string; isPublic: boolean }[];
@@ -83,6 +87,8 @@ export async function getBookPageData(
       publishedYear: true,
       isbn: true,
       contextChain: true,
+      readingGuide: true,
+      readingProfile: true,
       mergedIntoId: true,
       authorRel: { select: { id: true, name: true, slug: true } },
     },
@@ -226,6 +232,8 @@ export async function getBookPageData(
       publishedYear: book.publishedYear,
       isbn: book.isbn,
       contextChain: book.contextChain,
+      readingGuide: book.readingGuide as ReadingGuide | null,
+      readingProfile: book.readingProfile as ReadingProfile | null,
     },
     author: book.authorRel,
     tierLists,

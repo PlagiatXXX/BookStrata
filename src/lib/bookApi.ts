@@ -10,6 +10,33 @@ export interface BookContextChainItem {
   text: string;
 }
 
+/** AI-паспорт «Гид по чтению» (Book.readingGuide). Структура валидируется
+ *  на бэке; тут только транспортный тип (значения enum — строки). */
+export interface ReadingGuide {
+  short_hook: string;
+  target_audience: string;
+  not_recommended_for: string;
+  reading_pace: string;
+  difficulty: string;
+  vibe: string;
+  key_takeaways: string[];
+}
+
+/** Reading DNA — профиль книги для Book Match (нормализованные значения по 4 осям). */
+export interface ReadingProfile {
+  storyFocus: number;
+  emotionalWeight: number;
+  pace: number;
+  darkness: number;
+  confidence: {
+    storyFocus: number;
+    emotionalWeight: number;
+    pace: number;
+    darkness: number;
+  };
+  source: "ai" | "manual" | "calibrated";
+}
+
 /** Компактная карточка книги (similarBooks / otherBooksByAuthor) */
 export interface BookCard {
   id: number;
@@ -61,6 +88,8 @@ export interface BookPageData {
     publishedYear: number | null;
     isbn: string | null;
     contextChain: BookContextChainItem[] | null;
+    readingGuide: ReadingGuide | null;
+    readingProfile: ReadingProfile | null;
   };
   author: { id: number; name: string; slug: string | null } | null;
   tierLists: { id: string; slug: string | null; title: string; isPublic: boolean }[];

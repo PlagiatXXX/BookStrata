@@ -10,6 +10,34 @@ export interface ContextChainItem {
   text: string;
 }
 
+/** AI-паспорт «Гид по чтению» (Book.readingGuide). Значения темпа/сложности
+ *  валидируются enum'ами на бэке; на фронте unknown-значения рендерятся
+ *  нейтральным текстом (см. BookReadingGuide). */
+export interface ReadingGuide {
+  short_hook: string;
+  target_audience: string;
+  not_recommended_for: string;
+  reading_pace: string;
+  difficulty: string;
+  vibe: string;
+  key_takeaways: string[];
+}
+
+/** Reading DNA — профиль книги для Book Match (Book.readingProfile). */
+export interface ReadingProfile {
+  storyFocus: number;
+  emotionalWeight: number;
+  pace: number;
+  darkness: number;
+  confidence: {
+    storyFocus: number;
+    emotionalWeight: number;
+    pace: number;
+    darkness: number;
+  };
+  source: "ai" | "manual" | "calibrated";
+}
+
 export interface AdminBookListItem {
   id: number;
   title: string;
@@ -41,6 +69,8 @@ export interface AdminBookDetail extends AdminBookListItem {
   publishedYear: number | null;
   isbn: string | null;
   contextChain: ContextChainItem[] | null;
+  readingGuide: ReadingGuide | null;
+  readingProfile: ReadingProfile | null;
   createdAt: string;
   authorRel: { name: string } | null;
   slugHistory: { id: number; oldSlug: string; createdAt: string }[];
@@ -68,6 +98,8 @@ export interface BookUpdateInput {
   publishedYear?: number | null;
   slug?: string;
   contextChain?: ContextChainItem[] | null;
+  readingGuide?: ReadingGuide | null;
+  readingProfile?: ReadingProfile | null;
   isTrending?: boolean;
   /** Рейтинг каталога 0–10 */
   rating?: number | null;

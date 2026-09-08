@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { searchBooks } from "./books.service.js";
 import { searchCatalogBooks } from "./catalogSearch.service.js";
 import { getTrendingBooks } from "./trending.service.js";
+import { getMatchedBooks } from "./readingMatch.service.js";
 import { getBookPageData } from "./bookPage.service.js";
 import { toggleBookLike } from "./bookLike.service.js";
 import {
@@ -93,6 +94,56 @@ export async function booksRoutes(fastify: FastifyInstance) {
       const books = await searchCatalogBooks(q, limit);
       return reply.code(200).send(createSuccessResponse({ books }));
     }
+  );
+
+  // GET /match — топ-N книг под настроение (Book Match recommendations).
+  // ВАЖНО: регистрируется до /:slug, иначе slug-роут перехватит путь.
+  fastify.get<{
+    Querystring: {
+      storyFocus?: number;
+      emotionalWeight?: number;
+      pace?: number;
+      darkness?: number;
+      limit?: number;
+      exclude?: string;
+    };
+  }>("/match",
+    {
+      schema: {
+        querystring: {
+          type: "object",
+          properties: {
+            storyFocus: { type: "number", minimum: 0, maximum: 100 },
+            emotionalWeight: { type: "number", minimum: 0, maximum: 100 },
+            pace: { type: "number", minimum: 0, maximum: 100 },
+            darkness: { type: "number", minimum: 0, maximum: 100 },
+            limit: { type: "number", minimum: 1, maximum: 10, default: 3 },
+            exclude: { type: "string" },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { storyFocus, emotionalWeight, pace, darkness, limit = 3, exclude } = request.query;
+
+      if (
+        storyFocus === undefined &&
+        emotionalWeight === undefined &&
+        pace === undefined &&
+        darkness === undefined
+      ) {
+        return reply.code(400).send(
+          createApiError(ErrorCodes.VALIDATION_ERROR, "Укажите хотя бы один параметр настроения"),
+        );
+      }
+
+      const books = await getMatchedBooks(
+        { storyFocus, emotionalWeight, pace, darkness },
+        limit,
+        exclude,
+      );
+      return reply.send(createSuccessResponse({ books }));
+    },
   );
 
   // GET /:slug — публичная страница книги (только published-книги; draft → 404)
