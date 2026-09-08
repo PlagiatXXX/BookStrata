@@ -200,4 +200,193 @@
   .bp-book-hover-lift:hover {
     transform: none;
   }
+  .bp-vibe-ticket:hover {
+    transform: none;
+  }
+}
+
+/* ── Vibe Ticket — мягкая пастельная карточка (based on Uiverse.io) ── */
+.bp-vibe-ticket {
+  --vt-width: 190px;
+  --vt-height: 260px;
+  --vt-radius: 50px;
+
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 1rem;
+  grid-template-areas:
+    "header"
+    "body";
+
+  width: var(--vt-width);
+  height: var(--vt-height);
+  padding: 1.25rem 0.5rem;
+  overflow: hidden;
+
+  background: rgb(223, 225, 235);
+  border-radius: var(--vt-radius);
+  box-shadow:
+    rgba(0, 0, 0, 0.17) 0px -23px 25px 0px inset,
+    rgba(0, 0, 0, 0.15) 0px -36px 30px 0px inset,
+    rgba(0, 0, 0, 0.1) 0px -79px 40px 0px inset,
+    rgba(0, 0, 0, 0.06) 0px 2px 1px,
+    rgba(0, 0, 0, 0.09) 0px 4px 2px,
+    rgba(0, 0, 0, 0.09) 0px 8px 4px,
+    rgba(0, 0, 0, 0.09) 0px 16px 8px,
+    rgba(0, 0, 0, 0.09) 0px 32px 16px;
+
+  transition: transform 0.3s ease;
+  user-select: none;
+}
+
+.bp-vibe-ticket:hover {
+  transform: translateY(-4px);
+}
+
+/* ── Заголовок: "ВАЙБ" ── */
+.bp-vibe-ticket-header {
+  grid-area: header;
+  margin: 0 8px;
+  text-align: center;
+  font-family: "Impact", "Oswald", sans-serif;
+  font-size: 2rem;
+  letter-spacing: 4px;
+  color: #2b2d42;
+}
+
+/* ── Тело: теги ── */
+.bp-vibe-ticket-body {
+  grid-area: body;
+  margin: 0 1em;
+  padding: 0.5em;
+  font-weight: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.bp-vibe-tag {
+  padding: 0.15rem 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #2b2d42;
+  white-space: nowrap;
+}
+
+/* ── Футер удалён: счётчик вайбов больше не нужен ── */
+
+/* ── Book Accordion — аккордеон-книги на полке ── */
+.bp-book-shelf {
+  display: flex;
+  gap: 12px;
+  height: 140px;
+}
+
+.bp-book-panel {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s;
+}
+
+.bp-book-panel:hover {
+  flex: 5;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Номер — скрыт на десктопе */
+.bp-book-num {
+  display: none;
+}
+
+/* Текст тезиса (аккордеон) */
+.bp-book-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  margin: 0 auto;
+  transform: rotate(-90deg);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s,
+              padding 0.4s,
+              width 0.4s,
+              font-size 0.3s;
+}
+
+.bp-book-panel:hover .bp-book-text {
+  width: 100%;
+  transform: rotate(0);
+  justify-content: flex-start;
+  padding: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Мобильный текст — скрыт на десктопе */
+.bp-book-mobile-text {
+  display: none;
+}
+
+/* Мобилка — обычный список */
+@media (max-width: 767px) {
+  .bp-book-shelf {
+    flex-direction: column;
+    height: auto;
+    gap: 8px;
+  }
+
+  .bp-book-panel {
+    flex: none;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Скрываем аккордеон-текст на мобилке */
+  .bp-book-text {
+    display: none;
+  }
+
+  /* Показываем номер */
+  .bp-book-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.5rem;
+    background: rgba(249, 115, 22, 0.1);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgb(251, 146, 60);
+    flex-shrink: 0;
+  }
+
+  /* Показываем мобильный текст */
+  .bp-book-mobile-text {
+    display: block;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+    padding-top: 0.2rem;
+  }
 }

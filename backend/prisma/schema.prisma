@@ -118,7 +118,9 @@ rating          Float?          // Рейтинг каталога 0–10; си�
 likesCount      Int             @default(0) // Счётчик лайков (денормализация)
 isTrending      Boolean         @default(false) @map("is_trending")
 mergedIntoId    Int?            // Аудит дедупа: id книги-канона, поглотившего эту запись (иная запись)
-contextChain    Json?           // Редакторский блок «Погружение в контекст»: [{ icon, title, text }]
+  contextChain    Json?           // Редакторский блок «Погружение в контекст»: [{ icon, title, text }]
+  readingGuide   Json?           // AI-паспорт «Гид по чтению»: { short_hook, target_audience, not_recommended_for, reading_pace, difficulty, vibe, key_takeaways }
+  readingProfile Json?           // Reading DNA: { storyFocus, emotionalWeight, pace, darkness, confidence, source }
 user            User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
 placements      BookPlacement[]
 ratings         BookRating[]

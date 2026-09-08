@@ -2,6 +2,7 @@
 // Утилиты SEO для страницы книги: meta description и JSON-LD (Schema.org Book).
 // Вынесены в отдельный файл — react-refresh запрещает экспорт не-компонентов
 // из файлов компонентов.
+import type { ReadingGuide } from "@/lib/bookApi";
 
 /**
  * Meta description для страницы книги: первые ~155 символов описания
@@ -22,6 +23,13 @@ export function buildDescriptionSnippet(book: { title: string; author: string | 
  * aggregateRating намеренно НЕ размечаем (решение 14.08): редакторский
  * рейтинг с ratingCount: 1 — риск спам-фильтра Google на все rich-результаты.
  * Рейтинг остаётся видимым на странице; вернём разметку с реальными голосами.
+ *
+ * AI-паспорт «Гид по чтению» (если заполнен) обогащает разметку ТОЛЬКО
+ * честными полями Book (решение 08.09): disambiguatingDescription (хук) и
+ * keywords (вайб/темп/сложность/тезисы) — все эти тексты реально видны на
+ * странице в блоке «Гид по чтению». Синтетический Review сознательно
+ * НЕ добавляем: сгенерированный ИИ «отзыв организации» — триггер
+ * спам-фильтров поисковиков на все rich-результаты сайта.
  */
 export function buildBookJsonLd(book: {
   title: string;
@@ -31,17 +39,39 @@ export function buildBookJsonLd(book: {
   genre: string | null;
   publishedYear: number | null;
   isbn: string | null;
+  /** AI-паспорт «Гид по чтению» (Book.readingGuide), опционально */
+  readingGuide?: ReadingGuide | null;
   /** Канонический URL страницы книги (для url и mainEntityOfPage) */
   url: string;
 }): Record<string, unknown> {
+  const guide = book.readingGuide ?? null;
+
+  // Description: хук паспорта вперёд (уникальная суть), затем синопсис.
+  // Хук и аудитория реально отображаются на странице — правила Schema.org
+  // «разметка = видимый контент» соблюдены.
+  const enrichedDescription =
+    guide && guide.short_hook
+      ? [guide.short_hook, book.description].filter(Boolean).join(" ")
+      : book.description;
+
+  const keywords = guide
+    ? [guide.vibe, guide.reading_pace, guide.difficulty, book.genre, ...guide.key_takeaways]
+        .filter(Boolean)
+        .join(", ")
+    : null;
+
   return {
     "@context": "https://schema.org",
     "@type": "Book",
     name: book.title,
     ...(book.author ? { author: { "@type": "Person", name: book.author } } : {}),
     ...(book.coverImageUrl ? { image: book.coverImageUrl } : {}),
-    ...(book.description ? { description: book.description } : {}),
+    ...(enrichedDescription ? { description: enrichedDescription } : {}),
+    ...(guide?.short_hook
+      ? { disambiguatingDescription: guide.short_hook }
+      : {}),
     ...(book.genre ? { genre: book.genre } : {}),
+    ...(keywords ? { keywords } : {}),
     ...(book.publishedYear ? { datePublished: String(book.publishedYear) } : {}),
     ...(book.isbn ? { isbn: book.isbn } : {}),
     inLanguage: "ru",
