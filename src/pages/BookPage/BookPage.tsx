@@ -26,6 +26,8 @@ import { Icon } from "@/components/Icon";
 import { BookCover3D } from "./BookCover3D";
 import { BookRatingPanel } from "./BookRatingPanel";
 import { BookContextChain } from "./BookContextChain";
+import { BookReadingGuide } from "./BookReadingGuide";
+import { BookMatch, BookMatchBadge } from "@/features/book-match/components";
 // import { ContentLock } from "./ContentLock"; // отключено для открытого доступа к страницам книг
 import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
@@ -481,6 +483,17 @@ export default function BookPage() {
           description="Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы"
           redirectTo={`/books/${slug}`}
         > */}
+          {/* ── Гид по чтению (AI-паспорт) ── */}
+          {book.readingGuide && <BookReadingGuide guide={book.readingGuide} />}
+
+          {/* ── Book Match — совместимость читателя и книги ── */}
+          {book.readingProfile && (
+            <div className="mb-6 flex justify-center">
+              <BookMatchBadge book={book.readingProfile} />
+            </div>
+          )}
+          {book.readingProfile && <BookMatch book={book.readingProfile} bookTitle={book.title} bookSlug={book.slug ?? undefined} />}
+
           {/* ── Погружение в контекст ── */}
           {contextChain.length > 0 && <BookContextChain items={contextChain} />}
 

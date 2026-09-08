@@ -83,6 +83,8 @@ const bookPageData: BookPageData = {
     publishedYear: 1925,
     isbn: null,
     contextChain: null,
+    readingGuide: null,
+    readingProfile: null,
   },
   author: { id: 1, name: "Ф. Скотт Фицджеральд", slug: "f-skott-fitsdzherald" },
   tierLists: [{ id: "tl-1", slug: "top-100", title: "Топ-100 классики", isPublic: true }],
@@ -157,6 +159,55 @@ describe("BookPage", () => {
     expect(screen.getByText("Великие романы")).toBeTruthy();
     expect(screen.getByText("Стивен Кинг")).toBeTruthy();
     expect(screen.getByText("Обсуждение")).toBeTruthy();
+  });
+
+  it("показывает «Гид по чтению» при заполненном AI-паспорте", async () => {
+    mockedUseBook.mockReturnValue({
+      data: {
+        ...bookPageData,
+        book: {
+          ...bookPageData.book,
+          readingGuide: {
+            short_hook: "История любви и мифа об американской мечте.",
+            target_audience: "Ценителям лиричной прозы и атмосферных романов.",
+            not_recommended_for: "Тем, кто ждёт динамичного сюжета.",
+            reading_pace: "Размеренный",
+            difficulty: "Легкое чтение",
+            vibe: "Ностальгия и блеск",
+            key_takeaways: ["Цена мечты", "Иллюзия и реальность"],
+          },
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("Гид по чтению")).toBeTruthy();
+    });
+    // хук рендерится в editorial-блоке (blockquote)
+    expect(
+      screen.getByText("История любви и мифа об американской мечте."),
+    ).toBeTruthy();
+    expect(screen.getByText("Кому понравится")).toBeTruthy();
+    expect(screen.getByText("Кому пропустить")).toBeTruthy();
+  });
+
+  it("не показывает «Гид по чтению» без AI-паспорта", async () => {
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1, name: "Великий Гэтсби" })).toBeTruthy();
+    });
+    expect(screen.queryByText("Гид по чтению")).toBeNull();
   });
 
   it("крошки показывают тир-лист при ?from= (путь Тир-лист → Книга)", async () => {
@@ -439,6 +490,58 @@ describe("BookPage", () => {
     });
 
     expect(ld).not.toHaveProperty("isbn");
+  });
+
+  it("buildBookJsonLd: паспорт обогащает description, disambiguatingDescription и keywords, БЕЗ review", () => {
+    const ld = buildBookJsonLd({
+      title: "Дюна",
+      author: "Фрэнк Герберт",
+      coverImageUrl: "https://example.com/cover.jpg",
+      description: "Эпопея о пустынной планете.",
+      genre: "Фантастика",
+      publishedYear: 1965,
+      isbn: null,
+      readingGuide: {
+        short_hook: "Политическая экология пустынной планеты.",
+        target_audience: "Любителям масштабной фантастики.",
+        not_recommended_for: "Тем, кто не любит многотомные саги.",
+        reading_pace: "Размеренный",
+        difficulty: "Средняя сложность",
+        vibe: "Мистика пустыни",
+        key_takeaways: ["Экология", "Политика", "Мессианство"],
+      },
+      url: "https://bookstrata.ru/books/dyuna",
+    });
+
+    expect(ld.description).toBe(
+      "Политическая экология пустынной планеты. Эпопея о пустынной планете.",
+    );
+    expect(ld.disambiguatingDescription).toBe(
+      "Политическая экология пустынной планеты.",
+    );
+    expect(ld.keywords).toContain("Мистика пустыни");
+    expect(ld.keywords).toContain("Экология");
+    expect(ld.keywords).toContain("Фантастика");
+    // Синтетический Review сознательно НЕ размечаем (риск спам-фильтров)
+    expect(ld).not.toHaveProperty("review");
+  });
+
+  it("buildBookJsonLd без паспорта не добавляет SEO-полей паспорта", () => {
+    const ld = buildBookJsonLd({
+      title: "Дюна",
+      author: "Фрэнк Герберт",
+      coverImageUrl: "https://example.com/cover.jpg",
+      description: "Эпопея о пустынной планете.",
+      genre: "Фантастика",
+      publishedYear: 1965,
+      isbn: null,
+      url: "https://bookstrata.ru/books/dyuna",
+    });
+
+    expect(ld).not.toHaveProperty("disambiguatingDescription");
+    expect(ld).not.toHaveProperty("keywords");
+    expect(ld).not.toHaveProperty("review");
+    expect(ld.description).toBe("Эпопея о пустынной планете.");
   });
 });
 
