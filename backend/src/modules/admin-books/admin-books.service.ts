@@ -16,6 +16,14 @@ import {
 } from "../books/bookPublish.service.js";
 import { searchBooks } from "../books/books.service.js";
 import {
+  readingGuideSchema,
+  type ReadingGuide,
+} from "../books/readingGuide.schema.js";
+import {
+  readingProfileSchema,
+  type ReadingProfile,
+} from "../books/readingProfile.schema.js";
+import {
   mergeGroup,
   normalizeTitle,
   type DedupeBook,
@@ -380,6 +388,8 @@ export async function getBookAdmin(id: number) {
       likesCount: true,
       isTrending: true,
       contextChain: true,
+      readingGuide: true,
+      readingProfile: true,
       source: true,
       externalId: true,
       mergedIntoId: true,
@@ -403,6 +413,10 @@ export interface BookUpdateInput {
   publishedYear?: number | null;
   slug?: string;
   contextChain?: Array<{ icon: string; title: string; text: string }> | null;
+  /** AI-паспорт «Гид по чтению» (структура см. readingGuide.schema) */
+  readingGuide?: ReadingGuide | null;
+  /** Reading DNA — профиль книги для Book Match (структура см. readingProfile.schema) */
+  readingProfile?: ReadingProfile | null;
   isTrending?: boolean;
   /** Рейтинг каталога 0–10 (как в коллекциях/знаменитостях) */
   rating?: number | null;
@@ -474,6 +488,23 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
       data.contextChain && data.contextChain.length > 0
         ? (data.contextChain as unknown as Prisma.InputJsonValue)
         : Prisma.JsonNull;
+  }
+  if (data.readingGuide !== undefined) {
+    if (data.readingGuide === null) {
+      updateData.readingGuide = Prisma.JsonNull;
+    } else {
+      // Стена валидации: в БД попадает только паспорт, прошедший схему
+      const validated = readingGuideSchema.parse(data.readingGuide);
+      updateData.readingGuide = validated as unknown as Prisma.InputJsonValue;
+    }
+  }
+  if (data.readingProfile !== undefined) {
+    if (data.readingProfile === null) {
+      updateData.readingProfile = Prisma.JsonNull;
+    } else {
+      const validated = readingProfileSchema.parse(data.readingProfile);
+      updateData.readingProfile = validated as unknown as Prisma.InputJsonValue;
+    }
   }
   if (data.isTrending !== undefined) updateData.isTrending = data.isTrending;
 
@@ -801,6 +832,14 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
     fetchDedupeBook(canon),
   ]);
 
+  // Гид по чтению: mergeGroup может удалить поглощаемую книгу, поэтому
+  // вытаскиваем её паспорт ДО склейки и переносим в канон, если у того
+  // своего нет (редакторский контент не должен теряться при дедупе).
+  const dupReadingGuide =
+    dup.readingGuide !== undefined
+      ? (dup.readingGuide as Prisma.InputJsonValue)
+      : undefined;
+
   // Выбор канона из админки имеет приоритет: mergeGroup не перевыбирает
   // его через pickCanon (баг: склейка «Ртути» поглотила published-книгу
   // черновиком, потому что score черновика оказался выше).
@@ -811,6 +850,13 @@ export async function mergeBooksByIds(dupId: number, canonId: number) {
     },
     { forceCanonId: canonId },
   );
+
+  if (dupReadingGuide && !canon.readingGuide) {
+    await prisma.book.update({
+      where: { id: canonId },
+      data: { readingGuide: dupReadingGuide },
+    });
+  }
 
   return prisma.book.findUnique({ where: { id: canonId } });
 }

@@ -62,6 +62,8 @@ const bookDetail = {
   publishedYear: 1877,
   isbn: null,
   contextChain: null,
+  readingGuide: null,
+  readingProfile: null,
   createdAt: "2025-01-01T00:00:00Z",
   authorRel: { name: "Лев Толстой" },
   slugHistory: [],

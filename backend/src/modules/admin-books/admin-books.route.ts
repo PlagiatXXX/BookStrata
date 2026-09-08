@@ -41,6 +41,12 @@ const handleError = (error: unknown, reply: {
       createApiError(error.code as ErrorCode, error.message),
     );
   }
+  // ZodError от readingGuideSchema.parse / readingProfileSchema.parse
+  if (error instanceof Error && error.name === "ZodError") {
+    return reply.code(400).send(
+      createApiError(ErrorCodes.VALIDATION_ERROR, "Невалидная структура readingGuide или readingProfile"),
+    );
+  }
   throw error;
 };
 

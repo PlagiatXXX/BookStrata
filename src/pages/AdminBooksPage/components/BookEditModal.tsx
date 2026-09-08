@@ -8,8 +8,49 @@ import type {
   AdminBookDetail,
   BookUpdateInput,
   ContextChainItem,
+  ReadingGuide,
+  ReadingProfile,
 } from "@/lib/adminBooksApi";
 import { uploadBookCover } from "@/lib/adminBooksApi";
+import { ReadingProfilePrompt } from "./ReadingProfilePrompt";
+
+/** Обязательные ключи AI-паспорта (для клиентской проверки поля в модалке).
+ *  Полную zod-валидацию делает бэкенд при PATCH. */
+const GUIDE_REQUIRED_KEYS = [
+  "short_hook",
+  "target_audience",
+  "not_recommended_for",
+  "reading_pace",
+  "difficulty",
+  "vibe",
+  "key_takeaways",
+] as const;
+
+/** Срезает markdown-обёртку ```json ... ``` из ответа ИИ */
+function stripMarkdownFence(raw: string): string {
+  let cleaned = raw.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```\s*$/, "");
+  }
+  return cleaned;
+}
+
+/** Парсит JSON из чата ИИ → объект паспорта | null (битый JSON) */
+function parseGuideJson(raw: string): ReadingGuide | null {
+  try {
+    const parsed: unknown = JSON.parse(stripMarkdownFence(raw));
+    if (typeof parsed !== "object" || parsed === null) return null;
+    const obj = parsed as Record<string, unknown>;
+    for (const key of GUIDE_REQUIRED_KEYS) {
+      if (!(key in obj)) return null;
+    }
+    return parsed as ReadingGuide;
+  } catch {
+    return null;
+  }
+}
 
 const MATERIAL_SYMBOLS = [
   "menu_book",
@@ -83,6 +124,17 @@ export function BookEditModal({
   const [chain, setChain] = useState<ContextChainItem[]>(
     book.contextChain ?? [],
   );
+  // AI-паспорт: сырой текст (может быть с ```json-обёрткой от ИИ) и ошибка
+  // валидации. Парсинг — на blur; PATCH отправляет объект или null.
+  const [guideInput, setGuideInput] = useState<string>(
+    book.readingGuide ? JSON.stringify(book.readingGuide, null, 2) : "",
+  );
+  const [guideError, setGuideError] = useState<string | null>(null);
+  // Reading DNA: сырой JSON readingProfile
+  const [profileInput, setProfileInput] = useState<string>(
+    book.readingProfile ? JSON.stringify(book.readingProfile, null, 2) : "",
+  );
+  const [profileError, setProfileError] = useState<string | null>(null);
   // Сырая строка тегов: парсится в массив только при сохранении, иначе
   // запятая мгновенно отфильтровывается как пустой тег и не вводится
   const [tagsInput, setTagsInput] = useState((book.tags ?? []).join(", "));
@@ -122,6 +174,61 @@ export function BookEditModal({
       [next[i], next[j]] = [next[j], next[i]];
       return next;
     });
+
+  // Валидация AI-паспорта при уходе из поля: чистый JSON → pretty-print в
+  // поле + объект в форму; пусто → null (паспорт снимается); битый → ошибка
+  // и поле НЕ попадает в патч (чтобы не отправить мусор на сервер).
+  const handleGuideBlur = () => {
+    const raw = guideInput.trim();
+    if (!raw) {
+      setGuideError(null);
+      set("readingGuide", null);
+      return;
+    }
+    const parsed = parseGuideJson(raw);
+    if (parsed) {
+      setGuideInput(JSON.stringify(parsed, null, 2));
+      setGuideError(null);
+      set("readingGuide", parsed);
+    } else {
+      setGuideError(
+        "Невалидный JSON паспорта: проверьте кавычки, скобки и наличие всех 7 полей",
+      );
+    }
+  };
+
+  // Reading DNA: валидация readingProfile при уходе из поля
+  const PROFILE_REQUIRED_KEYS = [
+    "storyFocus", "emotionalWeight", "pace", "darkness", "confidence", "source",
+  ] as const;
+
+  const handleProfileBlur = () => {
+    const raw = profileInput.trim();
+    if (!raw) {
+      setProfileError(null);
+      set("readingProfile", null);
+      return;
+    }
+    try {
+      const parsed: unknown = JSON.parse(stripMarkdownFence(raw));
+      if (typeof parsed !== "object" || parsed === null) {
+        setProfileError("Невалидный JSON");
+        return;
+      }
+      const obj = parsed as Record<string, unknown>;
+      for (const key of PROFILE_REQUIRED_KEYS) {
+        if (!(key in obj)) {
+          setProfileError(`Отсутствует поле: ${key}`);
+          return;
+        }
+      }
+      setProfileInput(JSON.stringify(parsed, null, 2));
+      setProfileError(null);
+      set("readingProfile", parsed as ReadingProfile);
+    } catch {
+      setProfileError("Невалидный JSON: проверьте синтаксис");
+    }
+  };
 
   const isPublished = book.status === "published";
 
@@ -292,6 +399,85 @@ export function BookEditModal({
           </label>
         </div>
 
+        {/* AI-паспорт «Гид по чтению» */}
+        <div className="mt-5">
+          <div className="mb-1 flex items-center justify-between">
+            <label
+              htmlFor="reading-guide-input"
+              className="text-sm font-semibold text-(--ink-0)"
+            >
+              AI-паспорт «Гид по чтению» (JSON)
+            </label>
+            {(form.readingGuide ?? book.readingGuide) && !guideError && (
+              <span className="text-xs text-emerald-400">✓ Заполнен</span>
+            )}
+          </div>
+          <textarea
+            id="reading-guide-input"
+            rows={7}
+            value={guideInput}
+            onChange={(e) => setGuideInput(e.target.value)}
+            onBlur={handleGuideBlur}
+            placeholder={`{\n  "short_hook": "Суть книги одним предложением",\n  "target_audience": "Кому понравится",\n  "not_recommended_for": "Кому пропустить",\n  "reading_pace": "Динамичный | Размеренный | Медитативный",\n  "difficulty": "Легкое чтение | Средняя сложность | Высокий порог входа",\n  "vibe": "Настроение",\n  "key_takeaways": ["Тезис 1", "Тезис 2", "Тезис 3"]\n}`}
+            className={`w-full resize-y rounded-lg border bg-(--bg-0) px-3 py-2 font-mono text-xs text-(--ink-0) outline-none ${
+              guideError
+                ? "border-red-500 text-red-200"
+                : "border-(--ink-3) focus:border-(--accent-main)"
+            }`}
+          />
+          {guideError && (
+            <p className="mt-1 text-xs text-red-400">{guideError}</p>
+          )}
+          <p className="mt-1 text-xs text-(--ink-2)">
+            Вставьте ответ ИИ целиком — обёртки ```json удаляются автоматически,
+            при сохранении JSON форматируется. Пустое поле снимает паспорт.
+          </p>
+        </div>
+
+        {/* Reading DNA — readingProfile */}
+        <div className="mt-5">
+          <div className="mb-1 flex items-center justify-between">
+            <label
+              htmlFor="reading-profile-input"
+              className="text-sm font-semibold text-(--ink-0)"
+            >
+              Reading DNA (JSON)
+            </label>
+            {(form.readingProfile ?? book.readingProfile) && !profileError && (
+              <span className="text-xs text-emerald-400">✓ Заполнен</span>
+            )}
+          </div>
+          <textarea
+            id="reading-profile-input"
+            rows={8}
+            value={profileInput}
+            onChange={(e) => setProfileInput(e.target.value)}
+            onBlur={handleProfileBlur}
+            placeholder={`{\n  "storyFocus": 25,      // 0=сюжет, 100=рефлексия\n  "emotionalWeight": 20, // 0=легко, 100=тяжело\n  "pace": 30,            // 0=быстро, 100=погружение\n  "darkness": 15,        // 0=светло, 100=мрачно\n  "confidence": {\n    "storyFocus": 0.95,\n    "emotionalWeight": 0.95,\n    "pace": 0.9,\n    "darkness": 0.95\n  },\n  "source": "ai" | "manual" | "calibrated"\n}`}
+            className={`w-full resize-y rounded-lg border bg-(--bg-0) px-3 py-2 font-mono text-xs text-(--ink-0) outline-none ${
+              profileError
+                ? "border-red-500 text-red-200"
+                : "border-(--ink-3) focus:border-(--accent-main)"
+            }`}
+          />
+          {profileError && (
+            <p className="mt-1 text-xs text-red-400">{profileError}</p>
+          )}
+          <p className="mt-1 text-xs text-(--ink-2)">
+            Reading DNA книги: 4 оси (0–100) + confidence (0–1) + source.
+            Используйте AI-промпт или заполните вручную. Пустое поле снимает профиль.
+          </p>
+
+          {/* Шпаргалка-промпт для AI-генерации */}
+          <ReadingProfilePrompt
+            bookTitle={book.title}
+            bookAuthor={book.author}
+            genre={book.genre}
+            tags={book.tags}
+            description={book.description}
+          />
+        </div>
+
         {/* Погружение в контекст */}
         <div className="mt-5">
           <div className="mb-2 flex items-center justify-between">
@@ -406,16 +592,21 @@ export function BookEditModal({
 
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-(--ink-3) pt-4">
           <button
-            onClick={() =>
+            onClick={() => {
+              // Битый JSON паспорта/профиля — не отправляем поле вовсе, чтобы
+              // случайный мусор не затёр существующие данные в БД.
+              const rest = { ...form };
+              delete rest.readingGuide;
+              delete rest.readingProfile;
               onSave({
-                ...form,
+                ...(guideError ? rest : profileError ? rest : form),
                 tags: tagsInput
                   .split(",")
                   .map((t) => t.trim())
                   .filter(Boolean),
                 contextChain: chain,
-              })
-            }
+              });
+            }}
             disabled={saving}
             className="rounded-lg bg-(--accent-main) px-4 py-2 text-sm font-semibold text-(--bg-0) hover:opacity-90 disabled:opacity-50 cursor-pointer"
           >

@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import request from "supertest";
 import Fastify from "fastify";
+import { Prisma } from "@prisma/client";
 
 const mocks = vi.hoisted(() => ({
   prisma: {
@@ -475,6 +476,70 @@ describe("Admin Books Routes", () => {
           }),
         }),
       );
+    });
+
+    it("readingGuide: валидный паспорт сохраняется", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.update.mockResolvedValue({ ...bookRow });
+
+      const guide = {
+        short_hook: "Трагедия любви, ломающей светский порядок.",
+        target_audience: "Ценителям психологической прозы и большой русской классики.",
+        not_recommended_for: "Тем, кто ищет лёгкий сюжетный роман без рефлексии.",
+        reading_pace: "Размеренный",
+        difficulty: "Средняя сложность",
+        vibe: "Элегическая грусть",
+        key_takeaways: ["Любовь и долг", "Цена выбора", "Суд общества"],
+      };
+
+      await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ readingGuide: guide });
+
+      expect(mocks.prisma.book.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ readingGuide: guide }),
+        }),
+      );
+    });
+
+    it("readingGuide: null очищает паспорт", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+      mocks.prisma.book.update.mockResolvedValue({ ...bookRow });
+
+      await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ readingGuide: null });
+
+      expect(mocks.prisma.book.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ readingGuide: Prisma.JsonNull }),
+        }),
+      );
+    });
+
+    it("readingGuide: нестандартный reading_pace → 400, без записи в БД", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
+
+      const res = await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({
+          readingGuide: {
+            short_hook: "Хук",
+            target_audience: "Аудитория книги",
+            not_recommended_for: "Не подходит тем-то",
+            reading_pace: "Легко читается",
+            difficulty: "Легкое чтение",
+            vibe: "Мрачное",
+            key_takeaways: ["Тезис"],
+          },
+        });
+
+      expect(res.status).toBe(400);
+      expect(mocks.prisma.book.update).not.toHaveBeenCalled();
     });
 
     it("rating сохраняется в Book.rating", async () => {
