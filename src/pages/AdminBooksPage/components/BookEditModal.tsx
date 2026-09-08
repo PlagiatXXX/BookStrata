@@ -13,6 +13,7 @@ import type {
 } from "@/lib/adminBooksApi";
 import { uploadBookCover } from "@/lib/adminBooksApi";
 import { ReadingProfilePrompt } from "./ReadingProfilePrompt";
+import { ReadingGuidePrompt } from "./ReadingGuidePrompt";
 
 /** Обязательные ключи AI-паспорта (для клиентской проверки поля в модалке).
  *  Полную zod-валидацию делает бэкенд при PATCH. */
@@ -432,6 +433,15 @@ export function BookEditModal({
             Вставьте ответ ИИ целиком — обёртки ```json удаляются автоматически,
             при сохранении JSON форматируется. Пустое поле снимает паспорт.
           </p>
+
+          {/* Шпаргалка-промпт для AI-генерации паспорта */}
+          <ReadingGuidePrompt
+            bookTitle={book.title}
+            bookAuthor={book.author}
+            genre={book.genre}
+            tags={book.tags}
+            description={book.description}
+          />
         </div>
 
         {/* Reading DNA — readingProfile */}
