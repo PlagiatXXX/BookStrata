@@ -49,6 +49,26 @@ describe("readingGuideSchema", () => {
     ).toThrow(/reading_pace/);
   });
 
+  it("нормализует варианты ИИ: «Быстрый» → «Динамичный»", () => {
+    const result = readingGuideSchema.parse({ ...validGuide, reading_pace: "Быстрый" });
+    expect(result.reading_pace).toBe("Динамичный");
+  });
+
+  it("нормализует варианты ИИ: «Медленный» → «Медитативный»", () => {
+    const result = readingGuideSchema.parse({ ...validGuide, reading_pace: "Медленный" });
+    expect(result.reading_pace).toBe("Медитативный");
+  });
+
+  it("нормализует варианты ИИ: «Легко» → «Легкое чтение»", () => {
+    const result = readingGuideSchema.parse({ ...validGuide, difficulty: "Легко" });
+    expect(result.difficulty).toBe("Легкое чтение");
+  });
+
+  it("нормализует варианты ИИ: «Сложно» → «Высокий порог входа»", () => {
+    const result = readingGuideSchema.parse({ ...validGuide, difficulty: "Сложно" });
+    expect(result.difficulty).toBe("Высокий порог входа");
+  });
+
   it("отклоняет нестандартный difficulty", () => {
     expect(() =>
       readingGuideSchema.parse({ ...validGuide, difficulty: "На один вечер" }),
