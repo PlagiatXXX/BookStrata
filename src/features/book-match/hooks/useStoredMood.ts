@@ -7,7 +7,7 @@ import type { UserMood } from "../domain/types";
 
 export const MOOD_STORAGE_KEY = "bookstrata:mood";
 
-const VALID_AXES = ["storyFocus", "emotionalWeight", "pace", "darkness"] as const;
+const VALID_AXES = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"] as const;
 
 /** Читает mood из localStorage. Битый JSON / лишние ключи → {}. */
 export function readStoredMood(): UserMood {

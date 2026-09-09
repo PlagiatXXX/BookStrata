@@ -44,6 +44,15 @@ describe("readStoredMood / writeStoredMood (чистые функции)", () =>
     writeStoredMood({});
     expect(readStoredMood()).toEqual({});
   });
+
+  it("read сохраняет scope и complexity (6 осей)", () => {
+    writeStoredMood({ storyFocus: 20, darkness: 70, scope: 50, complexity: 80 });
+    const mood = readStoredMood();
+    expect(mood.scope).toBe(50);
+    expect(mood.complexity).toBe(80);
+    expect(mood.storyFocus).toBe(20);
+    expect(mood.darkness).toBe(70);
+  });
 });
 
 // Семантика перезаписи (не «чинить»!): writeStoredMood(next) / updateMood(next)

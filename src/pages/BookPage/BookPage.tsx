@@ -411,6 +411,7 @@ export default function BookPage() {
                <p className="mt-3 text-xs text-white/30 leading-relaxed max-w-sm">
                  Сохраняйте книги и создавайте тир-листы из прочитанных
                </p>
+               {book.readingProfile && <BookMatchBadge book={book.readingProfile} />}
 
                {/* Scroll indicator: «Листай дальше» — сразу под кнопками действий */}
               <motion.div
@@ -487,11 +488,6 @@ export default function BookPage() {
           {book.readingGuide && <BookReadingGuide guide={book.readingGuide} />}
 
           {/* ── Book Match — совместимость читателя и книги ── */}
-          {book.readingProfile && (
-            <div className="mb-6 flex justify-center">
-              <BookMatchBadge book={book.readingProfile} />
-            </div>
-          )}
           {book.readingProfile && <BookMatch book={book.readingProfile} bookTitle={book.title} bookSlug={book.slug ?? undefined} />}
 
           {/* ── Погружение в контекст ── */}
