@@ -8,7 +8,9 @@ const HARRY_POTTER: ReadingProfile = {
   emotionalWeight: 20,
   pace: 30,
   darkness: 15,
-  confidence: { storyFocus: 0.95, emotionalWeight: 0.95, pace: 0.9, darkness: 0.95 },
+  scope: 40,
+  complexity: 35,
+  confidence: { storyFocus: 0.95, emotionalWeight: 0.95, pace: 0.9, darkness: 0.95, scope: 0.9, complexity: 0.9 },
   source: "calibrated",
 };
 
@@ -73,12 +75,12 @@ describe("explainMatch", () => {
     expect(result.diffs[0].direction).toContain("светлее");
   });
 
-  it("все 4 оси — полный набор diffs", () => {
+  it("все 6 осей — полный набор diffs", () => {
     const result = explainMatch(
-      { storyFocus: 50, emotionalWeight: 50, pace: 50, darkness: 50 },
+      { storyFocus: 50, emotionalWeight: 50, pace: 50, darkness: 50, scope: 50, complexity: 50 },
       HARRY_POTTER,
     );
-    expect(result.diffs).toHaveLength(4);
+    expect(result.diffs).toHaveLength(6);
   });
 
   it("среднее расхождение — корректно", () => {

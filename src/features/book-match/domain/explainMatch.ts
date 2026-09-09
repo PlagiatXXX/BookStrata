@@ -5,7 +5,7 @@ import type { ReadingProfile, UserMood, MatchAxis, AxisDiff } from "./types";
 import { AXIS_LABELS } from "./types";
 
 /** Все оси совместимости. */
-const ALL_AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness"];
+const ALL_AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
 
 /** Пороговые значения для классификации расхождений. */
 const DIFF_THRESHOLDS = {
@@ -25,6 +25,8 @@ function describeDirection(axis: MatchAxis, diff: number): string {
     emotionalWeight: { right: "тяжелее", left: "легче" },
     pace:            { right: "медленнее", left: "быстрее" },
     darkness:        { right: "мрачнее", left: "светлее" },
+    scope:           { right: "эпичнее", left: "камернее" },
+    complexity:      { right: "многослойнее", left: "проще" },
   };
 
   return axisDir[axis][direction];

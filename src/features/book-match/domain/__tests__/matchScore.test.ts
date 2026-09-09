@@ -10,7 +10,9 @@ const HARRY_POTTER: ReadingProfile = {
   emotionalWeight: 20,
   pace: 30,
   darkness: 15,
-  confidence: { storyFocus: 0.95, emotionalWeight: 0.95, pace: 0.9, darkness: 0.95 },
+  scope: 40,
+  complexity: 35,
+  confidence: { storyFocus: 0.95, emotionalWeight: 0.95, pace: 0.9, darkness: 0.95, scope: 0.9, complexity: 0.9 },
   source: "calibrated",
 };
 
@@ -19,7 +21,9 @@ const ORWELL_1984: ReadingProfile = {
   emotionalWeight: 85,
   pace: 45,
   darkness: 90,
-  confidence: { storyFocus: 0.9, emotionalWeight: 0.95, pace: 0.85, darkness: 0.95 },
+  scope: 70,
+  complexity: 65,
+  confidence: { storyFocus: 0.9, emotionalWeight: 0.95, pace: 0.85, darkness: 0.95, scope: 0.9, complexity: 0.9 },
   source: "calibrated",
 };
 
@@ -28,7 +32,9 @@ const FLOWERS_FOR_ALGERNON: ReadingProfile = {
   emotionalWeight: 90,
   pace: 40,
   darkness: 60,
-  confidence: { storyFocus: 0.9, emotionalWeight: 0.95, pace: 0.85, darkness: 0.9 },
+  scope: 55,
+  complexity: 70,
+  confidence: { storyFocus: 0.9, emotionalWeight: 0.95, pace: 0.85, darkness: 0.9, scope: 0.9, complexity: 0.9 },
   source: "calibrated",
 };
 
@@ -37,7 +43,9 @@ const PROUST: ReadingProfile = {
   emotionalWeight: 55,
   pace: 90,
   darkness: 40,
-  confidence: { storyFocus: 0.95, emotionalWeight: 0.85, pace: 0.9, darkness: 0.85 },
+  scope: 80,
+  complexity: 85,
+  confidence: { storyFocus: 0.95, emotionalWeight: 0.85, pace: 0.9, darkness: 0.85, scope: 0.9, complexity: 0.9 },
   source: "calibrated",
 };
 
@@ -139,9 +147,9 @@ describe("matchScore — несколько активных осей", () => {
   });
 });
 
-// ─── Все 4 оси ──────────────────────────────────────────────────────────────
+// ─── Все 6 осей ──────────────────────────────────────────────────────────────
 
-describe("matchScore — все 4 оси", () => {
+describe("matchScore — все 6 осей", () => {
   it("считает полный score со всеми осями", () => {
     // Идеально подходит под Поттера
     const mood: UserMood = {

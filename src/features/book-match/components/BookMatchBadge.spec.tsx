@@ -14,7 +14,9 @@ const BOOK: ReadingProfile = {
   emotionalWeight: 30,
   pace: 80,
   darkness: 90,
-  confidence: { storyFocus: 0.9, emotionalWeight: 0.9, pace: 0.9, darkness: 0.9 },
+  scope: 50,
+  complexity: 60,
+  confidence: { storyFocus: 0.9, emotionalWeight: 0.9, pace: 0.9, darkness: 0.9, scope: 0.9, complexity: 0.9 },
   source: "ai",
 };
 
