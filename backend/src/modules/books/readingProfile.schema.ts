@@ -25,11 +25,36 @@ export const readingProfileSchema = z.object({
   }),
 
   source: z.enum(["ai", "manual", "calibrated"]),
+
+  // CoT-поля (опциональны, для backward-совместимости)
+  analysis: z.string().optional(),
+  knowledgeSource: z.enum(["world_knowledge", "annotation_only"]).optional(),
 });
 
 export type ReadingProfile = z.infer<typeof readingProfileSchema>;
 
-/** Валидация readingProfile из JSON. Бросает ZodError при невалидной структуре. */
+/**
+ * Очищает строку analysis от некорректных кавычек,
+ * которые модель может сгенерировать внутри JSON.
+ * Проблема: "Герой ищет "смысл жизни"" → ломает JSON-парсер.
+ * Решение: заменяем незакрытые кавычки на ёлочки.
+ */
+function sanitizeAnalysis(raw: unknown): unknown {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const obj = raw as Record<string, unknown>;
+  if (typeof obj.analysis === "string") {
+    // Заменяем прямые двойные кавычки внутри текста на ёлочки
+    obj.analysis = obj.analysis
+      .replace(/(?<!\\)"/g, "«")
+      .replace(/«([^«»]*)$/g, "«$1»");
+  }
+  return obj;
+}
+
+/**
+ * Валидация readingProfile из JSON. Бросает ZodError при невалидной структуре.
+ * Перед валидацией очищает analysis от проблемных кавычек.
+ */
 export function validateReadingProfile(raw: unknown): ReadingProfile {
-  return readingProfileSchema.parse(raw);
+  return readingProfileSchema.parse(sanitizeAnalysis(raw));
 }

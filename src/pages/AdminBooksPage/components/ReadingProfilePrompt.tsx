@@ -33,7 +33,14 @@ function buildPrompt(book: {
 
 ---
 
-ОЦЕНИ ПО ШЕСТИ ОСЯМ (0–100):
+ПРАВИЛА ИСТОЧНИКА ДАННЫХ:
+- Если книга общеизвестна (классика, мировой бестселлер, культовое произведение) —
+  используй полные знания о сюжете, стиле и структуре. Укажи
+  "knowledgeSource": "world_knowledge".
+- Если книга малоизвестна или новинка — опирайся строго на жанр, теги и аннотацию.
+  Укажи "knowledgeSource": "annotation_only".
+
+ОСИ (0–100):
 
 01. storyFocus (Сюжет ↔ Рефлексия)
   0–20 — чистый экшн. Погони, интриги, twist за twist.
@@ -79,20 +86,15 @@ function buildPrompt(book: {
 
 ---
 
-Для каждой оси оцени confidence (0–1):
-  0.9–1.0 — уверенно, достаточно данных
-  0.7–0.8 — вероятно, но есть неопределённость
-  0.5–0.6 — приблизительно, мало данных
-  < 0.5 — сложно определить
+confidence (0–1):
+- 0.9–1.0 — уверенно, достаточно данных
+- 0.7–0.8 — вероятно, но есть неопределённость
+- 0.5–0.6 — приблизительно, мало данных
+- < 0.5 — сложно определить
 
 ---
 
 ПРАВИЛА:
-- Оценивай ТОЛЬКО по данным: жанр, теги, аннотация. НЕ выдумывай
-  факты, которых нет в тексте выше (сюжет, героев, события).
-- Помни: тебе доступна аннотация, а не вся книга. Если данных
-  для уверенной оценки оси недостаточно — ставь значение по
-  аннотации и честно понижай confidence (0.4–0.6).
 - Числа — целые, в диапазоне 0–100, без кавычек.
 - Не добавляй полей, кроме указанных в шаблоне ответа.
 
@@ -102,6 +104,8 @@ function buildPrompt(book: {
 Без markdown-обёртки — НЕ оборачивай ответ в \`\`\` или \`\`\`json.
 
 {
+  "analysis": "<краткий анализ книги в 2–3 предложениях перед выставлением оценок>",
+  "knowledgeSource": "<world_knowledge ИЛИ annotation_only>",
   "storyFocus": <целое число 0–100>,
   "emotionalWeight": <целое число 0–100>,
   "pace": <целое число 0–100>,
@@ -215,18 +219,39 @@ export function ReadingProfilePrompt({
 
   return (
     <div className="mt-3 rounded-lg border border-(--ink-3) bg-(--bg-0)">
-      {/* Header — кликабельный */}
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-(--ink-0) hover:bg-(--ink-3)/30 transition-colors"
-      >
-        <Sparkles className="h-4 w-4 text-amber-400" />
-        <span>AI-промпт для Reading DNA</span>
-        <span className="ml-auto text-(--ink-2)">
-          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </span>
-      </button>
+      {/* Header — кликабельный + кнопка копирования */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex flex-1 items-center gap-2 text-left text-sm font-medium text-(--ink-0) hover:bg-(--ink-3)/30 transition-colors rounded px-1 py-0.5 -ml-1"
+        >
+          <Sparkles className="h-4 w-4 text-amber-400" />
+          <span>AI-промпт для Reading DNA</span>
+          <span className="ml-auto text-(--ink-2)">
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </span>
+        </button>
+        {expanded && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-(--accent-main) hover:bg-(--accent-main)/10 transition-colors"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                Скопировано
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" />
+                Копировать
+              </>
+            )}
+          </button>
+        )}
+      </div>
 
       {/* Body */}
       {expanded && (
@@ -261,30 +286,11 @@ export function ReadingProfilePrompt({
             </div>
           </div>
 
-          {/* Кнопка копирования + текст промпта */}
+          {/* Текст промпта */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-semibold text-(--ink-0)">
-                Готовый промпт (скопировать → вставить в ChatGPT/Claude)
-              </span>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex items-center gap-1 rounded px-2 py-1 text-xs text-(--accent-main) hover:bg-(--accent-main)/10 transition-colors"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-3.5 w-3.5" />
-                    Скопировано
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5" />
-                    Копировать
-                  </>
-                )}
-              </button>
-            </div>
+            <span className="text-xs font-semibold text-(--ink-0) mb-1.5 block">
+              Готовый промпт (скопировать → вставить в ChatGPT/Claude)
+            </span>
             <pre className="max-h-60 overflow-auto rounded-md border border-(--ink-3) bg-black/30 p-3 text-[11px] leading-relaxed text-(--ink-1) font-mono whitespace-pre-wrap">
               {prompt}
             </pre>

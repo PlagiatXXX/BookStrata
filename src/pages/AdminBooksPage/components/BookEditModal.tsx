@@ -446,7 +446,16 @@ export function BookEditModal({
 
         {/* Reading DNA — readingProfile */}
         <div className="mt-5">
-          <div className="mb-1 flex items-center justify-between">
+          {/* Шпаргалка-промпт для AI-генерации */}
+          <ReadingProfilePrompt
+            bookTitle={book.title}
+            bookAuthor={book.author}
+            genre={book.genre}
+            tags={book.tags}
+            description={book.description}
+          />
+
+          <div className="mb-1 mt-3 flex items-center justify-between">
             <label
               htmlFor="reading-profile-input"
               className="text-sm font-semibold text-(--ink-0)"
@@ -474,18 +483,9 @@ export function BookEditModal({
             <p className="mt-1 text-xs text-red-400">{profileError}</p>
           )}
           <p className="mt-1 text-xs text-(--ink-2)">
-            Reading DNA книги: 4 оси (0–100) + confidence (0–1) + source.
+            Reading DNA книги: 6 осей (0–100) + confidence (0–1) + source + analysis.
             Используйте AI-промпт или заполните вручную. Пустое поле снимает профиль.
           </p>
-
-          {/* Шпаргалка-промпт для AI-генерации */}
-          <ReadingProfilePrompt
-            bookTitle={book.title}
-            bookAuthor={book.author}
-            genre={book.genre}
-            tags={book.tags}
-            description={book.description}
-          />
         </div>
 
         {/* Погружение в контекст */}

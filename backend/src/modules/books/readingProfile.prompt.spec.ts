@@ -20,9 +20,15 @@ describe("buildReadingProfilePrompt", () => {
     expect(prompt).toContain("драконы, феи, романтика");
   });
 
-  it("содержит анти-галлюцинационные правила (не выдумывать факты)", () => {
-    expect(prompt).toContain("НЕ выдумывай");
-    expect(prompt).toContain("понижай confidence");
+  it("содержит инструкцию по Chain-of-Thought (анализ внутри JSON)", () => {
+    expect(prompt).toContain("analysis");
+    expect(prompt).toContain("краткий анализ книги");
+  });
+
+  it("разрешает использовать знания общеизвестных произведениях", () => {
+    expect(prompt).toContain("knowledgeSource");
+    expect(prompt).toContain("world_knowledge");
+    expect(prompt).toContain("annotation_only");
   });
 
   it("запрещает markdown-обёртку и требует один JSON-объект", () => {
@@ -31,7 +37,7 @@ describe("buildReadingProfilePrompt", () => {
   });
 
   it("требует целые числа без кавычек", () => {
-    expect(prompt).toContain("целые");
+    expect(prompt).toContain("целое");
     expect(prompt).toContain("без кавычек");
   });
 
