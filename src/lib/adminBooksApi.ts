@@ -29,11 +29,15 @@ export interface ReadingProfile {
   emotionalWeight: number;
   pace: number;
   darkness: number;
+  scope: number;
+  complexity: number;
   confidence: {
     storyFocus: number;
     emotionalWeight: number;
     pace: number;
     darkness: number;
+    scope: number;
+    complexity: number;
   };
   source: "ai" | "manual" | "calibrated";
 }

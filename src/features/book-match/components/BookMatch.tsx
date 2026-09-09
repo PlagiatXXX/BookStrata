@@ -19,7 +19,7 @@ interface BookMatchProps {
   bookSlug?: string;
 }
 
-const AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness"];
+const AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
 
 export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
   // Mood персистентен: init из localStorage, изменения перезаписывают,
@@ -57,9 +57,9 @@ export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
             Тебе зайдёт эта книга?
           </h2>
           <p className="text-sm text-white/40">
-            Настрой чтение под себя
+            Настрой чтение под себя один раз и данные сохранятся
           </p>
-          <div className="w-24 h-px bg-(--bp-primary) mx-auto mt-3" />
+          <div className="w-40 h-px bg-(--bp-primary) mx-auto mt-3" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
@@ -76,9 +76,9 @@ export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
             ))}
 
             {/* Индикатор настроенных параметров */}
-            {activeAxesCount > 0 && activeAxesCount < 4 && (
+            {activeAxesCount > 0 && activeAxesCount < 6 && (
               <p className="text-center text-xs text-white/25 mt-4">
-                {activeAxesCount} из 4 параметров настроены
+                {activeAxesCount} из 6 параметров настроены
               </p>
             )}
           </div>

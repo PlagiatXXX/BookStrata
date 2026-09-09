@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MatchAxis } from "../domain/types";
-import { AXIS_LABELS, SNAP_POINTS } from "../domain/types";
+import { AXIS_LABELS, SNAP_POINTS, getRubricLabel } from "../domain/types";
 
 interface BookMatchSliderProps {
   axis: MatchAxis;
@@ -149,6 +149,13 @@ export function BookMatchSlider({ axis, value, onChange }: BookMatchSliderProps)
           />
         ))}
       </div>
+
+      {/* Rubric description */}
+      {isActive && (
+        <p className="text-center text-xs text-white/30 leading-snug">
+          {getRubricLabel(axis, currentVal)}
+        </p>
+      )}
     </div>
   );
 }

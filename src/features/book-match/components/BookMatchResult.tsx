@@ -3,7 +3,7 @@
 // Показывается всегда, когда есть хотя бы одна настроенная ось.
 
 import { Fragment } from "react";
-import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, RotateCcw } from "lucide-react";
 import type { MatchResult } from "../domain/types";
 import { AXIS_LABELS } from "../domain/types";
 import { describeDiff } from "../domain/explainMatch";
@@ -38,9 +38,9 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
           {level.label}
         </span>
 
-        {activeAxesCount < 4 && (
+        {activeAxesCount < 6 && (
           <p className="mt-1 text-xs text-white/30">
-            {activeAxesCount} из 4 параметров настроены
+            {activeAxesCount} из 6 параметров настроены
           </p>
         )}
       </div>
@@ -127,8 +127,9 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
         <button
           type="button"
           onClick={onReset}
-          className="text-xs text-white/30 hover:text-white/60 transition-colors underline underline-offset-2"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-(--bp-primary)/30 px-3.5 py-2 text-xs font-medium text-(--bp-primary) transition-all duration-200 hover:bg-(--bp-primary)/10 hover:border-(--bp-primary)/50 hover:shadow-[0_0_15px_rgba(255,183,135,0.15)] active:scale-95"
         >
+          <RotateCcw className="h-3.5 w-3.5" />
           Сбросить настройки
         </button>
       </div>

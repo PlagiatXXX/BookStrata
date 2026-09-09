@@ -7,7 +7,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { validateReadingProfile, type ReadingProfile } from "./readingProfile.schema.js";
 
-const AXES = ["storyFocus", "emotionalWeight", "pace", "darkness"] as const;
+const AXES = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"] as const;
 type MatchAxis = (typeof AXES)[number];
 
 /** Настроение пользователя — только активные (заданные) оси. */
@@ -15,10 +15,12 @@ export type UserMood = Partial<Record<MatchAxis, number>>;
 
 /** Веса осей (идентичны AXIS_WEIGHTS фронта, сумма = 1.0). */
 const AXIS_WEIGHTS: Record<MatchAxis, number> = {
-  storyFocus: 0.25,
-  emotionalWeight: 0.30,
-  pace: 0.20,
-  darkness: 0.25,
+  storyFocus: 0.20,
+  emotionalWeight: 0.20,
+  pace: 0.15,
+  darkness: 0.15,
+  scope: 0.15,
+  complexity: 0.15,
 };
 
 /** Крутизна sigmoid (идентична K фронта). */

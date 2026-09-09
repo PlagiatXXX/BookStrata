@@ -42,14 +42,16 @@ describe("buildReadingProfilePrompt", () => {
   it("не содержит мусора копипаста (иероглифы, слипшиеся слова)", () => {
     expect(prompt).not.toMatch(/[\u4e00-\u9fff]/); // CJK-иероглифы
     expect(prompt).not.toContain("сямReading");
-    expect(prompt).toContain("4 осям Reading DNA");
+    expect(prompt).toContain("6 осям Reading DNA");
   });
 
-  it("описывает все 4 оси и confidence", () => {
+  it("описывает все 6 осей и confidence", () => {
     expect(prompt).toContain("storyFocus");
     expect(prompt).toContain("emotionalWeight");
     expect(prompt).toContain("pace");
     expect(prompt).toContain("darkness");
+    expect(prompt).toContain("scope");
+    expect(prompt).toContain("complexity");
     expect(prompt).toContain("confidence");
     expect(prompt).toContain('"source": "ai"');
   });

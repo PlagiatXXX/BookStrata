@@ -22,17 +22,21 @@ export interface ReadingGuide {
   key_takeaways: string[];
 }
 
-/** Reading DNA — профиль книги для Book Match (нормализованные значения по 4 осям). */
+/** Reading DNA — профиль книги для Book Match (нормализованные значения по 6 осям). */
 export interface ReadingProfile {
   storyFocus: number;
   emotionalWeight: number;
   pace: number;
   darkness: number;
+  scope: number;
+  complexity: number;
   confidence: {
     storyFocus: number;
     emotionalWeight: number;
     pace: number;
     darkness: number;
+    scope: number;
+    complexity: number;
   };
   source: "ai" | "manual" | "calibrated";
 }

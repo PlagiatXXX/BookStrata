@@ -7,7 +7,7 @@ import { AXIS_WEIGHTS } from "./types";
 import { perceptual } from "./perceptualScale";
 
 /** Все оси совместимости. */
-const ALL_AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness"];
+const ALL_AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
 
 /**
  * Рассчитывает Match Score (0–100) между настроением пользователя и профилем книги.
