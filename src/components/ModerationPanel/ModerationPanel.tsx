@@ -39,6 +39,11 @@ export function ModerationPanel({ userId, username, currentRole }: Props) {
   const [showWarnings, setShowWarnings] = useState(false)
   const [suspendHours, setSuspendHours] = useState(24)
   const suspendReason = ""
+  // Смена роли требует секрет ADMIN_ROLE_CHANGE_SECRET (второй фактор на бэке)
+  const [showRoleModal, setShowRoleModal] = useState(false)
+  useBodyScrollLock(showRoleModal)
+  const [rolePassword, setRolePassword] = useState("")
+  const [pendingRole, setPendingRole] = useState<string | null>(null)
 
   const { data: status } = useQuery<ModerationStatus>({
     queryKey: ["moderationStatus", userId],
@@ -100,12 +105,16 @@ export function ModerationPanel({ userId, username, currentRole }: Props) {
   })
 
   const roleMutation = useMutation({
-    mutationFn: (role: string) => apiChangeRole(userId, role),
+    mutationFn: ({ role, password }: { role: string; password: string }) =>
+      apiChangeRole(userId, role, password),
     onSuccess: () => {
+      setShowRoleModal(false)
+      setRolePassword("")
+      setPendingRole(null)
       queryClient.invalidateQueries({ queryKey: ["moderationStatus", userId] })
       sileo.success({ title: "Роль изменена", duration: 3000 })
     },
-    onError: () => sileo.error({ title: "Ошибка", description: "Не удалось изменить роль" }),
+    onError: () => sileo.error({ title: "Ошибка", description: "Не удалось изменить роль. Проверьте секретный пароль." }),
   })
 
   const formatDate = (iso: string) =>
@@ -197,12 +206,15 @@ export function ModerationPanel({ userId, username, currentRole }: Props) {
           Предупредить
         </button>
 
-        {/* Change role (admin only) */}
+        {/* Change role (admin only) — с модалкой секретного пароля */}
         {isAdmin && (
           <div className="flex items-center gap-1">
             <select
               value={currentRole}
-              onChange={(e) => roleMutation.mutate(e.target.value)}
+              onChange={(e) => {
+                setPendingRole(e.target.value)
+                setShowRoleModal(true)
+              }}
               className="px-2 py-1.5 rounded text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30"
             >
               {ROLE_OPTIONS.map((opt) => (
@@ -265,6 +277,42 @@ export function ModerationPanel({ userId, username, currentRole }: Props) {
                 className="px-3 py-1.5 text-xs rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-40 transition-colors"
               >
                 {warnMutation.isPending ? "..." : "Отправить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Role change modal — второй фактор (ADMIN_ROLE_CHANGE_SECRET) */}
+      {showRoleModal && pendingRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => { setShowRoleModal(false); setPendingRole(null) }}>
+          <div className="bg-[#1a1a2e] border border-purple-500/30 rounded-lg p-5 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-bold mb-1">Смена роли: {username}</h3>
+            <p className="text-xs text-purple-400/60 mb-3">
+              Новая роль: <span className="font-medium text-purple-400">{ROLE_OPTIONS.find((o) => o.value === pendingRole)?.label}</span>.
+              Введите секретный пароль для подтверждения.
+            </p>
+            <input
+              type="password"
+              value={rolePassword}
+              onChange={(e) => setRolePassword(e.target.value)}
+              placeholder="Секретный пароль"
+              autoFocus
+              className="w-full bg-black/30 border border-purple-500/20 rounded px-3 py-2 text-sm text-white outline-none focus:border-purple-500/50"
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => { setShowRoleModal(false); setRolePassword(""); setPendingRole(null) }}
+                className="px-3 py-1.5 text-xs rounded border border-purple-500/20 text-purple-400 hover:bg-purple-500/10 transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => roleMutation.mutate({ role: pendingRole, password: rolePassword })}
+                disabled={!rolePassword.trim() || roleMutation.isPending}
+                className="px-3 py-1.5 text-xs rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 disabled:opacity-40 transition-colors"
+              >
+                {roleMutation.isPending ? "..." : "Подтвердить"}
               </button>
             </div>
           </div>

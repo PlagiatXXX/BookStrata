@@ -467,6 +467,48 @@ export async function updateBookCatalog(
   });
 }
 
+/**
+ * Фаза 2.3 + фикс IDOR: обновление каталоговых полей книги из пользовательского
+ * редактора допускается ТОЛЬКО для книги, размещённой в этом тир-листе
+ * (проверка BookPlacement), и только для draft-статуса.
+ * Без проверки связи владелец любого своего листа мог править title/author/
+ * description/genre/tags чужой личной draft-книги по глобальному bookId.
+ */
+export async function updateBookCatalogIfPlaced(
+  tierListId: string,
+  bookId: number,
+  data: {
+    title?: string;
+    author?: string | null;
+    description?: string | null;
+    genre?: string | null;
+    tags?: string[];
+    coverImageUrl?: string;
+    publishedYear?: number | null;
+  },
+) {
+  const bookPlacement = await prisma.bookPlacement.findUnique({
+    where: { tierListId_bookId: { tierListId, bookId } },
+  });
+
+  if (!bookPlacement) {
+    throw new NotFoundError("Book does not belong to this tier list");
+  }
+
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: { status: true },
+  });
+
+  // Каталог-эталон из пользовательского редактора не перезаписывается
+  // для опубликованных книг (защита Фазы 2.3)
+  if (book?.status !== "draft") {
+    return null;
+  }
+
+  return updateBookCatalog(bookId, data);
+}
+
 export async function removeBookFromTierList(
   tierListId: string,
   bookId: number,

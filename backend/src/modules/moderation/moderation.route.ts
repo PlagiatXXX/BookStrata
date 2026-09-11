@@ -4,11 +4,13 @@ import { requireRole } from "../../middleware/requireRole.js";
 import { createSuccessResponse, createApiError, ErrorCodes } from "../../lib/api-response.js";
 import { banChatSchema, suspendSchema, warnSchema, changeRoleSchema, createFlagSchema, resolveFlagSchema } from "./moderation.schema.js";
 import { createFlag, getFlags, resolveFlag } from "./flags.service.js";
+import { RolesService } from "../roles/roles.service.js";
 
 type IdParams = { Params: { id: string } };
 
 export async function moderationRoutes(fastify: FastifyInstance) {
   const moderationService = new ModerationService(fastify.prisma);
+  const rolesService = new RolesService(fastify.prisma);
 
   fastify.get<IdParams>(
     "/users/:id/moderation",
@@ -88,21 +90,35 @@ export async function moderationRoutes(fastify: FastifyInstance) {
     },
   );
 
+  // Смена роли — через единый RolesService.assignRole с проверкой
+  // ADMIN_ROLE_CHANGE_SECRET. Раньше здесь был прямой prisma.user.update:
+  // тот же эффект, что и PUT /api/roles/user/:id, но БЕЗ второго фактора —
+  // вся защита секретом обходилась этим роутом.
   fastify.put<IdParams>(
     "/users/:id/role",
     { preHandler: [requireRole("admin")] },
     async (req, reply) => {
       const targetUserId = Number(req.params.id);
       if (isNaN(targetUserId)) return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Неверный ID"));
-      const { role } = changeRoleSchema.body.parse(req.body);
-      const roleData = await fastify.prisma.role.findUnique({ where: { name: role } });
-      if (!roleData) return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Роль не найдена"));
-      const user = await fastify.prisma.user.update({
-        where: { id: targetUserId },
-        data: { roleId: roleData.id },
-        select: { id: true, username: true, role: { select: { name: true } } },
-      });
-      return reply.send(createSuccessResponse(user));
+      const { role, password } = changeRoleSchema.body.parse(req.body);
+      try {
+        const result = await rolesService.assignRole(
+          targetUserId,
+          role,
+          req.user?.userId,
+          password,
+        );
+        return reply.send(createSuccessResponse(result));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Ошибка при смене роли";
+        if (message.includes("Неверный пароль") || message.includes("ADMIN_ROLE_CHANGE_SECRET")) {
+          return reply.code(403).send(createApiError(ErrorCodes.ACCESS_DENIED, message));
+        }
+        if (message.includes("не найдена")) {
+          return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, message));
+        }
+        throw err;
+      }
     },
   );
 

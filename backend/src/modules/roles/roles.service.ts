@@ -68,6 +68,23 @@ export class RolesService {
   }
 
   /**
+   * Проверка секрета смены ролей. FAIL-CLOSED: если ADMIN_ROLE_CHANGE_SECRET
+   * не задан в окружении, смена/снятие ролей запрещены полностью —
+   * ошибка деплоя (забытая переменная) не должна молча отключать второй фактор.
+   */
+  private assertRoleChangeSecret(adminPassword?: string): void {
+    const secret = config.ADMIN_ROLE_CHANGE_SECRET;
+    if (!secret) {
+      throw new ValidationError(
+        "Смена ролей заблокирована: ADMIN_ROLE_CHANGE_SECRET не задан на сервере",
+      );
+    }
+    if (!adminPassword || adminPassword !== secret) {
+      throw new ValidationError("Неверный пароль для смены роли");
+    }
+  }
+
+  /**
    * Назначить роль пользователю
    */
   async assignRole(
@@ -83,13 +100,9 @@ export class RolesService {
       return null;
     }
 
-    // Проверяем секретный пароль для смены роли
-    const secret = config.ADMIN_ROLE_CHANGE_SECRET;
-    if (secret) {
-      if (!adminPassword || adminPassword !== secret) {
-        throw new ValidationError("Неверный пароль для смены роли");
-      }
-    }
+    // Второй фактор на любую смену роли (раньше был fail-open: без
+    // заданного секрета проверка молча пропускалась)
+    this.assertRoleChangeSecret(adminPassword);
 
     logger.info("Назначение роли", { userId, roleName, grantedBy });
 
@@ -123,10 +136,24 @@ export class RolesService {
   }
 
   /**
-   * Снять роль с пользователя
+   * Снять роль с пользователя.
+   * Как и assignRole, требует секрет (асимметрия PUT/DELETE была дырой:
+   * снять admin-роль — вплоть до последнего админа — можно было без второго фактора).
    */
-  async removeRole(userId: number): Promise<void> {
-    logger.info("Снятие роли", { userId });
+  async removeRole(
+    userId: number,
+    requestedBy?: number,
+    adminPassword?: string,
+  ): Promise<void> {
+    this.assertRoleChangeSecret(adminPassword);
+
+    // Нельзя снять роль самому себе — классический само-локOut,
+    // после которого смену придётся делать напрямую через БД
+    if (requestedBy && requestedBy === userId) {
+      throw new ValidationError("Нельзя изменить собственную роль");
+    }
+
+    logger.info("Снятие роли", { userId, requestedBy });
 
     await this.prisma.user.update({
       where: { id: userId },

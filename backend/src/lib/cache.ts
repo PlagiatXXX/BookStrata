@@ -52,3 +52,28 @@ export async function clearPattern(pattern: string): Promise<void> {
     console.error(`Cache CLEAR error for pattern ${pattern}:`, error);
   }
 }
+
+/**
+ * Захват распределённого лока (setnx + TTL, атомарно).
+ * Возвращает true, если лок захвачен; false — если уже занят.
+ * Fail-open при недоступности Redis (как остальной кэш): лучше пропустить,
+ * чем уронить функциональность.
+ */
+export async function acquireLock(key: string, ttlSeconds: number): Promise<boolean> {
+  try {
+    const result = await redis.set(key, '1', 'EX', ttlSeconds, 'NX');
+    return result === 'OK';
+  } catch (error) {
+    console.error(`Cache LOCK error for key ${key}:`, error);
+    return true;
+  }
+}
+
+/** Освобождение лока. Безопасно при отсутствии ключа. */
+export async function releaseLock(key: string): Promise<void> {
+  try {
+    await redis.del(key);
+  } catch (error) {
+    console.error(`Cache UNLOCK error for key ${key}:`, error);
+  }
+}

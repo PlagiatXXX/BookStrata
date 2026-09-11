@@ -28,6 +28,7 @@ export {
   addBooksToTierList,
   updateBookPlacement,
   updateBookCatalog,
+  updateBookCatalogIfPlaced,
   removeBookFromTierList,
 } from "./tierList.books.service.js";
 

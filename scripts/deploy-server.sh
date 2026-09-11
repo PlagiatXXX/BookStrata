@@ -175,21 +175,33 @@ fi
 # Это нужно, чтобы prerender не зависел от доступности API (см. #prerender-fix).
 # Postgres опубликован на 127.0.0.1:5432, передаём DATABASE_URL явно,
 # т.к. в .env сервера хост может быть docker hostname (postgres).
+# Креды берём из backend/.env сервера (POSTGRES_USER/POSTGRES_PASSWORD) —
+# в репозитории пароля больше нет.
 if [ "$SKIP_BUILD" = false ]; then
   info "Экспорт маршрутов коллекций из БД..."
   cd "$PROJECT_DIR/backend"
-  if DATABASE_URL="postgresql://bookstrata:bookstrata_pass@127.0.0.1:5432/bookstrata" \
-    npx tsx scripts/export-collection-routes.ts; then
-    ok "Маршруты коллекций экспортированы"
-  else
-    warn "Не удалось экспортировать коллекции — prerender использует JSON из репы"
+
+  DB_USER="${POSTGRES_USER:-bookstrata}"
+  DB_PASS="${POSTGRES_PASSWORD:-}"
+  if [ -z "$DB_PASS" ] && [ -f .env ]; then
+    DB_PASS="$(grep -E '^POSTGRES_PASSWORD=' .env | head -1 | cut -d= -f2- | tr -d '"' || true)"
   fi
-  # Маршруты книг (Фаза 6): published книги со slug → book-routes.json для prerender'а
-  if DATABASE_URL="postgresql://bookstrata:bookstrata_pass@127.0.0.1:5432/bookstrata" \
-    npx tsx scripts/export-book-routes.ts; then
-    ok "Маршруты книг экспортированы"
+  if [ -z "$DB_PASS" ]; then
+    warn "POSTGRES_PASSWORD не задан (backend/.env) — экспорт маршрутов пропущен"
   else
-    warn "Не удалось экспортировать книги — prerender использует JSON из репы"
+    if DATABASE_URL="postgresql://$DB_USER:$DB_PASS@127.0.0.1:5432/bookstrata" \
+      npx tsx scripts/export-collection-routes.ts; then
+      ok "Маршруты коллекций экспортированы"
+    else
+      warn "Не удалось экспортировать коллекции — prerender использует JSON из репы"
+    fi
+    # Маршруты книг (Фаза 6): published книги со slug → book-routes.json для prerender'а
+    if DATABASE_URL="postgresql://$DB_USER:$DB_PASS@127.0.0.1:5432/bookstrata" \
+      npx tsx scripts/export-book-routes.ts; then
+      ok "Маршруты книг экспортированы"
+    else
+      warn "Не удалось экспортировать книги — prerender использует JSON из репы"
+    fi
   fi
   cd "$PROJECT_DIR"
 fi

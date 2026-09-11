@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import { createLogger } from "../../lib/logger.js";
-import { getFromCache, setToCache, deleteFromCache } from "../../lib/cache.js";
+import { getFromCache, setToCache, deleteFromCache, acquireLock, releaseLock } from "../../lib/cache.js";
 import type { BookSearchResult } from "../books/books.service.js";
 
 const logger = createLogger("LiveLib", { color: "magenta" });
@@ -186,15 +186,28 @@ async function resolveUserId(username: string): Promise<number> {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
 
-      const response = await fetch(url, {
-        method: "HEAD",
-        headers: BROWSER_HEADERS,
-        signal: controller.signal,
-        redirect: "manual",
-      });
-      clearTimeout(timeout);
+      let location = "";
+      let responseStatus = 0;
+      try {
+        const response = await fetch(url, {
+          method: "HEAD",
+          headers: BROWSER_HEADERS,
+          signal: controller.signal,
+          redirect: "manual",
+        });
+        location = response.headers.get("location") || "";
+        responseStatus = response.status;
 
-      const location = response.headers.get("location") || "";
+        // Если редиректа нет — проверяем тело ответа (тоже под таймаутом)
+        if (!location && response.ok) {
+          const body = await response.text();
+          const bodyMatch = body.match(/\/users\/(\d+)/);
+          if (bodyMatch) return Number(bodyMatch[1]);
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+
       const match = location.match(/\/users\/(\d+)/);
       if (match) {
         logger.info(
@@ -203,14 +216,7 @@ async function resolveUserId(username: string): Promise<number> {
         return Number(match[1]);
       }
 
-      // Если редиректа нет — проверяем тело ответа
-      if (response.ok) {
-        const body = await response.text();
-        const bodyMatch = body.match(/\/users\/(\d+)/);
-        if (bodyMatch) return Number(bodyMatch[1]);
-      }
-
-      if (response.status === 404) {
+      if (responseStatus === 404) {
         throw new Error("Пользователь не найден на LiveLib");
       }
     } catch (err) {
@@ -291,7 +297,6 @@ async function fetchRscListPage(
       headers: makeRscHeaders(userId, collectionType),
       signal: controller.signal,
     });
-    clearTimeout(timeout);
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -302,14 +307,17 @@ async function fetchRscListPage(
       return [];
     }
 
+    // Читаем тело ПОД таймаутом: медленный trickle-ответ не может
+    // держать соединение бесконечно после быстрых заголовков
     const text = await response.text();
     return extractAllBooksFromRsc(text);
   } catch (err) {
-    clearTimeout(timeout);
     logger.warn(
       `Ошибка при загрузке RSC списка ${list}: ${(err as Error).message}`,
     );
     return [];
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -317,15 +325,25 @@ async function fetchRscListPage(
  * Загружает все страницы одного списка (read / wish) для пользователя.
  * Страницы запрашиваются последовательно, чтобы не нагружать LiveLib.
  * Дубликаты (из React Query cache) отфильтровываются по art_edition.url.
+ * deadline — общий бюджет всего импорта: при его превышении пагинация останавливается.
  */
 async function fetchListWithPagination(
   userId: number,
   list: string,
+  deadline: number,
 ): Promise<BookSearchResult[]> {
   const seenUrls = new Set<string>();
   const allBooks: BookSearchResult[] = [];
 
   for (let page = 1; page <= MAX_PAGES_PER_LIST; page++) {
+    // Общий дедлайн импорта истёк — не начинаем новую страницу
+    if (Date.now() > deadline) {
+      logger.warn(
+        `Дедлайн импорта истёк на странице ${page} списка ${list} для userId ${userId}`,
+      );
+      break;
+    }
+
     const apiBooks = await fetchRscListPage(userId, list, page);
 
     if (apiBooks.length === 0) {
@@ -370,17 +388,49 @@ async function fetchListWithPagination(
  * Загрузка книг пользователя из его списков на LiveLib.
  * Собирает все страницы /read (прочитанное) и /wish (хочу прочитать).
  */
+// Дедлайн на весь импорт: без него 62 последовательных fetch (30 стр × 2 списка)
+// при медленном LiveLib держат воркер до ~12 минут.
+const IMPORT_DEADLINE_MS = 90_000;
+// Минимальный интервал между forceRefresh одного username (setnx-лок в Redis):
+// иначе любой юзер мог сбросить кэш любого livelib-username и триггерить полный проход.
+const FORCE_REFRESH_LOCK_TTL = 5 * 60; // 5 минут
+// TTL кэша пустого результата: короче полного, чтобы «пустой профиль»
+// не заставлял каждый запрос снова ходить по всем страницам LiveLib.
+const EMPTY_RESULT_TTL = 60;
+
 export async function fetchUserBooks(
   username: string,
   forceRefresh?: boolean,
 ): Promise<BookSearchResult[]> {
   const cacheKey = `livelib:user:${username.toLowerCase()}`;
+  const lockKey = `livelib:lock:${username.toLowerCase()}`;
 
-  // Принудительно сбрасываем кэш, если запрошено обновление
+  // Принудительно сбрасываем кэш, если запрошено обновление —
+  // но только захватив setnx-лок (не чаще раза в 5 минут на username)
   if (forceRefresh) {
-    logger.info(`Force refresh for LiveLib user "${username}" — clearing cache`);
-    await deleteFromCache(cacheKey);
+    const acquired = await acquireLock(lockKey, FORCE_REFRESH_LOCK_TTL);
+    if (!acquired) {
+      throw new Error(
+        `Обновление для пользователя "${username}" запрашивается слишком часто. Повторите через несколько минут.`,
+      );
+    }
+    try {
+      logger.info(`Force refresh for LiveLib user "${username}" — clearing cache`);
+      await deleteFromCache(cacheKey);
+      return await fetchUserBooksWithDeadline(username, cacheKey);
+    } finally {
+      await releaseLock(lockKey);
+    }
   }
+
+  return fetchUserBooksWithDeadline(username, cacheKey);
+}
+
+async function fetchUserBooksWithDeadline(
+  username: string,
+  cacheKey: string,
+): Promise<BookSearchResult[]> {
+  const deadline = Date.now() + IMPORT_DEADLINE_MS;
 
   const cached = await getFromCache<BookSearchResult[]>(cacheKey);
   if (cached) {
@@ -398,7 +448,7 @@ export async function fetchUserBooks(
   const allResults: BookSearchResult[] = [];
 
   for (const list of ["read", "wish"]) {
-    const books = await fetchListWithPagination(userId, list);
+    const books = await fetchListWithPagination(userId, list, deadline);
     for (const b of books) {
       const key = b.openLibraryKey;
       if (seenKeys.has(key)) continue;
@@ -407,9 +457,13 @@ export async function fetchUserBooks(
     }
   }
 
-  if (allResults.length > 0) {
-    await setToCache(cacheKey, allResults, CACHE_TTL);
-  }
+  // Кэшируем ЛЮБОЙ результат, включая пустой (с коротким TTL):
+  // пустой профиль без кэша = полный проход по LiveLib на каждый запрос
+  await setToCache(
+    cacheKey,
+    allResults,
+    allResults.length > 0 ? CACHE_TTL : EMPTY_RESULT_TTL,
+  );
 
   logger.info(
     `Загружено всего ${allResults.length} книг для "${username}"`,

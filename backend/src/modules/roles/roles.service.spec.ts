@@ -131,11 +131,12 @@ describe("RolesService", () => {
       setConfig({ ADMIN_ROLE_CHANGE_SECRET: undefined });
     });
 
-    it("должен назначить роль пользователю (без проверки пароля)", async () => {
+    it("назначает роль при заданном секрете и верном пароле (секрет обязателен)", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
       (prisma.role.findUnique as any).mockResolvedValue(mockAdminRole);
       (prisma.user.update as any).mockResolvedValue(mockUpdatedUser);
 
-      const result = await rolesService.assignRole(1, "admin", 42);
+      const result = await rolesService.assignRole(1, "admin", 42, "secret123");
 
       expect(prisma.role.findUnique).toHaveBeenCalledWith({ where: { name: "admin" } });
       expect(prisma.user.update).toHaveBeenCalledWith({
@@ -152,21 +153,33 @@ describe("RolesService", () => {
     });
 
     it("должен вернуть null если роль не найдена", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
       (prisma.role.findUnique as any).mockResolvedValue(null);
 
-      const result = await rolesService.assignRole(1, "admin");
+      const result = await rolesService.assignRole(1, "admin", 42, "secret123");
 
       expect(result).toBeNull();
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     it("должен вернуть null если у обновлённого пользователя нет role", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
       (prisma.role.findUnique as any).mockResolvedValue(mockUserRole);
       (prisma.user.update as any).mockResolvedValue({ id: 1, role: null });
 
-      const result = await rolesService.assignRole(1, "user");
+      const result = await rolesService.assignRole(1, "user", 42, "secret123");
 
       expect(result).toBeNull();
+    });
+
+    it("FAIL-CLOSED: без ADMIN_ROLE_CHANGE_SECRET смену ролей блокирует (ошибка деплоя не отключает защиту)", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: undefined });
+      (prisma.role.findUnique as any).mockResolvedValue(mockAdminRole);
+
+      await expect(rolesService.assignRole(1, "admin", 42, "whatever")).rejects.toThrow(
+        /не задан|секрет/i,
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     it("должен требовать пароль если установлен ADMIN_ROLE_CHANGE_SECRET", async () => {
@@ -179,28 +192,49 @@ describe("RolesService", () => {
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
-    it("должен принять правильный пароль", async () => {
-      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
+    it("смена роли на admin требует секрет даже при мок-роли user (эскалация привилегий)", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: undefined });
       (prisma.role.findUnique as any).mockResolvedValue(mockAdminRole);
-      (prisma.user.update as any).mockResolvedValue(mockUpdatedUser);
 
-      const result = await rolesService.assignRole(1, "admin", 42, "secret123");
-
-      expect(result).toBeDefined();
-      expect(result!.name).toBe("admin");
+      await expect(rolesService.assignRole(1, "admin", 42)).rejects.toThrow();
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
 
   describe("removeRole", () => {
-    it("должен снять роль с пользователя", async () => {
+    it("должен снять роль с пользователя при верном секрете", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
       (prisma.user.update as any).mockResolvedValue({ id: 1, roleId: null });
 
-      await rolesService.removeRole(1);
+      await rolesService.removeRole(1, 42, "secret123");
 
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { roleId: null },
       });
+    });
+
+    it("FAIL-CLOSED: снятие роли без заданного секрета блокируется (асимметрия с PUT закрыта)", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: undefined });
+
+      await expect(rolesService.removeRole(1, 42, "x")).rejects.toThrow(/не задан|секрет/i);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("снятие роли с неверным паролем отклоняется", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
+
+      await expect(rolesService.removeRole(1, 42, "wrong")).rejects.toThrow(
+        "Неверный пароль для смены роли",
+      );
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("НЕ позволяет снять роль самому себе (защита от само-локOut)", async () => {
+      setConfig({ ADMIN_ROLE_CHANGE_SECRET: "secret123" });
+
+      await expect(rolesService.removeRole(42, 42, "secret123")).rejects.toThrow(/собственн|сам|себе/i);
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
 

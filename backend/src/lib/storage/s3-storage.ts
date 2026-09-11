@@ -5,6 +5,7 @@ import type { ImageStorageService, UploadResult, UploadWithOgResult } from './ty
 import { prepareImage, prepareOgImage } from './image-processor.js'
 import { config } from '../../config/env.js'
 import { createLogger } from '../logger.js'
+import { safeFetchToBuffer } from '../safe-fetch.js'
 
 const logger = createLogger('S3Storage', { color: 'yellow' })
 
@@ -67,15 +68,16 @@ function bufferFromBase64(base64: string): Buffer {
   return Buffer.from(raw, 'base64')
 }
 
+// SSRF-защита: DNS-resolve против private IP, запрет редиректов,
+// таймаут и лимит тела — единый гвард (раньше fetch уходил на произвольный URL,
+// включая localhost/metadata-эндпоинты, и результат публиковался в S3)
 async function fetchToBuffer(url: string): Promise<{ buffer: Buffer; contentType: string }> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)
-  }
-  const arrayBuffer = await response.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  const contentType = response.headers.get('content-type') || 'image/png'
-  return { buffer, contentType }
+  const { buffer, contentType } = await safeFetchToBuffer(url, {
+    allowHttp: true,
+    timeoutMs: 15_000,
+    maxBytes: 20 * 1024 * 1024,
+  })
+  return { buffer, contentType: contentType || 'image/png' }
 }
 
 export class S3Storage implements ImageStorageService {

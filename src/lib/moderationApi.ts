@@ -49,8 +49,10 @@ export async function apiGetWarnings(userId: number): Promise<Warning[]> {
   return apiClient.get<Warning[]>(`/moderation/users/${userId}/warnings`)
 }
 
-export async function apiChangeRole(userId: number, role: string) {
-  return apiClient.put(`/moderation/users/${userId}/role`, { role })
+// Смена роли требует второй фактор — секрет ADMIN_ROLE_CHANGE_SECRET
+// (проверяется на бэке в RolesService.assignRole)
+export async function apiChangeRole(userId: number, role: string, password: string) {
+  return apiClient.put(`/moderation/users/${userId}/role`, { role, password })
 }
 
 // ====== Флаги контента (NSFW) ======

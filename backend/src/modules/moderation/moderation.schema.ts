@@ -23,6 +23,8 @@ export const warnSchema = {
 export const changeRoleSchema = {
   body: z.object({
     role: z.enum(["admin", "moderator", "user"]),
+    // Второй фактор (ADMIN_ROLE_CHANGE_SECRET) — обязателен, как в PUT /api/roles/user/:id
+    password: z.string().min(1),
   }),
 };
 

@@ -109,6 +109,44 @@ const RETENTION_EVENTS = [
   'book_search', 'export_png',
 ]
 
+// ── Защита инжестии /track от мусора и переполнения ─────────────────────────
+// События data-analytics динамические (cta.landing.try_template_12 и т.п.),
+// поэтому вместо allowlist — строгий формат + жёсткие лимиты размеров.
+const EVENT_NAME_PATTERN = /^[a-z0-9_.:-]{1,64}$/
+const URL_MAX_LENGTH = 512
+const USER_AGENT_MAX_LENGTH = 256
+const META_MAX_SERIALIZED_LENGTH = 2048
+
+/** Валидное имя события: только строчные a-z, цифры, точки/подчёркивания/дефисы/двоеточия, ≤64 симв. */
+export function isValidEventName(event: string): boolean {
+  return EVENT_NAME_PATTERN.test(event)
+}
+
+/** Безопасная сериализация meta: копия без прототипных ключей, обрезка до лимита. */
+function sanitizeMeta(meta: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (!meta || typeof meta !== 'object') return {}
+  // Копия own-ключей — отсекает __proto__/constructor, попавшие в объект
+  const safe: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(meta)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue
+    safe[key] = value
+  }
+  // Жёсткий лимит сериализованного размера: обрезаем до порога
+  let serialized = JSON.stringify(safe)
+  if (serialized.length > META_MAX_SERIALIZED_LENGTH) {
+    const truncated: Record<string, unknown> = { truncated: true }
+    // Оставляем максимум полей, влезающих в лимит
+    for (const [key, value] of Object.entries(safe)) {
+      const candidate = { ...truncated, [key]: value }
+      const candidateJson = JSON.stringify(candidate)
+      if (candidateJson.length > META_MAX_SERIALIZED_LENGTH) break
+      truncated[key] = value
+    }
+    serialized = JSON.stringify(truncated)
+  }
+  return JSON.parse(serialized) as Record<string, unknown>
+}
+
 export function createAnalyticsService(prisma: PrismaClient) {
   const trackEvent = async (payload: TrackPayload): Promise<void> => {
     try {
@@ -118,14 +156,24 @@ export function createAnalyticsService(prisma: PrismaClient) {
         if (excludedIds.has(payload.userId)) return
       }
 
+      // Мусорные события (HTML, unicode, >64 симв.) не пишем —
+      // иначе таблица становится вектором забивания БД
+      if (!isValidEventName(payload.event)) {
+        return
+      }
+
       await prisma.analyticsEvent.create({
         data: {
           userId: payload.userId ?? null,
           event: payload.event,
-          meta: (payload.meta ?? {}) as Prisma.InputJsonValue,
-          url: payload.url ?? null,
+          meta: sanitizeMeta(payload.meta) as Prisma.InputJsonValue,
+          url: (payload.url ?? null) && payload.url!.length > URL_MAX_LENGTH
+            ? payload.url!.slice(0, URL_MAX_LENGTH)
+            : (payload.url ?? null),
           ip: payload.ip ?? null,
-          userAgent: payload.userAgent ?? null,
+          userAgent: (payload.userAgent ?? null) && payload.userAgent!.length > USER_AGENT_MAX_LENGTH
+            ? payload.userAgent!.slice(0, USER_AGENT_MAX_LENGTH)
+            : (payload.userAgent ?? null),
         },
       })
     } catch (err) {

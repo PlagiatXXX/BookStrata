@@ -42,28 +42,53 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
       // Это гарантирует, что при смене роли админом права обновятся в течение ~60 секунд,
       // а не ждут перелогина (7-14 дней с текущими сроками жизни JWT).
       let role = payload.role || "user";
+      let suspended = false;
       try {
         const cacheKey = `user:role:${payload.userId}`;
         const cachedRole = await redis.get(cacheKey);
 
         if (cachedRole) {
           role = cachedRole;
+          // Суспензия тоже кэшируется (см. ниже) — отдельно от роли,
+          // чтобы сброс роли не сбрасывал флаг блокировки
+          const suspendedKey = `user:suspended:${payload.userId}`;
+          const cachedSuspended = await redis.get(suspendedKey);
+          if (cachedSuspended === "1") suspended = true;
         } else {
           const prisma = (fastify as any).prisma;
           if (prisma) {
             const dbUser = await prisma.user.findUnique({
               where: { id: payload.userId },
-              select: { role: { select: { name: true } } },
+              select: {
+                role: { select: { name: true } },
+                suspendedUntil: true,
+              },
             });
             if (dbUser?.role?.name) {
               role = dbUser.role.name;
             }
+            // Заблокированный модератором пользователь не должен работать
+            // с API до конца жизни access-токена (раньше suspendedUntil
+            // проверялся только при логине)
+            if (dbUser?.suspendedUntil && new Date(dbUser.suspendedUntil) > new Date()) {
+              suspended = true;
+            }
           }
           // Кэшируем на 60 секунд — баланс между производительностью и актуальностью
           redis.set(cacheKey, role, "EX", 60).catch(() => {});
+          redis.set(`user:suspended:${payload.userId}`, suspended ? "1" : "0", "EX", 60).catch(() => {});
         }
       } catch {
         // Redis или БД недоступны — используем роль из JWT (не меняется до релогина)
+      }
+
+      if (suspended) {
+        // Суспендированный пользователь = аноним: request.user не заполняем,
+        // защищённые роуты вернут 401 через authMiddleware/requireRole
+        logger.warn("Заблокированный пользователь попытался обратиться к API", {
+          userId: payload.userId,
+        });
+        return;
       }
 
       (request as any).user = {

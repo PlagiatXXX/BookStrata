@@ -108,9 +108,10 @@ describe("ImageProxy getWebP", () => {
       80,
     );
 
+    // SSRF-фикс: редиректы запрещены (allowlist обходится через 3xx на private IP)
     expect(fetchMock).toHaveBeenCalledWith(
       "https://cdn.litres.ru/pub/c/cover_415/58887294",
-      expect.objectContaining({ redirect: "follow" }),
+      expect.objectContaining({ redirect: "error" }),
     );
     // Пустой content-type → конвертация прошла, buffer отдан
     expect(buffer.length).toBeGreaterThan(0);
@@ -149,8 +150,9 @@ describe("ImageProxy getWebP", () => {
   it("не-200 от origin → ошибка", async () => {
     fetchMock.mockResolvedValue(new Response("not found", { status: 404 }));
 
+    // Сообщение от safeFetchToBuffer (единый формат для всех внешних загрузок)
     await expect(getWebP("https://example.com/gone")).rejects.toThrow(
-      "Failed to fetch https://example.com/gone: 404",
+      /404|Failed to fetch/,
     );
   });
 });

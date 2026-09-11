@@ -19,6 +19,27 @@ vi.mock("../../lib/prisma.js", () => {
   return { prisma: tx };
 });
 
+// Fail-closed секрет смены ролей — в тестах задан явно
+vi.mock("../../config/env.js", () => ({
+  config: {
+    ADMIN_ROLE_CHANGE_SECRET: "route-test-secret",
+    NODE_ENV: "test",
+    LOG_DIR: "/tmp",
+  },
+  setConfig: vi.fn(),
+}));
+
+vi.mock("../../lib/redis.js", () => {
+  // Стабильные реализации: resetAllMocks в afterEach сбрасывает
+  // impl у vi.fn() — используем объект-прототип, который не мутирует
+  const stable = {
+    del: vi.fn(async () => 1),
+    get: vi.fn(async () => null),
+    set: vi.fn(async () => "OK"),
+  };
+  return { redis: stable };
+});
+
 import { rolesRoutes } from "./roles.route.js";
 
 describe("Roles Routes", () => {
@@ -143,7 +164,7 @@ describe("Roles Routes", () => {
   });
 
   describe("PUT /api/roles/user/:userId", () => {
-    it("должен назначить роль (admin)", async () => {
+    it("должен назначить роль (admin, верный секрет)", async () => {
       const { prisma } = await import("../../lib/prisma.js");
       (prisma.role.findUnique as any).mockResolvedValue({ id: 1, name: "admin", description: "Admin" });
       (prisma.user.update as any).mockResolvedValue({
@@ -154,10 +175,23 @@ describe("Roles Routes", () => {
       const res = await request(app.server)
         .put("/api/roles/user/2")
         .set("Authorization", "Bearer admin-token")
-        .send({ role: "admin", password: "test" })
+        .send({ role: "admin", password: "route-test-secret" })
         .expect(200);
 
       expect(res.body.data.success).toBe(true);
+    });
+
+    it("должен вернуть 403 при неверном секрете", async () => {
+      const { prisma } = await import("../../lib/prisma.js");
+      (prisma.role.findUnique as any).mockResolvedValue({ id: 1, name: "admin", description: "Admin" });
+
+      await request(app.server)
+        .put("/api/roles/user/2")
+        .set("Authorization", "Bearer admin-token")
+        .send({ role: "admin", password: "wrong-secret" })
+        .expect(403);
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     it("должен вернуть 404 если роль не найдена в БД", async () => {
@@ -167,7 +201,7 @@ describe("Roles Routes", () => {
       const res = await request(app.server)
         .put("/api/roles/user/2")
         .set("Authorization", "Bearer admin-token")
-        .send({ role: "moderator", password: "test" })
+        .send({ role: "moderator", password: "route-test-secret" })
         .expect(404);
 
       expect(res.body.error.code).toBe("not_found");
@@ -175,20 +209,43 @@ describe("Roles Routes", () => {
   });
 
   describe("DELETE /api/roles/user/:userId", () => {
-    it("должен снять роль с пользователя (admin)", async () => {
+    it("должен снять роль с пользователя (admin, верный секрет)", async () => {
       const { prisma } = await import("../../lib/prisma.js");
       (prisma.user.update as any).mockResolvedValue({ id: 2, roleId: null });
 
       await request(app.server)
         .delete("/api/roles/user/2")
         .set("Authorization", "Bearer admin-token")
+        .send({ password: "route-test-secret" })
         .expect(200);
+    });
+
+    it("должен вернуть 403 при неверном секрете снятия", async () => {
+      const { prisma } = await import("../../lib/prisma.js");
+
+      await request(app.server)
+        .delete("/api/roles/user/2")
+        .set("Authorization", "Bearer admin-token")
+        .send({ password: "wrong" })
+        .expect(403);
+
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("НЕ позволяет снять роль самому себе", async () => {
+      // admin-token = userId 1 → снятие роли с userId 1 = само-локOut
+      await request(app.server)
+        .delete("/api/roles/user/1")
+        .set("Authorization", "Bearer admin-token")
+        .send({ password: "route-test-secret" })
+        .expect(400);
     });
 
     it("должен вернуть 403 для обычного пользователя", async () => {
       await request(app.server)
         .delete("/api/roles/user/2")
         .set("Authorization", "Bearer user-token")
+        .send({ password: "route-test-secret" })
         .expect(403);
     });
   });

@@ -54,6 +54,22 @@ function deslugify(slug) {
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
+/**
+ * HTML-экранирование пользовательских строк (названия тир-листов, коллекций,
+ * знаменитостей) перед вставкой в fallback-HTML пререндера.
+ * Без этого title тир-листа вида `<img src=x onerror=...>` исполнялся
+ * в статическом HTML, отдаваемом всем пользователям и ботам (stored XSS).
+ */
+export function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // для HTTP запросов к localhost не нужен специальный Agent.
 // В Node.js 22+ fetch встроен и работает напрямую.
 
@@ -949,9 +965,9 @@ async function processRoute(browser, route) {
       if (isTierList) {
         const slug = route.path.replace("/tier-lists/", "");
         // Используем name из ROUTES (там реальное название из API), а не deslugify
-        const readableTitle = route.name.replace("Тир-лист: ", "") || deslugify(slug);
+        const readableTitle = escapeHtml(route.name.replace("Тир-лист: ", "") || deslugify(slug));
         // Автор в title/description уникализирует тир-листы с одинаковыми названиями
-        const authorPart = route.authorName && route.authorName !== "Anonymous" ? ` от @${route.authorName}` : "";
+        const authorPart = route.authorName && route.authorName !== "Anonymous" ? ` от @${escapeHtml(route.authorName)}` : "";
         fallbackTitle = `${readableTitle} — книжный тир-лист${authorPart} | BookStrata`;
         fallbackDesc = `Тир-лист «${readableTitle}»${authorPart ? ` от пользователя ${authorPart}` : ""} — визуальный рейтинг книг, составленный читателем на BookStrata. Оценивайте и сортируйте любимые книги.`;
         canonicalPath = route.path;
@@ -966,7 +982,7 @@ async function processRoute(browser, route) {
   </nav>
 </article>`;
       } else if (isCollection) {
-        const collectionName = route.name.replace("Подборка: ", "");
+        const collectionName = escapeHtml(route.name.replace("Подборка: ", ""));
         fallbackTitle = `${collectionName} — подборка книг | BookStrata`;
         fallbackDesc = `Редакционная подборка книг «${collectionName}» — лучшие книги по жанру, рейтинг и рекомендации читателей на BookStrata.`;
         canonicalPath = route.path;
@@ -981,7 +997,7 @@ async function processRoute(browser, route) {
   </nav>
 </article>`;
       } else if (isTopic) {
-        const categoryName = route.name || deslugify(route.path.replace("/topics/", ""));
+        const categoryName = escapeHtml(route.name || deslugify(route.path.replace("/topics/", "")));
         fallbackTitle = `${categoryName} — подборки книг и рейтинг | BookStrata`;
         fallbackDesc = `Подборки книг в жанре «${categoryName}» — рейтинг читателей, отзывы и рекомендации на BookStrata.`;
         canonicalPath = route.path;
@@ -991,7 +1007,7 @@ async function processRoute(browser, route) {
   <p>${fallbackDesc}</p>
 </main>`;
       } else if (isCelebrity) {
-        const celebrityName = route.name.replace("Знаменитость: ", "");
+        const celebrityName = escapeHtml(route.name.replace("Знаменитость: ", ""));
         fallbackTitle = `${celebrityName} — что читает, любимые книги | BookStrata`;
         fallbackDesc = `Любимые книги ${celebrityName} — подборка книг, которые читает знаменитость. Книжные рекомендации на BookStrata.`;
         canonicalPath = route.path;
@@ -1007,7 +1023,7 @@ async function processRoute(browser, route) {
 </article>`;
       } else {
         // Статические страницы (главная, контакты, privacy, etc.)
-        const pageName = route.name || "BookStrata";
+        const pageName = escapeHtml(route.name || "BookStrata");
         fallbackTitle = `${pageName} | BookStrata`;
         fallbackDesc = `BookStrata — интерактивный рейтинг книг. Составляйте визуальные подборки, находите что почитать и делитесь мнением.`;
         canonicalPath = route.path;

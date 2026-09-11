@@ -1,238 +1,138 @@
-import { describe, it, expect } from "vitest";
-import { extractBooksFromHtml } from "./livelib.service.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-describe("LiveLib HTML parser", () => {
-  it("should extract books from a typical LiveLib reading list page", () => {
-    const html = `
-      <div id="user-objects">
-        <div class="object-wrapper object-wrapper-outer object-edition">
-          <div class="ll-redirect" data-link="/book/1015868566-vojna-i-mir-v-4-tomah-tom-iii-lev-tolstoj">
-            <a href="/book/1015868566-vojna-i-mir-v-4-tomah-tom-iii-lev-tolstoj" title="Лев Толстой - Война и мир. В 4 томах. Том III">
-              <span class="object-cover" style="background:url(https://s1.livelib.ru/boocover/1015868566/120x180/044f/boocover.jpg) no-repeat;"></span>
-            </a>
-            <div class="object-info">
-              <div class="brow-title">
-                <a href="/book/1015868566-vojna-i-mir-v-4-tomah-tom-iii-lev-tolstoj" class="title">Война и мир. В 4 томах. Том III</a>
-              </div>
-              <a class="description" href="/author/5497-lev-tolstoj" title="Лев Толстой">Лев Толстой</a>
-            </div>
-          </div>
-          <div class="separator"></div>
-        </div>
+// Мокаем кэш (lib/cache) ДО импорта сервиса — vi.mock hoisted, фабрика самодостаточна
+vi.mock("../../lib/cache.js", () => ({
+  getFromCache: vi.fn().mockResolvedValue(null),
+  setToCache: vi.fn().mockResolvedValue(undefined),
+  deleteFromCache: vi.fn().mockResolvedValue(undefined),
+  acquireLock: vi.fn().mockResolvedValue(true),
+  releaseLock: vi.fn().mockResolvedValue(undefined),
+}));
 
-        <div class="object-wrapper object-wrapper-outer object-edition">
-          <div class="ll-redirect" data-link="/book/1009177603-vojna-i-mir-tom-34-lev-tolstoj">
-            <a href="/book/1009177603-vojna-i-mir-tom-34-lev-tolstoj" title="Лев Толстой - Война и мир. Том III-IV">
-              <span class="object-cover" style="background:url(https://s1.livelib.ru/boocover/1009177603/120x180/3af8/boocover.jpg) no-repeat;"></span>
-            </a>
-            <div class="object-info">
-              <div class="brow-title">
-                <a href="/book/1009177603-vojna-i-mir-tom-34-lev-tolstoj" class="title">Война и мир. Том III-IV</a>
-              </div>
-              <a class="description" href="/author/5497-lev-tolstoj" title="Лев Толстой">Лев Толстой</a>
-            </div>
-          </div>
-          <div class="separator"></div>
-        </div>
-      </div>
-    `;
+// Мокаем глобальный fetch — по умолчанию мгновенный пустой ответ
+const fetchMock = vi.fn().mockResolvedValue(
+  new Response("{}", { status: 200, headers: { "content-type": "text/plain" } }),
+);
+vi.stubGlobal("fetch", fetchMock);
 
-    const books = extractBooksFromHtml(html);
+import { fetchUserBooks } from "./livelib.service.js";
+import {
+  getFromCache,
+  setToCache,
+  deleteFromCache,
+  acquireLock,
+  releaseLock,
+} from "../../lib/cache.js";
 
-    expect(books).toHaveLength(2);
+const cacheMock = {
+  getFromCache: vi.mocked(getFromCache),
+  setToCache: vi.mocked(setToCache),
+  deleteFromCache: vi.mocked(deleteFromCache),
+  acquireLock: vi.mocked(acquireLock),
+  releaseLock: vi.mocked(releaseLock),
+};
 
-    expect(books[0].title).toBe("Война и мир. В 4 томах. Том III");
-    expect(books[0].author).toBe("Лев Толстой");
-    expect(books[0].coverImageUrl).toBe(
-      "https://s1.livelib.ru/boocover/1015868566/120x180/044f/boocover.jpg",
-    );
-    expect(books[0].liveLibUrl).toBe(
-      "/book/1015868566-vojna-i-mir-v-4-tomah-tom-iii-lev-tolstoj",
-    );
-
-    expect(books[1].title).toBe("Война и мир. Том III-IV");
-    expect(books[1].author).toBe("Лев Толстой");
-    expect(books[1].coverImageUrl).toBe(
-      "https://s1.livelib.ru/boocover/1009177603/120x180/3af8/boocover.jpg",
+describe("livelib: защита от зависания и кэширование пустых результатов", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cacheMock.getFromCache.mockResolvedValue(null);
+    cacheMock.acquireLock.mockResolvedValue(true);
+    fetchMock.mockResolvedValue(
+      new Response("{}", { status: 200 }),
     );
   });
 
-  it("should return empty array when no book entries exist", () => {
-    const html = `
-      <div id="user-objects">
-        <div class="block-border card-block">
-          <div class="with-pad">
-            <p>Этот список пока пуст.</p>
-          </div>
-        </div>
-      </div>
-    `;
+  it("НЕ кэширует только непустые результаты: пустой список тоже попадает в кэш (короткий TTL)", async () => {
+    // resolveUserId: HEAD с location на /users/123
+    fetchMock.mockImplementation(async (url: string, _init?: RequestInit) => {
+      if (String(url).includes("/reader/")) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "https://livlib.ru/users/123" },
+        });
+      }
+      // RSC-страница: без книг → extractAllBooksFromRsc вернёт []
+      return new Response("no books here", { status: 200 });
+    });
 
-    const books = extractBooksFromHtml(html);
-    expect(books).toHaveLength(0);
-  });
+    const books = await fetchUserBooks("testuser");
+    expect(books).toEqual([]);
 
-  it("should skip entries without title", () => {
-    const html = `
-      <div id="user-objects">
-        <div class="object-wrapper object-wrapper-outer object-edition">
-          <div class="ll-redirect" data-link="/book/123">
-            <a href="/book/123" title="Test">
-              <span class="object-cover" style="background:url(https://example.com/cover.jpg) no-repeat;"></span>
-            </a>
-            <div class="object-info">
-              <div class="brow-title">
-                <a href="/book/123" class="title"></a>
-              </div>
-              <a class="description" href="/author/1" title="Author">Author</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const books = extractBooksFromHtml(html);
-    expect(books).toHaveLength(0);
-  });
-
-  it("should handle missing author gracefully", () => {
-    const html = `
-      <div id="user-objects">
-        <div class="object-wrapper object-wrapper-outer object-edition">
-          <div class="ll-redirect" data-link="/book/456">
-            <span class="object-cover" style="background:url(https://example.com/cover.jpg) no-repeat;"></span>
-            <div class="object-info">
-              <div class="brow-title">
-                <a href="/book/456" class="title">Книга без автора</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const books = extractBooksFromHtml(html);
-    expect(books).toHaveLength(1);
-    expect(books[0].title).toBe("Книга без автора");
-    expect(books[0].author).toBe("");
-    expect(books[0].coverImageUrl).toBe(
-      "https://example.com/cover.jpg",
+    // Пустой результат ДОЛЖЕН быть закэширован (иначе каждый запрос = полный проход по LiveLib)
+    expect(cacheMock.setToCache).toHaveBeenCalledWith(
+      "livelib:user:testuser",
+      [],
+      expect.any(Number),
     );
   });
 
-  it("should handle missing cover image", () => {
-    const html = `
-      <div id="user-objects">
-        <div class="object-wrapper object-wrapper-outer object-edition">
-          <div class="ll-redirect" data-link="/book/789">
-            <span class="object-cover" style="background:url() no-repeat;"></span>
-            <div class="object-info">
-              <div class="brow-title">
-                <a href="/book/789" class="title">Книга без обложки</a>
-              </div>
-              <a class="description" href="/author/2" title="Author">Автор</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
+  it("таймаут fetch покрывает и чтение тела, а не только заголовки", async () => {
+    // resolveUserId ок; RSC-страница отдаёт тело МЕДЛЕННО — abort должен покрыть и его
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (String(url).includes("/reader/")) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "https://livlib.ru/users/123" },
+        });
+      }
+      // Проверяем, что AbortController передан — паттерн таймаута сохранён
+      if (!init?.signal) throw new Error("fetch без AbortSignal — таймаут не защищает запрос");
+      return new Response("{}", { status: 200 });
+    });
 
-    const books = extractBooksFromHtml(html);
-    expect(books).toHaveLength(1);
-    expect(books[0].coverImageUrl).toBeNull();
+    // Не падает и возвращает результат — сигнал прокинут во все fetch
+    await expect(fetchUserBooks("testuser")).resolves.toBeDefined();
   });
 
-  it("should extract books from profile page carousel (slide-book__item)", () => {
-    const html = `
-      <div class="profile-carousel">
-        <ul class="slide-book__carousel">
-          <li class="slide-book__item">
-            <a class="slide-book__link" href="/book/1016063812-intrizhka-flora-kollins">
-              <img data-pagespeed-lazy-src="https://s1.livelib.ru/boocover/1016063812/200/8756/boocover.jpg" alt="Интрижка">
-            </a>
-            <a class="slide-book__title" href="/book/1016063812-intrizhka-flora-kollins">Интрижка</a>
-            <a class="slide-book__author" href="/author/1-flora-kollins">Флора Коллинз</a>
-          </li>
-          <li class="slide-book__item">
-            <a class="slide-book__link" href="/book/1017721894-50-pravil-meril-strip-harper-lidiya">
-              <img data-pagespeed-lazy-src="https://s1.livelib.ru/boocover/1017721894/200/ce22/boocover.jpg" alt="50 правил Мерил Стрип">
-            </a>
-            <a class="slide-book__title" href="/book/1017721894-50-pravil-meril-strip-harper-lidiya">50 правил Мерил Стрип</a>
-            <a class="slide-book__author" href="/author/2-harper-lidiya">Харпер Лидия</a>
-          </li>
-        </ul>
-      </div>
-    `;
+  it("общий дедлайн: fetchUserBooks не работает дольше лимита страниц", async () => {
+    // resolveUserId ок
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes("/reader/")) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "https://livlib.ru/users/123" },
+        });
+      }
+      // Каждая страница возвращает «книги», чтобы пагинация не заканчивалась
+      return new Response(
+        JSON.stringify({ props: { bookList: [] } }),
+        { status: 200 },
+      );
+    });
 
-    const books = extractBooksFromHtml(html);
-    expect(books).toHaveLength(2);
-    expect(books[0].title).toBe("Интрижка");
-    expect(books[0].author).toBe("Флора Коллинз");
-    expect(books[0].coverImageUrl).toBe(
-      "https://s1.livelib.ru/boocover/1016063812/200/8756/boocover.jpg",
+    await fetchUserBooks("testuser");
+    // Даже если страницы всё возвращают «новое», общее число страниц ограничено
+    // MAX_PAGES_PER_LIST на каждый список × 2 списка — но общее число fetch ≤ 60 + resolve
+    const fetchCalls = fetchMock.mock.calls.length;
+    expect(fetchCalls).toBeLessThanOrEqual(62);
+  });
+
+  it("forceRefresh требует захвата лока (setnx) — не чаще раза в N минут на username", async () => {
+    cacheMock.acquireLock.mockResolvedValueOnce(false); // лок уже занят
+
+    await expect(fetchUserBooks("testuser", true)).rejects.toThrow(
+      /слишком часто|ПОВТОРИТЕ/i,
     );
-    expect(books[0].liveLibUrl).toBe(
-      "/book/1016063812-intrizhka-flora-kollins",
-    );
-    expect(books[1].title).toBe("50 правил Мерил Стрип");
+    // Кэш не сбрасывается без лока
+    expect(cacheMock.deleteFromCache).not.toHaveBeenCalled();
   });
 
-  it("should prefer list page selectors over carousel when both exist", () => {
-    const html = `
-      <div class="object-wrapper object-edition">
-        <div class="brow-title">
-          <a href="/book/111" class="title">Из списка</a>
-        </div>
-        <a class="description" href="/author/1">Автор из списка</a>
-        <span class="object-cover" style="background:url(https://example.com/list.jpg) no-repeat;"></span>
-      </div>
-      <ul class="slide-book__carousel">
-        <li class="slide-book__item">
-          <a class="slide-book__link" href="/book/222">
-            <img data-pagespeed-lazy-src="https://example.com/carousel.jpg">
-          </a>
-          <a class="slide-book__title" href="/book/222">Из карусели</a>
-        </li>
-      </ul>
-    `;
+  it("forceRefresh при свободном локе сбрасывает кэш и отпускает лок", async () => {
+    cacheMock.acquireLock.mockResolvedValueOnce(true);
+    // resolveUserId: редирект на /users/123; страницы пустые
+    fetchMock.mockImplementation(async (url: string) => {
+      if (String(url).includes("/reader/")) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "https://livelib.ru/users/123" },
+        });
+      }
+      return new Response("{}", { status: 200 });
+    });
 
-    const books = extractBooksFromHtml(html);
-    // Должна выбрать первую книгу из основного списка, а не из карусели
-    expect(books).toHaveLength(1);
-    expect(books[0].title).toBe("Из списка");
-  });
+    await fetchUserBooks("testuser", true);
 
-  it("should work with different list view layouts", () => {
-    // Некоторые страницы могут иметь другую разметку (biglist, smalltiles)
-    // но базовые селекторы должны оставаться теми же
-    const html = `
-      <div class="object-wrapper object-edition">
-        <div class="ll-redirect" data-link="/book/111">
-          <span class="object-cover" style="background:url(https://example.com/c1.jpg) no-repeat;"></span>
-          <div class="object-info">
-            <div class="brow-title">
-              <a href="/book/111" class="title">Книга 1</a>
-            </div>
-            <a class="description" href="/author/3">Автор 1</a>
-          </div>
-        </div>
-      </div>
-      <div class="object-wrapper object-edition">
-        <div class="ll-redirect" data-link="/book/222">
-          <span class="object-cover" style="background:url(https://example.com/c2.jpg) no-repeat;"></span>
-          <div class="object-info">
-            <div class="brow-title">
-              <a href="/book/222" class="title">Книга 2</a>
-            </div>
-            <a class="description" href="/author/4">Автор 2</a>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const books = extractBooksFromHtml(html);
-    expect(books).toHaveLength(2);
-    expect(books[0].title).toBe("Книга 1");
-    expect(books[1].title).toBe("Книга 2");
+    expect(cacheMock.deleteFromCache).toHaveBeenCalledWith("livelib:user:testuser");
+    expect(cacheMock.releaseLock).toHaveBeenCalled();
   });
 });

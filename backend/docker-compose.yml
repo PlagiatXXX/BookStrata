@@ -3,9 +3,13 @@ services:
     image: postgres:16-alpine
     container_name: bookstrata-postgres
     environment:
-      POSTGRES_USER: bookstrata
-      POSTGRES_PASSWORD: bookstrata_pass
-      POSTGRES_DB: bookstrata
+      POSTGRES_USER: ${POSTGRES_USER:-bookstrata}
+      # На проде пароль задаётся в backend/.env сервера (в git не входит).
+      # Дефолт — только для локальной разработки (порт 127.0.0.1).
+      # ВАЖНО: при смене пароля в первый раз на уже инициализированном
+      # volume старый пароль сохраняется в кластере — см. README по миграции.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bookstrata_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-bookstrata}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:

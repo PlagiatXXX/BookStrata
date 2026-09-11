@@ -12,15 +12,24 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
   fastify.post(
     '/track',
     {
+      // Публичная инжестия — отдельный строгий rate limit (не дефолтные 30/мин анонима)
+      config: {
+        rateLimit: {
+          max: 60,
+          timeWindow: '1 minute',
+        },
+      },
       schema: {
         body: {
           type: 'object',
           required: ['event'],
           properties: {
-            event: { type: 'string', minLength: 1 },
-            meta: { type: 'object' },
-            url: { type: 'string' },
+            // Формат: строчные a-z/0-9 + . _ : - (события data-analytics динамические)
+            event: { type: 'string', minLength: 1, maxLength: 64, pattern: '^[a-z0-9_.:-]+$' },
+            meta: { type: 'object', maxProperties: 20, additionalProperties: true },
+            url: { type: 'string', maxLength: 512 },
           },
+          additionalProperties: false,
         },
       },
     },

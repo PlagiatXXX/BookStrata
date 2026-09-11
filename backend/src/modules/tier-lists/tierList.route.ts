@@ -20,7 +20,6 @@ import {
   getLikesWithStatus,
 } from "./likes/likes.service.js";
 import { addBooksToTierList } from "./tierList.service.js";
-import { prisma } from "../../lib/prisma.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 // Логгер для роутов тир-листов
@@ -565,20 +564,15 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         });
       }
 
-      // 2. Каталоговые поля (title/author/genre/tags/description) — только для draft-книг:
-      //    начальные данные книги, которой ещё нет в каталоге. Для published-книг
+      // 2. Каталоговые поля (title/author/genre/tags/description) — только для draft-книг,
+      //    размещённых В ЭТОМ тир-листе (проверка BookPlacement внутри сервиса — защита
+      //    от IDOR-правки чужих draft-книг по глобальному bookId). Для published-книг
       //    каталог-эталон из пользовательского редактора не перезаписывается (защита Фазы 2.3).
       const catalogPayload = Object.fromEntries(
         Object.entries(catalogFields).filter(([, v]) => v !== undefined),
       );
       if (Object.keys(catalogPayload).length > 0) {
-        const book = await prisma.book.findUnique({
-          where: { id: bookId },
-          select: { status: true },
-        });
-        if (book?.status === "draft") {
-          await service.updateBookCatalog(bookId, catalogPayload);
-        }
+        await service.updateBookCatalogIfPlaced(tierListId, bookId, catalogPayload);
       }
 
       const updated = await service.updateBookPlacement(tierListId, bookId, {});

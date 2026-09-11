@@ -152,22 +152,44 @@ export async function rolesRoutes(fastify: FastifyInstance) {
 
   /**
    * DELETE /api/roles/user/:userId
-   * Снять роль с пользователя (требуется роль admin)
+   * Снять роль с пользователя (требуется роль admin + секрет смены ролей)
    */
   fastify.delete(
     "/roles/user/:userId",
-    { preHandler: requireRole("admin") },
+    {
+      preHandler: requireRole("admin"),
+      schema: {
+        body: {
+          type: "object",
+          required: ["password"],
+          properties: {
+            password: { type: "string", minLength: 1 },
+          },
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       try {
         const { userId } = request.params as { userId: string };
+        const { password } = (request.body ?? {}) as { password?: string };
+        const adminId = request.user?.userId;
 
-        await rolesService.removeRole(parseInt(userId, 10));
+        await rolesService.removeRole(parseInt(userId, 10), adminId, password);
 
-        logger.info("Роль снята", { userId });
+        logger.info("Роль снята", { userId, by: adminId });
 
         return reply.send({ data: { success: true } });
       } catch (error) {
-        logger.error("Ошибка снятия роли", { error });
+        const message = error instanceof Error ? error.message : "Ошибка при снятии роли";
+        logger.error("Ошибка снятия роли", { error, message });
+
+        if (message.includes("Неверный пароль") || message.includes("ADMIN_ROLE_CHANGE_SECRET")) {
+          return reply.code(403).send(createApiError(ErrorCodes.ACCESS_DENIED, message));
+        }
+        if (message.includes("собственную роль")) {
+          return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, message));
+        }
+
         return reply.code(500).send(createApiError(ErrorCodes.INTERNAL_ERROR, "Ошибка при снятии роли"));
       }
     },

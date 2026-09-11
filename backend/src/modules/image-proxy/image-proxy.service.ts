@@ -8,6 +8,7 @@ import {
 import sharp from "sharp";
 import { createLogger } from "../../lib/logger.js";
 import { config } from "../../config/env.js";
+import { safeFetchToBuffer, assertSafeImageUrl } from "../../lib/safe-fetch.js";
 
 const logger = createLogger("ImageProxy", { color: "cyan" });
 
@@ -174,6 +175,8 @@ async function uploadToS3(
 
 /**
  * Скачивает изображение по URL, конвертирует в WebP.
+ * SSRF-защита: DNS-resolve против private IP + запрет редиректов +
+ * лимит размера тела — через единый safeFetchToBuffer (lib/safe-fetch).
  */
 async function convertToWebP(
   url: string,
@@ -182,31 +185,22 @@ async function convertToWebP(
 ): Promise<Buffer> {
   logger.info(`Fetching: ${url}`);
 
-  const response = await fetch(url, {
-    redirect: "follow",
+  const { buffer: inputBuffer, contentType } = await safeFetchToBuffer(url, {
+    allowHttp: true, // часть внешних CDN (litres и др.) отдаёт http
+    timeoutMs: 15_000,
+    maxBytes: 20 * 1024 * 1024,
     headers: {
       "User-Agent": "BookStrata/1.0 ImageProxy",
       Referer: "https://bookstrata.ru",
     },
-    signal: AbortSignal.timeout(15_000), // 15 секунд таймаут
   });
 
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch ${url}: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  const contentType = response.headers.get("content-type") || "";
   // Некоторые CDN (cdn.litres.ru и др.) отдают картинки БЕЗ заголовка
   // Content-Type вовсе — пустой тип не блокируем, sharp определит формат
   // по содержимому. Блокируем только явные не-image типы (HTML-капча и т.п.).
   if (contentType && !contentType.startsWith("image/")) {
     throw new Error(`Non-image content type: ${contentType}`);
   }
-
-  const arrayBuffer = await response.arrayBuffer();
-  const inputBuffer = Buffer.from(arrayBuffer);
 
   logger.info(
     `Converting: ${url} → WebP (${width}px, q${quality}), source ${(inputBuffer.length / 1024).toFixed(0)} KB`,
@@ -313,6 +307,15 @@ export async function externalToCdnUrl(
   }
 
   if (!ALLOWED_PROTOCOLS.some((p) => url.startsWith(p))) return null;
+
+  // SSRF-гвард: DNS-resolve против private IP (169.254.169.254 и т.п.).
+  // Раньше проверялся только протокол — fetch уходил на произвольный хост.
+  try {
+    await assertSafeImageUrl(url, { allowHttp: true });
+  } catch {
+    logger.warn(`externalToCdnUrl: заблокирован небезопасный URL: ${url}`);
+    return null;
+  }
 
   const hash = urlHash(url);
   const key = cacheKey(hash);

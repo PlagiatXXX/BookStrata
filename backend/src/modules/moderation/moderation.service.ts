@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { createLogger } from "../../lib/logger.js";
 import { ErrorCodes, createApiError } from "../../lib/api-response.js";
+import { redis } from "../../lib/redis.js";
 
 const logger = createLogger("ModerationService", { color: "red" });
 
@@ -110,6 +111,12 @@ export class ModerationService {
       reason,
     });
 
+    // Мгновенная инвалидация кэша роли/суспензии в authPlugin (иначе до 60с
+    // заблокированный продолжал бы работать с API)
+    redis
+      .del(`user:role:${targetUserId}`, `user:suspended:${targetUserId}`)
+      .catch(() => {});
+
     return {
       ...user,
       suspendedAt: now.toISOString(),
@@ -130,6 +137,10 @@ export class ModerationService {
     });
 
     logger.info("Пользователь разблокирован", { targetUserId, moderatorId });
+
+    redis
+      .del(`user:role:${targetUserId}`, `user:suspended:${targetUserId}`)
+      .catch(() => {});
 
     return user;
   }

@@ -1,14 +1,14 @@
 import sharp from 'sharp'
 import crypto from 'node:crypto'
 import { access, mkdir, unlink } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import type { ImageStorageService, UploadResult, UploadWithOgResult } from './types.js'
 import { prepareImage, prepareOgImage } from './image-processor.js'
 import { config } from '../../config/env.js'
+import { safeFetchToBuffer } from '../safe-fetch.js'
 
-const UPLOADS_DIR = config.UPLOADS_DIR
-  ? join(process.cwd(), config.UPLOADS_DIR)
-  : join(process.cwd(), 'uploads')
+// resolve корректно обрабатывает и относительные пути (от cwd), и абсолютные
+const UPLOADS_DIR = resolve(process.cwd(), config.UPLOADS_DIR || 'uploads')
 
 const BASE_URL = config.UPLOADS_BASE_URL
 
@@ -45,13 +45,15 @@ function bufferFromBase64(base64: string): Buffer {
   return Buffer.from(raw, 'base64')
 }
 
+// SSRF-защита: DNS-resolve против private IP, запрет редиректов,
+// таймаут и лимит тела — единый гвард для всех загрузок по URL
 async function fetchToBuffer(url: string): Promise<Buffer> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)
-  }
-  const arrayBuffer = await response.arrayBuffer()
-  return Buffer.from(arrayBuffer)
+  const { buffer } = await safeFetchToBuffer(url, {
+    allowHttp: true,
+    timeoutMs: 15_000,
+    maxBytes: 20 * 1024 * 1024,
+  })
+  return buffer
 }
 
 const AVATARS_DIR = 'avatars'
@@ -75,7 +77,15 @@ export class LocalStorage implements ImageStorageService {
   async deleteFile(publicId: string): Promise<void> {
     // publicId = /uploads/folder/uuid.ext — убираем /uploads, получаем путь от UPLOADS_DIR
     const relativePath = publicId.replace(/^\/uploads\//, '')
-    const filePath = join(UPLOADS_DIR, relativePath)
+
+    // Path traversal-гвард: резолвим и убеждаемся, что итоговый путь
+    // остаётся внутри UPLOADS_DIR. Иначе ../ в publicId позволяет удалять
+    // произвольные файлы процесса (chain: PUT /users/me/avatar → orphan → unlink)
+    const filePath = resolve(UPLOADS_DIR, relativePath)
+    if (!filePath.startsWith(UPLOADS_DIR + '/')) {
+      return // путь вне хранилища — молча игнорируем
+    }
+
     try {
       await unlink(filePath)
     } catch {

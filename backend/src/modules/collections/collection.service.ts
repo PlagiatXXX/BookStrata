@@ -11,6 +11,7 @@ import { createAuthorService } from "../authors/authors.service.js";
 import { matchBook } from "../books/bookMatching.service.js";
 import type { MatchBookInput } from "./collection.schema.js";
 import { config } from "../../config/env.js";
+import { safeFetchToBuffer } from "../../lib/safe-fetch.js";
 import {
   syncCatalogCards,
   gcOrphanBooks,
@@ -549,29 +550,25 @@ function isNoise(text: string): boolean {
 export async function parseBooksFromUrl(url: string): Promise<ParsedBook[]> {
   const cheerio = await import("cheerio");
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml,application/xml",
-      },
-      signal: AbortSignal.timeout(15_000),
-    });
-  } catch (fetchError) {
+  // SSRF-гвард: DNS-resolve против private IP (localhost/metadata),
+  // запрет редиректов, лимит тела — единый safeFetch (бэкенд может
+  // ходить в свою же внутреннюю сеть, если URL придёт от компрометированного админа)
+  const { buffer: htmlBuffer } = await safeFetchToBuffer(url, {
+    allowHttp: true,
+    timeoutMs: 15_000,
+    maxBytes: 5 * 1024 * 1024, // HTML-странице достаточно 5MB
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml",
+    },
+  }).catch((fetchError: unknown) => {
     throw new Error(
       `Не удалось загрузить страницу: ${fetchError instanceof Error ? fetchError.message : "таймаут или сетевой сбой"}`,
     );
-  }
+  });
 
-  if (!response.ok) {
-    throw new Error(
-      `Сервер вернул ${response.status}${response.status === 503 ? " (сайт блокирует ботов)" : ""}`,
-    );
-  }
-
-  const html = await response.text();
+  const html = htmlBuffer.toString("utf-8");
 
   // Проверяем, что HTML похож на человеческую страницу
   if (html.length < 500) {

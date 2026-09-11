@@ -7,7 +7,10 @@ import { AuthenticationError } from "../../lib/errors.js";
 
 const logger = createLogger("Token", { color: "cyan" });
 
-const ACCESS_TOKEN_EXPIRY = "7d";
+// Access-токен короткоживущий: при 7-дневном access заблокированный
+// (suspendedUntil) пользователь продолжал работать с API неделю.
+// 60 минут + refresh-флоу на фронте (single-flight) — окно компрометации ≤1ч.
+const ACCESS_TOKEN_EXPIRY = "60m";
 const REFRESH_TOKEN_EXPIRY = "14d";
 
 const REFRESH_VERSION_PREFIX = "auth:refresh_version:";
@@ -92,12 +95,13 @@ export async function validateRefreshToken(token: string): Promise<AuthTokenPayl
 }
 
 export async function logout(userId: number): Promise<void> {
-  // Refresh-токен хранится в httpOnly Secure SameSite=Strict cookie —
-  // украсть через XSS нельзя. Клиент сам чистит куку при logout,
-  // поэтому серверу не нужно инвалидировать refreshVersion.
-  // Инвалидация refreshVersion всё ещё используется при смене пароля
-  // для отзыва всех сессий (в password-reset.service.ts).
-  logger.info("Пользователь вышел (refresh-токен остаётся валидным до истечения срока)", { userId });
+  // Отзываем все refresh-токены пользователя инкрементом версии:
+  // «выйти» теперь реально завершает сессию (раньше refresh оставался
+  // валидным до 14 дней). Access-токен истекает сам (≤60 минут).
+  // Refresh хранится в httpOnly-куке — кража по XSS исключена, но logout
+  // обязан работать и против украденной куки (shared-устройство и т.п.).
+  await incrementRefreshVersion(userId);
+  logger.info("Пользователь вышел — refresh-токены отозваны", { userId });
 }
 
 export async function generateTokenPair(payload: Partial<AuthTokenPayload>): Promise<{
