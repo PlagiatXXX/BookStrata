@@ -1269,7 +1269,14 @@ async function prerender() {
 // }
 */
 
-prerender().catch((err) => {
-  console.error("[prerender] Fatal:", err);
-  process.exit(1);
-});
+// Запускаем только при прямом вызове скрипта, не при импорте (тесты)
+if (
+  process.argv[1] &&
+  (process.argv[1] === __dirname + "/prerender.mjs" ||
+    process.argv[1].endsWith("/prerender.mjs"))
+) {
+  prerender().catch((err) => {
+    console.error("[prerender] Fatal:", err);
+    process.exit(1);
+  });
+}
