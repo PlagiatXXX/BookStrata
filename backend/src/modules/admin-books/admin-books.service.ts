@@ -309,6 +309,23 @@ export async function listBooks(params: BookListParams) {
   if (orFilters.length > 0) where.OR = orFilters;
 
   const sort = params.sort ?? "updatedAt";
+  const isViewsSort = sort === "views";
+
+  // Просмотры считаем одной агрегацией по всем /books/ и привязываем по slug
+  // Важно: при сортировке по просмотрам нужен доступ ко ВСЕМ slug ДО пагинации,
+  // чтобы отсортировать и взять top-N. Поэтому для views-сортировки
+  // сначала считаем просмотры, потом пагинируем по отсортированному списку.
+  const viewGroups = await prisma.analyticsEvent.groupBy({
+    by: ["url"],
+    where: {
+      event: "page_view",
+      url: { contains: "/books/" },
+      ...excludedUserFilter,
+    },
+    _count: { url: true },
+  });
+  const viewsBySlug = collectViewsBySlug(viewGroups);
+
   const orderBy: Prisma.BookOrderByWithRelationInput =
     sort === "rating"
       ? { rating: "desc" }
@@ -318,42 +335,46 @@ export async function listBooks(params: BookListParams) {
           ? { title: "asc" }
           : { updatedAt: "desc" };
 
-  // Просмотры считаем одной агрегацией по всем /books/ и привязываем по slug
-  const [items, total, viewGroups] = searchResult
-    ? [
-        searchResult.items,
-        searchResult.total,
-        await prisma.analyticsEvent.groupBy({
-          by: ["url"],
-          where: {
-            event: "page_view",
-            url: { contains: "/books/" },
-            ...excludedUserFilter,
-          },
-          _count: { url: true },
-        }),
-      ]
-    : await Promise.all([
-        prisma.book.findMany({
-          where,
-          orderBy,
-          skip: params.offset ?? 0,
-          take: Math.min(params.limit ?? 50, 200),
-          select: BOOK_LIST_SELECT,
-        }),
-        prisma.book.count({ where }),
-        prisma.analyticsEvent.groupBy({
-          by: ["url"],
-          where: {
-            event: "page_view",
-            url: { contains: "/books/" },
-            ...excludedUserFilter,
-          },
-          _count: { url: true },
-        }),
-      ]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let items: any[];
+  let total: number;
 
-  const viewsBySlug = collectViewsBySlug(viewGroups);
+  if (searchResult) {
+    items = searchResult.items;
+    total = searchResult.total;
+  } else if (isViewsSort) {
+    // Сортировка по просмотрам: берём ВСЕ книги (без пагинации),
+    // сортируем по views desc, потом пагинируем в памяти.
+    const allBooks = await prisma.book.findMany({
+      where,
+      orderBy: { updatedAt: "desc" },
+      select: BOOK_LIST_SELECT,
+    });
+    total = allBooks.length;
+
+    // Сортируем по просмотрам desc, при равенстве — по updatedAt desc
+    allBooks.sort((a, b) => {
+      const va = viewsBySlug.get(a.slug ?? "") ?? 0;
+      const vb = viewsBySlug.get(b.slug ?? "") ?? 0;
+      if (vb !== va) return vb - va;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+
+    const offset = params.offset ?? 0;
+    const limit = Math.min(params.limit ?? 50, 200);
+    items = allBooks.slice(offset, offset + limit);
+  } else {
+    [items, total] = await Promise.all([
+      prisma.book.findMany({
+        where,
+        orderBy,
+        skip: params.offset ?? 0,
+        take: Math.min(params.limit ?? 50, 200),
+        select: BOOK_LIST_SELECT,
+      }),
+      prisma.book.count({ where }),
+    ]);
+  }
 
   // Владелец (для draft) и тир-листы — единый каталог (19.08)
   const enriched = await enrichWithOwnerAndTierLists(items);

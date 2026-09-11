@@ -105,6 +105,7 @@ export default function AdminBooksPage() {
             <option value="updatedAt">По обновлению</option>
             <option value="rating">По рейтингу</option>
             <option value="likesCount">По лайкам</option>
+            <option value="views">По просмотрам</option>
             <option value="title">По названию</option>
           </select>
           <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[var(--ink-3)] bg-[var(--bg-1)] px-3 py-2 text-sm text-[var(--ink-0)]">
