@@ -135,7 +135,7 @@ describe("BookEditModal — readingGuide", () => {
   const validGuideJson = JSON.stringify({
     short_hook: "Эпическая история пустынной планеты.",
     target_audience: "Любителям масштабной научной фантастики.",
-    not_recommended_for: "Тем, кто не любит многотомные саги.",
+    friction_points: "Тем, кто не любит многотомные саги.",
     reading_pace: "Размеренный",
     difficulty: "Средняя сложность",
     vibe: "Мистика пустыни",

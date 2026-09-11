@@ -8,7 +8,7 @@ const guide: ReadingGuide = {
   short_hook: "История любви и мифа об американской мечте.",
   target_audience:
     "Ценителям лиричной прозы и читателям, любящим атмосферные романы о судьбах эпохи.",
-  not_recommended_for:
+  friction_points:
     "Тем, кто ждёт динамичного сюжета с интригами и погонями.",
   reading_pace: "размеренный",
   difficulty: "средне",
@@ -28,7 +28,7 @@ describe("BookReadingGuide", () => {
     expect(screen.getByText(/кому пропустить/i)).toBeInTheDocument();
     expect(screen.getByText(guide.short_hook)).toBeInTheDocument();
     expect(screen.getByText(guide.target_audience)).toBeInTheDocument();
-    expect(screen.getByText(guide.not_recommended_for)).toBeInTheDocument();
+    expect(screen.getByText(guide.friction_points)).toBeInTheDocument();
     // takeaways рендерятся дважды (desktop + mobile) — используем getAllByText
     expect(screen.getAllByText("Цена американской мечты").length).toBeGreaterThan(0);
   });
@@ -156,9 +156,9 @@ describe("BookReadingGuide", () => {
     expect(screen.queryByText(/ключевые/i)).not.toBeInTheDocument();
   });
 
-  it("не рендерит блок «Кому пропустить» если not_recommended_for пустой", () => {
+  it("не рендерит блок «Кому пропустить» если friction_points пустой", () => {
     render(
-      <BookReadingGuide guide={{ ...guide, not_recommended_for: "" }} />,
+      <BookReadingGuide guide={{ ...guide, friction_points: "" }} />,
     );
     expect(screen.queryByText(/кому пропустить/i)).not.toBeInTheDocument();
     expect(screen.getByText(/кому понравится/i)).toBeInTheDocument();
@@ -173,9 +173,9 @@ describe("BookReadingGuide", () => {
     expect(mascot.className).toContain("md:block");
   });
 
-  it("скрывает маскота, если not_recommended_for пустой", () => {
+  it("скрывает маскота, если friction_points пустой", () => {
     render(
-      <BookReadingGuide guide={{ ...guide, not_recommended_for: "" }} />,
+      <BookReadingGuide guide={{ ...guide, friction_points: "" }} />,
     );
     expect(screen.queryByAltText(/маскот bookstrata/i)).not.toBeInTheDocument();
   });

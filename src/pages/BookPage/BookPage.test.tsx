@@ -170,7 +170,7 @@ describe("BookPage", () => {
           readingGuide: {
             short_hook: "История любви и мифа об американской мечте.",
             target_audience: "Ценителям лиричной прозы и атмосферных романов.",
-            not_recommended_for: "Тем, кто ждёт динамичного сюжета.",
+            friction_points: "Тем, кто ждёт динамичного сюжета.",
             reading_pace: "Размеренный",
             difficulty: "Легкое чтение",
             vibe: "Ностальгия и блеск",
@@ -504,7 +504,7 @@ describe("BookPage", () => {
       readingGuide: {
         short_hook: "Политическая экология пустынной планеты.",
         target_audience: "Любителям масштабной фантастики.",
-        not_recommended_for: "Тем, кто не любит многотомные саги.",
+        friction_points: "Тем, кто не любит многотомные саги.",
         reading_pace: "Размеренный",
         difficulty: "Средняя сложность",
         vibe: "Мистика пустыни",

@@ -485,7 +485,7 @@ describe("Admin Books Routes", () => {
       const guide = {
         short_hook: "Трагедия любви, ломающей светский порядок.",
         target_audience: "Ценителям психологической прозы и большой русской классики.",
-        not_recommended_for: "Тем, кто ищет лёгкий сюжетный роман без рефлексии.",
+        friction_points: "Тем, кто ищет лёгкий сюжетный роман без рефлексии.",
         reading_pace: "Размеренный",
         difficulty: "Средняя сложность",
         vibe: "Элегическая грусть",
@@ -530,7 +530,7 @@ describe("Admin Books Routes", () => {
           readingGuide: {
             short_hook: "Хук",
             target_audience: "Аудитория книги",
-            not_recommended_for: "Не подходит тем-то",
+            friction_points: "Не подходит тем-то",
             reading_pace: "Легко читается",
             difficulty: "Легкое чтение",
             vibe: "Мрачное",

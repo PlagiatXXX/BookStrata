@@ -15,7 +15,7 @@ export interface BookContextChainItem {
 export interface ReadingGuide {
   short_hook: string;
   target_audience: string;
-  not_recommended_for: string;
+  friction_points: string;
   reading_pace: string;
   difficulty: string;
   vibe: string;

@@ -63,6 +63,11 @@ function normalizeGuideValues(raw: unknown): unknown {
   if (typeof obj.difficulty === "string") {
     obj.difficulty = DIFFICULTY_NORMALIZE[obj.difficulty.trim().toLowerCase()] ?? obj.difficulty;
   }
+  // Backward compatibility: not_recommended_for → friction_points
+  if ("not_recommended_for" in obj && !("friction_points" in obj)) {
+    obj.friction_points = obj.not_recommended_for;
+    delete obj.not_recommended_for;
+  }
   return obj;
 }
 
@@ -71,8 +76,8 @@ export const readingGuideSchema = z.preprocess(normalizeGuideValues, z.object({
   short_hook: z.string().min(5).max(300),
   /** Кому понравится (1–2 предложения о трюках и читательских вкусах) */
   target_audience: z.string().min(10).max(1000),
-  /** Кому лучше пропустить (чего здесь точно нет) */
-  not_recommended_for: z.string().min(10).max(1000),
+  /** Точки трения: конкретные элементы, которые могут оттолкнуть */
+  friction_points: z.string().min(10).max(1000),
   reading_pace: z.enum(READING_PACE_VALUES),
   difficulty: z.enum(DIFFICULTY_VALUES),
   /** Настроение книги: 1–2 слова */

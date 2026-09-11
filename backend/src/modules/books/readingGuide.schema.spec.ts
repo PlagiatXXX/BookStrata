@@ -11,7 +11,7 @@ const validGuide = {
   short_hook: "Роман о дьяволе, устроившем бал в атеистической Москве.",
   target_audience:
     "Любителям ироничной классики, ценителям метафизики и дворцовых интриг.",
-  not_recommended_for:
+  friction_points:
     "Тем, кто ждёт лёгкого развлекательного чтива без философских слоёв.",
   reading_pace: "Динамичный",
   difficulty: "Средняя сложность",
@@ -79,6 +79,23 @@ describe("readingGuideSchema", () => {
     const withoutVibe = { ...validGuide } as Record<string, unknown>;
     delete withoutVibe.vibe;
     expect(() => readingGuideSchema.parse(withoutVibe)).toThrow();
+  });
+
+  it("нормализует not_recommended_for → friction_points (backward compat)", () => {
+    const oldGuide = { ...validGuide, not_recommended_for: "Старое поле" };
+    delete (oldGuide as Record<string, unknown>).friction_points;
+    const result = readingGuideSchema.parse(oldGuide);
+    expect(result.friction_points).toBe("Старое поле");
+  });
+
+  it("friction_points приоритетнее not_recommended_for", () => {
+    const both = {
+      ...validGuide,
+      friction_points: "Новое поле",
+      not_recommended_for: "Старое поле",
+    };
+    const result = readingGuideSchema.parse(both);
+    expect(result.friction_points).toBe("Новое поле");
   });
 
   it("отклоняет пустые строки в takeaways", () => {

@@ -20,7 +20,7 @@ import { ReadingGuidePrompt } from "./ReadingGuidePrompt";
 const GUIDE_REQUIRED_KEYS = [
   "short_hook",
   "target_audience",
-  "not_recommended_for",
+  "friction_points",
   "reading_pace",
   "difficulty",
   "vibe",
@@ -419,7 +419,7 @@ export function BookEditModal({
             value={guideInput}
             onChange={(e) => setGuideInput(e.target.value)}
             onBlur={handleGuideBlur}
-            placeholder={`{\n  "short_hook": "Суть книги одним предложением",\n  "target_audience": "Кому понравится",\n  "not_recommended_for": "Кому пропустить",\n  "reading_pace": "Динамичный | Размеренный | Медитативный",\n  "difficulty": "Легкое чтение | Средняя сложность | Высокий порог входа",\n  "vibe": "Настроение",\n  "key_takeaways": ["Тезис 1", "Тезис 2", "Тезис 3"]\n}`}
+            placeholder={`{\n  "short_hook": "Суть книги одним предложением",\n  "target_audience": "Кому понравится",\n  "friction_points": "Что может оттолкнуть (конкретика)",\n  "reading_pace": "Динамичный | Размеренный | Медитативный",\n  "difficulty": "Легкое чтение | Средняя сложность | Высокий порог входа",\n  "vibe": "Настроение",\n  "key_takeaways": ["Тезис 1", "Тезис 2", "Тезис 3"]\n}`}
             className={`w-full resize-y rounded-lg border bg-(--bg-0) px-3 py-2 font-mono text-xs text-(--ink-0) outline-none ${
               guideError
                 ? "border-red-500 text-red-200"
