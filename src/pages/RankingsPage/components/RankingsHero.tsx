@@ -44,7 +44,7 @@ export function RankingsHero({ onAiOpen }: RankingsHeroProps) {
         </div>
 
         {/* Правая колонка — поиск */}
-        <div className="mt-2 md:mt-12">
+        <div className="mt-2 md:mt-12 mb-4 md:mb-0">
           <RankingsSearchBar />
         </div>
       </div>

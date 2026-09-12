@@ -22,6 +22,17 @@ export function RankingsSearchBar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
+  // На мобилке при фокусе на инпуте — скроллим его в центр экрана,
+  // чтобы клавиатура не перекрывала поле ввода
+  const handleFocus = useCallback(() => {
+    if (query.trim().length >= 2) setIsOpen(true);
+
+    // scrollIntoView нужен с задержкой — клавиатура ещё анимируется
+    setTimeout(() => {
+      inputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 300);
+  }, [query, setIsOpen]);
+
   // Закрытие при клике вне
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -96,7 +107,7 @@ export function RankingsSearchBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => query.trim().length >= 2 && setIsOpen(true)}
+          onFocus={handleFocus}
           onKeyDown={handleKeyDown}
           placeholder="Найти книгу..."
           aria-label="Поиск книг в каталоге"
