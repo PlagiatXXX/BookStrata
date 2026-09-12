@@ -84,6 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshUser]);
 
   const handleAuthTokenChanged = useCallback(() => {
+    // Обновляем данные пользователя при смене токена (logout, обновление профиля).
+    // Не вызываем fetchUser если уже идёт загрузка — чтобы не плодить параллельные apiGetMe().
     fetchUser(true);
   }, [fetchUser]);
 

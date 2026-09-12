@@ -21,6 +21,8 @@ import { ConfirmModal } from "@/ui/ConfirmModal";
 
 interface NavItem {
   label: string;
+  /** Латинский ключ для data-analytics (без кириллицы и спецсимволов) */
+  analyticsKey: string;
   onClick?: () => void;
   icon?: React.ReactNode;
   description: string;
@@ -177,6 +179,7 @@ export const Header = ({
   const navItems: NavItem[] = [
     {
       label: "Главная",
+      analyticsKey: "home",
       onClick: onMyRatingsClick ?? handleDefaultMyRatings,
       description: "Управление рейтингами",
     },
@@ -184,6 +187,7 @@ export const Header = ({
       ? [
           {
             label: "Тир-листы",
+            analyticsKey: "tier_lists",
             onClick: () => navigate("/templates"),
             description: "Готовые шаблоны",
           },
@@ -191,16 +195,19 @@ export const Header = ({
       : []),
     {
       label: "Рейтинги",
+      analyticsKey: "ratings",
       onClick: handleRatingsClick,
       description: "Редакционные подборки",
     },
     {
       label: "Новости",
+      analyticsKey: "news",
       onClick: () => navigate("/community"),
       description: "Новости сообщества",
     },
     {
       label: "Полка",
+      analyticsKey: "shelf",
       onClick: () => navigate("/shelf"),
       icon: <BookMarked size={18} />,
       description: "Книги, которые вы читали или хотите прочитать",
@@ -208,6 +215,7 @@ export const Header = ({
     },
     {
       label: "Угостить",
+      analyticsKey: "donate",
       onClick: () => navigate("/pricing"),
       icon: <CoffeeCup className="h-5 w-5 text-amber-400" />,
       description: "Угостить автора кофе",
@@ -232,7 +240,7 @@ export const Header = ({
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-0">
               {navItems.map((item) => {
-                const analyticsName = `nav.main.${item.label.toLowerCase().replace(/\s+/g, "_")}`;
+                const analyticsName = `nav.main.${item.analyticsKey}`;
                 const isRatings = item.label === "Рейтинги";
                 return (
                   <div

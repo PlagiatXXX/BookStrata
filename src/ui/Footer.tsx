@@ -50,36 +50,36 @@ function scrollToSection(id: string) {
 }
 
 const mainLinks = [
-  { href: "/", label: "Главная", icon: <List size={14} /> },
-  { href: "/blog", label: "Блог", icon: <BookOpen size={14} /> },
-  { href: "/rankings", label: "Рейтинг книг", icon: <BarChart3 size={14} /> },
-  { href: "/what-to-read", label: "Что почитать", icon: <BookOpen size={14} /> },
-  { href: "/celebrities", label: "Знаменитости", icon: <Star size={14} /> },
-  { href: "/templates", label: "Тир-листы", icon: <Folder size={14} /> },
-  { href: "/community", label: "Сообщество", icon: <Users size={14} /> },
+  { href: "/", label: "Главная", analyticsKey: "home", icon: <List size={14} /> },
+  { href: "/blog", label: "Блог", analyticsKey: "blog", icon: <BookOpen size={14} /> },
+  { href: "/rankings", label: "Рейтинг книг", analyticsKey: "rankings", icon: <BarChart3 size={14} /> },
+  { href: "/what-to-read", label: "Что почитать", analyticsKey: "what_to_read", icon: <BookOpen size={14} /> },
+  { href: "/celebrities", label: "Знаменитости", analyticsKey: "celebrities", icon: <Star size={14} /> },
+  { href: "/templates", label: "Тир-листы", analyticsKey: "tier_lists", icon: <Folder size={14} /> },
+  { href: "/community", label: "Сообщество", analyticsKey: "community", icon: <Users size={14} /> },
 ];
 
-const landingLinks: { label: string; icon: React.ReactNode; sectionId?: string; href?: string }[] = [
-  { sectionId: "features", label: "Возможности", icon: <Sparkles size={14} /> },
-  { sectionId: "pricing", label: "Тарифы", icon: <Shield size={14} /> },
+const landingLinks: { label: string; analyticsKey: string; icon: React.ReactNode; sectionId?: string; href?: string }[] = [
+  { sectionId: "features", label: "Возможности", analyticsKey: "features", icon: <Sparkles size={14} /> },
+  { sectionId: "pricing", label: "Тарифы", analyticsKey: "pricing", icon: <Shield size={14} /> },
 ];
 
 const userLinks = [
-  { href: "/profile", label: "Профиль", icon: <User size={14} /> },
-  { href: "/about", label: "О проекте", icon: <Info size={14} /> },
-  { href: "/pricing", label: "Поддержать проект", icon: <Coffee size={14} /> },
-  { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
-  { href: "/faq", label: "Вопросы и ответы", icon: <CircleHelp size={14} /> },
-  { href: "/privacy", label: "Политика", icon: <ScrollText size={14} /> },
-  { href: "/terms", label: "Условия", icon: <Shield size={14} /> },
+  { href: "/profile", label: "Профиль", analyticsKey: "profile", icon: <User size={14} /> },
+  { href: "/about", label: "О проекте", analyticsKey: "about", icon: <Info size={14} /> },
+  { href: "/pricing", label: "Поддержать проект", analyticsKey: "donate", icon: <Coffee size={14} /> },
+  { href: "/contact", label: "Контакты", analyticsKey: "contact", icon: <HelpCircle size={14} /> },
+  { href: "/faq", label: "Вопросы и ответы", analyticsKey: "faq", icon: <CircleHelp size={14} /> },
+  { href: "/privacy", label: "Политика", analyticsKey: "privacy", icon: <ScrollText size={14} /> },
+  { href: "/terms", label: "Условия", analyticsKey: "terms", icon: <Shield size={14} /> },
 ];
 
-const landingUserLinks: { label: string; icon: React.ReactNode; href?: string; isExternal?: boolean }[] = [
-  { href: "/privacy", label: "Политика конфиденциальности", icon: <ScrollText size={14} /> },
-  { href: "/terms", label: "Условия использования", icon: <Shield size={14} /> },
-  { href: "/about", label: "О проекте", icon: <Info size={14} /> },
-  { href: "/contact", label: "Контакты", icon: <HelpCircle size={14} /> },
-  { href: "/faq", label: "Вопросы и ответы", icon: <CircleHelp size={14} /> },
+const landingUserLinks: { label: string; analyticsKey: string; icon: React.ReactNode; href?: string; isExternal?: boolean }[] = [
+  { href: "/privacy", label: "Политика конфиденциальности", analyticsKey: "privacy_policy", icon: <ScrollText size={14} /> },
+  { href: "/terms", label: "Условия использования", analyticsKey: "terms_of_use", icon: <Shield size={14} /> },
+  { href: "/about", label: "О проекте", analyticsKey: "about", icon: <Info size={14} /> },
+  { href: "/contact", label: "Контакты", analyticsKey: "contact", icon: <HelpCircle size={14} /> },
+  { href: "/faq", label: "Вопросы и ответы", analyticsKey: "faq", icon: <CircleHelp size={14} /> },
 ];
 
 const combinedLinks = [...mainLinks, ...userLinks];
@@ -262,7 +262,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
                   const isScroll = "sectionId" in link && link.sectionId;
                   const key = isScroll ? link.sectionId! : ("href" in link ? link.href! : "");
-                  const analyticsName = `nav.footer.${link.label.toLowerCase().replace(/[\s]+/g, "_").replace(/[^a-zа-я0-9_]/g, "")}`;
+                  const analyticsName = `nav.footer.${link.analyticsKey}`;
                   return (
                     <li key={key}>
                       {isScroll ? (

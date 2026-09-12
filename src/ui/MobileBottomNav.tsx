@@ -40,11 +40,11 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
   }, [ratingsOpen, closeRatings]);
 
   const NAV_ITEMS = [
-    { label: "Главная", icon: List, path: isAuthenticated ? "/dashboard" : "/" },
-    { label: "Рейтинги", icon: BarChart3 },
-    { label: "Тир-листы", icon: Library, path: "/templates" },
-    { label: "Полка", icon: BookMarked, path: "/shelf", badge: totalCount },
-    { label: "Новости", icon: Globe, path: "/community" },
+    { label: "Главная", analyticsKey: "home", icon: List, path: isAuthenticated ? "/dashboard" : "/" },
+    { label: "Рейтинги", analyticsKey: "ratings", icon: BarChart3 },
+    { label: "Тир-листы", analyticsKey: "tier_lists", icon: Library, path: "/templates" },
+    { label: "Полка", analyticsKey: "shelf", icon: BookMarked, path: "/shelf", badge: totalCount },
+    { label: "Новости", analyticsKey: "news", icon: Globe, path: "/community" },
   ] as const;
 
   const items = showTemplatesNav
@@ -83,7 +83,7 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
               className="relative flex-1"
             >
               <button
-                data-analytics={`nav.mobile.${item.label.toLowerCase()}`}
+                data-analytics={`nav.mobile.${item.analyticsKey}`}
                 onClick={() => {
                   if (isRatings) {
                     setRatingsOpen((prev) => !prev);

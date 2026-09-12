@@ -25,6 +25,11 @@ function setupAnalyticsClickListener() {
     const eventName = target.getAttribute("data-analytics");
     if (!eventName) return;
 
+    // Санитизация: backend schema требует ^[a-z0-9_.:-]+$.
+    // Кириллица, пробелы и спецсимволы заменяются на подчёркивание.
+    const sanitized = eventName.toLowerCase().replace(/[^a-z0-9_.:-]/g, "_").replace(/_{2,}/g, "_");
+    if (!sanitized) return;
+
     // Дополнительные данные из data-атрибутов
     const meta: Record<string, string> = {};
     const label = target.getAttribute("data-analytics-label");
@@ -33,7 +38,7 @@ function setupAnalyticsClickListener() {
     if (value) meta.value = value;
 
     // Отправка во внутреннюю аналитику
-    apiTrackEvent(eventName, meta, window.location.href);
+    apiTrackEvent(sanitized, meta, window.location.href);
   };
 
   document.addEventListener("click", handler, { passive: true });
