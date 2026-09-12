@@ -50,14 +50,14 @@ describe("ReadingGuidePrompt", () => {
 
     const pre = document.querySelector("pre");
     const text = pre?.textContent ?? "";
-    expect(text).toContain("Запрещено галлюцинировать");
+    expect(text).toContain("Галлюцинировать запрещено");
     expect(text).toContain("Динамичный");
     expect(text).toContain("Медитативный");
     expect(text).toContain("Легкое чтение");
     expect(text).toContain("Высокий порог входа");
-    // Фиксы ревью: лимиты длины, запрет обёртки, русский язык
+    // Лимиты длины, формат, русский язык
     expect(text).toContain("150 символов");
-    expect(text).toContain("Не оборачивай");
+    expect(text).toContain("markdown-обёрток");
     expect(text).toContain("на русском");
   });
 
