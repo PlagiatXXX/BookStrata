@@ -228,7 +228,9 @@ function MetricsCard({ guide }: { guide: ReadingGuide }) {
 }
 
 function AudienceCard({ guide }: { guide: ReadingGuide }) {
-  const hasAnti = Boolean(guide.friction_points);
+  // Поддержка обоих полей: friction_points (новые) и not_recommended_for (старые)
+  const antiAudience = guide.friction_points || guide.not_recommended_for;
+  const hasAnti = Boolean(antiAudience);
 
   return (
     <div className="md:col-span-12">
@@ -262,7 +264,7 @@ function AudienceCard({ guide }: { guide: ReadingGuide }) {
               Кому пропустить
             </h3>
             <p className="text-sm leading-relaxed text-white/70">
-              {guide.friction_points}
+              {antiAudience}
             </p>
           </div>
         )}

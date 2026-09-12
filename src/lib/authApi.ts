@@ -252,6 +252,17 @@ export async function apiValidateToken(
   throw new Error("Валидация токена не удалась после всех попыток");
 }
 
+/**
+ * Refresh token rejected by server (401/403).
+ * Отдельный класс чтобы catch мог отличить network error от auth rejection.
+ */
+class RefreshRejectedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RefreshRejectedError";
+  }
+}
+
 // ========== TOKEN MANAGEMENT (in-memory) ==========
 
 /**
@@ -263,7 +274,12 @@ export function setAuthToken(token: string) {
   inMemoryToken = token;
   resetRefreshFailed(); // новый токен — новая сессия, сбрасываем флаг
   localStorage.setItem(SESSION_ACTIVE_KEY, "true");
-  window.dispatchEvent(new Event("auth-token-changed"));
+  // Планируем proактивное обновление токена до истечения
+  scheduleProactiveRefresh(token);
+  // НЕ диспатчим 'auth-token-changed' — AuthProvider уже установил пользователя
+  // через loginWithData() после логина/регистрации, или через restoreSession().
+  // Диспатч здесь вызывал лишний fetchUser() → apiGetMe(), который при 401
+  // запускал каскад: handleUnauthorized → markRefreshFailed → ломал все запросы.
 }
 
 /**
@@ -278,6 +294,7 @@ export function getAuthToken(): string | null {
  */
 export function removeAuthToken() {
   inMemoryToken = null;
+  cancelProactiveRefresh();
   localStorage.removeItem(SESSION_ACTIVE_KEY);
   window.dispatchEvent(new Event("auth-token-changed"));
 }
@@ -306,8 +323,7 @@ export function handleUnauthorized() {
     "Неавторизованный доступ — очистка сессии",
   );
   markRefreshFailed(); // refresh не удался — больше не пробуем до логина
-  removeAuthToken();
-  window.dispatchEvent(new Event("auth-token-changed"));
+  removeAuthToken(); // удалит токен и диспатчит 'auth-token-changed'
 }
 
 /**
@@ -322,8 +338,66 @@ export function handleUnauthorized() {
  */
 let refreshPromise: Promise<string> | null = null;
 
+// ─── Proactive Refresh ─────────────────────────────────────────────────────
+// Обновляем токен за 5 минут до истечения, чтобы пользователь не видел 401.
+
+const REFRESH_BUFFER_MS = 5 * 60 * 1000; // 5 минут до истечения
+let proactiveRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+
 /**
- * Refresh access токена
+ * Декодирует JWT (без валидации подписи) и возвращает payload.
+ * Нужен только для чтения exp — валидация на сервере.
+ */
+function decodeJwtPayload(token: string): { exp?: number } | null {
+  try {
+    const base64 = token.split(".")[1];
+    if (!base64) return null;
+    const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+/** Планирует обновление токена за 5 минут до истечения */
+function scheduleProactiveRefresh(token: string): void {
+  cancelProactiveRefresh();
+
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return;
+
+  const expiresAt = payload.exp * 1000; // exp в секундах → мс
+  const refreshAt = expiresAt - REFRESH_BUFFER_MS;
+  const delay = refreshAt - Date.now();
+
+  if (delay <= 0) {
+    // Токен уже истекает — обновляем сразу
+    authLogger.debug("Токен истекает imminent, обновляем сейчас");
+    refreshAccessToken().catch(() => {});
+    return;
+  }
+
+  authLogger.debug(`Proactive refresh запланирован через ${Math.round(delay / 1000)}с`);
+  proactiveRefreshTimer = setTimeout(() => {
+    authLogger.info("Proactive refresh — обновляем токен до истечения");
+    refreshAccessToken().catch(() => {});
+  }, delay);
+}
+
+/** Отменяет запланированный proactive refresh */
+function cancelProactiveRefresh(): void {
+  if (proactiveRefreshTimer) {
+    clearTimeout(proactiveRefreshTimer);
+    proactiveRefreshTimer = null;
+  }
+}
+
+/**
+ * Refresh access токена с retry при сетевых ошибках.
+ *
+ * Retry: до 2 попыток с экспоненциальной задержкой (1с, 2с).
+ * Ставит _refreshFailed ТОЛЬКО при 401/403 (реальный отказ токена).
+ * При сетевых ошибках/5xx — retry, без _refreshFailed.
  */
 export async function refreshAccessToken(): Promise<string> {
   if (refreshPromise) {
@@ -333,42 +407,87 @@ export async function refreshAccessToken(): Promise<string> {
 
   authLogger.debug("Refreshing access token");
 
-  refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
-    method: "POST",
-    credentials: "include", // Отправляем cookie с refresh токеном
-  })
-    .then(async (response) => {
-      if (!response.ok) {
-        // 401 — refresh не удался, чистим сессию (один раз, в catch)
-        throw new Error("Refresh token failed");
+  const MAX_RETRIES = 2;
+  const BASE_DELAY = 1000; // 1с
+
+  refreshPromise = (async () => {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          // Сервер明确拒绝 refresh (401/403) — refresh-токен невалиден/отозван.
+          // Не retry — это не временная проблема.
+          if (response.status === 401 || response.status === 403) {
+            throw new RefreshRejectedError("Refresh token rejected by server");
+          }
+          // Другие HTTP-ошибки (500, 503) — сервер временно недоступен.
+          // Retry если есть попытки.
+          if (attempt < MAX_RETRIES) {
+            const delay = BASE_DELAY * Math.pow(2, attempt);
+            authLogger.debug(`RefreshHTTP ${response.status}, retry через ${delay}мс (попытка ${attempt + 1}/${MAX_RETRIES})`);
+            await sleep(delay);
+            continue;
+          }
+          throw new Error(`Refresh failed with status ${response.status}`);
+        }
+
+        const data = unwrapData<{ accessToken: string }>(await response.json());
+        const newAccessToken = data.accessToken;
+
+        // Сохраняем новый access токен
+        setAuthToken(newAccessToken);
+        // Планируем следующее обновление
+        scheduleProactiveRefresh(newAccessToken);
+
+        authLogger.info("Access token refreshed successfully");
+        return newAccessToken;
+      } catch (error) {
+        // RefreshRejectedError — сервер明确 отклонил, не retry
+        if (error instanceof RefreshRejectedError) {
+          throw error;
+        }
+        // Сетевая ошибка (TypeError: Failed to fetch) — retry если есть попытки
+        if (attempt < MAX_RETRIES) {
+          const delay = BASE_DELAY * Math.pow(2, attempt);
+          authLogger.debug(`Refresh network error, retry через ${delay}мс (попытка ${attempt + 1}/${MAX_RETRIES})`);
+          await sleep(delay);
+          continue;
+        }
+        // Все попытки исчерпаны — пробрасываем
+        throw error;
       }
+    }
+    // Недостижимо, но TS требует
+    throw new Error("Refresh failed: all retries exhausted");
+  })();
 
-      const data = unwrapData<{ accessToken: string }>(await response.json());
-      const newAccessToken = data.accessToken;
-
-      // Сохраняем новый access токен
-      setAuthToken(newAccessToken);
-
-      authLogger.info("Access token refreshed successfully");
-      return newAccessToken;
-    })
-    .catch((error) => {
-      // Штатная ситуация для неавторизованных пользователей
-      authLogger.info("Refresh токена не удался (штатно для гостя)", {
+  // Оборачиваем: при RejectRejectedError → handleUnauthorized, иначе — просто markRefreshFailed
+  const wrapped = refreshPromise.catch((error) => {
+    if (error instanceof RefreshRejectedError) {
+      authLogger.warn("Refresh токена отклонён сервером — очистка сессии");
+      handleUnauthorized();
+    } else {
+      authLogger.info("Refresh токена не удался (сетевая ошибка или сервер недоступен)", {
         action: "refresh access token",
         error: error instanceof Error ? error.message : String(error),
       });
-      handleUnauthorized();
-      throw error; // reject — все ждущие промисы упадут с этой ошибкой
-    });
+      // Не чистим сессию — при network error сессия может быть жива.
+      // НЕ ставим _refreshFailed — при следующем запросе попробуем снова.
+    }
+    throw error;
+  });
 
-  // Очищаем refreshPromise после завершения (успех или ошибка)
+  // Очищаем refreshPromise после завершения
   const cleanup = () => {
     refreshPromise = null;
   };
-  refreshPromise.then(cleanup, cleanup);
+  wrapped.then(cleanup, cleanup);
 
-  return refreshPromise;
+  return wrapped;
 }
 
 /**

@@ -52,7 +52,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         reply.setCookie("refreshToken", result.refreshToken, {
           httpOnly: true,
           secure: config.NODE_ENV === "production",
-          sameSite: "strict",
+          sameSite: "lax",
           signed: false,
           maxAge: 14 * 24 * 60 * 60,
           path: "/",
@@ -116,7 +116,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         reply.setCookie("refreshToken", result.refreshToken, {
           httpOnly: true,
           secure: config.NODE_ENV === "production",
-          sameSite: "strict",
+          sameSite: "lax",
           signed: false,
           maxAge: 14 * 24 * 60 * 60,
           path: "/",
@@ -228,7 +228,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       reply.setCookie("refreshToken", tokens.refreshToken, {
         httpOnly: true,
         secure: config.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
         signed: false,
         maxAge: 14 * 24 * 60 * 60,
         path: "/",
@@ -338,7 +338,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       reply.setCookie("refreshToken", result.refreshToken, {
         httpOnly: true,
         secure: config.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
         signed: false,
         maxAge: 14 * 24 * 60 * 60,
         path: "/",
@@ -386,7 +386,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       reply.setCookie("refreshToken", result.refreshToken, {
         httpOnly: true,
         secure: config.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
         signed: false,
         maxAge: 14 * 24 * 60 * 60,
         path: "/",

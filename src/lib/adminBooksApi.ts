@@ -17,6 +17,8 @@ export interface ReadingGuide {
   short_hook: string;
   target_audience: string;
   friction_points: string;
+  /** @deprecated Старое поле (до rename). Встречается в старых записях — отображаем через fallback. */
+  not_recommended_for?: string;
   reading_pace: string;
   difficulty: string;
   vibe: string;

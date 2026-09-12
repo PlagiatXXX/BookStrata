@@ -86,7 +86,13 @@ export const readingGuideSchema = z.preprocess(normalizeGuideValues, z.object({
   key_takeaways: z.array(z.string().min(3).max(500)).min(1).max(3),
 }));
 
-export type ReadingGuide = z.infer<typeof readingGuideSchema>;
+/** Транспортный тип (для чтения из БД). Расширяет Zod-схему опциональным
+ *  deprecated-полем `not_recommended_for` — старые записи в БД могут содержать
+ *  его вместо `friction_points`. Фронт обрабатывает оба варианта. */
+export type ReadingGuide = z.infer<typeof readingGuideSchema> & {
+  /** @deprecated Старое поле (до rename). Встречается в записях до迁移. */
+  not_recommended_for?: string;
+};
 
 /**
  * Парсит ответ внешнего ИИ: срезает markdown-обёртку ```json ... ```

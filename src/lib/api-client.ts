@@ -1,4 +1,4 @@
-import { getAuthHeader, getAuthToken, refreshAccessToken, isRefreshFailed, markRefreshFailed, resetRefreshFailed } from "./authApi";
+import { getAuthHeader, refreshAccessToken, isRefreshFailed, markRefreshFailed, resetRefreshFailed } from "./authApi";
 import { checkResponseForAchievements } from "./achievementApi";
 import { API_BASE_URL } from "./config";
 import { notifyError } from "./notifyError";
@@ -89,19 +89,20 @@ async function request<T>(
       }
 
       if (attempt === 0) {
-        // Нет access-токена → пользователь точно гость (или сессия уже сброшена).
-        // Не пытаемся refresh — сразу помечаем как failed, чтобы не плодить 401
-        // от параллельных запросов при старте страницы.
-        if (!getAuthToken()) {
+        try {
+          // Пытаемся refresh даже без access-токена — refresh cookie может быть на месте.
+          // Если пользователь гость (нет cookie) — refreshAccessToken() сам бросит ошибку,
+          // и markRefreshFailed() вызовется в catch ниже, блокируя только повторные попытки.
+          await refreshAccessToken();
+          resetRefreshFailed(); // успешный refresh — сбрасываем флаг
+          continue; // повторяем запрос с новым токеном
+        } catch {
+          // Refresh не удался.
+          // refreshAccessToken() уже обработал ошибку:
+          //   - 401/403 → handleUnauthorized() (разлогин)
+          //   - сетевая ошибка → просто пробросил (сессия жива, попробуем позже)
+          // Тут ставим _refreshFailed чтобы не зациклить retry на этом же запросе.
           markRefreshFailed();
-        } else {
-          try {
-            await refreshAccessToken();
-            resetRefreshFailed(); // успешный refresh — сбрасываем флаг
-            continue; // повторяем запрос с новым токеном
-          } catch {
-            markRefreshFailed(); // refresh не удался — больше не пробуем до логина
-          }
         }
       }
 
@@ -112,7 +113,14 @@ async function request<T>(
       const isPrerendering = typeof document !== "undefined"
         && (("prerendering" in document) || window.__PRERENDER__ === true);
       if (!isAuthRefresh && !isPrerendering) {
-        notifyError("Сессия истекла", "Пожалуйста, войдите в систему снова");
+        notifyError({
+          title: "Сессия истекла",
+          description: "Попробуйте обновить страницу",
+          button: {
+            title: "Обновить",
+            onClick: () => window.location.reload(),
+          },
+        });
       }
       throw new ApiRequestError("unauthorized", "Требуется авторизация", 401);
     }

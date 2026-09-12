@@ -8,8 +8,26 @@
  * менять здесь, а не по всему коду.
  */
 import { sileo } from "sileo";
+import type { SileoButton } from "sileo";
 
-export function notifyError(title: string, description?: string): void {
+interface NotifyErrorOptions {
+  title: string;
+  description?: string;
+  /** Кнопка действия (например, «Обновить страницу») */
+  button?: SileoButton;
+}
+
+export function notifyError(titleOrOpts: string | NotifyErrorOptions, description?: string): void {
   if (typeof document === "undefined") return;
-  sileo.error({ title, description });
+
+  const opts = typeof titleOrOpts === "string"
+    ? { title: titleOrOpts, description }
+    : titleOrOpts;
+
+  sileo.error({
+    title: opts.title,
+    description: opts.description,
+    button: opts.button,
+    duration: opts.button ? null : undefined, // с кнопкой — не скрываем автоматически
+  });
 }
