@@ -5,6 +5,9 @@ import { apiRegister, setAuthToken } from "@/lib/authApi"
 import { StorageService } from "@/lib/storage"
 import { useAuth } from "@/hooks/useAuthContext"
 import { sileo } from "sileo"
+import { createLogger } from "@/lib/logger"
+
+const logger = createLogger("AuthOnSaveModal", { color: "purple" })
 
 interface AuthOnSaveModalProps {
   isOpen: boolean
@@ -24,7 +27,7 @@ export function AuthOnSaveModal({
   initialTitle,
   onTitleChange,
 }: AuthOnSaveModalProps) {
-  const { refreshUser } = useAuth()
+  const { loginWithData } = useAuth()
   const [step, setStep] = useState<"title" | "register">("title")
   const [title, setTitle] = useState(initialTitle)
   const [username, setUsername] = useState("")
@@ -68,14 +71,23 @@ export function AuthOnSaveModal({
         password,
         acceptedTerms,
       })
+
+      // Устанавливаем токен в память
       setAuthToken(result.accessToken)
       StorageService.setString("username", result.username)
-      window.dispatchEvent(new Event("auth-token-changed"))
-      await new Promise((resolve) => setTimeout(resolve, 200))
-      await refreshUser()
+
+      // Мгновенно ставим пользователя в контекст — аналогично AuthForm.
+      // Это гарантирует, что ProtectedRoute увидит isAuthenticated=true
+      // и тир-лист будет распознан как свой (isOwner=true).
+      // Старый подход (refreshUser → apiGetMe) мог молча упасть на 401/сети
+      // и оставить пользователя «гостем».
+      loginWithData({ userId: result.userId, username: result.username })
+
+      logger.info("Регистрация в модалке успешна", { userId: result.userId, username: result.username })
       sileo.success({ title: "Аккаунт создан!", description: "Сохраняем ваш тир-лист..." })
       onSuccess()
     } catch (err) {
+      logger.error(err instanceof Error ? err : new Error(String(err)), { action: "register" })
       setError(err instanceof Error ? err.message : "Ошибка регистрации")
     } finally {
       setIsSubmitting(false)
@@ -93,7 +105,7 @@ export function AuthOnSaveModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center">
+    <div className="fixed inset-0 z-70 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/75" onClick={handleClose} aria-hidden="true" />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -154,7 +166,7 @@ export function AuthOnSaveModal({
               )}
 
               <div className="space-y-1">
-                <label htmlFor="auth-username" className="text-xs font-bold uppercase tracking-[0.1em] text-(--theme-accent-primary)">
+                <label htmlFor="auth-username" className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)">
                   Имя пользователя
                 </label>
                 <div className="relative">
@@ -172,7 +184,7 @@ export function AuthOnSaveModal({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="auth-email" className="text-xs font-bold uppercase tracking-[0.1em] text-(--theme-accent-primary)">
+                <label htmlFor="auth-email" className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)">
                   Email
                 </label>
                 <div className="relative">
@@ -189,7 +201,7 @@ export function AuthOnSaveModal({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="auth-password" className="text-xs font-bold uppercase tracking-[0.1em] text-(--theme-accent-primary)">
+                <label htmlFor="auth-password" className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)">
                   Пароль
                 </label>
                 <div className="relative">

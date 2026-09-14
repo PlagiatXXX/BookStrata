@@ -6,6 +6,7 @@ import { AchievementNotification } from "@/components/AchievementNotification/Ac
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
+import { SessionExpiredOverlay } from "@/components/SessionExpiredOverlay";
 import { AppProviders } from "./AppProviders";
 import "../styles/sileo-custom.css";
 
@@ -62,6 +63,7 @@ function AppShell() {
         <main><Outlet /></main>
       </Suspense>
       <Toaster position="top-center" theme="system" />
+      <SessionExpiredOverlay />
       <AchievementNotification achievement={newAchievement} onClose={clearNotification} />
       {!pathname.match(/^\/tier-lists\/[^/]+\/?$/) && (
         <FeedbackButton

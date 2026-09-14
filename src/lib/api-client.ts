@@ -2,6 +2,7 @@ import { getAuthHeader, refreshAccessToken, isRefreshFailed, markRefreshFailed, 
 import { checkResponseForAchievements } from "./achievementApi";
 import { API_BASE_URL } from "./config";
 import { notifyError } from "./notifyError";
+import { showSessionExpired } from "./sessionExpired";
 
 type QueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, QueryValue>;
@@ -85,6 +86,7 @@ async function request<T>(
       // Если refresh уже падал в этой сессии — не повторяем, сразу ошибка.
       // Это предотвращает ретрей-цикл (auth-token-changed → fetchUser → 401 → ...).
       if (isRefreshFailed()) {
+        showSessionExpired();
         throw new ApiRequestError("unauthorized", "Требуется авторизация", 401);
       }
 
@@ -96,32 +98,27 @@ async function request<T>(
           await refreshAccessToken();
           resetRefreshFailed(); // успешный refresh — сбрасываем флаг
           continue; // повторяем запрос с новым токеном
-        } catch {
+        } catch (refreshErr) {
           // Refresh не удался.
           // refreshAccessToken() уже обработал ошибку:
           //   - 401/403 → handleUnauthorized() (разлогин)
           //   - сетевая ошибка → просто пробросил (сессия жива, попробуем позже)
           // Тут ставим _refreshFailed чтобы не зациклить retry на этом же запросе.
           markRefreshFailed();
+
+          // Показываем полноэкранный экран «Сессия истекла» ТОЛЬКО при реальном
+          // отказе токена (401/403). При сетевой ошибке (TypeError: Failed to fetch)
+          // сессия может быть жива — просто нет связи с сервером.
+          const isNetworkError = refreshErr instanceof TypeError;
+          const isAuthRefresh = path.includes("/auth/refresh");
+          const isPrerendering = typeof document !== "undefined"
+            && (("prerendering" in document) || window.__PRERENDER__ === true);
+          if (!isNetworkError && !isAuthRefresh && !isPrerendering) {
+            showSessionExpired();
+          }
         }
       }
 
-      // Не показываем тост для auth/refresh — при пререндере нет сессии, это штатная ситуация.
-      // Также скрываем тост если страница в Prerendering API (Google/Yandex боты)
-      // или в Playwright-пререндере (window.__PRERENDER__).
-      const isAuthRefresh = path.includes("/auth/refresh");
-      const isPrerendering = typeof document !== "undefined"
-        && (("prerendering" in document) || window.__PRERENDER__ === true);
-      if (!isAuthRefresh && !isPrerendering) {
-        notifyError({
-          title: "Сессия истекла",
-          description: "Попробуйте обновить страницу",
-          button: {
-            title: "Обновить",
-            onClick: () => window.location.reload(),
-          },
-        });
-      }
       throw new ApiRequestError("unauthorized", "Требуется авторизация", 401);
     }
 
