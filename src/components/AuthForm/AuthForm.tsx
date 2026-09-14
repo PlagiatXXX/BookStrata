@@ -130,10 +130,13 @@ export function AuthForm() {
 
     dispatch({ type: "SUBMIT_START" })
 
+    const trimmedUsername = state.formData.username.trim()
+    const trimmedEmail = state.formData.email.trim().toLowerCase()
+
     try {
       if (mode === "login") {
         const result = await apiLogin({
-          username: state.formData.username,
+          username: trimmedUsername,
           password: state.formData.password,
         })
         setAuthToken(result.accessToken)
@@ -146,8 +149,8 @@ export function AuthForm() {
         dispatch({ type: "SUBMIT_SUCCESS" })
       } else {
         const result = await apiRegister({
-          username: state.formData.username,
-          email: state.formData.email,
+          username: trimmedUsername,
+          email: trimmedEmail,
           password: state.formData.password,
           acceptedTerms: state.acceptedTerms,
         })
