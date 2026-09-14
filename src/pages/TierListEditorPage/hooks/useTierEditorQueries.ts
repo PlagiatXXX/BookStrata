@@ -204,8 +204,8 @@ export function useTierEditorQueries(
   const isLoading = isNew ? (isForkLoading || isCelebrityForkLoading) : isTierListLoading;
   const isError = isNew ? (isForkError || isCelebrityForkError) : isTierListError;
 
-  // Получаем isPublic из API данных
-  const isPublic = apiData?.isPublic ?? false;
+  // Получаем isPublic из API данных (для новых — по умолчанию публичный)
+  const isPublic = apiData?.isPublic ?? isNew;
 
   return {
     apiData,

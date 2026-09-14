@@ -100,6 +100,11 @@ export function useTierEditorSave({
       const isUuid = UUID_RE.test(listData.id);
       let effectiveId = isNumericId || isUuid ? listData.id : tierListId;
 
+      // При создании нового tier list: backend создаёт дефолтные тиры (rank 0-4),
+      // frontend хранит их с временными ID (tier-1...tier-5). Маппим temp → real,
+      // чтобы getAtomicSavePayload не отправил дефолтные тиры как "added".
+      let tierIdRemap: Record<string, string> | undefined;
+
       if (!isNumericId && !isUuid) {
         // Создаём новый тир-лист
         const created = await createTierList(listData.title || "Новый тир-лист");
@@ -136,13 +141,32 @@ export function useTierEditorSave({
           payload: { ...listData, id: effectiveId, tierIdToTempIdMap: {} },
         });
 
+        // Маппинг временных ID тиров на реальные
+        const createdTiers = created.tiers ?? [];
+        if (createdTiers.length > 0) {
+          tierIdRemap = {};
+          const tierReplacements = listData.tierOrder
+            .map((tempId, rank) => {
+              const backendTier = createdTiers.find((t) => t.rank === rank);
+              if (!backendTier) return null;
+              const realId = String(backendTier.id);
+              tierIdRemap![tempId] = realId;
+              return { tempId, realId };
+            })
+            .filter((r): r is { tempId: string; realId: string } => r !== null);
+
+          if (tierReplacements.length > 0) {
+            dispatch({ type: "REPLACE_TIER_IDS", payload: tierReplacements });
+          }
+        }
+
         // Сохраняем тему, если она выбрана нестандартная
         if (theme && theme !== "default") {
           apiClient.put(`/tier-lists/${effectiveId}`, { theme }).catch(() => {});
         }
       }
 
-      const payload = getSavePayload();
+      const payload = getAtomicSavePayload(listData, tierIdRemap);
       const result = await saveTierListAtomic(effectiveId, payload);
 
       setHasUnsavedChanges(false);
@@ -187,7 +211,7 @@ export function useTierEditorSave({
       });
       return false;
     }
-  }, [tierListId, isLoading, isReadOnly, getSavePayload, setHasUnsavedChanges, dispatch, queryClient, logger, theme, listData]);
+  }, [tierListId, isLoading, isReadOnly, setHasUnsavedChanges, dispatch, queryClient, logger, theme, listData]);
 
   return {
     saveStatus,

@@ -726,7 +726,7 @@ const TierListEditorContent = () => {
         }}
         username={authUser?.username || "user"}
         isReadOnly={isReadOnly}
-        localMode={isDemo}
+        localMode={tierListId === "new"}
         tierListTheme={displayTheme}
         onRequireAuth={() => setShowAuthModal(true)}
       />

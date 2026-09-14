@@ -63,6 +63,7 @@ export function getInitialData(id: string, title: string): TierListData {
   return {
     id,
     title,
+    isPublic: true,
 
     // "Мастер-лист" всех доступных книг
     books: {},
@@ -140,7 +141,7 @@ export function getTemplateInitialData(id: string, template: CreateTemplateData)
     tiers,
     tierOrder,
     unrankedBookIds,
-    isPublic: false,
+    isPublic: true,
     tierIdToTempIdMap,
   };
 }

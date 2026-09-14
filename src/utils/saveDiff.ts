@@ -57,14 +57,19 @@ function toNumericId(id: string): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-export function getAtomicSavePayload(listData: TierListData): AtomicSavePayload {
+export function getAtomicSavePayload(
+  listData: TierListData,
+  tierIdRemap?: Record<string, string>,
+): AtomicSavePayload {
   const addedTiers: AtomicTierAdd[] = [];
   const updatedTiers: AtomicTierUpdate[] = [];
   const placements: AtomicPlacement[] = [];
 
   // Собираем тиры и их позиции
-  listData.tierOrder.forEach((tierId, rank) => {
-    const tier = listData.tiers[tierId];
+  listData.tierOrder.forEach((rawTierId, rank) => {
+    // Применяем маппинг: temp ID → real ID (при создании нового tier list)
+    const tierId = tierIdRemap?.[rawTierId] ?? rawTierId;
+    const tier = listData.tiers[rawTierId];
     if (!tier) return;
 
     const numericTierId = toNumericId(tierId);
