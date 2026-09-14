@@ -74,6 +74,7 @@ async function request<T>(
       // Иначе GET-ответы с Cache-Control (public, max-age=60) на бэке возвращаются
       // из кэша браузера, и после мутаций refetch показывает устаревшие данные.
       cache: "no-store",
+      credentials: "include",
       headers: {
         ...(data !== undefined ? { "Content-Type": "application/json" } : {}),
         ...getAuthHeader(),
