@@ -32,14 +32,17 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
     throw new ValidationError("Необходимо принять условия использования");
   }
 
-  const domain = payload.email.split("@")[1]
-  if (domain && isDisposableEmail(payload.email)) {
-    logger.warn("Попытка регистрации с disposable email", { email: payload.email })
+  const username = payload.username.trim().toLowerCase();
+  const email = payload.email.trim().toLowerCase();
+
+  const domain = email.split("@")[1]
+  if (domain && isDisposableEmail(email)) {
+    logger.warn("Попытка регистрации с disposable email", { email })
     throw new ValidationError("Регистрация с временных почтовых адресов запрещена. Используйте постоянный email.")
   }
 
-  if (isReservedUsername(payload.username)) {
-    logger.warn("Попытка регистрации с зарезервированным username", { username: payload.username })
+  if (isReservedUsername(username)) {
+    logger.warn("Попытка регистрации с зарезервированным username", { username })
     throw new ValidationError("Это имя пользователя зарезервировано системой. Пожалуйста, выберите другое имя.")
   }
 
@@ -53,7 +56,7 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
 
   // Сначала быстрые проверки, потом дорогое bcrypt
   const emailTaken = await prisma.user.findFirst({
-    where: { email: { equals: payload.email, mode: 'insensitive' } },
+    where: { email: { equals: email, mode: 'insensitive' } },
   });
   if (emailTaken) {
     throw new ConflictError(
@@ -62,7 +65,7 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
   }
 
   const usernameTaken = await prisma.user.findFirst({
-    where: { username: { equals: payload.username, mode: 'insensitive' } },
+    where: { username: { equals: username, mode: 'insensitive' } },
   });
   if (usernameTaken) {
     throw new ConflictError(
@@ -82,8 +85,8 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
   const user = await prisma.$transaction(async (tx) => {
     return tx.user.create({
       data: {
-        username: payload.username,
-        email: payload.email,
+        username,
+        email,
         passwordHash: hashedPassword,
         roleId: userRole.id,
         emailVerifiedAt: new Date(),
@@ -113,8 +116,10 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
 }
 
 export async function login(payload: LoginPayload): Promise<AuthToken> {
+  const username = payload.username.trim();
+
   const user = await prisma.user.findFirst({
-    where: { username: { equals: payload.username, mode: 'insensitive' } },
+    where: { username: { equals: username, mode: 'insensitive' } },
     include: { role: true },
   });
 

@@ -214,6 +214,36 @@ describe("Auth Service", () => {
     // it("должен бросить ошибку если SmartCaptcha не пройдена", ...)
     // it("должен пропускать SmartCaptcha если токен не передан", ...)
 
+    it("должен нормализовать username и email при регистрации (trim + lowercase)", async () => {
+      (prisma.user.findFirst as any).mockResolvedValue(null);
+      (prisma.user.create as any).mockResolvedValue({
+        id: 2,
+        username: "newuser",
+        email: "newuser@example.com",
+        passwordHash: "hashed",
+      });
+
+      await authService.register({
+        username: "  NewUser  ",
+        email: "  NEWUSER@Example.COM  ",
+        password: "password123",
+        acceptedTerms: true,
+      });
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { email: { equals: "newuser@example.com", mode: "insensitive" } },
+      });
+      expect(prisma.user.findFirst).toHaveBeenLastCalledWith({
+        where: { username: { equals: "newuser", mode: "insensitive" } },
+      });
+      expect(prisma.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          username: "newuser",
+          email: "newuser@example.com",
+        }),
+      });
+    });
+
     it("должен захешировать пароль перед сохранением", async () => {
       (prisma.user.findFirst as any).mockResolvedValue(null);
       (prisma.user.create as any).mockResolvedValue(mockCreatedUser);
@@ -294,6 +324,29 @@ describe("Auth Service", () => {
       await expect(
         authService.login({ ...mockLoginPayload, password: "wrongpassword" }),
       ).rejects.toThrow("Неверное имя пользователя или пароль");
+    });
+
+    it("должен нормализовать username при входе (trim)", async () => {
+      const mockUserLogin = {
+        id: 1,
+        username: "testuser",
+        email: "test@example.com",
+        passwordHash: await bcrypt.hash("password123", 10),
+        role: { name: "user" },
+        suspendedUntil: null,
+        suspensionReason: null,
+      };
+      (prisma.user.findFirst as any).mockResolvedValue(mockUserLogin);
+
+      await authService.login({
+        username: "  testuser  ",
+        password: "password123",
+      });
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { username: { equals: "testuser", mode: "insensitive" } },
+        include: { role: true },
+      });
     });
 
     it("должен бросить ошибку если аккаунт заблокирован", async () => {
