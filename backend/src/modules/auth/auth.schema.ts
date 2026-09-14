@@ -31,10 +31,13 @@ export type AuthTokenPayload = z.infer<typeof jwtPayloadSchema>;
 export const registerBodySchema = z.object({
   username: z
     .string()
+    .trim()
     .min(2, "Имя должно содержать минимум 2 символа")
     .max(30, "Имя не может быть длиннее 30 символов"),
   email: z
     .string()
+    .trim()
+    .toLowerCase()
     .email("Некорректный формат email")
     .max(255, "Email не может быть длиннее 255 символов"),
   password: z
@@ -50,7 +53,7 @@ export const registerBodySchema = z.object({
 });
 
 const loginBodySchema = z.object({
-  username: z.string().min(1).max(30),
+  username: z.string().trim().min(1).max(30),
   password: z.string().min(1).max(100),
 });
 
