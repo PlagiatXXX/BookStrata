@@ -45,6 +45,8 @@ test.describe("Refresh Token Mechanics (cookie-based)", () => {
     const response2 = await request.post("http://localhost:8080/api/auth/refresh", {
       headers: { Cookie: `refreshToken=${oldRefresh}` },
     });
+    // After rotation, old token may still work (200) or be invalidated (401)
+    // depending on backend implementation. Both are acceptable behaviors.
     expect([200, 401]).toContain(response2.status());
   });
 });

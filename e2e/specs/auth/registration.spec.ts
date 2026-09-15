@@ -12,10 +12,14 @@ test.describe("Registration Flow", () => {
     await page.fill('input[name="password"]', "StrongPass1!");
     await page.check('input[type="checkbox"]');
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(3000);
+    // Wait for either redirect to dashboard or confirmation message
+    await Promise.race([
+      page.waitForURL("**/dashboard", { timeout: 15000 }),
+      page.locator("text=/подтвердите|проверьте|отправлено/i").waitFor({ state: "visible", timeout: 15000 }),
+    ]);
     const isOnDashboard = page.url().includes("/dashboard");
     const hasConfirmation = await page.locator("text=/подтвердите|проверьте|отправлено/i")
-      .isVisible({ timeout: 5000 }).catch(() => false);
+      .isVisible().catch(() => false);
     expect(isOnDashboard || hasConfirmation).toBeTruthy();
   });
 
@@ -48,7 +52,8 @@ test.describe("Registration Flow", () => {
     await page.fill('input[name="email"]', `noterms_${Date.now()}@test.com`);
     await page.fill('input[name="password"]', "StrongPass1!");
     await page.click('button[type="submit"]');
-    await page.waitForTimeout(2000);
+    // Form should stay on /auth — checkbox unchecked means HTML5 validation blocks submit
+    await page.waitForTimeout(500);
     expect(page.url()).toContain("/auth");
   });
 

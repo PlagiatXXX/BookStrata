@@ -15,11 +15,11 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await apiForgotPassword(email);
+      const result = await apiForgotPassword(email);
       setSent(true);
       sileo.success({
-        title: "Письмо отправлено",
-        description: "Проверьте вашу почту для получения инструкций",
+        title: "Запрос отправлен",
+        description: result.message || "Проверьте вашу почту",
       });
     } catch (err) {
       sileo.error({
@@ -44,15 +44,20 @@ export default function ForgotPasswordPage() {
               </h1>
               <p className="mt-3 text-xs text-slate-500">
                 {sent 
-                  ? "Инструкции отправлены на ваш email" 
+                  ? "Проверьте вашу почту" 
                   : "Введите ваш email для получения ссылки на сброс пароля"}
               </p>
             </div>
 
             {sent ? (
               <div className="space-y-6">
-                <div className="text-center text-sm text-slate-700 bg-white/50 p-4 rounded-lg">
-                  Мы отправили письмо на <strong>{email}</strong>. Если письма нет, проверьте папку "Спам".
+                <div className="text-center text-sm text-slate-700 bg-white/50 p-4 rounded-lg space-y-2">
+                  <p>
+                    Если аккаунт с email <strong>{email}</strong> существует, мы отправили ссылку для сброса пароля.
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Не забудьте проверить папку «Спам» или «Промо».
+                  </p>
                 </div>
                 <Link to="/auth">
                   <Button className="w-full rounded-full bg-orange-500/80 hover:bg-orange-500 text-white">

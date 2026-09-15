@@ -19,6 +19,7 @@ import {
   Plus,
   Pencil,
   Trash2,
+  KeyRound,
 } from "lucide-react"
 import { api } from "@/lib/api-client"
 import { apiSetDonorStatus, apiAddUserBadge, apiUpdateUserBadge, apiDeleteUserBadge } from "@/lib/userApi"
@@ -96,13 +97,17 @@ export default function AdminUsersPage() {
     newRole: Role
   } | null>(null)
 
+  // Password reset state
+  const [resetPasswordUser, setResetPasswordUser] = useState<{ userId: number; username: string } | null>(null)
+  const [newPassword, setNewPassword] = useState("")
+
   // Badge management state
   const [editingBadgeUser, setEditingBadgeUser] = useState<number | null>(null)
   const [badgeText, setBadgeText] = useState("")
   const [badgeColor, setBadgeColor] = useState<BadgeColor>("purple")
   const [editingBadge, setEditingBadge] = useState<UserBadge | null>(null)
 
-  useBodyScrollLock(!!confirmTarget || editingBadgeUser !== null)
+  useBodyScrollLock(!!confirmTarget || editingBadgeUser !== null || !!resetPasswordUser)
 
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["admin-users"],
@@ -215,6 +220,19 @@ export default function AdminUsersPage() {
     },
     onError: (err: Error) => {
       sileo.error({ title: "Ошибка", description: err.message, duration: 5000 })
+    },
+  })
+
+  const resetPasswordMut = useMutation({
+    mutationFn: ({ userId, password }: { userId: number; password: string }) =>
+      api.post(`/admin/users/${userId}/reset-password`, { password }),
+    onSuccess: () => {
+      sileo.success({ title: "Пароль успешно сброшен", duration: 3000 })
+      setResetPasswordUser(null)
+      setNewPassword("")
+    },
+    onError: (err: Error) => {
+      sileo.error({ title: "Ошибка", description: err.message || "Не удалось сбросить пароль", duration: 5000 })
     },
   })
 
@@ -590,6 +608,19 @@ export default function AdminUsersPage() {
                             >
                               <Heart size={12} />
                               {u.isDonor ? "Снять" : "Меценат"}
+                            </button>
+                          )}
+                          {canChangeRole && u.userId !== currentUser?.userId && (
+                            <button
+                              onClick={() => {
+                                setResetPasswordUser({ userId: u.userId, username: u.username || u.email })
+                                setNewPassword("")
+                              }}
+                              className="ml-2 inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-white/5 text-gray-400 border border-gray-700 hover:bg-white/10 transition-colors cursor-pointer"
+                              type="button"
+                              title="Сбросить пароль"
+                            >
+                              <KeyRound size={12} />
                             </button>
                           )}
                           {canChangeRole && u.userId !== currentUser?.userId ? (
@@ -1158,6 +1189,92 @@ export default function AdminUsersPage() {
                   : editingBadge
                     ? "Сохранить"
                     : "Добавить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {resetPasswordUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => {
+            setResetPasswordUser(null)
+            setNewPassword("")
+          }}
+        >
+          <div
+            className="bg-[#1a1a2e] border border-gray-700 rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                <KeyRound size={20} className="text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  Сброс пароля
+                </h3>
+                <p className="text-sm text-gray-400">
+                  для {resetPasswordUser.username}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setResetPasswordUser(null)
+                  setNewPassword("")
+                }}
+                className="ml-auto text-gray-500 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm text-gray-400 mb-1.5 font-medium">
+                Новый пароль
+              </label>
+              <input
+                type="text"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Минимум 8 символов"
+                className="w-full bg-white/10 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/50"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newPassword.length >= 8) {
+                    resetPasswordMut.mutate({ userId: resetPasswordUser.userId, password: newPassword })
+                  }
+                }}
+              />
+              {newPassword.length > 0 && newPassword.length < 8 && (
+                <p className="mt-1 text-xs text-red-400">
+                  Минимум 8 символов
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setResetPasswordUser(null)
+                  setNewPassword("")
+                }}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-gray-700 text-sm text-gray-300 hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => {
+                  if (resetPasswordUser && newPassword.length >= 8) {
+                    resetPasswordMut.mutate({ userId: resetPasswordUser.userId, password: newPassword })
+                  }
+                }}
+                disabled={newPassword.length < 8 || resetPasswordMut.isPending}
+                className="flex-1 px-4 py-2.5 rounded-lg bg-amber-500/20 border border-amber-500/30 text-sm font-medium text-amber-400 hover:bg-amber-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {resetPasswordMut.isPending ? "Сброс..." : "Сбросить пароль"}
               </button>
             </div>
           </div>

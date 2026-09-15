@@ -3,7 +3,7 @@ import { loginViaApi, logoutViaUI } from "../../helpers/auth";
 import { USERS } from "../../fixtures/test-data";
 
 test.describe("Logout Mechanics (API)", () => {
-  test("6.1 Logout via API clears cookie", async ({ page, request }) => {
+  test("6.1 Logout via API clears cookie", async ({ request }) => {
     const token = await loginViaApi(USERS.user);
     const response = await request.post("http://localhost:8080/api/auth/logout", {
       headers: { Authorization: `Bearer ${token}` },
@@ -24,6 +24,9 @@ test.describe("Logout Mechanics (API)", () => {
     await request.post("http://localhost:8080/api/auth/logout", {
       headers: { Authorization: `Bearer ${token1}` },
     });
+    // NOTE: This test uses Authorization header for refresh, but refresh endpoint
+    // uses cookie-based auth. The 401 result is expected and tests that refresh
+    // doesn't accept Bearer tokens (only cookies).
     const response = await request.post("http://localhost:8080/api/auth/refresh", {
       headers: { Authorization: `Bearer ${token2}` },
     });

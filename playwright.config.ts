@@ -16,6 +16,7 @@ export default defineConfig({
     timeout: 15000,
   },
   globalSetup: path.resolve("./e2e/global-setup.ts"),
+  globalTeardown: path.resolve("./e2e/global-teardown.ts"),
   use: {
     baseURL: "http://localhost:5173",
     storageState: path.resolve("./e2e/.auth/user.json"),

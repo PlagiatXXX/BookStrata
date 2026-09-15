@@ -128,6 +128,12 @@ export function AuthForm() {
     setFieldErrors(errors);
     if (hasErrors) return;
 
+    // Клиентская проверка acceptedTerms (до отправки на сервер)
+    if (mode === "register" && !state.acceptedTerms) {
+      dispatch({ type: "SUBMIT_FAILURE", error: "Необходимо принять условия использования" })
+      return
+    }
+
     dispatch({ type: "SUBMIT_START" })
 
     const trimmedUsername = state.formData.username.trim()
@@ -299,7 +305,7 @@ export function AuthForm() {
                 type="submit"
                 data-analytics={`auth.submit_${mode}`}
                 isLoading={state.loading}
-                className="w-full -mt-5 rounded-full !bg-orange-500 hover:!bg-orange-600 !border-orange-500 hover:!border-orange-600 !text-white tracking-wider focus-visible:ring-2 focus-visible:ring-orange-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent transition-colors duration-200 text-sm py-3"
+                className="w-full -mt-5 rounded-full bg-orange-500! hover:bg-orange-600! border-orange-500! hover:border-orange-600! text-white! tracking-wider focus-visible:ring-2 focus-visible:ring-orange-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent transition-colors duration-200 text-sm py-3"
               >
                 {mode === "login" ? "Войти" : "Зарегистрироваться"}
               </Button>

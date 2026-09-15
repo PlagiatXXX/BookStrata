@@ -339,9 +339,10 @@ export function handleUnauthorized() {
 let refreshPromise: Promise<string> | null = null;
 
 // ─── Proactive Refresh ─────────────────────────────────────────────────────
-// Обновляем токен за 5 минут до истечения, чтобы пользователь не видел 401.
+// Обновляем токен за 1 день до истечения (при 7-дневном access token).
+// Запас в 1 день — чтобы при сетевых проблемах было время повторить.
 
-const REFRESH_BUFFER_MS = 5 * 60 * 1000; // 5 минут до истечения
+const REFRESH_BUFFER_MS = 24 * 60 * 60 * 1000; // 1 день до истечения
 let proactiveRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
@@ -359,7 +360,7 @@ function decodeJwtPayload(token: string): { exp?: number } | null {
   }
 }
 
-/** Планирует обновление токена за 5 минут до истечения */
+/** Планирует обновление токена за REFRESH_BUFFER_MS до истечения */
 function scheduleProactiveRefresh(token: string): void {
   cancelProactiveRefresh();
 

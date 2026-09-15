@@ -64,6 +64,17 @@ async function loginAndSaveState(
 export default async function globalSetup(_config: FullConfig) {
   const { chromium } = await import("playwright");
 
+  // Сбрасываем пароли e2e-пользователей (могли быть изменены тестами)
+  try {
+    execSync("npx tsx scripts/e2e-reset-passwords.ts", {
+      cwd: "backend",
+      stdio: "pipe",
+    });
+    console.log("[Setup] E2E passwords reset");
+  } catch {
+    console.warn("[Setup] Password reset skipped");
+  }
+
   const admin = { username: "e2e_chief", email: "e2e_chief@test.com", password: "StrongPass1!" };
   const user = { username: "e2e_member", email: "e2e_member@test.com", password: "StrongPass2!" };
 

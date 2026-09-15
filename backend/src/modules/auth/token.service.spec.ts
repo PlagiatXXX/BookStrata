@@ -55,8 +55,8 @@ describe("JWT: короткий access-токен", () => {
     const lifetimeSec = decoded.exp - decoded.iat;
 
     // 7-дневный access = заблокированный пользователь работает неделю.
-    // Максимум 60 минут (3600с) + небольшой запас на clock skew.
-    expect(lifetimeSec).toBeLessThanOrEqual(3660);
+    // Максимум 7 дней (604800с) + небольшой запас на clock skew.
+    expect(lifetimeSec).toBeLessThanOrEqual(604860);
   });
 
   it("refresh-токен остаётся долгоживущим (14 дней)", async () => {

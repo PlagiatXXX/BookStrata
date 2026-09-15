@@ -436,6 +436,10 @@ fastify.register(shelfRoutes, { prefix: "/api/shelf" });
 import { adminCleanupRoutes } from "../src/modules/admin/admin-cleanup.route.js";
 fastify.register(adminCleanupRoutes, { prefix: "/api/admin" });
 
+// Admin: сброс пароля пользователей
+import { adminUsersRoutes } from "../src/modules/admin/admin-users.route.js";
+fastify.register(adminUsersRoutes, { prefix: "/api/admin" });
+
 // Analytics
 import { analyticsRoutes } from "../src/modules/analytics/analytics.route.js";
 fastify.register(analyticsRoutes, { prefix: "/api/analytics" });

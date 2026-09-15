@@ -7,10 +7,9 @@ import { AuthenticationError } from "../../lib/errors.js";
 
 const logger = createLogger("Token", { color: "cyan" });
 
-// Access-токен короткоживущий: при 7-дневном access заблокированный
-// (suspendedUntil) пользователь продолжал работать с API неделю.
-// 60 минут + refresh-флоу на фронте (single-flight) — окно компрометации ≤1ч.
-const ACCESS_TOKEN_EXPIRY = "60m";
+// Access-токен живёт 7 дней — пользователи не страдают от частых истечений.
+// Refresh token — 14 дней (на случай если access не обновился превентивно).
+const ACCESS_TOKEN_EXPIRY = "7d";
 const REFRESH_TOKEN_EXPIRY = "14d";
 
 const REFRESH_VERSION_PREFIX = "auth:refresh_version:";

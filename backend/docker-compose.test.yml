@@ -1,0 +1,29 @@
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: bookstrata-postgres-test
+    environment:
+      POSTGRES_USER: bookstrata
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: bookstrata_test
+    ports:
+      - "127.0.0.1:5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookstrata"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: bookstrata-redis-test
+    ports:
+      - "127.0.0.1:6380:6379"
+    command: redis-server --save ""
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
