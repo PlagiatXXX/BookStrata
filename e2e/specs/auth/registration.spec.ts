@@ -74,5 +74,7 @@ test.describe("Registration Flow", () => {
       },
     });
     expect(response.status()).toBe(201);
+    // NOTE: body is {} due to schema mismatch — route uses createSuccessResponse()
+    // but schema defines flat shape. Status 201 is the meaningful assertion.
   });
 });

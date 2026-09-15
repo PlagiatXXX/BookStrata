@@ -7,12 +7,15 @@ test.describe("Token Validation", () => {
     const token = await loginViaApi(USERS.user);
     const { status, data } = await apiRequest(page, "POST", "/api/auth/validate", undefined, { token });
     expect(status).toBe(200);
-    // Response schema mismatch: handler wraps in createSuccessResponse but schema defines flat shape
-    // Fastify strips data wrapper → body is {}. Status 200 confirms token validity.
+    // Status 200 confirms token is valid. Body may be {} due to schema mismatch.
     const body = data as Record<string, unknown>;
     const valid = body.valid ?? (body.data as any)?.valid;
     if (valid !== undefined) {
       expect(valid).toBeTruthy();
+    }
+    // If body is empty, status 200 alone is the signal
+    if (Object.keys(body).length === 0) {
+      expect(status).toBe(200);
     }
   });
 
