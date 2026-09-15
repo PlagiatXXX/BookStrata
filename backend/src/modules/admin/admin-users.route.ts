@@ -2,8 +2,8 @@ import type { FastifyPluginAsync } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { adminResetPassword } from "./admin-users.service.js";
-import { createApiError, createSuccessResponse } from "../../lib/api-response.js";
-import { ErrorCodes } from "../../lib/api-response.js";
+import { resetPasswordBodySchema } from "./admin-users.schema.js";
+import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
 
 export const adminUsersRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
@@ -16,7 +16,13 @@ export const adminUsersRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, "Некорректный ID пользователя"));
       }
 
-      const { password } = request.body as { password: string };
+      const bodyResult = resetPasswordBodySchema.safeParse(request.body);
+      if (!bodyResult.success) {
+        const message = bodyResult.error.issues[0]?.message || "Некорректные данные";
+        return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, message));
+      }
+
+      const { password } = bodyResult.data;
 
       try {
         const result = await adminResetPassword(userId, password);

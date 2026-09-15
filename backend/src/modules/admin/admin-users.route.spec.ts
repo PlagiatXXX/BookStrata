@@ -73,6 +73,14 @@ describe("POST /api/admin/users/:id/reset-password", () => {
       .expect(404);
   });
 
+  it("возвращает 400 для слишком короткого пароля", async () => {
+    await request(app.server)
+      .post("/api/admin/users/42/reset-password")
+      .set("Authorization", "Bearer admin-token")
+      .send({ password: "short" })
+      .expect(400);
+  });
+
   it("сбрасывает пароль для админа", async () => {
     vi.mocked(adminResetPassword).mockResolvedValue({
       message: "Пароль пользователя testuser успешно сброшен",
