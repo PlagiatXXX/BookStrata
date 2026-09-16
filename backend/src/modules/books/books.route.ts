@@ -30,12 +30,11 @@ export async function booksRoutes(fastify: FastifyInstance) {
     return reply.send(createSuccessResponse({ books }));
   });
 
-  // GET /api/books/search?q=<query>
+  // GET /api/books/search?q=<query> — публичный поиск (Google Books + OpenLibrary fallback)
   fastify.get<{
     Querystring: { q: string; startIndex?: number };
   }>('/search',
     {
-      preHandler: [authMiddleware],
       schema: {
         querystring: {
           type: 'object',
@@ -92,6 +91,40 @@ export async function booksRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { q, limit = 10 } = request.query;
       const books = await searchCatalogBooks(q, limit);
+      return reply.code(200).send(createSuccessResponse({ books }));
+    }
+  );
+
+  // GET /api/books/site-search — поиск по каталогу BookStrata в формате OpenLibraryBook
+  // Используется фронтендом для combined search (site + external) с приоритетом site
+  fastify.get<{
+    Querystring: { q: string; limit?: number };
+  }>("/site-search",
+    {
+      schema: {
+        querystring: {
+          type: "object",
+          required: ["q"],
+          properties: {
+            q: { type: "string", minLength: 2, description: "Поисковый запрос" },
+            limit: { type: "number", minimum: 1, maximum: 20, default: 10 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { q, limit = 10 } = request.query;
+      const catalogBooks = await searchCatalogBooks(q, limit);
+      // Преобразуем в формат OpenLibraryBook для совместимости с фронтендом
+      const books = catalogBooks.map((b) => ({
+        openLibraryKey: `site-${b.id}`,
+        source: "bookstrata" as const,
+        externalId: String(b.id),
+        title: b.title,
+        author: b.author || "",
+        coverUrl: b.coverImageUrl,
+        coverUrlLarge: b.coverImageUrl,
+      }));
       return reply.code(200).send(createSuccessResponse({ books }));
     }
   );

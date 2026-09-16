@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Search, X, BookOpen, Plus, Eye, User, Upload } from "lucide-react";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
-import { batchAddBooksFromSearch, addBookFromGoogleBooks, importFromLiveLib, type OpenLibraryBook, type LiveLibBook } from '@/lib/bookSearchApi';
+import { batchAddBooksFromSearch, addBookFromGoogleBooks, linkSiteBooksToTierList, importFromLiveLib, type OpenLibraryBook, type LiveLibBook } from '@/lib/bookSearchApi';
 import { createLogger } from "@/lib/logger";
 import { sileo } from 'sileo';
 import { YM_GOALS } from "@/lib/ym-goals";
@@ -192,9 +192,16 @@ const BookItem = memo(({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="truncate text-sm font-semibold text-(--theme-text)">
-          {book.title}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="truncate text-sm font-semibold text-(--theme-text)">
+            {book.title}
+          </h3>
+          {book.source === 'bookstrata' && (
+            <span className="shrink-0 rounded bg-(--theme-accent-primary)/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-(--theme-accent-primary)">
+              На сайте
+            </span>
+          )}
+        </div>
         <p className="truncate text-xs text-(--theme-text-muted)">{book.author}</p>
         {book.publishYear && (
           <p className="mt-1 text-xs text-(--theme-text-muted)">{book.publishYear}</p>
@@ -302,16 +309,7 @@ export const BookSearchModal = ({
     onClose();
   }, [clearResults, onClose]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
-    };
-
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [isOpen, handleClose]);
+  // Модалка закрывается ТОЛЬКО по кнопке X или "Отмена" (overlay и Esc не закрывают)
 
   const handleSearch = useCallback(async () => {
     if (!state.query.trim() || state.query.length < 2) return;
@@ -452,7 +450,28 @@ export const BookSearchModal = ({
         return;
       }
 
-      const addedBooks = await batchAddBooksFromSearch(tierListId, allBooks);
+      // Разделяем site-книги и внешние
+      const siteBooks = allBooks.filter((b) => b.source === 'bookstrata');
+      const externalBooks = allBooks.filter((b) => b.source !== 'bookstrata');
+
+      const addedBooks: Array<{ id: number; title: string; author: string | null; coverImageUrl: string }> = [];
+
+      // Site-книги: линковка существующих каталоговых книг
+      if (siteBooks.length > 0) {
+        const siteBookIds = siteBooks
+          .map((b) => parseInt(b.externalId || '', 10))
+          .filter((id) => !Number.isNaN(id));
+        if (siteBookIds.length > 0) {
+          const linked = await linkSiteBooksToTierList(tierListId, siteBookIds);
+          addedBooks.push(...linked);
+        }
+      }
+
+      // Внешние книги: существующий flow
+      if (externalBooks.length > 0) {
+        const added = await batchAddBooksFromSearch(tierListId, externalBooks);
+        addedBooks.push(...added);
+      }
 
       dispatch({ type: "CLEAR_SELECTION" });
       setLiveLibSelected(new Set());
@@ -500,6 +519,19 @@ export const BookSearchModal = ({
         setViewBook(null);
         handleClose();
         return;
+      }
+
+      // Site-книги: линковка существующей каталоговой книги
+      if (book.source === 'bookstrata' && book.externalId) {
+        const bookId = parseInt(book.externalId, 10);
+        if (!Number.isNaN(bookId)) {
+          const linked = await linkSiteBooksToTierList(tierListId, [bookId]);
+          sileo.success({ title: "Книга добавлена", duration: 3000 });
+          onBookAdded?.(linked.length > 0 ? [linked[0]!] : null);
+          setViewBook(null);
+          handleClose();
+          return;
+        }
       }
 
       const result = await addBookFromGoogleBooks(tierListId, book);
@@ -554,10 +586,9 @@ export const BookSearchModal = ({
   return (
     <>
       <div className="fixed inset-0 z-60 flex items-center justify-center">
-        {/* Overlay */}
+        {/* Overlay — клик по overlay НЕ закрывает модалку (только X / Отмена) */}
         <div
-          className="absolute inset-0 cursor-pointer bg-black/75"
-          onClick={handleClose}
+          className="absolute inset-0 bg-black/75"
           aria-hidden="true"
         />
 
@@ -760,19 +791,51 @@ export const BookSearchModal = ({
                 {/* Results List */}
                 {!isLoading && (
                   <div className="space-y-2">
-                    {results.map((book, index) => (
-                      <div
-                        key={book.openLibraryKey}
-                        style={{ animationDelay: `${index * 30}ms` }}
-                      >
-                        <BookItem
-                          book={book}
-                          isSelected={book.openLibraryKey in state.selectedBooks}
-                          onToggle={handleToggleBookSelection}
-                          onView={handleSetViewBook}
-                        />
-                      </div>
-                    ))}
+                    {(() => {
+                      const siteResults = results.filter((b) => b.source === 'bookstrata');
+                      const externalResults = results.filter((b) => b.source !== 'bookstrata');
+                      const hasBoth = siteResults.length > 0 && externalResults.length > 0;
+
+                      return (
+                        <>
+                          {siteResults.map((book, index) => (
+                            <div
+                              key={book.openLibraryKey}
+                              style={{ animationDelay: `${index * 30}ms` }}
+                            >
+                              <BookItem
+                                book={book}
+                                isSelected={book.openLibraryKey in state.selectedBooks}
+                                onToggle={handleToggleBookSelection}
+                                onView={handleSetViewBook}
+                              />
+                            </div>
+                          ))}
+                          {hasBoth && (
+                            <div className="flex items-center gap-3 py-2">
+                              <div className="h-px flex-1 bg-(--theme-border)" />
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-(--theme-text-muted)">
+                                Внешние источники
+                              </span>
+                              <div className="h-px flex-1 bg-(--theme-border)" />
+                            </div>
+                          )}
+                          {externalResults.map((book, index) => (
+                            <div
+                              key={book.openLibraryKey}
+                              style={{ animationDelay: `${(siteResults.length + index) * 30}ms` }}
+                            >
+                              <BookItem
+                                book={book}
+                                isSelected={book.openLibraryKey in state.selectedBooks}
+                                onToggle={handleToggleBookSelection}
+                                onView={handleSetViewBook}
+                              />
+                            </div>
+                          ))}
+                        </>
+                      );
+                    })()}
 
                     {/* Loading More */}
                     {isLoadingMore && (

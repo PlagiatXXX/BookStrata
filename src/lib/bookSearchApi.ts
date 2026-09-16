@@ -5,9 +5,9 @@ const bookSearchLogger = createLogger('BookSearch', { color: 'yellow' });
 
 export interface OpenLibraryBook {
   openLibraryKey: string;
-  /** Источник внешнего ID (Фаза 2.1): google_books | open_library | livelib */
-  source?: 'google_books' | 'open_library' | 'livelib';
-  /** ID книги в источнике (volumeId / OpenLibrary key / LiveLib id) */
+  /** Источник внешнего ID книги (Фаза 2.1): google_books | open_library | livelib | bookstrata */
+  source?: 'google_books' | 'open_library' | 'livelib' | 'bookstrata';
+  /** ID книги в источнике (volumeId / OpenLibrary key / LiveLib id / BookStrata book id) */
   externalId?: string;
   title: string;
   author: string;
@@ -105,6 +105,8 @@ export interface LiveLibBook {
   author: string;
   coverUrl: string | null;
   coverUrlLarge: string | null;
+  source?: 'livelib';
+  externalId?: string;
 }
 
 export async function importFromLiveLib(
@@ -151,6 +153,54 @@ export async function addBookFromOpenLibrary(
   } catch (err) {
     if (err instanceof Error) {
       bookSearchLogger.error(err, { action: 'addBookFromOpenLibrary', tierListId, title: book.title });
+    }
+    throw err;
+  }
+}
+
+/**
+ * Поиск книг по каталогу BookStrata (site-search).
+ * Возвращает книги в формате OpenLibraryBook с source='bookstrata'.
+ */
+export async function searchSiteBooks(query: string, limit = 10): Promise<OpenLibraryBook[]> {
+  if (!query || query.length < 2) return [];
+
+  try {
+    bookSearchLogger.info('Поиск книг на сайте', { query, limit });
+    const result = await apiClient.get<{ books: OpenLibraryBook[] }>('/books/site-search', { q: query, limit });
+    bookSearchLogger.info('Поиск на сайте завершён', { count: result.books.length });
+    return result.books;
+  } catch (err) {
+    if (err instanceof Error) {
+      bookSearchLogger.error(err, { action: 'searchSiteBooks', query });
+    }
+    throw err;
+  }
+}
+
+/**
+ * Линковка существующих каталоговых книг к тир-листу по bookId.
+ * Используется для книг с source='bookstrata' — книга уже в каталоге,
+ * создаём только BookPlacement.
+ */
+export async function linkSiteBooksToTierList(
+  tierListId: string,
+  bookIds: number[]
+): Promise<Array<{ id: number; title: string; author: string | null; coverImageUrl: string }>> {
+  if (bookIds.length === 0) return [];
+
+  try {
+    bookSearchLogger.info('Линковка site-книг к тир-листу', { tierListId, bookIds });
+    const result = await apiClient.post<{ results: Array<{ book: { id: number; title: string; author: string | null; coverImageUrl: string } }> }>(
+      `/tier-lists/${tierListId}/link-books`,
+      { bookIds }
+    );
+    const linkedBooks = result.results?.map((r) => r.book) ?? [];
+    bookSearchLogger.info('Site-книги привязаны', { tierListId, count: linkedBooks.length });
+    return linkedBooks;
+  } catch (err) {
+    if (err instanceof Error) {
+      bookSearchLogger.error(err, { action: 'linkSiteBooksToTierList', tierListId, bookIds });
     }
     throw err;
   }

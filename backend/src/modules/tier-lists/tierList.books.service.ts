@@ -368,6 +368,66 @@ async function findRaceCanon(
 }
 
 /**
+ * Линковка существующих каталоговых книг к тир-листу по ID.
+ * Используется при добавлении книг с сайта (source='bookstrata'):
+ * книга уже в каталоге (published), создаём только BookPlacement.
+ */
+export async function linkBooksToTierList(
+  tierListId: string,
+  bookIds: number[],
+) {
+  if (bookIds.length === 0) return [];
+
+  const realTierListId = await resolveTierListId(tierListId);
+  const tierList = await prisma.tierList.findUnique({
+    where: { id: realTierListId },
+    select: { userId: true },
+  });
+  if (!tierList) throw new NotFoundError("Tier list not found");
+
+  // Проверяем, что все книги существуют и опубликованы
+  const books = await prisma.book.findMany({
+    where: { id: { in: bookIds }, status: "published" },
+    select: { id: true },
+  });
+  const validBookIds = new Set(books.map((b) => b.id));
+  const invalidIds = bookIds.filter((id) => !validBookIds.has(id));
+  if (invalidIds.length > 0) {
+    throw new ValidationError(`Books not found or not published: ${invalidIds.join(", ")}`);
+  }
+
+  // Проверяем, какие уже в листе
+  const existingPlacements = await prisma.bookPlacement.findMany({
+    where: { tierListId: realTierListId },
+    select: { bookId: true, rank: true },
+  });
+  const existingBookIds = new Set(existingPlacements.map((p) => p.bookId));
+  const startRank = Math.max(0, ...existingPlacements.map((p) => p.rank + 1), existingPlacements.length);
+
+  // Только новые (дедупликация)
+  const newBookIds = bookIds.filter((id) => !existingBookIds.has(id));
+  if (newBookIds.length === 0) return [];
+
+  const results = await prisma.$transaction(async (tx) => {
+    const placements = [];
+    for (let i = 0; i < newBookIds.length; i++) {
+      const placement = await tx.bookPlacement.create({
+        data: {
+          tierListId: realTierListId,
+          bookId: newBookIds[i]!,
+          rank: startRank + i,
+        },
+        include: { book: true },
+      });
+      placements.push(placement);
+    }
+    return placements;
+  });
+
+  return results;
+}
+
+/**
  * Фаза 2.3 (seobook.md): разделение API «каталог vs вхождение».
  *
  * updateBookPlacement — личные данные вхождения (владелец тир-листа):

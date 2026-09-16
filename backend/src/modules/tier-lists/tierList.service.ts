@@ -26,6 +26,7 @@ export {
 export {
   updatePlacements,
   addBooksToTierList,
+  linkBooksToTierList,
   updateBookPlacement,
   updateBookCatalog,
   updateBookCatalogIfPlaced,

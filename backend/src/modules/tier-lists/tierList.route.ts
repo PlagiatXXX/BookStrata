@@ -528,6 +528,44 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
   );
 
+  // POST /:id/link-books — линковка существующих каталоговых книг к тир-листу по ID
+  // Используется при добавлении книг с сайта (source='bookstrata')
+  fastify.post<{
+    Params: { id: string };
+    Body: { bookIds: number[] };
+  }>(
+    "/:id/link-books",
+    {
+      preHandler: [authMiddleware],
+      schema: {
+        body: {
+          type: "object",
+          required: ["bookIds"],
+          properties: {
+            bookIds: {
+              type: "array",
+              items: { type: "number" },
+              minItems: 1,
+              maxItems: 50,
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const tierListId = request.params.id;
+      await service.assertOwner(tierListId, request.user!.userId);
+
+      const { bookIds } = request.body;
+      const results = await service.linkBooksToTierList(tierListId, bookIds);
+
+      const newAchievements = await eventBus.emit("tier-list:book-added", {
+        userId: request.user!.userId,
+      });
+      return reply.code(201).send(createSuccessResponse({ results, newAchievements }));
+    },
+  );
+
   // PUT /:id/books/:bookId -> Обновить книгу (Фаза 2.3: каталог vs вхождение)
   fastify.put<{
     Params: { id: string; bookId: string };

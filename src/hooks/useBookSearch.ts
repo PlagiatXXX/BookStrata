@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { searchGoogleBooks, type OpenLibraryBook } from "@/lib/bookSearchApi";
+import { searchGoogleBooks, searchSiteBooks, type OpenLibraryBook } from "@/lib/bookSearchApi";
 import { createLogger } from "@/lib/logger";
 import { StorageService } from "@/lib/storage";
 
@@ -112,22 +112,33 @@ export function useBookSearch(
       setStartIndex(0);
 
       try {
-        const books = await searchGoogleBooks(query.trim(), 0);
+        // Параллельный поиск: site (приоритет) + Google Books
+        const [siteBooks, googleBooks] = await Promise.all([
+          searchSiteBooks(query.trim(), 10).catch(() => [] as OpenLibraryBook[]),
+          searchGoogleBooks(query.trim(), 0).catch(() => [] as OpenLibraryBook[]),
+        ]);
+
         // Фильтруем только книги с обложками
-        const filteredBooks = books.filter(
+        const filteredSite = siteBooks.filter(
+          (book) => book.coverUrl || book.coverUrlLarge,
+        );
+        const filteredGoogle = googleBooks.filter(
           (book) => book.coverUrl || book.coverUrlLarge,
         );
 
-        // Дедупликация по openLibraryKey (защита от дубликатов API)
-        const uniqueBooks = Array.from(
-          new Map(
-            filteredBooks.map((book) => [book.openLibraryKey, book]),
-          ).values(),
-        );
+        // Дедупликация: site-books первые, потом Google (без дублей по openLibraryKey)
+        const seen = new Set<string>();
+        const uniqueBooks: OpenLibraryBook[] = [];
+        for (const book of [...filteredSite, ...filteredGoogle]) {
+          if (!seen.has(book.openLibraryKey)) {
+            seen.add(book.openLibraryKey);
+            uniqueBooks.push(book);
+          }
+        }
 
         setResults(uniqueBooks);
         setTotalResults(uniqueBooks.length);
-        setHasMore(uniqueBooks.length >= 20);
+        setHasMore(googleBooks.length >= 20);
 
         // Кэшируем результат
         if (cacheEnabled && uniqueBooks.length > 0) {
