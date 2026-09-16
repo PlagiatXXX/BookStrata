@@ -68,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /** Установить пользователя напрямую из данных ответа API.
    *  Используется после регистрации/входа чтобы мгновенно сделать isAuthenticated=true
-   *  и избежать гонки: ProtectedRoute рендерится до завершения apiGetMe(). */
+   *  и избежать гонки: ProtectedRoute рендерится до завершения apiGetMe().
+   *  После оптимистичной установки запускаем fetchUser, чтобы получить полные данные
+   *  (avatarUrl, актуальная роль и т.д.) — токен к этому моменту уже установлен. */
   const loginWithData = useCallback((data: { userId: number; username: string; role?: string }) => {
     authLogger.info("Login with data (optimistic)", { userId: data.userId, username: data.username });
     setUser({
@@ -77,7 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: data.role || "user",
     });
     setIsLoading(false);
-  }, []);
+    // Загружаем полные данные пользователя (avatar, роль) — токен уже в памяти
+    fetchUser(true);
+  }, [fetchUser]);
 
   React.useEffect(() => {
     refreshUserDataRef.current = refreshUser;

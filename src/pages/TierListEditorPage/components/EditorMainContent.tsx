@@ -248,12 +248,12 @@ export const EditorMainContent = memo(
                 <div className="nb-editor-toggle-line w-4 min-h-80 bg-(--theme-bg) group-hover:shadow-[inset_0_0_18px_0_color-mix(in_srgb,var(--theme-accent-primary)_25%,transparent),0_0_25px_6px_color-mix(in_srgb,var(--theme-accent-primary)_20%,transparent)] transition-all duration-500" />
                 {sidebarCollapsed ? (
                   <PanelRightOpen
-                    size={16}
+                    size={20}
                     className="text-(--theme-accent-primary) ml-1.5 group-hover:brightness-150 transition-all duration-300"
                   />
                 ) : (
                   <PanelRightClose
-                    size={16}
+                    size={20}
                     className="text-(--theme-accent-primary) ml-1.5 group-hover:brightness-150 transition-all duration-300"
                   />
                 )}

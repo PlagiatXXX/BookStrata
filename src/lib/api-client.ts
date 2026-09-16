@@ -134,7 +134,7 @@ async function request<T>(
       json = await response.json();
     } catch {
       if (!response.ok) {
-        const msg = `Ошибка: ${response.statusText}`;
+        const msg = `Ошибка ${response.status}: ${response.statusText || "нет описания"}`;
         notifyError("Ошибка запроса", msg);
         throw new ApiRequestError("parse_error", msg, response.status);
       }
@@ -164,7 +164,7 @@ async function request<T>(
       const message = errorData?.message as string
         ?? errObj?.error as string
         ?? errObj?.message as string
-        ?? `Ошибка: ${response.statusText}`;
+        ?? `Ошибка ${response.status}: ${response.statusText || "нет описания"}`;
       notifyError("Ошибка", message);
       throw new ApiRequestError(code, message, response.status);
     }
