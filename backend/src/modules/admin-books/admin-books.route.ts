@@ -182,8 +182,8 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /api/admin/books/:id/publish — через publishBook() (инвариант полноты)
   fastify.post<{ Params: { id: string } }>("/:id/publish", async (request, reply) => {
     try {
-      const book = await publishBookById(Number(request.params.id));
-      return reply.send(createSuccessResponse(book));
+      const result = await publishBookById(Number(request.params.id));
+      return reply.send(createSuccessResponse(result));
     } catch (error) {
       if (error instanceof Error && error.name === "IncompleteBookError") {
         return reply.code(422).send(

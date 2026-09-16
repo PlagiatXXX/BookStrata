@@ -28,7 +28,7 @@ const mocks = vi.hoisted(() => ({
   publishBook: vi.fn(),
   unpublishBook: vi.fn(),
   searchBooks: vi.fn(),
-  mergeGroup: vi.fn(),
+  mergeGroup: vi.fn().mockResolvedValue({ affectedTierListIds: [] }),
   findOrCreate: vi.fn(),
   validateRemoteImageDimensions: vi.fn().mockResolvedValue(null),
   deleteIfOrphaned: vi.fn().mockResolvedValue(true),
@@ -143,6 +143,7 @@ describe("Admin Books Routes", () => {
     mocks.prisma.bookPlacement.findMany.mockResolvedValue([]);
     mocks.searchBooks.mockReset();
     mocks.mergeGroup.mockReset();
+    mocks.mergeGroup.mockResolvedValue({ affectedTierListIds: [] });
     mocks.publishBook.mockReset();
     mocks.unpublishBook.mockReset();
     mocks.findOrCreate.mockReset();

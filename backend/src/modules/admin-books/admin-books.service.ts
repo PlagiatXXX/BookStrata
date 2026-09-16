@@ -667,6 +667,11 @@ async function findCatalogPublished(
   return null;
 }
 
+export interface PublishResult {
+  book: Awaited<ReturnType<typeof prisma.book.findUniqueOrThrow>>;
+  affectedTierListIds: string[];
+}
+
 /** Публикация через publishBook() — инвариант полноты полей.
  *  Единый каталог (19.08): публикация книги из тир-листа разрешена; чужие
  *  draft-дубли поглощаются каноном (mergeGroup), userId снимается — книга
@@ -679,7 +684,9 @@ async function findCatalogPublished(
  *  владельца с уже поглощёнными дублями). Если каталог уже содержит
  *  published-книгу той же книги — текущая запись вливается в неё, а не
  *  публикуется как новый дубликат. */
-export async function publishBookById(id: number) {
+export async function publishBookById(id: number): Promise<PublishResult> {
+  const allAffectedTierListIds: string[] = [];
+
   const book = await prisma.book.findUnique({
     where: { id },
     select: {
@@ -722,11 +729,13 @@ export async function publishBookById(id: number) {
         fetchDedupeBook(catalogBook),
         fetchDedupeBook(book),
       ]);
-      await mergeGroup(
+      const result = await mergeGroup(
         { key: `publish-catalog:${id}`, books: [canonBook!, dupBook!] },
         { forceCanonId: catalogBook.id },
       );
-      return prisma.book.findUniqueOrThrow({ where: { id: catalogBook.id } });
+      allAffectedTierListIds.push(...result.affectedTierListIds);
+      const publishedBook = await prisma.book.findUniqueOrThrow({ where: { id: catalogBook.id } });
+      return { book: publishedBook, affectedTierListIds: allAffectedTierListIds };
     }
   }
 
@@ -736,17 +745,19 @@ export async function publishBookById(id: number) {
     const [canonBook, ...dupBooks] = await Promise.all(
       [book, ...dupes].map((b) => fetchDedupeBook(b)),
     );
-    await mergeGroup(
+    const result = await mergeGroup(
       { key: `publish:${id}`, books: [canonBook!, ...dupBooks] },
       { forceCanonId: id },
     );
+    allAffectedTierListIds.push(...result.affectedTierListIds);
   }
 
   // 3. Книга становится общей (каталоговой)
   await prisma.book.update({ where: { id }, data: { userId: null } });
 
   // 4. Публикация (поля проверены в шаге 0)
-  return publishBook(id);
+  const publishedBook = await publishBook(id);
+  return { book: publishedBook, affectedTierListIds: allAffectedTierListIds };
 }
 
 export async function unpublishBookById(id: number) {
