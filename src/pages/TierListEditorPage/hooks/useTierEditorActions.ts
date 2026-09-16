@@ -111,27 +111,37 @@ export function useTierEditorActions({
       updateBook(bookId, data);
       setHasUnsavedChanges(true);
 
-      sileo.success({ 
-        title: 'Сохранено', 
-        duration: 1500 
-      });
-
-      if (!tierListId || !isPersistedBookId(bookId)) return;
+      if (!tierListId || !isPersistedBookId(bookId)) {
+        sileo.success({ title: 'Сохранено', duration: 1500 });
+        return;
+      }
 
       void (async () => {
         setIsUpdatingBook(true);
         try {
           await apiClient.put(`/tier-lists/${tierListId}/books/${bookId}`, data);
+          sileo.success({ title: 'Сохранено', duration: 1500 });
         } catch (error) {
           const message = error instanceof Error ? error.message : '';
-          // Книга может не принадлежать тир-листу на сервере (добавлена через поиск) — это ожидаемо
+          // Книга не принадлежит тир-листу на сервере — синхронизируем UI с сервером
           if (message.includes('не принадлежит') || message.includes('not belong')) {
             logger.warn(message, { action: 'updateBook', tierListId, bookId });
+            sileo.warning({
+              title: 'Книга не найдена в тир-листе',
+              description: 'Обновляем данные...',
+              duration: 3000,
+            });
+            await queryClient.invalidateQueries({ queryKey: ['tierList', tierListId] });
           } else {
             logger.error(error instanceof Error ? error : new Error(String(error)), {
               action: 'updateBook',
               tierListId,
               bookId,
+            });
+            sileo.error({
+              title: 'Не удалось сохранить',
+              description: 'Попробуйте снова позже',
+              duration: 3000,
             });
           }
         } finally {
@@ -139,7 +149,7 @@ export function useTierEditorActions({
         }
       })();
     },
-    [setHasUnsavedChanges, tierListId, updateBook]
+    [setHasUnsavedChanges, tierListId, updateBook, queryClient]
   );
 
   const handleDeleteBook = useCallback(

@@ -101,8 +101,12 @@ export function useTierEditorQueries(
   forkReadIds?: string[] | null,
   templateId?: string | null,
   celebrityForkSlug?: string | null,
+  /** Реальный ID тир-листа после его создания на сервере (когда tierListId="new") */
+  createdTierListId?: string | null,
 ): TierEditorQueriesResult {
   const isNew = tierListId === "new";
+  // После создания тир-листа используем реальный ID для запроса данных
+  const effectiveId = isNew && createdTierListId ? createdTierListId : tierListId;
 
   // Шаблон из mockData (для /tier-lists/new?template=N)
   const template = useMemo(() => {
@@ -110,16 +114,16 @@ export function useTierEditorQueries(
     return TEMPLATES.find((t) => String(t.id) === templateId);
   }, [isNew, templateId]);
 
-  // Загрузка данных с сервера (только если не "new")
+  // Загрузка данных с сервера (только если не "new" или уже создали на сервере)
   const {
     data: apiData,
     isLoading: isTierListLoading,
     isError: isTierListError,
     error,
   } = useQuery({
-    queryKey: ['tierList', tierListId],
-    queryFn: () => fetchTierList(tierListId!),
-    enabled: !!tierListId && !isNew,
+    queryKey: ['tierList', effectiveId],
+    queryFn: () => fetchTierList(effectiveId!),
+    enabled: !!effectiveId && (!isNew || !!createdTierListId),
     staleTime: 0,
   });
 
@@ -152,9 +156,9 @@ export function useTierEditorQueries(
 
   // Получаем количество лайков
   const { data: likesData } = useQuery({
-    queryKey: ['tierListLikes', tierListId],
-    queryFn: () => (tierListId ? apiGetTierListLikes(tierListId) : null),
-    enabled: !!tierListId && !isNew && !isPrerender,
+    queryKey: ['tierListLikes', effectiveId],
+    queryFn: () => (effectiveId ? apiGetTierListLikes(effectiveId) : null),
+    enabled: !!effectiveId && (!isNew || !!createdTierListId) && !isPrerender,
   });
 
   // Получаем все лайкнутые тир-листы
@@ -162,7 +166,7 @@ export function useTierEditorQueries(
     queryKey: ['likedTierListIds'],
     queryFn: () => apiGetLikedTierListIds(),
     staleTime: 5 * 60 * 1000,
-    enabled: !isPrerender && !isNew,
+    enabled: !isPrerender && (!isNew || !!createdTierListId),
   });
 
   const likedIdsSet = useMemo(

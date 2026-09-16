@@ -108,6 +108,10 @@ const TierListEditorContent = () => {
   // Получаем данные и настройки пользователя
   const { user: authUser, isAuthenticated } = useAuth();
 
+  // Реальный ID тир-листа после его создания на сервере (когда tierListId="new").
+  // Нужен, чтобы React Query мог загрузить apiData после первого сохранения.
+  const [createdTierListId, setCreatedTierListId] = useState<string | null>(null);
+
   // Получаем данные через React Query
   const {
     isLoading,
@@ -117,7 +121,7 @@ const TierListEditorContent = () => {
     likesData,
     isPublic,
     initialDataForHook,
-  } = useTierEditorQueries(tierListId, forkSlug, forkReadIds, templateId, celebrityForkSlug);
+  } = useTierEditorQueries(tierListId, forkSlug, forkReadIds, templateId, celebrityForkSlug, createdTierListId);
 
   // Переопределения от пользователя (null = не менял, берём из apiData)
   const [userCoverOverride, setUserCoverOverride] = useState<string | null>(null);
@@ -235,6 +239,7 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges,
     logger,
     theme: normalizedDisplayTheme,
+    onTierListCreated: setCreatedTierListId,
   });
 
   // Ref на handleSave для использования после обновления состояния (регистрация)

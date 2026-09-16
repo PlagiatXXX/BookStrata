@@ -31,6 +31,8 @@ interface UseTierEditorSaveParams {
     error: (error: Error, context: { tierListId: string; action: string }) => void;
   };
   theme?: string;
+  /** Вызывается при создании нового тир-листа на сервере (передаёт реальный ID) */
+  onTierListCreated?: (id: string) => void;
 }
 
 /**
@@ -52,6 +54,7 @@ export function useTierEditorSave({
   setHasUnsavedChanges,
   logger,
   theme = "default",
+  onTierListCreated,
 }: UseTierEditorSaveParams): UseTierEditorSaveResult {
   const queryClient = useQueryClient();
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -109,6 +112,7 @@ export function useTierEditorSave({
         // Создаём новый тир-лист
         const created = await createTierList(listData.title || "Новый тир-лист");
         effectiveId = String(created.id);
+        onTierListCreated?.(effectiveId);
         pushDataLayerEvent("create_tier_list", {
           tier_list_id: effectiveId,
           tier_list_title: listData.title || "Новый тир-лист",
@@ -191,9 +195,10 @@ export function useTierEditorSave({
       // Сохраняем snapshot для последующего сравнения
       savedSnapshotRef.current = serializeSnapshot(payload);
 
-      // Обновляем кэш React Query
+      // Обновляем кэш React Query — используем effectiveId (реальный ID после создания),
+      // а не tierListId (может быть "new" при первом сохранении демо-режима)
       await queryClient.invalidateQueries({
-        queryKey: ["tierList", tierListId],
+        queryKey: ["tierList", effectiveId],
       });
       await queryClient.invalidateQueries({ queryKey: ["userTierLists"] });
 
@@ -211,7 +216,7 @@ export function useTierEditorSave({
       });
       return false;
     }
-  }, [tierListId, isLoading, isReadOnly, setHasUnsavedChanges, dispatch, queryClient, logger, theme, listData]);
+  }, [tierListId, isLoading, isReadOnly, setHasUnsavedChanges, dispatch, queryClient, logger, theme, listData, onTierListCreated]);
 
   return {
     saveStatus,
