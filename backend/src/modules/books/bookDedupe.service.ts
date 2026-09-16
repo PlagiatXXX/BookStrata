@@ -175,10 +175,17 @@ export interface MergeGroupOptions {
   allowPublishedIntoDraft?: boolean;
 }
 
+export interface MergeGroupResult {
+  /** ID тир-листов, в которых были перенесены placements при склейке */
+  affectedTierListIds: string[];
+}
+
 export async function mergeGroup(
   group: DuplicateGroup,
   options: MergeGroupOptions = {},
-): Promise<void> {
+): Promise<MergeGroupResult> {
+  const allAffectedTierListIds: string[] = [];
+
   const canon = options.forceCanonId
     ? (group.books.find((b) => b.id === options.forceCanonId) ??
       (() => {
@@ -234,6 +241,8 @@ export async function mergeGroup(
 
     for (const p of dupPlacements) {
       if (existingTierListIds.has(p.tierListId)) continue; // канон уже в листе — не дублируем
+
+      allAffectedTierListIds.push(p.tierListId);
 
       // Личная обложка дубля (книга пользователя, userId) не должна потеряться
       // при склейке: переносим её в placement, если у вхождения своей обложки
@@ -381,4 +390,6 @@ export async function mergeGroup(
       await deleteIfOrphaned(dup.coverImageUrl);
     }
   }
+
+  return { affectedTierListIds: allAffectedTierListIds };
 }
