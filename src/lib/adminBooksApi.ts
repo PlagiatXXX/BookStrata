@@ -152,8 +152,13 @@ export async function updateAdminBook(
   return apiClient.patch<AdminBookDetail>(`/admin/books/${id}`, patch);
 }
 
-export async function publishAdminBook(id: number) {
-  return apiClient.post(`/admin/books/${id}/publish`);
+export interface PublishResult {
+  book: AdminBookDetail;
+  affectedTierListIds: string[];
+}
+
+export async function publishAdminBook(id: number): Promise<PublishResult> {
+  return apiClient.post<PublishResult>(`/admin/books/${id}/publish`);
 }
 
 export async function unpublishAdminBook(id: number) {

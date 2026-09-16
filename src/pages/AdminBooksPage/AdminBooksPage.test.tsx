@@ -96,7 +96,7 @@ describe("AdminBooksPage (Фаза 7)", () => {
     mockedList.mockResolvedValue({ items: [bookRow], total: 1 });
     mockedDetail.mockResolvedValue(bookDetail);
     mockedComments.mockResolvedValue({ items: [], total: 0 });
-    mockedPublish.mockResolvedValue({ ...bookRow, status: "published" } as never);
+    mockedPublish.mockResolvedValue({ book: bookDetail, affectedTierListIds: [] } as never);
     mockedMerge.mockResolvedValue({ ...bookRow } as never);
     mockedEnrich.mockResolvedValue({ updated: ["title"] });
     mockedUpdate.mockResolvedValue(bookDetail);

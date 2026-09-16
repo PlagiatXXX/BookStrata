@@ -87,8 +87,12 @@ export function useAdminBooks() {
 
   const publishMutation = useMutation({
     mutationFn: (id: number) => publishAdminBook(id),
-    onSuccess: () => {
+    onSuccess: (result) => {
       invalidateLists();
+      // Инвалидируем кэш тир-листов, затронутых merge при публикации
+      for (const tierListId of result.affectedTierListIds) {
+        queryClient.invalidateQueries({ queryKey: ["tierList", tierListId] });
+      }
       setEditingId(null);
       sileo.success({ title: "Книга опубликована" });
     },
