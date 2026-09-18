@@ -162,6 +162,18 @@ export function createAnalyticsService(prisma: PrismaClient) {
         return
       }
 
+      // Если указан userId — проверяем, что пользователь существует,
+      // иначе FK-ограничение сломает запись (удалённый пользователь / устаревший JWT)
+      if (payload.userId) {
+        const userExists = await prisma.user.findUnique({
+          where: { id: payload.userId },
+          select: { id: true },
+        })
+        if (!userExists) {
+          payload.userId = null
+        }
+      }
+
       await prisma.analyticsEvent.create({
         data: {
           userId: payload.userId ?? null,
