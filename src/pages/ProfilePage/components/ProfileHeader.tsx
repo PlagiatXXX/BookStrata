@@ -2,6 +2,7 @@ import { Camera, Edit2, Save, X, Calendar } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { ProfileBioEditor } from "./ProfileBioEditor";
 import type { SocialLink } from "@/lib/userApi";
+import type { UserBadge } from "@/types/auth";
 
 interface ProfileHeaderProps {
   user?: {
@@ -10,6 +11,7 @@ interface ProfileHeaderProps {
     createdAt: string;
     bio?: string | null;
     socialLinks?: SocialLink[] | null;
+    badges?: UserBadge[];
   };
   username?: string;
   isEditingUsername: boolean;
@@ -109,6 +111,34 @@ export function ProfileHeader({
                 <h1 className="text-xl font-bold text-white dark:text-white light:text-gray-900 sm:text-2xl">
                   {username}
                 </h1>
+                {user?.badges?.map((badge) => (
+                  <span
+                    key={badge.id}
+                    className="inline-flex items-center gap-1 rounded px-3 py-0.5 border font-mono text-xs font-bold uppercase tracking-widest"
+                    style={{
+                      background: badge.color === "purple" ? "rgba(168,85,247,0.2)"
+                        : badge.color === "blue" ? "rgba(59,130,246,0.2)"
+                        : badge.color === "amber" ? "rgba(245,158,11,0.2)"
+                        : badge.color === "green" ? "rgba(34,197,94,0.2)"
+                        : badge.color === "red" ? "rgba(239,68,68,0.2)"
+                        : "rgba(6,182,212,0.2)",
+                      color: badge.color === "purple" ? "#c084fc"
+                        : badge.color === "blue" ? "#93c5fd"
+                        : badge.color === "amber" ? "#fcd34d"
+                        : badge.color === "green" ? "#86efac"
+                        : badge.color === "red" ? "#fca5a5"
+                        : "#67e8f9",
+                      borderColor: badge.color === "purple" ? "rgba(168,85,247,0.5)"
+                        : badge.color === "blue" ? "rgba(59,130,246,0.5)"
+                        : badge.color === "amber" ? "rgba(245,158,11,0.5)"
+                        : badge.color === "green" ? "rgba(34,197,94,0.5)"
+                        : badge.color === "red" ? "rgba(239,68,68,0.5)"
+                        : "rgba(6,182,212,0.5)",
+                    }}
+                  >
+                    {badge.text}
+                  </span>
+                ))}
                 <button
                   onClick={onStartEditUsername}
                   className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"

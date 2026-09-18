@@ -15,6 +15,7 @@ export interface User {
   role?: string;
   isDonor?: boolean;
   createdAt: string;
+  badges?: UserBadge[];
 }
 
 export interface PublicUser {

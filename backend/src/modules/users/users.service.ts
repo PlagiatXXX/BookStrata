@@ -45,10 +45,17 @@ const userProfileSelect = {
 
 // GET /api/users/me - получить текущего пользователя
 export async function getMe(userId: number) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: userProfileSelect,
-  });
+  const [user, badges] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: userProfileSelect,
+    }),
+    prisma.userBadge.findMany({
+      where: { userId },
+      select: { id: true, text: true, color: true, createdAt: true },
+      orderBy: { createdAt: "asc" as const },
+    }),
+  ]);
 
   if (!user) {
     throw new NotFoundError("Пользователь не найден");
@@ -57,6 +64,7 @@ export async function getMe(userId: number) {
   return {
     ...user,
     role: user.role?.name || undefined,
+    badges,
   };
 }
 

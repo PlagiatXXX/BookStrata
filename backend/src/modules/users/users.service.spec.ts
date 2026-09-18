@@ -26,6 +26,9 @@ vi.mock("../../lib/prisma.js", () => ({
     },
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn(),
+    userBadge: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -84,6 +87,7 @@ describe("users.service", () => {
 
     it("должен вернуть текущего пользователя", async () => {
       (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+      (prisma.userBadge.findMany as any).mockResolvedValue([]);
 
       const result = await userService.getMe(mockUserId);
 
@@ -108,11 +112,13 @@ describe("users.service", () => {
       expect(result).toEqual({
         ...mockUser,
         role: "user",
+        badges: [],
       });
     });
 
     it("должен бросить ошибку если пользователь не найден", async () => {
       (prisma.user.findUnique as any).mockResolvedValue(null);
+      (prisma.userBadge.findMany as any).mockResolvedValue([]);
 
       await expect(userService.getMe(mockUserId)).rejects.toThrow(
         "Пользователь не найден",
@@ -122,6 +128,7 @@ describe("users.service", () => {
     it("должен вернуть пользователя без avatarUrl если аватара нет", async () => {
       const userWithoutAvatar = { ...mockUser, avatarUrl: null };
       (prisma.user.findUnique as any).mockResolvedValue(userWithoutAvatar);
+      (prisma.userBadge.findMany as any).mockResolvedValue([]);
 
       const result = await userService.getMe(mockUserId);
 
