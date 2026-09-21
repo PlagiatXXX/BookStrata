@@ -45,7 +45,12 @@ const publishedBook = {
   authorRel: { id: 10, name: "Лев Толстой", slug: "lev-tolstoy" },
 };
 
-const draftBook = { ...publishedBook, id: 2, slug: "draft-book", status: "draft" };
+const draftBook = {
+  ...publishedBook,
+  id: 2,
+  slug: "draft-book",
+  status: "draft",
+};
 
 describe("getBookPageData", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -84,9 +89,16 @@ describe("getBookPageData", () => {
     expect(asBookPage(page).collections).toHaveLength(1);
     expect(asBookPage(page).celebrities).toHaveLength(1);
     // Фильтры видимости в where
-    expect((prisma.collection.findMany as any).mock.calls[0][0].where.isPublished).toBe(true);
-    expect((prisma.celebrity.findMany as any).mock.calls[0][0].where.isPublished).toBe(true);
-    expect((prisma.collection.findMany as any).mock.calls[0][0].where.catalogBooks.some.bookId).toBe(1);
+    expect(
+      (prisma.collection.findMany as any).mock.calls[0][0].where.isPublished,
+    ).toBe(true);
+    expect(
+      (prisma.celebrity.findMany as any).mock.calls[0][0].where.isPublished,
+    ).toBe(true);
+    expect(
+      (prisma.collection.findMany as any).mock.calls[0][0].where.catalogBooks
+        .some.bookId,
+    ).toBe(1);
     // SQL-запрос тир-листов: только публичные + нормализованные title/author книги
     const sqlCall = (prisma.$queryRaw as any).mock.calls[0];
     // Таблица tier_lists и колонки is_public/likes_count (snake_case через @map в Prisma)
@@ -114,7 +126,10 @@ describe("getBookPageData", () => {
     expect(similarArgs.where.status).toBe("published");
     expect(similarArgs.where.id.not).toBe(1);
     // Книги автора исключаются — они уходят в «Другие книги автора» (разделы не пересекаются)
-    expect(similarArgs.where.authorId.not).toBe(10);
+    expect(similarArgs.where.NOT).toEqual([
+      { authorId: 10 },
+      { author: { equals: "Лев Толстой", mode: "insensitive" } },
+    ]);
     expect(similarArgs.where.OR).toHaveLength(2); // genre + tags
     expect(similarArgs.take).toBe(8);
     expect(asBookPage(page).similarBooks).toHaveLength(1);
@@ -136,7 +151,10 @@ describe("getBookPageData", () => {
     // но книги автора всё равно исключаются
     const [similarArgs] = (prisma.book.findMany as any).mock.calls[0];
     expect(similarArgs.where.OR).toBeUndefined();
-    expect(similarArgs.where.authorId.not).toBe(10);
+    expect(similarArgs.where.NOT).toEqual([
+      { authorId: 10 },
+      { author: { equals: "Лев Толстой", mode: "insensitive" } },
+    ]);
     expect(asBookPage(page).similarBooks).toEqual([]);
   });
 
@@ -154,15 +172,46 @@ describe("getBookPageData", () => {
     const page = await getBookPageData("voyna-i-mir");
 
     const [, otherArgs] = (prisma.book.findMany as any).mock.calls;
-    expect(otherArgs[0].where.authorId).toBe(10);
+    expect(otherArgs[0].where.OR).toEqual([
+      { authorId: 10 },
+      { author: { equals: "Лев Толстой", mode: "insensitive" } },
+    ]);
     expect(otherArgs[0].where.id.not).toBe(1);
     expect(otherArgs[0].where.status).toBe("published");
     expect(otherArgs[0].take).toBe(4);
     expect(asBookPage(page).otherBooksByAuthor).toHaveLength(1);
   });
 
+  it("группирует книги автора по имени, если authorId различается или отсутствует", async () => {
+    const bookWithoutAuthorId = { ...publishedBook, authorId: null };
+    (prisma.book.findUnique as any).mockResolvedValue(bookWithoutAuthorId);
+    (prisma.book.findMany as any)
+      .mockResolvedValueOnce([]) // similarBooks
+      .mockResolvedValueOnce([{ id: 11 }]); // otherBooksByAuthor
+    (prisma.$queryRaw as any).mockResolvedValue([]);
+    (prisma.collection.findMany as any).mockResolvedValue([]);
+    (prisma.celebrity.findMany as any).mockResolvedValue([]);
+    (prisma.bookComment.findMany as any).mockResolvedValue([]);
+    (prisma.bookComment.count as any).mockResolvedValue(0);
+
+    await getBookPageData("voyna-i-mir");
+
+    const [similarArgs, otherArgs] = (prisma.book.findMany as any).mock.calls;
+    expect(similarArgs[0].where.NOT).toEqual([
+      { author: { equals: "Лев Толстой", mode: "insensitive" } },
+    ]);
+    expect(otherArgs[0].where.OR).toEqual([
+      { author: { equals: "Лев Толстой", mode: "insensitive" } },
+    ]);
+  });
+
   it("без authorId другие книги автора не запрашиваются", async () => {
-    const noAuthor = { ...publishedBook, authorId: null };
+    const noAuthor = {
+      ...publishedBook,
+      author: null,
+      authorId: null,
+      authorRel: null,
+    };
     (prisma.book.findUnique as any).mockResolvedValue(noAuthor);
     (prisma.book.findMany as any).mockResolvedValue([]);
     (prisma.$queryRaw as any).mockResolvedValue([]);
@@ -176,7 +225,7 @@ describe("getBookPageData", () => {
     expect((prisma.book.findMany as any).mock.calls).toHaveLength(1); // только similarBooks
     // у similarBooks нет фильтра по автору (автора у книги нет)
     const [similarWhere] = (prisma.book.findMany as any).mock.calls[0];
-    expect(similarWhere.authorId).toBeUndefined();
+    expect(similarWhere.NOT).toBeUndefined();
     expect(asBookPage(page).otherBooksByAuthor).toEqual([]);
   });
 
@@ -187,7 +236,14 @@ describe("getBookPageData", () => {
     (prisma.collection.findMany as any).mockResolvedValue([]);
     (prisma.celebrity.findMany as any).mockResolvedValue([]);
     (prisma.bookComment.findMany as any).mockResolvedValue([
-      { id: 1, content: "Отлично", likesCount: 3, editedAt: null, createdAt: new Date(), user: { id: 4, username: "vasya", avatarUrl: "/a.png" } },
+      {
+        id: 1,
+        content: "Отлично",
+        likesCount: 3,
+        editedAt: null,
+        createdAt: new Date(),
+        user: { id: 4, username: "vasya", avatarUrl: "/a.png" },
+      },
     ]);
     (prisma.bookComment.count as any).mockResolvedValue(42);
 
@@ -211,7 +267,9 @@ describe("getBookPageData", () => {
     (prisma.bookLike.findUnique as any).mockResolvedValue({ id: 99 });
     const liked = await getBookPageData("voyna-i-mir", 7);
     expect(asBookPage(liked).userLike).toBe(true);
-    expect((prisma.bookLike.findUnique as any).mock.calls[0][0].where.bookId_userId).toEqual({ bookId: 1, userId: 7 });
+    expect(
+      (prisma.bookLike.findUnique as any).mock.calls[0][0].where.bookId_userId,
+    ).toEqual({ bookId: 1, userId: 7 });
 
     // Гость — запроса к БД нет
     (prisma.bookLike.findUnique as any).mockClear();
@@ -230,10 +288,12 @@ describe("getBookPageData", () => {
     const page = await getBookPageData("rtut-kelli-hart", 1);
 
     expect(page).toEqual({ redirectTo: "/books/rtut-kelly-hart" });
-    expect((prisma.bookSlugHistory.findUnique as any).mock.calls[0][0]).toEqual({
-      where: { oldSlug: "rtut-kelli-hart" },
-      select: { bookId: true },
-    });
+    expect((prisma.bookSlugHistory.findUnique as any).mock.calls[0][0]).toEqual(
+      {
+        where: { oldSlug: "rtut-kelli-hart" },
+        select: { bookId: true },
+      },
+    );
   });
 
   it("slugHistory без опубликованного канона → null (404)", async () => {

@@ -48,7 +48,12 @@ export interface BookPageData {
     readingProfile: ReadingProfile | null;
   };
   author: { id: number; name: string; slug: string | null } | null;
-  tierLists: { id: string; slug: string | null; title: string; isPublic: boolean }[];
+  tierLists: {
+    id: string;
+    slug: string | null;
+    title: string;
+    isPublic: boolean;
+  }[];
   collections: { id: number; slug: string; title: string; type: string }[];
   celebrities: { id: number; slug: string; name: string }[];
   similarBooks: unknown[];
@@ -133,10 +138,28 @@ export async function getBookPageData(
   // Похожие: тот же жанр или пересечение тегов (если нет ни одного — пусто).
   // Книги автора исключаются — они уже показаны в «Другие книги автора»,
   // чтобы разделы не пересекались (вариативность для пользователя).
+  // authorId может отсутствовать у старых/импортированных книг, поэтому
+  // текстовое имя автора остаётся резервным критерием группировки.
   const similarWhere: Prisma.BookWhereInput = {
     status: "published",
     id: { not: id },
-    ...(authorId ? { authorId: { not: authorId } } : {}),
+    ...(authorId || book.author
+      ? {
+          NOT: [
+            ...(authorId ? [{ authorId }] : []),
+            ...(book.author
+              ? [
+                  {
+                    author: {
+                      equals: book.author,
+                      mode: "insensitive" as const,
+                    },
+                  },
+                ]
+              : []),
+          ],
+        }
+      : {}),
   };
   if (genre || tags.length > 0) {
     similarWhere.OR = [
@@ -159,7 +182,15 @@ export async function getBookPageData(
     // (решение 17.08): в тир-листах книги пользовательские (draft-копии),
     // каталог с ними не склеивается — страница книги находит тир-листы,
     // где такая книга есть, по названию и автору.
-    prisma.$queryRaw<Array<{ id: string; slug: string | null; title: string; isPublic: boolean; likesCount: number }>>`
+    prisma.$queryRaw<
+      Array<{
+        id: string;
+        slug: string | null;
+        title: string;
+        isPublic: boolean;
+        likesCount: number;
+      }>
+    >`
       SELECT DISTINCT tl.id, tl.slug, tl.title, tl.is_public, tl.likes_count
       FROM tier_lists tl
       JOIN "BookPlacement" bp ON bp."tierListId" = tl.id
@@ -186,11 +217,30 @@ export async function getBookPageData(
       orderBy: [{ likesCount: "desc" }, { publishedAt: "desc" }],
       take: 8,
     }),
-    authorId
+    authorId || book.author
       ? prisma.book.findMany({
-          where: { authorId, status: "published", id: { not: id } },
+          where: {
+            status: "published",
+            id: { not: id },
+            OR: [
+              ...(authorId ? [{ authorId }] : []),
+              ...(book.author
+                ? [
+                    {
+                      author: {
+                        equals: book.author,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                  ]
+                : []),
+            ],
+          },
           select: bookCardSelect,
-          orderBy: [{ placements: { _count: "desc" } }, { publishedAt: "desc" }],
+          orderBy: [
+            { placements: { _count: "desc" } },
+            { publishedAt: "desc" },
+          ],
           take: 4,
         })
       : Promise.resolve([]),
