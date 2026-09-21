@@ -298,7 +298,7 @@ export default function CelebrityPage() {
                 </p>
                 <button
                   onClick={handleForkCelebrity}
-                  className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all duration-100 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-bold uppercase tracking-wider bg-white text-black border-2 border-black shadow-[4px_4px_0_0_var(--accent-main)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all duration-100 cursor-pointer"
                 >
                   Составить свой рейтинг
                 </button>
