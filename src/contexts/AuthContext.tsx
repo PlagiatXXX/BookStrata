@@ -1,7 +1,13 @@
 import React, { useState, useCallback, useRef, type ReactNode } from "react";
 import type { User } from "@/types/auth";
 import { AuthContext, type AuthContextType } from "./auth.context";
-import { getAuthToken, removeAuthToken, refreshAccessToken, apiLogout, hasSession } from "@/lib/authApi";
+import {
+  getAuthToken,
+  removeAuthToken,
+  refreshAccessToken,
+  apiLogout,
+  hasSession,
+} from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
 import { ApiRequestError } from "@/lib/api-client";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
@@ -42,19 +48,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authLogger.info(`Fetching user profile (force=${force})`);
       const fullUserData = await apiGetMe();
       setUser(mapApiUserToAuthUser(fullUserData));
-      authLogger.debug(`User data fetched: id=${fullUserData.id} username=${fullUserData.username}`);
+      authLogger.debug(
+        `User data fetched: id=${fullUserData.id} username=${fullUserData.username}`,
+      );
     } catch (err) {
       authLogger.warn("Failed to fetch user profile", {
         error: err instanceof Error ? err.message : String(err),
       });
-      // Сбрасываем токен только при реальной ошибке авторизации (401).
+      // Сбрасываем сессию при ошибке авторизации или если refresh-токен
+      // ссылается на пользователя, которого больше нет в базе (404).
       // При 429 (rate limit) или сетевых ошибках токен остаётся валидным —
       // иначе удаление токена превращает временный rate-limit в каскад 401.
       const isUnauthorized =
         err instanceof ApiRequestError && err.status === 401;
-      if (isUnauthorized) {
+      const isUserMissing =
+        err instanceof ApiRequestError && err.status === 404;
+      if (isUnauthorized || isUserMissing) {
         setUser(null);
         removeAuthToken();
+        if (isUserMissing) {
+          await apiLogout();
+        }
       }
     }
     setIsLoading(false);
@@ -71,17 +85,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    *  и избежать гонки: ProtectedRoute рендерится до завершения apiGetMe().
    *  После оптимистичной установки запускаем fetchUser, чтобы получить полные данные
    *  (avatarUrl, актуальная роль и т.д.) — токен к этому моменту уже установлен. */
-  const loginWithData = useCallback((data: { userId: number; username: string; role?: string }) => {
-    authLogger.info("Login with data (optimistic)", { userId: data.userId, username: data.username });
-    setUser({
-      userId: data.userId,
-      username: data.username,
-      role: data.role || "user",
-    });
-    setIsLoading(false);
-    // Загружаем полные данные пользователя (avatar, роль) — токен уже в памяти
-    fetchUser(true);
-  }, [fetchUser]);
+  const loginWithData = useCallback(
+    (data: { userId: number; username: string; role?: string }) => {
+      authLogger.info("Login with data (optimistic)", {
+        userId: data.userId,
+        username: data.username,
+      });
+      setUser({
+        userId: data.userId,
+        username: data.username,
+        role: data.role || "user",
+      });
+      setIsLoading(false);
+      // Загружаем полные данные пользователя (avatar, роль) — токен уже в памяти
+      fetchUser(true);
+    },
+    [fetchUser],
+  );
 
   React.useEffect(() => {
     refreshUserDataRef.current = refreshUser;
@@ -123,12 +143,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession();
 
     window.addEventListener("auth-token-changed", handleAuthTokenChanged);
-    window.addEventListener("avatar-updated", handleAvatarUpdated as EventListener);
+    window.addEventListener(
+      "avatar-updated",
+      handleAvatarUpdated as EventListener,
+    );
 
     return () => {
       isMounted = false;
       window.removeEventListener("auth-token-changed", handleAuthTokenChanged);
-      window.removeEventListener("avatar-updated", handleAvatarUpdated as EventListener);
+      window.removeEventListener(
+        "avatar-updated",
+        handleAvatarUpdated as EventListener,
+      );
     };
   }, [fetchUser, handleAuthTokenChanged, handleAvatarUpdated]);
 

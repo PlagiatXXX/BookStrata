@@ -1,23 +1,23 @@
-import { useState } from "react"
-import { motion } from "motion/react"
-import { X, Mail, User, Lock, Loader } from "lucide-react"
-import { apiRegister, setAuthToken } from "@/lib/authApi"
-import { StorageService } from "@/lib/storage"
-import { useAuth } from "@/hooks/useAuthContext"
-import { sileo } from "sileo"
-import { createLogger } from "@/lib/logger"
+import { useEffect, useState } from "react";
+import { motion } from "motion/react";
+import { X, Mail, User, Lock, Loader } from "lucide-react";
+import { apiRegister, setAuthToken } from "@/lib/authApi";
+import { StorageService } from "@/lib/storage";
+import { useAuth } from "@/hooks/useAuthContext";
+import { sileo } from "sileo";
+import { createLogger } from "@/lib/logger";
 
-const logger = createLogger("AuthOnSaveModal", { color: "purple" })
+const logger = createLogger("AuthOnSaveModal", { color: "purple" });
 
 interface AuthOnSaveModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
   /** Вызывается после успешной регистрации */
-  onSuccess: () => void
+  onSuccess: () => void;
   /** Предзаполненное название тир-листа */
-  initialTitle: string
+  initialTitle: string;
   /** Обновить название перед сохранением */
-  onTitleChange: (title: string) => void
+  onTitleChange: (title: string) => void;
 }
 
 export function AuthOnSaveModal({
@@ -27,86 +27,104 @@ export function AuthOnSaveModal({
   initialTitle,
   onTitleChange,
 }: AuthOnSaveModalProps) {
-  const { loginWithData } = useAuth()
-  const [step, setStep] = useState<"title" | "register">("title")
-  const [title, setTitle] = useState(initialTitle)
-  const [username, setUsername] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [acceptedTerms, setAcceptedTerms] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { loginWithData } = useAuth();
+  const [step, setStep] = useState<"title" | "register">("title");
+  const [title, setTitle] = useState(initialTitle);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(initialTitle);
+    }
+  }, [isOpen, initialTitle]);
 
   const handleContinue = () => {
     if (!title.trim()) {
-      sileo.error({ title: "Введите название тир-листа" })
-      return
+      sileo.error({ title: "Введите название тир-листа" });
+      return;
     }
-    onTitleChange(title.trim())
-    setStep("register")
-  }
+    onTitleChange(title.trim());
+    setStep("register");
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     if (!username.trim() || !email.trim() || !password.trim()) {
-      setError("Заполните все поля")
-      return
+      setError("Заполните все поля");
+      return;
     }
     if (!acceptedTerms) {
-      setError("Примите условия использования")
-      return
+      setError("Примите условия использования");
+      return;
     }
     if (password.length < 8) {
-      setError("Пароль должен быть не менее 8 символов")
-      return
+      setError("Пароль должен быть не менее 8 символов");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       const result = await apiRegister({
         username: username.trim(),
         email: email.trim(),
         password,
         acceptedTerms,
-      })
+      });
 
       // Устанавливаем токен в память
-      setAuthToken(result.accessToken)
-      StorageService.setString("username", result.username)
+      setAuthToken(result.accessToken);
+      StorageService.setString("username", result.username);
 
       // Мгновенно ставим пользователя в контекст — аналогично AuthForm.
       // Это гарантирует, что ProtectedRoute увидит isAuthenticated=true
       // и тир-лист будет распознан как свой (isOwner=true).
       // Старый подход (refreshUser → apiGetMe) мог молча упасть на 401/сети
       // и оставить пользователя «гостем».
-      loginWithData({ userId: result.userId, username: result.username })
+      loginWithData({ userId: result.userId, username: result.username });
 
-      logger.info("Регистрация в модалке успешна", { userId: result.userId, username: result.username })
-      sileo.success({ title: "Аккаунт создан!", description: "Сохраняем ваш тир-лист..." })
-      onSuccess()
+      logger.info("Регистрация в модалке успешна", {
+        userId: result.userId,
+        username: result.username,
+      });
+      sileo.success({
+        title: "Аккаунт создан!",
+        description: "Сохраняем ваш тир-лист...",
+      });
+      onSuccess();
     } catch (err) {
-      logger.error(err instanceof Error ? err : new Error(String(err)), { action: "register" })
-      setError(err instanceof Error ? err.message : "Ошибка регистрации")
+      logger.error(err instanceof Error ? err : new Error(String(err)), {
+        action: "register",
+      });
+      setError(err instanceof Error ? err.message : "Ошибка регистрации");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setStep("title")
-      setError(null)
-      onClose()
+      setStep("title");
+      setError(null);
+      onClose();
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-70 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/75" onClick={handleClose} aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-black/75"
+        onClick={handleClose}
+        aria-hidden="true"
+      />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -134,7 +152,8 @@ export function AuthOnSaveModal({
           {step === "title" ? (
             <div className="space-y-4">
               <p className="text-sm text-(--theme-text-muted)">
-                Ваш тир-лист пока сохранён только в браузере. Дайте ему название, чтобы после регистрации он получил красивый адрес.
+                Ваш тир-лист пока сохранён только в браузере. Дайте ему
+                название, чтобы после регистрации он получил красивый адрес.
               </p>
               <input
                 type="text"
@@ -156,7 +175,8 @@ export function AuthOnSaveModal({
           ) : (
             <form onSubmit={handleRegister} className="space-y-4">
               <p className="text-sm text-(--theme-text-muted)">
-                Создайте аккаунт, чтобы сохранить тир-лист «{title}» и получить доступ ко всем возможностям BookStrata.
+                Создайте аккаунт, чтобы сохранить тир-лист «{title}» и получить
+                доступ ко всем возможностям BookStrata.
               </p>
 
               {error && (
@@ -166,7 +186,10 @@ export function AuthOnSaveModal({
               )}
 
               <div className="space-y-1">
-                <label htmlFor="auth-username" className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)">
+                <label
+                  htmlFor="auth-username"
+                  className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)"
+                >
                   Имя пользователя
                 </label>
                 <div className="relative">
@@ -184,7 +207,10 @@ export function AuthOnSaveModal({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="auth-email" className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)">
+                <label
+                  htmlFor="auth-email"
+                  className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)"
+                >
                   Email
                 </label>
                 <div className="relative">
@@ -201,7 +227,10 @@ export function AuthOnSaveModal({
               </div>
 
               <div className="space-y-1">
-                <label htmlFor="auth-password" className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)">
+                <label
+                  htmlFor="auth-password"
+                  className="text-xs font-bold uppercase tracking-widest text-(--theme-accent-primary)"
+                >
                   Пароль
                 </label>
                 <div className="relative">
@@ -225,10 +254,24 @@ export function AuthOnSaveModal({
                   className="mt-1 h-4 w-4 cursor-pointer accent-(--theme-accent-primary)"
                 />
                 <span className="text-xs text-(--theme-text-muted)">
-                  Я принимаю{' '}
-                  <a href="/terms" target="_blank" className="text-(--theme-accent-primary) underline" rel="noreferrer">условия использования</a>
-                  {' '}и{' '}
-                  <a href="/privacy" target="_blank" className="text-(--theme-accent-primary) underline" rel="noreferrer">политику конфиденциальности</a>
+                  Я принимаю{" "}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    className="text-(--theme-accent-primary) underline"
+                    rel="noreferrer"
+                  >
+                    условия использования
+                  </a>{" "}
+                  и{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    className="text-(--theme-accent-primary) underline"
+                    rel="noreferrer"
+                  >
+                    политику конфиденциальности
+                  </a>
                 </span>
               </label>
 
@@ -250,8 +293,8 @@ export function AuthOnSaveModal({
               <button
                 type="button"
                 onClick={() => {
-                  setStep("title")
-                  setError(null)
+                  setStep("title");
+                  setError(null);
                 }}
                 disabled={isSubmitting}
                 className="w-full cursor-pointer text-center text-xs text-(--theme-text-muted) underline transition-colors hover:text-(--theme-text) disabled:opacity-50"
@@ -263,5 +306,5 @@ export function AuthOnSaveModal({
         </div>
       </motion.div>
     </div>
-  )
+  );
 }

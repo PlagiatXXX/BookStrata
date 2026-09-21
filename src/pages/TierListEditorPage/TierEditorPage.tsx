@@ -37,7 +37,9 @@ import "./TierEditorPage.css";
 import type { Book, Tier, TierListData } from "@/types";
 
 const isUuid = (value: string) =>
-  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value);
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+    value,
+  );
 
 type PendingDeletedBook = {
   book: Book;
@@ -110,7 +112,9 @@ const TierListEditorContent = () => {
 
   // Реальный ID тир-листа после его создания на сервере (когда tierListId="new").
   // Нужен, чтобы React Query мог загрузить apiData после первого сохранения.
-  const [createdTierListId, setCreatedTierListId] = useState<string | null>(null);
+  const [createdTierListId, setCreatedTierListId] = useState<string | null>(
+    null,
+  );
 
   // Получаем данные через React Query
   const {
@@ -121,29 +125,50 @@ const TierListEditorContent = () => {
     likesData,
     isPublic,
     initialDataForHook,
-  } = useTierEditorQueries(tierListId, forkSlug, forkReadIds, templateId, celebrityForkSlug, createdTierListId);
+  } = useTierEditorQueries(
+    tierListId,
+    forkSlug,
+    forkReadIds,
+    templateId,
+    celebrityForkSlug,
+    createdTierListId,
+  );
 
   // Переопределения от пользователя (null = не менял, берём из apiData)
-  const [userCoverOverride, setUserCoverOverride] = useState<string | null>(null);
-  const [userThemeOverride, setUserThemeOverride] = useState<string | null>(null);
+  const [userCoverOverride, setUserCoverOverride] = useState<string | null>(
+    null,
+  );
+  const [userThemeOverride, setUserThemeOverride] = useState<string | null>(
+    null,
+  );
 
-  const displayCoverImageUrl = userCoverOverride !== null ? userCoverOverride : (apiData?.coverImageUrl ?? null);
-  const displayTheme = userThemeOverride !== null ? userThemeOverride : (apiData?.theme ?? "default");
+  const displayCoverImageUrl =
+    userCoverOverride !== null
+      ? userCoverOverride
+      : (apiData?.coverImageUrl ?? null);
+  const displayTheme =
+    userThemeOverride !== null
+      ? userThemeOverride
+      : (apiData?.theme ?? "default");
 
   // Старые темы из БД (midnight, frost и т.д.) приводятся к "default"
-  const normalizedDisplayTheme = displayTheme !== null ? normalizeTheme(displayTheme) : "default";
+  const normalizedDisplayTheme =
+    displayTheme !== null ? normalizeTheme(displayTheme) : "default";
 
   const [isAiLibrarianOpen, setAiLibrarianOpen] = useState(false);
 
   const handleAiLibrarianOpen = useCallback(() => setAiLibrarianOpen(true), []);
-  const handleAiLibrarianClose = useCallback(() => setAiLibrarianOpen(false), []);
+  const handleAiLibrarianClose = useCallback(
+    () => setAiLibrarianOpen(false),
+    [],
+  );
 
   // Заменяем UUID на slug в URL после загрузки данных
   useEffect(() => {
     if (apiData?.slug && isUuid(tierListId)) {
       window.history.replaceState(null, "", `/tier-lists/${apiData.slug}`);
     }
-  }, [apiData?.slug, tierListId])
+  }, [apiData?.slug, tierListId]);
 
   // Извлекаем ID владельца и текущего пользователя
   const ownerUserId = apiData?.user?.id;
@@ -160,16 +185,23 @@ const TierListEditorContent = () => {
   // Если есть сохранённый черновик в localStorage — используем его (для демо и после регистрации).
   // При открытии по ссылке с шаблоном (?template=N) черновик игнорируем — показываем шаблон.
   const [demoInitialData] = useState<TierListData | null>(() => {
-    if (tierListId === "new" && !templateId && !forkSlug) return loadDemo() ?? null;
+    if (tierListId === "new" && !templateId && !forkSlug)
+      return loadDemo() ?? null;
     return null;
   });
 
   // Если демо-режим без форка, шаблона и без сохранённого черновика — показываем предзаполненные книги
-  const effectiveInitialData = demoInitialData ?? (isDemo && !forkSlug && !templateId ? getDemoInitialData(tierListId, 'Новый тир-лист') : initialDataForHook);
+  const effectiveInitialData =
+    demoInitialData ??
+    (isDemo && !forkSlug && !templateId
+      ? getDemoInitialData(tierListId, "Новый тир-лист")
+      : initialDataForHook);
 
   // Состояние для модалки регистрации (используется в части 2)
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [demoTitle, setDemoTitle] = useState(initialDataForHook.title || "Новый тир-лист");
+  const [demoTitle, setDemoTitle] = useState(
+    initialDataForHook.title || "Новый тир-лист",
+  );
 
   // ========== ОНБОРДИНГ ДЕМО-РЕЖИМА ==========
   // Показывается один раз на браузер (флаг в localStorage), а не при каждом заходе в демо-режим
@@ -207,8 +239,8 @@ const TierListEditorContent = () => {
   useEffect(() => {
     if (tierListId === "new" && isAuthenticated && demoInitialData) {
       sileo.success({
-        title: 'Черновик восстановлен',
-        description: 'Вы можете продолжить редактирование и сохранить тир-лист',
+        title: "Черновик восстановлен",
+        description: "Вы можете продолжить редактирование и сохранить тир-лист",
         duration: 5000,
       });
     }
@@ -226,11 +258,7 @@ const TierListEditorContent = () => {
   // ========== КОНЕЦ ДЕМО-РЕЖИМ (часть 2) ==========
 
   // ========== ОПТИМИЗИРОВАННОЕ АВТОСОХРАНЕНИЕ ==========
-  const {
-    saveStatus,
-    lastSaved,
-    handleSave,
-  } = useTierEditorSave({
+  const { saveStatus, lastSaved, handleSave } = useTierEditorSave({
     tierListId,
     listData,
     dispatch: dispatch as React.Dispatch<Action>,
@@ -270,6 +298,11 @@ const TierListEditorContent = () => {
     }, 50);
   }, [demoTitle, dispatch, clearDemo]);
 
+  const openDemoAuthModal = useCallback(() => {
+    setDemoTitle(listData.title === "Новый тир-лист" ? "" : listData.title);
+    setShowAuthModal(true);
+  }, [listData.title]);
+
   // Автосохранение по таймеру (каждые 30 сек) — не в демо-режиме
   useEffect(() => {
     if (isReadOnly || !tierListId || isDemo) return;
@@ -281,14 +314,20 @@ const TierListEditorContent = () => {
     }, 30_000);
 
     return () => clearInterval(interval);
-  }, [handleSave, isReadOnly, hasUnsavedChanges, saveStatus, tierListId, isDemo]);
+  }, [
+    handleSave,
+    isReadOnly,
+    hasUnsavedChanges,
+    saveStatus,
+    tierListId,
+    isDemo,
+  ]);
   // ========== КОНЕЦ АВТОСОХРАНЕНИЯ ==========
 
   // Перехват сохранения: в демо-режиме открываем регистрацию, иначе стандартный save
   const handleSaveOrRegister = useCallback(async () => {
     if (isDemo) {
-      setDemoTitle(listData.title || "Новый тир-лист");
-      setShowAuthModal(true);
+      openDemoAuthModal();
     } else {
       // При сохранении с "new" на сервер — чистим localStorage от демо-данных
       await handleSave();
@@ -296,7 +335,7 @@ const TierListEditorContent = () => {
         clearDemo();
       }
     }
-  }, [isDemo, listData.title, handleSave, tierListId, clearDemo]);
+  }, [isDemo, handleSave, tierListId, clearDemo, openDemoAuthModal]);
 
   // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
   useEffect(() => {
@@ -311,7 +350,9 @@ const TierListEditorContent = () => {
         } else if (saveStatus === "saving") {
           logger.info("Ctrl+S pressed while saving, prevented default");
         } else if (!hasUnsavedChanges) {
-          logger.info("Ctrl+S pressed with no unsaved changes, prevented default");
+          logger.info(
+            "Ctrl+S pressed with no unsaved changes, prevented default",
+          );
         }
       }
     };
@@ -337,115 +378,139 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges,
     setDeletedTierIds,
     navigate,
-    onRequireAuth: () => setShowAuthModal(true),
+    onRequireAuth: openDemoAuthModal,
   });
 
-  const processBookFiles = useCallback(async (files: File[]) => {
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-    const MAX_TOTAL_SIZE = 30 * 1024 * 1024; // 30 MB
+  const processBookFiles = useCallback(
+    async (files: File[]) => {
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+      const MAX_TOTAL_SIZE = 30 * 1024 * 1024; // 30 MB
 
-    // Проверяем каждый файл
-    const tooBig = files.find((f) => f.size > MAX_FILE_SIZE);
-    if (tooBig) {
-      sileo.error({
-        title: "Файл слишком большой",
-        description: `«${tooBig.name}» больше 5 MB. Максимум 5 MB на одну обложку.`,
-      });
-      return;
-    }
-
-    // Проверяем суммарный размер
-    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-    if (totalSize > MAX_TOTAL_SIZE) {
-      sileo.error({
-        title: "Слишком большой общий объём",
-        description: `Общий размер файлов (${(totalSize / 1024 / 1024).toFixed(1)} MB) превышает лимит 30 MB.`,
-      });
-      return;
-    }
-
-    // Собираем existingKeys заранее, чтобы не показывать тост на дубликаты
-    const existingKeys = new Set(
-      Object.values(listData.books).map(
-        (b) => `${b.title.toLowerCase()}|${(b.author || "").toLowerCase()}`,
-      ),
-    );
-
-    let addedCount = 0;
-    for (const file of files) {
-      const title = file.name.replace(/\.[^/.]+$/, "");
-      const author = "Неизвестен";
-      const key = `${title.toLowerCase()}|${author.toLowerCase()}`;
-
-      // Пропускаем дубликаты
-      if (existingKeys.has(key)) continue;
-      existingKeys.add(key);
-
-      const coverImageUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-      const bookId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      dispatch({
-        type: "ADD_BOOKS",
-        payload: {
-          newBooks: [
-            {
-              id: bookId,
-              title,
-              author,
-              coverImageUrl,
-            },
-          ],
-        },
-      });
-      setHasUnsavedChanges(true);
-      addedCount++;
-    }
-
-    if (addedCount === 0) {
-      if (files.length === 1) {
-        sileo.info({
-          title: "Книга уже добавлена",
-          description: "Эта книга уже есть в тир-листе",
-          duration: 2500,
+      // Проверяем каждый файл
+      const tooBig = files.find((f) => f.size > MAX_FILE_SIZE);
+      if (tooBig) {
+        sileo.error({
+          title: "Файл слишком большой",
+          description: `«${tooBig.name}» больше 5 MB. Максимум 5 MB на одну обложку.`,
         });
-      } else {
-        const d = files.length % 10;
-        const dd = files.length % 100;
-        const w = d === 1 && dd !== 11 ? 'книга'
-          : d >= 2 && d <= 4 && (dd < 12 || dd > 14) ? 'книги'
-          : 'книг';
-        sileo.info({
-          title: "Книги уже добавлены",
-          description: `Все ${files.length} ${w} уже есть в тир-листе`,
-          duration: 2500,
-        });
+        return;
       }
-      return;
-    }
 
-    const skipped = files.length - addedCount;
-    const n = addedCount;
-    const lastDigit = n % 10;
-    const lastTwoDigits = n % 100;
-    const prefix = lastDigit === 1 && lastTwoDigits !== 11 ? "Загружена" : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14) ? "Загружены" : "Загружено";
-    const word = lastDigit === 1 && lastTwoDigits !== 11 ? "книга" : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14) ? "книги" : "книг";
-    const title = skipped > 0
-      ? `${prefix} ${n} ${word} (${skipped} ${skipped === 1 ? 'уже была' : 'уже были'})`
-      : `${prefix} ${n} ${word}`;
-    sileo.success({
-      title,
-      duration: 3000,
-    });
-  }, [dispatch, setHasUnsavedChanges, listData.books])
+      // Проверяем суммарный размер
+      const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+      if (totalSize > MAX_TOTAL_SIZE) {
+        sileo.error({
+          title: "Слишком большой общий объём",
+          description: `Общий размер файлов (${(totalSize / 1024 / 1024).toFixed(1)} MB) превышает лимит 30 MB.`,
+        });
+        return;
+      }
 
-  const handleUploadBooks = useCallback(async (files: File[]) => {
-    if (files.length === 0) return
+      // Собираем existingKeys заранее, чтобы не показывать тост на дубликаты
+      const existingKeys = new Set(
+        Object.values(listData.books).map(
+          (b) => `${b.title.toLowerCase()}|${(b.author || "").toLowerCase()}`,
+        ),
+      );
 
-    await processBookFiles(files)
-  }, [processBookFiles])
+      let addedCount = 0;
+      for (const file of files) {
+        const title = file.name.replace(/\.[^/.]+$/, "");
+        const author = "Неизвестен";
+        const key = `${title.toLowerCase()}|${author.toLowerCase()}`;
+
+        // Пропускаем дубликаты
+        if (existingKeys.has(key)) continue;
+        existingKeys.add(key);
+
+        const coverImageUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        const bookId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        dispatch({
+          type: "ADD_BOOKS",
+          payload: {
+            newBooks: [
+              {
+                id: bookId,
+                title,
+                author,
+                coverImageUrl,
+              },
+            ],
+          },
+        });
+        setHasUnsavedChanges(true);
+        addedCount++;
+      }
+
+      if (addedCount === 0) {
+        if (files.length === 1) {
+          sileo.info({
+            title: "Книга уже добавлена",
+            description: "Эта книга уже есть в тир-листе",
+            duration: 2500,
+          });
+        } else {
+          const d = files.length % 10;
+          const dd = files.length % 100;
+          const w =
+            d === 1 && dd !== 11
+              ? "книга"
+              : d >= 2 && d <= 4 && (dd < 12 || dd > 14)
+                ? "книги"
+                : "книг";
+          sileo.info({
+            title: "Книги уже добавлены",
+            description: `Все ${files.length} ${w} уже есть в тир-листе`,
+            duration: 2500,
+          });
+        }
+        return;
+      }
+
+      const skipped = files.length - addedCount;
+      const n = addedCount;
+      const lastDigit = n % 10;
+      const lastTwoDigits = n % 100;
+      const prefix =
+        lastDigit === 1 && lastTwoDigits !== 11
+          ? "Загружена"
+          : lastDigit >= 2 &&
+              lastDigit <= 4 &&
+              (lastTwoDigits < 12 || lastTwoDigits > 14)
+            ? "Загружены"
+            : "Загружено";
+      const word =
+        lastDigit === 1 && lastTwoDigits !== 11
+          ? "книга"
+          : lastDigit >= 2 &&
+              lastDigit <= 4 &&
+              (lastTwoDigits < 12 || lastTwoDigits > 14)
+            ? "книги"
+            : "книг";
+      const title =
+        skipped > 0
+          ? `${prefix} ${n} ${word} (${skipped} ${skipped === 1 ? "уже была" : "уже были"})`
+          : `${prefix} ${n} ${word}`;
+      sileo.success({
+        title,
+        duration: 3000,
+      });
+    },
+    [dispatch, setHasUnsavedChanges, listData.books],
+  );
+
+  const handleUploadBooks = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return;
+
+      await processBookFiles(files);
+    },
+    [processBookFiles],
+  );
 
   const pendingDeletedBooksRef = useRef<Map<string, PendingDeletedBook>>(
     new Map(),
@@ -579,7 +644,7 @@ const TierListEditorContent = () => {
   const handleConfirmDeleteRating = async () => {
     if (isDemo) {
       clearDemo();
-      navigate('/');
+      navigate("/");
       return;
     }
     await deleteRatingFromServer();
@@ -733,7 +798,7 @@ const TierListEditorContent = () => {
         isReadOnly={isReadOnly}
         localMode={tierListId === "new"}
         tierListTheme={displayTheme}
-        onRequireAuth={() => setShowAuthModal(true)}
+        onRequireAuth={openDemoAuthModal}
       />
 
       {/* Онбординг демо-режима — внутри main[data-theme], наследует токены темы */}
@@ -753,12 +818,20 @@ const TierListEditorContent = () => {
   return (
     <>
       {/* Не рендерим SEOHead пока грузятся данные — чтобы избежать пустых мета-тегов */}
-      {(isLoading && !apiData) ? null : (
+      {isLoading && !apiData ? null : (
         <SEOHead
           title={buildTierListSeoTitle(apiData?.title, apiData?.user?.username)}
-          description={buildTierListSeoDescription(apiData?.title, apiData?.user?.username)}
+          description={buildTierListSeoDescription(
+            apiData?.title,
+            apiData?.user?.username,
+          )}
           url={`/tier-lists/${pageUrl}`}
-          image={apiData?.coverImageUrl && !apiData.coverImageUrl.includes("encrypted-tbn0.gstatic.com") ? apiData.coverImageUrl : undefined}
+          image={
+            apiData?.coverImageUrl &&
+            !apiData.coverImageUrl.includes("encrypted-tbn0.gstatic.com")
+              ? apiData.coverImageUrl
+              : undefined
+          }
           publishedTime={apiData?.createdAt ?? apiData?.updatedAt}
           dateModified={apiData?.updatedAt}
           author={apiData?.user?.username}
@@ -767,7 +840,10 @@ const TierListEditorContent = () => {
           breadcrumbs={[
             { name: "Главная", url: "/" },
             { name: "Тир-листы", url: "/templates" },
-            { name: apiData?.title || "Тир-лист", url: `/tier-lists/${pageUrl}` },
+            {
+              name: apiData?.title || "Тир-лист",
+              url: `/tier-lists/${pageUrl}`,
+            },
           ]}
         />
       )}
@@ -830,98 +906,98 @@ const TierListEditorContent = () => {
         error={error}
         onMyRatingsClick={handleMyRatingsClick}
       >
-      <EditorLayout
-        activeItem={activeItem}
-        onDragStart={wrappedHandleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEndAndClear}
-        onDragCancel={() => setActiveItem(null)}
-        headerProps={headerProps}
-        onMyRatingsClick={handleMyRatingsClick}
-        isReadOnly={isReadOnly}
-        tierListId={tierListId}
-        coverImageUrl={displayCoverImageUrl}
-        hideCover={fromBattle}
-        theme={normalizedDisplayTheme}
-        booksCount={Object.keys(listData.books).length}
-        onCoverUpdated={setUserCoverOverride}
-        onThemeChanged={setUserThemeOverride}
-        ownerUserId={ownerUserId}
-        currentUserId={currentUserId}
-        breadcrumbItems={[
-          { label: "Тир-листы", href: "/templates" },
-          { label: apiData?.title || "Тир-лист" },
-        ]}
-      >
-        <TasteMatchBanner
-          apiData={apiData}
+        <EditorLayout
+          activeItem={activeItem}
+          onDragStart={wrappedHandleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEndAndClear}
+          onDragCancel={() => setActiveItem(null)}
+          headerProps={headerProps}
+          onMyRatingsClick={handleMyRatingsClick}
           isReadOnly={isReadOnly}
-          authorUsername={apiData?.user?.username}
-        />
+          tierListId={tierListId}
+          coverImageUrl={displayCoverImageUrl}
+          hideCover={fromBattle}
+          theme={normalizedDisplayTheme}
+          booksCount={Object.keys(listData.books).length}
+          onCoverUpdated={setUserCoverOverride}
+          onThemeChanged={setUserThemeOverride}
+          ownerUserId={ownerUserId}
+          currentUserId={currentUserId}
+          breadcrumbItems={[
+            { label: "Тир-листы", href: "/templates" },
+            { label: apiData?.title || "Тир-лист" },
+          ]}
+        >
+          <TasteMatchBanner
+            apiData={apiData}
+            isReadOnly={isReadOnly}
+            authorUsername={apiData?.user?.username}
+          />
 
-        {/* Приветственный промпт AI — один раз при добавлении 3+ книг */}
-        {!isReadOnly && Object.keys(listData.books).length >= 3 && (
-          <AiRecommendationPrompt
-            totalBooks={Object.keys(listData.books).length}
-            onOpenAiLibrarian={handleAiLibrarianOpen}
+          {/* Приветственный промпт AI — один раз при добавлении 3+ книг */}
+          {!isReadOnly && Object.keys(listData.books).length >= 3 && (
+            <AiRecommendationPrompt
+              totalBooks={Object.keys(listData.books).length}
+              onOpenAiLibrarian={handleAiLibrarianOpen}
+            />
+          )}
+
+          <EditorMainContent
+            listData={listData}
+            isReadOnly={isReadOnly}
+            isDemo={isDemo}
+            tierGridRef={tierGridRef}
+            hideUnranked={fromBattle}
+            onDeleteBook={setBookToDelete}
+            onEditBook={(book) => setBookToEdit(book)}
+            onViewBook={handleViewBook}
+            activeTierId={activeTierId}
+            onAddRow={addRowWithUnsaved}
+            onChangeTierColor={(tierId, color) =>
+              updateTierSettingsWithUnsaved(tierId, { color })
+            }
+            onRenameTier={renameTierWithUnsaved}
+            onDeleteTier={setTierToDelete}
+            onSetActiveTier={(id) =>
+              setActiveTierId((current) => (current === id ? null : id))
+            }
+            onUpdateTier={updateTierSettingsWithUnsaved}
+            onClearRows={() => setIsClearAllModalOpen(true)}
+            onDownloadImage={() => setIsExportModalOpen(true)}
+            shareUrl={shareUrl}
+            title={listData.title}
+            onDeleteRating={() => setShowDeleteRatingModal(true)}
+            isPublic={isPublic}
+            onTogglePublic={togglePublic}
+            isTogglingPublic={isTogglingPublic}
+            onFindBook={() => setIsSearchModalOpen(true)}
+            saveStatus={saveStatus}
+            lastSaved={lastSaved}
+            hasUnsavedChanges={hasUnsavedChanges}
+            onSave={handleSaveOrRegister}
+            onboardingStep={onboardingStep}
+          />
+
+          {/* Модалки внутри main[data-theme] — наследуют токены темы */}
+          {modals}
+        </EditorLayout>
+
+        {!isReadOnly && (
+          <AiLibrarianModal
+            isOpen={isAiLibrarianOpen}
+            onClose={handleAiLibrarianClose}
+            variant="sidebar"
           />
         )}
 
-        <EditorMainContent
-          listData={listData}
-          isReadOnly={isReadOnly}
-          isDemo={isDemo}
-          tierGridRef={tierGridRef}
-          hideUnranked={fromBattle}
-          onDeleteBook={setBookToDelete}
-          onEditBook={(book) => setBookToEdit(book)}
-          onViewBook={handleViewBook}
-          activeTierId={activeTierId}
-          onAddRow={addRowWithUnsaved}
-          onChangeTierColor={(tierId, color) =>
-            updateTierSettingsWithUnsaved(tierId, { color })
-          }
-          onRenameTier={renameTierWithUnsaved}
-          onDeleteTier={setTierToDelete}
-          onSetActiveTier={(id) =>
-            setActiveTierId((current) => (current === id ? null : id))
-          }
-          onUpdateTier={updateTierSettingsWithUnsaved}
-          onClearRows={() => setIsClearAllModalOpen(true)}
-          onDownloadImage={() => setIsExportModalOpen(true)}
-          shareUrl={shareUrl}
-          title={listData.title}
-          onDeleteRating={() => setShowDeleteRatingModal(true)}
-          isPublic={isPublic}
-          onTogglePublic={togglePublic}
-          isTogglingPublic={isTogglingPublic}
-          onFindBook={() => setIsSearchModalOpen(true)}
-          saveStatus={saveStatus}
-          lastSaved={lastSaved}
-          hasUnsavedChanges={hasUnsavedChanges}
-          onSave={handleSaveOrRegister}
-          onboardingStep={onboardingStep}
-        />
-
-        {/* Модалки внутри main[data-theme] — наследуют токены темы */}
-        {modals}
-      </EditorLayout>
-
-      {!isReadOnly && (
-        <AiLibrarianModal
-          isOpen={isAiLibrarianOpen}
-          onClose={handleAiLibrarianClose}
-          variant="sidebar"
-        />
-      )}
-
-      {/* Плавающий виджет Букстража — заменяет FeedbackButton на странице редактора */}
-      {!isReadOnly && (
-        <div className="fixed right-6 z-50 bottom-20 md:bottom-6">
-          <AiLibrarianWidget onClick={handleAiLibrarianOpen} />
-        </div>
-      )}
-    </EditorScreens>
+        {/* Плавающий виджет Букстража — заменяет FeedbackButton на странице редактора */}
+        {!isReadOnly && (
+          <div className="fixed right-6 z-50 bottom-20 md:bottom-6">
+            <AiLibrarianWidget onClick={handleAiLibrarianOpen} />
+          </div>
+        )}
+      </EditorScreens>
     </>
   );
 };
@@ -930,4 +1006,4 @@ const TierListEditorContent = () => {
 export default function TierListEditorPage() {
   const { id: tierListId = "" } = useParams<{ id: string }>();
   return <TierListEditorContent key={tierListId} />;
-};
+}
