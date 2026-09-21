@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
       findUniqueOrThrow: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+      create: vi.fn(),
     },
     bookSlugHistory: { create: vi.fn() },
     analyticsEvent: { groupBy: vi.fn() },
@@ -130,6 +131,7 @@ describe("Admin Books Routes", () => {
     mocks.prisma.book.findFirst.mockReset();
     mocks.prisma.book.findMany.mockReset();
     mocks.prisma.book.update.mockReset();
+    mocks.prisma.book.create.mockReset();
     mocks.prisma.book.count.mockReset();
     mocks.prisma.bookComment.findMany.mockReset();
     mocks.prisma.bookComment.update.mockReset();
@@ -1054,6 +1056,97 @@ describe("Admin Books Routes", () => {
       expect(res.status).toBe(200);
       expect(res.body.data.items).toHaveLength(1);
       expect(res.body.data.items[0].views).toBe(16);
+    });
+  });
+
+  describe("POST / — создание книги", () => {
+    it("создаёт книгу с дефолтными значениями", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValue(null); // slug свободен
+      mocks.prisma.book.create.mockResolvedValue({ id: 50, slug: "novaya-kniga" });
+      mocks.prisma.book.findUniqueOrThrow.mockResolvedValue({
+        id: 50,
+        title: "Новая книга",
+        slug: "novaya-kniga",
+        status: "draft",
+        coverImageUrl: "/images/books/default-cover.jpg",
+      });
+
+      const res = await request(app.server)
+        .post("/api/admin/books")
+        .set("Authorization", "Bearer admin-token")
+        .send({});
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.title).toBe("Новая книга");
+      expect(res.body.data.status).toBe("draft");
+      expect(res.body.data.coverImageUrl).toBe("/images/books/default-cover.jpg");
+      expect(res.body.data.slug).toBeTruthy();
+      expect(mocks.prisma.book.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          title: "Новая книга",
+          coverImageUrl: "/images/books/default-cover.jpg",
+          status: "draft",
+        }),
+      });
+    });
+
+    it("создаёт книгу с кастомным title", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValue(null);
+      mocks.prisma.book.create.mockResolvedValue({ id: 51, slug: "vojna-i-mir" });
+      mocks.prisma.book.findUniqueOrThrow.mockResolvedValue({
+        id: 51,
+        title: "Война и мир",
+        slug: "vojna-i-mir",
+        status: "draft",
+        coverImageUrl: "/images/books/default-cover.jpg",
+      });
+
+      const res = await request(app.server)
+        .post("/api/admin/books")
+        .set("Authorization", "Bearer admin-token")
+        .send({ title: "Война и мир" });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.title).toBe("Война и мир");
+      expect(mocks.prisma.book.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ title: "Война и мир" }),
+      });
+    });
+
+    it("создаёт книгу с кастомной обложкой", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValue(null);
+      mocks.prisma.book.create.mockResolvedValue({ id: 52, slug: "kniga-s-oblozhkoj" });
+      mocks.prisma.book.findUniqueOrThrow.mockResolvedValue({
+        id: 52,
+        title: "Новая книга",
+        slug: "kniga-s-oblozhkoj",
+        status: "draft",
+        coverImageUrl: "https://example.com/cover.jpg",
+      });
+
+      const res = await request(app.server)
+        .post("/api/admin/books")
+        .set("Authorization", "Bearer admin-token")
+        .send({ coverImageUrl: "https://example.com/cover.jpg" });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.coverImageUrl).toBe("https://example.com/cover.jpg");
+      expect(mocks.prisma.book.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ coverImageUrl: "https://example.com/cover.jpg" }),
+      });
+    });
+
+    it("без токена → 401", async () => {
+      const res = await request(app.server).post("/api/admin/books").send({});
+      expect(res.status).toBe(401);
+    });
+
+    it("обычный пользователь → 403", async () => {
+      const res = await request(app.server)
+        .post("/api/admin/books")
+        .set("Authorization", "Bearer user-token")
+        .send({});
+      expect(res.status).toBe(403);
     });
   });
 
