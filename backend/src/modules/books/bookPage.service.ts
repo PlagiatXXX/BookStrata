@@ -198,7 +198,7 @@ export async function getBookPageData(
       FROM tier_lists tl
       JOIN "BookPlacement" bp ON bp."tierListId" = tl.id
       JOIN "Book" b ON b.id = bp."bookId"
-      JOIN users u ON u.id = tl."userId"
+      JOIN "User" u ON u.id = tl."userId"
       WHERE tl.is_public = true
         AND lower(trim(regexp_replace(translate(b.title, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${normTitleForSql(book.title)}
         AND (${book.author ? normTitleForSql(book.author) : null}::text IS NULL
