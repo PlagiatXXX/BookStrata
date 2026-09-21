@@ -87,7 +87,7 @@ const bookPageData: BookPageData = {
     readingProfile: null,
   },
   author: { id: 1, name: "Ф. Скотт Фицджеральд", slug: "f-skott-fitsdzherald" },
-  tierLists: [{ id: "tl-1", slug: "top-100", title: "Топ-100 классики", isPublic: true }],
+  tierLists: [{ id: "tl-1", slug: "top-100", title: "Топ-100 классики", isPublic: true, authorUsername: "testuser" }],
   collections: [{ id: 1, slug: "velikie-romany", title: "Великие романы", type: "collection" }],
   celebrities: [{ id: 1, slug: "stephen-king", name: "Стивен Кинг" }],
   similarBooks: [],

@@ -644,9 +644,14 @@ export default function BookPage() {
                       name="format_list_numbered"
                       className="text-(--bp-primary) text-xl opacity-70 group-hover:opacity-100 transition-opacity"
                     />
-                    <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
-                      {tl.title}
-                    </span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
+                        {tl.title}
+                      </span>
+                      <span className="text-white/40 text-xs">
+                        @{tl.authorUsername}
+                      </span>
+                    </div>
                   </Link>
                 ))}
               </div>

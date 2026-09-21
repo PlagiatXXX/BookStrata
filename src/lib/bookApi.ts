@@ -98,7 +98,7 @@ export interface BookPageData {
     readingProfile: ReadingProfile | null;
   };
   author: { id: number; name: string; slug: string | null } | null;
-  tierLists: { id: string; slug: string | null; title: string; isPublic: boolean }[];
+  tierLists: { id: string; slug: string | null; title: string; isPublic: boolean; authorUsername: string }[];
   collections: { id: number; slug: string; title: string; type: string }[];
   celebrities: { id: number; slug: string; name: string }[];
   similarBooks: BookCard[];

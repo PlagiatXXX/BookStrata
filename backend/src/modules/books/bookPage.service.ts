@@ -53,6 +53,7 @@ export interface BookPageData {
     slug: string | null;
     title: string;
     isPublic: boolean;
+    authorUsername: string;
   }[];
   collections: { id: number; slug: string; title: string; type: string }[];
   celebrities: { id: number; slug: string; name: string }[];
@@ -189,12 +190,15 @@ export async function getBookPageData(
         title: string;
         isPublic: boolean;
         likesCount: number;
+        authorUsername: string;
       }>
     >`
-      SELECT DISTINCT tl.id, tl.slug, tl.title, tl.is_public, tl.likes_count
+      SELECT DISTINCT tl.id, tl.slug, tl.title, tl.is_public, tl.likes_count,
+             u.username AS "authorUsername"
       FROM tier_lists tl
       JOIN "BookPlacement" bp ON bp."tierListId" = tl.id
       JOIN "Book" b ON b.id = bp."bookId"
+      JOIN users u ON u.id = tl."userId"
       WHERE tl.is_public = true
         AND lower(trim(regexp_replace(translate(b.title, 'Ёё', 'Ее'), '\s+', ' ', 'g'))) = ${normTitleForSql(book.title)}
         AND (${book.author ? normTitleForSql(book.author) : null}::text IS NULL
