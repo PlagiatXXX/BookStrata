@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Outlet, ScrollRestoration, useLocation } from "react-router-dom";
 import { Toaster } from "sileo";
 import { Spinner } from "@/components/Spinner";
@@ -7,13 +7,23 @@ import { useAchievementNotifications } from "@/hooks/useAchievementNotifications
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
 import { SessionExpiredOverlay } from "@/components/SessionExpiredOverlay";
+import { restoreBookReturnScroll } from "@/utils/bookNavigation";
 import { AppProviders } from "./AppProviders";
 import "../styles/sileo-custom.css";
 
 function AppShell() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const { newAchievement, clearNotification } = useAchievementNotifications();
   useAnalyticsTracker();
+
+  useEffect(() => {
+    const path = `${location.pathname}${location.search}`;
+    const frame = requestAnimationFrame(() => {
+      restoreBookReturnScroll(path);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [location.key, location.pathname, location.search]);
 
   return (
     <AppProviders>
@@ -27,17 +37,19 @@ function AppShell() {
           </div>
         }
       >
-        <main><Outlet /></main>
+        <main>
+          <Outlet />
+        </main>
       </Suspense>
       <ScrollRestoration />
       <Toaster position="top-center" theme="system" />
       <SessionExpiredOverlay />
-      <AchievementNotification achievement={newAchievement} onClose={clearNotification} />
+      <AchievementNotification
+        achievement={newAchievement}
+        onClose={clearNotification}
+      />
       {!pathname.match(/^\/tier-lists\/[^/]+\/?$/) && (
-        <FeedbackButton
-          raised={false}
-          withNavMargin={pathname !== "/"}
-        />
+        <FeedbackButton raised={false} withNavMargin={pathname !== "/"} />
       )}
     </AppProviders>
   );

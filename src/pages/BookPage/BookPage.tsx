@@ -6,7 +6,12 @@
 // «Другие книги автора», «Похожие», «В тир-листах», «В подборках»,
 // «У знаменитостей», «Обсуждение».
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
@@ -33,6 +38,7 @@ import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
 import { BookSignUpCta } from "./BookSignUpCta";
 import { getAffiliateLinks } from "@/lib/affiliateLinks";
+import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 import "./BookPage.css";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
@@ -103,7 +109,15 @@ export default function BookPage() {
     return <NotFoundPage />;
   }
 
-  const { book, tierLists, collections, celebrities, similarBooks, otherBooksByAuthor, comments } = data;
+  const {
+    book,
+    tierLists,
+    collections,
+    celebrities,
+    similarBooks,
+    otherBooksByAuthor,
+    comments,
+  } = data;
   const rating = book.rating;
   const contextChain = book.contextChain ?? [];
   const hasTags = book.tags.length > 0;
@@ -112,7 +126,9 @@ export default function BookPage() {
   // показываем путь «Тир-лист → Книга» вместо звена по жанру
   const fromTierListId = searchParams.get("from");
   const fromTierList = fromTierListId
-    ? tierLists.find((t) => t.id === fromTierListId || t.slug === fromTierListId)
+    ? tierLists.find(
+        (t) => t.id === fromTierListId || t.slug === fromTierListId,
+      )
     : undefined;
 
   const breadcrumbs = [
@@ -183,7 +199,13 @@ export default function BookPage() {
       <SEOHead
         title={`${book.title}${book.author ? ` — ${book.author}` : ""}`}
         description={buildDescriptionSnippet(book)}
-        image={book.ogImageUrl || (book.coverImageUrl && !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com") ? book.coverImageUrl : undefined)}
+        image={
+          book.ogImageUrl ||
+          (book.coverImageUrl &&
+          !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com")
+            ? book.coverImageUrl
+            : undefined)
+        }
         url={`/books/${slug}`}
         type="article"
         hideSiteName
@@ -219,135 +241,170 @@ export default function BookPage() {
             <div className="flex items-center justify-between mb-8">
               <button
                 type="button"
-                onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}
+                onClick={() =>
+                  window.history.length > 1 ? navigate(-1) : navigate("/")
+                }
                 className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm"
               >
                 <Icon name="arrow_back" className="text-lg" />
                 Назад
               </button>
               <div className="hidden md:block">
-                <Breadcrumbs items={breadcrumbs.map((b) => ({ label: b.name, href: b.url }))} />
+                <Breadcrumbs
+                  items={breadcrumbs.map((b) => ({
+                    label: b.name,
+                    href: b.url,
+                  }))}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            {/* Левая колонка: 3D-обложка */}
-            <div className="md:col-span-4 flex justify-center md:justify-end">
-              <BookCover3D coverImageUrl={book.coverImageUrl} title={book.title} />
-            </div>
-
-            {/* Центр: метаданные + описание + действия */}
-            <div className="md:col-span-5 flex flex-col justify-center relative z-20 md:pl-8">
-              <div className="flex flex-wrap items-center gap-4 mb-2">
-                {book.genre && (
-                  <span className="bp-label-caps text-(--bp-primary) tracking-widest">
-                    {book.genre}
-                  </span>
-                )}
-                {book.publishedYear && (
-                  <span className="bp-label-caps text-(--bp-on-surface-variant) tracking-widest">
-                    {book.publishedYear} г.
-                  </span>
-                )}
-                {hasTags && (
-                  <>
-                    <div className="h-3 w-px bg-white/10" />
-                    <div className="flex flex-wrap gap-4">
-                      {book.tags.slice(0, 5).map((tag) => (
-                        <span key={tag} className="bp-label-caps bp-tag-caps text-(--bp-on-surface-variant) tracking-widest">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </>
-                )}
+              {/* Левая колонка: 3D-обложка */}
+              <div className="md:col-span-4 flex justify-center md:justify-end">
+                <BookCover3D
+                  coverImageUrl={book.coverImageUrl}
+                  title={book.title}
+                />
               </div>
 
-              <h1 className="bp-display text-[32px] md:text-5xl text-white drop-shadow-2xl mb-1 leading-[1.15]">
-                {book.title}
-              </h1>
-              {book.author && (
-                <h2 className="text-lg text-(--bp-primary)/90 drop-shadow-md mb-3">
-                  {book.author}
-                </h2>
-              )}
-
-{/* Описание с fade-out — видно всем */}
-              {book.description && (
-                <div className="bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl mb-8">
-                  <div className="relative">
-                    <p
-                      className={`text-[15px] leading-relaxed text-white/90 max-w-prose overflow-hidden transition-all duration-500 ease-in-out ${
-                        descExpanded ? "line-clamp-none" : "line-clamp-4"
-                      }`}
-                    >
-                      {book.description}
-                      <span
-                        aria-hidden
-                        className={`absolute bottom-0 left-0 w-full h-12 bg-linear-to-t from-black/80 to-transparent pointer-events-none transition-opacity duration-500 ${
-                          descExpanded ? "opacity-0" : "opacity-100"
-                        }`}
-                      />
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setDescExpanded((v) => !v)}
-                      className="mt-4 flex items-center gap-2 text-(--bp-primary) hover:text-white transition-colors bp-label-caps tracking-widest"
-                    >
-                      <Icon name={descExpanded ? "expand_less" : "expand_more"} className="text-sm" />
-                      {descExpanded ? "Свернуть" : "Читать полностью"}
-                    </button>
-                  </div>
+              {/* Центр: метаданные + описание + действия */}
+              <div className="md:col-span-5 flex flex-col justify-center relative z-20 md:pl-8">
+                <div className="flex flex-wrap items-center gap-4 mb-2">
+                  {book.genre && (
+                    <span className="bp-label-caps text-(--bp-primary) tracking-widest">
+                      {book.genre}
+                    </span>
+                  )}
+                  {book.publishedYear && (
+                    <span className="bp-label-caps text-(--bp-on-surface-variant) tracking-widest">
+                      {book.publishedYear} г.
+                    </span>
+                  )}
+                  {hasTags && (
+                    <>
+                      <div className="h-3 w-px bg-white/10" />
+                      <div className="flex flex-wrap gap-4">
+                        {book.tags.slice(0, 5).map((tag) => (
+                          <span
+                            key={tag}
+                            className="bp-label-caps bp-tag-caps text-(--bp-on-surface-variant) tracking-widest"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
-              )}
 
-              {/* Действия. relative — якорь для выпадашки тир-листов: на мобильных
+                <h1 className="bp-display text-[32px] md:text-5xl text-white drop-shadow-2xl mb-1 leading-[1.15]">
+                  {book.title}
+                </h1>
+                {book.author && (
+                  <h2 className="text-lg text-(--bp-primary)/90 drop-shadow-md mb-3">
+                    {book.author}
+                  </h2>
+                )}
+
+                {/* Описание с fade-out — видно всем */}
+                {book.description && (
+                  <div className="bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-2xl mb-8">
+                    <div className="relative">
+                      <p
+                        className={`text-[15px] leading-relaxed text-white/90 max-w-prose overflow-hidden transition-all duration-500 ease-in-out ${
+                          descExpanded ? "line-clamp-none" : "line-clamp-4"
+                        }`}
+                      >
+                        {book.description}
+                        <span
+                          aria-hidden
+                          className={`absolute bottom-0 left-0 w-full h-12 bg-linear-to-t from-black/80 to-transparent pointer-events-none transition-opacity duration-500 ${
+                            descExpanded ? "opacity-0" : "opacity-100"
+                          }`}
+                        />
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setDescExpanded((v) => !v)}
+                        className="mt-4 flex items-center gap-2 text-(--bp-primary) hover:text-white transition-colors bp-label-caps tracking-widest"
+                      >
+                        <Icon
+                          name={descExpanded ? "expand_less" : "expand_more"}
+                          className="text-sm"
+                        />
+                        {descExpanded ? "Свернуть" : "Читать полностью"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Действия. relative — якорь для выпадашки тир-листов: на мобильных
                   панель растёт от левого края контейнера и не обрезается экраном.
                   gap-2/px-3 — компактные отступы, чтобы обе кнопки влезали в ряд на 360px. */}
-              <div ref={dropdownRef} className="relative flex items-center gap-2 sm:gap-4">
-                <button
-                  type="button"
-                  onClick={handleWantToRead}
-                  className="h-12 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/20 hover:border-white/50 text-white bp-label-caps bp-label-caps-compact px-3 sm:px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:bg-white/5"
+                <div
+                  ref={dropdownRef}
+                  className="relative flex items-center gap-2 sm:gap-4"
                 >
-                  <Icon
-                    name="bookmarks"
-                    className="text-sm text-(--bp-primary)"
-                    style={{ fontVariationSettings: isWantToRead ? "'FILL' 1" : "'FILL' 0" }}
-                  />
-                  {isWantToRead ? "Уже в плане" : "Хочу прочитать"}
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleWantToRead}
+                    className="h-12 whitespace-nowrap bg-black/40 backdrop-blur-md border border-white/20 hover:border-white/50 text-white bp-label-caps bp-label-caps-compact px-3 sm:px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg hover:bg-white/5"
+                  >
+                    <Icon
+                      name="bookmarks"
+                      className="text-sm text-(--bp-primary)"
+                      style={{
+                        fontVariationSettings: isWantToRead
+                          ? "'FILL' 1"
+                          : "'FILL' 0",
+                      }}
+                    />
+                    {isWantToRead ? "Уже в плане" : "Хочу прочитать"}
+                  </button>
 
-                {/* «В тир-лист» — выпадающий список листов */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!user) {
-                      navigate(`/auth?mode=register&redirect=${encodeURIComponent(`/books/${slug}`)}`);
-                      return;
-                    }
-                    setTierDropdownOpen((v) => !v);
-                  }}
-                  className="h-12 whitespace-nowrap bg-(--bp-primary) hover:bg-(--bp-primary-container) text-(--bp-on-primary) bp-label-caps bp-label-caps-compact px-3 sm:px-6 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
-                >
-                  <Icon name="format_list_bulleted" className="text-sm" />
-                  В тир-лист
-                  <Icon name="expand_more" className="text-sm" style={{ transform: tierDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
-                </button>
+                  {/* «В тир-лист» — выпадающий список листов */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!user) {
+                        navigate(
+                          `/auth?mode=register&redirect=${encodeURIComponent(`/books/${slug}`)}`,
+                        );
+                        return;
+                      }
+                      setTierDropdownOpen((v) => !v);
+                    }}
+                    className="h-12 whitespace-nowrap bg-(--bp-primary) hover:bg-(--bp-primary-container) text-(--bp-on-primary) bp-label-caps bp-label-caps-compact px-3 sm:px-6 rounded-lg shadow-[0_0_20px_rgba(255,183,135,0.3)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] transition-all flex items-center gap-2"
+                  >
+                    <Icon name="format_list_bulleted" className="text-sm" />
+                    В тир-лист
+                    <Icon
+                      name="expand_more"
+                      className="text-sm"
+                      style={{
+                        transform: tierDropdownOpen ? "rotate(180deg)" : "none",
+                        transition: "transform 0.2s",
+                      }}
+                    />
+                  </button>
 
-                {tierDropdownOpen && (
-                  <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-primary/30 bg-(--bp-surface-container-high) backdrop-blur-xl shadow-2xl z-60 py-2">
+                  {tierDropdownOpen && (
+                    <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-primary/30 bg-(--bp-surface-container-high) backdrop-blur-xl shadow-2xl z-60 py-2">
                       <p className="bp-label-caps text-white/50 px-4 py-2 tracking-widest">
                         Добавить в тир-лист
                       </p>
                       {myTierListsQuery.isLoading && (
-                        <p className="px-4 py-3 text-sm text-white/60">Загрузка...</p>
-                      )}
-                      {!myTierListsQuery.isLoading && myTierLists?.length === 0 && (
                         <p className="px-4 py-3 text-sm text-white/60">
-                          Нет тир-листов. Создайте первый ниже.
+                          Загрузка...
                         </p>
                       )}
+                      {!myTierListsQuery.isLoading &&
+                        myTierLists?.length === 0 && (
+                          <p className="px-4 py-3 text-sm text-white/60">
+                            Нет тир-листов. Создайте первый ниже.
+                          </p>
+                        )}
                       {!myTierListsQuery.isLoading &&
                         myTierLists?.map((tl) => (
                           <button
@@ -356,7 +413,10 @@ export default function BookPage() {
                             onClick={() => handleAddToTierList(tl.id)}
                             className="w-full text-left px-4 py-2.5 text-sm text-white/85 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2"
                           >
-                            <Icon name="list_alt" className="text-base text-(--bp-primary)" />
+                            <Icon
+                              name="list_alt"
+                              className="text-base text-(--bp-primary)"
+                            />
                             {tl.title}
                           </button>
                         ))}
@@ -379,7 +439,8 @@ export default function BookPage() {
                               value={newListTitle}
                               onChange={(e) => setNewListTitle(e.target.value)}
                               onKeyDown={(e) => {
-                                if (e.key === "Enter") void handleCreateAndAdd();
+                                if (e.key === "Enter")
+                                  void handleCreateAndAdd();
                                 if (e.key === "Escape") {
                                   setShowCreateForm(false);
                                   setNewListTitle("");
@@ -390,7 +451,9 @@ export default function BookPage() {
                               className="w-full px-3 py-2 text-sm bg-black/30 border border-white/15 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-(--bp-primary)"
                             />
                             {createListError && (
-                              <p className="text-xs text-red-400">{createListError}</p>
+                              <p className="text-xs text-red-400">
+                                {createListError}
+                              </p>
                             )}
                             <button
                               type="button"
@@ -398,101 +461,115 @@ export default function BookPage() {
                               onClick={() => void handleCreateAndAdd()}
                               className="w-full px-3 py-2 text-sm rounded-lg bg-(--bp-primary) text-(--bp-on-primary) hover:bg-(--bp-primary-container) disabled:opacity-50 transition-colors"
                             >
-                              {creatingList ? "Создание..." : "Создать и добавить"}
+                              {creatingList
+                                ? "Создание..."
+                                : "Создать и добавить"}
                             </button>
                           </div>
                         )}
-                       </div>
-                     </div>
-                   )}
-               </div>
-
-               {/* Подсказка о механике сайта — невзрачная, под кнопками */}
-               <p className="mt-3 text-xs text-white/30 leading-relaxed max-w-sm">
-                 Сохраняйте книги и создавайте тир-листы из прочитанных
-               </p>
-               {book.readingProfile && <BookMatchBadge book={book.readingProfile} />}
-
-               {/* Scroll indicator: «Листай дальше» — сразу под кнопками действий */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="mt-12 flex flex-col items-center gap-1 text-white/30 select-none"
-              >
-                <span className="text-xs">Листай дальше</span>
-                <motion.div
-                  animate={{ y: [0, 6, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <Icon name="expand_more" className="text-base" />
-                </motion.div>
-              </motion.div>
-            </div>
-
-            {/* Сайдбар: рейтинг + «Где читать» */}
-            <div className="md:col-span-3 pt-8 md:pt-0 md:pl-4 flex flex-col justify-center relative z-10">
-              <div className="bg-black/30 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-2xl h-full">
-                {rating !== null && rating !== undefined && (
-                  <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="bp-label-caps text-white/80 tracking-widest">Рейтинг</h3>
-                      <span className="text-4xl font-bold text-(--bp-primary) drop-shadow-md">
-                        {rating.toFixed(1)}
-                      </span>
-                    </div>
-                    <RatingStars rating={rating} />
-                  </div>
-                )}
-
-                {/* Оценить книгу: слайдер 0–10, одна оценка на пользователя */}
-                <BookRatingPanel bookId={book.id} defaultRating={rating} />
-
-                {/* «Где читать» — аффилиат-ссылки на Читай Город и ЛитРес */}
-                <div>
-                  <h3 className="bp-label-caps text-white/80 tracking-widest mb-4">Где читать</h3>
-                  <div className="flex flex-col gap-3">
-                    {getAffiliateLinks(book).map((link) => (
-                      <div key={link.name}>
-                        <a
-                          href={link.stub ? undefined : link.url}
-                          target="_blank"
-                          rel="noopener noreferrer nofollow"
-                          onClick={link.stub ? (e) => e.preventDefault() : undefined}
-                          className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group overflow-hidden"
-                        >
-                           <span className="text-[15px] text-white font-medium ml-2">{link.name}</span>
-                        </a>
-                        {link.disclaimer && (
-                          <p className="text-[9px] text-white/20 mt-1 leading-tight px-1">
-                            {link.disclaimer}
-                          </p>
-                        )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Telegram — видео о возможностях сервиса */}
-                <a
-                  href="https://t.me/BookStrata"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 bp-glass-panel p-3 rounded-lg flex items-center gap-3 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group"
+                {/* Подсказка о механике сайта — невзрачная, под кнопками */}
+                <p className="mt-3 text-xs text-white/30 leading-relaxed max-w-sm">
+                  Сохраняйте книги и создавайте тир-листы из прочитанных
+                </p>
+                {book.readingProfile && (
+                  <BookMatchBadge book={book.readingProfile} />
+                )}
+
+                {/* Scroll indicator: «Листай дальше» — сразу под кнопками действий */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="mt-12 flex flex-col items-center gap-1 text-white/30 select-none"
                 >
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-5 h-5 text-blue-400 group-hover:text-blue-300 shrink-0 transition-colors"
+                  <span className="text-xs">Листай дальше</span>
+                  <motion.div
+                    animate={{ y: [0, 6, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0Zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635Z" />
-                  </svg>
-                  <span className="text-[15px] text-white font-medium">Возможности сервиса</span>
-                </a>
+                    <Icon name="expand_more" className="text-base" />
+                  </motion.div>
+                </motion.div>
+              </div>
+
+              {/* Сайдбар: рейтинг + «Где читать» */}
+              <div className="md:col-span-3 pt-8 md:pt-0 md:pl-4 flex flex-col justify-center relative z-10">
+                <div className="bg-black/30 backdrop-blur-md p-6 rounded-xl border border-white/10 shadow-2xl h-full">
+                  {rating !== null && rating !== undefined && (
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="bp-label-caps text-white/80 tracking-widest">
+                          Рейтинг
+                        </h3>
+                        <span className="text-4xl font-bold text-(--bp-primary) drop-shadow-md">
+                          {rating.toFixed(1)}
+                        </span>
+                      </div>
+                      <RatingStars rating={rating} />
+                    </div>
+                  )}
+
+                  {/* Оценить книгу: слайдер 0–10, одна оценка на пользователя */}
+                  <BookRatingPanel bookId={book.id} defaultRating={rating} />
+
+                  {/* «Где читать» — аффилиат-ссылки на Читай Город и ЛитРес */}
+                  <div>
+                    <h3 className="bp-label-caps text-white/80 tracking-widest mb-4">
+                      Где читать
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                      {getAffiliateLinks(book).map((link) => (
+                        <div key={link.name}>
+                          <a
+                            href={link.stub ? undefined : link.url}
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                            onClick={
+                              link.stub ? (e) => e.preventDefault() : undefined
+                            }
+                            className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group overflow-hidden"
+                          >
+                            <span className="text-[15px] text-white font-medium ml-2">
+                              {link.name}
+                            </span>
+                          </a>
+                          {link.disclaimer && (
+                            <p className="text-[9px] text-white/20 mt-1 leading-tight px-1">
+                              {link.disclaimer}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Telegram — видео о возможностях сервиса */}
+                  <a
+                    href="https://t.me/BookStrata"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 bp-glass-panel p-3 rounded-lg flex items-center gap-3 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-5 h-5 text-blue-400 group-hover:text-blue-300 shrink-0 transition-colors"
+                    >
+                      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0Zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635Z" />
+                    </svg>
+                    <span className="text-[15px] text-white font-medium">
+                      Возможности сервиса
+                    </span>
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
           </div>
         </header>
 
@@ -502,114 +579,140 @@ export default function BookPage() {
           description="Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы"
           redirectTo={`/books/${slug}`}
         > */}
-          {/* ── Гид по чтению (AI-паспорт) ── */}
-          {book.readingGuide && <BookReadingGuide guide={book.readingGuide} />}
+        {/* ── Гид по чтению (AI-паспорт) ── */}
+        {book.readingGuide && <BookReadingGuide guide={book.readingGuide} />}
 
-          {/* ── Book Match — совместимость читателя и книги ── */}
-          {book.readingProfile && <BookMatch book={book.readingProfile} bookTitle={book.title} bookSlug={book.slug ?? undefined} />}
+        {/* ── Book Match — совместимость читателя и книги ── */}
+        {book.readingProfile && (
+          <BookMatch
+            book={book.readingProfile}
+            bookTitle={book.title}
+            bookSlug={book.slug ?? undefined}
+          />
+        )}
 
-          {/* ── Погружение в контекст ── */}
-          {contextChain.length > 0 && <BookContextChain items={contextChain} />}
+        {/* ── Погружение в контекст ── */}
+        {contextChain.length > 0 && <BookContextChain items={contextChain} />}
 
-          {/* ── Другие книги автора ── */}
-          {otherBooksByAuthor.length > 0 && (
-            <section className="relative py-12">
-              <div className="max-w-275 mx-auto px-4 md:px-5">
-                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Другие книги автора</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {otherBooksByAuthor.map((b) => (
-                    <BookCardLink key={b.id} book={b} />
-                  ))}
-                </div>
+        {/* ── Другие книги автора ── */}
+        {otherBooksByAuthor.length > 0 && (
+          <section className="relative py-12">
+            <div className="max-w-275 mx-auto px-4 md:px-5">
+              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">
+                Другие книги автора
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {otherBooksByAuthor.map((b) => (
+                  <BookCardLink key={b.id} book={b} />
+                ))}
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
-          {/* ── Похожие книги ── */}
-          {similarBooks.length > 0 && (
-            <section className="relative py-12 border-t border-primary/20">
-              <div className="max-w-275 mx-auto px-4 md:px-5">
-                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Похожие книги</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {similarBooks.slice(0, 4).map((b) => (
-                    <BookCardLink key={b.id} book={b} />
-                  ))}
-                </div>
+        {/* ── Похожие книги ── */}
+        {similarBooks.length > 0 && (
+          <section className="relative py-12 border-t border-primary/20">
+            <div className="max-w-275 mx-auto px-4 md:px-5">
+              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">
+                Похожие книги
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {similarBooks.slice(0, 4).map((b) => (
+                  <BookCardLink key={b.id} book={b} />
+                ))}
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
-          {/* ── Встречается в тир-листах ── */}
-          {tierLists.length > 0 && (
-            <section className="relative pt-4 pb-12 border-t border-primary/20">
-              <div className="max-w-275 mx-auto px-4 md:px-5">
-                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">Встречается в тир-листах</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {tierLists.map((tl) => (
-                    <Link
-                      key={tl.id}
-                      to={`/tier-lists/${tl.slug || tl.id}`}
-                      className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-(--bp-primary)/30 bg-linear-to-r from-(--bp-primary)/5 to-transparent hover:from-(--bp-primary)/10 transition-all duration-300"
-                    >
-                       <Icon name="format_list_numbered" className="text-(--bp-primary) text-xl opacity-70 group-hover:opacity-100 transition-opacity" />
-                      <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
-                        {tl.title}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
+        {/* ── Встречается в тир-листах ── */}
+        {tierLists.length > 0 && (
+          <section className="relative pt-4 pb-12 border-t border-primary/20">
+            <div className="max-w-275 mx-auto px-4 md:px-5">
+              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">
+                Встречается в тир-листах
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {tierLists.map((tl) => (
+                  <Link
+                    key={tl.id}
+                    to={`/tier-lists/${tl.slug || tl.id}`}
+                    className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-(--bp-primary)/30 bg-linear-to-r from-(--bp-primary)/5 to-transparent hover:from-(--bp-primary)/10 transition-all duration-300"
+                  >
+                    <Icon
+                      name="format_list_numbered"
+                      className="text-(--bp-primary) text-xl opacity-70 group-hover:opacity-100 transition-opacity"
+                    />
+                    <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
+                      {tl.title}
+                    </span>
+                  </Link>
+                ))}
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
-          {/* ── В подборках ── */}
-          {collections.length > 0 && (
-            <section className="relative pt-4 pb-12 border-t border-primary/20">
-              <div className="max-w-275 mx-auto px-4 md:px-5">
-                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">В подборках</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {collections.map((c) => (
-                    <Link
-                      key={c.id}
-                      to={`/collections/${c.slug}`}
-                      className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-(--bp-tertiary)/30 bg-linear-to-r from-(--bp-tertiary)/5 to-transparent hover:from-(--bp-tertiary)/10 transition-all duration-300"
-                    >
-                       <Icon name="collections_bookmark" className="text-(--bp-tertiary) text-xl opacity-70 group-hover:opacity-100 transition-opacity" />
-                      <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
-                        {c.title}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
+        {/* ── В подборках ── */}
+        {collections.length > 0 && (
+          <section className="relative pt-4 pb-12 border-t border-primary/20">
+            <div className="max-w-275 mx-auto px-4 md:px-5">
+              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">
+                В подборках
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {collections.map((c) => (
+                  <Link
+                    key={c.id}
+                    to={`/collections/${c.slug}`}
+                    className="group relative flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-(--bp-tertiary)/30 bg-linear-to-r from-(--bp-tertiary)/5 to-transparent hover:from-(--bp-tertiary)/10 transition-all duration-300"
+                  >
+                    <Icon
+                      name="collections_bookmark"
+                      className="text-(--bp-tertiary) text-xl opacity-70 group-hover:opacity-100 transition-opacity"
+                    />
+                    <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
+                      {c.title}
+                    </span>
+                  </Link>
+                ))}
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
-          {/* ── У знаменитостей ── */}
-          {celebrities.length > 0 && (
-            <section className="relative py-12 border-t border-primary/20">
-              <div className="max-w-275 mx-auto px-4 md:px-5">
-                <h2 className="bp-display text-white text-xl md:text-2xl mb-6">У знаменитостей</h2>
-                <div className="flex flex-wrap gap-3">
-                  {celebrities.map((c) => (
-                    <Link
-                      key={c.id}
-                      to={`/celebrities/${c.slug}`}
-                      className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
-                    >
-                      {c.name}
-                    </Link>
-                  ))}
-                </div>
+        {/* ── У знаменитостей ── */}
+        {celebrities.length > 0 && (
+          <section className="relative py-12 border-t border-primary/20">
+            <div className="max-w-275 mx-auto px-4 md:px-5">
+              <h2 className="bp-display text-white text-xl md:text-2xl mb-6">
+                У знаменитостей
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                {celebrities.map((c) => (
+                  <Link
+                    key={c.id}
+                    to={`/celebrities/${c.slug}`}
+                    className="bp-glass-panel px-4 py-2.5 rounded-lg border border-white/10 hover:border-primary/50 text-white/80 hover:text-white text-sm transition-colors"
+                  >
+                    {c.name}
+                  </Link>
+                ))}
               </div>
-            </section>
-          )}
+            </div>
+          </section>
+        )}
 
-          {/* ── Обсуждение ── */}
-          <BookComments slug={slug!} initialItems={comments.items} initialTotal={comments.total} />
+        {/* ── Обсуждение ── */}
+        <BookComments
+          slug={slug!}
+          initialItems={comments.items}
+          initialTotal={comments.total}
+        />
 
-          {/* ── Призыв к регистрации для гостей ── */}
-          <BookSignUpCta redirectTo={`/books/${slug}`} />
+        {/* ── Призыв к регистрации для гостей ── */}
+        <BookSignUpCta redirectTo={`/books/${slug}`} />
         {/* </ContentLock> */}
       </main>
 
@@ -627,7 +730,10 @@ function RatingStars({ rating }: { rating: number }) {
   const fraction = stars - full; // доля следующей звезды 0..1
 
   return (
-    <div className="relative inline-block" aria-label={`Рейтинг ${rating.toFixed(1)} из 10`}>
+    <div
+      className="relative inline-block"
+      aria-label={`Рейтинг ${rating.toFixed(1)} из 10`}
+    >
       <div className="flex items-center gap-1">
         {Array.from({ length: 5 }, (_, i) => {
           if (i < full) return <StarGlyph key={i} variant="full" />;
@@ -688,19 +794,31 @@ function StarGlyph({
 }
 
 /** Карточка книги-ссылки (другие книги автора / похожие). */
-function BookCardLink({ book }: { book: { slug: string | null; title: string; coverImageUrl: string } }) {
+function BookCardLink({
+  book,
+}: {
+  book: { slug: string | null; title: string; coverImageUrl: string };
+}) {
   if (!book.slug) return null;
   return (
     <Link
       to={`/books/${book.slug}`}
+      onClick={rememberBookReturnScroll}
       className="group block hover:-translate-y-3 hover:scale-[1.02] transition-all duration-500 ease-out"
     >
       <div className="aspect-2/3 rounded-lg overflow-hidden mb-3 border border-white/10 shadow-lg bp-book-hover-lift">
         {book.coverImageUrl ? (
-          <img src={book.coverImageUrl} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
+          <img
+            src={book.coverImageUrl}
+            alt={book.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
         ) : (
           <div className="w-full h-full bg-(--bp-surface-container-high) flex items-center justify-center">
-            <span className="text-white/50 text-sm text-center px-4">{book.title}</span>
+            <span className="text-white/50 text-sm text-center px-4">
+              {book.title}
+            </span>
           </div>
         )}
       </div>

@@ -1,10 +1,18 @@
-import { memo, forwardRef, useState, useRef, useCallback, useEffect } from "react";
+import {
+  memo,
+  forwardRef,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+} from "react";
 import { Link } from "react-router-dom";
 import { X, Edit2, Eye, Heart } from "lucide-react";
 import type { Book } from "@/types";
 import type { ShelfStatus } from "@/lib/shelfApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
+import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 
 interface BookCoverProps {
   book: Book;
@@ -42,7 +50,19 @@ function withRetryParam(url: string, attempt: number): string {
 
 export const BookCover = memo(
   forwardRef<HTMLDivElement, BookCoverProps>(
-    ({ book, isDraggable = true, onDelete, onEdit, onView, shelfStatus, priority = false, linkToBook = false }, ref) => {
+    (
+      {
+        book,
+        isDraggable = true,
+        onDelete,
+        onEdit,
+        onView,
+        shelfStatus,
+        priority = false,
+        linkToBook = false,
+      },
+      ref,
+    ) => {
       const [showActions, setShowActions] = useState(false);
       const [isHovered, setIsHovered] = useState(false);
       const [coverError, setCoverError] = useState(false);
@@ -71,22 +91,26 @@ export const BookCover = memo(
         : isHovered || showActions;
       const hasCover = !!book.coverImageUrl;
       const showCover = hasCover && !coverError;
-      const baseImgUrl = hasCover ? proxyImageUrl(book.coverImageUrl) : undefined;
+      const baseImgUrl = hasCover
+        ? proxyImageUrl(book.coverImageUrl)
+        : undefined;
 
       // Сброс при смене книги (компонент переиспользуется, например в длинных
       // списках без key). Паттерн «storing information from previous renders».
-      const [prevCoverUrl, setPrevCoverUrl] = useState<typeof baseImgUrl>(baseImgUrl);
+      const [prevCoverUrl, setPrevCoverUrl] =
+        useState<typeof baseImgUrl>(baseImgUrl);
       if (baseImgUrl !== prevCoverUrl) {
         setPrevCoverUrl(baseImgUrl);
         setRetryCount(0);
         setCoverError(false);
       }
 
-      const imgUrl = showCover && baseImgUrl
-        ? retryCount > 0
-          ? withRetryParam(baseImgUrl, retryCount)
-          : baseImgUrl
-        : undefined;
+      const imgUrl =
+        showCover && baseImgUrl
+          ? retryCount > 0
+            ? withRetryParam(baseImgUrl, retryCount)
+            : baseImgUrl
+          : undefined;
 
       // Обрыв сети на мобильных — частая история: первая попытка падает,
       // картинка на самом деле доступна. Пробуем ещё раз с новым src,
@@ -155,15 +179,18 @@ export const BookCover = memo(
         lastTapTime.current = now;
       };
 
-      const handleClickOutside = useCallback((e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        const clickedBookId = target
-          .closest("[data-book-id]")
-          ?.getAttribute("data-book-id");
+      const handleClickOutside = useCallback(
+        (e: MouseEvent) => {
+          const target = e.target as HTMLElement;
+          const clickedBookId = target
+            .closest("[data-book-id]")
+            ?.getAttribute("data-book-id");
 
-        if (clickedBookId === book.id) return;
-        setShowActions(false);
-      }, [book.id]);
+          if (clickedBookId === book.id) return;
+          setShowActions(false);
+        },
+        [book.id],
+      );
 
       // Закрываем кнопки при клике вне книги (в т.ч. по другой книге
       // или пустому месту). Подписываемся только пока кнопки открыты.
@@ -175,7 +202,9 @@ export const BookCover = memo(
 
       // BookCover рендерится как <div> (редактор) или как <Link> (публичные
       // страницы, Фаза 5.3). Внешний контракт ref — HTMLDivElement.
-      const forwardCoverRef = (node: HTMLDivElement | HTMLAnchorElement | null) => {
+      const forwardCoverRef = (
+        node: HTMLDivElement | HTMLAnchorElement | null,
+      ) => {
         if (typeof ref === "function") {
           ref((node as unknown as HTMLDivElement) ?? null);
         } else if (ref) {
@@ -190,7 +219,9 @@ export const BookCover = memo(
         onMouseEnter: () => setIsHovered(true),
         onMouseLeave: () => setIsHovered(false),
         "data-book-id": book.id,
-        "data-book-actions": showActionsFinal ? ("visible" as const) : ("hidden" as const),
+        "data-book-actions": showActionsFinal
+          ? ("visible" as const)
+          : ("hidden" as const),
         className: `nb-book-card relative ${cursorClass}`,
         "data-testid": "book-cover",
       };
@@ -225,7 +256,9 @@ export const BookCover = memo(
                          rounded-t bg-(--theme-border)/70 px-2
                          text-[9px] font-bold uppercase leading-none tracking-wider"
               title={shelfStatus === "read" ? "Прочитал" : "Хочу прочитать"}
-              aria-label={shelfStatus === "read" ? "Прочитал" : "Хочу прочитать"}
+              aria-label={
+                shelfStatus === "read" ? "Прочитал" : "Хочу прочитать"
+              }
             >
               {shelfStatus === "read" ? (
                 <>
@@ -234,7 +267,11 @@ export const BookCover = memo(
                 </>
               ) : (
                 <>
-                  <Heart size={9} className="text-cyan-400" fill="currentColor" />
+                  <Heart
+                    size={9}
+                    className="text-cyan-400"
+                    fill="currentColor"
+                  />
                   <span className="text-cyan-300">В планах</span>
                 </>
               )}
@@ -320,7 +357,12 @@ export const BookCover = memo(
       );
 
       return linkUrl ? (
-        <Link ref={forwardCoverRef} to={linkUrl} {...commonProps}>
+        <Link
+          ref={forwardCoverRef}
+          to={linkUrl}
+          {...commonProps}
+          onClick={rememberBookReturnScroll}
+        >
           {cardContent}
         </Link>
       ) : (

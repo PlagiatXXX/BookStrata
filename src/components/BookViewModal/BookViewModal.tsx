@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { X, Star, FileText, Calendar, BookOpen, Check, Heart, ExternalLink } from "lucide-react";
+import {
+  X,
+  Star,
+  FileText,
+  Calendar,
+  BookOpen,
+  Check,
+  Heart,
+  ExternalLink,
+} from "lucide-react";
 import { Modal } from "@/ui/Modal";
 import { Button } from "@/ui/Button";
 import type { BookRatingsResult } from "@/lib/ratingsApi";
@@ -10,6 +19,7 @@ import { useBookshelf } from "@/hooks/useBookshelf";
 import type { ShelfStatus } from "@/lib/shelfApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
+import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 import { RetryableImage } from "@/ui/RetryableImage";
 import { sileo } from "sileo";
 
@@ -30,14 +40,21 @@ const sectionTitleClass =
   "mb-3 block text-[11px] font-bold uppercase tracking-[0.14em] text-(--theme-accent-primary)";
 
 function StarDisplay({ value, size = 16 }: { value: number; size?: number }) {
-  const stars = []
-  const normalized = value / 2
+  const stars = [];
+  const normalized = value / 2;
 
   for (let i = 0; i < 5; i++) {
-    const fill = Math.min(1, Math.max(0, normalized - i))
+    const fill = Math.min(1, Math.max(0, normalized - i));
     stars.push(
-      <span key={i} className="relative inline-block" style={{ width: size, height: size }}>
-        <Star size={size} className="absolute inset-0 text-(--theme-text-muted)/40" />
+      <span
+        key={i}
+        className="relative inline-block"
+        style={{ width: size, height: size }}
+      >
+        <Star
+          size={size}
+          className="absolute inset-0 text-(--theme-text-muted)/40"
+        />
         <span
           className="absolute inset-0 overflow-hidden"
           style={{ width: `${fill * 100}%` }}
@@ -45,10 +62,10 @@ function StarDisplay({ value, size = 16 }: { value: number; size?: number }) {
           <Star size={size} className="text-amber-400" fill="#fbbf24" />
         </span>
       </span>,
-    )
+    );
   }
 
-  return <span className="inline-flex items-center gap-0.5">{stars}</span>
+  return <span className="inline-flex items-center gap-0.5">{stars}</span>;
 }
 
 export const BookViewModal: React.FC<BookViewModalProps> = ({
@@ -100,9 +117,10 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
   };
 
   // Рейтинг для отображения: из данных книги (коллекции) или с сервера
-  const displayRating = book?.rating != null
-    ? { count: 0, averages: {}, overall: book.rating }
-    : apiRatings;
+  const displayRating =
+    book?.rating != null
+      ? { count: 0, averages: {}, overall: book.rating }
+      : apiRatings;
 
   // При открытии модалки всегда скроллим контент вверх
   useEffect(() => {
@@ -120,9 +138,13 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
     const bookIdNum = Number(book.id);
     if (!Number.isFinite(bookIdNum)) return;
 
-    getBookRatings(bookIdNum).then((result) => {
-      setApiRatings(result);
-    }).catch(() => { /* ignore */ });
+    getBookRatings(bookIdNum)
+      .then((result) => {
+        setApiRatings(result);
+      })
+      .catch(() => {
+        /* ignore */
+      });
   }, [isOpen, book]);
 
   if (!book) return null;
@@ -131,10 +153,10 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
 
   const coverUrl = proxyImageUrl(
     book.coverImageUrl ||
-    book.image_url ||
-    book.cover_image_url ||
-    book.coverUrlLarge ||
-    book.coverUrl
+      book.image_url ||
+      book.cover_image_url ||
+      book.coverUrlLarge ||
+      book.coverUrl,
   );
 
   const pages = book.numberOfPages ?? book.number_of_pages ?? book.pageCount;
@@ -148,134 +170,138 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
       titleId="book-view-title"
       className={className}
     >
-        <div
-          ref={scrollRef}
-          className="max-h-[90dvh] overflow-y-auto nb-heavy-border bg-(--theme-surface-3) text-(--theme-text)"
-        >
-          <div className="relative border-b-(--theme-border-width) border-(--theme-border) p-4 sm:p-6">
-            <button
-              onClick={onClose}
-              className="absolute right-3 top-3 cursor-pointer rounded-sm nb-heavy-border bg-(--theme-surface-4) p-1 text-(--theme-text) transition-colors hover:border-(--theme-accent-primary) hover:text-(--theme-accent-primary) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none sm:right-4 sm:top-4"
-              aria-label="Закрыть"
-            >
-              <X size={18} />
-            </button>
-            <h3
-              id="book-view-title"
-              className="pr-10 text-base font-black leading-tight sm:pr-12 sm:text-xl md:text-2xl"
-            >
-              {book.title}
-            </h3>
-            <p className="mt-1 text-xs font-medium text-(--theme-text-muted) sm:text-sm">
-              {book.author || book.author_name || "Автор неизвестен"}
+      <div
+        ref={scrollRef}
+        className="max-h-[90dvh] overflow-y-auto nb-heavy-border bg-(--theme-surface-3) text-(--theme-text)"
+      >
+        <div className="relative border-b-(--theme-border-width) border-(--theme-border) p-4 sm:p-6">
+          <button
+            onClick={onClose}
+            className="absolute right-3 top-3 cursor-pointer rounded-sm nb-heavy-border bg-(--theme-surface-4) p-1 text-(--theme-text) transition-colors hover:border-(--theme-accent-primary) hover:text-(--theme-accent-primary) focus-visible:ring-2 focus-visible:ring-(--theme-focus) focus:outline-none sm:right-4 sm:top-4"
+            aria-label="Закрыть"
+          >
+            <X size={18} />
+          </button>
+          <h3
+            id="book-view-title"
+            className="pr-10 text-base font-black leading-tight sm:pr-12 sm:text-xl md:text-2xl"
+          >
+            {book.title}
+          </h3>
+          <p className="mt-1 text-xs font-medium text-(--theme-text-muted) sm:text-sm">
+            {book.author || book.author_name || "Автор неизвестен"}
+          </p>
+          {book.genre && (
+            <p className="mt-1 text-xs text-(--theme-accent-primary)">
+              {book.genre}
             </p>
-            {book.genre && (
-              <p className="mt-1 text-xs text-(--theme-accent-primary)">
-                {book.genre}
-              </p>
-            )}
-            {book.tags && book.tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {book.tags.map((tag: string) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded-full border border-(--theme-accent-primary)/30 bg-(--theme-accent-primary)/10 px-2 py-0.5 text-[10px] font-medium text-(--theme-accent-primary)"
-                  >
-                    #{tag}
+          )}
+          {book.tags && book.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {book.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-full border border-(--theme-accent-primary)/30 bg-(--theme-accent-primary)/10 px-2 py-0.5 text-[10px] font-medium text-(--theme-accent-primary)"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 sm:p-6">
+          <div className="grid gap-5 sm:gap-6 sm:grid-cols-[120px_minmax(0,1fr)] lg:grid-cols-[140px_minmax(0,1fr)]">
+            <div className="flex flex-col items-center gap-2 sm:gap-3">
+              {coverUrl && !imageError ? (
+                <RetryableImage
+                  src={coverUrl}
+                  alt={book.title}
+                  onError={() => setImageError(true)}
+                  className="w-28 sm:w-full aspect-2/3 nb-heavy-border object-cover shadow-lg"
+                />
+              ) : (
+                <div className="w-28 sm:w-full aspect-2/3 border-2 border-(--theme-surface-2) overflow-hidden">
+                  <BookCoverPlaceholder />
+                </div>
+              )}
+
+              {displayRating && (
+                <div className="flex flex-col items-center gap-0.5">
+                  <StarDisplay value={displayRating.overall} />
+                  <span className="text-[11px] text-(--theme-text-muted)">
+                    {displayRating.overall.toFixed(1)}
                   </span>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
 
-          <div className="p-4 sm:p-6">
-            <div className="grid gap-5 sm:gap-6 sm:grid-cols-[120px_minmax(0,1fr)] lg:grid-cols-[140px_minmax(0,1fr)]">
-              <div className="flex flex-col items-center gap-2 sm:gap-3">
-                {coverUrl && !imageError ? (
-                  <RetryableImage
-                    src={coverUrl}
-                    alt={book.title}
-                    onError={() => setImageError(true)}
-                    className="w-28 sm:w-full aspect-2/3 nb-heavy-border object-cover shadow-lg"
-                  />
-                ) : (
-                  <div className="w-28 sm:w-full aspect-2/3 border-2 border-(--theme-surface-2) overflow-hidden">
-                    <BookCoverPlaceholder />
-                  </div>
-                )}
+              {/* Компактные метаданные: страницы и год всегда под обложкой */}
+              {isSearchPreview && (
+                <div className="w-full space-y-1.5 mt-1">
+                  {pages != null && (
+                    <div className="flex items-center gap-2 text-xs text-(--theme-text-muted)">
+                      <FileText
+                        size={12}
+                        className="shrink-0 text-(--theme-accent-primary)"
+                      />
+                      <span>{pages} стр.</span>
+                    </div>
+                  )}
+                  {year != null && (
+                    <div className="flex items-center gap-2 text-xs text-(--theme-text-muted)">
+                      <Calendar
+                        size={12}
+                        className="shrink-0 text-(--theme-accent-primary)"
+                      />
+                      <span>{year} г.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
-                {displayRating && (
-                  <div className="flex flex-col items-center gap-0.5">
-                    <StarDisplay value={displayRating.overall} />
-                    <span className="text-[11px] text-(--theme-text-muted)">
-                      {displayRating.overall.toFixed(1)}
-                    </span>
-                  </div>
-                )}
+            <div className="flex flex-col gap-4 sm:gap-5">
+              {isSearchPreview ? (
+                <p className="text-sm leading-relaxed text-(--theme-text-muted)">
+                  Нажмите «Добавить», чтобы включить книгу в тир-лист
+                </p>
+              ) : (
+                <>
+                  {book.description && (
+                    <div>
+                      <span className={sectionTitleClass}>Описание</span>
+                      <p className="text-sm leading-relaxed text-(--theme-text)/90">
+                        {book.description}
+                      </p>
+                    </div>
+                  )}
 
-                {/* Компактные метаданные: страницы и год всегда под обложкой */}
-                {isSearchPreview && (
-                  <div className="w-full space-y-1.5 mt-1">
-                    {pages != null && (
-                      <div className="flex items-center gap-2 text-xs text-(--theme-text-muted)">
-                        <FileText size={12} className="shrink-0 text-(--theme-accent-primary)" />
-                        <span>{pages} стр.</span>
-                      </div>
-                    )}
-                    {year != null && (
-                      <div className="flex items-center gap-2 text-xs text-(--theme-text-muted)">
-                        <Calendar size={12} className="shrink-0 text-(--theme-accent-primary)" />
-                        <span>{year} г.</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-4 sm:gap-5">
-                {isSearchPreview ? (
-                  <p className="text-sm leading-relaxed text-(--theme-text-muted)">
-                    Нажмите «Добавить», чтобы включить книгу в тир-лист
-                  </p>
-                ) : (
-                  <>
-                    {book.description && (
-                      <div>
-                        <span className={sectionTitleClass}>Описание</span>
-                        <p className="text-sm leading-relaxed text-(--theme-text)/90">
-                          {book.description}
+                  {!hideThoughts && book.thoughts && (
+                    <div>
+                      <span
+                        className={`${sectionTitleClass} flex items-center gap-2`}
+                      >
+                        <BookOpen size={14} />
+                        Мысли о книге
+                      </span>
+                      <div className="border-l-4 border-(--theme-accent-primary) bg-(--theme-surface-4) p-4">
+                        <p className="text-sm leading-relaxed text-(--theme-text)">
+                          {book.thoughts}
                         </p>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {!hideThoughts && book.thoughts && (
-                      <div>
-                        <span
-                          className={`${sectionTitleClass} flex items-center gap-2`}
-                        >
-                          <BookOpen size={14} />
-                          Мысли о книге
-                        </span>
-                        <div className="border-l-4 border-(--theme-accent-primary) bg-(--theme-surface-4) p-4">
-                          <p className="text-sm leading-relaxed text-(--theme-text)">
-                            {book.thoughts}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {!book.description && !book.thoughts && (
-                      <p className="py-6 text-center text-sm text-(--theme-text-muted)">
-                        Нет описания и мыслей
-                      </p>
-                    )}
-
-
-                  </>
-                )}
-              </div>
+                  {!book.description && !book.thoughts && (
+                    <p className="py-6 text-center text-sm text-(--theme-text-muted)">
+                      Нет описания и мыслей
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           </div>
+        </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t-(--theme-border-width) border-(--theme-border) px-5 py-3">
           {/* Кнопки статусов «Моей полки» (при клике по активному — снимают отметку) */}
@@ -289,8 +315,16 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
                   ? "border-(--theme-success) bg-(--theme-success) text-white hover:border-(--theme-success)! hover:bg-(--theme-success)! hover:text-white! shadow-[inset_0_2px_0_rgba(255,255,255,0.35)]"
                   : "text-(--theme-text-muted) hover:text-(--theme-success)"
               }`}
-              title={currentStatus === "read" ? "Убрать отметку" : "Отметить как прочитанное"}
-              aria-label={currentStatus === "read" ? "Убрать отметку прочитанного" : "Отметить книгу как прочитанную"}
+              title={
+                currentStatus === "read"
+                  ? "Убрать отметку"
+                  : "Отметить как прочитанное"
+              }
+              aria-label={
+                currentStatus === "read"
+                  ? "Убрать отметку прочитанного"
+                  : "Отметить книгу как прочитанную"
+              }
             >
               <Check size={14} fill="currentColor" />
               {currentStatus === "read" ? "Прочитал" : "Прочитал?"}
@@ -304,8 +338,16 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
                   ? "border-(--theme-accent-secondary) bg-(--theme-accent-secondary) text-white hover:border-(--theme-accent-secondary)! hover:bg-(--theme-accent-secondary)! hover:text-white! shadow-[inset_0_2px_0_rgba(255,255,255,0.35)]"
                   : "text-(--theme-text-muted) hover:text-(--theme-accent-secondary)"
               }`}
-              title={currentStatus === "want_to_read" ? "Убрать из планов" : "Добавить в «Хочу прочитать»"}
-              aria-label={currentStatus === "want_to_read" ? "Убрать из планов" : "Добавить в «Хочу прочитать»"}
+              title={
+                currentStatus === "want_to_read"
+                  ? "Убрать из планов"
+                  : "Добавить в «Хочу прочитать»"
+              }
+              aria-label={
+                currentStatus === "want_to_read"
+                  ? "Убрать из планов"
+                  : "Добавить в «Хочу прочитать»"
+              }
             >
               <Heart size={14} fill="currentColor" />
               {currentStatus === "want_to_read" ? "В планах" : "Хочу прочитать"}
@@ -321,6 +363,7 @@ export const BookViewModal: React.FC<BookViewModalProps> = ({
           {!isSearchPreview && book.status === "published" && book.slug && (
             <Link
               to={`/books/${book.slug}${tierListId ? `?from=${tierListId}` : ""}`}
+              onClick={rememberBookReturnScroll}
               className="inline-flex items-center gap-1.5 rounded-md border border-(--theme-accent-primary)/40 bg-(--theme-accent-primary)/10 px-3 py-2 text-sm font-bold text-(--theme-accent-primary) transition-colors hover:bg-(--theme-accent-primary)/20 focus-visible:ring-2 focus-visible:ring-(--theme-focus) outline-none"
               aria-label="Открыть страницу книги"
             >
