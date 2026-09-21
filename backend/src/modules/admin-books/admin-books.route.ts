@@ -19,7 +19,9 @@ import {
   listBookComments,
   updateCommentAdmin,
   deleteCommentAdmin,
+  createBookAdmin,
   type BookUpdateInput,
+  type BookCreateInput,
 } from "./admin-books.service.js";
 
 const handleError = (error: unknown, reply: {
@@ -36,6 +38,7 @@ const handleError = (error: unknown, reply: {
       google_empty: 404,
       invalid_comment_content: 400,
       book_from_tier_list: 409,
+      create_failed: 500,
     };
     return reply.code(map[error.code] ?? 400).send(
       createApiError(error.code as ErrorCode, error.message),
@@ -81,6 +84,18 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
       limit: Number(request.query.limit ?? 50),
     });
     return reply.send(createSuccessResponse(result));
+  });
+
+  // POST /api/admin/books — создание новой книги (draft)
+  fastify.post<{
+    Body: BookCreateInput;
+  }>("/", async (request, reply) => {
+    try {
+      const book = await createBookAdmin(request.body);
+      return reply.code(201).send(createSuccessResponse(book));
+    } catch (error) {
+      return handleError(error, reply);
+    }
   });
 
   // GET /api/admin/books/top-views — топ книг по просмотрам
