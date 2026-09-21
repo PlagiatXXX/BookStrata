@@ -139,6 +139,12 @@ export async function listAdminBooks(params: BookListParams = {}) {
   );
 }
 
+export async function createAdminBook(
+  data: { title?: string; coverImageUrl?: string } = {},
+): Promise<AdminBookDetail> {
+  return apiClient.post<AdminBookDetail>("/admin/books", data);
+}
+
 export async function getAdminBook(
   id: number,
 ): Promise<AdminBookDetail | null> {
