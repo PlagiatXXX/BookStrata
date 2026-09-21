@@ -17,6 +17,7 @@ import {
   listAdminComments,
   updateAdminComment,
   deleteAdminComment,
+  createAdminBook,
   type BookUpdateInput,
 } from "@/lib/adminBooksApi";
 
@@ -132,6 +133,22 @@ export function useAdminBooks() {
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: (data?: { title?: string; coverImageUrl?: string }) =>
+      createAdminBook(data),
+    onSuccess: (book) => {
+      invalidateLists();
+      setEditingId(book.id);
+      sileo.success({ title: "Книга создана" });
+    },
+    onError: (err) => {
+      sileo.error({
+        title: "Не удалось создать книгу",
+        description: err instanceof ApiRequestError ? err.message : undefined,
+      });
+    },
+  });
+
   const commentsQuery = useQuery({
     queryKey: ["admin-book-comments", commentsBook?.id],
     queryFn: () =>
@@ -182,6 +199,8 @@ export function useAdminBooks() {
     publishMutation,
     unpublishMutation,
     enrichMutation,
+    // создание
+    createMutation,
     // merge: mergeCanon — книга-канон, поглощающая дубль
     mergeCanon, setMergeCanon,
     mergeMutation,
