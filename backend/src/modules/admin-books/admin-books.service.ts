@@ -29,6 +29,7 @@ import {
   type DedupeBook,
 } from "../books/bookDedupe.service.js";
 import { createAuthorService } from "../authors/authors.service.js";
+import { createBookWithSlug } from "../../lib/slug.js";
 import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
 import { ValidationError } from "../../lib/errors.js";
 import { validateRemoteImageDimensions } from "../../lib/validators.js";
@@ -443,6 +444,11 @@ export interface BookUpdateInput {
   rating?: number | null;
 }
 
+export interface BookCreateInput {
+  title?: string;
+  coverImageUrl?: string;
+}
+
 export class AdminBookError extends Error {
   constructor(
     message: string,
@@ -451,6 +457,24 @@ export class AdminBookError extends Error {
     super(message);
     this.name = "AdminBookError";
   }
+}
+
+/**
+ * Создание новой книги из админки (draft). Минимальные обязательные поля:
+ * title и coverImageUrl. Slug генерируется автоматически через createBookWithSlug.
+ */
+export async function createBookAdmin(data: BookCreateInput) {
+  const title = data.title?.trim() || "Новая книга";
+  const coverImageUrl =
+    data.coverImageUrl?.trim() || "/images/books/default-cover.jpg";
+
+  const { id } = await createBookWithSlug(prisma, {
+    title,
+    coverImageUrl,
+    status: "draft",
+  });
+
+  return prisma.book.findUniqueOrThrow({ where: { id } });
 }
 
 /**
