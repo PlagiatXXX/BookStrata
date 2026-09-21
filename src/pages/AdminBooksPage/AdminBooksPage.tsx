@@ -122,7 +122,7 @@ export default function AdminBooksPage() {
         {/* Кнопка создания */}
         <div className="mb-4 flex justify-end">
           <button
-            onClick={() => h.createMutation.mutate()}
+            onClick={() => h.createMutation.mutate(undefined)}
             disabled={h.createMutation.isPending}
             className="flex items-center gap-1.5 rounded-lg bg-[var(--accent-main)] px-3 py-2 text-sm font-medium text-[var(--bg-0)] hover:opacity-90 disabled:opacity-50 cursor-pointer"
           >
