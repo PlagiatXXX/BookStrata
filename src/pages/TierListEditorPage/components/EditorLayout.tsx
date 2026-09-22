@@ -48,6 +48,7 @@ interface EditorLayoutProps {
   headerProps: EditorHeaderProps;
   onMyRatingsClick: () => void;
   isReadOnly: boolean;
+  isStreamMode?: boolean;
   tierListId?: string;
   coverImageUrl?: string | null;
   hideCover?: boolean;
@@ -72,6 +73,7 @@ export const EditorLayout = ({
   headerProps,
   onMyRatingsClick,
   isReadOnly,
+  isStreamMode = false,
   tierListId,
   coverImageUrl,
   hideCover = false,
@@ -122,24 +124,29 @@ export const EditorLayout = ({
       fullWidth={!isReadOnly}
       hideMobileNav={!isReadOnly}
       hideLogout={true}
+      hideFooter={isStreamMode}
+      hideHeader={isStreamMode}
       contentTopPadding="pt-24"
     >
       <main
         className={`neo-brutalist-editor flex-1 overflow-x-clip ${isReadOnly ? "px-4 lg:px-8 pb-4 lg:pb-8 pt-1" : "p-4 lg:p-8 pb-24 lg:pb-8"}`}
         data-theme={theme}
       >
-        {breadcrumbItems && (
+        {/* Хлебные крошки — скрыты в стрим-режиме */}
+        {!isStreamMode && breadcrumbItems && (
           <div className="mb-4">
-            <Breadcrumbs items={breadcrumbItems} />
+            <Breadcrumbs items={breadcrumbItems} theme={["clay", "soft", "vintage", "y2k"].includes(theme) ? "light" : "dark"} />
           </div>
         )}
-        {/* Верхняя секция: название */}
-        <div className="min-h-0 min-w-0">
-          <EditorHeader {...headerProps} />
-        </div>
+        {/* Заголовок — скрыт в стрим-режиме */}
+        {!isStreamMode && (
+          <div className="min-h-0 min-w-0">
+            <EditorHeader {...headerProps} />
+          </div>
+        )}
 
-        {/* Панель обложки и темы с триггером под темами */}
-        {!isReadOnly && (
+        {/* Панель обложки и темы — скрыта в стрим-режиме */}
+        {!isReadOnly && !isStreamMode && (
           <div className="space-y-3">
             <div
               className={`overflow-hidden transition-[grid-template-rows] duration-300 ease-in-out ${

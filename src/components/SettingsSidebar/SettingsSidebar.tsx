@@ -14,6 +14,7 @@ import {
   Italic,
   CaseSensitive,
   Palette,
+  Monitor,
 } from "lucide-react";
 import type { Tier } from "@/types";
 import { Switch } from "@/ui/Switch";
@@ -63,6 +64,9 @@ interface SettingsSidebarProps {
   lastSaved?: Date | null;
   hasUnsavedChanges?: boolean;
   onSave?: () => void;
+  /** Режим стрим */
+  isStreamMode?: boolean;
+  onToggleStreamMode?: () => void;
 }
 
 export const SettingsSidebar = memo(({
@@ -82,6 +86,8 @@ export const SettingsSidebar = memo(({
   lastSaved,
   hasUnsavedChanges,
   onSave,
+  isStreamMode = false,
+  onToggleStreamMode,
 }: SettingsSidebarProps) => {
   const height = activeTier?.height || 130;
   const labelSize = activeTier?.labelSize || "sm";
@@ -303,6 +309,19 @@ export const SettingsSidebar = memo(({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Режим стрим */}
+      {onToggleStreamMode && (
+        <div className="border-t border-(--theme-accent-primary)/10 pt-4">
+          <button
+            onClick={onToggleStreamMode}
+            className={isStreamMode ? primaryActionButtonClass : secondaryActionButtonClass}
+          >
+            <Monitor size={16} className={actionIconClass} />
+            {isStreamMode ? "Выйти из стрима" : "Режим стрим"}
+          </button>
         </div>
       )}
 

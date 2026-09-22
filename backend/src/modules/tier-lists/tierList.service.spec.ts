@@ -1302,7 +1302,12 @@ describe("tierList.service", () => {
 
       // Моки для книг
       (prisma.book.create as any).mockResolvedValue({ id: 200 });
-      (prisma.book.findMany as any).mockResolvedValue([]);
+      (prisma.book.findMany as any).mockImplementation((args: any) => {
+        if (args.where?.id?.in) {
+          return Promise.resolve(args.where.id.in.map((id: number) => ({ id })));
+        }
+        return Promise.resolve([]);
+      });
 
       // Моки для размещений (Фаза 2.4: update/upsert вместо delete/recreate)
       (prisma.bookPlacement.findMany as any).mockResolvedValue([]);
@@ -1395,7 +1400,12 @@ describe("tierList.service", () => {
       (prisma.bookPlacement.createMany as any).mockResolvedValue({ count: 1 });
       (prisma.bookPlacement.deleteMany as any).mockResolvedValue({ count: 0 });
       (prisma.tierList.update as any).mockResolvedValue({});
-      (prisma.book.findMany as any).mockResolvedValue([]);
+      (prisma.book.findMany as any).mockImplementation((args: any) => {
+        if (args.where?.id?.in) {
+          return Promise.resolve(args.where.id.in.map((id: number) => ({ id })));
+        }
+        return Promise.resolve([]);
+      });
 
       const payload = {
         placements: [{ bookId: 10, tierId: null, rank: 0 }],

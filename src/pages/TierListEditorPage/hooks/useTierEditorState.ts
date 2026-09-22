@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { Book, Tier } from '@/types';
 
 export interface TierEditorState {
@@ -37,9 +37,23 @@ export interface TierEditorState {
   setBookToEdit: React.Dispatch<React.SetStateAction<Book | null>>;
   bookToView: Book | null;
   setBookToView: React.Dispatch<React.SetStateAction<Book | null>>;
+
+  // Режим стрим
+  isStreamMode: boolean;
+  setIsStreamMode: (value: boolean) => void;
 }
 
-export function useTierEditorState(): TierEditorState {
+const STREAM_MODE_KEY_PREFIX = "tier-editor-stream-mode-";
+
+function readStreamMode(tierListId: string): boolean {
+  try {
+    return localStorage.getItem(`${STREAM_MODE_KEY_PREFIX}${tierListId}`) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function useTierEditorState(tierListId?: string): TierEditorState {
   // Состояние для отслеживания несохраненных изменений
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [deletedTierIds, setDeletedTierIds] = useState<number[]>([]);
@@ -60,6 +74,30 @@ export function useTierEditorState(): TierEditorState {
   const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
   const [bookToEdit, setBookToEdit] = useState<Book | null>(null);
   const [bookToView, setBookToView] = useState<Book | null>(null);
+
+  // Режим стрим: состояние + localStorage (инициализатор читает при первом рендере;
+  // при навигации между тир-листами компонент ремаунтится и инициализатор запускается заново)
+  const [isStreamMode, setIsStreamModeRaw] = useState(() =>
+    tierListId ? readStreamMode(tierListId) : false,
+  );
+
+  const setIsStreamMode = useCallback(
+    (value: boolean) => {
+      setIsStreamModeRaw(value);
+      if (tierListId) {
+        try {
+          if (value) {
+            localStorage.setItem(`${STREAM_MODE_KEY_PREFIX}${tierListId}`, "true");
+          } else {
+            localStorage.removeItem(`${STREAM_MODE_KEY_PREFIX}${tierListId}`);
+          }
+        } catch {
+          // localStorage недоступен — игнорируем
+        }
+      }
+    },
+    [tierListId],
+  );
 
   return {
     // Состояния для отслеживания несохраненных изменений
@@ -97,5 +135,9 @@ export function useTierEditorState(): TierEditorState {
     setBookToEdit,
     bookToView,
     setBookToView,
+
+    // Режим стрим
+    isStreamMode,
+    setIsStreamMode,
   };
 }

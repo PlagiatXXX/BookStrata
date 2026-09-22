@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { apiTrackEvent } from "@/lib/analyticsApi";
 import { pushDataLayerEvent } from "@/lib/gtm";
+import { useAuth } from "@/hooks/useAuthContext";
 
 // Минимальный интервал между page_view для одного и того же пути (сек)
 const PAGE_VIEW_DEBOUNCE_MS = 10_000;
@@ -47,6 +48,7 @@ function setupAnalyticsClickListener() {
 
 export function useAnalyticsTracker() {
   const { pathname } = useLocation();
+  const { isLoading } = useAuth();
   const lastTrackedRef = useRef<{ path: string; time: number } | null>(null);
   const prevPathnameRef = useRef(pathname);
 
@@ -56,8 +58,14 @@ export function useAnalyticsTracker() {
   }, []);
 
   // Трекинг просмотра страницы — для всех пользователей,
-  // не чаще раза в 10 секунд для одного и того же пути
+  // не чаще раза в 10 секунд для одного и того же пути.
+  // Ждём завершения restoreSession (isLoading=false), чтобы токен был
+  // доступен и userId попадал в событие (иначе write-side фильтр
+  // ANALYTICS_EXCLUDE_USERNAMES не работает для залогиненных).
   useEffect(() => {
+    // Не отправляем, пока auth не разрешился — иначе токен ещё не в памяти
+    if (isLoading) return;
+
     const now = Date.now();
     const last = lastTrackedRef.current;
     const isFirstLoad = prevPathnameRef.current === pathname;
@@ -102,5 +110,5 @@ export function useAnalyticsTracker() {
         // Тихий fallback
       }
     }
-  }, [pathname]);
+  }, [pathname, isLoading]);
 }

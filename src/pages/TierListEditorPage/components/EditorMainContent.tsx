@@ -12,6 +12,8 @@ interface EditorMainContentProps {
   isReadOnly: boolean;
   /** Демо-режим: гость без авторизации создаёт тир-лист — показываем панель настроек сразу */
   isDemo?: boolean;
+  /** Режим стрим: скрываем сайдбар, тулбар, кнопки добавления, заголовки */
+  isStreamMode?: boolean;
   hideUnranked?: boolean;
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   onboardingStep?: 0 | 1 | 2 | 3 | null;
@@ -41,6 +43,7 @@ interface EditorMainContentProps {
   lastSaved?: Date | null;
   hasUnsavedChanges?: boolean;
   onSave?: () => void;
+  onToggleStreamMode?: () => void;
 }
 
 export const EditorMainContent = memo(
@@ -48,6 +51,7 @@ export const EditorMainContent = memo(
     listData,
     isReadOnly,
     isDemo = false,
+    isStreamMode = false,
     hideUnranked = false,
     tierGridRef,
     onboardingStep,
@@ -74,6 +78,7 @@ export const EditorMainContent = memo(
     lastSaved,
     hasUnsavedChanges,
     onSave,
+    onToggleStreamMode,
   }: EditorMainContentProps) => {
     // Классы для подсветки областей во время онбординга
     const tierGridHighlight =
@@ -171,12 +176,12 @@ export const EditorMainContent = memo(
               <TierGrid
                 ref={tierGridRef}
                 listData={listData}
-                onDeleteBook={isReadOnly ? undefined : onDeleteBook}
-                onEditBook={isReadOnly ? undefined : onEditBook}
-                onViewBook={onViewBook}
+                onDeleteBook={isReadOnly || isStreamMode ? undefined : onDeleteBook}
+                onEditBook={isReadOnly || isStreamMode ? undefined : onEditBook}
+                onViewBook={isStreamMode ? undefined : onViewBook}
                 linkToBook={isReadOnly}
                 activeTierId={activeTierId}
-                onAddRow={isReadOnly ? undefined : handleAddRow}
+                onAddRow={isReadOnly || isStreamMode ? undefined : handleAddRow}
                 onChangeTierColor={isReadOnly ? undefined : handleChangeTierColor}
                 onRenameTier={isReadOnly ? undefined : handleRenameTier}
                 onDeleteTier={isReadOnly ? undefined : handleDeleteTier}
@@ -189,16 +194,18 @@ export const EditorMainContent = memo(
                 <UnrankedItems
                   books={unrankedBooks}
                   booksCount={totalBooksCount}
-                  onDeleteBook={isReadOnly ? undefined : onDeleteBook}
-                  onEditBook={isReadOnly ? undefined : onEditBook}
-                  onViewBook={onViewBook}
+                  onDeleteBook={isReadOnly || isStreamMode ? undefined : onDeleteBook}
+                  onEditBook={isReadOnly || isStreamMode ? undefined : onEditBook}
+                  onViewBook={isStreamMode ? undefined : onViewBook}
                   linkToBook={isReadOnly}
+                  hideHeader={isStreamMode}
                 />
               </div>
             )}
           </div>
 
-          {!isReadOnly && (
+          {/* Боковая панель настроек — скрыта в стрим-режиме */}
+          {!isReadOnly && !isStreamMode && (
             <div className="hidden lg:flex sticky top-24 self-start shrink-0">
               <div
                 data-testid="sidebar-transition-wrapper"
@@ -227,6 +234,8 @@ export const EditorMainContent = memo(
                     lastSaved={lastSaved}
                     hasUnsavedChanges={hasUnsavedChanges}
                     onSave={onSave}
+                    isStreamMode={isStreamMode}
+                    onToggleStreamMode={onToggleStreamMode}
                   />
                 </div>
               </div>
@@ -262,7 +271,8 @@ export const EditorMainContent = memo(
           )}
         </div>
 
-        {!isReadOnly && (
+        {/* Мобильный тулбар — скрыт в стрим-режиме */}
+        {!isReadOnly && !isStreamMode && (
           <MobileToolbar
             onSave={() => onSave?.()}
             saveStatus={saveStatus ?? "idle"}

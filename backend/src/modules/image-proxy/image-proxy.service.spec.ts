@@ -108,10 +108,10 @@ describe("ImageProxy getWebP", () => {
       80,
     );
 
-    // SSRF-фикс: редиректы запрещены (allowlist обходится через 3xx на private IP)
+    // SSRF-фикс: allowRedirects=true для covers.openlibrary.org (302)
     expect(fetchMock).toHaveBeenCalledWith(
       "https://cdn.litres.ru/pub/c/cover_415/58887294",
-      expect.objectContaining({ redirect: "error" }),
+      expect.objectContaining({ redirect: "follow" }),
     );
     // Пустой content-type → конвертация прошла, buffer отдан
     expect(buffer.length).toBeGreaterThan(0);

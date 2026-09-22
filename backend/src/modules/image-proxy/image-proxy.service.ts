@@ -187,6 +187,7 @@ async function convertToWebP(
 
   const { buffer: inputBuffer, contentType } = await safeFetchToBuffer(url, {
     allowHttp: true, // часть внешних CDN (litres и др.) отдаёт http
+    allowRedirects: true, // covers.openlibrary.org и др. отвечают 302-редиректом
     timeoutMs: 15_000,
     maxBytes: 20 * 1024 * 1024,
     headers: {

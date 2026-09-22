@@ -13,6 +13,7 @@ import { EditorModals } from "./components/EditorModals";
 import { EditorLayout } from "./components/EditorLayout";
 import { EditorMainContent } from "./components/EditorMainContent";
 import { EditorScreens } from "./components/EditorScreens";
+import { StreamModeExitButton } from "./components/StreamModeExitButton";
 import { useTierEditorActions } from "./hooks/useTierEditorActions";
 import { useTierEditorState } from "./hooks/useTierEditorState";
 import { useTierEditorQueries } from "./hooks/useTierEditorQueries";
@@ -105,7 +106,11 @@ const TierListEditorContent = () => {
     setBookToEdit,
     bookToView,
     setBookToView,
-  } = useTierEditorState();
+
+    // Режим стрим
+    isStreamMode,
+    setIsStreamMode,
+  } = useTierEditorState(tierListId);
 
   // Получаем данные и настройки пользователя
   const { user: authUser, isAuthenticated } = useAuth();
@@ -915,6 +920,7 @@ const TierListEditorContent = () => {
           headerProps={headerProps}
           onMyRatingsClick={handleMyRatingsClick}
           isReadOnly={isReadOnly}
+          isStreamMode={isStreamMode}
           tierListId={tierListId}
           coverImageUrl={displayCoverImageUrl}
           hideCover={fromBattle}
@@ -929,24 +935,30 @@ const TierListEditorContent = () => {
             { label: apiData?.title || "Тир-лист" },
           ]}
         >
-          <TasteMatchBanner
-            apiData={apiData}
-            isReadOnly={isReadOnly}
-            authorUsername={apiData?.user?.username}
-          />
+          {/* TasteMatchBanner и AI-промпт — скрыты в стрим-режиме */}
+          {!isStreamMode && (
+            <>
+              <TasteMatchBanner
+                apiData={apiData}
+                isReadOnly={isReadOnly}
+                authorUsername={apiData?.user?.username}
+              />
 
-          {/* Приветственный промпт AI — один раз при добавлении 3+ книг */}
-          {!isReadOnly && Object.keys(listData.books).length >= 3 && (
-            <AiRecommendationPrompt
-              totalBooks={Object.keys(listData.books).length}
-              onOpenAiLibrarian={handleAiLibrarianOpen}
-            />
+              {/* Приветственный промпт AI — один раз при добавлении 3+ книг */}
+              {!isReadOnly && Object.keys(listData.books).length >= 3 && (
+                <AiRecommendationPrompt
+                  totalBooks={Object.keys(listData.books).length}
+                  onOpenAiLibrarian={handleAiLibrarianOpen}
+                />
+              )}
+            </>
           )}
 
           <EditorMainContent
             listData={listData}
             isReadOnly={isReadOnly}
             isDemo={isDemo}
+            isStreamMode={isStreamMode}
             tierGridRef={tierGridRef}
             hideUnranked={fromBattle}
             onDeleteBook={setBookToDelete}
@@ -977,11 +989,19 @@ const TierListEditorContent = () => {
             hasUnsavedChanges={hasUnsavedChanges}
             onSave={handleSaveOrRegister}
             onboardingStep={onboardingStep}
+            onToggleStreamMode={() =>
+              setIsStreamMode(!isStreamMode)
+            }
           />
 
           {/* Модалки внутри main[data-theme] — наследуют токены темы */}
           {modals}
         </EditorLayout>
+
+        {/* Режим стрим: кнопка выхода в углу экрана */}
+        {isStreamMode && (
+          <StreamModeExitButton onExit={() => setIsStreamMode(false)} />
+        )}
 
         {!isReadOnly && (
           <AiLibrarianModal
@@ -991,8 +1011,8 @@ const TierListEditorContent = () => {
           />
         )}
 
-        {/* Плавающий виджет Букстража — заменяет FeedbackButton на странице редактора */}
-        {!isReadOnly && (
+          {/* Плавающий виджет Букстража — скрыт в стрим-режиме */}
+          {!isReadOnly && !isStreamMode && (
           <div className="fixed right-6 z-50 bottom-20 md:bottom-6">
             <AiLibrarianWidget onClick={handleAiLibrarianOpen} />
           </div>

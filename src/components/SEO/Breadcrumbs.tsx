@@ -10,37 +10,37 @@ interface BreadcrumbsProps {
   theme?: "dark" | "light";
 }
 
+/**
+ * Inline-стили гарантируют видимость кроумбов поверх CSS-переменных темы
+ * (.neo-brutalist-editor задаёт color: var(--theme-text), что может
+ * перебивать Tailwind-утилиты из-за порядка слоёв).
+ */
 export function Breadcrumbs({ items, theme = "dark" }: BreadcrumbsProps) {
   if (!items.length) return null;
 
-  const linkColor = theme === "light"
-    ? "text-slate-500 hover:text-orange-600"
-    : "text-(--ink-2) hover:text-(--accent-main)";
-
-  const activeColor = theme === "light"
-    ? "text-slate-900 font-medium"
-    : "text-(--ink-0) font-medium";
-
-  const separatorColor = theme === "light"
-    ? "text-slate-300"
-    : "text-(--ink-2)";
-
-  const separatorEl = (
-    <span className={`mx-2 select-none ${separatorColor}`} aria-hidden="true">/</span>
-  );
+  const isLight = theme === "light";
 
   return (
     <nav aria-label="Хлебные крошки" className="mb-6">
-      <ol className={`flex items-center flex-wrap text-xs ${theme === "light" ? "text-slate-500" : "text-(--ink-2)"}`}>
+      <ol
+        className="flex items-center flex-wrap gap-y-1 text-xs"
+        style={{ color: isLight ? "#64748b" : "var(--ink-2)" }}
+      >
         {items.map((item, i) => (
           <li key={i} className="flex items-center">
-            {i > 0 && separatorEl}
+            {i > 0 && (
+              <span className="mx-2 select-none" style={{ color: isLight ? "#cbd5e1" : "var(--ink-2)" }} aria-hidden="true">/</span>
+            )}
             {item.href ? (
-              <Link to={item.href} className={`transition-colors ${linkColor}`}>
+              <Link
+                to={item.href}
+                className="transition-colors hover:!text-orange-600"
+                style={{ color: isLight ? "#64748b" : "var(--ink-2)" }}
+              >
                 {item.label}
               </Link>
             ) : (
-              <span className={activeColor}>{item.label}</span>
+              <span className="font-medium" style={{ color: isLight ? "#0f172a" : "var(--ink-0)" }}>{item.label}</span>
             )}
           </li>
         ))}

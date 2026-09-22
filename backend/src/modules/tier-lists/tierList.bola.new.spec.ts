@@ -99,6 +99,14 @@ describe("Tier List BOLA Security Tests - New", () => {
       const myTierListId = "1";
       const globalBookId = 777;
 
+      // Ghost-book фильтр: book.findMany должен вернуть существующую книгу
+      (prisma.book.findMany as any).mockImplementation((args: any) => {
+        if (args.where?.id?.in) {
+          return Promise.resolve(args.where.id.in.map((id: number) => ({ id })));
+        }
+        return Promise.resolve([]);
+      });
+
       const payload = {
         placements: [
           { bookId: globalBookId, tierId: null, rank: 0 }

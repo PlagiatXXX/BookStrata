@@ -11,22 +11,15 @@ import { restoreBookReturnScroll } from "@/utils/bookNavigation";
 import { AppProviders } from "./AppProviders";
 import "../styles/sileo-custom.css";
 
-function AppShell() {
+/** Внутренний контент, рендерится внутри AppProviders — хуки зависящие от AuthProvider безопасны */
+function AppShellInner() {
   const location = useLocation();
   const { pathname } = location;
   const { newAchievement, clearNotification } = useAchievementNotifications();
   useAnalyticsTracker();
 
-  useEffect(() => {
-    const path = `${location.pathname}${location.search}`;
-    const frame = requestAnimationFrame(() => {
-      restoreBookReturnScroll(path);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [location.key, location.pathname, location.search]);
-
   return (
-    <AppProviders>
+    <>
       <Suspense
         fallback={
           <div className="min-h-screen flex items-center justify-center">
@@ -51,6 +44,24 @@ function AppShell() {
       {!pathname.match(/^\/tier-lists\/[^/]+\/?$/) && (
         <FeedbackButton raised={false} withNavMargin={pathname !== "/"} />
       )}
+    </>
+  );
+}
+
+function AppShell() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const path = `${pathname}${window.location.search}`;
+    const frame = requestAnimationFrame(() => {
+      restoreBookReturnScroll(path);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
+
+  return (
+    <AppProviders>
+      <AppShellInner />
     </AppProviders>
   );
 }

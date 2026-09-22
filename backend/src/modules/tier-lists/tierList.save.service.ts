@@ -4,6 +4,9 @@ import { sanitize } from "../../lib/sanitizer.js";
 import { createAuthorService, type AuthorResult } from "../authors/authors.service.js";
 import { matchBook } from "../books/bookMatching.service.js";
 import { findExistingUserBook } from "./tierList.books.service.js";
+import { createLogger } from "../../lib/logger.js";
+
+const logger = createLogger("TierListSave", { color: "magenta" });
 
 const authorService = createAuthorService(prisma);
 
@@ -196,14 +199,22 @@ export async function saveAll(
         ),
       );
 
-      // Исправление: Проверяем физическое существование книг в глобальной базе
+      // Проверяем существование книг и фильтруем «призрачные» (удалённые из каталога)
+      let validBookIds = new Set(existingBookIds);
+      // Temp-книги, получившие реальные ID через bookReplacementMap, тоже валидны
+      for (const realId of bookReplacementMap.values()) {
+        validBookIds.add(parseInt(realId, 10));
+      }
       if (existingBookIds.length > 0) {
-        const existingBooksCount = await tx.book.count({
+        const existingBooks = await tx.book.findMany({
           where: { id: { in: existingBookIds } },
+          select: { id: true },
         });
-
-        if (existingBooksCount !== existingBookIds.length) {
-          throw new ValidationError("One or more books do not exist in the database");
+        const existingBookIdSet = new Set(existingBooks.map((b) => b.id));
+        const missingIds = existingBookIds.filter((id) => !existingBookIdSet.has(id));
+        if (missingIds.length > 0) {
+          logger.warn(`Призрачные книги в tier list ${realTierListId}: ${missingIds.join(", ")} — пропускаем`);
+          validBookIds = existingBookIdSet;
         }
       }
 
@@ -242,14 +253,7 @@ export async function saveAll(
           .map((b) => [b.tempId, sanitize(b.thoughts as string)]),
       );
 
-      const finalPlacements: Array<{
-        tierListId: string;
-        bookId: number;
-        tierId: number | null;
-        rank: number;
-        thoughts?: string | null;
-        coverImageUrl?: string | null;
-      }> = payload.placements.map((p) => {
+      const finalPlacements = payload.placements.map((p) => {
         let finalBookId: number;
         let isTempBook = false;
         if (typeof p.bookId === "string" && p.bookId.includes("-")) {
@@ -281,6 +285,13 @@ export async function saveAll(
             ? { thoughts: thoughtsByTempId.get(p.bookId as string) }
             : {}),
         };
+      }).filter((p) => {
+        // Пропускаем призрачные книги (удалены из каталога)
+        if (!validBookIds.has(p.bookId)) {
+          logger.warn(`Пропускаем placement с призрачной книгой bookId=${p.bookId} в tier list ${realTierListId}`);
+          return false;
+        }
+        return true;
       });
 
       // Единый каталог (19.08): placement на каталоговую (published) книгу

@@ -62,6 +62,13 @@ describe('tierList.service.saveAll', () => {
 
   it('should save all changes in a transaction', async () => {
     (prisma.bookPlacement.count as any).mockResolvedValue(1);
+    // Ghost-book фильтр: возвращаем все запрошенные ID; findExistingUserBook → []
+    (prisma.book.findMany as any).mockImplementation((args: any) => {
+      if (args.where?.id?.in) {
+        return Promise.resolve(args.where.id.in.map((id: number) => ({ id })));
+      }
+      return Promise.resolve([]);
+    });
     const payload = {
       tiers: {
         added: [{ tempId: 'tier-1', title: 'New Tier', color: '#ff0000', rank: 5 }],
@@ -145,6 +152,12 @@ describe('tierList.service.saveAll', () => {
     (prisma.bookPlacement.findMany as any).mockResolvedValue([
       { bookId: 200, thoughts: 'мои мысли', coverImageUrl: 'cov' },
     ]);
+    (prisma.book.findMany as any).mockImplementation((args: any) => {
+      if (args.where?.id?.in) {
+        return Promise.resolve(args.where.id.in.map((id: number) => ({ id })));
+      }
+      return Promise.resolve([]);
+    });
 
     const payload = {
       placements: [{ bookId: 200, tierId: null, rank: 0 }],

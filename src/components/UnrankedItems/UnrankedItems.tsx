@@ -15,10 +15,12 @@ interface UnrankedItemsProps {
   onViewBook?: (book: Book) => void;
   /** Фаза 5.3: published-книги становятся ссылками на /books/{slug} (read-only просмотр) */
   linkToBook?: boolean;
+  /** Скрыть заголовок «Книги без рейтинга» и счётчик (режим стрим) */
+  hideHeader?: boolean;
 }
 
 export const UnrankedItems = memo(
-  ({ books, booksCount, onDeleteBook, onEditBook, onViewBook, linkToBook = false }: UnrankedItemsProps) => {
+  ({ books, booksCount, onDeleteBook, onEditBook, onViewBook, linkToBook = false, hideHeader = false }: UnrankedItemsProps) => {
     const { over } = useDndContext();
     const { setNodeRef, isOver, active } = useDroppable({
       id: UNRANKED_AREA_ID,
@@ -40,11 +42,17 @@ export const UnrankedItems = memo(
           isBookDropTarget ? "nb-sidebar-drop-target" : ""
         }`}
       >
-        <div className="nb-section-header">
-          <h3 className="nb-label-md text-(--theme-accent-primary)">
-            Книги без рейтинга
-          </h3>
-        </div>
+        <span className="mb-1 block text-center text-[10px] font-semibold uppercase tracking-wider text-(--theme-text-muted)/40 select-none">
+          bookstrata.ru
+        </span>
+
+        {!hideHeader && (
+          <div className="nb-section-header">
+            <h3 className="nb-label-md text-(--theme-accent-primary)">
+              Книги без рейтинга
+            </h3>
+          </div>
+        )}
 
         <div className="p-4">
           <SortableContext
@@ -74,7 +82,7 @@ export const UnrankedItems = memo(
           </SortableContext>
 
           <div className="mt-8">
-            <BookCounter booksCount={displayBooksCount} />
+            {!hideHeader && <BookCounter booksCount={displayBooksCount} />}
           </div>
         </div>
       </div>

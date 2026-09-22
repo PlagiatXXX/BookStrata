@@ -20,6 +20,10 @@ interface DashboardLayoutProps {
   hideMobileNav?: boolean;
   /** Скрывает кнопку "Выйти" в хедере */
   hideLogout?: boolean;
+  /** Скрыть футер */
+  hideFooter?: boolean;
+  /** Скрыть хедер и отступ сверху */
+  hideHeader?: boolean;
   /** Вариант фона: "gradient" — сине-фиолетовый градиент (по умолчанию), "dark" — нейтральный тёмный для нео-бруталист страниц */
   bgVariant?: BgVariant;
   /** Переопределение отступа сверху для контента по отношению к фиксированному хедеру */
@@ -63,6 +67,8 @@ export function DashboardLayout({
   fullWidth = false,
   hideMobileNav = false,
   hideLogout = false,
+  hideFooter = false,
+  hideHeader = false,
   bgVariant = "gradient",
   contentTopPadding,
 }: DashboardLayoutProps) {
@@ -71,17 +77,19 @@ export function DashboardLayout({
       className="flex min-h-screen flex-col text-white"
       style={BG_STYLES[bgVariant]}
     >
-      <Header
-        onMyRatingsClick={onMyRatingsClick}
-        onSearch={onSearch}
-        searchValue={searchValue}
-        showTemplatesNav={showTemplatesNav}
-        showSearch={showSearch}
-        activeItem={activeItem}
-        hideLogout={hideLogout}
-      />
+      {!hideHeader && (
+        <Header
+          onMyRatingsClick={onMyRatingsClick}
+          onSearch={onSearch}
+          searchValue={searchValue}
+          showTemplatesNav={showTemplatesNav}
+          showSearch={showSearch}
+          activeItem={activeItem}
+          hideLogout={hideLogout}
+        />
+      )}
       <main
-        className={`grid flex-1 grid-cols-1 ${contentTopPadding || "pt-24"} overflow-x-hidden ${
+        className={`grid flex-1 grid-cols-1 ${hideHeader ? "pt-0" : contentTopPadding || "pt-24"} overflow-x-hidden ${
           hideMobileNav ? "" : "pb-16 md:pb-0"
         }`}
       >
@@ -90,7 +98,7 @@ export function DashboardLayout({
       {!hideMobileNav && (
         <MobileBottomNav showTemplatesNav={showTemplatesNav} />
       )}
-      <Footer />
+      {!hideFooter && <Footer />}
     </div>
   );
 }
