@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { RetryableImage } from "@/ui/RetryableImage";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 import type { TrendingBook } from "@/lib/bookApi";
 
 interface TrendingBooksCarouselProps {
@@ -67,7 +68,7 @@ export function TrendingBooksCarousel({ books }: TrendingBooksCarouselProps) {
             );
 
             return book.slug ? (
-              <Link key={book.id} to={`/books/${book.slug}`} className="snap-center">
+              <Link key={book.id} to={`/books/${book.slug}`} className="snap-center" onClick={rememberBookReturnScroll}>
                 {inner}
               </Link>
             ) : (
