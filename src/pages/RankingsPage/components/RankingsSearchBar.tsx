@@ -4,6 +4,7 @@ import { Search, X, Star, Loader2 } from "lucide-react";
 import { useCatalogSearch } from "@/hooks/useCatalogSearch";
 import { BookCoverPlaceholder } from "@/components/BookCoverPlaceholder/BookCoverPlaceholder";
 import { RetryableImage } from "@/ui/RetryableImage";
+import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 
 export function RankingsSearchBar() {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ export function RankingsSearchBar() {
   const handleSelect = useCallback(
     (slug: string | null) => {
       if (slug) {
+        rememberBookReturnScroll();
         navigate(`/books/${slug}`);
         setIsOpen(false);
         setQuery("");
