@@ -4,6 +4,7 @@
 
 import { Link } from "react-router-dom";
 import { useMatchedBooks } from "../hooks/useMatchedBooks";
+import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 import { matchLevel } from "../domain/matchLevel";
 import type { MoodParams } from "@/lib/matchApi";
 
@@ -58,6 +59,7 @@ export function BookRecommendations({ mood, excludeSlug }: BookRecommendationsPr
                 key={book.id}
                 to={`/books/${book.slug}`}
                 className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition-colors duration-200 hover:border-white/25 hover:bg-white/10"
+                onClick={rememberBookReturnScroll}
               >
                 <img
                   src={book.coverImageUrl}
