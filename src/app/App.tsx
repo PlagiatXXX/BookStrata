@@ -53,10 +53,16 @@ function AppShell() {
 
   useEffect(() => {
     const path = `${pathname}${window.location.search}`;
-    const frame = requestAnimationFrame(() => {
-      restoreBookReturnScroll(path);
-    });
-    return () => cancelAnimationFrame(frame);
+    // setTimeout(0) ensures this runs AFTER React Router's ScrollRestoration
+    // which processes popstate synchronously. Without it, our restore fires
+    // first and RR overwrites it with its own (wrong) position.
+    const timer = setTimeout(() => {
+      const frame = requestAnimationFrame(() => {
+        restoreBookReturnScroll(path);
+      });
+      return () => cancelAnimationFrame(frame);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   return (
