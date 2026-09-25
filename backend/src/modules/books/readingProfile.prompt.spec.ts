@@ -62,6 +62,12 @@ describe("buildReadingProfilePrompt", () => {
     expect(prompt).toContain('"source": "ai"');
   });
 
+  it("требует genreConfidence (точность жанра по тегам)", () => {
+    expect(prompt).toContain("genreConfidence");
+    expect(prompt).toContain("точность жанра");
+    expect(prompt).toContain('"genreConfidence": <число 0–1>');
+  });
+
   it("автор отсутствует — строка автора не ломает шаблон", () => {
     const noAuthor = buildReadingProfilePrompt({ ...BOOK, author: null });
     expect(noAuthor).toContain("«Баллада о падающих драконах»");
