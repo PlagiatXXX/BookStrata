@@ -22,6 +22,8 @@ import {
   addUserBadge,
   updateUserBadge,
   deleteUserBadge,
+  getGenrePreferences,
+  setGenrePreferences,
 } from "./users.service.js";
 
 import type { SocialLink, BadgeColor } from "./users.service.js";
@@ -100,6 +102,58 @@ export async function userRoutes(fastify: FastifyInstance) {
       }
       const stats = await getUserStats(userId);
       return reply.code(200).send(createSuccessResponse(stats));
+    },
+  );
+
+  // GET /api/users/me/genre-preferences — выбор жанров (7-я ось Book Match)
+  fastify.get(
+    "/me/genre-preferences",
+    { preHandler: [authMiddleware] },
+    async (request, reply) => {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
+      }
+      const genres = await getGenrePreferences(userId);
+      return reply.code(200).send(createSuccessResponse({ genres }));
+    },
+  );
+
+  // PUT /api/users/me/genre-preferences
+  fastify.put<{ Body: { genres: string[] } }>(
+    "/me/genre-preferences",
+    {
+      preHandler: [authMiddleware],
+      // Fastify ajv по умолчанию coerceTypes: "array" — скаляр превращается в
+      // массив до схемы, поэтому ловим не-массив здесь, до коэрсии
+      preValidation: async (request, reply) => {
+        if (!Array.isArray((request.body as { genres?: unknown } | undefined)?.genres)) {
+          return reply
+            .code(400)
+            .send(createApiError(ErrorCodes.VALIDATION_ERROR, "genres must be an array"));
+        }
+      },
+      schema: {
+        body: {
+          type: "object",
+          required: ["genres"],
+          properties: {
+            genres: {
+              type: "array",
+              maxItems: 19,
+              items: { type: "string", minLength: 1, maxLength: 40 },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const userId = (request as any).user?.userId;
+      if (!userId) {
+        return reply.code(401).send(createApiError(ErrorCodes.UNAUTHORIZED, "Unauthorized"));
+      }
+      const genres = await setGenrePreferences(userId, request.body.genres);
+      return reply.code(200).send(createSuccessResponse({ genres }));
     },
   );
 
