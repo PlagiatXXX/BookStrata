@@ -472,7 +472,7 @@ export function BookEditModal({
             value={profileInput}
             onChange={(e) => setProfileInput(e.target.value)}
             onBlur={handleProfileBlur}
-            placeholder={`{\n  "storyFocus": 25,      // 0=сюжет, 100=рефлексия\n  "emotionalWeight": 20, // 0=легко, 100=тяжело\n  "pace": 30,            // 0=быстро, 100=погружение\n  "darkness": 15,        // 0=светло, 100=мрачно\n  "scope": 40,           // 0=камерное, 100=эпическое\n  "complexity": 35,      // 0=доступное, 100=многослойное\n  "confidence": {\n    "storyFocus": 0.95,\n    "emotionalWeight": 0.95,\n    "pace": 0.9,\n    "darkness": 0.95,\n    "scope": 0.85,\n    "complexity": 0.8\n  },\n  "source": "ai" | "manual" | "calibrated"\n}`}
+            placeholder={`{\n  "storyFocus": 25,      // 0=сюжет, 100=рефлексия\n  "emotionalWeight": 20, // 0=легко, 100=тяжело\n  "pace": 30,            // 0=быстро, 100=погружение\n  "darkness": 15,        // 0=светло, 100=мрачно\n  "scope": 40,           // 0=камерное, 100=эпическое\n  "complexity": 35,      // 0=доступное, 100=многослойное\n  "genreConfidence": 0.9,   // 0–1 точность жанра\n  "confidence": {\n    "storyFocus": 0.95,\n    "emotionalWeight": 0.95,\n    "pace": 0.9,\n    "darkness": 0.95,\n    "scope": 0.85,\n    "complexity": 0.8\n  },\n  "source": "ai" | "manual" | "calibrated"\n}`}
             className={`w-full resize-y rounded-lg border bg-(--bg-0) px-3 py-2 font-mono text-xs text-(--ink-0) outline-none ${
               profileError
                 ? "border-red-500 text-red-200"
@@ -483,8 +483,8 @@ export function BookEditModal({
             <p className="mt-1 text-xs text-red-400">{profileError}</p>
           )}
           <p className="mt-1 text-xs text-(--ink-2)">
-            Reading DNA книги: 6 осей (0–100) + confidence (0–1) + source + analysis.
-            Используйте AI-промпт или заполните вручную. Пустое поле снимает профиль.
+            Reading DNA книги: 6 осей (0–100) + genreConfidence (0–1) + confidence (0–1) + source +
+            analysis. Используйте AI-промпт или заполните вручную. Пустое поле снимает профиль.
           </p>
         </div>
 

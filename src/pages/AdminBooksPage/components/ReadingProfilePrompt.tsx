@@ -13,7 +13,9 @@ interface ReadingProfilePromptProps {
   description: string | null;
 }
 
-function buildPrompt(book: {
+// Текст синхронизирован с backend/src/modules/books/readingProfile.prompt.ts при изменении — править оба!
+// eslint-disable-next-line react-refresh/only-export-components -- buildPrompt используется тестом, не компонент
+export function buildPrompt(book: {
   title: string;
   author: string | null;
   genre: string | null;
@@ -84,6 +86,14 @@ function buildPrompt(book: {
   60–80 — многослойное. Богатая стилистика, метафоры, интертекст.
   80–100 — высокая сложность. Модернистская форма, экспериментальный язык.
 
+07. genreConfidence — точность жанра (0–1)
+  Оцени, насколько заявленный жанр и теги подтверждают реальное
+  содержание книги (по аннотации и знаниям о сюжете).
+  0.9–1.0 — жанр точно подтверждается тегами и содержанием
+  0.7–0.8 — в целом верно, но есть жанровые примеси
+  0.5–0.6 — жанр формальный, книга на стыке жанров
+  < 0.5 — жанр вводит в заблуждение
+
 ---
 
 confidence (0–1):
@@ -112,6 +122,7 @@ confidence (0–1):
   "darkness": <целое число 0–100>,
   "scope": <целое число 0–100>,
   "complexity": <целое число 0–100>,
+  "genreConfidence": <число 0–1>,
   "confidence": {
     "storyFocus": <число 0–1>,
     "emotionalWeight": <число 0–1>,

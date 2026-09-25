@@ -33,6 +33,8 @@ export interface ReadingProfile {
   darkness: number;
   scope: number;
   complexity: number;
+  /** Точность жанра от ИИ (0–1); у старых профилей отсутствует → 0.5. */
+  genreConfidence?: number;
   confidence: {
     storyFocus: number;
     emotionalWeight: number;
