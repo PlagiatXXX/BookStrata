@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { BookMatchSlider } from "./BookMatchSlider";
 import { BookMatchResult } from "./BookMatchResult";
 import { BookRecommendations } from "./BookRecommendations";
-import type { MatchAxis, ReadingProfile } from "../domain/types";
+import type { MatchAxis, SliderAxis, ReadingProfile } from "../domain/types";
 import { matchScore } from "../domain/matchScore";
 import { matchLevel } from "../domain/matchLevel";
 import { explainMatch } from "../domain/explainMatch";
@@ -19,7 +19,7 @@ interface BookMatchProps {
   bookSlug?: string;
 }
 
-const AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
+const AXES: SliderAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
 
 export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
   // Mood персистентен: init из localStorage, изменения перезаписывают,

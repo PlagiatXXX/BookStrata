@@ -1,11 +1,11 @@
 // src/features/book-match/domain/explainMatch.ts
 // Explain Match — детерминированное объяснение совпадения/расхождения по осям.
 
-import type { ReadingProfile, UserMood, MatchAxis, AxisDiff } from "./types";
+import type { ReadingProfile, UserMood, SliderAxis, AxisDiff } from "./types";
 import { AXIS_LABELS } from "./types";
 
 /** Все оси совместимости. */
-const ALL_AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
+const ALL_AXES: SliderAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
 
 /** Пороговые значения для классификации расхождений. */
 const DIFF_THRESHOLDS = {
@@ -17,10 +17,10 @@ const DIFF_THRESHOLDS = {
 } as const;
 
 /** Описание направления расхождения. */
-function describeDirection(axis: MatchAxis, diff: number): string {
+function describeDirection(axis: SliderAxis, diff: number): string {
   const direction = diff > 0 ? "right" : "left";
 
-  const axisDir: Record<MatchAxis, { right: string; left: string }> = {
+  const axisDir: Record<SliderAxis, { right: string; left: string }> = {
     storyFocus:      { right: "более рефлексивная", left: "более сюжетная" },
     emotionalWeight: { right: "тяжелее", left: "легче" },
     pace:            { right: "медленнее", left: "быстрее" },
