@@ -172,8 +172,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
 
       const books = await getMatchedBooks(
         { storyFocus, emotionalWeight, pace, darkness },
-        limit,
-        exclude,
+        { limit, excludeSlug: exclude },
       );
       return reply.send(createSuccessResponse({ books }));
     },
