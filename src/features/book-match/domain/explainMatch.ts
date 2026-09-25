@@ -56,7 +56,7 @@ export interface ExplainResult {
  * Генерирует детерминированное объяснение совпадения.
  * Не использует LLM — только math + правила.
  */
-export function explainMatch(user: UserMood, book: ReadingProfile): ExplainResult {
+export function explainMatch(user: UserMood, book: ReadingProfile, genreSim?: number): ExplainResult {
   const diffs: AxisDiff[] = [];
 
   for (const axis of ALL_AXES) {
@@ -81,8 +81,34 @@ export function explainMatch(user: UserMood, book: ReadingProfile): ExplainResul
 
   // Оставляем порядок осей стабильным (ALL_AXES), не сортируем по absDiff
 
-  const matches = diffs.filter((d) => d.absDiff < DIFF_THRESHOLDS.GOOD);
-  const mismatches = diffs.filter((d) => d.absDiff >= DIFF_THRESHOLDS.NOTICEABLE);
+  // Жанровая ось: userValue=100 (хочу попадание), bookValue=genreSim.
+  const genreDiff: AxisDiff | null =
+    genreSim !== undefined
+      ? {
+          axis: "genre",
+          label: "Жанр",
+          userValue: 100,
+          bookValue: genreSim,
+          diff: genreSim - 100,
+          absDiff: 100 - genreSim,
+          direction:
+            genreSim >= 70
+              ? "совпадает с твоими жанрами"
+              : genreSim >= 40
+                ? "частично совпадает с твоими жанрами"
+                : "не совпадает с твоими жанрами",
+        }
+      : null;
+  if (genreDiff) diffs.push(genreDiff);
+
+  // Пороги жанра отличаются от absDiff-порогов слайдер-осей (спека §4):
+  // genreSim ≥ 40 → matches, < 40 → mismatches.
+  const matches = diffs.filter((d) => d.axis !== "genre" && d.absDiff < DIFF_THRESHOLDS.GOOD);
+  const mismatches = diffs.filter((d) => d.axis !== "genre" && d.absDiff >= DIFF_THRESHOLDS.NOTICEABLE);
+  if (genreDiff) {
+    if (genreSim! >= 40) matches.push(genreDiff);
+    else mismatches.push(genreDiff);
+  }
 
   const averageDifference =
     diffs.length > 0

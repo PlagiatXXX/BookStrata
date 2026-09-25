@@ -94,8 +94,15 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
       {/* Объяснение — все оси в стабильном порядке */}
       <div className="space-y-2">
         {diffs.map((d) => {
-          const isGood = d.absDiff < 20;
-          const isBad = d.absDiff >= 40;
+          const isGenre = d.axis === "genre";
+          const isGood = isGenre ? d.bookValue >= 70 : d.absDiff < 20;
+          const isBad = isGenre ? d.bookValue < 40 : d.absDiff >= 40;
+          const genreText =
+            d.bookValue >= 70
+              ? "попадание"
+              : d.bookValue >= 40
+                ? "частично совпадает"
+                : "мимо твоих предпочтений";
           return (
             <div key={d.axis} className="flex items-start gap-2 text-sm">
               {isGood ? (
@@ -106,9 +113,19 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
                 <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               )}
               <span className="text-white/70">
-                <span className="text-white/90 font-medium">{d.label.split(" ↔ ")[0]}</span>
-                {" — "}
-                {describeDiff(d.absDiff, d.direction)}
+                {isGenre ? (
+                  <>
+                    <span className="text-white/90 font-medium">Жанр</span>
+                    {" — "}
+                    {genreText}
+                  </>
+                ) : (
+                  <>
+                    <span className="text-white/90 font-medium">{d.label.split(" ↔ ")[0]}</span>
+                    {" — "}
+                    {describeDiff(d.absDiff, d.direction)}
+                  </>
+                )}
               </span>
             </div>
           );
