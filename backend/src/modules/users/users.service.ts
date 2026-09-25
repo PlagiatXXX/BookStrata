@@ -7,6 +7,7 @@ import {
 import bcrypt from "bcryptjs";
 import { tierListRepository } from "../../repositories/index.js";
 import { getTitleEntryByXP } from "../achievements/achievements.service.js";
+import { isCategoryId, type CategoryId } from "../books/genreTaxonomy.js";
 
 // Типы для валидации
 export type UpdateAvatarInput = {
@@ -794,4 +795,25 @@ export async function updateUserBadge(
 
 export async function deleteUserBadge(badgeId: number): Promise<void> {
   await prisma.userBadge.delete({ where: { id: badgeId } });
+}
+
+/** Выбранные жанры пользователя (7-я ось Book Match). Мусор из БД отфильтрован. */
+export async function getGenrePreferences(userId: number): Promise<CategoryId[]> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { genrePreferences: true },
+  });
+  const raw = user?.genrePreferences;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((v): v is CategoryId => typeof v === "string" && isCategoryId(v));
+}
+
+/** Сохраняет выбор жанров: дедупликация + отсев неизвестных id. */
+export async function setGenrePreferences(userId: number, genres: string[]): Promise<CategoryId[]> {
+  const clean = [...new Set(genres.filter(isCategoryId))];
+  await prisma.user.update({
+    where: { id: userId },
+    data: { genrePreferences: clean },
+  });
+  return clean;
 }

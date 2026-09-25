@@ -1029,3 +1029,35 @@ describe("users.service", () => {
     });
   });
 });
+
+describe("getGenrePreferences / setGenrePreferences", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("get: null в БД → []", async () => {
+    const { prisma } = await import("../../lib/prisma.js");
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ genrePreferences: null } as never);
+    const { getGenrePreferences } = await import("./users.service.js");
+    await expect(getGenrePreferences(1)).resolves.toEqual([]);
+  });
+
+  it("get: мусор и неизвестные id отфильтровываются", async () => {
+    const { prisma } = await import("../../lib/prisma.js");
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      genrePreferences: ["fantasy", "мусор", 42, "horror"],
+    } as never);
+    const { getGenrePreferences } = await import("./users.service.js");
+    await expect(getGenrePreferences(1)).resolves.toEqual(["fantasy", "horror"]);
+  });
+
+  it("set: дедупликация и фильтр, запись чистого массива", async () => {
+    const { prisma } = await import("../../lib/prisma.js");
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+    const { setGenrePreferences } = await import("./users.service.js");
+    const result = await setGenrePreferences(1, ["fantasy", "fantasy", "мусор", "horror"]);
+    expect(result).toEqual(["fantasy", "horror"]);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { genrePreferences: ["fantasy", "horror"] },
+    });
+  });
+});
