@@ -28,6 +28,8 @@ function bookRow(id: number, slug: string, title: string, darkness: number) {
     title,
     author: "Автор",
     coverImageUrl: `/c/${slug}.jpg`,
+    genre: slug === "dark-book" ? "Ужасы" : "Фэнтези",
+    tags: [],
     readingProfile: { ...PROFILE, darkness },
   };
 }
@@ -80,5 +82,21 @@ describe("GET /api/books/match", () => {
     const res = await request(app.server).get("/api/books/match?pace=50");
     expect(res.statusCode).toBe(200);
     expect(res.body.data.books).toBeDefined();
+  });
+
+  it("genres-only: без слайдеров, но с genres — 200", async () => {
+    const res = await request(app.server).get("/api/books/match?genres=fantasy");
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.books).toBeDefined();
+  });
+
+  it("мусорные genre id игнорируются: только мусор → 400", async () => {
+    const res = await request(app.server).get("/api/books/match?genres=абракадабра");
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("слайдер + мусорный genres → 200 (слайдер спасает)", async () => {
+    const res = await request(app.server).get("/api/books/match?darkness=90&genres=мусор");
+    expect(res.statusCode).toBe(200);
   });
 });
