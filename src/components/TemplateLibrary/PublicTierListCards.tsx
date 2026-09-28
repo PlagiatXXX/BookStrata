@@ -4,6 +4,7 @@ import { Heart } from "lucide-react";
 import type { TierListShort } from "@/lib/tierListApi";
 import { booksCountText } from "@/lib/plural";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import { PrivateBadge } from "@/components/PrivateBadge";
 
 interface PublicTierListCardsProps {
   tierLists: TierListShort[];
@@ -80,6 +81,7 @@ const PublicTierListCards = memo(function PublicTierListCards({
                     tierList.user?.username ||
                     "Неизвестный автор"}
                 </p>
+                {!tierList.isPublic && <PrivateBadge />}
               </div>
               <div className="tpl-card__stats">
                 <span className="tpl-card__likes">

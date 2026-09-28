@@ -125,6 +125,29 @@ describe("UserProfilePage", () => {
     expect(screen.getByText("25%")).toBeDefined()
   })
 
+  it("показывает пометку «Приватный» для приватного тир-листа в списке", async () => {
+    vi.mocked(userApiModule.apiGetUserTierLists).mockResolvedValue({
+      data: [
+        {
+          id: "tl-private",
+          title: "Секретный список",
+          createdAt: "2024-06-01T00:00:00.000Z",
+          updatedAt: "2024-06-01T00:00:00.000Z",
+          isPublic: false,
+          likesCount: 0,
+          booksCount: 0,
+          user: { username: "fedor", avatarUrl: null },
+        },
+      ],
+      meta: { totalItems: 1, itemCount: 1, itemsPerPage: 10, totalPages: 1, currentPage: 1 },
+    })
+    renderWithRoute("2")
+
+    await waitFor(() => {
+      expect(screen.getByText("Приватный")).toBeDefined()
+    })
+  })
+
   it("должен показать профиль неавторизованному посетителю без совпадения вкусов", async () => {
     vi.mocked(authContextModule.useAuth).mockReturnValue({
       user: null,

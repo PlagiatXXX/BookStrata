@@ -5,6 +5,7 @@ import { forkTierList } from "@/lib/tierListApi";
 import { sileo } from "sileo";
 import { LikeButton } from "@/components/LikeButton";
 import { TierListCover } from "@/components/DashboardHeroSection/components/TierListCover";
+import { PrivateBadge } from "@/components/PrivateBadge";
 
 export interface EditorHeaderProps {
   title: string;
@@ -15,6 +16,8 @@ export interface EditorHeaderProps {
   ownerUserId?: number;
   currentUserId?: number;
   isReadOnly?: boolean;
+  /** Видимость списка — для пометки «Приватный» в режиме просмотра */
+  isPublic?: boolean;
   /** Демо-режим (без авторизации) */
   isDemo?: boolean;
   hideFork?: boolean;
@@ -34,6 +37,7 @@ export const EditorHeader = ({
   ownerUserId,
   currentUserId,
   isReadOnly = false,
+  isPublic,
   isDemo = false,
   hideFork = false,
   coverImageUrl,
@@ -136,6 +140,7 @@ export const EditorHeader = ({
 
             {/* Действия */}
             <div className="flex items-center gap-3 shrink-0">
+              {isPublic === false && <PrivateBadge />}
               {!hideFork && (
                 <button
                   onClick={handleFork}

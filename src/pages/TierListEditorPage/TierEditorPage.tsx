@@ -180,8 +180,9 @@ const TierListEditorContent = () => {
   const currentUserId = authUser?.userId;
   const isOwner = currentUserId === ownerUserId;
 
-  // Режим просмотра (если не владелец и список публичный)
-  const isReadOnly = !isOwner && isPublic;
+  // Режим просмотра (если не владелец). Чужой приватный список видит
+  // только staff (admin/moderator) — для него тоже read-only.
+  const isReadOnly = !isOwner && (isPublic || !!apiData);
 
   // ========== ДЕМО-РЕЖИМ (часть 1: инициализация) ==========
   const isDemo = tierListId === "new" && !isAuthenticated;
@@ -734,6 +735,7 @@ const TierListEditorContent = () => {
       ownerUserId,
       currentUserId,
       isReadOnly: true,
+      isPublic,
       hideFork: fromBattle,
       coverImageUrl: displayCoverImageUrl,
       booksCount: Object.keys(listData.books).length,

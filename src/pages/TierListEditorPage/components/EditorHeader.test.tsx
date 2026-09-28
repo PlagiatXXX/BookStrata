@@ -64,4 +64,16 @@ describe("EditorHeader (read-only)", () => {
     expect(h1).toHaveLength(1);
     expect(h1[0]).toHaveTextContent("Книги");
   });
+
+  it("приватный чужой список — пометка «Приватный»", () => {
+    render(<EditorHeader {...baseProps} isPublic={false} />);
+
+    expect(screen.getByTestId("private-badge")).toHaveTextContent("Приватный");
+  });
+
+  it("публичный список — без пометки «Приватный»", () => {
+    render(<EditorHeader {...baseProps} isPublic />);
+
+    expect(screen.queryByTestId("private-badge")).toBeNull();
+  });
 });

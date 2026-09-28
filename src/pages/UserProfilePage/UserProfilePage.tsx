@@ -22,6 +22,7 @@ import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { ModerationPanel } from "@/components/ModerationPanel/ModerationPanel";
 import { DonorBadge } from "@/components/DonorBadge/DonorBadge";
 import { RetryableImage } from "@/ui/RetryableImage";
+import { PrivateBadge } from "@/components/PrivateBadge";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import type { TierListShort } from "@/lib/tierListApi";
 import "./UserProfilePage.css";
@@ -353,6 +354,7 @@ export default function UserProfilePage() {
                       <h3 className="font-semibold text-[var(--p-on-surface)] mb-1 text-sm line-clamp-1">
                         {tl.title}
                       </h3>
+                      {!tl.isPublic && <PrivateBadge />}
                       <div className="flex items-center gap-3 mt-2 text-xs text-[var(--p-on-surface-variant)]">
                         <span className="flex items-center gap-1">
                           <Heart size={12} />
