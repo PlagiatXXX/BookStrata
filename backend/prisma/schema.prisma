@@ -697,10 +697,11 @@ model AnalyticsEvent {
 }
 
 model Author {
-  id        Int     @id @default(autoincrement())
-  name      String  @unique
-  slug      String? @unique
-  books     Book[]
+  id              Int     @id @default(autoincrement())
+  name            String  @unique
+  slug            String? @unique
+  seoDescription  String? @map("seo_description")
+  books           Book[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
