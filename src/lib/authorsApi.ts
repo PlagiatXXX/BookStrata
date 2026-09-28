@@ -12,6 +12,40 @@ export interface AuthorSearchResponse {
   authors: AuthorResult[]
 }
 
+export interface AuthorBookCard {
+  id: number
+  title: string
+  slug: string | null
+  coverImageUrl: string
+  publishedYear: number | null
+  genre: string | null
+  rating: number | null
+  ratingsCount: number
+}
+
+export interface AuthorPageData {
+  author: {
+    id: number
+    name: string
+    slug: string
+    seoDescription: string
+    bookCount: number
+    avgRating: number | null
+  }
+  books: AuthorBookCard[]
+  topBooks: AuthorBookCard[]
+  bottomBooks: AuthorBookCard[]
+  tierLists: { id: string; slug: string | null; title: string }[]
+}
+
+/**
+ * Данные страницы автора /authors/:slug (SEO-лендинг).
+ * 404 пробрасывается как ApiRequestError — страница рендерит NotFound.
+ */
+export function getAuthorBySlug(slug: string): Promise<AuthorPageData> {
+  return apiClient.get<AuthorPageData>(`/authors/${encodeURIComponent(slug)}`)
+}
+
 /**
  * Поиск авторов по подстроке (для автодополнения)
  */
