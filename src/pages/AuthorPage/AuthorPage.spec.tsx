@@ -1,7 +1,7 @@
 // src/pages/AuthorPage/AuthorPage.spec.tsx
 // Страница автора /authors/:slug: hero + SEO-текст + партнёрка + 404
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
@@ -114,5 +114,91 @@ describe("AuthorPage", () => {
     renderPage();
 
     expect(await screen.findByRole("heading", { name: "Страница не найдена" })).toBeInTheDocument();
+  });
+});
+
+describe("AuthorPage — каталог книг", () => {
+  const catalogFixture: AuthorPageData = {
+    ...fixture,
+    books: [
+      {
+        id: 1, title: "Слабая", slug: "slabaya", coverImageUrl: "/1.jpg",
+        publishedYear: 2001, genre: "Роман", rating: 6.0, ratingsCount: 12,
+      },
+      {
+        id: 2, title: "Сильная", slug: "silnaya", coverImageUrl: "/2.jpg",
+        publishedYear: 2000, genre: "Роман", rating: 9.0, ratingsCount: 20,
+      },
+      {
+        id: 3, title: "Средняя", slug: "srednyaya", coverImageUrl: "/3.jpg",
+        publishedYear: 1999, genre: null, rating: 7.5, ratingsCount: 8,
+      },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.mocked(getAuthorBySlug).mockReset();
+  });
+
+  const bookTitles = () =>
+    screen.getAllByRole("heading", { level: 3 }).map((n) => n.textContent);
+
+  it("по умолчанию — хронология по году издания", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue(catalogFixture);
+
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Лев Толстой" })).toBeInTheDocument();
+    expect(bookTitles()).toEqual(["Средняя", "Сильная", "Слабая"]);
+    expect(screen.getByText("1999")).toBeInTheDocument();
+    expect(screen.getByText("7.5 / 10")).toBeInTheDocument();
+  });
+
+  it("клик «По рейтингу» — сортировка по убыванию рейтинга", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue(catalogFixture);
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "По рейтингу" }));
+
+    expect(bookTitles()).toEqual(["Сильная", "Средняя", "Слабая"]);
+  });
+
+  it("возврат к «По порядку» — снова хронология", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue(catalogFixture);
+
+    renderPage();
+    fireEvent.click(await screen.findByRole("button", { name: "По рейтингу" }));
+    fireEvent.click(screen.getByRole("button", { name: "По порядку" }));
+
+    expect(bookTitles()).toEqual(["Средняя", "Сильная", "Слабая"]);
+  });
+
+  it("книга со slug — ссылка на страницу книги; без slug — не ссылка", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue({
+      ...catalogFixture,
+      books: [
+        { ...catalogFixture.books[0], slug: null },
+        catalogFixture.books[1],
+      ],
+    });
+
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Лев Толстой" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Сильная/ })).toHaveAttribute(
+      "href",
+      "/books/silnaya",
+    );
+    expect(screen.queryByRole("link", { name: /Слабая/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Слабая" })).toBeInTheDocument();
+  });
+
+  it("секция каталога есть, счётчик книг — в hero", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue(catalogFixture);
+
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Книги автора" })).toBeInTheDocument();
+    expect(screen.getByText(/12 книг/)).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 // src/pages/AuthorPage/AuthorPage.tsx
-// SEO-страница автора /authors/:slug — hero + SEO-текст + партнёрская CTA.
-// Каталог книг и блоки рейтингов добавляются задачами 8–9 плана.
-import { useParams } from "react-router-dom";
+// SEO-страница автора /authors/:slug — hero + каталог книг + рейтинги.
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { Spinner } from "@/components/Spinner";
@@ -11,6 +11,9 @@ import { Footer } from "@/ui/Footer";
 import { useAuthorPage } from "./hooks/useAuthorPage";
 import { buildAuthorSeoTitle, buildAuthorDescription } from "./seo";
 import { getAuthorAffiliateLink } from "@/lib/affiliateLinks";
+import type { AuthorBookCard } from "@/lib/authorsApi";
+
+type BookSort = "year" | "rating";
 
 /** Русские склонения: 1 книга / 2 книги / 5 книг */
 function pluralRu(n: number, forms: [string, string, string]): string {
@@ -21,9 +24,26 @@ function pluralRu(n: number, forms: [string, string, string]): string {
   return forms[2];
 }
 
+/** Хронология: по году издания (null — в конец), tie-break по названию */
+function byYear(a: AuthorBookCard, b: AuthorBookCard): number {
+  const ay = a.publishedYear ?? Number.POSITIVE_INFINITY;
+  const by = b.publishedYear ?? Number.POSITIVE_INFINITY;
+  if (ay !== by) return ay - by;
+  return a.title.localeCompare(b.title, "ru");
+}
+
+/** По рейтингу: по убыванию (null — в конец), tie-break по названию */
+function byRating(a: AuthorBookCard, b: AuthorBookCard): number {
+  const ar = a.rating ?? Number.NEGATIVE_INFINITY;
+  const br = b.rating ?? Number.NEGATIVE_INFINITY;
+  if (ar !== br) return br - ar;
+  return a.title.localeCompare(b.title, "ru");
+}
+
 export default function AuthorPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: page, isLoading, isError } = useAuthorPage(slug);
+  const [sort, setSort] = useState<BookSort>("year");
 
   if (isLoading) {
     return (
@@ -40,6 +60,7 @@ export default function AuthorPage() {
   const genres = Array.from(
     new Set(books.map((b) => b.genre).filter((g): g is string => Boolean(g))),
   ).join(", ");
+  const sorted = [...books].sort(sort === "year" ? byYear : byRating);
 
   return (
     <>
@@ -103,6 +124,88 @@ export default function AuthorPage() {
             </div>
 
             <p className="mt-3 text-xs text-[#0a0e1a]/50">{cta.disclaimer}</p>
+          </section>
+
+          {/* Каталог книг с переключателями сортировки */}
+          <section className="mt-10">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-2xl font-black text-[#f3efe6]">Книги автора</h2>
+
+              <div className="flex gap-2" role="group" aria-label="Сортировка книг">
+                <button
+                  type="button"
+                  onClick={() => setSort("year")}
+                  aria-pressed={sort === "year"}
+                  className={
+                    sort === "year"
+                      ? "nb-btn-primary px-4 py-2 text-sm"
+                      : "nb-btn-secondary px-4 py-2 text-sm"
+                  }
+                >
+                  По порядку
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSort("rating")}
+                  aria-pressed={sort === "rating"}
+                  className={
+                    sort === "rating"
+                      ? "nb-btn-primary px-4 py-2 text-sm"
+                      : "nb-btn-secondary px-4 py-2 text-sm"
+                  }
+                >
+                  По рейтингу
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {sorted.map((book) => {
+                const card = (
+                  <>
+                    <img
+                      src={book.coverImageUrl}
+                      alt={book.title}
+                      loading="lazy"
+                      className="aspect-[2/3] w-full rounded border-2 border-black object-cover"
+                    />
+                    <h3 className="mt-2 text-sm font-bold text-[#f3efe6]">
+                      {book.title}
+                    </h3>
+                    <div className="mt-1 text-xs text-[#f3efe6]/60">
+                      {[book.publishedYear, book.genre].filter(Boolean).join(" · ")}
+                    </div>
+                    {book.rating !== null && (
+                      <div className="mt-1 text-xs font-bold text-[#f3efe6]">
+                        {book.rating.toFixed(1)} / 10
+                        <span className="font-normal text-[#f3efe6]/50">
+                          {" "}
+                          · {book.ratingsCount}{" "}
+                          {pluralRu(book.ratingsCount, ["оценка", "оценки", "оценок"])}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                );
+
+                return book.slug ? (
+                  <Link
+                    key={book.id}
+                    to={`/books/${book.slug}`}
+                    className="neo-brutalist-card block border-2 border-black bg-[#141a2a] p-3 transition-transform hover:-translate-y-0.5"
+                  >
+                    {card}
+                  </Link>
+                ) : (
+                  <div
+                    key={book.id}
+                    className="neo-brutalist-card block border-2 border-black bg-[#141a2a] p-3"
+                  >
+                    {card}
+                  </div>
+                );
+              })}
+            </div>
           </section>
         </div>
       </div>
