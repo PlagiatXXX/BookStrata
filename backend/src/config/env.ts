@@ -41,6 +41,8 @@ const envSchema = z.object({
     .string()
     .default("https://api.neuraldeep.ru/v1"),
   CUSTOM_AI_API_KEY: z.string().default(""),
+  /** Запасной ключ того же провайдера — на случай исчерпания лимитов основного. */
+  CUSTOM_AI_API_KEY_2: z.string().default(""),
   CUSTOM_AI_MODEL: z.string().default("gpt-oss-120b"),
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_MODEL: z
