@@ -2,7 +2,7 @@
 // BookMatch — контейнер: заголовок + слайдеры + результат.
 // Слайдеры и результат живут одновременно.
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { BookMatchSlider } from "./BookMatchSlider";
 import { BookMatchResult } from "./BookMatchResult";
 import { BookRecommendations } from "./BookRecommendations";
@@ -11,6 +11,12 @@ import { matchScore } from "../domain/matchScore";
 import { matchLevel } from "../domain/matchLevel";
 import { explainMatch } from "../domain/explainMatch";
 import { useStoredMood } from "../hooks/useStoredMood";
+import { useAuth } from "@/hooks/useAuthContext";
+import {
+  useGenrePreferences,
+  useSetGenrePreferences,
+} from "@/hooks/useGenrePreferences";
+import { GENRE_CATEGORIES, type CategoryId } from "@/data/genre-taxonomy";
 
 interface BookMatchProps {
   book: ReadingProfile;
@@ -25,6 +31,21 @@ export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
   // Mood персистентен: init из localStorage, изменения перезаписывают,
   // сброс удаляет (см. useStoredMood)
   const { mood: userMood, updateMood, resetMood } = useStoredMood();
+
+  // 7-я ось: жанры профиля. Блок виден только залогиненным с выбранными
+  // жанрами; тумблер исключает их из расчёта на этот раз (не сохраняется).
+  const { isAuthenticated } = useAuth();
+  const { data: selectedGenres = [] } = useGenrePreferences();
+  const setPreferences = useSetGenrePreferences();
+  const [useGenresInMatch, setUseGenresInMatch] = useState(true);
+
+  const showGenreBlock = isAuthenticated && selectedGenres.length > 0;
+  const genresForMatch =
+    showGenreBlock && useGenresInMatch ? selectedGenres : undefined;
+
+  const removeGenre = (id: CategoryId) => {
+    setPreferences.mutate(selectedGenres.filter((g) => g !== id));
+  };
 
   const handleSliderChange = (axis: MatchAxis, value: number) => {
     updateMood({ ...userMood, [axis]: value });
@@ -102,8 +123,45 @@ export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
           </div>
         </div>
 
+        {/* Жанры профиля: чипы выбранных (клик снимает) + тумблер учёта */}
+        {showGenreBlock && (
+          <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                Мои жанры
+              </p>
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-white/60 select-none">
+                <input
+                  type="checkbox"
+                  checked={useGenresInMatch}
+                  onChange={(e) => setUseGenresInMatch(e.target.checked)}
+                  className="h-4 w-4 accent-(--bp-primary)"
+                />
+                Учитывать мои жанры
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedGenres.map((genre) => (
+                <button
+                  key={genre}
+                  type="button"
+                  onClick={() => removeGenre(genre)}
+                  className="rounded-full border border-(--bp-primary)/60 bg-(--bp-primary)/20 px-3 py-1 text-xs font-medium text-white transition-colors hover:border-(--bp-primary)"
+                  title="Убрать из предпочтений"
+                >
+                  {GENRE_CATEGORIES.find((c) => c.id === genre)?.label ?? genre}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Рекомендации под настроенное настроение (скрывается сам, если mood пуст) */}
-        <BookRecommendations mood={userMood} excludeSlug={bookSlug} />
+        <BookRecommendations
+          mood={userMood}
+          excludeSlug={bookSlug}
+          genres={genresForMatch}
+        />
       </div>
     </section>
   );

@@ -7,6 +7,7 @@ import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileActions } from "./components/ProfileActions";
 import { PasswordChangeForm } from "./components/PasswordChangeForm";
 import { StatsCards } from "./components/StatsCards";
+import { ProfileGenresSection } from "./components/ProfileGenresSection";
 import { useProfileActions } from "./hooks/useProfileActions";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useAuth } from "@/hooks/useAuthContext";
@@ -180,6 +181,8 @@ export default function ProfilePage() {
           )}
 
           <StatsCards stats={stats} />
+
+          <ProfileGenresSection />
 
           <AchievementsGrid
             achievements={achievements}

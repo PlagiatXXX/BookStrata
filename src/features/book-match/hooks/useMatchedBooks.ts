@@ -3,6 +3,7 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getMatchedBooks, matchedBooksKey, type MoodParams } from "@/lib/matchApi";
+import type { CategoryId } from "@/data/genre-taxonomy";
 
 const DEBOUNCE_MS = 400;
 const STALE_TIME = 5 * 60 * 1000;
@@ -14,7 +15,7 @@ const STALE_TIME = 5 * 60 * 1000;
  */
 export function useMatchedBooks(
   mood: MoodParams,
-  opts?: { limit?: number; excludeSlug?: string },
+  opts?: { limit?: number; excludeSlug?: string; genres?: CategoryId[] },
 ) {
   const limit = opts?.limit ?? 3;
   const debouncedMood = useDebounce(mood, DEBOUNCE_MS);
@@ -22,8 +23,8 @@ export function useMatchedBooks(
   const hasActiveAxis = Object.values(debouncedMood).some((v) => v !== undefined);
 
   return useQuery({
-    queryKey: matchedBooksKey(debouncedMood, limit, opts?.excludeSlug),
-    queryFn: () => getMatchedBooks(debouncedMood, limit, opts?.excludeSlug),
+    queryKey: matchedBooksKey(debouncedMood, limit, opts?.excludeSlug, opts?.genres),
+    queryFn: () => getMatchedBooks(debouncedMood, limit, opts?.excludeSlug, opts?.genres),
     enabled: hasActiveAxis,
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
