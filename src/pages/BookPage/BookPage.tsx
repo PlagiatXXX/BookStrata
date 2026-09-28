@@ -588,6 +588,8 @@ export default function BookPage() {
             book={book.readingProfile}
             bookTitle={book.title}
             bookSlug={book.slug ?? undefined}
+            bookGenre={book.genre}
+            bookTags={book.tags}
           />
         )}
 

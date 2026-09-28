@@ -73,12 +73,18 @@ const BOOK = {
   source: "ai" as const,
 };
 
-function renderUi(props: { bookSlug?: string } = {}) {
+function renderUi(props: { bookSlug?: string; bookGenre?: string | null; bookTags?: string[] } = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <BookMatch book={BOOK} bookTitle="Тест" bookSlug={props.bookSlug} />
+        <BookMatch
+          book={BOOK}
+          bookTitle="Тест"
+          bookSlug={props.bookSlug}
+          bookGenre={props.bookGenre}
+          bookTags={props.bookTags}
+        />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -151,17 +157,15 @@ describe("BookMatch — жанры профиля (7-я ось)", () => {
     expect(screen.getByTestId("recs").getAttribute("data-genres")).toBeNull();
   });
 
-  it("залогиненный видит выбранные чипы и тумблер, genres передаются по умолчанию", () => {
+  it("по умолчанию тумблер снят — genres не передаются в рекомендации", () => {
     genreState.genres = ["fantasy", "horror"];
     renderUi();
 
     expect(screen.getByText("Учитывать мои жанры")).toBeDefined();
     expect(screen.getByRole("button", { name: "Фэнтези" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Ужасы / Мистика" })).toBeDefined();
-    expect(screen.getByRole("checkbox")).toBeChecked();
-    expect(screen.getByTestId("recs").getAttribute("data-genres")).toBe(
-      JSON.stringify(["fantasy", "horror"]),
-    );
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+    expect(screen.getByTestId("recs").getAttribute("data-genres")).toBeNull();
   });
 
   it("клик по чипу снимает жанр (мутация с новым списком)", () => {
@@ -173,14 +177,34 @@ describe("BookMatch — жанры профиля (7-я ось)", () => {
     expect(genreState.mutate).toHaveBeenCalledWith([]);
   });
 
-  it("тумблер выкл — genres не передаются в рекомендации", () => {
+  it("включение тумблера передаёт genres в рекомендации", () => {
     genreState.genres = ["fantasy"];
     renderUi();
 
     fireEvent.click(screen.getByRole("checkbox"));
 
-    expect(screen.getByRole("checkbox")).not.toBeChecked();
-    expect(screen.getByTestId("recs").getAttribute("data-genres")).toBeNull();
+    expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(screen.getByTestId("recs").getAttribute("data-genres")).toBe(
+      JSON.stringify(["fantasy"]),
+    );
+  });
+
+  it("включённый флажок меняет процент совместимости (главная оценка учитывает жанры)", () => {
+    genreState.genres = ["fantasy"];
+    renderUi({ bookGenre: "Фэнтези", bookTags: [] });
+
+    const readScore = () =>
+      screen.getByText((_content, el) => /^\d+%$/.test(el?.textContent ?? ""))
+        .textContent;
+    const before = readScore();
+
+    // Флажок выкл по умолчанию → включаем: genreSim попадает в matchScore
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(readScore()).not.toBe(before);
+
+    // Выключаем — процент возвращается к исходному (ось деактивна)
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(readScore()).toBe(before);
   });
 
   it("без выбранных жанров блок не рендерится", () => {

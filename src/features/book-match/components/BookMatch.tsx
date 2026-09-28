@@ -8,6 +8,7 @@ import { BookMatchResult } from "./BookMatchResult";
 import { BookRecommendations } from "./BookRecommendations";
 import type { MatchAxis, SliderAxis, ReadingProfile } from "../domain/types";
 import { matchScore } from "../domain/matchScore";
+import { genreSimilarity } from "../domain/genreSimilarity";
 import { matchLevel } from "../domain/matchLevel";
 import { explainMatch } from "../domain/explainMatch";
 import { useStoredMood } from "../hooks/useStoredMood";
@@ -23,11 +24,14 @@ interface BookMatchProps {
   bookTitle: string;
   /** Slug текущей книги — исключить её из рекомендаций. */
   bookSlug?: string;
+  /** Жанр и теги книги — вход для 7-й оси (genreSimilarity). */
+  bookGenre?: string | null;
+  bookTags?: string[];
 }
 
 const AXES: SliderAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
 
-export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
+export function BookMatch({ book, bookTitle, bookSlug, bookGenre, bookTags }: BookMatchProps) {
   // Mood персистентен: init из localStorage, изменения перезаписывают,
   // сброс удаляет (см. useStoredMood)
   const { mood: userMood, updateMood, resetMood } = useStoredMood();
@@ -37,7 +41,7 @@ export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
   const { isAuthenticated } = useAuth();
   const { data: selectedGenres = [] } = useGenrePreferences();
   const setPreferences = useSetGenrePreferences();
-  const [useGenresInMatch, setUseGenresInMatch] = useState(true);
+  const [useGenresInMatch, setUseGenresInMatch] = useState(false);
 
   const showGenreBlock = isAuthenticated && selectedGenres.length > 0;
   const genresForMatch =
@@ -60,11 +64,29 @@ export function BookMatch({ book, bookTitle, bookSlug }: BookMatchProps) {
 
   const result = useMemo(() => {
     if (activeAxesCount === 0) return null;
-    const score = matchScore(userMood, book);
+    // 7-я ось: жанровая схожесть — только когда тумблер включён (и блок виден)
+    const genreSim =
+      showGenreBlock && useGenresInMatch
+        ? genreSimilarity(selectedGenres, {
+            genre: bookGenre ?? null,
+            tags: bookTags ?? [],
+            genreConfidence: book.genreConfidence,
+          })
+        : undefined;
+    const score = matchScore(userMood, book, genreSim);
     const level = matchLevel(score);
     const explanation = explainMatch(userMood, book);
     return { score, level, activeAxesCount, ...explanation };
-  }, [userMood, book, activeAxesCount]);
+  }, [
+    userMood,
+    book,
+    activeAxesCount,
+    showGenreBlock,
+    useGenresInMatch,
+    selectedGenres,
+    bookGenre,
+    bookTags,
+  ]);
 
   return (
     <section
