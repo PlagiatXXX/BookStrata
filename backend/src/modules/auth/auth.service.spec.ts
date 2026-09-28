@@ -363,6 +363,125 @@ describe("Auth Service", () => {
         "Нарушение правил",
       );
     });
+
+    describe("вход по email (когда username не совпал)", () => {
+      const emailUser = {
+        id: 2,
+        username: "bookish_quokka",
+        email: "alabama22036@gmail.com",
+        passwordHash: "",
+        role: { name: "user" },
+        suspendedUntil: null,
+        suspensionReason: null,
+      };
+
+      beforeEach(async () => {
+        (emailUser as any).passwordHash = await bcrypt.hash("password123", 10);
+      });
+
+      it("должен войти по email, если username-поиск ничего не нашёл", async () => {
+        (prisma.user.findFirst as any)
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(emailUser);
+
+        const result = await authService.login({
+          username: "alabama22036@gmail.com",
+          password: "password123",
+        });
+
+        expect(prisma.user.findFirst).toHaveBeenNthCalledWith(1, {
+          where: { username: { equals: "alabama22036@gmail.com", mode: "insensitive" } },
+          include: { role: true },
+        });
+        expect(prisma.user.findFirst).toHaveBeenNthCalledWith(2, {
+          where: { email: { equals: "alabama22036@gmail.com", mode: "insensitive" } },
+          include: { role: true },
+        });
+        expect(result).toMatchObject({ userId: 2, username: "bookish_quokka" });
+      });
+
+      it("не должен искать по email, если ввод не содержит @", async () => {
+        (prisma.user.findFirst as any).mockResolvedValue(null);
+
+        await expect(
+          authService.login({ username: "bookish_quokka", password: "password123" }),
+        ).rejects.toThrow("Неверное имя пользователя или пароль");
+
+        expect(prisma.user.findFirst).toHaveBeenCalledTimes(1);
+      });
+
+      it("при коллизии (username кого-то = email другого) — должен войти по email-кандидату, если пароль его", async () => {
+        const collidingUsernameOwner = {
+          id: 3,
+          username: "alabama22036@gmail.com",
+          email: "other@example.com",
+          passwordHash: await bcrypt.hash("otherpass123", 10),
+          role: { name: "user" },
+          suspendedUntil: null,
+          suspensionReason: null,
+        };
+        (prisma.user.findFirst as any)
+          .mockResolvedValueOnce(collidingUsernameOwner)
+          .mockResolvedValueOnce(emailUser);
+
+        const result = await authService.login({
+          username: "alabama22036@gmail.com",
+          password: "password123",
+        });
+
+        expect(result).toMatchObject({ userId: 2, username: "bookish_quokka" });
+      });
+
+      it("при коллизии — должен войти по username-кандидату, если пароль его", async () => {
+        const collidingUsernameOwner = {
+          id: 3,
+          username: "alabama22036@gmail.com",
+          email: "other@example.com",
+          passwordHash: await bcrypt.hash("otherpass123", 10),
+          role: { name: "user" },
+          suspendedUntil: null,
+          suspensionReason: null,
+        };
+        (prisma.user.findFirst as any)
+          .mockResolvedValueOnce(collidingUsernameOwner)
+          .mockResolvedValueOnce(emailUser);
+
+        const result = await authService.login({
+          username: "alabama22036@gmail.com",
+          password: "otherpass123",
+        });
+
+        expect(result).toMatchObject({ userId: 3, username: "alabama22036@gmail.com" });
+      });
+
+      it("должен бросить единый 401, если не подошёл ни один кандидат", async () => {
+        (prisma.user.findFirst as any)
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(emailUser);
+
+        await expect(
+          authService.login({
+            username: "alabama22036@gmail.com",
+            password: "wrongpassword",
+          }),
+        ).rejects.toThrow("Неверное имя пользователя или пароль");
+      });
+
+      it("не должен искать по email дважды, если username-кандидат найден и пароль его", async () => {
+        (prisma.user.findFirst as any)
+          .mockResolvedValueOnce(mockUser)
+          .mockResolvedValueOnce(emailUser);
+
+        const result = await authService.login({
+          username: "existinguser@example.com",
+          password: "password123",
+        });
+
+        expect(result.userId).toBe(1);
+        // username-кандидат найден, пароль подошёл — email-поиск не нужен
+        expect(prisma.user.findFirst).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 
   describe("OAuth VK", () => {

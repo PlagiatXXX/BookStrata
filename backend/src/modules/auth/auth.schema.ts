@@ -52,8 +52,9 @@ export const registerBodySchema = z.object({
     .optional(),
 });
 
-const loginBodySchema = z.object({
-  username: z.string().trim().min(1).max(30),
+export const loginBodySchema = z.object({
+  // username или email — при вводе с @ срабатывает фоллбэк на поиск по email
+  username: z.string().trim().min(1).max(255),
   password: z.string().min(1).max(100),
 });
 

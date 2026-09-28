@@ -118,17 +118,42 @@ export async function register(payload: RegisterPayload): Promise<AuthToken> {
 export async function login(payload: LoginPayload): Promise<AuthToken> {
   const username = payload.username.trim();
 
-  const user = await prisma.user.findFirst({
-    where: { username: { equals: username, mode: 'insensitive' } },
-    include: { role: true },
-  });
+  const findByUsername = () =>
+    prisma.user.findFirst({
+      where: { username: { equals: username, mode: 'insensitive' } },
+      include: { role: true },
+    });
 
-  if (!user) {
-    throw new AuthenticationError("Неверное имя пользователя или пароль");
+  const findByEmail = () =>
+    prisma.user.findFirst({
+      where: { email: { equals: username, mode: 'insensitive' } },
+      include: { role: true },
+    });
+
+  // Сначала username. Если не подошёл (не найден или пароль неверный)
+  // и ввод похож на email — фоллбэк на поиск по email.
+  let user = await findByUsername();
+  let isPasswordValid = user
+    ? await bcrypt.compare(payload.password, user.passwordHash)
+    : false;
+
+  if (!isPasswordValid && username.includes("@")) {
+    const emailUser = await findByEmail();
+    // Коллизия: username одного пользователя = email другого —
+    // пропускаем, если это один и тот же аккаунт (username = свой email).
+    if (emailUser && emailUser.id !== user?.id) {
+      const emailPasswordValid = await bcrypt.compare(
+        payload.password,
+        emailUser.passwordHash,
+      );
+      if (emailPasswordValid) {
+        user = emailUser;
+        isPasswordValid = true;
+      }
+    }
   }
 
-  const isPasswordValid = await bcrypt.compare(payload.password, user.passwordHash);
-  if (!isPasswordValid) {
+  if (!user || !isPasswordValid) {
     throw new AuthenticationError("Неверное имя пользователя или пароль");
   }
 
