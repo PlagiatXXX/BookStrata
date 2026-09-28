@@ -2,8 +2,6 @@
 // SEO-хелперы страницы автора /authors/:slug
 // (паттерны: CollectionPage/seo.ts, BookPage/seo.ts)
 
-const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
-
 const DEFAULT_DESCRIPTION =
   "Полная библиография, рейтинги книг и тир-листы автора на BookStrata — читайте, оценивайте, составляйте свои списки.";
 
@@ -27,17 +25,6 @@ export function buildAuthorDescription(seoDescription: string | null | undefined
   return first.slice(0, 155).replace(/\s+\S*$/, "") + "…";
 }
 
-/**
- * JSON-LD Person. aggregateRating намеренно НЕ размечаем —
- * как на BookPage: слабые/малооценённые рейтинги не должны попадать в выдачу.
- */
-export function buildAuthorJsonLd(author: { name: string; slug: string }): Record<string, unknown> {
-  const url = `${SITE_URL}/authors/${author.slug}`;
-  return {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    name: author.name,
-    url,
-    sameAs: [url],
-  };
-}
+// Person JSON-LD отдаёт готовый проп `person` в SEOHead
+// (name + url + description, без aggregateRating — решение проекта).
+// Свой buildAuthorJsonLd здесь не нужен — дублировал бы разметку.

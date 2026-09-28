@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAuthorSeoTitle, buildAuthorDescription, buildAuthorJsonLd } from "./seo";
+import { buildAuthorSeoTitle, buildAuthorDescription } from "./seo";
 
 describe("buildAuthorSeoTitle", () => {
   it("формирует title с хвостом-запросом (бренд добавит SEOHead)", () => {
@@ -42,21 +42,5 @@ describe("buildAuthorDescription", () => {
 
   it("null и undefined не падают", () => {
     expect(buildAuthorDescription(null)).toBe(buildAuthorDescription(undefined));
-  });
-});
-
-describe("buildAuthorJsonLd", () => {
-  it("Person с name и url", () => {
-    const ld = buildAuthorJsonLd({ name: "Лев Толстой", slug: "lev-tolstoy" });
-    expect(ld["@type"]).toBe("Person");
-    expect(ld.name).toBe("Лев Толстой");
-    expect(ld.url).toBe("https://bookstrata.ru/authors/lev-tolstoy");
-    expect(ld["@context"]).toBe("https://schema.org");
-  });
-
-  it("БЕЗ aggregateRating (решение проекта — не размечаем слабые рейтинги)", () => {
-    const ld = buildAuthorJsonLd({ name: "X", slug: "x" });
-    expect(ld).not.toHaveProperty("aggregateRating");
-    expect(ld).not.toHaveProperty("description");
   });
 });
