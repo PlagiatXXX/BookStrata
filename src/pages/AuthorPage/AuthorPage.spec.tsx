@@ -202,3 +202,70 @@ describe("AuthorPage — каталог книг", () => {
     expect(screen.getByText(/12 книг/)).toBeInTheDocument();
   });
 });
+
+describe("AuthorPage — лучшие/слабые книги и тир-листы", () => {
+  const ratedFixture: AuthorPageData = {
+    ...fixture,
+    topBooks: [
+      { id: 9, title: "Мастер", slug: "master", coverImageUrl: "/m.jpg",
+        publishedYear: null, genre: null, rating: 9.8, ratingsCount: 100 },
+    ],
+    bottomBooks: [
+      { id: 10, title: "Слабая книга", slug: null, coverImageUrl: "/w.jpg",
+        publishedYear: null, genre: null, rating: 5.2, ratingsCount: 30 },
+    ],
+    tierLists: [
+      { id: "tl1", slug: "top-100", title: "Топ-100 книг" },
+      { id: "tl2", slug: "klassika", title: "Классика" },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.mocked(getAuthorBySlug).mockReset();
+  });
+
+  it("блоки «Лучшие книги» и «Слабые книги» с рейтингами", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue(ratedFixture);
+
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Лучшие книги" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Мастер" })).toBeInTheDocument();
+    expect(screen.getByText("9.8 / 10")).toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: "Слабые книги" })).toBeInTheDocument();
+    expect(screen.getByText("5.2 / 10")).toBeInTheDocument();
+  });
+
+  it("тир-листы: счётчик и ссылки на /tier-lists/{slug}", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue(ratedFixture);
+
+    renderPage();
+
+    const heading = await screen.findByRole("heading", { name: /В тир-листах/ });
+    expect(heading).toBeInTheDocument();
+
+    const tlLink = screen.getByRole("link", { name: /Топ-100 книг/ });
+    expect(tlLink).toHaveAttribute("href", "/tier-lists/top-100");
+    expect(screen.getByRole("link", { name: /Классика/ })).toHaveAttribute(
+      "href",
+      "/tier-lists/klassika",
+    );
+  });
+
+  it("пустые массивы — блоки не рендерятся", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue({
+      ...fixture,
+      topBooks: [],
+      bottomBooks: [],
+      tierLists: [],
+    });
+
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Книги автора" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Лучшие книги" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Слабые книги" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /В тир-листах/ })).not.toBeInTheDocument();
+  });
+});

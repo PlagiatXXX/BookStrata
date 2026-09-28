@@ -40,6 +40,45 @@ function byRating(a: AuthorBookCard, b: AuthorBookCard): number {
   return a.title.localeCompare(b.title, "ru");
 }
 
+/** Карточка книги: обложка, название, год/жанр, рейтинг (ссылка при наличии slug) */
+function BookCard({ book }: { book: AuthorBookCard }) {
+  const inner = (
+    <>
+      <img
+        src={book.coverImageUrl}
+        alt={book.title}
+        loading="lazy"
+        className="aspect-[2/3] w-full rounded border-2 border-black object-cover"
+      />
+      <h3 className="mt-2 text-sm font-bold text-[#f3efe6]">{book.title}</h3>
+      <div className="mt-1 text-xs text-[#f3efe6]/60">
+        {[book.publishedYear, book.genre].filter(Boolean).join(" · ")}
+      </div>
+      {book.rating !== null && (
+        <div className="mt-1 text-xs font-bold text-[#f3efe6]">
+          {book.rating.toFixed(1)} / 10
+          <span className="font-normal text-[#f3efe6]/50">
+            {" "}
+            · {book.ratingsCount}{" "}
+            {pluralRu(book.ratingsCount, ["оценка", "оценки", "оценок"])}
+          </span>
+        </div>
+      )}
+    </>
+  );
+
+  const className =
+    "neo-brutalist-card block border-2 border-black bg-[#141a2a] p-3 transition-transform hover:-translate-y-0.5";
+
+  return book.slug ? (
+    <Link to={`/books/${book.slug}`} className={className}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={className}>{inner}</div>
+  );
+}
+
 export default function AuthorPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: page, isLoading, isError } = useAuthorPage(slug);
@@ -160,53 +199,55 @@ export default function AuthorPage() {
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {sorted.map((book) => {
-                const card = (
-                  <>
-                    <img
-                      src={book.coverImageUrl}
-                      alt={book.title}
-                      loading="lazy"
-                      className="aspect-[2/3] w-full rounded border-2 border-black object-cover"
-                    />
-                    <h3 className="mt-2 text-sm font-bold text-[#f3efe6]">
-                      {book.title}
-                    </h3>
-                    <div className="mt-1 text-xs text-[#f3efe6]/60">
-                      {[book.publishedYear, book.genre].filter(Boolean).join(" · ")}
-                    </div>
-                    {book.rating !== null && (
-                      <div className="mt-1 text-xs font-bold text-[#f3efe6]">
-                        {book.rating.toFixed(1)} / 10
-                        <span className="font-normal text-[#f3efe6]/50">
-                          {" "}
-                          · {book.ratingsCount}{" "}
-                          {pluralRu(book.ratingsCount, ["оценка", "оценки", "оценок"])}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                );
-
-                return book.slug ? (
-                  <Link
-                    key={book.id}
-                    to={`/books/${book.slug}`}
-                    className="neo-brutalist-card block border-2 border-black bg-[#141a2a] p-3 transition-transform hover:-translate-y-0.5"
-                  >
-                    {card}
-                  </Link>
-                ) : (
-                  <div
-                    key={book.id}
-                    className="neo-brutalist-card block border-2 border-black bg-[#141a2a] p-3"
-                  >
-                    {card}
-                  </div>
-                );
-              })}
+              {sorted.map((book) => (
+                <BookCard key={book.id} book={book} />
+              ))}
             </div>
           </section>
+
+          {/* Лучшие книги (с ≥ 5 оценок) */}
+          {page.topBooks.length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-2xl font-black text-[#f3efe6]">Лучшие книги</h2>
+              <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                {page.topBooks.map((book) => (
+                  <BookCard key={book.id} book={book} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Слабые книги (с ≥ 5 оценок) */}
+          {page.bottomBooks.length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-2xl font-black text-[#f3efe6]">Слабые книги</h2>
+              <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                {page.bottomBooks.map((book) => (
+                  <BookCard key={book.id} book={book} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Тир-листы с книгами автора */}
+          {page.tierLists.length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-2xl font-black text-[#f3efe6]">
+                В тир-листах ({page.tierLists.length})
+              </h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {page.tierLists.map((tl) => (
+                  <Link
+                    key={tl.id}
+                    to={`/tier-lists/${tl.slug ?? tl.id}`}
+                    className="nb-btn-secondary px-4 py-2 text-sm"
+                  >
+                    {tl.title}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
