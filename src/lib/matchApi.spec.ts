@@ -38,6 +38,22 @@ describe("getMatchedBooks", () => {
     mockGet.mockResolvedValue({ books });
     await expect(getMatchedBooks({ darkness: 80 })).resolves.toEqual(books);
   });
+
+  it("шлёт genres csv-строкой", async () => {
+    mockGet.mockResolvedValue({ books: [] });
+    await getMatchedBooks({ pace: 50 }, 3, undefined, ["fantasy", "horror"]);
+
+    const params = mockGet.mock.calls[0][1] as Record<string, unknown>;
+    expect(params.genres).toBe("fantasy,horror");
+  });
+
+  it("не шлёт genres если массив пустой", async () => {
+    mockGet.mockResolvedValue({ books: [] });
+    await getMatchedBooks({ pace: 50 }, 3, undefined, []);
+
+    const params = mockGet.mock.calls[0][1] as Record<string, unknown>;
+    expect(params).toEqual({ limit: 3, pace: 50 });
+  });
 });
 
 describe("matchedBooksKey", () => {
@@ -51,5 +67,13 @@ describe("matchedBooksKey", () => {
     const a = matchedBooksKey({ darkness: 80 }, 3);
     const b = matchedBooksKey({ darkness: 20 }, 3);
     expect(a).not.toEqual(b);
+  });
+
+  it("различается при разных genres и не зависит от их порядка", () => {
+    const a = matchedBooksKey({ pace: 50 }, 3, undefined, ["fantasy", "horror"]);
+    const b = matchedBooksKey({ pace: 50 }, 3, undefined, ["horror", "fantasy"]);
+    const c = matchedBooksKey({ pace: 50 }, 3, undefined, ["fantasy"]);
+    expect(a).toEqual(b);
+    expect(a).not.toEqual(c);
   });
 });

@@ -2,6 +2,7 @@ import { apiClient } from "./api-client";
 import { createLogger } from "./logger";
 import type { PaginatedTierListsResponse } from "./tierListApi";
 import type { UserBadge, BadgeColor } from "@/types/auth";
+import type { CategoryId } from "@/data/genre-taxonomy";
 
 const userLogger = createLogger("UserApi", { color: "green" });
 
@@ -89,6 +90,25 @@ export async function apiUpdateProfile(
 export async function apiDeleteAvatar(): Promise<User> {
   userLogger.info("Удаление аватара пользователя");
   return apiClient.delete<User>("/users/me/avatar");
+}
+
+/** Выбранные жанры профиля (7-я ось Book Match). */
+export async function apiGetGenrePreferences(): Promise<CategoryId[]> {
+  const { genres } = await apiClient.get<{ genres: CategoryId[] }>(
+    "/users/me/genre-preferences",
+  );
+  return genres;
+}
+
+export async function apiSetGenrePreferences(
+  genres: CategoryId[],
+): Promise<CategoryId[]> {
+  userLogger.info("Сохранение жанровых предпочтений", { count: genres.length });
+  const { genres: saved } = await apiClient.put<{ genres: CategoryId[] }>(
+    "/users/me/genre-preferences",
+    { genres },
+  );
+  return saved;
 }
 
 export async function apiGetUserById(id: string): Promise<User> {
