@@ -72,6 +72,22 @@ export async function generateSitemap(): Promise<string> {
     // таблица celebrities ещё не создана — пропускаем
   }
 
+  // Авторы — SEO-лендинги: только с seoDescription (страница отдаётся только при нём)
+  let authors: { slug: string; updatedAt: Date }[] = [];
+  try {
+    const authorRecords = await prisma.author.findMany({
+      where: { seoDescription: { not: null }, slug: { not: null } },
+      select: { slug: true, updatedAt: true },
+      orderBy: { updatedAt: "desc" },
+      take: 500,
+    });
+    authors = authorRecords.filter(
+      (a): a is { slug: string; updatedAt: Date } => !!a.slug,
+    );
+  } catch {
+    // таблица authors ещё не создана — пропускаем
+  }
+
   const newsUrls = newsArticles.map((a) =>
     xmlTag(
       `${SITE_URL}/news/${a.id}`,
@@ -106,6 +122,15 @@ export async function generateSitemap(): Promise<string> {
       "0.6",
       "weekly",
       c.updatedAt.toISOString().split("T")[0],
+    ),
+  );
+
+  const authorUrls = authors.map((a) =>
+    xmlTag(
+      `${SITE_URL}/authors/${a.slug}`,
+      "0.7",
+      "weekly",
+      a.updatedAt.toISOString().split("T")[0],
     ),
   );
 
@@ -160,6 +185,6 @@ export async function generateSitemap(): Promise<string> {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...celebrityUrls, ...bookUrls, ...topicUrls].join("\n")}
+${[...staticPages.map((p) => xmlTag(p.url, p.priority, p.changefreq)), ...newsUrls, ...tierListUrls, ...collectionUrls, ...celebrityUrls, ...authorUrls, ...bookUrls, ...topicUrls].join("\n")}
 </urlset>`;
 }
