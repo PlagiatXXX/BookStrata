@@ -13,6 +13,35 @@ export interface AuthorResult {
   bookCount: number;
 }
 
+/** Минимум оценок книги для попадания в топ/худшие на странице автора */
+export const MIN_RATINGS = 5;
+
+export interface AuthorBookDto {
+  id: number;
+  title: string;
+  slug: string | null;
+  coverImageUrl: string;
+  publishedYear: number | null;
+  genre: string | null;
+  rating: number | null;
+  ratingsCount: number;
+}
+
+export interface AuthorPageData {
+  author: {
+    id: number;
+    name: string;
+    slug: string;
+    seoDescription: string;
+    bookCount: number;
+    avgRating: number | null;
+  };
+  books: AuthorBookDto[];
+  topBooks: AuthorBookDto[];
+  bottomBooks: AuthorBookDto[];
+  tierLists: { id: string; slug: string | null; title: string }[];
+}
+
 /**
  * Эвристика: похоже ли имя на название книги, а не на автора.
  */
@@ -169,11 +198,96 @@ export function createAuthorService(prisma: PrismaClient) {
       }));
   };
 
+  /**
+   * Данные страницы автора /authors/:slug.
+   * Возвращает null, если автор не найден или у него нет seoDescription
+   * (страница публикуется только после генерации SEO-описания).
+   */
+  const getBySlug = async (slug: string): Promise<AuthorPageData | null> => {
+    const author = await prisma.author.findUnique({
+      where: { slug },
+      include: {
+        books: {
+          where: { status: "published", userId: null },
+          include: { _count: { select: { ratings: true } } },
+        },
+      },
+    });
+
+    if (!author || !author.seoDescription) return null;
+
+    const books: AuthorBookDto[] = author.books
+      .map((b) => ({
+        id: b.id,
+        title: b.title,
+        slug: b.slug,
+        coverImageUrl: b.coverImageUrl,
+        publishedYear: b.publishedYear,
+        genre: b.genre,
+        rating: b.rating,
+        ratingsCount: b._count.ratings,
+      }))
+      .sort((a, b) => {
+        // Хронология: null (без года) — в конец
+        const ay = a.publishedYear ?? Number.POSITIVE_INFINITY;
+        const by = b.publishedYear ?? Number.POSITIVE_INFINITY;
+        if (ay !== by) return ay - by;
+        return a.title.localeCompare(b.title, "ru");
+      });
+
+    const ratedValues = books
+      .map((b) => b.rating)
+      .filter((r): r is number => r !== null);
+    const avgRating = ratedValues.length
+      ? Math.round((ratedValues.reduce((s, r) => s + r, 0) / ratedValues.length) * 10) / 10
+      : null;
+
+    const rated = books.filter((b) => b.rating !== null && b.ratingsCount >= MIN_RATINGS);
+    const topBooks = [...rated]
+      .sort((a, b) => (b.rating as number) - (a.rating as number))
+      .slice(0, 5);
+    const bottomBooks = [...rated]
+      .sort((a, b) => (a.rating as number) - (b.rating as number))
+      .slice(0, 5);
+
+    const placements = await prisma.bookPlacement.findMany({
+      where: {
+        book: { authorId: author.id, userId: null, status: "published" },
+        tierList: { isPublic: true },
+      },
+      select: {
+        tierListId: true,
+        tierList: { select: { id: true, slug: true, title: true } },
+      },
+      distinct: ["tierListId"],
+      orderBy: { tierListId: "asc" },
+      take: 6,
+    });
+    const tierLists = placements.map((p) => p.tierList);
+
+    return {
+      author: {
+        id: author.id,
+        name: author.name,
+        // findUnique по slug → slug не null (TS не выводит)
+        slug: author.slug as string,
+        seoDescription: author.seoDescription,
+        bookCount: books.length,
+        avgRating,
+      },
+      books,
+      topBooks,
+      bottomBooks,
+      tierLists,
+    };
+  };
+
   return {
     findByName,
     findOrCreate,
     findOrCreateMany,
     search,
+    getBySlug,
   };
 }
 
