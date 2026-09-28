@@ -52,6 +52,20 @@ function buildSearchQuery(book: BookForAffiliate): string {
 }
 
 /**
+ * Ссылки «где читать» для страницы автора /authors/:slug — поиск по имени.
+ */
+export function getAuthorAffiliateLink(authorName: string): AffiliateLink[] {
+  return [
+    {
+      name: "Читай-город",
+      url: buildChitaiGorodLink(authorName),
+      iconName: "chitai-gorod",
+      disclaimer: "Реклама. ООО «ГРАМОТА», ИНН 7706293136, partner ID: 1006433.",
+    },
+  ];
+}
+
+/**
  * Читай-город — поиск по названию/автору с partnerId
  * Формат из виджета: https://www.chitai-gorod.ru/search?phrase={query}&utm_source=affiliate&utm_medium=cpa&partnerId=...
  */
