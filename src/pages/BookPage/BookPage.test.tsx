@@ -598,6 +598,38 @@ describe("BookPage: мобильная адаптивность действий
     expect(panel!.className).toContain("sm:right-0");
     expect(panel!.className).not.toMatch(/(^|\s)right-0(\s|$)/);
   });
+
+  it("имя автора в hero — ссылка на страницу автора при наличии slug", async () => {
+    mockedUseBook.mockReturnValue({
+      data: bookPageData, // author.slug = "f-skott-fitsdzherald"
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    const link = await screen.findByRole("link", { name: "Ф. Скотт Фицджеральд" });
+    expect(link).toHaveAttribute("href", "/authors/f-skott-fitsdzherald");
+  });
+
+  it("без slug автора — обычный текст, ссылки нет", async () => {
+    mockedUseBook.mockReturnValue({
+      data: {
+        ...bookPageData,
+        author: { id: 1, name: "Ф. Скотт Фицджеральд", slug: null },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    expect(await screen.findByRole("heading", { level: 1 })).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: "Ф. Скотт Фицджеральд" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText("Ф. Скотт Фицджеральд").length).toBeGreaterThan(0);
+  });
 });
 
 describe("buildDescriptionSnippet", () => {

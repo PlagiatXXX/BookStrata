@@ -111,6 +111,7 @@ export default function BookPage() {
 
   const {
     book,
+    author,
     tierLists,
     collections,
     celebrities,
@@ -303,7 +304,16 @@ export default function BookPage() {
                 </h1>
                 {book.author && (
                   <h2 className="text-lg text-(--bp-primary)/90 drop-shadow-md mb-3">
-                    {book.author}
+                    {author?.slug ? (
+                      <Link
+                        to={`/authors/${author.slug}`}
+                        className="underline-offset-4 hover:underline"
+                      >
+                        {book.author}
+                      </Link>
+                    ) : (
+                      book.author
+                    )}
                   </h2>
                 )}
 
