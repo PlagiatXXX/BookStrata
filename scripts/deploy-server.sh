@@ -202,6 +202,13 @@ if [ "$SKIP_BUILD" = false ]; then
     else
       warn "Не удалось экспортировать книги — prerender использует JSON из репы"
     fi
+    # Маршруты авторов: авторы с seoDescription → author-routes.json для prerender'а
+    if DATABASE_URL="postgresql://$DB_USER:$DB_PASS@127.0.0.1:5432/bookstrata" \
+      npx tsx scripts/export-author-routes.ts; then
+      ok "Маршруты авторов экспортированы"
+    else
+      warn "Не удалось экспортировать авторов — prerender использует JSON из репы"
+    fi
   fi
   cd "$PROJECT_DIR"
 fi

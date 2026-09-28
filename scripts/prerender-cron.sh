@@ -80,6 +80,14 @@ else
   warn "Не удалось экспортировать коллекции — prerender использует JSON из репы"
 fi
 
+# ——— Экспорт маршрутов авторов (fallback для prerender) ———
+info "Экспорт маршрутов авторов из БД..."
+if npx tsx "$PROJECT_DIR/backend/scripts/export-author-routes.ts" 2>&1; then
+  ok "Маршруты авторов экспортированы"
+else
+  warn "Не удалось экспортировать авторов — prerender использует JSON из репы"
+fi
+
 # ——— Запуск prerender ———
 info "Запуск prerender..."
 export API_URL="$BACKEND_URL"
