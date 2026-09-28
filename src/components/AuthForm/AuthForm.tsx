@@ -219,7 +219,7 @@ export function AuthForm() {
             <form key={mode} onSubmit={handleSubmit} autoComplete="on" className="space-y-4 md:space-y-5">
               <div className="relative group">
                 <label htmlFor="username" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
-                  Логин <span className="text-red-500">*</span>
+                  {mode === "login" ? "Логин или email" : "Логин"} <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="username" type="text" name="username"
