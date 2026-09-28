@@ -3,6 +3,7 @@ import { ValidationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { slugify } from "../../utils/slugify.js";
 import type { PrismaClient } from "@prisma/client";
+import type { AuthorBookDto, AuthorPageData } from "./authors.schema.js";
 
 const logger = createLogger("Authors", { color: "cyan" });
 
@@ -16,31 +17,7 @@ export interface AuthorResult {
 /** Минимум оценок книги для попадания в топ/худшие на странице автора */
 export const MIN_RATINGS = 5;
 
-export interface AuthorBookDto {
-  id: number;
-  title: string;
-  slug: string | null;
-  coverImageUrl: string;
-  publishedYear: number | null;
-  genre: string | null;
-  rating: number | null;
-  ratingsCount: number;
-}
-
-export interface AuthorPageData {
-  author: {
-    id: number;
-    name: string;
-    slug: string;
-    seoDescription: string;
-    bookCount: number;
-    avgRating: number | null;
-  };
-  books: AuthorBookDto[];
-  topBooks: AuthorBookDto[];
-  bottomBooks: AuthorBookDto[];
-  tierLists: { id: string; slug: string | null; title: string }[];
-}
+export type { AuthorBookDto, AuthorPageData };
 
 /**
  * Эвристика: похоже ли имя на название книги, а не на автора.
