@@ -67,6 +67,8 @@ suspensionReason     String?    @map("suspension_reason")
    contentFlags         ContentFlag[]
    resolvedFlags        ContentFlag[]       @relation("ResolvedFlags")
    analyticsEvents      AnalyticsEvent[]
+  // 7-я ось Book Match: выбранные пользователем жанры (массив CategoryId, JSON)
+  genrePreferences     Json?          @map("genre_preferences")
    createdAt            DateTime   @default(now()) @map("created_at")
  
 @@index([xp])

@@ -21,7 +21,7 @@ vi.mock("@/hooks/useAchievementNotifications", () => ({
   triggerAchievementNotification: vi.fn(),
 }))
 
-import { apiGetPublicUser, apiGetUserTierLists, apiGetTasteMatch } from "./userApi"
+import { apiGetPublicUser, apiGetUserTierLists, apiGetTasteMatch, apiGetGenrePreferences, apiSetGenrePreferences } from "./userApi"
 
 function mockResponse(data: unknown, status = 200) {
   return {
@@ -166,6 +166,34 @@ describe("userApi", () => {
 
       expect(result.matchPercent).toBe(0)
       expect(result.commonBooks).toBe(0)
+    })
+  })
+
+  describe("apiGetGenrePreferences", () => {
+    it("должен запросить GET /users/me/genre-preferences", async () => {
+      mockFetch.mockResolvedValue(mockResponse({ data: { genres: ["fantasy", "horror"] } }))
+
+      const result = await apiGetGenrePreferences()
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:8080/api/users/me/genre-preferences",
+        expect.objectContaining({ method: "GET" }),
+      )
+      expect(result).toEqual(["fantasy", "horror"])
+    })
+  })
+
+  describe("apiSetGenrePreferences", () => {
+    it("должен отправить PUT с массивом жанров в body", async () => {
+      mockFetch.mockResolvedValue(mockResponse({ data: { genres: ["fantasy"] } }))
+
+      const result = await apiSetGenrePreferences(["fantasy"])
+
+      const [url, init] = mockFetch.mock.calls[0] as unknown as [string, RequestInit]
+      expect(url).toBe("http://localhost:8080/api/users/me/genre-preferences")
+      expect(init.method).toBe("PUT")
+      expect(JSON.parse(init.body as string)).toEqual({ genres: ["fantasy"] })
+      expect(result).toEqual(["fantasy"])
     })
   })
 })

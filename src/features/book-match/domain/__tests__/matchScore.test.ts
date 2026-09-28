@@ -190,3 +190,31 @@ describe("matchScore — все 6 осей", () => {
     expect(score).toBeLessThan(70);
   });
 });
+
+// ─── Жанровая ось (genreSim) ────────────────────────────────────────────────
+
+describe("matchScore — жанровая ось", () => {
+  it("только жанровая ось (пустой mood) — score от genreSim", () => {
+    // totalWeight = 0.15; score = (100/100)*0.15/0.15 = 1 → 100
+    expect(matchScore({}, HARRY_POTTER, 100)).toBe(100);
+    // genreSim = 0 → 0
+    expect(matchScore({}, HARRY_POTTER, 0)).toBe(0);
+  });
+
+  it("жанр перетягивает итог вверх при высоком genreSim", () => {
+    const mood: UserMood = { darkness: 90 }; // HP darkness=15 → слабо
+    const without = matchScore(mood, HARRY_POTTER);
+    const withGenre = matchScore(mood, HARRY_POTTER, 100);
+    expect(withGenre).toBeGreaterThan(without);
+  });
+
+  it("без genreSim — результат байт-в-байт как раньше", () => {
+    const mood: UserMood = { storyFocus: 25, darkness: 15 };
+    expect(matchScore(mood, HARRY_POTTER)).toBe(100);
+    expect(matchScore(mood, HARRY_POTTER, undefined)).toBe(100);
+  });
+
+  it("genreSim=undefined при пустом mood → 0", () => {
+    expect(matchScore({}, HARRY_POTTER, undefined)).toBe(0);
+  });
+});

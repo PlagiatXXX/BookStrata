@@ -3,7 +3,12 @@
 // Domain layer: не зависит от React, DOM или Framer Motion.
 
 /** Оси совместимости (唯一 — без дублирования). */
-export type MatchAxis = "storyFocus" | "emotionalWeight" | "pace" | "darkness" | "scope" | "complexity";
+export type MatchAxis =
+  | "storyFocus" | "emotionalWeight" | "pace" | "darkness" | "scope" | "complexity"
+  | "genre";
+
+/** Слайдер-оси (6) — genre не слайдер: приходит предвычисленным genreSim. */
+export type SliderAxis = Exclude<MatchAxis, "genre">;
 
 /** Веса осей в формуле Match Score. Сумма = 1.0. */
 export const AXIS_WEIGHTS: Record<MatchAxis, number> = {
@@ -13,6 +18,7 @@ export const AXIS_WEIGHTS: Record<MatchAxis, number> = {
   darkness:        0.15,
   scope:           0.15,
   complexity:      0.15,
+  genre:           0.15, // 7-я ось: жанровое сходство (сумма слайдер-осей = 1.0, genre добавляется при активности)
 };
 
 /** Snap-точки для UI-слайдеров (11 состояний). */
@@ -36,6 +42,9 @@ export interface ReadingProfile {
     scope: number;
     complexity: number;
   };
+
+  /** Точность жанра от ИИ (0–1). Опционально: у старых профилей отсутствует → фолбэк 0.5. */
+  genreConfidence?: number;
 
   /** Источник данных. */
   source: "ai" | "manual" | "calibrated";
@@ -111,6 +120,7 @@ export const AXIS_LABELS: Record<MatchAxis, { left: string; right: string }> = {
   darkness:        { left: "Светло", right: "Мрачно" },
   scope:           { left: "Камерное", right: "Эпическое" },
   complexity:      { left: "Доступное", right: "Многослойное" },
+  genre:           { left: "Мимо", right: "Попадание" },
 };
 
 /** Рубрики осей — диапазоны 0–100 с описанием зоны (для UI-подсказок). */
@@ -163,6 +173,13 @@ export const AXIS_RUBRICS: Record<MatchAxis, RubricRow[]> = {
     { min: 60, max: 80, label: "Многослойное. Богатая стилистика, метафоры, интертекст." },
     { min: 80, max: 100, label: "Высокая сложность. Модернистская форма, экспериментальный язык." },
   ],
+  genre: [
+    { min: 0, max: 20, label: "Жанр мимо твоей выборки." },
+    { min: 20, max: 40, label: "Совпадение случайное, общие теги." },
+    { min: 40, max: 60, label: "Частичное совпадение жанров." },
+    { min: 60, max: 80, label: "Хорошее совпадение с твоими жанрами." },
+    { min: 80, max: 100, label: "Попадание в твою жанровую выборку." },
+  ],
 };
 
 /** Возвращает описание зоны по значению оси (0–100). */
@@ -188,6 +205,7 @@ export function describeAxisDiff(diff: AxisDiff): string {
     darkness:        { right: "мрачнее", left: "светлее" },
     scope:           { right: "эпичнее", left: "камернее" },
     complexity:      { right: "сложнее", left: "проще" },
+    genre:           { right: "ближе к твоему жанру", left: "не твой жанр" },
   };
 
   const dir = axisDir[axis][direction];

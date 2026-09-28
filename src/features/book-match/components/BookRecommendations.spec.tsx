@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
+import type { CategoryId } from "@/data/genre-taxonomy";
 
 // Debounce → identity: тестируем рендер-логику, а не таймеры
 vi.mock("@/hooks/useDebounce", () => ({
@@ -10,8 +11,22 @@ vi.mock("@/hooks/useDebounce", () => ({
 
 vi.mock("@/lib/matchApi", () => ({
   getMatchedBooks: vi.fn(),
-  matchedBooksKey: (mood: Record<string, number | undefined>, limit: number, excludeSlug?: string) =>
-    ["book-match", mood.storyFocus ?? null, mood.emotionalWeight ?? null, mood.pace ?? null, mood.darkness ?? null, limit, excludeSlug ?? null] as const,
+  matchedBooksKey: (
+    mood: Record<string, number | undefined>,
+    limit: number,
+    excludeSlug?: string,
+    genres?: CategoryId[],
+  ) =>
+    [
+      "book-match",
+      mood.storyFocus ?? null,
+      mood.emotionalWeight ?? null,
+      mood.pace ?? null,
+      mood.darkness ?? null,
+      limit,
+      excludeSlug ?? null,
+      genres && genres.length > 0 ? [...genres].sort().join(",") : null,
+    ] as const,
 }));
 
 import { getMatchedBooks } from "@/lib/matchApi";
@@ -25,15 +40,23 @@ const BOOKS = [
   { id: 3, slug: "light-book", title: "Светлая", author: "Автор Светлый", coverImageUrl: "/c/light.jpg", score: 72 },
 ];
 
-function renderUi(props: { mood: Record<string, number | undefined>; excludeSlug?: string }) {
+type UiProps = {
+  mood: Record<string, number | undefined>;
+  excludeSlug?: string;
+  genres?: CategoryId[];
+};
+
+function renderUi(props: UiProps) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const ui = (p: UiProps) => (
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <BookRecommendations mood={props.mood} excludeSlug={props.excludeSlug} />
+        <BookRecommendations mood={p.mood} excludeSlug={p.excludeSlug} genres={p.genres} />
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const result = render(ui(props));
+  return { ...result, rerenderProps: (p: UiProps) => result.rerender(ui(p)) };
 }
 
 describe("BookRecommendations", () => {
@@ -76,6 +99,45 @@ describe("BookRecommendations", () => {
       { darkness: 90 },
       3,
       "current-book",
+      undefined,
+    );
+  });
+
+  it("передаёт genres в DAO", async () => {
+    mockGetMatchedBooks.mockResolvedValue(BOOKS);
+    renderUi({ mood: { darkness: 90 }, genres: ["fantasy"] });
+
+    await waitFor(() => expect(mockGetMatchedBooks).toHaveBeenCalled());
+    expect(mockGetMatchedBooks).toHaveBeenCalledWith(
+      { darkness: 90 },
+      3,
+      undefined,
+      ["fantasy"],
+    );
+  });
+
+  it("без genres вызывает DAO с пустым 4-м аргументом", async () => {
+    mockGetMatchedBooks.mockResolvedValue(BOOKS);
+    renderUi({ mood: { darkness: 90 } });
+
+    await waitFor(() => expect(mockGetMatchedBooks).toHaveBeenCalled());
+    expect(mockGetMatchedBooks).toHaveBeenCalledWith({ darkness: 90 }, 3, undefined, undefined);
+  });
+
+  it("смена genres при том же mood перезапрашивает рекомендации", async () => {
+    mockGetMatchedBooks.mockResolvedValue(BOOKS);
+    const { rerenderProps } = renderUi({ mood: { darkness: 90 }, genres: ["fantasy"] });
+
+    await waitFor(() => expect(mockGetMatchedBooks).toHaveBeenCalledTimes(1));
+
+    rerenderProps({ mood: { darkness: 90 }, genres: ["horror"] });
+
+    await waitFor(() => expect(mockGetMatchedBooks).toHaveBeenCalledTimes(2));
+    expect(mockGetMatchedBooks).toHaveBeenLastCalledWith(
+      { darkness: 90 },
+      3,
+      undefined,
+      ["horror"],
     );
   });
 

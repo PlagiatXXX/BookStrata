@@ -6,9 +6,37 @@ import { MemoryRouter } from "react-router-dom";
 vi.mock("@/hooks/useDebounce", () => ({
   useDebounce: <T,>(value: T) => value,
 }));
+
+// Стейт моков жанров — управляем per-test через vi.hoisted
+const genreState = vi.hoisted(() => ({
+  authenticated: true,
+  genres: [] as string[],
+  mutate: vi.fn(),
+}));
+
+vi.mock("@/hooks/useAuthContext", () => ({
+  useAuth: () => ({ isAuthenticated: genreState.authenticated }),
+}));
+
+vi.mock("@/hooks/useGenrePreferences", () => ({
+  genrePreferencesKey: ["genre-preferences"],
+  MAX_GENRE_PREFERENCES: 7,
+  useGenrePreferences: () => ({ data: genreState.genres }),
+  useSetGenrePreferences: () => ({ mutate: genreState.mutate }),
+}));
+
 vi.mock("./BookRecommendations", () => ({
-  BookRecommendations: ({ mood, excludeSlug }: { mood: Record<string, number | undefined>; excludeSlug?: string }) => (
-    <div data-testid="recs" data-mood={JSON.stringify(mood)} data-exclude={excludeSlug} />
+  BookRecommendations: ({ mood, excludeSlug, genres }: {
+    mood: Record<string, number | undefined>;
+    excludeSlug?: string;
+    genres?: string[];
+  }) => (
+    <div
+      data-testid="recs"
+      data-mood={JSON.stringify(mood)}
+      data-exclude={excludeSlug}
+      data-genres={genres ? JSON.stringify(genres) : null}
+    />
   ),
 }));
 // Слайдер — детально протестирован сам по себе (pointer capture не работает
@@ -101,5 +129,65 @@ describe("BookMatch — persistance mood", () => {
 
     // storyFocus добавлен (100), существующие оси (darkness, pace) сохранены
     expect(readStoredMood()).toEqual({ storyFocus: 100, darkness: 70, pace: 20 });
+  });
+});
+
+describe("BookMatch — жанры профиля (7-я ось)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem("bookstrata:mood", JSON.stringify({ darkness: 70 }));
+    genreState.authenticated = true;
+    genreState.genres = [];
+    genreState.mutate.mockClear();
+  });
+  afterEach(() => localStorage.clear());
+
+  it("гость не видит блок жанров и не передаёт genres в рекомендации", () => {
+    genreState.authenticated = false;
+    genreState.genres = ["fantasy"];
+    renderUi();
+
+    expect(screen.queryByText("Учитывать мои жанры")).toBeNull();
+    expect(screen.getByTestId("recs").getAttribute("data-genres")).toBeNull();
+  });
+
+  it("залогиненный видит выбранные чипы и тумблер, genres передаются по умолчанию", () => {
+    genreState.genres = ["fantasy", "horror"];
+    renderUi();
+
+    expect(screen.getByText("Учитывать мои жанры")).toBeDefined();
+    expect(screen.getByRole("button", { name: "Фэнтези" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Ужасы / Мистика" })).toBeDefined();
+    expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(screen.getByTestId("recs").getAttribute("data-genres")).toBe(
+      JSON.stringify(["fantasy", "horror"]),
+    );
+  });
+
+  it("клик по чипу снимает жанр (мутация с новым списком)", () => {
+    genreState.genres = ["fantasy"];
+    renderUi();
+
+    fireEvent.click(screen.getByRole("button", { name: "Фэнтези" }));
+
+    expect(genreState.mutate).toHaveBeenCalledWith([]);
+  });
+
+  it("тумблер выкл — genres не передаются в рекомендации", () => {
+    genreState.genres = ["fantasy"];
+    renderUi();
+
+    fireEvent.click(screen.getByRole("checkbox"));
+
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+    expect(screen.getByTestId("recs").getAttribute("data-genres")).toBeNull();
+  });
+
+  it("без выбранных жанров блок не рендерится", () => {
+    genreState.genres = [];
+    renderUi();
+
+    expect(screen.queryByText("Учитывать мои жанры")).toBeNull();
+    expect(screen.getByTestId("recs").getAttribute("data-genres")).toBeNull();
   });
 });

@@ -92,3 +92,40 @@ describe("explainMatch", () => {
     expect(result.averageDifference).toBe(0);
   });
 });
+
+// ─── Жанровая ось ───────────────────────────────────────────────────────────
+
+describe("explainMatch — genreSim", () => {
+  it("без genreSim строки жанра нет", () => {
+    const result = explainMatch({ darkness: 15 }, HARRY_POTTER);
+    expect(result.diffs.some((d) => d.axis === "genre")).toBe(false);
+  });
+
+  it("с genreSim строка жанра в diffs, bookValue = genreSim", () => {
+    const result = explainMatch({ darkness: 15 }, HARRY_POTTER, 82);
+    const genreDiff = result.diffs.find((d) => d.axis === "genre");
+    expect(genreDiff).toBeDefined();
+    expect(genreDiff!.bookValue).toBe(82);
+    expect(genreDiff!.userValue).toBe(100);
+    expect(genreDiff!.absDiff).toBe(18);
+    expect(genreDiff!.label).toBe("Жанр");
+  });
+
+  it("жанр ≥ 40 → matches (даже при 45 — частичное)", () => {
+    const result = explainMatch({ darkness: 15 }, HARRY_POTTER, 45);
+    expect(result.matches.some((d) => d.axis === "genre")).toBe(true);
+    expect(result.mismatches.some((d) => d.axis === "genre")).toBe(false);
+  });
+
+  it("жанр < 40 → mismatches", () => {
+    const result = explainMatch({ darkness: 15 }, HARRY_POTTER, 20);
+    expect(result.mismatches.some((d) => d.axis === "genre")).toBe(true);
+    expect(result.matches.some((d) => d.axis === "genre")).toBe(false);
+  });
+
+  it("только genreSim (пустой mood) — работает", () => {
+    const result = explainMatch({}, HARRY_POTTER, 90);
+    expect(result.diffs).toHaveLength(1);
+    expect(result.diffs[0].axis).toBe("genre");
+  });
+});

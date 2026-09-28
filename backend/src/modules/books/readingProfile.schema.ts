@@ -1,6 +1,6 @@
 // backend/src/modules/books/readingProfile.schema.ts
 // Zod-схема Reading DNA (Book.readingProfile, Json).
-// Нормализованные значения по 6 осям + confidence + source.
+// Нормализованные значения: 6 осей + genreConfidence (0–1, default 0.5) + confidence + source.
 
 import { z } from "zod";
 
@@ -14,6 +14,7 @@ export const readingProfileSchema = z.object({
   darkness: axisValue,
   scope: axisValue.optional().default(50),
   complexity: axisValue.optional().default(50),
+  genreConfidence: z.number().min(0).max(1).optional().default(0.5),
 
   confidence: z.object({
     storyFocus: z.number().min(0).max(1),

@@ -21,6 +21,7 @@ import { assertOwner } from "../tier-lists/tierList.utils.js";
 import { prisma } from "../../lib/prisma.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
+import { isCategoryId, type CategoryId } from "./genreTaxonomy.js";
 
 export async function booksRoutes(fastify: FastifyInstance) {
   // GET /api/books/trending — трендовые книги недели
@@ -139,6 +140,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
       darkness?: number;
       limit?: number;
       exclude?: string;
+      genres?: string;
     };
   }>("/match",
     {
@@ -152,28 +154,34 @@ export async function booksRoutes(fastify: FastifyInstance) {
             darkness: { type: "number", minimum: 0, maximum: 100 },
             limit: { type: "number", minimum: 1, maximum: 10, default: 3 },
             exclude: { type: "string" },
+            genres: { type: "string" }, // "fantasy,horror"
           },
         },
       },
     },
     async (request, reply) => {
-      const { storyFocus, emotionalWeight, pace, darkness, limit = 3, exclude } = request.query;
+      const { storyFocus, emotionalWeight, pace, darkness, limit = 3, exclude, genres } = request.query;
+
+      const genreList = (genres ?? "")
+        .split(",")
+        .map((g) => g.trim())
+        .filter((g): g is CategoryId => g !== "" && isCategoryId(g));
 
       if (
         storyFocus === undefined &&
         emotionalWeight === undefined &&
         pace === undefined &&
-        darkness === undefined
+        darkness === undefined &&
+        genreList.length === 0
       ) {
         return reply.code(400).send(
-          createApiError(ErrorCodes.VALIDATION_ERROR, "Укажите хотя бы один параметр настроения"),
+          createApiError(ErrorCodes.VALIDATION_ERROR, "Укажите хотя бы один параметр настроения или жанры"),
         );
       }
 
       const books = await getMatchedBooks(
         { storyFocus, emotionalWeight, pace, darkness },
-        limit,
-        exclude,
+        { limit, excludeSlug: exclude, genres: genreList },
       );
       return reply.send(createSuccessResponse({ books }));
     },

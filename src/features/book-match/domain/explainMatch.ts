@@ -1,11 +1,11 @@
 // src/features/book-match/domain/explainMatch.ts
 // Explain Match — детерминированное объяснение совпадения/расхождения по осям.
 
-import type { ReadingProfile, UserMood, MatchAxis, AxisDiff } from "./types";
+import type { ReadingProfile, UserMood, SliderAxis, AxisDiff } from "./types";
 import { AXIS_LABELS } from "./types";
 
 /** Все оси совместимости. */
-const ALL_AXES: MatchAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
+const ALL_AXES: SliderAxis[] = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"];
 
 /** Пороговые значения для классификации расхождений. */
 const DIFF_THRESHOLDS = {
@@ -17,10 +17,10 @@ const DIFF_THRESHOLDS = {
 } as const;
 
 /** Описание направления расхождения. */
-function describeDirection(axis: MatchAxis, diff: number): string {
+function describeDirection(axis: SliderAxis, diff: number): string {
   const direction = diff > 0 ? "right" : "left";
 
-  const axisDir: Record<MatchAxis, { right: string; left: string }> = {
+  const axisDir: Record<SliderAxis, { right: string; left: string }> = {
     storyFocus:      { right: "более рефлексивная", left: "более сюжетная" },
     emotionalWeight: { right: "тяжелее", left: "легче" },
     pace:            { right: "медленнее", left: "быстрее" },
@@ -56,7 +56,7 @@ export interface ExplainResult {
  * Генерирует детерминированное объяснение совпадения.
  * Не использует LLM — только math + правила.
  */
-export function explainMatch(user: UserMood, book: ReadingProfile): ExplainResult {
+export function explainMatch(user: UserMood, book: ReadingProfile, genreSim?: number): ExplainResult {
   const diffs: AxisDiff[] = [];
 
   for (const axis of ALL_AXES) {
@@ -81,8 +81,34 @@ export function explainMatch(user: UserMood, book: ReadingProfile): ExplainResul
 
   // Оставляем порядок осей стабильным (ALL_AXES), не сортируем по absDiff
 
-  const matches = diffs.filter((d) => d.absDiff < DIFF_THRESHOLDS.GOOD);
-  const mismatches = diffs.filter((d) => d.absDiff >= DIFF_THRESHOLDS.NOTICEABLE);
+  // Жанровая ось: userValue=100 (хочу попадание), bookValue=genreSim.
+  const genreDiff: AxisDiff | null =
+    genreSim !== undefined
+      ? {
+          axis: "genre",
+          label: "Жанр",
+          userValue: 100,
+          bookValue: genreSim,
+          diff: genreSim - 100,
+          absDiff: 100 - genreSim,
+          direction:
+            genreSim >= 70
+              ? "совпадает с твоими жанрами"
+              : genreSim >= 40
+                ? "частично совпадает с твоими жанрами"
+                : "не совпадает с твоими жанрами",
+        }
+      : null;
+  if (genreDiff) diffs.push(genreDiff);
+
+  // Пороги жанра отличаются от absDiff-порогов слайдер-осей (спека §4):
+  // genreSim ≥ 40 → matches, < 40 → mismatches.
+  const matches = diffs.filter((d) => d.axis !== "genre" && d.absDiff < DIFF_THRESHOLDS.GOOD);
+  const mismatches = diffs.filter((d) => d.axis !== "genre" && d.absDiff >= DIFF_THRESHOLDS.NOTICEABLE);
+  if (genreDiff) {
+    if (genreSim! >= 40) matches.push(genreDiff);
+    else mismatches.push(genreDiff);
+  }
 
   const averageDifference =
     diffs.length > 0

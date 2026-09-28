@@ -6,6 +6,8 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { validateReadingProfile, type ReadingProfile } from "./readingProfile.schema.js";
+import { genreSimilarity } from "./genreSimilarity.service.js";
+import type { CategoryId } from "./genreTaxonomy.js";
 
 const AXES = ["storyFocus", "emotionalWeight", "pace", "darkness", "scope", "complexity"] as const;
 type MatchAxis = (typeof AXES)[number];
@@ -13,14 +15,15 @@ type MatchAxis = (typeof AXES)[number];
 /** Настроение пользователя — только активные (заданные) оси. */
 export type UserMood = Partial<Record<MatchAxis, number>>;
 
-/** Веса осей (идентичны AXIS_WEIGHTS фронта, сумма = 1.0). */
-const AXIS_WEIGHTS: Record<MatchAxis, number> = {
+/** Веса осей (идентичны AXIS_WEIGHTS фронта; слайдер-оси суммируются в 1.0). */
+const AXIS_WEIGHTS: Record<MatchAxis, number> & { genre: number } = {
   storyFocus: 0.20,
   emotionalWeight: 0.20,
   pace: 0.15,
   darkness: 0.15,
   scope: 0.15,
   complexity: 0.15,
+  genre: 0.15, // 7-я ось — активна только при opts.genres
 };
 
 /** Крутизна sigmoid (идентична K фронта). */
@@ -33,12 +36,14 @@ function perceptual(linear: number): number {
   return Math.round(sigmoid * 100 * 10) / 10;
 }
 
-/** Match Score (0–100) между настроением и профилем книги. */
-export function matchScore(user: UserMood, book: ReadingProfile): number {
+/** Match Score (0–100); genreSim — предвычисленное жанровое сходство (0–100). */
+export function matchScore(user: UserMood, book: ReadingProfile, genreSim?: number): number {
   const activeAxes = AXES.filter((axis) => user[axis] !== undefined);
-  if (activeAxes.length === 0) return 0;
+  const genreActive = genreSim !== undefined;
+  if (activeAxes.length === 0 && !genreActive) return 0;
 
-  const totalWeight = activeAxes.reduce((sum, axis) => sum + AXIS_WEIGHTS[axis], 0);
+  let totalWeight = activeAxes.reduce((sum, axis) => sum + AXIS_WEIGHTS[axis], 0);
+  if (genreActive) totalWeight += AXIS_WEIGHTS.genre;
 
   let score = 0;
   for (const axis of activeAxes) {
@@ -46,6 +51,9 @@ export function matchScore(user: UserMood, book: ReadingProfile): number {
     const bookVal = perceptual(book[axis]);
     const similarity = 1 - Math.abs(userVal - bookVal) / 100;
     score += (similarity * AXIS_WEIGHTS[axis]) / totalWeight;
+  }
+  if (genreActive) {
+    score += (genreSim! / 100) * AXIS_WEIGHTS.genre / totalWeight;
   }
 
   return Math.round(score * 100);
@@ -62,6 +70,14 @@ export interface MatchedBook {
   score: number;
 }
 
+/** Опции подбора. */
+export interface GetMatchedBooksOptions {
+  limit?: number;
+  excludeSlug?: string;
+  /** Выбранные жанры пользователя — активируют 7-ю ось. */
+  genres?: CategoryId[];
+}
+
 /**
  * Топ-N опубликованных книг под настроение пользователя.
  * Профили достаём из БД (JSON), валидируем Zod-схемой, скорим в JS.
@@ -69,9 +85,10 @@ export interface MatchedBook {
  */
 export async function getMatchedBooks(
   mood: UserMood,
-  limit = 3,
-  excludeSlug?: string,
+  opts: GetMatchedBooksOptions = {},
 ): Promise<MatchedBook[]> {
+  const { limit = 3, excludeSlug, genres = [] } = opts;
+
   const rows = await prisma.book.findMany({
     where: {
       status: "published",
@@ -85,6 +102,8 @@ export async function getMatchedBooks(
       author: true,
       coverImageUrl: true,
       readingProfile: true,
+      genre: true,
+      tags: true,
     },
   });
 
@@ -93,13 +112,21 @@ export async function getMatchedBooks(
     if (!row.slug || row.slug === excludeSlug) continue;
     try {
       const bookProfile = validateReadingProfile(row.readingProfile);
+      const genreSim =
+        genres.length > 0
+          ? genreSimilarity(genres, {
+              genre: row.genre,
+              tags: row.tags,
+              genreConfidence: bookProfile.genreConfidence,
+            })
+          : undefined;
       scored.push({
         id: row.id,
         slug: row.slug,
         title: row.title,
         author: row.author,
         coverImageUrl: row.coverImageUrl,
-        score: matchScore(mood, bookProfile),
+        score: matchScore(mood, bookProfile, genreSim),
       });
     } catch {
       // Невалидный профиль в БД — пропускаем молча

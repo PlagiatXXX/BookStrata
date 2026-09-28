@@ -63,7 +63,7 @@ describe("getMatchedBooks", () => {
     mockFindMany.mockResolvedValue([BOOK_LIGHT, BOOK_DARK]);
 
     const { getMatchedBooks } = await import("./readingMatch.service.js");
-    const books = await getMatchedBooks({ darkness: 90 }, 1);
+    const books = await getMatchedBooks({ darkness: 90 }, { limit: 1 });
 
     expect(books).toHaveLength(1);
     expect(books[0].slug).toBe("dark-book");
@@ -74,7 +74,7 @@ describe("getMatchedBooks", () => {
     mockFindMany.mockResolvedValue([BOOK_DARK, BOOK_LIGHT]);
 
     const { getMatchedBooks } = await import("./readingMatch.service.js");
-    const books = await getMatchedBooks({ darkness: 90 }, 3, "dark-book");
+    const books = await getMatchedBooks({ darkness: 90 }, { limit: 3, excludeSlug: "dark-book" });
 
     expect(books.map((b) => b.slug)).toEqual(["light-book"]);
   });
@@ -103,5 +103,59 @@ describe("getMatchedBooks", () => {
         }),
       }),
     );
+  });
+});
+
+describe("matchScore — жанровая ось (порт)", () => {
+  it("только genreSim, пустой mood → 100/0", async () => {
+    const { matchScore } = await import("./readingMatch.service.js");
+    const prof = profile({ storyFocus: 50, emotionalWeight: 50, pace: 50, darkness: 50 });
+    expect(matchScore({}, prof, 100)).toBe(100);
+    expect(matchScore({}, prof, 0)).toBe(0);
+    expect(matchScore({}, prof)).toBe(0);
+  });
+});
+
+describe("getMatchedBooks — opts.genres", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const BOOK_FANTASY = {
+    id: 10,
+    slug: "fantasy-book",
+    title: "Фэнтези",
+    author: "А",
+    coverImageUrl: "/c/f.jpg",
+    genre: "Фэнтези",
+    tags: ["магия"],
+    readingProfile: { ...profile({ storyFocus: 50, emotionalWeight: 50, pace: 50, darkness: 50 }), genreConfidence: 1 },
+  };
+  const BOOK_HORROR = {
+    id: 11,
+    slug: "horror-book",
+    title: "Хоррор",
+    author: "А",
+    coverImageUrl: "/c/h.jpg",
+    genre: "Ужасы",
+    tags: [],
+    readingProfile: { ...profile({ storyFocus: 50, emotionalWeight: 50, pace: 50, darkness: 50 }), genreConfidence: 1 },
+  };
+
+  it("с genres ранжирует книгу выбранного жанра выше", async () => {
+    mockFindMany.mockResolvedValue([BOOK_FANTASY, BOOK_HORROR]);
+    const { getMatchedBooks } = await import("./readingMatch.service.js");
+    const books = await getMatchedBooks(
+      { darkness: 50 },
+      { limit: 2, genres: ["fantasy"] },
+    );
+    expect(books[0].slug).toBe("fantasy-book");
+  });
+
+  it("без genres — жанр не влияет (совпадает со старым поведением)", async () => {
+    mockFindMany.mockResolvedValue([BOOK_FANTASY, BOOK_HORROR]);
+    const { getMatchedBooks } = await import("./readingMatch.service.js");
+    const books = await getMatchedBooks({ darkness: 50 }, { limit: 2 });
+    // оба одинаковые по 6 осям → tie-break по названию: "Фэнтези" < "Хоррор" (localeCompare ru)
+    expect(books).toHaveLength(2);
+    expect(books.every((b) => typeof b.score === "number")).toBe(true);
   });
 });

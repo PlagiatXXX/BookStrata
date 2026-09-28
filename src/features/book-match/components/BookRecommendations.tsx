@@ -7,11 +7,14 @@ import { useMatchedBooks } from "../hooks/useMatchedBooks";
 import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 import { matchLevel } from "../domain/matchLevel";
 import type { MoodParams } from "@/lib/matchApi";
+import type { CategoryId } from "@/data/genre-taxonomy";
 
 interface BookRecommendationsProps {
   mood: MoodParams;
   /** Slug текущей книги — исключаем из рекомендаций. */
   excludeSlug?: string;
+  /** Жанровые предпочтения профиля — 7-я ось match (csv на бэке). */
+  genres?: CategoryId[];
 }
 
 /** Цвет уровня → Tailwind класс (как в BookMatchResult). */
@@ -21,9 +24,9 @@ function levelColor(color: "emerald" | "amber" | "rose"): string {
   return "text-rose-400";
 }
 
-export function BookRecommendations({ mood, excludeSlug }: BookRecommendationsProps) {
+export function BookRecommendations({ mood, excludeSlug, genres }: BookRecommendationsProps) {
   const hasMood = Object.values(mood).some((v) => v !== undefined);
-  const { data: books, isPending, isError } = useMatchedBooks(mood, { excludeSlug });
+  const { data: books, isPending, isError } = useMatchedBooks(mood, { excludeSlug, genres });
 
   // Нет настроения / ошибка — блок скрыт целиком
   if (!hasMood || isError) return null;
