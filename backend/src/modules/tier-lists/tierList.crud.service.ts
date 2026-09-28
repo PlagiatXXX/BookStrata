@@ -68,7 +68,10 @@ export async function getFullTierList(id: string) {
   return tierListRepository.getFullTierList(id);
 }
 
-export async function getPublicTierLists(query: GetTierListsQuery) {
+export async function getPublicTierLists(
+  query: GetTierListsQuery,
+  options?: { includePrivate?: boolean },
+) {
   const page = safePageParam(query.page, 1);
   const pageSize = safePageParam(query.pageSize, 10);
 
@@ -76,6 +79,7 @@ export async function getPublicTierLists(query: GetTierListsQuery) {
     page,
     pageSize,
     sortBy: query.sortBy,
+    includePrivate: options?.includePrivate,
   });
   const totalPages = Math.ceil(totalItems / pageSize);
 

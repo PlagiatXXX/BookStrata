@@ -90,11 +90,15 @@ export class TierListRepository {
     ]);
   }
 
-  async findPublicByUserId(userId: number, pagination: { page: number; pageSize: number }) {
+  async findPublicByUserId(
+    userId: number,
+    pagination: { page: number; pageSize: number; includePrivate?: boolean },
+  ) {
     const skip = (pagination.page - 1) * pagination.pageSize;
+    const where = pagination.includePrivate ? { userId } : { userId, isPublic: true };
     return Promise.all([
       this.db.tierList.findMany({
-        where: { userId, isPublic: true },
+        where,
         select: {
           id: true,
           title: true,
@@ -111,11 +115,16 @@ export class TierListRepository {
         take: pagination.pageSize,
         skip,
       }),
-      this.db.tierList.count({ where: { userId, isPublic: true } }),
+      this.db.tierList.count({ where }),
     ]);
   }
 
-  async findPublic(options: { page: number; pageSize: number; sortBy?: string }) {
+  async findPublic(options: {
+    page: number;
+    pageSize: number;
+    sortBy?: string;
+    includePrivate?: boolean;
+  }) {
     const skip = (options.page - 1) * options.pageSize;
 
     // Стабильная сортировка: основное поле + tiebreaker по id,
@@ -128,10 +137,11 @@ export class TierListRepository {
           : { createdAt: "desc" as const };
 
     const orderBy = [primaryOrder, { id: "desc" as const }];
+    const where = options.includePrivate ? {} : { isPublic: true };
 
     return Promise.all([
       this.db.tierList.findMany({
-        where: { isPublic: true },
+        where,
         select: {
           id: true,
           title: true,
@@ -148,7 +158,7 @@ export class TierListRepository {
         take: options.pageSize,
         skip,
       }),
-      this.db.tierList.count({ where: { isPublic: true } }),
+      this.db.tierList.count({ where }),
     ]);
   }
 

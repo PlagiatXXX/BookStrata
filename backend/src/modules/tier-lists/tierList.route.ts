@@ -21,6 +21,7 @@ import {
 } from "./likes/likes.service.js";
 import { addBooksToTierList } from "./tierList.service.js";
 import { ErrorCodes, createApiError, createSuccessResponse } from "../../lib/api-response.js";
+import { isStaff } from "../../middleware/requireRole.js";
 
 // Логгер для роутов тир-листов
 const logger = createLogger("TierListsRoutes", { color: "cyan" });
@@ -181,7 +182,9 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       try {
         reply.header("Cache-Control", "public, max-age=30, s-maxage=120");
         logger.debug("GET /public вызван", { query: request.query });
-        const tierLists = await service.getPublicTierLists(request.query);
+        const tierLists = await service.getPublicTierLists(request.query, {
+          includePrivate: isStaff(request.user),
+        });
         logger.debug("Возвращаем публичные тир-листы", {
           dataLength: tierLists.data?.length,
           meta: tierLists.meta,
@@ -323,8 +326,18 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       }
 
       const isOwner = request.user?.userId === tierList.userId;
-      if (!tierList.isPublic && !isOwner) {
+      const staff = isStaff(request.user);
+      if (!tierList.isPublic && !isOwner && !staff) {
         return reply.code(403).send(createApiError(ErrorCodes.ACCESS_DENIED, "Access denied"));
+      }
+      if (!tierList.isPublic && !isOwner && staff) {
+        // Аудит-след: staff открыл чужой приватный список
+        logger.info("Staff-доступ к приватному тир-листу", {
+          viewerId: request.user?.userId,
+          viewerRole: request.user?.role,
+          tierListId: tierList.id,
+          ownerId: tierList.userId,
+        });
       }
       return reply.send(createSuccessResponse(tierList));
     },

@@ -6,6 +6,16 @@ const logger = createLogger("RequireRole", { color: "yellow" });
 export type RoleName = "admin" | "moderator" | "user";
 
 /**
+ * Staff = admin или moderator.
+ * Staff-пользователи видят приватные тир-листы (просмотр/чтение),
+ * но без права изменения чужого контента (форк и т.п. — как прежде).
+ */
+export function isStaff(user?: { role?: string | null } | null): boolean {
+  return user?.role === "admin" || user?.role === "moderator";
+}
+
+
+/**
  * Middleware для проверки роли пользователя
  * @param allowedRoles - Массив разрешённых ролей
  */

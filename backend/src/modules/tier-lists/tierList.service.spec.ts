@@ -1117,6 +1117,30 @@ describe("tierList.service", () => {
 
       expect(result.meta.totalPages).toBe(4); // ceil(35/10) = 4
     });
+
+    it("по умолчанию фильтрует только публичные списки", async () => {
+      (prisma.tierList.findMany as any).mockResolvedValue([]);
+      (prisma.tierList.count as any).mockResolvedValue(0);
+
+      await service.getPublicTierLists(mockQuery);
+
+      expect(prisma.tierList.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isPublic: true } }),
+      );
+      expect(prisma.tierList.count).toHaveBeenCalledWith({ where: { isPublic: true } });
+    });
+
+    it("с includePrivate снимает фильтр isPublic (admin/moderator видит приватные)", async () => {
+      (prisma.tierList.findMany as any).mockResolvedValue([]);
+      (prisma.tierList.count as any).mockResolvedValue(0);
+
+      await service.getPublicTierLists(mockQuery, { includePrivate: true });
+
+      expect(prisma.tierList.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+      expect(prisma.tierList.count).toHaveBeenCalledWith({ where: {} });
+    });
   });
 
   describe("forkTierList", () => {

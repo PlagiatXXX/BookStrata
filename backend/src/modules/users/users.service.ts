@@ -351,10 +351,11 @@ export async function getUserPublicTierLists(
   userId: number,
   page: number,
   pageSize: number,
+  options?: { includePrivate?: boolean },
 ) {
   const [data, totalItems] = await tierListRepository.findPublicByUserId(
     userId,
-    { page, pageSize },
+    { page, pageSize, includePrivate: options?.includePrivate },
   );
 
   const transformed = data.map((tl) => ({

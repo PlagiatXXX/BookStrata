@@ -26,7 +26,7 @@ import {
 
 import type { SocialLink, BadgeColor } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
-import { requireRole } from "../../middleware/requireRole.js";
+import { requireRole, isStaff } from "../../middleware/requireRole.js";
 import { ErrorCodes, createApiError, createSuccessResponse, createPaginatedResponse } from "../../lib/api-response.js";
 
 export async function userRoutes(fastify: FastifyInstance) {
@@ -183,7 +183,9 @@ export async function userRoutes(fastify: FastifyInstance) {
       const userId = parseInt(request.params.id);
       const page = Number(request.query.page) || 1;
       const pageSize = Number(request.query.pageSize) || 10;
-      const result = await getUserPublicTierLists(userId, page, pageSize);
+      const result = await getUserPublicTierLists(userId, page, pageSize, {
+        includePrivate: isStaff((request as any).user),
+      });
       const totalPages = Math.ceil(result.totalItems / pageSize);
       return reply.send(
         createPaginatedResponse(result.data, {

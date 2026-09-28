@@ -679,6 +679,18 @@ describe("users.service", () => {
 
       expect(result).toEqual({ data: [], totalItems: 0 })
     })
+
+    it("includePrivate пробрасывается в репозиторий (admin/moderator видит приватные)", async () => {
+      mockFindPublicByUserId.mockResolvedValue([[], 0])
+
+      await userService.getUserPublicTierLists(userId, 1, 10, { includePrivate: true })
+
+      expect(mockFindPublicByUserId).toHaveBeenCalledWith(userId, {
+        page: 1,
+        pageSize: 10,
+        includePrivate: true,
+      })
+    })
   })
 
   describe("getTasteMatch", () => {
