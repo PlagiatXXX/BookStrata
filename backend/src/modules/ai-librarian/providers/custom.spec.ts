@@ -20,6 +20,7 @@ async function* chunks(...items: AiChunk[]): AsyncGenerator<AiChunk> {
   for (const item of items) yield item;
 }
 /** Ошибка на старте — до первого yield (как 401/429 от провайдера). */
+// eslint-disable-next-line require-yield
 async function* failBeforeYield(): AsyncGenerator<AiChunk> {
   throw new Error("429 rate limit");
 }
@@ -64,13 +65,8 @@ describe("customProvider — fallback-ключ", () => {
     createChatCompletionStream.mockImplementationOnce(() => failBeforeYield());
 
     const provider = await loadProvider();
-    await expect(
-      (async () => {
-        for await (const _ of provider.generate(messages, "sys")) {
-          // consume
-        }
-      })(),
-    ).rejects.toThrow("429");
+    const iterator = provider.generate(messages, "sys");
+    await expect(iterator.next()).rejects.toThrow("429");
     expect(createChatCompletionStream).toHaveBeenCalledTimes(1);
   });
 
