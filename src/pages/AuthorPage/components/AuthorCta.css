@@ -1,0 +1,21 @@
+/* AuthorCta — тёмная панель-призыв с двумя плитками-ссылками, hover — золотая рамка */
+.ap-cta-panel {
+  background: var(--ap-surface);
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius-lg);
+}
+
+.ap-cta-tile {
+  min-width: 220px;
+  background: var(--ap-surface-raised);
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.ap-cta-tile:hover {
+  border-color: var(--ap-gold);
+  background: var(--ap-gold-soft);
+}

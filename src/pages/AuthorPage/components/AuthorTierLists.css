@@ -1,0 +1,16 @@
+/* AuthorTierLists — parchment-плитка тир-листа, hover — золотая рамка + тёплый тон */
+.ap-tier-tile {
+  background: var(--ap-surface-raised);
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.ap-tier-tile:hover {
+  border-color: var(--ap-gold);
+  background: var(--ap-gold-soft);
+  transform: translateX(4px);
+}

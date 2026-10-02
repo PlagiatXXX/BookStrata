@@ -91,6 +91,8 @@ export interface BookListParams {
   duplicatesOnly?: boolean;
   /** Происхождение книги: "tier-list" — есть вхождения в тир-листы пользователей */
   origin?: "tier-list" | "catalog";
+  /** Фильтр по автору (для выбора книг в админ-редакторе контента автора) */
+  authorId?: number;
   sort?: string;
   offset?: number;
   limit?: number;
@@ -131,6 +133,7 @@ export async function listAdminBooks(params: BookListParams = {}) {
   if (params.genre) query.set("genre", params.genre);
   if (params.duplicatesOnly) query.set("duplicatesOnly", "true");
   if (params.origin) query.set("origin", params.origin);
+  if (params.authorId != null) query.set("authorId", String(params.authorId));
   if (params.sort) query.set("sort", params.sort);
   if (params.offset) query.set("offset", String(params.offset));
   if (params.limit) query.set("limit", String(params.limit));

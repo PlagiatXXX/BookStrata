@@ -21,6 +21,32 @@ export interface AuthorBookCard {
   genre: string | null
   rating: number | null
   ratingsCount: number
+  isbn: string | null
+  description: string | null
+}
+
+export interface AuthorStatItem {
+  value: string
+  label: string
+}
+
+export interface AuthorShowcaseItem {
+  book: AuthorBookCard
+  pullQuote: string | null
+}
+
+export interface AuthorAdaptationItem {
+  kind: "film" | "theatre" | "tv"
+  title: string
+  meta: string | null
+  description: string | null
+  url: string | null
+}
+
+export interface AuthorPressQuoteItem {
+  quote: string
+  source: string
+  sourceRole: string | null
 }
 
 export interface AuthorPageData {
@@ -31,11 +57,22 @@ export interface AuthorPageData {
     seoDescription: string
     bookCount: number
     avgRating: number | null
+    heroImageUrl: string | null
+    badge: string | null
+    motto: string | null
+    manifestoQuote: string | null
+    manifestoAuthor: string | null
+    manifestoRole: string | null
+    aboutText: string | null
   }
   books: AuthorBookCard[]
   topBooks: AuthorBookCard[]
   bottomBooks: AuthorBookCard[]
   tierLists: { id: string; slug: string | null; title: string }[]
+  stats: AuthorStatItem[]
+  showcase: AuthorShowcaseItem[]
+  adaptations: AuthorAdaptationItem[]
+  pressQuotes: AuthorPressQuoteItem[]
 }
 
 /**
@@ -44,6 +81,27 @@ export interface AuthorPageData {
  */
 export function getAuthorBySlug(slug: string): Promise<AuthorPageData> {
   return apiClient.get<AuthorPageData>(`/authors/${encodeURIComponent(slug)}`)
+}
+
+/**
+ * Список всех авторов каталога (страница «Все авторы» /authors).
+ * Только авторы с опубликованными книгами, по алфавиту.
+ */
+export async function getAllAuthors(): Promise<AuthorResult[]> {
+  const response = await apiClient.get<{ authors: AuthorResult[] }>('/authors')
+  return response.authors
+}
+
+/**
+ * Популярные авторы (по числу опубликованных книг) — блок
+ * «Другие авторы» на странице автора.
+ */
+export async function getPopularAuthors(limit = 6): Promise<AuthorResult[]> {
+  const response = await apiClient.get<{ authors: AuthorResult[] }>('/authors', {
+    sort: 'popular',
+    limit,
+  })
+  return response.authors
 }
 
 /**

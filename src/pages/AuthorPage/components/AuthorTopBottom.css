@@ -1,0 +1,11 @@
+/* AuthorTopBottom — компактная карточка рейтинга: подъём и подсветка рамки при hover */
+.ap-rank-card {
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.ap-rank-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--ap-border-strong);
+}

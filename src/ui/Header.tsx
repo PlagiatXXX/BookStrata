@@ -13,6 +13,7 @@ import {
   Pause,
   Play,
   BookMarked,
+  Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAmbientSound } from "@/hooks/useAmbientSound";
@@ -117,6 +118,8 @@ export const Header = ({
       const path = location.pathname;
       if (path === "/rankings") return "Рейтинги";
       if (path === "/celebrities" || path.startsWith("/celebrities/"))
+        return "Рейтинги";
+      if (path === "/authors" || path.startsWith("/authors/"))
         return "Рейтинги";
       if (path === "/community") return "Новости";
       if (path === "/templates" || path.startsWith("/templates/"))
@@ -328,6 +331,14 @@ export const Header = ({
                         >
                           <Star size={16} className="text-amber-400 shrink-0" />
                           <span>Топ знаменитостей</span>
+                        </button>
+                        <button
+                          data-analytics="nav.main.ratings_authors"
+                          onClick={() => handleRatingsSubNav("/authors")}
+                          className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer"
+                        >
+                          <Users size={16} className="text-orange-400 shrink-0" />
+                          <span>Все авторы</span>
                         </button>
                       </div>
                     )}

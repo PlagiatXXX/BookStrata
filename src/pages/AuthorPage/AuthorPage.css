@@ -1,0 +1,57 @@
+/* Импорт стилей секций (создаются в Task 8–10) */
+@import "./components/AuthorHero.css";
+@import "./components/AuthorManifesto.css";
+@import "./components/AuthorShowcase.css";
+@import "./components/AuthorBibliography.css";
+@import "./components/AuthorTopBottom.css";
+@import "./components/AuthorTierLists.css";
+@import "./components/AuthorAdaptations.css";
+@import "./components/AuthorPress.css";
+@import "./components/AuthorCta.css";
+
+/* Общий контейнер секций страницы автора (max-w-6xl + ритм секции) */
+.ap-section {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  padding-block: var(--ap-section-gap);
+}
+
+@media (min-width: 640px) {
+  .ap-section {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ap-section {
+    padding-inline: 2rem;
+  }
+}
+
+/* Токены страницы автора — палитра «Obsidian & Parchment» (спека 2026-09-29) */
+.author-page {
+  /* фон и поверхности */
+  --ap-bg: #0b0d12;
+  --ap-surface: #12151d;
+  --ap-surface-raised: #171b26;
+  --ap-border: #232838;
+  --ap-border-strong: #333a4f;
+  /* текст */
+  --ap-ink: #e8e4d8;
+  --ap-ink-muted: #9a958a;
+  --ap-ink-faint: #6b675e;
+  /* акценты */
+  --ap-gold: #c9a961;
+  --ap-gold-soft: rgba(201, 169, 97, 0.14);
+  --ap-rose: #b5767a;
+  --ap-cobalt: #7c93c7;
+  /* типографика */
+  --ap-display: "Newsreader", "Times New Roman", serif;
+  --ap-ui: "Geist", "Inter", system-ui, sans-serif;
+  /* ритм */
+  --ap-radius: 4px;
+  --ap-radius-lg: 8px;
+  --ap-section-gap: clamp(56px, 8vw, 112px);
+}

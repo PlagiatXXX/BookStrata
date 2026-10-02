@@ -1,0 +1,15 @@
+/* AuthorManifesto — декоративные кавычки цитаты (вне DOM-текста:
+   тесты ищут точный текст цитаты без кавычек) */
+.ap-manifesto-quote::before {
+  content: "«";
+  color: var(--ap-gold);
+  opacity: 0.55;
+  margin-right: 0.08em;
+}
+
+.ap-manifesto-quote::after {
+  content: "»";
+  color: var(--ap-gold);
+  opacity: 0.55;
+  margin-left: 0.08em;
+}

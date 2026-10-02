@@ -40,6 +40,7 @@ const NotFoundPage = lazy(() => import("@/pages/NotFoundPage/NotFoundPage"));
 const CollectionPage = lazy(() => import("@/pages/CollectionPage/CollectionPage"));
 const BookPage = lazy(() => import("@/pages/BookPage/BookPage"));
 const AuthorPage = lazy(() => import("@/pages/AuthorPage"));
+const AuthorsPage = lazy(() => import("@/pages/AuthorsPage"));
 const RankingsPage = lazy(() => import("@/pages/RankingsPage/RankingsPage"));
 const WhatToReadPage = lazy(() => import("@/pages/WhatToReadPage/WhatToReadPage"));
 const TopicPage = lazy(() => import("@/pages/TopicPage"));
@@ -49,6 +50,7 @@ const CelebritiesPage = lazy(() => import("@/pages/CelebritiesPage/CelebritiesPa
 const CelebrityPage = lazy(() => import("@/pages/CelebrityPage/CelebrityPage"));
 const AdminCelebritiesPage = lazy(() => import("@/pages/AdminCelebritiesPage/AdminCelebritiesPage"));
 const AdminBooksPage = lazy(() => import("@/pages/AdminBooksPage/AdminBooksPage"));
+const AdminAuthorsPage = lazy(() => import("@/pages/AdminAuthorsPage/AdminAuthorsPage"));
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() => import("@/pages/TierListEditorPage/TierEditorPage"));
@@ -81,6 +83,7 @@ export const router = createBrowserRouter([
       { path: "/topics/:slug", element: <TopicPage /> },
       { path: "/collections/:slug", element: <CollectionPage /> },
       { path: "/books/:slug", element: <BookPage /> },
+      { path: "/authors", element: <AuthorsPage /> },
       { path: "/authors/:slug", element: <AuthorPage /> },
       { path: "/tier-lists/:id", element: <TierListEditorPage /> },
       { path: "/templates", element: <TemplateLibrary /> },
@@ -137,6 +140,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminCelebritiesPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/authors",
+        element: (
+          <AdminGuard>
+            <AdminAuthorsPage />
           </AdminGuard>
         ),
       },

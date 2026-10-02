@@ -1,0 +1,21 @@
+/* AuthorPress — карточка цитаты; открывающая кавычка золотая, вне DOM-текста
+   (тесты ищут точный текст цитаты без кавычек) */
+.ap-press-card {
+  background: var(--ap-surface-raised);
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+}
+
+.ap-press-quote::before {
+  content: "«";
+  color: var(--ap-gold);
+  opacity: 0.7;
+  margin-right: 0.06em;
+}
+
+.ap-press-quote::after {
+  content: "»";
+  color: var(--ap-gold);
+  opacity: 0.7;
+  margin-left: 0.06em;
+}

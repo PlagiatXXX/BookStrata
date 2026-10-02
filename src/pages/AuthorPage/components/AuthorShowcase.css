@@ -1,0 +1,65 @@
+/* AuthorShowcase — панели-книги с чередованием сторон и акцентами палитры
+   (gold/rose/cobalt через data-accent): цитата, подсветка обложки, кнопка.
+   Кавычки pull-quote — вне DOM-текста: тесты ищут точный текст без кавычек. */
+.ap-pull-quote::before {
+  content: "«";
+}
+
+.ap-pull-quote::after {
+  content: "»";
+}
+
+/* Акценты: единый --ap-showcase-accent на карточку */
+.ap-showcase-card[data-accent="gold"] {
+  --ap-showcase-accent: var(--ap-gold);
+}
+
+.ap-showcase-card[data-accent="rose"] {
+  --ap-showcase-accent: var(--ap-rose);
+}
+
+.ap-showcase-card[data-accent="cobalt"] {
+  --ap-showcase-accent: var(--ap-cobalt);
+}
+
+.ap-showcase-card .ap-pull-quote {
+  color: var(--ap-showcase-accent);
+}
+
+.ap-showcase-card .ap-pull-quote::before,
+.ap-showcase-card .ap-pull-quote::after {
+  color: var(--ap-showcase-accent);
+  opacity: 0.7;
+}
+
+/* Кнопка — в цвет акцента карточки */
+.ap-showcase-card .ap-showcase-cta {
+  background: var(--ap-showcase-accent);
+}
+
+/* Чередование сторон: нечётные карточки — обложка справа (md+) */
+@media (min-width: 768px) {
+  .ap-showcase-card--flip {
+    flex-direction: row-reverse;
+  }
+}
+
+/* Подсветка обложки акцентом + подсветка рамки при наведении */
+.ap-showcase-cover-glow {
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--ap-showcase-accent),
+    transparent 70%
+  );
+  opacity: 0.22;
+  filter: blur(6px);
+  transition: opacity 0.3s ease;
+}
+
+.ap-showcase-cover:hover {
+  border-color: var(--ap-showcase-accent);
+}
+
+.ap-showcase-cover:hover .ap-showcase-cover-glow {
+  opacity: 0.38;
+}

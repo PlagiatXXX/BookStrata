@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, BarChart3, ArrowLeft, ShieldAlert, MailQuestion, Library } from 'lucide-react'
+import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, BarChart3, ArrowLeft, ShieldAlert, MailQuestion, Library, Feather } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import { useAuth } from '@/hooks/useAuthContext'
 import type { AdminDashboardStats } from '@/../shared/types'
@@ -57,6 +57,16 @@ const ALL_SECTIONS: AdminSection[] = [
     borderColor: 'border-yellow-500/30',
     textColor: 'text-yellow-500',
     roles: ['admin', 'moderator'],
+  },
+  {
+    title: 'Авторы',
+    description: 'Контент страниц авторов: герой, манифест, книги',
+    icon: Feather,
+    path: '/admin/authors',
+    color: 'from-orange-500/20 to-orange-500/5',
+    borderColor: 'border-orange-500/30',
+    textColor: 'text-orange-500',
+    roles: ['admin'],
   },
   {
     title: 'Битвы',

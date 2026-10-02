@@ -22,8 +22,8 @@ describe("getAuthorAffiliateLink (страница автора)", () => {
     expect(link.url).toContain("https://www.chitai-gorod.ru/search?");
     expect(new URL(link.url).searchParams.get("phrase")).toBe("Лев Толстой");
     expect(link.url).toContain("partnerId=1006433");
-    expect(link.disclaimer).toContain("Реклама");
-    expect(link.disclaimer).toContain("partner ID: 1006433");
+    // Реквизиты рекламодателя на странице автора не показываем
+    expect(link.disclaimer).toBeUndefined();
   });
 
   it("имя с кириллицей и спецсимволами корректно кодируется", () => {

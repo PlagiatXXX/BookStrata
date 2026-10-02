@@ -47,6 +47,16 @@ describe("Footer", () => {
     expect(link).toHaveAttribute("href", "/pricing");
   });
 
+  it("содержит ссылку на раздел авторов /authors (перелинковка)", () => {
+    mockedGet.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([])
+
+    renderFooter();
+
+    const link = screen.getByRole("link", { name: /Все авторы/i });
+    expect(link).toHaveAttribute("href", "/authors");
+  });
+
   it("подпись «Меценаты проекта:» стоит слева от бегущей строки донаторов на одном уровне", async () => {
     mockedGet.mockResolvedValue([{ id: 1, name: "Аноним" }])
     mockedGetCollections.mockResolvedValue([])

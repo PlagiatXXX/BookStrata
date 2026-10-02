@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { List, Globe, Library, BarChart3, Star, ChevronDown, BookMarked } from "lucide-react";
+import { List, Globe, Library, BarChart3, Star, ChevronDown, BookMarked, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBookshelf } from "@/hooks/useBookshelf";
 import { useBottomSafeOffset } from "@/hooks/useBottomSafeOffset";
@@ -55,7 +55,9 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
     if (label === "Рейтинги") {
       return location.pathname === "/rankings" ||
         location.pathname === "/celebrities" ||
-        location.pathname.startsWith("/celebrities/");
+        location.pathname.startsWith("/celebrities/") ||
+        location.pathname === "/authors" ||
+        location.pathname.startsWith("/authors/");
     }
     const item = NAV_ITEMS.find((i) => i.label === label);
     if (!item || !("path" in item) || !item.path) return false;
@@ -144,6 +146,18 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
                   >
                     <Star size={16} className="text-amber-400 shrink-0" />
                     <span>Топ знаменитостей</span>
+                  </button>
+                  <button
+                    data-analytics="nav.mobile.ratings_authors"
+                    onClick={() => handleRatingsSubNav("/authors")}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left cursor-pointer ${
+                      location.pathname === "/authors" || location.pathname.startsWith("/authors/")
+                        ? "text-cyan-400 bg-slate-800/50"
+                        : "text-gray-300 hover:text-white hover:bg-slate-800/50"
+                    }`}
+                  >
+                    <Users size={16} className="text-orange-400 shrink-0" />
+                    <span>Все авторы</span>
                   </button>
                 </div>
               )}

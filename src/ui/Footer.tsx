@@ -55,6 +55,7 @@ const mainLinks = [
   { href: "/rankings", label: "Рейтинг книг", analyticsKey: "rankings", icon: <BarChart3 size={14} /> },
   { href: "/what-to-read", label: "Что почитать", analyticsKey: "what_to_read", icon: <BookOpen size={14} /> },
   { href: "/celebrities", label: "Знаменитости", analyticsKey: "celebrities", icon: <Star size={14} /> },
+  { href: "/authors", label: "Все авторы", analyticsKey: "authors", icon: <Users size={14} /> },
   { href: "/templates", label: "Тир-листы", analyticsKey: "tier_lists", icon: <Folder size={14} /> },
   { href: "/community", label: "Сообщество", analyticsKey: "community", icon: <Users size={14} /> },
 ];

@@ -21,6 +21,18 @@ function getArticleJsonLd(): JsonLdObject | undefined {
 }
 
 describe("SEOHead", () => {
+  it("SiteNavigationElement содержит раздел «Все авторы» (/authors)", () => {
+    render(<SEOHead title="Тест" url="/test" />);
+    const nav = getJsonLdScripts().find(
+      (s) => s["@type"] === "SiteNavigationElement",
+    );
+    expect(nav).toBeDefined();
+    const parts = (nav!.hasPart ?? []) as JsonLdObject[];
+    expect(
+      parts.some((p) => p.url === "https://bookstrata.ru/authors"),
+    ).toBe(true);
+  });
+
   it("не рендерит Person JSON-LD без пропа person", () => {
     render(<SEOHead title="Тест" url="/test" />);
     expect(getPersonJsonLd()).toBeUndefined();
