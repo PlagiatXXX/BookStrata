@@ -99,6 +99,7 @@ const ROUTES = [
   { path: "/templates",  name: "Шаблоны" },
   { path: "/blog",       name: "Блог" },
   { path: "/celebrities", name: "Знаменитости" },
+  { path: "/authors",    name: "Все авторы" },
   { path: "/forum",      name: "Форум" },
   { path: "/about",      name: "О проекте" },
   { path: "/faq",        name: "Вопросы и ответы" },
@@ -405,7 +406,7 @@ async function addPublicBookRoutes() {
 
 /**
  * Добавляет страницы авторов (/authors/:slug) в ROUTES для prerender'а.
- * Список авторов с seoDescription берётся из src/data/author-routes.json —
+ * Список авторов со slug берётся из src/data/author-routes.json —
  * публичного API листинга авторов нет, файл обновляется на деплое
  * (backend/scripts/export-author-routes.ts).
  */
