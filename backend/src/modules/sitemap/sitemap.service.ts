@@ -27,6 +27,7 @@ export async function generateSitemap(): Promise<string> {
     { url: `${SITE_URL}/blog/why-not-goodreads`, priority: "0.6", changefreq: "monthly" },
     { url: `${SITE_URL}/blog/ssr-without-nextjs`, priority: "0.6", changefreq: "monthly" },
     { url: `${SITE_URL}/celebrities`, priority: "0.7", changefreq: "weekly" },
+    { url: `${SITE_URL}/authors`, priority: "0.7", changefreq: "weekly" },
     { url: `${SITE_URL}/privacy`, priority: "0.3", changefreq: "yearly" },
     { url: `${SITE_URL}/terms`, priority: "0.3", changefreq: "yearly" },
   ];
@@ -72,11 +73,12 @@ export async function generateSitemap(): Promise<string> {
     // таблица celebrities ещё не создана — пропускаем
   }
 
-  // Авторы — SEO-лендинги: только с seoDescription (страница отдаётся только при нём)
+  // Авторы — все со slug: страница отдаётся и без seoDescription
+  // (описание в метах — фолбэк), пустой sitemap блокировал индексацию раздела
   let authors: { slug: string; updatedAt: Date }[] = [];
   try {
     const authorRecords = await prisma.author.findMany({
-      where: { seoDescription: { not: null }, slug: { not: null } },
+      where: { slug: { not: null } },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
       take: 500,

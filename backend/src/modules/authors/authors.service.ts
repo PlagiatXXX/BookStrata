@@ -17,7 +17,12 @@ export interface AuthorResult {
 /** Минимум оценок книги для попадания в топ/худшие на странице автора */
 export const MIN_RATINGS = 5;
 
+/** Максимум авто-фактов об экранизациях (из лонгридов книг) на странице автора */
+export const MAX_FILM_FACTS = 8;
+
 export type { AuthorBookDto, AuthorPageData };
+
+type AuthorAdaptation = AuthorPageData["adaptations"][number];
 
 /**
  * Эвристика: похоже ли имя на название книги, а не на автора.
@@ -33,6 +38,70 @@ export function looksLikeBookTitle(name: string): boolean {
   if (/\n/.test(trimmed)) return true;
   return false;
 }
+
+type BookWithCount = {
+  id: number; title: string; slug: string | null; coverImageUrl: string;
+  publishedYear: number | null; genre: string | null; rating: number | null;
+  isbn: string | null; description: string | null;
+  _count: { ratings: number };
+};
+
+function toBookDto(b: BookWithCount): AuthorBookDto {
+  return {
+    id: b.id, title: b.title, slug: b.slug, coverImageUrl: b.coverImageUrl,
+    publishedYear: b.publishedYear, genre: b.genre, rating: b.rating,
+    ratingsCount: b._count.ratings, isbn: b.isbn, description: b.description,
+  };
+}
+
+/** Блок лонгрида «Погружение в контекст»: { icon, title, text } */
+type ContextChainBlock = { icon?: unknown; title?: unknown; text?: unknown };
+
+/** Валидный блок contextChain с фактом об экранизации */
+type FilmFactBlock = { icon: string; title: string; text: string };
+
+function isFilmFactBlock(value: unknown): value is FilmFactBlock {
+  if (!value || typeof value !== "object") return false;
+  const block = value as ContextChainBlock;
+  return (
+    block.icon === "movie" &&
+    typeof block.title === "string" &&
+    block.title.trim() !== "" &&
+    typeof block.text === "string" &&
+    block.text.trim() !== ""
+  );
+}
+
+/**
+ * Собирает факты об экранизациях из лонгридов (contextChain) книг автора.
+ * Порядок: новые книги первыми (null-год в конец), внутри книги — порядок блоков.
+ * Битые элементы JSON пропускаются, страница не падает.
+ */
+function collectFilmFacts(
+  books: Array<{ title: string; slug: string | null; publishedYear: number | null; contextChain: unknown }>,
+): AuthorAdaptation[] {
+  const ordered = [...books].sort(
+    (a, b) => (b.publishedYear ?? Number.NEGATIVE_INFINITY) - (a.publishedYear ?? Number.NEGATIVE_INFINITY),
+  );
+
+  const facts: AuthorAdaptation[] = [];
+  for (const book of ordered) {
+    if (!Array.isArray(book.contextChain)) continue;
+    for (const block of book.contextChain) {
+      if (!isFilmFactBlock(block)) continue;
+      facts.push({
+        kind: "film",
+        title: block.title.trim(),
+        description: block.text,
+        meta: book.title,
+        url: book.slug ? `/books/${book.slug}` : null,
+      });
+      if (facts.length >= MAX_FILM_FACTS) return facts;
+    }
+  }
+  return facts;
+}
+
 
 export function createAuthorService(prisma: PrismaClient) {
   /**
@@ -177,8 +246,9 @@ export function createAuthorService(prisma: PrismaClient) {
 
   /**
    * Данные страницы автора /authors/:slug.
-   * Возвращает null, если автор не найден или у него нет seoDescription
-   * (страница публикуется только после генерации SEO-описания).
+   * Возвращает null, только если автор не найден.
+   * seoDescription опционален (пустая строка, если не заполнен) —
+   * страница публикуется по ручному контенту, а не по SEO-полю.
    */
   const getBySlug = async (slug: string): Promise<AuthorPageData | null> => {
     const author = await prisma.author.findUnique({
@@ -188,22 +258,20 @@ export function createAuthorService(prisma: PrismaClient) {
           where: { status: "published", userId: null },
           include: { _count: { select: { ratings: true } } },
         },
+        stats: { orderBy: { order: "asc" as const } },
+        showcase: {
+          orderBy: { order: "asc" as const },
+          include: { book: { include: { _count: { select: { ratings: true } } } } },
+        },
+        adaptations: { orderBy: { order: "asc" as const } },
+        pressQuotes: { orderBy: { order: "asc" as const } },
       },
     });
 
-    if (!author || !author.seoDescription) return null;
+    if (!author) return null;
 
     const books: AuthorBookDto[] = author.books
-      .map((b) => ({
-        id: b.id,
-        title: b.title,
-        slug: b.slug,
-        coverImageUrl: b.coverImageUrl,
-        publishedYear: b.publishedYear,
-        genre: b.genre,
-        rating: b.rating,
-        ratingsCount: b._count.ratings,
-      }))
+      .map(toBookDto)
       .sort((a, b) => {
         // Хронология: null (без года) — в конец
         const ay = a.publishedYear ?? Number.POSITIVE_INFINITY;
@@ -248,15 +316,78 @@ export function createAuthorService(prisma: PrismaClient) {
         name: author.name,
         // findUnique по slug → slug не null (TS не выводит)
         slug: author.slug as string,
-        seoDescription: author.seoDescription,
+        seoDescription: author.seoDescription ?? "",
         bookCount: books.length,
         avgRating,
+        heroImageUrl: author.heroImageUrl ?? null,
+        badge: author.badge ?? null,
+        motto: author.motto ?? null,
+        manifestoQuote: author.manifestoQuote ?? null,
+        manifestoAuthor: author.manifestoAuthor ?? null,
+        manifestoRole: author.manifestoRole ?? null,
+        aboutText: author.aboutText ?? null,
       },
       books,
       topBooks,
       bottomBooks,
       tierLists,
+      stats: (author.stats ?? []).map((s) => ({ value: s.value, label: s.label })),
+      showcase: (author.showcase ?? []).map((s) => ({
+        book: toBookDto(s.book),
+        pullQuote: s.pullQuote,
+      })),
+      adaptations: [
+        ...(author.adaptations ?? []).map((a) => ({
+          kind: a.kind, title: a.title, meta: a.meta, description: a.description, url: a.url,
+        })),
+        // Авто-факты об экранизациях из лонгридов книг — после ручных
+        ...collectFilmFacts(author.books),
+      ],
+      pressQuotes: (author.pressQuotes ?? []).map((q) => ({
+        quote: q.quote, source: q.source, sourceRole: q.sourceRole,
+      })),
     };
+  };
+
+  /**
+   * Список всех авторов для страницы «Все авторы» /authors.
+   * Только авторы с опубликованными каталоговыми книгами (как на странице
+   * автора), мусорные записи (названия книг) отфильтровываются, по алфавиту.
+   */
+  const list = async (opts?: {
+    sort?: "name" | "popular";
+    limit?: number;
+  }): Promise<AuthorResult[]> => {
+    const authors = await prisma.author.findMany({
+      where: {
+        books: { some: { status: "published", userId: null } },
+      },
+      include: {
+        _count: {
+          select: { books: { where: { status: "published", userId: null } } },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    let result = authors
+      .filter((a) => a._count.books > 0 && !looksLikeBookTitle(a.name))
+      .map((a) => ({
+        id: a.id,
+        name: a.name,
+        slug: a.slug,
+        bookCount: a._count.books,
+      }));
+
+    if (opts?.sort === "popular") {
+      result = [...result].sort(
+        (a, b) => b.bookCount - a.bookCount || a.name.localeCompare(b.name, "ru"),
+      );
+    }
+    if (opts?.limit) {
+      result = result.slice(0, opts.limit);
+    }
+    return result;
   };
 
   return {
@@ -264,6 +395,7 @@ export function createAuthorService(prisma: PrismaClient) {
     findOrCreate,
     findOrCreateMany,
     search,
+    list,
     getBySlug,
   };
 }

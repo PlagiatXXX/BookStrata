@@ -1,5 +1,5 @@
 // backend/src/modules/sitemap/sitemap.service.spec.ts
-// Sitemap: страницы авторов /authors/:slug — только с seoDescription
+// Sitemap: страницы авторов /authors и /authors/:slug — все авторы со slug
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -33,16 +33,21 @@ describe("generateSitemap — страницы авторов", () => {
     ]);
   });
 
-  it("включает /authors/{slug} для автора с seoDescription", async () => {
+  it("включает /authors/{slug} для автора со slug", async () => {
     const xml = await generateSitemap();
     expect(xml).toContain("https://bookstrata.ru/authors/lev-tolstoy");
   });
 
-  it("фильтрует по seoDescription != null и slug != null", async () => {
+  it("включает страницу списка /authors", async () => {
+    const xml = await generateSitemap();
+    expect(xml).toContain("<loc>https://bookstrata.ru/authors</loc>");
+  });
+
+  it("фильтрует по slug != null (без условия на seoDescription)", async () => {
     await generateSitemap();
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { seoDescription: { not: null }, slug: { not: null } },
+        where: { slug: { not: null } },
         select: { slug: true, updatedAt: true },
       }),
     );

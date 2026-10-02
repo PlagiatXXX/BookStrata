@@ -56,6 +56,46 @@ describe("Analytics trackEvent: лимиты и защита от мусора",
     expect(saved.userAgent.length).toBeLessThanOrEqual(256);
   });
 
+  it("ОТБРАСЫВАЕТ события от ботов по userAgent (meta-externalagent)", async () => {
+    await service.trackEvent({
+      event: "page_view",
+      url: "/auth",
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 (compatible; meta-externalagent/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler))",
+    });
+    expect(prismaMock.analyticsEvent.create).not.toHaveBeenCalled();
+  });
+
+  it("ОТБРАСЫВАЕТ события от ботов (bot/crawl/spider/slurp/headless, без учёта регистра)", async () => {
+    const botUAs = [
+      "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+      "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+      "Twitterbot/1.0",
+      "Some Crawler Spider v1",
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 HeadlessChrome/131.0.0.0 Safari/537.36",
+      "curl/8.5.0",
+    ];
+    for (const userAgent of botUAs) {
+      await service.trackEvent({ event: "page_view", url: "/auth", userAgent });
+    }
+    expect(prismaMock.analyticsEvent.create).not.toHaveBeenCalled();
+  });
+
+  it("ПРОПУСКАЕТ события реальных пользователей (не ботов)", async () => {
+    await service.trackEvent({
+      event: "page_view",
+      url: "/books/dune",
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+    });
+    expect(prismaMock.analyticsEvent.create).toHaveBeenCalled();
+  });
+
+  it("ПРОПУСКАЕТ событие без userAgent (тесты, серверные вызовы)", async () => {
+    await service.trackEvent({ event: "page_view", url: "/books/dune" });
+    expect(prismaMock.analyticsEvent.create).toHaveBeenCalled();
+  });
+
   it("игнорирует meta с прототипными ключами (prototype pollution)", async () => {
     await service.trackEvent({
       event: "page_view",

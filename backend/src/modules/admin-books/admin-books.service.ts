@@ -46,6 +46,8 @@ export interface BookListParams {
   /** Происхождение книги: "tier-list" — есть вхождения в тир-листы пользователей,
    *  "catalog" — тир-листов нет (каталог/коллекции/знаменитости). */
   origin?: "tier-list" | "catalog";
+  /** Фильтр по автору (для выбора книг в админ-редакторе контента автора) */
+  authorId?: number;
   sort?: string;
   offset?: number;
   limit?: number;
@@ -181,6 +183,7 @@ async function searchBooksByRelevance(params: BookListParams) {
       ${params.duplicatesOnly ? Prisma.sql`AND b."mergedIntoId" IS NOT NULL` : Prisma.empty}
       ${params.origin === "tier-list" ? Prisma.sql`AND (b.user_id IS NOT NULL OR EXISTS (SELECT 1 FROM "BookPlacement" p2 WHERE p2."bookId" = b.id))` : Prisma.empty}
       ${params.origin === "catalog" ? Prisma.sql`AND NOT EXISTS (SELECT 1 FROM "BookPlacement" p3 WHERE p3."bookId" = b.id) AND b.user_id IS NULL` : Prisma.empty}
+      ${params.authorId != null ? Prisma.sql`AND b."authorId" = ${params.authorId}` : Prisma.empty}
   `;
 
   const [total, rows] = await Promise.all([
@@ -298,6 +301,8 @@ export async function listBooks(params: BookListParams) {
   if (params.status)
     where.status = params.status as Prisma.BookWhereInput["status"];
   if (params.genre) where.genre = params.genre;
+  if (params.authorId != null && Number.isFinite(params.authorId))
+    where.authorId = params.authorId;
   if (params.duplicatesOnly) where.mergedIntoId = { not: null };
   // «Из тир-листов»: личные книги (userId) + легаси-общие, у которых есть вхождения
   if (params.origin === "tier-list") {

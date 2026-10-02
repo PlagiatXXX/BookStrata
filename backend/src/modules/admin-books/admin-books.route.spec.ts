@@ -385,6 +385,65 @@ describe("Admin Books Routes", () => {
       );
     });
 
+    it("authorId → фильтр по Book.authorId в where (листинг и count)", async () => {
+      mocks.prisma.book.findMany.mockResolvedValue([]);
+      mocks.prisma.book.count.mockResolvedValue(0);
+
+      await request(app.server)
+        .get("/api/admin/books?authorId=7")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { authorId: 7 } }),
+      );
+      expect(mocks.prisma.book.count).toHaveBeenCalledWith({
+        where: { authorId: 7 },
+      });
+    });
+
+    it("authorId=abc → нечисловое значение игнорируется (where без authorId)", async () => {
+      mocks.prisma.book.findMany.mockResolvedValue([]);
+      mocks.prisma.book.count.mockResolvedValue(0);
+
+      await request(app.server)
+        .get("/api/admin/books?authorId=abc")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+    });
+
+    it("authorId=2.5 → дробное значение игнорируется (where без authorId)", async () => {
+      mocks.prisma.book.findMany.mockResolvedValue([]);
+      mocks.prisma.book.count.mockResolvedValue(0);
+
+      const res = await request(app.server)
+        .get("/api/admin/books?authorId=2.5")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+    });
+
+    it("q + authorId → фильтр и в raw-поиске (и count, и выдача)", async () => {
+      mocks.prisma.$queryRaw.mockResolvedValue([]);
+      mocks.prisma.book.count.mockResolvedValue(0);
+
+      await request(app.server)
+        .get("/api/admin/books?q=война&authorId=7")
+        .set("Authorization", "Bearer admin-token");
+
+      const calls = mocks.prisma.$queryRaw.mock.calls;
+      const countSql = (calls[0][0] as { strings: string[] }).strings.join("$");
+      const itemsSql = (calls[1][0] as { strings: string[] }).strings.join("$");
+      expect(countSql).toContain('b."authorId" = $');
+      expect(itemsSql).toContain('b."authorId" = $');
+      expect(mocks.prisma.book.findMany).not.toHaveBeenCalled();
+    });
+
     it("views — просмотры из AnalyticsEvent, привязанные по slug", async () => {
       mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
       mocks.prisma.book.count.mockResolvedValue(1);

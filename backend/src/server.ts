@@ -451,6 +451,10 @@ fastify.register(analyticsRoutes, { prefix: "/api/admin/analytics" });
 import { adminBooksRoutes } from "../src/modules/admin-books/admin-books.route.js";
 fastify.register(adminBooksRoutes, { prefix: "/api/admin/books" });
 
+// Admin: контент страницы автора (ручной контент)
+import { adminAuthorsRoutes } from "./modules/admin-authors/admin-authors.route.js";
+fastify.register(adminAuthorsRoutes, { prefix: "/api/admin/authors" });
+
 // Sitemap (без /api префикса, доступен по /sitemap.xml)
 import { sitemapRoutes } from "../src/modules/sitemap/sitemap.route.js";
 fastify.register(sitemapRoutes);

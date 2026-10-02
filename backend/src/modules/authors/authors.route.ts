@@ -26,6 +26,26 @@ export async function authorsRoutes(fastify: FastifyInstance) {
     return reply.code(200).send(createSuccessResponse({ authors }));
   });
 
+  // GET /api/authors — список авторов (страница «Все авторы», блок «Другие авторы»)
+  fastify.get<{
+    Querystring: { sort?: "name" | "popular"; limit?: number };
+  }>('/', {
+    schema: {
+      description: 'Список авторов каталога (имя, slug, число книг)',
+      querystring: {
+        type: 'object',
+        properties: {
+          sort: { type: 'string', enum: ['name', 'popular'], default: 'name', description: 'Сортировка: по алфавиту или по числу книг' },
+          limit: { type: 'number', minimum: 1, maximum: 100, description: 'Максимум авторов в ответе' },
+        },
+      },
+    },
+  }, async (request, reply) => {
+    const { sort, limit } = request.query;
+    const authors = await authorService.list({ sort, limit });
+    return reply.code(200).send(createSuccessResponse({ authors }));
+  });
+
   // GET /api/authors/:slug — данные страницы автора (SEO-лендинг)
   fastify.get<{ Params: { slug: string } }>('/:slug', {
     schema: {

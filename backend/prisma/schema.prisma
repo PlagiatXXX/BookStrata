@@ -133,6 +133,7 @@ likes           BookLike[]
 collectionBooks CollectionBook[]
 celebrityBooks  CelebrityBook[]
 authorRel       Author?         @relation(fields: [authorId], references: [id], onDelete: Restrict)
+authorShowcase  AuthorShowcase[]
 createdAt       DateTime        @default(now()) @map("created_at")
 updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
 
@@ -701,11 +702,87 @@ model Author {
   name            String  @unique
   slug            String? @unique
   seoDescription  String? @map("seo_description")
+  // Ручной контент страницы (спека 2026-09-29-author-page-redesign)
+  heroImageUrl    String? @map("hero_image_url")
+  badge           String?
+  motto           String?
+  manifestoQuote  String? @map("manifesto_quote")
+  manifestoAuthor String? @map("manifesto_author")
+  manifestoRole   String? @map("manifesto_role")
+  aboutText       String? @map("about_text")
   books           Book[]
+  stats           AuthorStat[]
+  showcase        AuthorShowcase[]
+  adaptations     AuthorAdaptation[]
+  pressQuotes     AuthorPressQuote[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([name])
   @@map("authors")
+}
+
+// Строка статистики hero («14 млн» / «напечатанных книг в мире»)
+model AuthorStat {
+  id       Int    @id @default(autoincrement())
+  authorId Int    @map("author_id")
+  value    String
+  label    String
+  order    Int    @default(0)
+  author   Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("author_stats")
+}
+
+// Избранная книга showcase-карточки «Избранные романы»
+model AuthorShowcase {
+  id        Int     @id @default(autoincrement())
+  authorId  Int     @map("author_id")
+  bookId    Int     @map("book_id")
+  pullQuote String? @map("pull_quote")
+  order     Int     @default(0)
+  author    Author  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  book      Book    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([authorId, bookId])
+  @@index([authorId])
+  @@map("author_showcase")
+}
+
+enum AuthorAdaptationKind {
+  film
+  theatre
+  tv
+}
+
+// Экранизация / театральная постановка
+model AuthorAdaptation {
+  id          Int                   @id @default(autoincrement())
+  authorId    Int                   @map("author_id")
+  kind        AuthorAdaptationKind
+  title       String
+  meta        String?               // год / роль, например «2024 · сценарий»
+  description String?
+  url         String?
+  order       Int                   @default(0)
+  author      Author                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("author_adaptations")
+}
+
+// Цитата прессы («Голоса мировой прессы»)
+model AuthorPressQuote {
+  id         Int    @id @default(autoincrement())
+  authorId   Int    @map("author_id")
+  quote      String
+  source     String // издание
+  sourceRole String? @map("source_role") // роль автора цитаты, «Обозреватель»
+  order      Int    @default(0)
+  author     Author @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("author_press_quotes")
 }

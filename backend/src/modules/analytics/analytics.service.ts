@@ -122,6 +122,19 @@ export function isValidEventName(event: string): boolean {
   return EVENT_NAME_PATTERN.test(event)
 }
 
+// ── Фильтр ботов ─────────────────────────────────────────────────────────────
+// Поисковые/социальные краулеры (Googlebot, YandexBot, meta-externalagent и т.п.)
+// исполняют JS и шлют page_view — их события засоряют аналитику.
+// UA сравнивается без учёта регистра; легитимные браузеры не содержат этих маркеров.
+const BOT_USER_AGENT_PATTERN =
+  /bot|crawl|spider|slurp|headless|meta-externalagent|preview|monitor|scrapy|phantomjs|python-requests|wget|curl\/|go-http-client|okhttp|axios|node-fetch/i
+
+/** true, если userAgent выглядит как бот/краулер/скрипт. Пустой UA (тесты, серверные вызовы) — не бот. */
+export function isBotUserAgent(userAgent: string | null | undefined): boolean {
+  if (!userAgent) return false
+  return BOT_USER_AGENT_PATTERN.test(userAgent)
+}
+
 /** Безопасная сериализация meta: копия без прототипных ключей, обрезка до лимита. */
 function sanitizeMeta(meta: Record<string, unknown> | undefined): Record<string, unknown> {
   if (!meta || typeof meta !== 'object') return {}
@@ -159,6 +172,12 @@ export function createAnalyticsService(prisma: PrismaClient) {
       // Мусорные события (HTML, unicode, >64 симв.) не пишем —
       // иначе таблица становится вектором забивания БД
       if (!isValidEventName(payload.event)) {
+        return
+      }
+
+      // События ботов/краулеров не пишем — иначе аналитика засоряется
+      // (например, meta-externalagent после снятия Disallow: /auth)
+      if (isBotUserAgent(payload.userAgent)) {
         return
       }
 

@@ -1,12 +1,13 @@
 /**
- * Экспорт slug'ов и имён авторов с SEO-описанием для prerender'а.
+ * Экспорт slug'ов и имён авторов для prerender'а.
  *
  * Генерирует src/data/author-routes.json — файл, который prerender.mjs
  * использует для списка пререндер-роутов /authors/:slug (по образцу
  * export-book-routes.ts).
  *
- * Страница автора отдаётся только при наличии seoDescription
- * (см. authors.service.getBySlug) — в экспорт попадают только такие авторы.
+ * Экспортируются все авторы со slug: страница отдаётся и без seoDescription
+ * (см. authors.route.spec — ручной контент публикуется), а пререндер нужен
+ * для индексации (nginx отдаёт авторам SPA-каркас, пока файлов нет).
  *
  * Запуск:
  *   cd backend && npx tsx scripts/export-author-routes.ts
@@ -39,14 +40,14 @@ interface AuthorRoute {
 async function main() {
   console.log("🔍 Подключаюсь к БД...");
   const authors = await prisma.author.findMany({
-    where: { slug: { not: null }, seoDescription: { not: null } },
+    where: { slug: { not: null } },
     orderBy: { name: "asc" },
     select: {
       slug: true,
       name: true,
     },
   });
-  console.log(`  Найдено авторов с seoDescription: ${authors.length}`);
+  console.log(`  Найдено авторов со slug: ${authors.length}`);
 
   const routes: AuthorRoute[] = authors
     .filter((author) => !!author.slug)

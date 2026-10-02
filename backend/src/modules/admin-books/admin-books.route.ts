@@ -65,6 +65,7 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
       genre?: string;
       duplicatesOnly?: string;
       origin?: string;
+      authorId?: string;
       sort?: string;
       offset?: string;
       limit?: string;
@@ -73,12 +74,14 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
     const origin = request.query.origin === "tier-list" || request.query.origin === "catalog"
       ? request.query.origin
       : undefined;
+    const authorId = Number(request.query.authorId);
     const result = await listBooks({
       q: request.query.q,
       status: request.query.status,
       genre: request.query.genre,
       duplicatesOnly: request.query.duplicatesOnly === "true",
       origin,
+      authorId: request.query.authorId && Number.isInteger(authorId) ? authorId : undefined,
       sort: request.query.sort,
       offset: Number(request.query.offset ?? 0),
       limit: Number(request.query.limit ?? 50),
