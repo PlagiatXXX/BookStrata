@@ -43,7 +43,7 @@ const envSchema = z.object({
   CUSTOM_AI_API_KEY: z.string().default(""),
   /** Запасной ключ того же провайдера — на случай исчерпания лимитов основного. */
   CUSTOM_AI_API_KEY_2: z.string().default(""),
-  CUSTOM_AI_MODEL: z.string().default("gpt-oss-120b"),
+  CUSTOM_AI_MODEL: z.string().default("qwen3.6-35b-a3b-noreason"),
   OPENROUTER_API_KEY: z.string().default(""),
   OPENROUTER_MODEL: z
     .string()
