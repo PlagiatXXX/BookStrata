@@ -8,6 +8,13 @@ export interface AiProviderConfig {
   user?: string
 }
 
+export interface ProviderStatus {
+  online: boolean
+  model: string | null
+  /** Причина недоступности (например, 403 от провайдера) — для диагностики. */
+  error?: string
+}
+
 export interface AiProvider {
   readonly name: string
   readonly model: string
@@ -17,5 +24,5 @@ export interface AiProvider {
     signal?: AbortSignal,
     userId?: string,
   ): AsyncGenerator<AiChunk>
-  checkStatus(): Promise<{ online: boolean; model: string | null }>
+  checkStatus(): Promise<ProviderStatus>
 }

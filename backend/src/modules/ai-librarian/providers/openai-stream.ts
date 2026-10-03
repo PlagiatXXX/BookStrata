@@ -99,29 +99,56 @@ export async function* createChatCompletionStream(
   yield { content: '', done: true }
 }
 
+const PROBE_TIMEOUT_MS = 5000
+const PROBE_ERROR_MAX_LENGTH = 300
+
+function truncateProbeError(text: string): string {
+  if (text.length <= PROBE_ERROR_MAX_LENGTH) return text
+  return `${text.slice(0, PROBE_ERROR_MAX_LENGTH - 1)}…`
+}
+
+/**
+ * Реальная проба генерации: POST /chat/completions с max_tokens:1.
+ * GET /models недостаточно — модель может быть в каталоге, но недоступна
+ * по тарифу/ключу (тогда провайдер отдаёт 403 только на chat/completions).
+ */
+export async function probeChatCompletion(
+  config: AiProviderConfig,
+): Promise<{ ok: boolean; error?: string }> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (config.apiKey) {
+    headers['Authorization'] = `Bearer ${config.apiKey}`
+  }
+
+  try {
+    const response = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{ role: 'user', content: 'ping' }],
+        stream: false,
+        max_tokens: 1,
+      }),
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+    })
+
+    if (response.ok) return { ok: true }
+
+    const errorText = await response.text().catch(() => '')
+    return { ok: false, error: truncateProbeError(`HTTP ${response.status} ${errorText}`) }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return { ok: false, error: truncateProbeError(message) }
+  }
+}
+
 export async function checkOpenAiCompatibleStatus(
   config: AiProviderConfig,
-): Promise<{ online: boolean; model: string | null }> {
-  try {
-    const headers: Record<string, string> = {}
-    if (config.apiKey) {
-      headers['Authorization'] = `Bearer ${config.apiKey}`
-    }
-
-    const response = await fetch(`${config.baseUrl}/models`, {
-      headers,
-      signal: AbortSignal.timeout(5000),
-    })
-    if (!response.ok) return { online: false, model: null }
-
-    const data = (await response.json()) as { data?: Array<{ id: string }> }
-    const models = data?.data?.map((m) => m.id) || []
-
-    return {
-      online: models.length > 0,
-      model: models[0] || null,
-    }
-  } catch {
-    return { online: false, model: null }
+): Promise<{ online: boolean; model: string | null; error?: string }> {
+  const probe = await probeChatCompletion(config)
+  if (!probe.ok) {
+    return { online: false, model: null, error: probe.error }
   }
+  return { online: true, model: config.model }
 }

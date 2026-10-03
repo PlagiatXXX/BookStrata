@@ -326,9 +326,13 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
   return sections.join('\n\n')
 }
 
-export async function checkAiStatus(): Promise<{ online: boolean; model: string | null }> {
+export async function checkAiStatus(): Promise<{
+  online: boolean
+  model: string | null
+  providers: Array<{ name: string; online: boolean; model: string | null; error?: string }>
+}> {
   const status = await checkAllProvidersStatus()
-  return { online: status.online, model: status.activeModel }
+  return { online: status.online, model: status.activeModel, providers: status.providers }
 }
 
 export async function* streamAiResponse(

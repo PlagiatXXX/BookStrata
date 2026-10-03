@@ -111,11 +111,12 @@ export async function* routeAiResponse(
   )
 }
 
-export async function checkAllProvidersStatus(): Promise<{
-  online: boolean
-  providers: Array<{ name: string; online: boolean; model: string | null }>
-  activeModel: string | null
-}> {
+// Статус кэшируется: эндпоинт /librarian/status публичный, а проба генерации
+// реально дёргает провайдера — без кэша его можно задолбить.
+const STATUS_CACHE_TTL_MS = 60_000
+let statusCache: { expiresAt: number; value: Awaited<ReturnType<typeof fetchProvidersStatus>> } | undefined
+
+async function fetchProvidersStatus() {
   const results = await Promise.all(
     providers.map(async (p) => {
       const status = await p.checkStatus()
@@ -129,4 +130,18 @@ export async function checkAllProvidersStatus(): Promise<{
     providers: results,
     activeModel: onlineProvider ? onlineProvider.model : null,
   }
+}
+
+export async function checkAllProvidersStatus(): Promise<{
+  online: boolean
+  providers: Array<{ name: string; online: boolean; model: string | null; error?: string }>
+  activeModel: string | null
+}> {
+  if (statusCache && statusCache.expiresAt > Date.now()) {
+    return statusCache.value
+  }
+
+  const value = await fetchProvidersStatus()
+  statusCache = { expiresAt: Date.now() + STATUS_CACHE_TTL_MS, value }
+  return value
 }
