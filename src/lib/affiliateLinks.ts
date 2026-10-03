@@ -60,6 +60,7 @@ export function getAuthorAffiliateLink(authorName: string): AffiliateLink[] {
       name: "Читай-город",
       url: buildChitaiGorodLink(authorName),
       iconName: "chitai-gorod",
+      disclaimer: "Реклама. ООО «ГРАМОТА», ИНН 7706293136, partner ID: 1006433.",
     },
   ];
 }

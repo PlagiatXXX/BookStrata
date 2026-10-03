@@ -20,8 +20,10 @@ export async function* createChatCompletionStream(
       ...messages.map((m) => ({ role: m.role, content: m.content })),
     ],
     stream: true,
-    temperature: 0.3,
-    max_tokens: 2048,
+    // 0.7 — reasoning-модели (gpt-oss и т.п.) зацикливаются на низкой температуре;
+    // 4096 — reasoning-блок жрёт основной бюджет токенов max_tokens.
+    temperature: 0.7,
+    max_tokens: 4096,
   }
 
   if (config.user) {

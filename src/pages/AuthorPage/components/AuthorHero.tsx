@@ -22,7 +22,7 @@ export function AuthorHero({ author, stats }: AuthorHeroProps) {
   const portrait = author.heroImageUrl;
 
   return (
-    <section className="relative overflow-hidden border-b border-[var(--ap-border)]">
+    <section className="relative overflow-hidden border-b border-(--ap-border)">
       {/* Подложка: glow + (опционально) портрет фоном и затемнители для читаемости */}
       <div className="ap-hero-bg absolute inset-0">
         <div className="ap-hero-glow absolute inset-0" />
@@ -35,33 +35,33 @@ export function AuthorHero({ author, stats }: AuthorHeroProps) {
             />
             {/* Затемнение: базовое + слева (текст) + снизу (стык со следующей секцией) */}
             <div className="absolute inset-0 bg-black/45" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--ap-bg)] via-[var(--ap-bg)]/75 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--ap-bg)] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-r from-(--ap-bg) via-(--ap-bg)/75 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-(--ap-bg) via-transparent to-transparent" />
           </>
         )}
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-svh max-w-6xl flex-col justify-end gap-5 px-4 py-[var(--ap-section-gap)] sm:px-6 lg:px-8 max-lg:min-h-0">
+      <div className="relative z-10 mx-auto flex min-h-svh max-w-6xl flex-col justify-end gap-5 px-4 py-(--ap-section-gap) sm:px-6 lg:px-8 max-lg:min-h-0">
         <div className="flex max-w-2xl flex-col gap-5">
           {author.badge && (
-            <span className="w-fit inline-flex items-center gap-2 rounded-full border border-[var(--ap-gold)]/40 bg-[var(--ap-gold-soft)] px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--ap-gold)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--ap-gold)]" />
+            <span className="w-fit inline-flex items-center gap-2 rounded-full border border-(--ap-gold)/40 bg-(--ap-gold-soft) px-4 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-(--ap-gold)">
+              <span className="h-1.5 w-1.5 rounded-full bg-(--ap-gold)" />
               {author.badge}
             </span>
           )}
 
           <div className="flex flex-col gap-3">
-            <h1 className="font-[family-name:var(--ap-display)] text-3xl font-light leading-none tracking-tight text-[var(--ap-ink)] md:text-4xl">
+            <h1 className="font-(family-name:--ap-display) text-3xl font-light leading-none tracking-tight text-(--ap-ink) md:text-4xl">
               {author.name}
             </h1>
             {author.motto && (
-              <p className="font-[family-name:var(--ap-display)] text-lg italic text-[var(--ap-gold)] md:text-xl">
+              <p className="font-(family-name:--ap-display) text-lg italic text-(--ap-gold) md:text-xl">
                 {author.motto}
               </p>
             )}
           </div>
 
-          <p className="whitespace-pre-line text-sm font-light leading-relaxed text-[var(--ap-ink)]">
+          <p className="whitespace-pre-line text-sm font-light leading-relaxed text-(--ap-ink)">
             {author.seoDescription}
           </p>
 
@@ -71,7 +71,7 @@ export function AuthorHero({ author, stats }: AuthorHeroProps) {
                 href={cta.url}
                 target="_blank"
                 rel="sponsored nofollow noopener"
-                className="w-fit rounded-[var(--ap-radius)] bg-[var(--ap-gold)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ap-bg)] transition-opacity hover:opacity-90"
+                className="w-fit rounded-(--ap-radius) bg-(--ap-gold) px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-(--ap-bg) transition-opacity hover:opacity-90"
               >
                 Читать книги автора
               </a>
@@ -82,16 +82,22 @@ export function AuthorHero({ author, stats }: AuthorHeroProps) {
                     .getElementById("bibliography")
                     ?.scrollIntoView({ behavior: "smooth", block: "start" })
                 }
-                className="w-fit rounded-[var(--ap-radius)] border border-[var(--ap-gold)]/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ap-gold)] transition-colors hover:bg-[var(--ap-gold-soft)]"
+                className="w-fit rounded-(--ap-radius) border border-(--ap-gold)/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-(--ap-gold) transition-colors hover:bg-(--ap-gold-soft)"
               >
                 Смотреть библиографию ↓
               </button>
             </div>
+            {/* Признак рекламы рядом с партнёрской кнопкой (ФЗ-38 «О рекламе») */}
+            {cta.disclaimer && (
+              <p className="text-[10px] leading-relaxed text-(--ap-ink-muted)">
+                {cta.disclaimer}
+              </p>
+            )}
           </div>
         </div>
 
         {/* Bottom Metric Strip: ручные stats + авто-поля (спека §1) */}
-        <div className="grid max-w-5xl grid-cols-2 gap-x-5 gap-y-4 rounded-[var(--ap-radius-lg)] border border-[var(--ap-border)] bg-[var(--ap-bg)]/40 px-5 py-4 backdrop-blur-sm sm:grid-cols-3 md:grid-cols-5">
+        <div className="grid max-w-5xl grid-cols-2 gap-x-5 gap-y-4 rounded-(--ap-radius-lg) border border-(--ap-border) bg-(--ap-bg)/40 px-5 py-4 backdrop-blur-sm sm:grid-cols-3 md:grid-cols-5">
           {stats.map((stat, index) => (
             <div
               key={`${stat.label}-${index}`}

@@ -81,6 +81,16 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toContain('реальные пересечения')
   })
 
+  it('запрещает повторять книги, уже названные в диалоге', () => {
+    const prompt = buildSystemPrompt(richProfile, 'User')
+    expect(prompt).toContain('Не повторяй книги, которые уже назвал')
+  })
+
+  it('запрещает выдумывать названия при неуверенности', () => {
+    const prompt = buildSystemPrompt(richProfile, 'User')
+    expect(prompt).toContain('Не уверен в точном названии')
+  })
+
   it('limits top books to 15', () => {
     const manyBooks: TasteProfile = {
       ...emptyProfile,

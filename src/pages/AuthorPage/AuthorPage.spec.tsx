@@ -693,6 +693,19 @@ describe("Секции ручного контента", () => {
     expect(scrollSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("hero: партнёрская кнопка «Читать книги автора» — рядом disclaimer «Реклама» (ФЗ-38)", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue(fixture);
+
+    renderPage();
+    await screen.findByRole("heading", { name: "Лев Толстой" });
+
+    const cta = screen.getByRole("link", { name: /Читать книги автора/ });
+    expect(cta.getAttribute("href")).toContain("partnerId=1006433");
+    const disclaimer = screen.getByText(/Реклама\./);
+    // Disclaimer визуально рядом с кнопкой — в той же hero-секции
+    expect(cta.closest("section")).toContainElement(disclaimer);
+  });
+
   it("hero: ручные stats рендерятся в мета-полосе (value + label), авто-строки рядом", async () => {
     vi.mocked(getAuthorBySlug).mockResolvedValue({
       ...fixture,
