@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { getCollectionSeedData } from "./seed-collections.js";
 
 const prisma = new PrismaClient();
 
@@ -106,80 +105,8 @@ async function main() {
 
   console.log("Users ensured:", { admin1: admin1.username, admin2: admin2Username, mod1: mod1Username, mod2: mod2Username })
 
-  // // === Создаём начальные новости ===
-  // const newsData = [
-  //   {
-  //     title: "Новые возможности платформы",
-  //     content: `Мы рады сообщить о запуске новых функций платформы BookStrata!
-  //
-  // Теперь вы можете:
-  // - Создавать неограниченное количество тир-листов
-  // - Использовать шаблоны для быстрого старта
-  // - Делиться своими рейтингами с сообществом
-  // - Загружать обложки книг через drag-and-drop
-  //
-  // Следите за обновлениями!`,
-  //     excerpt: "Обзор новых функций платформы BookStrata",
-  //     tags: ["новинки", "обновления"],
-  //   },
-  //   {
-  //     title: "Как создать идеальный тир-лист",
-  //     content: `Советы по созданию качественных тир-листов:
-  //
-  // 1. Определите критерии оценки
-  // 2. Выберите подходящую категорию книг
-  // 3. Используйте шаблоны для экономии времени
-  // 4. Не бойтесь экспериментировать с уровнями
-  //
-  // Помните, что ваш рейтинг — это субъективное мнение, и оно имеет право на существование!`,
-  //     excerpt: "Руководство для начинающих",
-  //     tags: ["гайды", "советы"],
-  //   },
-  //   {
-  //     title: "Топ книг месяца",
-  //     content: `Подборка популярных книг этого месяца по версии нашего сообщества:
-  //
-  // 📚 **Фантастика:**
-  // - "Dune" — Frank Herbert
-  // - "The Hobbit" — J.R.R. Tolkien
-  //
-  // 📖 **Фэнтези:**
-  // - "Harry Potter" — J.K. Rowling
-  // - "Percy Jackson" — Rick Riordan
-  //
-  // 🔍 **Детективы:**
-  // - "Sherlock Holmes" — Arthur Conan Doyle
-  //
-  // А какие книги в вашем топе?`,
-  //     excerpt: "Ежемесячная подборка лучших книг",
-  //     tags: ["подборки", "рекомендации"],
-  //   },
-  // ]
-  //
-  // for (const news of newsData) {
-  //   await prisma.newsArticle.create({
-  //     data: { ...news, authorId: admin1.id, isPublished: true },
-  //   })
-  // }
-  //
-  // console.log("News created: 3 articles")
-
-  // === Подборки (collections) — create-only ===
-  // Seed НИКОГДА не перезаписывает существующие коллекции,
-  // чтобы не затёрсть правки, сделанные через админку на проде.
-  const collections = getCollectionSeedData()
-  let created = 0
-
-  for (const data of collections) {
-    const exists = await prisma.collection.findUnique({ where: { slug: data.slug } })
-    if (!exists) {
-      await prisma.collection.create({ data })
-      created++
-    }
-  }
-
-  if (created > 0) console.log(`Collections created: ${created}`)
-  else console.log("Collections: no new ones to create")
+  // Новости, коллекции и прочий контент создаются/обновляются через админку —
+  // сид контента больше не используется (см. AUDIT_FILES_GUIDE.md).
 
   console.log("Seed done!")
 }
