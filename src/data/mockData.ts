@@ -1,5 +1,5 @@
 // src/data/mockData.ts
-// Mock-данные для шаблонов, коллекций и новостей
+// Mock-данные для шаблонов и коллекций
 import {
   BookOpen,
   Book as BookIcon,
@@ -28,16 +28,7 @@ export type TemplateItem = {
   templateData: CreateTemplateData;
 };
 
-export type NewsItem = {
-  id: number;
-  title: string;
-  excerpt: string;
-  tag: string;
-  readTime: string;
-};
-
-/** Палитра акцентных цветов для карточек коллекций */
-export const COLLECTION_ACCENTS = [
+/** Палитра акцентных цветов для карточек коллекций */export const COLLECTION_ACCENTS = [
   '#f97316', // оранжевый (текущий accent-main)
   '#ef4444', // красный
   '#ec4899', // розовый
@@ -2002,29 +1993,5 @@ export const COLLECTIONS: CollectionItem[] = [
       n12: { id: "n12", title: "Туберкулёз", author: "", coverImageUrl: "/images/collections/curated/popular-science/tuberculosis.jpeg", description: "" },
     },
     unrankedBookIds: [],
-  },
-];
-
-export const NEWS_ITEMS: NewsItem[] = [
-  {
-    id: 1,
-    title: "Новые шаблоны недели: фэнтези, классика и sci‑fi",
-    excerpt: "Собрали свежие подборки, которые быстрее всего набирают оценки.",
-    tag: "Обновление",
-    readTime: "2 мин",
-  },
-  {
-    id: 2,
-    title: "Комьюнити‑лист: лучшие подборки марта",
-    excerpt: "Смотрите топ‑рейтинги и идеи, как оформить свой тир‑лист.",
-    tag: "Комьюнити",
-    readTime: "3 мин",
-  },
-  {
-    id: 3,
-    title: "Как делать компактные шаблоны без потери качества",
-    excerpt: "Мини‑гайд по оптимизации изображений и структуры списков.",
-    tag: "Гайд",
-    readTime: "4 мин",
   },
 ];
