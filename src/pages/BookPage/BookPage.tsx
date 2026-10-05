@@ -39,6 +39,7 @@ import { BookComments } from "./BookComments";
 import { BookSignUpCta } from "./BookSignUpCta";
 import { getAffiliateLinks } from "@/lib/affiliateLinks";
 import { rememberBookReturnScroll } from "@/utils/bookNavigation";
+import { GENRE_CATEGORIES, parseBookGenre } from "@/data/genre-taxonomy";
 import "./BookPage.css";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
@@ -132,13 +133,38 @@ export default function BookPage() {
       )
     : undefined;
 
-  const breadcrumbs = [
-    { name: "Главная", url: "/" },
-    ...(fromTierList
-      ? [{ name: fromTierList.title, url: `/tier-lists/${fromTierList.id}` }]
-      : [{ name: book.genre ?? "Книги", url: "/rankings" }]),
-    { name: book.title, url: `/books/${slug}` },
-  ];
+  // Первый распознанный жанр книги → категория каталога (/topics/:id)
+  const [firstGenreId] = parseBookGenre(book.genre);
+  const genreCategory = firstGenreId
+    ? GENRE_CATEGORIES.find((c) => c.id === firstGenreId)
+    : undefined;
+  // Куда ведёт жанр-чип: распознанный → тема, иначе → рейтинги
+  const genreHref = genreCategory
+    ? `/topics/${genreCategory.id}`
+    : book.genre
+      ? "/rankings"
+      : null;
+
+  const breadcrumbs = fromTierList
+    ? [
+        // Путь навигации «Тир-лист → Книга» — иерархия каталога тут не причём
+        { name: "Главная", url: "/" },
+        { name: fromTierList.title, url: `/tier-lists/${fromTierList.id}` },
+        { name: book.title, url: `/books/${slug}` },
+      ]
+    : [
+        // Иерархия каталога: Главная → Рейтинги → Жанр → Книга
+        { name: "Главная", url: "/" },
+        { name: "Рейтинги", url: "/rankings" },
+        // Распознанный жанр → канонический лейбл категории, ссылка на /topics/:id;
+        // нераспознанный → сырой текст жанра на /rankings; без жанра звена нет
+        ...(genreCategory
+          ? [{ name: genreCategory.label, url: `/topics/${genreCategory.id}` }]
+          : book.genre
+            ? [{ name: book.genre, url: "/rankings" }]
+            : []),
+        { name: book.title, url: `/books/${slug}` },
+      ];
 
   const bookJsonLd = buildBookJsonLd({
     ...book,
@@ -272,10 +298,13 @@ export default function BookPage() {
               {/* Центр: метаданные + описание + действия */}
               <div className="md:col-span-5 flex flex-col justify-center relative z-20 md:pl-8">
                 <div className="flex flex-wrap items-center gap-4 mb-2">
-                  {book.genre && (
-                    <span className="bp-label-caps text-(--bp-primary) tracking-widest">
+                  {book.genre && genreHref && (
+                    <Link
+                      to={genreHref}
+                      className="bp-label-caps text-(--bp-primary) tracking-widest hover:underline underline-offset-4 transition-colors"
+                    >
                       {book.genre}
-                    </span>
+                    </Link>
                   )}
                   {book.publishedYear && (
                     <span className="bp-label-caps text-(--bp-on-surface-variant) tracking-widest">

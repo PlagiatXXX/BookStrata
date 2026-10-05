@@ -1,7 +1,7 @@
 // src/pages/BookPage/BookPage.test.tsx
 // Рендер, загрузка, ошибка, 404 — по плану (Фаза 5, тесты).
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
@@ -222,8 +222,11 @@ describe("BookPage", () => {
     // Крошечная ссылка (первая) ведёт на тир-лист по id
     const links = await screen.findAllByRole("link", { name: "Топ-100 классики" });
     expect(links[0]).toHaveAttribute("href", "/tier-lists/tl-1");
-    // Звено «Книги» (по жанру) при ?from= не показывается — путь идёт от тир-листа
-    expect(screen.queryByRole("link", { name: "Роман" })).toBeNull();
+    // Звено по жанру в крошках при ?from= не показывается — путь идёт от тир-листа
+    // (жанр-чип в теле страницы остаётся ссылкой — это отдельный элемент)
+    const nav = screen.getByRole("navigation", { name: "Хлебные крошки" });
+    expect(within(nav).queryByRole("link", { name: "Роман" })).toBeNull();
+    expect(within(nav).queryByText("Роман")).toBeNull();
   });
 
   it("крошки находят тир-лист и по slug в ?from=", async () => {
@@ -629,6 +632,88 @@ describe("BookPage: мобильная адаптивность действий
       screen.queryByRole("link", { name: "Ф. Скотт Фицджеральд" }),
     ).not.toBeInTheDocument();
     expect(screen.getAllByText("Ф. Скотт Фицджеральд").length).toBeGreaterThan(0);
+  });
+
+  describe("перелинковка жанра (крошки и жанр-чип)", () => {
+    function renderWithGenre(genre: string | null, entries?: string[]) {
+      mockedUseBook.mockReturnValue({
+        data: { ...bookPageData, book: { ...bookPageData.book, genre } },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as never);
+      return renderPage(entries);
+    }
+
+    async function breadcrumbHrefs(): Promise<{ labels: string[]; hrefs: string[] }> {
+      const nav = await screen.findByRole("navigation", { name: "Хлебные крошки" });
+      const links = within(nav).getAllByRole("link");
+      return {
+        labels: links.map((a) => a.textContent ?? ""),
+        hrefs: links.map((a) => a.getAttribute("href") ?? ""),
+      };
+    }
+
+    it("распознанный жанр → Главная → Рейтинги → Классика (/topics/classics) → Книга", async () => {
+      renderWithGenre("Классическая литература");
+
+      const { labels, hrefs } = await breadcrumbHrefs();
+      expect(labels).toEqual(["Главная", "Рейтинги", "Классика", "Великий Гэтсби"]);
+      expect(hrefs).toEqual(["/", "/rankings", "/topics/classics", "/books/velikij-getssbi"]);
+    });
+
+    it("мульти-жанр → одно звено по первому распознанному жанру", async () => {
+      renderWithGenre("Детектив, Классика");
+
+      const { labels, hrefs } = await breadcrumbHrefs();
+      expect(labels[2]).toBe("Детектив / Триллер");
+      expect(hrefs[2]).toBe("/topics/thriller");
+    });
+
+    it("нераспознанный жанр → сырой текст со ссылкой на /rankings", async () => {
+      renderWithGenre("Авангардный журнал");
+
+      const { labels, hrefs } = await breadcrumbHrefs();
+      expect(labels).toEqual(["Главная", "Рейтинги", "Авангардный журнал", "Великий Гэтсби"]);
+      expect(hrefs[2]).toBe("/rankings");
+      expect(hrefs.some((h) => h.startsWith("/topics/"))).toBe(false);
+    });
+
+    it("без жанра → Главная → Рейтинги → Книга (звена категории нет)", async () => {
+      renderWithGenre(null);
+
+      const { labels } = await breadcrumbHrefs();
+      expect(labels).toEqual(["Главная", "Рейтинги", "Великий Гэтсби"]);
+    });
+
+    it("?from= → цепочка тир-листа без звена «Рейтинги»", async () => {
+      renderWithGenre("Роман", ["/books/velikij-getssbi?from=tl-1"]);
+
+      const { labels, hrefs } = await breadcrumbHrefs();
+      expect(labels).toEqual(["Главная", "Топ-100 классики", "Великий Гэтсби"]);
+      expect(hrefs[1]).toBe("/tier-lists/tl-1");
+      expect(labels).not.toContain("Рейтинги");
+    });
+
+    it("жанр-чип в теле страницы — ссылка на /topics/:id", async () => {
+      renderWithGenre("Классическая литература");
+
+      const chipLinks = await screen.findAllByRole("link", { name: "Классическая литература" });
+      expect(chipLinks.length).toBeGreaterThan(0);
+      for (const link of chipLinks) {
+        expect(link).toHaveAttribute("href", "/topics/classics");
+      }
+    });
+
+    it("жанр-чип нераспознанного жанра ведёт на /rankings", async () => {
+      renderWithGenre("Авангардный журнал");
+
+      const chipLinks = await screen.findAllByRole("link", { name: "Авангардный журнал" });
+      expect(chipLinks.length).toBeGreaterThan(0);
+      for (const link of chipLinks) {
+        expect(link).toHaveAttribute("href", "/rankings");
+      }
+    });
   });
 });
 
