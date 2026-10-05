@@ -128,8 +128,9 @@ describe("routeAiResponse — порядок и пропуск провайде�
   const systemPrompt = "system";
 
   async function collect(route: ReturnType<Awaited<ReturnType<typeof loadRouter>>["routeAiResponse"]>) {
-    for await (const _chunk of route) {
+    for await (const chunk of route) {
       // собираем стрим до конца
+      void chunk;
     }
   }
 
@@ -152,6 +153,7 @@ describe("routeAiResponse — порядок и пропуск провайде�
     for (const [name, mock] of Object.entries(generateMocks)) {
       mock.mockImplementation(() => {
         order.push(name);
+        // eslint-disable-next-line require-yield -- генератор нужен только для throw в for await
         return (async function* () {
           throw new Error(`${name} down`);
         })();
@@ -166,6 +168,7 @@ describe("routeAiResponse — порядок и пропуск провайде�
 
   it("падение custom переводит запрос на abliteration", async () => {
     process.env.ABLITERATION_API_KEY = "abl-key";
+    // eslint-disable-next-line require-yield -- генератор нужен только для throw в for await
     generateMocks.custom.mockImplementation(async function* () {
       throw new Error("neuraldeep down");
     });
