@@ -56,13 +56,18 @@ function AppShell() {
     // setTimeout(0) ensures this runs AFTER React Router's ScrollRestoration
     // which processes popstate synchronously. Without it, our restore fires
     // first and RR overwrites it with its own (wrong) position.
+    let cleanupRestore: (() => void) | null = null;
+    let frameId = 0;
     const timer = setTimeout(() => {
-      const frame = requestAnimationFrame(() => {
-        restoreBookReturnScroll(path);
+      frameId = requestAnimationFrame(() => {
+        cleanupRestore = restoreBookReturnScroll(path);
       });
-      return () => cancelAnimationFrame(frame);
     }, 0);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(frameId);
+      cleanupRestore?.();
+    };
   }, [pathname]);
 
   return (

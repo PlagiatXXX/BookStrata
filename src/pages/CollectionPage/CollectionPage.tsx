@@ -6,8 +6,7 @@ import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { sileo } from "sileo";
-import { getCollectionBySlug, getCollectionPreviewBySlug } from "@/lib/collectionsApi";
-import type { CollectionItem } from "@/types/collection";
+import { useCollection } from "./hooks/useCollection";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { COLLECTION_TITLES } from "@/data/collection-seo";
@@ -30,13 +29,13 @@ export default function CollectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const cameFromApp = location.key !== "default";
-  const redirectedRef = useRef(false);
-  const [collection, setCollection] = useState<CollectionItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [viewedBook, setViewedBook] = useState<Book | null>(null);
+  const redirectHandledRef = useRef(false);
+  const { collection, isLoading: loading, isError } = useCollection(slug, isPreview);
   const { shelf } = useBookshelf();
   const { user: authUser } = useAuth();
   const currentUserId = authUser?.userId ?? null;
+
+  const [viewedBook, setViewedBook] = useState<Book | null>(null);
 
   const handleViewBook = useCallback((book: Book) => {
     setViewedBook(book);
@@ -45,49 +44,39 @@ export default function CollectionPage() {
   // Theme state (filters managed by themed section or default layout)
   const [filterGenre, setFilterGenre] = useState<string | null>(null);
 
+  // Коллекция не найдена (404) → редирект, как и раньше на ручном fetch
   useEffect(() => {
-    const loadCollection = async () => {
-      if (!slug) return;
-
-      try {
-        const data = isPreview
-          ? await getCollectionPreviewBySlug(slug)
-          : await getCollectionBySlug(slug);
-        if (!data) {
-          sileo.error({
-            title: "Коллекция не найдена",
-            description: "Возможно, она была удалена",
-            duration: 3000,
-          });
-          if (!redirectedRef.current) {
-            redirectedRef.current = true;
-            if (cameFromApp) {
-              navigate(-1);
-            } else {
-              navigate("/rankings");
-            }
-          }
-          return;
-        }
-        setCollection(data);
-      } catch (error) {
-        if (typeof window !== "undefined" && window.__PRERENDER__) {
-          console.warn("[prerender] API недоступен, показываем SEO-заглушку");
-        } else {
-          console.error("Failed to load collection:", error);
-          sileo.error({
-            title: "Ошибка загрузки",
-            description: "Не удалось загрузить коллекцию",
-            duration: 3000,
-          });
-        }
-      } finally {
-        setLoading(false);
+    if (loading || redirectHandledRef.current) return;
+    if (collection === null && !isError) {
+      redirectHandledRef.current = true;
+      sileo.error({
+        title: "Коллекция не найдена",
+        description: "Возможно, она была удалена",
+        duration: 3000,
+      });
+      if (cameFromApp) {
+        navigate(-1);
+      } else {
+        navigate("/rankings");
       }
-    };
+    }
+  }, [loading, collection, isError, cameFromApp, navigate]);
 
-    loadCollection();
-  }, [slug, navigate, isPreview, cameFromApp]);
+  // Ошибка загрузки → тост, страница показывает заглушку
+  useEffect(() => {
+    if (!isError || redirectHandledRef.current) return;
+    redirectHandledRef.current = true;
+    if (typeof window !== "undefined" && window.__PRERENDER__) {
+      console.warn("[prerender] API недоступно, показываем SEO-заглушку");
+    } else {
+      console.error("Failed to load collection:", slug);
+      sileo.error({
+        title: "Ошибка загрузки",
+        description: "Не удалось загрузить коллекцию",
+        duration: 3000,
+      });
+    }
+  }, [isError, slug]);
 
   // SEO data — available even during loading/error for prerender
   const seoTitle = buildCollectionSeoTitle(collection?.title, slug || "", COLLECTION_TITLES[slug || ""] || "");
