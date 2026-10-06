@@ -5,7 +5,6 @@ import { Spinner } from "@/components/Spinner";
 import { AchievementNotification } from "@/components/AchievementNotification/AchievementNotification";
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
-import { FeedbackButton } from "@/components/FeedbackButton/FeedbackButton";
 import { SessionExpiredOverlay } from "@/components/SessionExpiredOverlay";
 import { restoreBookReturnScroll } from "@/utils/bookNavigation";
 import { AppProviders } from "./AppProviders";
@@ -13,8 +12,6 @@ import "../styles/sileo-custom.css";
 
 /** Внутренний контент, рендерится внутри AppProviders — хуки зависящие от AuthProvider безопасны */
 function AppShellInner() {
-  const location = useLocation();
-  const { pathname } = location;
   const { newAchievement, clearNotification } = useAchievementNotifications();
   useAnalyticsTracker();
 
@@ -41,9 +38,6 @@ function AppShellInner() {
         achievement={newAchievement}
         onClose={clearNotification}
       />
-      {!pathname.match(/^\/tier-lists\/[^/]+\/?$/) && (
-        <FeedbackButton raised={false} withNavMargin={pathname !== "/"} />
-      )}
     </>
   );
 }
