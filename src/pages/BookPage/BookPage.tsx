@@ -38,6 +38,7 @@ import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
 import { BookComments } from "./BookComments";
 import { BookSignUpCta } from "./BookSignUpCta";
 import { getAffiliateLinks } from "@/lib/affiliateLinks";
+import { pushDataLayerEvent } from "@/lib/gtm";
 import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 import { GENRE_CATEGORIES, parseBookGenre } from "@/data/genre-taxonomy";
 import "./BookPage.css";
@@ -186,10 +187,29 @@ export default function BookPage() {
       slug: book.slug ?? undefined,
     });
     if (!isAlreadyWantToRead) {
-      sileo.success({
+      // Мостик к полке: показываем, где посмотреть сохранённое, — иначе
+      // гости жмут «Хочу прочитать» и никогда не находят свою полку.
+      const toastId = sileo.action({
         title: "«Хочу прочитать»",
-        description: `«${book.title}» добавлена на полку. Вы можете продолжить подбирать книги.`,
-        duration: 5000,
+        description: `«${book.title}» добавлена на полку.`,
+        duration: 8000,
+        button: {
+          title: "Открыть полку",
+          onClick: () => {
+            // sileo не скрывает тост сам при клике на кнопку — прячем вручную,
+            // иначе он висит поверх страницы полки до истечения duration
+            sileo.dismiss(toastId);
+            pushDataLayerEvent("open_shelf_from_toast");
+            navigate("/shelf");
+          },
+        },
+      });
+    } else {
+      // Снятие отметки: короткий подтверждающий тост (как в BookViewModal)
+      sileo.success({
+        title: "Книга убрана с полки",
+        description: `«${book.title}» больше не в планах`,
+        duration: 3000,
       });
     }
   };

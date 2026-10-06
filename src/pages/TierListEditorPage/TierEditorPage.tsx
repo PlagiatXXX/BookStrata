@@ -20,9 +20,11 @@ import { useTierEditorQueries } from "./hooks/useTierEditorQueries";
 import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
-import { getDemoInitialData } from "./_initialData";
+import { resolveDemoInitialData } from "./_initialData";
 import { buildTierListSeoDescription, buildTierListSeoTitle } from "./seo";
 import { getBookViewAction } from "./bookClick";
+import { pushDataLayerEvent } from "@/lib/gtm";
+import { useBookshelf } from "@/hooks/useBookshelf";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { AiLibrarianWidget } from "@/components/AiLibrarian/AiLibrarianWidget";
@@ -66,6 +68,10 @@ const TierListEditorContent = () => {
     const raw = searchParams.get("readIds");
     return raw ? raw.split(",").filter(Boolean) : null;
   }, [searchParams]);
+  // Гость пришёл из полки: /tier-lists/new?from=shelf&section=want&title=...
+  const fromShelf = searchParams.get("from") === "shelf";
+  const shelfSection = searchParams.get("section");
+  const shelfTitle = searchParams.get("title");
   const navigate = useNavigate();
 
   // Получаем все состояния из хука
@@ -188,6 +194,30 @@ const TierListEditorContent = () => {
   const isDemo = tierListId === "new" && !isAuthenticated;
   const { loadDemo, saveDemo, clearDemo } = useDemoStorage();
 
+  // Книги гостевой полки — для предзаполнения при ?from=shelf.
+  // Гостевая полка живёт в localStorage (shelf + guestBookMeta).
+  const { shelf: guestShelf, guestBookMeta } = useBookshelf();
+  const shelfBooks = useMemo<Book[]>(() => {
+    if (!fromShelf || !isDemo) return [];
+    const books: Book[] = [];
+    for (const [bookKey, status] of Object.entries(guestShelf)) {
+      if (shelfSection === "read" && status !== "read") continue;
+      if (shelfSection === "want" && status !== "want_to_read") continue;
+      const meta = guestBookMeta[bookKey];
+      if (!meta?.title) continue; // без данных книги карточку не собрать
+      books.push({
+        id: bookKey,
+        title: meta.title,
+        author: meta.author ?? "",
+        coverImageUrl: meta.coverImageUrl ?? "",
+        genre: meta.genre ?? "",
+        description: meta.description ?? "",
+        slug: meta.slug ?? null,
+      });
+    }
+    return books;
+  }, [fromShelf, isDemo, shelfSection, guestShelf, guestBookMeta]);
+
   // Если есть сохранённый черновик в localStorage — используем его (для демо и после регистрации).
   // При открытии по ссылке с шаблоном (?template=N) черновик игнорируем — показываем шаблон.
   const [demoInitialData] = useState<TierListData | null>(() => {
@@ -196,12 +226,31 @@ const TierListEditorContent = () => {
     return null;
   });
 
-  // Если демо-режим без форка, шаблона и без сохранённого черновика — показываем предзаполненные книги
-  const effectiveInitialData =
-    demoInitialData ??
-    (isDemo && !forkSlug && !templateId
-      ? getDemoInitialData(tierListId, "Новый тир-лист")
-      : initialDataForHook);
+  // Приоритет: демо-черновик > книги полки (?from=shelf) > дефолтные демо-книги
+  const effectiveInitialData = resolveDemoInitialData({
+    tierListId,
+    isAuthenticated,
+    templateId,
+    forkSlug,
+    fromShelf,
+    shelfTitle,
+    demoDraft: demoInitialData,
+    shelfBooks,
+    fallback: initialDataForHook,
+  });
+
+  // Аналитика воронки: вход в редактор из полки (один раз на монтирование)
+  const shelfEntryTrackedRef = useRef(false);
+  useEffect(() => {
+    if (shelfEntryTrackedRef.current) return;
+    if (fromShelf && isDemo && shelfBooks.length > 0) {
+      shelfEntryTrackedRef.current = true;
+      pushDataLayerEvent("editor_opened_from_shelf", {
+        books_count: shelfBooks.length,
+        section: shelfSection,
+      });
+    }
+  }, [fromShelf, isDemo, shelfBooks, shelfSection]);
 
   // Состояние для модалки регистрации (используется в части 2)
   const [showAuthModal, setShowAuthModal] = useState(false);

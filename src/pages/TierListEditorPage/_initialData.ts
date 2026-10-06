@@ -104,6 +104,79 @@ export function getDemoInitialData(id: string, title: string): TierListData {
 }
 
 /**
+ * Начальные данные тир-листа из книг «Моей полки» (для /tier-lists/new?from=shelf).
+ * Гость подбирает книги через «Хочу прочитать»/«Прочитал», затем из полки
+ * создаёт тир-лист — книги уже в «Книги без рейтинга», распределяет сам.
+ * Ключи сохраняются как есть: числовые id каталога уйдут в placements
+ * (существующие книги БД), строковые ("curated_*") — как newBooks.
+ */
+export function getShelfInitialData(id: string, title: string, shelfBooks: Book[]): TierListData {
+  const books: Record<string, Book> = {};
+  const unrankedBookIds: string[] = [];
+
+  for (const book of shelfBooks) {
+    books[book.id] = book;
+    unrankedBookIds.push(book.id);
+  }
+
+  return {
+    ...getInitialData(id, title),
+    books,
+    unrankedBookIds,
+  };
+}
+
+interface ResolveDemoInitialDataParams {
+  tierListId: string;
+  isAuthenticated: boolean;
+  templateId?: string | null;
+  forkSlug?: string | null;
+  /** Гость пришёл из полки: /tier-lists/new?from=shelf */
+  fromShelf?: boolean;
+  /** Название секции полки — заголовок нового тир-листа */
+  shelfTitle?: string | null;
+  /** Демо-черновик из localStorage (bookstrata_demo_tierlist) */
+  demoDraft: TierListData | null;
+  /** Книги гостевой полки */
+  shelfBooks: Book[];
+  /** Данные из useTierEditorQueries (шаблон/форк/загруженный лист) */
+  fallback: TierListData;
+}
+
+/**
+ * Выбор начальных данных редактора в демо-режиме.
+ * Приоритет: демо-черновик > книги полки (?from=shelf) > дефолтные демо-книги.
+ * Авторизованный / ?template= / ?fork= / существующий лист → fallback.
+ */
+export function resolveDemoInitialData({
+  tierListId,
+  isAuthenticated,
+  templateId,
+  forkSlug,
+  fromShelf,
+  shelfTitle,
+  demoDraft,
+  shelfBooks,
+  fallback,
+}: ResolveDemoInitialDataParams): TierListData {
+  if (tierListId !== "new" || isAuthenticated) return fallback;
+  // Шаблон/форк приоритетнее: их логику обрабатывает useTierEditorQueries
+  if (templateId || forkSlug) return fallback;
+
+  if (demoDraft) return demoDraft;
+
+  if (fromShelf && shelfBooks.length > 0) {
+    return getShelfInitialData(
+      tierListId,
+      shelfTitle || "Новый тир-лист",
+      shelfBooks,
+    );
+  }
+
+  return getDemoInitialData(tierListId, "Новый тир-лист");
+}
+
+/**
  * Создаёт начальные данные тир-листа из шаблона (для /tier-lists/new?template=N).
  * Все книги складываются в «Книги без рейтинга» — пользователь сам распределяет их
  * по полкам (как в демо-режиме). Полки создаются из тиров шаблона, но пустые.

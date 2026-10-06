@@ -56,10 +56,15 @@ vi.mock("@/lib/tierListApi", () => ({
   createTierList: vi.fn(),
 }));
 
+vi.mock("sileo", () => ({
+  sileo: { action: vi.fn(), success: vi.fn(), error: vi.fn(), dismiss: vi.fn() },
+}));
+
 import { useBook } from "@/hooks/useBook";
 import { useBookshelf } from "@/hooks/useBookshelf";
 import { useAuth } from "@/hooks/useAuthContext";
 import { createTierList } from "@/lib/tierListApi";
+import { sileo } from "sileo";
 
 const mockedUseBook = vi.mocked(useBook);
 const mockedUseBookshelf = vi.mocked(useBookshelf);
@@ -278,6 +283,77 @@ describe("BookPage", () => {
     expect(toggleStatusMock).toHaveBeenCalledWith("1", "want_to_read", expect.objectContaining({ title: "Великий Гэтсби" }));
   });
 
+  it("тост «Хочу прочитать» содержит кнопку «Открыть полку» (мостик к полке)", async () => {
+    vi.mocked(sileo.action).mockClear();
+    toggleStatusMock.mockClear();
+    mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    const button = await screen.findByText("Хочу прочитать");
+    await userEvent.click(button);
+
+    expect(sileo.action).toHaveBeenCalledWith(
+      expect.objectContaining({
+        button: expect.objectContaining({
+          title: "Открыть полку",
+          onClick: expect.any(Function),
+        }),
+      }),
+    );
+  });
+
+  it("клик «Открыть полку» из тоста отправляет событие в dataLayer", async () => {
+    vi.mocked(sileo.action).mockClear();
+    mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    window.dataLayer = [];
+    renderPage();
+
+    const button = await screen.findByText("Хочу прочитать");
+    await userEvent.click(button);
+
+    const call = vi.mocked(sileo.action).mock.calls[0][0];
+    call.button?.onClick();
+
+    expect(window.dataLayer).toContainEqual(
+      expect.objectContaining({ event: "open_shelf_from_toast" }),
+    );
+    delete window.dataLayer;
+  });
+
+  it("клик «Открыть полку» скрывает тост (dismiss по id)", async () => {
+    vi.mocked(sileo.action).mockClear();
+    vi.mocked(sileo.action).mockReturnValue("toast-123" as never);
+    vi.mocked(sileo.dismiss).mockClear();
+    mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    const button = await screen.findByText("Хочу прочитать");
+    await userEvent.click(button);
+
+    const call = vi.mocked(sileo.action).mock.calls[0][0];
+    call.button?.onClick();
+
+    expect(sileo.dismiss).toHaveBeenCalledWith("toast-123");
+  });
+
   it("книга уже на полке → кнопка «Уже в плане»", async () => {
     mockedUseBookshelf.mockReturnValue({
       shelf: { "1": "want_to_read" },
@@ -293,6 +369,37 @@ describe("BookPage", () => {
     renderPage();
 
     expect(await screen.findByText("Уже в плане")).toBeTruthy();
+    mockedUseBookshelf.mockReturnValue({ shelf: {}, slugShelf: {}, toggleStatus: toggleStatusMock } as never);
+  });
+
+  it("повторный клик снимает отметку и показывает короткий тост на 3 секунды", async () => {
+    vi.mocked(sileo.success).mockClear();
+    toggleStatusMock.mockClear();
+    mockedUseBookshelf.mockReturnValue({
+      shelf: { "1": "want_to_read" },
+      slugShelf: {},
+      toggleStatus: toggleStatusMock,
+    } as never);
+    mockedUseAuth.mockReturnValue({ user: null, isLoading: false } as never);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    const button = await screen.findByText("Уже в плане");
+    await userEvent.click(button);
+
+    // Статус снимается (toggleStatus → removeStatus при совпадающем статусе)
+    expect(toggleStatusMock).toHaveBeenCalledWith("1", "want_to_read", expect.anything());
+    // Тост «убрана с полки» на 3 секунды, без кнопок
+    expect(sileo.success).toHaveBeenCalledWith(
+      expect.objectContaining({ duration: 3000 }),
+    );
+    expect(vi.mocked(sileo.success).mock.calls[0][0].title).toMatch(/убран|снят/i);
+
     mockedUseBookshelf.mockReturnValue({ shelf: {}, slugShelf: {}, toggleStatus: toggleStatusMock } as never);
   });
 

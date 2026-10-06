@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { BookMarked, Check, Heart, ListPlus, LogIn } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { sileo } from "sileo";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
@@ -102,16 +101,17 @@ export default function ShelfPage() {
     (books: Book[], defaultTitle: string) => {
       if (books.length === 0) return;
       if (!isAuthenticated) {
-        sileo.action({
-          title: "Требуется регистрация",
-          description:
-            "Зарегистрируйтесь, чтобы создать тир-лист из книг полки",
-          duration: 10000,
-          button: {
-            title: "Создать аккаунт",
-            onClick: () => navigate("/auth?mode=register&redirect=/shelf"),
-          },
-        });
+        // Гость: вместо стены регистрации — демо-редактор с книгами полки.
+        // Регистрация спросится при сохранении (AuthOnSaveModal).
+        const section =
+          defaultTitle === "Моё прочитанное"
+            ? "read"
+            : defaultTitle === "Хочу прочитать"
+              ? "want"
+              : "all";
+        navigate(
+          `/tier-lists/new?from=shelf&section=${section}&title=${encodeURIComponent(defaultTitle)}`,
+        );
         return;
       }
       setTierListSource({ books, defaultTitle });
