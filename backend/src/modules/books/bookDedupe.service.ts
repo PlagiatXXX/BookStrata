@@ -10,8 +10,9 @@
  *   score = placements * 3 + (cover ? 2 : 0) + (description ? 1 : 0) + (publishedAt ? 2 : 0) + updatedAtMs * 0.01
  *   при равенстве: published > draft, затем самый старый createdAt.
  *
- * Перенос: BookPlacement (P2002-конфликты пропускаются), BookRating (остаётся новейший),
- * BookStatus (конфликты пропускаются), CollectionBook/CelebrityBook (конфликты пропускаются).
+ * Перенос: BookPlacement/BookStatus/CollectionBook/CelebrityBook — при конфликте
+ * (канон уже имеет такую связь) строка дубля УДАЛЯЕТСЯ, иначе привязка остаётся
+ * на дубле и он никогда не станет orphan (вечный дубль). BookRating — остаётся новейший.
  * Неканон удаляется, если после переноса не имеет ни одной привязки
  * (placements/ratings/statuses/связи коллекций/комментарии/лайки).
  *
@@ -227,7 +228,9 @@ export async function mergeGroup(
       }
     }
 
-    // 1. BookPlacement: переносим, конфликты (P2002) пропускаем
+    // 1. BookPlacement: переносим; при конфликте (канон уже в листе) строка дубля
+    //    удаляется — иначе placements != 0 и дубль никогда не станет orphan
+    //    (баг вечного дубля: книга висит с mergedIntoId навсегда).
     const dupPlacements = await prisma.bookPlacement.findMany({
       where: { bookId: dup.id },
     });
@@ -235,12 +238,33 @@ export async function mergeGroup(
     // Batch-загрузка существующих placements для canon (N+1 fix)
     const existingPlacements = await prisma.bookPlacement.findMany({
       where: { bookId: canon.id },
-      select: { tierListId: true },
+      select: { tierListId: true, coverImageUrl: true },
     });
-    const existingTierListIds = new Set(existingPlacements.map((p) => p.tierListId));
+    const existingCoverByTierList = new Map(
+      existingPlacements.map((p) => [p.tierListId, p.coverImageUrl]),
+    );
 
     for (const p of dupPlacements) {
-      if (existingTierListIds.has(p.tierListId)) continue; // канон уже в листе — не дублируем
+      if (existingCoverByTierList.has(p.tierListId)) {
+        // Канон уже в листе: вхождение дубля лишнее — удаляем. Личную обложку
+        // дубля сохраняем на вхождении канона, если у того её нет.
+        const dupOwnCover =
+          p.coverImageUrl ??
+          (dup.userId != null && dup.coverImageUrl && dup.coverImageUrl !== canon.coverImageUrl
+            ? dup.coverImageUrl
+            : null);
+        if (existingCoverByTierList.get(p.tierListId) == null && dupOwnCover) {
+          await prisma.bookPlacement.update({
+            where: { tierListId_bookId: { tierListId: p.tierListId, bookId: canon.id } },
+            data: { coverImageUrl: dupOwnCover },
+          });
+        }
+        allAffectedTierListIds.push(p.tierListId);
+        await prisma.bookPlacement.delete({
+          where: { tierListId_bookId: { tierListId: p.tierListId, bookId: dup.id } },
+        });
+        continue;
+      }
 
       allAffectedTierListIds.push(p.tierListId);
 
@@ -306,7 +330,12 @@ export async function mergeGroup(
     const existingStatusUserIds = new Set(existingStatuses.map((s) => s.userId));
 
     for (const s of dupStatuses) {
-      if (existingStatusUserIds.has(s.userId)) continue;
+      if (existingStatusUserIds.has(s.userId)) {
+        // Канон уже имеет статус этого пользователя — строка дубля лишняя
+        // (иначе statuses != 0 и дубль не станет orphan)
+        await prisma.bookStatus.delete({ where: { id: s.id } });
+        continue;
+      }
       await prisma.bookStatus.update({
         where: { id: s.id },
         data: { bookId: canon.id },
@@ -327,7 +356,11 @@ export async function mergeGroup(
     const existingCollectionIds = new Set(existingCollectionBooks.map((cb) => cb.collectionId));
 
     for (const cb of dupCollectionBooks) {
-      if (existingCollectionIds.has(cb.collectionId)) continue;
+      if (existingCollectionIds.has(cb.collectionId)) {
+        // Канон уже в коллекции — строка дубля лишняя (иначе дубль не станет orphan)
+        await prisma.collectionBook.delete({ where: { id: cb.id } });
+        continue;
+      }
       await prisma.collectionBook.update({
         where: { id: cb.id },
         data: { bookId: canon.id },
@@ -346,7 +379,12 @@ export async function mergeGroup(
     const existingCelebrityIds = new Set(existingCelebrityBooks.map((cb) => cb.celebrityId));
 
     for (const cb of dupCelebrityBooks) {
-      if (existingCelebrityIds.has(cb.celebrityId)) continue;
+      if (existingCelebrityIds.has(cb.celebrityId)) {
+        // Канон уже связан с знаменитостью — строка дубля лишняя
+        // (иначе celebrityBooks != 0 и дубль не станет orphan)
+        await prisma.celebrityBook.delete({ where: { id: cb.id } });
+        continue;
+      }
       await prisma.celebrityBook.update({
         where: { id: cb.id },
         data: { bookId: canon.id },

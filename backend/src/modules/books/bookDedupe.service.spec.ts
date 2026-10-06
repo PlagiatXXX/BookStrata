@@ -20,6 +20,7 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     bookRating: {
       findMany: vi.fn(),
@@ -31,16 +32,19 @@ vi.mock("../../lib/prisma.js", () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     collectionBook: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     celebrityBook: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
     bookSlugHistory: {
       create: vi.fn(),
@@ -179,6 +183,7 @@ describe("pickCanon", () => {
     id: 1,
     title: "t",
     authorId: 1,
+    userId: null,
     slug: null,
     coverImageUrl: "",
     description: null,
@@ -277,7 +282,7 @@ describe("mergeGroup", () => {
     });
   });
 
-  it("переносит placements, пропуская конфликты (P2002/канон уже в листе)", async () => {
+  it("переносит placements; при конфликте (канон уже в листе) удаляет строку дубля", async () => {
     (prisma.bookPlacement.findMany as any)
       .mockResolvedValueOnce([
         // dupPlacements (dup.id = 2)
@@ -286,7 +291,7 @@ describe("mergeGroup", () => {
       ])
       .mockResolvedValueOnce([
         // existingPlacements for canon (canon.id = 1)
-        { tierListId: "tl-2" }, // tl-2 конфликт → пропуск
+        { tierListId: "tl-2", coverImageUrl: null }, // tl-2 конфликт
       ]);
 
     await mergeGroup(group);
@@ -295,6 +300,35 @@ describe("mergeGroup", () => {
     expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
       where: { tierListId_bookId: { tierListId: "tl-1", bookId: 2 } },
       data: { bookId: 1 },
+    });
+    // Конфликтная строка дубля удаляется, а не остаётся висеть на нём:
+    // иначе placements != 0 и дубль никогда не станет orphan (вечный дубль #2029)
+    expect(prisma.bookPlacement.delete).toHaveBeenCalledWith({
+      where: { tierListId_bookId: { tierListId: "tl-2", bookId: 2 } },
+    });
+    expect(prisma.book.delete).toHaveBeenCalledWith({ where: { id: 2 } });
+  });
+
+  it("конфликт placement: сохраняет обложку дубля на вхождении канона, если у того её нет", async () => {
+    (prisma.bookPlacement.findMany as any)
+      .mockResolvedValueOnce([
+        // dupPlacements
+        { tierListId: "tl-2", bookId: 2, tierId: null, rank: 1, coverImageUrl: "https://s3.example/dup.webp" },
+      ])
+      .mockResolvedValueOnce([
+        // existingPlacements for canon — вхождение без обложки
+        { tierListId: "tl-2", coverImageUrl: null },
+      ]);
+
+    await mergeGroup(group);
+
+    // Личная обложка не теряется: переносится на строку канона в этом листе
+    expect(prisma.bookPlacement.update).toHaveBeenCalledWith({
+      where: { tierListId_bookId: { tierListId: "tl-2", bookId: 1 } },
+      data: { coverImageUrl: "https://s3.example/dup.webp" },
+    });
+    expect(prisma.bookPlacement.delete).toHaveBeenCalledWith({
+      where: { tierListId_bookId: { tierListId: "tl-2", bookId: 2 } },
     });
     expect(prisma.book.delete).toHaveBeenCalledWith({ where: { id: 2 } });
   });
@@ -428,7 +462,7 @@ describe("mergeGroup", () => {
     expect(prisma.bookRating.update).not.toHaveBeenCalled();
   });
 
-  it("переносит CollectionBook/CelebrityBook, пропуская конфликты", async () => {
+  it("переносит CollectionBook/CelebrityBook; при конфликте удаляет строку дубля", async () => {
     (prisma.collectionBook.findMany as any)
       .mockResolvedValueOnce([
         // dupCollectionBooks
@@ -442,7 +476,7 @@ describe("mergeGroup", () => {
       ])
       .mockResolvedValueOnce([
         // existingCelebrityBooks for canon
-        { celebrityId: 8 }, // конфликт → пропуск
+        { celebrityId: 8 }, // конфликт
       ]);
 
     await mergeGroup(group);
@@ -451,8 +485,46 @@ describe("mergeGroup", () => {
       where: { id: 30 },
       data: { bookId: 1 },
     });
-    // конфликт у знаменитости — не переносим
+    // Конфликтная строка дубля удаляется (канон уже связан) — иначе дубль не станет orphan
     expect(prisma.celebrityBook.update).not.toHaveBeenCalled();
+    expect(prisma.celebrityBook.delete).toHaveBeenCalledWith({ where: { id: 40 } });
+    expect(prisma.book.delete).toHaveBeenCalledWith({ where: { id: 2 } });
+  });
+
+  it("CollectionBook: при конфликте (канон уже в коллекции) удаляет строку дубля", async () => {
+    (prisma.collectionBook.findMany as any)
+      .mockResolvedValueOnce([
+        // dupCollectionBooks
+        { id: 31, collectionId: 5, bookId: 2, rank: 0 },
+      ])
+      .mockResolvedValueOnce([
+        // existingCollectionBooks for canon
+        { collectionId: 5 }, // конфликт
+      ]);
+
+    await mergeGroup(group);
+
+    expect(prisma.collectionBook.update).not.toHaveBeenCalled();
+    expect(prisma.collectionBook.delete).toHaveBeenCalledWith({ where: { id: 31 } });
+    expect(prisma.book.delete).toHaveBeenCalledWith({ where: { id: 2 } });
+  });
+
+  it("BookStatus: при конфликте (канон уже имеет статус юзера) удаляет строку дубля", async () => {
+    (prisma.bookStatus.findMany as any)
+      .mockResolvedValueOnce([
+        // dupStatuses
+        { id: 50, bookId: 2, userId: 7, status: "reading" },
+      ])
+      .mockResolvedValueOnce([
+        // existingStatuses for canon
+        { userId: 7 }, // конфликт
+      ]);
+
+    await mergeGroup(group);
+
+    expect(prisma.bookStatus.update).not.toHaveBeenCalled();
+    expect(prisma.bookStatus.delete).toHaveBeenCalledWith({ where: { id: 50 } });
+    expect(prisma.book.delete).toHaveBeenCalledWith({ where: { id: 2 } });
   });
 
   it("НЕ удаляет неканон, если остались привязки (например, комментарии)", async () => {
