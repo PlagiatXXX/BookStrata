@@ -43,6 +43,12 @@ export default function AuthorPage() {
     new Set(books.map((b) => b.genre).filter((g): g is string => Boolean(g))),
   ).join(", ");
 
+  // SEO-текст: seoDescription (если заполнен) → иначе aboutText («Описание
+  // автора» из админки). Поле seoDescription в админке не редактируется —
+  // без фолбэка авторы с пустым SEO получали бы дефолтное description.
+  const seoText =
+    author.seoDescription?.trim() || author.aboutText?.trim() || "";
+
   // Перелинковка: популярные авторы без текущего
   const otherAuthors = popularAuthors
     .filter((a) => a.slug !== author.slug)
@@ -52,7 +58,7 @@ export default function AuthorPage() {
     <>
       <SEOHead
         title={buildAuthorSeoTitle(author.name)}
-        description={buildAuthorDescription(author.seoDescription)}
+        description={buildAuthorDescription(seoText)}
         url={`/authors/${author.slug}`}
         image={books[0]?.coverImageUrl}
         breadcrumbs={[
@@ -62,7 +68,7 @@ export default function AuthorPage() {
         ]}
         person={{
           name: author.name,
-          description: author.seoDescription,
+          description: seoText,
           ...(genres ? { knowsAbout: genres } : {}),
         }}
       />

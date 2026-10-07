@@ -627,7 +627,7 @@ describe("Секции ручного контента", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("manifesto: manifestoQuote = null — секция скрыта", async () => {
+  it("manifesto: manifestoQuote = null, но aboutText есть — цитаты нет, карточка «О траектории автора» видна", async () => {
     vi.mocked(getAuthorBySlug).mockResolvedValue({
       ...fixture,
       author: { ...fixture.author, manifestoQuote: null },
@@ -637,6 +637,55 @@ describe("Секции ручного контента", () => {
     await screen.findByRole("heading", { name: "Лев Толстой" });
 
     expect(screen.queryByText(/Каждое предложение/)).not.toBeInTheDocument();
+    // описание автора не должно пропадать из-за отсутствия цитаты-манифеста
+    expect(screen.getByText("Текст о творчестве автора.")).toBeInTheDocument();
+  });
+
+  it("manifesto: нет ни manifestoQuote, ни aboutText — секция не рендерится", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue({
+      ...fixture,
+      author: { ...fixture.author, manifestoQuote: null, aboutText: null },
+    });
+
+    renderPage();
+    await screen.findByRole("heading", { name: "Лев Толстой" });
+
+    expect(screen.queryByText("О траектории автора")).not.toBeInTheDocument();
+  });
+
+  it("seo: seoDescription пуст — meta description и Person JSON-LD берутся из aboutText", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue({
+      ...fixture,
+      author: {
+        ...fixture.author,
+        seoDescription: "",
+        aboutText: "Описание траектории автора для сниппета выдачи.",
+      },
+    });
+
+    renderPage();
+    await screen.findByRole("heading", { name: "Лев Толстой" });
+
+    const meta = document.querySelector('meta[name="description"]');
+    expect(meta?.getAttribute("content")).toBe(
+      "Описание траектории автора для сниппета выдачи.",
+    );
+
+    const person = Array.from(
+      document.querySelectorAll('script[type="application/ld+json"]'),
+    )
+      .map((s) => {
+        try {
+          return JSON.parse(s.textContent || "");
+        } catch {
+          return null;
+        }
+      })
+      .find((ld) => ld && ld["@type"] === "Person");
+    expect(person).toBeDefined();
+    expect(person.description).toBe(
+      "Описание траектории автора для сниппета выдачи.",
+    );
   });
 
   it("hero: heroImageUrl = null — без портрета, текстовый блок виден", async () => {
