@@ -185,7 +185,7 @@ PATH=/usr/local/bin:/usr/bin:/bin
 0 4 * * * mkdir -p /root/bookstrata/logs && bash /root/bookstrata/scripts/reprerender.sh >> /root/bookstrata/logs/reprerender.log 2>&1
 ```
 
-> ⚠️ В репозитории есть устаревший `scripts/prerender-cron.sh` со своей cron-строкой (`0 6 * * *`). Прежде чем ставить новую строку — проверьте `crontab -l` и уберите строку старого скрипта, иначе будет два полных пререндера в сутки с разными lock-файлами.
+> ⚠️ При обновлении с прежней версии проверьте `crontab -l`: уберите строку устаревшего `scripts/prerender-cron.sh` (`0 6 * * *`), иначе будут два полных пререндера в сутки с разными lock-файлами.
 
 Когда ждать результат: сразу после ручного запуска; при cron — до суток. Ограничения: IndexNow уведомляет Яндекс/Bing (Google перечитывает sitemap по своему графику), `lastmod` в sitemap — точность до дня.
 
