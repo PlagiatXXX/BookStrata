@@ -25,13 +25,17 @@
 ### Users (`users/`)
 Управление профилями пользователей, статистикой и аватарами.
 - Интеграция с сервисом аватаров (presets, AI generation).
+- Жанровые предпочтения (`GET/PUT /api/users/me/genre-preferences`) — питают жанровую ось Book Match.
 
 ### Books (`books/`)
 Прокси-слой для поиска книг через Google Books API с кэшированием результатов.
 
 ### Прочие модули
-- `collections/`, `celebrities/`, `authors/` — редакционные подборки, страницы знаменитостей и авторов.
-- `ai-librarian/` — ИИ-рекомендации («Букстраж»): провайдеры OpenRouter / кастомный (OpenAI-совместимый) с failover и стримингом, in-memory кэш.
+- `collections/`, `celebrities/` — редакционные подборки и страницы знаменитостей.
+- `authors/` — SEO-страницы авторов (`GET /api/authors/:slug`), поиск и каталог.
+- `admin-authors/`, `admin-books/` — админка: контент страниц авторов, CRUD/merge/publish книг.
+- `shelf/` — личная полка книг (статусы чтения, merge гостевой полки после входа).
+- `ai-librarian/` — ИИ-рекомендации («Букстраж»): провайдеры OpenRouter / кастомный (OpenAI-совместимый с запасным ключом) / abliteration.ai с failover и стримингом, проверка статуса пробной генерацией (кэш 60с), in-memory кэш.
 - `battles/`, `discussions/` (форум и чат), `news/`, `external-news/`, `rss/` — сообщество и контент.
 - `livelib/` — импорт книг из LiveLib.
 - `image-proxy/`, `proxy/` — проксирование внешних изображений и API.

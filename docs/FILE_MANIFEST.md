@@ -1,484 +1,1671 @@
 # Справочник файлов BookStrata
 
-Этот документ содержит краткое описание каждого файла. Как опытный разработчик, я настоятельно рекомендую ознакомиться с ним перед внесением изменений.
+Этот документ содержит краткое описание каждого файла проекта. Сгенерирован автоматически по списку git-отслеживаемых файлов (7 октября 2026 г.) — при добавлении/переименовании файлов перегенерируйте его.
 
-## Корневые файлы конфигурации
+## Корень проекта
 
-- `DEEP_AUDIT_REPORT.md`: Результаты глубокого аудита и проведенного рефакторинга.
-- `DEPLOY_GUIDE.md`: Файл .md в проекте.
-- `KODA.md`: Файл .md в проекте.
-- `LICENSE`: Файл  в проекте.
-- `QWEN.md`: Файл .md в проекте.
-- `README.md`: Общее описание проекта и инструкции по запуску.
-- `ROADMAP.md`: Файл .md в проекте.
-- `TierMaker-Pro-Business-Plan.txt`: Файл .txt в проекте.
-- `doctor.md`: Отчет о здоровье проекта и прохождении тестов.
-- `eslint.config.js`: Правила линтинга кода.
+- `.env.example`: Frontend environment configuration.
+- `.env.production.example`: BookStrata — Frontend Production Environment.
+- `.gitignore`: Logs.
+- `CHANGELOG.md`: Changelog.
+- `LICENSE`: ЛИЦЕНЗИОННОЕ СОГЛАШЕНИЕ.
+- `README.md`: BookStrata 🎯.
+- `commitlint.config.mjs`: Файл .mjs в проекте.
+- `eslint.config.js`: Файл .js в проекте.
 - `index.html`: Файл .html в проекте.
 - `package-lock.json`: Файл .json в проекте.
-- `package.json`: Управление зависимостями и сценариями Node.js.
-- `tailwind.config.ts`: Конфигурация стилей TailwindCSS v4.
+- `package.json`: Файл .json в проекте.
+- `playwright.config.ts`: Файл .ts в проекте.
+- `tailwind.config.ts`: Tailwind v4 — конфигурация темы в @theme CSS-директиве (globals.css).
 - `tsconfig.app.json`: Файл .json в проекте.
-- `tsconfig.json`: Главная конфигурация компилятора TypeScript.
+- `tsconfig.json`: Файл .json в проекте.
 - `tsconfig.node.json`: Файл .json в проекте.
-- `vite.config.ts`: Настройка сборщика Vite (плагины, алиасы, прокси).
-- `vitest.config.ts`: Настройка среды тестирования для фронтенда и бэкенда.
+- `vite.config.ts`: https://vite.dev/config/.
+- `vitest.config.ts`: Файл .ts в проекте.
 
-## Директория src
+## `.github/`
 
-- **src/**
-  - `index.css`: Файл .css в проекте.
-  - **test/**
-    - `setup.ts`: Файл .ts в проекте.
-  - **components/**
-    - **TierRow/**
-      - `TierRow.tsx`: Функциональный React-компонент для TierRow.
-    - **Avatar/**
-      - `Avatar.tsx`: Функциональный React-компонент для Avatar.
-      - `AvatarSelector.spec.tsx`: Функциональный React-компонент для Avatar.
-      - `AvatarSelector.tsx`: Функциональный React-компонент для Avatar.
-      - `constants.ts`: Функциональный React-компонент для Avatar.
-      - `generationReducer.ts`: Функциональный React-компонент для Avatar.
-      - `index.ts`: Функциональный React-компонент для Avatar.
-      - `presets.ts`: Функциональный React-компонент для Avatar.
-      - `previewReducer.ts`: Функциональный React-компонент для Avatar.
-      - `types.ts`: Функциональный React-компонент для Avatar.
-      - **components/**
-        - `AiGenerationTab.tsx`: Функциональный React-компонент для components.
-        - `AvatarPreview.tsx`: Функциональный React-компонент для components.
-        - `AvatarSelectorFooter.tsx`: Функциональный React-компонент для components.
-        - `AvatarSelectorHeader.tsx`: Функциональный React-компонент для components.
-        - `PresetsTab.tsx`: Функциональный React-компонент для components.
-        - `TabNavigation.tsx`: Функциональный React-компонент для components.
-        - `UploadTab.tsx`: Функциональный React-компонент для components.
-      - **hooks/**
-        - `useAvatarGeneration.ts`: Функциональный React-компонент для hooks.
-        - `useAvatarPreview.ts`: Функциональный React-компонент для hooks.
-    - **CommunityComponents/**
-      - `CategoryTabs.tsx`: Функциональный React-компонент для CommunityComponents.
-      - `CollectionsSection.tsx`: Функциональный React-компонент для CommunityComponents.
-      - `HeroSection.tsx`: Функциональный React-компонент для CommunityComponents.
-      - `NewsSection.tsx`: Функциональный React-компонент для CommunityComponents.
-      - `TemplateCard.tsx`: Функциональный React-компонент для CommunityComponents.
-      - `TemplateGrid.tsx`: Функциональный React-компонент для CommunityComponents.
-      - `TemplatePreviewModal.tsx`: Функциональный React-компонент для CommunityComponents.
-      - **BookScene/**
-        - `BookScene.css`: Функциональный React-компонент для BookScene.
-        - `BookScene.tsx`: Функциональный React-компонент для BookScene.
-        - `useBookController.ts`: Функциональный React-компонент для BookScene.
-    - **SortableBookCover/**
-      - `SortableBookCover.tsx`: Функциональный React-компонент для SortableBookCover.
-    - **BookEditModal/**
-      - `BookEditModal.tsx`: Функциональный React-компонент для BookEditModal.
-    - **AdminGuard/**
-      - `AdminGuard.tsx`: Функциональный React-компонент для AdminGuard.
-      - `index.ts`: Функциональный React-компонент для AdminGuard.
-    - **TemplateBuilder/**
-      - `TemplateBuilder.tsx`: Функциональный React-компонент для TemplateBuilder.
-    - **TemplateLibrary/**
-      - `DeleteTemplateModal.tsx`: Функциональный React-компонент для TemplateLibrary.
-      - `PublicTierListCards.tsx`: Функциональный React-компонент для TemplateLibrary.
-      - `TemplateLibrary.spec.tsx`: Функциональный React-компонент для TemplateLibrary.
-      - `TemplateLibrary.tsx`: Функциональный React-компонент для TemplateLibrary.
-      - `constants.ts`: Функциональный React-компонент для TemplateLibrary.
-      - `templateLibraryReducer.spec.ts`: Функциональный React-компонент для TemplateLibrary.
-      - `templateLibraryReducer.ts`: Функциональный React-компонент для TemplateLibrary.
-      - `types.ts`: Функциональный React-компонент для TemplateLibrary.
-      - **components/**
-        - `EmptyState.tsx`: Функциональный React-компонент для components.
-        - `PublicTierListsSection.tsx`: Функциональный React-компонент для components.
-        - `TemplateLibraryGrid.tsx`: Функциональный React-компонент для components.
-        - `TemplateLibraryHeader.tsx`: Функциональный React-компонент для components.
-        - `TemplateLibrarySidebar.tsx`: Функциональный React-компонент для components.
-        - `TemplateLibraryToolbar.tsx`: Функциональный React-компонент для components.
-      - **hooks/**
-        - `usePublicTierListsPagination.spec.ts`: Функциональный React-компонент для hooks.
-        - `usePublicTierListsPagination.ts`: Функциональный React-компонент для hooks.
-        - `useTemplateFilters.spec.ts`: Функциональный React-компонент для hooks.
-        - `useTemplateFilters.ts`: Функциональный React-компонент для hooks.
-    - **ImageUploader/**
-      - `ImageUploader.spec.tsx`: Функциональный React-компонент для ImageUploader.
-      - `ImageUploader.tsx`: Функциональный React-компонент для ImageUploader.
-    - **BookViewModal/**
-      - `BookViewModal.tsx`: Функциональный React-компонент для BookViewModal.
-    - **LikeButton/**
-      - `LikeButton.tsx`: Функциональный React-компонент для LikeButton.
-      - `index.ts`: Функциональный React-компонент для LikeButton.
-    - **DashboardHeroSection/**
-      - `DashboardHeroSection.css`: Функциональный React-компонент для DashboardHeroSection.
-      - `DashboardHeroSection.tsx`: Функциональный React-компонент для DashboardHeroSection.
-      - **components/**
-        - `HeroPreviewCard.tsx`: Функциональный React-компонент для components.
-        - `QuickStartTemplates.css`: Функциональный React-компонент для components.
-        - `QuickStartTemplates.tsx`: Функциональный React-компонент для components.
-        - `UserActivityStats.css`: Функциональный React-компонент для components.
-        - `UserActivityStats.tsx`: Функциональный React-компонент для components.
-    - **AchievementNotification/**
-      - `AchievementNotification.tsx`: Функциональный React-компонент для AchievementNotification.
-    - **SearchBar/**
-      - `SearchBar.tsx`: Функциональный React-компонент для SearchBar.
-    - **Spinner/**
-      - `Spinner.tsx`: Функциональный React-компонент для Spinner.
-      - `index.ts`: Функциональный React-компонент для Spinner.
-    - **UnrankedItems/**
-      - `UnrankedItems.tsx`: Функциональный React-компонент для UnrankedItems.
-    - **BookSearchModal/**
-      - `BookSearchModal.tsx`: Функциональный React-компонент для BookSearchModal.
-    - **EditorScreens/**
-      - `EditorErrorScreen.tsx`: Функциональный React-компонент для EditorScreens.
-      - `EditorLoadingScreen.tsx`: Функциональный React-компонент для EditorScreens.
-      - `index.ts`: Функциональный React-компонент для EditorScreens.
-    - **TierGrid/**
-      - `TierGrid.tsx`: Функциональный React-компонент для TierGrid.
-    - **TemplateEditor/**
-      - `TemplateEditorWizard.tsx`: Функциональный React-компонент для TemplateEditor.
-      - **components/**
-        - `BasicInfoStep.tsx`: Функциональный React-компонент для components.
-        - `ReviewStep.tsx`: Функциональный React-компонент для components.
-        - `StepsHeader.tsx`: Функциональный React-компонент для components.
-        - `TierRow.tsx`: Функциональный React-компонент для components.
-        - `TiersStep.tsx`: Функциональный React-компонент для components.
-    - **EditorModals/**
-      - `ClearAllModal.tsx`: Функциональный React-компонент для EditorModals.
-      - `DeleteBookModal.tsx`: Функциональный React-компонент для EditorModals.
-      - `DeleteRatingModal.tsx`: Функциональный React-компонент для EditorModals.
-      - `DeleteTierModal.tsx`: Функциональный React-компонент для EditorModals.
-      - `EditorConfirmModal.tsx`: Функциональный React-компонент для EditorModals.
-      - `UnsavedChangesModal.tsx`: Функциональный React-компонент для EditorModals.
-      - `index.ts`: Функциональный React-компонент для EditorModals.
-    - **SettingsSidebar/**
-      - `SettingsSidebar.tsx`: Функциональный React-компонент для SettingsSidebar.
-    - **BookCounter/**
-      - `BookCounter.spec.tsx`: Функциональный React-компонент для BookCounter.
-      - `BookCounter.tsx`: Функциональный React-компонент для BookCounter.
-    - **TemplateCard/**
-      - `TemplateCard.tsx`: Функциональный React-компонент для TemplateCard.
-    - **ProtectedRoute/**
-      - `ProtectedRoute.tsx`: Функциональный React-компонент для ProtectedRoute.
-      - `index.ts`: Функциональный React-компонент для ProtectedRoute.
-    - **AuthForm/**
-      - `AuthForm.tsx`: Функциональный React-компонент для AuthForm.
-  - **app/**
-    - `App.tsx`: Файл .tsx в проекте.
-    - `main.tsx`: Файл .tsx в проекте.
-    - `router.tsx`: Файл .tsx в проекте.
-  - **hooks/**
-    - `useAchievementNotifications.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useAchievements.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useAuthContext.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useAutoSaveOptimized.test.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useAutoSaveOptimized.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useBookSearch.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useDebounce.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useTemplateEditorState.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useTemplates.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useTierList.referential.test.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useTierList.test.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useTierList.ts`: Кастомный React-хук для инкапсуляции логики.
-    - `useUser.ts`: Кастомный React-хук для инкапсуляции логики.
-  - **utils/**
-    - `colorUtils.ts`: Файл .ts в проекте.
-    - `id.test.ts`: Файл автоматизированных тестов (Vitest).
-    - `id.ts`: Файл .ts в проекте.
-    - `saveDiff.test.ts`: Файл .ts в проекте.
-    - `saveDiff.ts`: Файл .ts в проекте.
-  - **contexts/**
-    - `AuthContext.tsx`: Файл .tsx в проекте.
-    - `auth.context.ts`: Файл .ts в проекте.
-  - **pages/**
-    - `AuthPage.tsx`: Страница приложения: AuthPage.
-    - `CreateTemplatePage.tsx`: Страница приложения: CreateTemplatePage.
-    - `EditTemplatePage.tsx`: Страница приложения: EditTemplatePage.
-    - `ForgotPasswordPage.tsx`: Страница приложения: ForgotPasswordPage.
-    - `ResetPasswordPage.tsx`: Страница приложения: ResetPasswordPage.
-    - **CommunityPage/**
-      - `CommunityPage.css`: Страница приложения: CommunityPage.
-      - `CommunityPage.tsx`: Страница приложения: CommunityPage.
-      - `index.ts`: Страница приложения: index.
-    - **AdminCollectionsPage/**
-      - `AdminCollectionsPage.css`: Страница приложения: AdminCollectionsPage.
-      - `AdminCollectionsPage.tsx`: Страница приложения: AdminCollectionsPage.
-      - `index.ts`: Страница приложения: index.
-      - **components/**
-        - `WysiwygEditor.css`: Функциональный React-компонент для components.
-        - `WysiwygEditor.tsx`: Функциональный React-компонент для components.
-    - **AdminNewsPage/**
-      - `AdminNewsPage.css`: Страница приложения: AdminNewsPage.
-      - `AdminNewsPage.tsx`: Страница приложения: AdminNewsPage.
-      - `index.ts`: Страница приложения: index.
-    - **AdminDashboard/**
-      - `AdminDashboard.tsx`: Страница приложения: AdminDashboard.
-    - **CollectionPage/**
-      - `CollectionPage.css`: Страница приложения: CollectionPage.
-      - `CollectionPage.tsx`: Страница приложения: CollectionPage.
-      - `index.ts`: Страница приложения: index.
-    - **AdminSubscriptionsPage/**
-      - `AdminSubscriptionsPage.tsx`: Страница приложения: AdminSubscriptionsPage.
-    - **ProfilePage/**
-      - `index.tsx`: Страница приложения: index.
-      - **components/**
-        - `AchievementsGrid.tsx`: Функциональный React-компонент для components.
-        - `PasswordChangeForm.tsx`: Функциональный React-компонент для components.
-        - `ProfileActions.tsx`: Функциональный React-компонент для components.
-        - `ProfileHeader.tsx`: Функциональный React-компонент для components.
-        - `StatsCards.tsx`: Функциональный React-компонент для components.
-      - **hooks/**
-        - `useProfileActions.ts`: Кастомный React-хук для инкапсуляции логики.
-    - **DashboardPage/**
-      - `DashboardPage.css`: Страница приложения: DashboardPage.
-      - `DashboardPage.spec.tsx`: Страница приложения: DashboardPage.
-      - `DashboardPage.tsx`: Страница приложения: DashboardPage.
-      - `types.ts`: Страница приложения: types.
-      - **components/**
-        - `CreateTierListModal.tsx`: Функциональный React-компонент для components.
-        - `DashboardHeader.tsx`: Функциональный React-компонент для components.
-        - `DeleteTierListModal.tsx`: Функциональный React-компонент для components.
-        - `EmptyStates.tsx`: Функциональный React-компонент для components.
-        - `RenameTierListModal.spec.tsx`: Функциональный React-компонент для components.
-        - `RenameTierListModal.tsx`: Функциональный React-компонент для components.
-        - `TierListCard.tsx`: Функциональный React-компонент для components.
-        - `TierListGrid.tsx`: Функциональный React-компонент для components.
-      - **hooks/**
-        - `useDashboardState.spec.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useDashboardState.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierListActions.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierListActions.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierListsPagination.spec.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierListsPagination.ts`: Кастомный React-хук для инкапсуляции логики.
-    - **NewsPage/**
-      - `NewsPage.css`: Страница приложения: NewsPage.
-      - `NewsPage.tsx`: Страница приложения: NewsPage.
-      - `index.ts`: Страница приложения: index.
-    - **TierListEditorPage/**
-      - `ExportThemes.css`: Страница приложения: ExportThemes.
-      - `TierEditorPage.css`: Страница приложения: TierEditorPage.
-      - `TierEditorPage.tsx`: Страница приложения: TierEditorPage.
-      - `_initialData.ts`: Страница приложения: _initialData.
-      - **components/**
-        - `AutoSaveIndicator.tsx`: Функциональный React-компонент для components.
-        - `EditorHeader.tsx`: Функциональный React-компонент для components.
-        - `EditorLayout.tsx`: Функциональный React-компонент для components.
-        - `EditorMainContent.tsx`: Функциональный React-компонент для components.
-        - `EditorModals.tsx`: Функциональный React-компонент для components.
-        - `EditorScreens.tsx`: Функциональный React-компонент для components.
-        - `ExportModal.tsx`: Функциональный React-компонент для components.
-      - **hooks/**
-        - `useTierEditorActions.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorActions.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorBlocker.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorBlocker.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorDrag.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorDrag.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorQueries.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorQueries.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorSave.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorSave.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorState.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierEditorState.ts`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierListBooksLimit.spec.tsx`: Кастомный React-хук для инкапсуляции логики.
-        - `useTierListBooksLimit.ts`: Кастомный React-хук для инкапсуляции логики.
-  - **data/**
-    - `mockData.ts`: Файл .ts в проекте.
-  - **layouts/**
-    - **DashboardLayout/**
-      - `DashboardLayout.tsx`: Файл .tsx в проекте.
-  - **ui/**
-    - `BookCover.tsx`: Атомарный UI-компонент (BookCover).
-    - `Button.spec.tsx`: Атомарный UI-компонент (Button).
-    - `Button.tsx`: Атомарный UI-компонент (Button).
-    - `Card.tsx`: Атомарный UI-компонент (Card).
-    - `Footer.tsx`: Атомарный UI-компонент (Footer).
-    - `Header.tsx`: Атомарный UI-компонент (Header).
-    - `Input.tsx`: Атомарный UI-компонент (Input).
-    - `Logo.tsx`: Атомарный UI-компонент (Logo).
-    - `Modal.tsx`: Атомарный UI-компонент (Modal).
-    - `Pagination.tsx`: Атомарный UI-компонент (Pagination).
-    - `RainEffect.tsx`: Атомарный UI-компонент (RainEffect).
-    - `Skeleton.tsx`: Атомарный UI-компонент (Skeleton).
-    - `Switch.tsx`: Атомарный UI-компонент (Switch).
-    - `Textarea.tsx`: Атомарный UI-компонент (Textarea).
-    - `TierLabel.tsx`: Атомарный UI-компонент (TierLabel).
-  - **styles/**
-    - `globals.css`: Файл .css в проекте.
-    - `sileo-custom.css`: Файл .css в проекте.
-  - **assets/**
-    - **avatars/**
-      - `README.md`: Общее описание проекта и инструкции по запуску.
-  - **lib/**
-    - `achievementApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `api-client.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `authApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `avatarApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `bookSearchApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `collectionsApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `config.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `likesApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `logger.spec.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `logger.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `newsApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `storage.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `templateTransformer.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `tierListApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `userApi.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-  - **constants/**
-    - `colors.ts`: Файл .ts в проекте.
-    - `dnd.ts`: Файл .ts в проекте.
-    - `limits.ts`: Файл .ts в проекте.
-    - `pagination.ts`: Файл .ts в проекте.
-  - **types/**
-    - `api.ts`: TypeScript определения (интерфейсы, типы, перечисления).
-    - `auth.ts`: TypeScript определения (интерфейсы, типы, перечисления).
-    - `index.ts`: TypeScript определения (интерфейсы, типы, перечисления).
-    - `logger.ts`: TypeScript определения (интерфейсы, типы, перечисления).
-    - `templateEditor.ts`: TypeScript определения (интерфейсы, типы, перечисления).
-    - `templates.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+- `.github/copilot-instructions.md`: BookStrata — Инструкции для AI Агентов.
+- `.github/workflows/ci.yml`: Файл .yml в проекте.
+- `.github/workflows/e2e.yml`: Файл .yml в проекте.
 
-## Директория backend/src
+## `.husky/`
 
-- **src/**
-  - `server.ts`: Файл .ts в проекте.
-  - `swagger.ts`: Файл .ts в проекте.
-  - **test/**
-    - `utils.ts`: Файл .ts в проекте.
-  - **modules/**
-    - **templates/**
-      - `templates.controller.ts`: Файл .ts в проекте.
-      - `templates.plugin.ts`: Файл .ts в проекте.
-      - `templates.service.spec.ts`: Тесты функциональности бэкенда.
-      - `templates.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-      - **likes/**
-        - `likes.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-        - `likes.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **achievements/**
-      - `achievements.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-      - `achievements.service.spec.ts`: Тесты функциональности бэкенда.
-      - `achievements.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **subscriptions/**
-      - `subscriptions.routes.ts`: Файл .ts в проекте.
-      - `subscriptions.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **books/**
-      - `books.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-      - `books.schema.ts`: Zod-схема для валидации входных и выходных данных.
-      - `books.service.spec.ts`: Тесты функциональности бэкенда.
-      - `books.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **avatars/**
-      - `avatar.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-      - `avatar.schema.ts`: Zod-схема для валидации входных и выходных данных.
-      - `avatar.service.spec.ts`: Тесты функциональности бэкенда.
-      - `avatar.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **news/**
-      - `news.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-      - `news.security.spec.ts`: Тесты функциональности бэкенда.
-      - `news.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **tier-lists/**
-      - `tierList.route.spec.ts`: Тесты функциональности бэкенда.
-      - `tierList.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-      - `tierList.schema.ts`: Zod-схема для валидации входных и выходных данных.
-      - `tierList.service.spec.ts`: Тесты функциональности бэкенда.
-      - `tierList.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-      - **likes/**
-        - `likes.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-        - `likes.service.spec.ts`: Тесты функциональности бэкенда.
-        - `likes.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **users/**
-      - `users.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-      - `users.service.spec.ts`: Тесты функциональности бэкенда.
-      - `users.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **roles/**
-      - `roles.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-      - `roles.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-    - **auth/**
-      - `auth.mail.ts`: Файл .ts в проекте.
-      - `auth.middleware.ts`: Файл .ts в проекте.
-      - `auth.route.ts`: Определение эндпоинтов API и связывание с сервисами.
-      - `auth.schema.ts`: Zod-схема для валидации входных и выходных данных.
-      - `auth.service.spec.ts`: Тесты функциональности бэкенда.
-      - `auth.service.ts`: Сервис бизнес-логики для соответствующего модуля бэкенда.
-  - **plugins/**
-    - `auth.ts`: Плагин Fastify для расширения функционала сервера.
-    - `logFromFrontend.ts`: Плагин Fastify для расширения функционала сервера.
-    - `requestContext.ts`: Плагин Fastify для расширения функционала сервера.
-  - **middleware/**
-    - `proLimit.ts`: Файл .ts в проекте.
-    - `requireRole.ts`: Файл .ts в проекте.
-  - **scripts/**
-    - `debug-welcome.ts`: Файл .ts в проекте.
-    - `test-smtp.ts`: Файл .ts в проекте.
-  - **lib/**
-    - `upload.ts`: Прокси-обёртка над активным S3-хранилищем.
-    - `errorNotifier.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `logger.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `mailer.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-    - `prisma.ts`: Утилитарная библиотека или клиент для внешних сервисов.
-  - **types/**
-    - `fastify.d.ts`: TypeScript определения (интерфейсы, типы, перечисления).
-    - `logger.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+- `.husky/commit-msg`: Файл без расширения в проекте.
+- `.husky/pre-commit`: Файл без расширения в проекте.
 
-## Директория shared
+## `.scripts/`
 
-- **shared/**
-  - `types.ts`: TypeScript определения (интерфейсы, типы, перечисления).
+- `.scripts/gen-stars.mjs`: Генератор box-shadow — шрифт 4×5, вплотную, без blur.
 
-## Директория public
+## `backend/`
 
-- **public/**
-  - `Book.glb`: 3D модель в формате GLB.
-  - `fon.jpg`: Статический медиа-актив (изображение/иконка).
-  - `fon.webp`: Статический медиа-актив (изображение/иконка).
-  - `hero-bg.webp`: Статический медиа-актив (изображение/иконка).
-  - `library.png`: Статический медиа-актив (изображение/иконка).
-  - `library.webp`: Статический медиа-актив (изображение/иконка).
-  - `logo-animation.svg`: Статический медиа-актив (изображение/иконка).
-  - `logo.svg`: Статический медиа-актив (изображение/иконка).
-  - `screen.png`: Статический медиа-актив (изображение/иконка).
-  - `templates.webp`: Статический медиа-актив (изображение/иконка).
-  - **textures/**
-    - `leather.webp`: Статический медиа-актив (изображение/иконка).
-    - `paper.svg`: Статический медиа-актив (изображение/иконка).
-    - `screen.png  WPS Photos.jpg`: Статический медиа-актив (изображение/иконка).
-  - **images/**
-    - **templates/**
-      - `2026.webp`: Статический медиа-актив (изображение/иконка).
-      - `Brain.webp`: Статический медиа-актив (изображение/иконка).
-      - `Bussines.webp`: Статический медиа-актив (изображение/иконка).
-      - `Classics.webp`: Статический медиа-актив (изображение/иконка).
-      - `Cofe.webp`: Статический медиа-актив (изображение/иконка).
-      - `CosmOpera.webp`: Статический медиа-актив (изображение/иконка).
-      - `Cyberpank.webp`: Статический медиа-актив (изображение/иконка).
-      - `DarkFantasy.webp`: Статический медиа-актив (изображение/иконка).
-      - `Popular.webp`: Статический медиа-актив (изображение/иконка).
-      - `Romantic.webp`: Статический медиа-актив (изображение/иконка).
-      - `Rpg.webp`: Статический медиа-актив (изображение/иконка).
-      - `bestseller.webp`: Статический медиа-актив (изображение/иконка).
-      - `detectiv.webp`: Статический медиа-актив (изображение/иконка).
-      - `fantasy.webp`: Статический медиа-актив (изображение/иконка).
-      - `fantasy2.webp`: Статический медиа-актив (изображение/иконка).
-    - **books/**
-      - `BOOKS_FULL_LIST.md`: Статический файл в публичной директории.
-      - `COVERS_GUIDE.md`: Статический файл в публичной директории.
-      - `README.md`: Общее описание проекта и инструкции по запуску.
-      - `bunin-large.webp`: Статический медиа-актив (изображение/иконка).
-      - `bunin-medium.webp`: Статический медиа-актив (изображение/иконка).
-      - `bunin-small.webp`: Статический медиа-актив (изображение/иконка).
-      - `bunin.webp`: Статический медиа-актив (изображение/иконка).
-      - `pasternak-large.webp`: Статический медиа-актив (изображение/иконка).
-      - `pasternak-medium.webp`: Статический медиа-актив (изображение/иконка).
-      - `pasternak-small.webp`: Статический медиа-актив (изображение/иконка).
-      - `pasternak.webp`: Статический медиа-актив (изображение/иконка).
-      - `placeholder.svg`: Статический медиа-актив (изображение/иконка).
-      - `prosa-large.webp`: Статический медиа-актив (изображение/иконка).
-      - `prosa-medium.webp`: Статический медиа-актив (изображение/иконка).
-      - `prosa-small.webp`: Статический медиа-актив (изображение/иконка).
-      - `prosa.webp`: Статический медиа-актив (изображение/иконка).
-      - `prosa3-large.webp`: Статический медиа-актив (изображение/иконка).
-      - `prosa3-medium.webp`: Статический медиа-актив (изображение/иконка).
-      - `prosa3-small.webp`: Статический медиа-актив (изображение/иконка).
-      - `prosa3.webp`: Статический медиа-актив (изображение/иконка).
-      - `sholohov-large.webp`: Статический медиа-актив (изображение/иконка).
-      - `sholohov-medium.webp`: Статический медиа-актив (изображение/иконка).
-      - `sholohov-small.webp`: Статический медиа-актив (изображение/иконка).
-      - `sholohov.webp`: Статический медиа-актив (изображение/иконка).
-    - **collections/**
-      - `2026-hero.webp`: Статический медиа-актив (изображение/иконка).
-      - `nobel-prize.webp`: Статический медиа-актив (изображение/иконка).
-      - `prosa-hero.webp`: Статический медиа-актив (изображение/иконка).
+- `backend/.dockerignore`: .log.
+- `backend/.env.example`: Креды прод-БД. На сервере задаются ЗДЕСЬ (файл в git не входит)..
+- `backend/.env.production.example`: BookStrata — Backend Production Environment.
+- `backend/.env.test`: Test environment for E2E auth tests.
+- `backend/.gitignore`: Logs.
+- `backend/.npmrc`: Зеркало для ускорения установки на российских серверах.
+- `backend/Dockerfile`: BookStrata Backend — Dockerfile (multi-stage).
+- `backend/README.md`: Backend Docker / Redis Setup.
+- `backend/SWAGGER_DOCS.md`: Swagger API Documentation — BookStrata.
+- `backend/docker-compose.test.yml`: Файл .yml в проекте.
+- `backend/docker-compose.yml`: Файл .yml в проекте.
+- `backend/ecosystem.config.cjs`: PM2 Ecosystem config — BookStrata Backend.
+- `backend/package-lock.json`: Файл .json в проекте.
+- `backend/package.json`: Файл .json в проекте.
+- `backend/prisma/migrations/20260323155937_add_new_articles/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260323170000_add_roles_system/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260323184025_fix_role_unique_constraint/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260324110846_add_template_type/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260325104730_add_likes_count/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260330111631_add_pro_subscription_fields/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260331130157_add_password_reset_token/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260410160208_add_battles/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260430112300_add_performance_indexes/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260505080714_add_uuid/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260505115016_add_fix_05052026/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260506091748_add_title/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260507125236_add_slug/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260520130002_add_original_tier_list_id/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260521115007_add_battle_applications/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260521121121_make_battle_id_optional/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260521123508_make_template_id_optional/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260522143017_add_cover_image_url/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260522144842_add_theme/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260526135721_add_donors/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260527095640_name_add_feedback/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260527100356_fix_feedback/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260527103601_add_feedback/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260527143801_add_discussions/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260528080803_add_discussion_topics/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260528090307_add_pinned_topics/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260528192335_add_moderation_tools/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260528220433_add_content_flags/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260529000001_add_email_verification_oauth/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260529195330_add_donor_fields/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260611120341_add_tier_font_settings/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260616133324_add_genre_and_tags_to_book/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260616133448_add_book_indexes/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260619165322_add_activity_tracking/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260621011216_add_analytics_events/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260623124658_add_collections/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260625111521_add_category_id_to_collections/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260626124448_add_editorial_note/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260629122247_add_is_featured_to_collections/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260702125312_add_accent_color_to_collections/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260703114753_add_authors_registry/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260716233820_make_username_required/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260717011637_add_indexes_template_author_id_password_reset_token_user_id_user_role_id/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260717212200_add_celebrity_model/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260803_add_tags_to_celebrities/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260810113725_add_book_status/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260812124520_add_bio_and_social_links/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260813193000_add_book_catalog/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260813193500_add_book_merged_into/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260813194000_finalize_book_catalog/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260817_drop_books_local_identity_unique/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260818_add_book_user_id/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260821223000_add_book_is_trending/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260826000000_add_book_placement_created_at/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260827174155_add_user_badges/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260830000000_add_book_og_image_url/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260831_add_theme_to_collection/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260903000000_add_celebrity_focal_point/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260907222054_add_reading_guide_to_book/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260908103134_add_reading_profile/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260925132000_add_genre_preferences/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260928180000_add_seo_description_to_author/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/20260929084940_add_author_manual_content/migration.sql`: Файл .sql в проекте.
+- `backend/prisma/migrations/migration_lock.toml`: Please do not edit this file manually.
+- `backend/prisma/schema.prisma`: ID strategy:.
+- `backend/prisma/seed-reading-profile.ts`: backend/prisma/seed-reading-profile.ts.
+- `backend/prisma/seed.ts`: Файл .ts в проекте.
+- `backend/scripts/assign-book-owners.ts`: Backfill владельцев пользовательских книг (модель «личные книги», решение 18.08)..
+- `backend/scripts/backfill-collection-books.ts`: Backfill карточек коллекций/знаменитостей → каталог (Фаза 1.5, seobook.md)..
+- `backend/scripts/backfill-genre-confidence.ts`: Разовый batch: проставляет genreConfidence в Book.readingProfile.
+- `backend/scripts/e2e-promote-admin.ts`: Файл .ts в проекте.
+- `backend/scripts/e2e-reset-passwords.ts`: Файл .ts в проекте.
+- `backend/scripts/estimate-author-demand.ts`: Оценка спроса на авторов через Yandex Wordstat → src/data/author-demand.json..
+- `backend/scripts/export-author-routes.ts`: Экспорт slug'ов и имён авторов для prerender'а..
+- `backend/scripts/export-book-routes.ts`: Экспорт slug'ов и названий опубликованных книг для prerender'а..
+- `backend/scripts/export-collection-routes.ts`: Экспорт slug'ов и названий коллекций для prerender'а..
+- `backend/scripts/fill-book-slugs.ts`: Заполнение slug у книг без slug (Фаза 1.4, seobook.md)..
+- `backend/scripts/generate-author-seos.ts`: Генерация SEO-описаний целевых авторов через LLM (custom AI provider)..
+- `backend/scripts/import-reading-guides.ts`: Bulk-импорт AI-паспортов «Гид по чтению» (Book.readingGuide)..
+- `backend/scripts/migrate-book-og-images.ts`: one-shot: генерация OG-изображений (1200×630) для существующих published-книг..
+- `backend/scripts/migrate-external-covers.ts`: backend/scripts/migrate-external-covers.ts.
+- `backend/scripts/set-s3-cors.ts`: Устанавливает CORS-политику на S3-бакет для аватарок и изображений..
+- `backend/src/config/env.ts`: Централизованная конфигурация окружения..
+- `backend/src/constants/reserved-usernames.ts`: ВНИМАНИЕ: проверка через includes(), а не точное совпадение..
+- `backend/src/lib/analytics-subscriptions.ts`: Файл .ts в проекте.
+- `backend/src/lib/api-response.ts`: 4xx Client Errors.
+- `backend/src/lib/cache.ts`: Файл .ts в проекте.
+- `backend/src/lib/disposable-email.ts`: Файл .ts в проекте.
+- `backend/src/lib/errorNotifier.ts`: Email-уведомления об ошибках (через Яндекс.Почту / любой SMTP).
+- `backend/src/lib/errors.ts`: Типизированные ошибки приложения..
+- `backend/src/lib/event-emitter.ts`: Файл .ts в проекте.
+- `backend/src/lib/event-subscriptions.ts`: Подписка achievement-модуля на события системы.
+- `backend/src/lib/external-covers.spec.ts`: Мокируем модуль proxy, чтобы не ходить в сеть/S3 в юнит-тестах.
+- `backend/src/lib/external-covers.ts`: backend/src/lib/external-covers.ts.
+- `backend/src/lib/logger.ts`: Контекстный логгер для Node.js (бэкенд).
+- `backend/src/lib/mailer.ts`: Файл .ts в проекте.
+- `backend/src/lib/module-loader.ts`: Файл .ts в проекте.
+- `backend/src/lib/nsfw-check.spec.ts`: Файл .ts в проекте.
+- `backend/src/lib/nsfw-check.ts`: Серверная NSFW-проверка изображений (вариант A)..
+- `backend/src/lib/oauth.ts`: Файл .ts в проекте.
+- `backend/src/lib/prisma.ts`: Файл .ts в проекте.
+- `backend/src/lib/redis.ts`: Файл .ts в проекте.
+- `backend/src/lib/safe-fetch.spec.ts`: Мокаем DNS — не ходим в сеть из тестов.
+- `backend/src/lib/safe-fetch.ts`: lib/safe-fetch.ts — единая SSRF-защита для всех fetch внешних URL..
+- `backend/src/lib/sanitizer.ts`: Опции для санитизации HTML-контента новостей и подборок..
+- `backend/src/lib/sentry.ts`: Sentry — инициализация серверной части (Fastify)..
+- `backend/src/lib/slug.ts`: backend/src/lib/slug.ts.
+- `backend/src/lib/smartcaptcha.ts`: Файл .ts в проекте.
+- `backend/src/lib/storage/file-cleanup.spec.ts`: backend/src/lib/storage/file-cleanup.spec.ts.
+- `backend/src/lib/storage/file-cleanup.ts`: backend/src/lib/storage/file-cleanup.ts.
+- `backend/src/lib/storage/image-processor.spec.ts`: backend/src/lib/storage/image-processor.spec.ts.
+- `backend/src/lib/storage/image-processor.ts`: backend/src/lib/storage/image-processor.ts.
+- `backend/src/lib/storage/index.ts`: Файл .ts в проекте.
+- `backend/src/lib/storage/local-storage.spec.ts`: Тестовый каталог вместо боевого ./uploads — путь вычисляется внутри фабрики мока.
+- `backend/src/lib/storage/local-storage.ts`: resolve корректно обрабатывает и относительные пути (от cwd), и абсолютные.
+- `backend/src/lib/storage/s3-storage.ts`: Файл .ts в проекте.
+- `backend/src/lib/storage/types.ts`: Результат загрузки с OG-изображением (1200×630) для соцсетей..
+- `backend/src/lib/upload.ts`: Прокси-обёртка над активным хранилищем (STORAGE_PROVIDER=s3|local).
+- `backend/src/lib/validators.spec.ts`: Файл .ts в проекте.
+- `backend/src/lib/validators.ts`: backend/src/lib/validators.ts.
+- `backend/src/middleware/requireRole.ts`: Staff = admin или moderator..
+- `backend/src/modules/achievements/achievements.route.ts`: GET /api/achievements/me.
+- `backend/src/modules/achievements/achievements.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/achievements/achievements.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin-authors/admin-authors.route.spec.ts`: backend/src/modules/admin-authors/admin-authors.route.spec.ts.
+- `backend/src/modules/admin-authors/admin-authors.route.ts`: backend/src/modules/admin-authors/admin-authors.route.ts.
+- `backend/src/modules/admin-authors/admin-authors.schema.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin-authors/admin-authors.schema.ts`: backend/src/modules/admin-authors/admin-authors.schema.ts.
+- `backend/src/modules/admin-authors/admin-authors.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin-authors/admin-authors.service.ts`: backend/src/modules/admin-authors/admin-authors.service.ts.
+- `backend/src/modules/admin-books/admin-books.route.spec.ts`: backend/src/modules/admin-books/admin-books.route.spec.ts.
+- `backend/src/modules/admin-books/admin-books.route.ts`: backend/src/modules/admin-books/admin-books.route.ts.
+- `backend/src/modules/admin-books/admin-books.service.ts`: backend/src/modules/admin-books/admin-books.service.ts.
+- `backend/src/modules/admin-stats/admin-stats.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin-stats/admin-stats.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin-stats/admin-stats.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin-stats/admin-stats.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin/admin-cleanup.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin/admin-cleanup.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin/admin-users.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin/admin-users.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin/admin-users.schema.ts`: Файл .ts в проекте.
+- `backend/src/modules/admin/admin-users.service.spec.ts`: Mock dependencies.
+- `backend/src/modules/admin/admin-users.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/ai-librarian.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/ai-librarian.schema.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/ai-librarian.schema.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/ai-librarian.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/ai-librarian.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/cache.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/providers/abliteration.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/providers/custom.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/providers/custom.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/providers/openai-stream.spec.ts`: Тесты параметров запроса к OpenAI-совместимому API (streaming) и статуса провайдера..
+- `backend/src/modules/ai-librarian/providers/openai-stream.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/providers/openrouter.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/providers/types.ts`: Причина недоступности (например, 403 от провайдера) — для диагностики..
+- `backend/src/modules/ai-librarian/router.spec.ts`: Тесты статуса провайдеров: TTL-кэш и диагностика ошибок..
+- `backend/src/modules/ai-librarian/router.ts`: Файл .ts в проекте.
+- `backend/src/modules/analytics/analytics.route.ts`: POST /api/analytics/track — запись события (публичная ручка).
+- `backend/src/modules/analytics/analytics.service.spec.ts`: Мокаем конфиг до импорта сервиса (EXCLUDED_USERNAMES читается на загрузке модуля).
+- `backend/src/modules/analytics/analytics.service.ts`: Исключённые из аналитики пользователи (по username из конфига, CSV)..
+- `backend/src/modules/auth/auth.mail.ts`: Simple HTML escaping to prevent XSS/injection in emails.
+- `backend/src/modules/auth/auth.middleware.ts`: Middleware to protect routes that require authentication..
+- `backend/src/modules/auth/auth.route.spec.ts`: backend/src/modules/auth/auth.route.spec.ts.
+- `backend/src/modules/auth/auth.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/auth/auth.schema.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/auth/auth.schema.ts`: Файл .ts в проекте.
+- `backend/src/modules/auth/auth.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/auth/auth.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/auth/auth.utils.ts`: Гарантирует, что username не null. Если null — системная ошибка..
+- `backend/src/modules/auth/oauth.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/auth/password-reset.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/auth/token.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/auth/token.service.ts`: Access-токен живёт 7 дней — пользователи не страдают от частых истечений..
+- `backend/src/modules/authors/authorSeo.spec.ts`: backend/src/modules/authors/authorSeo.spec.ts.
+- `backend/src/modules/authors/authorSeo.ts`: backend/src/modules/authors/authorSeo.ts.
+- `backend/src/modules/authors/authors.route.spec.ts`: backend/src/modules/authors/authors.route.spec.ts.
+- `backend/src/modules/authors/authors.route.ts`: backend/src/modules/authors/authors.route.ts.
+- `backend/src/modules/authors/authors.schema.ts`: backend/src/modules/authors/authors.schema.ts.
+- `backend/src/modules/authors/authors.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/authors/authors.service.ts`: backend/src/modules/authors/authors.service.ts.
+- `backend/src/modules/avatars/avatar.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/avatars/avatar.schema.ts`: Схема для генерации аватара - защищает от слишком длинных промптов, которые могут перегрузить сервис.
+- `backend/src/modules/avatars/avatar.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/avatars/avatar.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/battles/battles.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/battles/battles.route.ts`: GET /api/battles - получить активные битвы.
+- `backend/src/modules/battles/battles.schema.ts`: Файл .ts в проекте.
+- `backend/src/modules/battles/battles.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/battles/battles.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/bookPages/bookRedirect.route.spec.ts`: backend/src/modules/bookPages/bookRedirect.route.spec.ts.
+- `backend/src/modules/bookPages/bookRedirect.route.ts`: backend/src/modules/bookPages/bookRedirect.route.ts.
+- `backend/src/modules/bookPages/bookRedirect.service.ts`: backend/src/modules/bookPages/bookRedirect.service.ts.
+- `backend/src/modules/books/bookCatalogSync.service.spec.ts`: ─── Моки ───.
+- `backend/src/modules/books/bookCatalogSync.service.ts`: backend/src/modules/books/bookCatalogSync.service.ts.
+- `backend/src/modules/books/bookComment.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/bookComment.service.ts`: backend/src/modules/books/bookComment.service.ts.
+- `backend/src/modules/books/bookDedupe.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/bookDedupe.service.ts`: Дедупликация каталога книг (Фаза 1.3, seobook.md)..
+- `backend/src/modules/books/bookLike.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/bookLike.service.ts`: backend/src/modules/books/bookLike.service.ts.
+- `backend/src/modules/books/bookMatching.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/bookMatching.service.ts`: backend/src/modules/books/bookMatching.service.ts.
+- `backend/src/modules/books/bookPage.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/bookPage.service.ts`: backend/src/modules/books/bookPage.service.ts.
+- `backend/src/modules/books/bookPublish.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/bookPublish.service.ts`: backend/src/modules/books/bookPublish.service.ts.
+- `backend/src/modules/books/bookSnapshots.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/bookSnapshots.service.ts`: backend/src/modules/books/bookSnapshots.service.ts.
+- `backend/src/modules/books/books.route.spec.ts`: backend/src/modules/books/books.route.spec.ts.
+- `backend/src/modules/books/books.route.ts`: backend/src/modules/books/books.route.ts.
+- `backend/src/modules/books/books.schema.ts`: backend/src/modules/books/books.schema.ts.
+- `backend/src/modules/books/books.service.spec.ts`: Устанавливаем тестовый API key ДО импорта сервиса.
+- `backend/src/modules/books/books.service.trim.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/books.service.ts`: backend/src/modules/books/books.service.ts.
+- `backend/src/modules/books/catalogSearch.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/catalogSearch.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/genreConfidenceExtract.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/genreConfidenceExtract.ts`: backend/src/modules/books/genreConfidenceExtract.ts.
+- `backend/src/modules/books/genreSimilarity.service.spec.ts`: backend/src/modules/books/genreSimilarity.service.spec.ts.
+- `backend/src/modules/books/genreSimilarity.service.ts`: backend/src/modules/books/genreSimilarity.service.ts.
+- `backend/src/modules/books/genreTaxonomy.spec.ts`: backend/src/modules/books/genreTaxonomy.spec.ts.
+- `backend/src/modules/books/genreTaxonomy.ts`: backend/src/modules/books/genreTaxonomy.ts.
+- `backend/src/modules/books/readingGuide.schema.spec.ts`: backend/src/modules/books/readingGuide.schema.spec.ts.
+- `backend/src/modules/books/readingGuide.schema.ts`: backend/src/modules/books/readingGuide.schema.ts.
+- `backend/src/modules/books/readingMatch.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/readingMatch.service.spec.ts`: Валидный ReadingProfile (confidence обязателен, 0–1)..
+- `backend/src/modules/books/readingMatch.service.ts`: backend/src/modules/books/readingMatch.service.ts.
+- `backend/src/modules/books/readingProfile.prompt.spec.ts`: backend/src/modules/books/readingProfile.prompt.spec.ts.
+- `backend/src/modules/books/readingProfile.prompt.ts`: backend/src/modules/books/readingProfile.prompt.ts.
+- `backend/src/modules/books/readingProfile.schema.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/readingProfile.schema.ts`: backend/src/modules/books/readingProfile.schema.ts.
+- `backend/src/modules/books/trending.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/trending.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/books/trending.service.ts`: Получить трендовые книги:.
+- `backend/src/modules/celebrities/celebrity.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/celebrities/celebrity.schema.ts`: Файл .ts в проекте.
+- `backend/src/modules/celebrities/celebrity.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/collections/collection.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/collections/collection.schema.ts`: Файл .ts в проекте.
+- `backend/src/modules/collections/collection.service.spec.ts`: backend/src/modules/collections/collection.service.spec.ts.
+- `backend/src/modules/collections/collection.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/collections/topic.route.ts`: GET / — список категорий с количеством коллекций.
+- `backend/src/modules/discussions/discussions.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/discussions/discussions.route.ts`: GET /api/discussions/topics — список топиков форума.
+- `backend/src/modules/discussions/discussions.schema.ts`: Файл .ts в проекте.
+- `backend/src/modules/discussions/discussions.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/discussions/discussions.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/donors/donors.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/donors/donors.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/donors/donors.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/donors/donors.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/external-news/external-news.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/external-news/external-news.route.ts`: GET /api/external-news.
+- `backend/src/modules/external-news/external-news.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/external-news/external-news.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/feedback/feedback.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/feedback/feedback.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/feedback/feedback.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/feedback/feedback.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/forum/forum.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/forum/forum.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/forum/forum.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/forum/forum.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/image-proxy/image-proxy.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/image-proxy/image-proxy.schema.ts`: Схема валидации query-параметров для /api/images/proxy.
+- `backend/src/modules/image-proxy/image-proxy.service.spec.ts`: backend/src/modules/image-proxy/image-proxy.service.spec.ts.
+- `backend/src/modules/image-proxy/image-proxy.service.ts`: ── Белый список доменов для прокси ──.
+- `backend/src/modules/livelib/livelib.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/livelib/livelib.service.spec.ts`: Мокаем кэш (lib/cache) ДО импорта сервиса — vi.mock hoisted, фабрика самодостаточна.
+- `backend/src/modules/livelib/livelib.service.ts`: @deprecated LiveLib перешёл на Next.js SPA — данные больше не в HTML..
+- `backend/src/modules/moderation/flags.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/moderation/flags.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/moderation/moderation.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/moderation/moderation.schema.ts`: Файл .ts в проекте.
+- `backend/src/modules/moderation/moderation.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/moderation/moderation.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/news/news.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/news/news.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/news/news.security.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/news/news.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/news/news.service.ts`: Логгер для сервиса новостей.
+- `backend/src/modules/proxy/proxy.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/ratings/ratings.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/ratings/ratings.route.ts`: POST /api/ratings — оценить книгу (требуется авторизация).
+- `backend/src/modules/ratings/ratings.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/ratings/ratings.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/roles/roles.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/roles/roles.route.ts`: GET /api/roles.
+- `backend/src/modules/roles/roles.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/roles/roles.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/rss/rss.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/rss/rss.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/shelf/shelf.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/shelf/shelf.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/shelf/shelf.schema.ts`: Статусы книги в «Моей полке».
+- `backend/src/modules/shelf/shelf.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/shelf/shelf.service.ts`: Данные книги для find-or-create (когда bookId не число).
+- `backend/src/modules/sitemap/sitemap.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/sitemap/sitemap.service.spec.ts`: backend/src/modules/sitemap/sitemap.service.spec.ts.
+- `backend/src/modules/sitemap/sitemap.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/subscriptions/subscriptions.route.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/subscriptions/subscriptions.routes.ts`: Файл .ts в проекте.
+- `backend/src/modules/subscriptions/subscriptions.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/subscriptions/subscriptions.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/templates/likes/likes.route.ts`: GET /api/templates/:id/likes - получить количество лайков и статус.
+- `backend/src/modules/templates/likes/likes.service.ts`: Получить лайки шаблона.
+- `backend/src/modules/templates/templates.controller.ts`: Тип для Headers с authorization.
+- `backend/src/modules/templates/templates.plugin.ts`: Добавляем хук аутентификации для всех роутов шаблонов.
+- `backend/src/modules/templates/templates.service.spec.ts`: Моки для Prisma — создаём объект сразу.
+- `backend/src/modules/templates/templates.service.ts`: Логгер для сервиса шаблонов.
+- `backend/src/modules/tier-lists/likes/likes.service.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/tier-lists/likes/likes.service.ts`: Получить количество лайков тир-листа.
+- `backend/src/modules/tier-lists/tierList.bola.new.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/tier-lists/tierList.bola.repro.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/tier-lists/tierList.bola.spec.ts`: Моки для Prisma.
+- `backend/src/modules/tier-lists/tierList.books.add.spec.ts`: Мок матчинга каталога: новые ветки управляются через mocks.matchBook,.
+- `backend/src/modules/tier-lists/tierList.books.idor.spec.ts`: Файл .ts в проекте.
+- `backend/src/modules/tier-lists/tierList.books.service.ts`: Лёгкая нормализация названия/автора для SQL-матчинга:.
+- `backend/src/modules/tier-lists/tierList.crud.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/tier-lists/tierList.fork.bola.spec.ts`: Mock Prisma.
+- `backend/src/modules/tier-lists/tierList.fork.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/tier-lists/tierList.private-access.spec.ts`: Мокаем тяжёлые/внешние зависимости роута.
+- `backend/src/modules/tier-lists/tierList.route.spec.ts`: Регистрируем CORS.
+- `backend/src/modules/tier-lists/tierList.route.ts`: backend/src/modules/tier-lists/tierList.route.ts.
+- `backend/src/modules/tier-lists/tierList.save.service.ts`: Лимит отключён до введения подписок Pro.
+- `backend/src/modules/tier-lists/tierList.saveAll.spec.ts`: Каталоговый матчинг (единый каталог, 19.08): по умолчанию каталог не находит книгу.
+- `backend/src/modules/tier-lists/tierList.schema.ts`: backend/src/modules/tier-lists/tierList.schema.ts.
+- `backend/src/modules/tier-lists/tierList.service.spec.ts`: Каталоговый матчинг (единый каталог, 19.08): по умолчанию каталог не.
+- `backend/src/modules/tier-lists/tierList.service.ts`: Barrel file — реэкспортирует все сервисы для обратной совместимости импортов.
+- `backend/src/modules/tier-lists/tierList.tiers.service.ts`: Файл .ts в проекте.
+- `backend/src/modules/tier-lists/tierList.utils.ts`: Файл .ts в проекте.
+- `backend/src/modules/users/genrePreferences.route.spec.ts`: backend/src/modules/users/genrePreferences.route.spec.ts.
+- `backend/src/modules/users/users.route.ts`: Файл .ts в проекте.
+- `backend/src/modules/users/users.service.spec.ts`: Моки для Prisma — объявляем внутри factory для vi.mock.
+- `backend/src/modules/users/users.service.ts`: Типы для валидации.
+- `backend/src/plugins/auth.ts`: Файл .ts в проекте.
+- `backend/src/plugins/logFromFrontend.ts`: backend/src/plugins/logFromFrontend.ts.
+- `backend/src/plugins/requestContext.ts`: Единый AsyncLocalStorage для контекста HTTP-запроса..
+- `backend/src/repositories/index.ts`: Файл .ts в проекте.
+- `backend/src/repositories/tier-list.repository.ts`: Файл .ts в проекте.
+- `backend/src/scripts/admin-reset-password.ts`: Файл .ts в проекте.
+- `backend/src/scripts/cleanup-authors.ts`: Скрипт очистки реестра авторов: удаляет записи, похожие на названия книг,.
+- `backend/src/scripts/cleanup-orphaned-files.ts`: Скрипт зачистки осиротевших файлов изображений в S3-бакете..
+- `backend/src/scripts/migrate-authors.ts`: Скрипт миграции: заполняет authorId для существующих книг..
+- `backend/src/scripts/test-smtp.ts`: Файл .ts в проекте.
+- `backend/src/server.ts`: Файл .ts в проекте.
+- `backend/src/swagger.ts`: Swagger definitions для BookStrata API.
+- `backend/src/test/utils.ts`: Для тестов используем моки вместо реальной БД.
+- `backend/src/tests/integration/achievements.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/admin.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/auth-flow.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/auth.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/avatar-admin.integration.spec.ts`: Обычный пользователь.
+- `backend/src/tests/integration/battles.integration.spec.ts`: Admin user.
+- `backend/src/tests/integration/book-crud.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/book-search.integration.spec.ts`: Интеграционный тест релевантного поиска книг в админке (listBooks с q)..
+- `backend/src/tests/integration/cascade.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/catalog-search.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/discussions.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/donors.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/external-news.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/feedback.integration.spec.ts`: Regular user.
+- `backend/src/tests/integration/fork.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/forum.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/helpers.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/likes.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/limits.integration.spec.ts`: Создаём free user напрямую (регистрация включает Pro-триал).
+- `backend/src/tests/integration/moderation.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/news.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/public-access.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/public.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/ratings.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/roles.integration.spec.ts`: Убираем секрет смены ролей, если он задан в окружении.
+- `backend/src/tests/integration/save-all.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/sitemap.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/subscriptions.integration.spec.ts`: Регистрация авто-активирует 7-дневный Pro-триал.
+- `backend/src/tests/integration/taste-match.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/templates.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/tier-list.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/tier-operations.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/tests/integration/users.integration.spec.ts`: Файл .ts в проекте.
+- `backend/src/types/fastify.d.ts`: Файл .ts в проекте.
+- `backend/src/types/logger.ts`: Уровни логирования.
+- `backend/src/types/rate-limit.d.ts`: Файл .ts в проекте.
+- `backend/src/utils/slugify.ts`: Файл .ts в проекте.
+- `backend/tsconfig.json`: Файл .json в проекте.
+- `backend/vitest.config.ts`: Файл .ts в проекте.
+- `backend/vitest.integration.config.ts`: Файл .ts в проекте.
+- `backend/vitest.integration.setup.ts`: Файл .ts в проекте.
+- `backend/vitest.setup.ts`: Vitest setup file — выполняется до импорта всех тестовых файлов.
+
+## `docs/`
+
+- `docs/API_REFERENCE.md`: Справочник API (API Reference).
+- `docs/ARCHITECTURE.md`: Архитектура BookStrata.
+- `docs/AVATAR_FEATURE_SPEC.md`: Avatar Feature Specification.
+- `docs/BACKEND.md`: Документация Бэкенда.
+- `docs/CDN_SETUP.md`: CDN Setup — Timeweb Cloud S3 + CDN.
+- `docs/FILE_MANIFEST.md`: Справочник файлов BookStrata.
+- `docs/FRONTEND.md`: Документация Фронтенда.
+- `docs/FUTURE_SCOPE.md`: Масштабирование, Идеи и Творчество.
+- `docs/INDEX.md`: 📚 Документация BookStrata.
+- `docs/LOGGER.md`: Контекстный логгер — Документация.
+- `docs/PERFORMANCE_OPTIMIZATION.md`: Файл .md в проекте.
+- `docs/SECURITY_GUIDE.md`: или более простой вариант.
+
+## `e2e/`
+
+- `e2e/.gitignore`: Файл без расширения в проекте.
+- `e2e/README.md`: E2E тесты (Playwright).
+- `e2e/fixtures/test-data.ts`: Файл .ts в проекте.
+- `e2e/global-setup.ts`: Файл .ts в проекте.
+- `e2e/global-teardown.ts`: Get admin credentials from test data.
+- `e2e/helpers/api.ts`: Make authenticated API call..
+- `e2e/helpers/auth.ts`: Login via UI (form submission)..
+- `e2e/mocks/api-routes.ts`: Google Books API (search through backend proxy).
+- `e2e/specs/admin.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth.spec.ts`: Тесты, которые должны быть неавторизованы.
+- `e2e/specs/auth/anonymous-access.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/authorized-permissions.spec.ts`: Используем storageState по умолчанию (e2e/.auth/user.json) — пользователь залогинен.
+- `e2e/specs/auth/error-handling.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/login-validation.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/logout-mechanics.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/multi-tab.spec.ts`: Открываем две вкладки.
+- `e2e/specs/auth/password-reset.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/rate-limiting.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/rbac.spec.ts`: Обычный пользователь не видит админку — либо "доступ запрещён", либо форма логина.
+- `e2e/specs/auth/refresh-mechanics.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/registration.spec.ts`: Wait for either redirect to dashboard or confirmation message.
+- `e2e/specs/auth/session-expiry.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/token-lifecycle.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/auth/token-validation.spec.ts`: Status 200 confirms token is valid. Body may be {} due to schema mismatch..
+- `e2e/specs/battles.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/discussions.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/profile.spec.ts`: Проверяем, что мы на странице профиля.
+- `e2e/specs/responsive.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/search.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/subscriptions.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/templates.spec.ts`: Файл .ts в проекте.
+- `e2e/specs/tier-lists.spec.ts`: Счётчик для уникальных ID тир-листов в пределах одного запуска.
+
+## `nginx/`
+
+- `nginx/bookstrata.conf`: BookStrata — Nginx config (production, HTTPS).
+- `nginx/snippets/security-headers.conf`: Security-заголовки — общий snippet для всех location.
+- `nginx/status.conf`: ACME-проверки Let's Encrypt (certbot renew --webroot), до редиректа.
+
+## `public/`
+
+- `public/404.webp`: Файл .webp в проекте.
+- `public/4508ec37e2220b2cb72eb21df85e8059.txt`: Файл .txt в проекте.
+- `public/MAX.svg`: Файл .svg в проекте.
+- `public/Selfi.webp`: Файл .webp в проекте.
+- `public/Starwars2.webp`: M0 4/4jQjUY?Jʞ}g.
+- `public/android-chrome-192x192.png`: Файл .png в проекте.
+- `public/android-chrome-512x512.png`: Файл .png в проекте.
+- `public/apple-touch-icon.png`: Файл .png в проекте.
+- `public/audio/music/.gitkeep`: Файл без расширения в проекте.
+- `public/audio/music/chill-vlog.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/dark-ambient.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/epic.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/future-design.mp3`: }v^53)*>xlhٿjAynD.
+- `public/audio/music/honey-kisses.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/lo-fi-jazzy.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/moment-of-peace.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/music-promotion.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/new-age-nature.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/no-copyright.mp3`: Файл .mp3 в проекте.
+- `public/audio/music/perfect-beauty.mp3`: s8 ^b3vF5X@  3yd>R362D::.
+- `public/audio/music/sigma-no-copyright.mp3`: <-㘿`b:(p3PN>4wv]m6{.
+- `public/audio/music/wonders-of-earth.mp3`: Файл .mp3 в проекте.
+- `public/audio/noise/.gitkeep`: Файл без расширения в проекте.
+- `public/audio/noise/brown-noise.mp3`: Файл .mp3 в проекте.
+- `public/audio/noise/fan.mp3`: Файл .mp3 в проекте.
+- `public/audio/noise/fireplace.mp3`: Файл .mp3 в проекте.
+- `public/audio/noise/forest.mp3`: Файл .mp3 в проекте.
+- `public/audio/noise/night-city.mp3`: Файл .mp3 в проекте.
+- `public/audio/noise/pink-noise.mp3`: Файл .mp3 в проекте.
+- `public/audio/noise/rain.mp3`: Файл .mp3 в проекте.
+- `public/audio/noise/waves.mp3`: Файл .mp3 в проекте.
+- `public/avatars/abstract/avatar-1-full.webp`: RXHщJ/MYˣ'}߃wD$&`aϝFob՝Dy;$.
+- `public/avatars/abstract/avatar-1-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-1.svg`: Файл .svg в проекте.
+- `public/avatars/abstract/avatar-2-full.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-2-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-2.svg`: Файл .svg в проекте.
+- `public/avatars/abstract/avatar-3-full.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-3-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-3.svg`: Файл .svg в проекте.
+- `public/avatars/abstract/avatar-4-full.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-4-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-4.svg`: Файл .svg в проекте.
+- `public/avatars/abstract/avatar-5-full.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-5-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-5.svg`: Файл .svg в проекте.
+- `public/avatars/abstract/avatar-6-full.webp`: E&.
+- `public/avatars/abstract/avatar-6-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/abstract/avatar-6.svg`: Файл .svg в проекте.
+- `public/avatars/abstract/index.ts`: Аватарки категории "Абстракции".
+- `public/avatars/animals/avatar-1-full.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-1-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-1.svg`: Файл .svg в проекте.
+- `public/avatars/animals/avatar-2-full.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-2-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-2.svg`: Файл .svg в проекте.
+- `public/avatars/animals/avatar-3-full.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-3-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-3.svg`: Файл .svg в проекте.
+- `public/avatars/animals/avatar-4-full.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-4-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-4.svg`: Файл .svg в проекте.
+- `public/avatars/animals/avatar-5-full.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-5-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-5.svg`: Файл .svg в проекте.
+- `public/avatars/animals/avatar-6-full.webp`: Файл .webp в проекте.
+- `public/avatars/animals/avatar-6-thumb.webp`: f2VP8 l  C * w >a&E$"!9w8@ Yx.k?{$y?H`߭]/|~{z:7ǬǠOg.
+- `public/avatars/animals/avatar-6.svg`: Файл .svg в проекте.
+- `public/avatars/animals/index.ts`: Аватарки категории "Животные".
+- `public/avatars/cartoon/avatar-1-full.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-1-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-1.svg`: Файл .svg в проекте.
+- `public/avatars/cartoon/avatar-2-full.webp`: Bk.
+- `public/avatars/cartoon/avatar-2-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-2.svg`: Файл .svg в проекте.
+- `public/avatars/cartoon/avatar-3-full.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-3-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-3.svg`: Файл .svg в проекте.
+- `public/avatars/cartoon/avatar-4-full.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-4-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-4.svg`: Файл .svg в проекте.
+- `public/avatars/cartoon/avatar-5-full.webp`: ~$cA|ˆ`ɨ^nh=<6}uH8lXZ</4k-:5J.
+- `public/avatars/cartoon/avatar-5-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-5.svg`: Файл .svg в проекте.
+- `public/avatars/cartoon/avatar-6-full.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-6-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/cartoon/avatar-6.svg`: Файл .svg в проекте.
+- `public/avatars/cartoon/index.ts`: Аватарки категории "Мультяшные".
+- `public/avatars/fantasy/avatar-1-full.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-1-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-1.svg`: Файл .svg в проекте.
+- `public/avatars/fantasy/avatar-2-full.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-2-thumb.webp`: %2A,H$ՇV`#3 9' QVNF.
+- `public/avatars/fantasy/avatar-2.svg`: Файл .svg в проекте.
+- `public/avatars/fantasy/avatar-3-full.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-3-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-3.svg`: Файл .svg в проекте.
+- `public/avatars/fantasy/avatar-4-full.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-4-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-4.svg`: Файл .svg в проекте.
+- `public/avatars/fantasy/avatar-5-full.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-5-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-5.svg`: Файл .svg в проекте.
+- `public/avatars/fantasy/avatar-6-full.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-6-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/fantasy/avatar-6.svg`: Файл .svg в проекте.
+- `public/avatars/fantasy/index.ts`: Аватарки категории "Фэнтези".
+- `public/avatars/minimalist/avatar-1-full.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-1-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-1.svg`: Файл .svg в проекте.
+- `public/avatars/minimalist/avatar-2-full.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-2-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-2.svg`: Файл .svg в проекте.
+- `public/avatars/minimalist/avatar-3-full.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-3-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-3.svg`: Файл .svg в проекте.
+- `public/avatars/minimalist/avatar-4-full.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-4-thumb.webp`: O߸Ak_ T|,(~)/^?#;(.
+- `public/avatars/minimalist/avatar-4.svg`: Файл .svg в проекте.
+- `public/avatars/minimalist/avatar-5-full.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-5-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-5.svg`: Файл .svg в проекте.
+- `public/avatars/minimalist/avatar-6-full.webp`: IHǈF<F14x$ci#.
+- `public/avatars/minimalist/avatar-6-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/minimalist/avatar-6.svg`: Файл .svg в проекте.
+- `public/avatars/minimalist/index.ts`: Аватарки категории "Минимализм".
+- `public/avatars/professional/avatar-1-full.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-1-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-1.svg`: Файл .svg в проекте.
+- `public/avatars/professional/avatar-2-full.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-2-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-2.svg`: Файл .svg в проекте.
+- `public/avatars/professional/avatar-3-full.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-3-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-3.svg`: Файл .svg в проекте.
+- `public/avatars/professional/avatar-4-full.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-4-thumb.webp`: Q;^+'v0I.4(`A1-y.
+- `public/avatars/professional/avatar-4.svg`: Файл .svg в проекте.
+- `public/avatars/professional/avatar-5-full.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-5-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-5.svg`: Файл .svg в проекте.
+- `public/avatars/professional/avatar-6-full.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-6-thumb.webp`: Файл .webp в проекте.
+- `public/avatars/professional/avatar-6.svg`: Файл .svg в проекте.
+- `public/avatars/professional/index.ts`: Аватарки категории "Профессиональные".
+- `public/book-covers/default/book-1.webp`: Файл .webp в проекте.
+- `public/book-covers/default/book-2.webp`: Файл .webp в проекте.
+- `public/book-covers/default/book-3.webp`: س9,[nNrEQnʙp"e[da1Se3.
+- `public/book-covers/default/book-4.webp`: P㶉EOJrMw1.
+- `public/book-covers/default/book-5.webp`: Файл .webp в проекте.
+- `public/book-covers/default/book-6.webp`: Файл .webp в проекте.
+- `public/book-covers/default/template-detectives.webp`: Файл .webp в проекте.
+- `public/book-covers/default/template-fiction.webp`: Файл .webp в проекте.
+- `public/book-covers/default/template-nonfiction.webp`: Файл .webp в проекте.
+- `public/book-covers/default/template-scifi.webp`: Файл .webp в проекте.
+- `public/bookstrasz-character.webp`: Файл .webp в проекте.
+- `public/bookstrazh-books.webp`: Файл .webp в проекте.
+- `public/bukstrazh.webp`: Файл .webp в проекте.
+- `public/chat.webp`: Файл .webp в проекте.
+- `public/cosmo.webp`: Файл .webp в проекте.
+- `public/cosmo2.webp`: Gɪ`:jV.
+- `public/fantast.webp`: Файл .webp в проекте.
+- `public/favicon-16x16.png`: Файл .png в проекте.
+- `public/favicon-32x32.png`: Файл .png в проекте.
+- `public/favicon-48x48.png`: Файл .png в проекте.
+- `public/favicon.ico`: Файл .ico в проекте.
+- `public/favicon.svg`: Файл .svg в проекте.
+- `public/fon.webp`: Файл .webp в проекте.
+- `public/fonts/caveat-cyrillic-ext.woff2`: qaEF.
+- `public/fonts/caveat-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/caveat-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/caveat-latin.woff2`: 3X%܂!C2eȕ'_۟ۀ1BEmB.
+- `public/fonts/comfortaa-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/comfortaa-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/eb-garamond-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/eb-garamond-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/fonts.css`: Файл .css в проекте.
+- `public/fonts/hanken-grotesk-cyrillic-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/hanken-grotesk-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/hanken-grotesk-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/jetbrains-mono-cyrillic-500.woff2`: Файл .woff2 в проекте.
+- `public/fonts/jetbrains-mono-latin-500.woff2`: Файл .woff2 в проекте.
+- `public/fonts/manrope-cyrillic-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/manrope-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/manrope-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/manrope-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/material-symbols-outlined-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/merriweather-bold-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/merriweather-cyrillic-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/merriweather-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/merriweather-italic-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/merriweather-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/merriweather-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/montserrat-cyrillic-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/montserrat-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/montserrat-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/montserrat-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/nunito-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/nunito-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/onest-cyrillic-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/onest-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/onest-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/onest-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/pixelify-sans-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/pixelify-sans-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/playfair-display-cyrillic-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/playfair-display-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/playfair-display-italic-variable.woff2`: Файл .woff2 в проекте.
+- `public/fonts/playfair-display-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/playfair-display-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/playfair-display-normal-variable.woff2`: Файл .woff2 в проекте.
+- `public/fonts/press-start-2p-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/press-start-2p-latin.woff2`: A@(1܊.
+- `public/fonts/source-sans-3-cyrillic-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/source-sans-3-cyrillic.woff2`: Файл .woff2 в проекте.
+- `public/fonts/source-sans-3-italic-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/source-sans-3-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/source-sans-3-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/space-grotesk-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/space-grotesk-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/syne-latin-ext.woff2`: Файл .woff2 в проекте.
+- `public/fonts/syne-latin.woff2`: Файл .woff2 в проекте.
+- `public/fonts/unbounded-cyrillic.woff2`: W9׾,?gz<.
+- `public/fonts/unbounded-latin.woff2`: Файл .woff2 в проекте.
+- `public/footer-bg.png`: Файл .png в проекте.
+- `public/footer-bg.webp`: Файл .webp в проекте.
+- `public/funny_small.webp`: Файл .webp в проекте.
+- `public/hero-bg.webp`: Файл .webp в проекте.
+- `public/images/books/anna-karenina.webp`: Файл .webp в проекте.
+- `public/images/books/beguschiy-za-vetrom.webp`: Файл .webp в проекте.
+- `public/images/books/bratya-karamazovy.webp`: Файл .webp в проекте.
+- `public/images/books/bunin-medium.webp`: Файл .webp в проекте.
+- `public/images/books/circus.webp`: Файл .webp в проекте.
+- `public/images/books/doktor-zhivago.webp`: Файл .webp в проекте.
+- `public/images/books/garri-potter-i-filosofskiy-kamen.webp`: Файл .webp в проекте.
+- `public/images/books/igra-prestolov.webp`: Файл .webp в проекте.
+- `public/images/books/imya-vetra.webp`: Файл .webp в проекте.
+- `public/images/books/khroniki-narnii-lev-koldunya-i-platyanoy.webp`: Файл .webp в проекте.
+- `public/images/books/kod-da-vinchi.webp`: !hjBim3[~A`oSڡ*=X$?1r*l zN?Q=w.<̳&jb5.
+- `public/images/books/koleso-vremeni-oko-mira.webp`: Файл .webp в проекте.
+- `public/images/books/master-i-margarita.webp`: Файл .webp в проекте.
+- `public/images/books/pasternak-medium.webp`: Файл .webp в проекте.
+- `public/images/books/prestuplenie-i-nakazanie.webp`: Файл .webp в проекте.
+- `public/images/books/prosa-medium.webp`: |%$+ eAIhwLo_op֔1.
+- `public/images/books/prosa1-medium.webp`: Файл .webp в проекте.
+- `public/images/books/prosa3-medium.webp`: Файл .webp в проекте.
+- `public/images/books/put-koroley.webp`: Файл .webp в проекте.
+- `public/images/books/schegol.webp`: Файл .webp в проекте.
+- `public/images/books/shadow-wind.webp`: Файл .webp в проекте.
+- `public/images/books/shantaram.webp`: Файл .webp в проекте.
+- `public/images/books/sholohov-medium.webp`: Файл .webp в проекте.
+- `public/images/books/sto-let-odinochestva.webp`: Файл .webp в проекте.
+- `public/images/books/temnye-allei.webp`: dXsdW1u.
+- `public/images/books/tikhiy-don.webp`: Файл .webp в проекте.
+- `public/images/books/ubit-peresmeshnika.webp`: 5s:)NF0g=.
+- `public/images/books/vedmak-poslednee-zhelanie.webp`: Файл .webp в проекте.
+- `public/images/books/vlastelin-kolets.webp`: Файл .webp в проекте.
+- `public/images/books/voyna-i-mir.webp`: zvN\#̸MST	zpGxXt@lmIqA9)2ͤ镄icI\G>拑汌y:|UӽAxLdguOIP]\K9h?.
+- `public/images/books/zhizn-pi.webp`: Файл .webp в проекте.
+- `public/images/collections/curated/best-books-2026/Ave-maria.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/Dear-Debby.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/best-books-2026/atmosphere.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/bright-creature.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/best-books-2026/broken-country.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/best-books-2026/game.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/half-his-age.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/best-books-2026/heart-lover.jpeg`: 9ڱˊs\K  nx>1ﶩ.
+- `public/images/collections/curated/best-books-2026/husbands-wife.jpeg`: ɕ0O|8JÕ:,(!بq",\΋P% (.
+- `public/images/collections/curated/best-books-2026/korrespondent.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/midnight-library.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/my-friends.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/names.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/best-books-2026/pereval.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/teo-golden.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/vacation.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/wedding.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/best-books-2026/wild-dark.webp`: Файл .webp в проекте.
+- `public/images/collections/curated/best-books-2026/yesteryear.webp`: Файл .webp в проекте.
+- `public/images/collections/curated/historical-novels/1929.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/alone.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/bright-years.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/buckeye.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/historical-novels/family.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/historical-novels/hamnet.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/imperia.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/james.png`: Файл .png в проекте.
+- `public/images/collections/curated/historical-novels/kill-witch.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/killers.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/mad-wife.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/historical-novels/marrige-sea.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/historical-novels/november.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/historical-novels/radium.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/river.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/sapiens.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/historical-novels/say-nothing.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/seven.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/historical-novels/tiran.png`: Файл .png в проекте.
+- `public/images/collections/curated/historical-novels/wager.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/ad.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/horror-books/buffalo.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/crady.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/horror-books/darkness.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/flesh.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/frankenshtein.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/hidden-pictures.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/live-here.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/long.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/play-nice.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/horror-books/rabbit.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/horror-books/strange-pictures.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/popular-science/anthropocene.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/popular-science/anxious.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/popular-science/atomic.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/popular-science/let-them.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/popular-science/london-falling.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/popular-science/mans.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/popular-science/museum-vor.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/popular-science/one-day.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/popular-science/pofigism.png`: Файл .png в проекте.
+- `public/images/collections/curated/popular-science/psi-money.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/popular-science/serviceberry.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/popular-science/tuberculosis.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/alchemisen.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/court-fure.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/court-rose.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/court-ruin.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/iron-fire.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/mate.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-fantasy/onix.jpeg`: 1!%)+...383,7(-.+.
+- `public/images/collections/curated/romantic-fantasy/rites-starling.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-fantasy/rtut.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/sera.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/shield-sparrows.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-fantasy/wing.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/alchemised2.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/assistant.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/bird.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/dire-bound.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-stories/enchantra.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/enemy.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/hercules.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/immortal.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-stories/knight-moth.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/lost-tales.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-stories/mate2.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-stories/onix-2.jpeg`: 1!%)+...383,7(-.+.
+- `public/images/collections/curated/romantic-stories/rose-chains.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/shield.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-stories/silver-elite.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/visious.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-stories/wild-reverence.jpeg`: 'cle[h59UFJ.
+- `public/images/collections/curated/romantic-stories/wings-blood.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/romantic-stories/witch-guide.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/romantic-stories/wrath.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-detective/alibi.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-detective/god-woods.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-detective/his-her.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-detective/housemade3.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-detective/hoysemade.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-detective/intruder.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-detective/not-her.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-detective/pacient.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-detective/secret-housemade.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-detective/woman-down.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-fantastic/carl.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantastic/carl2.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantastic/dark-matter.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantastic/gold-son.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantastic/i-who.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantastic/marsianin.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantastic/ministery-time.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantastic/never.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-fantastic/operation.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantastic/red-pising.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/astral-library.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/bury.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/circeya.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/cofe.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/house-lasyr.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/katabasis.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/mistborn.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/onvisible-life.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/piranesi.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-fantasy/song-achilles.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-fantasy/strength-few.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/beautiful-life.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/bread-berary.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/caller.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/deep-end.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/deg-borrow.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/enough.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/favorite.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/golden-summer.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/king-elvy.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/love-arranged.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/makes-happy.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/problem-roman.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/remember.jpeg`: QP-?}b~pu}lγ/| rV`;T<昘؉ H`I^V.
+- `public/images/collections/curated/top-romance/rewind-back.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/scythe.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/season.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/spiral.jpg`: Файл .jpg в проекте.
+- `public/images/collections/curated/top-romance/story-life.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/summer-part.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/curated/top-romance/wild-side.jpeg`: Файл .jpeg в проекте.
+- `public/images/collections/literary/2026-hero.webp`: J]	M@Cߑ.
+- `public/images/collections/literary/nobel-prize.webp`: Файл .webp в проекте.
+- `public/images/collections/literary/prosa-hero.webp`: Файл .webp в проекте.
+- `public/images/new-placeholder.webp`: Файл .webp в проекте.
+- `public/images/placeholder.svg`: Файл .svg в проекте.
+- `public/images/rankings/hero-book3.webp`: Файл .webp в проекте.
+- `public/images/rankings/hero-down.avif`: |l/Ԑ c Dfɩ/m$Лd\h)JT6ܓv[W(>A49pǼm!'h.
+- `public/images/templates/2026.webp`: Файл .webp в проекте.
+- `public/images/templates/2026@730.webp`: Файл .webp в проекте.
+- `public/images/templates/Brain.webp`: Файл .webp в проекте.
+- `public/images/templates/Brain@730.webp`: Файл .webp в проекте.
+- `public/images/templates/Bussines.webp`: Файл .webp в проекте.
+- `public/images/templates/Bussines@730.webp`: Файл .webp в проекте.
+- `public/images/templates/Classics.webp`: Файл .webp в проекте.
+- `public/images/templates/Classics@730.webp`: Файл .webp в проекте.
+- `public/images/templates/Cofe.webp`: Файл .webp в проекте.
+- `public/images/templates/Cofe@730.webp`: Файл .webp в проекте.
+- `public/images/templates/CosmOpera.webp`: Файл .webp в проекте.
+- `public/images/templates/CosmOpera@730.webp`: Файл .webp в проекте.
+- `public/images/templates/Cyberpank.webp`: Файл .webp в проекте.
+- `public/images/templates/Cyberpank@730.webp`: Файл .webp в проекте.
+- `public/images/templates/DarkFantasy.webp`: Файл .webp в проекте.
+- `public/images/templates/DarkFantasy@730.webp`: Файл .webp в проекте.
+- `public/images/templates/Popular.webp`: Файл .webp в проекте.
+- `public/images/templates/Popular@730.webp`: Файл .webp в проекте.
+- `public/images/templates/Romantic.webp`: Файл .webp в проекте.
+- `public/images/templates/Romantic@730.webp`: Файл .webp в проекте.
+- `public/images/templates/Rpg.webp`: Файл .webp в проекте.
+- `public/images/templates/Rpg@730.webp`: Файл .webp в проекте.
+- `public/images/templates/bestseller.webp`: Файл .webp в проекте.
+- `public/images/templates/bestseller@730.webp`: Файл .webp в проекте.
+- `public/images/templates/default.webp`: Файл .webp в проекте.
+- `public/images/templates/default@730.webp`: Файл .webp в проекте.
+- `public/images/templates/detectiv.webp`: Файл .webp в проекте.
+- `public/images/templates/detectiv@730.webp`: Файл .webp в проекте.
+- `public/images/templates/fantasy.webp`: Файл .webp в проекте.
+- `public/images/templates/fantasy2.webp`: Файл .webp в проекте.
+- `public/images/templates/fantasy2@730.webp`: Файл .webp в проекте.
+- `public/images/templates/fantasy@730.webp`: Файл .webp в проекте.
+- `public/images/templates/placeholder.webp`: Файл .webp в проекте.
+- `public/images/templates/placeholder@730.webp`: Файл .webp в проекте.
+- `public/images/templates/scifi.webp`: Файл .webp в проекте.
+- `public/images/templates/scifi@730.webp`: Файл .webp в проекте.
+- `public/lap.webp`: и2Ѹj.
+- `public/lending-hero.mp4`: Файл .mp4 в проекте.
+- `public/library-bg.webp`: lQBk;"Y܁%{*"s<$85+lOCAy@	/.
+- `public/library.webp`: Файл .webp в проекте.
+- `public/library4k-hq-full.mp4`: Файл .mp4 в проекте.
+- `public/llms.txt`: Файл .txt в проекте.
+- `public/logo-animation.svg`: Файл .svg в проекте.
+- `public/logo.svg`: Файл .svg в проекте.
+- `public/loveis.webp`: Файл .webp в проекте.
+- `public/og-landing.webp`: Файл .webp в проекте.
+- `public/philosoph.webp`: Файл .webp в проекте.
+- `public/robots.txt`: Файл .txt в проекте.
+- `public/scary_small.webp`: Файл .webp в проекте.
+- `public/screenshots/AI-400.webp`: Файл .webp в проекте.
+- `public/screenshots/AI-640.webp`: Файл .webp в проекте.
+- `public/screenshots/AI-800.webp`: Файл .webp в проекте.
+- `public/screenshots/AI.webp`: Файл .webp в проекте.
+- `public/screenshots/battles-400.webp`: Файл .webp в проекте.
+- `public/screenshots/battles-640.webp`: Файл .webp в проекте.
+- `public/screenshots/battles-800.webp`: Файл .webp в проекте.
+- `public/screenshots/battles.webp`: Файл .webp в проекте.
+- `public/screenshots/dashboard-400.webp`: Файл .webp в проекте.
+- `public/screenshots/dashboard-640.webp`: Файл .webp в проекте.
+- `public/screenshots/dashboard-800.webp`: ?g2gyupa.
+- `public/screenshots/dashboard.webp`: Файл .webp в проекте.
+- `public/screenshots/editor-400.webp`: Файл .webp в проекте.
+- `public/screenshots/editor-640.webp`: ,aLѾмף*IҦ.
+- `public/screenshots/editor-800.webp`: Файл .webp в проекте.
+- `public/screenshots/editor-compressed.mp4`: Файл .mp4 в проекте.
+- `public/screenshots/editor.webp`: Файл .webp в проекте.
+- `public/screenshots/library-400.webp`: Файл .webp в проекте.
+- `public/screenshots/library-640.webp`: Файл .webp в проекте.
+- `public/screenshots/library-800.webp`: Файл .webp в проекте.
+- `public/screenshots/library.webp`: ׉<{VXt(HkVtL+BC]¯p$5L+BPЭۥ:CO~&dQ-.
+- `public/screenshots/profile-400.webp`: 2<AH/OrWSfqҚ]d+CkF+a[tGuQQ+X|Źt)26b3Y#<V&&"UXvPeiA q5n=pՈT\wimpM^OOzZ\x.
+- `public/screenshots/profile-640.webp`: Файл .webp в проекте.
+- `public/screenshots/profile-800.webp`: Файл .webp в проекте.
+- `public/screenshots/profile.webp`: 5S⃛TکA͇imTô6|PsajU>(9ptsvթ;)DC ^zG0e"p*𳯯5M.
+- `public/screenshots/tier-list.mp4`: Файл .mp4 в проекте.
+- `public/screenshots/tier-list.webm`: Файл .webm в проекте.
+- `public/sherlock.webp`: Файл .webp в проекте.
+- `public/site.webmanifest`: Файл .webmanifest в проекте.
+- `public/templates.webp`: Файл .webp в проекте.
+- `public/textures/leather.webp`: Файл .webp в проекте.
+- `public/textures/paper.svg`: Файл .svg в проекте.
+- `public/yandex_a01576b25e2919e7.html`: Файл .html в проекте.
+
+## `screenshots/`
+
+- `screenshots/.gitkeep`: Файл без расширения в проекте.
+
+## `scripts/`
+
+- `scripts/backup-db.sh`: !/usr/bin/env bash.
+- `scripts/bootstrap-server.sh`: !/usr/bin/env bash.
+- `scripts/deploy-server.sh`: !/usr/bin/env bash.
+- `scripts/fetch-covers.mjs`: !/usr/bin/env node.
+- `scripts/indexnow-ping.mjs`: !/usr/bin/env node.
+- `scripts/indexnow-ping.test.mjs`: Файл .mjs в проекте.
+- `scripts/indexnow.key`: Файл .key в проекте.
+- `scripts/material-symbols-icons.json`: Файл .json в проекте.
+- `scripts/prerender-cron.sh`: !/usr/bin/env bash.
+- `scripts/prerender.mjs`: Prerender — генерация статического HTML для публичных маршрутов SPA..
+- `scripts/prerender.test.mjs`: escapeHtml экспортируется из prerender.mjs для тестирования.
+- `scripts/resize-templates.mjs`: Нарезает уменьшенные версии шаблонных изображений..
+- `scripts/setup-ssl.sh`: !/usr/bin/env bash.
+- `scripts/setup-test-env.sh`: !/bin/bash.
+- `scripts/sri-plugin.mjs`: Custom SRI (Subresource Integrity) plugin for Vite..
+- `scripts/subset-material-symbols.py`: !/usr/bin/env python3.
+- `scripts/subset-material-symbols.sh`: !/bin/bash.
+
+## `shared/`
+
+- `shared/types.ts`: Shared types for BookStrata.
+
+## `src/`
+
+- `src/app/App.tsx`: Внутренний контент, рендерится внутри AppProviders — хуки зависящие от AuthProvider безопасны.
+- `src/app/AppProviders.tsx`: Файл .tsx в проекте.
+- `src/app/main.tsx`: Sentry — lazy init (динамический import ~60KB, не блокирует first paint).
+- `src/app/router.tsx`: Файл .tsx в проекте.
+- `src/components/AchievementNotification/AchievementNotification.tsx`: Файл .tsx в проекте.
+- `src/components/AdminGuard/AdminGuard.tsx`: Файл .tsx в проекте.
+- `src/components/AdminGuard/index.ts`: Файл .ts в проекте.
+- `src/components/AiLibrarian/AiLibrarianCard.css`: Файл .css в проекте.
+- `src/components/AiLibrarian/AiLibrarianCard.tsx`: Файл .tsx в проекте.
+- `src/components/AiLibrarian/AiLibrarianModal.spec.tsx`: Файл .tsx в проекте.
+- `src/components/AiLibrarian/AiLibrarianModal.tsx`: ─── Suggestion chips ───.
+- `src/components/AiLibrarian/AiLibrarianWidget.css`: Файл .css в проекте.
+- `src/components/AiLibrarian/AiLibrarianWidget.tsx`: Файл .tsx в проекте.
+- `src/components/AiLibrarian/AiRecommendationPrompt.tsx`: Контекстный блок с предложением ИИ-рекомендаций..
+- `src/components/AmbientSound/AmbientSettingsModal.tsx`: Файл .tsx в проекте.
+- `src/components/AmbientSound/ambient-tracks.ts`: Файл .ts в проекте.
+- `src/components/AuthForm/AuthForm.spec.tsx`: Файл .tsx в проекте.
+- `src/components/AuthForm/AuthForm.tsx`: Файл .tsx в проекте.
+- `src/components/AuthorInput/AuthorInput.tsx`: src/components/AuthorInput/AuthorInput.tsx.
+- `src/components/Avatar/Avatar.tsx`: Файл .tsx в проекте.
+- `src/components/Avatar/AvatarSelector.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/components/Avatar/AvatarSelector.tsx`: Файл .tsx в проекте.
+- `src/components/Avatar/components/AiGenerationTab.tsx`: Файл .tsx в проекте.
+- `src/components/Avatar/components/AvatarPreview.tsx`: Файл .tsx в проекте.
+- `src/components/Avatar/components/AvatarSelectorFooter.tsx`: Файл .tsx в проекте.
+- `src/components/Avatar/components/AvatarSelectorHeader.tsx`: Файл .tsx в проекте.
+- `src/components/Avatar/components/PresetsTab.tsx`: Файл .tsx в проекте.
+- `src/components/Avatar/components/TabNavigation.tsx`: Файл .tsx в проекте.
+- `src/components/Avatar/components/UploadTab.tsx`: NSFW-проверка выполняется на сервере при загрузке —.
+- `src/components/Avatar/constants.ts`: Файл .ts в проекте.
+- `src/components/Avatar/generationReducer.ts`: Файл .ts в проекте.
+- `src/components/Avatar/hooks/useAvatarGeneration.ts`: Файл .ts в проекте.
+- `src/components/Avatar/hooks/useAvatarPreview.ts`: Хук для управления состоянием preview изображения.
+- `src/components/Avatar/index.ts`: Файл .ts в проекте.
+- `src/components/Avatar/presets.ts`: Файл .ts в проекте.
+- `src/components/Avatar/previewReducer.ts`: Файл .ts в проекте.
+- `src/components/Avatar/types.ts`: Файл .ts в проекте.
+- `src/components/BattleApplyModal/BattleApplyModal.spec.tsx`: Файл .tsx в проекте.
+- `src/components/BattleApplyModal/BattleApplyModal.tsx`: Файл .tsx в проекте.
+- `src/components/BookCounter/BookCounter.spec.tsx`: Файл .tsx в проекте.
+- `src/components/BookCounter/BookCounter.tsx`: Файл .tsx в проекте.
+- `src/components/BookCoverPlaceholder/BookCoverPlaceholder.tsx`: Файл .tsx в проекте.
+- `src/components/BookEditModal/BookEditModal.spec.tsx`: src/components/BookEditModal/BookEditModal.spec.tsx.
+- `src/components/BookEditModal/BookEditModal.tsx`: Файл .tsx в проекте.
+- `src/components/BookSearchModal/BookSearchModal.tsx`: Файл .tsx в проекте.
+- `src/components/BookViewModal/BookViewModal.spec.tsx`: src/components/BookViewModal/BookViewModal.spec.tsx.
+- `src/components/BookViewModal/BookViewModal.tsx`: Файл .tsx в проекте.
+- `src/components/BookstrataCharacter/BookstrataCharacter.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/BookScene/BookScene.css`: Файл .css в проекте.
+- `src/components/CommunityComponents/BookScene/BookScene.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/BookScene/useBookController.ts`: Файл .ts в проекте.
+- `src/components/CommunityComponents/CategoryTabs.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/CollectionCard.spec.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/CollectionCard.tsx`: Первый экран: приоритетная загрузка (fetchpriority="high", loading="eager").
+- `src/components/CommunityComponents/CollectionFlipCard.spec.tsx`: Карточка содержит <Link> (react-router) — тесты оборачиваем в MemoryRouter.
+- `src/components/CommunityComponents/CollectionFlipCard.tsx`: Приоритетная загрузка — для LCP-изображений.
+- `src/components/CommunityComponents/CollectionGrid.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/CollectionsSection.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/ExternalNewsSection.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/HeroSection.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/components/CommunityComponents/HeroSection.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/NewsSection.spec.tsx`: src/components/CommunityComponents/NewsSection.spec.tsx.
+- `src/components/CommunityComponents/NewsSection.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/TemplateCard.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/TemplateGrid.tsx`: Файл .tsx в проекте.
+- `src/components/CommunityComponents/TemplatePreviewModal.tsx`: Файл .tsx в проекте.
+- `src/components/CuratorApplyModal/CuratorApplyModal.spec.tsx`: Файл .tsx в проекте.
+- `src/components/CuratorApplyModal/CuratorApplyModal.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/DashboardHeroSection.css`: Файл .css в проекте.
+- `src/components/DashboardHeroSection/DashboardHeroSection.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/AchievementsPanel.spec.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/AchievementsPanel.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/ActivityChart.spec.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/ActivityChart.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/HeroPreviewCard.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/LevelCard.spec.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/LevelCard.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/QuickStartTemplates.css`: Файл .css в проекте.
+- `src/components/DashboardHeroSection/components/QuickStartTemplates.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/RecentPublicTierLists.css`: Файл .css в проекте.
+- `src/components/DashboardHeroSection/components/RecentPublicTierLists.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/TierListCover.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/TrendingNow.css`: Файл .css в проекте.
+- `src/components/DashboardHeroSection/components/TrendingNow.test.tsx`: Мокаем внешние модули.
+- `src/components/DashboardHeroSection/components/TrendingNow.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/UserActivityStats.spec.tsx`: Файл .tsx в проекте.
+- `src/components/DashboardHeroSection/components/UserActivityStats.tsx`: Файл .tsx в проекте.
+- `src/components/DiscussionSection/DiscussionSection.css`: Файл .css в проекте.
+- `src/components/DiscussionSection/DiscussionSection.spec.tsx`: Файл .tsx в проекте.
+- `src/components/DiscussionSection/DiscussionSection.tsx`: Файл .tsx в проекте.
+- `src/components/DonateModal/DonateModal.tsx`: Файл .tsx в проекте.
+- `src/components/DonorBadge/DonorBadge.tsx`: Файл .tsx в проекте.
+- `src/components/EditorModals/ClearAllModal.tsx`: Файл .tsx в проекте.
+- `src/components/EditorModals/DeleteBookModal.tsx`: Файл .tsx в проекте.
+- `src/components/EditorModals/DeleteRatingModal.tsx`: Файл .tsx в проекте.
+- `src/components/EditorModals/DeleteTierModal.tsx`: Файл .tsx в проекте.
+- `src/components/EditorModals/EditorConfirmModal.tsx`: Файл .tsx в проекте.
+- `src/components/EditorModals/UnsavedChangesModal.tsx`: Файл .tsx в проекте.
+- `src/components/EditorModals/index.ts`: Файл .ts в проекте.
+- `src/components/EditorScreens/EditorErrorScreen.tsx`: Файл .tsx в проекте.
+- `src/components/EditorScreens/EditorLoadingScreen.tsx`: Файл .tsx в проекте.
+- `src/components/EditorScreens/index.ts`: Файл .ts в проекте.
+- `src/components/ErrorBoundary/AppErrorBoundary.tsx`: Файл .tsx в проекте.
+- `src/components/ErrorBoundary/FallbackErrorPage.tsx`: Страница-заглушка при падении React-компонента..
+- `src/components/Fur/Fur.spec.tsx`: happy-dom не умеет рисовать на canvas — замокаем 2d-контекст,.
+- `src/components/Fur/fur.css`: Файл .css в проекте.
+- `src/components/Fur/fur.tsx`: Fur. Рисует шерсть на любой фигуре: folder, card, heart, кастомный SVG-путь.
+- `src/components/Fur/index.ts`: Файл .ts в проекте.
+- `src/components/GuestRoute/GuestRoute.tsx`: Маршрут только для неавторизованных пользователей..
+- `src/components/GuestRoute/index.ts`: Файл .ts в проекте.
+- `src/components/Icon.tsx`: Material Symbols icon component..
+- `src/components/ImageUploader/ImageUploader.spec.tsx`: Файл .tsx в проекте.
+- `src/components/ImageUploader/ImageUploader.tsx`: src/components/ImageUploader/ImageUploader.tsx.
+- `src/components/LikeButton/LikeButton.tsx`: Файл .tsx в проекте.
+- `src/components/LikeButton/index.ts`: Файл .ts в проекте.
+- `src/components/ModerationPanel/ModerationPanel.spec.tsx`: Файл .tsx в проекте.
+- `src/components/ModerationPanel/ModerationPanel.tsx`: Файл .tsx в проекте.
+- `src/components/PageContainer/PageContainer.tsx`: Единый контейнер для страниц — занимает всю ширину родителя..
+- `src/components/PrivateBadge.tsx`: Пометка «Приватный» для тир-листа..
+- `src/components/ProtectedRoute/ProtectedRoute.tsx`: Защищённый маршрут для авторизованных пользователей..
+- `src/components/ProtectedRoute/index.ts`: Файл .ts в проекте.
+- `src/components/Reveal/Reveal.test.tsx`: Контролируемый mock IntersectionObserver для эмитации пересечений.
+- `src/components/Reveal/Reveal.tsx`: Тег корневого элемента (по умолчанию div).
+- `src/components/SEO/Breadcrumbs.tsx`: Inline-стили гарантируют видимость кроумбов поверх CSS-переменных темы.
+- `src/components/SEO/SEOHead.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/components/SEO/SEOHead.tsx`: Файл .tsx в проекте.
+- `src/components/SearchBar/SearchBar.shortcut.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/components/SearchBar/SearchBar.tsx`: Файл .tsx в проекте.
+- `src/components/SessionExpiredOverlay/SessionExpiredOverlay.tsx`: Полноэкранный экран при истёкшей сессии..
+- `src/components/SessionExpiredOverlay/index.ts`: Файл .ts в проекте.
+- `src/components/SettingsSidebar/SettingsSidebar.tsx`: Файл .tsx в проекте.
+- `src/components/SortableBookCover/SortableBookCover.tsx`: Фаза 5.3: published-книги становятся ссылками на /books/{slug} (read-only просмотр).
+- `src/components/Spinner/Spinner.tsx`: Файл .tsx в проекте.
+- `src/components/Spinner/index.ts`: Файл .ts в проекте.
+- `src/components/StaticTierView/StaticTierView.css`: Файл .css в проекте.
+- `src/components/StaticTierView/StaticTierView.tsx`: Файл .tsx в проекте.
+- `src/components/StaticTierView/index.ts`: Файл .ts в проекте.
+- `src/components/TasteMatchBanner/TasteMatchBanner.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateBuilder/TemplateBuilder.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateCard/TemplateCard.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateEditor/TemplateEditorWizard.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateEditor/components/BasicInfoStep.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateEditor/components/ReviewStep.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateEditor/components/StepsHeader.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateEditor/components/TierRow.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateEditor/components/TiersStep.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/DeleteTemplateModal.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/PublicTierListCards.spec.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/PublicTierListCards.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/TemplateLibrary.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/components/TemplateLibrary/TemplateLibrary.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/components/EmptyState.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/components/PublicTierListsSection.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/components/TemplateLibraryHeader.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/components/TemplateLibrarySidebar.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/components/TemplateLibraryToolbar.tsx`: Файл .tsx в проекте.
+- `src/components/TemplateLibrary/constants.ts`: Файл .ts в проекте.
+- `src/components/TemplateLibrary/hooks/usePublicTierListsPagination.spec.ts`: / <reference types="vitest/globals" />.
+- `src/components/TemplateLibrary/hooks/usePublicTierListsPagination.ts`: Файл .ts в проекте.
+- `src/components/TemplateLibrary/hooks/useTemplateFilters.spec.ts`: / <reference types="vitest/globals" />.
+- `src/components/TemplateLibrary/hooks/useTemplateFilters.ts`: Файл .ts в проекте.
+- `src/components/TemplateLibrary/templateLibraryReducer.spec.ts`: / <reference types="vitest/globals" />.
+- `src/components/TemplateLibrary/templateLibraryReducer.ts`: Файл .ts в проекте.
+- `src/components/TemplateLibrary/templates-page.css`: Файл .css в проекте.
+- `src/components/TemplateLibrary/types.ts`: Re-export типов из reducer.
+- `src/components/TierGrid/TierGrid.tsx`: Файл .tsx в проекте.
+- `src/components/TierListPreview/TierListPreview.tsx`: Файл .tsx в проекте.
+- `src/components/TierListPreview/index.ts`: Файл .ts в проекте.
+- `src/components/TierRow/TierRow.tsx`: Файл .tsx в проекте.
+- `src/components/UnrankedItems/UnrankedItems.tsx`: Файл .tsx в проекте.
+- `src/components/ui/border-beam.tsx`: The size of the border beam..
+- `src/components/ui/handdrawn-heart.tsx`: Файл .tsx в проекте.
+- `src/components/ui/handdrawn-smiley.tsx`: Файл .tsx в проекте.
+- `src/components/ui/highlighter.tsx`: Файл .tsx в проекте.
+- `src/components/ui/pointer.tsx`: A custom pointer component that displays an animated cursor..
+- `src/constants/colors.ts`: Reds & Corals.
+- `src/constants/dnd.ts`: Файл .ts в проекте.
+- `src/constants/limits.ts`: Глобальные ограничения для различных уровней подписки.
+- `src/constants/pagination.ts`: Настройки пагинации по умолчанию.
+- `src/content/articles/index.ts`: Файл .ts в проекте.
+- `src/content/articles/ssr-without-nextjs.md`: Как мы сделали SSR для React SPA без Next.js.
+- `src/content/articles/why-not-goodreads.md`: Почему мы не стали копировать Goodreads.
+- `src/contexts/AiLibrarianContext.tsx`: Файл .tsx в проекте.
+- `src/contexts/AnalyticsContext.tsx`: Файл .tsx в проекте.
+- `src/contexts/AuthContext.tsx`: Файл .tsx в проекте.
+- `src/contexts/BookshelfContext.tsx`: Файл .tsx в проекте.
+- `src/contexts/aiLibrarian.context.ts`: Файл .ts в проекте.
+- `src/contexts/ambient/AmbientContext.tsx`: Файл .tsx в проекте.
+- `src/contexts/auth.context.ts`: Расширенный тип пользователя для контекста.
+- `src/contexts/bookshelf.context.ts`: Статус «Прочитал» — подтип статусов полки (для совместимости со старым кодом).
+- `src/data/author-demand.json`: Файл .json в проекте.
+- `src/data/author-routes.json`: Файл .json в проекте.
+- `src/data/book-routes.json`: Файл .json в проекте.
+- `src/data/categories.ts`: Категории (жанры) для коллекций..
+- `src/data/category-ids.json`: Файл .json в проекте.
+- `src/data/category-seo.ts`: SEO-тексты для страниц категорий (/topics/:slug)..
+- `src/data/collection-routes.json`: Файл .json в проекте.
+- `src/data/collection-seo.ts`: SEO-тексты для страниц коллекций (/collections/:slug)..
+- `src/data/genre-taxonomy.spec.ts`: Файл .ts в проекте.
+- `src/data/genre-taxonomy.ts`: Канонический словарь жанров для оси genre (Book Match)..
+- `src/data/mockData.ts`: src/data/mockData.ts.
+- `src/data/tag-to-category.ts`: Маппинг тегов коллекций на categoryId для перелинковки..
+- `src/features/book-match/components/BookMatch.spec.tsx`: Стейт моков жанров — управляем per-test через vi.hoisted.
+- `src/features/book-match/components/BookMatch.tsx`: src/features/book-match/components/BookMatch.tsx.
+- `src/features/book-match/components/BookMatchBadge.spec.tsx`: Файл .tsx в проекте.
+- `src/features/book-match/components/BookMatchBadge.tsx`: src/features/book-match/components/BookMatchBadge.tsx.
+- `src/features/book-match/components/BookMatchResult.tsx`: src/features/book-match/components/BookMatchResult.tsx.
+- `src/features/book-match/components/BookMatchSlider.tsx`: src/features/book-match/components/BookMatchSlider.tsx.
+- `src/features/book-match/components/BookRecommendations.spec.tsx`: Debounce → identity: тестируем рендер-логику, а не таймеры.
+- `src/features/book-match/components/BookRecommendations.tsx`: src/features/book-match/components/BookRecommendations.tsx.
+- `src/features/book-match/components/index.ts`: src/features/book-match/components/index.ts.
+- `src/features/book-match/domain/__tests__/explainMatch.test.ts`: src/features/book-match/domain/__tests__/explainMatch.test.ts.
+- `src/features/book-match/domain/__tests__/genreSimilarity.test.ts`: Файл .ts в проекте.
+- `src/features/book-match/domain/__tests__/matchLevel.test.ts`: src/features/book-match/domain/__tests__/matchLevel.test.ts.
+- `src/features/book-match/domain/__tests__/matchScore.test.ts`: src/features/book-match/domain/__tests__/matchScore.test.ts.
+- `src/features/book-match/domain/explainMatch.ts`: src/features/book-match/domain/explainMatch.ts.
+- `src/features/book-match/domain/genreSimilarity.ts`: 7-я ось Match Score: сходство любимых жанров пользователя и книги..
+- `src/features/book-match/domain/index.ts`: src/features/book-match/domain/index.ts.
+- `src/features/book-match/domain/matchLevel.ts`: src/features/book-match/domain/matchLevel.ts.
+- `src/features/book-match/domain/matchScore.ts`: src/features/book-match/domain/matchScore.ts.
+- `src/features/book-match/domain/perceptualScale.spec.ts`: Файл .ts в проекте.
+- `src/features/book-match/domain/perceptualScale.ts`: Perceptual Scale — нелинейное преобразование шкалы 0–100 через sigmoid..
+- `src/features/book-match/domain/types.ts`: src/features/book-match/domain/types.ts.
+- `src/features/book-match/hooks/useMatchedBooks.ts`: src/features/book-match/hooks/useMatchedBooks.ts.
+- `src/features/book-match/hooks/useStoredMood.spec.ts`: Файл .ts в проекте.
+- `src/features/book-match/hooks/useStoredMood.ts`: src/features/book-match/hooks/useStoredMood.ts.
+- `src/hooks/useAchievementNotifications.ts`: Файл .ts в проекте.
+- `src/hooks/useAchievements.ts`: Файл .ts в проекте.
+- `src/hooks/useAiLibrarian.ts`: Файл .ts в проекте.
+- `src/hooks/useAmbientSound.ts`: Файл .ts в проекте.
+- `src/hooks/useAnalyticsTracker.ts`: Минимальный интервал между page_view для одного и того же пути (сек).
+- `src/hooks/useAuthContext.ts`: Файл .ts в проекте.
+- `src/hooks/useBodyScrollLock.ts`: Блокируем скролл на html и body (некоторые браузеры скроллят html).
+- `src/hooks/useBook.ts`: src/hooks/useBook.ts.
+- `src/hooks/useBookRating.ts`: Средние оценки книги (count — число пользовательских голосов).
+- `src/hooks/useBookSearch.ts`: Логгер для хука поиска книг.
+- `src/hooks/useBookshelf.ts`: Файл .ts в проекте.
+- `src/hooks/useBottomSafeOffset.test.ts`: src/hooks/useBottomSafeOffset.test.ts.
+- `src/hooks/useBottomSafeOffset.ts`: Только iOS нуждается в компенсации: там клавиатура сжимает visualViewport,.
+- `src/hooks/useCatalogSearch.ts`: Файл .ts в проекте.
+- `src/hooks/useDebounce.ts`: Хук для дебаунса (задержки) обновления значения..
+- `src/hooks/useFeedback.ts`: Файл .ts в проекте.
+- `src/hooks/useGenrePreferences.spec.ts`: src/hooks/useGenrePreferences.spec.ts.
+- `src/hooks/useGenrePreferences.ts`: src/hooks/useGenrePreferences.ts.
+- `src/hooks/useHeartbeat.ts`: Отправляет heartbeat каждые 60 секунд, пока пользователь авторизован.
+- `src/hooks/useRetryableImage.ts`: Добавляет retry-параметр к URL изображения. Без него браузер отдаёт.
+- `src/hooks/useShare.ts`: Хук для «Поделиться в соцсетях»..
+- `src/hooks/useTasteMatch.spec.ts`: / <reference types="vitest/globals" />.
+- `src/hooks/useTasteMatch.ts`: Файл .ts в проекте.
+- `src/hooks/useTemplateEditorState.ts`: Файл .ts в проекте.
+- `src/hooks/useTemplates.ts`: Логгер для модуля шаблонов.
+- `src/hooks/useTierList.referential.test.ts`: / <reference types="vitest/globals" />.
+- `src/hooks/useTierList.test.ts`: / <reference types="vitest/globals" />.
+- `src/hooks/useTierList.ts`: Логгер для хука useTierList.
+- `src/hooks/useUser.ts`: Файл .ts в проекте.
+- `src/index.css`: Файл .css в проекте.
+- `src/layouts/DashboardLayout/DashboardLayout.tsx`: Файл .tsx в проекте.
+- `src/lib/achievementApi.spec.ts`: Файл .ts в проекте.
+- `src/lib/achievementApi.ts`: Файл .ts в проекте.
+- `src/lib/adminAuthorsApi.ts`: src/lib/adminAuthorsApi.ts.
+- `src/lib/adminBooksApi.ts`: src/lib/adminBooksApi.ts.
+- `src/lib/affiliateLinks.spec.ts`: Файл .ts в проекте.
+- `src/lib/affiliateLinks.ts`: src/lib/affiliateLinks.ts.
+- `src/lib/aiLibrarianApi.ts`: Файл .ts в проекте.
+- `src/lib/analyticsApi.ts`: Файл .ts в проекте.
+- `src/lib/api-client.spec.ts`: Изолируем тест от окружения: VITE_API_URL на разных машинах разный.
+- `src/lib/api-client.ts`: Файл .ts в проекте.
+- `src/lib/authApi.ts`: Логгер для модуля аутентификации.
+- `src/lib/authorsApi.spec.ts`: Файл .ts в проекте.
+- `src/lib/authorsApi.ts`: src/lib/authorsApi.ts.
+- `src/lib/avatarApi.ts`: Файл .ts в проекте.
+- `src/lib/battlesApi.spec.ts`: Файл .ts в проекте.
+- `src/lib/battlesApi.ts`: Файл .ts в проекте.
+- `src/lib/bookApi.test.ts`: src/lib/bookApi.test.ts.
+- `src/lib/bookApi.ts`: src/lib/bookApi.ts.
+- `src/lib/bookSearchApi.ts`: Источник внешнего ID книги (Фаза 2.1): google_books | open_library | livelib | bookstrata.
+- `src/lib/celebritiesApi.ts`: Tier list data (curated).
+- `src/lib/collectionsApi.ts`: Получить все опубликованные коллекции (для публичного листинга).
+- `src/lib/config.ts`: Файл .ts в проекте.
+- `src/lib/discussionApi.spec.ts`: Файл .ts в проекте.
+- `src/lib/discussionApi.ts`: Файл .ts в проекте.
+- `src/lib/externalNewsApi.ts`: Файл .ts в проекте.
+- `src/lib/feedbackApi.ts`: Файл .ts в проекте.
+- `src/lib/gtm.ts`: Утилиты для Google Tag Manager..
+- `src/lib/lazy.ts`: Защита от stale-бандла после деплоя и битого кеша..
+- `src/lib/level.spec.ts`: Файл .ts в проекте.
+- `src/lib/level.ts`: Формула уровней: 100 XP на уровень (перенесено из DashboardAchievements).
+- `src/lib/likesApi.ts`: Файл .ts в проекте.
+- `src/lib/logger.spec.ts`: / <reference types="vitest/globals" />.
+- `src/lib/logger.ts`: Контекстный логгер для браузера.
+- `src/lib/matchApi.spec.ts`: vi.mock хойстится — фабрика не должна ссылаться на внешние переменные..
+- `src/lib/matchApi.ts`: src/lib/matchApi.ts.
+- `src/lib/moderationApi.ts`: Файл .ts в проекте.
+- `src/lib/newsApi.spec.ts`: src/lib/newsApi.spec.ts.
+- `src/lib/newsApi.ts`: Файл .ts в проекте.
+- `src/lib/notifyError.ts`: Утилита для показа пользовательских уведомлений об ошибках..
+- `src/lib/plural.ts`: Файл .ts в проекте.
+- `src/lib/ratingsApi.ts`: Файл .ts в проекте.
+- `src/lib/sentry.ts`: Sentry — инициализация клиентской части..
+- `src/lib/sessionExpired.ts`: Модуль управления показом экрана «Сессия истекла»..
+- `src/lib/shelfApi.ts`: Статус книги в «Моей полке».
+- `src/lib/socialLinks.spec.ts`: Файл .ts в проекте.
+- `src/lib/socialLinks.ts`: Валидация и хелперы соцссылок профиля..
+- `src/lib/storage.ts`: Файл .ts в проекте.
+- `src/lib/templateTransformer.ts`: Преобразует API-шаблон в тип Template.
+- `src/lib/tierListApi.spec.ts`: Файл .ts в проекте.
+- `src/lib/tierListApi.ts`: Цветовые темы.
+- `src/lib/userApi.spec.ts`: Файл .ts в проекте.
+- `src/lib/userApi.ts`: Файл .ts в проекте.
+- `src/lib/utils.ts`: Файл .ts в проекте.
+- `src/lib/ym-goals.ts`: Маппинг ID целей Яндекс.Метрики..
+- `src/lib/ym.spec.ts`: Счётчик Метрики должен инициализироваться ТОЛЬКО на продовых хостах..
+- `src/lib/ym.ts`: Инициализация Яндекс.Метрики..
+- `src/pages/AboutPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminAnalyticsPage/AdminAnalyticsPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminAuthorsPage/AdminAuthorsPage.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminAuthorsPage/AdminAuthorsPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminAuthorsPage/components/AuthorAiPrompt.spec.tsx`: Тесты блока «AI-промпт для автора» в админке..
+- `src/pages/AdminAuthorsPage/components/AuthorAiPrompt.tsx`: src/pages/AdminAuthorsPage/components/AuthorAiPrompt.tsx.
+- `src/pages/AdminAuthorsPage/components/AuthorContentEditor.spec.tsx`: Тесты встройки AI-промпта в редактор контента автора..
+- `src/pages/AdminAuthorsPage/components/AuthorContentEditor.tsx`: Лимиты секций — зеркалит authorContentInputSchema на бэке (Zod max)..
+- `src/pages/AdminAuthorsPage/components/authorAi.spec.ts`: Тесты генератора промпта и парсера ответа ИИ для админки авторов..
+- `src/pages/AdminAuthorsPage/components/authorAi.ts`: src/pages/AdminAuthorsPage/components/authorAiPrompt.ts.
+- `src/pages/AdminAuthorsPage/hooks/useAdminAuthors.ts`: Хуки админ-редактора контента страницы автора (TanStack Query).
+- `src/pages/AdminAuthorsPage/index.ts`: Файл .ts в проекте.
+- `src/pages/AdminBattlesPage/AdminBattlesPage.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminBattlesPage/AdminBattlesPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminBattlesPage/CreateBattleModal.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminBooksPage/AdminBooksPage.test.tsx`: src/pages/AdminBooksPage/AdminBooksPage.test.tsx.
+- `src/pages/AdminBooksPage/AdminBooksPage.tsx`: src/pages/AdminBooksPage/AdminBooksPage.tsx.
+- `src/pages/AdminBooksPage/components/BookEditModal.test.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminBooksPage/components/BookEditModal.tsx`: src/pages/AdminBooksPage/components/BookEditModal.tsx.
+- `src/pages/AdminBooksPage/components/CommentsModal.tsx`: src/pages/AdminBooksPage/components/CommentsModal.tsx.
+- `src/pages/AdminBooksPage/components/MergeModal.tsx`: src/pages/AdminBooksPage/components/MergeModal.tsx.
+- `src/pages/AdminBooksPage/components/ReadingGuidePrompt.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminBooksPage/components/ReadingGuidePrompt.tsx`: src/pages/AdminBooksPage/components/ReadingGuidePrompt.tsx.
+- `src/pages/AdminBooksPage/components/ReadingProfilePrompt.spec.ts`: src/pages/AdminBooksPage/components/ReadingProfilePrompt.spec.ts.
+- `src/pages/AdminBooksPage/components/ReadingProfilePrompt.tsx`: src/pages/AdminBooksPage/components/ReadingProfilePrompt.tsx.
+- `src/pages/AdminBooksPage/hooks/useAdminBooks.ts`: src/pages/AdminBooksPage/hooks/useAdminBooks.ts.
+- `src/pages/AdminCelebritiesPage/AdminCelebritiesPage.css`: Файл .css в проекте.
+- `src/pages/AdminCelebritiesPage/AdminCelebritiesPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCelebritiesPage/components/CelebrityFormModal.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCelebritiesPage/hooks/useAdminCelebrities.ts`: Файл .ts в проекте.
+- `src/pages/AdminCollectionsPage/AdminCollectionsPage.css`: Файл .css в проекте.
+- `src/pages/AdminCollectionsPage/AdminCollectionsPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/BookRow.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/CollectionFormModal.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/CollectionList.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/CuratedCollectionEditor.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/DroppableTierGroup.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/EditBookModal.test.tsx`: src/pages/AdminCollectionsPage/components/EditBookModal.test.tsx.
+- `src/pages/AdminCollectionsPage/components/EditBookModal.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/JsonImportModal.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/ParseUrlModal.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminCollectionsPage/components/WysiwygEditor.css`: Файл .css в проекте.
+- `src/pages/AdminCollectionsPage/components/WysiwygEditor.spec.tsx`: src/pages/AdminCollectionsPage/components/WysiwygEditor.spec.tsx.
+- `src/pages/AdminCollectionsPage/components/WysiwygEditor.tsx`: Загрузка изображения файлом; кнопка «Файл» видна только при переданном пропе.
+- `src/pages/AdminCollectionsPage/components/types.ts`: Файл .ts в проекте.
+- `src/pages/AdminCollectionsPage/hooks/useAdminCollections.ts`: Файл .ts в проекте.
+- `src/pages/AdminCollectionsPage/hooks/useCollectionEditor.ts`: Состояния.
+- `src/pages/AdminCollectionsPage/index.ts`: Файл .ts в проекте.
+- `src/pages/AdminDashboard/AdminDashboard.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminDonorsPage/AdminDonorsPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminFeedbackPage/AdminFeedbackPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminNewsPage/AdminNewsPage.css`: Файл .css в проекте.
+- `src/pages/AdminNewsPage/AdminNewsPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminNewsPage/index.ts`: Файл .ts в проекте.
+- `src/pages/AdminSubscriptionsPage/AdminSubscriptionsPage.tsx`: Убираем дублирующий интерфейс — используем AdminUser из types/auth.
+- `src/pages/AdminUsersPage/AdminUsersPage.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminUsersPage/AdminUsersPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AdminUsersPage/index.ts`: Файл .ts в проекте.
+- `src/pages/AuthPage.tsx`: Файл .tsx в проекте.
+- `src/pages/AuthorPage/AuthorPage.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/AuthorPage.spec.tsx`: src/pages/AuthorPage/AuthorPage.spec.tsx.
+- `src/pages/AuthorPage/AuthorPage.tsx`: src/pages/AuthorPage/AuthorPage.tsx.
+- `src/pages/AuthorPage/components/AuthorAdaptations.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorAdaptations.tsx`: src/pages/AuthorPage/components/AuthorAdaptations.tsx.
+- `src/pages/AuthorPage/components/AuthorBibliography.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorBibliography.tsx`: src/pages/AuthorPage/components/AuthorBibliography.tsx.
+- `src/pages/AuthorPage/components/AuthorCta.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorCta.tsx`: src/pages/AuthorPage/components/AuthorCta.tsx.
+- `src/pages/AuthorPage/components/AuthorHero.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorHero.tsx`: src/pages/AuthorPage/components/AuthorHero.tsx.
+- `src/pages/AuthorPage/components/AuthorManifesto.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorManifesto.tsx`: src/pages/AuthorPage/components/AuthorManifesto.tsx.
+- `src/pages/AuthorPage/components/AuthorOtherAuthors.tsx`: src/pages/AuthorPage/components/AuthorOtherAuthors.tsx.
+- `src/pages/AuthorPage/components/AuthorPress.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorPress.tsx`: src/pages/AuthorPage/components/AuthorPress.tsx.
+- `src/pages/AuthorPage/components/AuthorShowcase.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorShowcase.tsx`: src/pages/AuthorPage/components/AuthorShowcase.tsx.
+- `src/pages/AuthorPage/components/AuthorTierLists.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorTierLists.tsx`: src/pages/AuthorPage/components/AuthorTierLists.tsx.
+- `src/pages/AuthorPage/components/AuthorTopBottom.css`: Файл .css в проекте.
+- `src/pages/AuthorPage/components/AuthorTopBottom.tsx`: src/pages/AuthorPage/components/AuthorTopBottom.tsx.
+- `src/pages/AuthorPage/hooks/useAuthorPage.ts`: src/pages/AuthorPage/hooks/useAuthorPage.ts.
+- `src/pages/AuthorPage/hooks/usePopularAuthors.ts`: src/pages/AuthorPage/hooks/usePopularAuthors.ts.
+- `src/pages/AuthorPage/index.ts`: Файл .ts в проекте.
+- `src/pages/AuthorPage/seo.spec.ts`: Файл .ts в проекте.
+- `src/pages/AuthorPage/seo.ts`: src/pages/AuthorPage/seo.ts.
+- `src/pages/AuthorsPage/AuthorsPage.spec.tsx`: src/pages/AuthorsPage/AuthorsPage.spec.tsx.
+- `src/pages/AuthorsPage/AuthorsPage.tsx`: src/pages/AuthorsPage/AuthorsPage.tsx.
+- `src/pages/AuthorsPage/hooks/useAuthorsPage.ts`: src/pages/AuthorsPage/hooks/useAuthorsPage.ts.
+- `src/pages/AuthorsPage/index.ts`: Файл .ts в проекте.
+- `src/pages/BattleDetailPage/BattleDetailPage.css`: Файл .css в проекте.
+- `src/pages/BattleDetailPage/BattleDetailPage.tsx`: Файл .tsx в проекте.
+- `src/pages/BattleDetailPage/index.ts`: Файл .ts в проекте.
+- `src/pages/BlogPage/BlogArticlePage.tsx`: Импортируем все md-файлы как сырой текст.
+- `src/pages/BlogPage/BlogPage.tsx`: Файл .tsx в проекте.
+- `src/pages/BlogPage/normalizeArticleHtml.spec.ts`: src/pages/BlogPage/normalizeArticleHtml.spec.ts.
+- `src/pages/BlogPage/normalizeArticleHtml.ts`: src/pages/BlogPage/normalizeArticleHtml.ts.
+- `src/pages/BookPage/BookComments.tsx`: src/pages/BookPage/BookComments.tsx.
+- `src/pages/BookPage/BookContextChain.test.tsx`: src/pages/BookPage/BookContextChain.test.tsx.
+- `src/pages/BookPage/BookContextChain.tsx`: src/pages/BookPage/BookContextChain.tsx.
+- `src/pages/BookPage/BookCover3D.tsx`: src/pages/BookPage/BookCover3D.tsx.
+- `src/pages/BookPage/BookPage.css`: Файл .css в проекте.
+- `src/pages/BookPage/BookPage.test.tsx`: src/pages/BookPage/BookPage.test.tsx.
+- `src/pages/BookPage/BookPage.tsx`: src/pages/BookPage/BookPage.tsx.
+- `src/pages/BookPage/BookRatingPanel.test.tsx`: src/pages/BookPage/BookRatingPanel.test.tsx.
+- `src/pages/BookPage/BookRatingPanel.tsx`: src/pages/BookPage/BookRatingPanel.tsx.
+- `src/pages/BookPage/BookReadingGuide.test.tsx`: src/pages/BookPage/BookReadingGuide.test.tsx.
+- `src/pages/BookPage/BookReadingGuide.tsx`: src/pages/BookPage/BookReadingGuide.tsx.
+- `src/pages/BookPage/BookSignUpCta.tsx`: src/pages/BookPage/BookSignUpCta.tsx.
+- `src/pages/BookPage/ContentLock.tsx`: src/pages/BookPage/ContentLock.tsx.
+- `src/pages/BookPage/seo.ts`: src/pages/BookPage/seo.ts.
+- `src/pages/CelebritiesPage/CelebritiesPage.css`: Файл .css в проекте.
+- `src/pages/CelebritiesPage/CelebritiesPage.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/CelebritiesPage/CelebritiesPage.tsx`: Пастельная палитра фонов карточек.
+- `src/pages/CelebrityPage/CelebrityPage.css`: Файл .css в проекте.
+- `src/pages/CelebrityPage/CelebrityPage.tsx`: Файл .tsx в проекте.
+- `src/pages/CollectionPage/CollectionPage.css`: Файл .css в проекте.
+- `src/pages/CollectionPage/CollectionPage.tsx`: Файл .tsx в проекте.
+- `src/pages/CollectionPage/DefaultCollectionLayout.tsx`: Файл .tsx в проекте.
+- `src/pages/CollectionPage/InteractiveShelfBlock.tsx`: Файл .tsx в проекте.
+- `src/pages/CollectionPage/NotesBlock.tsx`: Файл .tsx в проекте.
+- `src/pages/CollectionPage/hooks/useCollection.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/CollectionPage/hooks/useCollection.ts`: Кэш живёт 5 минут — при back/forward коллекция отдаётся без скелетона.
+- `src/pages/CollectionPage/index.ts`: Файл .ts в проекте.
+- `src/pages/CollectionPage/related.spec.ts`: Файл .ts в проекте.
+- `src/pages/CollectionPage/related.ts`: Выбор «похожих подборок» для страницы коллекции (SEO-перелинковка + UX)..
+- `src/pages/CollectionPage/seo.spec.ts`: Файл .ts в проекте.
+- `src/pages/CollectionPage/seo.ts`: Обрезка текста до 155 символов по границе слова (лимит meta description)..
+- `src/pages/CommunityPage/CommunityPage.css`: Файл .css в проекте.
+- `src/pages/CommunityPage/CommunityPage.tsx`: Мемоизируем компоненты выше фолда.
+- `src/pages/CommunityPage/index.ts`: Файл .ts в проекте.
+- `src/pages/ContactPage.tsx`: Файл .tsx в проекте.
+- `src/pages/CreateTemplatePage.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/DashboardPage.css`: Файл .css в проекте.
+- `src/pages/DashboardPage/DashboardPage.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/DashboardPage/DashboardPage.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/BookCard.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/CreateTierListModal.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/CreateTierListModal.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/DashboardHeader.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/DeleteTierListModal.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/EmptyStates.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/RenameTierListModal.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/RenameTierListModal.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/TierListCard.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/TierListCard.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/components/TierListGrid.tsx`: Файл .tsx в проекте.
+- `src/pages/DashboardPage/hooks/useDashboardState.spec.ts`: / <reference types="vitest/globals" />.
+- `src/pages/DashboardPage/hooks/useDashboardState.ts`: Файл .ts в проекте.
+- `src/pages/DashboardPage/hooks/useTierListActions.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/DashboardPage/hooks/useTierListActions.ts`: Логгер для хука действий тир-листов.
+- `src/pages/DashboardPage/hooks/useTierListSorting.spec.ts`: Файл .ts в проекте.
+- `src/pages/DashboardPage/hooks/useTierListSorting.ts`: Хук для сортировки тир-листов.
+- `src/pages/DashboardPage/hooks/useTierListsPagination.spec.ts`: / <reference types="vitest/globals" />.
+- `src/pages/DashboardPage/hooks/useTierListsPagination.ts`: Файл .ts в проекте.
+- `src/pages/DashboardPage/types.ts`: Файл .ts в проекте.
+- `src/pages/EditTemplatePage.tsx`: Файл .tsx в проекте.
+- `src/pages/FaqPage/FaqPage.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/FaqPage/FaqPage.tsx`: Единый источник правды: текст на странице и JSON-LD генерируются из него,.
+- `src/pages/ForgotPasswordPage.tsx`: Файл .tsx в проекте.
+- `src/pages/ForumPage/ForumPage.css`: Файл .css в проекте.
+- `src/pages/ForumPage/ForumPage.tsx`: Файл .tsx в проекте.
+- `src/pages/ForumPage/components/BattleCard.tsx`: Файл .tsx в проекте.
+- `src/pages/ForumPage/components/BattleList.tsx`: Файл .tsx в проекте.
+- `src/pages/ForumPage/components/UserSearchSection.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/ForumPage/components/UserSearchSection.tsx`: Файл .tsx в проекте.
+- `src/pages/ForumPage/index.ts`: Файл .ts в проекте.
+- `src/pages/HistoryPage.tsx`: Файл .tsx в проекте.
+- `src/pages/LandingPage/LandingBody.tsx`: Файл .tsx в проекте.
+- `src/pages/LandingPage/LandingPage.css`: Файл .css в проекте.
+- `src/pages/LandingPage/LandingPage.tsx`: Файл .tsx в проекте.
+- `src/pages/LandingPage/landingData.tsx`: Файл .tsx в проекте.
+- `src/pages/NewsPage/NewsPage.css`: Файл .css в проекте.
+- `src/pages/NewsPage/NewsPage.spec.tsx`: src/pages/NewsPage/NewsPage.spec.tsx.
+- `src/pages/NewsPage/NewsPage.tsx`: Файл .tsx в проекте.
+- `src/pages/NewsPage/index.ts`: Файл .ts в проекте.
+- `src/pages/NotFoundPage/NotFoundPage.tsx`: Файл .tsx в проекте.
+- `src/pages/OAuthCallbackPage.tsx`: Файл .tsx в проекте.
+- `src/pages/PricingPage/PricingPage.css`: Файл .css в проекте.
+- `src/pages/PricingPage/PricingPage.tsx`: Файл .tsx в проекте.
+- `src/pages/PrivacyPage.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/components/AchievementsGrid.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/components/AchievementsGrid.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/components/PasswordChangeForm.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/components/ProfileActions.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/components/ProfileBioEditor.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/components/ProfileBioEditor.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/components/ProfileGenresSection.spec.tsx`: src/pages/ProfilePage/components/ProfileGenresSection.spec.tsx.
+- `src/pages/ProfilePage/components/ProfileGenresSection.tsx`: src/pages/ProfilePage/components/ProfileGenresSection.tsx.
+- `src/pages/ProfilePage/components/ProfileHeader.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/components/StatsCards.tsx`: Файл .tsx в проекте.
+- `src/pages/ProfilePage/hooks/useProfileActions.ts`: Логгер для хука действий профиля.
+- `src/pages/ProfilePage/index.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/RankingsPage.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/RankingsPage.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/components/CreateRatingCta.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/components/GenreNavigation.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/components/NeonFlipCollectionCard.spec.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/components/NeonFlipCollectionCard.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/components/RankingsHero.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/components/RankingsSearchBar.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/RankingsPage/components/RankingsSearchBar.tsx`: Файл .tsx в проекте.
+- `src/pages/RankingsPage/components/TrendingBooksCarousel.tsx`: Файл .tsx в проекте.
+- `src/pages/ResetPasswordPage.tsx`: Файл .tsx в проекте.
+- `src/pages/ShelfPage/ShelfPage.css`: Файл .css в проекте.
+- `src/pages/ShelfPage/ShelfPage.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/ShelfPage/ShelfPage.tsx`: Файл .tsx в проекте.
+- `src/pages/ShelfPage/components/CreateTierListModal.tsx`: Файл .tsx в проекте.
+- `src/pages/TermsPage.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/ExportThemes.css`: Файл .css в проекте.
+- `src/pages/TierListEditorPage/TierEditorPage.css`: Файл .css в проекте.
+- `src/pages/TierListEditorPage/TierEditorPage.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/_initialData.spec.ts`: Файл .ts в проекте.
+- `src/pages/TierListEditorPage/_initialData.ts`: Версия демо-данных. При изменении набора книг — увеличивать,.
+- `src/pages/TierListEditorPage/bookClick.spec.ts`: src/pages/TierListEditorPage/bookClick.spec.ts.
+- `src/pages/TierListEditorPage/bookClick.ts`: src/pages/TierListEditorPage/bookClick.ts.
+- `src/pages/TierListEditorPage/components/AuthOnSaveModal.tsx`: Вызывается после успешной регистрации.
+- `src/pages/TierListEditorPage/components/DemoOnboarding.tsx`: Названия тиров текущего тир-листа (по порядку) — для динамического текста шага 2.
+- `src/pages/TierListEditorPage/components/EditorHeader.test.tsx`: src/pages/TierListEditorPage/components/EditorHeader.test.tsx.
+- `src/pages/TierListEditorPage/components/EditorHeader.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/EditorLayout.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/EditorMainContent.test.tsx`: Мокаем все дочерние компоненты.
+- `src/pages/TierListEditorPage/components/EditorMainContent.tsx`: Демо-режим: гость без авторизации создаёт тир-лист — показываем панель настроек сразу.
+- `src/pages/TierListEditorPage/components/EditorModals.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/EditorScreens.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/ExportModal.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/MobileToolbar.test.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/MobileToolbar.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/SaveButton.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/StreamModeExitButton.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/ThemePicker.tsx`: Файл .tsx в проекте.
+- `src/pages/TierListEditorPage/components/TierListCoverEditor.tsx`: NSFW-проверка обложки выполняется на сервере при загрузке..
+- `src/pages/TierListEditorPage/hooks/useDemoOnboarding.spec.ts`: Файл .ts в проекте.
+- `src/pages/TierListEditorPage/hooks/useDemoOnboarding.ts`: Ключ флага «онбординг демо-режима уже показан» в localStorage.
+- `src/pages/TierListEditorPage/hooks/useDemoStorage.ts`: Загрузить демо-черновик из localStorage (null если версия устарела).
+- `src/pages/TierListEditorPage/hooks/useTierEditorActions.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/TierListEditorPage/hooks/useTierEditorActions.ts`: Логгер для хука действий редактора.
+- `src/pages/TierListEditorPage/hooks/useTierEditorBlocker.ts`: Файл .ts в проекте.
+- `src/pages/TierListEditorPage/hooks/useTierEditorDrag.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/TierListEditorPage/hooks/useTierEditorDrag.ts`: Логгер для хука drag-and-drop.
+- `src/pages/TierListEditorPage/hooks/useTierEditorQueries.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/TierListEditorPage/hooks/useTierEditorQueries.ts`: Файл .ts в проекте.
+- `src/pages/TierListEditorPage/hooks/useTierEditorSave.ts`: Файл .ts в проекте.
+- `src/pages/TierListEditorPage/hooks/useTierEditorState.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/TierListEditorPage/hooks/useTierEditorState.ts`: Состояния для отслеживания несохраненных изменений.
+- `src/pages/TierListEditorPage/seo.spec.ts`: Файл .ts в проекте.
+- `src/pages/TierListEditorPage/seo.ts`: SEO-метаданные публичного тир-листа..
+- `src/pages/TopicPage/TopicPage.tsx`: Файл .tsx в проекте.
+- `src/pages/TopicPage/index.ts`: Файл .ts в проекте.
+- `src/pages/UserProfilePage/UserProfilePage.css`: Файл .css в проекте.
+- `src/pages/UserProfilePage/UserProfilePage.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/pages/UserProfilePage/UserProfilePage.tsx`: Файл .tsx в проекте.
+- `src/pages/WhatToReadPage/WhatToReadPage.tsx`: Файл .tsx в проекте.
+- `src/scripts/avatars-to-webp.mjs`: Файл .mjs в проекте.
+- `src/styles/globals.css`: Файл .css в проекте.
+- `src/styles/sileo-custom.css`: Файл .css в проекте.
+- `src/test/setup.ts`: Mock window.matchMedia.
+- `src/themes/ThemeDecor.tsx`: ThemeDecor — router for decorative overlays.
+- `src/themes/ThemeProvider.tsx`: Файл .tsx в проекте.
+- `src/themes/ThemeSection.tsx`: Файл .tsx в проекте.
+- `src/themes/decor/FallingLeaves.tsx`: Файл .tsx в проекте.
+- `src/themes/registry.ts`: Register all themes.
+- `src/themes/sections/ThemeCategoryBlocks.tsx`: Файл .tsx в проекте.
+- `src/themes/sections/ThemeContentGrid.tsx`: Файл .tsx в проекте.
+- `src/themes/sections/ThemeDescription.tsx`: Файл .tsx в проекте.
+- `src/themes/sections/ThemeFilterChips.tsx`: Файл .tsx в проекте.
+- `src/themes/sections/ThemeHeroSplit.tsx`: Файл .tsx в проекте.
+- `src/themes/sections/ThemeProse.tsx`: Файл .tsx в проекте.
+- `src/themes/sections/ThemeSidebar.tsx`: Файл .tsx в проекте.
+- `src/themes/themes/autumn.css`: Файл .css в проекте.
+- `src/themes/themes/autumn.ts`: Файл .ts в проекте.
+- `src/themes/types.ts`: Файл .ts в проекте.
+- `src/themes/useTheme.ts`: Файл .ts в проекте.
+- `src/types/api.ts`: Описывает одну книгу, как она приходит из Prisma.
+- `src/types/auth.ts`: Типы для auth API ответов.
+- `src/types/battles.ts`: Файл .ts в проекте.
+- `src/types/collection.ts`: Для curated (тир-лист):.
+- `src/types/discussions.ts`: Файл .ts в проекте.
+- `src/types/index.ts`: Файл .ts в проекте.
+- `src/types/logger.ts`: Уровни логирования.
+- `src/types/templateEditor.ts`: Файл .ts в проекте.
+- `src/types/templates.ts`: Типы данных для системы шаблонов.
+- `src/ui/BookCover.spec.tsx`: BookCover рендерит <Link> (react-router) — тесты оборачиваем в MemoryRouter.
+- `src/ui/BookCover.tsx`: Файл .tsx в проекте.
+- `src/ui/Button.spec.tsx`: / <reference types="vitest/globals" />.
+- `src/ui/Button.tsx`: Файл .tsx в проекте.
+- `src/ui/Card.tsx`: Файл .tsx в проекте.
+- `src/ui/CoffeeCup.tsx`: src/ui/CoffeeCup.tsx.
+- `src/ui/ColorPickerPopover.tsx`: Базовые цвета для быстрого выбора.
+- `src/ui/ConfirmModal.tsx`: Файл .tsx в проекте.
+- `src/ui/Footer.spec.tsx`: Файл .tsx в проекте.
+- `src/ui/Footer.tsx`: Файл .tsx в проекте.
+- `src/ui/Header.spec.tsx`: src/ui/Header.spec.tsx.
+- `src/ui/Header.tsx`: Файл .tsx в проекте.
+- `src/ui/Input.tsx`: Файл .tsx в проекте.
+- `src/ui/Logo.tsx`: Светлый вариант (для прозрачного хедера на светлых темах).
+- `src/ui/MobileBottomNav.spec.tsx`: src/ui/MobileBottomNav.spec.tsx.
+- `src/ui/MobileBottomNav.tsx`: Файл .tsx в проекте.
+- `src/ui/Modal.tsx`: Файл .tsx в проекте.
+- `src/ui/Pagination.tsx`: Файл .tsx в проекте.
+- `src/ui/RetryableImage.spec.tsx`: Файл .tsx в проекте.
+- `src/ui/RetryableImage.tsx`: Событие ошибки после исчерпания ретраев: у нового `Event` нет currentTarget,.
+- `src/ui/RevealBox.tsx`: Файл .tsx в проекте.
+- `src/ui/ShineBorder.tsx`: Width of the border in pixels.
+- `src/ui/Skeleton.tsx`: Файл .tsx в проекте.
+- `src/ui/SocialIcons.tsx`: Файл .tsx в проекте.
+- `src/ui/Switch.tsx`: Файл .tsx в проекте.
+- `src/ui/Textarea.tsx`: Файл .tsx в проекте.
+- `src/ui/TierLabel.tsx`: Файл .tsx в проекте.
+- `src/utils/bookNavigation.spec.ts`: Файл .ts в проекте.
+- `src/utils/bookNavigation.ts`: Сколько времени удерживаем «догоняющий» restore, пока контент догружается.
+- `src/utils/cn.ts`: Файл .ts в проекте.
+- `src/utils/colorUtils.ts`: Calculates the luminance of a color.
+- `src/utils/cropAvatar.ts`: Обрезка изображения аватарки с учётом позиции (pan)..
+- `src/utils/dragDrop.spec.ts`: Файл .ts в проекте.
+- `src/utils/dragDrop.ts`: Чистые функции для логики Drag & Drop тир-листов..
+- `src/utils/id.test.ts`: Файл .ts в проекте.
+- `src/utils/id.ts`: Файл .ts в проекте.
+- `src/utils/imageProxy.spec.ts`: src/utils/imageProxy.spec.ts.
+- `src/utils/imageProxy.ts`: Прокси для изображений..
+- `src/utils/mdToHtml.ts`: Минимальный markdown → HTML конвертер..
+- `src/utils/saveDiff.ts`: Файл .ts в проекте.
+- `src/utils/stableStringify.spec.ts`: Файл .ts в проекте.
+- `src/utils/stableStringify.ts`: Стабильная сериализация в JSON..
+- `src/utils/timeFormat.ts`: Форматирует ISO-дату как относительное время ("только что", "5 мин. назад", и т.д.).
+- `src/vite-env.d.ts`: / <reference types="vite/client" />.

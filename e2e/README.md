@@ -59,7 +59,7 @@ e2e/
 │   ├── auth.ts                # loginViaApi, loginViaUI, logoutViaUI, waitForSessionExpired
 │   └── api.ts                 # apiRequest, createTierList, getTierList, deleteTierList
 ├── specs/
-│   ├── auth.spec.ts           # 6 сценариев — регистрация, вход, выход, неверные креды
+│   ├── auth.spec.ts           # 8 сценариев — регистрация, вход, выход, неверные креды, cookies
 │   ├── tier-lists.spec.ts     # 7 сценариев — CRUD тир-листов, лайки, лимиты
 │   ├── profile.spec.ts        # 4 сценария — просмотр, username, пароль, аватарка (skip)
 │   ├── admin.spec.ts          # 3 сценария — доступ, запрет для user, управление
@@ -69,18 +69,25 @@ e2e/
 │   ├── templates.spec.ts      # 2 сценария — просмотр, использование шаблона
 │   ├── search.spec.ts         # 1 сценарий  — главная страница
 │   ├── responsive.spec.ts     # 8 сценариев — 4 вьюпорта × 2 страницы (horizontal scroll)
-│   └── auth/                  # Расширенные auth-тесты (RBAC, токены, сессии)
-│       ├── anonymous-access.spec.ts       # 6 — доступ анонимных пользователей
-│       ├── authorized-permissions.spec.ts # 8 — права авторизованных
-│       ├── token-lifecycle.spec.ts        # 5 — жизненный цикл токена
-│       ├── session-expiry.spec.ts         # 5 — истечение сессии
-│       ├── multi-tab.spec.ts              # 4 — мульти-таб и гонки
-│       ├── rbac.spec.ts                   # 7 — role-based access control
-│       └── error-handling.spec.ts         # 8 — ошибки и edge cases
+│   └── auth/                  # Расширенные auth-тесты (RBAC, токены, сессии) — 14 файлов
+│       ├── anonymous-access.spec.ts       # доступ анонимных пользователей
+│       ├── authorized-permissions.spec.ts # права авторизованных
+│       ├── registration.spec.ts           # регистрация
+│       ├── login-validation.spec.ts       # валидация входа
+│       ├── logout-mechanics.spec.ts       # выход
+│       ├── token-lifecycle.spec.ts        # жизненный цикл токена
+│       ├── token-validation.spec.ts       # валидация токена
+│       ├── refresh-mechanics.spec.ts      # refresh-токены
+│       ├── session-expiry.spec.ts         # истечение сессии
+│       ├── multi-tab.spec.ts              # мульти-таб и гонки
+│       ├── rbac.spec.ts                   # role-based access control
+│       ├── password-reset.spec.ts         # восстановление пароля
+│       ├── rate-limiting.spec.ts          # rate limiting
+│       └── error-handling.spec.ts         # ошибки и edge cases
 └── reports/                   # HTML-отчёты (создаются после прогона)
 ```
 
-**Итого: 73 теста, 16 файлов.**
+**Итого: 121 тест, 24 файла.**
 
 ## Хелперы
 

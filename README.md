@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-1620%2B_passed-brightgreen)](./README.md)
+[![Tests](https://img.shields.io/badge/Tests-2170%2B_passed-brightgreen)](./README.md)
 
 ---
 
@@ -59,12 +59,27 @@
 - **Полка** — Личная полка книг для авторизованных пользователей (`/shelf`).
 - **Достижения** — Ачивки пользователей с сеткой на профиле (модуль `achievements`).
 - **Вход через соцсети** — OAuth-авторизация через VK и Google (`/oauth/callback`).
+- **Вход по email** — фоллбэк на email, если username не совпал (`Логин или email` в форме входа).
+- **Приватные тир-листы** — пометка «Приватный» на карточках и странице просмотра.
+- **Демо-режим для гостей** — создание тир-листа из полки без регистрации, merge гостевой полки в аккаунт после входа.
+- **Страницы авторов** — SEO-лендинги `/authors/:slug` (топ/худшие книги, тир-листы, каталог с сортировкой) и общий каталог `/authors`; ссылки со страниц книги, крошки и жанр-чип на тематических страницах.
+- **Страница автора: аффилиат-ссылки** — партнёрские ссылки (Читай-город, ЛитРес) и disclaimer на странице автора.
+- **Бейджи пользователя** — отображение бейджей в своём профиле (`/profile`).
+- **Scroll restore** — восстановление позиции прокрутки при возвратах back из книги, поиска, рекомендаций и трендов.
+- **GhostChat** — виджет обратной связи вместо старой кнопки Feedback.
 
 ### 🤖 AI-библиотекарь
 - **AI-рекомендации** — Персональные подборки книг на основе ваших тир-листов.
-- **Failover** — Автоматическое переключение между провайдерами (OpenRouter → кастомный OpenAI-совместимый → streaming) при недоступности.
+- **Failover** — Автоматическое переключение между провайдерами (OpenRouter → кастомный OpenAI-совместимый с запасным ключом → abliteration.ai → streaming) при недоступности.
+- **Проверка статуса провайдеров** — пробной генерацией с кэшем на 60 секунд, дефолтная модель — бесплатная `qwen3.6-35b-a3b-noreason`.
+- **Защита от повторов** — запрет повторных обращений в библиотекаре на один запрос.
 - **Кэширование** — In-memory кэш для быстрых повторных запросов.
 - **Профиль вкусов** — Анализ лайков и популярных тир-листов для точных рекомендаций.
+
+### 🎯 Book Match и жанры
+- **Жанровая ось** — словарь жанров и функция `genreSimilarity` в оценке совместимости (7-я ось matchScore).
+- **Жанровые предпочтения** — выбор жанров в профиле (`GET/PUT /api/users/me/genre-preferences`), учёт в `GET /api/books/match?genres=`.
+- **Reading DNA** — поле `genreConfidence` в разборе совместимости, batch-backfill через ИИ.
 
 ---
 
@@ -141,7 +156,8 @@ cd backend && npm run build  # Сборка бэкенда
 Проект следует принципам **чистой архитектуры** и модульности:
 
 - **Frontend:** Разделение на `pages/`, `components/`, `hooks/`, `contexts/`. Логика редактора вынесена в специализированные хуки (`useTierEditorState`, `useTierEditorSave`, `useTierEditorDraft` и др.).
-- **Backend:** Модульный подход (`modules/`). 33 модуля: `auth`, `users`, `books`, `bookPages`, `tier-lists`, `battles`, `discussions`, `forum`, `news`, `feedback`, `templates`, `avatars`, `achievements`, `ai-librarian`, `livelib`, `moderation`, `ratings`, `subscriptions`, `donors`, `roles`, `admin`, `admin-books`, `admin-stats`, `external-news`, `sitemap`, `proxy`, `image-proxy`, `authors`, `celebrities`, `collections`, `analytics`, `rss`, `shelf`.
+- **Backend:** Модульный подход (`modules/`). 34 модуля: `auth`, `users`, `books`, `bookPages`, `tier-lists`, `battles`, `discussions`, `forum`, `news`, `feedback`, `templates`, `avatars`, `achievements`, `ai-librarian`, `livelib`, `moderation`, `ratings`, `subscriptions`, `donors`, `roles`, `admin`, `admin-authors`, `admin-books`, `admin-stats`, `external-news`, `sitemap`, `proxy`, `image-proxy`, `authors`, `celebrities`, `collections`, `analytics`, `rss`, `shelf`.
+- **SEO:** prerender публичных маршрутов (включая коллекции и авторов), sitemap, RSS, экспортируемые маршруты коллекций/авторов из БД.
 - **API:** RESTful API с автоматической Swagger-документацией на `/documentation`.
 - **Discussions:** Общий чат, топики форума, комментарии к битвам. CRUD сообщений, закрепление/удаление топиков (admin/mod).
 
@@ -149,7 +165,7 @@ cd backend && npm run build  # Сборка бэкенда
 
 ## 🧪 Тестирование
 
-Проект покрыт **1620+ тестами** (747 фронтенд + 874 бэкенд unit + e2e) — Vitest + React Testing Library + Playwright (e2e).
+Проект покрыт **2170+ тестами** (1055 фронтенд + 1115 бэкенд unit) + 121 e2e — Vitest + React Testing Library + Playwright (e2e).
 
 ```bash
 # Запуск всех тестов
@@ -161,7 +177,7 @@ cd backend && npm test  # Бэкенд unit
 cd backend && npm run test:integration  # Интеграционные (нужна БД)
 npm run test:e2e      # Playwright e2e
 ```
-*Статус: **1620+/1620+** тестов проходят успешно ✅*
+*Статус: **2170+/2170+** unit-тестов проходят успешно ✅*
 
 ---
 
@@ -191,6 +207,6 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 2 сентября 2026 г.
-**Статус:** Страницы книг, рейтинги, «Что почитать», полка, OAuth (VK/Google), коллекции, знаменитости, блог, FAQ-страница, AI-библиотекарь, LiveLib импорт, NSFW Detection, аффилиат-ссылки (Читай-город, ЛитРес) (1620+ тестов)
+**Последнее обновление:** 7 октября 2026 г.
+**Статус:** Страницы книг и авторов, рейтинги, «Что почитать», полка, OAuth (VK/Google), коллекции, знаменитости, блог, FAQ-страница, AI-библиотекарь, Book Match с жанровой осью, LiveLib импорт, NSFW Detection, приватные тир-листы, GhostChat, аффилиат-ссылки (Читай-город, ЛитРес) (2170+ тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)

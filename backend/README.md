@@ -4,7 +4,7 @@
 
 ## Что уже сделано
 
-- В `backend/docker-compose.yml` добавлены сервисы `postgres` и `redis`.
+- В `backend/docker-compose.yml` добавлены сервисы `postgres`, `redis` (плюс `app` и `nginx` — prod-профиль, см. корневой `AGENTS.md`).
 - В `backend/.env` уже указано:
 
 ```env
@@ -19,7 +19,7 @@ REDIS_URL=redis://localhost:6379
 Открой терминал и перейди в папку backend:
 
 ```bash
-cd /Users/fedor/Bookstrata/BookStrata/backend
+cd backend
 ```
 
 Запусти сервисы через Docker Compose:
@@ -72,7 +72,3 @@ docker run -d --name bookstrata-redis -p 6379:6379 redis:7
 ## Если Redis недоступен
 
 Код кеша написан так, чтобы при ошибках Redis приложение продолжало работать. Это означает, что если Redis не стартует, функционал не сломается — просто кеширование будет пропущено.
-
----
-
-Если хочешь, могу дополнительно добавить раздел в корневой `README.md` или настроить `docker compose` для всего проекта.

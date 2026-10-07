@@ -13,7 +13,7 @@
 ### Основной стек
 - **Frontend**: React 19, TypeScript 5.9, Vite 7, TailwindCSS 4, TanStack Query 5.
 - **Backend**: Fastify 5.7, Prisma ORM, Zod, JWT.
-- **Инфраструктура**: S3-совместимое хранилище (Timeweb Cloud S3 + CDN) или локальная ФС через `STORAGE_PROVIDER`, Google Books API (поиск книг), OpenRouter / кастомный AI-провайдер (AI-библиотекарь), Redis (кэш, rate limiting).
+- **Инфраструктура**: S3-совместимое хранилище (Timeweb Cloud S3 + CDN) или локальная ФС через `STORAGE_PROVIDER`, Google Books API (поиск книг), AI-провайдеры библиотекаря (OpenRouter / кастомный OpenAI-совместимый / abliteration.ai со стримингом и failover), Redis (кэш, rate limiting).
 
 ## 3. Модульная структура и логика
 

@@ -9,8 +9,7 @@
 3.  **[Бэкенд](BACKEND.md)** — Логика сервера, API, работа с БД и плагины.
 4.  **[Справочник API](API_REFERENCE.md)** — Список эндпоинтов и форматы обмена данными.
 5.  **[Манифест Файлов](FILE_MANIFEST.md)** — **Полный список абсолютно всех файлов** проекта с их кратким описанием.
-6.  **[Help Center & FAQ](HELP_CENTER.md)** — Ответы на популярные вопросы пользователей и советы по использованию.
-7.  **[Масштабирование и Идеи](FUTURE_SCOPE.md)** — Дорожная карта развития, советы по масштабированию и идеи для новых фич.
+6.  **[Масштабирование и Идеи](FUTURE_SCOPE.md)** — Дорожная карта развития, советы по масштабированию и идеи для новых фич.
 
 ---
 
@@ -20,10 +19,23 @@
 - **[CDN Setup](CDN_SETUP.md)** — Настройка Timeweb S3 + CDN.
 - **[Гайд по безопасности](SECURITY_GUIDE.md)** — Аудит безопасности и рекомендации.
 - **[Оптимизация производительности](PERFORMANCE_OPTIMIZATION.md)** — Замеры и оптимизации.
-- **[Сравнение VPS](VPS_COMPARISON.md)** — Выбор хостинга для продакшена.
-- **[Аудит файлов](AUDIT_FILES_GUIDE.md)** — Результаты аудита кодовой базы.
-- **[Swagger API](backend/SWAGGER_DOCS.md)** — Документация по API (Swagger/OpenAPI).
-- **[CHANGELOG](CHANGELOG.md)** — История изменений.
+- **[Аудит производительности](performance-audit.md)** — Результаты аудита.
+- **[SEO: рабочий процесс коллекций](seo-collections-workflow.md)** — Как создаются и продвигаются лендинги-коллекции.
+- **[SEO: план лендингов](seo-landing-pages-plan.md)** — План программных лендингов.
+- **[Аудит файлов](../AUDIT_FILES_GUIDE.md)** — Результаты аудита кодовой базы.
+- **[Swagger API](../backend/SWAGGER_DOCS.md)** — Документация по API (Swagger/OpenAPI).
+- **[CHANGELOG](../CHANGELOG.md)** — История изменений.
+
+## 📐 Спецификации дизайна (superpowers)
+Решения по дизайну фич хранятся в [`superpowers/specs/`](superpowers/specs/) в виде отдельных документов с датами:
+- `2026-08-31-theme-system-design.md` — Тематическая система
+- `2026-09-21-admin-create-book-design.md` — Создание книг из админки
+- `2026-09-24-genre-axis-design.md` — Жанровая ось Book Match
+- `2026-09-28-author-landing-pages-design.md` — SEO-страницы авторов
+- `2026-09-29-author-page-redesign-design.md` — Редизайн страницы автора
+- `2026-10-06-ghostchat-widget-design.md` — Виджет GhostChat
+
+Плюс [`2026-09-09-book-match-embeddings-design.md`](2026-09-09-book-match-embeddings-design.md) — Book Match на эмбеддингах. Планы работ — в [`superpowers/plans/`](superpowers/plans/).
 
 ## 🚀 Как пользоваться этой документацией
 Если вы новый разработчик: начните с **ARCHITECTURE.md** и **FILE_MANIFEST.md**.

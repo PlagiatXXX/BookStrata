@@ -94,18 +94,22 @@ fastify.get('/', handler);
 ## 📚 Доступные эндпоинты
 
 ### Authentication
-- `POST /api/auth/register` — Регистрация
-- `POST /api/auth/login` — Вход
-- `GET /api/auth/me` — Текущий пользователь
-- `POST /api/auth/logout` — Выход
+- `POST /api/auth/register` — Регистрация (авто-логин, токены в ответе)
+- `POST /api/auth/login` — Вход (по username или email)
+- `POST /api/auth/validate` — Валидация access-токена
+- `POST /api/auth/logout` — Выход (отзыв токена)
+- `POST /api/auth/forgot-password` — Запрос сброса пароля
+- `POST /api/auth/reset-password` — Сброс пароля по токену
+- `GET /api/auth/oauth/vk`, `GET /api/auth/oauth/google` — OAuth-вход (VK/Google)
 
 ### Tier Lists
-- `GET /api/tier-lists` — Мои тир-листы
+- `GET /api/tier-lists` — Мои тир-листы (включая приватные)
 - `POST /api/tier-lists` — Создать тир-лист
 - `GET /api/tier-lists/:id` — Получить по ID
 - `PUT /api/tier-lists/:id` — Обновить
 - `DELETE /api/tier-lists/:id` — Удалить
 - `GET /api/tier-lists/public` — Публичные тир-листы
+- `GET /api/tier-lists/liked` — Лайкнутые тир-листы пользователя
 - `POST /api/tier-lists/:id/books` — Добавить книги
 - `POST /api/tier-lists/:id/books/search` — Добавить книгу по данным из внешнего источника
 - `DELETE /api/tier-lists/:id/books/:bookId` — Удалить книгу
@@ -127,12 +131,56 @@ fastify.get('/', handler);
 ### Users
 - `GET /api/users/me` — Профиль текущего пользователя
 - `GET /api/users/me/stats` — Статистика пользователя
+- `PUT /api/users/me` — Обновить профиль
+- `PUT /api/users/me/password` — Сменить пароль
+- `GET /api/users/me/genre-preferences` — Жанровые предпочтения (7-я ось Book Match)
+- `PUT /api/users/me/genre-preferences` — Сохранить выбранные жанры
+- `GET /api/users/:id` — Публичный профиль
+- `GET /api/users/:id/tier-lists` — Публичные тир-листы пользователя
+- `GET /api/users/:id/badges` — Бейджи пользователя (публичные)
+- `GET /api/users/search?q=` — Поиск пользователей по нику
 - `PUT /api/users/me/avatar` — Обновить аватар
 - `DELETE /api/users/me/avatar` — Удалить аватар
 - `POST /api/users/me/avatar/upload` — Загрузить аватар
 
 ### Books
 - `GET /api/books/search` — Поиск книг (Google Books API)
+- `GET /api/books/catalog-search` — Публичный поиск по каталогу BookStrata
+- `GET /api/books/site-search` — Поиск по каталогу в формате OpenLibraryBook
+- `GET /api/books/trending` — Трендовые книги недели
+- `GET /api/books/match?genres=` — Подбор книг (Book Match, с жанровой осью)
+- `POST /api/books/livelib-import` — Импорт книг из LiveLib
+
+### Authors
+- `GET /api/authors` — Список авторов каталога (`sort=name|popular`)
+- `GET /api/authors/search?q=` — Поиск авторов
+- `GET /api/authors/:slug` — Данные страницы автора (SEO-лендинг)
+
+### Shelf
+- `GET /api/shelf` — Вся полка текущего пользователя
+- `GET /api/shelf/books` — Полка с данными книг
+- `PUT /api/shelf/books/:bookId` — Установить/переключить статус
+- `DELETE /api/shelf/books/:bookKey` — Снять отметку
+- `POST /api/shelf/import` — Merge гостевой полки в аккаунт
+
+### Admin Books (только admin)
+- `GET /api/admin/books` — Листинг с фильтрами
+- `POST /api/admin/books` — Создание новой книги (draft)
+- `GET /api/admin/books/:id` — Полная книга
+- `PATCH /api/admin/books/:id` — Правка полей + slug
+- `POST /api/admin/books/:id/enrich` — Обогащение из Google Books
+- `POST /api/admin/books/:id/merge` — Ручной merge дублей
+- `POST /api/admin/books/:id/publish` — Публикация
+- `POST /api/admin/books/:id/unpublish` — Возврат в draft
+
+### Admin Authors (только admin)
+- `GET /api/admin/authors?q=` — Список авторов с флагами контента
+- `GET /api/admin/authors/:id/content` — Контент страницы автора для редактора
+- `PUT /api/admin/authors/:id/content` — Сохранение контента одной транзакцией
+
+### AI-библиотекарь
+- `POST /api/ai/librarian/chat` — Чат-рекомендации (авторизация; провайдеры: OpenRouter → кастомный → abliteration.ai → streaming)
+- `GET /api/ai/librarian/status` — Статус провайдеров (пробная генерация с кэшем 60с)
 
 ### Avatars (AI)
 - `POST /api/avatars/generate` — Сгенерировать AI аватар
@@ -258,5 +306,5 @@ curl -X POST "http://localhost:8080/api/tier-lists/1/books" \
 
 ---
 
-**Last Updated:** 6 августа 2026 г.  
-**Version:** 1.0.0
+**Last Updated:** 7 октября 2026 г.  
+**Version:** 1.1.0 (Unreleased)
