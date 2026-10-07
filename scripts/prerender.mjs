@@ -70,6 +70,35 @@ export function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+/**
+ * CLI-фильтр роутов для флага --only (повторяемый).
+ * onlyPaths пуст/не передан → все роуты; иначе — точное совпадение route.path.
+ * Нет совпадений → пустой массив (вызывающий код: warn + exit 1).
+ */
+export function filterRoutes(routes, onlyPaths) {
+  if (!onlyPaths || onlyPaths.length === 0) return routes;
+  const wanted = new Set(onlyPaths);
+  return routes.filter((route) => wanted.has(route.path));
+}
+
+/**
+ * Собирает значения повторяемого флага --only из process.argv.
+ * argv[0]=node, argv[1]=скрипт, дальше -- по парам.
+ */
+export function parseOnlyArgs(argv) {
+  const only = [];
+  for (let i = 2; i < argv.length; i++) {
+    if (argv[i] === "--only") {
+      if (i + 1 >= argv.length || argv[i + 1].startsWith("--")) {
+        throw new Error("--only требует путь после флага (например: --only /authors/agata-kristi)");
+      }
+      only.push(argv[i + 1]);
+      i++;
+    }
+  }
+  return only;
+}
+
 // для HTTP запросов к localhost не нужен специальный Agent.
 // В Node.js 22+ fetch встроен и работает напрямую.
 
@@ -1166,6 +1195,8 @@ async function processRoute(browser, route) {
 }
 
 async function prerender() {
+  // CLI-флаг --only (повторяемый): рендерим только указанные пути.
+  const onlyPaths = parseOnlyArgs(process.argv);
   // Проверяем, что dist уже существует (сборка уже выполнена)
   if (!existsSync(DIST)) {
     throw new Error("dist/ not found. Run 'npm run build' first, or run this script via the build command.");
@@ -1269,10 +1300,23 @@ async function prerender() {
     await addBlogArticleRoutes();
     await addNewsRoutes();
 
+    // CLI-фильтр --only: применяется после сбора всех роутов.
+    // Ни одного совпадения → warn + exit 1 (опечатка ≠ «успех без работы»);
+    // return из try → finally закроет браузер и локальный сервер.
+    const selectedRoutes = filterRoutes(ROUTES, onlyPaths);
+    if (selectedRoutes.length === 0) {
+      const detail = onlyPaths.length > 0
+        ? `--only: ни один путь не совпал: ${onlyPaths.join(", ")}`
+        : "нет маршрутов для пререндера";
+      log(`⚠️  Prerender: ${detail} — выход с кодом 1`);
+      process.exitCode = 1;
+      return;
+    }
+
     // Параллельная обработка страниц (CONCURRENCY за раз)
-    for (let i = 0; i < ROUTES.length; i += CONCURRENCY) {
-      const batch = ROUTES.slice(i, i + CONCURRENCY);
-      log(`\n📦 Batch ${Math.floor(i / CONCURRENCY) + 1}/${Math.ceil(ROUTES.length / CONCURRENCY)} (${batch.length} pages)`);
+    for (let i = 0; i < selectedRoutes.length; i += CONCURRENCY) {
+      const batch = selectedRoutes.slice(i, i + CONCURRENCY);
+      log(`\n📦 Batch ${Math.floor(i / CONCURRENCY) + 1}/${Math.ceil(selectedRoutes.length / CONCURRENCY)} (${batch.length} pages)`);
 
       const batchResults = await Promise.all(
         batch.map((route) => processRoute(browser, route)),
