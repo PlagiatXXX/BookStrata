@@ -199,7 +199,7 @@ describe("AdminAuthorsPage", () => {
     await renderWithAuthorSelected()
 
     expect(
-      screen.getByText(/Портрет 3:4.*1200×1600.*до 300 КБ/),
+      screen.getByText(/Горизонтальный 4:3.*1600×1200.*до 300 КБ/),
     ).toBeInTheDocument()
     // Обложки showcase подтягиваются из книги автоматически — подсказка не нужна
     expect(
