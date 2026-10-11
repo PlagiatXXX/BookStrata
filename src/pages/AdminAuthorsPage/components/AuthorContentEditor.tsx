@@ -282,7 +282,8 @@ export function AuthorContentEditor({
             </div>
             <p className="mt-1 text-xs text-gray-500">
               Горизонтальный 4:3 — ~1600×1200 px (мин. 1067×800), до 300 КБ,
-              WebP/JPEG; лицо ближе к центру кадра, тёмный фон
+              WebP/JPEG; средний план (лицо и плечи), лицо в верхней трети кадра,
+              тёмный фон
             </p>
             {heroUploadError && (
               <p className="mt-1 text-xs text-red-400">{heroUploadError}</p>
