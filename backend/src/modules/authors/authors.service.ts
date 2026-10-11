@@ -12,6 +12,8 @@ export interface AuthorResult {
   name: string;
   slug: string | null;
   bookCount: number;
+  /** Фото из админки (карточки на /authors); null — если не заполнено */
+  heroImageUrl: string | null;
 }
 
 /** Минимум оценок книги для попадания в топ/худшие на странице автора */
@@ -124,6 +126,7 @@ export function createAuthorService(prisma: PrismaClient) {
       name: author.name,
       slug: author.slug,
       bookCount: author._count.books,
+      heroImageUrl: author.heroImageUrl ?? null,
     };
   };
 
@@ -170,6 +173,7 @@ export function createAuthorService(prisma: PrismaClient) {
       name: author.name,
       slug: author.slug,
       bookCount: 0,
+      heroImageUrl: author.heroImageUrl ?? null,
     };
   };
 
@@ -196,6 +200,7 @@ export function createAuthorService(prisma: PrismaClient) {
         name: author.name,
         slug: author.slug,
         bookCount: author._count?.books ?? 0,
+        heroImageUrl: author.heroImageUrl ?? null,
       });
     }
 
@@ -241,6 +246,7 @@ export function createAuthorService(prisma: PrismaClient) {
         name: a.name,
         slug: a.slug,
         bookCount: a._count.books,
+        heroImageUrl: a.heroImageUrl ?? null,
       }));
   };
 
@@ -377,7 +383,14 @@ export function createAuthorService(prisma: PrismaClient) {
         name: a.name,
         slug: a.slug,
         bookCount: a._count.books,
+        heroImageUrl: a.heroImageUrl ?? null,
       }));
+
+    // Авторы с фото (заполнено в админке) — первыми; каждая группа
+    // сохраняет алфавитный порядок из findMany (orderBy name asc).
+    const withPhoto = result.filter((a) => a.heroImageUrl);
+    const withoutPhoto = result.filter((a) => !a.heroImageUrl);
+    result = [...withPhoto, ...withoutPhoto];
 
     if (opts?.sort === "popular") {
       result = [...result].sort(

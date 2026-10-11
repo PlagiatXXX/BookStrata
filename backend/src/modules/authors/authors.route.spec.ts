@@ -129,8 +129,8 @@ describe("GET /api/authors", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.authors).toEqual([
-      { id: 1, name: "Лев Толстой", slug: "lev-tolstoy", bookCount: 3 },
-      { id: 2, name: "Артур Конан Дойл", slug: "arthur-conan-doyle", bookCount: 1 },
+      { id: 1, name: "Лев Толстой", slug: "lev-tolstoy", bookCount: 3, heroImageUrl: null },
+      { id: 2, name: "Артур Конан Дойл", slug: "arthur-conan-doyle", bookCount: 1, heroImageUrl: null },
     ]);
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -159,7 +159,7 @@ describe("GET /api/authors", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.authors).toEqual([
-      { id: 2, name: "Артур Конан Дойл", slug: "arthur-conan-doyle", bookCount: 8 },
+      { id: 2, name: "Артур Конан Дойл", slug: "arthur-conan-doyle", bookCount: 8, heroImageUrl: null },
     ]);
   });
 });

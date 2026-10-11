@@ -422,7 +422,38 @@ describe("list", () => {
     const authors = await service.list();
 
     expect(authors).toEqual([
-      { id: 1, name: "Лев Толстой", slug: "lev-tolstoy", bookCount: 3 },
+      { id: 1, name: "Лев Толстой", slug: "lev-tolstoy", bookCount: 3, heroImageUrl: null },
+    ]);
+  });
+
+  it("маппит heroImageUrl из админки", async () => {
+    const { service } = makeService({
+      authorFindMany: [
+        { id: 1, name: "Лев Толстой", slug: "lev-tolstoy", _count: { books: 3 }, heroImageUrl: "/hero.jpg" },
+      ],
+    });
+
+    const authors = await service.list();
+
+    expect(authors[0].heroImageUrl).toBe("/hero.jpg");
+  });
+
+  it("авторы с фото идут первыми, внутри каждой группы — по алфавиту", async () => {
+    // findMany отдаёт результат БД, уже отсортированный по алфавиту (orderBy name asc)
+    const { service } = makeService({
+      authorFindMany: [
+        { id: 1, name: "Алёша", slug: "alesha", _count: { books: 1 }, heroImageUrl: null },
+        { id: 2, name: "Без фото", slug: "bez-foto", _count: { books: 1 }, heroImageUrl: null },
+        { id: 3, name: "Достоевский", slug: "dostoevsky", _count: { books: 1 }, heroImageUrl: "/d.jpg" },
+        { id: 4, name: "Толстой", slug: "tolstoy", _count: { books: 1 }, heroImageUrl: "/t.jpg" },
+      ],
+    });
+
+    const authors = await service.list();
+
+    expect(authors.map((a) => a.slug)).toEqual([
+      "dostoevsky", "tolstoy", // с фото — по алфавиту
+      "alesha", "bez-foto", // без фото — по алфавиту
     ]);
   });
 
