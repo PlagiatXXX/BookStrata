@@ -71,9 +71,9 @@ export const createCollectionJsonSchema = {
       theme: { type: "string", nullable: true },
     },
   },
-  response: {
-    201: { type: "object", properties: { id: { type: "integer" }, slug: { type: "string" } } },
-  },
+  // response-блок сознательно убран: реальный ответ — { data: collection } c полным
+  // набором полей, объявлять частичную форму нельзя — fast-json-stringify вырежет остальные
+  // (ловушка того же класса, что register в auth 11.10.2026)
 };
 
 export const getCollectionsJsonSchema = {

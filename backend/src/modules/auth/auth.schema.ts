@@ -84,9 +84,17 @@ export const registerSchema = {
        description: 'User registered successfully',
        type: 'object',
        properties: {
-         accessToken: { type: 'string', description: 'JWT access token' },
-         userId: { type: 'number', description: 'Created user ID' },
-         username: { type: 'string', description: 'Username' },
+         // Ответ оборачивается в createSuccessResponse → { data: {...} }.
+         // Поля на верхнем уровне НЕ объявлять: fast-json-stringify вырезает
+         // всё, что не заявлено в схеме (регрессия 11.10.2026 — фронт получал {}).
+         data: {
+           type: 'object',
+           properties: {
+             accessToken: { type: 'string', description: 'JWT access token' },
+             userId: { type: 'number', description: 'Created user ID' },
+             username: { type: 'string', description: 'Username' },
+           },
+         },
        },
      },
     409: makeErrorSchema('Username or email already exists'),
@@ -113,10 +121,17 @@ export const validateSchema = {
       description: 'Token is valid',
       type: 'object',
       properties: {
-        valid: { type: 'boolean' },
-        userId: { type: 'number' },
-        username: { type: 'string' },
-        role: { type: 'string' },
+        // Ответ оборачивается в createSuccessResponse → { data: {...} }.
+        // См. комментарий в registerSchema — поля на верхнем уровне не объявлять.
+        data: {
+          type: 'object',
+          properties: {
+            valid: { type: 'boolean' },
+            userId: { type: 'number' },
+            username: { type: 'string' },
+            role: { type: 'string' },
+          },
+        },
       },
     },
     401: makeErrorSchema('Token is invalid or expired'),

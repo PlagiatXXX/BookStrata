@@ -17,6 +17,13 @@ export const togglePublicBodySchema = z.object({
 });
 
 // --- JSON Schema для Swagger документации ---
+// ВАЖНО: Fastify принимает схему только в ключе schema:{} роута (см. tierList.route.ts).
+// Спред ...schema.getXSchema на верхний уровень опций молча игнорируется.
+//
+// response-блоки здесь сознательно ОТСУТСТВУЮТ у GET /, GET /liked, POST /, PUT /:id/public:
+// реальные ответы содержат поля Prisma-объектов и пагинацию {data, meta, links}, а
+// fast-json-stringify вырезает всё, что не объявлено в схеме (баг register в auth 11.10.2026:
+// неполная схема → фронт получал {}). Объявлять схему надо только если она покрывает ответ ПОЛНОСТЬЮ.
 export const getTierListsSchema = {
   description: 'Get paginated list of tier lists for authenticated user',
   tags: ['Tier Lists'],
@@ -24,16 +31,8 @@ export const getTierListsSchema = {
     type: 'object',
     properties: {
       page: { type: 'string', default: '1' },
-      pageSize: { type: 'string', default: '6' },
-    },
-  },
-  response: {
-    200: {
-      type: 'object',
-      properties: {
-        tierLists: { type: 'array' },
-        total: { type: 'number' },
-      },
+      // default '10' — как в getTierListsQuerySchema и safePageParam фоллбэке сервиса
+      pageSize: { type: 'string', default: '10' },
     },
   },
 };
@@ -47,9 +46,6 @@ export const createTierListSchema = {
     properties: {
       title: { type: 'string', minLength: 1, maxLength: 100 },
     },
-  },
-  response: {
-    201: { type: 'object' },
   },
 };
 
@@ -116,8 +112,9 @@ export const updatePlacementsSchema = {
           type: 'object',
           required: ['bookId', 'tierId', 'rank'],
           properties: {
-            bookId: { type: 'number' },
-            tierId: { type: ['number', 'null'] },
+            // string | number — как в saveAllSchema: временные ID книг приходят строками
+            bookId: { type: ['number', 'string'] },
+            tierId: { type: ['number', 'string', 'null'] },
             rank: { type: 'number' },
           },
         },
@@ -177,12 +174,17 @@ export const addBooksSchema = {
           type: 'object',
           required: ['title', 'coverImageUrl'],
           properties: {
-            title: { type: 'string', minLength: 1, maxLength: 255 },
-            author: { type: ['string', 'null'], maxLength: 255 },
-            coverImageUrl: { type: 'string', maxLength: 2048 },
-            description: { type: ['string', 'null'], maxLength: 1000 },
-            thoughts: { type: ['string', 'null'], maxLength: 2000 },
-            genre: { type: ['string', 'null'], maxLength: 100 },
+            // Лимиты не строже shelf-схемы (title ≤500, author ≤300, genre ≤200,
+            // description ≤5000) — CreateTierListModal пересылает эти поля как есть
+            title: { type: 'string', minLength: 1, maxLength: 500 },
+            author: { type: ['string', 'null'], maxLength: 300 },
+            // maxLength НЕ задаём: coverImageUrl принимает base64 data:-обложки
+            // (многокилобайтные) — роут сам валидирует размер через validateImageSize
+            coverImageUrl: { type: ['string', 'null'] },
+            description: { type: ['string', 'null'], maxLength: 5000 },
+            // Без maxLength: БД-колонка безлимитна, вызывающий код не ограничивает
+            thoughts: { type: ['string', 'null'] },
+            genre: { type: ['string', 'null'], maxLength: 200 },
             tags: { type: 'array', items: { type: 'string', maxLength: 50 }, maxItems: 20 },
             externalId: { type: ['string', 'null'], maxLength: 255, description: 'ID книги во внешнем источнике (Фаза 2.1)' },
             source: { type: ['string', 'null'], enum: ['google_books', 'open_library', 'livelib'], description: 'Источник внешнего ID (Фаза 2.1)' },
@@ -209,11 +211,15 @@ export const updateBookSchema = {
     properties: {
       title: { type: 'string', minLength: 1, maxLength: 255 },
       author: { type: 'string', maxLength: 255 },
-      description: { type: 'string', maxLength: 1000 },
-      thoughts: { type: 'string', maxLength: 2000 },
+      // Без maxLength: BookEditModal (textarea) не ограничивает ввод, БД-колонки
+      // безлимитны — активация валидации не должна ломать сохранение длинных текстов
+      description: { type: 'string' },
+      thoughts: { type: 'string' },
       genre: { type: ['string', 'null'], maxLength: 100 },
-      tags: { type: 'array', items: { type: 'string', maxLength: 50 }, maxItems: 20 },
-      coverImageUrl: { type: 'string', maxLength: 2048 },
+      // Без maxItems/itemLength: инпут тегов в BookEditModal без maxLength
+      tags: { type: 'array', items: { type: 'string' } },
+      // Без maxLength: принимает base64 data:-обложки (см. addBooksSchema)
+      coverImageUrl: { type: 'string' },
     },
   },
 };
@@ -248,20 +254,8 @@ export const togglePublicSchema = {
       isPublic: { type: 'boolean' },
     },
   },
-  response: {
-    200: {
-      type: 'object',
-      properties: {
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            isPublic: { type: 'boolean' },
-          },
-        },
-      },
-    },
-  },
+  // response-блок сознательно убран: реальный ответ — полный Prisma-объект тир-листа,
+  // объявлять в схеме только id/isPublic нельзя — fast-json-stringify вырежет остальные поля
 };
 
 export const getPublicTierListsSchema = {

@@ -120,7 +120,9 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/liked",
     {
       preHandler: [authMiddleware],
-      ...schema.getTierListsSchema,
+      // Fastify принимает schema только в ключе schema:{} — спред на верхний
+      // уровень опций молча игнорируется (регрессия 11.10.2026)
+      schema: schema.getTierListsSchema,
     },
     async (request, reply) => {
       const userId = request.user!.userId;
@@ -243,7 +245,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   // GET / -> Получить список с пагинацией
   fastify.get<{ Querystring: GetTierListsQuery }>(
     "/",
-    { preHandler: [authMiddleware], ...schema.getTierListsSchema },
+    { preHandler: [authMiddleware], schema: schema.getTierListsSchema },
     async (request, reply) => {
       const userId = request.user!.userId;
       const tierLists = await service.getUserTierLists(userId, request.query);
@@ -291,7 +293,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     "/",
     {
       preHandler: [authMiddleware],
-      ...schema.createTierListSchema,
+      schema: schema.createTierListSchema,
       config: {
         rateLimit: {
           max: 10,
@@ -310,7 +312,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   // GET /:id -> Получить один тир-лист
   fastify.get<{ Params: { id: string } }>(
     "/:id",
-    { preHandler: [optionalAuthMiddleware], ...schema.getTierListByIdSchema },
+    { preHandler: [optionalAuthMiddleware], schema: schema.getTierListByIdSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       let tierList: Awaited<ReturnType<typeof service.getFullTierList>>;
@@ -370,7 +372,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   // PUT /:id -> Обновить тир-лист (название или тему)
   fastify.put<{ Params: { id: string }; Body: { title?: string; theme?: string } }>(
     "/:id",
-    { preHandler: [authMiddleware], ...schema.updateTierListSchema },
+    { preHandler: [authMiddleware], schema: schema.updateTierListSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       const tierList = await service.getFullTierList(tierListId);
@@ -399,7 +401,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   // DELETE
   fastify.delete<{ Params: { id: string } }>(
     "/:id",
-    { preHandler: [authMiddleware], ...schema.deleteTierListSchema },
+    { preHandler: [authMiddleware], schema: schema.deleteTierListSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       const tierList = await service.prisma.tierList.findUnique({
@@ -430,7 +432,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/:id/placements",
-    { preHandler: [authMiddleware], ...schema.updatePlacementsSchema },
+    { preHandler: [authMiddleware], schema: schema.updatePlacementsSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       await service.assertOwner(tierListId, request.user!.userId);
@@ -482,7 +484,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/:id/books",
-    { preHandler: [authMiddleware], ...schema.addBooksSchema },
+    { preHandler: [authMiddleware], schema: schema.addBooksSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       await service.assertOwner(tierListId, request.user!.userId);
@@ -593,7 +595,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     };
   }>(
     "/:id/books/:bookId",
-    { preHandler: [authMiddleware], ...schema.updateBookSchema },
+    { preHandler: [authMiddleware], schema: schema.updateBookSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       const bookId = parseInt(request.params.bookId, 10);
@@ -640,7 +642,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   // DELETE /:id/books/:bookId -> Удалить книгу из листа
   fastify.delete<{ Params: { id: string; bookId: string } }>(
     "/:id/books/:bookId",
-    { preHandler: [authMiddleware], ...schema.deleteBookSchema },
+    { preHandler: [authMiddleware], schema: schema.deleteBookSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       const bookId = parseInt(request.params.bookId, 10);
@@ -844,7 +846,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   // PUT /:id/public -> Переключить статус публичности
   fastify.put<{ Params: { id: string }; Body: { isPublic: boolean } }>(
     "/:id/public",
-    { preHandler: [authMiddleware], ...schema.togglePublicSchema },
+    { preHandler: [authMiddleware], schema: schema.togglePublicSchema },
     async (request, reply) => {
       const tierListId = request.params.id;
       await service.assertOwner(tierListId, request.user!.userId);

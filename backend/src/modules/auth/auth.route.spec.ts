@@ -151,3 +151,71 @@ describe("POST /api/auth/refresh — Origin/Referer check (CSRF defense-in-depth
     expect(res.status).toBe(401);
   });
 });
+
+// Регрессия 11.10.2026: response-схема register[201] объявляла поля accessToken/userId/username
+// на верхнем уровне, а реальный ответ оборачивается в { data: ... } (createSuccessResponse).
+// Fastify сериализовал ответ по схеме и вырезал всё → фронт получал {} (nginx: 201, body=2 байта),
+// accessToken терялся, и пользователь после регистрации отскакивал на /auth.
+describe("Response envelope — схемы сериализации не теряют данные", () => {
+  let app: ReturnType<typeof Fastify>;
+
+  async function createApp() {
+    const instance = Fastify({ logger: false });
+    await instance.register(cookie, { secret: "test-secret" });
+    await instance.register(authRoutes, { prefix: "/api/auth" });
+    await instance.ready();
+    return instance;
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    app = await createApp();
+  });
+
+  afterEach(async () => {
+    await app.close();
+    vi.resetAllMocks();
+  });
+
+  it("POST /register — 201 отдаёт data.accessToken/data.userId/data.username, а не пустой объект", async () => {
+    mocks.authService.register.mockResolvedValue({
+      userId: 58,
+      username: "vlp",
+      accessToken: "access-token-abc",
+      refreshToken: "refresh-token-abc",
+    });
+
+    const res = await request(app.server)
+      .post("/api/auth/register")
+      .send({
+        username: "vlp",
+        email: "vlp@studioroom.ru",
+        password: "password123",
+        acceptedTerms: true,
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.data.accessToken).toBe("access-token-abc");
+    expect(res.body.data.userId).toBe(58);
+    expect(res.body.data.username).toBe("vlp");
+  });
+
+  it("POST /validate — 200 отдаёт data.valid/data.userId/data.username, а не пустой объект", async () => {
+    mocks.tokenService.validateToken.mockReturnValue({
+      userId: 58,
+      username: "vlp",
+      role: "user",
+    });
+
+    const res = await request(app.server)
+      .post("/api/auth/validate")
+      .send({ token: "header.payload.signature" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.data.valid).toBe(true);
+    expect(res.body.data.userId).toBe(58);
+    expect(res.body.data.username).toBe("vlp");
+  });
+});
