@@ -121,8 +121,8 @@ describe("AuthorPage", () => {
   it("блок «Другие авторы» ведёт на страницы других авторов, текущего исключает", async () => {
     vi.mocked(getAuthorBySlug).mockResolvedValue(fixture);
     vi.mocked(getPopularAuthors).mockResolvedValue([
-      { id: 2, name: "Фёдор Достоевский", slug: "fedor-dostoevsky", bookCount: 5 },
-      { id: 1, name: "Лев Толстой", slug: "lev-tolstoy", bookCount: 12 },
+      { id: 2, name: "Фёдор Достоевский", slug: "fedor-dostoevsky", bookCount: 5, heroImageUrl: null },
+      { id: 1, name: "Лев Толстой", slug: "lev-tolstoy", bookCount: 12, heroImageUrl: null },
     ]);
 
     renderPage();

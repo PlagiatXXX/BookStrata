@@ -17,10 +17,21 @@ vi.mock("@/ui/Footer", () => ({ Footer: () => null }));
 
 import { getAllAuthors } from "@/lib/authorsApi";
 
-type AuthorListItem = { id: number; name: string; slug: string; bookCount: number };
+type AuthorListItem = {
+  id: number;
+  name: string;
+  slug: string;
+  bookCount: number;
+  heroImageUrl: string | null;
+};
 
-function makeAuthor(id: number, name: string, bookCount = 1): AuthorListItem {
-  return { id, name, slug: `author-${id}`, bookCount };
+function makeAuthor(
+  id: number,
+  name: string,
+  bookCount = 1,
+  heroImageUrl: string | null = null,
+): AuthorListItem {
+  return { id, name, slug: `author-${id}`, bookCount, heroImageUrl };
 }
 
 function renderPage() {
@@ -126,6 +137,43 @@ describe("AuthorsPage", () => {
 
     expect(screen.queryByText("Лев Толстой")).not.toBeInTheDocument();
     expect(screen.getByText(/ничего не найдено/i)).toBeInTheDocument();
+  });
+
+  it("автор с фото рендерит портрет (img)", async () => {
+    vi.mocked(getAllAuthors).mockResolvedValue([
+      makeAuthor(1, "Лев Толстой", 12, "/hero/tolstoy.jpg"),
+    ]);
+
+    renderPage();
+
+    const img = await screen.findByRole("img", { name: /Лев Толстой/ });
+    expect(img).toHaveAttribute("src", "/hero/tolstoy.jpg");
+  });
+
+  it("автор без фото рендерится компактной строкой без портрета", async () => {
+    vi.mocked(getAllAuthors).mockResolvedValue([makeAuthor(1, "Лев Толстой")]);
+
+    renderPage();
+
+    expect(await screen.findByText("Лев Толстой")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("сохраняет порядок из API — автор с фото идёт первым", async () => {
+    vi.mocked(getAllAuthors).mockResolvedValue([
+      makeAuthor(1, "Автор с фото", 1, "/a.jpg"),
+      makeAuthor(2, "Без фото", 2),
+    ]);
+
+    renderPage();
+    expect(await screen.findByText("Без фото")).toBeInTheDocument();
+
+    // только карточки-ссылки на авторов (крошки «Главная» — не их)
+    const links = screen
+      .getAllByRole("link")
+      .filter((l) => l.getAttribute("href")?.startsWith("/authors/"));
+    expect(links[0]).toHaveTextContent("Автор с фото");
+    expect(links[1]).toHaveTextContent("Без фото");
   });
 
   it("после уточнения поиска лимит сбрасывается (показ первых 6)", async () => {

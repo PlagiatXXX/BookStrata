@@ -6,6 +6,8 @@ export interface AuthorResult {
   name: string
   slug: string | null
   bookCount: number
+  /** Фото из админки (карточка на /authors); null — если не заполнено */
+  heroImageUrl: string | null
 }
 
 export interface AuthorSearchResponse {

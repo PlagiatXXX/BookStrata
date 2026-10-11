@@ -1,6 +1,7 @@
 // src/pages/AuthorsPage/AuthorsPage.tsx
 // Страница «Все авторы» /authors — каталог авторов с поиском и «Показать ещё».
-// Карточка: имя + число книг → ссылка на /authors/:slug.
+// Карточки: авторы с фото (из админки) — крупные с портретом первыми,
+// без фото — компактные строки (имя + число книг) → /authors/:slug.
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SEOHead } from "@/components/SEO/SEOHead";
@@ -9,11 +10,96 @@ import { Spinner } from "@/components/Spinner";
 import { Header } from "@/ui/Header";
 import { Footer } from "@/ui/Footer";
 import { pluralize } from "@/lib/plural";
+import { type AuthorResult } from "@/lib/authorsApi";
 import { useAuthorsPage } from "./hooks/useAuthorsPage";
 // Токены --ap-* и .ap-section живут в css страницы автора (общая тема)
 import "@/pages/AuthorPage/AuthorPage.css";
 
 const PAGE_SIZE = 6;
+
+function authorInitials(name: string): string {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((word) => word[0] ?? "")
+      .join("")
+      .toUpperCase() || "?"
+  );
+}
+
+/** Карточка автора с портретом (heroImageUrl из админки) — фото по центру. */
+function AuthorPhotoCard({ author }: { author: AuthorResult }) {
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const linkClass =
+    "group flex flex-col items-center overflow-hidden rounded-[var(--ap-radius-lg)] border border-[var(--ap-border)] bg-[var(--ap-surface)] px-4 pb-4 pt-5 transition-colors hover:border-[var(--ap-gold)]/40 hover:bg-[var(--ap-surface-raised)]";
+
+  const body = (
+    <>
+      <div className="relative aspect-[3/4] w-44 overflow-hidden rounded-[var(--ap-radius)] bg-[var(--ap-bg)]">
+        {photoFailed ? (
+          <span
+            aria-hidden
+            className="flex h-full w-full items-center justify-center font-[family-name:var(--ap-display)] text-3xl text-[var(--ap-gold)]/50"
+          >
+            {authorInitials(author.name)}
+          </span>
+        ) : (
+          <img
+            src={author.heroImageUrl ?? undefined}
+            alt={`Портрет: ${author.name}`}
+            loading="lazy"
+            onError={() => setPhotoFailed(true)}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+        )}
+      </div>
+      <span className="flex flex-col items-center gap-1 pt-3 text-center">
+        <span className="font-[family-name:var(--ap-display)] text-base text-[var(--ap-ink)] transition-colors group-hover:text-[var(--ap-gold)]">
+          {author.name}
+        </span>
+        <span className="text-xs text-[var(--ap-ink-muted)]">
+          <span className="font-semibold text-[var(--ap-gold)]">{author.bookCount}</span>{" "}
+          {pluralize(author.bookCount, ["книга", "книги", "книг"])}
+        </span>
+      </span>
+    </>
+  );
+
+  return author.slug ? (
+    <Link to={`/authors/${author.slug}`} className={linkClass}>
+      {body}
+    </Link>
+  ) : (
+    <div className={linkClass}>{body}</div>
+  );
+}
+
+/** Компактная строка автора без фото — имя + число книг. */
+function AuthorCompactCard({ author }: { author: AuthorResult }) {
+  const body = (
+    <>
+      <span className="font-[family-name:var(--ap-display)] text-base text-[var(--ap-ink)] transition-colors group-hover:text-[var(--ap-gold)]">
+        {author.name}
+      </span>
+      <span className="flex shrink-0 items-baseline gap-1 text-xs text-[var(--ap-ink-muted)]">
+        <span className="font-semibold text-[var(--ap-gold)]">{author.bookCount}</span>
+        {pluralize(author.bookCount, ["книга", "книги", "книг"])}
+      </span>
+    </>
+  );
+  const cardClass =
+    "group flex items-baseline justify-between gap-4 self-start rounded-[var(--ap-radius-lg)] border border-[var(--ap-border)] bg-[var(--ap-surface)] p-4 transition-colors hover:border-[var(--ap-gold)]/40 hover:bg-[var(--ap-surface-raised)]";
+
+  return author.slug ? (
+    <Link to={`/authors/${author.slug}`} className={cardClass}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cardClass}>{body}</div>
+  );
+}
 
 export default function AuthorsPage() {
   const { data: authors, isLoading, isError } = useAuthorsPage();
@@ -54,7 +140,8 @@ export default function AuthorsPage() {
           />
         </div>
 
-        <section className="ap-section">
+        {/* Вместо .ap-section: компактный отступ сверху (крошки рядом с заголовком) */}
+        <section className="mx-auto w-full max-w-6xl px-4 pt-6 pb-(--ap-section-gap) sm:px-6 lg:px-8">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-3">
@@ -103,33 +190,13 @@ export default function AuthorsPage() {
 
             {!isLoading && !isError && filtered.length > 0 && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {shown.map((author) => {
-                  const card = (
-                    <>
-                      <span className="font-[family-name:var(--ap-display)] text-base text-[var(--ap-ink)] transition-colors group-hover:text-[var(--ap-gold)]">
-                        {author.name}
-                      </span>
-                      <span className="flex shrink-0 items-baseline gap-1 text-xs text-[var(--ap-ink-muted)]">
-                        <span className="font-semibold text-[var(--ap-gold)]">
-                          {author.bookCount}
-                        </span>
-                        {pluralize(author.bookCount, ["книга", "книги", "книг"])}
-                      </span>
-                    </>
-                  );
-                  const cardClass =
-                    "group flex items-baseline justify-between gap-4 rounded-[var(--ap-radius-lg)] border border-[var(--ap-border)] bg-[var(--ap-surface)] p-4 transition-colors hover:border-[var(--ap-gold)]/40 hover:bg-[var(--ap-surface-raised)]";
-
-                  return author.slug ? (
-                    <Link key={author.id} to={`/authors/${author.slug}`} className={cardClass}>
-                      {card}
-                    </Link>
+                {shown.map((author) =>
+                  author.heroImageUrl ? (
+                    <AuthorPhotoCard key={author.id} author={author} />
                   ) : (
-                    <div key={author.id} className={cardClass}>
-                      {card}
-                    </div>
-                  );
-                })}
+                    <AuthorCompactCard key={author.id} author={author} />
+                  ),
+                )}
               </div>
             )}
 
