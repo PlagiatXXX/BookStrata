@@ -34,7 +34,7 @@ export function AuthorHero({ author, stats }: AuthorHeroProps) {
               className="absolute inset-0 h-full w-full object-cover object-[center_25%]"
             />
             {/* Затемнение: базовое + слева (текст) + снизу (стык со следующей секцией) */}
-            <div className="absolute inset-0 bg-black/45" />
+            <div className="absolute inset-0 bg-black/25" />
             <div className="absolute inset-0 bg-linear-to-r from-(--ap-bg) via-(--ap-bg)/75 to-transparent" />
             <div className="absolute inset-0 bg-linear-to-t from-(--ap-bg) via-transparent to-transparent" />
           </>
