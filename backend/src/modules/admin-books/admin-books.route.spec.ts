@@ -428,6 +428,81 @@ describe("Admin Books Routes", () => {
       );
     });
 
+    it("authorId → pullQuote из первого блока format_quote лонгрида, кавычки обрезаются", async () => {
+      mocks.prisma.book.findMany
+        .mockResolvedValueOnce([bookRow])
+        .mockResolvedValueOnce([
+          {
+            id: 10,
+            contextChain: [
+              { icon: "movie", title: "Экранизация", text: "Факт о кино" },
+              { icon: "format_quote", title: "", text: "«Первая цитата»" },
+              { icon: "format_quote", title: "", text: "«Вторая цитата»" },
+            ],
+          },
+        ]);
+      mocks.prisma.book.count.mockResolvedValue(1);
+
+      const res = await request(app.server)
+        .get("/api/admin/books?authorId=7")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      // Кавычки срезаются: на странице автора они добавляются CSS-псевдоэлементами
+      expect(res.body.data.items[0].pullQuote).toBe("Первая цитата");
+    });
+
+    it("extractPullQuote: срезает разные парные кавычки, непарные не трогает", async () => {
+      const { extractPullQuote } = await import("./admin-books.service.js");
+
+      expect(extractPullQuote([{ icon: "format_quote", text: "«Цитата»" }])).toBe("Цитата");
+      expect(extractPullQuote([{ icon: "format_quote", text: '"Цитата"' }])).toBe("Цитата");
+      expect(extractPullQuote([{ icon: "format_quote", text: "“Цитата”" }])).toBe("Цитата");
+      expect(extractPullQuote([{ icon: "format_quote", text: "„Цитата“" }])).toBe("Цитата");
+      expect(extractPullQuote([{ icon: "format_quote", text: "‘Цитата’" }])).toBe("Цитата");
+      // Непарные кавычки — не трогаем
+      expect(extractPullQuote([{ icon: "format_quote", text: "«Цитата" }])).toBe("«Цитата");
+      expect(extractPullQuote([{ icon: "format_quote", text: "Цитата»" }])).toBe("Цитата»");
+      // Цитата из одного символа-кавычки
+      expect(extractPullQuote([{ icon: "format_quote", text: "«" }])).toBe("«");
+    });
+
+    it("authorId → битые блоки лонгрида пропускаются, цитат нет — pullQuote null", async () => {
+      mocks.prisma.book.findMany
+        .mockResolvedValueOnce([bookRow])
+        .mockResolvedValueOnce([
+          {
+            id: 10,
+            contextChain: [
+              { icon: "format_quote", title: "", text: "   " },
+              "мусор вместо блока",
+              { icon: "movie", text: "не цитата" },
+            ],
+          },
+        ]);
+      mocks.prisma.book.count.mockResolvedValue(1);
+
+      const res = await request(app.server)
+        .get("/api/admin/books?authorId=7")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items[0].pullQuote).toBeNull();
+    });
+
+    it("без authorId → pullQuote не запрашивается и не отдаётся", async () => {
+      mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
+      mocks.prisma.book.count.mockResolvedValue(1);
+
+      const res = await request(app.server)
+        .get("/api/admin/books")
+        .set("Authorization", "Bearer admin-token");
+
+      expect(res.status).toBe(200);
+      expect(mocks.prisma.book.findMany).toHaveBeenCalledTimes(1);
+      expect(res.body.data.items[0].pullQuote).toBeUndefined();
+    });
+
     it("q + authorId → фильтр и в raw-поиске (и count, и выдача)", async () => {
       mocks.prisma.$queryRaw.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);

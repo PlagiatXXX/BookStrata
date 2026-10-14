@@ -111,3 +111,67 @@ describe("AuthorContentEditor — AI-промпт", () => {
     expect(JSON.stringify(payload)).not.toContain("Сайт");
   });
 });
+
+describe("AuthorContentEditor — автозаполнение цитаты из лонгрида книги", () => {
+  const books = [
+    { id: 1, title: "Война и мир", pullQuote: "Цитата из лонгрида" },
+    { id: 2, title: "Анна Каренина", pullQuote: null },
+  ];
+
+  function renderWithBooks() {
+    return render(
+      <AuthorContentEditor
+        authorName="Лев Толстой"
+        content={emptyContent}
+        books={books}
+        booksLoading={false}
+        savePending={false}
+        onSave={vi.fn()}
+      />,
+    );
+  }
+
+  /** Добавляет строку showcase и выбирает книгу в её селекте. */
+  function addShowcaseRowAndPick(bookId: string) {
+    fireEvent.click(screen.getByRole("button", { name: /добавить книгу/i }));
+    fireEvent.change(screen.getByLabelText("Книга"), {
+      target: { value: bookId },
+    });
+  }
+
+  it("выбор книги заполняет пустую цитату из лонгрида", () => {
+    renderWithBooks();
+
+    addShowcaseRowAndPick("1");
+
+    expect(screen.getByLabelText("Цитата к книге")).toHaveValue(
+      "Цитата из лонгрида",
+    );
+  });
+
+  it("введённая вручную цитата не перезаписывается при смене книги", () => {
+    renderWithBooks();
+
+    addShowcaseRowAndPick("1");
+    fireEvent.change(screen.getByLabelText("Цитата к книге"), {
+      target: { value: "Моя цитата" },
+    });
+    // Смена книги на ту же (с цитатой в лонгриде) — ручная цитата сохраняется
+    fireEvent.change(screen.getByLabelText("Книга"), {
+      target: { value: "2" },
+    });
+    fireEvent.change(screen.getByLabelText("Книга"), {
+      target: { value: "1" },
+    });
+
+    expect(screen.getByLabelText("Цитата к книге")).toHaveValue("Моя цитата");
+  });
+
+  it("у книги без цитаты в лонгриде поле остаётся пустым", () => {
+    renderWithBooks();
+
+    addShowcaseRowAndPick("2");
+
+    expect(screen.getByLabelText("Цитата к книге")).toHaveValue("");
+  });
+});

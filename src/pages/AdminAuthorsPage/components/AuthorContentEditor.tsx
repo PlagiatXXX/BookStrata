@@ -125,7 +125,7 @@ interface AuthorContentEditorProps {
   /** Контент автора — инициализирует состояние формы при монтаже
    *  (внешний ключ key={selectedId} пересоздаёт компонент при смене автора). */
   content: AdminAuthorContent
-  books: { id: number; title: string }[]
+  books: { id: number; title: string; pullQuote?: string | null }[]
   booksLoading: boolean
   savePending: boolean
   onSave: (payload: AuthorContentInput) => void
@@ -486,9 +486,21 @@ export function AuthorContentEditor({
                   <select
                     id={`showcase-${i}-book`}
                     value={row.bookId}
-                    onChange={(e) =>
-                      updateRow("showcase", i, { bookId: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const bookId = e.target.value
+                      // Автозаполнение цитаты из лонгрида книги (блок «Цитата»):
+                      // заполняем только пустое поле, введённое вручную — не трогаем
+                      const longreadQuote =
+                        books.find((b) => String(b.id) === bookId)?.pullQuote ??
+                        ""
+                      updateRow("showcase", i, {
+                        bookId,
+                        pullQuote:
+                          row.pullQuote.trim() === ""
+                            ? longreadQuote
+                            : row.pullQuote,
+                      })
+                    }}
                     className={inputClass}
                   >
                     <option value="">— выберите книгу —</option>

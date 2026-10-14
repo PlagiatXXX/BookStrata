@@ -111,6 +111,55 @@ function collectViewsBySlug(
   return viewsBySlug;
 }
 
+/** Блок лонгрида «Погружение в контекст»: { icon, title, text } */
+type ChainBlock = { icon?: unknown; title?: unknown; text?: unknown };
+
+/** Валидный блок contextChain с цитатой (иконка «Цитата», непустой текст) */
+function isQuoteBlock(value: unknown): value is { text: string } {
+  if (!value || typeof value !== "object") return false;
+  const block = value as ChainBlock;
+  return (
+    block.icon === "format_quote" &&
+    typeof block.text === "string" &&
+    block.text.trim() !== ""
+  );
+}
+
+/** Парные обрамляющие кавычки, которые срезаются при автозаполнении
+ *  (на странице автора цитата оборачивается в «» CSS-псевдоэлементами) */
+const QUOTE_PAIRS: Array<[string, string]> = [
+  ["«", "»"],
+  ['"', '"'],
+  ["“", "”"],
+  ["„", "“"],
+  ["‘", "’"],
+];
+
+/** Срезает парные обрамляющие кавычки с начала и конца текста.
+ *  Непарные кавычки (только в начале или только в конце) не трогаются. */
+function stripSurroundingQuotes(text: string): string {
+  if (text.length < 2) return text;
+  const first = text[0];
+  const last = text[text.length - 1];
+  for (const [open, close] of QUOTE_PAIRS) {
+    if (first === open && last === close) {
+      return text.slice(1, -1).trim();
+    }
+  }
+  return text;
+}
+
+/** Первая цитата из блоков лонгрида (icon=format_quote) | null.
+ *  Нужна для автозаполнения «Избранных книг» админки авторов.
+ *  Битые элементы JSON пропускаются, листинг не падает. */
+export function extractPullQuote(contextChain: unknown): string | null {
+  if (!Array.isArray(contextChain)) return null;
+  for (const block of contextChain) {
+    if (isQuoteBlock(block)) return stripSurroundingQuotes(block.text.trim());
+  }
+  return null;
+}
+
 /** Полный срез книги для mergeGroup (counts обязательны для pickCanon). */
 async function fetchDedupeBook(b: { id: number }): Promise<DedupeBook> {
   const withCounts = await prisma.book.findUniqueOrThrow({
@@ -385,8 +434,25 @@ export async function listBooks(params: BookListParams) {
   // Владелец (для draft) и тир-листы — единый каталог (19.08)
   const enriched = await enrichWithOwnerAndTierLists(items);
 
+  // Цитаты лонгридов — для автозаполнения «Избранных книг» админки авторов
+  // (запрашивается только при фильтре по authorId — селект showcase)
+  let withPullQuote = enriched;
+  if (params.authorId != null && Number.isFinite(params.authorId) && enriched.length > 0) {
+    const chains = await prisma.book.findMany({
+      where: { id: { in: enriched.map((b) => b.id) } },
+      select: { id: true, contextChain: true },
+    });
+    const quoteById = new Map(
+      chains.map((c) => [c.id, extractPullQuote(c.contextChain)]),
+    );
+    withPullQuote = enriched.map((b) => ({
+      ...b,
+      pullQuote: quoteById.get(b.id) ?? null,
+    }));
+  }
+
   return {
-    items: enriched.map((book) => ({
+    items: withPullQuote.map((book) => ({
       ...book,
       views: viewsBySlug.get(book.slug ?? "") ?? 0,
     })),

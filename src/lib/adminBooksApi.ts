@@ -69,6 +69,9 @@ export interface AdminBookListItem {
   tierListNames: string[];
   _count: { comments: number; placements: number };
   isTrending: boolean;
+  /** Первая цитата лонгрида (блок format_quote) — автозаполнение
+   *  «Избранных книг» админки авторов (отдаётся только при фильтре authorId) */
+  pullQuote?: string | null;
 }
 
 export interface AdminBookDetail extends AdminBookListItem {
