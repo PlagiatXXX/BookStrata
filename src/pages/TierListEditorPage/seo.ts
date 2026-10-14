@@ -9,13 +9,13 @@
 const DEFAULT_TITLE = "Книжный тир-лист";
 const DEFAULT_DESCRIPTION = "Книжный тир-лист на BookStrata — рейтинг книг по уровням";
 
-/** «Название — книжный тир-лист от @автор» (автор — опционально). */
+/** «Название — книжный тир-лист от автора» (автор — опционально). */
 export function buildTierListSeoTitle(
   title: string | null | undefined,
   username?: string | null,
 ): string {
   if (!title) return DEFAULT_TITLE;
-  const authorPart = username ? ` от @${username}` : "";
+  const authorPart = username ? ` от ${username}` : "";
   return `${title} — книжный тир-лист${authorPart}`;
 }
 
@@ -25,6 +25,6 @@ export function buildTierListSeoDescription(
   username?: string | null,
 ): string {
   if (!title) return DEFAULT_DESCRIPTION;
-  const authorPart = username ? ` от пользователя @${username}` : "";
+  const authorPart = username ? ` от пользователя ${username}` : "";
   return `Тир-лист «${title}»${authorPart} — визуальный рейтинг книг, созданный на BookStrata`;
 }

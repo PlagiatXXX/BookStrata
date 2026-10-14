@@ -28,13 +28,20 @@ export function AuthorTierLists({ lists }: AuthorTierListsProps) {
 
       <div className="mt-6 flex flex-col gap-3">
         {lists.map((list) => (
-          <Link
+          <div
             key={list.id}
-            to={`/tier-lists/${list.slug ?? list.id}`}
-            className="ap-tier-tile group flex items-center justify-between gap-4 px-5 py-4"
+            className="ap-tier-tile group relative flex items-center justify-between gap-4 px-5 py-4"
           >
-            <span className="font-[family-name:var(--ap-display)] text-base text-[var(--ap-ink)]">
-              {list.title}
+            <span className="flex min-w-0 flex-col gap-0.5">
+              <span className="font-[family-name:var(--ap-display)] text-base text-[var(--ap-ink)]">
+                {list.title}
+              </span>
+              <Link
+                to={`/users/${list.userId}`}
+                className="relative z-10 w-fit text-sm text-[var(--ap-ink-muted)] transition-colors hover:text-[var(--ap-gold)]"
+              >
+                {list.username}
+              </Link>
             </span>
             <span
               aria-hidden="true"
@@ -42,7 +49,13 @@ export function AuthorTierLists({ lists }: AuthorTierListsProps) {
             >
               →
             </span>
-          </Link>
+            {/* Вся плитка (кроме ника) кликается на тир-лист */}
+            <Link
+              to={`/tier-lists/${list.slug ?? list.id}`}
+              aria-label={list.title}
+              className="ap-tier-tile__link"
+            />
+          </div>
         ))}
       </div>
     </section>

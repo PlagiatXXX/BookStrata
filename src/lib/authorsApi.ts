@@ -70,7 +70,7 @@ export interface AuthorPageData {
   books: AuthorBookCard[]
   topBooks: AuthorBookCard[]
   bottomBooks: AuthorBookCard[]
-  tierLists: { id: string; slug: string | null; title: string }[]
+  tierLists: { id: string; slug: string | null; title: string; userId: number; username: string }[]
   stats: AuthorStatItem[]
   showcase: AuthorShowcaseItem[]
   adaptations: AuthorAdaptationItem[]

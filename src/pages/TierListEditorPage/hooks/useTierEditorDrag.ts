@@ -162,7 +162,7 @@ export function useTierEditorDrag({
         const separator = document.createTextNode(" • ");
 
         const userSpan = document.createElement("span");
-        userSpan.textContent = `@${username || "user"}`;
+        userSpan.textContent = username || "user";
 
         watermark.append(brandSpan, separator, userSpan);
         element.appendChild(watermark);

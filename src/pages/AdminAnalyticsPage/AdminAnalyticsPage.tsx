@@ -375,7 +375,7 @@ export default function AdminAnalyticsPage() {
                         </td>
                         <td className="px-4 py-3 text-gray-300">
                           {event.username ? (
-                            <span className="font-medium">@{event.username}</span>
+                            <span className="font-medium">{event.username}</span>
                           ) : (
                             <span className="text-gray-600">—</span>
                           )}

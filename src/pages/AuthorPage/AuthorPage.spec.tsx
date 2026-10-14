@@ -375,8 +375,8 @@ describe("AuthorPage — лучшие/слабые книги и тир-лист
         isbn: null, description: null },
     ],
     tierLists: [
-      { id: "tl1", slug: "top-100", title: "Топ-100 книг" },
-      { id: "tl2", slug: "klassika", title: "Классика" },
+      { id: "tl1", slug: "top-100", title: "Топ-100 книг", userId: 7, username: "reader" },
+      { id: "tl2", slug: "klassika", title: "Классика", userId: 9, username: "fan" },
     ],
   };
 

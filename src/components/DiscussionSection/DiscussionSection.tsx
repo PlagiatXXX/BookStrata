@@ -377,7 +377,7 @@ function ChatMessageRow({
           {message.parent?.user?.username && (
             <span className="chat-message-reply-to">
               <Reply size={10} />
-              @{message.parent.user.username}
+              {message.parent.user.username}
             </span>
           )}
           <span className="chat-message-time">{formatDate(message.createdAt)}</span>

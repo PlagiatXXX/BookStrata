@@ -14,3 +14,16 @@
   background: var(--ap-gold-soft);
   transform: translateX(4px);
 }
+
+/* Растянутая ссылка на тир-лист — кликается вся плитка;
+   ник владельца (z-index выше) перекрывает её и ведёт на профиль */
+.ap-tier-tile__link {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--ap-radius);
+}
+
+.ap-tier-tile__link:focus-visible {
+  outline: 2px solid var(--ap-gold);
+  outline-offset: 2px;
+}

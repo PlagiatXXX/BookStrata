@@ -52,7 +52,7 @@ function MiniTierCard({ item }: { item: TierListShort }) {
       <div className="mini-tier-card__body">
         <h3 className="mini-tier-card__title">{item.title}</h3>
         <div className="mini-tier-card__meta">
-          <span>@{item.user?.username || item.authorName || "anonymous"}</span>
+          <span>{item.user?.username || item.authorName || "anonymous"}</span>
           {item.likesCount != null && (
             <span className="mini-tier-card__likes">
               <Heart size={12} fill="currentColor" />

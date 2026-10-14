@@ -710,7 +710,7 @@ export default function BookPage() {
                         {tl.title}
                       </span>
                       <span className="text-white/40 text-xs">
-                        @{tl.authorUsername}
+                        {tl.authorUsername}
                       </span>
                     </div>
                   </Link>

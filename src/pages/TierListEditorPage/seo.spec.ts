@@ -7,7 +7,7 @@ import {
 
 describe("buildTierListSeoTitle", () => {
   it("добавляет автора в заголовок — уникализирует одинаковые названия", () => {
-    expect(buildTierListSeoTitle("2026", "fedora")).toBe("2026 — книжный тир-лист от @fedora");
+    expect(buildTierListSeoTitle("2026", "fedora")).toBe("2026 — книжный тир-лист от fedora");
   });
 
   it("не добавляет автора, если никнейм отсутствует", () => {
@@ -25,7 +25,7 @@ describe("buildTierListSeoTitle", () => {
 describe("buildTierListSeoDescription", () => {
   it("добавляет автора в описание", () => {
     expect(buildTierListSeoDescription("2026", "fedora")).toBe(
-      "Тир-лист «2026» от пользователя @fedora — визуальный рейтинг книг, созданный на BookStrata",
+      "Тир-лист «2026» от пользователя fedora — визуальный рейтинг книг, созданный на BookStrata",
     );
   });
 
