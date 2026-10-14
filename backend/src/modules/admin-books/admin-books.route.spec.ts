@@ -467,6 +467,17 @@ describe("Admin Books Routes", () => {
       expect(extractPullQuote([{ icon: "format_quote", text: "«" }])).toBe("«");
     });
 
+    it("extractPullQuote: точка или пробел после закрывающей кавычки не мешает обрезке", async () => {
+      const { extractPullQuote } = await import("./admin-books.service.js");
+
+      expect(extractPullQuote([{ icon: "format_quote", text: "«Цитата»." }])).toBe("Цитата.");
+      expect(extractPullQuote([{ icon: "format_quote", text: "«Цитата» . " }])).toBe("Цитата.");
+      expect(extractPullQuote([{ icon: "format_quote", text: '"Цитата". ' }])).toBe("Цитата.");
+      expect(extractPullQuote([{ icon: "format_quote", text: "«Цитата»…" }])).toBe("Цитата…");
+      // Внутренние кавычки не ломают обрезку внешних
+      expect(extractPullQuote([{ icon: "format_quote", text: "«Цитата «внутри» хвост»." }])).toBe("Цитата «внутри» хвост.");
+    });
+
     it("authorId → битые блоки лонгрида пропускаются, цитат нет — pullQuote null", async () => {
       mocks.prisma.book.findMany
         .mockResolvedValueOnce([bookRow])

@@ -136,14 +136,23 @@ const QUOTE_PAIRS: Array<[string, string]> = [
 ];
 
 /** Срезает парные обрамляющие кавычки с начала и конца текста.
- *  Непарные кавычки (только в начале или только в конце) не трогаются. */
+ *  Допускает хвост из пробелов и точек после закрывающей кавычки
+ *  («Цитата». → Цитата.) — на странице автора цитата снова оборачивается
+ *  в «» CSS-псевдоэлементами. Непарные кавычки не трогаются. */
 function stripSurroundingQuotes(text: string): string {
   if (text.length < 2) return text;
-  const first = text[0];
-  const last = text[text.length - 1];
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   for (const [open, close] of QUOTE_PAIRS) {
-    if (first === open && last === close) {
-      return text.slice(1, -1).trim();
+    if (text[0] !== open) continue;
+    const match = text.match(
+      new RegExp(`^${escape(open)}([\\s\\S]+)${escape(close)}[…\\s.]*$`),
+    );
+    if (match) {
+      // Хвост после кавычек: если там была точка/многоточие — оставляем
+      // первый пунктуационный символ, пробелы отбрасываем
+      const tail = match[0].slice(match[0].lastIndexOf(close) + 1);
+      const punctuation = tail.match(/[.…]/)?.[0] ?? "";
+      return (match[1] + punctuation).trim();
     }
   }
   return text;
