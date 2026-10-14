@@ -55,7 +55,10 @@ export const authorPageSchema = z.object({
   books: z.array(authorBookSchema),
   topBooks: z.array(authorBookSchema),
   bottomBooks: z.array(authorBookSchema),
-  tierLists: z.array(z.object({ id: z.string(), slug: z.string().nullable(), title: z.string() })),
+  tierLists: z.array(z.object({
+    id: z.string(), slug: z.string().nullable(), title: z.string(),
+    userId: z.number(), username: z.string(),
+  })),
   stats: z.array(authorStatSchema),
   showcase: z.array(authorShowcaseSchema),
   adaptations: z.array(authorAdaptationSchema),

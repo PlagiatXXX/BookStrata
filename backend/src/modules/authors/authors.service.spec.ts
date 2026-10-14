@@ -159,7 +159,8 @@ describe('getBySlug', () => {
         stats: [], showcase: [], adaptations: [], pressQuotes: [],
       },
       placementFindMany: [
-        { tierListId: 't1', tierList: { id: 't1', slug: 'tl-1', title: 'Лучшее' } },
+        { tierListId: 't1', tierList: { id: 't1', slug: 'tl-1', title: 'Лучшее',
+          user: { id: 7, username: 'reader' } } },
       ],
     });
 
@@ -174,7 +175,37 @@ describe('getBySlug', () => {
     // топ/худшие: только книги с >= 5 оценок
     expect(data!.topBooks.map((b) => b.id)).toEqual([2, 3]);
     expect(data!.bottomBooks.map((b) => b.id)).toEqual([3, 2]);
-    expect(data!.tierLists).toEqual([{ id: 't1', slug: 'tl-1', title: 'Лучшее' }]);
+    expect(data!.tierLists).toEqual([
+      { id: 't1', slug: 'tl-1', title: 'Лучшее', userId: 7, username: 'reader' },
+    ]);
+  });
+
+  it('tierLists включают владельца: userId и username', async () => {
+    const { service, prisma } = makeService({
+      authorFindUnique: {
+        id: 1, name: 'X', slug: 'x', seoDescription: 'Текст', books: [],
+        stats: [], showcase: [], adaptations: [], pressQuotes: [],
+      },
+      placementFindMany: [
+        { tierListId: 't1',
+          tierList: { id: 't1', slug: 'tl-1', title: 'Лучшее',
+            user: { id: 42, username: 'fan42' } } },
+      ],
+    });
+
+    const data = await service.getBySlug('x');
+
+    expect(data!.tierLists).toEqual([
+      { id: 't1', slug: 'tl-1', title: 'Лучшее', userId: 42, username: 'fan42' },
+    ]);
+    // выборка включает владельца тир-листа
+    expect(prisma.bookPlacement.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({
+          tierList: { select: { id: true, slug: true, title: true, user: { select: { id: true, username: true } } } },
+        }),
+      }),
+    );
   });
 
   it('avgRating null если у книг нет оценок', async () => {

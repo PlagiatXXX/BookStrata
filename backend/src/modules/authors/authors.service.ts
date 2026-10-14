@@ -308,13 +308,24 @@ export function createAuthorService(prisma: PrismaClient) {
       },
       select: {
         tierListId: true,
-        tierList: { select: { id: true, slug: true, title: true } },
+        tierList: {
+          select: {
+            id: true, slug: true, title: true,
+            user: { select: { id: true, username: true } },
+          },
+        },
       },
       distinct: ["tierListId"],
       orderBy: { tierListId: "asc" },
       take: 6,
     });
-    const tierLists = placements.map((p) => p.tierList);
+    const tierLists = placements.map((p) => ({
+      id: p.tierList.id,
+      slug: p.tierList.slug,
+      title: p.tierList.title,
+      userId: p.tierList.user.id,
+      username: p.tierList.user.username,
+    }));
 
     return {
       author: {
