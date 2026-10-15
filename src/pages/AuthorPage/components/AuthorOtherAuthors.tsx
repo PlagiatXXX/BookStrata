@@ -46,7 +46,7 @@ export function AuthorOtherAuthors({ authors }: AuthorOtherAuthorsProps) {
                 {a.name}
               </span>
               <span className="mt-1 flex items-center gap-2 text-xs text-[var(--ap-ink-muted)]">
-                {booksLabel(a.bookCount)}
+                {booksLabel(a.bookCount)} на сайте
                 <span
                   aria-hidden="true"
                   className="text-[var(--ap-gold)] transition-transform duration-300 group-hover:translate-x-1"

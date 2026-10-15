@@ -61,7 +61,7 @@ function AuthorPhotoCard({ author }: { author: AuthorResult }) {
         </span>
         <span className="text-xs text-[var(--ap-ink-muted)]">
           <span className="font-semibold text-[var(--ap-gold)]">{author.bookCount}</span>{" "}
-          {pluralize(author.bookCount, ["книга", "книги", "книг"])}
+          {pluralize(author.bookCount, ["книга", "книги", "книг"])} на сайте
         </span>
       </span>
     </>
@@ -85,7 +85,7 @@ function AuthorCompactCard({ author }: { author: AuthorResult }) {
       </span>
       <span className="flex shrink-0 items-baseline gap-1 text-xs text-[var(--ap-ink-muted)]">
         <span className="font-semibold text-[var(--ap-gold)]">{author.bookCount}</span>
-        {pluralize(author.bookCount, ["книга", "книги", "книг"])}
+        {pluralize(author.bookCount, ["книга", "книги", "книг"])} на сайте
       </span>
     </>
   );

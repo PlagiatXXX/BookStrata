@@ -69,7 +69,7 @@ describe("AuthorsPage", () => {
       "/authors/author-1",
     );
     expect(screen.getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("книг")).toBeInTheDocument();
+    expect(screen.getByText("книг на сайте")).toBeInTheDocument();
   });
 
   it("крошки не прячутся под fixed-хедером (контейнер с pt-24)", async () => {

@@ -90,7 +90,7 @@ describe("AuthorPage", () => {
     expect(await screen.findByRole("heading", { name: "Лев Толстой" })).toBeInTheDocument();
     expect(screen.getByText(/Русский писатель, классик мировой литературы/)).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("книг")).toBeInTheDocument();
+    expect(screen.getByText("книг на сайте")).toBeInTheDocument();
 
     const link = screen.getByRole("link", { name: /читать|купить/i });
     expect(link).toHaveAttribute("href", expect.stringContaining("chitai-gorod.ru"));
@@ -347,7 +347,7 @@ describe("Библиография", () => {
     // Счётчик в hero, а не только в чипсете жанров библиографии
     const hero = screen.getByRole("heading", { name: "Лев Толстой" }).closest("section");
     expect(within(hero!).getByText("12")).toBeInTheDocument();
-    expect(within(hero!).getByText("книг")).toBeInTheDocument();
+    expect(within(hero!).getByText("книг на сайте")).toBeInTheDocument();
   });
 
   it("books пуст — секция скрыта (карточек нет)", async () => {
@@ -767,7 +767,7 @@ describe("Секции ручного контента", () => {
     expect(screen.getByText("14 млн")).toBeInTheDocument();
     expect(screen.getByText("напечатанных книг")).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("книг")).toBeInTheDocument();
+    expect(screen.getByText("книг на сайте")).toBeInTheDocument();
     expect(screen.getByText("8.7 / 10")).toBeInTheDocument();
     expect(screen.getByText("Средний рейтинг")).toBeInTheDocument();
   });
@@ -781,7 +781,7 @@ describe("Секции ручного контента", () => {
     expect(screen.queryByText("14 млн")).not.toBeInTheDocument();
     expect(screen.queryByText("напечатанных книг")).not.toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("книг")).toBeInTheDocument();
+    expect(screen.getByText("книг на сайте")).toBeInTheDocument();
     expect(screen.getByText("8.7 / 10")).toBeInTheDocument();
     expect(screen.getByText("Средний рейтинг")).toBeInTheDocument();
   });

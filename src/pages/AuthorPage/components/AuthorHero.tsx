@@ -110,7 +110,7 @@ export function AuthorHero({ author, stats }: AuthorHeroProps) {
           <div className="flex flex-col items-center justify-center text-center">
             <span className={STAT_VALUE_CLASS}>{author.bookCount}</span>
             <span className={STAT_LABEL_CLASS}>
-              {pluralize(author.bookCount, ["книга", "книги", "книг"])}
+              {pluralize(author.bookCount, ["книга", "книги", "книг"])} на сайте
             </span>
           </div>
           {author.avgRating !== null && (

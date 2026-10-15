@@ -152,7 +152,7 @@ export default function AuthorInput({
             >
               <span className="font-medium">{author.name}</span>
               <span className="ml-2 text-[10px] text-gray-400">
-                {author.bookCount} {author.bookCount === 1 ? 'книга' : author.bookCount < 5 ? 'книги' : 'книг'}
+                {author.bookCount} {author.bookCount === 1 ? 'книга' : author.bookCount < 5 ? 'книги' : 'книг'} на сайте
               </span>
             </button>
           ))}
