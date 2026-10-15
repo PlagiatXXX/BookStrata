@@ -45,9 +45,14 @@ export const adminAuthorsRoutes: FastifyPluginAsync = async (fastify) => {
   }>("/", async (request, reply) => {
     try {
       const parsedPage = Number(request.query.page);
+      // Верхняя граница — защита от Int32 overflow в skip Prisma
+      const page =
+        Number.isInteger(parsedPage) && parsedPage >= 1 && parsedPage <= 1_000_000
+          ? parsedPage
+          : 1;
       const result = await service.list({
         q: request.query.q,
-        page: Number.isInteger(parsedPage) && parsedPage >= 1 ? parsedPage : 1,
+        page,
         onlyWithoutHero: request.query.onlyWithoutHero === "true",
       });
       return reply.code(200).send(createSuccessResponse(result));

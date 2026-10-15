@@ -115,6 +115,18 @@ describe("admin-authors routes", () => {
     );
   });
 
+  it("admin: GET / с чрезмерным page → page 1 (без Int32 overflow в Prisma)", async () => {
+    mocks.prisma.author.findMany.mockResolvedValue([]);
+    const res = await request(app.server)
+      .get("/api/admin/authors?page=100000000")
+      .set("Authorization", "Bearer admin-token");
+    expect(res.status).toBe(200);
+    expect(res.body.data.page).toBe(1);
+    expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 0 }),
+    );
+  });
+
   it("admin: GET /:id/content несуществующего → 404", async () => {
     mocks.prisma.author.findUnique.mockResolvedValue(null);
     const res = await request(app.server)
