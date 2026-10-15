@@ -61,7 +61,7 @@ export default function TopicPage() {
             <div className="h-4 bg-(--bg-1) rounded w-3/4" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-[200px] bg-(--bg-1) rounded" />
+                <div key={i} className="h-50 bg-(--bg-1) rounded" />
               ))}
             </div>
           </div>
@@ -78,7 +78,7 @@ export default function TopicPage() {
           description={`В жанре «${categoryLabel}» пока нет подборок. Посмотрите другие коллекции на BookStrata.`}
           url={`/topics/${slug}`}
           noindex
-          breadcrumbs={[{ name: "Главная", url: "/" }, { name: categoryLabel, url: `/topics/${slug}` }]}
+          breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Подборки книг", url: "/collections" }, { name: categoryLabel, url: `/topics/${slug}` }]}
         />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20 text-center">
           <h1 className="text-2xl font-bold text-(--ink-2) mb-4">
@@ -114,14 +114,14 @@ export default function TopicPage() {
         title={`${categoryLabel} — подборки книг и рейтинг`}
         description={description}
         url={`/topics/${slug}`}
-        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Рейтинги", url: "/rankings" }, { name: categoryLabel, url: `/topics/${slug}` }]}
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Подборки книг", url: "/collections" }, { name: categoryLabel, url: `/topics/${slug}` }]}
       />
 
       <DashboardLayout showSearch={false}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 pb-12">
           {/* Breadcrumbs */}
           <Breadcrumbs
-            items={[{ label: "Главная", href: "/" }, { label: "Рейтинги", href: "/rankings" }, { label: categoryLabel }]}
+            items={[{ label: "Главная", href: "/" }, { label: "Подборки книг", href: "/collections" }, { label: categoryLabel }]}
             theme="light"
           />
 
