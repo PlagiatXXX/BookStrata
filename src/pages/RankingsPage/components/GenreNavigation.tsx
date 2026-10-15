@@ -83,6 +83,17 @@ export function GenreNavigation() {
             <ChevronRight size={18} />
           </button>
         </div>
+
+        {/* Вход на хаб /collections — под каруселью жанров */}
+        <div className="mt-2 flex justify-center">
+          <Link
+            to="/collections"
+            className="inline-flex items-center gap-2 rounded-full border border-primary text-primary px-7 py-2.5 text-sm font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(236,178,255,0.35)] hover:bg-primary/10 transition-all"
+          >
+            Все коллекции
+            <ChevronRight size={16} />
+          </Link>
+        </div>
       </div>
     </section>
   );

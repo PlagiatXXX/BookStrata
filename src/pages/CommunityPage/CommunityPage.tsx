@@ -1,6 +1,6 @@
 import { useEffect, useState, memo, lazy, Suspense } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
-import { TrendingUp } from "lucide-react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { TrendingUp, ArrowUpRight } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { Reveal } from "@/components/Reveal/Reveal";
@@ -105,6 +105,13 @@ export default function CommunityPage() {
               <TrendingUp className="text-(--accent-main)" size={28} />
               Подборки BookStrata
             </h2>
+            <Link
+              to="/collections"
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-(--accent-main) px-4 py-2 text-sm font-semibold text-(--accent-main) no-underline hover:bg-(--accent-main)/10 transition-colors"
+            >
+              Все коллекции
+              <ArrowUpRight size={14} />
+            </Link>
           </Reveal>
 
           <MemoizedCollectionGrid
