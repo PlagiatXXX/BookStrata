@@ -122,6 +122,7 @@ const ROUTES = [
   { path: "/",           name: "Главная" },
   { path: "/auth",       name: "Вход / Регистрация" },
   { path: "/rankings",   name: "Рейтинг книг" },
+  { path: "/collections", name: "Подборки книг" },
   { path: "/community",  name: "Сообщество" },
   { path: "/history",    name: "История" },
   { path: "/what-to-read", name: "Что почитать" },
@@ -853,12 +854,15 @@ async function processRoute(browser, route) {
       body: JSON.stringify([]),
     }));
 
-    // Список коллекций в сайдбаре — не нужен для SEO отдельных страниц
-    await page.route("**/api/collections", (route) => route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([]),
-    }));
+    // Список коллекций в сайдбаре — не нужен для SEO отдельных страниц.
+    // На самой странице /collections (хаб) данные нужны — мок там не ставим.
+    if (route.path !== "/collections") {
+      await page.route("**/api/collections", (route) => route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      }));
+    }
 
     // Блокируем внешние запросы, не нужные при пререндере
     await page.route("**/sitemap.xml", (route) => route.abort());
