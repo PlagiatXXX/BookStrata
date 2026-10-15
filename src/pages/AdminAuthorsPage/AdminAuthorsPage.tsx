@@ -19,11 +19,13 @@ export default function AdminAuthorsPage() {
   const [search, setSearch] = useState("")
   const debouncedSearch = useDebounce(search, 400)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [page, setPage] = useState(1)
+  const [onlyWithoutHero, setOnlyWithoutHero] = useState(false)
   const [status, setStatus] = useState<
     { type: "success"; text: string } | { type: "error"; text: string } | null
   >(null)
 
-  const authorsQuery = useAdminAuthorList(debouncedSearch)
+  const authorsQuery = useAdminAuthorList(debouncedSearch, page, onlyWithoutHero)
   const contentQuery = useAdminAuthorContent(selectedId)
   const booksQuery = useAdminAuthorBooks(selectedId)
   const saveMutation = useSaveAuthorContent(selectedId)
@@ -49,7 +51,11 @@ export default function AdminAuthorsPage() {
     })
   }
 
-  const authors = authorsQuery.data ?? []
+  const authorList = authorsQuery.data
+  const authors = authorList?.authors ?? []
+  const total = authorList?.total ?? 0
+  const pageSize = authorList?.pageSize ?? 100
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const books = booksQuery.data?.items ?? []
   const selectedAuthor = authors.find((a) => a.id === selectedId)
 
@@ -84,10 +90,35 @@ export default function AdminAuthorsPage() {
                 type="text"
                 placeholder="Поиск автора..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  // Смена поиска — всегда на первую страницу
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
                 className={`${inputClass} pl-9`}
                 aria-label="Поиск автора"
               />
+            </div>
+
+            <div className="mb-3 flex gap-1" role="group" aria-label="Фильтр по фото">
+              {([false, true] as const).map((value) => (
+                <button
+                  key={String(value)}
+                  type="button"
+                  onClick={() => {
+                    // Смена фильтра — всегда на первую страницу
+                    setOnlyWithoutHero(value)
+                    setPage(1)
+                  }}
+                  className={`rounded-lg border px-3 py-1.5 text-xs transition-colors cursor-pointer ${
+                    onlyWithoutHero === value
+                      ? "border-gray-600 bg-white/10 text-white"
+                      : "border-gray-800 bg-white/5 text-gray-400 hover:bg-white/10"
+                  }`}
+                >
+                  {value ? "Без фото" : "Все"}
+                </button>
+              ))}
             </div>
 
             {authorsQuery.isLoading && (
@@ -158,6 +189,32 @@ export default function AdminAuthorsPage() {
                 </button>
               ))}
             </div>
+
+            {totalPages > 1 && (
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  aria-label="Предыдущая страница"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="rounded-lg border border-gray-800 bg-white/5 px-3 py-1.5 text-xs text-gray-300 transition-colors enabled:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Назад
+                </button>
+                <span className="text-xs text-gray-500">
+                  Страница {page} из {totalPages}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Следующая страница"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="rounded-lg border border-gray-800 bg-white/5 px-3 py-1.5 text-xs text-gray-300 transition-colors enabled:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Вперёд
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Правая колонка — редактор */}

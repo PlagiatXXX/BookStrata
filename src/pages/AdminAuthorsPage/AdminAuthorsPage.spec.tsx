@@ -86,6 +86,14 @@ const mockContent = {
   ],
 }
 
+/** Ответ listAdminAuthors в новой форме (список + пагинация). */
+const listResult = (
+  authors: typeof mockAuthors,
+  overrides: Partial<{ total: number; page: number; pageSize: number }> = {},
+) => ({ authors, total: authors.length, page: 1, pageSize: 100, ...overrides })
+
+const mockedList = vi.mocked(listAdminAuthors)
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -98,7 +106,7 @@ function createWrapper() {
 }
 
 async function renderWithAuthorSelected() {
-  vi.mocked(listAdminAuthors).mockResolvedValue(mockAuthors)
+  mockedList.mockResolvedValue(listResult(mockAuthors))
   vi.mocked(getAdminAuthorContent).mockResolvedValue(mockContent)
   vi.mocked(listAdminBooks).mockResolvedValue({
     items: [{ id: 10, title: "Анна Каренина" }],
@@ -123,19 +131,19 @@ describe("AdminAuthorsPage", () => {
   })
 
   it("поиск отображает авторов с флагами счётчиков (только ненулевые)", async () => {
-    vi.mocked(listAdminAuthors).mockResolvedValue(mockAuthors)
+    mockedList.mockResolvedValue(listResult(mockAuthors))
 
     render(<AdminAuthorsPage />, { wrapper: createWrapper() })
 
     await waitFor(() => {
-      expect(listAdminAuthors).toHaveBeenCalledWith(undefined)
+      expect(listAdminAuthors).toHaveBeenCalledWith({ page: 1 })
     })
 
     const input = screen.getByPlaceholderText("Поиск автора...")
     await userEvent.type(input, "Толстой")
 
     await waitFor(() => {
-      expect(listAdminAuthors).toHaveBeenCalledWith("Толстой")
+      expect(listAdminAuthors).toHaveBeenCalledWith({ q: "Толстой", page: 1 })
     })
     await waitFor(() => {
       expect(screen.getByTestId("author-item-1")).toBeInTheDocument()
@@ -157,12 +165,12 @@ describe("AdminAuthorsPage", () => {
   })
 
   it("один символ в поиске — подсказка «Введите 2 и более символа», не «не найдены»", async () => {
-    vi.mocked(listAdminAuthors).mockResolvedValue(mockAuthors)
+    mockedList.mockResolvedValue(listResult(mockAuthors))
 
     render(<AdminAuthorsPage />, { wrapper: createWrapper() })
 
     await waitFor(() => {
-      expect(listAdminAuthors).toHaveBeenCalledWith(undefined)
+      expect(listAdminAuthors).toHaveBeenCalledWith({ page: 1 })
     })
 
     const input = screen.getByPlaceholderText("Поиск автора...")
@@ -295,7 +303,7 @@ describe("AdminAuthorsPage", () => {
   })
 
   it("неудачная загрузка контента (автор не найден) → сообщение об ошибке", async () => {
-    vi.mocked(listAdminAuthors).mockResolvedValue(mockAuthors)
+    mockedList.mockResolvedValue(listResult(mockAuthors))
     vi.mocked(getAdminAuthorContent).mockRejectedValue(new Error("Автор не найден"))
 
     render(<AdminAuthorsPage />, { wrapper: createWrapper() })
@@ -320,5 +328,77 @@ describe("AdminAuthorsPage", () => {
     expect(
       screen.queryByText(/Контент автора сохранён/),
     ).not.toBeInTheDocument()
+  })
+
+  it("пагинация: total 250 → «Страница 1 из 3», кнопка вперёд запрашивает page=2", async () => {
+    mockedList.mockResolvedValue(listResult(mockAuthors, { total: 250 }))
+
+    render(<AdminAuthorsPage />, { wrapper: createWrapper() })
+
+    expect(await screen.findByText("Страница 1 из 3")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Следующая страница" }))
+    await waitFor(() =>
+      expect(listAdminAuthors).toHaveBeenCalledWith(expect.objectContaining({ page: 2 })),
+    )
+  })
+
+  it("фильтр «Без фото» запрашивает onlyWithoutHero: true и сбрасывает страницу", async () => {
+    mockedList.mockResolvedValue(listResult(mockAuthors, { total: 42 }))
+
+    render(<AdminAuthorsPage />, { wrapper: createWrapper() })
+    await screen.findByText("Лев Толстой")
+
+    await userEvent.click(screen.getByRole("button", { name: "Без фото" }))
+
+    await waitFor(() =>
+      expect(listAdminAuthors).toHaveBeenCalledWith(
+        expect.objectContaining({ onlyWithoutHero: true, page: 1 }),
+      ),
+    )
+    // total меньше одной страницы — кнопок пагинации нет
+    expect(screen.queryByText(/Страница \d+ из \d+/)).not.toBeInTheDocument()
+  })
+
+  it("смена поиска после перехода на страницу 2 сбрасывает page на 1", async () => {
+    mockedList.mockResolvedValue(listResult(mockAuthors, { total: 250 }))
+
+    render(<AdminAuthorsPage />, { wrapper: createWrapper() })
+    await screen.findByText("Страница 1 из 3")
+    await userEvent.click(screen.getByRole("button", { name: "Следующая страница" }))
+    await waitFor(() =>
+      expect(listAdminAuthors).toHaveBeenCalledWith(expect.objectContaining({ page: 2 })),
+    )
+
+    mockedList.mockResolvedValue(listResult([], { total: 0, page: 1 }))
+    await userEvent.type(screen.getByLabelText("Поиск автора"), "Толстой")
+
+    await waitFor(() =>
+      expect(listAdminAuthors).toHaveBeenCalledWith(
+        expect.objectContaining({ q: "Толстой", page: 1 }),
+      ),
+    )
+  })
+
+  it("total обнулился на странице 2: пусто + кнопка назад работает", async () => {
+    mockedList.mockResolvedValue(listResult(mockAuthors, { total: 250 }))
+
+    render(<AdminAuthorsPage />, { wrapper: createWrapper() })
+    await screen.findByText("Страница 1 из 3")
+    await userEvent.click(screen.getByRole("button", { name: "Следующая страница" }))
+    await waitFor(() =>
+      expect(listAdminAuthors).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 2 }),
+      ),
+    )
+
+    // total обнулился (записи удалили) — список пуст, но назад можно
+    mockedList.mockResolvedValue(listResult([], { total: 0 }))
+    await userEvent.click(screen.getByRole("button", { name: "Предыдущая страница" }))
+
+    await waitFor(() =>
+      expect(listAdminAuthors).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1 }),
+      ),
+    )
   })
 })

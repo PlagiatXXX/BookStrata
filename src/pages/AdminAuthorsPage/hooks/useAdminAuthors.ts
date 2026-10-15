@@ -8,12 +8,18 @@ import {
 } from "@/lib/adminAuthorsApi"
 import { listAdminBooks } from "@/lib/adminBooksApi"
 
-/** Список авторов с флагами контента. Запрос — только при пустом запросе
- *  или длине ≥ 2 (один символ не фильтрует ничего полезного). */
-export function useAdminAuthorList(q: string) {
+/** Список авторов с флагами контента: пагинация и фильтр «без фото».
+ *  Запрос — только при пустом запросе или длине ≥ 2 (один символ не
+ *  фильтрует ничего полезного). */
+export function useAdminAuthorList(q: string, page: number, onlyWithoutHero: boolean) {
   return useQuery({
-    queryKey: ["admin", "authors", q],
-    queryFn: () => listAdminAuthors(q || undefined),
+    queryKey: ["admin", "authors", q, page, onlyWithoutHero],
+    queryFn: () =>
+      listAdminAuthors({
+        ...(q ? { q } : {}),
+        page,
+        ...(onlyWithoutHero ? { onlyWithoutHero: true } : {}),
+      }),
     enabled: q.length >= 2 || q === "",
   })
 }

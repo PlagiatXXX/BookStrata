@@ -42,13 +42,23 @@ export type AdminAuthorContent = Omit<AuthorContentInput, "showcase"> & {
   showcase: AdminAuthorShowcaseItem[]
 }
 
-/** Список авторов для админки (с флагами наличия контента). */
-export async function listAdminAuthors(q?: string): Promise<AdminAuthorListItem[]> {
-  const res = await apiClient.get<{ authors: AdminAuthorListItem[] }>(
-    "/admin/authors",
-    q ? { q } : undefined,
-  )
-  return res.authors
+export interface AdminAuthorListResult {
+  authors: AdminAuthorListItem[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+/** Список авторов для админки: пагинация + сортировка «без фото сверху».
+ *  onlyWithoutHero — только авторы без heroImageUrl (ревизия незаполненных). */
+export function listAdminAuthors(
+  params?: { q?: string; page?: number; onlyWithoutHero?: boolean },
+): Promise<AdminAuthorListResult> {
+  const query: Record<string, string | number | boolean> = {}
+  if (params?.q) query.q = params.q
+  if (params?.page !== undefined) query.page = params.page
+  if (params?.onlyWithoutHero) query.onlyWithoutHero = true
+  return apiClient.get("/admin/authors", query)
 }
 
 /** Текущий контент автора для редактора. */
