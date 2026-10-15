@@ -245,7 +245,15 @@ export default function BookPage() {
     <div className="book-page">
       <SEOHead
         title={`${book.title}${book.author ? ` — ${book.author}` : ""}`}
-        description={buildDescriptionSnippet(book)}
+        description={buildDescriptionSnippet({
+          title: book.title,
+          author: book.author,
+          description: book.description,
+          rating: book.rating,
+          hasReadingGuide: Boolean(book.readingGuide),
+          hasSimilarBooks: similarBooks.length > 0,
+          tierListsCount: tierLists.length,
+        })}
         image={
           book.ogImageUrl ||
           (book.coverImageUrl &&

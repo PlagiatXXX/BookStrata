@@ -566,6 +566,22 @@ describe("BookPage", () => {
     ).toBe("Великий Гэтсби — Ф. Скотт Фицджеральд | BookStrata");
   });
 
+  it("meta description собирается из блоков страницы", async () => {
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    await waitFor(() => {
+      expect(document.querySelector('meta[name="description"]')?.getAttribute("content")).toBe(
+        "Великий Гэтсби — Ф. Скотт Фицджеральд: о чём книга, оценка редакции 8,4 из 10 и тир-листы читателей. Роман, ставший символом века джаза.",
+      );
+    });
+  });
+
   it("buildBookJsonLd добавляет isbn, inLanguage, url и mainEntityOfPage", () => {
     const ld = buildBookJsonLd({
       title: "Дюна",
@@ -825,23 +841,78 @@ describe("BookPage: мобильная адаптивность действий
 });
 
 describe("buildDescriptionSnippet", () => {
-  it("короткое описание возвращает как есть", () => {
+  it("без доп. данных — база и описание", () => {
     expect(
       buildDescriptionSnippet({ title: "Дюна", author: "Фрэнк Герберт", description: "Роман о пустынной планете." }),
-    ).toBe("Роман о пустынной планете.");
+    ).toBe("Дюна — Фрэнк Герберт: о чём книга. Роман о пустынной планете.");
   });
 
-  it("длинное описание обрезает по границе слова с многоточием", () => {
+  it("без автора — база без тире", () => {
+    expect(buildDescriptionSnippet({ title: "Гэтсби", author: null, description: "Роман." })).toBe(
+      "Гэтсби: о чём книга. Роман.",
+    );
+  });
+
+  it("добавляет оценку редакции, гид, тир-листы и похожие книги по наличию", () => {
+    expect(
+      buildDescriptionSnippet({
+        title: "Гэтсби",
+        author: "Фицджеральд",
+        description: "Роман.",
+        rating: 8.4,
+        hasReadingGuide: true,
+        hasSimilarBooks: true,
+        tierListsCount: 3,
+      }),
+    ).toBe(
+      "Гэтсби — Фицджеральд: о чём книга, оценка редакции 8,4 из 10, гид по чтению, тир-листы читателей и похожие книги. Роман.",
+    );
+  });
+
+  it("rating = 0 не выводит оценку", () => {
+    const result = buildDescriptionSnippet({ title: "Дюна", author: "Ф. Герберт", description: "Роман.", rating: 0 });
+    expect(result).not.toContain("оценка редакции");
+  });
+
+  it("длинное описание обрезает по границе слова, итог ≤ 160 с многоточием", () => {
     const long = `Роман, ставший символом века джаза. ${"Далее длинный текст сюжета. ".repeat(10)}конец`;
     const result = buildDescriptionSnippet({ title: "Гэтсби", author: null, description: long });
-    expect(result.length).toBeLessThanOrEqual(158);
+    expect(result.length).toBeLessThanOrEqual(160);
     expect(result.endsWith("…")).toBe(true);
     expect(result.endsWith("…конец")).toBe(false);
   });
 
-  it("без описания — fallback-шаблон с названием и автором", () => {
+  it("длинный префикс обрезает описание, но сохраняет начало и укладывается в лимит", () => {
+    const result = buildDescriptionSnippet({
+      title: "Очень длинное название книги про путешествия",
+      author: "Автор",
+      description: "Короткий синопсис про море и горы.",
+      rating: 7,
+      hasReadingGuide: true,
+      tierListsCount: 1,
+    });
+    expect(result.length).toBeLessThanOrEqual(160);
+    expect(result.includes("о чём книга")).toBe(true);
+    expect(result.includes("Короткий")).toBe(true);
+  });
+
+  it("префикс длиннее лимита — режется префикс, пустого описания нет", () => {
+    const result = buildDescriptionSnippet({
+      title: "Очень длинное название книги ".repeat(6),
+      author: "Автор",
+      description: "Короткий синопсис.",
+      rating: 7,
+      hasReadingGuide: true,
+      tierListsCount: 1,
+    });
+    expect(result.length).toBeLessThanOrEqual(160);
+    expect(result.endsWith("…")).toBe(true);
+    expect(result.startsWith("Очень длинное")).toBe(true);
+  });
+
+  it("без описания — fallback-шаблон с базой и призывом", () => {
     expect(buildDescriptionSnippet({ title: "Дюна", author: "Фрэнк Герберт", description: null })).toBe(
-      "Книга Дюна Фрэнк Герберт: описание, жанр, рейтинг. Найди книги в тир-листах и подборках BookStrata.",
+      "Дюна — Фрэнк Герберт: о чём книга. Найди книги в тир-листах и подборках BookStrata.",
     );
   });
 });
