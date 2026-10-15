@@ -15,7 +15,7 @@ function makeTx() {
 
 function makeService(tx = makeTx()) {
   const prisma = {
-    author: { findMany: vi.fn().mockResolvedValue([]), findUnique: vi.fn() },
+    author: { findMany: vi.fn().mockResolvedValue([]), findUnique: vi.fn(), count: vi.fn().mockResolvedValue(0) },
     book: { findMany: vi.fn().mockResolvedValue([{ id: 7 }]) },
     $transaction: vi.fn(async (fn: (t: unknown) => Promise<unknown>) => fn(tx)),
   };
@@ -41,8 +41,8 @@ describe("admin-authors service", () => {
     prisma.author.findMany.mockResolvedValue([
       { id: 1, name: "Вэнс", slug: "vans", _count: { stats: 2, showcase: 1, adaptations: 0, pressQuotes: 3 } },
     ]);
-    const list = await service.list("вэнс");
-    expect(list).toEqual([
+    const { authors } = await service.list({ q: "вэнс" });
+    expect(authors).toEqual([
       { id: 1, name: "Вэнс", slug: "vans", statsCount: 2, showcaseCount: 1, adaptationsCount: 0, pressQuotesCount: 3 },
     ]);
     expect(prisma.author.findMany).toHaveBeenCalledWith(
@@ -53,14 +53,57 @@ describe("admin-authors service", () => {
     );
   });
 
-  it("list: авторы с большим числом книг идут выше (books._count desc, tie-break по имени)", async () => {
+  it("list: сначала авторы без фото, потом по книгам desc и имени asc", async () => {
     const { service, prisma } = makeService();
 
     await service.list();
 
     expect(prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        orderBy: [{ books: { _count: "desc" } }, { name: "asc" }],
+        orderBy: [
+          { heroImageUrl: { sort: "asc", nulls: "first" } },
+          { books: { _count: "desc" } },
+          { name: "asc" },
+        ],
+      }),
+    );
+  });
+
+  it("list: пагинация — skip/take по 100, возвращает total/page/pageSize", async () => {
+    const { service, prisma } = makeService();
+    prisma.author.findMany.mockResolvedValue([]);
+    prisma.author.count.mockResolvedValue(250);
+
+    const result = await service.list({ page: 3 });
+
+    expect(result).toMatchObject({ total: 250, page: 3, pageSize: 100 });
+    expect(prisma.author.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 200, take: 100 }),
+    );
+    expect(prisma.author.count).toHaveBeenCalledWith({ where: {} });
+  });
+
+  it("list: page по умолчанию 1 — skip 0", async () => {
+    const { service, prisma } = makeService();
+
+    await service.list();
+
+    expect(prisma.author.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 0, take: 100 }),
+    );
+  });
+
+  it("list: onlyWithoutHero — where heroImageUrl: null вместе с поиском", async () => {
+    const { service, prisma } = makeService();
+
+    await service.list({ q: "лев", onlyWithoutHero: true });
+
+    expect(prisma.author.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          name: { contains: "лев", mode: "insensitive" },
+          heroImageUrl: null,
+        },
       }),
     );
   });

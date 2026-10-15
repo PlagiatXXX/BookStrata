@@ -7,7 +7,7 @@ import type { PrismaClient } from "@prisma/client";
 
 const mocks = vi.hoisted(() => ({
   prisma: {
-    author: { findMany: vi.fn(), findUnique: vi.fn() },
+    author: { findMany: vi.fn(), findUnique: vi.fn(), count: vi.fn() },
     book: { findMany: vi.fn() },
     $transaction: vi.fn(),
   },
@@ -83,6 +83,35 @@ describe("admin-authors routes", () => {
     expect(res.body.data.authors[0]).toMatchObject({ id: 1, name: "Вэнс", statsCount: 1 });
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { name: { contains: "вэнс", mode: "insensitive" } } }),
+    );
+  });
+
+  it("admin: GET /?page=2&onlyWithoutHero=true — прокидывает параметры, отвечает с total", async () => {
+    mocks.prisma.author.findMany.mockResolvedValue([]);
+    mocks.prisma.author.count.mockResolvedValue(150);
+    const res = await request(app.server)
+      .get("/api/admin/authors?page=2&onlyWithoutHero=true")
+      .set("Authorization", "Bearer admin-token");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ total: 150, page: 2, pageSize: 100 });
+    expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { heroImageUrl: null },
+        skip: 100,
+        take: 100,
+      }),
+    );
+  });
+
+  it("admin: GET / с мусорным page → page 1", async () => {
+    mocks.prisma.author.findMany.mockResolvedValue([]);
+    const res = await request(app.server)
+      .get("/api/admin/authors?page=abc")
+      .set("Authorization", "Bearer admin-token");
+    expect(res.status).toBe(200);
+    expect(res.body.data.page).toBe(1);
+    expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 0 }),
     );
   });
 

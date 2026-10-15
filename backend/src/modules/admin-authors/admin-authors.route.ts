@@ -38,11 +38,19 @@ export const adminAuthorsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook("preHandler", authMiddleware);
   fastify.addHook("preHandler", requireRole("admin"));
 
-  // GET /api/admin/authors?q= — список авторов с флагами контента
-  fastify.get<{ Querystring: { q?: string } }>("/", async (request, reply) => {
+  // GET /api/admin/authors?q=&page=&onlyWithoutHero= — список авторов
+  // с флагами контента, пагинацией и сортировкой «без фото сверху»
+  fastify.get<{
+    Querystring: { q?: string; page?: string; onlyWithoutHero?: string };
+  }>("/", async (request, reply) => {
     try {
-      const authors = await service.list(request.query.q);
-      return reply.code(200).send(createSuccessResponse({ authors }));
+      const parsedPage = Number(request.query.page);
+      const result = await service.list({
+        q: request.query.q,
+        page: Number.isInteger(parsedPage) && parsedPage >= 1 ? parsedPage : 1,
+        onlyWithoutHero: request.query.onlyWithoutHero === "true",
+      });
+      return reply.code(200).send(createSuccessResponse(result));
     } catch (error) {
       return handleError(error, reply);
     }

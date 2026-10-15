@@ -43,27 +43,57 @@ export interface AdminAuthorContent {
 }
 
 export function createAdminAuthorService(prisma: PrismaClient) {
-  /** Список авторов для админки, с флагами наличия контента. */
-  const list = async (q?: string): Promise<AdminAuthorListItem[]> => {
+  /** Размер страницы админ-списка авторов. */
+  const AUTHORS_PAGE_SIZE = 100;
+
+  /** Список авторов для админки, с флагами наличия контента.
+   *  Пагинация: page (с 1), total — всего авторов под фильтром.
+   *  Сортировка: без фото — в начале (ревизия), затем популярные
+   *  (больше книг), при равенстве — по алфавиту. */
+  const list = async (
+    opts: { q?: string; page?: number; onlyWithoutHero?: boolean } = {},
+  ): Promise<{
+    authors: AdminAuthorListItem[];
+    total: number;
+    page: number;
+    pageSize: number;
+  }> => {
+    const { q, page = 1, onlyWithoutHero } = opts;
     const trimmed = q?.trim();
-    const authors = await prisma.author.findMany({
-      where: trimmed ? { name: { contains: trimmed, mode: "insensitive" } } : undefined,
-      // Популярные (больше книг) — выше, при равенстве — по алфавиту
-      orderBy: [{ books: { _count: "desc" } }, { name: "asc" }],
-      take: 100,
-      include: {
-        _count: { select: { stats: true, showcase: true, adaptations: true, pressQuotes: true } },
-      },
-    });
-    return authors.map((a) => ({
-      id: a.id,
-      name: a.name,
-      slug: a.slug,
-      statsCount: a._count.stats,
-      showcaseCount: a._count.showcase,
-      adaptationsCount: a._count.adaptations,
-      pressQuotesCount: a._count.pressQuotes,
-    }));
+    const where = {
+      ...(trimmed ? { name: { contains: trimmed, mode: "insensitive" as const } } : {}),
+      ...(onlyWithoutHero ? { heroImageUrl: null } : {}),
+    };
+    const [authors, total] = await Promise.all([
+      prisma.author.findMany({
+        where,
+        orderBy: [
+          { heroImageUrl: { sort: "asc" as const, nulls: "first" as const } },
+          { books: { _count: "desc" as const } },
+          { name: "asc" as const },
+        ],
+        skip: (page - 1) * AUTHORS_PAGE_SIZE,
+        take: AUTHORS_PAGE_SIZE,
+        include: {
+          _count: { select: { stats: true, showcase: true, adaptations: true, pressQuotes: true } },
+        },
+      }),
+      prisma.author.count({ where }),
+    ]);
+    return {
+      authors: authors.map((a) => ({
+        id: a.id,
+        name: a.name,
+        slug: a.slug,
+        statsCount: a._count.stats,
+        showcaseCount: a._count.showcase,
+        adaptationsCount: a._count.adaptations,
+        pressQuotesCount: a._count.pressQuotes,
+      })),
+      total,
+      page,
+      pageSize: AUTHORS_PAGE_SIZE,
+    };
   };
 
   /** Текущий контент автора для редактора. */
