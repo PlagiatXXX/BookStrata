@@ -6,13 +6,15 @@ import { useTierEditorDrag } from './useTierEditorDrag';
 import type { TierListData } from '@/types';
 import type { DragEndEvent } from '@dnd-kit/core';
 
-// Мокаем logger
+// Мокаем logger (hoisted — чтобы тесты могли проверять вызовы logger.error)
+const loggerMock = vi.hoisted(() => ({
+  info: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+}));
+
 vi.mock('@/lib/logger', () => ({
-  createLogger: vi.fn(() => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  })),
+  createLogger: vi.fn(() => loggerMock),
 }));
 
 // Мокаем StorageService
@@ -494,6 +496,49 @@ describe('useTierEditorDrag', () => {
 
       // Стили восстановлены даже при ошибке
       expect(card.style.backgroundImage).toContain('http://example.com/cover.jpg');
+    });
+
+    it('логирует Event от html-to-image с URL упавшего изображения, а не [object Event]', async () => {
+      const brokenImg = document.createElement('img');
+      brokenImg.src = 'https://re406cj9uj.cdn.twcstorage.ru/image-cache/broken-cover.webp';
+      const loadErrorEvent = new Event('error');
+      // html-to-image reject-ит промис сырым событием onerror у <img>
+      Object.defineProperty(loadErrorEvent, 'target', { value: brokenImg });
+      mockToPng.mockRejectedValue(loadErrorEvent);
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['fake'], { type: 'image/jpeg' })),
+      });
+
+      const { result } = renderHookWithRef();
+      result.current.tierGridRef.current!.appendChild(document.createElement('div'));
+
+      await result.current.onDownloadImage();
+
+      expect(loggerMock.error).toHaveBeenCalledTimes(1);
+      const loggedError = loggerMock.error.mock.calls[0][0] as Error;
+      expect(loggedError).toBeInstanceOf(Error);
+      expect(loggedError.message).toContain('https://re406cj9uj.cdn.twcstorage.ru/image-cache/broken-cover.webp');
+      expect(loggedError.message).not.toContain('[object Event]');
+    });
+
+    it('логирует Event без известного target по типу события, а не [object Event]', async () => {
+      mockToPng.mockRejectedValue(new Event('error'));
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: () => Promise.resolve(new Blob(['fake'], { type: 'image/jpeg' })),
+      });
+
+      const { result } = renderHookWithRef();
+      result.current.tierGridRef.current!.appendChild(document.createElement('div'));
+
+      await result.current.onDownloadImage();
+
+      expect(loggerMock.error).toHaveBeenCalledTimes(1);
+      const loggedError = loggerMock.error.mock.calls[0][0] as Error;
+      expect(loggedError).toBeInstanceOf(Error);
+      expect(loggedError.message).toContain('error');
+      expect(loggedError.message).not.toContain('[object Event]');
     });
 
     it('должен восстанавливать background-image после экспорта', async () => {

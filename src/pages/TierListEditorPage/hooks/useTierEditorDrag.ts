@@ -27,6 +27,29 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
+/**
+ * Приводит ошибку экспорта к Error с полезным сообщением.
+ * html-to-image reject-ит промис сырым событием `onerror` у <img>, а строковое
+ * представление Event — «[object Event]» — бесполезно в Sentry: не видно, какое
+ * изображение упало. Для Event достаём URL из target.
+ */
+function normalizeExportError(err: unknown): Error {
+  if (err instanceof Error) return err;
+
+  if (err instanceof Event) {
+    const target = err.target as { currentSrc?: string; src?: string } | null;
+    const src =
+      target !== null && typeof target === "object"
+        ? target.currentSrc || target.src
+        : undefined;
+    return src
+      ? new Error(`Не удалось загрузить изображение для экспорта: ${src}`)
+      : new Error(`Экспорт прерван событием: ${err.type}`);
+  }
+
+  return new Error(String(err));
+}
+
 export interface UseTierEditorDragResult {
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   handleDragStart: (event: DragStartEvent) => void;
@@ -215,7 +238,7 @@ export function useTierEditorDrag({
         }
         inlineMap.clear();
 
-        logger.error(err instanceof Error ? err : new Error(String(err)), {
+        logger.error(normalizeExportError(err), {
           action: "downloadImage",
           title: listData.title,
         });
