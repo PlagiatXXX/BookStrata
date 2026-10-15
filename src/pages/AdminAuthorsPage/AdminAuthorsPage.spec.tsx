@@ -379,26 +379,28 @@ describe("AdminAuthorsPage", () => {
     )
   })
 
-  it("total обнулился на странице 2: пусто + кнопка назад работает", async () => {
-    mockedList.mockResolvedValue(listResult(mockAuthors, { total: 250 }))
+  it("total обнулился на странице 2: пагинация остаётся, кнопка назад работает", async () => {
+    mockedList
+      .mockResolvedValueOnce(listResult(mockAuthors, { total: 250 })) // страница 1
+      .mockResolvedValueOnce(listResult([], { total: 0 })) // данные обнулились
+      .mockResolvedValueOnce(listResult(mockAuthors, { total: 250 })) // снова страница 1
 
     render(<AdminAuthorsPage />, { wrapper: createWrapper() })
     await screen.findByText("Страница 1 из 3")
     await userEvent.click(screen.getByRole("button", { name: "Следующая страница" }))
-    await waitFor(() =>
-      expect(listAdminAuthors).toHaveBeenLastCalledWith(
-        expect.objectContaining({ page: 2 }),
-      ),
-    )
 
-    // total обнулился (записи удалили) — список пуст, но назад можно
-    mockedList.mockResolvedValue(listResult([], { total: 0 }))
-    await userEvent.click(screen.getByRole("button", { name: "Предыдущая страница" }))
+    // total обнулился (записи удалили): список пуст, но «Назад» остаётся
+    expect(await screen.findByText("Авторы не найдены")).toBeInTheDocument()
+    const prev = screen.getByRole("button", { name: "Предыдущая страница" })
+    expect(prev).toBeEnabled()
+
+    await userEvent.click(prev)
 
     await waitFor(() =>
       expect(listAdminAuthors).toHaveBeenLastCalledWith(
         expect.objectContaining({ page: 1 }),
       ),
     )
+    expect(await screen.findByText("Страница 1 из 3")).toBeInTheDocument()
   })
 })

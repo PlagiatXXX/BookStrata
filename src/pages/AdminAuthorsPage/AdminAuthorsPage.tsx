@@ -190,7 +190,7 @@ export default function AdminAuthorsPage() {
               ))}
             </div>
 
-            {totalPages > 1 && (
+            {(totalPages > 1 || page > 1) && (
               <div className="mt-3 flex items-center justify-between gap-2">
                 <button
                   type="button"
@@ -202,7 +202,8 @@ export default function AdminAuthorsPage() {
                   Назад
                 </button>
                 <span className="text-xs text-gray-500">
-                  Страница {page} из {totalPages}
+                  Страница {page}
+                  {page <= totalPages && ` из ${totalPages}`}
                 </span>
                 <button
                   type="button"
