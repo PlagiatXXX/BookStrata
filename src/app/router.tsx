@@ -38,6 +38,7 @@ const OAuthCallbackPage = lazy(() => import("@/pages/OAuthCallbackPage"));
 const UserProfilePage = lazy(() => import("@/pages/UserProfilePage/UserProfilePage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage/NotFoundPage"));
 const CollectionPage = lazy(() => import("@/pages/CollectionPage/CollectionPage"));
+const CollectionsPage = lazy(() => import("@/pages/CollectionsPage/CollectionsPage"));
 const BookPage = lazy(() => import("@/pages/BookPage/BookPage"));
 const AuthorPage = lazy(() => import("@/pages/AuthorPage"));
 const AuthorsPage = lazy(() => import("@/pages/AuthorsPage"));
@@ -81,6 +82,7 @@ export const router = createBrowserRouter([
       { path: "/blog", element: <BlogPage /> },
       { path: "/blog/:slug", element: <BlogArticlePage /> },
       { path: "/topics/:slug", element: <TopicPage /> },
+      { path: "/collections", element: <CollectionsPage /> },
       { path: "/collections/:slug", element: <CollectionPage /> },
       { path: "/books/:slug", element: <BookPage /> },
       { path: "/authors", element: <AuthorsPage /> },
