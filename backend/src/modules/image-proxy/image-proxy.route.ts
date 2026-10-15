@@ -4,6 +4,14 @@ import { isAllowedUrl, getWebP } from "./image-proxy.service.js";
 
 const logger = createLogger("ImageProxy", { color: "cyan" });
 
+// Версия CDN-ключа в Location-редиректе. Ответы, закэшированные CDN до
+// настройки CORS на бакете, не содержат Access-Control-Allow-Origin —
+// fetch при экспорте тир-листа (html-to-image) на них падает с CORS-ошибкой.
+// Bump параметра меняет ключ кэша CDN: старые ответы больше не отдаются,
+// объекты кэшируются заново уже с заголовком. Понадобится bump только если
+// в CDN-кэше снова появятся ответы без CORS-заголовка.
+const CDN_URL_CACHE_VERSION = "2";
+
 export async function imageProxyRoutes(fastify: FastifyInstance) {
   fastify.get<{
     Querystring: {
@@ -47,9 +55,10 @@ export async function imageProxyRoutes(fastify: FastifyInstance) {
 
         // ── Если есть S3 URL — редирект (кэш на CDN) ──
         if (s3Url) {
+          const separator = s3Url.includes("?") ? "&" : "?";
           return reply
             .code(302)
-            .header("Location", s3Url)
+            .header("Location", `${s3Url}${separator}v=${CDN_URL_CACHE_VERSION}`)
             .header("Cache-Control", "public, max-age=31536000, immutable")
             .header("Vary", "Accept")
             .send();
