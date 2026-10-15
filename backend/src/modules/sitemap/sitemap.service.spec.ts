@@ -43,6 +43,11 @@ describe("generateSitemap — страницы авторов", () => {
     expect(xml).toContain("<loc>https://bookstrata.ru/authors</loc>");
   });
 
+  it("включает хаб-страницу /collections", async () => {
+    const xml = await generateSitemap();
+    expect(xml).toContain("<loc>https://bookstrata.ru/collections</loc>");
+  });
+
   it("фильтрует по slug != null (без условия на seoDescription)", async () => {
     await generateSitemap();
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
