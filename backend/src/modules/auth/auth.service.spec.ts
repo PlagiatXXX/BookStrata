@@ -53,6 +53,7 @@ vi.mock("../../lib/oauth.js", () => ({
 }));
 
 import * as authService from "./auth.service.js";
+import { sendResetPasswordEmail } from "./auth.mail.js";
 import { prisma } from "../../lib/prisma.js";
 import { RolesService } from "../roles/roles.service.js";
 import { isDisposableEmail } from "../../lib/disposable-email.js";
@@ -656,18 +657,20 @@ describe("Auth Service", () => {
   });
 
   describe("requestPasswordReset", () => {
-    it("должен сгенерировать новый пароль и вызвать отправку письма", async () => {
+    it("должен создать токен, отправить письмо и только затем погасить прежние ссылки", async () => {
       const mockUser = {
         id: 1,
         email: "test@example.com",
         username: "testuser",
       };
       (prisma.user.findUnique as any).mockResolvedValue(mockUser);
-      (prisma.user.update as any).mockResolvedValue(mockUser);
+      (prisma.passwordResetToken.create as any).mockResolvedValue({
+        id: 11,
+        token: "token-11",
+      });
       (prisma.passwordResetToken.deleteMany as any).mockResolvedValue({
         count: 0,
       });
-      (prisma.$transaction as any).mockResolvedValue([]);
 
       await authService.requestPasswordReset("test@example.com");
 
@@ -675,7 +678,16 @@ describe("Auth Service", () => {
         where: { email: "test@example.com" },
       });
 
-      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(sendResetPasswordEmail).toHaveBeenCalledWith(
+        "test@example.com",
+        "testuser",
+        expect.any(String),
+      );
+      expect(prisma.passwordResetToken.create).toHaveBeenCalled();
+      // Прежние ссылки гасятся после успешной отправки — новая остаётся единственной
+      expect(prisma.passwordResetToken.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 1, id: { not: 11 } },
+      });
     });
 
     it("не должен бросать ошибку если пользователь не найден (security)", async () => {

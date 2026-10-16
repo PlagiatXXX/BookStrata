@@ -18,23 +18,38 @@ export async function requestPasswordReset(email: string): Promise<void> {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-  await prisma.$transaction([
-    prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
-    prisma.passwordResetToken.create({
-      data: { token, userId: user.id, expiresAt },
-    }),
-  ]);
+  // Токен пишем до отправки, но прежние ссылки НЕ гасим: если SMTP не ответит,
+  // у пользователя останется рабочая старая ссылка, а не «ни письма, ни токена».
+  const created = await prisma.passwordResetToken.create({
+    data: { token, userId: user.id, expiresAt },
+  });
 
   try {
     await sendResetPasswordEmail(user.email, user.username, token);
-    logger.info("Ссылка для сброса пароля отправлена", { userId: user.id });
   } catch (error) {
     logger.error("Ошибка при отправке ссылки сброса пароля", {
       error: (error as Error).message,
       userId: user.id,
     });
+    // Письмо не ушло — токен смысла не имеет, откатываем запись
+    await prisma.passwordResetToken
+      .delete({ where: { id: created.id } })
+      .catch((rollbackError) => {
+        logger.error("Не удалось удалить неотправленный токен сброса пароля", {
+          error: (rollbackError as Error).message,
+          tokenId: created.id,
+          userId: user.id,
+        });
+      });
     throw new Error("Не удалось отправить письмо для сброса пароля. Попробуйте позже.");
   }
+
+  // Письмо ушло — теперь гасим прежние ссылки, оставляя единственную рабочую
+  await prisma.passwordResetToken.deleteMany({
+    where: { userId: user.id, id: { not: created.id } },
+  });
+
+  logger.info("Ссылка для сброса пароля отправлена", { userId: user.id });
 }
 
 export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
