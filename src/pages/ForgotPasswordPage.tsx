@@ -1,114 +1,65 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/ui/Card";
-import { Button } from "@/ui/Button";
-import { apiForgotPassword } from "@/lib/authApi";
-import { sileo } from "sileo";
 import { SEOHead } from "@/components/SEO/SEOHead";
 
+// Восстановление пароля идёт вручную: SMTP сайта недоступен, поэтому запрос
+// уходит живому человеку, а не в молчащий почтовый сервер.
+const TELEGRAM_URL = "https://t.me/PasFedor";
+
+const steps = [
+  "Напишите нам в Telegram и укажите свой ник в BookStrata.",
+  "Пришлём временный пароль на почту, указанную при регистрации.",
+  "Войдите и смените пароль в профиле.",
+];
+
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const result = await apiForgotPassword(email);
-      setSent(true);
-      sileo.success({
-        title: "Запрос отправлен",
-        description: result.message || "Проверьте вашу почту",
-      });
-    } catch (err) {
-      sileo.error({
-        title: "Ошибка",
-        description: err instanceof Error ? err.message : "Не удалось отправить запрос",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="relative min-h-screen bg-[url('/library.webp')] bg-cover bg-center">
-      <SEOHead title="Сброс пароля" url="/forgot-password" noindex />
+      <SEOHead title="Восстановление пароля" url="/forgot-password" noindex />
       <div className="absolute inset-0 bg-black/20" />
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md bg-white/25 backdrop-blur-xs shadow-2xl border border-white/30">
           <div className="p-8">
             <div className="mb-8 text-center">
               <h1 className="text-xl font-medium tracking-widest text-slate-800 uppercase">
-                Сброс пароля
+                Восстановление пароля
               </h1>
               <p className="mt-3 text-xs text-slate-500">
-                {sent 
-                  ? "Проверьте вашу почту" 
-                  : "Введите ваш email для получения ссылки на сброс пароля"}
+                Напишите нам в Telegram — выдадим временный пароль
               </p>
             </div>
 
-            {sent ? (
-              <div className="space-y-6">
-                <div className="text-center text-sm text-slate-700 bg-white/50 p-4 rounded-lg space-y-2">
-                  <p>
-                    Если аккаунт с email <strong>{email}</strong> существует, мы отправили ссылку для сброса пароля.
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Не забудьте проверить папку «Спам» или «Промо».
-                  </p>
-                </div>
-                <Link to="/auth">
-                  <Button className="w-full rounded-full bg-orange-500/80 hover:bg-orange-500 text-white">
-                    Вернуться к входу
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="relative group">
-                  <label htmlFor="email" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 focus:outline-none placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 transition-colors"
-                  />
-                  <span
-                    className="
-                      pointer-events-none
-                      absolute left-0 -bottom-px
-                      h-0.5 w-full
-                      origin-left
-                      scale-x-0
-                      bg-orange-500
-                      transition-transform duration-300 ease-out
-                      peer-focus:scale-x-100
-                    "
-                  />
-                </div>
+            <ol className="space-y-3 text-sm text-slate-700">
+              {steps.map((step, index) => (
+                <li key={step} className="flex gap-3">
+                  <span className="font-medium text-orange-500">{index + 1}.</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
 
-                <Button
-                  type="submit"
-                  isLoading={loading}
-                  className="w-full rounded-full bg-orange-500/80 hover:bg-orange-500 text-white py-2"
-                >
-                  Отправить ссылку
-                </Button>
+            <a
+              href={TELEGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 flex w-full items-center justify-center gap-2 nb-heavy-border border border-orange-500 bg-orange-500/80 px-4 py-2 text-base text-white transition-[transform,color,background-color,border-color] duration-150 ease-out hover:bg-orange-500 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-(--accent-main) rounded-full"
+            >
+              Написать в Telegram
+            </a>
 
-                <div className="text-center">
-                  <Link to="/auth" className="text-xs text-slate-500 hover:text-orange-500 transition-colors">
-                    Вспомнили пароль? Войти
-                  </Link>
-                </div>
-              </form>
-            )}
+            <p className="mt-4 text-center text-xs text-slate-600">
+              Пароль отправим только на почту, указанную при регистрации. В переписке пароли не
+              сообщаем.
+            </p>
+
+            <div className="mt-6 text-center">
+              <Link
+                to="/auth"
+                className="text-xs text-slate-500 hover:text-orange-500 transition-colors"
+              >
+                Вспомнили пароль? Войти
+              </Link>
+            </div>
           </div>
         </Card>
       </div>
