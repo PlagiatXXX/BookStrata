@@ -51,6 +51,7 @@ import { Prisma } from "@prisma/client";
 import * as Sentry from "@sentry/node";
 import { errorNotifier } from "./lib/errorNotifier.js";
 import { initSentry } from "./lib/sentry.js";
+import { shouldReportToSentry } from "./lib/sentry-filter.js";
 import { AppError } from "./lib/errors.js";
 import { registerAchievementSubscriptions } from "./lib/event-subscriptions.js";
 import { registerAnalyticsSubscriptions } from "./lib/analytics-subscriptions.js";
@@ -209,19 +210,27 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
     })
     .catch(console.error);
 
-  // Отправка в Sentry
-  Sentry.withScope((scope) => {
-    scope.setTag("url", request.url);
-    scope.setTag("method", request.method);
-    scope.setTag("user-agent", request.headers["user-agent"] || "unknown");
-    if ((request as any).userId) {
-      scope.setUser({ id: String((request as any).userId) });
-    }
-    if (queryParams) {
-      scope.setExtra("query", queryParams);
-    }
-    Sentry.captureException(error);
-  });
+  // В Sentry уходят только серверные поломки. 4xx (401/404/429/валидация) —
+  // это обычный ответ API, и раньше они топили настоящие сбои в шуме.
+  if (shouldReportToSentry(error)) {
+    Sentry.withScope((scope) => {
+      scope.setLevel("error");
+      scope.setTag("url", request.url);
+      scope.setTag("method", request.method);
+      scope.setTag("user-agent", request.headers["user-agent"] || "unknown");
+      if ((request as any).userId) {
+        scope.setUser({ id: String((request as any).userId) });
+      }
+      if (queryParams) {
+        scope.setExtra("query", queryParams);
+      }
+      if (error instanceof AppError) {
+        scope.setTag("error_code", error.code);
+        scope.setExtra("error_details", error.details);
+      }
+      Sentry.captureException(error);
+    });
+  }
 
   // 429 — rate-limit плагин (не AppError, проверяем до instanceof)
   if (error.statusCode === 429) {
@@ -232,13 +241,6 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
 
   // Типизированные ошибки приложения — code и statusCode из класса
   if (error instanceof AppError) {
-    const sentryLevel = error.statusCode >= 500 ? "error" : "warning";
-    Sentry.withScope((scope) => {
-      scope.setLevel(sentryLevel);
-      scope.setTag("error_code", error.code);
-      scope.setExtra("error_details", error.details);
-      Sentry.captureException(error);
-    });
     return reply
       .code(error.statusCode)
       .send(createApiError(
