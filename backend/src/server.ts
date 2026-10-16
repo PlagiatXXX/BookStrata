@@ -10,6 +10,7 @@ import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 import staticFiles from "@fastify/static";
 import { config } from "./config/env.js";
+import { buildFastifyOptions } from "./config/fastify-options.js";
 import { redis, RedisRateLimitStore } from "./lib/redis.js";
 import LocalStore from "@fastify/rate-limit/store/LocalStore.js";
 import { prisma, waitForDatabase } from "./lib/prisma.js";
@@ -66,22 +67,7 @@ errorNotifier.initialize();
 // Инициализация Sentry
 initSentry();
 
-const fastify = Fastify({
-  ajv: {
-    customOptions: {
-      allowUnionTypes: true,
-    },
-  },
-  logger: {
-    level: config.NODE_ENV === "production" ? "info" : "debug",
-    ...(config.NODE_ENV !== "production" && {
-      transport: {
-        target: "pino-pretty",
-      },
-    }),
-  },
-  bodyLimit: 30 * 1024 * 1024, // 30MB лимит для save-all с base64 изображениями
-});
+const fastify = Fastify(buildFastifyOptions());
 
 const PORT = config.PORT;
 

@@ -17,6 +17,11 @@ const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().default(8080),
 
+  // Сколько прокси стоит перед сервером (у нас один — nginx).
+  // Именно число, а не `true`: при `true` Fastify верит любому
+  // X-Forwarded-For, и клиент подделает свой IP в лимитах и логах.
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(1),
+
   // --- Database ---
   DATABASE_URL: z.string(),
 
