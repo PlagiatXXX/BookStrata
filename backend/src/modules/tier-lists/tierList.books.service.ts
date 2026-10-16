@@ -547,8 +547,18 @@ export async function updateBookCatalogIfPlaced(
     publishedYear?: number | null;
   },
 ) {
+  // Редактор адресует лист по uuid ИЛИ slug, а BookPlacement хранит uuid тир-листа.
+  // Без резолва правка карточки по slug-адресу всегда давала 404 «Book does not belong…»
+  const tierList = await tierListRepository.findById(tierListId, {
+    select: { id: true },
+  });
+
+  if (!tierList) {
+    throw new NotFoundError("Tier list not found");
+  }
+
   const bookPlacement = await prisma.bookPlacement.findUnique({
-    where: { tierListId_bookId: { tierListId, bookId } },
+    where: { tierListId_bookId: { tierListId: tierList.id, bookId } },
   });
 
   if (!bookPlacement) {
