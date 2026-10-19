@@ -514,7 +514,11 @@ export async function tierListRoutes(fastify: FastifyInstance) {
 
           // Внешний URL → uploadFromUrl (скачать и загрузить в собственное хранилище).
           // URL уже размещённые в нашем S3/CDN не перезаливаем повторно.
-          const ourHosts = [config.S3_PUBLIC_HOST, config.CDN_PUBLIC_HOST];
+          const ourHosts = [
+            config.S3_PUBLIC_HOST,
+            config.CDN_PUBLIC_HOST,
+            new URL(config.MEDIA_PUBLIC_URL).hostname,
+          ];
           const isExternalUrl = url.startsWith("http") && !ourHosts.some((h) => url.includes(h));
           if (isExternalUrl) {
             try {

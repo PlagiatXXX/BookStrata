@@ -2,6 +2,7 @@
 // Хелперы для валидации данных на бэкенде
 
 import sharp from "sharp";
+import { config } from "../config/env.js";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
@@ -42,6 +43,7 @@ export async function validateRemoteImageDimensions(
   if (
     trimmed.startsWith("/") ||
     trimmed.startsWith("data:") ||
+    trimmed.startsWith(config.MEDIA_PUBLIC_URL) ||
     trimmed.includes("cdn.twcstorage.ru") ||
     trimmed.includes("s3.twcstorage.ru")
   ) {

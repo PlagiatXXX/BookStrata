@@ -11,6 +11,8 @@ const logger = createLogger("FileCleanup", { color: "yellow" });
 
 const S3_HOST = config.S3_PUBLIC_HOST;
 const CDN_HOST = config.CDN_PUBLIC_HOST;
+const MEDIA_HOST = new URL(config.MEDIA_PUBLIC_URL).hostname.toLowerCase();
+const MEDIA_PATH_PREFIX = new URL(config.MEDIA_PUBLIC_URL).pathname.replace(/^\//, "");
 const S3_BUCKET = config.S3_BUCKET;
 const UPLOADS_PREFIX = config.UPLOADS_BASE_URL.startsWith("/")
   ? config.UPLOADS_BASE_URL
@@ -18,6 +20,7 @@ const UPLOADS_PREFIX = config.UPLOADS_BASE_URL.startsWith("/")
 
 /**
  * Извлекает key файла из URL, если файл лежит в НАШЕМ хранилище:
+ * - свой домен: {MEDIA_PUBLIC_URL}/{key} → key
  * - S3: {S3_PUBLIC_HOST}/{bucket}/{key} → key
  * - CDN: {CDN_PUBLIC_HOST}/{key} → key
  * - local: {UPLOADS_BASE_URL}/{folder}/{uuid}.ext → URL как есть
@@ -32,6 +35,13 @@ export function extractStorageKey(url: string | null | undefined): string | null
   try {
     const parsed = new URL(url);
     const host = parsed.hostname.toLowerCase();
+    if (
+      host === MEDIA_HOST &&
+      MEDIA_PATH_PREFIX &&
+      parsed.pathname.startsWith(`/${MEDIA_PATH_PREFIX}/`)
+    ) {
+      return parsed.pathname.slice(MEDIA_PATH_PREFIX.length + 2);
+    }
     if (host === CDN_HOST) {
       return parsed.pathname.replace(/^\//, "");
     }

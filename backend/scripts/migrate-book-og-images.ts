@@ -27,11 +27,12 @@ const s3 = new S3Client({
 });
 
 const BUCKET = process.env.S3_BUCKET!;
-const PUBLIC_HOST = process.env.S3_PUBLIC_HOST!;
+const MEDIA_PUBLIC_URL =
+  process.env.MEDIA_PUBLIC_URL ?? "https://bookstrata.ru/img";
 const SITE_URL = process.env.SITE_URL || "https://bookstrata.ru";
 
 function publicUrl(key: string): string {
-  return `https://${PUBLIC_HOST}/${BUCKET}/${key}`;
+  return `${MEDIA_PUBLIC_URL}/${key}`;
 }
 
 async function fetchBuffer(url: string): Promise<Buffer> {

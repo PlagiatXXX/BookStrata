@@ -105,6 +105,7 @@ async function collectUsedUrls(): Promise<Set<string>> {
 /** Все URL-варианты, под которыми файл с этим ключом может быть в БД. */
 function urlsForKey(key: string): string[] {
   return [
+    `${config.MEDIA_PUBLIC_URL}/${key}`,
     `https://${config.S3_PUBLIC_HOST}/${BUCKET}/${key}`,
     `https://${config.CDN_PUBLIC_HOST}/${key}`,
   ];

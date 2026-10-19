@@ -26,6 +26,7 @@ vi.mock("../../config/env.js", () => ({
     LOG_DIR: "/tmp/bookstrata-test-logs",
     S3_PUBLIC_HOST: "s3.twcstorage.ru",
     CDN_PUBLIC_HOST: "re406cj9uj.cdn.twcstorage.ru",
+    MEDIA_PUBLIC_URL: "https://bookstrata.ru/img",
     S3_BUCKET: "bookstrata-bucket",
     UPLOADS_BASE_URL: "/uploads",
   },
@@ -48,6 +49,12 @@ describe("extractStorageKey", () => {
   it("CDN URL → key без бакета", () => {
     expect(
       extractStorageKey("https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/book-covers/abc.webp"),
+    ).toBe("tiermaker-pro/book-covers/abc.webp");
+  });
+
+  it("URL собственного домена → key без префикса /img", () => {
+    expect(
+      extractStorageKey("https://bookstrata.ru/img/tiermaker-pro/book-covers/abc.webp"),
     ).toBe("tiermaker-pro/book-covers/abc.webp");
   });
 

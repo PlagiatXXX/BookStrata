@@ -4,6 +4,7 @@ import crypto from 'node:crypto'
 import type { ImageStorageService, UploadResult, UploadWithOgResult } from './types.js'
 import { prepareImage, prepareOgImage } from './image-processor.js'
 import { config } from '../../config/env.js'
+import { mediaUrl } from '../media-url.js'
 import { createLogger } from '../logger.js'
 import { safeFetchToBuffer } from '../safe-fetch.js'
 
@@ -18,7 +19,8 @@ const S3_ENDPOINT = config.S3_ENDPOINT
 const S3_REGION = config.S3_REGION
 const S3_ACCESS_KEY_ID = config.S3_ACCESS_KEY_ID
 const S3_SECRET_ACCESS_KEY = config.S3_SECRET_ACCESS_KEY
-const S3_PUBLIC_HOST = config.S3_PUBLIC_HOST
+// Путь собственного домена в URL ({host}/{mediaPath}/{key}) — срезается при удалении
+const MEDIA_PATH_PREFIX = new URL(config.MEDIA_PUBLIC_URL).pathname.replace(/^\//, '')
 
 const client = new S3Client({
   endpoint: S3_ENDPOINT,
@@ -31,7 +33,7 @@ const client = new S3Client({
 })
 
 function publicUrl(key: string): string {
-  return `https://${S3_PUBLIC_HOST}/${S3_BUCKET}/${key}`
+  return mediaUrl(key)
 }
 
 function generateKey(folder: string, ext: string): string {
@@ -101,6 +103,10 @@ export class S3Storage implements ImageStorageService {
       try {
         const parsed = new URL(publicId)
         key = parsed.pathname.replace(/^\//, '')
+        // URL собственного домена вида {host}/{mediaPath}/{key} — срезаем префикс
+        if (MEDIA_PATH_PREFIX && key.startsWith(`${MEDIA_PATH_PREFIX}/`)) {
+          key = key.slice(MEDIA_PATH_PREFIX.length + 1)
+        }
         // S3-URL вида {host}/{bucket}/{key} — срезаем имя бакета
         if (key.startsWith(`${S3_BUCKET!}/`)) {
           key = key.slice(S3_BUCKET!.length + 1)

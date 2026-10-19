@@ -8,6 +8,7 @@ import {
 import sharp from "sharp";
 import { createLogger } from "../../lib/logger.js";
 import { config } from "../../config/env.js";
+import { mediaUrl } from "../../lib/media-url.js";
 import { safeFetchToBuffer, assertSafeImageUrl } from "../../lib/safe-fetch.js";
 
 const logger = createLogger("ImageProxy", { color: "cyan" });
@@ -73,13 +74,11 @@ const s3Client = new S3Client({
   forcePathStyle: false,
 });
 
-// ── Публичный хост для раздачи закэшированных изображений ──
-// CDN, а не raw-S3: s3.twcstorage.ru — одиночный РФ-IP и недоступен
-// клиентам через зарубежные VPN (картинки падали в плейсхолдеры).
-const CDN_PUBLIC_HOST = config.CDN_PUBLIC_HOST;
-
+// ── Публичный URL закэшированных изображений ──
+// Раздача через собственный домен (nginx проксирует /img/ в S3) — доступен
+// клиентам глобально; raw-S3-хост у части пользователей (VPN/гео) не открывался.
 function publicUrl(key: string): string {
-  return `https://${CDN_PUBLIC_HOST}/${key}`;
+  return mediaUrl(key);
 }
 
 // ── In-memory кэш URL → S3 URL ──
@@ -301,6 +300,7 @@ export async function externalToCdnUrl(
   // Свои/локальные — не трогаем
   if (
     url.startsWith("/") ||
+    url.startsWith(config.MEDIA_PUBLIC_URL) ||
     url.includes("cdn.twcstorage.ru") ||
     url.includes("s3.twcstorage.ru")
   ) {

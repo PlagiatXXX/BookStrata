@@ -7,6 +7,9 @@ import { promises as dns } from "node:dns";
 
 const logger = createLogger("Proxy", { color: "yellow" });
 
+// Внешние источники, которые можно качать через прокси. Свой домен
+// (bookstrata.ru/img) сюда НЕ входит: он отдаёт готовый WebP, а серверный
+// fetch на себя — лишний трафик и риск цикла.
 const ALLOWED_HOSTS = [
   "books.google.com",
   "covers.openlibrary.org",

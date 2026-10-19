@@ -102,6 +102,10 @@ const envSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().default(""),
   S3_SECRET_ACCESS_KEY: z.string().default(""),
   S3_PUBLIC_HOST: z.string().default("s3.twcstorage.ru"),
+  /** Публичный префикс URL для изображений из хранилища (без завершающего слэша).
+   *  Раздача идёт через собственный домен (nginx проксирует /img/ в S3),
+   *  который доступен глобально, в отличие от raw-S3-хоста. */
+  MEDIA_PUBLIC_URL: z.string().default("https://bookstrata.ru/img"),
   /** Хост CDN, зеркалирующий S3-бакет (для раздачи изображений клиентам).
    *  CDN глобально доступен, в отличие от raw-S3 (недоступен из-за VPN/гео). */
   CDN_PUBLIC_HOST: z.string().default("re406cj9uj.cdn.twcstorage.ru"),
