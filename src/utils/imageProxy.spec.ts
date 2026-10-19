@@ -1,14 +1,26 @@
 // src/utils/imageProxy.spec.ts
-// proxyImageUrl: S3 → CDN, внешние обложки → WebP-прокси, локальные — как есть,
-// относительные пути без слэша — нормализация (защита от 404 на /collections/...).
+// proxyImageUrl: S3/CDN → собственный домен, внешние обложки → WebP-прокси,
+// локальные — как есть, относительные пути без слэша — нормализация.
 import { describe, it, expect } from "vitest";
 import { proxyImageUrl } from "./imageProxy";
 
 describe("proxyImageUrl", () => {
-  it("S3 заменяется на CDN", () => {
+  it("старый S3-URL нормализуется к собственному домену", () => {
     expect(
       proxyImageUrl("https://s3.twcstorage.ru/bookstrata/tiermaker-pro/x.webp"),
-    ).toBe("https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/x.webp");
+    ).toBe("https://bookstrata.ru/img/tiermaker-pro/x.webp");
+  });
+
+  it("старый CDN-URL нормализуется к собственному домену", () => {
+    expect(
+      proxyImageUrl("https://re406cj9uj.cdn.twcstorage.ru/tiermaker-pro/x.webp"),
+    ).toBe("https://bookstrata.ru/img/tiermaker-pro/x.webp");
+  });
+
+  it("URL собственного домена возвращается как есть", () => {
+    expect(
+      proxyImageUrl("https://bookstrata.ru/img/tiermaker-pro/x.webp"),
+    ).toBe("https://bookstrata.ru/img/tiermaker-pro/x.webp");
   });
 
   it("локальный путь со слэшем не меняется", () => {

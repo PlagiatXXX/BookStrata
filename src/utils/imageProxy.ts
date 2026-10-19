@@ -1,7 +1,7 @@
 /**
  * Прокси для изображений.
  *
- * 1. S3 → CDN (замена базового URL)
+ * 1. S3/CDN → собственный домен (нормализация базового URL)
  * 2. Внешние обложки (Amazon, Goodreads, Livelib) → WebP-конвертация через /api/images/proxy
  * 3. Локальные URL — как есть
  *
@@ -9,8 +9,13 @@
  * и кэшируется на S3 (повторные запросы — с CDN, без нагрузки на бэкенд).
  */
 
-const S3_BASE = "https://s3.twcstorage.ru/bookstrata";
-const CDN_BASE = "https://re406cj9uj.cdn.twcstorage.ru";
+// Собственный домен раздачи картинок (nginx проксирует /img/ в S3).
+// CDN отключён: сырой S3-хост недоступен части клиентов (VPN/гео).
+const MEDIA_BASE = import.meta.env.VITE_MEDIA_PUBLIC_URL ?? "https://bookstrata.ru/img";
+// Граница пути: /image-cache или /imgfoo на нашем домене — не медиа-URL
+const MEDIA_PREFIX = MEDIA_BASE.endsWith("/") ? MEDIA_BASE : `${MEDIA_BASE}/`;
+const S3_PREFIX = "https://s3.twcstorage.ru/bookstrata/";
+const CDN_PREFIX = "https://re406cj9uj.cdn.twcstorage.ru/";
 
 /** Допустимые ширины ресайза (защита от перебора S3 разными размерами) */
 const ALLOWED_RESIZE_WIDTHS = [64, 300, 730] as const;
@@ -116,10 +121,9 @@ export function proxyImageUrl(
   const isLocal = url.startsWith("/");
   const finalWidth = width ? clampWidth(width) : undefined;
 
-  // S3 → CDN (без прокси — CDN уже быстрый, ресайз не нужен,
-  // round-trip к прокси убивает LCP: +1.5-2s к Resource load delay)
-  if (url.startsWith(S3_BASE)) {
-    return url.replace(S3_BASE, CDN_BASE);
+  // Уже наш домен — отдаём как есть
+  if (url.startsWith(MEDIA_PREFIX)) {
+    return url;
   }
 
   // Локальные URL — не трогаем (будут нарезаны статически)
@@ -127,11 +131,14 @@ export function proxyImageUrl(
     return url;
   }
 
-  // CDN-изображения (загруженные файлы) — прямой URL без прокси.
-  // CDN уже быстрый, а ресайз через прокси добавляет latency;
-  // object-cover на клиенте решает проблему размеров.
-  if (url.startsWith(CDN_BASE)) {
-    return url;
+  // Старые S3/CDN-URL загруженных файлов → собственный домен (прямой URL без
+  // прокси: файлы уже WebP, а round-trip к прокси добавляет latency к LCP).
+  if (url.startsWith(S3_PREFIX)) {
+    return MEDIA_BASE + "/" + url.slice(S3_PREFIX.length);
+  }
+
+  if (url.startsWith(CDN_PREFIX)) {
+    return MEDIA_BASE + "/" + url.slice(CDN_PREFIX.length);
   }
 
   // Внешние URL — через WebP-прокси (только на клиенте)
