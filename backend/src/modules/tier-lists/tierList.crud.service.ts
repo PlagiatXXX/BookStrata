@@ -161,17 +161,17 @@ export async function getLikedTierLists(
   };
 }
 
-export async function createTierList(userId: number, title: string) {
+export async function createTierList(userId: number, title: string, description?: string | null) {
   const randomSuffix = Math.random().toString(36).substring(2, 8);
   const slug = generateUniqueSlug(title, randomSuffix);
-  const tierList = await tierListRepository.create(userId, { title, slug });
+  const tierList = await tierListRepository.create(userId, { title, slug, description });
   const { placements: unrankedBooks, ...rest } = tierList;
   return { ...rest, unrankedBooks };
 }
 
 export async function updateTierList(
   id: string,
-  data: { title?: string; isPublic?: boolean; year?: number; theme?: string },
+  data: { title?: string; description?: string | null; isPublic?: boolean; year?: number; theme?: string },
 ) {
   return tierListRepository.update(id, data);
 }

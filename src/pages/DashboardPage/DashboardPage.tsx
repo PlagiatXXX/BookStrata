@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [isAiLibrarianOpen, setIsAiLibrarianOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
   const tierListsSectionRef = useRef<HTMLDivElement>(null);
   const booksSectionRef = useRef<HTMLDivElement>(null);
 
@@ -155,6 +156,7 @@ export default function DashboardPage() {
       return;
     }
     setCreateTitle("");
+    setCreateDescription("");
     setIsCreateModalOpen(true);
   }, [isGuest, navigate]);
 
@@ -163,6 +165,7 @@ export default function DashboardPage() {
     (tierListId?: string) => {
       setIsCreateModalOpen(false);
       setCreateTitle("");
+      setCreateDescription("");
       if (tierListId) {
         navigate(`/tier-lists/${tierListId}`);
       }
@@ -411,6 +414,8 @@ export default function DashboardPage() {
           onCreate={createNewTierList}
           createTitle={createTitle}
           onTitleChange={setCreateTitle}
+          createDescription={createDescription}
+          onDescriptionChange={setCreateDescription}
           isPending={isCreating}
         />
       </DashboardLayout>

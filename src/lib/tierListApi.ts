@@ -127,9 +127,15 @@ export interface SaveTierListPayload {
   }>;
 }
 
-export async function createTierList(title: string): Promise<ApiTierListResponse> {
+export async function createTierList(
+  title: string,
+  description?: string | null,
+): Promise<ApiTierListResponse> {
   tierListLogger.info('Создание нового рейтингового списка', { title });
-  const result = await apiClient.post<ApiTierListResponse>('/tier-lists', { title });
+  const result = await apiClient.post<ApiTierListResponse>('/tier-lists', {
+    title,
+    ...(description ? { description } : {}),
+  });
   tierListLogger.info('Успешно создан рейтинговый список', { tierListId: result.id, title });
   return result;
 }
@@ -267,6 +273,13 @@ export async function updateTierListTitle(id: string, title: string) {
   return result;
 }
 
+export async function updateTierListDescription(id: string, description: string | null) {
+  tierListLogger.info('Обновление описания рейтингового списка', { tierListId: id });
+  const result = await apiClient.put(`/tier-lists/${id}`, { description });
+  tierListLogger.info('Описание успешно обновлено', { tierListId: id });
+  return result;
+}
+
 export async function toggleTierListPublic(id: string, isPublic: boolean) {
   tierListLogger.info('Переключение статуса публичности', { tierListId: id, isPublic });
   const result = await apiClient.put(`/tier-lists/${id}/public`, { isPublic });
@@ -369,6 +382,7 @@ export function transformApiToState(apiData: ApiTierListResponse): TierListData 
   return {
     id: String(apiData.id),
     title: apiData.title,
+    description: apiData.description ?? null,
     books,
     tiers,
     tierOrder,

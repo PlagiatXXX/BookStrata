@@ -24,6 +24,7 @@ import type { EditorHeaderProps } from "./EditorHeader";
 import { EditorHeader } from "./EditorHeader";
 import { TierListCoverEditor } from "./TierListCoverEditor";
 import { ThemePicker } from "./ThemePicker";
+import { updateTierListDescription } from "@/lib/tierListApi";
 
 // Кастомный алгоритм коллизий:
 // 1. pointerWithin — точное попадание курсора в карточку/контейнер
@@ -53,6 +54,8 @@ interface EditorLayoutProps {
   coverImageUrl?: string | null;
   hideCover?: boolean;
   theme?: string;
+  description?: string;
+  onDescriptionChange?: (value: string) => void;
   booksCount: number;
   onCoverUpdated?: (url: string) => void;
   onThemeChanged?: (theme: string) => void;
@@ -78,6 +81,8 @@ export const EditorLayout = ({
   coverImageUrl,
   hideCover = false,
   theme = "default",
+  description = "",
+  onDescriptionChange,
   booksCount = 0,
   onCoverUpdated,
   onThemeChanged,
@@ -178,8 +183,36 @@ export const EditorLayout = ({
                     </div>
                   )}
                 </div>
-              </div>
+
+              {/* Описание — внутри сворачиваемого блока, прячется вместе с панелью */}
+              {tierListId && onDescriptionChange && (
+                <div className="mt-3 px-1">
+                  <label className="nb-label-xs mb-1 block text-(--theme-text-muted) uppercase tracking-wider">
+                    Описание списка
+                  </label>
+                  <textarea
+                    value={description}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onChange={(e) => onDescriptionChange(e.target.value)}
+                    onBlur={(e) => {
+                      const trimmed = e.target.value.trim();
+                      if (tierListId) {
+                        updateTierListDescription(tierListId, trimmed === "" ? null : trimmed).catch(() => {});
+                      }
+                    }}
+                    placeholder="О чём этот тир-лист…"
+                    rows={3}
+                    maxLength={200}
+                    className="w-full rounded border border-(--theme-border) bg-(--theme-bg) px-3 py-2 text-sm text-(--theme-text) placeholder:text-(--theme-text-muted) placeholder:opacity-60 focus:outline-none focus:ring-2 focus:ring-(--theme-accent-primary)"
+                  />
+                  <p className="mt-1 text-xs text-(--theme-text-muted)">
+                    {description.length}/200
+                  </p>
+                </div>
+              )}
             </div>
+          </div>
 
             <div className="flex justify-center -mt-4 mb-6">
               <button

@@ -303,7 +303,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const userId = request.user!.userId;
-      const tierList = await service.createTierList(userId, request.body.title);
+      const tierList = await service.createTierList(userId, request.body.title, request.body.description);
       const newAchievements = await eventBus.emit("tier-list:created", { userId });
       return reply.code(201).header("Location", `/api/tier-lists/${tierList.id}`).send({ data: { ...tierList, newAchievements } });
     },
@@ -370,7 +370,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
   );
 
   // PUT /:id -> Обновить тир-лист (название или тему)
-  fastify.put<{ Params: { id: string }; Body: { title?: string; theme?: string } }>(
+  fastify.put<{ Params: { id: string }; Body: { title?: string; description?: string | null; theme?: string } }>(
     "/:id",
     { preHandler: [authMiddleware], schema: schema.updateTierListSchema },
     async (request, reply) => {
@@ -382,8 +382,12 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           .send(createApiError(ErrorCodes.FORBIDDEN, "You can only edit your own tier lists"));
       }
 
-      const updateData: Record<string, string> = {};
+      const updateData: Record<string, string | null> = {};
       if (request.body.title) updateData.title = request.body.title.trim();
+      if (request.body.description !== undefined) {
+        const trimmed = request.body.description === null ? null : request.body.description.trim();
+        updateData.description = trimmed === "" ? null : trimmed;
+      }
       if (request.body.theme) updateData.theme = request.body.theme;
 
       if (!Object.keys(updateData).length) {

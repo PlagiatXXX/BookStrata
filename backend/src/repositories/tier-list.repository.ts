@@ -246,12 +246,13 @@ export class TierListRepository {
 
   // ─── Write ────────────────────────────────────────────────────
 
-  async create(userId: number, data: { title: string; slug: string }) {
+  async create(userId: number, data: { title: string; slug: string; description?: string | null }) {
     return this.db.tierList.create({
       data: {
         userId,
         title: data.title,
         slug: data.slug,
+        ...(data.description ? { description: data.description } : {}),
         isPublic: true,
         tiers: {
           create: [
@@ -277,7 +278,7 @@ export class TierListRepository {
     });
   }
 
-  async update(id: string, data: { title?: string; isPublic?: boolean; year?: number; theme?: string; coverImageUrl?: string }) {
+  async update(id: string, data: { title?: string; description?: string | null; isPublic?: boolean; year?: number; theme?: string; coverImageUrl?: string }) {
     return this.db.tierList.update({
       where: getWhereClause(id),
       data,

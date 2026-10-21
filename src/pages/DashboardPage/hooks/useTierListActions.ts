@@ -14,7 +14,7 @@ interface UseTierListActionsOptions {
 }
 
 interface UseTierListActionsReturn {
-  createNewTierList: (title: string) => void;
+  createNewTierList: (title: string, description?: string | null) => void;
   renameTierList: (id: string, title: string) => void;
   removeTierList: (id: string) => void;
   isCreating: boolean;
@@ -32,8 +32,9 @@ export function useTierListActions({
 }: UseTierListActionsOptions): UseTierListActionsReturn {
   const queryClient = useQueryClient();
 
-  const { mutate: createNewTierList, isPending: isCreating } = useMutation({
-    mutationFn: (title: string) => createTierList(title),
+  const { mutate: createNewTierListMutate, isPending: isCreating } = useMutation({
+    mutationFn: ({ title, description }: { title: string; description?: string | null }) =>
+      description ? createTierList(title, description) : createTierList(title),
     onSuccess: async (tierList) => {
       logger.info("New tier list created - navigating to editor", {
         id: tierList.id,
@@ -66,6 +67,10 @@ export function useTierListActions({
       });
     },
   });
+
+  const createNewTierList = (title: string, description?: string | null) => {
+    createNewTierListMutate({ title, description });
+  };
 
   const { mutateAsync: renameMutation, isPending: isRenaming } = useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) =>

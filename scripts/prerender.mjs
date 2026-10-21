@@ -256,29 +256,38 @@ function proxyApiRequest(req, res) {
 async function addPublicTierListRoutes() {
   try {
     log(`📡 Fetching public tier lists from ${BACKEND_URL}/api/tier-lists/public…`);
-    const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=50&sortBy=likes`);
-    if (!res.ok) {
-      log(`⚠️  API responded with ${res.status}, skipping tier-list prerender`);
-      return;
-    }
-    const body = await res.json();
-    const items = body.data || [];
-    if (items.length === 0) {
-      log("⚠️  No public tier lists found, skipping");
-      return;
-    }
-    for (const item of items) {
-      const slug = item.slug;
-      if (!slug) {
-        log(`  ⚠️  Tier list "${item.title}" has no slug, skipping`);
-        continue;
+    let page = 1;
+    const pageSize = 100;
+    let totalAdded = 0;
+    let totalPages = 1;
+    while (page <= totalPages) {
+      const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=${pageSize}&page=${page}&sortBy=likes`);
+      if (!res.ok) {
+        log(`⚠️  API responded with ${res.status}, skipping tier-list prerender`);
+        return;
       }
-      const path = `/tier-lists/${slug}`;
-      // authorName сохраняем отдельно — используется в SEO-fallback ниже
-      ROUTES.push({ path, name: `Тир-лист: ${item.title}`, authorName: item.authorName });
-      log(`  → ${path} (${item.title})`);
+      const body = await res.json();
+      const items = body.data || [];
+      totalPages = body.meta?.totalPages || 1;
+      if (items.length === 0 && page === 1) {
+        log("⚠️  No public tier lists found, skipping");
+        return;
+      }
+      for (const item of items) {
+        const slug = item.slug;
+        if (!slug) {
+          log(`  ⚠️  Tier list "${item.title}" has no slug, skipping`);
+          continue;
+        }
+        const path = `/tier-lists/${slug}`;
+        // authorName сохраняем отдельно — используется в SEO-fallback ниже
+        ROUTES.push({ path, name: `Тир-лист: ${item.title}`, authorName: item.authorName });
+        log(`  → ${path} (${item.title})`);
+        totalAdded++;
+      }
+      page++;
     }
-    log(`✅ Added ${items.filter(i => i.slug).length} tier lists to prerender`);
+    log(`✅ Added ${totalAdded} tier lists to prerender`);
     backendAvailable = true;
   } catch (err) {
     log(`⚠️  Cannot reach backend (${BACKEND_URL}): ${err.message}`);
@@ -1038,9 +1047,11 @@ async function processRoute(browser, route) {
         // Используем name из ROUTES (там реальное название из API), а не deslugify
         const readableTitle = escapeHtml(route.name.replace("Тир-лист: ", "") || deslugify(slug));
         // Автор в title/description уникализирует тир-листы с одинаковыми названиями
-        const authorPart = route.authorName && route.authorName !== "Anonymous" ? ` от @${escapeHtml(route.authorName)}` : "";
-        fallbackTitle = `${readableTitle} — книжный тир-лист${authorPart} | BookStrata`;
-        fallbackDesc = `Тир-лист «${readableTitle}»${authorPart ? ` от пользователя ${authorPart}` : ""} — визуальный рейтинг книг, составленный читателем на BookStrata. Оценивайте и сортируйте любимые книги.`;
+        const authorName = route.authorName && route.authorName !== "Anonymous" ? escapeHtml(route.authorName) : "";
+        const authorTitlePart = authorName ? ` от @${authorName}` : "";
+        const authorDescPart = authorName ? ` от пользователя ${authorName}` : "";
+        fallbackTitle = `${readableTitle} — книжный тир-лист${authorTitlePart} | BookStrata`;
+        fallbackDesc = `Тир-лист «${readableTitle}»${authorDescPart} — визуальный рейтинг книг, составленный читателем на BookStrata. Оценивайте и сортируйте любимые книги.`;
         canonicalPath = route.path;
         fallbackBodyHtml = `
 <article itemscope itemtype="https://schema.org/ItemList">

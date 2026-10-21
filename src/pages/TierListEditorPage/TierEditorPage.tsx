@@ -152,6 +152,15 @@ const TierListEditorContent = () => {
   const [userThemeOverride, setUserThemeOverride] = useState<string | null>(
     null,
   );
+  const [tierListDescription, setTierListDescription] = useState<string>("");
+
+  // Синхронизация описания с apiData
+  useEffect(() => {
+    if (apiData?.description !== undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTierListDescription(apiData.description || "");
+    }
+  }, [apiData?.description]);
 
   const displayCoverImageUrl =
     userCoverOverride !== null
@@ -322,6 +331,7 @@ const TierListEditorContent = () => {
     setHasUnsavedChanges,
     logger,
     theme: normalizedDisplayTheme,
+    description: tierListDescription,
     onTierListCreated: setCreatedTierListId,
   });
 
@@ -876,11 +886,31 @@ const TierListEditorContent = () => {
       {/* Не рендерим SEOHead пока грузятся данные — чтобы избежать пустых мета-тегов */}
       {isLoading && !apiData ? null : (
         <SEOHead
-          title={buildTierListSeoTitle(apiData?.title, apiData?.user?.username)}
-          description={buildTierListSeoDescription(
+          title={buildTierListSeoTitle(
             apiData?.title,
             apiData?.user?.username,
+            Object.keys(listData.books).length,
           )}
+          description={
+            apiData?.description ||
+            buildTierListSeoDescription(
+              apiData?.title,
+              apiData?.user?.username,
+              Object.keys(listData.books).length,
+              (() => {
+                const firstTierId = listData.tierOrder[0];
+                const firstTier = firstTierId ? listData.tiers[firstTierId] : undefined;
+                const ids =
+                  firstTier?.bookIds?.length
+                    ? firstTier.bookIds
+                    : Object.keys(listData.books);
+                return ids
+                  .slice(0, 3)
+                  .map((id) => listData.books[id]?.title)
+                  .filter((t): t is string => !!t);
+              })(),
+            )
+          }
           url={`/tier-lists/${pageUrl}`}
           image={
             apiData?.coverImageUrl &&
@@ -892,7 +922,13 @@ const TierListEditorContent = () => {
           dateModified={apiData?.updatedAt}
           author={apiData?.user?.username}
           type="article"
-          noindex={tierListId === "new" || (apiData ? !isPublic : undefined)}
+          noindex={
+            tierListId === "new" ||
+            (apiData ? !isPublic : undefined) ||
+            (apiData
+              ? Object.keys(listData.books).length === 0 || !apiData.title
+              : undefined)
+          }
           breadcrumbs={[
             { name: "Главная", url: "/" },
             { name: "Тир-листы", url: "/templates" },
@@ -977,6 +1013,8 @@ const TierListEditorContent = () => {
           hideCover={fromBattle}
           theme={normalizedDisplayTheme}
           booksCount={Object.keys(listData.books).length}
+          description={tierListDescription}
+          onDescriptionChange={setTierListDescription}
           onCoverUpdated={setUserCoverOverride}
           onThemeChanged={setUserThemeOverride}
           ownerUserId={ownerUserId}
@@ -1005,6 +1043,14 @@ const TierListEditorContent = () => {
             </>
           )}
 
+          <>
+          {isReadOnly && tierListDescription && (
+            <div className="mb-4 px-1">
+              <p className="text-sm text-(--theme-text-muted) leading-relaxed whitespace-pre-line">
+                {tierListDescription}
+              </p>
+            </div>
+          )}
           <EditorMainContent
             listData={listData}
             isReadOnly={isReadOnly}
@@ -1044,6 +1090,7 @@ const TierListEditorContent = () => {
               setIsStreamMode(!isStreamMode)
             }
           />
+        </>
 
           {/* Модалки внутри main[data-theme] — наследуют токены темы */}
           {modals}

@@ -243,6 +243,7 @@ slug        String?         @unique
 user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 userId      Int
 title       String
+description String?
 year        Int?
 isTemplate  Boolean         @default(false) @map("is_template")
 isPublic   Boolean         @default(false) @map("is_public")

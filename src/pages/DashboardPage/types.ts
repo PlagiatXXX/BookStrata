@@ -84,9 +84,11 @@ export interface EmptyStatesProps {
 export interface CreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (title: string) => void;
+  onCreate: (title: string, description?: string) => void;
   createTitle: string;
   onTitleChange: (title: string) => void;
+  createDescription?: string;
+  onDescriptionChange?: (description: string) => void;
   isPending: boolean;
 }
 

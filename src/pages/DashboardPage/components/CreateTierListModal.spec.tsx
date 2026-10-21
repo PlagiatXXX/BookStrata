@@ -38,20 +38,20 @@ describe("CreateTierListModal", () => {
       name: /название тир-листа/i,
     });
 
-    expect(input).toHaveAttribute("maxLength", "100");
+    expect(input).toHaveAttribute("maxLength", "50");
     expect(input).toBeEnabled();
   });
 
   it("должен отображать счётчик символов", () => {
     render(<CreateTierListModal {...defaultProps} createTitle="New List" />);
 
-    expect(screen.getByText("8/100")).toBeInTheDocument();
+    expect(screen.getByText("8/50")).toBeInTheDocument();
   });
 
   it("должен вызывать onTitleChange при вводе текста", () => {
     render(<CreateTierListModal {...defaultProps} />);
 
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("textbox", { name: /название тир-листа/i });
     fireEvent.change(input, { target: { value: "New Tier List" } });
 
     expect(mockOnTitleChange).toHaveBeenCalledWith("New Tier List");
@@ -60,16 +60,16 @@ describe("CreateTierListModal", () => {
   it("должен вызывать onCreate при нажатии Enter с валидным названием", () => {
     render(<CreateTierListModal {...defaultProps} createTitle="New List" />);
 
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("textbox", { name: /название тир-листа/i });
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(mockOnCreate).toHaveBeenCalledWith("New List");
+    expect(mockOnCreate).toHaveBeenCalledWith("New List", "");
   });
 
   it("не должен вызывать onCreate при нажатии Enter с пустым названием", () => {
     render(<CreateTierListModal {...defaultProps} createTitle="" />);
 
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("textbox", { name: /название тир-листа/i });
     fireEvent.keyDown(input, { key: "Enter" });
 
     expect(mockOnCreate).not.toHaveBeenCalled();
@@ -78,7 +78,7 @@ describe("CreateTierListModal", () => {
   it("не должен вызывать onCreate при нажатии Enter с пробелами", () => {
     render(<CreateTierListModal {...defaultProps} createTitle="   " />);
 
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("textbox", { name: /название тир-листа/i });
     fireEvent.keyDown(input, { key: "Enter" });
 
     expect(mockOnCreate).not.toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe("CreateTierListModal", () => {
       <CreateTierListModal {...defaultProps} createTitle="List" isPending />,
     );
 
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("textbox", { name: /название тир-листа/i });
     expect(input).toBeDisabled();
   });
 
@@ -133,7 +133,7 @@ describe("CreateTierListModal", () => {
     const createButton = screen.getByRole("button", { name: /создать/i });
     fireEvent.click(createButton);
 
-    expect(mockOnCreate).toHaveBeenCalledWith("New List");
+    expect(mockOnCreate).toHaveBeenCalledWith("New List", "");
   });
 
   it('должен вызывать onClose при клике на кнопку "Отмена"', () => {

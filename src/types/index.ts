@@ -29,6 +29,7 @@ export interface TierListData {
   tierIdToTempIdMap: Record<string, string>; // Карта соответствия временных ID тиров реальным ID
   id: string;
   title: string;
+  description?: string | null;
   books: Record<string, Book>;
   tiers: Record<string, Tier>;
   tierOrder: string[];

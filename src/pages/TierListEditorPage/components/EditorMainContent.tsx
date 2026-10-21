@@ -202,6 +202,26 @@ export const EditorMainContent = memo(
                 />
               </div>
             )}
+
+            {isReadOnly && Object.values(listData.books).some((b) => b.thoughts) && (
+              <section className="mt-2 rounded border border-(--theme-border) bg-(--theme-bg) p-4">
+                <h2 className="mb-3 text-base font-semibold text-(--theme-text)">
+                  Мысли автора о книгах
+                </h2>
+                <ul className="space-y-3">
+                  {Object.values(listData.books)
+                    .filter((b) => b.thoughts)
+                    .map((b) => (
+                      <li key={b.id} className="border-l-2 border-(--theme-accent-primary) pl-3">
+                        <p className="text-sm font-medium text-(--theme-text)">{b.title}</p>
+                        <blockquote className="mt-1 text-sm text-(--theme-text-muted) leading-relaxed whitespace-pre-line">
+                          {b.thoughts}
+                        </blockquote>
+                      </li>
+                    ))}
+                </ul>
+              </section>
+            )}
           </div>
 
           {/* Боковая панель настроек — скрыта в стрим-режиме */}

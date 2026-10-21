@@ -28,6 +28,7 @@ export async function forkTierList(id: string, userId: number) {
         userId,
         title: newTitle,
         slug,
+        description: original.description ?? null,
         isPublic: true,
         originalTierListId: original.id,
         tiers: {

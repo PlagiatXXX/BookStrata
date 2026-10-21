@@ -93,6 +93,7 @@ const TemplateLibrary: React.FC = () => {
   const [tierListToDelete, setTierListToDelete] = useState<TierListShort | null>(null);
   const [renameTitle, setRenameTitle] = useState("");
   const [createTitle, setCreateTitle] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
 
   const openCreateModal = useCallback(() => {
     if (!isAuthenticated) {
@@ -101,6 +102,7 @@ const TemplateLibrary: React.FC = () => {
     }
     setActiveModal("create");
     setCreateTitle("");
+    setCreateDescription("");
   }, [isAuthenticated, navigate]);
 
   const openRenameModal = useCallback((tl: TierListShort) => {
@@ -565,6 +567,8 @@ const TemplateLibrary: React.FC = () => {
         onCreate={createNewTierList}
         createTitle={createTitle}
         onTitleChange={setCreateTitle}
+        createDescription={createDescription}
+        onDescriptionChange={setCreateDescription}
         isPending={isCreating}
       />
 

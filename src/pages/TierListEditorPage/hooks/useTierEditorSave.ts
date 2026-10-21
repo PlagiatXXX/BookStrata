@@ -31,6 +31,7 @@ interface UseTierEditorSaveParams {
     error: (error: Error, context: { tierListId: string; action: string }) => void;
   };
   theme?: string;
+  description?: string | null;
   /** Вызывается при создании нового тир-листа на сервере (передаёт реальный ID) */
   onTierListCreated?: (id: string) => void;
 }
@@ -54,6 +55,7 @@ export function useTierEditorSave({
   setHasUnsavedChanges,
   logger,
   theme = "default",
+  description,
   onTierListCreated,
 }: UseTierEditorSaveParams): UseTierEditorSaveResult {
   const queryClient = useQueryClient();
@@ -110,7 +112,7 @@ export function useTierEditorSave({
 
       if (!isNumericId && !isUuid) {
         // Создаём новый тир-лист
-        const created = await createTierList(listData.title || "Новый тир-лист");
+        const created = await createTierList(listData.title || "Новый тир-лист", description ?? undefined);
         effectiveId = String(created.id);
         onTierListCreated?.(effectiveId);
         pushDataLayerEvent("create_tier_list", {
@@ -216,7 +218,7 @@ export function useTierEditorSave({
       });
       return false;
     }
-  }, [tierListId, isLoading, isReadOnly, setHasUnsavedChanges, dispatch, queryClient, logger, theme, listData, onTierListCreated]);
+  }, [tierListId, isLoading, isReadOnly, setHasUnsavedChanges, dispatch, queryClient, logger, theme, description, listData, onTierListCreated]);
 
   return {
     saveStatus,

@@ -11,6 +11,8 @@ export function CreateTierListModal({
   onCreate,
   createTitle,
   onTitleChange,
+  createDescription = "",
+  onDescriptionChange,
   isPending,
 }: CreateModalProps) {
   const [showError, setShowError] = useState(false);
@@ -23,7 +25,7 @@ export function CreateTierListModal({
       setTimeout(() => setShowError(false), 500);
       return;
     }
-    onCreate(createTitle);
+    onCreate(createTitle, createDescription);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -67,15 +69,35 @@ export function CreateTierListModal({
             onChange={(e) => onTitleChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Название тир-листа..."
-            className={`dashboard-modal__input transition-colors ${showError ? "border-red-500! ring-2 ring-red-500/20" : ""}`}
-            maxLength={100}
+            className={`dashboard-modal__input transition-colors placeholder:text-gray-400 placeholder:opacity-60 ${showError ? "border-red-500! ring-2 ring-red-500/20" : ""}`}
+            maxLength={50}
             disabled={isPending}
             aria-label="Название тир-листа"
           />
           <span className="text-xs text-gray-500 text-right">
-            {createTitle.length}/100
+            {createTitle.length}/50
           </span>
         </motion.div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="create-tierlist-description" className="text-sm font-medium text-gray-300">
+            Описание <span className="text-gray-500 font-normal">(не обязательно)</span>
+          </label>
+          <textarea
+            id="create-tierlist-description"
+            value={createDescription}
+            onChange={(e) => onDescriptionChange?.(e.target.value)}
+            placeholder="О чём этот тир-лист…"
+            maxLength={200}
+            rows={3}
+            disabled={isPending}
+            className="dashboard-modal__input transition-colors resize-none placeholder:text-gray-400 placeholder:opacity-60"
+            aria-label="Описание тир-листа"
+          />
+          <span className="text-xs text-gray-500 text-right">
+            {createDescription.length}/200
+          </span>
+        </div>
 
         <div className="dashboard-modal__actions">
           <button

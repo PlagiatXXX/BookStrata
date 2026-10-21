@@ -9,22 +9,33 @@
 const DEFAULT_TITLE = "Книжный тир-лист";
 const DEFAULT_DESCRIPTION = "Книжный тир-лист на BookStrata — рейтинг книг по уровням";
 
-/** «Название — книжный тир-лист от автора» (автор — опционально). */
+/** «Название — книжный тир-лист из N книг от автора» (автор и количество — опционально). */
 export function buildTierListSeoTitle(
   title: string | null | undefined,
   username?: string | null,
+  booksCount?: number,
 ): string {
   if (!title) return DEFAULT_TITLE;
   const authorPart = username ? ` от ${username}` : "";
-  return `${title} — книжный тир-лист${authorPart}`;
+  const booksPart =
+    booksCount && booksCount > 0 ? ` из ${booksCount} книг` : "";
+  return `${title} — книжный тир-лист${booksPart}${authorPart}`;
 }
 
-/** «Тир-лист "Название" от пользователя @автор — визуальный рейтинг книг…». */
+/** «Тир-лист "Название" от пользователя @автор — N книг, топ: …». */
 export function buildTierListSeoDescription(
   title: string | null | undefined,
   username?: string | null,
+  booksCount?: number,
+  topBooks?: string[],
 ): string {
   if (!title) return DEFAULT_DESCRIPTION;
   const authorPart = username ? ` от пользователя ${username}` : "";
-  return `Тир-лист «${title}»${authorPart} — визуальный рейтинг книг, созданный на BookStrata`;
+  const booksPart =
+    booksCount && booksCount > 0 ? `: ${booksCount} книг` : "";
+  const topPart =
+    topBooks && topBooks.length > 0
+      ? ` (топ: ${topBooks.slice(0, 3).join(", ")})`
+      : "";
+  return `Тир-лист «${title}»${authorPart}${booksPart}${topPart} — визуальный рейтинг книг, созданный на BookStrata`;
 }

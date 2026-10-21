@@ -37,6 +37,7 @@ export interface ApiTierListResponse {
   id: string;
   slug?: string | null;
   title: string;
+  description?: string | null;
   year: number | null;
   isPublic: boolean;
   coverImageUrl?: string | null;
