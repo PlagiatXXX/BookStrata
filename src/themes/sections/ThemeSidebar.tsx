@@ -53,18 +53,6 @@ export function ThemeSidebar({ collectionSlug, currentUserId }: ThemeSidebarProp
           borderBottom: "1px solid var(--theme-outline-variant)",
         }}
       >
-        {/* Small decorative leaf */}
-        <svg
-          className="absolute top-2 right-2 opacity-[0.08] w-12 h-12"
-          viewBox="0 0 100 100"
-          fill="none"
-        >
-          <path
-            d="M50 5 C60 20, 85 30, 90 55 C95 75, 75 95, 50 95 C25 95, 5 75, 10 55 C15 30, 40 20, 50 5Z"
-            fill="var(--theme-primary)"
-          />
-        </svg>
-
         <h4
           className="text-xl mb-1 relative z-10"
           style={{

@@ -2,8 +2,10 @@ import type { SectionType } from "./types";
 import type { CollectionItem } from "@/types/collection";
 import type { Tier, Book } from "@/types";
 import type { ShelfStatus } from "@/lib/shelfApi";
+import { lazy, Suspense } from "react";
 import { StaticTierView } from "@/components/StaticTierView";
 import { ThemeHeroSplit } from "./sections/ThemeHeroSplit";
+const ThemeGlasshouseHero = lazy(() => import("./sections/ThemeGlasshouseHero"));
 import { ThemeFilterChips } from "./sections/ThemeFilterChips";
 import { ThemeContentGrid } from "./sections/ThemeContentGrid";
 import { ThemeProse } from "./sections/ThemeProse";
@@ -146,6 +148,15 @@ export function ThemeSection({
           bookCount={Object.keys(books).length}
           coverImageUrl={collection.coverImageUrl}
         />
+      );
+
+    case "hero-glasshouse":
+      return (
+        <div style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)" }}>
+          <Suspense fallback={null}>
+            <ThemeGlasshouseHero collection={collection} onViewBook={onViewBook} />
+          </Suspense>
+        </div>
       );
 
     case "sidebar":

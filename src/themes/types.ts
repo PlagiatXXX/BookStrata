@@ -38,6 +38,7 @@ export interface ThemeTokens {
 export type SectionType =
   | "hero-split"
   | "hero-full"
+  | "hero-glasshouse"
   | "filter-chips"
   | "content-grid"
   | "category-blocks"
