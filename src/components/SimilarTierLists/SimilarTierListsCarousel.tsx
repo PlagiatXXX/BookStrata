@@ -1,23 +1,33 @@
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { useRef } from "react";
 import { getSimilarTierLists } from "@/lib/tierListApi";
+import { buildSimilarTierListsJsonLd } from "./seo";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { RetryableImage } from "@/ui/RetryableImage";
 import { booksCountText } from "@/lib/plural";
 
+import type { TierListShort } from "@/lib/tierListApi";
+
 interface SimilarTierListsCarouselProps {
   tierListId: string;
+  /** Похожие тир-листы, уже полученные с основным ответом страницы (без отдельного запроса) */
+  initialSimilar?: TierListShort[];
 }
 
 export function SimilarTierListsCarousel({
   tierListId,
+  initialSimilar,
 }: SimilarTierListsCarouselProps) {
+  const hasInitial = Array.isArray(initialSimilar);
   const { data, isLoading } = useQuery({
     queryKey: ["similar-tier-lists", tierListId],
     queryFn: () => getSimilarTierLists(tierListId, 4),
-    enabled: !!tierListId,
+    enabled: !!tierListId && !hasInitial,
+    initialData: hasInitial ? initialSimilar : undefined,
+    staleTime: hasInitial ? 5 * 60 * 1000 : 0,
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -31,8 +41,18 @@ export function SimilarTierListsCarousel({
 
   if (isLoading || !data || data.length === 0) return null;
 
+  const similarJsonLd = buildSimilarTierListsJsonLd(data);
+
   return (
-    <section className="mt-8">
+    <>
+      {similarJsonLd && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify(similarJsonLd)}
+          </script>
+        </Helmet>
+      )}
+      <section className="mt-8">
       <h2 className="text-lg font-bold mb-4 text-(--theme-text)">
         Похожие тир-листы
       </h2>
@@ -103,5 +123,6 @@ export function SimilarTierListsCarousel({
         </button>
       </div>
     </section>
+    </>
   );
 }

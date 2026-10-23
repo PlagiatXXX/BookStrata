@@ -1093,7 +1093,7 @@ const TierListEditorContent = () => {
           />
 
           {!isStreamMode && (
-            <SimilarTierListsCarousel tierListId={tierListId} />
+            <SimilarTierListsCarousel tierListId={tierListId} initialSimilar={apiData?.similar} />
           )}
         </>
 

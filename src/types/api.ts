@@ -33,6 +33,8 @@ export interface ApiTier {
 }
 
 // Описывает полный ответ от нашего GET /api/tier-lists/:id
+import type { TierListShort } from "@/lib/tierListApi";
+
 export interface ApiTierListResponse {
   id: string;
   slug?: string | null;
@@ -52,6 +54,8 @@ export interface ApiTierListResponse {
   tiers: ApiTier[];
   unrankedBooks: ApiBookPlacement[];
   likesCount?: number;
+  /** Похожие тир-листы (возвращаются только для публичных списков) */
+  similar?: TierListShort[];
 }
 
 // Описывает тир-шаблон, как он приходит из API
