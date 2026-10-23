@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, TrendingUp, Sparkles } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -24,6 +25,34 @@ const MOODS: MoodCard[] = [
   { emoji: "🔍", title: "Раскрыть тайну", description: "Детективы и триллеры", slug: "top-detective", image: "/sherlock.webp" },
 ];
 
+const WHAT_TO_READ_FAQ = [
+  {
+    question: "Как выбрать, что почитать?",
+    answer:
+      "Выберите настроение на странице «Что почитать» — мы подберём жанр и подборку. Либо откройте каталог подборок и выберите по жанру или теме.",
+  },
+  {
+    question: "Где найти лучшие книги по жанрам?",
+    answer:
+      "В разделе «Подборки книг» собраны топы по жанрам: фэнтези, детективы, ужасы, романтика, классика и другие. Каждая подборка содержит рейтинг и отзывы читателей.",
+  },
+  {
+    question: "Что такое тир-лист книг?",
+    answer:
+      "Тир-лист — это визуальный рейтинг книг от S до F, который можно составить самому или посмотреть у других читателей. Помогает быстро понять, какие книги стоит читать в первую очередь.",
+  },
+] as const;
+
+const whatToReadFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: WHAT_TO_READ_FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: { "@type": "Answer", text: item.answer },
+  })),
+};
+
 export default function WhatToReadPage() {
   const { data: collections = [] } = useQuery({
     queryKey: ["published-collections"],
@@ -44,6 +73,9 @@ export default function WhatToReadPage() {
         url="/what-to-read"
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Что почитать", url: "/what-to-read" }]}
       />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(whatToReadFaqJsonLd)}</script>
+      </Helmet>
       <DashboardLayout showSearch={false} activeItem="Новости">
         <div className="px-6 pt-6 pb-4">
           <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Что почитать" }]} />

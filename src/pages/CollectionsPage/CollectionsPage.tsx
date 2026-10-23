@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { ArrowLeft } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
@@ -9,6 +10,34 @@ import { useCollectionsList } from "./hooks/useCollectionsList";
 const SEO_TITLE = "Подборки книг — каталог рейтингов и что почитать";
 const SEO_DESCRIPTION =
   "Все подборки книг BookStrata: топы ужасов, фэнтези, детективов, нон-фикшн и другие жанровые рейтинги. Что почитать — выбирай по жанру.";
+
+const COLLECTIONS_FAQ = [
+  {
+    question: "Что такое подборки книг на BookStrata?",
+    answer:
+      "Это редакционные и пользовательские подборки книг по жанрам, темам и настроениям. В отличие от тир-листов, подборки составлены командой или читателями BookStrata.",
+  },
+  {
+    question: "Как найти, что почитать?",
+    answer:
+      "Откройте нужный жанр или подборку — там собраны лучшие книги с рейтингами и отзывами читателей. Также можно воспользоваться страницей «Что почитать» для выбора по настроению.",
+  },
+  {
+    question: "Можно ли создать свою подборку?",
+    answer:
+      "Да, зарегистрированные пользователи могут создавать тир-листы и делиться ими. Редакционные подборки создаёт команда BookStrata.",
+  },
+] as const;
+
+const collectionsFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: COLLECTIONS_FAQ.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: { "@type": "Answer", text: item.answer },
+  })),
+};
 
 function pluralizeCollections(count: number): string {
   const mod10 = count % 10;
@@ -118,6 +147,9 @@ export default function CollectionsPage() {
           { name: "Подборки книг", url: "/collections" },
         ]}
       />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(collectionsFaqJsonLd)}</script>
+      </Helmet>
 
       <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Подборки книг" }]} />
 
