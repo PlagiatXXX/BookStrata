@@ -13,3 +13,41 @@ BookStrata — социальная сеть читателей. Составл�
 - https://bookstrata.ru/templates — Библиотека тир-листов
 - https://bookstrata.ru/community — Сообщество
 - https://bookstrata.ru/forum — Форум
+- https://bookstrata.ru/rankings — Рейтинги книг
+- https://bookstrata.ru/what-to-read — Что почитать
+- https://bookstrata.ru/collections — Подборки книг (коллекции)
+- https://bookstrata.ru/authors — Все авторы
+- https://bookstrata.ru/celebrities — Знаменитости и их книжные вкусы
+- https://bookstrata.ru/blog — Блог о книгах и чтении
+- https://bookstrata.ru/news — Новости сообщества
+- https://bookstrata.ru/faq — Вопросы и ответы
+- https://bookstrata.ru/history — История чтения
+
+## Разделы по жанрам и темам
+
+- https://bookstrata.ru/topics/{slug} — подборки по жанру (например, /topics/fantasy)
+- https://bookstrata.ru/collections/{slug} — конкретная подборка книг (например, /collections/horror-books)
+
+## Книги
+
+- https://bookstrata.ru/books/{slug} — страница книги с рейтингами, отзывами и гидом по чтению
+
+## Авторы
+
+- https://bookstrata.ru/authors/{slug} — страница автора с биографией и книгами
+
+## Знаменитости
+
+- https://bookstrata.ru/celebrities/{slug} — книжные вкусы знаменитости
+
+## Статьи блога
+
+- https://bookstrata.ru/blog/{slug} — статья о книгах и чтении
+
+## Тир-листы пользователей
+
+- https://bookstrata.ru/tier-lists/{slug} — пользовательский тир-лист (рейтинг книг)
+
+## API
+
+- https://bookstrata.ru/api/ — REST API (документация: /documentation/)
