@@ -138,13 +138,16 @@ export async function generateSitemap(): Promise<string> {
   );
 
   // Книги каталога — только published (Фаза 6): slug обязателен (страница /books/:slug)
+  // Лимит 45 000: протокол sitemap допускает 50 000 URL на файл, остальные ~600 URL
+  // (статика, авторы, коллекции, тир-листы) оставляют запас. Без лимита 1000 новые
+  // книги выпадали из карты сайта при росте каталога.
   let books: { slug: string; updatedAt: Date }[] = [];
   try {
     const bookRecords = await prisma.book.findMany({
       where: { status: "published", slug: { not: null } },
       select: { slug: true, updatedAt: true },
       orderBy: { publishedAt: "asc" },
-      take: 1000,
+      take: 45000,
     });
     books = bookRecords
       .filter((b): b is { slug: string; updatedAt: Date } => !!b.slug)
