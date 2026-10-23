@@ -226,7 +226,7 @@ export default function LandingPage() {
           </div>
 
           <h1 className="landing-hero__title">
-            Рейтинг книг и тир-листы:
+            Рейтинг книг и тир-листы:{" "}
             <br />
             <span className="landing-hero__carousel">
               <span

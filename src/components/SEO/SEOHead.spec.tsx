@@ -175,4 +175,26 @@ describe("SEOHead", () => {
       document.querySelector('meta[property="og:title"]')?.getAttribute("content"),
     ).toBe("Тир-листы книг | BookStrata");
   });
+
+  it("длинный og:title обрезается по тексту, сохраняя бренд целиком", () => {
+    render(
+      <SEOHead
+        title="Тир-листы книг онлайн — создавай рейтинги и делись"
+        url="/"
+      />,
+    );
+
+    const og =
+      document.querySelector('meta[property="og:title"]')?.getAttribute("content") ?? "";
+    const twitter =
+      document.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ?? "";
+
+    expect(og.length).toBeLessThanOrEqual(60);
+    expect(og.endsWith(" | BookStrata")).toBe(true);
+    expect(og).not.toContain("Book…");
+    expect(og.startsWith("Тир-листы книг онлайн")).toBe(true);
+
+    expect(twitter.length).toBeLessThanOrEqual(70);
+    expect(twitter.endsWith(" | BookStrata")).toBe(true);
+  });
 });

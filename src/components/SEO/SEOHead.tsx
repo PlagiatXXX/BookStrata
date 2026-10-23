@@ -5,6 +5,18 @@ const SITE_NAME = "BookStrata";
 const DEFAULT_DESC = "BookStrata — библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите библиотеку, находите книги по вкусу с ИИ.";
 const DEFAULT_IMAGE = "/og-landing.webp";
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
+const BRAND_SUFFIX = ` | ${SITE_NAME}`;
+
+/** Обрезка под лимит соцсетей: режем заголовок, бренд оставляем целиком. */
+function truncateKeepingBrand(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  const base = text.endsWith(BRAND_SUFFIX)
+    ? text.slice(0, -BRAND_SUFFIX.length)
+    : text;
+  const keep = maxLength - BRAND_SUFFIX.length - 1;
+  if (keep <= 0) return `${text.slice(0, maxLength - 1)}…`;
+  return `${base.slice(0, keep).trimEnd()}…${BRAND_SUFFIX}`;
+}
 
 interface SEOHeadProps {
   title?: string;
@@ -106,8 +118,8 @@ export function SEOHead({
   // Соцсети всегда получают бренд: узнаваемость при шаринге не зависит от сниппета.
   const socialTitle = cleanTitle ? `${cleanTitle} | ${SITE_NAME}` : pageTitle;
   // Обрезка под лимиты соцсетей (og:title ≤60, twitter:title ≤70, description ≤200).
-  const socialTitleOg = socialTitle.length > 60 ? `${socialTitle.slice(0, 57)}…` : socialTitle;
-  const socialTitleTwitter = socialTitle.length > 70 ? `${socialTitle.slice(0, 67)}…` : socialTitle;
+  const socialTitleOg = truncateKeepingBrand(socialTitle, 60);
+  const socialTitleTwitter = truncateKeepingBrand(socialTitle, 70);
   const socialDesc = description.length > 200 ? `${description.slice(0, 197)}…` : description;
   const pageUrl = url ? `${SITE_URL}${url}` : SITE_URL;
   const imageUrl = image.startsWith("http") ? image : new URL(image, SITE_URL).href;
