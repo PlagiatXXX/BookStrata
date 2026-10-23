@@ -423,7 +423,10 @@ export async function getSimilarTierLists(id: string, limit = 4) {
   const currentKeys = new Set(
     currentPlacements.map((p) => normalizeSimilarKey(p.book.title, p.book.author)),
   );
-  if (currentKeys.size === 0) await setToCache(cacheKey, [], 300); return [];
+  if (currentKeys.size === 0) {
+    await setToCache(cacheKey, [], 300);
+    return [];
+  }
 
   // Кандидаты: все placements в других публичных тир-листах.
   // Фильтрация по названию/автору — в JS (нормализованный ключ),
@@ -445,7 +448,10 @@ export async function getSimilarTierLists(id: string, limit = 4) {
       counts.set(p.tierListId, (counts.get(p.tierListId) || 0) + 1);
     }
   }
-  if (counts.size === 0) await setToCache(cacheKey, [], 300); return [];
+  if (counts.size === 0) {
+    await setToCache(cacheKey, [], 300);
+    return [];
+  }
 
   const candidateIds = [...counts.keys()];
   const tierLists = await prisma.tierList.findMany({
