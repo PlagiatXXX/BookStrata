@@ -369,6 +369,26 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
   );
 
+  // GET /:id/similar — похожие публичные тир-листы (по общим книгам)
+  fastify.get<{ Params: { id: string }; Querystring: { limit?: string } }>(
+    "/:id/similar",
+    async (request, reply) => {
+      const limitRaw = request.query.limit;
+      const limit = Math.min(20, Math.max(1, parseInt(limitRaw || "4", 10) || 4));
+      try {
+        const data = await service.getSimilarTierLists(request.params.id, limit);
+        return reply.code(200).send({ data });
+      } catch (err: any) {
+        if (err?.message?.includes("not found") || err?.message?.includes("Tier list not found")) {
+          return reply.code(404).send(
+            createApiError(ErrorCodes.TIER_LIST_NOT_FOUND, "Tier list not found"),
+          );
+        }
+        throw err;
+      }
+    },
+  );
+
   // PUT /:id -> Обновить тир-лист (название или тему)
   fastify.put<{ Params: { id: string }; Body: { title?: string; description?: string | null; theme?: string } }>(
     "/:id",

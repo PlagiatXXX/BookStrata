@@ -26,6 +26,7 @@ import { getBookViewAction } from "./bookClick";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { useBookshelf } from "@/hooks/useBookshelf";
 import { TasteMatchBanner } from "@/components/TasteMatchBanner/TasteMatchBanner";
+import { SimilarTierListsCarousel } from "@/components/SimilarTierLists/SimilarTierListsCarousel";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { AiLibrarianWidget } from "@/components/AiLibrarian/AiLibrarianWidget";
 import { AiRecommendationPrompt } from "@/components/AiLibrarian/AiRecommendationPrompt";
@@ -1090,6 +1091,10 @@ const TierListEditorContent = () => {
               setIsStreamMode(!isStreamMode)
             }
           />
+
+          {!isStreamMode && (
+            <SimilarTierListsCarousel tierListId={tierListId} />
+          )}
         </>
 
           {/* Модалки внутри main[data-theme] — наследуют токены темы */}

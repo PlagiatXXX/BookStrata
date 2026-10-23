@@ -373,3 +373,99 @@ export async function getTierListTasteMatch(
     matches,
   };
 }
+
+function normalizeSimilarKey(title: string, author: string | null): string {
+  const norm = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .trim()
+      .replace(/\s+/g, " ");
+  const t = norm(title);
+  const a = norm(author || "");
+  return `${t}|${a}`;
+}
+
+// GET /api/tier-lists/:id/similar — публичные тир-листы с общими книгами
+// Сравнение по нормализованному ключу (название + автор), а не по bookId:
+// у разных пользователей книги могут быть разными записями в каталоге (draft),
+// но совпадать по названию/автору.
+export async function getSimilarTierLists(id: string, limit = 4) {
+  const realId = await resolveTierListId(id);
+
+  const current = await prisma.tierList.findUnique({
+    where: { id: realId },
+    select: { isPublic: true, userId: true },
+  });
+  if (!current || !current.isPublic) {
+    return [];
+  }
+  const currentOwnerId = current.userId;
+
+  const currentPlacements = await prisma.bookPlacement.findMany({
+    where: { tierListId: realId },
+    include: { book: { select: { title: true, author: true } } },
+  });
+  const currentKeys = new Set(
+    currentPlacements.map((p) => normalizeSimilarKey(p.book.title, p.book.author)),
+  );
+  if (currentKeys.size === 0) return [];
+
+  // Кандидаты: все placements в других публичных тир-листах.
+  // Фильтрация по названию/автору — в JS (нормализованный ключ),
+  // чтобы не терять совпадения из-за регистра/пробелов/ё-е.
+  const candidatePlacements = await prisma.bookPlacement.findMany({
+    where: {
+      tierListId: { not: realId },
+      tierList: { isPublic: true, userId: { not: currentOwnerId } },
+    },
+    include: {
+      book: { select: { title: true, author: true } },
+      tierList: { select: { id: true, likesCount: true, userId: true } },
+    },
+  });
+
+  const counts = new Map<string, number>();
+  for (const p of candidatePlacements) {
+    if (currentKeys.has(normalizeSimilarKey(p.book.title, p.book.author))) {
+      counts.set(p.tierListId, (counts.get(p.tierListId) || 0) + 1);
+    }
+  }
+  if (counts.size === 0) return [];
+
+  const candidateIds = [...counts.keys()];
+  const tierLists = await prisma.tierList.findMany({
+    where: { id: { in: candidateIds }, isPublic: true, userId: { not: currentOwnerId } },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      createdAt: true,
+      updatedAt: true,
+      isPublic: true,
+      likesCount: true,
+      coverImageUrl: true,
+      user: { select: { id: true, username: true, avatarUrl: true } },
+      _count: { select: { placements: true } },
+    },
+  });
+
+  const byId = new Map(tierLists.map((tl) => [tl.id, tl]));
+  const sorted = candidateIds
+    .map((cid) => {
+      const tl = byId.get(cid);
+      if (!tl) return null;
+      return { tl, score: counts.get(cid) || 0 };
+    })
+    .filter((x): x is { tl: (typeof tierLists)[number]; score: number } => x !== null)
+    .sort((a, b) => b.score - a.score || (b.tl.likesCount || 0) - (a.tl.likesCount || 0))
+    .slice(0, limit);
+
+  return sorted.map(({ tl }) => ({
+    ...tl,
+    authorName: tl.user?.username || "Anonymous",
+    authorAvatar: tl.user?.avatarUrl,
+    booksCount: tl._count?.placements ?? 0,
+    _count: undefined,
+  }));
+}

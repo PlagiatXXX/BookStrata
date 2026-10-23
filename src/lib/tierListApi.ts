@@ -465,3 +465,18 @@ export async function apiGetTierListTasteMatch(
   tierListLogger.info("Получение совпадения вкусов для тир-листа", { idOrSlug });
   return apiClient.get<TierListTasteMatchResult>(`/tier-lists/${idOrSlug}/taste-match`);
 }
+
+// --- Похожие тир-листы (по общим книгам) ---
+
+export async function getSimilarTierLists(
+  idOrSlug: string,
+  limit = 4,
+): Promise<TierListShort[]> {
+  tierListLogger.info("Получение похожих тир-листов", { idOrSlug, limit });
+  // apiClient автоматически разворачивает { data: ... } → массив
+  const result = await apiClient.get<TierListShort[]>(
+    `/tier-lists/${idOrSlug}/similar`,
+    { limit },
+  );
+  return result ?? [];
+}
