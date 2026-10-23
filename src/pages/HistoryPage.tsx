@@ -115,7 +115,7 @@ export default function HistoryPage() {
 
         <div className="relative max-w-2xl mx-auto text-center">
           <span
-            className="block text-[96px] leading-none font-serif mb-[-20px]"
+            className="block text-[96px] leading-none font-serif -mb-5"
             style={{ color: "rgba(249,115,22,0.25)" }}
           >
             &ldquo;
@@ -185,7 +185,7 @@ export default function HistoryPage() {
 
               <p>
                 Подписывайтесь на наши группы в{' '}
-                <a href="https://vk.com/club237287277" target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-3 decoration-2" style={{ color: "#fb923c", textDecorationColor: "rgba(251, 146, 60, 0.7)" }}>
+                <a href="https://vk.ru/club237287277" target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-3 decoration-2" style={{ color: "#fb923c", textDecorationColor: "rgba(251, 146, 60, 0.7)" }}>
                   ВК
                 </a>
                 {' '}или{' '}
@@ -196,7 +196,7 @@ export default function HistoryPage() {
               </p>
 
               <p
-                className="!text-[1.15rem] !font-medium"
+                className="text-[1.15rem]! font-medium!"
                 style={{ color: "#f1f5f9" }}
               >
                 <Highlighter action="underline" color="#c97d60" strokeWidth={2} iterations={3} padding={4} animationDuration={800}>

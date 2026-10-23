@@ -45,4 +45,30 @@ Disallow: /api/
 Clean-param: template
 Clean-param: redirect
 
+# Явное управление AI-краулерами (иначе наследуют правила *)
+User-agent: ClaudeBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: ChatGPT-User
+User-agent: Bytespider
+User-agent: CCBot
+User-agent: anthropic-ai
+User-agent: FacebookBot
+User-agent: Amazonbot
+Allow: /
+Disallow: /auth
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /shelf
+Disallow: /users/
+Disallow: /admin
+Disallow: /oauth/
+Disallow: /api/
+Clean-param: template
+Clean-param: redirect
+
 Sitemap: https://bookstrata.ru/sitemap.xml

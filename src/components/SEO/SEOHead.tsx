@@ -39,7 +39,7 @@ const organizationJsonLd = {
   description: DEFAULT_DESC,
   sameAs: [
     "https://t.me/PasFedor",
-    "https://vk.com/club237287277",
+    "https://vk.ru/club237287277",
   ],
 };
 
@@ -105,6 +105,10 @@ export function SEOHead({
     : `Интерактивный рейтинг книг — топ лучших книг и что почитать | ${SITE_NAME}`;
   // Соцсети всегда получают бренд: узнаваемость при шаринге не зависит от сниппета.
   const socialTitle = cleanTitle ? `${cleanTitle} | ${SITE_NAME}` : pageTitle;
+  // Обрезка под лимиты соцсетей (og:title ≤60, twitter:title ≤70, description ≤200).
+  const socialTitleOg = socialTitle.length > 60 ? `${socialTitle.slice(0, 57)}…` : socialTitle;
+  const socialTitleTwitter = socialTitle.length > 70 ? `${socialTitle.slice(0, 67)}…` : socialTitle;
+  const socialDesc = description.length > 200 ? `${description.slice(0, 197)}…` : description;
   const pageUrl = url ? `${SITE_URL}${url}` : SITE_URL;
   const imageUrl = image.startsWith("http") ? image : new URL(image, SITE_URL).href;
 
@@ -142,15 +146,15 @@ export function SEOHead({
     };
 
     setMeta('meta[name="description"]', "content", description);
-    setMeta('meta[property="og:title"]', "content", socialTitle);
-    setMeta('meta[property="og:description"]', "content", description);
+    setMeta('meta[property="og:title"]', "content", socialTitleOg);
+    setMeta('meta[property="og:description"]', "content", socialDesc);
     setMeta('meta[property="og:image"]', "content", imageUrl);
     setMeta('meta[property="og:image:width"]', "content", "1200");
     setMeta('meta[property="og:image:height"]', "content", "630");
     setMeta('meta[property="og:url"]', "content", pageUrl);
     setMeta('meta[property="og:type"]', "content", type);
-    setMeta('meta[name="twitter:title"]', "content", socialTitle);
-    setMeta('meta[name="twitter:description"]', "content", description);
+    setMeta('meta[name="twitter:title"]', "content", socialTitleTwitter);
+    setMeta('meta[name="twitter:description"]', "content", socialDesc);
     setMeta('meta[name="twitter:image"]', "content", imageUrl);
     setMeta('meta[name="twitter:image:alt"]', "content", description);
 
@@ -164,7 +168,7 @@ export function SEOHead({
     }
 
     setLink('link[rel="canonical"]', "href", pageUrl);
-  }, [pageTitle, socialTitle, description, imageUrl, pageUrl, type, noindex, title]);
+  }, [pageTitle, socialTitleOg, socialTitleTwitter, socialDesc, description, imageUrl, pageUrl, type, noindex, title]);
 
   const breadcrumbJsonLd = breadcrumbs?.length
     ? {
@@ -227,8 +231,8 @@ export function SEOHead({
       <meta name="description" content={description} />
 
       <meta property="og:type" content={type} />
-      <meta property="og:title" content={socialTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:title" content={socialTitleOg} />
+      <meta property="og:description" content={socialDesc} />
       <meta property="og:image" content={imageUrl} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
@@ -237,8 +241,8 @@ export function SEOHead({
       <meta property="og:locale" content="ru_RU" />
 
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={socialTitle} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:title" content={socialTitleTwitter} />
+      <meta name="twitter:description" content={socialDesc} />
       <meta name="twitter:image" content={imageUrl} />
       <meta name="twitter:image:alt" content={description} />
 

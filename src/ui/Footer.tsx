@@ -42,7 +42,7 @@ const marqueeStyle = `
 const glassCard = "backdrop-blur-xl rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] to-transparent p-6 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.18)]";
 
 const TELEGRAM_URL = "https://t.me/PasFedor";
-const VK_URL = "https://vk.com/club237287277";
+const VK_URL = "https://vk.ru/club237287277";
 
 function scrollToSection(id: string) {
   const el = document.getElementById(id)
@@ -330,7 +330,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                     vk: VK_URL,
                     github: "https://github.com/PlagiatXXX",
                     yandexMail: "mailto:fedorpasyada@yandex.ru",
-                    youtube: "https://www.youtube.com/@fedor1994",
+                    youtube: "https://www.youtube.com/@bookstrata",
                   }}
                 />
               </div>
