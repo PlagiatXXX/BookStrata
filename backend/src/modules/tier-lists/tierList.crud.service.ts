@@ -6,6 +6,7 @@ import { prisma } from "./tierList.utils.js";
 import { NotFoundError } from "../../lib/errors.js";
 import { generateUniqueSlug } from "../../utils/slugify.js";
 import { deleteIfOrphaned } from "../../lib/storage/file-cleanup.js";
+import { getFromCache, setToCache } from "../../lib/cache.js";
 import type { GetTierListsQuery } from "./tierList.schema.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,8 +65,17 @@ export async function getUserTierLists(
   };
 }
 
-export async function getFullTierList(id: string) {
-  return tierListRepository.getFullTierList(id);
+export async function getFullTierList(id: string, includeSimilar = false) {
+  const tierList = await tierListRepository.getFullTierList(id);
+  if (!includeSimilar || !tierList?.isPublic) {
+    return tierList;
+  }
+  try {
+    const similar = await getSimilarTierLists(tierList.id, 4);
+    return { ...tierList, similar };
+  } catch {
+    return { ...tierList, similar: [] };
+  }
 }
 
 export async function getPublicTierLists(
@@ -393,12 +403,16 @@ function normalizeSimilarKey(title: string, author: string | null): string {
 export async function getSimilarTierLists(id: string, limit = 4) {
   const realId = await resolveTierListId(id);
 
+  const cacheKey = `tierlist:similar:${realId}:${limit}`;
+  const cached = await getFromCache<Record<string, unknown>[]>(cacheKey);
+  if (cached) return cached;
+
   const current = await prisma.tierList.findUnique({
     where: { id: realId },
     select: { isPublic: true, userId: true },
   });
   if (!current || !current.isPublic) {
-    return [];
+    await setToCache(cacheKey, [], 300); return [];
   }
   const currentOwnerId = current.userId;
 
@@ -409,7 +423,7 @@ export async function getSimilarTierLists(id: string, limit = 4) {
   const currentKeys = new Set(
     currentPlacements.map((p) => normalizeSimilarKey(p.book.title, p.book.author)),
   );
-  if (currentKeys.size === 0) return [];
+  if (currentKeys.size === 0) await setToCache(cacheKey, [], 300); return [];
 
   // Кандидаты: все placements в других публичных тир-листах.
   // Фильтрация по названию/автору — в JS (нормализованный ключ),
@@ -431,7 +445,7 @@ export async function getSimilarTierLists(id: string, limit = 4) {
       counts.set(p.tierListId, (counts.get(p.tierListId) || 0) + 1);
     }
   }
-  if (counts.size === 0) return [];
+  if (counts.size === 0) await setToCache(cacheKey, [], 300); return [];
 
   const candidateIds = [...counts.keys()];
   const tierLists = await prisma.tierList.findMany({
@@ -461,11 +475,13 @@ export async function getSimilarTierLists(id: string, limit = 4) {
     .sort((a, b) => b.score - a.score || (b.tl.likesCount || 0) - (a.tl.likesCount || 0))
     .slice(0, limit);
 
-  return sorted.map(({ tl }) => ({
+  const result = sorted.map(({ tl }) => ({
     ...tl,
     authorName: tl.user?.username || "Anonymous",
     authorAvatar: tl.user?.avatarUrl,
     booksCount: tl._count?.placements ?? 0,
     _count: undefined,
   }));
+  await setToCache(cacheKey, result, 300);
+  return result;
 }

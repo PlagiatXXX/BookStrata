@@ -317,7 +317,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
       const tierListId = request.params.id;
       let tierList: Awaited<ReturnType<typeof service.getFullTierList>>;
       try {
-        tierList = await service.getFullTierList(tierListId);
+        tierList = await service.getFullTierList(tierListId, true);
       } catch {
         return reply.code(404).send(createApiError(ErrorCodes.TIER_LIST_NOT_FOUND, "Tier list not found"));
       }
