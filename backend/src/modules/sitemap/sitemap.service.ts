@@ -55,7 +55,7 @@ export async function generateSitemap(): Promise<string> {
       where: { isPublished: true },
       select: { slug: true, updatedAt: true },
       orderBy: { order: "asc" },
-      take: 200,
+      take: 500,
     });
   } catch {
     // таблица collections ещё не создана — пропускаем
@@ -68,7 +68,7 @@ export async function generateSitemap(): Promise<string> {
       where: { isPublished: true },
       select: { slug: true, updatedAt: true },
       orderBy: { order: "asc" },
-      take: 200,
+      take: 500,
     });
   } catch {
     // таблица celebrities ещё не создана — пропускаем
@@ -82,7 +82,7 @@ export async function generateSitemap(): Promise<string> {
       where: { slug: { not: null } },
       select: { slug: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
-      take: 500,
+      take: 2000,
     });
     authors = authorRecords.filter(
       (a): a is { slug: string; updatedAt: Date } => !!a.slug,
