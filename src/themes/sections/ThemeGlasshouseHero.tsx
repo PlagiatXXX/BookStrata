@@ -21,7 +21,7 @@ const SHARP = new URL('../../assets/greenhouse.webp', import.meta.url).href
 const FOG = new URL('../../assets/greenhouse-fog.webp', import.meta.url).href
 
 // In-memory cache: survives SPA navigation, reset on full reload
-const maskCache = new Map<string, { mask: Float32Array; gw: number; gh: number; unlocked: boolean }>()
+const maskCache = new Map<string, { mask: Float32Array; gw: number; gh: number; unlocked: boolean; cleared: boolean }>()
 
 const smooth = (a: number, b: number, v: number) => {
   const t = Math.max(0, Math.min(1, (v - a) / (b - a)))
@@ -73,17 +73,30 @@ export default function ThemeGlasshouseHero({ collection, onViewBook }: Props) {
   const [unlocked, setUnlocked] = useState(false)
   const [cleared, setCleared] = useState(false)
   const unlockedRef = useRef(false)
+  const clearedRef = useRef(false)
   const restoredRef = useRef(false)
   useEffect(() => { unlockedRef.current = unlocked }, [unlocked])
+  useEffect(() => { clearedRef.current = cleared }, [cleared])
   useLayoutEffect(() => {
     if (state !== 'ready' || restoredRef.current) return
     const slug = collection?.slug ?? 'default'
     const engine = engineRef.current
     if (!engine) return
-    const cached = maskCache.get(slug)
+    let cached = maskCache.get(slug)
+    if (!cached) {
+      try {
+        const raw = sessionStorage.getItem(`glasshouse:${slug}`)
+        if (raw) {
+          const d = JSON.parse(raw) as { mask: number[]; gw: number; gh: number; unlocked: boolean; cleared: boolean }
+          cached = { mask: new Float32Array(d.mask), gw: d.gw, gh: d.gh, unlocked: d.unlocked, cleared: d.cleared }
+          maskCache.set(slug, cached)
+        }
+      } catch { /* ignore */ }
+    }
     if (cached && engine.importMask(cached.mask, cached.gw, cached.gh)) {
-      const val = cached.unlocked
-      setTimeout(() => setUnlocked(val), 0)
+      const u = cached.unlocked
+      const c = cached.cleared
+      setTimeout(() => { setUnlocked(u); setCleared(c) }, 0)
     }
     restoredRef.current = true
   }, [state, collection?.slug])
@@ -180,7 +193,8 @@ export default function ThemeGlasshouseHero({ collection, onViewBook }: Props) {
           document.removeEventListener('visibilitychange', sync)
           try {
             const exp = engine.exportMask()
-            maskCache.set(collection?.slug ?? 'default', { ...exp, unlocked: unlockedRef.current })
+            maskCache.set(collection?.slug ?? 'default', { ...exp, unlocked: unlockedRef.current, cleared: clearedRef.current })
+try { sessionStorage.setItem(`glasshouse:${collection?.slug ?? 'default'}`, JSON.stringify({ mask: Array.from(exp.mask), gw: exp.gw, gh: exp.gh, unlocked: unlockedRef.current, cleared: clearedRef.current })) } catch { /* ignore */ }
           } catch (e) {
             logger.warn('cache save failed', { e })
           }

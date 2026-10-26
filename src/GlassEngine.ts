@@ -249,19 +249,43 @@ export class GlassEngine {
   }
 
   resize(w: number, h: number) {
-    this.w = Math.max(1, w)
-    this.h = Math.max(1, h)
+    const nw = Math.max(1, w)
+    const nh = Math.max(1, h)
     const dpr = Math.min(window.devicePixelRatio || 1, 1.75)
+    const cell = clamp(nw / 260, 3, 6)
+    const ngw = Math.ceil(nw / cell)
+    const ngh = Math.ceil(nh / cell)
+    // Не сбрасывать маску/состояние, если размеры не изменились —
+    // иначе ResizeObserver после восстановления из кэша затирает маску.
+    if (ngw === this.gw && ngh === this.gh && nw === this.w && nh === this.h && dpr === this.sc) {
+      return
+    }
+    // Сохраняем старую маску для пересэмплирования при изменении размеров.
+    const oldGw = this.gw
+    const oldGh = this.gh
+    const oldMask = this.mask
+    this.w = nw
+    this.h = nh
     this.sc = dpr
     this.canvas.width = Math.round(this.w * dpr)
     this.canvas.height = Math.round(this.h * dpr)
     this.dc.width = Math.ceil(this.w / 2)
     this.dc.height = Math.ceil(this.h / 2)
-    this.cell = clamp(this.w / 260, 3, 6)
-    this.gw = Math.ceil(this.w / this.cell)
-    this.gh = Math.ceil(this.h / this.cell)
+    this.cell = cell
+    this.gw = ngw
+    this.gh = ngh
     this.mask = new Float32Array(this.gw * this.gh)
     this.bytes = new Uint8Array(this.gw * this.gh)
+    // Пересэмплируем маску (ближайший сосед), чтобы стёртые участки не пропадали.
+    if (oldGw > 0 && oldGh > 0 && oldMask.length === oldGw * oldGh) {
+      for (let j = 0; j < this.gh; j++) {
+        for (let i = 0; i < this.gw; i++) {
+          const si = Math.min(oldGw - 1, Math.floor((i / this.gw) * oldGw))
+          const sj = Math.min(oldGh - 1, Math.floor((j / this.gh) * oldGh))
+          this.mask[j * this.gw + i] = oldMask[sj * oldGw + si]
+        }
+      }
+    }
     this.drops = []
     this.beads = []
     this.rasterWriting()
@@ -273,7 +297,7 @@ export class GlassEngine {
     c.width = this.gw
     c.height = this.gh
     const ctx = c.getContext('2d')!
-    let fontPx = (this.mobile ? Math.min(this.w * 0.12, 60) : Math.min(this.w * 0.06, this.h * 0.12, 100)) / this.cell
+    let fontPx = (this.mobile ? Math.min(this.w * 0.14, 70) : Math.min(this.w * 0.075, this.h * 0.14, 120)) / this.cell
     ctx.font = `italic 400 ${fontPx}px "Instrument Serif", serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
@@ -284,30 +308,51 @@ export class GlassEngine {
     const cx = this.gw * 0.5
     const cy = this.gh * (this.mobile ? 0.47 : 0.5)
     const words = this.text.split(/\\s+/).filter(Boolean)
-    // Длинные предложения переносим на две строки, балансируя длину строк.
     const lines: string[] = []
     if (words.length <= 2 && this.text.length < 24) {
       lines.push(this.text)
     } else if (words.length === 1) {
       lines.push(this.text)
     } else {
-      // подобрать точку разбиения, минимизирующую максимальную ширину строки
-      let bestSplit = Math.ceil(words.length / 2)
-      let bestMax = Infinity
+      // Балансируем перенос: пробуем 2 строки, а если текст длинный и
+      // не влезает по ширине — 3 строки, чтобы шрифт оставался читаемым.
+      let best2Split = 1, best2Max = Infinity
       for (let s = 1; s < words.length; s++) {
-        const l1 = words.slice(0, s).join(' ')
-        const l2 = words.slice(s).join(' ')
-        const w1 = ctx.measureText(l1).width
-        const w2 = ctx.measureText(l2).width
+        const w1 = ctx.measureText(words.slice(0, s).join(' ')).width
+        const w2 = ctx.measureText(words.slice(s).join(' ')).width
         const mx = Math.max(w1, w2)
-        if (mx < bestMax) { bestMax = mx; bestSplit = s }
+        if (mx < best2Max) { best2Max = mx; best2Split = s }
       }
-      lines.push(words.slice(0, bestSplit).join(' '))
-      lines.push(words.slice(bestSplit).join(' '))
+      const twoLines = [words.slice(0, best2Split).join(' '), words.slice(best2Split).join(' ')]
+
+      let threeLines: string[] | null = null
+      let best3Max = Infinity
+      if (words.length >= 4) {
+        let bi = 1, bj = 2, bmax = Infinity
+        for (let i = 1; i < words.length - 1; i++) {
+          for (let j = i + 1; j < words.length; j++) {
+            const w1 = ctx.measureText(words.slice(0, i).join(' ')).width
+            const w2 = ctx.measureText(words.slice(i, j).join(' ')).width
+            const w3 = ctx.measureText(words.slice(j).join(' ')).width
+            const mx = Math.max(w1, w2, w3)
+            if (mx < bmax) { bmax = mx; bi = i; bj = j }
+          }
+        }
+        threeLines = [words.slice(0, bi).join(' '), words.slice(bi, bj).join(' '), words.slice(bj).join(' ')]
+        best3Max = bmax
+      }
+
+      // Выбираем 3 строки только если они заметно уменьшают максимальную
+      // ширину строки (иначе остаёмся на 2 строках).
+      if (threeLines && best3Max < best2Max * 0.8) {
+        lines.push(...threeLines)
+      } else {
+        lines.push(...twoLines)
+      }
     }
     if (lines.length === 0) lines.push(this.text)
     // Масштабировать шрифт, чтобы самая широкая строка влезла в холст с отступами.
-    const maxWidth = this.gw * 0.9
+    const maxWidth = this.gw * 0.94
     let maxW = 0
     lines.forEach((l) => { maxW = Math.max(maxW, ctx.measureText(l).width) })
     if (maxW > maxWidth && maxW > 0) {
@@ -376,10 +421,22 @@ export class GlassEngine {
     return { mask: new Float32Array(this.mask), gw: this.gw, gh: this.gh }
   }
 
-  /** restore a previously cached mask; returns true if dimensions matched */
+  /** restore a previously cached mask; resamples if dimensions differ */
   importMask(mask: Float32Array, gw: number, gh: number) {
-    if (gw !== this.gw || gh !== this.gh) return false
-    this.mask.set(mask)
+    if (gw === this.gw && gh === this.gh) {
+      this.mask.set(mask)
+      return true
+    }
+    // Размеры сетки изменились (viewport/скролл) — пересэмплируем ближайшим соседом,
+    // чтобы стёртые участки не пропадали.
+    const m = this.mask
+    for (let j = 0; j < this.gh; j++) {
+      for (let i = 0; i < this.gw; i++) {
+        const si = Math.min(gw - 1, Math.floor((i / this.gw) * gw))
+        const sj = Math.min(gh - 1, Math.floor((j / this.gh) * gh))
+        m[j * this.gw + i] = mask[sj * gw + si] ?? 0
+      }
+    }
     return true
   }
 
