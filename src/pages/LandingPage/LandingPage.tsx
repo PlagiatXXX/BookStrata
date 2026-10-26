@@ -73,6 +73,13 @@ function LandingNav() {
           >
             Знаменитости
           </Link>
+          <Link
+            data-analytics="nav.landing.authors"
+            to="/authors"
+            className="landing-nav__link"
+          >
+            Авторы
+          </Link>
 
           <div className="landing-nav__auth">
             <button

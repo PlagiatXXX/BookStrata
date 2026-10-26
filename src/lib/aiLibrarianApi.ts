@@ -138,7 +138,7 @@ export async function streamAiChat(
       // ignore parse error
     }
     if (response.status === 403) {
-      throw new Error('Букстраж доступен только для Pro подписки')
+      throw new Error('Букстраж сейчас на перерыве. Попробуйте через минуту.')
     }
     throw new Error(errorMessage)
   }

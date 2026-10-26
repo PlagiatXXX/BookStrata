@@ -1,4 +1,4 @@
-import { BookOpen, Layers, Heart, Sparkles, MessageSquare, BarChart3 } from "lucide-react";
+import { BookOpen, Layers, Heart, Sparkles, MessageSquare, BarChart3, Swords } from "lucide-react";
 
 /* ---------- Scenario card ---------- */
 export interface ScenarioItem {
@@ -15,7 +15,7 @@ export const scenarios: ScenarioItem[] = [
     title: "Ведите свою библиотеку",
     points: [
       "Добавляйте книги из Google Books и LiveLib",
-      "Отмечайте статус: прочитано / читаю / планирую",
+      "Отмечайте статус: прочитано / хочу прочитать",
       "Никогда не забывайте, что читали",
     ],
     gradient: "from-emerald-500 to-teal-600",
@@ -36,7 +36,7 @@ export const scenarios: ScenarioItem[] = [
     title: "Находите единомышленников",
     points: [
       "Сравнивайте свои рейтинги с другими читателями",
-      "Подписывайтесь на людей с похожим вкусом",
+      "Сравнивайте совпадение вкусов",
       "Обсуждайте книги в комментариях",
     ],
     gradient: "from-rose-500 to-pink-600",
@@ -51,6 +51,16 @@ export const scenarios: ScenarioItem[] = [
     ],
     gradient: "from-sky-500 to-indigo-600",
   },
+  {
+    icon: Swords,
+    title: "Участвуйте в баттлах",
+    points: [
+      "Соревнуйтесь с другими читателями в подборках",
+      "Обсуждайте книги и голосуйте за любимые",
+      "Находите новые книги через баттлы",
+    ],
+    gradient: "from-amber-500 to-orange-600",
+  },
 ];
 
 /* ---------- Pricing ---------- */
@@ -63,6 +73,11 @@ export const allFeatures = [
   "Букстраж (AI-рекомендации)",
   "Добавление книг через Google Books и LiveLib",
   "AI-генерация аватарок",
+  "Баттлы и обсуждения",
+  "Коллекции и знаменитости",
+  "Страницы книг и авторов",
+  "Достижения и бейджи",
+  "Приватные тир-листы",
   "И многое другое",
 ];
 
@@ -176,5 +191,12 @@ export const screenshots: ScreenshotItem[] = [
     gradient: "bg-linear-to-br from-sky-900/80 to-indigo-900/80",
     icon: <Sparkles size={28} />,
     src: "/screenshots/AI.webp",
+  },
+  {
+    title: "Баттлы",
+    description: "Соревнования тир-листов",
+    gradient: "bg-linear-to-br from-amber-900/80 to-orange-900/80",
+    icon: <Swords size={28} />,
+    src: "/screenshots/battles.webp",
   },
 ];
