@@ -26,7 +26,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Путь к корню проекта (backend/ → BookStrata/)
-const ROOT = path.resolve(__dirname, "../..");
+// Корень проекта: на хосте __dirname=backend/scripts → ../..;
+// в Docker-контейнере __dirname=/app/scripts → ../..=/ (неверно).
+// Проверяем кандидатов, где реально есть src/data.
+const ROOT = (() => {
+  const candidates = [
+    path.resolve(__dirname, "../.."),
+    "/app",
+    process.cwd(),
+    path.resolve(process.cwd(), ".."),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(path.join(c, "src", "data"))) return c;
+  }
+  return path.resolve(__dirname, "../..");
+})();
 // Куда писать JSON (относительно корня проекта)
 const OUTPUT_FILE = path.resolve(ROOT, "src/data/author-routes.json");
 
