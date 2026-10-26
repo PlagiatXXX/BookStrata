@@ -224,7 +224,11 @@ try { sessionStorage.setItem(`glasshouse:${collection?.slug ?? 'default'}`, JSON
       const r = stage.getBoundingClientRect()
       return { x: x - r.left, y: y - r.top }
     }
-    const onUi = (t: EventTarget | null) => t instanceof Element && !!t.closest('button, a')
+    const onUi = (t: EventTarget | null) => {
+      if (!(t instanceof Element)) return false
+      if (t.closest('[data-book-id]')) return false
+      return !!t.closest('button, a')
+    }
     const move = (e: PointerEvent) => {
       if (e.pointerType === 'touch' || onUi(e.target)) return
       const p = local(e.clientX, e.clientY)
