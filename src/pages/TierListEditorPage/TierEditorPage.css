@@ -75,7 +75,7 @@ main.grid:has(> .neo-brutalist-editor) {
   font-family: var(--theme-font-body);
   background-color: var(--theme-bg);
   color: var(--theme-text);
-  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
 }
 

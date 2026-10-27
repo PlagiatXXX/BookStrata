@@ -275,7 +275,7 @@ export default function BookPage() {
 
       <main className="relative">
         {/* ── HERO ── */}
-        <header className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center gap-8 md:gap-12 pt-24 pb-16 overflow-x-clip">
+        <header className="relative min-h-[calc(100dvh-4rem)] flex flex-col justify-center gap-8 md:gap-12 pt-24 pb-16 overflow-x-clip">
           {/* Cinematic backdrop: размытая обложка + градиент */}
           {book.coverImageUrl && (
             <div aria-hidden className="absolute inset-0 overflow-hidden">

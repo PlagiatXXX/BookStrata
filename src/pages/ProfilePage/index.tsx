@@ -116,7 +116,7 @@ export default function ProfilePage() {
       <div className="hidden md:block">
         <Header hideLogout />
       </div>
-      <div className="pt-4 sm:pt-24 pb-20 md:pb-10">
+      <main className="pt-4 sm:pt-24 pb-20 md:pb-10">
         <div className="mx-auto px-4 w-full max-w-2xl sm:px-6 lg:max-w-4xl">
           <button
             onClick={handleBack}
@@ -189,7 +189,7 @@ export default function ProfilePage() {
             isLoading={isAchievementsLoading}
           />
         </div>
-      </div>
+      </main>
 
       <MobileBottomNav />
       <Footer />

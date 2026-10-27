@@ -132,7 +132,7 @@ export default function AuthorsPage() {
 
       <Header showSearch={false} />
 
-      <div className="author-page min-h-screen bg-[var(--ap-bg)] pb-24">
+      <main className="author-page min-h-screen bg-[var(--ap-bg)] pb-24">
         <div className="mx-auto max-w-6xl px-4 pt-24">
           <Breadcrumbs
             theme="dark"
@@ -213,7 +213,7 @@ export default function AuthorsPage() {
             )}
           </div>
         </section>
-      </div>
+      </main>
 
       <Footer />
     </>

@@ -32,7 +32,7 @@
   background-color: var(--bp-background);
   color: var(--bp-on-surface);
   font-family: var(--bp-font-body);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Заголовки и редакторский текст — антиква */

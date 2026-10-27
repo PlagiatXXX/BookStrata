@@ -125,7 +125,7 @@ export function TasteMatchBanner({
                   {d.coverImageUrl && (
                     <img
                       src={d.coverImageUrl}
-                      alt=""
+                      alt={d.title || "Обложка книги"}
                       className="h-5 w-3.5 rounded object-cover"
                     />
                   )}

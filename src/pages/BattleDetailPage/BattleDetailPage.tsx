@@ -56,7 +56,7 @@ const ParticipantCard = memo(({
         onKeyDown={(e) => { if (e.key === "Enter" && tl?.user?.id) { e.stopPropagation(); navigate(`/users/${tl.user.id}`) } }}
       >
         {tl?.user?.avatarUrl ? (
-          <img src={tl.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+          <img src={tl.user.avatarUrl} alt={tl.user?.username || "Аватар"} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-(--ink-1) text-sm font-bold">
             {tl?.user?.username?.[0]?.toUpperCase() || "?"}

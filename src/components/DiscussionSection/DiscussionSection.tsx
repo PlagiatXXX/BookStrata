@@ -355,7 +355,7 @@ function ChatMessageRow({
         onKeyDown={(e) => { if (e.key === "Enter") goToUser(message.user.id)(e) }}
       >
         {message.user.avatarUrl ? (
-          <img src={message.user.avatarUrl} alt="" />
+          <img src={message.user.avatarUrl} alt={message.user?.username || "Аватар"} />
         ) : (
           <span>{message.user.username?.[0]?.toUpperCase() || "?"}</span>
         )}

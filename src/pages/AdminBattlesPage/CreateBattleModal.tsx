@@ -143,7 +143,7 @@ export function CreateBattleModal({ approvedApplications, onClose, onCreated }: 
                     />
                     <div className="w-8 h-8 rounded-full border border-(--line-soft) bg-(--bg-1) overflow-hidden shrink-0">
                       {app.user.avatarUrl ? (
-                        <img src={app.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        <img src={app.user.avatarUrl} alt={app.user?.username || "Аватар"} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-[9px] font-bold text-(--ink-1)">
                           {app.user.username?.[0]?.toUpperCase() || "?"}

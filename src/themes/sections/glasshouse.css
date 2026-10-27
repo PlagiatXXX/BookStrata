@@ -19,6 +19,7 @@
   top: 0;
   height: 100vh;
   height: 100svh;
+  height: 100dvh;
   overflow: hidden;
   overflow: clip;
   background: var(--cd-bg);

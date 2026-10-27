@@ -131,7 +131,7 @@ export default function AdminBattlesPage() {
                     <div key={app.id} className="brutal-card brutal-border p-4 bg-(--bg-2) flex items-center gap-4">
                       <div className="w-9 h-9 rounded-full border border-(--line-soft) bg-(--bg-1) overflow-hidden shrink-0">
                         {app.user.avatarUrl ? (
-                          <img src={app.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                          <img src={app.user.avatarUrl} alt={app.user?.username || "Аватар"} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-(--ink-1)">
                             {app.user.username?.[0]?.toUpperCase() || "?"}
@@ -227,7 +227,7 @@ function ApplicationCard({
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-full border border-(--line-soft) bg-(--bg-1) overflow-hidden shrink-0">
             {app.user.avatarUrl ? (
-              <img src={app.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img src={app.user.avatarUrl} alt={app.user?.username || "Аватар"} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-xs font-bold text-(--ink-1)">
                 {app.user.username?.[0]?.toUpperCase() || "?"}

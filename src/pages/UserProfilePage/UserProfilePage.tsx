@@ -155,7 +155,7 @@ export default function UserProfilePage() {
                   {profile.avatarUrl && !avatarFailed ? (
                     <RetryableImage
                       src={proxyImageUrl(profile.avatarUrl, 320)}
-                      alt=""
+                      alt={profile.username || "Аватар"}
                       className="w-full h-full object-cover"
                       onError={() => setAvatarFailed(true)}
                     />

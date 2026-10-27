@@ -112,7 +112,7 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
                   {/* Ромбовидный аватар */}
                   <div className="w-12 h-12 bg-black/50 border border-primary/40 flex items-center justify-center overflow-hidden shrink-0 rotate-45 transform-gpu mt-2">
                     {c.user.avatarUrl ? (
-                      <img src={c.user.avatarUrl} alt="" className="w-full h-full object-cover -rotate-45 scale-125" />
+                      <img src={c.user.avatarUrl} alt={c.user?.username || "Аватар"} className="w-full h-full object-cover -rotate-45 scale-125" />
                     ) : (
                       <Icon name="person" className="text-[var(--bp-primary)] -rotate-45" />
                     )}

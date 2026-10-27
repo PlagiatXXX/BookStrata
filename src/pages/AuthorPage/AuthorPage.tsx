@@ -76,7 +76,7 @@ export default function AuthorPage() {
       <Header showSearch={false} />
 
       {/* pt-20 — полоса под fixed-хедером (~80px): хиро не залезает под него */}
-      <div className="author-page relative min-h-screen bg-[var(--ap-bg)] pb-24 pt-20">
+      <main className="author-page relative min-h-screen bg-[var(--ap-bg)] pb-24 pt-20">
         {/* Крошки поверх хиро (верх пустой, justify-end) — не сдвигают контент страницы.
             z-20 > z-10 у hero-обёртки — иначе её div перехватывает клики по ссылкам.
             pt-28 — воздух под хедером (~80px), чтобы крошки не прилипали к нему */}
@@ -102,7 +102,7 @@ export default function AuthorPage() {
         <AuthorPress items={page.pressQuotes} />
         <AuthorOtherAuthors authors={otherAuthors} />
         <AuthorCta />
-      </div>
+      </main>
 
       <Footer />
     </>
