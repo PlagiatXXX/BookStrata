@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { lazy, Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useSearchParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { Tag } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
@@ -21,6 +21,11 @@ import { ThemeSection } from "@/themes/ThemeSection";
 import { ThemeDecor } from "@/themes/ThemeDecor";
 import { DefaultCollectionLayout } from "./DefaultCollectionLayout";
 import "./CollectionPage.css";
+
+const HalloweenCollectionLayout = lazy(async () => {
+  const module = await import("@/themes/HalloweenCollectionLayout");
+  return { default: module.HalloweenCollectionLayout };
+});
 
 export default function CollectionPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -172,7 +177,11 @@ export default function CollectionPage() {
         showSearch={false}
         bgVariant="collection"
       >
-        {themeConfig ? (
+        {themeConfig?.id === "halloween" ? (
+          <Suspense fallback={null}>
+            <HalloweenCollectionLayout collection={collection} theme={themeConfig} />
+          </Suspense>
+        ) : themeConfig ? (
           /* ── Themed layout ── */
           <ThemeProvider theme={themeConfig}>
             {themeConfig.decor && <ThemeDecor name={themeConfig.decor} />}

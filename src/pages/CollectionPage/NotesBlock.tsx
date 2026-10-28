@@ -20,6 +20,11 @@ export function NotesBlock({ excerpt, editorialNote }: NotesBlockProps) {
             «{excerpt}»
           </blockquote>
         )}
+        {editorialNote && (
+          <p className="text-sm leading-relaxed text-(--ink-2)">
+            {editorialNote}
+          </p>
+        )}
       </div>
 
     </article>

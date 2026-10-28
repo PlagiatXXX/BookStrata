@@ -39,7 +39,7 @@ export const StaticTierView = memo(({
     .filter((book) => matchesGenre(book, filterGenre)) ?? [];
 
   return (
-    <div className="static-tier-view">
+    <div className="static-tier-view static-tier-view--mobile-stacked">
       <div className="flex flex-col">
         {tierOrder.map((tierId, tierIndex) => {
           const tier = tiers[tierId];

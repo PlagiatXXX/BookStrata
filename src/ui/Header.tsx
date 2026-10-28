@@ -208,22 +208,6 @@ export const Header = ({
       onClick: () => navigate("/community"),
       description: "Новости сообщества",
     },
-    {
-      label: "Полка",
-      analyticsKey: "shelf",
-      onClick: () => navigate("/shelf"),
-      icon: <BookMarked size={18} />,
-      description: "Книги, которые вы читали или хотите прочитать",
-      badge: totalCount > 0 ? String(totalCount) : undefined,
-    },
-    {
-      label: "Угостить",
-      analyticsKey: "donate",
-      onClick: () => navigate("/pricing"),
-      icon: <CoffeeCup className="h-5 w-5 text-amber-400" />,
-      description: "Угостить автора кофе",
-      iconAfter: true,
-    },
   ];
 
   return (
@@ -349,6 +333,56 @@ export const Header = ({
 
             {/* Right Section - Search & Settings */}
             <div className="flex items-center gap-2 xs:gap-3 shrink-0">
+              {/* «Полка» и «Угостить» — выделенные кнопки, поодаль от ссылок навигации */}
+              <button
+                data-analytics="nav.main.shelf"
+                onClick={() => navigate("/shelf")}
+                title="Полка"
+                className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                  activeItem === "Полка"
+                    ? isLightTheme
+                      ? "border-cyan-300 bg-white/80 text-cyan-700"
+                      : "border-cyan-400/50 bg-slate-800/60 text-cyan-400"
+                    : isLightTheme
+                      ? "border-slate-300 bg-white/80 text-slate-700 hover:bg-white hover:text-slate-950"
+                      : "border-slate-600/60 bg-slate-800/60 text-gray-200 hover:bg-slate-700/60 hover:text-white"
+                }`}
+              >
+                <span className="relative shrink-0">
+                  <BookMarked size={18} />
+                  {totalCount > 0 && (
+                    <span
+                      className={`absolute -top-1.5 -right-1.5 z-10 flex size-4 items-center justify-center rounded-full border text-[9px] font-bold leading-none ${
+                        isLightTheme
+                          ? "bg-yellow-400 text-yellow-950 border-yellow-600/60"
+                          : "bg-yellow-500/90 text-yellow-950 border-yellow-300/60"
+                      }`}
+                    >
+                      {totalCount}
+                    </span>
+                  )}
+                </span>
+                <span>Полка</span>
+              </button>
+
+              <button
+                data-analytics="nav.main.donate"
+                onClick={() => navigate("/pricing")}
+                title="Угостить автора кофе"
+                className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                  activeItem === "Угостить"
+                    ? isLightTheme
+                      ? "border-cyan-300 bg-white/80 text-cyan-700"
+                      : "border-cyan-400/50 bg-slate-800/60 text-cyan-400"
+                    : isLightTheme
+                      ? "border-slate-300 bg-white/80 text-slate-700 hover:bg-white hover:text-slate-950"
+                      : "border-slate-600/60 bg-slate-800/60 text-gray-200 hover:bg-slate-700/60 hover:text-white"
+                }`}
+              >
+                <span>Угостить</span>
+                <CoffeeCup className="h-5 w-5 text-amber-400" />
+              </button>
+
               {/* Search */}
               {showSearch && (
                 <SearchBar

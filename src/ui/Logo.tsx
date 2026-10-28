@@ -4,6 +4,14 @@ interface LogoProps {
   light?: boolean;
 }
 
+/**
+ * Хэллоуинская тыква на логотипе.
+ * Заменить картинку — положить свой файл в `public/` и поправить путь ниже
+ * (png/webp/svg — любой формат, главное с прозрачным фоном).
+ * Чтобы убрать тыкву — поставь `null`.
+ */
+const HALLOWEEN_PUMPKIN_SRC: string | null = "/halloween-pumpkin.webp";
+
 export const Logo = ({ onClick, light = false }: LogoProps) => {
   return (
     <button
@@ -14,7 +22,7 @@ export const Logo = ({ onClick, light = false }: LogoProps) => {
       <svg
         viewBox="0 0 180 48"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 w-30 xs:w-35 sm:w-40 md:w-45 h-auto"
+        className="shrink-0 w-30 xs:w-35 sm:w-40 md:w-45 h-auto overflow-visible"
       >
         {/* ICON - Animated tier bars */}
         <g transform="translate(4, 10)">
@@ -116,6 +124,27 @@ export const Logo = ({ onClick, light = false }: LogoProps) => {
             <stop offset="100%" stopColor={light ? "#334155" : "#6b7280"} />
           </linearGradient>
         </defs>
+
+        {/*
+          Halloween pumpkin — картинка из public/ (см. HALLOWEEN_PUMPKIN_SRC).
+          Позиция/размер — атрибуты x/y/width/height (координаты viewBox 180×48).
+          Если файла нет — просто ничего не рисуется.
+        */}
+        {HALLOWEEN_PUMPKIN_SRC && (
+          <image
+            className="logo-pumpkin"
+            href={HALLOWEEN_PUMPKIN_SRC}
+            x="42"
+            y="-10"
+            width="34"
+            height="30"
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden="true"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        )}
       </svg>
     </button>
   );

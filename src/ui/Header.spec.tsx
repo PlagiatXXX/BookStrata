@@ -60,3 +60,44 @@ describe("Header — дропдаун «Рейтинги»", () => {
     expect(screen.getByTestId("location-path").textContent).toBe("/authors");
   });
 });
+
+describe("Header — «Полка» и «Угостить» выделены в кнопки правой секции", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAuth).mockReturnValue({
+      isAuthenticated: false,
+      user: null,
+      logout: vi.fn(),
+    } as unknown as ReturnType<typeof useAuth>);
+    vi.mocked(useBookshelf).mockReturnValue({
+      totalCount: 0,
+    } as unknown as ReturnType<typeof useBookshelf>);
+  });
+
+  it("обе кнопки находятся вне <nav> и в одном контейнере правой секции", () => {
+    renderHeader();
+
+    const nav = screen.getByRole("navigation");
+    const shelf = screen.getByRole("button", { name: /Полка/ });
+    const treat = screen.getByRole("button", { name: /Угостить/ });
+
+    expect(nav).not.toContain(shelf);
+    expect(nav).not.toContain(treat);
+    expect(shelf.parentElement).toBe(treat.parentElement);
+    expect(shelf.parentElement).not.toBe(nav);
+  });
+
+  it("в навигации остаются только ссылки: Главная, Тир-листы, Рейтинги, Новости", () => {
+    renderHeader();
+
+    const nav = screen.getByRole("navigation");
+    const labels = [...nav.querySelectorAll("button")].map(
+      (b) => b.textContent ?? "",
+    );
+
+    expect(labels).toHaveLength(4);
+    expect(labels.join(" ")).toContain("Главная");
+    expect(labels.join(" ")).toContain("Тир-листы");
+    expect(labels.join(" ")).toContain("Новости");
+  });
+});

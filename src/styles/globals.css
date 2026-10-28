@@ -287,6 +287,29 @@
   }
 }
 
+/* ── Halloween: тыква на логотипе ── */
+@keyframes logoPumpkinSway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+.logo-pumpkin {
+  transform-box: view-box;
+  transform-origin: 59px 0px;
+  animation: logoPumpkinSway 3.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-pumpkin {
+    animation: none;
+  }
+}
+
 /* Skeleton shimmer effect */
 .animate-shimmer {
   background: linear-gradient(

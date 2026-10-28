@@ -30,6 +30,7 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const { shelf, slugShelf } = useBookshelf();
+  const isHalloween = collection.theme === "halloween";
   const [viewedBook, setViewedBook] = useState<Book | null>(null);
   const [isAiOpen, setAiOpen] = useState(false);
   const [shelfFilter, setShelfFilter] = useState<"all" | "planned">("all");
@@ -228,19 +229,30 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
               <button
                 type="button"
                 onClick={handleAiOpen}
-                className="relative group overflow-hidden inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-sm font-semibold transition-all duration-300 active:scale-95"
-                style={{
-                  background: 'linear-gradient(90deg, #f59e0b, #d97722, #ff9837)',
-                  color: '#0b0f19',
+                className={`relative group overflow-hidden inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-sm font-semibold transition-all duration-300 active:scale-95 cursor-pointer${isHalloween ? " collection-ai-cta--halloween" : ""}`}
+                style={isHalloween ? undefined : {
+                  background: "linear-gradient(90deg, #f59e0b, #d97722, #ff9837)",
+                  color: "#0b0f19",
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  boxShadow: '0 0 28px rgba(245, 158, 11, 0.45)'
+                  boxShadow: "0 0 28px rgba(245, 158, 11, 0.45)",
                 }}
               >
-                <span className="material-symbols-outlined text-[20px]" style={{ color: '#0b0f19' }}>auto_awesome</span>
+                {isHalloween ? (
+                  <img
+                    aria-hidden="true"
+                    alt=""
+                    className="collection-ai-cta-pumpkin"
+                    src="/halloween-pumpkin.webp"
+                  />
+                ) : (
+                  <span className="material-symbols-outlined text-[20px]" style={{ color: "#0b0f19" }}>
+                    auto_awesome
+                  </span>
+                )}
                 <span>Спросить у Букстража</span>
                 <span
-                  className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px]"
-                  style={{ background: 'rgba(10, 14, 24, 0.3)', color: '#0b0f19' }}
+                  className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px]${isHalloween ? " collection-ai-cta-badge" : ""}`}
+                  style={isHalloween ? undefined : { background: "rgba(10, 14, 24, 0.3)", color: "#0b0f19" }}
                 >
                   AI
                 </span>
@@ -258,7 +270,10 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
             </span>
             <span className="flex items-center gap-1">
               <Calendar size={14} />
-              Сентябрь 2026
+              {new Date(collection.createdAt).toLocaleDateString("ru-RU", {
+                month: "long",
+                year: "numeric",
+              })}
             </span>
           </div>
         )}
@@ -302,6 +317,32 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
               unrankedBookIds={collection.unrankedBookIds}
               linkToBook
             />
+          </div>
+        )}
+
+        {collection.tags.length > 0 && (
+          <div className="mb-8 flex items-center gap-2 flex-wrap">
+            <Tag size={16} className="text-(--ink-1)" />
+            <span className="text-sm text-(--ink-1)">Теги:</span>
+            {collection.tags.map((tag) => {
+              const categoryId = TAG_TO_CATEGORY[tag];
+              if (categoryId) {
+                return (
+                  <Link
+                    key={tag}
+                    to={`/topics/${categoryId}`}
+                    className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
+                  >
+                    #{tag}
+                  </Link>
+                );
+              }
+              return (
+                <span key={tag} className="text-sm text-(--accent-main)">
+                  #{tag}
+                </span>
+              );
+            })}
           </div>
         )}
 
@@ -403,32 +444,6 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
           </section>
         )}
 
-        {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-(--line-soft)">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Tag size={16} className="text-(--ink-1)" />
-            <span className="text-sm text-(--ink-1)">Теги:</span>
-            {collection.tags.map((tag) => {
-              const categoryId = TAG_TO_CATEGORY[tag];
-              if (categoryId) {
-                return (
-                  <Link
-                    key={tag}
-                    to={`/topics/${categoryId}`}
-                    className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
-                  >
-                    #{tag}
-                  </Link>
-                );
-              }
-              return (
-                <span key={tag} className="text-sm text-(--accent-main)">
-                  #{tag}
-                </span>
-              );
-            })}
-          </div>
-        </footer>
       </div>
     </>
   );

@@ -41,7 +41,7 @@ export function ThemeProvider({ theme, children }: ThemeProviderProps) {
 
   return (
     <ThemeContext.Provider value={{ theme }}>
-      <div className="theme-container" style={style}>
+      <div className={`theme-container theme-container--${theme.id}`} style={style}>
         {/* Texture overlay */}
         <div
           className="theme-texture-overlay"

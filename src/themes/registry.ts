@@ -1,6 +1,7 @@
 import type { ThemeConfig } from "./types";
 import { autumnTheme } from "./themes/autumn";
 import { glasshouseTheme } from "./themes/glasshouse";
+import { halloweenTheme } from "./themes/halloween";
 
 const THEMES: Record<string, ThemeConfig> = {};
 
@@ -15,6 +16,7 @@ export function registerTheme(config: ThemeConfig): void {
 // Register all themes
 registerTheme(autumnTheme);
 registerTheme(glasshouseTheme);
+registerTheme(halloweenTheme);
 
 /** List all available themes for the admin dropdown */
 export function listThemes(): Array<{ id: string; name: string }> {
