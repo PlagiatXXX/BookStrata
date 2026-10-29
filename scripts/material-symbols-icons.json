@@ -6,7 +6,13 @@
       "description": "Icons hardcoded in JSX (BookPage, ThemeHeroSplit, etc.)",
       "icons": [
         "arrow_back",
+        "auto_awesome",
+        "home",
+        "local_florist",
+        "nightlight",
         "star",
+        "stars",
+        "wb_sunny",
         "favorite",
         "edit",
         "delete",

@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Tag, Calendar, BookOpen } from "lucide-react";
+import { Tag, Calendar, BookOpen, Home, ArrowLeft, Star, Sparkles } from "lucide-react";
 import DOMPurify from "dompurify";
 import { Helmet } from "react-helmet-async";
 
@@ -157,7 +157,7 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
         >
           <nav className="flex items-center flex-wrap gap-1.5 sm:gap-2" style={{ color: '#d8c3ad' }}>
             <a href="/" className="hover:text-[#f59e0b] transition-colors flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px] sm:text-[16px]">home</span>
+              <Home size={14} className="sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Главная</span>
             </a>
             <span style={{ color: '#534434' }}>/</span>
@@ -181,7 +181,7 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
               color: '#d8c3ad'
             }}
           >
-            <span className="material-symbols-outlined text-[16px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '0.8125rem' }}>Назад к подборкам</span>
           </a>
         </div>
@@ -200,7 +200,7 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
                       fontFamily: "'Plus Jakarta Sans', sans-serif"
                     }}
                   >
-                    <span className="material-symbols-outlined text-[14px]">stars</span>
+                    <Star size={14} />
                     КУРАТОРСКИЙ ВЫБОР 2026
                   </span>
                 </div>
@@ -245,9 +245,7 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
                     src="/halloween-pumpkin.webp"
                   />
                 ) : (
-                  <span className="material-symbols-outlined text-[20px]" style={{ color: "#0b0f19" }}>
-                    auto_awesome
-                  </span>
+                  <Sparkles size={20} style={{ color: "#0b0f19" }} />
                 )}
                 <span>Спросить у Букстража</span>
                 <span
