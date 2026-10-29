@@ -197,12 +197,14 @@ describe("AuthorPage", () => {
     expect(await screen.findByRole("heading", { name: "Страница не найдена" })).toBeInTheDocument();
   });
 
-  it("ошибка сети → NotFoundPage (не рендерим пустоту)", async () => {
+  it("ошибка сети → блок ошибки с повтором (не NotFoundPage, чтобы не вешать noindex)", async () => {
     vi.mocked(getAuthorBySlug).mockRejectedValue(new Error("network"));
 
     renderPage();
 
-    expect(await screen.findByRole("heading", { name: "Страница не найдена" })).toBeInTheDocument();
+    expect(await screen.findByText(/не удалось загрузить данные автора/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /попробовать снова/i })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Страница не найдена" })).not.toBeInTheDocument();
   });
 });
 

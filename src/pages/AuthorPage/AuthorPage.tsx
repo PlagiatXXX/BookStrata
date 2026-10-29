@@ -1,6 +1,7 @@
 // src/pages/AuthorPage/AuthorPage.tsx
 // SEO-страница автора /authors/:slug — hero + секции ручного контента + рейтинги.
 import { useParams } from "react-router-dom";
+import { ApiRequestError } from "@/lib/api-client";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { Spinner } from "@/components/Spinner";
@@ -24,7 +25,7 @@ import "./AuthorPage.css";
 
 export default function AuthorPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { data: page, isLoading, isError } = useAuthorPage(slug);
+  const { data: page, isLoading, isError, error, refetch } = useAuthorPage(slug);
   // Хук должен вызываться до любых early return — иначе «Rendered more hooks»
   const { data: popularAuthors = [] } = usePopularAuthors(7);
 
@@ -35,8 +36,34 @@ export default function AuthorPage() {
       </div>
     );
   }
-  // 404 от API и любая ошибка сети — страница не найдена (не рендерим пустоту)
-  if (isError || !page) return <NotFoundPage />;
+
+  // Только явный 404 от API означает, что автора нет в каталоге
+  const isNotFound =
+    (error instanceof ApiRequestError && error.status === 404) ||
+    ((error as { status?: number })?.status === 404);
+
+  if (isNotFound) return <NotFoundPage />;
+
+  // При ошибке сети или блокировке запроса — показываем блок ошибки с повтором,
+  // НЕ монтируя NotFoundPage (чтобы не вешать noindex и /404 на валидный URL)
+  if (isError || !page) {
+    return (
+      <>
+        <Header showSearch={false} />
+        <main className="author-page flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-[var(--ap-bg)] pt-28 text-center">
+          <p className="text-sm text-[var(--ap-ink-muted)]">Не удалось загрузить данные автора</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="rounded-(--ap-radius) border border-(--ap-gold)/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-(--ap-gold) transition-colors hover:bg-(--ap-gold-soft)"
+          >
+            Попробовать снова
+          </button>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   const { author, books } = page;
   const genres = Array.from(
