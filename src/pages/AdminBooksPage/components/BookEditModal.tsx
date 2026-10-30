@@ -435,7 +435,7 @@ export function BookEditModal({
                 <input
                   ref={videoInputRef}
                   type="file"
-                  accept="video/mp4,video/webm"
+                  accept="video/*,.mp4,.webm,.mov,.m4v"
                   className="hidden"
                   onChange={(e) => {
                     handleVideoUpload(e.target.files?.[0]);
