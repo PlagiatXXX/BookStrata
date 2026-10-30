@@ -43,6 +43,7 @@ const BookPage = lazy(() => import("@/pages/BookPage/BookPage"));
 const AuthorPage = lazy(() => import("@/pages/AuthorPage"));
 const AuthorsPage = lazy(() => import("@/pages/AuthorsPage"));
 const RankingsPage = lazy(() => import("@/pages/RankingsPage/RankingsPage"));
+const SearchPage = lazy(() => import("@/pages/SearchPage"));
 const WhatToReadPage = lazy(() => import("@/pages/WhatToReadPage/WhatToReadPage"));
 const TopicPage = lazy(() => import("@/pages/TopicPage"));
 const BlogPage = lazy(() => import("@/pages/BlogPage/BlogPage"));
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
       { path: "/contact", element: <ContactPage /> },
       { path: "/pricing", element: <PricingPage /> },
       { path: "/rankings", element: <RankingsPage /> },
+      { path: "/search", element: <SearchPage /> },
       { path: "/what-to-read", element: <WhatToReadPage /> },
       { path: "/blog", element: <BlogPage /> },
       { path: "/blog/:slug", element: <BlogArticlePage /> },

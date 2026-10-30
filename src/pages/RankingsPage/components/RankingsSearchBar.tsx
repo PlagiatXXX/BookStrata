@@ -73,6 +73,17 @@ export function RankingsSearchBar() {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (isOpen && activeIndex >= 0 && results[activeIndex]) {
+          handleSelect(results[activeIndex].slug);
+        } else if (query.trim().length >= 2) {
+          setIsOpen(false);
+          navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+        }
+        return;
+      }
+
       if (!isOpen || results.length === 0) return;
 
       if (e.key === "ArrowDown") {
@@ -81,12 +92,9 @@ export function RankingsSearchBar() {
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setActiveIndex(Math.max(activeIndex - 1, -1));
-      } else if (e.key === "Enter" && activeIndex >= 0) {
-        e.preventDefault();
-        handleSelect(results[activeIndex].slug);
       }
     },
-    [isOpen, results, activeIndex, setActiveIndex, handleSelect],
+    [isOpen, results, activeIndex, setActiveIndex, handleSelect, query, navigate, setIsOpen],
   );
 
   // Скролл активного элемента в видимую область
@@ -203,6 +211,15 @@ export function RankingsSearchBar() {
                   )}
                 </li>
               ))}
+              <li
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+                }}
+                className="border-t border-slate-700/50 px-4 py-2.5 text-center text-xs font-semibold text-cyan-400 transition-colors hover:bg-slate-700/50 cursor-pointer"
+              >
+                Все результаты поиска для «{query.trim()}» →
+              </li>
             </ul>
           )}
         </div>

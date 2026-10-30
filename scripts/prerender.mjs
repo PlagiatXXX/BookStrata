@@ -122,6 +122,7 @@ const ROUTES = [
   { path: "/",           name: "Главная" },
   { path: "/auth",       name: "Вход / Регистрация" },
   { path: "/rankings",   name: "Рейтинг книг" },
+  { path: "/search",     name: "Поиск" },
   { path: "/collections", name: "Подборки книг" },
   { path: "/community",  name: "Сообщество" },
   { path: "/history",    name: "История" },
