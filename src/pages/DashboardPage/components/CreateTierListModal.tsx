@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RefreshCw, X, PlusCircle } from 'lucide-react';
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Modal } from '@/ui/Modal';
 
 import type { CreateModalProps } from '../types';

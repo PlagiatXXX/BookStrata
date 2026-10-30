@@ -13,7 +13,7 @@ import {
   Ear,
   Music,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 import { useAmbientSound } from "@/hooks/useAmbientSound";
 import { TRACKS_BY_CATEGORY } from "./ambient-tracks";

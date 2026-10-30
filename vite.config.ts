@@ -49,7 +49,7 @@ export default defineConfig({
         manualChunks: {
           "react-vendor": ["react", "react-dom", "react-router-dom"],
           "query-vendor": ["@tanstack/react-query"],
-          "motion-vendor": ["framer-motion"],
+          "motion-vendor": ["motion"],
           "sileo-vendor": ["sileo"],
         },
       },

@@ -15,7 +15,7 @@ import {
   BookMarked,
   Users,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { useAmbientSound } from "@/hooks/useAmbientSound";
 import { useBookshelf } from "@/hooks/useBookshelf";
 import { ConfirmModal } from "@/ui/ConfirmModal";

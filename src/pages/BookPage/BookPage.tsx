@@ -12,7 +12,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";

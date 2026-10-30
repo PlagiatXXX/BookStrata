@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, useSyncExternalStore } from 'react'
 import { Send, X, RotateCcw, Wifi, WifiOff, Loader, LogIn } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import { useAiLibrarian, type AiStatus } from '@/hooks/useAiLibrarian'
 import { useAuth } from '@/hooks/useAuthContext'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'

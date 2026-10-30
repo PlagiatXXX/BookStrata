@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { motion } from "motion/react"
 
 export function BookstrataCharacter() {
   const [isWatching, setIsWatching] = useState(false)

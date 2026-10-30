@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { sileo } from 'sileo';
 import { YM_GOALS } from '@/lib/ym-goals';
 import { createLogger } from '@/lib/logger';

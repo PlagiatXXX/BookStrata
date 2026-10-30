@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { useRef, useCallback, useEffect, useMemo, useLayoutEffect, memo, type RefObject } from "react";
 import { useBookController } from "./useBookController";
 import "./BookScene.css";

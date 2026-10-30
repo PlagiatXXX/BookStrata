@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Trophy, Lock, Star, ChevronDown, ChevronUp } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 interface Achievement {
   id: string;

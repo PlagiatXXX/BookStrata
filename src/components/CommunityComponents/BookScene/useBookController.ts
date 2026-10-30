@@ -3,10 +3,9 @@ import {
   useTransform,
   useSpring,
   useMotionValue,
-} from "framer-motion";
+  type MotionValue,
+} from "motion/react";
 import type { RefObject } from "react";
-
-import { MotionValue } from "framer-motion";
 
 interface BookControllerReturn {
   rotateX: MotionValue<number>;

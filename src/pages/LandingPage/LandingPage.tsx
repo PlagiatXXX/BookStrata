@@ -21,7 +21,7 @@ import { getFeaturedCollections } from "@/lib/collectionsApi";
 import { heroPhrases } from "./landingData";
 import "./LandingPage.css";
 
-// Ленивая загрузка секций ниже фолда (framer-motion, иконки, API-данные — в отдельном чанке)
+// Ленивая загрузка секций ниже фолда (motion, иконки, API-данные — в отдельном чанке)
 const LandingBody = lazy(() => import("./LandingBody"));
 
 /* ---------- Nav ---------- */
