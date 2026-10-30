@@ -53,6 +53,7 @@ const CelebrityPage = lazy(() => import("@/pages/CelebrityPage/CelebrityPage"));
 const AdminCelebritiesPage = lazy(() => import("@/pages/AdminCelebritiesPage/AdminCelebritiesPage"));
 const AdminBooksPage = lazy(() => import("@/pages/AdminBooksPage/AdminBooksPage"));
 const AdminAuthorsPage = lazy(() => import("@/pages/AdminAuthorsPage/AdminAuthorsPage"));
+const AdminSubscriptionsPage = lazy(() => import("@/pages/AdminSubscriptionsPage"));
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() => import("@/pages/TierListEditorPage/TierEditorPage"));
@@ -159,10 +160,7 @@ export const router = createBrowserRouter([
         path: "/admin/subscriptions",
         element: (
           <AdminGuard>
-            <div className="flex flex-col items-center justify-center h-64 gap-2">
-              <h1 className="text-lg font-bold text-(--ink-0)">Подписки</h1>
-              <p className="text-sm text-(--ink-2)">Раздел временно недоступен</p>
-            </div>
+            <AdminSubscriptionsPage />
           </AdminGuard>
         ),
       },

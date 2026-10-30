@@ -96,7 +96,6 @@ const ALL_SECTIONS: AdminSection[] = [
     borderColor: 'border-amber-500/30',
     textColor: 'text-amber-500',
     roles: ['admin'],
-    disabled: true,
   },
   {
     title: 'Донатеры',
