@@ -172,7 +172,12 @@ export default function CollectionsPage() {
       </p>
 
       {isLoading ? (
-        <p className="text-neutral-400">Загружаем подборки…</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-44 rounded-xl border border-white/10 bg-white/5 animate-pulse" />
+          ))}
+          <p className="sr-only">Загружаем подборки…</p>
+        </div>
       ) : isError ? (
         <p className="text-red-400">Не удалось загрузить подборки. Попробуйте обновить страницу.</p>
       ) : collections.length === 0 ? (
@@ -185,7 +190,7 @@ export default function CollectionsPage() {
             ))}
           </div>
           {rest.length > 0 ? (
-            <section>
+            <section className="mb-14">
               <h2 className="mb-4 text-xl font-bold text-neutral-100">Все подборки</h2>
               <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))]">
                 {rest.map((c) => (
@@ -194,6 +199,19 @@ export default function CollectionsPage() {
               </div>
             </section>
           ) : null}
+
+          {/* Видимый FAQ (синхронизирован с FAQPage Schema.org для исключения Soft 404) */}
+          <section className="pt-8 border-t border-white/10">
+            <h2 className="mb-6 text-xl font-bold text-neutral-100">Часто задаваемые вопросы</h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {COLLECTIONS_FAQ.map((item, idx) => (
+                <div key={idx} className="rounded-xl border border-white/10 bg-white/3 p-4">
+                  <h3 className="text-sm font-semibold text-neutral-100 mb-2">{item.question}</h3>
+                  <p className="text-xs leading-relaxed text-neutral-400">{item.answer}</p>
+                </div>
+              ))}
+            </div>
+          </section>
         </>
       )}
     </div>

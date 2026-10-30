@@ -65,9 +65,10 @@ describe("CollectionsPage", () => {
     // карточки подборок — только в «Все подборки» (вне жанров); жанровые подборки — контент топиков
     expect(screen.getByRole("link", { name: /Без жанра/ })).toHaveProperty("href", expect.stringContaining("/collections/c-3"));
     expect(screen.queryByRole("link", { name: /Топ ужасов/ })).toBeNull();
-    // «Все подборки» — последняя секция
+    // «Все подборки» и FAQ присутствуют на странице
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-    expect(headings[headings.length - 1]).toContain("Все подборки");
+    expect(headings).toContain("Все подборки");
+    expect(headings).toContain("Часто задаваемые вопросы");
   });
 
   it("передаёт SEOHead title/description/canonical", async () => {
