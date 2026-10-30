@@ -39,10 +39,8 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-bullseye-slim AS production
 
-# ffmpeg для сжатия живых обложек книг
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
+# Статический бинарник ffmpeg (автономный, без лишних 189 apt-пакетов и без сетевых 404)
+COPY --from=mwader/static-ffmpeg:6.1 /ffmpeg /usr/local/bin/ffmpeg
 
 RUN groupadd -g 1001 appgroup && \
     useradd -m -u 1001 -g appgroup appuser
