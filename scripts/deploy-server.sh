@@ -45,16 +45,19 @@ check_health() {
 
 SKIP_BUILD=false
 ROLLBACK=false
+SKIP_PRERENDER=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --skip-build) SKIP_BUILD=true; shift ;;
-    --rollback)   ROLLBACK=true; shift ;;
+    --skip-build)     SKIP_BUILD=true; shift ;;
+    --skip-prerender) SKIP_PRERENDER=true; shift ;;
+    --rollback)       ROLLBACK=true; shift ;;
     --help)
-      echo "Использование: $0 [--skip-build] [--rollback]"
+      echo "Использование: $0 [--skip-build] [--skip-prerender] [--rollback]"
       echo ""
-      echo "  --skip-build    не собирать фронт (если не менялся)"
-      echo "  --rollback      откатить фронт на предыдущую версию (dist.old)"
+      echo "  --skip-build        не собирать фронт (если не менялся)"
+      echo "  --skip-prerender    не запускать prerender (быстрый деплой за 20 сек)"
+      echo "  --rollback          откатить фронт на предыдущую версию (dist.old)"
       exit 0
       ;;
     *)
@@ -181,7 +184,7 @@ fi
 # т.к. в .env сервера хост может быть docker hostname (postgres).
 # Креды берём из backend/.env сервера (POSTGRES_USER/POSTGRES_PASSWORD) —
 # в репозитории пароля больше нет.
-if [ "$SKIP_BUILD" = false ]; then
+if [ "$SKIP_BUILD" = false ] && [ "$SKIP_PRERENDER" = false ]; then
   info "Экспорт маршрутов коллекций из БД..."
   cd "$PROJECT_DIR/backend"
 
@@ -221,7 +224,7 @@ fi
 # Запускается ПОСЛЕ обновления бэкенда, чтобы API возвращал актуальные данные.
 # dist уже содержит новую сборку (после атомарного swap'а на шаге 7).
 # Prerender пишет HTML прямо в dist/ — дополнительных mv не нужно.
-if [ "$SKIP_BUILD" = false ]; then
+if [ "$SKIP_BUILD" = false ] && [ "$SKIP_PRERENDER" = false ]; then
   info "Prerender публичных маршрутов..."
 
   # API_URL напрямую к бэкенду (http://localhost:8080).
@@ -240,13 +243,15 @@ fi
 # ——— 13. IndexNow ping — уведомляем Яндекс о новых/обновлённых страницах ———
 # Sitemap отдаёт бэкенд (динамический), поэтому берём его по публичному URL.
 # Опциональный шаг: сбой пинга не должен ронять деплой.
-info "IndexNow: пинг поисковиков о новых/обновлённых URL..."
-if node "$PROJECT_DIR/scripts/indexnow-ping.mjs" \
-     --sitemap "https://bookstrata.ru/sitemap.xml" \
-     --state "$PROJECT_DIR/.indexnow-state.json"; then
-  ok "IndexNow: пинг выполнен"
-else
-  warn "IndexNow: пинг не удался (опционально) — поисковики найдут изменения сами"
+if [ "$SKIP_PRERENDER" = false ]; then
+  info "IndexNow: пинг поисковиков о новых/обновлённых URL..."
+  if node "$PROJECT_DIR/scripts/indexnow-ping.mjs" \
+       --sitemap "https://bookstrata.ru/sitemap.xml" \
+       --state "$PROJECT_DIR/.indexnow-state.json"; then
+    ok "IndexNow: пинг выполнен"
+  else
+    warn "IndexNow: пинг не удался (опционально) — поисковики найдут изменения сами"
+  fi
 fi
 
 echo ""
