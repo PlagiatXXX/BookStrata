@@ -149,6 +149,7 @@ export function useAdminCollections() {
           id: t!.id,
           title: t!.title,
           color: t!.color,
+          description: t!.description,
         }));
       setCuratedTiers(tiers);
 
@@ -251,13 +252,19 @@ export function useAdminCollections() {
             return;
           }
 
-          const tiersMap: Record<string, { id: string; title: string; color: string; bookIds: string[] }> = {};
+          const tiersMap: Record<string, { id: string; title: string; color: string; description?: string; bookIds: string[] }> = {};
           const tierOrder: string[] = [];
           const booksMap: Record<string, { id: string; title: string; author: string; coverImageUrl: string; description?: string; rating?: number; genre?: string; tags?: string[]; year?: number }> = {};
           const unrankedBookIds: string[] = [];
 
           curatedTiers.forEach((t) => {
-            tiersMap[t.id] = { id: t.id, title: t.title, color: t.color, bookIds: [] };
+            tiersMap[t.id] = {
+              id: t.id,
+              title: t.title,
+              color: t.color,
+              description: t.description?.trim() || undefined,
+              bookIds: [],
+            };
             tierOrder.push(t.id);
           });
 

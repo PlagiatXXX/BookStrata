@@ -10,6 +10,7 @@ export interface Book {
   tags?: string[];
   year?: number; // Год издания (карточка коллекции/знаменитости → Book.publishedYear)
   slug?: string | null; // Slug каталоговой страницы /books/{slug} (Фаза 5.3, только published)
+  authorSlug?: string | null; // Slug страницы автора /authors/{authorSlug}
   status?: string | null; // "published" | "draft" | null — из каталога Book
 }
 
@@ -18,6 +19,7 @@ export interface Tier {
   title: string;
   color: string;
   bookIds: string[];
+  description?: string;
   height?: number;
   labelSize?: "xs" | "sm" | "md";
   labelWeight?: "thin" | "normal" | "bold" | "black";

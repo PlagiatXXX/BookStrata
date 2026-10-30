@@ -34,19 +34,43 @@ export async function enrichBookSnapshots(
   );
   if (entries.length === 0) return books;
 
-  // Один запрос на все опубликованные книги каталога (их мало — единицы/десятки)
-  const catalog = await prisma.book.findMany({
-    where: { status: "published", slug: { not: null } },
-    select: { title: true, author: true, slug: true, coverImageUrl: true },
-  });
+  const authorsPromise =
+    prisma.author && typeof prisma.author.findMany === "function"
+      ? Promise.resolve(
+          prisma.author.findMany({
+            where: { slug: { not: null } },
+            select: { name: true, slug: true },
+          }),
+        ).catch(() => [])
+      : Promise.resolve([]);
 
-  const matchByKey = new Map<string, { slug: string; coverImageUrl: string }>();
+  const [catalog, authors] = await Promise.all([
+    prisma.book.findMany({
+      where: { status: "published", slug: { not: null } },
+      select: {
+        title: true,
+        author: true,
+        slug: true,
+        coverImageUrl: true,
+        authorRel: { select: { slug: true } },
+      },
+    }),
+    authorsPromise,
+  ]);
+
+  const authorSlugByName = new Map<string, string>();
+  for (const a of authors || []) {
+    if (a.slug) authorSlugByName.set(normalizeSnapshotText(a.name), a.slug);
+  }
+
+  const matchByKey = new Map<string, { slug: string; coverImageUrl: string; authorRelSlug?: string | null }>();
   for (const b of catalog) {
     if (!b.slug) continue;
     const author = b.author ? normalizeSnapshotText(b.author) : "";
     matchByKey.set(`${normalizeSnapshotText(b.title)}|${author}`, {
       slug: b.slug,
       coverImageUrl: b.coverImageUrl,
+      authorRelSlug: b.authorRel?.slug ?? null,
     });
   }
 
@@ -54,15 +78,23 @@ export async function enrichBookSnapshots(
   const result: Record<string, BookSnapshot> = {};
   for (const [key, snap] of entries) {
     const title = normalizeSnapshotText(String(snap.title));
-    const author = typeof snap.author === "string" ? normalizeSnapshotText(snap.author) : "";
-    const match = matchByKey.get(`${title}|${author}`);
-    if (match) {
+    const authorRaw = typeof snap.author === "string" ? snap.author : "";
+    const authorKey = normalizeSnapshotText(authorRaw);
+    const match = matchByKey.get(`${title}|${authorKey}`);
+    const authorSlug = match?.authorRelSlug || authorSlugByName.get(authorKey) || undefined;
+
+    if (match || authorSlug) {
       result[key] = {
         ...snap,
-        slug: match.slug,
-        status: "published",
-        // Обложка — из каталога (единый источник), фолбэк — редакторская карточка
-        coverImageUrl: match.coverImageUrl || (snap as { coverImageUrl?: unknown }).coverImageUrl,
+        ...(match
+          ? {
+              slug: match.slug,
+              status: "published",
+              // Обложка — из каталога (единый источник), фолбэк — редакторская карточка
+              coverImageUrl: match.coverImageUrl || (snap as { coverImageUrl?: unknown }).coverImageUrl,
+            }
+          : {}),
+        ...(authorSlug ? { authorSlug } : {}),
       };
       enriched = true;
     } else {

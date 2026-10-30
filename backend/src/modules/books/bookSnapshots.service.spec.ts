@@ -5,6 +5,9 @@ vi.mock("../../lib/prisma.js", () => ({
     book: {
       findMany: vi.fn(),
     },
+    author: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -12,6 +15,7 @@ import { prisma } from "../../lib/prisma.js";
 import { enrichBookSnapshots, normalizeSnapshotText } from "./bookSnapshots.service.js";
 
 const mockFindMany = prisma.book.findMany as unknown as ReturnType<typeof vi.fn>;
+const mockAuthorFindMany = prisma.author.findMany as unknown as ReturnType<typeof vi.fn>;
 
 describe("normalizeSnapshotText", () => {
   it("приводит к нижнему регистру и схлопывает пробелы", () => {
@@ -49,7 +53,13 @@ describe("enrichBookSnapshots", () => {
     });
     expect(mockFindMany).toHaveBeenCalledWith({
       where: { status: "published", slug: { not: null } },
-      select: { title: true, author: true, slug: true, coverImageUrl: true },
+      select: {
+        title: true,
+        author: true,
+        slug: true,
+        coverImageUrl: true,
+        authorRel: { select: { slug: true } },
+      },
     });
   });
 
@@ -122,5 +132,25 @@ describe("enrichBookSnapshots", () => {
   it("не делает запрос к каталогу, если снимков нет", async () => {
     await enrichBookSnapshots({});
     expect(mockFindMany).not.toHaveBeenCalled();
+  });
+
+  it("обогащает authorSlug из таблицы авторов, даже если книги нет в каталоге", async () => {
+    mockFindMany.mockResolvedValue([]);
+    mockAuthorFindMany.mockResolvedValue([
+      { name: "Стивен Кинг", slug: "stiven-king" },
+    ]);
+
+    const result = await enrichBookSnapshots({
+      b1: { id: "b1", title: "Сияние", author: "Стивен Кинг" },
+    });
+
+    expect(result).toEqual({
+      b1: {
+        id: "b1",
+        title: "Сияние",
+        author: "Стивен Кинг",
+        authorSlug: "stiven-king",
+      },
+    });
   });
 });

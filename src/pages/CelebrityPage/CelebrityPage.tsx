@@ -338,9 +338,13 @@ export default function CelebrityPage() {
                     );
                   }
                   return (
-                    <span key={tag} className="text-sm text-(--accent-main)">
+                    <Link
+                      key={tag}
+                      to={`/search?q=${encodeURIComponent(tag)}`}
+                      className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
+                    >
                       #{tag}
-                    </span>
+                    </Link>
                   );
                 })}
               </div>

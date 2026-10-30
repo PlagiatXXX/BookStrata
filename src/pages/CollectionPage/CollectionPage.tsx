@@ -20,6 +20,7 @@ import { ThemeProvider } from "@/themes/ThemeProvider";
 import { ThemeSection } from "@/themes/ThemeSection";
 import { ThemeDecor } from "@/themes/ThemeDecor";
 import { DefaultCollectionLayout } from "./DefaultCollectionLayout";
+import { CollectionBooksGuide } from "./components/CollectionBooksGuide";
 import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage";
 import "./CollectionPage.css";
 
@@ -204,6 +205,17 @@ export default function CollectionPage() {
                 />
               ))}
 
+              {/* Гид по книгам рейтинга (для читателей и SEO) */}
+              {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
+                <div className="mt-12">
+                  <CollectionBooksGuide
+                    tiers={collection.tiers as Record<string, import("@/types").Tier>}
+                    tierOrder={collection.tierOrder}
+                    books={collection.books as Record<string, import("@/types").Book>}
+                  />
+                </div>
+              )}
+
               {/* Tags footer */}
               {collection.tags.length > 0 && (
                 <footer className="mt-12 pt-8 border-t border-(--line-soft)">
@@ -224,9 +236,13 @@ export default function CollectionPage() {
                         );
                       }
                       return (
-                        <span key={tag} className="text-sm text-(--accent-main)">
+                        <Link
+                          key={tag}
+                          to={`/search?q=${encodeURIComponent(tag)}`}
+                          className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
+                        >
                           #{tag}
-                        </span>
+                        </Link>
                       );
                     })}
                   </div>

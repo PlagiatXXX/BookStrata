@@ -43,9 +43,19 @@ export function CuratedCollectionEditor({
               <input
                 type="text"
                 className="curated-editor-input"
+                style={{ flex: "0 0 160px" }}
                 value={tier.title}
                 onChange={(e) => h.handleUpdateTier(tier.id, "title", e.target.value)}
-                placeholder="Название уровня (S, A, B...)"
+                placeholder="Название (Шедевр...)"
+              />
+              <input
+                type="text"
+                className="curated-editor-input"
+                style={{ flex: "1 1 200px" }}
+                value={tier.description || ""}
+                onChange={(e) => h.handleUpdateTier(tier.id, "description", e.target.value)}
+                placeholder="Критерий уровня (необязательно)"
+                title="Пояснение для читателей: почему книги попадают на этот уровень"
               />
               <div className="curated-editor-color-picker">
                 {TIER_COLORS.map((c) => (

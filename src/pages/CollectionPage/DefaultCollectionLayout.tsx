@@ -10,6 +10,7 @@ import { BookViewModal } from "@/components/BookViewModal/BookViewModal";
 import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { NotesBlock } from "./NotesBlock";
 import { InteractiveShelfBlock } from "./InteractiveShelfBlock";
+import { CollectionBooksGuide } from "./components/CollectionBooksGuide";
 import { CollectionCard } from "@/components/CommunityComponents/CollectionCard";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBookshelf } from "@/hooks/useBookshelf";
@@ -17,6 +18,7 @@ import { sileo } from "sileo";
 import { getCollections } from "@/lib/collectionsApi";
 import type { CollectionItem } from "@/types/collection";
 import type { Book } from "@/types";
+import type { ShelfStatus } from "@/lib/shelfApi";
 import { proxyImageUrl } from "@/utils/imageProxy";
 import { CATEGORIES } from "@/data/categories";
 import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
@@ -29,7 +31,7 @@ interface DefaultCollectionLayoutProps {
 export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutProps) {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const { shelf, slugShelf } = useBookshelf();
+  const { shelf, slugShelf, toggleStatus } = useBookshelf();
   const isHalloween = collection.theme === "halloween";
   const [viewedBook, setViewedBook] = useState<Book | null>(null);
   const [isAiOpen, setAiOpen] = useState(false);
@@ -39,6 +41,33 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
 
   const handleAiOpen = useCallback(() => setAiOpen(true), []);
   const handleAiClose = useCallback(() => setAiOpen(false), []);
+
+  const handleToggleShelf = useCallback(
+    (book: Book, targetStatus: ShelfStatus) => {
+      toggleStatus(String(book.id), targetStatus, {
+        title: book.title,
+        author: book.author ?? undefined,
+        coverImageUrl: book.coverImageUrl || undefined,
+        genre: book.genre ?? undefined,
+        description: book.description ?? undefined,
+        slug: book.slug ?? undefined,
+      });
+      if (targetStatus === "want_to_read") {
+        sileo.success({
+          title: "«Хочу прочитать»",
+          description: `«${book.title}» добавлена на вашу полку`,
+          duration: 3000,
+        });
+      } else if (targetStatus === "read") {
+        sileo.success({
+          title: "«Прочитано»",
+          description: `«${book.title}» отмечена как прочитанная`,
+          duration: 3000,
+        });
+      }
+    },
+    [toggleStatus],
+  );
 
   const statuses = useMemo(() => {
     const result: Record<string, string> = {};
@@ -336,12 +365,28 @@ export function DefaultCollectionLayout({ collection }: DefaultCollectionLayoutP
                 );
               }
               return (
-                <span key={tag} className="text-sm text-(--accent-main)">
+                <Link
+                  key={tag}
+                  to={`/search?q=${encodeURIComponent(tag)}`}
+                  className="text-sm text-(--accent-main) hover:text-(--accent-hover) transition-colors"
+                >
                   #{tag}
-                </span>
+                </Link>
               );
             })}
           </div>
+        )}
+
+        {/* Гид по книгам рейтинга (для читателей и Googlebot / Search Console) */}
+        {collection.type === "curated" && collection.tiers && collection.tierOrder && collection.books && (
+          <CollectionBooksGuide
+            tiers={collection.tiers as Record<string, import("@/types").Tier>}
+            tierOrder={collection.tierOrder}
+            books={collection.books as Record<string, import("@/types").Book>}
+            shelfStatuses={shelf}
+            onToggleShelf={handleToggleShelf}
+            unrankedBookIds={collection.unrankedBookIds}
+          />
         )}
 
         {/* CTA */}

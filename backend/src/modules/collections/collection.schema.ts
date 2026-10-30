@@ -7,6 +7,7 @@ const tierObjectSchema = z.object({
   title: z.string(),
   color: z.string(),
   bookIds: z.array(z.string()).optional().default([]),
+  description: z.string().nullable().optional(),
 });
 
 const bookObjectSchema = z.object({

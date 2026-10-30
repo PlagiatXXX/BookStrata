@@ -2,6 +2,7 @@ export interface CuratedTier {
   id: string;
   title: string;
   color: string;
+  description?: string;
 }
 
 export interface CuratedBook {
