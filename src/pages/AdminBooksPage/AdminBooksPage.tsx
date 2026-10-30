@@ -156,20 +156,30 @@ export default function AdminBooksPage() {
                   <tr key={b.id} className="border-b border-[var(--ink-3)]/50 last:border-0 hover:bg-[var(--ink-3)]/30">
                     <td className="px-1.5 py-1.5">
                       <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => h.setEditingId(b.id)}
-                          title="Редактировать книгу"
-                          aria-label={`Редактировать обложку: ${b.title}`}
-                          className="shrink-0 cursor-pointer overflow-hidden rounded transition-opacity hover:opacity-75"
-                        >
-                          <img
-                            src={b.coverImageUrl || undefined}
-                            alt=""
-                            className="h-14 w-10 rounded object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                          />
-                        </button>
+                        <div className="relative shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => h.setEditingId(b.id)}
+                            title="Редактировать книгу"
+                            aria-label={`Редактировать обложку: ${b.title}`}
+                            className="block shrink-0 cursor-pointer overflow-hidden rounded transition-opacity hover:opacity-75"
+                          >
+                            <img
+                              src={b.coverImageUrl || undefined}
+                              alt=""
+                              className="h-14 w-10 rounded object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                          </button>
+                          {b.animatedCoverUrl && (
+                            <span
+                              title="Живая анимированная обложка"
+                              className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-[9px] text-white shadow-sm ring-1 ring-black"
+                            >
+                              ▶
+                            </span>
+                          )}
+                        </div>
                         <div className="min-w-0">
                           <button
                             type="button"
@@ -187,6 +197,14 @@ export default function AdminBooksPage() {
                               className="inline-block whitespace-nowrap rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-medium text-sky-300"
                             >
                               в тир-листах: {b._count.placements}
+                            </span>
+                          )}
+                          {b.animatedCoverUrl && (
+                            <span
+                              title="Живая анимированная обложка книги"
+                              className="inline-block whitespace-nowrap rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-medium text-amber-300"
+                            >
+                              ✨ живая
                             </span>
                           )}
                           {b.status === "draft" && b.ownerUsername && (

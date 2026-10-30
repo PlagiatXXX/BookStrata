@@ -39,6 +39,11 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-bullseye-slim AS production
 
+# ffmpeg для сжатия живых обложек книг
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN groupadd -g 1001 appgroup && \
     useradd -m -u 1001 -g appgroup appuser
 

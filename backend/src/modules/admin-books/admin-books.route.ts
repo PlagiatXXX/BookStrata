@@ -23,6 +23,7 @@ import {
   type BookUpdateInput,
   type BookCreateInput,
 } from "./admin-books.service.js";
+import { processAndUploadAnimatedCover, VideoProcessingError } from "./video-processor.service.js";
 
 const handleError = (error: unknown, reply: {
   code: (code: number) => { send: (payload: unknown) => unknown };
@@ -193,6 +194,40 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
         }
         fastify.log.error({ error: String(error) }, "Failed to upload book cover");
         return reply.code(500).send(createApiError(ErrorCodes.UPLOAD_FAILED, "Failed to upload image"));
+      }
+    },
+  );
+
+  // POST /upload-animated-cover — загрузка и сжатие видео (ffmpeg) + постер WebP
+  fastify.post<{ Body: { videoBase64: string } }>(
+    "/upload-animated-cover",
+    async (request, reply) => {
+      const { videoBase64 } = request.body;
+
+      if (!videoBase64 || typeof videoBase64 !== "string") {
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Не переданы данные видео"));
+      }
+
+      // Проверяем префикс base64 видео
+      const match = videoBase64.match(/^data:video\/([a-zA-Z0-9.-]+);base64,(.+)$/);
+      const rawBase64 = match?.[2] ?? videoBase64.replace(/^data:[^;]+;base64,/, "");
+
+      const videoBuffer = Buffer.from(rawBase64, "base64");
+      if (videoBuffer.length === 0) {
+        return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Некорректный base64 для видео"));
+      }
+
+      try {
+        const result = await processAndUploadAnimatedCover(videoBuffer, {
+          folder: "tiermaker-pro/book-covers",
+        });
+        return reply.code(200).send(createSuccessResponse(result));
+      } catch (error: unknown) {
+        if (error instanceof VideoProcessingError) {
+          return reply.code(400).send(createApiError(ErrorCodes.VALIDATION_ERROR, error.message));
+        }
+        fastify.log.error({ error: String(error) }, "Failed to process animated book cover");
+        return reply.code(500).send(createApiError(ErrorCodes.UPLOAD_FAILED, "Не удалось обработать видео"));
       }
     },
   );

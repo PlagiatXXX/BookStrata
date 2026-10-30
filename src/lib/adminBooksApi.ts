@@ -55,6 +55,7 @@ export interface AdminBookListItem {
   genre: string | null;
   tags: string[];
   coverImageUrl: string;
+  animatedCoverUrl?: string | null;
   rating: number | null;
   likesCount: number;
   views: number;
@@ -108,6 +109,7 @@ export interface BookUpdateInput {
   genre?: string | null;
   tags?: string[];
   coverImageUrl?: string;
+  animatedCoverUrl?: string | null;
   publishedYear?: number | null;
   slug?: string;
   contextChain?: ContextChainItem[] | null;
@@ -193,6 +195,23 @@ export async function uploadBookCover(
   return apiClient.post<{ coverImageUrl: string }>(
     "/admin/books/upload-cover",
     { coverImageUrl: base64 },
+  );
+}
+
+export interface UploadAnimatedCoverResponse {
+  animatedCoverUrl: string;
+  coverImageUrl: string;
+  ogImageUrl?: string;
+}
+
+// Загрузить анимированную обложку книги (видео → base64 → ffmpeg сжатие на сервере + постер WebP)
+export async function uploadBookAnimatedCover(
+  file: File,
+): Promise<UploadAnimatedCoverResponse> {
+  const base64 = await fileToBase64(file);
+  return apiClient.post<UploadAnimatedCoverResponse>(
+    "/admin/books/upload-animated-cover",
+    { videoBase64: base64 },
   );
 }
 

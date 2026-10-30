@@ -320,6 +320,7 @@ export default function BookPage() {
                 <BookCover3D
                   coverImageUrl={book.coverImageUrl}
                   title={book.title}
+                  liveVideoUrl={book.animatedCoverUrl || undefined}
                 />
               </div>
 

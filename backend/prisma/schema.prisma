@@ -106,6 +106,7 @@ authorId        Int?
 userId          Int?            @map("user_id")
 coverImageUrl   String          @map("cover_image_url")
 ogImageUrl      String?         @map("og_image_url")
+animatedCoverUrl String?        @map("animated_cover_url")
 description     String?
 genre           String?
 tags            String[]

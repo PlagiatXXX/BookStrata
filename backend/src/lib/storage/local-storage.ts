@@ -136,4 +136,8 @@ export class LocalStorage implements ImageStorageService {
 
     return { ...mainResult, ogUrl: ogResult.url }
   }
+
+  async uploadVideo(buffer: Buffer, folder = UPLOADS_SUBDIR): Promise<UploadResult> {
+    return writeFile(buffer, folder, 'mp4')
+  }
 }

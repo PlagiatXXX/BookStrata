@@ -87,6 +87,7 @@ export interface BookPageData {
     author: string | null;
     coverImageUrl: string;
     ogImageUrl: string | null;
+    animatedCoverUrl?: string | null;
     description: string | null;
     genre: string | null;
     tags: string[];

@@ -9,4 +9,5 @@ export const uploadBase64 = storage.uploadBase64.bind(storage)
 export const uploadFromUrl = storage.uploadFromUrl.bind(storage)
 export const uploadBase64WithOg = storage.uploadBase64WithOg.bind(storage)
 export const uploadFromUrlWithOg = storage.uploadFromUrlWithOg.bind(storage)
+export const uploadVideo = storage.uploadVideo.bind(storage)
 export type { UploadResult, UploadWithOgResult }

@@ -162,4 +162,22 @@ export class S3Storage implements ImageStorageService {
 
     return { ...mainResult, ogUrl: ogResult.url }
   }
+
+  async uploadVideo(buffer: Buffer, folder = 'tiermaker-pro/uploads'): Promise<UploadResult> {
+    const key = generateKey(folder, 'mp4')
+    const command = new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: 'video/mp4',
+      ACL: 'public-read',
+    })
+
+    await client.send(command)
+
+    return {
+      url: publicUrl(key),
+      publicId: key,
+    }
+  }
 }

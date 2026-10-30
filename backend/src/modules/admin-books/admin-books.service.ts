@@ -62,6 +62,7 @@ const BOOK_LIST_SELECT = {
   genre: true,
   tags: true,
   coverImageUrl: true,
+  animatedCoverUrl: true,
   rating: true,
   likesCount: true,
   isTrending: true,
@@ -484,6 +485,7 @@ export async function getBookAdmin(id: number) {
       tags: true,
       description: true,
       coverImageUrl: true,
+      animatedCoverUrl: true,
       publishedYear: true,
       isbn: true,
       rating: true,
@@ -512,6 +514,7 @@ export interface BookUpdateInput {
   tags?: string[];
   coverImageUrl?: string;
   ogImageUrl?: string | null;
+  animatedCoverUrl?: string | null;
   publishedYear?: number | null;
   slug?: string;
   contextChain?: Array<{ icon: string; title: string; text: string }> | null;
@@ -588,6 +591,9 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
   }
   if (data.ogImageUrl !== undefined) {
     updateData.ogImageUrl = data.ogImageUrl?.trim() || null;
+  }
+  if (data.animatedCoverUrl !== undefined) {
+    updateData.animatedCoverUrl = data.animatedCoverUrl?.trim() || null;
   }
   if (data.publishedYear !== undefined)
     updateData.publishedYear = data.publishedYear;
@@ -802,6 +808,7 @@ export async function publishBookById(id: number): Promise<PublishResult> {
       tags: true,
       description: true,
       coverImageUrl: true,
+      animatedCoverUrl: true,
       publishedYear: true,
       source: true,
       externalId: true,

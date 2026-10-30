@@ -19,6 +19,7 @@ export interface Book {
   title: string;
   author: string | null;
   coverImageUrl: string;
+  animatedCoverUrl?: string | null;
   description: string | null;
   thoughts?: string | null;
   rating?: number;

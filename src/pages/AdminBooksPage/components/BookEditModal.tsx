@@ -3,7 +3,7 @@
 // (publish через инвариант полноты), обогащение из Google Books, merge,
 // редактор contextChain ({ icon, title, text }) с иконками Material Symbols.
 import { useRef, useState } from "react";
-import { ArrowUp, ArrowDown, Plus, Trash2, X, Upload } from "lucide-react";
+import { ArrowUp, ArrowDown, Plus, Trash2, X, Upload, Film, Sparkles } from "lucide-react";
 import type {
   AdminBookDetail,
   BookUpdateInput,
@@ -11,7 +11,7 @@ import type {
   ReadingGuide,
   ReadingProfile,
 } from "@/lib/adminBooksApi";
-import { uploadBookCover } from "@/lib/adminBooksApi";
+import { uploadBookCover, uploadBookAnimatedCover } from "@/lib/adminBooksApi";
 import { ReadingProfilePrompt } from "./ReadingProfilePrompt";
 import { ReadingGuidePrompt } from "./ReadingGuidePrompt";
 
@@ -154,6 +154,24 @@ export function BookEditModal({
       setCoverError("Не удалось загрузить обложку");
     } finally {
       setCoverUploading(false);
+    }
+  };
+
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleVideoUpload = async (file: File | undefined) => {
+    if (!file) return;
+    setVideoUploading(true);
+    setVideoError(null);
+    try {
+      const res = await uploadBookAnimatedCover(file);
+      set("animatedCoverUrl", res.animatedCoverUrl);
+    } catch {
+      setVideoError("Не удалось обработать видео. Проверьте формат (MP4/WebM) и размер (до 35 МБ)");
+    } finally {
+      setVideoUploading(false);
     }
   };
 
@@ -387,6 +405,84 @@ export function BookEditModal({
               <p className="mt-1 text-xs text-red-400">{coverError}</p>
             )}
           </label>
+          <div className="md:col-span-2 rounded-xl border border-(--ink-3) bg-(--bg-0)/60 p-4">
+            <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-(--ink-0) flex items-center gap-2">
+                  <Film size={16} className="text-(--accent-main)" />
+                  Живая анимированная обложка (видео)
+                </span>
+                {(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) && (
+                  <button
+                    type="button"
+                    onClick={() => set("animatedCoverUrl", null)}
+                    className="text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                  >
+                    Удалить видео
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-(--ink-1)">
+                Загрузите исходное видео (MP4/WebM). Сервер сожмет его через ffmpeg (H.264, ~400 КБ, no-audio, faststart) и создаст четкий постер первого кадра в качестве обложки.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) ?? ""}
+                  onChange={(e) => set("animatedCoverUrl", e.target.value.trim() || null)}
+                  placeholder="/images/books/... или https://cdn.bookstrata.ru/.../video.mp4"
+                  className="w-full rounded-lg border border-(--ink-3) bg-(--bg-1) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
+                />
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/mp4,video/webm"
+                  className="hidden"
+                  onChange={(e) => {
+                    handleVideoUpload(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={videoUploading}
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg border border-(--accent-main)/40 bg-(--accent-main)/10 px-3.5 py-2 text-sm font-medium text-(--accent-main) hover:bg-(--accent-main)/20 disabled:opacity-50 cursor-pointer transition-colors"
+                >
+                  <Film size={14} />
+                  {videoUploading ? "Сжатие ffmpeg…" : "Загрузить видео"}
+                </button>
+              </div>
+              {videoError && (
+                <p className="text-xs text-red-400">{videoError}</p>
+              )}
+              {(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) && (
+                <div className="mt-2 flex items-center gap-4 rounded-lg border border-(--ink-3) bg-(--bg-1) p-3">
+                  <div className="relative h-24 w-16 overflow-hidden rounded-md border border-(--ink-3) bg-black shrink-0">
+                    <video
+                      src={(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) ?? ""}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="text-xs text-(--ink-1) space-y-1">
+                    <p className="font-medium text-(--ink-0) flex items-center gap-1.5">
+                      <Sparkles size={13} className="text-amber-400" />
+                      Живая обложка включена
+                    </p>
+                    <p className="text-(--ink-2)">
+                      • Десктоп: воспроизведение при наведении курсора
+                    </p>
+                    <p className="text-(--ink-2)">
+                      • Мобильные: кнопка «Оживить обложку» под книгой
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           <label className="block md:col-span-2">
             <span className="mb-1 block text-sm text-(--ink-1)">
               Описание *
