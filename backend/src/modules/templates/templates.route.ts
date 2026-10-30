@@ -1,29 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  type FastifyInstance,
-  type FastifyRequest,
-  type FastifyReply,
+import type {
+  FastifyInstance,
+  FastifyPluginAsync,
+  FastifyRequest,
+  FastifyReply,
 } from "fastify";
-import { PrismaClient } from "@prisma/client";
+import { authMiddleware } from "../auth/auth.middleware.js";
 import {
   TemplatesService,
   type CreateTemplateInput,
 } from "./templates.service.js";
 import { templateLikesRoutes } from "./likes/likes.route.js";
 
-// Тип для Headers с authorization
 interface AuthHeaders {
   authorization?: string;
 }
 
-export async function templatesController(
+export const templatesRoutes: FastifyPluginAsync = async (
   fastify: FastifyInstance,
-  prisma: PrismaClient,
-) {
-  const service = new TemplatesService(prisma);
+) => {
+  fastify.addHook("preHandler", authMiddleware);
 
-  // Роуты для лайков
-  fastify.register(templateLikesRoutes, { prefix: "/templates/:id" });
+  const service = new TemplatesService(fastify.prisma);
+
+  // Роуты для лайков: /api/templates/:id/likes и /api/templates/:id/like
+  fastify.register(templateLikesRoutes, { prefix: "/templates" });
 
   // Получить все шаблоны пользователя
   fastify.get(
@@ -309,4 +310,4 @@ export async function templatesController(
       }
     },
   );
-}
+};

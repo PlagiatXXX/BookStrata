@@ -42,7 +42,7 @@ import { topicRoutes } from "../src/modules/collections/topic.route.js";
 import { celebrityRoutes } from "../src/modules/celebrities/celebrity.route.js";
 import { shelfRoutes } from "../src/modules/shelf/shelf.route.js";
 import { moderationRoutes } from "../src/modules/moderation/moderation.route.js";
-import templatesPlugin from "../src/modules/templates/templates.plugin.js";
+import { templatesRoutes } from "./modules/templates/templates.route.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
 import requestContext from "../src/plugins/requestContext.js";
 import authPlugin from "../src/plugins/auth.js";
@@ -392,8 +392,8 @@ fastify.register(battleRoutes, { prefix: "/api/battles" });
 fastify.register(forumRoutes, { prefix: "/api/forum" });
 fastify.register(externalNewsRoutes, { prefix: "/api/external-news" });
 
-// Регистрируем контроллер шаблонов с префиксом /api
-fastify.register(templatesPlugin, { prisma, prefix: "/api" });
+// Шаблоны (тир-листы и их лайки)
+fastify.register(templatesRoutes, { prefix: "/api" });
 
 // Donors (публичный список + админка)
 fastify.register(donorRoutes, { prefix: "/api/donors" });

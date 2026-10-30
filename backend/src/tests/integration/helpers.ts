@@ -22,7 +22,7 @@ import { rolesRoutes } from "../../modules/roles/roles.route.js";
 import { sitemapRoutes } from "../../modules/sitemap/sitemap.route.js";
 import { externalNewsRoutes } from "../../modules/external-news/external-news.route.js";
 import { subscriptionsRoutes } from "../../modules/subscriptions/subscriptions.routes.js";
-import templatesPlugin from "../../modules/templates/templates.plugin.js";
+import { templatesRoutes } from "../../modules/templates/templates.route.js";
 import { adminCleanupRoutes } from "../../modules/admin/admin-cleanup.route.js";
 import adminStatsRoutes from "../../modules/admin-stats/admin-stats.route.js";
 
@@ -80,7 +80,7 @@ export async function createTestServer(): Promise<TestContext> {
   await fastify.register(sitemapRoutes);
   await fastify.register(externalNewsRoutes, { prefix: "/api/external-news" });
   await fastify.register(subscriptionsRoutes, { prefix: "/api/subscriptions" });
-  await fastify.register(templatesPlugin, { prisma, prefix: "/api" });
+  await fastify.register(templatesRoutes, { prefix: "/api" });
   await fastify.register(adminCleanupRoutes, { prefix: "/api/admin" });
   await fastify.register(adminStatsRoutes, { prefix: "/api/admin" });
 
