@@ -39,12 +39,22 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
       const ip = request.ip
       const userAgent = request.headers['user-agent']
 
+      let requestUrl: string | null = body.url || null
+      if (!requestUrl && request.headers.referer) {
+        try {
+          const parsed = new URL(request.headers.referer)
+          requestUrl = `${parsed.pathname}${parsed.search}`
+        } catch {
+          requestUrl = null
+        }
+      }
+
       // Аналитика не должна ломать запрос — fire and forget
       analytics.trackEvent({
         userId: user?.userId ?? null,
         event: body.event,
         meta: body.meta,
-        url: body.url || request.url,
+        url: requestUrl ?? undefined,
         ip,
         userAgent,
       }).catch(() => {})

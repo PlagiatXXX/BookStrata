@@ -82,6 +82,45 @@ describe("Analytics Routes", () => {
       )
     })
 
+    it("POST /api/analytics/track извлекает url из referer если url в body отсутствует", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/analytics/track",
+        headers: {
+          referer: "https://bookstrata.ru/tier-lists/school-books?mode=view",
+        },
+        payload: {
+          event: "session_heartbeat",
+        },
+      })
+
+      expect(response.statusCode).toBe(202)
+      expect(mockAnalyticsService.trackEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: "session_heartbeat",
+          url: "/tier-lists/school-books?mode=view",
+        }),
+      )
+    })
+
+    it("POST /api/analytics/track передаёт undefined в url если url и referer отсутствуют", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/analytics/track",
+        payload: {
+          event: "session_heartbeat",
+        },
+      })
+
+      expect(response.statusCode).toBe(202)
+      expect(mockAnalyticsService.trackEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: "session_heartbeat",
+          url: undefined,
+        }),
+      )
+    })
+
     it("POST /api/analytics/track отклоняет невалидное тело (без event)", async () => {
       const response = await app.inject({
         method: "POST",

@@ -37,6 +37,8 @@ import { useDemoStorage } from "./hooks/useDemoStorage";
 import { useDemoOnboarding } from "./hooks/useDemoOnboarding";
 import { AuthOnSaveModal } from "./components/AuthOnSaveModal";
 import { DemoOnboarding } from "./components/DemoOnboarding";
+import { apiTrackEvent } from "@/lib/analyticsApi";
+import { UNRANKED_AREA_ID } from "@/constants/dnd";
 import "./TierEditorPage.css";
 import type { Book, Tier, TierListData } from "@/types";
 
@@ -585,7 +587,29 @@ const TierListEditorContent = () => {
   // Обработчики с установкой hasUnsavedChanges
   const handleDragEndWithUnsaved = (event: DragEndEvent) => {
     const changed = handleDragEnd(event);
-    if (changed) setHasUnsavedChanges(true);
+    if (changed) {
+      setHasUnsavedChanges(true);
+      const activeData = event.active.data.current;
+      const overData = event.over?.data.current;
+      if (activeData?.type === "book" && overData?.containerId) {
+        const book =
+          activeData.book ||
+          listData.books[String(event.active.id).replace("book-", "")];
+        if (overData.containerId === UNRANKED_AREA_ID) {
+          apiTrackEvent("book_unranked", {
+            bookTitle: book?.title,
+            tierListId: listData.id,
+          });
+        } else {
+          const tier = listData.tiers[overData.containerId];
+          apiTrackEvent("book_placed", {
+            tierTitle: tier?.title,
+            bookTitle: book?.title,
+            tierListId: listData.id,
+          });
+        }
+      }
+    }
   };
 
   const getBookPlacement = (bookId: string) => {
@@ -678,9 +702,13 @@ const TierListEditorContent = () => {
     });
   };
 
-  const addRowWithUnsaved = () => {
-    addRow();
+  const addRowWithUnsaved = (title?: string) => {
+    addRow(title);
     setHasUnsavedChanges(true);
+    apiTrackEvent("tier_create", {
+      tierTitle: title || "Новый тир",
+      tierListId: listData.id,
+    });
   };
 
   const updateTierSettingsWithUnsaved = (
@@ -694,6 +722,10 @@ const TierListEditorContent = () => {
   const renameTierWithUnsaved = (tierId: string, newTitle: string) => {
     renameTier(tierId, newTitle);
     setHasUnsavedChanges(true);
+    apiTrackEvent("tier_rename", {
+      tierTitle: newTitle,
+      tierListId: listData.id,
+    });
   };
 
   const removeTierWithUnsaved = (tierId: string) => {

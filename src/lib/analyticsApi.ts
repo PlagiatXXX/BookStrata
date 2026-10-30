@@ -101,8 +101,14 @@ export async function apiTrackEvent(
   // просмотрами с 127.0.0.1:4173 (локальный сервер пререндера)
   if (typeof window !== 'undefined' && window.__PRERENDER__) return
 
+  const currentUrl =
+    url ||
+    (typeof window !== 'undefined' && window.location
+      ? `${window.location.pathname}${window.location.search}`
+      : undefined);
+
   try {
-    await apiClient.post('/analytics/track', { event, meta, url })
+    await apiClient.post('/analytics/track', { event, meta, url: currentUrl })
   } catch {
     // Тихий fallback — аналитика не должна ломать UX
   }

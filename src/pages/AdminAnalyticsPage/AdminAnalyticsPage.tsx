@@ -9,14 +9,19 @@ const EVENT_LABELS: Record<string, string> = {
   user_register: 'Регистрация',
   login: 'Вход в систему',
   logout: 'Выход',
-  session_heartbeat: 'Активность на сайте',
+  session_heartbeat: 'Онлайн на странице',
   tierlist_create: 'Создание тир-листа',
+  tierlist_save: 'Сохранение тир-листа',
   tierlist_fork: 'Форк тир-листа',
   tierlist_like: 'Лайк тир-листа',
   tierlist_publish: 'Публикация тир-листа',
   tierlist_unpublish: 'Скрытие тир-листа',
   book_add: 'Добавление книг',
+  book_placed: 'Книга на полке',
+  book_unranked: 'Книга в пуле (без тира)',
   book_search: 'Поиск книг',
+  tier_create: 'Создание полки',
+  tier_rename: 'Настройка полки',
   ai_librarian_message: 'Сообщение Букстражу',
   ai_avatar: 'Генерация аватара',
   donate_page_open: 'Открытие страницы угощения',
@@ -34,12 +39,53 @@ const EVENT_COLORS: Record<string, string> = {
   login: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
   session_heartbeat: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
   tierlist_create: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+  tierlist_save: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
   tierlist_fork: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
   tierlist_like: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
+  tierlist_publish: 'bg-teal-500/10 text-teal-400 border-teal-500/30',
+  tierlist_unpublish: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30',
   book_add: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  book_placed: 'bg-lime-500/10 text-lime-400 border-lime-500/30',
+  book_unranked: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
   book_search: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+  tier_create: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
+  tier_rename: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
   ai_librarian_message: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
   donate_page_open: 'bg-green-500/10 text-green-400 border-green-500/30',
+}
+
+function renderMetaSummary(event: string, meta?: Record<string, unknown> | null) {
+  if (!meta || typeof meta !== 'object') return null
+  if (event === 'book_search' && typeof meta.query === 'string' && meta.query) {
+    return <span className="text-[11px] text-amber-400 font-mono">🔍 «{meta.query}»</span>
+  }
+  if (event === 'book_placed') {
+    const book = typeof meta.bookTitle === 'string' ? meta.bookTitle : ''
+    const tier = typeof meta.tierTitle === 'string' ? meta.tierTitle : ''
+    if (book || tier) {
+      return <span className="text-[11px] text-lime-400">📚 {book} → «{tier}»</span>
+    }
+  }
+  if (event === 'book_unranked' && typeof meta.bookTitle === 'string') {
+    return <span className="text-[11px] text-yellow-400">📦 {meta.bookTitle}</span>
+  }
+  if (event === 'tier_rename' && typeof meta.tierTitle === 'string') {
+    return <span className="text-[11px] text-violet-400">🏷 «{meta.tierTitle}»</span>
+  }
+  if (event === 'tier_create' && typeof meta.tierTitle === 'string') {
+    return <span className="text-[11px] text-fuchsia-400">➕ «{meta.tierTitle}»</span>
+  }
+  if (event === 'tierlist_save') {
+    const title = typeof meta.title === 'string' ? meta.title : ''
+    const count = typeof meta.placementsCount === 'number' ? ` (${meta.placementsCount} книг)` : ''
+    if (title || count) {
+      return <span className="text-[11px] text-emerald-400">💾 {title}{count}</span>
+    }
+  }
+  if ((event === 'tierlist_publish' || event === 'tierlist_unpublish') && typeof meta.title === 'string') {
+    return <span className="text-[11px] text-teal-400">🌐 {meta.title}</span>
+  }
+  return null
 }
 
 function getEventStyle(event: string): string {
@@ -369,9 +415,12 @@ export default function AdminAnalyticsPage() {
                     {events.map((event: AnalyticsEvent) => (
                       <tr key={event.id} className="hover:bg-white/5 transition-colors">
                         <td className="px-4 py-3">
-                          <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-medium border ${getEventStyle(event.event)}`}>
-                            {EVENT_LABELS[event.event] || event.event}
-                          </span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-medium border ${getEventStyle(event.event)}`}>
+                              {EVENT_LABELS[event.event] || event.event}
+                            </span>
+                            {renderMetaSummary(event.event, event.meta)}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-gray-300">
                           {event.username ? (
@@ -380,8 +429,23 @@ export default function AdminAnalyticsPage() {
                             <span className="text-gray-600">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-gray-400 max-w-[200px] truncate">
-                          {event.url || '—'}
+                        <td className="px-4 py-3 text-gray-400 max-w-[240px] truncate" title={event.url || undefined}>
+                          {event.url && event.url !== '/api/analytics/track' ? (
+                            event.url.startsWith('/') ? (
+                              <a
+                                href={event.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="hover:text-amber-400 hover:underline transition-colors"
+                              >
+                                {event.url}
+                              </a>
+                            ) : (
+                              event.url
+                            )
+                          ) : (
+                            <span className="text-gray-600">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
                           {new Date(event.createdAt).toLocaleString('ru-RU')}

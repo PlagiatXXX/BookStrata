@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createTierList, saveTierListAtomic, updateTierListTheme } from "@/lib/tierListApi";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { YM_GOALS } from "@/lib/ym-goals";
+import { apiTrackEvent } from "@/lib/analyticsApi";
 import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
 import { stableStringify } from "@/utils/stableStringify";
 import type { TierListData } from "@/types";
@@ -204,6 +205,11 @@ export function useTierEditorSave({
       await queryClient.invalidateQueries({ queryKey: ["userTierLists"] });
 
       logger.info("Сохранение успешно", { tierListId });
+      apiTrackEvent("tierlist_save", {
+        tierListId: effectiveId,
+        title: listData.title,
+        placementsCount: payload.placements.length,
+      });
 
       // Через 3 секунды возвращаем статус в idle
       setTimeout(() => setSaveStatus("idle"), 3000);
