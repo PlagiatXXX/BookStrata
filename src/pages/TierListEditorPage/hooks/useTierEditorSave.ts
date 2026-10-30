@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { createTierList, saveTierListAtomic } from "@/lib/tierListApi";
-import { apiClient } from "@/lib/api-client";
+import { createTierList, saveTierListAtomic, updateTierListTheme } from "@/lib/tierListApi";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { YM_GOALS } from "@/lib/ym-goals";
 import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
@@ -168,7 +167,7 @@ export function useTierEditorSave({
 
         // Сохраняем тему, если она выбрана нестандартная
         if (theme && theme !== "default") {
-          apiClient.put(`/tier-lists/${effectiveId}`, { theme }).catch(() => {});
+          updateTierListTheme(effectiveId, theme).catch(() => {});
         }
       }
 

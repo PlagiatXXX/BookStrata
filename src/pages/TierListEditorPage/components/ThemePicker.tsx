@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { sileo } from "sileo"
-import { apiClient } from "@/lib/api-client"
 import {
   type TierListTheme,
   THEME_LABELS,
   THEME_COLORS,
+  updateTierListTheme,
 } from "@/lib/tierListApi"
 
 interface ThemePickerProps {
@@ -142,7 +142,7 @@ export function ThemePicker({
     const isRealTierList = tierListId && !/^(new|fork-)/.test(tierListId)
     if (isRealTierList) {
       try {
-        await apiClient.put(`/tier-lists/${tierListId}`, { theme })
+        await updateTierListTheme(tierListId, theme)
         sileo.success({ title: `Тема: ${THEME_LABELS[theme]}` })
       } catch {
         sileo.error({ title: "Ошибка при смене темы" })

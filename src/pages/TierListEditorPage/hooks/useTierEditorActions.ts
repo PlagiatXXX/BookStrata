@@ -5,8 +5,12 @@ import { sileo } from 'sileo';
 import type { NavigateFunction } from 'react-router-dom';
 import type { Action } from '@/hooks/useTierList';
 import type { Book } from '@/types';
-import { deleteTierList, removeBookFromTierList, toggleTierListPublic } from '@/lib/tierListApi';
-import { apiClient } from '@/lib/api-client';
+import {
+  deleteTierList,
+  removeBookFromTierList,
+  toggleTierListPublic,
+  updateBookInTierList,
+} from '@/lib/tierListApi';
 import { apiTrackEvent } from '@/lib/analyticsApi';
 import { createLogger } from '@/lib/logger';
 
@@ -119,7 +123,7 @@ export function useTierEditorActions({
       void (async () => {
         setIsUpdatingBook(true);
         try {
-          await apiClient.put(`/tier-lists/${tierListId}/books/${bookId}`, data);
+          await updateBookInTierList(tierListId, bookId, data);
           sileo.success({ title: 'Сохранено', duration: 1500 });
         } catch (error) {
           const message = error instanceof Error ? error.message : '';

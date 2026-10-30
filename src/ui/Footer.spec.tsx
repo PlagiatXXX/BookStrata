@@ -3,20 +3,18 @@ import { render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Footer } from "./Footer";
-import { apiClient } from "@/lib/api-client";
+import { getDonors } from "@/lib/donorsApi";
 import { getCollections } from "@/lib/collectionsApi";
 
-vi.mock("@/lib/api-client", () => ({
-  apiClient: {
-    get: vi.fn(),
-  },
+vi.mock("@/lib/donorsApi", () => ({
+  getDonors: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("@/lib/collectionsApi", () => ({
   getCollections: vi.fn(),
 }))
 
-const mockedGet = vi.mocked(apiClient.get)
+const mockedGetDonors = vi.mocked(getDonors)
 const mockedGetCollections = vi.mocked(getCollections)
 
 function renderFooter() {
@@ -38,7 +36,7 @@ beforeEach(() => {
 
 describe("Footer", () => {
   it("содержит ссылку на /pricing (страница не должна быть сиротой для поисковиков)", () => {
-    mockedGet.mockResolvedValue([])
+    mockedGetDonors.mockResolvedValue([])
     mockedGetCollections.mockResolvedValue([])
 
     renderFooter();
@@ -48,7 +46,7 @@ describe("Footer", () => {
   });
 
   it("содержит ссылку на раздел авторов /authors (перелинковка)", () => {
-    mockedGet.mockResolvedValue([])
+    mockedGetDonors.mockResolvedValue([])
     mockedGetCollections.mockResolvedValue([])
 
     renderFooter();
@@ -58,7 +56,7 @@ describe("Footer", () => {
   });
 
   it("подпись «Меценаты проекта:» стоит слева от бегущей строки донаторов на одном уровне", async () => {
-    mockedGet.mockResolvedValue([{ id: 1, name: "Аноним" }])
+    mockedGetDonors.mockResolvedValue([{ id: 1, name: "Аноним" }])
     mockedGetCollections.mockResolvedValue([])
 
     renderFooter();
@@ -79,7 +77,7 @@ describe("Footer", () => {
   })
 
   it("без донаторов ни строки, ни подписи нет", async () => {
-    mockedGet.mockResolvedValue([])
+    mockedGetDonors.mockResolvedValue([])
     mockedGetCollections.mockResolvedValue([])
 
     renderFooter();

@@ -1,7 +1,7 @@
 import { apiClient } from "./api-client";
 import { createLogger } from "./logger";
 import type { PaginatedTierListsResponse } from "./tierListApi";
-import type { UserBadge, BadgeColor } from "@/types/auth";
+import type { UserBadge, BadgeColor, AdminUser } from "@/types/auth";
 import type { CategoryId } from "@/data/genre-taxonomy";
 
 const userLogger = createLogger("UserApi", { color: "green" });
@@ -258,4 +258,10 @@ export async function apiUpdateUserBadge(
 export async function apiDeleteUserBadge(badgeId: number): Promise<void> {
   userLogger.info("Удаление бейджа", { badgeId });
   await apiClient.delete(`/users/badges/${badgeId}`);
+}
+
+// GET /api/users/admin/all — получить всех пользователей (admin only)
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  userLogger.info("Загрузка пользователей для админки");
+  return apiClient.get<AdminUser[]>("/users/admin/all");
 }

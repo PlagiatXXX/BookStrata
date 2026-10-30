@@ -1,53 +1,51 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Plus, Trash2, Heart } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
-
-interface DonorItem {
-  id: number
-  name: string
-}
+import { sileo } from 'sileo'
+import { getDonors, createDonor, deleteDonor } from '@/lib/donorsApi'
 
 export default function AdminDonorsPage() {
   const navigate = useNavigate()
-  const [donors, setDonors] = useState<DonorItem[]>([])
+  const queryClient = useQueryClient()
   const [newName, setNewName] = useState('')
-  const [loading, setLoading] = useState(true)
 
-  const fetchDonors = async () => {
-    try {
-      const data = await apiClient.get<DonorItem[]>('/donors')
-      setDonors(data)
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: donors = [], isLoading } = useQuery({
+    queryKey: ['donors'],
+    queryFn: getDonors,
+  })
 
-  useEffect(() => {
-    fetchDonors()
-  }, [])
+  const addMutation = useMutation({
+    mutationFn: (name: string) => createDonor(name),
+    onSuccess: () => {
+      setNewName('')
+      queryClient.invalidateQueries({ queryKey: ['donors'] })
+      sileo.success({ title: 'Донатер добавлен' })
+    },
+    onError: () => {
+      sileo.error({ title: 'Ошибка при добавлении донатера' })
+    },
+  })
 
-  const handleAdd = async () => {
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteDonor(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['donors'] })
+      sileo.success({ title: 'Донатер удален' })
+    },
+    onError: () => {
+      sileo.error({ title: 'Ошибка при удалении донатера' })
+    },
+  })
+
+  const handleAdd = () => {
     const name = newName.trim()
     if (!name) return
-    try {
-      await apiClient.post('/donors', { name })
-      setNewName('')
-      await fetchDonors()
-    } catch {
-      // ignore
-    }
+    addMutation.mutate(name)
   }
 
-  const handleDelete = async (id: number) => {
-    try {
-      await apiClient.delete(`/donors/${id}`)
-      setDonors((prev) => prev.filter((d) => d.id !== id))
-    } catch {
-      // ignore
-    }
+  const handleDelete = (id: number) => {
+    deleteMutation.mutate(id)
   }
 
   return (
@@ -82,7 +80,7 @@ export default function AdminDonorsPage() {
           />
           <button
             onClick={handleAdd}
-            disabled={!newName.trim()}
+            disabled={!newName.trim() || addMutation.isPending}
             className="flex cursor-pointer items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-bold text-black transition-colors hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus size={16} />
@@ -91,7 +89,7 @@ export default function AdminDonorsPage() {
         </div>
 
         {/* List */}
-        {loading ? (
+        {isLoading ? (
           <p className="text-gray-500 text-sm">Загрузка...</p>
         ) : donors.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-500">

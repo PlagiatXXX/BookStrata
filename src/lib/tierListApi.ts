@@ -280,6 +280,24 @@ export async function updateTierListDescription(id: string, description: string 
   return result;
 }
 
+export async function updateTierListTheme(id: string, theme: string) {
+  tierListLogger.info('Обновление темы рейтингового списка', { tierListId: id, theme });
+  const result = await apiClient.put(`/tier-lists/${id}`, { theme });
+  tierListLogger.info('Тема успешно обновлена', { tierListId: id, theme });
+  return result;
+}
+
+export async function updateBookInTierList(
+  tierListId: string,
+  bookId: string,
+  data: Record<string, unknown>
+) {
+  tierListLogger.info('Обновление книги в рейтинговом списке', { tierListId, bookId });
+  const result = await apiClient.put(`/tier-lists/${tierListId}/books/${bookId}`, data);
+  tierListLogger.info('Книга успешно обновлена', { tierListId, bookId });
+  return result;
+}
+
 export async function toggleTierListPublic(id: string, isPublic: boolean) {
   tierListLogger.info('Переключение статуса публичности', { tierListId: id, isPublic });
   const result = await apiClient.put(`/tier-lists/${id}/public`, { isPublic });

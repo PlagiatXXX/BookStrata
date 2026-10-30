@@ -1,17 +1,7 @@
-import { apiClient } from "@/lib/api-client";
+import { getFeedbackList, type FeedbackItem } from "@/lib/feedbackApi";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-export interface FeedbackItem {
-  id: number;
-  type: string;
-  status: string;
-  message: string;
-  pageUrl: string | null;
-  userEmail: string | null;
-  userId: number | null;
-  user: { id: number; username: string | null; avatarUrl: string | null } | null;
-  createdAt: string;
-}
+export type { FeedbackItem };
 
 const FEEDBACK_PAGE_SIZE = 50;
 
@@ -19,11 +9,8 @@ export function useFeedback() {
   return useInfiniteQuery<FeedbackItem[]>({
     queryKey: ["feedback"],
     queryFn: async ({ pageParam }) => {
-      const page = pageParam ?? 1;
-      const data = await apiClient.get<FeedbackItem[]>(
-        `/feedback?page=${page}&limit=${FEEDBACK_PAGE_SIZE}`,
-      );
-      return data;
+      const page = typeof pageParam === "number" ? pageParam : 1;
+      return getFeedbackList(page, FEEDBACK_PAGE_SIZE);
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {

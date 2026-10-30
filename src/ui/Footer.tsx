@@ -22,7 +22,7 @@ import {
 import { SocialIcons } from "./SocialIcons";
 import { CoffeeCup } from "./CoffeeCup";
 import { Fur } from "@/components/Fur";
-import { apiClient } from "@/lib/api-client";
+import { getDonors } from "@/lib/donorsApi";
 import { getCollections } from "@/lib/collectionsApi";
 import { YM_GOALS } from "@/lib/ym-goals";
 
@@ -98,9 +98,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
   const { data: donors = [] } = useQuery({
     queryKey: ["donors"],
-    queryFn: () =>
-      apiClient.get<Array<{ id: number; name: string }>>('/donors')
-        .then((data) => data.map((d) => d.name)),
+    queryFn: () => getDonors().then((data) => data.map((d) => d.name)),
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
@@ -231,7 +229,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
         </svg>
       </div>
       {/* Wave inner glow border */}
-      <div className="absolute top-[55px] md;top-[75px] left-0 w-full h-px bg-white/10" />
+      <div className="absolute top-[55px] md:top-[75px] left-0 w-full h-px bg-white/10" />
 
       {/* Floating books background */}
       <div

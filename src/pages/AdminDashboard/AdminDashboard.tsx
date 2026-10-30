@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, BarChart3, ArrowLeft, ShieldAlert, MailQuestion, Library, Feather } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
+import { getAdminDashboardStats } from '@/lib/adminStatsApi'
 import { useAuth } from '@/hooks/useAuthContext'
-import type { AdminDashboardStats } from '@/../shared/types'
 
 interface AdminSection {
   title: string
@@ -137,7 +136,7 @@ export default function AdminDashboard() {
 
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['admin', 'stats'],
-    queryFn: () => apiClient.get<AdminDashboardStats>('/admin/stats'),
+    queryFn: getAdminDashboardStats,
     staleTime: 5 * 60 * 1000,
     retry: 2,
     enabled: user?.role === 'admin',

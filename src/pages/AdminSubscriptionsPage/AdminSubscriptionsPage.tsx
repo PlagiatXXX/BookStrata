@@ -1,35 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
 import type { AdminUser } from "@/types/auth";
 import { sileo } from "sileo";
 import { Users, Crown, Clock, Shield, ArrowLeft } from "lucide-react";
 import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
-
-// Убираем дублирующий интерфейс — используем AdminUser из types/auth
-interface SubscriptionStats {
-  totalProUsers: number;
-  activeSubscriptions: number;
-  lifetimeSubscriptions: number;
-  expiringSoon: number;
-}
+import { getAdminUsers } from "@/lib/userApi";
+import {
+  getSubscriptionStats,
+  setProStatus as setProStatusApi,
+  activateProSubscription,
+  type SubscriptionStats,
+} from "@/lib/subscriptionsApi";
 
 // Алиас для совместимости с остальным кодом
 type UserSubscription = AdminUser;
-
-// Типы для ответов API подписок
-interface SetProStatusResponse {
-  userId: number;
-  isPro: boolean;
-  proExpiresAt: string | null;
-}
-
-interface ActivateProResponse {
-  userId: number;
-  isPro: boolean;
-  proExpiresAt: string;
-}
 
 export default function AdminSubscriptionsPage() {
   const navigate = useNavigate();
@@ -42,13 +27,13 @@ export default function AdminSubscriptionsPage() {
   // Загрузка всех пользователей
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
     queryKey: ["admin-users"],
-    queryFn: () => api.get<AdminUser[]>("/users/admin/all"),
+    queryFn: getAdminUsers,
   });
 
   // Загрузка статистики
   const { data: stats } = useQuery<SubscriptionStats>({
     queryKey: ["subscription-stats"],
-    queryFn: () => api.get<SubscriptionStats>("/subscriptions/stats"),
+    queryFn: getSubscriptionStats,
   });
 
   // Мутация для установки Pro статуса
@@ -62,7 +47,7 @@ export default function AdminSubscriptionsPage() {
       isPro: boolean;
       expiresAt?: string | null;
     }) =>
-      api.post<SetProStatusResponse>("/subscriptions/set-status", {
+      setProStatusApi({
         userId,
         isPro,
         expiresAt,
@@ -93,7 +78,7 @@ export default function AdminSubscriptionsPage() {
       userId: number;
       durationDays: number;
     }) =>
-      api.post<ActivateProResponse>("/subscriptions/activate", {
+      activateProSubscription({
         userId,
         durationDays,
       }),

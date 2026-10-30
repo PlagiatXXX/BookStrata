@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Bug,
@@ -12,8 +13,10 @@ import {
   Crown,
 } from "lucide-react";
 import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
-import { apiClient } from "@/lib/api-client";
+import { sileo } from "sileo";
 import { useFeedback, type FeedbackItem } from "@/hooks/useFeedback";
+import { updateFeedbackStatus, deleteFeedback } from "@/lib/feedbackApi";
+import { activateProSubscription } from "@/lib/subscriptionsApi";
 
 const STATUS_CONFIG: Record<
   string,
@@ -42,45 +45,55 @@ const REWARD_OPTIONS = [
 
 export default function AdminFeedbackPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [rewardingId, setRewardingId] = useState<number | null>(null);
   const [rewardError, setRewardError] = useState<string | null>(null);
-  const [rewarding, setRewarding] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useFeedback();
 
   const feedback: FeedbackItem[] = data?.pages.flat() ?? [];
 
-  const handleStatusChange = async (id: number, status: string) => {
-    try {
-      await apiClient.patch(`/feedback/${id}`, { status });
-    } catch {
-      // ignore
-    }
-  };
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) =>
+      updateFeedbackStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback"] });
+      sileo.success({ title: "Статус обновлен" });
+    },
+    onError: () => {
+      sileo.error({ title: "Ошибка при смене статуса" });
+    },
+  });
 
-  const handleDelete = async (id: number) => {
-    try {
-      await apiClient.delete(`/feedback/${id}`);
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteFeedback(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feedback"] });
       setDeleteConfirmId(null);
-    } catch {
-      // ignore
-    }
-  };
+      sileo.success({ title: "Отзыв удален" });
+    },
+    onError: () => {
+      sileo.error({ title: "Ошибка при удалении" });
+    },
+  });
 
-  const handleReward = async (userId: number, durationDays: number) => {
-    setRewarding(true);
-    try {
-      await apiClient.post("/subscriptions/activate", { userId, durationDays });
+  const rewardMutation = useMutation({
+    mutationFn: ({ userId, durationDays }: { userId: number; durationDays: number }) =>
+      activateProSubscription({ userId, durationDays }),
+    onSuccess: () => {
       setRewardingId(null);
       setRewardError(null);
-    } catch (err) {
-      setRewardError(err instanceof Error ? err.message : "Ошибка при активации");
-    } finally {
-      setRewarding(false);
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ["feedback"] });
+      sileo.success({ title: "Pro-статус выдан" });
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : "Ошибка при активации";
+      setRewardError(msg);
+      sileo.error({ title: msg });
+    },
+  });
 
   const getAuthorLabel = (item: FeedbackItem) => {
     if (item.user?.username) return item.user.username;
@@ -234,8 +247,13 @@ export default function AdminFeedbackPage() {
                           {REWARD_OPTIONS.map((opt) => (
                             <button
                               key={opt.days}
-                              onClick={() => handleReward(uid, opt.days)}
-                              disabled={rewarding}
+                              onClick={() =>
+                                rewardMutation.mutate({
+                                  userId: uid,
+                                  durationDays: opt.days,
+                                })
+                              }
+                              disabled={rewardMutation.isPending}
                               className="px-2.5 py-1 bg-amber-500/20 border border-amber-500/40 rounded-lg text-xs font-medium text-amber-300 hover:bg-amber-500/30 transition-colors disabled:opacity-50 cursor-pointer"
                             >
                               {opt.label}
@@ -255,8 +273,12 @@ export default function AdminFeedbackPage() {
                       <select
                         value={item.status}
                         onChange={(e) =>
-                          handleStatusChange(item.id, e.target.value)
+                          statusMutation.mutate({
+                            id: item.id,
+                            status: e.target.value,
+                          })
                         }
+                        disabled={statusMutation.isPending}
                         className="bg-gray-700 border border-gray-600 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer"
                       >
                         {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
@@ -296,7 +318,7 @@ export default function AdminFeedbackPage() {
           isOpen={deleteConfirmId !== null}
           onClose={() => setDeleteConfirmId(null)}
           onConfirm={() =>
-            deleteConfirmId && handleDelete(deleteConfirmId)
+            deleteConfirmId && deleteMutation.mutate(deleteConfirmId)
           }
           title="Удалить отзыв?"
           titleId="delete-feedback-title"
