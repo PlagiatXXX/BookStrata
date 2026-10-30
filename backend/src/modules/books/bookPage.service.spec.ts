@@ -35,6 +35,7 @@ const publishedBook = {
   author: "Лев Толстой",
   authorId: 10,
   coverImageUrl: "/cover.jpg",
+  animatedCoverUrl: "/animated.mp4",
   description: "Роман-эпопея",
   genre: "Классика",
   tags: ["роман", "война"],
@@ -88,6 +89,7 @@ describe("getBookPageData", () => {
     expect(asBookPage(page).tierLists).toHaveLength(1);
     expect(asBookPage(page).collections).toHaveLength(1);
     expect(asBookPage(page).celebrities).toHaveLength(1);
+    expect(asBookPage(page).book.animatedCoverUrl).toBe("/animated.mp4");
     // Фильтры видимости в where
     expect(
       (prisma.collection.findMany as any).mock.calls[0][0].where.isPublished,

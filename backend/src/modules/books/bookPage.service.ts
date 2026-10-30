@@ -278,6 +278,7 @@ export async function getBookPageData(
       title: book.title,
       author: book.author,
       coverImageUrl: book.coverImageUrl,
+      animatedCoverUrl: book.animatedCoverUrl,
       ogImageUrl: book.ogImageUrl,
       description: book.description,
       genre: book.genre,
