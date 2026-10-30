@@ -428,12 +428,12 @@ fastify.register(adminCleanupRoutes, { prefix: "/api/admin" });
 import { adminUsersRoutes } from "../src/modules/admin/admin-users.route.js";
 fastify.register(adminUsersRoutes, { prefix: "/api/admin" });
 
-// Analytics
-import { analyticsRoutes } from "../src/modules/analytics/analytics.route.js";
+// Analytics (публичный сбор событий)
+import { analyticsRoutes, adminAnalyticsRoutes } from "./modules/analytics/analytics.route.js";
 fastify.register(analyticsRoutes, { prefix: "/api/analytics" });
 
-// Admin: аналитика
-fastify.register(analyticsRoutes, { prefix: "/api/admin/analytics" });
+// Admin: аналитика (дашборд и метрики)
+fastify.register(adminAnalyticsRoutes, { prefix: "/api/admin/analytics" });
 
 // Admin: каталог книг (Фаза 7, seobook.md)
 import { adminBooksRoutes } from "../src/modules/admin-books/admin-books.route.js";

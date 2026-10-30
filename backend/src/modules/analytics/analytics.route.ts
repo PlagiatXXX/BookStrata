@@ -52,6 +52,10 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify: FastifyInstan
       return reply.code(202).send({ ok: true })
     },
   )
+}
+
+export const adminAnalyticsRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  const analytics = createAnalyticsService(fastify.prisma)
 
   // GET /api/admin/analytics/events — просмотр событий (только admin)
   fastify.get(
