@@ -98,6 +98,10 @@ fi
 # ——— 1. Стянуть код ———
 info "Стягиваем последний код из git..."
 cd "$PROJECT_DIR"
+# Сгенерированные маршруты (src/data/*-routes.json) перезаписываются на каждом
+# деплое экспортом из БД — локальные изменения в них блокируют git pull.
+# Сбрасываем их перед pull: они регенерируются на шаге 11.
+git checkout -- src/data/collection-routes.json src/data/book-routes.json src/data/author-routes.json 2>/dev/null || true
 git pull
 ok "Код обновлён"
 
