@@ -5,6 +5,7 @@ import { Footer } from "@/ui/Footer"
 import { articlesMeta } from "@/content/articles"
 import { mdToHtml } from "@/utils/mdToHtml"
 import { normalizeArticleHtml } from "./normalizeArticleHtml"
+import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage"
 
 // Импортируем все md-файлы как сырой текст
 const rawModules = import.meta.glob<string>(
@@ -29,17 +30,7 @@ export default function BlogArticlePage() {
   const html = raw ? mdToHtml(raw) : null
 
   if (!meta || !html) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0b1620] text-[#e2e8f0]">
-        <p className="text-lg">Статья не найдена</p>
-        <Link
-          to="/blog"
-          className="text-sm text-[#06bcf9] transition-colors hover:text-[#38bdf8]"
-        >
-          ← Все статьи
-        </Link>
-      </div>
-    )
+    return <NotFoundPage />
   }
 
   return (

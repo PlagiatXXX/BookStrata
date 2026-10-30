@@ -1,5 +1,5 @@
-import { lazy, Suspense, useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useSearchParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { lazy, Suspense, useState, useEffect, useCallback } from "react";
+import { useParams, useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Tag } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
@@ -20,6 +20,7 @@ import { ThemeProvider } from "@/themes/ThemeProvider";
 import { ThemeSection } from "@/themes/ThemeSection";
 import { ThemeDecor } from "@/themes/ThemeDecor";
 import { DefaultCollectionLayout } from "./DefaultCollectionLayout";
+import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage";
 import "./CollectionPage.css";
 
 const HalloweenCollectionLayout = lazy(async () => {
@@ -32,9 +33,6 @@ export default function CollectionPage() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get("preview") === "1";
   const navigate = useNavigate();
-  const location = useLocation();
-  const cameFromApp = location.key !== "default";
-  const redirectHandledRef = useRef(false);
   const { collection, isLoading: loading, isError } = useCollection(slug, isPreview);
   const { shelf } = useBookshelf();
   const { user: authUser } = useAuth();
@@ -49,28 +47,9 @@ export default function CollectionPage() {
   // Theme state (filters managed by themed section or default layout)
   const [filterGenre, setFilterGenre] = useState<string | null>(null);
 
-  // Коллекция не найдена (404) → редирект, как и раньше на ручном fetch
+  // Ошибка загрузки → тост
   useEffect(() => {
-    if (loading || redirectHandledRef.current) return;
-    if (collection === null && !isError) {
-      redirectHandledRef.current = true;
-      sileo.error({
-        title: "Коллекция не найдена",
-        description: "Возможно, она была удалена",
-        duration: 3000,
-      });
-      if (cameFromApp) {
-        navigate(-1);
-      } else {
-        navigate("/rankings");
-      }
-    }
-  }, [loading, collection, isError, cameFromApp, navigate]);
-
-  // Ошибка загрузки → тост, страница показывает заглушку
-  useEffect(() => {
-    if (!isError || redirectHandledRef.current) return;
-    redirectHandledRef.current = true;
+    if (!isError) return;
     if (typeof window !== "undefined" && window.__PRERENDER__) {
       console.warn("[prerender] API недоступно, показываем SEO-заглушку");
     } else {
@@ -138,23 +117,27 @@ export default function CollectionPage() {
     );
   }
 
-  if (!collection) {
+  // Коллекция не найдена на сервере (404)
+  if (!loading && !isError && collection === null) {
+    return <NotFoundPage />;
+  }
+
+  // Ошибка загрузки сети / сервера
+  if (isError || !collection) {
     return (
-      <>
-        <SEOHead
-          title={seoTitle}
-          description={seoDesc}
-          image={seoImage}
-          url={seoUrl}
-          breadcrumbs={seoBreadcrumbs}
-        />
-        <DashboardLayout showSearch={false} bgVariant="collection">
-          <div className="max-w-4xl mx-auto px-6 py-12 text-center">
-            <h1 className="text-2xl font-bold mb-4">{seoTitle}</h1>
-            <p className="text-(--ink-2)">Коллекция временно недоступна. Попробуйте обновить страницу.</p>
-          </div>
-        </DashboardLayout>
-      </>
+      <DashboardLayout showSearch={false} bgVariant="collection">
+        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <h1 className="text-2xl font-bold mb-4 text-white">Не удалось загрузить коллекцию</h1>
+          <p className="text-slate-400 mb-6">Произошла ошибка при загрузке данных с сервера. Попробуйте обновить страницу.</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-400 cursor-pointer"
+          >
+            Попробовать снова
+          </button>
+        </div>
+      </DashboardLayout>
     );
   }
 

@@ -92,4 +92,9 @@ describe("TopicPage — хлебные крошки на хаб /collections", (
     const crumbs = seoProps.breadcrumbs as { name: string; url: string }[];
     expect(crumbs).toContainEqual({ name: "Подборки книг", url: "/collections" });
   });
+
+  it("несуществующий жанр → рендерит NotFoundPage", async () => {
+    renderPage("/topics/unknown-non-existent-genre");
+    expect(await screen.findByRole("heading", { name: "Страница не найдена" })).toBeInTheDocument();
+  });
 });

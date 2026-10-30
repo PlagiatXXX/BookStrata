@@ -11,6 +11,7 @@ import { RetryableImage } from "@/ui/RetryableImage";
 import { CATEGORIES } from "@/data/mockData";
 import { CATEGORY_SEO } from "@/data/category-seo";
 import type { CollectionItem } from "@/types/collection";
+import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage";
 
 interface TopicCollectionData {
   data: CollectionItem[];
@@ -30,14 +31,20 @@ export default function TopicPage() {
     return CATEGORIES.find((c) => c.id === slug) || null;
   }, [slug]);
 
-  const categoryLabel = category?.label || (slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : "");
+  const isValidCategory = !!category && category.id !== "all";
 
   const { data, isLoading } = useQuery<TopicCollectionData>({
     queryKey: ["topic", slug],
     queryFn: () => api.get(`/topics/${slug}`),
-    enabled: !!slug,
+    enabled: !!slug && isValidCategory,
     retry: 1,
   });
+
+  if (!isValidCategory || !category) {
+    return <NotFoundPage />;
+  }
+
+  const categoryLabel = category.label;
 
   // SEO-текст из статического файла (приоритет) или динамический fallback
   const mainSeoText = slug && CATEGORY_SEO[slug]

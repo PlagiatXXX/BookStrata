@@ -16,6 +16,7 @@ import { getCelebrityBySlug, CELEBRITY_CATEGORIES } from "@/lib/celebritiesApi";
 import { TAG_TO_CATEGORY } from "@/data/tag-to-category";
 import type { Book } from "@/types";
 import { proxyImageUrl } from "@/utils/imageProxy";
+import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage";
 import "./CelebrityPage.css";
 
 export default function CelebrityPage() {
@@ -27,11 +28,10 @@ export default function CelebrityPage() {
   const handleAiOpen = useCallback(() => setAiOpen(true), []);
   const handleAiClose = useCallback(() => setAiOpen(false), []);
 
-  const { data: celebrity, isLoading, error } = useQuery({
+  const { data: celebrity, isLoading, isError, refetch } = useQuery({
     queryKey: ["celebrity", slug],
     queryFn: () => getCelebrityBySlug(slug || ""),
     enabled: !!slug,
-    retry: 1,
   });
 
   const { user: authUser } = useAuth();
@@ -110,22 +110,26 @@ export default function CelebrityPage() {
     );
   }
 
-  if (error || !celebrity) {
+  if (isError) {
     return (
       <DashboardLayout showSearch={false}>
-        <div className="max-w-4xl mx-auto px-6 py-12">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Знаменитость не найдена</h1>
-            <button
-              onClick={() => navigate("/celebrities")}
-              className="text-(--accent-main) hover:underline cursor-pointer"
-            >
-              ← Все знаменитости
-            </button>
-          </div>
+        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <h1 className="text-2xl font-bold mb-4 text-white">Не удалось загрузить данные</h1>
+          <p className="text-gray-400 mb-6">Произошла ошибка при загрузке информации о знаменитости.</p>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-400 cursor-pointer"
+          >
+            Попробовать снова
+          </button>
         </div>
       </DashboardLayout>
     );
+  }
+
+  if (!celebrity) {
+    return <NotFoundPage />;
   }
 
   return (
