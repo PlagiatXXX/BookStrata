@@ -468,16 +468,16 @@ setInterval(() => {
   });
 }, 60 * 60 * 1000);
 
-// Очистка аналитики старше 30 дней (раз в час)
+// Очистка аналитики старше 90 дней (раз в час)
 const analyticsCleanup = createAnalyticsService(prisma);
 setInterval(() => {
-  analyticsCleanup.cleanupOldEvents(30).catch((err) => {
+  analyticsCleanup.cleanupOldEvents(90).catch((err) => {
     fastify.log.error(err, "Ошибка при очистке старых событий аналитики");
   });
 }, 60 * 60 * 1000);
 // Первый запуск — через минуту после старта
 setTimeout(() => {
-  analyticsCleanup.cleanupOldEvents(30).catch((err) => {
+  analyticsCleanup.cleanupOldEvents(90).catch((err) => {
     fastify.log.error(err, "Ошибка при первой очистке старых событий аналитики");
   });
 }, 60 * 1000);

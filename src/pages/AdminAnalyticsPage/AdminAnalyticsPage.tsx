@@ -31,6 +31,11 @@ const EVENT_LABELS: Record<string, string> = {
   battle_win: 'Победа в битве',
   export_png: 'Экспорт в PNG',
   share_clicked: 'Поделились',
+  'auth.login_header': 'Клик «Войти» в шапке',
+  'auth.tab_register': 'Вкладка регистрации',
+  'auth.tab_login': 'Вкладка входа',
+  'auth.submit_login': 'Отправка формы входа',
+  'auth.submit_register': 'Отправка формы регистрации',
 }
 
 const EVENT_COLORS: Record<string, string> = {
@@ -52,6 +57,11 @@ const EVENT_COLORS: Record<string, string> = {
   tier_rename: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
   ai_librarian_message: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
   donate_page_open: 'bg-green-500/10 text-green-400 border-green-500/30',
+  'auth.login_header': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+  'auth.tab_register': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  'auth.tab_login': 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+  'auth.submit_login': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+  'auth.submit_register': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
 }
 
 function renderMetaSummary(event: string, meta?: Record<string, unknown> | null) {
@@ -97,6 +107,13 @@ function rateColor(value: number): string {
   if (value >= 40) return 'text-emerald-400'
   if (value >= 20) return 'text-amber-400'
   return 'text-red-400'
+}
+
+function renderRetentionValue(value: number | null) {
+  if (value === null) {
+    return <span className="text-gray-500">—</span>
+  }
+  return <span className={rateColor(value)}>{value}%</span>
 }
 
 export default function AdminAnalyticsPage() {
@@ -204,7 +221,11 @@ export default function AdminAnalyticsPage() {
                 <Users size={16} className="text-violet-400" />
               </div>
               <p className="text-3xl font-bold text-violet-400">{metrics.dau}</p>
-              <p className="text-xs text-gray-500 mt-1">уникальных пользователей сегодня</p>
+              <p className="text-xs text-gray-500 mt-1">авторизованных сегодня</p>
+              <div className="mt-2 pt-2 border-t border-violet-500/20 flex items-center justify-between text-xs text-violet-300/80">
+                <span>Посетителей (по IP):</span>
+                <span className="font-semibold">{metrics.uniqueVisitorsToday}</span>
+              </div>
             </div>
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
               <div className="flex items-center justify-between mb-3">
@@ -212,7 +233,7 @@ export default function AdminAnalyticsPage() {
                 <Activity size={16} className="text-emerald-400" />
               </div>
               <p className="text-3xl font-bold text-emerald-400">{metrics.mau}</p>
-              <p className="text-xs text-gray-500 mt-1">за последние 30 дней</p>
+              <p className="text-xs text-gray-500 mt-1">авторизованных за 30 дней</p>
             </div>
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
               <div className="flex items-center justify-between mb-3">
@@ -283,22 +304,22 @@ export default function AdminAnalyticsPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">D1</p>
-                  <p className={`text-4xl font-black ${rateColor(retention.d1)}`}>
-                    {retention.d1}%
+                  <p className="text-4xl font-black">
+                    {renderRetentionValue(retention.d1)}
                   </p>
                   <p className="text-xs text-gray-600 mt-1">вернулись на следующий день</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">D7</p>
-                  <p className={`text-4xl font-black ${rateColor(retention.d7)}`}>
-                    {retention.d7}%
+                  <p className="text-4xl font-black">
+                    {renderRetentionValue(retention.d7)}
                   </p>
                   <p className="text-xs text-gray-600 mt-1">вернулись через неделю</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">D30</p>
-                  <p className={`text-4xl font-black ${rateColor(retention.d30)}`}>
-                    {retention.d30}%
+                  <p className="text-4xl font-black">
+                    {renderRetentionValue(retention.d30)}
                   </p>
                   <p className="text-xs text-gray-600 mt-1">вернулись через месяц</p>
                 </div>
@@ -343,7 +364,7 @@ export default function AdminAnalyticsPage() {
 
           {/* Filters */}
           <div className="mb-4 flex flex-wrap gap-3 items-center">
-            <div className="relative flex-1 min-w-[200px] max-w-xs">
+            <div className="relative flex-1 min-w-50 max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
                 type="text"
@@ -429,7 +450,7 @@ export default function AdminAnalyticsPage() {
                             <span className="text-gray-600">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-gray-400 max-w-[240px] truncate" title={event.url || undefined}>
+                        <td className="px-4 py-3 text-gray-400 max-w-60 truncate" title={event.url || undefined}>
                           {event.url && event.url !== '/api/analytics/track' ? (
                             event.url.startsWith('/') ? (
                               <a

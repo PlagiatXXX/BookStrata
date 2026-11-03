@@ -86,6 +86,7 @@ export interface MetricsResult {
   stickiness: number
   churn: number
   churnRate: number
+  uniqueVisitorsToday: number
 }
 
 export interface FunnelStage {
@@ -98,9 +99,9 @@ export interface FunnelResult {
 }
 
 export interface RetentionResult {
-  d1: number
-  d7: number
-  d30: number
+  d1: number | null
+  d7: number | null
+  d30: number | null
 }
 
 const RETENTION_EVENTS = [
@@ -325,7 +326,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
   }
 
   // Очистка событий старше N дней
-  const cleanupOldEvents = async (daysToKeep: number = 30): Promise<number> => {
+  const cleanupOldEvents = async (daysToKeep: number = 90): Promise<number> => {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - daysToKeep)
 
@@ -349,7 +350,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const last30Start = new Date(todayStart.getTime() - 29 * 24 * 60 * 60 * 1000)
     const prev30Start = new Date(todayStart.getTime() - 59 * 24 * 60 * 60 * 1000)
-    const [dau, mau, prevActiveUsers] = await Promise.all([
+    const [dau, mau, prevActiveUsers, uniqueVisitors] = await Promise.all([
       // DAU: уникальные userId за сегодня (не null)
       prisma.analyticsEvent.findMany({
         where: { userId: { not: null }, createdAt: { gte: todayStart }, ...excludedUserFilter },
@@ -367,6 +368,12 @@ export function createAnalyticsService(prisma: PrismaClient) {
         where: { userId: { not: null }, createdAt: { gte: prev30Start, lt: last30Start }, ...excludedUserFilter },
         select: { userId: true },
         distinct: ['userId'],
+      }),
+      // Уникальные посетители (по IP) за сегодня среди всех событий (включая гостей)
+      prisma.analyticsEvent.findMany({
+        where: { ip: { not: null }, createdAt: { gte: todayStart }, ...excludedUserFilter },
+        select: { ip: true },
+        distinct: ['ip'],
       }),
     ])
 
@@ -390,16 +397,17 @@ export function createAnalyticsService(prisma: PrismaClient) {
       stickiness: Math.round(stickiness * 10000) / 100, // в процентах, 2 знака
       churn: churnedCount,
       churnRate: Math.round(churn * 10000) / 100,
+      uniqueVisitorsToday: uniqueVisitors.length,
     }
   }
 
-  // Воронка: регистрация → создание → публикация → шейринг
+  // Воронка: регистрация → создание → наполнение (книги/сохранение) → шейринг
   const getFunnel = async (days: number = 30): Promise<FunnelResult> => {
     const since = days ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : new Date(0)
 
-    const countUsersWithEvent = async (event: string): Promise<number> => {
+    const countUsersWithEvents = async (events: string[]): Promise<number> => {
       const rows = await prisma.analyticsEvent.findMany({
-        where: { event, userId: { not: null }, createdAt: { gte: since }, ...excludedUserFilter },
+        where: { event: { in: events }, userId: { not: null }, createdAt: { gte: since }, ...excludedUserFilter },
         select: { userId: true },
         distinct: ['userId'],
       })
@@ -407,64 +415,59 @@ export function createAnalyticsService(prisma: PrismaClient) {
     }
 
     const stages: FunnelStage[] = [
-      { name: 'Регистрация', count: await countUsersWithEvent('user_register') },
-      { name: 'Создание тир-листа', count: await countUsersWithEvent('tierlist_create') },
-      { name: 'Публикация', count: await countUsersWithEvent('tierlist_publish') },
-      { name: 'Поделились', count: await countUsersWithEvent('share_clicked') },
+      { name: 'Регистрация', count: await countUsersWithEvents(['user_register']) },
+      { name: 'Создание тир-листа', count: await countUsersWithEvents(['tierlist_create']) },
+      { name: 'Наполнение тир-листа', count: await countUsersWithEvents(['book_placed', 'tierlist_save']) },
+      { name: 'Поделились', count: await countUsersWithEvents(['share_clicked']) },
     ]
 
     return { stages }
   }
 
-  // Retention D1/D7/D30
+  // Retention D1/D7/D30 (когортный расчёт за последние 30 дней)
   const getRetention = async (): Promise<RetentionResult> => {
     const now = new Date()
 
-    const countRetained = async (daysAfter: number): Promise<number> => {
-      // Пользователи, которые зарегистрировались достаточно давно (чтобы прошло daysAfter дней)
-      const since = new Date(now.getTime() - daysAfter * 24 * 60 * 60 * 1000)
-
-      // Находим пользователей, зарегистрировавшихся после since и до daysAfter+1 день назад
-      const registeredBefore = new Date(now.getTime() - (daysAfter + 1) * 24 * 60 * 60 * 1000)
+    const countRetained = async (daysAfter: number): Promise<number | null> => {
+      // Когорта: пользователи, чьё окно дня daysAfter полностью завершилось к текущему моменту
+      const maxRegDate = new Date(now.getTime() - (daysAfter + 1) * 24 * 60 * 60 * 1000)
+      const minRegDate = new Date(now.getTime() - (30 + daysAfter + 1) * 24 * 60 * 60 * 1000)
 
       const registrations = await prisma.analyticsEvent.findMany({
         where: {
           event: 'user_register',
           userId: { not: null },
-          createdAt: { gte: registeredBefore, lt: since },
+          createdAt: { gte: minRegDate, lt: maxRegDate },
           ...excludedUserFilter,
         },
         select: { userId: true, createdAt: true },
         distinct: ['userId'],
       })
 
-      if (registrations.length === 0) return 0
+      if (registrations.length === 0) return null
 
-      // Глобальное временное окно, покрывающее все индивидуальные окна удержания
-      const firstReg = registrations[0]!
-      let minCreatedAt = firstReg.createdAt
-      let maxCreatedAt = firstReg.createdAt
+      // Собираем минимальные и максимальные окна активности для всей когорты
+      let minTargetStart = new Date(registrations[0]!.createdAt.getTime() + daysAfter * 24 * 60 * 60 * 1000)
+      let maxTargetEnd = new Date(registrations[0]!.createdAt.getTime() + (daysAfter + 1) * 24 * 60 * 60 * 1000)
+
       for (const reg of registrations) {
-        if (reg.createdAt < minCreatedAt) minCreatedAt = reg.createdAt
-        if (reg.createdAt > maxCreatedAt) maxCreatedAt = reg.createdAt
+        const start = new Date(reg.createdAt.getTime() + daysAfter * 24 * 60 * 60 * 1000)
+        const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
+        if (start < minTargetStart) minTargetStart = start
+        if (end > maxTargetEnd) maxTargetEnd = end
       }
 
-      const globalStart = new Date(minCreatedAt.getTime() + daysAfter * 24 * 60 * 60 * 1000)
-      const globalEnd = new Date(maxCreatedAt.getTime() + (daysAfter + 1) * 24 * 60 * 60 * 1000)
-
-      // Один запрос: все события retention для этих пользователей в глобальном окне
       const userIds = registrations.map((r) => r.userId!)
       const allActivities = await prisma.analyticsEvent.findMany({
         where: {
           userId: { in: userIds },
           event: { in: RETENTION_EVENTS },
-          createdAt: { gte: globalStart, lt: globalEnd },
+          createdAt: { gte: minTargetStart, lt: maxTargetEnd },
           ...excludedUserFilter,
         },
         select: { userId: true, createdAt: true },
       })
 
-      // Группируем активности по userId
       const userActivityMap = new Map<number, Date[]>()
       for (const a of allActivities) {
         const list = userActivityMap.get(a.userId!) ?? []
@@ -472,25 +475,25 @@ export function createAnalyticsService(prisma: PrismaClient) {
         userActivityMap.set(a.userId!, list)
       }
 
-      // Проверяем каждого пользователя по его индивидуальному окну (без дополнительных запросов)
       let retained = 0
       for (const reg of registrations) {
         const targetStart = new Date(reg.createdAt.getTime() + daysAfter * 24 * 60 * 60 * 1000)
         const targetEnd = new Date(targetStart.getTime() + 24 * 60 * 60 * 1000)
 
         const activities = userActivityMap.get(reg.userId!) ?? []
-        const hasActivity = activities.some((a) => a >= targetStart && a < targetEnd)
+        const hasActivity = activities.some((a) => {
+          const t = a.getTime()
+          return t >= targetStart.getTime() && t < targetEnd.getTime()
+        })
         if (hasActivity) retained++
       }
 
       return Math.round((retained / registrations.length) * 10000) / 100
     }
 
-    const [d1, d7, d30] = await Promise.all([
-      countRetained(1),
-      countRetained(7),
-      countRetained(30),
-    ])
+    const d1 = await countRetained(1)
+    const d7 = await countRetained(7)
+    const d30 = await countRetained(30)
 
     return { d1, d7, d30 }
   }

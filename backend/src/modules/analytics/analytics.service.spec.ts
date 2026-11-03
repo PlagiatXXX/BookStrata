@@ -107,3 +107,149 @@ describe("Analytics trackEvent: лимиты и защита от мусора",
     expect(JSON.stringify(saved.meta)).not.toContain("constructor");
   });
 });
+
+describe("Analytics: cleanupOldEvents и Churn", () => {
+  it("cleanupOldEvents по умолчанию удаляет события старше 90 дней", async () => {
+    const prismaMock = {
+      analyticsEvent: { deleteMany: vi.fn().mockResolvedValue({ count: 5 }) },
+    };
+    const service = createAnalyticsService(prismaMock as any);
+    const count = await service.cleanupOldEvents();
+    expect(count).toBe(5);
+    expect(prismaMock.analyticsEvent.deleteMany).toHaveBeenCalledWith({
+      where: {
+        createdAt: {
+          lt: expect.any(Date),
+        },
+      },
+    });
+    const cutoffArg = (prismaMock.analyticsEvent.deleteMany as any).mock.calls[0][0].where.createdAt.lt;
+    const diffDays = Math.round((Date.now() - cutoffArg.getTime()) / (1000 * 60 * 60 * 24));
+    expect(diffDays).toBe(90);
+  });
+
+  it("getMetrics корректно считает Churn, когда в предыдущие 30-60 дней были активные пользователи", async () => {
+    const prismaMock = {
+      analyticsEvent: {
+        findMany: vi.fn()
+          .mockResolvedValueOnce([{ userId: 1 }]) // DAU: user 1
+          .mockResolvedValueOnce([{ userId: 1 }, { userId: 2 }]) // MAU: users 1, 2
+          .mockResolvedValueOnce([{ userId: 2 }, { userId: 3 }]) // Prev 30-60d: users 2, 3
+          .mockResolvedValueOnce([]), // unique visitors
+      },
+    };
+    const service = createAnalyticsService(prismaMock as any);
+    const metrics = await service.getMetrics();
+    // Из prev (2, 3) в current MAU (1, 2) остался только 2, оттек 3 (1 из 2 = 50%)
+    expect(metrics.churn).toBe(1);
+    expect(metrics.churnRate).toBe(50);
+  });
+});
+
+describe("Analytics: getMetrics uniqueVisitorsToday", () => {
+  it("возвращает количество уникальных IP за сегодня", async () => {
+    const prismaMock = {
+      analyticsEvent: {
+        findMany: vi.fn()
+          .mockResolvedValueOnce([]) // dau
+          .mockResolvedValueOnce([]) // mau
+          .mockResolvedValueOnce([]) // prevActiveUsers
+          .mockResolvedValueOnce([{ ip: '1.2.3.4' }, { ip: '5.6.7.8' }]), // unique visitors by IP
+      },
+    };
+    const service = createAnalyticsService(prismaMock as any);
+    const metrics = await service.getMetrics();
+    expect(metrics.uniqueVisitorsToday).toBe(2);
+  });
+});
+
+describe("Analytics: getRetention", () => {
+  it("возвращает null для периодов, где не было регистраций", async () => {
+    const prismaMock = {
+      analyticsEvent: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const service = createAnalyticsService(prismaMock as any);
+    const retention = await service.getRetention();
+    expect(retention).toEqual({ d1: null, d7: null, d30: null });
+  });
+
+  it("считает когортный retention среди пользователей, зарегистрированных в окне", async () => {
+    const regDate = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000); // 4 дня назад (окно d1 завершилось)
+    const prismaMock = {
+      analyticsEvent: {
+        findMany: vi.fn()
+          // Вызовы для d1:
+          .mockResolvedValueOnce([{ userId: 10, createdAt: regDate }]) // registrations
+          .mockResolvedValueOnce([{ userId: 10, createdAt: new Date(regDate.getTime() + 25 * 3600 * 1000) }]) // activities
+          // Вызовы для d7:
+          .mockResolvedValueOnce([]) // нет регистраций старше 7 дней
+          // Вызовы для d30:
+          .mockResolvedValueOnce([]), // нет регистраций старше 30 дней
+      },
+    };
+    const service = createAnalyticsService(prismaMock as any);
+    const retention = await service.getRetention();
+    expect(retention.d1).toBe(100);
+    expect(retention.d7).toBeNull();
+    expect(retention.d30).toBeNull();
+  });
+
+  it("возвращает 0%, если пользователь зарегистрирован в окне, но не имеет активности в целевой день (или активность вне окна)", async () => {
+    const regDate = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);
+    const prismaMock = {
+      analyticsEvent: {
+        findMany: vi.fn()
+          // Вызовы для d1:
+          .mockResolvedValueOnce([
+            { userId: 10, createdAt: regDate },
+            { userId: 11, createdAt: regDate },
+          ]) // 2 пользователя в когорте
+          .mockResolvedValueOnce([
+            // Активности пользователя 10: до окна D1 (12ч) и после окна D1 (60ч)
+            { userId: 10, createdAt: new Date(regDate.getTime() + 12 * 3600 * 1000) },
+            { userId: 10, createdAt: new Date(regDate.getTime() + 60 * 3600 * 1000) },
+            // У пользователя 11 активностей нет
+          ])
+          // Вызовы для d7:
+          .mockResolvedValueOnce([])
+          // Вызовы для d30:
+          .mockResolvedValueOnce([]),
+      },
+    };
+    const service = createAnalyticsService(prismaMock as any);
+    const retention = await service.getRetention();
+    expect(retention.d1).toBe(0);
+    expect(retention.d7).toBeNull();
+    expect(retention.d30).toBeNull();
+  });
+});
+
+describe("Analytics: getFunnel", () => {
+  it("содержит этап 'Наполнение тир-листа' и исключает фиктивную публикацию", async () => {
+    const prismaMock = {
+      analyticsEvent: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
+    };
+    const service = createAnalyticsService(prismaMock as any);
+    const funnel = await service.getFunnel(30);
+    const stageNames = funnel.stages.map((s) => s.name);
+    expect(stageNames).toEqual([
+      'Регистрация',
+      'Создание тир-листа',
+      'Наполнение тир-листа',
+      'Поделились',
+    ]);
+    expect(prismaMock.analyticsEvent.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          event: { in: ['book_placed', 'tierlist_save'] },
+        }),
+      })
+    );
+  });
+});
+
+

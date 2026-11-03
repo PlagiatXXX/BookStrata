@@ -36,6 +36,7 @@ export interface MetricsResult {
   stickiness: number
   churn: number
   churnRate: number
+  uniqueVisitorsToday: number
 }
 
 export interface FunnelStage {
@@ -48,9 +49,9 @@ export interface FunnelResult {
 }
 
 export interface RetentionResult {
-  d1: number
-  d7: number
-  d30: number
+  d1: number | null
+  d7: number | null
+  d30: number | null
 }
 
 export interface AnalyticsQuery {
