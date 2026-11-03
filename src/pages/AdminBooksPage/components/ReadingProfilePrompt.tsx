@@ -235,7 +235,7 @@ export function ReadingProfilePrompt({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex flex-1 items-center gap-2 text-left text-sm font-medium text-(--ink-0) hover:bg-(--ink-3)/30 transition-colors rounded px-1 py-0.5 -ml-1"
+          className="flex flex-1 items-center gap-2 text-left text-sm font-medium text-(--ink-0) hover:bg-(--ink-3)/30 transition-colors rounded px-1 py-0.5 -ml-1 cursor-pointer"
         >
           <Sparkles className="h-4 w-4 text-amber-400" />
           <span>AI-промпт для Reading DNA</span>
@@ -243,25 +243,23 @@ export function ReadingProfilePrompt({
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </span>
         </button>
-        {expanded && (
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-(--accent-main) hover:bg-(--accent-main)/10 transition-colors"
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5" />
-                Скопировано
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                Копировать
-              </>
-            )}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-(--accent-main) hover:bg-(--accent-main)/10 transition-colors cursor-pointer"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5" />
+              Скопировано
+            </>
+          ) : (
+            <>
+              <Copy className="h-3.5 w-3.5" />
+              Копировать
+            </>
+          )}
+        </button>
       </div>
 
       {/* Body */}

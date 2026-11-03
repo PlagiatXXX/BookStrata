@@ -87,45 +87,46 @@ export function ReadingGuidePrompt({
 
   return (
     <div className="mt-3 rounded-lg border border-(--ink-3) bg-(--bg-0)">
-      {/* Header — кликабельный */}
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-(--ink-0) hover:bg-(--ink-3)/30 transition-colors"
-      >
-        <BookOpen className="h-4 w-4 text-amber-400" />
-        <span>AI-промпт для «Гида по чтению»</span>
-        <span className="ml-auto text-(--ink-2)">
-          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </span>
-      </button>
+      {/* Header — кликабельный + кнопка копирования */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex flex-1 items-center gap-2 text-left text-sm font-medium text-(--ink-0) hover:bg-(--ink-3)/30 transition-colors rounded px-1 py-0.5 -ml-1 cursor-pointer"
+        >
+          <BookOpen className="h-4 w-4 text-amber-400" />
+          <span>AI-промпт для «Гида по чтению»</span>
+          <span className="ml-auto text-(--ink-2)">
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-(--accent-main) hover:bg-(--accent-main)/10 transition-colors cursor-pointer"
+        >
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5" />
+              Скопировано
+            </>
+          ) : (
+            <>
+              <Copy className="h-3.5 w-3.5" />
+              Копировать
+            </>
+          )}
+        </button>
+      </div>
 
       {/* Body */}
       {expanded && (
         <div className="border-t border-(--ink-3) px-3 py-3 space-y-3">
-          {/* Кнопка копирования + текст промпта */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-semibold text-(--ink-0)">
                 Готовый промпт (скопировать → вставить в ChatGPT/Claude)
               </span>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="flex items-center gap-1 rounded px-2 py-1 text-xs text-(--accent-main) hover:bg-(--accent-main)/10 transition-colors"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-3.5 w-3.5" />
-                    Скопировано
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5" />
-                    Копировать
-                  </>
-                )}
-              </button>
             </div>
             <pre className="max-h-60 overflow-auto rounded-md border border-(--ink-3) bg-black/30 p-3 text-[11px] leading-relaxed text-(--ink-1) font-mono whitespace-pre-wrap">
               {prompt}

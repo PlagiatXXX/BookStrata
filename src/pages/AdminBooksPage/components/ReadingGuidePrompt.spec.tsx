@@ -74,4 +74,17 @@ describe("ReadingGuidePrompt", () => {
     expect(copiedText).toContain("Баллада о падающих драконах");
     expect(copiedText).toContain("short_hook");
   });
+
+  it("можно скопировать промпт сразу без раскрытия аккордеона", async () => {
+    renderUi();
+    expect(screen.queryByText(/готовый промпт/i)).toBeNull(); // свёрнут
+
+    clipboardMock.mockResolvedValue(undefined);
+    fireEvent.click(screen.getByRole("button", { name: /копировать/i }));
+
+    expect(await screen.findByText(/скопировано/i)).toBeDefined();
+    expect(clipboardMock).toHaveBeenCalledTimes(1);
+    const copiedText = clipboardMock.mock.calls[0][0] as string;
+    expect(copiedText).toContain("Баллада о падающих драконах");
+  });
 });
