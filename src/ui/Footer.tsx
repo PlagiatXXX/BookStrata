@@ -206,12 +206,12 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   if (isHidden) return null;
 
   return (
-    <footer className="relative overflow-hidden bg-gradient-to-b from-[#0d1b2a] via-[#1b263b] to-[#133d28] px-6 pt-16 pb-10">
+    <footer className="relative overflow-hidden bg-linear-to-b from-[#0d1b2a] via-[#1b263b] to-[#133d28] px-6 pt-16 pb-10">
       <style>{marqueeStyle}</style>
 
       {/* Organic wave overlays at top */}
       <div className="absolute top-0 left-0 w-full overflow-hidden leading-none">
-        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative block w-full h-[60px] md:h-[80px]" preserveAspectRatio="none">
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative block w-full h-15 md:h-20" preserveAspectRatio="none">
           <path d="M0,40 C180,100 360,10 540,60 C720,110 900,20 1080,60 C1260,100 1350,30 1440,50 L1440,0 L0,0 Z" fill="url(#wave1)" fillOpacity="0.4" />
           <path d="M0,60 C240,110 480,20 720,70 C960,120 1200,30 1440,60 L1440,0 L0,0 Z" fill="url(#wave2)" fillOpacity="0.3" />
           <defs>
@@ -229,7 +229,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
         </svg>
       </div>
       {/* Wave inner glow border */}
-      <div className="absolute top-[55px] md:top-[75px] left-0 w-full h-px bg-white/10" />
+      <div className="absolute top-13.75 md:top-18.75 left-0 w-full h-px bg-white/10" />
 
       {/* Floating books background */}
       <div
@@ -253,9 +253,9 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Основное — слева */}
           <div className={glassCard}>
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
               Основное
-            </h4>
+            </h3>
             <nav aria-label="Основная навигация футера">
               <ul className="flex flex-col gap-1">
                 {(isLanding ? combinedLandingLinks : combinedLinks).map((link) => {
@@ -297,9 +297,9 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
           {/* Подборки + Соцсети — по центру */}
           <div className="flex-1 flex flex-col sm:flex-row gap-8 justify-center">
             <div className={glassCard}>
-              <h4 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
+              <h3 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
                 Подборки
-              </h4>
+              </h3>
               <nav aria-label="Популярные подборки">
                 <ul className="flex flex-col gap-1">
                   {collections.slice(0, 8).map((collection) => (
@@ -318,10 +318,10 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
             {/* Соцсети + Донат */}
             <div className="flex flex-col gap-5">
-              <div className={`${glassCard} flex flex-col items-center text-center !py-5`}>
-                <h4 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
+              <div className={`${glassCard} flex flex-col items-center text-center py-5!`}>
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-white mb-3">
                   Соцсети
-                </h4>
+                </h3>
                 <SocialIcons
                   links={{
                     telegram: TELEGRAM_URL,
@@ -361,9 +361,9 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 } right-0`}
               >
                 <div className="relative p-5">
-                  <h3 className="text-base font-bold text-white">
+                  <h4 className="text-base font-bold text-white">
                     Угостить автора
-                  </h3>
+                  </h4>
                   <p className="mt-2 text-xs text-white/60 leading-relaxed text-left">
                     Ваша помощь помогает оплачивать сервера и делать BookStrata
                     лучше. Спасибо, что вы с нами!
@@ -400,7 +400,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
 
         {/* Donor Marquee */}
         {donors.length > 0 && (
-          <div data-testid="donor-marquee" className="flex items-center gap-4 w-full border-t border-white/[0.06] pt-6">
+          <div data-testid="donor-marquee" className="flex items-center gap-4 w-full border-t border-white/6 pt-6">
             <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-white/60">
               Меценаты проекта:
             </span>
@@ -413,7 +413,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
         )}
 
         {/* Bottom: Copyright + Links */}
-        <div className="flex flex-col items-center gap-2 border-t border-white/[0.06] pt-6">
+        <div className="flex flex-col items-center gap-2 border-t border-white/6 pt-6">
           <p className="text-[11px] text-white/50">
             © {new Date().getFullYear()} BookStrata. Все права защищены.
           </p>

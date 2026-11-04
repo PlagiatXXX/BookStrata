@@ -326,9 +326,9 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
 
           {collections && collections.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {collections.slice(0, 6).map((collection, index) => (
+              {collections.slice(0, 6).map((collection) => (
                 <RevealBox key={collection.id}>
-                  <CollectionFlipCard collection={collection} priority={index === 0} />
+                  <CollectionFlipCard collection={collection} />
                 </RevealBox>
               ))}
             </div>

@@ -15,6 +15,7 @@ import { Logo } from "@/ui/Logo";
 import { Footer } from "@/ui/Footer";
 import { Spinner } from "@/components/Spinner";
 import { SEOHead } from "@/components/SEO/SEOHead";
+import { hasSession } from "@/lib/authApi";
 import { getPublicTierLists } from "@/lib/tierListApi";
 import { getForumStats } from "@/lib/battlesApi";
 import { getFeaturedCollections } from "@/lib/collectionsApi";
@@ -187,8 +188,11 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Пока проверяется сессия — не рендерим контент, чтобы не моргал
-  if (isAuthLoading) {
+  // Только если у пользователя была активная сессия — ждём восстановления,
+  // чтобы сразу перенаправить на /dashboard без моргания лендинга.
+  // Для гостей (PageSpeed, новые пользователи) контент рендерится сразу,
+  // не ломая пререндер и LCP.
+  if (isAuthLoading && hasSession()) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
         <Spinner size="lg" />
@@ -222,7 +226,11 @@ export default function LandingPage() {
           preload="none"
           ref={videoRef}
           poster="/library-bg.webp"
-        />
+          aria-hidden="true"
+          tabIndex={-1}
+        >
+          <track kind="captions" src="data:text/vtt,WEBVTT" label="Без звука" default />
+        </video>
         <div className="landing-hero__gradient" />
         <div className="landing-hero__pattern" />
 
@@ -336,7 +344,7 @@ function BodySkeleton() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="aspect-[3/4] rounded-xl bg-white/5 animate-pulse"
+            className="aspect-3/4 rounded-xl bg-white/5 animate-pulse"
           />
         ))}
       </div>

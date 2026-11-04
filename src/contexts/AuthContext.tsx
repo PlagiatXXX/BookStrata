@@ -20,7 +20,7 @@ const authLogger = createLogger("Auth", { color: "blue" });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => hasSession());
   const refreshUserDataRef = useRef<(() => void) | null>(null);
 
   // Heartbeat: отправляет сигнал активности каждые 60с, пока пользователь авторизован

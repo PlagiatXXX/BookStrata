@@ -1,53 +1,36 @@
 # BookStrata
 
-BookStrata — социальная сеть читателей. Составляй визуальные рейтинги книг (тир-листы), участвуй в баттлах, общайся на форуме и получай ИИ-рекомендации.
+> BookStrata — социальная платформа читателей. Составляйте визуальные рейтинги книг (тир-листы), находите книги по вкусу с помощью ИИ, участвуйте в баттлах и общайтесь с единомышленниками.
 
-## Основные страницы
+BookStrata предоставляет каталог пользовательских и редакционных рейтингов книг, обзоры, списки чтения и профили авторов.
 
-- https://bookstrata.ru/ — Главная
-- https://bookstrata.ru/about — О проекте
-- https://bookstrata.ru/pricing — Тарифы
-- https://bookstrata.ru/contact — Контакты
-- https://bookstrata.ru/privacy — Политика конфиденциальности
-- https://bookstrata.ru/terms — Условия использования
-- https://bookstrata.ru/templates — Библиотека тир-листов
-- https://bookstrata.ru/community — Сообщество
-- https://bookstrata.ru/forum — Форум
-- https://bookstrata.ru/rankings — Рейтинги книг
-- https://bookstrata.ru/what-to-read — Что почитать
-- https://bookstrata.ru/collections — Подборки книг (коллекции)
-- https://bookstrata.ru/authors — Все авторы
-- https://bookstrata.ru/celebrities — Знаменитости и их книжные вкусы
-- https://bookstrata.ru/blog — Блог о книгах и чтении
-- https://bookstrata.ru/news — Новости сообщества
-- https://bookstrata.ru/faq — Вопросы и ответы
-- https://bookstrata.ru/history — История чтения
+## Основные разделы
 
-## Разделы по жанрам и темам
+- [Главная страница](https://bookstrata.ru/): Интерактивная платформа для создания книжных тир-листов и рейтингов
+- [Библиотека тир-листов](https://bookstrata.ru/templates): Тысячи готовых шаблонов и пользовательских рейтингов по жанрам
+- [Рейтинги книг](https://bookstrata.ru/rankings): Сводный рейтинг книг на основе тысяч пользовательских оценок
+- [Подборки книг](https://bookstrata.ru/collections): Тематические и жанровые коллекции лучших книг
+- [Что почитать](https://bookstrata.ru/what-to-read): Персональные рекомендации и подборки книг на любой вкус
+- [Авторы](https://bookstrata.ru/authors): Каталог авторов с биографиями, библиографией и рейтингами
+- [Знаменитости](https://bookstrata.ru/celebrities): Любимые книги известных личностей и их рейтинги
+- [Блог](https://bookstrata.ru/blog): Статьи, аналитика, списки литературы и советы для читателей
+- [Форум и Сообщество](https://bookstrata.ru/forum): Обсуждения книг, литературные дебаты и книжные баттлы
+- [Новости](https://bookstrata.ru/news): Обновления платформы и события книжного сообщества
+- [О проекте](https://bookstrata.ru/about): Миссия, команда и история BookStrata
+- [Тарифы и поддержка](https://bookstrata.ru/pricing): Премиум-функции и поддержка развития проекта
+- [Частые вопросы](https://bookstrata.ru/faq): Ответы на популярные вопросы о создании рейтингов
 
-- https://bookstrata.ru/topics/{slug} — подборки по жанру (например, /topics/fantasy)
-- https://bookstrata.ru/collections/{slug} — конкретная подборка книг (например, /collections/horror-books)
+## Динамические разделы
 
-## Книги
+- [Тематические подборки](https://bookstrata.ru/collections/{slug}): Страница конкретной коллекции книг (например, horror-books)
+- [Карточка книги](https://bookstrata.ru/books/{slug}): Оценки, отзывы читателей, распределение по тирам и гид по чтению
+- [Страница автора](https://bookstrata.ru/authors/{slug}): Полная библиография и лучшие произведения писателя
+- [Профиль знаменитости](https://bookstrata.ru/celebrities/{slug}): Избранные книги и тир-лист любимых произведений
+- [Пользовательский тир-лист](https://bookstrata.ru/tier-lists/{slug}): Рейтинг книг, составленный читателем платформы
 
-- https://bookstrata.ru/books/{slug} — страница книги с рейтингами, отзывами и гидом по чтению
+## Справка и документация
 
-## Авторы
-
-- https://bookstrata.ru/authors/{slug} — страница автора с биографией и книгами
-
-## Знаменитости
-
-- https://bookstrata.ru/celebrities/{slug} — книжные вкусы знаменитости
-
-## Статьи блога
-
-- https://bookstrata.ru/blog/{slug} — статья о книгах и чтении
-
-## Тир-листы пользователей
-
-- https://bookstrata.ru/tier-lists/{slug} — пользовательский тир-лист (рейтинг книг)
-
-## API
-
-- https://bookstrata.ru/api/ — REST API (документация: /documentation/)
+- [Контакты](https://bookstrata.ru/contact): Связь с создателями проекта
+- [Политика конфиденциальности](https://bookstrata.ru/privacy): Обработка пользовательских данных
+- [Пользовательское соглашение](https://bookstrata.ru/terms): Правила использования платформы
+- [REST API](https://bookstrata.ru/documentation/): Документация API для разработчиков
