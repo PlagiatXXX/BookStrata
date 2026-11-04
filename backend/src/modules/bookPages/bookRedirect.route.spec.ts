@@ -6,7 +6,6 @@
 //   - неизвестный/draft slug → 404 noindex,
 //   - небезопасный slug (path traversal) → 404.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 const mocks = vi.hoisted(() => ({
@@ -70,9 +69,9 @@ describe("GET /books/:slug (публичный роут)", () => {
       book: { slug: "anna-karenina-lev-tolstoj", status: "published" },
     });
 
-    const res = await request(app.server).get("/books/anna-karenina");
+    const res = await app.inject({ method: "GET", url: "/books/anna-karenina" });
 
-    expect(res.status).toBe(301);
+    expect(res.statusCode).toBe(301);
     expect(res.headers.location).toBe("/books/anna-karenina-lev-tolstoj");
     expect(mocks.prisma.bookSlugHistory.findUnique).toHaveBeenCalledWith({
       where: { oldSlug: "anna-karenina" },
@@ -87,9 +86,9 @@ describe("GET /books/:slug (публичный роут)", () => {
       book: { slug: "draft-book", status: "draft" },
     });
 
-    const res = await request(app.server).get("/books/old-draft");
+    const res = await app.inject({ method: "GET", url: "/books/old-draft" });
 
-    expect(res.status).toBe(404);
+    expect(res.statusCode).toBe(404);
   });
 
   it("актуальный published slug с пререндер-файлом → отдаёт пререндеренный HTML", async () => {
@@ -98,11 +97,11 @@ describe("GET /books/:slug (публичный роут)", () => {
     mocks.fs.existsSync.mockImplementation((p: string) => String(p).includes("books/anna-karenina-lev-tolstoj/index.html"));
     mocks.fs.readFileSync.mockReturnValue(PRERENDERED_HTML);
 
-    const res = await request(app.server).get("/books/anna-karenina-lev-tolstoj");
+    const res = await app.inject({ method: "GET", url: "/books/anna-karenina-lev-tolstoj" });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toContain("text/html");
-    expect(res.text).toContain("Анна Каренина — пререндер");
+    expect(res.body).toContain("Анна Каренина — пререндер");
   });
 
   it("published без пререндера → SEO-фолбэк с meta книги (title/canonical/OG) из БД", async () => {
@@ -112,15 +111,15 @@ describe("GET /books/:slug (публичный роут)", () => {
     mocks.fs.existsSync.mockImplementation((p: string) => String(p).endsWith("spa-index.html"));
     mocks.fs.readFileSync.mockReturnValue(SPA_SHELL);
 
-    const res = await request(app.server).get("/books/anna-karenina-lev-tolstoj");
+    const res = await app.inject({ method: "GET", url: "/books/anna-karenina-lev-tolstoj" });
 
-    expect(res.status).toBe(200);
-    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой</title>");
-    expect(res.text).toContain('<link rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj" />');
-    expect(res.text).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой" />');
-    expect(res.text).toContain('content="Роман о любви и обществе."');
-    expect(res.text).toContain('<meta property="og:image" content="/covers/anna.jpg" />');
-    expect(res.text).toContain('<div id="root"></div>');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain("<title>Анна Каренина — Лев Толстой</title>");
+    expect(res.body).toContain('<link rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj" />');
+    expect(res.body).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой" />');
+    expect(res.body).toContain('content="Роман о любви и обществе."');
+    expect(res.body).toContain('<meta property="og:image" content="/covers/anna.jpg" />');
+    expect(res.body).toContain('<div id="root"></div>');
   });
 
   it("каркас без <title> (как продовый index.html) → title и metaTags вставляются в head", async () => {
@@ -132,15 +131,15 @@ describe("GET /books/:slug (публичный роут)", () => {
       '<!DOCTYPE html><html><head><meta charset="utf-8" /></head><body><div id="root"></div></body></html>',
     );
 
-    const res = await request(app.server).get("/books/anna-karenina-lev-tolstoj");
+    const res = await app.inject({ method: "GET", url: "/books/anna-karenina-lev-tolstoj" });
 
-    expect(res.status).toBe(200);
-    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой</title>");
-    expect(res.text).toContain('<meta name="description" content="Роман о любви и обществе." />');
-    expect(res.text).toContain('<link rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj" />');
-    expect(res.text).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой" />');
-    expect(res.text).toContain('<meta name="robots" content="index, follow" />');
-    expect(res.text).toContain('<div id="root"></div>');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain("<title>Анна Каренина — Лев Толстой</title>");
+    expect(res.body).toContain('<meta name="description" content="Роман о любви и обществе." />');
+    expect(res.body).toContain('<link rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj" />');
+    expect(res.body).toContain('<meta property="og:title" content="Анна Каренина — Лев Толстой" />');
+    expect(res.body).toContain('<meta name="robots" content="index, follow" />');
+    expect(res.body).toContain('<div id="root"></div>');
   });
 
   it("SEO-фолбэк без DIST_DIR (dev) → standalone HTML с meta", async () => {
@@ -148,11 +147,11 @@ describe("GET /books/:slug (публичный роут)", () => {
     mocks.prisma.bookSlugHistory.findUnique.mockResolvedValue(null);
     mocks.prisma.book.findUnique.mockResolvedValue(publishedBook);
 
-    const res = await request(app.server).get("/books/anna-karenina-lev-tolstoj");
+    const res = await app.inject({ method: "GET", url: "/books/anna-karenina-lev-tolstoj" });
 
-    expect(res.status).toBe(200);
-    expect(res.text).toContain("<title>Анна Каренина — Лев Толстой</title>");
-    expect(res.text).toContain('rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj"');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain("<title>Анна Каренина — Лев Толстой</title>");
+    expect(res.body).toContain('rel="canonical" href="https://bookstrata.ru/books/anna-karenina-lev-tolstoj"');
     mocks.config.DIST_DIR = "/app/dist";
   });
 
@@ -160,26 +159,26 @@ describe("GET /books/:slug (публичный роут)", () => {
     mocks.prisma.bookSlugHistory.findUnique.mockResolvedValue(null);
     mocks.prisma.book.findUnique.mockResolvedValue(null);
 
-    const res = await request(app.server).get("/books/unknown-book");
+    const res = await app.inject({ method: "GET", url: "/books/unknown-book" });
 
-    expect(res.status).toBe(404);
-    expect(res.text).toContain("Книга не найдена");
-    expect(res.text).toContain('content="noindex"');
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toContain("Книга не найдена");
+    expect(res.body).toContain('content="noindex"');
   });
 
   it("draft-книга → 404 (не публикуется через URL)", async () => {
     mocks.prisma.bookSlugHistory.findUnique.mockResolvedValue(null);
     mocks.prisma.book.findUnique.mockResolvedValue({ ...publishedBook, status: "draft" });
 
-    const res = await request(app.server).get("/books/draft-book");
+    const res = await app.inject({ method: "GET", url: "/books/draft-book" });
 
-    expect(res.status).toBe(404);
+    expect(res.statusCode).toBe(404);
   });
 
   it("небезопасный slug (path traversal) → 404, файл не читается", async () => {
-    const res = await request(app.server).get("/books/..%2F..%2Fetc%2Fpasswd");
+    const res = await app.inject({ method: "GET", url: "/books/..%2F..%2Fetc%2Fpasswd" });
 
-    expect(res.status).toBe(404);
+    expect(res.statusCode).toBe(404);
     expect(mocks.fs.existsSync).not.toHaveBeenCalled();
   });
 });

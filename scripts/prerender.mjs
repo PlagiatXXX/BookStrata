@@ -280,6 +280,10 @@ async function addPublicTierListRoutes() {
           log(`  ⚠️  Tier list "${item.title}" has no slug, skipping`);
           continue;
         }
+        if (!item.booksCount || item.booksCount === 0) {
+          log(`  ⏭️  Tier list "${item.title}" has 0 books, skipping prerender (noindex)`);
+          continue;
+        }
         const path = `/tier-lists/${slug}`;
         // authorName сохраняем отдельно — используется в SEO-fallback ниже
         ROUTES.push({ path, name: `Тир-лист: ${item.title}`, authorName: item.authorName });

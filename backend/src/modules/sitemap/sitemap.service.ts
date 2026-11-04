@@ -41,7 +41,10 @@ export async function generateSitemap(): Promise<string> {
       take: 500,
     }),
     prisma.tierList.findMany({
-      where: { isPublic: true },
+      where: {
+        isPublic: true,
+        placements: { some: {} },
+      },
       select: { id: true, slug: true, updatedAt: true },
       orderBy: { likesCount: "desc" },
       take: 1000,

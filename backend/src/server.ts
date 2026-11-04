@@ -456,6 +456,11 @@ fastify.register(rssRoutes);
 import { bookRedirectRoutes } from "../src/modules/bookPages/bookRedirect.route.js";
 fastify.register(bookRedirectRoutes);
 
+// Публичные страницы тир-листов (без /api префикса): 404 для несуществующих,
+// noindex для приватных/пустых и SEO-фолбэк для непререндеренных (nginx проксирует /tier-lists/* на бэк)
+import { tierListRedirectRoutes } from "../src/modules/tier-lists/tierListRedirect.route.js";
+fastify.register(tierListRedirectRoutes);
+
 // Инициализация подписок на события
 registerAchievementSubscriptions();
 registerAnalyticsSubscriptions();

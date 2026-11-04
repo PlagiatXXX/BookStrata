@@ -116,3 +116,33 @@ describe("generateSitemap — книги каталога", () => {
     expect(args?.take === undefined || args.take > 1000).toBe(true);
   });
 });
+
+describe("generateSitemap — тир-листы", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.prisma.newsArticle.findMany.mockResolvedValue([]);
+    mocks.prisma.tierList.findMany.mockResolvedValue([]);
+    mocks.prisma.collection.findMany.mockResolvedValue([]);
+    mocks.prisma.celebrity.findMany.mockResolvedValue([]);
+    mocks.prisma.author.findMany.mockResolvedValue([]);
+    mocks.prisma.book.findMany.mockResolvedValue([]);
+  });
+
+  it("запрашивает только публичные тир-листы с размещёнными книгами (placements: { some: {} })", async () => {
+    mocks.prisma.tierList.findMany.mockResolvedValue([
+      { id: "tl-1", slug: "top-books", updatedAt: new Date("2026-09-01") },
+    ]);
+
+    const xml = await generateSitemap();
+
+    expect(mocks.prisma.tierList.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          isPublic: true,
+          placements: { some: {} },
+        },
+      }),
+    );
+    expect(xml).toContain("<loc>https://bookstrata.ru/tier-lists/top-books</loc>");
+  });
+});
