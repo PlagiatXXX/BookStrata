@@ -52,7 +52,7 @@ describe("BookEditModal — isTrending", () => {
         onClose={vi.fn()}
       />,
     );
-    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("checkbox", { name: /тренде/i }));
     fireEvent.click(screen.getByRole("button", { name: /сохранить/i }));
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({ isTrending: true }),
@@ -76,7 +76,7 @@ describe("BookEditModal — isTrending", () => {
         onClose={vi.fn()}
       />,
     );
-    expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: /тренде/i })).toBeChecked();
   });
 });
 
@@ -240,5 +240,37 @@ describe("BookEditModal — readingGuide", () => {
     const field = screen.getByLabelText(/ai-паспорт/i);
     expect(field.textContent).toContain("short_hook");
     expect(screen.getByText(/✓ заполнен/i)).toBeInTheDocument();
+  });
+});
+
+describe("BookEditModal — animated cover cropping & prompt", () => {
+  it("отображает кнопки подсказки для AI и режимы подгонки видео", () => {
+    render(
+      <BookEditModal
+        book={baseBook}
+        saving={false}
+        publishing={false}
+        unpublishing={false}
+        enriching={false}
+        enrichResult={null}
+        onSave={vi.fn()}
+        onPublish={vi.fn()}
+        onUnpublish={vi.fn()}
+        onEnrich={vi.fn()}
+        onMerge={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /скопировать режиссёрский промпт/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /краткие техпараметры/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /вписать целиком \+ размытие/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /кадрировать 2:3/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Оригинал" })).toBeInTheDocument();
+
+    const posterCheckbox = screen.getByRole("checkbox", {
+      name: /обновить статичную обложку книги/i,
+    });
+    expect(posterCheckbox).toBeChecked();
   });
 });

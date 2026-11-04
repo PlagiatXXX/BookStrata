@@ -198,6 +198,17 @@ export async function uploadBookCover(
   );
 }
 
+export type CropPosition = "center" | "left" | "right";
+export type VideoProcessingMode = "crop" | "fit-blur" | "original";
+export type VideoAspectRatio = "2:3" | "fit-blur" | "original";
+
+export interface UploadAnimatedCoverOptions {
+  mode?: VideoProcessingMode;
+  cropOffset?: number;
+  cropPosition?: CropPosition;
+  aspectRatio?: VideoAspectRatio;
+}
+
 export interface UploadAnimatedCoverResponse {
   animatedCoverUrl: string;
   coverImageUrl: string;
@@ -207,11 +218,18 @@ export interface UploadAnimatedCoverResponse {
 // Загрузить анимированную обложку книги (видео → base64 → ffmpeg сжатие на сервере + постер WebP)
 export async function uploadBookAnimatedCover(
   file: File,
+  options?: UploadAnimatedCoverOptions,
 ): Promise<UploadAnimatedCoverResponse> {
   const base64 = await fileToBase64(file);
   return apiClient.post<UploadAnimatedCoverResponse>(
     "/admin/books/upload-animated-cover",
-    { videoBase64: base64 },
+    {
+      videoBase64: base64,
+      mode: options?.mode,
+      cropOffset: options?.cropOffset,
+      cropPosition: options?.cropPosition,
+      aspectRatio: options?.aspectRatio,
+    },
   );
 }
 
