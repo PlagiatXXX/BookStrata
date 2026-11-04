@@ -6,6 +6,15 @@ import "../styles/globals.css";
 import { router } from "./router";
 import { initYandexMetrika } from "../lib/ym";
 import { AppErrorBoundary } from "../components/ErrorBoundary/AppErrorBoundary";
+import { removeCacheBustParam } from "../lib/lazy";
+
+// Бесшовная очистка служебного параметра ?__bust=... из адресной строки после перезагрузки
+if (typeof window !== "undefined" && window.location.search.includes("__bust")) {
+  const cleanUrl = removeCacheBustParam(window.location.href);
+  if (cleanUrl !== window.location.href) {
+    window.history.replaceState(null, "", cleanUrl);
+  }
+}
 
 // Sentry — lazy init (динамический import ~60KB, не блокирует first paint)
 import("../lib/sentry").then(({ initSentry }) => initSentry());

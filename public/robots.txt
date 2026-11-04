@@ -16,8 +16,12 @@ Allow: /api/celebrities
 Allow: /api/tier-lists
 Allow: /api/ai/librarian/status
 Disallow: /api/
+Clean-param: __bust
 Clean-param: template
 Clean-param: redirect
+Clean-param: context
+Clean-param: from
+Clean-param: section
 
 User-agent: OAI-SearchBot
 Allow: /
@@ -38,8 +42,12 @@ Allow: /api/celebrities
 Allow: /api/tier-lists
 Allow: /api/ai/librarian/status
 Disallow: /api/
+Clean-param: __bust
 Clean-param: template
 Clean-param: redirect
+Clean-param: context
+Clean-param: from
+Clean-param: section
 
 User-agent: GPTBot
 Allow: /
@@ -60,8 +68,12 @@ Allow: /api/celebrities
 Allow: /api/tier-lists
 Allow: /api/ai/librarian/status
 Disallow: /api/
+Clean-param: __bust
 Clean-param: template
 Clean-param: redirect
+Clean-param: context
+Clean-param: from
+Clean-param: section
 
 # Явное управление AI-краулерами (иначе наследуют правила *)
 User-agent: ClaudeBot
@@ -92,7 +104,11 @@ Allow: /api/celebrities
 Allow: /api/tier-lists
 Allow: /api/ai/librarian/status
 Disallow: /api/
+Clean-param: __bust
 Clean-param: template
 Clean-param: redirect
+Clean-param: context
+Clean-param: from
+Clean-param: section
 
 Sitemap: https://bookstrata.ru/sitemap.xml

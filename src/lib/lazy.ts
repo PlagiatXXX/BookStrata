@@ -74,6 +74,40 @@ export function hasReloadedThisSession(): boolean {
 }
 
 /**
+ * Добавляет или обновляет параметр ?__bust=<timestamp> в URL (без дублирования).
+ */
+export function addCacheBustParam(url: string, timestamp = Date.now()): string {
+  try {
+    const parsed = new URL(url, "https://bookstrata.ru");
+    parsed.searchParams.delete("__bust");
+    parsed.searchParams.set("__bust", String(timestamp));
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return parsed.pathname + (parsed.search ? parsed.search : "") + parsed.hash;
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Удаляет параметр ?__bust из URL после перезагрузки.
+ */
+export function removeCacheBustParam(url: string): string {
+  try {
+    const parsed = new URL(url, "https://bookstrata.ru");
+    if (!parsed.searchParams.has("__bust")) return url;
+    parsed.searchParams.delete("__bust");
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return parsed.pathname + (parsed.search ? parsed.search : "") + parsed.hash;
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+/**
  * Обработка ошибки загрузки чанка.
  * Возвращает true, если был запрошен reload (вызывающий может прерваться).
  */
@@ -90,11 +124,7 @@ export function handleChunkLoadError(err: unknown): boolean {
     if (attempt === 1) {
       // Вторая попытка — cache-busting: добавляем timestamp,
       // чтобы браузер не отдал тот же битый файл из кеша
-      const cacheBust = `__bust=${Date.now()}`;
-      const url = window.location.href;
-      window.location.href = url.includes("?")
-        ? `${url}&${cacheBust}`
-        : `${url}?${cacheBust}`;
+      window.location.href = addCacheBustParam(window.location.href);
     } else {
       // Первая попытка — обычный reload
       window.location.reload();

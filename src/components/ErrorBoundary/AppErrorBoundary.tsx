@@ -4,6 +4,7 @@ import {
   isChunkLoadError,
   getReloadCount,
   incrementReloadCount,
+  addCacheBustParam,
 } from "@/lib/lazy";
 
 interface Props {
@@ -47,12 +48,8 @@ export class AppErrorBoundary extends Component<Props, State> {
         // Первая попытка — обычный reload
         window.location.reload();
       } else {
-        // Последующие — cache-busting (???bust=<timestamp>)
-        const cacheBust = `__bust=${Date.now()}`;
-        const url = window.location.href;
-        window.location.href = url.includes("?")
-          ? `${url}&${cacheBust}`
-          : `${url}?${cacheBust}`;
+        // Последующие — cache-busting (?__bust=<timestamp>)
+        window.location.href = addCacheBustParam(window.location.href);
       }
       return;
     }
