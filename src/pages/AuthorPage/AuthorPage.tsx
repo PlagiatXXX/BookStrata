@@ -106,8 +106,8 @@ export default function AuthorPage() {
       <main className="author-page relative min-h-screen bg-[var(--ap-bg)] pb-24 pt-20">
         {/* Крошки поверх хиро (верх пустой, justify-end) — не сдвигают контент страницы.
             z-20 > z-10 у hero-обёртки — иначе её div перехватывает клики по ссылкам.
-            pt-28 — воздух под хедером (~80px), чтобы крошки не прилипали к нему */}
-        <div className="absolute inset-x-0 top-0 z-20 mx-auto max-w-6xl px-4 pt-28">
+            pt-18 xs:pt-22 sm:pt-24 — компактный отступ под хедером (64px на моб / 80px на десктопе), приподняты к шапке */}
+        <div className="absolute inset-x-0 top-0 z-20 mx-auto max-w-6xl px-4 pt-18 xs:pt-22 sm:pt-24">
           <Breadcrumbs
             theme="dark"
             items={[

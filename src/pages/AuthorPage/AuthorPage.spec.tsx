@@ -153,8 +153,8 @@ describe("AuthorPage", () => {
     expect(nav.parentElement).toHaveClass("absolute");
     // z-20 > z-10 у hero-обёртки — иначе клики перехватывает она (крошки не кликабельны)
     expect(nav.parentElement).toHaveClass("z-20");
-    // отступ под хедером, чтобы крошки не прилипали к нему
-    expect(nav.parentElement).toHaveClass("pt-28");
+    // отступ под хедером, чтобы крошки были ближе к шапке и не закрывали портрет
+    expect(nav.parentElement).toHaveClass("pt-18");
     // хиро не залезает под fixed-хедер: у обёртки остаётся полоса pt-20
     expect(nav.closest(".author-page")).toHaveClass("pt-20");
 
@@ -757,7 +757,7 @@ describe("Секции ручного контента", () => {
     expect(cta.closest("section")).toContainElement(disclaimer);
   });
 
-  it("hero: ручные stats рендерятся в мета-полосе (value + label), авто-строки рядом", async () => {
+  it("hero: парящий медальон среднего рейтинга рендерится в верхнем правом углу, мета-полоса без рейтинга", async () => {
     vi.mocked(getAuthorBySlug).mockResolvedValue({
       ...fixture,
       stats: [{ value: "14 млн", label: "напечатанных книг" }],
@@ -766,15 +766,21 @@ describe("Секции ручного контента", () => {
     renderPage();
     await screen.findByRole("heading", { name: "Лев Толстой" });
 
+    // Парящий медальон рейтинга в Hero (миниатюрная печать-монета)
+    const medallion = screen.getByTestId("author-rating-medallion");
+    expect(medallion).toBeInTheDocument();
+    expect(medallion).toHaveTextContent("8.7");
+    expect(medallion).toHaveTextContent("/ 10");
+
+    // Нижняя мета-полоса содержит ручные stats и счётчик книг, но не средний рейтинг
     expect(screen.getByText("14 млн")).toBeInTheDocument();
     expect(screen.getByText("напечатанных книг")).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("книг на сайте")).toBeInTheDocument();
-    expect(screen.getByText("8.7 / 10")).toBeInTheDocument();
-    expect(screen.getByText("Средний рейтинг")).toBeInTheDocument();
+    expect(screen.queryByText("Средний рейтинг")).not.toBeInTheDocument();
   });
 
-  it("hero: stats пуст — ручных строк нет, авто-строки остаются", async () => {
+  it("hero: stats пуст — ручных строк нет, счётчик книг на сайте и медальон остаются", async () => {
     vi.mocked(getAuthorBySlug).mockResolvedValue({ ...fixture, stats: [] });
 
     renderPage();
@@ -784,8 +790,22 @@ describe("Секции ручного контента", () => {
     expect(screen.queryByText("напечатанных книг")).not.toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("книг на сайте")).toBeInTheDocument();
-    expect(screen.getByText("8.7 / 10")).toBeInTheDocument();
-    expect(screen.getByText("Средний рейтинг")).toBeInTheDocument();
+    expect(screen.getByTestId("author-rating-medallion")).toBeInTheDocument();
+    expect(screen.queryByText("Средний рейтинг")).not.toBeInTheDocument();
+  });
+
+  it("hero: avgRating = null — парящий медальон отсутствует в DOM", async () => {
+    vi.mocked(getAuthorBySlug).mockResolvedValue({
+      ...fixture,
+      author: { ...fixture.author, avgRating: null },
+    });
+
+    renderPage();
+    await screen.findByRole("heading", { name: "Лев Толстой" });
+
+    expect(screen.queryByTestId("author-rating-medallion")).not.toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("книг на сайте")).toBeInTheDocument();
   });
 
   it("manifesto: aboutText — карточка «О траектории автора» в манифест-секции, не в hero", async () => {
