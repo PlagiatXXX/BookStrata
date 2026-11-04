@@ -23,7 +23,13 @@ import {
   type BookUpdateInput,
   type BookCreateInput,
 } from "./admin-books.service.js";
-import { processAndUploadAnimatedCover, VideoProcessingError } from "./video-processor.service.js";
+import {
+  processAndUploadAnimatedCover,
+  VideoProcessingError,
+  type CropPosition,
+  type VideoProcessingMode,
+  type VideoAspectRatio,
+} from "./video-processor.service.js";
 
 const handleError = (error: unknown, reply: {
   code: (code: number) => { send: (payload: unknown) => unknown };
@@ -199,10 +205,18 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   // POST /upload-animated-cover — загрузка и сжатие видео (ffmpeg) + постер WebP
-  fastify.post<{ Body: { videoBase64: string } }>(
+  fastify.post<{
+    Body: {
+      videoBase64: string;
+      mode?: VideoProcessingMode;
+      cropOffset?: number;
+      cropPosition?: CropPosition;
+      aspectRatio?: VideoAspectRatio;
+    };
+  }>(
     "/upload-animated-cover",
     async (request, reply) => {
-      const { videoBase64 } = request.body;
+      const { videoBase64, mode, cropOffset, cropPosition, aspectRatio } = request.body;
 
       if (!videoBase64 || typeof videoBase64 !== "string") {
         return reply.code(400).send(createApiError(ErrorCodes.INVALID_FORMAT, "Не переданы данные видео"));
@@ -220,6 +234,10 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
       try {
         const result = await processAndUploadAnimatedCover(videoBuffer, {
           folder: "tiermaker-pro/book-covers",
+          mode,
+          cropOffset,
+          cropPosition,
+          aspectRatio,
         });
         return reply.code(200).send(createSuccessResponse(result));
       } catch (error: unknown) {

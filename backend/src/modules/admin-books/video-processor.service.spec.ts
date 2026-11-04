@@ -99,7 +99,7 @@ describe('video-processor.service', () => {
     )
   })
 
-  it('успешно сжимает видео через ffmpeg, извлекает постер и загружает в storage', async () => {
+  it('по умолчанию сжимает видео в пропорцию 2:3 (540x810) с центрированным кропом', async () => {
     const inputBuffer = Buffer.from('fake-video-content')
     const result = await processAndUploadAnimatedCover(inputBuffer)
 
@@ -112,9 +112,13 @@ describe('video-processor.service', () => {
     // Проверяем вызовы ffmpeg
     expect(mocks.execFile).toHaveBeenCalledTimes(2)
 
-    // Первый вызов: сжатие видео (540:-2, crf 25, -an, faststart)
+    // Первый вызов: сжатие видео 2:3 с центрированием
     const firstCallArgs = mocks.execFile.mock.calls[0][1] as string[]
-    expect(firstCallArgs).toContain('scale=540:-2')
+    const vfIndex = firstCallArgs.indexOf('-vf')
+    expect(vfIndex).toBeGreaterThan(-1)
+    expect(firstCallArgs[vfIndex + 1]).toBe(
+      'scale=540:810:force_original_aspect_ratio=increase,crop=540:810:(in_w-540)/2:(in_h-810)/2,setsar=1',
+    )
     expect(firstCallArgs).toContain('libx264')
     expect(firstCallArgs).toContain('25')
     expect(firstCallArgs).toContain('-an')
@@ -129,6 +133,59 @@ describe('video-processor.service', () => {
 
     // Проверяем удаление временных файлов
     expect(mocks.unlink).toHaveBeenCalled()
+  })
+
+  it('поддерживает кроп слева (cropPosition: left)', async () => {
+    const inputBuffer = Buffer.from('fake-video-content')
+    await processAndUploadAnimatedCover(inputBuffer, { cropPosition: 'left' })
+
+    const firstCallArgs = mocks.execFile.mock.calls[0][1] as string[]
+    const vfIndex = firstCallArgs.indexOf('-vf')
+    expect(firstCallArgs[vfIndex + 1]).toBe(
+      'scale=540:810:force_original_aspect_ratio=increase,crop=540:810:0:(in_h-810)/2,setsar=1',
+    )
+  })
+
+  it('поддерживает кроп справа (cropPosition: right)', async () => {
+    const inputBuffer = Buffer.from('fake-video-content')
+    await processAndUploadAnimatedCover(inputBuffer, { cropPosition: 'right' })
+
+    const firstCallArgs = mocks.execFile.mock.calls[0][1] as string[]
+    const vfIndex = firstCallArgs.indexOf('-vf')
+    expect(firstCallArgs[vfIndex + 1]).toBe(
+      'scale=540:810:force_original_aspect_ratio=increase,crop=540:810:(in_w-540):(in_h-810)/2,setsar=1',
+    )
+  })
+
+  it('поддерживает исходные пропорции (aspectRatio: original)', async () => {
+    const inputBuffer = Buffer.from('fake-video-content')
+    await processAndUploadAnimatedCover(inputBuffer, { aspectRatio: 'original' })
+
+    const firstCallArgs = mocks.execFile.mock.calls[0][1] as string[]
+    const vfIndex = firstCallArgs.indexOf('-vf')
+    expect(firstCallArgs[vfIndex + 1]).toBe('scale=540:-2')
+  })
+
+  it('поддерживает режим вписывания с размытым фоном (mode: fit-blur)', async () => {
+    const inputBuffer = Buffer.from('fake-video-content')
+    await processAndUploadAnimatedCover(inputBuffer, { mode: 'fit-blur' })
+
+    const firstCallArgs = mocks.execFile.mock.calls[0][1] as string[]
+    expect(firstCallArgs).toContain('-filter_complex')
+    const fcIndex = firstCallArgs.indexOf('-filter_complex')
+    expect(firstCallArgs[fcIndex + 1]).toContain('boxblur=20:5')
+    expect(firstCallArgs[fcIndex + 1]).toContain('overlay=(W-w)/2:(H-h)/2')
+  })
+
+  it('поддерживает произвольное смещение кропа через cropOffset (0..100)', async () => {
+    const inputBuffer = Buffer.from('fake-video-content')
+    await processAndUploadAnimatedCover(inputBuffer, { cropOffset: 30 })
+
+    const firstCallArgs = mocks.execFile.mock.calls[0][1] as string[]
+    const vfIndex = firstCallArgs.indexOf('-vf')
+    expect(firstCallArgs[vfIndex + 1]).toBe(
+      'scale=540:810:force_original_aspect_ratio=increase,crop=540:810:(in_w-540)*0.3:(in_h-810)/2,setsar=1',
+    )
   })
 
   it('выбрасывает понятную ошибку, если ffmpeg завершился с ошибкой', async () => {

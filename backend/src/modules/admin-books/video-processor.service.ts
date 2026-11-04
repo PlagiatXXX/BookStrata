@@ -47,8 +47,62 @@ export interface ProcessedAnimatedCoverResult {
   ogImageUrl?: string
 }
 
+export type CropPosition = 'center' | 'left' | 'right'
+export type VideoProcessingMode = 'crop' | 'fit-blur' | 'original'
+export type VideoAspectRatio = '2:3' | 'fit-blur' | 'original'
+
 export interface ProcessVideoOptions {
   folder?: string
+  mode?: VideoProcessingMode
+  cropOffset?: number // 0..100 (%)
+  cropPosition?: CropPosition
+  aspectRatio?: VideoAspectRatio
+}
+
+export function buildFfmpegFilterArgs(options: ProcessVideoOptions = {}): string[] {
+  const mode =
+    options.mode ??
+    (options.aspectRatio === 'fit-blur'
+      ? 'fit-blur'
+      : options.aspectRatio === 'original'
+        ? 'original'
+        : 'crop')
+
+  if (mode === 'original') {
+    return ['-vf', 'scale=540:-2']
+  }
+
+  if (mode === 'fit-blur') {
+    return [
+      '-filter_complex',
+      '[0:v]scale=540:810:force_original_aspect_ratio=increase,crop=540:810,boxblur=20:5[bg];[0:v]scale=540:810:force_original_aspect_ratio=decrease[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1',
+    ]
+  }
+
+  // mode === 'crop' (книжный формат 2:3, 540x810 px)
+  let cropX = '(in_w-540)/2'
+  if (options.cropOffset !== undefined) {
+    const fraction = Math.max(0, Math.min(100, options.cropOffset)) / 100
+    cropX = `(in_w-540)*${fraction}`
+  } else if (options.cropPosition === 'left') {
+    cropX = '0'
+  } else if (options.cropPosition === 'right') {
+    cropX = '(in_w-540)'
+  }
+
+  const cropY = '(in_h-810)/2'
+  return [
+    '-vf',
+    `scale=540:810:force_original_aspect_ratio=increase,crop=540:810:${cropX}:${cropY},setsar=1`,
+  ]
+}
+
+export function buildFfmpegVideoFilter(
+  aspectRatio: VideoAspectRatio = '2:3',
+  cropPosition: CropPosition = 'center',
+): string {
+  const args = buildFfmpegFilterArgs({ aspectRatio, cropPosition })
+  return args[1] ?? 'scale=540:-2'
 }
 
 /**
@@ -85,14 +139,14 @@ export async function processAndUploadAnimatedCover(
     // 1. Записываем входное видео во временный файл
     await fsp.writeFile(inputPath, videoBuffer)
 
-    // 2. Сжимаем видео через ffmpeg
-    // scale=540:-2 гарантирует четность высоты и ширину 540px
+    // 2. Сжимаем видео через ffmpeg с кадрированием под пропорцию 2:3
+    const filterArgs = buildFfmpegFilterArgs(options)
+
     const compressArgs = [
       '-y',
       '-i',
       inputPath,
-      '-vf',
-      'scale=540:-2',
+      ...filterArgs,
       '-c:v',
       'libx264',
       '-crf',

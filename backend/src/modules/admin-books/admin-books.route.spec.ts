@@ -33,6 +33,17 @@ const mocks = vi.hoisted(() => ({
   findOrCreate: vi.fn(),
   validateRemoteImageDimensions: vi.fn().mockResolvedValue(null),
   deleteIfOrphaned: vi.fn().mockResolvedValue(true),
+  processAndUploadAnimatedCover: vi.fn(),
+}));
+
+vi.mock("./video-processor.service.js", () => ({
+  processAndUploadAnimatedCover: mocks.processAndUploadAnimatedCover,
+  VideoProcessingError: class VideoProcessingError extends Error {
+    constructor(message: string, public code = "VIDEO_PROCESSING_FAILED") {
+      super(message);
+      this.name = "VideoProcessingError";
+    }
+  },
 }));
 
 vi.mock("../../lib/prisma.js", () => ({ prisma: mocks.prisma }));
@@ -1343,6 +1354,47 @@ describe("Admin Books Routes", () => {
 
       expect(res.status).toBe(200);
       expect(mocks.prisma.bookComment.delete).toHaveBeenCalledWith({ where: { id: 5 } });
+    });
+  });
+
+  describe("POST /upload-animated-cover", () => {
+    it("передает cropPosition и aspectRatio в processAndUploadAnimatedCover", async () => {
+      mocks.processAndUploadAnimatedCover.mockResolvedValue({
+        animatedCoverUrl: "https://cdn.bookstrata.ru/video.mp4",
+        coverImageUrl: "https://cdn.bookstrata.ru/poster.webp",
+      });
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/upload-animated-cover",
+        headers: { authorization: "Bearer admin-token" },
+        payload: {
+          videoBase64: "data:video/mp4;base64,AAAA",
+          cropPosition: "left",
+          aspectRatio: "2:3",
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.processAndUploadAnimatedCover).toHaveBeenCalledWith(
+        expect.any(Buffer),
+        expect.objectContaining({
+          cropPosition: "left",
+          aspectRatio: "2:3",
+          folder: "tiermaker-pro/book-covers",
+        }),
+      );
+    });
+
+    it("возвращает 400 при отсутствии videoBase64", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/upload-animated-cover",
+        headers: { authorization: "Bearer admin-token" },
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 });
