@@ -254,8 +254,8 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-white/60 leading-relaxed">
-                  <Link to="/auth" className="text-[var(--bp-primary)] hover:text-white transition-colors">
+                <p className="text-sm text-white/70 leading-relaxed">
+                  <Link to="/auth" className="text-[var(--bp-primary)] underline hover:no-underline hover:text-white transition-colors">
                     Войдите
                   </Link>
                   , чтобы оставить комментарий.

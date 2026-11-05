@@ -93,10 +93,10 @@ export function BookMatchSlider({ axis, value, onChange }: BookMatchSliderProps)
     <div className="flex flex-col gap-2">
       {/* Label row */}
       <div className="flex items-center justify-between text-xs">
-        <span className={`transition-colors duration-200 ${isActive && currentVal <= 30 ? "text-white" : "text-white/40"}`}>
+        <span className={`transition-colors duration-200 ${isActive && currentVal <= 30 ? "text-white" : "text-white/70"}`}>
           {labels.left}
         </span>
-        <span className={`transition-colors duration-200 ${isActive && currentVal >= 70 ? "text-white" : "text-white/40"}`}>
+        <span className={`transition-colors duration-200 ${isActive && currentVal >= 70 ? "text-white" : "text-white/70"}`}>
           {labels.right}
         </span>
       </div>
@@ -152,7 +152,7 @@ export function BookMatchSlider({ axis, value, onChange }: BookMatchSliderProps)
 
       {/* Rubric description */}
       {isActive && (
-        <p className="text-center text-xs text-white/30 leading-snug">
+        <p className="text-center text-xs text-white/60 leading-snug">
           {getRubricLabel(axis, currentVal)}
         </p>
       )}

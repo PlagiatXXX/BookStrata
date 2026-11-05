@@ -31,7 +31,7 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
           <span className={`text-5xl md:text-6xl font-bold tabular-nums transition-colors duration-300 ${levelColor(level.color)}`}>
             {score}
           </span>
-          <span className="text-2xl text-white/40">%</span>
+          <span className="text-2xl text-white/70">%</span>
         </div>
 
         <span className={`mt-2 block text-sm font-semibold tracking-wider transition-colors duration-300 ${levelColor(level.color)}`}>
@@ -39,7 +39,7 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
         </span>
 
         {activeAxesCount < 6 && (
-          <p className="mt-1 text-xs text-white/30">
+          <p className="mt-1 text-xs text-white/60">
             {activeAxesCount} из 6 параметров настроены
           </p>
         )}
@@ -49,16 +49,16 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
       {activeAxesCount >= 2 && (
         <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2 text-xs">
           {/* Заголовки */}
-          <div className="text-right text-white/40 font-medium">Вы</div>
+          <div className="text-right text-white/70 font-medium">Вы</div>
           <div />
-          <div className="text-white/40 font-medium">Книга</div>
+          <div className="text-white/70 font-medium">Книга</div>
 
           {/* Строки по осям */}
           {diffs.map((diff) => (
             <Fragment key={diff.axis}>
               {/* User bar */}
               <div key={`${diff.axis}-user`} className="flex items-center justify-end gap-2">
-                <span className="text-white/50 w-16 text-right">{AXIS_LABELS[diff.axis].left}</span>
+                <span className="text-white/70 w-16 text-right">{AXIS_LABELS[diff.axis].left}</span>
                 <div className="w-20 h-1.5 rounded-full bg-white/5 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-(--bp-primary)/60 transition-all duration-300"
@@ -68,7 +68,7 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
               </div>
 
               {/* Axis label */}
-              <div key={`${diff.axis}-label`} className="flex items-center text-white/30">
+              <div key={`${diff.axis}-label`} className="flex items-center text-white/60">
                 {diff.absDiff < 20 ? (
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                 ) : diff.absDiff >= 30 ? (
@@ -84,7 +84,7 @@ export function BookMatchResult({ result, onReset }: BookMatchResultProps) {
                     style={{ width: `${diff.bookValue}%` }}
                   />
                 </div>
-                <span className="text-white/50 w-16">{AXIS_LABELS[diff.axis].right}</span>
+                <span className="text-white/70 w-16">{AXIS_LABELS[diff.axis].right}</span>
               </div>
             </Fragment>
           ))}

@@ -93,7 +93,7 @@ function PaceScale({ value }: { value: string }) {
   }
   return (
     <div className="group/scale relative flex items-center gap-3">
-      <div className="flex items-center gap-1.5" aria-label={`Темп: ${config.label}`}>
+      <div className="flex items-center gap-1.5" role="img" aria-label={`Темп: ${config.label}`}>
         {PACE_ANIMALS.map(({ icon: Icon, title }, idx) => {
           const isActive = idx + 1 === config.active;
           return (
@@ -131,7 +131,7 @@ function DifficultyScale({ value }: { value: string }) {
   }
   return (
     <div className="group/scale relative flex items-center gap-3">
-      <div className="flex gap-1.5" aria-label={`Сложность: ${config.label}`}>
+      <div className="flex gap-1.5" role="img" aria-label={`Сложность: ${config.label}`}>
         {[1, 2, 3].map((i) => (
           <div
             key={i}
@@ -184,7 +184,7 @@ function VibeCard({ guide }: { guide: ReadingGuide }) {
 
 function HookCard({ guide }: { guide: ReadingGuide }) {
   return (
-    <div className="md:col-span-5 relative rounded-2xl border border-white/[0.08] bg-black/40 backdrop-blur-xl p-5 transition-colors duration-300 hover:border-white/20">
+    <div className="md:col-span-5 relative rounded-2xl border border-white/8 bg-black/40 backdrop-blur-xl p-5 transition-colors duration-300 hover:border-white/20">
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/50">
         О книге
       </h3>
@@ -200,7 +200,7 @@ function HookCard({ guide }: { guide: ReadingGuide }) {
 
 function MetricsCard({ guide }: { guide: ReadingGuide }) {
   return (
-    <div className="md:col-span-4 rounded-2xl border border-white/[0.08] bg-black/40 backdrop-blur-xl p-5 transition-colors duration-300 hover:border-white/20">
+    <div className="md:col-span-4 rounded-2xl border border-white/8 bg-black/40 backdrop-blur-xl p-5 transition-colors duration-300 hover:border-white/20">
       <h3 className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-white/50">
         <Compass className="h-3.5 w-3.5" />
         Параметры чтения
@@ -236,7 +236,7 @@ function AudienceCard({ guide }: { guide: ReadingGuide }) {
     <div className="md:col-span-12">
       <div className={`grid ${hasAnti ? "grid-cols-1 md:grid-cols-[1fr_auto_1fr]" : "grid-cols-1"} gap-4 md:gap-6 items-center`}>
         {/* Зелёная зона — кому читать */}
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 md:p-5">
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/4 p-4 md:p-5">
           <h3 className="mb-2 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
             <CheckCircle2 className="h-4 w-4" />
             Кому понравится
@@ -258,7 +258,7 @@ function AudienceCard({ guide }: { guide: ReadingGuide }) {
 
         {/* Серая зона — кому пропустить */}
         {hasAnti && (
-          <div className="rounded-xl border border-rose-500/20 bg-rose-500/[0.04] p-4 md:p-5">
+          <div className="rounded-xl border border-rose-500/20 bg-rose-500/4 p-4 md:p-5">
             <h3 className="mb-2 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-400">
               <XCircle className="h-4 w-4" />
               Кому пропустить
@@ -277,7 +277,7 @@ function TakeawaysCard({ takeaways }: { takeaways: string[] }) {
   if (takeaways.length === 0) return null;
 
   return (
-    <div className="md:col-span-12 rounded-2xl border border-white/[0.08] bg-black/40 backdrop-blur-xl p-5 mt-6 transition-colors duration-300 hover:border-white/20">
+    <div className="md:col-span-12 rounded-2xl border border-white/8 bg-black/40 backdrop-blur-xl p-5 mt-6 transition-colors duration-300 hover:border-white/20">
       <span className="mb-4 block text-xs font-semibold uppercase tracking-wider text-white/50">
         Ключевые акценты
       </span>

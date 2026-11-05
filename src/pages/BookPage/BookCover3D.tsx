@@ -194,6 +194,7 @@ export function BookCover3D({
                   alt={`Обложка книги «${title}»`}
                   className="w-full h-full object-cover rounded-r-lg relative z-10"
                   loading="eager"
+                  fetchPriority="high"
                 />
 
                 {/* Живое видео-оживление */}
@@ -205,8 +206,11 @@ export function BookCover3D({
                       src={videoSrc}
                       playsInline
                       muted
-                      preload="auto"
+                      preload="none"
+                      aria-hidden="true"
+                      tabIndex={-1}
                       onCanPlay={() => setIsVideoReady(true)}
+                      onPlaying={() => setIsVideoReady(true)}
                       onEnded={stopMobilePlayback}
                       style={{ objectPosition: videoObjectPosition }}
                       className={`absolute inset-0 w-full h-full object-cover rounded-r-lg z-20 pointer-events-none transition-opacity duration-500 ease-out ${

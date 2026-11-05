@@ -40,7 +40,7 @@ export function BookRecommendations({ mood, excludeSlug, genres }: BookRecommend
         <h3 className="bp-display text-white tracking-[0.2em] uppercase text-sm md:text-base mb-1">
           Идеально под твоё настроение
         </h3>
-        <p className="text-xs text-white/40">Книги каталога с самым высоким совпадением</p>
+        <p className="text-xs text-white/70">Книги каталога с самым высоким совпадением</p>
       </div>
 
       {isPending ? (
@@ -66,7 +66,8 @@ export function BookRecommendations({ mood, excludeSlug, genres }: BookRecommend
               >
                 <img
                   src={book.coverImageUrl}
-                  alt={book.title}
+                  alt=""
+                  aria-hidden="true"
                   loading="lazy"
                   className="h-[72px] w-12 shrink-0 rounded-md object-cover"
                 />
@@ -74,7 +75,7 @@ export function BookRecommendations({ mood, excludeSlug, genres }: BookRecommend
                   <p className="truncate text-sm font-semibold text-white transition-colors group-hover:text-(--bp-primary)">
                     {book.title}
                   </p>
-                  <p className="truncate text-xs text-white/40">{book.author}</p>
+                  <p className="truncate text-xs text-white/70">{book.author}</p>
                   <span
                     className={`mt-1 block text-lg font-bold tabular-nums ${levelColor(level.color)}`}
                   >

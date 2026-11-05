@@ -261,6 +261,12 @@ export default function BookPage() {
             ? book.coverImageUrl
             : undefined)
         }
+        preloadImage={
+          book.coverImageUrl &&
+          !book.coverImageUrl.includes("encrypted-tbn0.gstatic.com")
+            ? book.coverImageUrl
+            : undefined
+        }
         url={`/books/${slug}`}
         type="article"
         hideSiteName
@@ -540,8 +546,8 @@ export default function BookPage() {
                   )}
                 </div>
 
-                {/* Подсказка о механике сайта — невзрачная, под кнопками */}
-                <p className="mt-3 text-xs text-white/30 leading-relaxed max-w-sm">
+                {/* Подсказка о механике сайта — под кнопками */}
+                <p className="mt-3 text-xs text-white/70 leading-relaxed max-w-sm">
                   Сохраняйте книги и создавайте тир-листы из прочитанных
                 </p>
                 {book.readingProfile && (
@@ -553,7 +559,7 @@ export default function BookPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1 }}
-                  className="mt-12 flex flex-col items-center gap-1 text-white/30 select-none"
+                  className="mt-12 flex flex-col items-center gap-1 text-white/70 select-none"
                 >
                   <span className="text-xs">Листай дальше</span>
                   <motion.div
@@ -718,7 +724,7 @@ export default function BookPage() {
                       <span className="text-white/80 group-hover:text-white text-sm font-medium transition-colors line-clamp-1">
                         {tl.title}
                       </span>
-                      <span className="text-white/40 text-xs">
+                      <span className="text-white/70 text-xs">
                         {tl.authorUsername}
                       </span>
                     </div>
@@ -806,6 +812,7 @@ function RatingStars({ rating }: { rating: number }) {
 
   return (
     <div
+      role="img"
       className="relative inline-block"
       aria-label={`Рейтинг ${rating.toFixed(1)} из 10`}
     >
@@ -885,7 +892,8 @@ function BookCardLink({
         {book.coverImageUrl ? (
           <img
             src={book.coverImageUrl}
-            alt={book.title}
+            alt=""
+            aria-hidden="true"
             className="w-full h-full object-cover"
             loading="lazy"
           />

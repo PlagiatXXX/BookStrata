@@ -19,6 +19,7 @@ describe("BookCover3D", () => {
     const img = screen.getByAltText("Обложка книги «Тестовая книга»");
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute("src", "https://bookstrata.ru/img/test.webp");
+    expect(img).toHaveAttribute("fetchpriority", "high");
 
     // Никаких видео или подсказок
     expect(container.querySelector("video")).toBeNull();
@@ -26,7 +27,7 @@ describe("BookCover3D", () => {
     expect(screen.queryByText(/Оживить обложку/i)).toBeNull();
   });
 
-  it("рендерит элемент video и десктопную подсказку, когда передан liveVideoUrl", () => {
+  it("рендерит элемент video с preload='none' и aria-hidden='true', когда передан liveVideoUrl", () => {
     const { container } = render(
       <BookCover3D
         coverImageUrl="https://bookstrata.ru/img/test.webp"
@@ -38,6 +39,9 @@ describe("BookCover3D", () => {
     const video = container.querySelector("video");
     expect(video).not.toBeNull();
     expect(video).toHaveAttribute("src", "https://bookstrata.ru/video/test.mp4");
+    expect(video).toHaveAttribute("preload", "none");
+    expect(video).toHaveAttribute("aria-hidden", "true");
+    expect(video).toHaveAttribute("tabindex", "-1");
     expect(screen.getByText(/Наведи мышь/i)).toBeInTheDocument();
   });
 });

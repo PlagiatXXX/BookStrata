@@ -134,6 +134,19 @@ describe("BookPage", () => {
     expect(container.querySelector(".animate-spin")).toBeTruthy();
   });
 
+  it("рендерит звёздный рейтинг с семантической ролью role='img'", () => {
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+    expect(
+      screen.getByRole("img", { name: /рейтинг 8\.4 из 10/i }),
+    ).toBeInTheDocument();
+  });
+
   it("рендерит hero: название, автор, жанр, год, рейтинг и теги", async () => {
     mockedUseBook.mockReturnValue({
       data: bookPageData,

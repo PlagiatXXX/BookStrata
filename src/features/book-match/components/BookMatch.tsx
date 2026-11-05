@@ -99,7 +99,7 @@ export function BookMatch({ book, bookTitle, bookSlug, bookGenre, bookTags }: Bo
           <h2 className="bp-display text-white tracking-[0.2em] uppercase text-xl md:text-2xl mb-2">
             Тебе зайдёт эта книга?
           </h2>
-          <p className="text-sm text-white/40">
+          <p className="text-sm text-white/70">
             Настрой чтение под себя один раз и данные сохранятся
           </p>
           <div className="w-40 h-px bg-(--bp-primary) mx-auto mt-3" />
@@ -108,7 +108,7 @@ export function BookMatch({ book, bookTitle, bookSlug, bookGenre, bookTags }: Bo
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* Слайдеры */}
           <div className="space-y-6">
-            <p className="text-xs font-semibold uppercase tracking-wider text-white/40">Ваши ожидания</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-white/70">Ваши ожидания</p>
             {AXES.map((axis) => (
               <BookMatchSlider
                 key={axis}
@@ -120,7 +120,7 @@ export function BookMatch({ book, bookTitle, bookSlug, bookGenre, bookTags }: Bo
 
             {/* Индикатор настроенных параметров */}
             {activeAxesCount > 0 && activeAxesCount < 6 && (
-              <p className="text-center text-xs text-white/25 mt-4">
+              <p className="text-center text-xs text-white/60 mt-4">
                 {activeAxesCount} из 6 параметров настроены
               </p>
             )}
@@ -128,7 +128,7 @@ export function BookMatch({ book, bookTitle, bookSlug, bookGenre, bookTags }: Bo
 
           {/* Результат */}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-6">Совместимость с {bookTitle}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-white/70 mb-6">Совместимость с {bookTitle}</p>
             {result ? (
               <BookMatchResult
                 result={result}
@@ -136,8 +136,8 @@ export function BookMatch({ book, bookTitle, bookSlug, bookGenre, bookTags }: Bo
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
-                <div className="text-4xl font-bold text-white/15 mb-2">—</div>
-                <p className="text-xs text-white/30">
+                <div className="text-4xl font-bold text-white/20 mb-2">—</div>
+                <p className="text-xs text-white/60">
                   Настрой хотя бы одну шкалу, чтобы увидеть совпадение
                 </p>
               </div>
@@ -149,10 +149,10 @@ export function BookMatch({ book, bookTitle, bookSlug, bookGenre, bookTags }: Bo
         {showGenreBlock && (
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/40">
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
                 Мои жанры
               </p>
-              <label className="flex cursor-pointer items-center gap-2 text-xs text-white/60 select-none">
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-white/80 select-none">
                 <input
                   type="checkbox"
                   checked={useGenresInMatch}

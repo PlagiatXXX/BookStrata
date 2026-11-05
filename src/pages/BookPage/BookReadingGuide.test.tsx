@@ -105,7 +105,8 @@ describe("BookReadingGuide", () => {
     render(
       <BookReadingGuide guide={{ ...guide, reading_pace: "Размеренный" }} />,
     );
-    const paceSection = screen.getByLabelText(/темп:/i) as HTMLElement;
+    const paceSection = screen.getByRole("img", { name: /темп:/i });
+    expect(paceSection).toBeInTheDocument();
     const squirrels = paceSection.querySelectorAll(".text-amber-400");
     expect(squirrels.length).toBe(1);
     expect(screen.getByText("Размеренный")).toBeInTheDocument();
@@ -115,7 +116,8 @@ describe("BookReadingGuide", () => {
     render(
       <BookReadingGuide guide={{ ...guide, difficulty: "Средняя сложность" }} />,
     );
-    const diffSection = screen.getByLabelText(/сложность:/i) as HTMLElement;
+    const diffSection = screen.getByRole("img", { name: /сложность:/i });
+    expect(diffSection).toBeInTheDocument();
     const dots = diffSection.querySelectorAll(".bg-amber-400");
     expect(dots.length).toBe(2);
     expect(screen.getByText("Средне")).toBeInTheDocument();
