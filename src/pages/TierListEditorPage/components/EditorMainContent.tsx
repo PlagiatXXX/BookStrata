@@ -170,7 +170,7 @@ export const EditorMainContent = memo(
 
     return (
       <>
-        <div className="flex flex-col gap-6 lg:flex-row lg:justify-center">
+        <div className="flex flex-col gap-6 lg:flex-row lg:justify-center max-w-450 w-full mx-auto">
           <div className="flex max-w-full flex-1 flex-col gap-4">
             <div className={tierGridHighlight} data-onboarding-target="tiers">
               <TierGrid

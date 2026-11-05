@@ -307,6 +307,34 @@ main.grid:has(> .neo-brutalist-editor) {
   }
 }
 
+@media (min-width: 1536px) {
+  .nb-book-card {
+    width: clamp(80px, 6vw, 115px);
+  }
+  .neo-brutalist-editor .nb-rank-box {
+    width: 150px;
+  }
+  .neo-brutalist-editor .nb-book-track {
+    min-height: 140px;
+    gap: 0.25rem;
+    padding: 0.4rem;
+  }
+}
+
+@media (min-width: 1920px) {
+  .nb-book-card {
+    width: clamp(95px, 5.5vw, 130px);
+  }
+  .neo-brutalist-editor .nb-rank-box {
+    width: 170px;
+  }
+  .neo-brutalist-editor .nb-book-track {
+    min-height: 165px;
+    gap: 0.35rem;
+    padding: 0.5rem;
+  }
+}
+
 .nb-book-card:hover {
   transform: rotate(2deg);
   border-color: var(--theme-accent-secondary);
@@ -925,6 +953,18 @@ main.grid:has(> .neo-brutalist-editor) {
   .neo-brutalist-editor[data-theme="clay"] .nb-book-card {
     width: clamp(52px, 19vw, 70px);
     border-radius: 10px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .neo-brutalist-editor[data-theme="clay"] .nb-book-card {
+    width: clamp(86px, 6.5vw, 122px);
+  }
+}
+
+@media (min-width: 1920px) {
+  .neo-brutalist-editor[data-theme="clay"] .nb-book-card {
+    width: clamp(102px, 6vw, 138px);
   }
 }
 

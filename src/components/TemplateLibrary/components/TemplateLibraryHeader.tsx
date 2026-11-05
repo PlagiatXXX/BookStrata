@@ -10,7 +10,7 @@ export const TemplateLibraryHeader = memo(({
       <h1 className="tpl-heading-xl mb-6">
         {title}
       </h1>
-      <p className="tpl-body max-w-2xl mx-auto font-light leading-relaxed">
+      <p className="tpl-body max-w-2xl 2xl:max-w-4xl mx-auto font-light leading-relaxed">
         {description}
       </p>
     </div>
