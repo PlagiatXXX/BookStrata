@@ -29,11 +29,13 @@ const UPLOADS_PREFIX = config.UPLOADS_BASE_URL.startsWith("/")
 export function extractStorageKey(url: string | null | undefined): string | null {
   if (!url) return null;
 
+  const cleanUrl = url.split('#')[0]?.split('?')[0] ?? url;
+
   // Локальные файлы (STORAGE_PROVIDER=local)
-  if (url.startsWith(UPLOADS_PREFIX)) return url;
+  if (cleanUrl.startsWith(UPLOADS_PREFIX)) return cleanUrl;
 
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(cleanUrl);
     const host = parsed.hostname.toLowerCase();
     if (
       host === MEDIA_HOST &&
@@ -65,9 +67,13 @@ export function extractStorageKey(url: string | null | undefined): string | null
  * знаменитостей, тир-листов, вхождений, новостей, аватарок).
  */
 export async function isUrlInUse(url: string): Promise<boolean> {
+  const cleanUrl = url.split('#')[0]?.split('?')[0] ?? url;
+
   const [
     book,
+    bookOg,
     bookVideo,
+    author,
     collection,
     collectionCover,
     celebrity,
@@ -76,22 +82,35 @@ export async function isUrlInUse(url: string): Promise<boolean> {
     news,
     user,
     flag,
+    achievement,
   ] = await Promise.all([
-    prisma.book.findFirst({ where: { coverImageUrl: url }, select: { id: true } }),
-    prisma.book.findFirst({ where: { animatedCoverUrl: url }, select: { id: true } }),
-    prisma.collection.findFirst({ where: { bookCovers: { has: url } }, select: { id: true } }),
-    prisma.collection.findFirst({ where: { coverImageUrl: url }, select: { id: true } }),
-    prisma.celebrity.findFirst({ where: { photoUrl: url }, select: { id: true } }),
-    prisma.tierList.findFirst({ where: { coverImageUrl: url }, select: { id: true } }),
-    prisma.bookPlacement.findFirst({ where: { coverImageUrl: url }, select: { tierListId: true } }),
-    prisma.newsArticle.findFirst({ where: { imageUrl: url }, select: { id: true } }),
-    prisma.user.findFirst({ where: { avatarUrl: url }, select: { id: true } }),
-    prisma.contentFlag.findFirst({ where: { imageUrl: url }, select: { id: true } }),
+    prisma.book.findFirst({ where: { coverImageUrl: cleanUrl }, select: { id: true } }),
+    prisma.book.findFirst({ where: { ogImageUrl: cleanUrl }, select: { id: true } }),
+    prisma.book.findFirst({
+      where: {
+        OR: [
+          { animatedCoverUrl: cleanUrl },
+          { animatedCoverUrl: { startsWith: `${cleanUrl}#` } },
+          { animatedCoverUrl: { startsWith: `${cleanUrl}?` } },
+        ],
+      },
+      select: { id: true },
+    }),
+    prisma.author.findFirst({ where: { heroImageUrl: cleanUrl }, select: { id: true } }),
+    prisma.collection.findFirst({ where: { bookCovers: { has: cleanUrl } }, select: { id: true } }),
+    prisma.collection.findFirst({ where: { coverImageUrl: cleanUrl }, select: { id: true } }),
+    prisma.celebrity.findFirst({ where: { photoUrl: cleanUrl }, select: { id: true } }),
+    prisma.tierList.findFirst({ where: { coverImageUrl: cleanUrl }, select: { id: true } }),
+    prisma.bookPlacement.findFirst({ where: { coverImageUrl: cleanUrl }, select: { tierListId: true } }),
+    prisma.newsArticle.findFirst({ where: { imageUrl: cleanUrl }, select: { id: true } }),
+    prisma.user.findFirst({ where: { avatarUrl: cleanUrl }, select: { id: true } }),
+    prisma.contentFlag.findFirst({ where: { imageUrl: cleanUrl }, select: { id: true } }),
+    prisma.achievement.findFirst({ where: { iconUrl: cleanUrl }, select: { id: true } }),
   ]);
 
   return Boolean(
-    book || bookVideo || collection || collectionCover || celebrity || tierList ||
-      placement || news || user || flag,
+    book || bookOg || bookVideo || author || collection || collectionCover || celebrity || tierList ||
+      placement || news || user || flag || achievement,
   );
 }
 

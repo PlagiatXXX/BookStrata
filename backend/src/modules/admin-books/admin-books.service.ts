@@ -673,7 +673,10 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
   if (oldCover && oldCover !== updated.coverImageUrl) {
     await deleteIfOrphaned(oldCover);
   }
-  if (oldAnimatedCover && oldAnimatedCover !== updated.animatedCoverUrl) {
+  const oldCleanAnimated = oldAnimatedCover?.split('#')[0]?.split('?')[0];
+  const newCleanAnimated = updated.animatedCoverUrl?.split('#')[0]?.split('?')[0];
+
+  if (oldCleanAnimated && oldCleanAnimated !== newCleanAnimated) {
     await deleteIfOrphaned(oldAnimatedCover);
   }
 

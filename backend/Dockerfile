@@ -56,6 +56,7 @@ COPY prisma/ ./prisma/
 # Скрипты (миграции, утилиты)
 COPY scripts/ ./scripts/
 COPY tsconfig.json ./
+COPY package.json ./
 
 # Очищаем кэш npm (кэш остался только в builder, но и тут чистим на всякий случай)
 RUN npm cache clean --force

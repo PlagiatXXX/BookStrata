@@ -35,7 +35,12 @@ export default defineConfig([
     },
   },
   {
-    files: ['backend/src/modules/**/*.schema.ts', 'backend/src/lib/**/*.ts'],
+    files: [
+      'backend/src/modules/**/*.schema.ts',
+      'backend/src/lib/**/*.ts',
+      'backend/src/scripts/**/*.ts',
+      'backend/scripts/**/*.ts',
+    ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
     },

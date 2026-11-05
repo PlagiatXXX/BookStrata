@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mocks = vi.hoisted(() => ({
   prisma: {
     book: { findFirst: vi.fn() },
+    author: { findFirst: vi.fn() },
     collection: { findFirst: vi.fn() },
     celebrity: { findFirst: vi.fn() },
     tierList: { findFirst: vi.fn() },
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
     newsArticle: { findFirst: vi.fn() },
     user: { findFirst: vi.fn() },
     contentFlag: { findFirst: vi.fn() },
+    achievement: { findFirst: vi.fn() },
   },
   storage: { deleteFile: vi.fn() },
 }));
@@ -87,17 +89,33 @@ describe("isUrlInUse", () => {
 
   it("true, если книга ссылается на URL через animatedCoverUrl", async () => {
     mocks.prisma.book.findFirst.mockImplementation(({ where }) => {
-      if (where?.animatedCoverUrl) return Promise.resolve({ id: 1 });
+      const hasAnimated =
+        where?.animatedCoverUrl ||
+        where?.OR?.some((cond: { animatedCoverUrl?: unknown }) => cond.animatedCoverUrl);
+      if (hasAnimated) return Promise.resolve({ id: 1 });
       return Promise.resolve(null);
     });
 
     expect(await isUrlInUse("https://re406cj9uj.cdn.twcstorage.ru/video.mp4")).toBe(true);
+    expect(await isUrlInUse("https://re406cj9uj.cdn.twcstorage.ru/video.mp4#pos=30")).toBe(true);
   });
 
   it("true, если коллекция ссылается через bookCovers", async () => {
     mocks.prisma.collection.findFirst.mockResolvedValue({ id: 2 });
 
     expect(await isUrlInUse("https://s3.twcstorage.ru/bucket/x.webp")).toBe(true);
+  });
+
+  it("true, если автор ссылается через heroImageUrl", async () => {
+    mocks.prisma.author.findFirst.mockResolvedValue({ id: 3 });
+
+    expect(await isUrlInUse("https://bookstrata.ru/img/tiermaker-pro/author-heroes/author.webp")).toBe(true);
+  });
+
+  it("true, если достижение ссылается через iconUrl", async () => {
+    mocks.prisma.achievement.findFirst.mockResolvedValue({ id: "first" });
+
+    expect(await isUrlInUse("https://bookstrata.ru/img/achieve.webp")).toBe(true);
   });
 
   it("false, если никто не ссылается", async () => {
