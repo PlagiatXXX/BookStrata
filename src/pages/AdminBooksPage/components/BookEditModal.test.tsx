@@ -243,8 +243,8 @@ describe("BookEditModal — readingGuide", () => {
   });
 });
 
-describe("BookEditModal — animated cover cropping & prompt", () => {
-  it("отображает кнопки подсказки для AI и режимы подгонки видео", () => {
+describe("BookEditModal — animated cover prompt & upload", () => {
+  it("отображает кнопки подсказки для AI и загрузку видео в оригинале", () => {
     render(
       <BookEditModal
         book={baseBook}
@@ -264,13 +264,86 @@ describe("BookEditModal — animated cover cropping & prompt", () => {
 
     expect(screen.getByRole("button", { name: /скопировать режиссёрский промпт/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /краткие техпараметры/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /вписать целиком \+ размытие/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /кадрировать 2:3/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Оригинал" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /загрузить видео/i })).toBeInTheDocument();
 
     const posterCheckbox = screen.getByRole("checkbox", {
       name: /обновить статичную обложку книги/i,
     });
     expect(posterCheckbox).not.toBeChecked();
+  });
+
+  it("отображает ползунок смещения кадра и пресеты при наличии animatedCoverUrl", () => {
+    const onSave = vi.fn();
+    render(
+      <BookEditModal
+        book={{
+          ...baseBook,
+          animatedCoverUrl: "https://cdn.example.com/cover.mp4#pos=25",
+        }}
+        saving={false}
+        publishing={false}
+        unpublishing={false}
+        enriching={false}
+        enrichResult={null}
+        onSave={onSave}
+        onPublish={vi.fn()}
+        onUnpublish={vi.fn()}
+        onEnrich={vi.fn()}
+        onMerge={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const slider = screen.getByLabelText(/смещение кадра по вертикали/i) as HTMLInputElement;
+    expect(slider).toBeInTheDocument();
+    expect(slider.value).toBe("25");
+
+    // Меняем ползунок на 80
+    fireEvent.change(slider, { target: { value: "80" } });
+    expect(slider.value).toBe("80");
+
+    // Нажимаем пресет 0% Верх
+    fireEvent.click(screen.getByRole("button", { name: /0% верх/i }));
+    expect(slider.value).toBe("0");
+
+    // Сохраняем форму
+    fireEvent.click(screen.getByRole("button", { name: /сохранить/i }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        animatedCoverUrl: "https://cdn.example.com/cover.mp4#pos=0",
+      }),
+    );
+  });
+
+  it("пресет 50% Центр убирает суффикс #pos и сохраняет чистый URL", () => {
+    const onSave = vi.fn();
+    render(
+      <BookEditModal
+        book={{
+          ...baseBook,
+          animatedCoverUrl: "https://cdn.example.com/cover.mp4#pos=15",
+        }}
+        saving={false}
+        publishing={false}
+        unpublishing={false}
+        enriching={false}
+        enrichResult={null}
+        onSave={onSave}
+        onPublish={vi.fn()}
+        onUnpublish={vi.fn()}
+        onEnrich={vi.fn()}
+        onMerge={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /50% центр/i }));
+    fireEvent.click(screen.getByRole("button", { name: /сохранить/i }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        animatedCoverUrl: "https://cdn.example.com/cover.mp4",
+      }),
+    );
   });
 });

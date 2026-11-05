@@ -6,6 +6,7 @@
 // - prefers-reduced-motion: только статика без анимаций.
 import { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
+import { parseAnimatedCoverUrl } from "@/utils/animatedCover";
 
 interface BookCover3DProps {
   coverImageUrl: string;
@@ -196,20 +197,24 @@ export function BookCover3D({
                 />
 
                 {/* Живое видео-оживление */}
-                {liveVideoUrl && !reducedMotion && (
-                  <video
-                    ref={videoRef}
-                    src={liveVideoUrl}
-                    playsInline
-                    muted
-                    preload="auto"
-                    onCanPlay={() => setIsVideoReady(true)}
-                    onEnded={stopMobilePlayback}
-                    className={`absolute inset-0 w-full h-full object-cover rounded-r-lg z-20 pointer-events-none transition-opacity duration-500 ease-out ${
-                      isVideoVisible ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                )}
+                {liveVideoUrl && !reducedMotion && (() => {
+                  const { cleanUrl: videoSrc, objectPosition: videoObjectPosition } = parseAnimatedCoverUrl(liveVideoUrl);
+                  return (
+                    <video
+                      ref={videoRef}
+                      src={videoSrc}
+                      playsInline
+                      muted
+                      preload="auto"
+                      onCanPlay={() => setIsVideoReady(true)}
+                      onEnded={stopMobilePlayback}
+                      style={{ objectPosition: videoObjectPosition }}
+                      className={`absolute inset-0 w-full h-full object-cover rounded-r-lg z-20 pointer-events-none transition-opacity duration-500 ease-out ${
+                        isVideoVisible ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                  );
+                })()}
               </>
             ) : (
               <div className="w-full h-full rounded-r-lg relative z-10 bg-surface-container-high flex items-center justify-center border border-white/10">

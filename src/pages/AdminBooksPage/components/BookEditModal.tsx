@@ -23,9 +23,9 @@ import type {
   ContextChainItem,
   ReadingGuide,
   ReadingProfile,
-  VideoProcessingMode,
 } from "@/lib/adminBooksApi";
 import { uploadBookCover, uploadBookAnimatedCover } from "@/lib/adminBooksApi";
+import { parseAnimatedCoverUrl, formatAnimatedCoverUrl } from "@/utils/animatedCover";
 import { buildBookAnimationPrompt, buildBookAnimationSpecs } from "./coverPromptHelper";
 import { ReadingProfilePrompt } from "./ReadingProfilePrompt";
 import { ReadingGuidePrompt } from "./ReadingGuidePrompt";
@@ -174,8 +174,6 @@ export function BookEditModal({
 
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
-  const [videoProcessingMode, setVideoProcessingMode] = useState<VideoProcessingMode>("original");
-  const [videoCropOffset, setVideoCropOffset] = useState<number>(50);
   const [syncCoverPoster, setSyncCoverPoster] = useState<boolean>(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedSpecs, setCopiedSpecs] = useState(false);
@@ -188,9 +186,8 @@ export function BookEditModal({
     setVideoError(null);
     try {
       const res = await uploadBookAnimatedCover(file, {
-        mode: videoProcessingMode,
-        cropOffset: videoProcessingMode === "crop" ? videoCropOffset : undefined,
-        aspectRatio: videoProcessingMode === "fit-blur" ? "fit-blur" : videoProcessingMode === "original" ? "original" : "2:3",
+        mode: "original",
+        aspectRatio: "original",
       });
       set("animatedCoverUrl", res.animatedCoverUrl);
       if (syncCoverPoster && res.coverImageUrl) {
@@ -516,96 +513,6 @@ export function BookEditModal({
                 )}
               </div>
 
-              <div className="flex flex-col gap-2 rounded-lg bg-(--bg-1) p-3 border border-(--ink-3)">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-medium text-(--ink-0)">Режим подгонки под обложку 2:3</span>
-                    <span className="text-[11px] text-(--ink-2)">
-                      {videoProcessingMode === "fit-blur" && "Всё видео 16:9 помещается целиком (без обрезки), фон сверху и снизу красиво размыт"}
-                      {videoProcessingMode === "crop" && "Видео заполняет всю обложку 2:3 (540×810 px), лишнее обрезается по выбранному смещению"}
-                      {videoProcessingMode === "original" && "Исходное видео сохраняется как есть, без изменения пропорций"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 bg-(--bg-0) p-1 rounded-md border border-(--ink-3) shrink-0 self-start sm:self-auto">
-                    <button
-                      type="button"
-                      onClick={() => setVideoProcessingMode("original")}
-                      className={`px-2.5 py-1 text-xs rounded transition-colors cursor-pointer ${
-                        videoProcessingMode === "original"
-                          ? "bg-(--accent-main) text-white font-medium"
-                          : "text-(--ink-1) hover:text-(--ink-0)"
-                      }`}
-                    >
-                      Оригинал
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVideoProcessingMode("fit-blur")}
-                      className={`px-2.5 py-1 text-xs rounded transition-colors cursor-pointer ${
-                        videoProcessingMode === "fit-blur"
-                          ? "bg-(--accent-main) text-white font-medium"
-                          : "text-(--ink-1) hover:text-(--ink-0)"
-                      }`}
-                    >
-                      Вписать целиком + размытие
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVideoProcessingMode("crop")}
-                      className={`px-2.5 py-1 text-xs rounded transition-colors cursor-pointer ${
-                        videoProcessingMode === "crop"
-                          ? "bg-(--accent-main) text-white font-medium"
-                          : "text-(--ink-1) hover:text-(--ink-0)"
-                      }`}
-                    >
-                      Кадрировать 2:3
-                    </button>
-                  </div>
-                </div>
-
-                {videoProcessingMode === "crop" && (
-                  <div className="mt-1 flex flex-col gap-1.5 pt-2 border-t border-(--ink-3)">
-                    <div className="flex items-center justify-between text-xs text-(--ink-1)">
-                      <span>Смещение кадра по горизонтали:</span>
-                      <span className="font-mono font-medium text-(--ink-0)">{videoCropOffset}%</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="5"
-                        value={videoCropOffset}
-                        onChange={(e) => setVideoCropOffset(Number(e.target.value))}
-                        className="w-full accent-(--accent-main) cursor-pointer"
-                      />
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setVideoCropOffset(0)}
-                          className="px-1.5 py-0.5 text-[11px] rounded bg-(--bg-0) hover:bg-(--bg-2) border border-(--ink-3) text-(--ink-1) cursor-pointer"
-                        >
-                          Слева (0%)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setVideoCropOffset(50)}
-                          className="px-1.5 py-0.5 text-[11px] rounded bg-(--bg-0) hover:bg-(--bg-2) border border-(--ink-3) text-(--ink-1) cursor-pointer"
-                        >
-                          Центр (50%)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setVideoCropOffset(100)}
-                          className="px-1.5 py-0.5 text-[11px] rounded bg-(--bg-0) hover:bg-(--bg-2) border border-(--ink-3) text-(--ink-1) cursor-pointer"
-                        >
-                          Справа (100%)
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
               <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-(--ink-1)">
                 <input
                   type="checkbox"
@@ -645,32 +552,102 @@ export function BookEditModal({
               {videoError && (
                 <p className="text-xs text-red-400">{videoError}</p>
               )}
-              {(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) && (
-                <div className="mt-2 flex items-center gap-4 rounded-lg border border-(--ink-3) bg-(--bg-1) p-3">
-                  <div className="relative w-20 aspect-2/3 overflow-hidden rounded-md border border-(--ink-3) bg-black shrink-0">
-                    <video
-                      src={(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) ?? ""}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="h-full w-full object-cover"
-                    />
+              {(() => {
+                const currentVideoUrl = (form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) ?? "";
+                if (!currentVideoUrl) return null;
+                const { cleanUrl, positionY, objectPosition } = parseAnimatedCoverUrl(currentVideoUrl);
+
+                return (
+                  <div className="mt-2 rounded-lg border border-(--ink-3) bg-(--bg-1) p-3 space-y-3">
+                    <div className="flex items-start gap-4">
+                      <div className="relative w-24 aspect-2/3 overflow-hidden rounded-md border border-(--ink-3) bg-black shrink-0 shadow-sm">
+                        <video
+                          key={cleanUrl}
+                          src={cleanUrl}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          style={{ objectPosition }}
+                          className="h-full w-full object-cover transition-[object-position] duration-75"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-(--ink-0) flex items-center gap-1.5">
+                            <Sparkles size={13} className="text-amber-400 shrink-0" />
+                            <span>Живая обложка включена</span>
+                          </p>
+                          <span className="font-mono text-[11px] text-(--accent-main) bg-(--accent-main)/10 px-1.5 py-0.5 rounded font-medium">
+                            {positionY}%
+                          </span>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between text-[11px] text-(--ink-1) mb-1">
+                            <span>Смещение кадра по вертикали:</span>
+                            <span className="text-(--ink-2)">
+                              {positionY === 0 ? "0% (Верх)" : positionY === 50 ? "50% (Центр)" : positionY === 100 ? "100% (Низ)" : `${positionY}%`}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            step={1}
+                            value={positionY}
+                            onChange={(e) => {
+                              const newPos = Math.round(Number(e.target.value));
+                              set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, newPos));
+                            }}
+                            aria-label="Смещение кадра по вертикали"
+                            className="w-full accent-(--accent-main) cursor-pointer"
+                          />
+                          <div className="flex items-center gap-1.5 mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 0))}
+                              className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
+                                positionY === 0
+                                  ? "bg-(--accent-main) text-white font-medium"
+                                  : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
+                              }`}
+                            >
+                              0% Верх
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 50))}
+                              className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
+                                positionY === 50
+                                  ? "bg-(--accent-main) text-white font-medium"
+                                  : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
+                              }`}
+                            >
+                              50% Центр
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 100))}
+                              className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
+                                positionY === 100
+                                  ? "bg-(--accent-main) text-white font-medium"
+                                  : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
+                              }`}
+                            >
+                              100% Низ
+                            </button>
+                          </div>
+                        </div>
+
+                        <p className="text-[11px] text-(--ink-2) leading-relaxed">
+                          Для видео 9:16 (Gemini / Veo): двигайте ползунок, чтобы в рамку 2:3 попали название и имя автора.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-xs text-(--ink-1) space-y-1">
-                    <p className="font-medium text-(--ink-0) flex items-center gap-1.5">
-                      <Sparkles size={13} className="text-amber-400" />
-                      Живая обложка включена
-                    </p>
-                    <p className="text-(--ink-2)">
-                      • Десктоп: воспроизведение при наведении курсора
-                    </p>
-                    <p className="text-(--ink-2)">
-                      • Мобильные: кнопка «Оживить обложку» под книгой
-                    </p>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
           <label className="block md:col-span-2">
