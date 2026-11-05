@@ -69,6 +69,7 @@ export function useAdminBooks() {
   const invalidateLists = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-books"] });
     queryClient.invalidateQueries({ queryKey: ["admin-book"] });
+    queryClient.invalidateQueries({ queryKey: ["book"] });
   };
 
   const saveMutation = useMutation({

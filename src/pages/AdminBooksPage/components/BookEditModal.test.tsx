@@ -271,6 +271,6 @@ describe("BookEditModal — animated cover cropping & prompt", () => {
     const posterCheckbox = screen.getByRole("checkbox", {
       name: /обновить статичную обложку книги/i,
     });
-    expect(posterCheckbox).toBeChecked();
+    expect(posterCheckbox).not.toBeChecked();
   });
 });

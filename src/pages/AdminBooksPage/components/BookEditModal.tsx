@@ -174,9 +174,9 @@ export function BookEditModal({
 
   const [videoUploading, setVideoUploading] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
-  const [videoProcessingMode, setVideoProcessingMode] = useState<VideoProcessingMode>("fit-blur");
+  const [videoProcessingMode, setVideoProcessingMode] = useState<VideoProcessingMode>("original");
   const [videoCropOffset, setVideoCropOffset] = useState<number>(50);
-  const [syncCoverPoster, setSyncCoverPoster] = useState<boolean>(true);
+  const [syncCoverPoster, setSyncCoverPoster] = useState<boolean>(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedSpecs, setCopiedSpecs] = useState(false);
   const [showPromptDetails, setShowPromptDetails] = useState(false);
@@ -529,6 +529,17 @@ export function BookEditModal({
                   <div className="flex items-center gap-1 bg-(--bg-0) p-1 rounded-md border border-(--ink-3) shrink-0 self-start sm:self-auto">
                     <button
                       type="button"
+                      onClick={() => setVideoProcessingMode("original")}
+                      className={`px-2.5 py-1 text-xs rounded transition-colors cursor-pointer ${
+                        videoProcessingMode === "original"
+                          ? "bg-(--accent-main) text-white font-medium"
+                          : "text-(--ink-1) hover:text-(--ink-0)"
+                      }`}
+                    >
+                      Оригинал
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setVideoProcessingMode("fit-blur")}
                       className={`px-2.5 py-1 text-xs rounded transition-colors cursor-pointer ${
                         videoProcessingMode === "fit-blur"
@@ -548,17 +559,6 @@ export function BookEditModal({
                       }`}
                     >
                       Кадрировать 2:3
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVideoProcessingMode("original")}
-                      className={`px-2.5 py-1 text-xs rounded transition-colors cursor-pointer ${
-                        videoProcessingMode === "original"
-                          ? "bg-(--accent-main) text-white font-medium"
-                          : "text-(--ink-1) hover:text-(--ink-0)"
-                      }`}
-                    >
-                      Оригинал
                     </button>
                   </div>
                 </div>
