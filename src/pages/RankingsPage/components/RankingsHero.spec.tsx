@@ -47,16 +47,13 @@ describe("RankingsHero", () => {
     expect(onAiOpen).toHaveBeenCalledTimes(1);
   });
 
-  it("использует CSS background-image вместо блокирующего <img> для декоративного фона LCP", () => {
+  it("рендерит декоративный фон LCP через явный <img> с fetchPriority='high'", () => {
     const { container } = renderHero();
 
-    // Не должно быть тега <img> для декоративного фона hero-book3
     const heroImg = container.querySelector('img[src*="hero-book3"]');
-    expect(heroImg).toBeNull();
-
-    // Декоративный фон должен быть задан через CSS background
-    const bgContainer = container.querySelector('[style*="hero-book3"]');
-    expect(bgContainer).toBeInTheDocument();
-    expect(bgContainer).toHaveAttribute("aria-hidden", "true");
+    expect(heroImg).toBeInTheDocument();
+    expect(heroImg?.getAttribute("fetchpriority")).toBe("high");
+    expect(heroImg?.getAttribute("aria-hidden")).toBe("true");
+    expect(heroImg?.getAttribute("alt")).toBe("");
   });
 });

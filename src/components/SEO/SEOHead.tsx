@@ -39,6 +39,10 @@ interface SEOHeadProps {
     description?: string;
     knowsAbout?: string;
   };
+  /** URL изображения для LCP предзагрузки в <head> */
+  preloadImage?: string;
+  /** MIME-тип предзагружаемого изображения (по умолчанию image/webp) */
+  preloadImageType?: string;
 }
 
 const organizationJsonLd = {
@@ -106,6 +110,8 @@ export function SEOHead({
   breadcrumbs,
   person,
   hideSiteName,
+  preloadImage,
+  preloadImageType = "image/webp",
 }: SEOHeadProps) {
   // Убираем дублирование бренда: если title уже содержит | BookStrata, не добавляем повторно.
   const cleanTitle = title?.replace(new RegExp(`\\s*\\|\\s*${SITE_NAME}\\s*$`), "");
@@ -260,6 +266,15 @@ export function SEOHead({
 
       <link rel="canonical" href={pageUrl} />
       <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} — Новости книжного рейтинга`} href={`${SITE_URL}/rss.xml`} />
+      {preloadImage && (
+        <link
+          rel="preload"
+          as="image"
+          href={preloadImage}
+          type={preloadImageType}
+          fetchPriority="high"
+        />
+      )}
 
       {publishedTime && (
         <meta property="article:published_time" content={publishedTime} />

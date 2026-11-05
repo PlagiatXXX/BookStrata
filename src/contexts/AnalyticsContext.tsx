@@ -64,7 +64,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
                 </div>
                 <button
                   onClick={handleDismiss}
-                  className="shrink-0 cursor-pointer rounded-lg bg-[#d94f2b] px-5 py-2 text-sm font-medium text-white transition-all hover:bg-[#c04424] active:scale-95"
+                  className="shrink-0 cursor-pointer rounded-lg bg-[#c23f1e] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#a63417] active:scale-95"
                 >
                   Хорошо
                 </button>

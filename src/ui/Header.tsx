@@ -486,7 +486,7 @@ export const Header = ({
                 <button
                   data-analytics="auth.login_header"
                   onClick={() => navigate("/auth?mode=login")}
-                  className="flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-400 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                  className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white hover:bg-orange-500 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                   title="Войти"
                   aria-label="Войти"
                 >

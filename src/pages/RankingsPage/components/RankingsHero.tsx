@@ -9,12 +9,15 @@ interface RankingsHeroProps {
 export function RankingsHero({ onAiOpen }: RankingsHeroProps) {
   return (
     <section className="relative w-full min-h-75 pt-6 pb-0 px-4 md:px-16 max-w-7xl mx-auto">
-      {/* Фон-книга (CSS background вместо блокирующего <img> для предотвращения завышения LCP) */}
+      {/* Фон-книга (явный <img> с fetchPriority="high" для наивысшего приоритета загрузки LCP) */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div
-          className="w-full h-full bg-cover bg-center opacity-40"
-          style={{ backgroundImage: "url('/images/rankings/hero-book3.webp')" }}
+        <img
+          src="/images/rankings/hero-book3.webp"
+          alt=""
           aria-hidden="true"
+          fetchPriority="high"
+          decoding="async"
+          className="w-full h-full object-cover opacity-40"
         />
         <div className="absolute inset-0 bg-linear-to-b from-background/60 via-background/40 to-background" />
       </div>

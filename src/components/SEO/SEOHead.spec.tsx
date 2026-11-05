@@ -197,4 +197,20 @@ describe("SEOHead", () => {
     expect(twitter.length).toBeLessThanOrEqual(70);
     expect(twitter.endsWith(" | BookStrata")).toBe(true);
   });
+
+  it("рендерит link rel='preload' для LCP изображения при передаче preloadImage", () => {
+    render(
+      <SEOHead
+        title="Тест"
+        url="/test"
+        preloadImage="/images/rankings/hero-book3.webp"
+        preloadImageType="image/webp"
+      />,
+    );
+
+    const preloadLink = document.querySelector('link[rel="preload"][as="image"]');
+    expect(preloadLink).toBeInTheDocument();
+    expect(preloadLink?.getAttribute("href")).toBe("/images/rankings/hero-book3.webp");
+    expect(preloadLink?.getAttribute("type")).toBe("image/webp");
+  });
 });

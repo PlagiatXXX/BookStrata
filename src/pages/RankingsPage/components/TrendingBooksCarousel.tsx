@@ -38,6 +38,7 @@ export function TrendingBooksCarousel({ books }: TrendingBooksCarouselProps) {
         <button
           type="button"
           onClick={() => scroll("left")}
+          aria-label="Предыдущие книги"
           className="absolute left-0 z-10 w-9 h-9 -ml-4 bg-surface-container-high/80 backdrop-blur rounded-full border border-outline-variant/50 flex items-center justify-center text-on-surface hover:text-primary hover:border-primary transition-colors shadow-[0_0_15px_rgba(236,178,255,0.2)] opacity-0 group-hover:opacity-100 md:flex cursor-pointer"
         >
           <ChevronLeft size={18} />
@@ -55,7 +56,8 @@ export function TrendingBooksCarousel({ books }: TrendingBooksCarouselProps) {
               <div className={`shrink-0 w-28 md:w-40 aspect-2/3 rounded-lg overflow-hidden relative group/card ${neonClass}`}>
                 <RetryableImage
                   src={proxyImageUrl(book.coverImageUrl)}
-                  alt={book.title}
+                  alt=""
+                  aria-hidden="true"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 cover-glow"
                   loading={i < 3 ? "eager" : "lazy"}
                   decoding="async"
@@ -85,6 +87,7 @@ export function TrendingBooksCarousel({ books }: TrendingBooksCarouselProps) {
         <button
           type="button"
           onClick={() => scroll("right")}
+          aria-label="Следующие книги"
           className="absolute right-0 z-10 w-10 h-10 -mr-5 bg-surface-container-high/80 backdrop-blur rounded-full border border-outline-variant/50 items-center justify-center text-on-surface hover:text-primary hover:border-primary transition-colors shadow-[0_0_15px_rgba(236,178,255,0.2)] opacity-0 group-hover:opacity-100 hidden md:flex cursor-pointer"
         >
           <ChevronRight size={20} />

@@ -35,6 +35,8 @@ export default function RankingsPage() {
         description="Редакционные подборки BookStrata: лучшие книги в жанрах, составленные редакцией."
         url="/rankings"
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Рейтинг книг", url: "/rankings" }]}
+        preloadImage="/images/rankings/hero-book3.webp"
+        preloadImageType="image/webp"
       />
       <DashboardLayout showSearch={false}>
         <RankingsHero onAiOpen={handleAiOpen} />
