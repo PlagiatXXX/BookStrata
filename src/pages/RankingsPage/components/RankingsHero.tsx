@@ -15,6 +15,8 @@ export function RankingsHero({ onAiOpen }: RankingsHeroProps) {
           src="/images/rankings/hero-book3.webp"
           alt=""
           aria-hidden="true"
+          width={1040}
+          height={520}
           fetchPriority="high"
           decoding="async"
           className="w-full h-full object-cover opacity-40"
@@ -32,7 +34,7 @@ export function RankingsHero({ onAiOpen }: RankingsHeroProps) {
             Рейтинг книг
           </h1>
 
-          <p className="text-base md:text-lg text-on-surface-variant max-w-xl mt-3">
+          <p className="text-base md:text-lg text-white/80 max-w-xl mt-3">
             Редакционные подборки BookStrata — лучшие книги по жанрам, чтобы вам было проще найти что почитать.
           </p>
 

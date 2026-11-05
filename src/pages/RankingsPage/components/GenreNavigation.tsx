@@ -33,7 +33,7 @@ export function GenreNavigation() {
         <h2 className="font-display text-xl md:text-2xl text-on-surface mb-1 font-bold text-glow-subtle">
           Навигация по жанрам
         </h2>
-        <p className="text-xs text-on-surface-variant mb-8">
+        <p className="text-xs text-white/70 mb-8">
           Собери собственную подборку любимых книг в формате топ-листа
         </p>
 

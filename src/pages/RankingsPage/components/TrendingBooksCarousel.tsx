@@ -59,7 +59,7 @@ export function TrendingBooksCarousel({ books }: TrendingBooksCarouselProps) {
                   alt=""
                   aria-hidden="true"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 cover-glow"
-                  loading={i < 3 ? "eager" : "lazy"}
+                  loading="lazy"
                   decoding="async"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
