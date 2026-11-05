@@ -7,6 +7,7 @@ vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     author: { findFirst: vi.fn() },
     book: { findUnique: vi.fn() },
+    collection: { findMany: vi.fn(), count: vi.fn() },
   },
 }));
 
@@ -16,7 +17,7 @@ vi.mock("../books/bookMatching.service.js", () => ({
 
 import { prisma } from "../../lib/prisma.js";
 import { matchBook } from "../books/bookMatching.service.js";
-import { matchCatalogBook } from "./collection.service.js";
+import { matchCatalogBook, getCollections, COLLECTION_SUMMARY_SELECT } from "./collection.service.js";
 
 const mockedMatch = vi.mocked(matchBook);
 const mockedFindUnique = vi.mocked(prisma.book.findUnique);
@@ -103,5 +104,66 @@ describe("matchCatalogBook (автозаполнение карточки под
       expect.objectContaining({ author: null, authorId: null }),
       { statusFilter: "published" },
     );
+  });
+});
+
+describe("getCollections (легковесная проекция для публичных списков)", () => {
+  it("в режиме summary: true использует COLLECTION_SUMMARY_SELECT и облегчает объект books", async () => {
+    const mockedFindMany = vi.mocked(prisma.collection.findMany);
+    const mockedCount = vi.mocked(prisma.collection.count);
+
+    mockedFindMany.mockResolvedValueOnce([
+      {
+        id: 1,
+        slug: "horror-books",
+        title: "Ужасы",
+        books: {
+          "book-1": { title: "Оно", author: "Кинг", description: "Длинное описание...", notes: "Заметка" },
+          "book-2": { title: "Сияние", author: "Кинг", description: "Ещё описание..." },
+        },
+      } as never,
+    ]);
+    mockedCount.mockResolvedValueOnce(1);
+
+    const result = await getCollections({ summary: true, isFeatured: true });
+
+    expect(mockedFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ isFeatured: true }),
+        select: COLLECTION_SUMMARY_SELECT,
+      }),
+    );
+    expect(result.data).toHaveLength(1);
+    // Количество ключей книг сохранено для подсчёта (Object.keys(books).length)
+    expect(Object.keys(result.data[0].books as object)).toEqual(["book-1", "book-2"]);
+    // Но тяжёлые поля описания и заметок отброшены
+    expect(result.data[0].books).toEqual({
+      "book-1": { id: "book-1" },
+      "book-2": { id: "book-2" },
+    });
+  });
+
+  it("без summary возвращает полные данные без select", async () => {
+    const mockedFindMany = vi.mocked(prisma.collection.findMany);
+    const mockedCount = vi.mocked(prisma.collection.count);
+
+    mockedFindMany.mockResolvedValueOnce([
+      {
+        id: 2,
+        slug: "full-col",
+        title: "Полная подборка",
+        content: "<p>Статья</p>",
+      } as never,
+    ]);
+    mockedCount.mockResolvedValueOnce(1);
+
+    const result = await getCollections({ isFeatured: false });
+
+    expect(mockedFindMany).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        select: expect.anything(),
+      }),
+    );
+    expect(result.data[0]).toHaveProperty("content", "<p>Статья</p>");
   });
 });

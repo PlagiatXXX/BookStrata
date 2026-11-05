@@ -138,7 +138,7 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
 
         if (rawContext.pageType === 'rankings') {
           try {
-            const result = await getCollections({ isFeatured: true, isPublished: true, pageSize: 50 })
+            const result = await getCollections({ isFeatured: true, isPublished: true, pageSize: 50, summary: true })
             pageContext = {
               pageType: 'rankings',
               featuredCollections: result.data.map((c) => ({

@@ -16,6 +16,7 @@ export async function topicRoutes(fastify: FastifyInstance) {
       categoryId,
       isPublished: true,
       pageSize: 100,
+      summary: true,
     });
 
     if (result.data.length === 0) {

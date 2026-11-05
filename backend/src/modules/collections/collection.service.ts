@@ -134,6 +134,28 @@ export async function validateUpdateInput(input: unknown) {
   return updateCollectionSchema.parse(input);
 }
 
+export const COLLECTION_SUMMARY_SELECT = {
+  id: true,
+  slug: true,
+  title: true,
+  type: true,
+  categoryId: true,
+  excerpt: true,
+  coverImageUrl: true,
+  bookCovers: true,
+  tags: true,
+  isPublished: true,
+  order: true,
+  accentColor: true,
+  theme: true,
+  isFeatured: true,
+  editorialNote: true,
+  tierOrder: true,
+  books: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
 export async function getCollections(options?: {
   type?: string;
   categoryId?: string;
@@ -142,6 +164,7 @@ export async function getCollections(options?: {
   tag?: string;
   page?: number;
   pageSize?: number;
+  summary?: boolean;
 }) {
   const page = options?.page || 1;
   const pageSize = options?.pageSize || 50;
@@ -154,15 +177,39 @@ export async function getCollections(options?: {
   if (options?.isFeatured !== undefined) where.isFeatured = options.isFeatured;
   if (options?.tag) where.tags = { has: options.tag };
 
-  const [data, total] = await Promise.all([
-    prisma.collection.findMany({
-      where,
-      orderBy: { order: "asc" },
-      skip,
-      take: pageSize,
-    }),
+  const [rawCollections, total] = await Promise.all([
+    options?.summary
+      ? prisma.collection.findMany({
+          where,
+          orderBy: { order: "asc" },
+          skip,
+          take: pageSize,
+          select: COLLECTION_SUMMARY_SELECT,
+        })
+      : prisma.collection.findMany({
+          where,
+          orderBy: { order: "asc" },
+          skip,
+          take: pageSize,
+        }),
     prisma.collection.count({ where }),
   ]);
+
+  const data = options?.summary
+    ? rawCollections.map((c) => {
+        let lightBooks = c.books;
+        if (c.books && typeof c.books === "object") {
+          lightBooks = Object.keys(c.books).reduce<Record<string, { id: string }>>((acc, key) => {
+            acc[key] = { id: key };
+            return acc;
+          }, {});
+        }
+        return {
+          ...c,
+          books: lightBooks,
+        };
+      })
+    : rawCollections;
 
   return {
     data,

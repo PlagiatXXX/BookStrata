@@ -44,6 +44,7 @@ export async function collectionRoutes(fastify: FastifyInstance) {
       tag: query.tag,
       page: query.page ? Number(query.page) : 1,
       pageSize: query.pageSize ? Number(query.pageSize) : 50,
+      summary: true,
     });
     return reply.code(200).send(result);
   });
