@@ -44,4 +44,17 @@ describe("NeonFlipCollectionCard", () => {
     const card = screen.getByLabelText("Подборка: Топ детективов");
     expect(card.textContent).toContain("Смотреть");
   });
+
+  it("обложка подборки загружается лениво (loading=lazy, decoding=async)", () => {
+    const collectionWithCover = {
+      ...mockCollection,
+      coverImageUrl: "https://bookstrata.ru/img/collection-covers/detective.webp",
+    } as CollectionItem;
+
+    render(<NeonFlipCollectionCard collection={collectionWithCover} index={0} />);
+
+    const img = screen.getByRole("img", { name: "Подборка: Топ детективов" });
+    expect(img).toHaveAttribute("loading", "lazy");
+    expect(img).toHaveAttribute("decoding", "async");
+  });
 });

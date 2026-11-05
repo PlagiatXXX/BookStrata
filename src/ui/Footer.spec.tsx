@@ -32,6 +32,18 @@ function renderFooter() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  class MockIntersectionObserver {
+    callback: IntersectionObserverCallback;
+    constructor(cb: IntersectionObserverCallback) {
+      this.callback = cb;
+    }
+    observe() {
+      this.callback([{ isIntersecting: true } as IntersectionObserverEntry], this as unknown as IntersectionObserver);
+    }
+    unobserve() {}
+    disconnect() {}
+  }
+  vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
 })
 
 describe("Footer", () => {
@@ -86,5 +98,18 @@ describe("Footer", () => {
       expect(screen.queryByText("Меценаты проекта:")).not.toBeInTheDocument()
     })
     expect(screen.queryByText(/·/)).not.toBeInTheDocument()
+  })
+
+  it("запрашивает подборки для ссылок футера при появлении в области видимости", async () => {
+    mockedGetDonors.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([
+      { id: 1, slug: "scifi", title: "Фантастика" } as unknown as import("@/types/collection").CollectionItem,
+    ])
+
+    renderFooter()
+
+    await waitFor(() => {
+      expect(mockedGetCollections).toHaveBeenCalled()
+    })
   })
 })

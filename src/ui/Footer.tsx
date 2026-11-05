@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -103,13 +103,42 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
     retry: 2,
   });
 
+  const footerRef = useRef<HTMLElement>(null);
+  const [shouldFetchCollections, setShouldFetchCollections] = useState(
+    () =>
+      typeof window === "undefined" ||
+      typeof IntersectionObserver === "undefined" ||
+      !!(window as Window & { __PRERENDER__?: boolean }).__PRERENDER__,
+  );
+
+  useEffect(() => {
+    if (shouldFetchCollections) return;
+    const el = footerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldFetchCollections(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "400px" },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [shouldFetchCollections]);
+
   // Популярные подборки — перелинковка коллекций со всех страниц (SEO).
   // Тот же queryKey, что на странице коллекции — общий кэш.
+  // Запрос отложен до приближения скролла к футеру, чтобы не блокировать LCP и первый экран.
   const { data: collections = [] } = useQuery({
     queryKey: ["all-collections"],
     queryFn: getCollections,
     staleTime: 60 * 1000,
     retry: 2,
+    enabled: shouldFetchCollections,
   });
 
   const cardNumber = "2202200609389554";
@@ -206,7 +235,10 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
   if (isHidden) return null;
 
   return (
-    <footer className="relative overflow-hidden bg-linear-to-b from-[#0d1b2a] via-[#1b263b] to-[#133d28] px-6 pt-16 pb-10">
+    <footer
+      ref={footerRef}
+      className="relative overflow-hidden bg-linear-to-b from-[#0d1b2a] via-[#1b263b] to-[#133d28] px-6 pt-16 pb-10"
+    >
       <style>{marqueeStyle}</style>
 
       {/* Organic wave overlays at top */}

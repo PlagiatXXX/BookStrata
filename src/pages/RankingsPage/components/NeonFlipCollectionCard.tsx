@@ -61,6 +61,8 @@ export function NeonFlipCollectionCard({ collection, index, className = "" }: Ne
               alt={`Подборка: ${collection.title}`}
               className="h-full w-full object-cover cover-glow"
               fallbackSrc={FALLBACK}
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center bg-surface-container">

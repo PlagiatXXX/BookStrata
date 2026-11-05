@@ -7,7 +7,13 @@ export function CreateRatingCta() {
 
   return (
     <section className="relative min-h-75 flex items-center justify-center py-12 overflow-hidden bg-cover bg-center">
-      <img src="/images/rankings/hero-down.avif" alt="" className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none" />
+      <img
+        src="/images/rankings/hero-down.avif"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none"
+        loading="lazy"
+        decoding="async"
+      />
       <div className="absolute inset-0 bg-linear-to-b from-background via-background/40 to-background pointer-events-none" />
       {/* Кометы */}
       <span className="rankings-comet rankings-comet-1" />
