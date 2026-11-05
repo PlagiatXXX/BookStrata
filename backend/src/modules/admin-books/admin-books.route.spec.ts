@@ -804,6 +804,25 @@ describe("Admin Books Routes", () => {
       expect(res.status).toBe(200);
       expect(mocks.deleteIfOrphaned).toHaveBeenCalledWith("/cover.jpg");
     });
+
+    it("смена или удаление animatedCoverUrl → старый видеофайл чистится как осиротевший", async () => {
+      mocks.prisma.book.findUnique.mockResolvedValue({
+        ...bookRow,
+        animatedCoverUrl: "/old-video.mp4",
+      });
+      mocks.prisma.book.update.mockResolvedValue({
+        ...bookRow,
+        animatedCoverUrl: null,
+      });
+
+      const res = await request(app.server)
+        .patch("/api/admin/books/10")
+        .set("Authorization", "Bearer admin-token")
+        .send({ animatedCoverUrl: null });
+
+      expect(res.status).toBe(200);
+      expect(mocks.deleteIfOrphaned).toHaveBeenCalledWith("/old-video.mp4");
+    });
   });
 
   describe("публикация", () => {

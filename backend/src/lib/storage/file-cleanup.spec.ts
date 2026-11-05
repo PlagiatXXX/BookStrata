@@ -85,6 +85,15 @@ describe("isUrlInUse", () => {
     expect(await isUrlInUse("https://re406cj9uj.cdn.twcstorage.ru/x.webp")).toBe(true);
   });
 
+  it("true, если книга ссылается на URL через animatedCoverUrl", async () => {
+    mocks.prisma.book.findFirst.mockImplementation(({ where }) => {
+      if (where?.animatedCoverUrl) return Promise.resolve({ id: 1 });
+      return Promise.resolve(null);
+    });
+
+    expect(await isUrlInUse("https://re406cj9uj.cdn.twcstorage.ru/video.mp4")).toBe(true);
+  });
+
   it("true, если коллекция ссылается через bookCovers", async () => {
     mocks.prisma.collection.findFirst.mockResolvedValue({ id: 2 });
 

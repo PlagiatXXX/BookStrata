@@ -67,6 +67,7 @@ export function extractStorageKey(url: string | null | undefined): string | null
 export async function isUrlInUse(url: string): Promise<boolean> {
   const [
     book,
+    bookVideo,
     collection,
     collectionCover,
     celebrity,
@@ -77,6 +78,7 @@ export async function isUrlInUse(url: string): Promise<boolean> {
     flag,
   ] = await Promise.all([
     prisma.book.findFirst({ where: { coverImageUrl: url }, select: { id: true } }),
+    prisma.book.findFirst({ where: { animatedCoverUrl: url }, select: { id: true } }),
     prisma.collection.findFirst({ where: { bookCovers: { has: url } }, select: { id: true } }),
     prisma.collection.findFirst({ where: { coverImageUrl: url }, select: { id: true } }),
     prisma.celebrity.findFirst({ where: { photoUrl: url }, select: { id: true } }),
@@ -88,7 +90,7 @@ export async function isUrlInUse(url: string): Promise<boolean> {
   ]);
 
   return Boolean(
-    book || collection || collectionCover || celebrity || tierList ||
+    book || bookVideo || collection || collectionCover || celebrity || tierList ||
       placement || news || user || flag,
   );
 }

@@ -664,6 +664,7 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
   }
 
   const oldCover = book.coverImageUrl;
+  const oldAnimatedCover = book.animatedCoverUrl;
 
   const updated = await prisma.book.update({ where: { id }, data: updateData });
 
@@ -671,6 +672,9 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
   // если на него никто больше не ссылается
   if (oldCover && oldCover !== updated.coverImageUrl) {
     await deleteIfOrphaned(oldCover);
+  }
+  if (oldAnimatedCover && oldAnimatedCover !== updated.animatedCoverUrl) {
+    await deleteIfOrphaned(oldAnimatedCover);
   }
 
   return updated;

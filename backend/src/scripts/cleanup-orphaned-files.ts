@@ -67,7 +67,7 @@ async function collectUsedUrls(): Promise<Set<string>> {
 
   const [books, collections, celebrities, tierLists, placements, news, users, flags, templates] =
     await Promise.all([
-      prisma.book.findMany({ select: { coverImageUrl: true } }),
+      prisma.book.findMany({ select: { coverImageUrl: true, animatedCoverUrl: true } }),
       prisma.collection.findMany({
         select: { coverImageUrl: true, bookCovers: true, books: true, tiers: true },
       }),
@@ -80,7 +80,10 @@ async function collectUsedUrls(): Promise<Set<string>> {
       prisma.template.findMany({ select: { defaultBooks: true } }),
     ]);
 
-  books.forEach((b) => add(b.coverImageUrl));
+  books.forEach((b) => {
+    add(b.coverImageUrl);
+    add(b.animatedCoverUrl);
+  });
   collections.forEach((c) => {
     add(c.coverImageUrl);
     c.bookCovers.forEach(add);
