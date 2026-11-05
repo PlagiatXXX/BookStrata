@@ -4,7 +4,17 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { GenreNavigation } from "./GenreNavigation";
 
-describe("GenreNavigation — вход на хаб коллекций", () => {
+describe("GenreNavigation — навигация и доступность", () => {
+  it("кнопки прокрутки карусели имеют доступные названия (aria-label)", () => {
+    render(
+      <MemoryRouter>
+        <GenreNavigation />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("button", { name: "Прокрутить жанры влево" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Прокрутить жанры вправо" })).toBeInTheDocument();
+  });
+
   it("под каруселью жанров есть кнопка «Все коллекции» на /collections", () => {
     render(
       <MemoryRouter>

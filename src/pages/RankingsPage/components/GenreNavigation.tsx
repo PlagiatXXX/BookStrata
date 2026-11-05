@@ -28,8 +28,8 @@ export function GenreNavigation() {
   };
 
   return (
-    <section className="w-full py-10 bg-gradient-to-b from-transparent to-surface-container-lowest">
-      <div className="max-w-[1280px] mx-auto px-4 md:px-16 text-center">
+    <section className="w-full py-10 bg-linear-to-b from-transparent to-surface-container-lowest">
+      <div className="max-w-7xl mx-auto px-4 md:px-16 text-center">
         <h2 className="font-display text-xl md:text-2xl text-on-surface mb-1 font-bold text-glow-subtle">
           Навигация по жанрам
         </h2>
@@ -42,9 +42,10 @@ export function GenreNavigation() {
           <button
             type="button"
             onClick={() => scroll("left")}
-            className="absolute left-0 md:left-4 z-10 w-10 h-10 bg-surface/50 backdrop-blur-md rounded-full border border-primary/50 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(236,178,255,0.3)] hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer hidden md:flex"
+            aria-label="Прокрутить жанры влево"
+            className="absolute left-0 md:left-4 z-10 w-10 h-10 bg-surface/50 backdrop-blur-md rounded-full border border-primary/50 flex items-center justify-center text-primary shadow-[0_0_15px_rgba(236,178,255,0.3)] hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer md:flex"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={18} aria-hidden="true" />
           </button>
 
           {/* Карусель жанров */}
@@ -78,9 +79,10 @@ export function GenreNavigation() {
           <button
             type="button"
             onClick={() => scroll("right")}
-            className="absolute right-0 md:right-4 z-10 w-10 h-10 bg-surface/50 backdrop-blur-md rounded-full border border-secondary-fixed-dim/50 flex items-center justify-center text-secondary-fixed-dim shadow-[0_0_15px_rgba(0,219,233,0.3)] hover:bg-secondary-fixed-dim/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer hidden md:flex"
+            aria-label="Прокрутить жанры вправо"
+            className="absolute right-0 md:right-4 z-10 w-10 h-10 bg-surface/50 backdrop-blur-md rounded-full border border-secondary-fixed-dim/50 flex items-center justify-center text-secondary-fixed-dim shadow-[0_0_15px_rgba(0,219,233,0.3)] hover:bg-secondary-fixed-dim/10 transition-all opacity-0 group-hover:opacity-100 cursor-pointer md:flex"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
 
