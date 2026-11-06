@@ -24,62 +24,86 @@ export const Logo = ({ onClick, light = false }: LogoProps) => {
         xmlns="http://www.w3.org/2000/svg"
         className="shrink-0 w-30 xs:w-35 sm:w-40 md:w-45 h-auto overflow-visible"
       >
-        {/* ICON - Animated tier bars */}
-        <g transform="translate(4, 10)">
-          {/* Top tier - S tier */}
-          <rect x="0" y="0" width="36" height="6" rx="3" fill="#8B7CFF">
+        {/* ICON - Animated 3D book tier strata */}
+        <g transform="translate(4, 11)">
+          {/* Top tier - S tier book */}
+          <g>
             <animateTransform
               attributeName="transform"
               type="scale"
-              values="1;1.08;1"
+              values="1;1.05;1"
               dur="2.4s"
               repeatCount="indefinite"
             />
             <animate
               attributeName="opacity"
-              values="0.9;1;0.9"
+              values="0.92;1;0.92"
               dur="2.4s"
               repeatCount="indefinite"
             />
-          </rect>
+            <image
+              href="/brand/book-tier-top.webp"
+              x="0"
+              y="0"
+              width="40"
+              height="10"
+              preserveAspectRatio="none"
+            />
+          </g>
 
-          {/* Middle tier - A tier */}
-          <rect x="0" y="10" width="28" height="6" rx="3" fill="#6D5DF6">
+          {/* Middle tier - A tier book */}
+          <g>
             <animateTransform
               attributeName="transform"
               type="translate"
-              values="0 0;3 0;0 0"
+              values="0 0;2.5 0;0 0"
               dur="2.4s"
               begin="0.2s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="opacity"
+              values="0.85;1;0.85"
+              dur="2.4s"
+              begin="0.2s"
+              repeatCount="indefinite"
+            />
+            <image
+              href="/brand/book-tier-mid.webp"
+              x="0"
+              y="8.8"
+              width="40"
+              height="7.2"
+              preserveAspectRatio="none"
+            />
+          </g>
+
+          {/* Bottom tier - B tier book */}
+          <g>
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values="0 0;1.5 0;0 0"
+              dur="2.4s"
+              begin="0.4s"
               repeatCount="indefinite"
             />
             <animate
               attributeName="opacity"
               values="0.75;0.95;0.75"
               dur="2.4s"
-              begin="0.2s"
-              repeatCount="indefinite"
-            />
-          </rect>
-
-          {/* Bottom tier - B tier */}
-          <rect x="0" y="20" width="20" height="6" rx="3" fill="#4C3FFF">
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              values="0 0;2 0;0 0"
-              dur="2.4s"
               begin="0.4s"
               repeatCount="indefinite"
             />
-            <animate
-              attributeName="opacity"
-              values="0.6;0.85;0.6"
-              dur="2.4s"
-              begin="0.4s"
-              repeatCount="indefinite"
+            <image
+              href="/brand/book-tier-bot.webp"
+              x="0"
+              y="15.2"
+              width="40"
+              height="7.5"
+              preserveAspectRatio="none"
             />
-          </rect>
+          </g>
         </g>
 
         {/* TEXT - Main title */}
