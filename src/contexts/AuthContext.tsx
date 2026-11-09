@@ -32,6 +32,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     username: fullUserData.username,
     avatarUrl: fullUserData.avatarUrl,
     role: fullUserData.role || "user",
+    feedbackDismissedAt: fullUserData.feedbackDismissedAt ?? null,
+    createdAt: fullUserData.createdAt,
   });
 
   const fetchUser = useCallback(async (force = false) => {

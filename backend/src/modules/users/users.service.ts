@@ -41,6 +41,7 @@ const userProfileSelect = {
   role: {
     select: { name: true },
   },
+  feedbackDismissedAt: true,
   createdAt: true,
 } as const;
 

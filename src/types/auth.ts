@@ -18,6 +18,8 @@ export interface User {
   username: string;
   avatarUrl?: string | null;
   role?: string;
+  feedbackDismissedAt?: string | null;
+  createdAt?: string;
 }
 
 export interface AuthError {

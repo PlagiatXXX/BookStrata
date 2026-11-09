@@ -1,8 +1,9 @@
 import { apiClient } from "./api-client";
 
 export interface FeedbackInput {
-  type: "bug" | "feature" | "other";
-  message: string;
+  type: "bug" | "feature" | "other" | "survey";
+  message?: string;
+  rating?: "great" | "neutral" | "bad";
   pageUrl?: string;
   userEmail?: string;
 }
@@ -21,6 +22,10 @@ export interface FeedbackItem {
 
 export async function sendFeedback(input: FeedbackInput) {
   return apiClient.post("/feedback", input);
+}
+
+export async function dismissFeedbackPrompt(): Promise<{ success: boolean }> {
+  return apiClient.post<{ success: boolean }>("/feedback/dismiss", {});
 }
 
 export async function getFeedbackList(page = 1, limit = 50): Promise<FeedbackItem[]> {

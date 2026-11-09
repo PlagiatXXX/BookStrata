@@ -59,6 +59,10 @@ const envSchema = z.object({
   // --- Redis ---
   REDIS_URL: z.string().default("redis://localhost:6379"),
 
+  // --- Telegram ---
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_CHAT_ID: z.string().optional(),
+
   // --- SMTP / Email ---
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().default(2525),

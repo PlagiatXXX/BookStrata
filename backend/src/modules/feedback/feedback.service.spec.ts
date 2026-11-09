@@ -8,11 +8,14 @@ vi.mock("../../lib/prisma.js", () => {
       update: vi.fn(),
       delete: vi.fn(),
     },
+    user: {
+      update: vi.fn().mockResolvedValue({ id: 1 } as any),
+    },
   }
   return { prisma: tx }
 })
 
-import { createFeedback, getAllFeedback, updateFeedbackStatus, deleteFeedback } from "./feedback.service.js"
+import { createFeedback, getAllFeedback, updateFeedbackStatus, deleteFeedback, dismissFeedback } from "./feedback.service.js"
 import { prisma } from "../../lib/prisma.js"
 
 describe("feedback.service", () => {
@@ -103,6 +106,19 @@ describe("feedback.service", () => {
       await deleteFeedback(1)
 
       expect(prisma.feedback.delete).toHaveBeenCalledWith({ where: { id: 1 } })
+    })
+  })
+
+  describe("dismissFeedback", () => {
+    it("должен обновить feedbackDismissedAt у пользователя", async () => {
+      vi.mocked(prisma.user.update).mockResolvedValue({ id: 10 } as any)
+
+      await dismissFeedback(10)
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { feedbackDismissedAt: expect.any(Date) },
+      })
     })
   })
 })

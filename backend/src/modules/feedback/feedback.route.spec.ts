@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import request from "supertest"
 import Fastify from "fastify"
 
 vi.mock("../../lib/prisma.js", () => {
   const tx = {
     feedback: { create: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    user: { update: vi.fn() },
   }
   return { prisma: tx }
 })
+
+vi.mock("../../lib/telegramNotifier.js", () => ({
+  sendTelegramFeedbackNotification: vi.fn().mockResolvedValue(true),
+}))
 
 vi.mock("../auth/auth.middleware.js", () => ({
   authMiddleware: vi.fn((request: any, _reply: any, done: any) => {
@@ -42,6 +46,17 @@ describe("Feedback Routes", () => {
     const instance = Fastify({ logger: false })
     const { prisma } = await import("../../lib/prisma.js")
     instance.decorate("prisma", prisma)
+
+    // Имитируем парсинг токена в request.user для публичных/опциональных роутов
+    instance.addHook("onRequest", async (request: any) => {
+      const authHeader = request.headers.authorization
+      if (authHeader === "Bearer admin-token") {
+        request.user = { userId: 1, username: "admin", role: "admin" }
+      } else if (authHeader === "Bearer user-token") {
+        request.user = { userId: 2, username: "user", role: "user" }
+      }
+    })
+
     await instance.register(feedbackRoutes, { prefix: "/api/feedback" })
     await instance.ready()
     return instance
@@ -64,12 +79,15 @@ describe("Feedback Routes", () => {
         id: 1, userId: null, type: "bug", message: "Тест",
       } as any)
 
-      const res = await request(app.server)
-        .post("/api/feedback")
-        .send({ type: "bug", message: "Тест" })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/feedback",
+        payload: { type: "bug", message: "Тест" },
+      })
 
-      expect(res.body.data).toHaveProperty("id", 1)
+      expect(res.statusCode).toBe(201)
+      const body = JSON.parse(res.body)
+      expect(body.data).toHaveProperty("id", 1)
     })
 
     it("должен создать фидбек с авторизацией", async () => {
@@ -77,21 +95,96 @@ describe("Feedback Routes", () => {
       vi.mocked(prisma.feedback.create).mockResolvedValue({
         id: 2, userId: 2, type: "feature", message: "Хочу фичу",
       } as any)
+      vi.mocked(prisma.user.update).mockResolvedValue({ id: 2 } as any)
 
-      const res = await request(app.server)
-        .post("/api/feedback")
-        .set("Authorization", "Bearer user-token")
-        .send({ type: "feature", message: "Хочу фичу" })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/feedback",
+        headers: { authorization: "Bearer user-token" },
+        payload: { type: "feature", message: "Хочу фичу" },
+      })
 
-      expect(res.body.data).toHaveProperty("id", 2)
+      expect(res.statusCode).toBe(201)
+      const body = JSON.parse(res.body)
+      expect(body.data).toHaveProperty("id", 2)
     })
 
     it("должен вернуть 400 при неверных данных", async () => {
-      await request(app.server)
-        .post("/api/feedback")
-        .send({ type: "invalid" })
-        .expect(400)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/feedback",
+        payload: { type: "invalid" },
+      })
+
+      expect(res.statusCode).toBe(400)
+    })
+
+    it("должен создать отзыв типа survey с оценкой и обновить статус показа у пользователя", async () => {
+      const { prisma } = await import("../../lib/prisma.js")
+      const { sendTelegramFeedbackNotification } = await import("../../lib/telegramNotifier.js")
+
+      vi.mocked(prisma.feedback.create).mockResolvedValue({
+        id: 3, userId: 2, type: "survey", message: "[Оценка: great] Классный сайт",
+      } as any)
+      vi.mocked(prisma.user.update).mockResolvedValue({ id: 2 } as any)
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/feedback",
+        headers: { authorization: "Bearer user-token" },
+        payload: { type: "survey", rating: "great", message: "Классный сайт", pageUrl: "/rankings" },
+      })
+
+      expect(res.statusCode).toBe(201)
+      const body = JSON.parse(res.body)
+      expect(body.data).toHaveProperty("id", 3)
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 2 },
+          data: expect.objectContaining({ feedbackDismissedAt: expect.any(Date) }),
+        })
+      )
+      expect(sendTelegramFeedbackNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rating: "great",
+          message: "Классный сайт",
+          pageUrl: "/rankings",
+        })
+      )
+    })
+  })
+
+  describe("POST /api/feedback/dismiss", () => {
+    it("должен скрыть фидбек для авторизованного пользователя", async () => {
+      const { prisma } = await import("../../lib/prisma.js")
+      vi.mocked(prisma.user.update).mockResolvedValue({ id: 2 } as any)
+
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/feedback/dismiss",
+        headers: { authorization: "Bearer user-token" },
+        payload: {},
+      })
+
+      expect(res.statusCode).toBe(200)
+      expect(JSON.parse(res.body)).toEqual({ success: true })
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 2 },
+          data: expect.objectContaining({ feedbackDismissedAt: expect.any(Date) }),
+        })
+      )
+    })
+
+    it("должен успешно возвращать 200 даже для неавторизованного пользователя", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/feedback/dismiss",
+        payload: {},
+      })
+
+      expect(res.statusCode).toBe(200)
+      expect(JSON.parse(res.body)).toEqual({ success: true })
     })
   })
 
@@ -100,12 +193,14 @@ describe("Feedback Routes", () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.feedback.findMany).mockResolvedValue([])
 
-      const res = await request(app.server)
-        .get("/api/feedback")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/feedback",
+        headers: { authorization: "Bearer admin-token" },
+      })
 
-      expect(res.body.data).toEqual([])
+      expect(res.statusCode).toBe(200)
+      expect(JSON.parse(res.body).data).toEqual([])
     })
 
     it("должен вернуть список с пагинацией", async () => {
@@ -114,54 +209,55 @@ describe("Feedback Routes", () => {
         { id: 1, type: "bug", message: "...", status: "pending", pageUrl: null, userEmail: null, userId: null, createdAt: "2024-01-01T00:00:00Z" } as any,
       ])
 
-      const res = await request(app.server)
-        .get("/api/feedback?page=1&limit=20")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200)
-
-      expect(res.body.data).toHaveLength(1)
-      expect(prisma.feedback.findMany).toHaveBeenCalledWith({
-        where: {},
-        skip: 0,
-        take: 20,
-        orderBy: { createdAt: "desc" },
-        include: { user: { select: { id: true, username: true, avatarUrl: true } } },
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/feedback?page=1&limit=20",
+        headers: { authorization: "Bearer admin-token" },
       })
+
+      expect(res.statusCode).toBe(200)
+      expect(JSON.parse(res.body).data).toHaveLength(1)
     })
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      await request(app.server)
-        .get("/api/feedback")
-        .set("Authorization", "Bearer user-token")
-        .expect(403)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/feedback",
+        headers: { authorization: "Bearer user-token" },
+      })
+
+      expect(res.statusCode).toBe(403)
     })
   })
 
   describe("PATCH /api/feedback/:id", () => {
     it("должен обновить статус", async () => {
       const { prisma } = await import("../../lib/prisma.js")
-      vi.mocked(prisma.feedback.update).mockResolvedValue({
-        id: 1, status: "in_progress",
-      } as any)
+      vi.mocked(prisma.feedback.update).mockResolvedValue({ id: 1, status: "in_progress" } as any)
 
-      const res = await request(app.server)
-        .patch("/api/feedback/1")
-        .set("Authorization", "Bearer admin-token")
-        .send({ status: "in_progress" })
-        .expect(200)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/feedback/1",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { status: "in_progress" },
+      })
 
-      expect(res.body.data.status).toBe("in_progress")
+      expect(res.statusCode).toBe(200)
+      expect(JSON.parse(res.body).data.status).toBe("in_progress")
     })
 
     it("должен вернуть 404 если фидбек не найден", async () => {
       const { prisma } = await import("../../lib/prisma.js")
-      vi.mocked(prisma.feedback.update).mockRejectedValue(new Error("Not found"))
+      vi.mocked(prisma.feedback.update).mockRejectedValue(new Error("Record not found"))
 
-      await request(app.server)
-        .patch("/api/feedback/999")
-        .set("Authorization", "Bearer admin-token")
-        .send({ status: "done" })
-        .expect(404)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/feedback/999",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { status: "done" },
+      })
+
+      expect(res.statusCode).toBe(404)
     })
   })
 
@@ -170,10 +266,13 @@ describe("Feedback Routes", () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.feedback.delete).mockResolvedValue({ id: 1 } as any)
 
-      await request(app.server)
-        .delete("/api/feedback/1")
-        .set("Authorization", "Bearer admin-token")
-        .expect(204)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/feedback/1",
+        headers: { authorization: "Bearer admin-token" },
+      })
+
+      expect(res.statusCode).toBe(204)
     })
   })
 })

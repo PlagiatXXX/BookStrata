@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { requireRole } from "../../middleware/requireRole.js";
 import { ErrorCodes, createApiError } from "../../lib/api-response.js";
@@ -7,9 +7,11 @@ import {
   getAllFeedback,
   updateFeedbackStatus,
   deleteFeedback,
+  dismissFeedback,
 } from "./feedback.service.js";
+import { sendTelegramFeedbackNotification } from "../../lib/telegramNotifier.js";
 
-const FEEDBACK_TYPES = ["bug", "feature", "other"] as const;
+const FEEDBACK_TYPES = ["bug", "feature", "other", "survey"] as const;
 const FEEDBACK_STATUSES = [
   "pending",
   "in_progress",
@@ -25,10 +27,11 @@ export async function feedbackRoutes(fastify: FastifyInstance) {
       schema: {
         body: {
           type: "object",
-          required: ["type", "message"],
+          required: ["type"],
           properties: {
             type: { type: "string", enum: [...FEEDBACK_TYPES] },
-            message: { type: "string", minLength: 1, maxLength: 5000 },
+            rating: { type: "string", enum: ["great", "neutral", "bad"] },
+            message: { type: "string", maxLength: 5000 },
             pageUrl: { type: "string", maxLength: 1000 },
             userEmail: { type: "string", maxLength: 255 },
           },
@@ -36,26 +39,60 @@ export async function feedbackRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { type, message, pageUrl, userEmail } = request.body as {
+      const { type, message, rating, pageUrl, userEmail } = request.body as {
         type: string;
-        message: string;
+        message?: string;
+        rating?: string;
         pageUrl?: string;
         userEmail?: string;
       };
 
-      const userId = (request as FastifyRequest).user?.userId ?? null;
+      if (type !== "survey" && (!message || message.trim().length === 0)) {
+        return reply.code(400).send({
+          error: { code: "validation_error", message: "Сообщение обязательно" },
+        });
+      }
+
+      const user = request.user;
+      const userId = user?.userId ?? null;
 
       const feedback = await createFeedback({
         userId,
         type,
-        message,
+        message: message ?? "",
+        rating,
         pageUrl: pageUrl ?? null,
         userEmail: userEmail ?? null,
+      });
+
+      // Отправляем в Telegram асинхронно
+      Promise.resolve(
+        sendTelegramFeedbackNotification({
+          username: user?.username ?? null,
+          userEmail: userEmail ?? null,
+          userId,
+          rating: rating ?? null,
+          message: message ?? null,
+          pageUrl: pageUrl ?? null,
+        })
+      ).catch((err) => {
+        request.log.warn({ err }, "Не удалось отправить уведомление в Telegram");
       });
 
       return reply.code(201).send({ data: feedback });
     },
   );
+
+  // POST /api/feedback/dismiss — скрыть опрос для пользователя
+  fastify.post("/dismiss", async (request, reply) => {
+    const userId = request.user?.userId ?? null;
+    if (userId) {
+      await dismissFeedback(userId).catch((err) => {
+        request.log.warn({ err }, "Не удалось зафиксировать dismissFeedback");
+      });
+    }
+    return reply.code(200).send({ success: true });
+  });
 
   // GET /api/feedback — список обратной связи (только админ)
   fastify.get(
