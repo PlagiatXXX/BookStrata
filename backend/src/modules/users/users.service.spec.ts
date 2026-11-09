@@ -105,6 +105,7 @@ describe("users.service", () => {
               name: true,
             },
           },
+          feedbackDismissedAt: true,
           createdAt: true,
         },
       });
@@ -179,6 +180,7 @@ describe("users.service", () => {
           role: {
             select: { name: true },
           },
+          feedbackDismissedAt: true,
           createdAt: true,
         },
       });
@@ -240,6 +242,7 @@ describe("users.service", () => {
           role: {
             select: { name: true },
           },
+          feedbackDismissedAt: true,
           createdAt: true,
         },
       });
@@ -288,6 +291,7 @@ describe("users.service", () => {
           role: {
             select: { name: true },
           },
+          feedbackDismissedAt: true,
           createdAt: true,
         },
       });

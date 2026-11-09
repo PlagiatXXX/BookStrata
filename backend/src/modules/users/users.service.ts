@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/prisma.js";
+import { Prisma } from "@prisma/client";
 import {
   NotFoundError,
   ConflictError,
@@ -87,13 +88,19 @@ export async function updateUser(userId: number, input: UpdateUserInput) {
     }
   }
 
+  const data: Prisma.UserUpdateInput = {};
+  if (username) data.username = username;
+  if (bio !== undefined) data.bio = bio;
+  if (socialLinks !== undefined) {
+    data.socialLinks =
+      socialLinks === null
+        ? Prisma.JsonNull
+        : (socialLinks as unknown as Prisma.InputJsonValue);
+  }
+
   return prisma.user.update({
     where: { id: userId },
-    data: {
-      ...(username && { username }),
-      bio: bio ?? undefined,
-      socialLinks: socialLinks ?? undefined,
-    },
+    data,
     select: userProfileSelect,
   });
 }
