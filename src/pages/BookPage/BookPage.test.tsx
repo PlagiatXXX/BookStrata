@@ -56,6 +56,14 @@ vi.mock("@/lib/tierListApi", () => ({
   createTierList: vi.fn(),
 }));
 
+vi.mock("@/lib/affiliateLinks", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/affiliateLinks")>();
+  return {
+    ...actual,
+    getAffiliateLinks: vi.fn(actual.getAffiliateLinks),
+  };
+});
+
 vi.mock("sileo", () => ({
   sileo: { action: vi.fn(), success: vi.fn(), error: vi.fn(), dismiss: vi.fn() },
 }));
@@ -64,12 +72,14 @@ import { useBook } from "@/hooks/useBook";
 import { useBookshelf } from "@/hooks/useBookshelf";
 import { useAuth } from "@/hooks/useAuthContext";
 import { createTierList } from "@/lib/tierListApi";
+import { getAffiliateLinks } from "@/lib/affiliateLinks";
 import { sileo } from "sileo";
 
 const mockedUseBook = vi.mocked(useBook);
 const mockedUseBookshelf = vi.mocked(useBookshelf);
 const mockedUseAuth = vi.mocked(useAuth);
 const mockedUseParams = vi.mocked(useParams);
+const mockedGetAffiliateLinks = vi.mocked(getAffiliateLinks);
 
 const bookPageData: BookPageData = {
   book: {
@@ -681,6 +691,46 @@ describe("BookPage", () => {
     expect(ld).not.toHaveProperty("keywords");
     expect(ld).not.toHaveProperty("review");
     expect(ld.description).toBe("Эпопея о пустынной планете.");
+  });
+});
+
+describe("BookPage: блок «Где читать»", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedUseParams.mockReturnValue({ slug: "velikij-getssbi" });
+  });
+
+  it("скрывает блок «Где читать», если список ссылок пуст", () => {
+    mockedGetAffiliateLinks.mockReturnValue([]);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    expect(screen.queryByText("Где читать")).not.toBeInTheDocument();
+  });
+
+  it("отображает блок «Где читать» при наличии ссылок", () => {
+    mockedGetAffiliateLinks.mockReturnValue([
+      {
+        name: "Читай-город",
+        url: "https://www.chitai-gorod.ru/search?phrase=test",
+        iconName: "chitai-gorod",
+      },
+    ]);
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    renderPage();
+
+    expect(screen.getByText("Где читать")).toBeInTheDocument();
+    expect(screen.getByText("Читай-город")).toBeInTheDocument();
   });
 });
 

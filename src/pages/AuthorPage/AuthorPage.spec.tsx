@@ -14,11 +14,16 @@ vi.mock("@/lib/authorsApi", () => ({
   getAuthorBySlug: vi.fn(),
   getPopularAuthors: vi.fn(),
 }));
+vi.mock("@/lib/affiliateLinks", () => ({
+  getAuthorAffiliateLink: vi.fn(() => []),
+  getAffiliateLinks: vi.fn(() => []),
+}));
 // Header/Footer требуют AuthProvider — в тесте не нужны
 vi.mock("@/ui/Header", () => ({ Header: () => null }));
 vi.mock("@/ui/Footer", () => ({ Footer: () => null }));
 
 import { getAuthorBySlug, getPopularAuthors } from "@/lib/authorsApi";
+import { getAuthorAffiliateLink } from "@/lib/affiliateLinks";
 
 const fixture: AuthorPageData = {
   author: {
@@ -80,9 +85,11 @@ function renderPage(initialEntries: string[] = ["/authors/lev-tolstoy"]) {
 describe("AuthorPage", () => {
   beforeEach(() => {
     vi.mocked(getAuthorBySlug).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
   });
 
-  it("показывает имя, SEO-текст, количество книг и кнопку партнёрки", async () => {
+  it("показывает имя, SEO-текст, количество книг и кнопку перехода к книгам автора на сайте", async () => {
     vi.mocked(getAuthorBySlug).mockResolvedValue(fixture);
 
     renderPage();
@@ -92,10 +99,11 @@ describe("AuthorPage", () => {
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("книг на сайте")).toBeInTheDocument();
 
-    const link = screen.getByRole("link", { name: /читать|купить/i });
-    expect(link).toHaveAttribute("href", expect.stringContaining("chitai-gorod.ru"));
-    expect(link).toHaveAttribute("rel", expect.stringContaining("sponsored"));
-    expect(link).toHaveAttribute("target", "_blank");
+    // Партнёрка отключена: отображается внутренняя кнопка к библиографии, а не внешняя ссылка
+    const button = screen.getByRole("button", { name: /книги автора на сайте/i });
+    expect(button).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /читать|купить/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/ООО «ГРАМОТА»/)).not.toBeInTheDocument();
   });
 
   it("вызывает API с slug из маршрута", async () => {
@@ -179,13 +187,13 @@ describe("AuthorPage", () => {
     ]);
   });
 
-  it("автор без книг — кнопка партнёрки всё равно есть", async () => {
+  it("автор без книг — кнопка перехода к книгам всё равно есть", async () => {
     vi.mocked(getAuthorBySlug).mockResolvedValue({ ...fixture, books: [] });
 
     renderPage();
 
     expect(await screen.findByRole("heading", { name: "Лев Толстой" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /читать|купить/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /книги автора на сайте/i })).toBeInTheDocument();
   });
 
   it("404 от API → NotFoundPage", async () => {
@@ -233,6 +241,8 @@ describe("Библиография", () => {
 
   beforeEach(() => {
     vi.mocked(getAuthorBySlug).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
   });
 
   /** Карточки книг в порядке отображения */
@@ -384,6 +394,8 @@ describe("AuthorPage — лучшие/слабые книги и тир-лист
 
   beforeEach(() => {
     vi.mocked(getAuthorBySlug).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
   });
 
   it("блоки «Лучшие книги» и «Слабые книги» с рейтингами", async () => {
@@ -467,6 +479,8 @@ describe("AuthorPage — лучшие/слабые книги и тир-лист
 describe("Секции ручного контента", () => {
   beforeEach(() => {
     vi.mocked(getAuthorBySlug).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
   });
 
   it("hero: показывает badge, motto и hero-картинку", async () => {
@@ -729,7 +743,7 @@ describe("Секции ручного контента", () => {
     expect(document.querySelector(".ap-hero-glow")).not.toBeNull();
   });
 
-  it("hero: кнопка «Смотреть библиографию» скроллит к секции #bibliography", async () => {
+  it("hero: кнопка «Книги автора на сайте» скроллит к секции #bibliography", async () => {
     vi.mocked(getAuthorBySlug).mockResolvedValue(fixture);
     const scrollSpy = vi.fn();
     Element.prototype.scrollIntoView = scrollSpy;
@@ -739,12 +753,20 @@ describe("Секции ручного контента", () => {
 
     expect(document.getElementById("bibliography")).not.toBeNull();
     await userEvent.click(
-      screen.getByRole("button", { name: /Смотреть библиографию/ }),
+      screen.getByRole("button", { name: /книги автора на сайте/i }),
     );
     expect(scrollSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("hero: партнёрская кнопка «Читать книги автора» — рядом disclaimer «Реклама» (ФЗ-38)", async () => {
+  it("hero: если партнёрка включена, отображается кнопка «Читать книги автора» и disclaimer «Реклама» (ФЗ-38)", async () => {
+    vi.mocked(getAuthorAffiliateLink).mockReturnValue([
+      {
+        name: "Читай-город",
+        url: "https://www.chitai-gorod.ru/search?phrase=%D0%9B%D0%B5%D0%B2+%D0%A2%D0%BE%D0%BB%D1%81%D1%82%D0%BE%D0%B9&partnerId=1006433",
+        iconName: "chitai-gorod",
+        disclaimer: "Реклама. ООО «ГРАМОТА», ИНН 7706293136, partner ID: 1006433.",
+      },
+    ]);
     vi.mocked(getAuthorBySlug).mockResolvedValue(fixture);
 
     renderPage();
@@ -856,6 +878,8 @@ describe("Экранизации и пресса", () => {
 
   beforeEach(() => {
     vi.mocked(getAuthorBySlug).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReset();
+    vi.mocked(getAuthorAffiliateLink).mockReturnValue([]);
   });
 
   it("адаптации: пусто — секция скрыта, CTA при этом виден", async () => {

@@ -19,7 +19,8 @@ const STAT_LABEL_CLASS =
   "mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--ap-ink-muted)]";
 
 export function AuthorHero({ author, stats }: AuthorHeroProps) {
-  const [cta] = getAuthorAffiliateLink(author.name);
+  const affiliateLinks = getAuthorAffiliateLink(author.name);
+  const cta = affiliateLinks[0];
   const portrait = author.heroImageUrl;
 
   return (
@@ -32,12 +33,12 @@ export function AuthorHero({ author, stats }: AuthorHeroProps) {
             <img
               src={portrait}
               alt={`Портрет автора — ${author.name}`}
-              className="absolute inset-x-0 top-0 h-[52vh] min-h-[360px] max-h-[500px] w-full object-cover object-[center_20%] lg:inset-0 lg:h-full lg:max-h-none lg:object-[center_25%]"
+              className="absolute inset-x-0 top-0 h-[52vh] min-h-90 max-h-125 w-full object-cover object-[center_20%] lg:inset-0 lg:h-full lg:max-h-none lg:object-[center_25%]"
             />
             {/* Базовое затемнение картинки (и на мобильных, и на десктопе) */}
-            <div className="absolute inset-x-0 top-0 h-[52vh] min-h-[360px] max-h-[500px] w-full bg-black/25 lg:inset-0 lg:h-full lg:max-h-none" />
+            <div className="absolute inset-x-0 top-0 h-[52vh] min-h-90 max-h-125 w-full bg-black/25 lg:inset-0 lg:h-full lg:max-h-none" />
             {/* Дополнительный градиент на мобильных: плавный переход снизу портрета в цвет фона страницы */}
-            <div className="absolute inset-x-0 top-0 h-[52vh] min-h-[360px] max-h-[500px] w-full bg-linear-to-t from-(--ap-bg) via-(--ap-bg)/50 to-transparent lg:hidden" />
+            <div className="absolute inset-x-0 top-0 h-[52vh] min-h-90 max-h-125 w-full bg-linear-to-t from-(--ap-bg) via-(--ap-bg)/50 to-transparent lg:hidden" />
             {/* Затемнения на десктопе: слева (для текста) + снизу (стык со следующей секцией) */}
             <div className="hidden lg:block absolute inset-0 bg-linear-to-r from-(--ap-bg) via-(--ap-bg)/75 to-transparent" />
             <div className="hidden lg:block absolute inset-0 bg-linear-to-t from-(--ap-bg) via-transparent to-transparent" />
@@ -108,28 +109,44 @@ export function AuthorHero({ author, stats }: AuthorHeroProps) {
 
           <div className="flex flex-col gap-2 pt-4 sm:pt-1">
             <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
-              <a
-                href={cta.url}
-                target="_blank"
-                rel="sponsored nofollow noopener"
-                className="inline-flex min-h-[44px] w-full sm:w-fit items-center justify-center rounded-(--ap-radius) bg-(--ap-gold) px-5 py-3 sm:py-2.5 text-xs sm:text-[11px] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-(--ap-bg) transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
-              >
-                Читать книги автора
-              </a>
-              <button
-                type="button"
-                onClick={() =>
-                  document
-                    .getElementById("bibliography")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
-                className="inline-flex min-h-[44px] w-full sm:w-fit items-center justify-center rounded-(--ap-radius) border border-(--ap-gold)/40 bg-(--ap-surface)/40 px-5 py-3 sm:py-2.5 text-xs sm:text-[11px] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-(--ap-gold) backdrop-blur-xs transition-all duration-150 hover:bg-(--ap-gold-soft) active:scale-[0.98]"
-              >
-                Смотреть библиографию ↓
-              </button>
+              {cta ? (
+                <>
+                  <a
+                    href={cta.url}
+                    target="_blank"
+                    rel="sponsored nofollow noopener"
+                    className="inline-flex min-h-11 w-full sm:w-fit items-center justify-center rounded-(--ap-radius) bg-(--ap-gold) px-5 py-3 sm:py-2.5 text-xs sm:text-[11px] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-(--ap-bg) transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+                  >
+                    Читать книги автора
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document
+                        .getElementById("bibliography")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }
+                    className="inline-flex min-h-11 w-full sm:w-fit items-center justify-center rounded-(--ap-radius) border border-(--ap-gold)/40 bg-(--ap-surface)/40 px-5 py-3 sm:py-2.5 text-xs sm:text-[11px] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-(--ap-gold) backdrop-blur-xs transition-all duration-150 hover:bg-(--ap-gold-soft) active:scale-[0.98]"
+                  >
+                    Смотреть библиографию ↓
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById("bibliography")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }
+                  className="inline-flex min-h-11 w-full sm:w-fit items-center justify-center rounded-(--ap-radius) bg-(--ap-gold) px-5 py-3 sm:py-2.5 text-xs sm:text-[11px] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.18em] text-(--ap-bg) transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+                >
+                  Книги автора на сайте ↓
+                </button>
+              )}
             </div>
-            {/* Признак рекламы рядом с партнёрской кнопкой (ФЗ-38 «О рекламе») */}
-            {cta.disclaimer && (
+            {/* Признак рекламы рядом с партнёрской кнопкой (ФЗ-38 «О рекламе») — только при наличии cta */}
+            {cta?.disclaimer && (
               <p className="text-[10px] leading-relaxed text-(--ap-ink-muted)">
                 {cta.disclaimer}
               </p>

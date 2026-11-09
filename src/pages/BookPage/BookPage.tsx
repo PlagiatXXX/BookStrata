@@ -124,6 +124,7 @@ export default function BookPage() {
   const rating = book.rating;
   const contextChain = book.contextChain ?? [];
   const hasTags = book.tags.length > 0;
+  const affiliateLinks = getAffiliateLinks(book);
 
   // Единый каталог (19.08): переход с тир-листа (?from=) — в крошках
   // показываем путь «Тир-лист → Книга» вместо звена по жанру
@@ -592,35 +593,37 @@ export default function BookPage() {
                   <BookRatingPanel bookId={book.id} defaultRating={rating} />
 
                   {/* «Где читать» — аффилиат-ссылки на Читай Город и ЛитРес */}
-                  <div>
-                    <h3 className="bp-label-caps text-white/80 tracking-widest mb-4">
-                      Где читать
-                    </h3>
-                    <div className="flex flex-col gap-3">
-                      {getAffiliateLinks(book).map((link) => (
-                        <div key={link.name}>
-                          <a
-                            href={link.stub ? undefined : link.url}
-                            target="_blank"
-                            rel="noopener noreferrer nofollow"
-                            onClick={
-                              link.stub ? (e) => e.preventDefault() : undefined
-                            }
-                            className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group overflow-hidden"
-                          >
-                            <span className="text-[15px] text-white font-medium ml-2">
-                              {link.name}
-                            </span>
-                          </a>
-                          {link.disclaimer && (
-                            <p className="text-[9px] text-white/20 mt-1 leading-tight px-1">
-                              {link.disclaimer}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                  {affiliateLinks.length > 0 && (
+                    <div>
+                      <h3 className="bp-label-caps text-white/80 tracking-widest mb-4">
+                        Где читать
+                      </h3>
+                      <div className="flex flex-col gap-3">
+                        {affiliateLinks.map((link) => (
+                          <div key={link.name}>
+                            <a
+                              href={link.stub ? undefined : link.url}
+                              target="_blank"
+                              rel="noopener noreferrer nofollow"
+                              onClick={
+                                link.stub ? (e) => e.preventDefault() : undefined
+                              }
+                              className="bp-glass-panel p-3 rounded-lg flex items-center gap-4 hover:bg-white/10 border border-white/10 transition-all hover:shadow-lg group overflow-hidden"
+                            >
+                              <span className="text-[15px] text-white font-medium ml-2">
+                                {link.name}
+                              </span>
+                            </a>
+                            {link.disclaimer && (
+                              <p className="text-[9px] text-white/20 mt-1 leading-tight px-1">
+                                {link.disclaimer}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Telegram — видео о возможностях сервиса */}
                   <a

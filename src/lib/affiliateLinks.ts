@@ -5,6 +5,8 @@
 const CHITAI_GOROD_PARTNER_ID = "1006433";
 // const LITRES_ERID = "2VfnxyNkZrY"; // ЛитРес — скрыт временно
 
+const AFFILIATES_ENABLED = false;
+
 interface BookForAffiliate {
   title: string;
   author?: string | null;
@@ -24,8 +26,9 @@ export interface AffiliateLink {
  * Генерирует аффилиат-ссылки для «Где читать»
  */
 export function getAffiliateLinks(book: BookForAffiliate): AffiliateLink[] {
-  const query = buildSearchQuery(book);
+  if (!AFFILIATES_ENABLED) return [];
 
+  const query = buildSearchQuery(book);
   return [
     {
       name: "Читай-город",
@@ -33,13 +36,6 @@ export function getAffiliateLinks(book: BookForAffiliate): AffiliateLink[] {
       iconName: "chitai-gorod",
       disclaimer: "Реклама. ООО «ГРАМОТА», ИНН 7706293136, partner ID: 1006433.",
     },
-    // ЛитРес — скрыт временно
-    // {
-    //   name: "ЛитРес",
-    //   url: buildLitresLink(query),
-    //   iconName: "litres",
-    //   disclaimer: "Реклама. ООО «ЛИТРЕС», ИНН 7719571260, erid: 2VfnxyNkZrY.",
-    // },
   ];
 }
 
@@ -47,7 +43,7 @@ function buildSearchQuery(book: BookForAffiliate): string {
   const parts: string[] = [];
   if (book.title) parts.push(book.title);
   if (book.author) parts.push(book.author);
-  // URLSearchParams сам кодирует —encodeURIComponent не нужен
+  // URLSearchParams сам кодирует — encodeURIComponent не нужен
   return parts.join(" ");
 }
 
@@ -55,6 +51,8 @@ function buildSearchQuery(book: BookForAffiliate): string {
  * Ссылки «где читать» для страницы автора /authors/:slug — поиск по имени.
  */
 export function getAuthorAffiliateLink(authorName: string): AffiliateLink[] {
+  if (!AFFILIATES_ENABLED) return [];
+
   return [
     {
       name: "Читай-город",
@@ -69,7 +67,7 @@ export function getAuthorAffiliateLink(authorName: string): AffiliateLink[] {
  * Читай-город — поиск по названию/автору с partnerId
  * Формат из виджета: https://www.chitai-gorod.ru/search?phrase={query}&utm_source=affiliate&utm_medium=cpa&partnerId=...
  */
-function buildChitaiGorodLink(query: string): string {
+export function buildChitaiGorodLink(query: string): string {
   const params = new URLSearchParams({
     phrase: query,
     utm_source: "affiliate",
@@ -80,16 +78,3 @@ function buildChitaiGorodLink(query: string): string {
 
   return `https://www.chitai-gorod.ru/search?${params.toString()}`;
 }
-
-// ЛитРес — скрыт временно
-// function buildLitresLink(query: string): string {
-//   const params = new URLSearchParams({
-//     q: query,
-//     erid: LITRES_ERID,
-//     utm_source: "advcake",
-//     utm_medium: "cpa",
-//     utm_campaign: "affiliate",
-//   });
-//
-//   return `https://www.litres.ru/search/?${params.toString()}`;
-// }
