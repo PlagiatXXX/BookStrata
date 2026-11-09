@@ -5,6 +5,7 @@ import { apiLogin, apiRegister, setAuthToken } from "@/lib/authApi";
 import { StorageService } from "@/lib/storage";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { YM_GOALS } from "@/lib/ym-goals";
+import { reachYmGoal } from "@/lib/ym";
 import { useAuth } from "@/hooks/useAuthContext";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
@@ -150,7 +151,7 @@ export function AuthForm() {
         // Мгновенно ставим пользователя — ProtectedRoute увидит isAuthenticated=true
         // до первого кадра и не отправит обратно на /auth (гонка с apiGetMe).
         loginWithData({ userId: result.userId, username: result.username, role: result.role })
-        window.ym?.(109755750, 'reachGoal', YM_GOALS.LOGIN)
+        reachYmGoal(YM_GOALS.LOGIN)
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })
       } else {
@@ -165,7 +166,7 @@ export function AuthForm() {
         // Мгновенно ставим пользователя — ProtectedRoute увидит isAuthenticated=true
         // до первого кадра и не отправит обратно на /auth (гонка с apiGetMe).
         loginWithData({ userId: result.userId, username: result.username })
-        window.ym?.(109755750, 'reachGoal', YM_GOALS.REGISTER)
+        reachYmGoal(YM_GOALS.REGISTER)
         pushDataLayerEvent("sign_up", { method: "email" })
         navigate(redirectTo)
         dispatch({ type: "SUBMIT_SUCCESS" })

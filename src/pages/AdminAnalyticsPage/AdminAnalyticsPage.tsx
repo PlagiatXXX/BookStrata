@@ -3,66 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, BarChart3, Search, Filter, Users, TrendingUp, Repeat, Activity } from 'lucide-react'
 import { apiGetAnalytics, apiGetAnalyticsSummary, apiGetAnalyticsMetrics, apiGetAnalyticsFunnel, apiGetAnalyticsRetention, type AnalyticsEvent } from '@/lib/analyticsApi'
-
-const EVENT_LABELS: Record<string, string> = {
-  page_view: 'Просмотр страницы',
-  user_register: 'Регистрация',
-  login: 'Вход в систему',
-  logout: 'Выход',
-  session_heartbeat: 'Онлайн на странице',
-  tierlist_create: 'Создание тир-листа',
-  tierlist_save: 'Сохранение тир-листа',
-  tierlist_fork: 'Форк тир-листа',
-  tierlist_like: 'Лайк тир-листа',
-  tierlist_publish: 'Публикация тир-листа',
-  tierlist_unpublish: 'Скрытие тир-листа',
-  book_add: 'Добавление книг',
-  book_placed: 'Книга на полке',
-  book_unranked: 'Книга в пуле (без тира)',
-  book_search: 'Поиск книг',
-  tier_create: 'Создание полки',
-  tier_rename: 'Настройка полки',
-  ai_librarian_message: 'Сообщение Букстражу',
-  ai_avatar: 'Генерация аватара',
-  donate_page_open: 'Открытие страницы угощения',
-  donate_copy: 'Копирование реквизитов',
-  review_write: 'Написание ревью',
-  battle_participate: 'Участие в битве',
-  battle_win: 'Победа в битве',
-  export_png: 'Экспорт в PNG',
-  share_clicked: 'Поделились',
-  'auth.login_header': 'Клик «Войти» в шапке',
-  'auth.tab_register': 'Вкладка регистрации',
-  'auth.tab_login': 'Вкладка входа',
-  'auth.submit_login': 'Отправка формы входа',
-  'auth.submit_register': 'Отправка формы регистрации',
-}
-
-const EVENT_COLORS: Record<string, string> = {
-  page_view: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  user_register: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  login: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-  session_heartbeat: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
-  tierlist_create: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-  tierlist_save: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  tierlist_fork: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
-  tierlist_like: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
-  tierlist_publish: 'bg-teal-500/10 text-teal-400 border-teal-500/30',
-  tierlist_unpublish: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30',
-  book_add: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  book_placed: 'bg-lime-500/10 text-lime-400 border-lime-500/30',
-  book_unranked: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
-  book_search: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-  tier_create: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
-  tier_rename: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
-  ai_librarian_message: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
-  donate_page_open: 'bg-green-500/10 text-green-400 border-green-500/30',
-  'auth.login_header': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-  'auth.tab_register': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  'auth.tab_login': 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  'auth.submit_login': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-  'auth.submit_register': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-}
+import { formatEventLabel, getEventBadgeStyle, ALL_EVENT_OPTIONS } from '@/lib/analyticsEvents'
 
 function renderMetaSummary(event: string, meta?: Record<string, unknown> | null) {
   if (!meta || typeof meta !== 'object') return null
@@ -96,10 +37,6 @@ function renderMetaSummary(event: string, meta?: Record<string, unknown> | null)
     return <span className="text-[11px] text-teal-400">🌐 {meta.title}</span>
   }
   return null
-}
-
-function getEventStyle(event: string): string {
-  return EVENT_COLORS[event] || 'bg-white/5 text-gray-300 border-gray-700'
 }
 
 /** Плавный градиент от зелёного к красному в зависимости от значения (0–100%) */
@@ -346,7 +283,7 @@ export default function AdminAnalyticsPage() {
               <div className="flex flex-wrap gap-2">
                 {summary.todayByEvent.slice(0, 6).map(({ event, count }) => (
                   <span key={event} className="inline-flex items-center gap-1.5 rounded-md border border-gray-700 bg-[#1a1a1a] px-2.5 py-1 text-xs">
-                    <span className="font-medium text-[#f6f1e8]">{EVENT_LABELS[event] || event}</span>
+                    <span className="font-medium text-[#f6f1e8]">{formatEventLabel(event)}</span>
                     <span className="text-gray-400">{count}</span>
                   </span>
                 ))}
@@ -381,8 +318,8 @@ export default function AdminAnalyticsPage() {
               className="rounded-lg border border-gray-700 bg-[#1a1a1a] px-3 py-2 text-sm text-[#f6f1e8] outline-none focus:border-violet-500"
             >
               <option value="">Все события</option>
-              {Object.entries(EVENT_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
+              {ALL_EVENT_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
               ))}
             </select>
 
@@ -437,8 +374,8 @@ export default function AdminAnalyticsPage() {
                       <tr key={event.id} className="hover:bg-white/5 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1 items-start">
-                            <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-medium border ${getEventStyle(event.event)}`}>
-                              {EVENT_LABELS[event.event] || event.event}
+                            <span className={`inline-block px-2.5 py-1 rounded-md text-xs font-medium border ${getEventBadgeStyle(event.event)}`}>
+                              {formatEventLabel(event.event)}
                             </span>
                             {renderMetaSummary(event.event, event.meta)}
                           </div>

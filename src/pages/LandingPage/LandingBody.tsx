@@ -7,7 +7,6 @@ import { Fur } from "@/components/Fur"
 import { Pointer } from "@/components/ui/pointer"
 import { BorderBeam } from "@/components/ui/border-beam"
 import { DonateModal } from "@/components/DonateModal/DonateModal"
-import { apiTrackEvent } from "@/lib/analyticsApi"
 import { scenarios, plans, audienceItems, screenshots, type ScreenshotItem } from "./landingData"
 import { proxyImageUrl } from "@/utils/imageProxy"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
@@ -115,7 +114,7 @@ function ScreenshotCard({ title, description, gradient, icon, index, src, videoS
     <RevealBox className={`group ${hasMedia ? "cursor-pointer" : ""}`}>
       <div style={{ animationDelay: `${index * 0.1}s` }} onClick={onOpen}>
         <div
-          className={`relative overflow-hidden rounded-2xl shadow-md group-hover:shadow-xl transition-shadow duration-300 bg-[rgba(15,30,50,0.6)] aspect-[4/3] flex items-center justify-center ${hasMedia ? "" : gradient}`}
+          className={`relative overflow-hidden rounded-2xl shadow-md group-hover:shadow-xl transition-shadow duration-300 bg-[rgba(15,30,50,0.6)] aspect-4/3 flex items-center justify-center ${hasMedia ? "" : gradient}`}
         >
           {videoSrc && (
             <video
@@ -179,7 +178,7 @@ function Lightbox({ screenshot, onClose }: {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-200 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
@@ -335,7 +334,7 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="min-h-[260px] rounded-sm bg-white/5 animate-pulse" />
+                <div key={i} className="min-h-65 rounded-sm bg-white/5 animate-pulse" />
               ))}
             </div>
           )}
@@ -518,7 +517,7 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
 
           <div className="grid sm:grid-cols-3 gap-6">
             {audienceItems.map((item, i) => (
-              <RevealBox key={i} className="p-8 text-center rounded-2xl border border-white/[0.06] bg-[rgba(15,30,50,0.4)] backdrop-blur-[12px] hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-300">
+              <RevealBox key={i} className="p-8 text-center rounded-2xl border border-white/6 bg-[rgba(15,30,50,0.4)] backdrop-blur-md hover:border-white/12 hover:-translate-y-0.5 transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl bg-[rgba(6,188,249,0.1)] text-[#06bcf9] flex items-center justify-center mx-auto mb-4">
                   <item.icon size={24} />
                 </div>
@@ -648,7 +647,7 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
 
                 <button
                   data-analytics={plan.donate ? "cta.landing.donate" : "cta.landing.start_now"}
-                  onClick={() => plan.donate ? (apiTrackEvent('donate_page_open'), setIsDonateOpen(true)) : navigate("/tier-lists/new")}
+                  onClick={() => plan.donate ? setIsDonateOpen(true) : navigate("/tier-lists/new")}
                   className={`landing-pricing__cta ${plan.donate ? "landing-pricing__cta--donate" : ""}`}
                   type="button"
                 >

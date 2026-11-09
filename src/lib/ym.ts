@@ -26,6 +26,23 @@ export function isAnalyticsHost(hostname: string): boolean {
   return ALLOWED_HOSTNAMES.has(hostname);
 }
 
+export const DEFAULT_YM_COUNTER_ID = 109755750;
+
+export function getYmCounterId(): number {
+  const counterId = import.meta.env.VITE_YM_COUNTER_ID;
+  return counterId ? Number(counterId) : DEFAULT_YM_COUNTER_ID;
+}
+
+export function reachYmGoal(goalId: number): void {
+  try {
+    if (typeof window !== "undefined" && typeof window.ym === "function") {
+      window.ym(getYmCounterId(), "reachGoal", goalId);
+    }
+  } catch {
+    // Аналитика не должна ломать UX — тихий fallback
+  }
+}
+
 export function initYandexMetrika(): void {
   try {
     const counterId = import.meta.env.VITE_YM_COUNTER_ID;

@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createTierList, saveTierListAtomic, updateTierListTheme } from "@/lib/tierListApi";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { YM_GOALS } from "@/lib/ym-goals";
+import { reachYmGoal } from "@/lib/ym";
 import { apiTrackEvent } from "@/lib/analyticsApi";
 import { getAtomicSavePayload, type AtomicSavePayload } from "@/utils/saveDiff";
 import { stableStringify } from "@/utils/stableStringify";
@@ -123,16 +124,7 @@ export function useTierEditorSave({
         // Отправка в Яндекс.Метрику: успешное создание нового тир-листа.
         // Цель в Метрике: тип «JavaScript-событие», идентификатор tierlist_create.
         if (!import.meta.env.DEV && !window.__PRERENDER__) {
-          try {
-            if (typeof window.ym === "function") {
-              const counterId = import.meta.env.VITE_YM_COUNTER_ID as string | undefined;
-              if (counterId) {
-                window.ym(Number(counterId), "reachGoal", YM_GOALS.TIERLIST_CREATE);
-              }
-            }
-          } catch {
-            // Тихий fallback — аналитика не должна ломать сохранение
-          }
+          reachYmGoal(YM_GOALS.TIERLIST_CREATE);
         }
 
         // Обновляем URL на slug (человекочитаемый), если он есть
