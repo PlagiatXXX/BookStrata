@@ -114,6 +114,7 @@ export const NewsSection = memo(() => {
               <p className="text-(--ink-1) text-sm mb-4 break-words">{article.excerpt}</p>
               <Link
                 to={`/news/${article.id}`}
+                aria-label={`Читать новость: ${article.title}`}
                 className="text-(--ink-0) text-xs font-semibold uppercase tracking-[0.12em] border-b border-(--line-soft) hover:border-(--line-strong) cursor-pointer"
               >
                 Открыть

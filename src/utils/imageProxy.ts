@@ -18,7 +18,7 @@ const S3_PREFIX = "https://s3.twcstorage.ru/bookstrata/";
 const CDN_PREFIX = "https://re406cj9uj.cdn.twcstorage.ru/";
 
 /** Допустимые ширины ресайза (защита от перебора S3 разными размерами) */
-const ALLOWED_RESIZE_WIDTHS = [64, 300, 730] as const;
+const ALLOWED_RESIZE_WIDTHS = [64, 300, 400, 730] as const;
 type AllowedResizeWidth = typeof ALLOWED_RESIZE_WIDTHS[number];
 
 function clampWidth(width: number): AllowedResizeWidth {

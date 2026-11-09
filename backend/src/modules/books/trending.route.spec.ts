@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 vi.mock("../../lib/prisma.js", () => ({
@@ -23,8 +22,13 @@ describe("GET /api/books/trending", () => {
     return instance;
   }
 
-  beforeEach(async () => { vi.clearAllMocks(); app = await createApp(); });
-  afterEach(async () => { await app.close(); });
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    app = await createApp();
+  });
+  afterEach(async () => {
+    await app.close();
+  });
 
   it("отдаёт трендовые книги с cache-заголовком", async () => {
     const { prisma } = await import("../../lib/prisma.js");
@@ -32,17 +36,25 @@ describe("GET /api/books/trending", () => {
       { id: 1, slug: "dune", title: "Дюна", author: "Герберт", coverImageUrl: "/c/dune.jpg" },
     ] as any);
 
-    const res = await request(app.server).get("/api/books/trending");
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/trending",
+    });
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.books).toHaveLength(1);
+    const body = res.json();
+    expect(body.data.books).toHaveLength(1);
     expect(res.headers["cache-control"]).toContain("max-age=300");
   });
 
   it("отдаёт пустой массив когда нет трендовых книг", async () => {
     const { prisma } = await import("../../lib/prisma.js");
     vi.mocked(prisma.book.findMany).mockResolvedValue([]);
-    const res = await request(app.server).get("/api/books/trending");
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/trending",
+    });
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.books).toEqual([]);
+    const body = res.json();
+    expect(body.data.books).toEqual([]);
   });
 });

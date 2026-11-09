@@ -20,8 +20,7 @@ const DEFAULT_ACCENT = 'var(--accent-main)';
 function buildCollectionSrcSet(coverImage: string): string {
   return [
     `${proxyImageUrl(coverImage, 400)} 400w`,
-    `${proxyImageUrl(coverImage, 640)} 640w`,
-    `${proxyImageUrl(coverImage, 800)} 800w`,
+    `${proxyImageUrl(coverImage, 730)} 730w`,
     `${proxyImageUrl(coverImage)} 1200w`,
   ].join(', ');
 }

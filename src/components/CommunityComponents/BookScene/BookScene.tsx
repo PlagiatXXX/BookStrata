@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useRef, useCallback, useEffect, useMemo, useLayoutEffect, memo, type RefObject } from "react";
+import { useRef, useCallback, useEffect, useMemo, memo, type RefObject } from "react";
 import { useBookController } from "./useBookController";
 import "./BookScene.css";
 
@@ -39,49 +39,25 @@ function getDailyAphorism(): { text: string; pageNumber: number } {
   return { text: APHORISMS[index], pageNumber }
 }
 
+function getQuoteTypography(textLength: number): { fontSize: number; dropCapSize: number } {
+  if (textLength > 120) return { fontSize: 13, dropCapSize: 32 };
+  if (textLength > 95) return { fontSize: 14, dropCapSize: 34 };
+  if (textLength > 75) return { fontSize: 15, dropCapSize: 36 };
+  return { fontSize: 16, dropCapSize: 38 };
+}
+
 interface BookSceneProps {
   containerRef: RefObject<HTMLDivElement | null>;
 }
 
 const BookScene = memo(({ containerRef }: BookSceneProps) => {
   const dailyAphorism = useMemo(() => getDailyAphorism(), [])
+  const { fontSize, dropCapSize } = useMemo(
+    () => getQuoteTypography(dailyAphorism.text.length),
+    [dailyAphorism.text.length],
+  )
   const rootRef = useRef<HTMLDivElement>(null);
-  const quoteRef = useRef<HTMLDivElement>(null);
-  const dropCapRef = useRef<HTMLSpanElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useLayoutEffect(() => {
-    const el = quoteRef.current;
-    const dropCap = dropCapRef.current;
-    if (!el || !dropCap) return;
-
-    el.style.fontSize = '20px';
-    el.style.lineHeight = '1.6';
-
-    if (el.scrollHeight <= el.clientHeight) {
-      dropCap.style.fontSize = '48px';
-      return;
-    }
-
-    let low = 10;
-    let high = 19;
-    let best = 20;
-
-    while (low <= high) {
-      const mid = Math.floor((low + high) / 2);
-      el.style.fontSize = `${mid}px`;
-
-      if (el.scrollHeight <= el.clientHeight) {
-        best = mid;
-        low = mid + 1;
-      } else {
-        high = mid - 1;
-      }
-    }
-
-    el.style.fontSize = `${best}px`;
-    dropCap.style.fontSize = `${best * 2.4}px`;
-  }, [dailyAphorism.text]);
 
   const {
     rotateX,
@@ -208,11 +184,10 @@ const BookScene = memo(({ containerRef }: BookSceneProps) => {
             className="secondPage"
             style={{ transform: secondPageTransform }}
           >
-            <div className="quote" ref={quoteRef}>
+            <div className="quote" style={{ fontSize: `${fontSize}px` }}>
               <span
-                ref={dropCapRef}
                 className="quote-drop-cap"
-                style={{ fontSize: 48 }}
+                style={{ fontSize: `${dropCapSize}px` }}
               >
                 {dailyAphorism.text[0]}
               </span>

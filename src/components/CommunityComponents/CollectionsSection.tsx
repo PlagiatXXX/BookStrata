@@ -71,9 +71,10 @@ export const CollectionsSection = memo(() => {
                     className="flex-1 h-20 bg-(--bg-0) border border-(--line-soft) rounded-sm overflow-hidden"
                   >
                     <RetryableImage
-                      alt={`Cover ${idx + 1}`}
+                      alt={`${collection.title} — книга ${idx + 1}`}
                       className="w-full h-full object-cover"
-                      src={img}
+                      src={proxyImageUrl(img, 300)}
+                      loading="lazy"
                       fallbackSrc="/images/placeholder.svg"
                     />
                   </div>
@@ -84,14 +85,15 @@ export const CollectionsSection = memo(() => {
                 <RetryableImage
                   alt={collection.title}
                   className="w-full h-full object-cover"
-                  src={proxyImageUrl(collection.coverImageUrl)}
+                  src={proxyImageUrl(collection.coverImageUrl, 300)}
+                  loading="lazy"
                   fallbackSrc="/images/placeholder.svg"
                 />
               </div>
             ) : null}
-            <h4 className="community-heading text-xl font-bold leading-tight mb-3">
+            <h3 className="community-heading text-xl font-bold leading-tight mb-3">
               {collection.title}
-            </h4>
+            </h3>
             <p className="text-(--ink-1) text-sm leading-relaxed line-clamp-3">
               {collection.excerpt}
             </p>

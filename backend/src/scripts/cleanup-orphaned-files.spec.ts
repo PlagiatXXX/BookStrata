@@ -137,6 +137,7 @@ describe("cleanup-orphaned-files", () => {
         },
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const urls = await collectUsedUrls(mockPrisma as any);
 
       // Проверяем ключевые поля, которые ранее были пропущены

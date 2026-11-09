@@ -36,7 +36,13 @@ export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
+      <div
+        role="tabpanel"
+        id={`panel-${activeCategory}`}
+        aria-labelledby={`tab-${activeCategory}`}
+        aria-busy="true"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8"
+      >
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="brutal-card brutal-border animate-pulse bg-(--bg-1)" />
         ))}
@@ -46,7 +52,12 @@ export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => 
 
   if (filteredCollections.length === 0) {
     return (
-      <div className="col-span-1 sm:col-span-2 lg:col-span-4 flex flex-col items-center justify-center p-12 text-center bg-(--bg-1) border border-dashed border-(--line-soft) rounded-md animate-fade-in">
+      <div
+        role="tabpanel"
+        id={`panel-${activeCategory}`}
+        aria-labelledby={`tab-${activeCategory}`}
+        className="col-span-1 sm:col-span-2 lg:col-span-4 flex flex-col items-center justify-center p-12 text-center bg-(--bg-1) border border-dashed border-(--line-soft) rounded-md animate-fade-in"
+      >
         <p className="text-(--ink-1) font-medium mb-2">Подборок пока нет</p>
         <p className="text-xs text-(--ink-1) opacity-70">
           В этой категории пока нет подборок, но они скоро появятся
@@ -56,12 +67,17 @@ export const CollectionGrid = memo(({ activeCategory }: CollectionGridProps) => 
   }
 
   return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
-        {filteredCollections.map((collection, index) => (
+    <div
+      role="tabpanel"
+      id={`panel-${activeCategory}`}
+      aria-labelledby={`tab-${activeCategory}`}
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8"
+    >
+      {filteredCollections.map((collection, index) => (
         <CollectionCard
           key={collection.id}
           collection={collection}
-          priority={index < 4}
+          priority={index === 0}
         />
       ))}
     </div>

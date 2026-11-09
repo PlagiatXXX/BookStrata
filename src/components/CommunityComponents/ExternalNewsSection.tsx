@@ -1,4 +1,4 @@
-import { memo } from "react"
+import { memo, useState, useEffect, useRef } from "react"
 import { ExternalLink, Globe, BookOpen } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { getExternalNews, type ExternalNewsItem } from "@/lib/externalNewsApi"
@@ -92,6 +92,27 @@ function NewsCard({ item }: { item: ExternalNewsItem }) {
 }
 
 export const ExternalNewsSection = memo(() => {
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const [isVisible, setIsVisible] = useState(() => typeof IntersectionObserver === "undefined")
+
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el || typeof IntersectionObserver === "undefined") {
+      return
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "300px" },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   const {
     data: news,
     isLoading,
@@ -99,38 +120,41 @@ export const ExternalNewsSection = memo(() => {
   } = useQuery<ExternalNewsItem[]>({
     queryKey: ["external-news"],
     queryFn: fetchExternalNews,
+    enabled: isVisible,
     staleTime: 10 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   })
 
-  if (isLoading) {
+  if (!isVisible || isLoading) {
     return (
-      <Reveal as="section" className="mb-12">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
-              Книжные новости мира
-            </h2>
-            <p className="text-(--ink-1) text-sm mt-1">
-              The Guardian • Год Литературы
-            </p>
-          </div>
-        </div>
-        <div className="community-rule mb-6" />
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="brutal-card brutal-border overflow-hidden animate-pulse">
-              <div className="aspect-[16/9] bg-(--bg-0)" />
-              <div className="p-5 space-y-3">
-                <div className="h-3 bg-(--bg-1) rounded w-20" />
-                <div className="h-4 bg-(--bg-1) rounded w-full" />
-                <div className="h-4 bg-(--bg-1) rounded w-3/4" />
-              </div>
+      <div ref={sectionRef}>
+        <Reveal as="section" className="mb-12">
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
+                Книжные новости мира
+              </h2>
+              <p className="text-(--ink-1) text-sm mt-1">
+                The Guardian • Год Литературы
+              </p>
             </div>
-          ))}
-        </div>
-      </Reveal>
+          </div>
+          <div className="community-rule mb-6" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="brutal-card brutal-border overflow-hidden animate-pulse">
+                <div className="aspect-[16/9] bg-(--bg-0)" />
+                <div className="p-5 space-y-3">
+                  <div className="h-3 bg-(--bg-1) rounded w-20" />
+                  <div className="h-4 bg-(--bg-1) rounded w-full" />
+                  <div className="h-4 bg-(--bg-1) rounded w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+      </div>
     )
   }
 
@@ -139,28 +163,30 @@ export const ExternalNewsSection = memo(() => {
   }
 
   return (
-    <Reveal as="section" className="mb-12">
-      <div className="flex items-end justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <BookOpen size={28} className="text-(--accent-main) shrink-0" />
-          <div>
-            <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
-              Книжные новости мира
-            </h2>
-            <p className="text-(--ink-1) text-sm mt-1">
-              The Guardian • Год Литературы
-            </p>
+    <div ref={sectionRef}>
+      <Reveal as="section" className="mb-12">
+        <div className="flex items-end justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <BookOpen size={28} className="text-(--accent-main) shrink-0" />
+            <div>
+              <h2 className="community-heading text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
+                Книжные новости мира
+              </h2>
+              <p className="text-(--ink-1) text-sm mt-1">
+                The Guardian • Год Литературы
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="community-rule mb-6" />
+        <div className="community-rule mb-6" />
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-        {news.map((item) => (
-          <NewsCard key={item.id} item={item} />
-        ))}
-      </div>
-    </Reveal>
+          {news.map((item) => (
+            <NewsCard key={item.id} item={item} />
+          ))}
+        </div>
+      </Reveal>
+    </div>
   )
 })

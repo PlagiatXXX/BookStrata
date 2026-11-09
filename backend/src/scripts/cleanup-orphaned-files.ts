@@ -43,6 +43,7 @@ export const DRY_RUN = !process.argv.includes("--delete");
 /**
  * Все URL, на которые ссылается БД (в любом поле с картинками).
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function collectUsedUrls(client: any = prisma): Promise<Set<string>> {
   const urls = new Set<string>();
   const add = (u: string | null | undefined) => {
@@ -103,30 +104,30 @@ export async function collectUsedUrls(client: any = prisma): Promise<Set<string>
     client.achievement.findMany({ select: { iconUrl: true } }),
   ]);
 
-  books.forEach((b: any) => {
+  books.forEach((b: { coverImageUrl?: string | null; ogImageUrl?: string | null; animatedCoverUrl?: string | null }) => {
     add(b.coverImageUrl);
     add(b.ogImageUrl);
     add(b.animatedCoverUrl);
   });
-  authors.forEach((a: any) => add(a.heroImageUrl));
-  collections.forEach((c: any) => {
+  authors.forEach((a: { heroImageUrl?: string | null }) => add(a.heroImageUrl));
+  collections.forEach((c: { coverImageUrl?: string | null; bookCovers?: string[]; books?: unknown; tiers?: unknown }) => {
     add(c.coverImageUrl);
     c.bookCovers?.forEach(add);
     addJsonUrls(c.books);
     addJsonUrls(c.tiers);
   });
-  celebrities.forEach((c: any) => {
+  celebrities.forEach((c: { photoUrl?: string | null; books?: unknown; tiers?: unknown }) => {
     add(c.photoUrl);
     addJsonUrls(c.books);
     addJsonUrls(c.tiers);
   });
-  tierLists.forEach((t: any) => add(t.coverImageUrl));
-  placements.forEach((p: any) => add(p.coverImageUrl));
-  news.forEach((n: any) => add(n.imageUrl));
-  users.forEach((u: any) => add(u.avatarUrl));
-  flags.forEach((f: any) => add(f.imageUrl));
-  templates.forEach((t: any) => addJsonUrls(t.defaultBooks));
-  achievements.forEach((a: any) => add(a.iconUrl));
+  tierLists.forEach((t: { coverImageUrl?: string | null }) => add(t.coverImageUrl));
+  placements.forEach((p: { coverImageUrl?: string | null }) => add(p.coverImageUrl));
+  news.forEach((n: { imageUrl?: string | null }) => add(n.imageUrl));
+  users.forEach((u: { avatarUrl?: string | null }) => add(u.avatarUrl));
+  flags.forEach((f: { imageUrl?: string | null }) => add(f.imageUrl));
+  templates.forEach((t: { defaultBooks?: unknown }) => addJsonUrls(t.defaultBooks));
+  achievements.forEach((a: { iconUrl?: string | null }) => add(a.iconUrl));
 
   return urls;
 }

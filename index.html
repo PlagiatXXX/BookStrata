@@ -27,9 +27,9 @@
         }
         gtmEvents.forEach(function(e) { window.addEventListener(e, onGtmInteract, { once: true, passive: true }); });
         if ('requestIdleCallback' in window) {
-          requestIdleCallback(function() { setTimeout(loadGTM, 2500); });
+          requestIdleCallback(function() { setTimeout(loadGTM, 4000); });
         } else {
-          setTimeout(loadGTM, 3000);
+          setTimeout(loadGTM, 4500);
         }
       }
     </script>

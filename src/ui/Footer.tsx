@@ -300,7 +300,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                         <button
                           data-analytics={analyticsName}
                           onClick={() => scrollToSection(link.sectionId!)}
-                          className="group flex items-center gap-1.5 text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 -mx-1 cursor-pointer"
+                          className="group flex items-center gap-1.5 text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 py-1 -mx-1 min-h-7 cursor-pointer"
                         >
                           <span className="text-white/40 group-hover:text-white/70 transition-colors">
                             {link.icon}
@@ -311,7 +311,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                         <Link
                           data-analytics={analyticsName}
                           to={"href" in link ? link.href! : ""}
-                          className="group flex items-center gap-1.5 text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 -mx-1"
+                          className="group flex items-center gap-1.5 text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 py-1 -mx-1 min-h-7"
                         >
                           <span className="text-white/40 group-hover:text-white/70 transition-colors">
                             {link.icon}
@@ -338,7 +338,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                     <li key={collection.id}>
                       <Link
                         to={`/collections/${collection.slug}`}
-                        className="group text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 -mx-1"
+                        className="group flex items-center text-[13px] text-white/70 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded-md px-1 py-1 -mx-1 min-h-7"
                       >
                         {collection.title}
                       </Link>

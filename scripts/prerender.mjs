@@ -869,8 +869,8 @@ async function processRoute(browser, route) {
     }));
 
     // Список коллекций в сайдбаре — не нужен для SEO отдельных страниц.
-    // На самой странице /collections (хаб) данные нужны — мок там не ставим.
-    if (route.path !== "/collections") {
+    // На самой странице /collections (хаб) и /community данные нужны — мок там не ставим.
+    if (route.path !== "/collections" && route.path !== "/community") {
       await page.route("**/api/collections", (route) => route.fulfill({
         status: 200,
         contentType: "application/json",
