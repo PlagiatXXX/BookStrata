@@ -448,7 +448,7 @@ export async function getTasteMatch(
 ) {
   // Неавторизованный посетитель — текущего пользователя нет, совпадение нулевое
   if (!currentUserId) {
-    return { matchPercent: 0, commonBooks: 0, totalBooks: 0 };
+    return { matchPercent: 0, commonBooks: 0, totalBooks: 0, matches: [] };
   }
 
   // Получаем все ID публичных тир-листов целевого пользователя
@@ -456,13 +456,16 @@ export async function getTasteMatch(
     await tierListRepository.findUserTierListIds(targetUserId);
 
   if (targetListIds.length === 0) {
-    return { matchPercent: 0, commonBooks: 0, totalBooks: 0 };
+    return { matchPercent: 0, commonBooks: 0, totalBooks: 0, matches: [] };
   }
 
   // Получаем все книги из тир-листов целевого пользователя
   const targetPlacements = await prisma.bookPlacement.findMany({
     where: { tierListId: { in: targetListIds } },
-    include: { book: { select: { title: true, author: true } } },
+    include: {
+      book: { select: { title: true, author: true, coverImageUrl: true } },
+      tier: { select: { id: true, title: true, rank: true } },
+    },
   });
 
   // Получаем все книги текущего пользователя
@@ -472,38 +475,85 @@ export async function getTasteMatch(
     userListIds.length > 0
       ? await prisma.bookPlacement.findMany({
           where: { tierListId: { in: userListIds } },
-          include: { book: { select: { title: true, author: true } } },
+          include: {
+            book: { select: { title: true, author: true, coverImageUrl: true } },
+            tier: { select: { id: true, title: true, rank: true } },
+          },
         })
       : [];
 
-  // Строим Set книг текущего пользователя (normalizeKey)
-  const userBookKeys = new Set(
-    userPlacements.map(
-      (p) =>
-        `${p.book.title.toLowerCase().trim()}|${(p.book.author ?? "").toLowerCase().trim()}`,
-    ),
-  );
+  const normalizeBookKey = (title: string, author: string | null | undefined) =>
+    `${(title ?? "").toLowerCase().trim()}|${(author ?? "").toLowerCase().trim()}`;
 
-  // Считаем совпадения среди книг целевого пользователя
-  const targetBookKeys = new Set(
-    targetPlacements.map(
-      (p) =>
-        `${p.book.title.toLowerCase().trim()}|${(p.book.author ?? "").toLowerCase().trim()}`,
-    ),
-  );
-
-  let commonBooks = 0;
-  for (const key of targetBookKeys) {
-    if (userBookKeys.has(key)) commonBooks++;
+  // Строим map книг текущего пользователя (normalizeKey)
+  const userBookMap = new Map<
+    string,
+    { tierTitle: string | null; tierRank: number | null }
+  >();
+  for (const p of userPlacements) {
+    const key = normalizeBookKey(p.book.title, p.book.author);
+    if (!userBookMap.has(key)) {
+      userBookMap.set(key, {
+        tierTitle: p.tier?.title ?? null,
+        tierRank: p.tier?.rank ?? null,
+      });
+    }
   }
 
-  const totalUnique = targetBookKeys.size + userBookKeys.size - commonBooks;
+  // Строим map книг целевого пользователя (normalizeKey)
+  const targetBookMap = new Map<
+    string,
+    {
+      book: { title: string; author: string | null; coverImageUrl: string | null };
+      tierTitle: string | null;
+      tierRank: number | null;
+    }
+  >();
+  for (const p of targetPlacements) {
+    const key = normalizeBookKey(p.book.title, p.book.author);
+    if (!targetBookMap.has(key)) {
+      targetBookMap.set(key, {
+        book: {
+          title: p.book.title,
+          author: p.book.author,
+          coverImageUrl: p.book.coverImageUrl ?? null,
+        },
+        tierTitle: p.tier?.title ?? null,
+        tierRank: p.tier?.rank ?? null,
+      });
+    }
+  }
+
+  const matches: Array<{
+    book: { title: string; author: string | null; coverImageUrl: string | null };
+    tierInProfile: string | null;
+    tierInProfileRank: number | null;
+    tierInMine: string | null;
+    tierInMineRank: number | null;
+  }> = [];
+
+  for (const [key, targetItem] of targetBookMap.entries()) {
+    const userMatch = userBookMap.get(key);
+    if (userMatch) {
+      matches.push({
+        book: targetItem.book,
+        tierInProfile: targetItem.tierTitle,
+        tierInProfileRank: targetItem.tierRank,
+        tierInMine: userMatch.tierTitle,
+        tierInMineRank: userMatch.tierRank,
+      });
+    }
+  }
+
+  const commonBooks = matches.length;
+  const totalUnique = targetBookMap.size + userBookMap.size - commonBooks;
 
   return {
     matchPercent:
       totalUnique > 0 ? Math.round((commonBooks / totalUnique) * 100) : 0,
     commonBooks,
-    totalBooks: targetBookKeys.size,
+    totalBooks: targetBookMap.size,
+    matches,
   };
 }
 

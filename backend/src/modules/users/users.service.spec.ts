@@ -730,6 +730,68 @@ describe("users.service", () => {
         matchPercent: 25,
         commonBooks: 1,
         totalBooks: 3,
+        matches: [
+          {
+            book: {
+              title: "Dune",
+              author: "Frank Herbert",
+              coverImageUrl: null,
+            },
+            tierInProfile: null,
+            tierInProfileRank: null,
+            tierInMine: null,
+            tierInMineRank: null,
+          },
+        ],
+      })
+    })
+
+    it("должен вернуть совпадение вкусов между двумя пользователями с деталями matches", async () => {
+      mockFindUserTierListIds
+        .mockResolvedValueOnce(["tl-1"])
+        .mockResolvedValueOnce(["tl-2"])
+
+      const targetPlacements = [
+        {
+          book: { id: 1, title: "Dune", author: "Frank Herbert", coverImageUrl: "/dune.jpg" },
+          tier: { id: 10, title: "Шедевр", rank: 0 },
+        },
+        {
+          book: { id: 2, title: "1984", author: "George Orwell", coverImageUrl: "/1984.jpg" },
+          tier: { id: 11, title: "Хорошо", rank: 1 },
+        },
+      ]
+      const userPlacements = [
+        {
+          book: { id: 1, title: "Dune", author: "Frank Herbert", coverImageUrl: "/dune.jpg" },
+          tier: { id: 20, title: "Дно", rank: 5 },
+        },
+        {
+          book: { id: 3, title: "Brave New World", author: "Aldous Huxley", coverImageUrl: "/bnw.jpg" },
+          tier: { id: 21, title: "Норм", rank: 2 },
+        },
+      ]
+
+      ;(prisma.bookPlacement.findMany as any)
+        .mockResolvedValueOnce(targetPlacements)
+        .mockResolvedValueOnce(userPlacements)
+
+      const result = await userService.getTasteMatch(targetUserId, currentUserId)
+
+      expect(result.commonBooks).toBe(1)
+      expect(result.totalBooks).toBe(2)
+      expect(result.matchPercent).toBe(33)
+      expect(result.matches).toHaveLength(1)
+      expect(result.matches[0]).toEqual({
+        book: {
+          title: "Dune",
+          author: "Frank Herbert",
+          coverImageUrl: "/dune.jpg",
+        },
+        tierInProfile: "Шедевр",
+        tierInProfileRank: 0,
+        tierInMine: "Дно",
+        tierInMineRank: 5,
       })
     })
 
@@ -738,7 +800,7 @@ describe("users.service", () => {
 
       const result = await userService.getTasteMatch(targetUserId, currentUserId)
 
-      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 0 })
+      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 0, matches: [] })
     })
 
     it("должен вернуть 0% если у текущего пользователя нет тир-листов", async () => {
@@ -753,7 +815,7 @@ describe("users.service", () => {
 
       const result = await userService.getTasteMatch(targetUserId, currentUserId)
 
-      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 1 })
+      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 1, matches: [] })
     })
 
     it("должен вернуть 100% если все книги совпадают", async () => {
@@ -771,13 +833,41 @@ describe("users.service", () => {
 
       const result = await userService.getTasteMatch(targetUserId, currentUserId)
 
-      expect(result).toEqual({ matchPercent: 100, commonBooks: 2, totalBooks: 2 })
+      expect(result).toEqual({
+        matchPercent: 100,
+        commonBooks: 2,
+        totalBooks: 2,
+        matches: [
+          {
+            book: {
+              title: "Dune",
+              author: "Frank Herbert",
+              coverImageUrl: null,
+            },
+            tierInProfile: null,
+            tierInProfileRank: null,
+            tierInMine: null,
+            tierInMineRank: null,
+          },
+          {
+            book: {
+              title: "1984",
+              author: "George Orwell",
+              coverImageUrl: null,
+            },
+            tierInProfile: null,
+            tierInProfileRank: null,
+            tierInMine: null,
+            tierInMineRank: null,
+          },
+        ],
+      })
     })
 
     it("должен вернуть нулевое совпадение для неавторизованного посетителя (currentUserId = null)", async () => {
       const result = await userService.getTasteMatch(targetUserId, null)
 
-      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 0 })
+      expect(result).toEqual({ matchPercent: 0, commonBooks: 0, totalBooks: 0, matches: [] })
       expect(mockFindUserTierListIds).not.toHaveBeenCalled()
       expect(prisma.bookPlacement.findMany).not.toHaveBeenCalled()
     })
