@@ -653,6 +653,9 @@ export default function BookPage() {
           description="Зарегистрируйтесь, чтобы посмотреть лонгрид и увидеть отзывы"
           redirectTo={`/books/${slug}`}
         > */}
+        {/* ── Погружение в контекст ── */}
+        {contextChain.length > 0 && <BookContextChain items={contextChain} />}
+
         {/* ── Гид по чтению (AI-паспорт) ── */}
         {book.readingGuide && <BookReadingGuide guide={book.readingGuide} />}
 
@@ -666,9 +669,6 @@ export default function BookPage() {
             bookTags={book.tags}
           />
         )}
-
-        {/* ── Погружение в контекст ── */}
-        {contextChain.length > 0 && <BookContextChain items={contextChain} />}
 
         {/* ── Другие книги автора ── */}
         {otherBooksByAuthor.length > 0 && (
