@@ -7,7 +7,7 @@ vi.mock("../../config/env.js", () => ({
   },
 }));
 
-import { createAnalyticsService } from "./analytics.service.js";
+import { createAnalyticsService, getMoscowDayStart } from "./analytics.service.js";
 import type { PrismaClient } from "@prisma/client";
 
 describe("Analytics trackEvent: лимиты и защита от мусора", () => {
@@ -249,6 +249,25 @@ describe("Analytics: getFunnel", () => {
         }),
       })
     );
+  });
+});
+
+describe("Analytics: getMoscowDayStart", () => {
+  it("возвращает полночь по Москве (UTC+3) независимо от локальной зоны", () => {
+    // 00:30 МСК 9 ноября = 21:30 UTC 8 ноября
+    const earlyMorning = new Date("2026-11-08T21:30:00.000Z");
+    const start1 = getMoscowDayStart(earlyMorning);
+    expect(start1.toISOString()).toBe("2026-11-08T21:00:00.000Z");
+
+    // 23:59 МСК 9 ноября = 20:59 UTC 9 ноября
+    const lateNight = new Date("2026-11-09T20:59:00.000Z");
+    const start2 = getMoscowDayStart(lateNight);
+    expect(start2.toISOString()).toBe("2026-11-08T21:00:00.000Z");
+
+    // 00:05 МСК 10 ноября = 21:05 UTC 9 ноября
+    const nextDay = new Date("2026-11-09T21:05:00.000Z");
+    const start3 = getMoscowDayStart(nextDay);
+    expect(start3.toISOString()).toBe("2026-11-09T21:00:00.000Z");
   });
 });
 

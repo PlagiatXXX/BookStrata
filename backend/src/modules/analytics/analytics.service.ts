@@ -136,6 +136,22 @@ export function isBotUserAgent(userAgent: string | null | undefined): boolean {
   return BOT_USER_AGENT_PATTERN.test(userAgent)
 }
 
+/**
+ * Возвращает дату начала суток (00:00:00) в московском часовом поясе (Europe/Moscow, UTC+3)
+ * в формате UTC. Это обеспечивает синхронизацию суточных метрик («Сегодня»)
+ * с Яндекс.Метрикой независимо от системной таймзоны сервера (например, UTC в Docker).
+ */
+export function getMoscowDayStart(date: Date = new Date()): Date {
+  const MSK_OFFSET_MS = 3 * 60 * 60 * 1000
+  const mskTime = new Date(date.getTime() + MSK_OFFSET_MS)
+  const mskMidnightUtc = Date.UTC(
+    mskTime.getUTCFullYear(),
+    mskTime.getUTCMonth(),
+    mskTime.getUTCDate(),
+  )
+  return new Date(mskMidnightUtc - MSK_OFFSET_MS)
+}
+
 /** Безопасная сериализация meta: копия без прототипных ключей, обрезка до лимита. */
 function sanitizeMeta(meta: Record<string, unknown> | undefined): Record<string, unknown> {
   if (!meta || typeof meta !== 'object') return {}
@@ -290,7 +306,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
   // Фикс: GROUP BY на уровне БД вместо full scan + JS Map
   const getSummary = async (): Promise<AnalyticsSummary> => {
     const now = new Date()
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const todayStart = getMoscowDayStart(now)
     const weekStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000)
 
     const mapGroupByResult = (
@@ -347,7 +363,7 @@ export function createAnalyticsService(prisma: PrismaClient) {
   // DAU, MAU, Stickiness, Churn
   const getMetrics = async (): Promise<MetricsResult> => {
     const now = new Date()
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const todayStart = getMoscowDayStart(now)
     const last30Start = new Date(todayStart.getTime() - 29 * 24 * 60 * 60 * 1000)
     const prev30Start = new Date(todayStart.getTime() - 59 * 24 * 60 * 60 * 1000)
     const [dau, mau, prevActiveUsers, uniqueVisitors] = await Promise.all([
