@@ -11,6 +11,8 @@ export interface BookMatchDetail {
   coverImageUrl: string
   viewedTierIndex: number
   userTierIndex: number
+  viewedTierTitle: string | null
+  userTierTitle: string | null
   tierDiff: number
 }
 
@@ -49,6 +51,8 @@ function detailsFromMatches(
       coverImageUrl: m.book.coverImageUrl,
       viewedTierIndex: viewedIdx,
       userTierIndex: userIdx,
+      viewedTierTitle: m.tierInList,
+      userTierTitle: m.tierInMine,
       tierDiff: Math.abs(viewedIdx - userIdx),
     }
   })

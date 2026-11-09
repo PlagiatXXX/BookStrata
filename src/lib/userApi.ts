@@ -69,6 +69,17 @@ export interface TasteMatchResult {
   matchPercent: number;
   commonBooks: number;
   totalBooks: number;
+  matches?: Array<{
+    book: {
+      title: string;
+      author: string | null;
+      coverImageUrl: string | null;
+    };
+    tierInProfile: string | null;
+    tierInProfileRank: number | null;
+    tierInMine: string | null;
+    tierInMineRank: number | null;
+  }>;
 }
 
 export async function apiGetMe(): Promise<User> {

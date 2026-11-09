@@ -190,11 +190,8 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(73, 68, 85, 0.2);
   border-radius: 0.75rem;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   transition: background 0.2s;
+  overflow: hidden;
 }
 
 .profile-taste-banner:hover {

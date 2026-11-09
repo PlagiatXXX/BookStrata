@@ -125,6 +125,80 @@ describe("UserProfilePage", () => {
     expect(screen.getByText("25%")).toBeDefined()
   })
 
+  it("раскрывает список совпавших книг по клику на баннер совпадения вкусов", async () => {
+    vi.mocked(authContextModule.useAuth).mockReturnValue({
+      user: { userId: 3, username: "other", avatarUrl: null, role: "user", isPro: false },
+      isAuthenticated: true,
+      isLoading: false,
+      logout: vi.fn(),
+      refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
+    } as any)
+    vi.mocked(userApiModule.apiGetTasteMatch).mockResolvedValue({
+      matchPercent: 50,
+      commonBooks: 2,
+      totalBooks: 4,
+      matches: [
+        {
+          book: {
+            title: "Дюна",
+            author: "Фрэнк Герберт",
+            coverImageUrl: "https://example.com/dune.jpg",
+          },
+          tierInProfile: "S",
+          tierInProfileRank: 0,
+          tierInMine: "A",
+          tierInMineRank: 1,
+        },
+        {
+          book: {
+            title: "Солярис",
+            author: "Станислав Лем",
+            coverImageUrl: null,
+          },
+          tierInProfile: "B",
+          tierInProfileRank: 2,
+          tierInMine: "S",
+          tierInMineRank: 0,
+        },
+      ],
+    })
+
+    renderWithRoute("2")
+
+    await waitFor(() => {
+      expect(screen.getByText(/Совпадение вкусов/)).toBeDefined()
+    })
+
+    const toggleButton = screen.getByRole("button", { name: /Совпадение вкусов/ })
+    expect(toggleButton.getAttribute("aria-expanded")).toBe("false")
+    expect(screen.queryByText(/А где поставили/)).toBeNull()
+
+    fireEvent.click(toggleButton)
+
+    await waitFor(() => {
+      expect(toggleButton.getAttribute("aria-expanded")).toBe("true")
+      expect(screen.getByText(/А где поставили \(ваш тир → тир пользователя\)/)).toBeDefined()
+    })
+
+    // Проверяем книгу "Дюна"
+    expect(screen.getByText(/Дюна \(Фрэнк Герберт\)/)).toBeDefined()
+    expect(screen.getByTitle("A")).toBeDefined()
+    expect(screen.getAllByTitle("S").length).toBe(2)
+    expect(screen.getByTitle("B")).toBeDefined()
+
+    // Проверяем обложку для Дюны
+    const duneCover = screen.getByAltText("Дюна") as HTMLImageElement
+    expect(duneCover.src).toContain("dune.jpg")
+
+    // Проверяем индикатор: для Дюны rankDiff <= 1 (1 - 0 = 1) -> title="Оценки близки или совпадают"
+    expect(screen.getAllByTitle("Оценки близки или совпадают").length).toBeGreaterThanOrEqual(1)
+
+    // Для Солярис: profileRank (2) > userRank (0), diff = 2 -> title="Пользователь оценил ниже"
+    expect(screen.getByText(/Солярис \(Станислав Лем\)/)).toBeDefined()
+    expect(screen.getByTitle("Пользователь оценил ниже")).toBeDefined()
+  })
+
   it("показывает пометку «Приватный» для приватного тир-листа в списке", async () => {
     vi.mocked(userApiModule.apiGetUserTierLists).mockResolvedValue({
       data: [

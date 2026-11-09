@@ -21,7 +21,7 @@ vi.mock("@/hooks/useAchievementNotifications", () => ({
   triggerAchievementNotification: vi.fn(),
 }))
 
-import { apiGetPublicUser, apiGetUserTierLists, apiGetTasteMatch, apiGetGenrePreferences, apiSetGenrePreferences } from "./userApi"
+import { apiGetPublicUser, apiGetUserTierLists, apiGetTasteMatch, apiGetGenrePreferences, apiSetGenrePreferences, type TasteMatchResult } from "./userApi"
 
 function mockResponse(data: unknown, status = 200) {
   return {
@@ -166,6 +166,35 @@ describe("userApi", () => {
 
       expect(result.matchPercent).toBe(0)
       expect(result.commonBooks).toBe(0)
+    })
+
+    it("должен вернуть список совпавших книг matches", async () => {
+      const matchWithBooks: TasteMatchResult = {
+        matchPercent: 50,
+        commonBooks: 2,
+        totalBooks: 4,
+        matches: [
+          {
+            book: {
+              title: "Дюна",
+              author: "Фрэнк Герберт",
+              coverImageUrl: "https://example.com/dune.jpg",
+            },
+            tierInProfile: "S",
+            tierInProfileRank: 0,
+            tierInMine: "A",
+            tierInMineRank: 1,
+          },
+        ],
+      }
+      mockFetch.mockResolvedValue(mockResponse({ data: matchWithBooks }))
+
+      const result = await apiGetTasteMatch("3")
+
+      expect(result.matches).toHaveLength(1)
+      expect(result.matches?.[0].book.title).toBe("Дюна")
+      expect(result.matches?.[0].tierInProfile).toBe("S")
+      expect(result.matches?.[0].tierInMine).toBe("A")
     })
   })
 

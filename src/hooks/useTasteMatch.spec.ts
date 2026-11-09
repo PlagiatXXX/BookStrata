@@ -112,6 +112,15 @@ describe("useTasteMatch", () => {
     expect(result.current.bestMatch!.matchPercent).toBe(50)
     expect(result.current.bestMatch!.commonBooks).toBe(2)
     expect(result.current.bestMatch!.details).toHaveLength(1)
+    expect(result.current.bestMatch!.details[0]).toMatchObject({
+      title: "Dune",
+      author: "Frank Herbert",
+      viewedTierIndex: 0,
+      userTierIndex: 1,
+      viewedTierTitle: "S",
+      userTierTitle: "A",
+      tierDiff: 1,
+    })
   })
 
   it("возвращает hasAny=false когда commonBooks=0", async () => {

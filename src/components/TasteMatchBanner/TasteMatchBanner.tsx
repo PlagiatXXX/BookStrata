@@ -60,6 +60,7 @@ export function TasteMatchBanner({
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center gap-3 px-4 py-3 text-left"
         type="button"
+        aria-expanded={expanded}
       >
         <Heart
           size={16}
@@ -115,8 +116,14 @@ export function TasteMatchBanner({
           </p>
           <div className="space-y-1.5">
             {bestMatch.details.map((d, i) => {
-              const viewedLabel = TIER_LABELS[d.viewedTierIndex] ?? `T${d.viewedTierIndex}`
-              const userLabel = TIER_LABELS[d.userTierIndex] ?? `T${d.userTierIndex}`
+              const userLabel =
+                d.userTierTitle?.trim() ||
+                TIER_LABELS[d.userTierIndex] ||
+                `T${d.userTierIndex}`
+              const viewedLabel =
+                d.viewedTierTitle?.trim() ||
+                TIER_LABELS[d.viewedTierIndex] ||
+                `T${d.viewedTierIndex}`
               return (
                 <div
                   key={i}
@@ -126,21 +133,39 @@ export function TasteMatchBanner({
                     <img
                       src={d.coverImageUrl}
                       alt={d.title || "Обложка книги"}
-                      className="h-5 w-3.5 rounded object-cover"
+                      className="h-5 w-3.5 rounded object-cover shrink-0"
                     />
                   )}
                   <span className="flex-1 truncate text-[#f3efe6]">
                     {d.title}{d.author ? ` (${d.author})` : ""}
                   </span>
-                  <span className="font-mono text-[#c1fffe]">{viewedLabel}</span>
-                  {d.tierDiff <= 1 ? (
-                    <Minus size={12} className="text-green-400" />
-                  ) : d.userTierIndex > d.viewedTierIndex ? (
-                    <ChevronDown size={12} className="text-pink-400" />
-                  ) : (
-                    <ChevronUp size={12} className="text-[#c1fffe]" />
-                  )}
-                  <span className="font-mono text-pink-400">{userLabel}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span
+                      className="inline-block max-w-25 sm:max-w-30 truncate rounded bg-pink-500/10 px-1.5 py-0.5 font-medium text-pink-400"
+                      title={userLabel}
+                    >
+                      {userLabel}
+                    </span>
+                    {d.tierDiff <= 1 ? (
+                      <span className="inline-flex shrink-0" title="Оценки близки или совпадают">
+                        <Minus size={12} className="text-green-400" />
+                      </span>
+                    ) : d.viewedTierIndex < d.userTierIndex ? (
+                      <span className="inline-flex shrink-0" title="Автор оценил выше">
+                        <ChevronUp size={12} className="text-[#c1fffe]" />
+                      </span>
+                    ) : (
+                      <span className="inline-flex shrink-0" title="Автор оценил ниже">
+                        <ChevronDown size={12} className="text-pink-400" />
+                      </span>
+                    )}
+                    <span
+                      className="inline-block max-w-25 sm:max-w-30 truncate rounded bg-[#c1fffe]/10 px-1.5 py-0.5 font-medium text-[#c1fffe]"
+                      title={viewedLabel}
+                    >
+                      {viewedLabel}
+                    </span>
+                  </div>
                 </div>
               )
             })}
