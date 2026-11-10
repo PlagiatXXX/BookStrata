@@ -124,7 +124,7 @@ export function BookContextChain({ items }: BookContextChainProps) {
           {valid.map((item, idx) => (
             <div
                 key={idx}
-                className="group relative flex justify-center z-40 bg-(--bp-surface-container-lowest) rounded-full p-2"
+                className="group relative flex items-center justify-center shrink-0 z-40 bg-(--bp-surface-container-lowest) rounded-full p-2"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -134,9 +134,12 @@ export function BookContextChain({ items }: BookContextChainProps) {
                   aria-expanded={activeIdx === idx}
                   onMouseEnter={() => alignTooltip(idx)}
                   onClick={() => handleToggle(idx)}
-                  className="bp-btn-pulse w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-primary/40 flex items-center justify-center text-(--bp-primary) hover:bg-(--bp-primary) hover:text-(--bp-background) transition-all duration-500 bg-(--bp-surface-container-lowest) shadow-[0_0_15px_rgba(255,183,135,0.2)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)]"
+                  className="bp-btn-pulse w-12 h-12 md:w-16 md:h-16 p-0 rounded-full border-2 border-primary/40 flex items-center justify-center shrink-0 text-(--bp-primary) hover:bg-(--bp-primary) hover:text-(--bp-background) transition-all duration-500 bg-(--bp-surface-container-lowest) shadow-[0_0_15px_rgba(255,183,135,0.2)] hover:shadow-[0_0_30px_rgba(255,183,135,0.5)] cursor-pointer"
                 >
-                  <Icon name={item.icon} className="text-2xl md:text-3xl" />
+                  <Icon
+                    name={item.icon}
+                    className="text-2xl md:text-3xl leading-none! size-[1em] flex items-center justify-center select-none pointer-events-none"
+                  />
                 </button>
                 {/* Тултип строго над иконкой: hover (десктоп) или тап (touch) */}
                 <div

@@ -57,6 +57,20 @@
   cursor: default;
 }
 
+/* Центрирование иконки Material Symbols в круглой кнопке лонгрида */
+.book-page button.bp-btn-pulse {
+  padding: 0;
+}
+
+.book-page button.bp-btn-pulse .material-symbols-outlined {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+}
+
 /* Label-caps: мелкие подписи с трекингом */
 .bp-label-caps {
   font-family: var(--bp-font-body);
