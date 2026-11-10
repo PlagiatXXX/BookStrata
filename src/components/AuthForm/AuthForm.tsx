@@ -177,7 +177,7 @@ export function AuthForm() {
   }
 
   return (
-      <div className="relative min-h-screen overflow-hidden">
+      <div className="relative min-h-dvh overflow-hidden">
         <div className="absolute inset-0">
           <video autoPlay muted playsInline className="hidden md:block absolute inset-0 w-full h-full object-cover">
             <source src="/library4k-hq-full.mp4" type="video/mp4" />
@@ -185,7 +185,7 @@ export function AuthForm() {
           <img src="/library.webp" alt="" fetchPriority="high" className="md:hidden absolute inset-0 w-full h-full object-cover" />
         </div>
         <div className="absolute inset-0 bg-black/20" />
-        <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+        <div className="relative z-10 flex min-h-dvh items-center justify-center p-4">
           <Card className="w-full max-w-sm md:max-w-md bg-white/25 backdrop-blur-xs shadow-[0_20px_60px_rgba(0,0,0,0.25)] border border-white/30">
             <div className="p-6 md:p-8">
             <div className="mb-6 md:mb-8 text-center">

@@ -50,4 +50,10 @@ describe("MobileBottomNav — drop-up «Рейтинги»", () => {
 
     expect(screen.getByTestId("location-path").textContent).toBe("/authors");
   });
+
+  it("содержит безопасный отступ pb-[env(safe-area-inset-bottom,0px)] для iPhone", () => {
+    renderNav();
+    const nav = screen.getByRole("navigation");
+    expect(nav.className).toContain("pb-[env(safe-area-inset-bottom,0px)]");
+  });
 });

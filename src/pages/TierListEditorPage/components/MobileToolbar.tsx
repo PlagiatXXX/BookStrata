@@ -222,7 +222,7 @@ export const MobileToolbar = memo(function MobileToolbar({
     <>
       {/* Основная панель */}
       <div
-        className="fixed left-0 right-0 z-50 block border-t border-white/6 bg-black/85 backdrop-blur-2xl lg:hidden"
+        className="fixed left-0 right-0 z-50 block border-t border-white/6 bg-black/85 backdrop-blur-2xl lg:hidden pb-[env(safe-area-inset-bottom,0px)]"
         style={{ bottom: bottomOffset }}
       >
         {/* Индикатор времени последнего сохранения — как на iPhone (Dynamic Island style) */}

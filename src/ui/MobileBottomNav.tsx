@@ -71,7 +71,7 @@ export function MobileBottomNav({ showTemplatesNav = true }: MobileBottomNavProp
   };
 
   return (
-    <nav className="fixed left-0 right-0 z-50 md:hidden border-t border-white/[0.06] bg-black/85 backdrop-blur-2xl" style={{ bottom: bottomOffset }}>
+    <nav className="fixed left-0 right-0 z-50 md:hidden border-t border-white/[0.06] bg-black/85 backdrop-blur-2xl pb-[env(safe-area-inset-bottom,0px)]" style={{ bottom: bottomOffset }}>
       <div className="flex items-stretch h-14">
         {items.map((item) => {
           const active = isActive(item.label);

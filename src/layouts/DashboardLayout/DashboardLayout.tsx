@@ -90,7 +90,7 @@ export function DashboardLayout({
       )}
       <main
         className={`grid flex-1 grid-cols-1 ${hideHeader ? "pt-0" : contentTopPadding || "pt-24"} overflow-x-hidden ${
-          hideMobileNav ? "" : "pb-16 md:pb-0"
+          hideMobileNav ? "" : "pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0"
         }`}
       >
         {fullWidth ? children : <PageContainer>{children}</PageContainer>}

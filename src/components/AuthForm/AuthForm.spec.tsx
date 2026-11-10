@@ -45,4 +45,10 @@ describe("AuthForm", () => {
     expect(screen.getByLabelText(/^логин \*/i)).toBeTruthy();
     expect(screen.queryByLabelText(/логин или email/i)).toBeNull();
   });
+
+  it("контейнер формы использует min-h-dvh для корректной высоты на мобильных устройствах", () => {
+    const { container } = renderForm();
+    const rootDiv = container.firstElementChild as HTMLElement;
+    expect(rootDiv.className).toContain("min-h-dvh");
+  });
 });

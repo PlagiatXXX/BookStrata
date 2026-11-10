@@ -3,6 +3,7 @@ import { ROUTES } from "../fixtures/test-data";
 
 test.describe("Responsive — мобильные вьюпорты", () => {
   const MOBILE_VIEWPORTS = [
+    { name: "Narrow Mobile (320px)", width: 320, height: 568 },
     { name: "OnePlus 10T", width: 393, height: 873 },
     { name: "iPhone SE", width: 375, height: 667 },
     { name: "iPhone 14 Pro", width: 390, height: 844 },
@@ -45,4 +46,17 @@ test.describe("Responsive — мобильные вьюпорты", () => {
       });
     });
   }
+
+  test.describe("Десктопный вьюпорт (1440×900)", () => {
+    test.use({ viewport: { width: 1440, height: 900 } });
+
+    test("Dashboard — нет горизонтального скролла на широком экране", async ({ page }) => {
+      await page.goto(ROUTES.dashboard, { waitUntil: "networkidle" });
+      await page.waitForTimeout(1000);
+
+      const docWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      const viewportWidth = await page.evaluate(() => window.innerWidth);
+      expect(docWidth).toBeLessThanOrEqual(viewportWidth);
+    });
+  });
 });
