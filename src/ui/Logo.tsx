@@ -10,7 +10,7 @@ interface LogoProps {
  * (png/webp/svg — любой формат, главное с прозрачным фоном).
  * Чтобы убрать тыкву — поставь `null`.
  */
-const HALLOWEEN_PUMPKIN_SRC: string | null = "/halloween-pumpkin.webp";
+const HALLOWEEN_PUMPKIN_SRC: string | null = null;
 
 export const Logo = ({ onClick, light = false }: LogoProps) => {
   return (
