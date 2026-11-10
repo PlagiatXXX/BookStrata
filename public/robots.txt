@@ -9,6 +9,7 @@ Disallow: /shelf
 Disallow: /users/
 Disallow: /admin
 Disallow: /oauth/
+Disallow: /search
 Allow: /api/authors
 Allow: /api/books
 Allow: /api/collections
@@ -35,6 +36,7 @@ Disallow: /shelf
 Disallow: /users/
 Disallow: /admin
 Disallow: /oauth/
+Disallow: /search
 Allow: /api/authors
 Allow: /api/books
 Allow: /api/collections
@@ -61,6 +63,7 @@ Disallow: /shelf
 Disallow: /users/
 Disallow: /admin
 Disallow: /oauth/
+Disallow: /search
 Allow: /api/authors
 Allow: /api/books
 Allow: /api/collections
@@ -97,6 +100,7 @@ Disallow: /shelf
 Disallow: /users/
 Disallow: /admin
 Disallow: /oauth/
+Disallow: /search
 Allow: /api/authors
 Allow: /api/books
 Allow: /api/collections
