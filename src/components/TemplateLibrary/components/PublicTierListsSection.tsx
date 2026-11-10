@@ -1,6 +1,6 @@
 
-import { Spinner } from "@/components/Spinner";
 import PublicTierListCards from "../PublicTierListCards";
+import { TemplateCardsSkeletonGrid } from "./TemplateCardsSkeletonGrid";
 import { EmptyState } from "./EmptyState";
 import type { TierListShort } from "@/lib/tierListApi";
 
@@ -25,12 +25,7 @@ export function PublicTierListsSection({
   onPageChange,
 }: PublicTierListsSectionProps) {
   if (isLoading) {
-    return (
-      <div className="tpl-loading">
-        <Spinner size="md" className="mr-2" />
-        Загрузка...
-      </div>
-    );
+    return <TemplateCardsSkeletonGrid />;
   }
 
   if (tierLists.length === 0) {

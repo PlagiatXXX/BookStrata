@@ -37,4 +37,19 @@ describe("PublicTierListCards — пометка приватности", () => 
 
     expect(screen.queryByText("Приватный")).toBeNull();
   });
+
+  it("рендерит карточки как семантические ссылки <a> без role=button", () => {
+    const { container } = renderCards([
+      makeList({ id: "tl-123", slug: "my-best-list", title: "Мой список", coverImageUrl: "https://example.com/cover.webp" }),
+    ]);
+
+    const link = container.querySelector("a.tpl-card");
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute("href")).toBe("/tier-lists/my-best-list");
+    expect(container.querySelector('[role="button"]')).toBeNull();
+
+    const img = container.querySelector("img.tpl-card__image");
+    expect(img?.getAttribute("loading")).toBe("eager");
+    expect(img?.getAttribute("fetchpriority")).toBe("high");
+  });
 });

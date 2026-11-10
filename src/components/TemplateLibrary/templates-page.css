@@ -96,6 +96,7 @@
   max-width: 64rem;
   margin: 0 auto;
   padding: 6rem 1.5rem 4rem;
+  min-height: calc(100dvh - 12rem);
 }
 
 @media (min-width: 1280px) {
@@ -307,6 +308,8 @@
   flex-direction: column;
   gap: 1rem;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .tpl-card__image-wrap {

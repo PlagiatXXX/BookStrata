@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import type { TierListShort } from "@/lib/tierListApi";
 import { booksCountText } from "@/lib/plural";
@@ -32,27 +32,18 @@ const PublicTierListCards = memo(function PublicTierListCards({
   tierLists,
   likedIdsSet,
 }: PublicTierListCardsProps) {
-  const navigate = useNavigate();
-
   return (
     <div className="tpl-card-grid">
-      {tierLists.map((tierList) => {
+      {tierLists.map((tierList, index) => {
         const isLiked = likedIdsSet.has(tierList.id);
         const gradient = hashGradient(tierList.title);
+        const isPriority = index < 4;
+
         return (
-          <article
+          <Link
             key={tierList.id}
+            to={`/tier-lists/${tierList.slug || tierList.id}`}
             className="tpl-card group"
-            onClick={() =>
-              navigate(`/tier-lists/${tierList.slug || tierList.id}`)
-            }
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                navigate(`/tier-lists/${tierList.slug || tierList.id}`);
-              }
-            }}
           >
             <div className="tpl-card__image-wrap">
               {tierList.coverImageUrl ? (
@@ -60,7 +51,9 @@ const PublicTierListCards = memo(function PublicTierListCards({
                   alt={tierList.title}
                   className="tpl-card__image"
                   src={proxyImageUrl(tierList.coverImageUrl)}
-                  loading="lazy"
+                  loading={isPriority ? "eager" : "lazy"}
+                  decoding="async"
+                  fetchPriority={isPriority ? "high" : "auto"}
                 />
               ) : (
                 <div
@@ -96,7 +89,7 @@ const PublicTierListCards = memo(function PublicTierListCards({
                 </span>
               </div>
             </div>
-          </article>
+          </Link>
         );
       })}
     </div>

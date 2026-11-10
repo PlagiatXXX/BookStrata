@@ -6,7 +6,6 @@ import { Search, Lock, Star } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Spinner } from "@/components/Spinner";
 import {
   getUserTierLists,
   getPublicTierLists,
@@ -29,6 +28,8 @@ import { TemplateLibrarySidebar } from "./components/TemplateLibrarySidebar";
 
 import { PublicTierListsSection } from "./components/PublicTierListsSection";
 import PublicTierListCards from "./PublicTierListCards";
+import { TemplateCardsSkeletonGrid } from "./components/TemplateCardsSkeletonGrid";
+import { SkeletonGrid } from "@/ui/Skeleton";
 import {
   PUBLIC_PAGE_SIZE,
   PUBLIC_TIER_LISTS_STALE_TIME_MS,
@@ -307,12 +308,7 @@ const TemplateLibrary: React.FC = () => {
         }
 
         if (isLoadingPrivate) {
-          return (
-            <div className="tpl-loading">
-              <Spinner size="md" className="mr-2" />
-              Загрузка...
-            </div>
-          );
+          return <SkeletonGrid count={6} />;
         }
 
         if (privateError) {
@@ -337,7 +333,7 @@ const TemplateLibrary: React.FC = () => {
             {/* Search, Filter, Sort */}
             <div className="dashboard-controls">
               <div className="flex items-center gap-3 flex-1">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 text-gray-400 border border-slate-700/50 transition-all focus-within:ring-2 focus-within:ring-[var(--tpl-primary)]/50 focus-within:border-[var(--tpl-primary)]/50">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/50 text-gray-400 border border-slate-700/50 transition-all focus-within:ring-2 focus-within:ring-(--tpl-primary)/50 focus-within:border-(--tpl-primary)/50">
                   <Search size={16} />
                   <input
                     type="text"
@@ -439,12 +435,7 @@ const TemplateLibrary: React.FC = () => {
 
       case "new": {
         if (isLoadingNew) {
-          return (
-            <div className="tpl-loading">
-              <Spinner size="md" className="mr-2" />
-              Загрузка...
-            </div>
-          );
+          return <TemplateCardsSkeletonGrid />;
         }
         if (newTierLists.length === 0) {
           return (
@@ -478,12 +469,7 @@ const TemplateLibrary: React.FC = () => {
         }
 
         if (isLoadingLiked) {
-          return (
-            <div className="tpl-loading">
-              <Spinner size="md" className="mr-2" />
-              Загрузка...
-            </div>
-          );
+          return <TemplateCardsSkeletonGrid />;
         }
         const lists = likedTierListsData?.data || [];
         if (lists.length === 0) {
