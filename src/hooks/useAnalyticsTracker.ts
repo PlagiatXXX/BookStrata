@@ -63,6 +63,9 @@ export function useAnalyticsTracker() {
   // доступен и userId попадал в событие (иначе write-side фильтр
   // ANALYTICS_EXCLUDE_USERNAMES не работает для залогиненных).
   useEffect(() => {
+    // Не отправляем события от автоматизированных браузеров (боты, скраперы)
+    if (typeof navigator !== 'undefined' && navigator.webdriver) return;
+
     // Не отправляем, пока auth не разрешился — иначе токен ещё не в памяти
     if (isLoading) return;
 

@@ -69,6 +69,23 @@ describe("analyticsApi", () => {
       expect(apiClient.post).not.toHaveBeenCalled();
     });
 
+    it("не отправляет запрос если браузер автоматизирован (navigator.webdriver === true)", async () => {
+      Object.defineProperty(navigator, "webdriver", {
+        configurable: true,
+        value: true,
+      });
+
+      try {
+        await apiTrackEvent("page_view");
+        expect(apiClient.post).not.toHaveBeenCalled();
+      } finally {
+        Object.defineProperty(navigator, "webdriver", {
+          configurable: true,
+          value: false,
+        });
+      }
+    });
+
     it("не выбрасывает исключение при ошибке apiClient", async () => {
       vi.mocked(apiClient.post).mockRejectedValueOnce(new Error("Network failed"));
 

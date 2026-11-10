@@ -102,6 +102,9 @@ export async function apiTrackEvent(
   // просмотрами с 127.0.0.1:4173 (локальный сервер пререндера)
   if (typeof window !== 'undefined' && window.__PRERENDER__) return
 
+  // Не отправляем события от автоматизированных браузеров (Puppeteer, Playwright, Selenium и др.)
+  if (typeof navigator !== 'undefined' && navigator.webdriver) return
+
   const currentUrl =
     url ||
     (typeof window !== 'undefined' && window.location

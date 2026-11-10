@@ -50,3 +50,13 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// В happy-dom navigator.webdriver по умолчанию true (как в headless окружении).
+// В реальных браузерах пользователей он всегда false.
+if (typeof navigator !== 'undefined') {
+  Object.defineProperty(navigator, 'webdriver', {
+    value: false,
+    configurable: true,
+    writable: true,
+  });
+}
