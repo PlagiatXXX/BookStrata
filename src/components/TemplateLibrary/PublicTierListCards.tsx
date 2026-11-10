@@ -54,6 +54,8 @@ const PublicTierListCards = memo(function PublicTierListCards({
                   loading={isPriority ? "eager" : "lazy"}
                   decoding="async"
                   fetchPriority={isPriority ? "high" : "auto"}
+                  width={312}
+                  height={390}
                 />
               ) : (
                 <div

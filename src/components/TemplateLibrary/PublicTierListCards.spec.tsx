@@ -51,5 +51,7 @@ describe("PublicTierListCards — пометка приватности", () => 
     const img = container.querySelector("img.tpl-card__image");
     expect(img?.getAttribute("loading")).toBe("eager");
     expect(img?.getAttribute("fetchpriority")).toBe("high");
+    expect(img?.getAttribute("width")).toBe("312");
+    expect(img?.getAttribute("height")).toBe("390");
   });
 });

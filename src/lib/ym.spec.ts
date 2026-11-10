@@ -24,6 +24,8 @@ describe("initYandexMetrika", () => {
     // счётчик задан как в продовой сборке
     (COUNTER_ID_ENV as Record<string, unknown>).VITE_YM_COUNTER_ID = "109755750";
     delete window.__PRERENDER__;
+    delete window.ym;
+    delete window._ymLoaded;
   });
 
   afterEach(() => {
@@ -56,26 +58,45 @@ describe("initYandexMetrika", () => {
     expect(injectedScripts()).toBe(0);
   });
 
-  it("НЕ инициализирует счётчик на 127.0.0.1", () => {
+  it("НЕ инициализирует счётчик на 127.0.0.1 даже при взаимодействии", () => {
     setHostname("127.0.0.1");
 
     initYandexMetrika();
+    window.dispatchEvent(new Event("scroll"));
 
     expect(injectedScripts()).toBe(0);
   });
 
-  it("инициализирует счётчик на bookstrata.ru", () => {
+  it("на bookstrata.ru создаёт очередь window.ym сразу, а скрипт откладывает до взаимодействия", () => {
     setHostname("bookstrata.ru");
 
     initYandexMetrika();
 
+    expect(typeof window.ym).toBe("function");
+    expect(injectedScripts()).toBe(0);
+
+    window.dispatchEvent(new Event("scroll"));
+
+    expect(injectedScripts()).toBe(1);
+
+    // Повторное событие не дублирует скрипт
+    window.dispatchEvent(new Event("click"));
     expect(injectedScripts()).toBe(1);
   });
 
-  it("инициализирует счётчик на www.bookstrata.ru", () => {
+  it("при флаге immediate: true внедряет скрипт сразу", () => {
+    setHostname("bookstrata.ru");
+
+    initYandexMetrika({ immediate: true });
+
+    expect(injectedScripts()).toBe(1);
+  });
+
+  it("на www.bookstrata.ru загружает скрипт по событию взаимодействия", () => {
     setHostname("www.bookstrata.ru");
 
     initYandexMetrika();
+    window.dispatchEvent(new Event("keydown"));
 
     expect(injectedScripts()).toBe(1);
   });

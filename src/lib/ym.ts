@@ -15,7 +15,11 @@
  */
 declare global {
   interface Window {
-    ym?: (id: number, action: string, ...args: unknown[]) => void;
+    ym?: ((id: number, action: string, ...args: unknown[]) => void) & {
+      a?: unknown[][];
+      l?: number;
+    };
+    _ymLoaded?: boolean;
   }
 }
 
@@ -43,27 +47,34 @@ export function reachYmGoal(goalId: number): void {
   }
 }
 
-export function initYandexMetrika(): void {
+export interface InitYandexMetrikaOptions {
+  /** Внедрить скрипт сразу без ожидания взаимодействия / idle (для тестов или форсированного режима) */
+  immediate?: boolean;
+  /** Задержка до фоновой загрузки при отсутствии взаимодействий (по умолчанию 3500 мс) */
+  idleDelayMs?: number;
+}
+
+export function initYandexMetrika(options?: InitYandexMetrikaOptions): void {
   try {
     const counterId = import.meta.env.VITE_YM_COUNTER_ID;
     if (!counterId || window.__PRERENDER__ || !isAnalyticsHost(window.location.hostname)) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const metrikaLoader = (m: any, e: Document, t: string, r: string, i: string, k?: any, a?: any) => {
-      m[i] = m[i] || function (...args: unknown[]) { (m[i].a = m[i].a || []).push(args); };
-      m[i].l = Date.now();
-      k = e.createElement(t);
-      a = e.getElementsByTagName(t)[0];
-      k.async = 1;
-      k.src = r;
-      a.parentNode.insertBefore(k, a);
-    };
-    metrikaLoader(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+    // 1. Создаём функцию-очередь window.ym сразу, чтобы вызовы hit/reachGoal не терялись
+    if (!window.ym) {
+      type YmQueueFn = {
+        (...args: unknown[]): void;
+        a?: unknown[][];
+        l?: number;
+      };
+      const queueFn: YmQueueFn = function (...args: unknown[]) {
+        (queueFn.a = queueFn.a || []).push(args);
+      };
+      queueFn.l = Date.now();
+      window.ym = queueFn as Window["ym"];
+    }
 
-    const ymFn: ((id: number, action: string, ...args: unknown[]) => void) | undefined = window.ym;
-    if (!ymFn) return;
-
-    ymFn(Number(counterId), "init", {
+    // Буферизируем параметры инициализации счётчика
+    window.ym?.(Number(counterId), "init", {
       clickmap: true,
       trackLinks: true,
       accurateTrackBounce: true,
@@ -71,6 +82,50 @@ export function initYandexMetrika(): void {
       defer: true,
       trackHash: true,
     });
+
+    // 2. Внедрение тяжелого скрипта tag.js (164ms Long Task) откладываем до первого
+    // взаимодействия пользователя или до простоя браузера, снижая TBT на 160-230 мс.
+    const loadScript = () => {
+      if (window._ymLoaded) return;
+      window._ymLoaded = true;
+
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = "https://mc.yandex.ru/metrika/tag.js";
+
+      const firstScript = document.getElementsByTagName("script")[0];
+      if (firstScript && firstScript.parentNode) {
+        firstScript.parentNode.insertBefore(script, firstScript);
+      } else {
+        document.head.appendChild(script);
+      }
+    };
+
+    if (options?.immediate) {
+      loadScript();
+      return;
+    }
+
+    const interactEvents = ["scroll", "keydown", "touchstart", "click"] as const;
+    const onInteract = () => {
+      interactEvents.forEach((event) => {
+        window.removeEventListener(event, onInteract);
+      });
+      loadScript();
+    };
+
+    interactEvents.forEach((event) => {
+      window.addEventListener(event, onInteract, { once: true, passive: true });
+    });
+
+    const delay = options?.idleDelayMs ?? 3500;
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(() => {
+        setTimeout(loadScript, delay);
+      });
+    } else {
+      setTimeout(loadScript, delay);
+    }
   } catch {
     // Аналитика не должна ломать приложение — тихий fallback
   }
