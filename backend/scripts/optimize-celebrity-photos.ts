@@ -8,27 +8,34 @@
 //   npx tsx scripts/optimize-celebrity-photos.ts --dry-run  # предварительный отчёт без перезаписи
 //   npx tsx scripts/optimize-celebrity-photos.ts            # выполнить оптимизацию
 //
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { config } from "../src/config/env.js";
-import { safeFetchToBuffer } from "../src/lib/safe-fetch.js";
 
 const prisma = new PrismaClient();
 const DRY_RUN = process.argv.includes("--dry-run");
 const TARGET_WIDTH = 640;
 
-const isS3 = config.STORAGE_PROVIDER === "s3";
+const S3_BUCKET = process.env.S3_BUCKET || "bookstrata";
+const S3_ENDPOINT = process.env.S3_ENDPOINT || "https://s3.twcstorage.ru";
+const S3_REGION = process.env.S3_REGION || "ru-1";
+const S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID || "";
+const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY || "";
+const UPLOADS_DIR = process.env.UPLOADS_DIR || "uploads";
+const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER || "s3";
+
+const isS3 = STORAGE_PROVIDER === "s3";
 
 const s3Client = isS3
   ? new S3Client({
-      endpoint: config.S3_ENDPOINT,
-      region: config.S3_REGION,
+      endpoint: S3_ENDPOINT,
+      region: S3_REGION,
       credentials: {
-        accessKeyId: config.S3_ACCESS_KEY_ID,
-        secretAccessKey: config.S3_SECRET_ACCESS_KEY,
+        accessKeyId: S3_ACCESS_KEY_ID,
+        secretAccessKey: S3_SECRET_ACCESS_KEY,
       },
       forcePathStyle: false,
     })
@@ -66,9 +73,8 @@ function extractStorageKey(url: string): { key: string; isLocal: boolean } | nul
 }
 
 async function getBuffer(url: string, keyInfo: { key: string; isLocal: boolean }): Promise<Buffer | null> {
-  const uploadsDir = config.UPLOADS_DIR || "uploads";
   if (keyInfo.isLocal) {
-    const localPath = join(uploadsDir, keyInfo.key);
+    const localPath = join(UPLOADS_DIR, keyInfo.key);
     try {
       return await fs.readFile(localPath);
     } catch {
@@ -76,11 +82,11 @@ async function getBuffer(url: string, keyInfo: { key: string; isLocal: boolean }
     }
   }
 
-  if (s3Client && config.S3_BUCKET) {
+  if (s3Client && S3_BUCKET) {
     try {
       const res = await s3Client.send(
         new GetObjectCommand({
-          Bucket: config.S3_BUCKET,
+          Bucket: S3_BUCKET,
           Key: keyInfo.key,
         }),
       );
@@ -89,30 +95,31 @@ async function getBuffer(url: string, keyInfo: { key: string; isLocal: boolean }
         return Buffer.from(byteArray);
       }
     } catch {
-      // Фолбэк на HTTP fetch
+      // Фолбэк на HTTP fetch ниже
     }
   }
 
   try {
-    const { buffer } = await safeFetchToBuffer(url);
-    return buffer;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arrayBuf = await res.arrayBuffer();
+    return Buffer.from(arrayBuf);
   } catch {
     return null;
   }
 }
 
 async function saveBuffer(keyInfo: { key: string; isLocal: boolean }, buffer: Buffer): Promise<void> {
-  const uploadsDir = config.UPLOADS_DIR || "uploads";
   if (keyInfo.isLocal) {
-    const localPath = join(uploadsDir, keyInfo.key);
+    const localPath = join(UPLOADS_DIR, keyInfo.key);
     await fs.writeFile(localPath, buffer);
     return;
   }
 
-  if (s3Client && config.S3_BUCKET) {
+  if (s3Client && S3_BUCKET) {
     await s3Client.send(
       new PutObjectCommand({
-        Bucket: config.S3_BUCKET,
+        Bucket: S3_BUCKET,
         Key: keyInfo.key,
         Body: buffer,
         ContentType: "image/webp",
