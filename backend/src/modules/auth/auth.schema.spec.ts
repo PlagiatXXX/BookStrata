@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loginBodySchema } from "./auth.schema.js";
+import { loginBodySchema, registerBodySchema } from "./auth.schema.js";
 
 describe("loginBodySchema", () => {
   it("принимает email длиной больше 30 символов в поле username (вход по email)", () => {
@@ -20,5 +20,29 @@ describe("loginBodySchema", () => {
     expect(() =>
       loginBodySchema.parse({ username: "a".repeat(256), password: "password123" }),
     ).toThrow();
+  });
+});
+
+describe("registerBodySchema", () => {
+  it("принимает пароль из 6 символов", () => {
+    expect(() =>
+      registerBodySchema.parse({
+        username: "validuser",
+        email: "valid@example.com",
+        password: "123456",
+        acceptedTerms: true,
+      }),
+    ).not.toThrow();
+  });
+
+  it("отклоняет пароль короче 6 символов", () => {
+    expect(() =>
+      registerBodySchema.parse({
+        username: "validuser",
+        email: "valid@example.com",
+        password: "12345",
+        acceptedTerms: true,
+      }),
+    ).toThrow("минимум 6 символов");
   });
 });

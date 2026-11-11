@@ -42,7 +42,7 @@ export const registerBodySchema = z.object({
     .max(255, "Email не может быть длиннее 255 символов"),
   password: z
     .string()
-    .min(8, "Пароль должен содержать минимум 8 символов")
+    .min(6, "Пароль должен содержать минимум 6 символов")
     .max(100, "Пароль не может быть длиннее 100 символов"),
   acceptedTerms: z
     .boolean()
@@ -71,7 +71,7 @@ const forgotPasswordBodySchema = z.object({
 
 const resetPasswordBodySchema = z.object({
   token: z.string().max(1000),
-  password: z.string().min(8).max(100),
+  password: z.string().min(6).max(100),
 });
 
 export const registerSchema = {
