@@ -22,9 +22,9 @@
   --muse-tertiary: #e9c400;
   --muse-tertiary-container: #c9a900;
 
-  /* Шрифты */
-  --muse-font-display: "Syne", system-ui, sans-serif;
-  --muse-font-body: "Hanken Grotesk", system-ui, sans-serif;
+  /* Шрифты (используем preloaded шрифты BookStrata с полной кириллицей) */
+  --muse-font-display: "Montserrat", var(--global-font-display, sans-serif);
+  --muse-font-body: "Onest", var(--global-font-body, sans-serif);
 
   /* Фон страницы — глубокий чёрно-фиолетовый */
   background:

@@ -16,8 +16,26 @@ if (typeof window !== "undefined" && window.location.search.includes("__bust")) 
   }
 }
 
-// Sentry — lazy init (динамический import ~60KB, не блокирует first paint)
-import("../lib/sentry").then(({ initSentry }) => initSentry());
+// Sentry — инициализируется после полной загрузки страницы в idle-период,
+// чтобы не конкурировать с FCP/LCP и шрифтами на медленных мобильных сетях
+if (typeof window !== "undefined") {
+  const scheduleSentry = () => {
+    const load = () => {
+      import("../lib/sentry").then(({ initSentry }) => initSentry());
+    };
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(load, { timeout: 6000 });
+    } else {
+      setTimeout(load, 3000);
+    }
+  };
+
+  if (document.readyState === "complete") {
+    scheduleSentry();
+  } else {
+    window.addEventListener("load", scheduleSentry, { once: true });
+  }
+}
 
 // Яндекс.Метрика — lazy init (внедряет скрипт асинхронно)
 initYandexMetrika();

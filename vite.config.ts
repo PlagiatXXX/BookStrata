@@ -51,6 +51,7 @@ export default defineConfig({
           "query-vendor": ["@tanstack/react-query"],
           "motion-vendor": ["motion"],
           "sileo-vendor": ["sileo"],
+          "sentry-vendor": ["@sentry/browser"],
         },
       },
     },

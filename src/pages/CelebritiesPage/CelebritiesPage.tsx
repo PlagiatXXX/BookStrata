@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DashboardLayout } from "@/layouts/DashboardLayout/DashboardLayout";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
-import { Spinner } from "@/components/Spinner";
 import { getCelebrities, CELEBRITY_CATEGORIES } from "@/lib/celebritiesApi";
 import type { CelebrityItem } from "@/lib/celebritiesApi";
 import "./CelebritiesPage.css";
@@ -187,13 +186,8 @@ export default function CelebritiesPage() {
             />
           )}
 
-          {/* Loading */}
-          {isLoading && (
-            <div className="flex items-center justify-center py-12" style={{ color: "var(--muse-on-surface-variant)" }}>
-              <Spinner size="md" className="mr-2" />
-              Загрузка...
-            </div>
-          )}
+          {/* Loading Skeleton — предотвращает скачок макета (CLS) и сдвиг футера */}
+          {isLoading && <CelebrityGridSkeleton />}
 
           {/* Empty state */}
           {!isLoading && celebrities.length === 0 && (
@@ -334,6 +328,31 @@ function CategoryTabs({
 }
 
 /* ═══════════════════════════════════════════════════════
+   Celebrity Grid Skeleton — стабильный каркас для предотвращения CLS
+   ═══════════════════════════════════════════════════════ */
+
+function CelebrityGridSkeleton() {
+  return (
+    <div
+      className="celebrities-grid"
+      aria-busy="true"
+      aria-label="Загрузка списка знаменитостей"
+    >
+      {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+        <div
+          key={i}
+          className="celebrity-card animate-pulse"
+          style={{
+            backgroundColor: "var(--muse-surface)",
+            borderColor: "rgba(81, 66, 85, 0.2)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
    Celebrity Grid — paginated asymmetric grid
    ═══════════════════════════════════════════════════════ */
 
@@ -350,11 +369,12 @@ function CelebrityGrid({ celebrities }: { celebrities: CelebrityItem[] }) {
   return (
     <>
       <div className="celebrities-grid">
-        {visibleCelebrities.map((celebrity) => (
+        {visibleCelebrities.map((celebrity, index) => (
           <CelebrityCard
             key={celebrity.id}
             celebrity={celebrity}
             cardBg={getCardBg(celebrity.id)}
+            isPriority={index < 2}
           />
         ))}
       </div>
@@ -402,9 +422,11 @@ function getBookCountLabel(count: number): string {
 const CelebrityCard = memo(function CelebrityCard({
   celebrity,
   cardBg,
+  isPriority = false,
 }: {
   celebrity: CelebrityItem;
   cardBg: string;
+  isPriority?: boolean;
 }) {
   const bookCount = celebrity.books ? Object.keys(celebrity.books).length : 0;
   const categoryLabel = CELEBRITY_CATEGORIES[celebrity.category] || celebrity.category;
@@ -428,7 +450,11 @@ const CelebrityCard = memo(function CelebrityCard({
               src={celebrity.photoUrl}
               alt={celebrity.name}
               className="celebrity-card-img"
-              loading="lazy"
+              loading={isPriority ? "eager" : "lazy"}
+              fetchPriority={isPriority ? "high" : "auto"}
+              decoding={isPriority ? "sync" : "async"}
+              width={320}
+              height={400}
             />
           ) : (
             <div className="celebrity-card-placeholder">

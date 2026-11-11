@@ -187,4 +187,37 @@ describe("CelebritiesPage", () => {
     expect(img).toBeTruthy();
     expect(img?.getAttribute("alt")).toBe("Знаменитость 1");
   });
+
+  it("первые две карточки имеют loading='eager' и fetchPriority='high', остальные — loading='lazy'", async () => {
+    mockGetCelebrities.mockResolvedValue(
+      Array.from({ length: 4 }, (_, i) => createCelebrity({ id: i + 1 })),
+    );
+
+    const { container } = renderPage();
+
+    await screen.findAllByText(/Знаменитость/);
+    const images = Array.from(
+      container.querySelectorAll<HTMLImageElement>(".celebrity-card-img"),
+    );
+    expect(images).toHaveLength(4);
+
+    expect(images[0].getAttribute("loading")).toBe("eager");
+    expect(images[0].getAttribute("fetchpriority")).toBe("high");
+    expect(images[1].getAttribute("loading")).toBe("eager");
+    expect(images[1].getAttribute("fetchpriority")).toBe("high");
+
+    expect(images[2].getAttribute("loading")).toBe("lazy");
+    expect(images[3].getAttribute("loading")).toBe("lazy");
+  });
+
+  it("показывает скелетоны сетки во время загрузки", () => {
+    // Бесконечный промис эмулирует состояние isLoading
+    mockGetCelebrities.mockReturnValue(new Promise(() => {}));
+
+    const { container } = renderPage();
+
+    const skeletons = container.querySelectorAll(".celebrity-card.animate-pulse");
+    expect(skeletons.length).toBe(6);
+    expect(screen.queryByText("Загрузка...")).toBeNull();
+  });
 });
