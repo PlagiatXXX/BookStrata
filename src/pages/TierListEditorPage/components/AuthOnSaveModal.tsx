@@ -33,7 +33,6 @@ export function AuthOnSaveModal({
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -60,12 +59,8 @@ export function AuthOnSaveModal({
       setError("Заполните все поля");
       return;
     }
-    if (!acceptedTerms) {
-      setError("Примите условия использования");
-      return;
-    }
-    if (password.length < 8) {
-      setError("Пароль должен быть не менее 8 символов");
+    if (password.length < 6) {
+      setError("Пароль должен быть не менее 6 символов");
       return;
     }
 
@@ -75,7 +70,7 @@ export function AuthOnSaveModal({
         username: username.trim(),
         email: email.trim(),
         password,
-        acceptedTerms,
+        acceptedTerms: true,
       });
 
       // Устанавливаем токен в память
@@ -240,40 +235,11 @@ export function AuthOnSaveModal({
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Не менее 8 символов"
+                    placeholder="Не менее 6 символов"
                     className="nb-input w-full py-3 pl-10 pr-4 text-sm placeholder:text-(--theme-text-muted) focus-within:ring-2 focus-within:ring-(--theme-focus)"
                   />
                 </div>
               </div>
-
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={acceptedTerms}
-                  onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="mt-1 h-4 w-4 cursor-pointer accent-(--theme-accent-primary)"
-                />
-                <span className="text-xs text-(--theme-text-muted)">
-                  Я принимаю{" "}
-                  <a
-                    href="/terms"
-                    target="_blank"
-                    className="text-(--theme-accent-primary) underline"
-                    rel="noreferrer"
-                  >
-                    условия использования
-                  </a>{" "}
-                  и{" "}
-                  <a
-                    href="/privacy"
-                    target="_blank"
-                    className="text-(--theme-accent-primary) underline"
-                    rel="noreferrer"
-                  >
-                    политику конфиденциальности
-                  </a>
-                </span>
-              </label>
 
               <button
                 type="submit"
@@ -283,12 +249,33 @@ export function AuthOnSaveModal({
                 {isSubmitting ? (
                   <>
                     <Loader className="h-4 w-4 animate-spin" />
-                    Создаём аккаунт...
+                    <span>Сохранение...</span>
                   </>
                 ) : (
                   "Создать аккаунт и сохранить"
                 )}
               </button>
+
+              <p className="text-xs text-center text-(--theme-text-muted) leading-relaxed">
+                Нажимая «Создать аккаунт и сохранить», вы принимаете{" "}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  className="text-(--theme-accent-primary) underline"
+                  rel="noreferrer"
+                >
+                  условия использования
+                </a>{" "}
+                и{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  className="text-(--theme-accent-primary) underline"
+                  rel="noreferrer"
+                >
+                  политику конфиденциальности
+                </a>
+              </p>
 
               <button
                 type="button"

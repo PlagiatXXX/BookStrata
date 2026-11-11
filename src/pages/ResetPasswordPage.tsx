@@ -34,8 +34,8 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      sileo.error({ title: "Ошибка", description: "Пароль должен быть не менее 8 символов" });
+    if (password.length < 6) {
+      sileo.error({ title: "Ошибка", description: "Пароль должен быть не менее 6 символов" });
       return;
     }
     if (password !== confirmPassword) {
@@ -96,7 +96,7 @@ export default function ResetPasswordPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
                   aria-pressed={showPassword}
-                  className="absolute right-2 top-[38px] text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded-sm"
+                  className="absolute right-2 top-9.5 text-slate-400 hover:text-slate-600 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded-sm"
                 >
                   {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                 </button>

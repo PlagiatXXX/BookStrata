@@ -51,4 +51,65 @@ describe("AuthForm", () => {
     const rootDiv = container.firstElementChild as HTMLElement;
     expect(rootDiv.className).toContain("min-h-dvh");
   });
+
+  it("в режиме входа не требует пароль длиннее 6 символов", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    renderForm("/?mode=login");
+
+    const passwordInput = screen.getByLabelText(/^пароль/i, { selector: "input" });
+    fireEvent.change(passwordInput, { target: { value: "123" } });
+
+    expect(screen.queryByText(/минимум/i)).toBeNull();
+  });
+
+  it("в режиме регистрации требует минимум 6 символов", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    renderForm("/?mode=register");
+
+    const passwordInput = screen.getByLabelText(/^пароль/i, { selector: "input" });
+    fireEvent.change(passwordInput, { target: { value: "12345" } });
+
+    expect(screen.getByText("Минимум 6 символов")).toBeTruthy();
+
+    fireEvent.change(passwordInput, { target: { value: "123456" } });
+    expect(screen.queryByText("Минимум 6 символов")).toBeNull();
+  });
+
+  it("в режиме регистрации нет чекбокса, условия отображаются текстом со ссылками", () => {
+    renderForm("/?mode=register");
+
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(screen.getByText(/условия использования/i)).toBeTruthy();
+    expect(screen.getByText(/политик[еу] конфиденциальности/i)).toBeTruthy();
+  });
+
+  it("при отправке формы регистрации передает acceptedTerms: true", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    const { apiRegister } = await import("@/lib/authApi");
+    vi.mocked(apiRegister).mockResolvedValueOnce({
+      accessToken: "token123",
+      userId: 1,
+      username: "newuser",
+    });
+
+    renderForm("/?mode=register");
+
+    const usernameInput = screen.getByLabelText(/^логин/i, { selector: "input" });
+    const emailInput = screen.getByLabelText(/^email/i, { selector: "input" });
+    const passwordInput = screen.getByLabelText(/^пароль/i, { selector: "input" });
+
+    fireEvent.change(usernameInput, { target: { value: "newuser" } });
+    fireEvent.change(emailInput, { target: { value: "user@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "password123" } });
+
+    const submitBtn = screen.getByRole("button", { name: "Зарегистрироваться" });
+    fireEvent.click(submitBtn);
+
+    expect(apiRegister).toHaveBeenCalledWith({
+      username: "newuser",
+      email: "user@example.com",
+      password: "password123",
+      acceptedTerms: true,
+    });
+  });
 });

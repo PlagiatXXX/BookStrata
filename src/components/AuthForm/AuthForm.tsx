@@ -21,7 +21,6 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   showPassword: boolean;
-  acceptedTerms: boolean;
 }
 
 type AuthAction =
@@ -29,7 +28,6 @@ type AuthAction =
   | { type: "SET_LOADING"; loading: boolean }
   | { type: "SET_ERROR"; error: string | null }
   | { type: "TOGGLE_PASSWORD" }
-  | { type: "SET_ACCEPTED_TERMS"; value: boolean }
   | { type: "RESET" }
   | { type: "SUBMIT_START" }
   | { type: "SUBMIT_SUCCESS" }
@@ -40,7 +38,6 @@ const initialAuthState: AuthState = {
   loading: false,
   error: null,
   showPassword: false,
-  acceptedTerms: false,
 };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
@@ -53,8 +50,6 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return { ...state, error: action.error }
     case "TOGGLE_PASSWORD":
       return { ...state, showPassword: !state.showPassword }
-    case "SET_ACCEPTED_TERMS":
-      return { ...state, acceptedTerms: action.value }
     case "RESET":
       return { ...initialAuthState }
     case "SUBMIT_START":
@@ -85,7 +80,7 @@ function validateField(name: string, value: string, mode: FormMode): string | nu
     }
     case "password": {
       if (!value) return "Пароль обязателен";
-      if (value.length < 8) return "Минимум 8 символов";
+      if (mode === "register" && value.length < 6) return "Минимум 6 символов";
       return null;
     }
     default:
@@ -127,12 +122,12 @@ export function AuthForm() {
       if (error) hasErrors = true;
     }
     setFieldErrors(errors);
-    if (hasErrors) return;
-
-    // Клиентская проверка acceptedTerms (до отправки на сервер)
-    if (mode === "register" && !state.acceptedTerms) {
-      dispatch({ type: "SUBMIT_FAILURE", error: "Необходимо принять условия использования" })
-      return
+    if (hasErrors) {
+      const firstErrorField = fields.find((f) => errors[f]);
+      if (firstErrorField) {
+        document.getElementById(firstErrorField)?.focus();
+      }
+      return;
     }
 
     dispatch({ type: "SUBMIT_START" })
@@ -159,7 +154,7 @@ export function AuthForm() {
           username: trimmedUsername,
           email: trimmedEmail,
           password: state.formData.password,
-          acceptedTerms: state.acceptedTerms,
+          acceptedTerms: true,
         })
         setAuthToken(result.accessToken)
         StorageService.setString("username", result.username)
@@ -204,7 +199,11 @@ export function AuthForm() {
                   <button
                     key={m}
                     data-analytics={`auth.tab_${m}`}
-                    onClick={() => { setMode(m); dispatch({ type: "SET_ERROR", error: null }) }}
+                    onClick={() => {
+                      setMode(m);
+                      dispatch({ type: "SET_ERROR", error: null });
+                      setFieldErrors({});
+                    }}
                     className={`relative w-32 py-3 text-center transition-colors duration-200 cursor-pointer ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
                   >
                     {m === "login" ? "Вход" : "Регистрация"}
@@ -226,7 +225,9 @@ export function AuthForm() {
                   id="username" type="text" name="username"
                   value={state.formData.username} onChange={handleChange} required
                   autoComplete="username"
-                  className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none focus:text-slate-950 transition-colors duration-200"
+                  className={`peer w-full bg-transparent border-b py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none focus:text-slate-950 transition-colors duration-200 ${
+                    fieldErrors.username ? "border-red-500" : "border-slate-500/60"
+                  }`}
                 />
                 <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
                 {fieldErrors.username && <p className="text-xs text-red-500 mt-1">{fieldErrors.username}</p>}
@@ -237,14 +238,16 @@ export function AuthForm() {
                   <label htmlFor="email" className="text-xs uppercase tracking-widest text-slate-500 font-medium mb-1 block">
                     Email <span className="text-red-500">*</span>
                   </label>
-                    <input
-                      id="email" type="email" name="email"
-                      value={state.formData.email} onChange={handleChange} required
-                      autoComplete="email"
-                      className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none"
-                    />
-                    <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
-                    {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
+                  <input
+                    id="email" type="email" name="email"
+                    value={state.formData.email} onChange={handleChange} required
+                    autoComplete="email"
+                    className={`peer w-full bg-transparent border-b py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none transition-colors duration-200 ${
+                      fieldErrors.email ? "border-red-500" : "border-slate-500/60"
+                    }`}
+                  />
+                  <span className="pointer-events-none absolute left-0 -bottom-px h-0.5 w-full origin-left scale-x-0 bg-orange-500 transition-transform duration-300 ease-out peer-focus:scale-x-100" />
+                  {fieldErrors.email && <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>}
                 </div>
               )}
 
@@ -256,7 +259,9 @@ export function AuthForm() {
                   id="password" type={state.showPassword ? "text" : "password"} name="password"
                   value={state.formData.password} onChange={handleChange} required
                   autoComplete={mode === "register" ? "new-password" : "current-password"}
-                  className="peer w-full bg-transparent border-b border-slate-500/60 py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none pr-10"
+                  className={`peer w-full bg-transparent border-b py-2 text-slate-900 placeholder:transition-opacity placeholder:duration-200 focus:placeholder:opacity-0 tracking-wide focus:outline-none pr-10 transition-colors duration-200 ${
+                    fieldErrors.password ? "border-red-500" : "border-slate-500/60"
+                  }`}
                 />
                 <button
                   type="button" onClick={() => dispatch({ type: "TOGGLE_PASSWORD" })}
@@ -269,33 +274,11 @@ export function AuthForm() {
                 {fieldErrors.password && <p className="text-xs text-red-500 mt-1">{fieldErrors.password}</p>}
               </div>
               {mode === "login" && (
-                <div className="flex justify-end -mt-4">
+                <div className="flex justify-end -mt-2">
                   <Link data-analytics="auth.forgot_password" to="/forgot-password" className="text-xs text-slate-500 hover:text-orange-500 transition-colors">
                     Забыли пароль?
                   </Link>
                 </div>
-              )}
-
-              {mode === "register" && (
-                <>
-                  {/* captcha — закомментировано, готово к подключению */}
-                  {/* <SmartCaptcha sitekey={import.meta.env.VITE_SMARTCAPTCHA_SITE_KEY} onSuccess={...} /> */}
-
-                  <label className="flex items-start gap-2 text-xs text-slate-600">
-                    <input
-                      type="checkbox"
-                      checked={state.acceptedTerms}
-                      onChange={(e) => dispatch({ type: "SET_ACCEPTED_TERMS", value: e.target.checked })}
-                      className="mt-0.5"
-                    />
-                    <span>
-                      Я принимаю{" "}
-                      <Link to="/privacy" target="_blank" className="text-orange-500 hover:text-orange-600 underline">
-                        условия использования и политику конфиденциальности
-                      </Link>
-                    </span>
-                  </label>
-                </>
               )}
 
               {state.error && (
@@ -306,10 +289,23 @@ export function AuthForm() {
                 type="submit"
                 data-analytics={`auth.submit_${mode}`}
                 isLoading={state.loading}
-                className="w-full -mt-5 rounded-full bg-orange-500! hover:bg-orange-600! border-orange-500! hover:border-orange-600! text-white! tracking-wider focus-visible:ring-2 focus-visible:ring-orange-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent transition-colors duration-200 text-sm py-3"
+                className="w-full rounded-full bg-orange-500! hover:bg-orange-600! border-orange-500! hover:border-orange-600! text-white! tracking-wider focus-visible:ring-2 focus-visible:ring-orange-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent transition-colors duration-200 text-sm py-3"
               >
                 {mode === "login" ? "Войти" : "Зарегистрироваться"}
               </Button>
+
+              {mode === "register" && (
+                <p className="text-xs text-center text-slate-500 leading-relaxed pt-1">
+                  Нажимая «Зарегистрироваться», вы принимаете{" "}
+                  <Link to="/terms" target="_blank" className="text-slate-700 hover:text-orange-600 underline">
+                    условия использования
+                  </Link>{" "}
+                  и даете согласие на обработку данных согласно{" "}
+                  <Link to="/privacy" target="_blank" className="text-slate-700 hover:text-orange-600 underline">
+                    политике конфиденциальности
+                  </Link>
+                </p>
+              )}
             </form>
 
             <div className="mt-4 space-y-2">
