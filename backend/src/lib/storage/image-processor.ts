@@ -16,14 +16,14 @@ export interface PreparedImage {
 }
 
 /**
- * Конвертирует изображение в WebP (q85) и уменьшает до MAX_IMAGE_WIDTH
+ * Конвертирует изображение в WebP (q80) и уменьшает до maxWidth (по умолчанию MAX_IMAGE_WIDTH)
  * по ширине. Маленькие картинки не увеличиваются. Битый файл возвращается
  * как есть (contentType = image/png) — как и раньше, ошибка не роняет загрузку.
  */
-export async function prepareImage(buffer: Buffer): Promise<PreparedImage> {
+export async function prepareImage(buffer: Buffer, maxWidth = MAX_IMAGE_WIDTH): Promise<PreparedImage> {
   try {
     const webp = await sharp(buffer)
-      .resize(MAX_IMAGE_WIDTH, undefined, { withoutEnlargement: true })
+      .resize(maxWidth, undefined, { withoutEnlargement: true })
       .webp({ quality: 80 })
       .toBuffer()
     return { buffer: webp, contentType: 'image/webp' }

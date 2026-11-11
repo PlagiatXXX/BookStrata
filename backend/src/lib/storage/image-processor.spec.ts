@@ -27,6 +27,14 @@ describe("prepareImage", () => {
     expect(contentType).toBe("image/webp");
   });
 
+  it("уменьшает картинку до кастомного maxWidth, если он передан", async () => {
+    const source = await makePngBuffer(2000, 1000);
+    const { buffer } = await prepareImage(source, 640);
+
+    const meta = await sharp(buffer).metadata();
+    expect(meta.width).toBe(640);
+  });
+
   it("не увеличивает маленькую картинку", async () => {
     const source = await makePngBuffer(800, 600);
     const { buffer } = await prepareImage(source);

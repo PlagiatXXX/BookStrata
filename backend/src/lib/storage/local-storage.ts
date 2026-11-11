@@ -93,19 +93,19 @@ export class LocalStorage implements ImageStorageService {
     }
   }
 
-  async uploadBase64(base64Data: string, folder = UPLOADS_SUBDIR): Promise<UploadResult> {
+  async uploadBase64(base64Data: string, folder = UPLOADS_SUBDIR, maxWidth?: number): Promise<UploadResult> {
     const buffer = bufferFromBase64(base64Data)
 
-    const { buffer: bufferToWrite, contentType } = await prepareImage(buffer)
+    const { buffer: bufferToWrite, contentType } = await prepareImage(buffer, maxWidth)
     const ext = contentType.split('/')[1] || 'png'
 
     return writeFile(bufferToWrite, folder, ext)
   }
 
-  async uploadFromUrl(url: string, folder = UPLOADS_SUBDIR): Promise<UploadResult> {
+  async uploadFromUrl(url: string, folder = UPLOADS_SUBDIR, maxWidth?: number): Promise<UploadResult> {
     const buffer = await fetchToBuffer(url)
 
-    const { buffer: bufferToWrite, contentType } = await prepareImage(buffer)
+    const { buffer: bufferToWrite, contentType } = await prepareImage(buffer, maxWidth)
     const ext = contentType.split('/')[1] || 'png'
 
     return writeFile(bufferToWrite, folder, ext)

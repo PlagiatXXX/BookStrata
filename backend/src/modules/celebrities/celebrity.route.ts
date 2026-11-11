@@ -148,9 +148,12 @@ export async function celebrityRoutes(fastify: FastifyInstance) {
       }
 
       try {
+        // Ограничиваем ширину 640px (Retina 2x для карточки каталога ~320px),
+        // чтобы избежать раздувания изображений до 1600px и перерасхода мобильного трафика
         const uploadResult = await uploadBase64(
           photoUrl,
           "tiermaker-pro/celebrity-photos",
+          640,
         );
         return reply.code(200).send({ data: { photoUrl: uploadResult.url } });
       } catch (error: unknown) {

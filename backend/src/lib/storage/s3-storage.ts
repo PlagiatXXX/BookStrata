@@ -123,18 +123,18 @@ export class S3Storage implements ImageStorageService {
     await client.send(command)
   }
 
-  async uploadBase64(base64Data: string, folder = 'tiermaker-pro/uploads'): Promise<UploadResult> {
+  async uploadBase64(base64Data: string, folder = 'tiermaker-pro/uploads', maxWidth?: number): Promise<UploadResult> {
     const buffer = bufferFromBase64(base64Data)
 
-    const { buffer: bufferToUpload, contentType } = await prepareImage(buffer)
+    const { buffer: bufferToUpload, contentType } = await prepareImage(buffer, maxWidth)
 
     return uploadBuffer(bufferToUpload, folder, contentType)
   }
 
-  async uploadFromUrl(url: string, folder = 'tiermaker-pro/uploads'): Promise<UploadResult> {
+  async uploadFromUrl(url: string, folder = 'tiermaker-pro/uploads', maxWidth?: number): Promise<UploadResult> {
     const { buffer, contentType } = await fetchToBuffer(url)
 
-    const { buffer: bufferToUpload, contentType: finalContentType } = await prepareImage(buffer)
+    const { buffer: bufferToUpload, contentType: finalContentType } = await prepareImage(buffer, maxWidth)
 
     return uploadBuffer(bufferToUpload, folder, finalContentType ?? contentType)
   }

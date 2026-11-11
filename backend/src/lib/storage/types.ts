@@ -11,8 +11,8 @@ export interface UploadWithOgResult extends UploadResult {
 export interface ImageStorageService {
   uploadAvatar(fileBuffer: Buffer, userId: number): Promise<UploadResult>
   deleteAvatar(publicId: string): Promise<void>
-  uploadBase64(base64Data: string, folder?: string): Promise<UploadResult>
-  uploadFromUrl(url: string, folder?: string): Promise<UploadResult>
+  uploadBase64(base64Data: string, folder?: string, maxWidth?: number): Promise<UploadResult>
+  uploadFromUrl(url: string, folder?: string, maxWidth?: number): Promise<UploadResult>
   /** Загрузка base64 с OG-вариантом (1200×630) для обложек книг. */
   uploadBase64WithOg(base64Data: string, folder?: string): Promise<UploadWithOgResult>
   /** Загрузка по URL с OG-вариантом (1200×630) для обложек книг. */
