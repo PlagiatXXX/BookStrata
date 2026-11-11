@@ -214,6 +214,7 @@ async function main() {
   log(`Итоги:`);
   log(`  Всего проверено: ${celebrities.length}`);
   log(`  Оптимизировано: ${optimizedCount}`);
+  log(`  Пропущено / ошибок: ${skippedCount}`);
   log(`  Сэкономлено трафика: ${(totalSavedBytes / 1024).toFixed(1)} KiB (${(totalSavedBytes / 1024 / 1024).toFixed(2)} MiB)`);
   log("=================================================");
 }
