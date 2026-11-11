@@ -77,6 +77,7 @@ export const Header = ({
   const [ratingsOpen, setRatingsOpen] = useState(false);
   const ratingsRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, user: authUser, logout } = useAuth();
+  const isAdmin = authUser?.role === "admin";
   const { totalCount } = useBookshelf();
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,6 +126,8 @@ export const Header = ({
       if (path === "/templates" || path.startsWith("/templates/"))
         return "Тир-листы";
       if (path === "/shelf") return "Полка";
+      if (path === "/reading-dna" || path.startsWith("/reading-dna/"))
+        return "Книжный ДНК";
       if (path === "/" || path === "/dashboard") return "Главная";
       return undefined;
     })();
@@ -203,6 +206,13 @@ export const Header = ({
       description: "Редакционные подборки",
     },
     {
+      label: "Книжный ДНК",
+      analyticsKey: "reading_dna",
+      onClick: isAdmin ? () => navigate("/reading-dna") : undefined,
+      description: "Определи свой читательский код",
+      badge: "Скоро",
+    },
+    {
       label: "Новости",
       analyticsKey: "news",
       onClick: () => navigate("/community"),
@@ -238,12 +248,13 @@ export const Header = ({
                     <button
                       data-analytics={analyticsName}
                       onClick={item.onClick}
+                      disabled={!item.onClick}
                       aria-current={
                         activeItem === item.label ? "page" : undefined
                       }
                       aria-expanded={isRatings ? ratingsOpen : undefined}
                       className={`group relative px-3 py-2 rounded-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                        item.onClick ? "cursor-pointer" : "cursor-not-allowed"
+                        item.onClick ? "cursor-pointer" : "cursor-not-allowed opacity-80"
                       } ${
                         activeItem === item.label
                           ? isLightTheme
@@ -269,17 +280,19 @@ export const Header = ({
                             )}
                           </span>
                         )}
-                        {!item.icon && item.badge && (
-                          <span className={`relative shrink-0 flex size-4 items-center justify-center rounded-full border text-[9px] font-bold leading-none ${
-                            isLightTheme
-                              ? "bg-yellow-400 text-yellow-950 border-yellow-600/60"
-                              : "bg-yellow-500/90 text-yellow-950 border-yellow-300/60"
-                          }`}>
-                            {item.badge}
-                          </span>
-                        )}
-                        <span className="text-sm font-medium">
+                        <span className="relative inline-flex items-center text-[13px] font-medium whitespace-nowrap">
                           {item.label}
+                          {!item.icon && item.badge && (
+                            <span
+                              className={`absolute -top-2 -right-3.5 z-10 flex h-3.5 px-1.5 items-center justify-center rounded-full border text-[8px] font-extrabold uppercase tracking-wide leading-none shadow-xs pointer-events-none rotate-12 ${
+                                isLightTheme
+                                  ? "bg-amber-400 text-amber-950 border-amber-600/50"
+                                  : "bg-linear-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300/50"
+                              }`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
                         </span>
                         {isRatings && (
                           <ChevronDown

@@ -87,7 +87,7 @@ describe("Header — «Полка» и «Угостить» выделены в 
     expect(shelf.parentElement).not.toBe(nav);
   });
 
-  it("в навигации остаются только ссылки: Главная, Тир-листы, Рейтинги, Новости", () => {
+  it("в навигации отображаются ссылки: Главная, Тир-листы, Рейтинги, Книжный ДНК, Новости", () => {
     renderHeader();
 
     const nav = screen.getByRole("navigation");
@@ -95,9 +95,41 @@ describe("Header — «Полка» и «Угостить» выделены в 
       (b) => b.textContent ?? "",
     );
 
-    expect(labels).toHaveLength(4);
+    expect(labels).toHaveLength(5);
     expect(labels.join(" ")).toContain("Главная");
     expect(labels.join(" ")).toContain("Тир-листы");
+    expect(labels.join(" ")).toContain("Рейтинги");
+    expect(labels.join(" ")).toContain("Книжный ДНК");
     expect(labels.join(" ")).toContain("Новости");
+  });
+
+  it("пункт «Книжный ДНК» для обычных пользователей имеет бейдж «Скоро» и не кликабелен", async () => {
+    const user = userEvent.setup();
+    renderHeader();
+
+    const dnaBtn = screen.getByRole("button", { name: /Книжный ДНК/i });
+    expect(dnaBtn).toBeInTheDocument();
+    expect(dnaBtn).toHaveTextContent("Скоро");
+    expect(dnaBtn).toBeDisabled();
+
+    await user.click(dnaBtn);
+    expect(screen.getByTestId("location-path").textContent).toBe("/");
+  });
+
+  it("пункт «Книжный ДНК» для администратора кликабелен и ведет на /reading-dna", async () => {
+    const user = userEvent.setup();
+    vi.mocked(useAuth).mockReturnValue({
+      isAuthenticated: true,
+      user: { userId: 1, username: "admin", role: "admin" },
+      logout: vi.fn(),
+    } as unknown as ReturnType<typeof useAuth>);
+
+    renderHeader();
+
+    const dnaBtn = screen.getByRole("button", { name: /Книжный ДНК/i });
+    expect(dnaBtn).not.toBeDisabled();
+
+    await user.click(dnaBtn);
+    expect(screen.getByTestId("location-path").textContent).toBe("/reading-dna");
   });
 });
