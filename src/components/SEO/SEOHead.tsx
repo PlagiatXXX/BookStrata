@@ -43,6 +43,8 @@ interface SEOHeadProps {
   preloadImage?: string;
   /** MIME-тип предзагружаемого изображения (по умолчанию image/webp) */
   preloadImageType?: string;
+  /** Показывать RSS-фид в <head> (по умолчанию true только для контентных страниц: /blog, /news, /community) */
+  hasRssFeed?: boolean;
 }
 
 const organizationJsonLd = {
@@ -112,7 +114,11 @@ export function SEOHead({
   hideSiteName,
   preloadImage,
   preloadImageType = "image/webp",
+  hasRssFeed,
 }: SEOHeadProps) {
+  const showRss =
+    hasRssFeed ?? (url ? /^\/(blog|news|community)($|\/)/.test(url) : false);
+
   // Убираем дублирование бренда: если title уже содержит | BookStrata, не добавляем повторно.
   const cleanTitle = title?.replace(new RegExp(`\\s*\\|\\s*${SITE_NAME}\\s*$`), "");
   // <title> без бренда при hideSiteName (место в выдаче), иначе — с брендом.
@@ -265,7 +271,14 @@ export function SEOHead({
       <meta name="twitter:image:alt" content={description} />
 
       <link rel="canonical" href={pageUrl} />
-      <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} — Новости книжного рейтинга`} href={`${SITE_URL}/rss.xml`} />
+      {showRss && (
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title={`${SITE_NAME} — Новости книжного рейтинга`}
+          href={`${SITE_URL}/rss.xml`}
+        />
+      )}
       {preloadImage && (
         <link
           rel="preload"

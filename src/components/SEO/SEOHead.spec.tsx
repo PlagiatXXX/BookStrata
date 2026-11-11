@@ -213,4 +213,23 @@ describe("SEOHead", () => {
     expect(preloadLink?.getAttribute("href")).toBe("/images/rankings/hero-book3.webp");
     expect(preloadLink?.getAttribute("type")).toBe("image/webp");
   });
+
+  it("не рендерит RSS-ссылку для страниц шаблонов, каталога и книг", () => {
+    render(<SEOHead title="Шаблоны тир-листов" url="/templates" />);
+    const rssLink = document.querySelector('link[type="application/rss+xml"]');
+    expect(rssLink).toBeNull();
+  });
+
+  it("рендерит RSS-ссылку для контентных страниц (блог, новости, сообщество)", () => {
+    render(<SEOHead title="Статья блога" url="/blog/why-not-goodreads" />);
+    const rssLink = document.querySelector('link[type="application/rss+xml"]');
+    expect(rssLink).not.toBeNull();
+    expect(rssLink?.getAttribute("href")).toBe("https://bookstrata.ru/rss.xml");
+  });
+
+  it("учитывает явный флаг hasRssFeed", () => {
+    render(<SEOHead title="Тест" url="/custom" hasRssFeed={true} />);
+    const rssLink = document.querySelector('link[type="application/rss+xml"]');
+    expect(rssLink).not.toBeNull();
+  });
 });
