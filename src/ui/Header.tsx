@@ -344,6 +344,39 @@ export const Header = ({
               })}
             </nav>
 
+            {/* Mobile Link — Книжный ДНК */}
+            <div className="md:hidden flex items-center justify-center flex-1 px-1">
+              <button
+                data-analytics="nav.mobile.reading_dna"
+                onClick={isAdmin ? () => navigate("/reading-dna") : undefined}
+                disabled={!isAdmin}
+                className={`group relative px-2 py-1 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                  isAdmin ? "cursor-pointer" : "cursor-not-allowed opacity-90"
+                } ${
+                  activeItem === "Книжный ДНК"
+                    ? isLightTheme
+                      ? "text-cyan-700 bg-cyan-50/60"
+                      : "text-cyan-400 bg-cyan-950/30"
+                    : isLightTheme
+                      ? "text-slate-700 hover:text-slate-950"
+                      : "text-gray-300 hover:text-white"
+                }`}
+              >
+                <span className="relative inline-flex items-center text-[12px] font-medium whitespace-nowrap">
+                  Книжный ДНК
+                  <span
+                    className={`absolute -top-2 -right-3.5 z-10 flex h-3.5 px-1.5 items-center justify-center rounded-full border text-[7.5px] font-extrabold uppercase tracking-wide leading-none shadow-xs pointer-events-none rotate-12 ${
+                      isLightTheme
+                        ? "bg-amber-400 text-amber-950 border-amber-600/50"
+                        : "bg-linear-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300/50"
+                    }`}
+                  >
+                    Скоро
+                  </span>
+                </span>
+              </button>
+            </div>
+
             {/* Right Section - Search & Settings */}
             <div className="flex items-center gap-2 xs:gap-3 shrink-0">
               {/* «Полка» и «Угостить» — выделенные кнопки, поодаль от ссылок навигации */}

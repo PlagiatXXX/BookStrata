@@ -54,6 +54,7 @@ const AdminCelebritiesPage = lazy(() => import("@/pages/AdminCelebritiesPage/Adm
 const AdminBooksPage = lazy(() => import("@/pages/AdminBooksPage/AdminBooksPage"));
 const AdminAuthorsPage = lazy(() => import("@/pages/AdminAuthorsPage/AdminAuthorsPage"));
 const AdminSubscriptionsPage = lazy(() => import("@/pages/AdminSubscriptionsPage"));
+const ReadingDnaPage = lazy(() => import("@/pages/ReadingDnaPage"));
 
 // Lazy loading for the DnD-heavy editor page
 const TierListEditorPage = lazy(() => import("@/pages/TierListEditorPage/TierEditorPage"));
@@ -113,6 +114,22 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminDashboard />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/reading-dna",
+        element: (
+          <AdminGuard>
+            <ReadingDnaPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/reading-dna/duel",
+        element: (
+          <AdminGuard>
+            <ReadingDnaPage />
           </AdminGuard>
         ),
       },
