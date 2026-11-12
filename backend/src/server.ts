@@ -43,6 +43,7 @@ import { celebrityRoutes } from "../src/modules/celebrities/celebrity.route.js";
 import { shelfRoutes } from "../src/modules/shelf/shelf.route.js";
 import { moderationRoutes } from "../src/modules/moderation/moderation.route.js";
 import { templatesRoutes } from "./modules/templates/templates.route.js";
+import { readingDnaRoutes } from "./modules/reading-dna/readingDna.route.js";
 import logFromFrontend from "../src/plugins/logFromFrontend.js";
 import requestContext from "../src/plugins/requestContext.js";
 import authPlugin from "../src/plugins/auth.js";
@@ -419,6 +420,7 @@ fastify.register(collectionRoutes, { prefix: "/api/collections" });
 fastify.register(topicRoutes, { prefix: "/api/topics" });
 fastify.register(celebrityRoutes, { prefix: "/api/celebrities" });
 fastify.register(shelfRoutes, { prefix: "/api/shelf" });
+fastify.register(readingDnaRoutes, { prefix: "/api/reading-dna" });
 
 // Admin: очистка load test пользователей
 import { adminCleanupRoutes } from "../src/modules/admin/admin-cleanup.route.js";

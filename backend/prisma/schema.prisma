@@ -70,6 +70,7 @@ suspensionReason     String?    @map("suspension_reason")
   // 7-я ось Book Match: выбранные пользователем жанры (массив CategoryId, JSON)
   genrePreferences     Json?          @map("genre_preferences")
   feedbackDismissedAt  DateTime?      @map("feedback_dismissed_at")
+  readingDna           ReadingDna?
    createdAt            DateTime   @default(now()) @map("created_at")
  
 @@index([xp])
@@ -788,4 +789,74 @@ model AuthorPressQuote {
 
   @@index([authorId])
   @@map("author_press_quotes")
+}
+
+// Книжный ДНК и Читательский билет
+model ReadingDna {
+  id               Int              @id @default(autoincrement())
+  userId           Int?             @unique @map("user_id")
+  user             User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestToken       String?          @unique @map("guest_token")
+  ticketNumber     String           @unique @map("ticket_number")
+  customName       String?          @map("custom_name")
+  archetype        String           @map("archetype")
+  archetypeName    String           @map("archetype_name")
+  archetypeDesc    String?          @map("archetype_desc")
+  motto            String?          @map("motto")
+  storyFocus       Int              @default(50) @map("story_focus")
+  emotionalWeight  Int              @default(50) @map("emotional_weight")
+  pace             Int              @default(50) @map("pace")
+  darkness         Int              @default(50) @map("darkness")
+  scope            Int              @default(50) @map("scope")
+  complexity       Int              @default(50) @map("complexity")
+  favoriteBooks    Json             @map("favorite_books")
+  kryptoniteBook   Json?            @map("kryptonite_book")
+  favoriteBookIds  Int[]            @default([]) @map("favorite_book_ids")
+  kryptoniteBookId Int?             @map("kryptonite_book_id")
+  likedGenres      String[]         @default([]) @map("liked_genres")
+  dislikedGenres   String[]         @default([]) @map("disliked_genres")
+  favoriteAuthors  String[]         @default([]) @map("favorite_authors")
+  theme            String           @default("dark") @map("theme")
+  shareUrl         String?          @map("share_url")
+  shortCode        String?          @unique @map("short_code")
+  qrCodeUrl        String?          @map("qr_code_url")
+  ticketImageUrl   String?          @map("ticket_image_url")
+  isPublic         Boolean          @default(true) @map("is_public")
+  viewsCount       Int              @default(0) @map("views_count")
+  shareCount       Int              @default(0) @map("share_count")
+  duelsCount       Int              @default(0) @map("duels_count")
+  receivedDuels    ReadingDnaDuel[] @relation("TargetDuels")
+  initiatedDuels   ReadingDnaDuel[] @relation("ChallengerDuels")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([guestToken])
+  @@index([ticketNumber])
+  @@index([archetype])
+  @@index([isPublic])
+  @@index([favoriteBookIds], type: Gin)
+  @@index([kryptoniteBookId])
+  @@index([likedGenres], type: Gin)
+  @@index([dislikedGenres], type: Gin)
+  @@map("reading_dna")
+}
+
+// Дуэли читательских вкусов
+model ReadingDnaDuel {
+  id              Int         @id @default(autoincrement())
+  targetDnaId     Int         @map("target_dna_id")
+  challengerDnaId Int?        @map("challenger_dna_id")
+  challengerName  String?     @map("challenger_name")
+  compatibility   Int         @map("compatibility")
+  verdict         String?     @map("verdict")
+  breakdown       Json        @map("breakdown")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  targetDna       ReadingDna  @relation("TargetDuels", fields: [targetDnaId], references: [id], onDelete: Cascade)
+  challengerDna   ReadingDna? @relation("ChallengerDuels", fields: [challengerDnaId], references: [id], onDelete: SetNull)
+
+  @@index([targetDnaId])
+  @@index([challengerDnaId])
+  @@map("reading_dna_duels")
 }

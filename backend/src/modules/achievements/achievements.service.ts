@@ -21,7 +21,7 @@ export const USER_TITLES = [
   { minXP: 150, title: 'Шкафный стратег', icon: '📄' },
   { minXP: 300, title: 'Укротитель абзацев', icon: '🅰️' },
   { minXP: 500, title: 'Покоритель глав', icon: '📑' },
-  { minXP: 800, title: 'Охотник за сюжетами', icon: '📚' },
+  { minXP: 800, title: 'Собиратель сюжетов', icon: '📚' },
   { minXP: 1200, title: 'Книжный странник', icon: '🧭' },
   { minXP: 1700, title: 'Библиотечный волк', icon: '🐺' },
   { minXP: 2300, title: 'Барон библиотеки', icon: '📜' },
