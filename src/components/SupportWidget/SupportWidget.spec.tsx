@@ -113,4 +113,15 @@ describe("SupportWidget", () => {
 
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
+
+  it("применяет адаптивные классы позиционирования для кнопки и окна чата", () => {
+    render(<SupportWidget />);
+    const buttonContainer = screen.getByLabelText("Поддержка и связь с нами").parentElement;
+    expect(buttonContainer).toHaveClass("support-widget-bottom");
+
+    // Открываем чат
+    fireEvent.click(screen.getByLabelText("Поддержка и связь с нами"));
+    const chatWindow = screen.getByText("Поддержка BookStrata").closest(".fixed");
+    expect(chatWindow).toHaveClass("support-chat-bottom");
+  });
 });

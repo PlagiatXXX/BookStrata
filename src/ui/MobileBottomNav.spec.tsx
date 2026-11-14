@@ -56,4 +56,10 @@ describe("MobileBottomNav — drop-up «Рейтинги»", () => {
     const nav = screen.getByRole("navigation");
     expect(nav.className).toContain("pb-[env(safe-area-inset-bottom,0px)]");
   });
+
+  it("содержит атрибут data-mobile-bottom-bar для адаптивного позиционирования виджета поддержки", () => {
+    renderNav();
+    const nav = screen.getByRole("navigation");
+    expect(nav).toHaveAttribute("data-mobile-bottom-bar");
+  });
 });

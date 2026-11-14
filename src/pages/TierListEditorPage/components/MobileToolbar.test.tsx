@@ -172,4 +172,10 @@ describe("MobileToolbar — настройки полки по шестерён�
     );
     expect(screen.getByText("Высота")).toBeInTheDocument();
   });
+
+  it("содержит атрибут data-mobile-bottom-bar на панели", () => {
+    const { container } = render(<MobileToolbar {...defaultProps} />);
+    const bar = container.querySelector("[data-mobile-bottom-bar]");
+    expect(bar).toBeInTheDocument();
+  });
 });

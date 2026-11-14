@@ -63,7 +63,7 @@ export function SupportWidget({ onOpenFeedbackSurvey }: SupportWidgetProps) {
   return (
     <>
       {/* Плавающая кнопка вызова чата в правом нижнем углу */}
-      <div className="fixed bottom-6 right-6 z-40 max-md:bottom-20 max-md:right-4">
+      <div className="fixed right-6 z-40 max-md:right-4 support-widget-bottom transition-[bottom] duration-200">
         <button
           type="button"
           onClick={handleToggle}
@@ -93,7 +93,7 @@ export function SupportWidget({ onOpenFeedbackSurvey }: SupportWidgetProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 16 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed bottom-22 right-6 z-50 flex h-[520px] max-h-[82vh] w-[360px] max-w-[calc(100vw-32px)] flex-col rounded-2xl border border-amber-200/25 bg-[#121215] text-[#f3efe6] shadow-[0_12px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl max-md:bottom-20 max-md:right-4 overflow-hidden"
+            className="fixed right-6 z-50 flex h-[520px] max-h-[82vh] w-[360px] max-w-[calc(100vw-32px)] flex-col rounded-2xl border border-amber-200/25 bg-[#121215] text-[#f3efe6] shadow-[0_12px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl max-md:right-4 overflow-hidden support-chat-bottom transition-[bottom] duration-200"
           >
             {/* Шапка чата */}
             <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 py-3">

@@ -93,6 +93,32 @@
   --theme-font-display: var(--global-font-display);
   --theme-font-body: var(--global-font-body);
   --theme-on-background: var(--theme-text);
+
+  /* ── Support Widget адаптивное позиционирование ── */
+  --support-widget-bottom: 1.5rem; /* 24px (десктоп) */
+  --support-chat-bottom: 5.5rem;   /* 88px (десктоп: над кнопкой) */
+}
+
+@media (max-width: 767px) {
+  :root {
+    /* На мобильных по умолчанию без нижнего бара: 16px + safe-area */
+    --support-widget-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    --support-chat-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* На мобильных при наличии панели управления: 80px + safe-area */
+  body:has([data-mobile-bottom-bar]) {
+    --support-widget-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    --support-chat-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.support-widget-bottom {
+  bottom: var(--support-widget-bottom);
+}
+
+.support-chat-bottom {
+  bottom: var(--support-chat-bottom);
 }
 
 @theme {
