@@ -71,6 +71,7 @@ suspensionReason     String?    @map("suspension_reason")
   genrePreferences     Json?          @map("genre_preferences")
   feedbackDismissedAt  DateTime?      @map("feedback_dismissed_at")
   readingDna           ReadingDna?
+  supportThreads       SupportThread[]
    createdAt            DateTime   @default(now()) @map("created_at")
  
 @@index([xp])
@@ -655,6 +656,48 @@ model Feedback {
   @@index([type])
   @@index([status])
   @@map("feedback")
+}
+
+// Тред поддержки (диалог между пользователем/гостем и администрацией)
+model SupportThread {
+  id            Int              @id @default(autoincrement())
+  userId        Int?             @map("user_id")
+  guestToken    String?          @map("guest_token")
+  status        String           @default("open") // "open" | "answered" | "resolved"
+  unreadByUser  Int              @default(0) @map("unread_by_user")
+  unreadByAdmin Int              @default(0) @map("unread_by_admin")
+  lastMessageAt DateTime         @default(now()) @map("last_message_at")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  user          User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      SupportMessage[]
+
+  @@index([userId])
+  @@index([guestToken])
+  @@index([status])
+  @@index([lastMessageAt])
+  @@map("support_threads")
+}
+
+// Сообщение внутри треда поддержки
+model SupportMessage {
+  id         Int              @id @default(autoincrement())
+  threadId   Int              @map("thread_id")
+  senderRole String           @map("sender_role") // "user" | "admin"
+  senderId   Int?             @map("sender_id")
+  text       String
+  replyToId  Int?             @map("reply_to_id")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  thread     SupportThread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  replyTo    SupportMessage?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies    SupportMessage[] @relation("MessageReplies")
+
+  @@index([threadId])
+  @@index([replyToId])
+  @@index([createdAt])
+  @@map("support_messages")
 }
 
 // Связь пользователей и достижений

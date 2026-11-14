@@ -22,6 +22,7 @@ import { externalNewsRoutes } from "../src/modules/external-news/external-news.r
 import { donorRoutes } from "../src/modules/donors/donors.route.js";
 import { discussionRoutes } from "../src/modules/discussions/discussions.route.js";
 import { feedbackRoutes } from "../src/modules/feedback/feedback.route.js";
+import { supportRoutes, adminSupportRoutes } from "./modules/support/support.route.js";
 import { ratingsRoutes } from "../src/modules/ratings/ratings.route.js";
 import { adminStatsRoutes } from "../src/modules/admin-stats/admin-stats.route.js";
 import { tierListRoutes } from "../src/modules/tier-lists/tierList.route.js";
@@ -404,6 +405,10 @@ fastify.register(discussionRoutes, { prefix: "/api/discussions" });
 
 // Feedback (обратная связь)
 fastify.register(feedbackRoutes, { prefix: "/api/feedback" });
+
+// Support (чат поддержки)
+fastify.register(supportRoutes, { prefix: "/api/support" });
+fastify.register(adminSupportRoutes, { prefix: "/api/admin/support" });
 
 // Ratings (оценки книг)
 fastify.register(ratingsRoutes, { prefix: "/api/ratings" });

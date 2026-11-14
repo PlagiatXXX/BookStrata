@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { sendTelegramFeedbackNotification, formatFeedbackHtml } from "./telegramNotifier.js";
+import {
+  sendTelegramFeedbackNotification,
+  formatFeedbackHtml,
+  sendTelegramSupportNotification,
+  formatSupportMessageHtml,
+} from "./telegramNotifier.js";
 import { config } from "../config/env.js";
 
 type ConfigMutable = Record<string, string | undefined>;
@@ -115,6 +120,82 @@ describe("telegramNotifier", () => {
       });
 
       expect(result).toBe(false);
+
+      cfg.TELEGRAM_BOT_TOKEN = prevToken;
+      cfg.TELEGRAM_CHAT_ID = prevChatId;
+    });
+  });
+
+  describe("formatSupportMessageHtml", () => {
+    it("formats support message with user info and link", () => {
+      const html = formatSupportMessageHtml({
+        threadId: 99,
+        username: "booklover",
+        userId: 12,
+        text: "Как добавить книгу в полку?",
+      });
+
+      expect(html).toContain("Новое сообщение в чате поддержки!");
+      expect(html).toContain("@booklover (ID: 12)");
+      expect(html).toContain("«Как добавить книгу в полку?»");
+      expect(html).toContain("https://bookstrata.ru/admin/support?thread=99");
+    });
+
+    it("formats guest message correctly", () => {
+      const html = formatSupportMessageHtml({
+        threadId: 105,
+        text: "Привет от гостя",
+      });
+
+      expect(html).toContain("Гость #105");
+      expect(html).toContain("«Привет от гостя»");
+    });
+  });
+
+  describe("sendTelegramSupportNotification", () => {
+    it("returns false if tokens are missing", async () => {
+      const prevToken = config.TELEGRAM_BOT_TOKEN;
+      const prevChatId = config.TELEGRAM_CHAT_ID;
+      cfg.TELEGRAM_BOT_TOKEN = "";
+      cfg.TELEGRAM_CHAT_ID = "";
+
+      const result = await sendTelegramSupportNotification({
+        threadId: 1,
+        text: "Тест",
+      });
+
+      expect(result).toBe(false);
+
+      cfg.TELEGRAM_BOT_TOKEN = prevToken;
+      cfg.TELEGRAM_CHAT_ID = prevChatId;
+    });
+
+    it("sends request to Telegram API when tokens exist", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ ok: true }),
+      });
+      globalThis.fetch = mockFetch as unknown as typeof fetch;
+
+      const prevToken = config.TELEGRAM_BOT_TOKEN;
+      const prevChatId = config.TELEGRAM_CHAT_ID;
+      cfg.TELEGRAM_BOT_TOKEN = "123:ABC";
+      cfg.TELEGRAM_CHAT_ID = "999";
+
+      const result = await sendTelegramSupportNotification({
+        threadId: 12,
+        username: "reader",
+        text: "Вопрос",
+      });
+
+      expect(result).toBe(true);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.telegram.org/bot123:ABC/sendMessage",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("chat_id"),
+        })
+      );
 
       cfg.TELEGRAM_BOT_TOKEN = prevToken;
       cfg.TELEGRAM_CHAT_ID = prevChatId;

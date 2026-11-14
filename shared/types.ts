@@ -91,6 +91,7 @@ export interface AdminDashboardStats {
   tierLists: number
   violators: number
   feedbackCount: number
+  supportThreadsCount?: number
 }
 
 export interface PaginationMeta {
@@ -104,4 +105,42 @@ export interface PaginationMeta {
 export interface PaginatedResponse<T> {
   data: T[];
   meta: PaginationMeta;
+}
+
+export interface SupportMessageReplyDto {
+  id: number;
+  text: string;
+  senderRole: "user" | "admin";
+}
+
+export interface SupportMessageDto {
+  id: number;
+  threadId: number;
+  senderRole: "user" | "admin";
+  senderId: number | null;
+  text: string;
+  replyToId: number | null;
+  replyTo?: SupportMessageReplyDto | null;
+  createdAt: string;
+}
+
+export interface SupportThreadUserDto {
+  id: number;
+  username: string;
+  avatarUrl?: string | null;
+  email?: string | null;
+}
+
+export interface SupportThreadDto {
+  id: number;
+  userId: number | null;
+  guestToken: string | null;
+  status: "open" | "answered" | "resolved";
+  unreadByUser: number;
+  unreadByAdmin: number;
+  lastMessageAt: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: SupportThreadUserDto | null;
+  messages?: SupportMessageDto[];
 }

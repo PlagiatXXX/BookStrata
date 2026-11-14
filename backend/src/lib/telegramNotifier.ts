@@ -94,3 +94,68 @@ export async function sendTelegramFeedbackNotification(
     return false;
   }
 }
+
+export interface TelegramSupportPayload {
+  threadId: number;
+  username?: string | null;
+  userId?: number | null;
+  text: string;
+  isGuest?: boolean;
+}
+
+export function formatSupportMessageHtml(payload: TelegramSupportPayload): string {
+  const userDisplay = payload.username
+    ? `@${escapeHtml(payload.username)}${payload.userId ? ` (ID: ${payload.userId})` : ""}`
+    : `Гость #${payload.threadId}`;
+
+  const messageText = escapeHtml(payload.text.trim());
+  const now = new Date().toLocaleString("ru-RU", { timeZone: "Europe/Moscow" });
+  const adminUrl = `https://bookstrata.ru/admin/support?thread=${payload.threadId}`;
+
+  return [
+    `💬 <b>Новое сообщение в чате поддержки!</b>`,
+    ``,
+    `<b>От:</b> ${userDisplay}`,
+    `<b>Сообщение:</b> «${messageText}»`,
+    `<b>Время:</b> ${now} (МСК)`,
+    ``,
+    `🔗 <a href="${adminUrl}">Открыть чат в админке</a>`,
+  ].join("\n");
+}
+
+export async function sendTelegramSupportNotification(
+  payload: TelegramSupportPayload
+): Promise<boolean> {
+  const token = config.TELEGRAM_BOT_TOKEN;
+  const chatId = config.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    return false;
+  }
+
+  try {
+    const text = formatSupportMessageHtml(payload);
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`[telegramNotifier] Telegram API responded with status ${response.status}`);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.warn("[telegramNotifier] Failed to send Telegram notification:", err);
+    return false;
+  }
+}
