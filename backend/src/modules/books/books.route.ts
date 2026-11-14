@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { searchBooks } from "./books.service.js";
 import { searchCatalogBooks } from "./catalogSearch.service.js";
 import { getTrendingBooks } from "./trending.service.js";
-import { getMatchedBooks } from "./readingMatch.service.js";
+import { getMatchedBooks, getUserDnaMood, type UserMood } from "./readingMatch.service.js";
 import { getBookPageData } from "./bookPage.service.js";
 import { toggleBookLike } from "./bookLike.service.js";
 import {
@@ -138,6 +138,8 @@ export async function booksRoutes(fastify: FastifyInstance) {
       emotionalWeight?: number;
       pace?: number;
       darkness?: number;
+      scope?: number;
+      complexity?: number;
       limit?: number;
       exclude?: string;
       genres?: string;
@@ -152,6 +154,8 @@ export async function booksRoutes(fastify: FastifyInstance) {
             emotionalWeight: { type: "number", minimum: 0, maximum: 100 },
             pace: { type: "number", minimum: 0, maximum: 100 },
             darkness: { type: "number", minimum: 0, maximum: 100 },
+            scope: { type: "number", minimum: 0, maximum: 100 },
+            complexity: { type: "number", minimum: 0, maximum: 100 },
             limit: { type: "number", minimum: 1, maximum: 10, default: 3 },
             exclude: { type: "string" },
             genres: { type: "string" }, // "fantasy,horror"
@@ -160,28 +164,55 @@ export async function booksRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const { storyFocus, emotionalWeight, pace, darkness, limit = 3, exclude, genres } = request.query;
+      const {
+        storyFocus,
+        emotionalWeight,
+        pace,
+        darkness,
+        scope,
+        complexity,
+        limit = 3,
+        exclude,
+        genres,
+      } = request.query;
 
       const genreList = (genres ?? "")
         .split(",")
         .map((g) => g.trim())
         .filter((g): g is CategoryId => g !== "" && isCategoryId(g));
 
-      if (
-        storyFocus === undefined &&
-        emotionalWeight === undefined &&
-        pace === undefined &&
-        darkness === undefined &&
-        genreList.length === 0
-      ) {
+      const hasAxes =
+        storyFocus !== undefined ||
+        emotionalWeight !== undefined ||
+        pace !== undefined ||
+        darkness !== undefined ||
+        scope !== undefined ||
+        complexity !== undefined;
+
+      const userId = (request as { user?: { userId?: number } }).user?.userId;
+      let dnaMood: UserMood | null = null;
+      if (userId && !hasAxes && genreList.length === 0) {
+        dnaMood = await getUserDnaMood(userId);
+      }
+
+      if (!hasAxes && genreList.length === 0 && !dnaMood) {
         return reply.code(400).send(
           createApiError(ErrorCodes.VALIDATION_ERROR, "Укажите хотя бы один параметр настроения или жанры"),
         );
       }
 
+      const queryMood: UserMood = {
+        storyFocus,
+        emotionalWeight,
+        pace,
+        darkness,
+        scope,
+        complexity,
+      };
+
       const books = await getMatchedBooks(
-        { storyFocus, emotionalWeight, pace, darkness },
-        { limit, excludeSlug: exclude, genres: genreList },
+        queryMood,
+        { limit, excludeSlug: exclude, genres: genreList, dnaMood: dnaMood ?? undefined },
       );
       return reply.send(createSuccessResponse({ books }));
     },

@@ -8,6 +8,20 @@ export interface TasteBook {
   tierListTitle: string
 }
 
+export interface TasteDnaSlice {
+  archetypeName: string
+  axes: {
+    storyFocus: number
+    emotionalWeight: number
+    pace: number
+    darkness: number
+    scope: number
+    complexity: number
+  }
+  likedGenres: string[]
+  dislikedGenres: string[]
+}
+
 export interface TasteProfile {
   topBooks: TasteBook[]
   midBooks: TasteBook[]
@@ -18,6 +32,7 @@ export interface TasteProfile {
   tierListNames: string[]
   totalLikesReceived: number
   popularTierLists: Array<{ title: string; likesCount: number }>
+  dna: TasteDnaSlice | null
 }
 
 export interface AiChunk {
@@ -113,6 +128,23 @@ export async function getUserTasteProfile(
 
   popularTierLists.sort((a, b) => b.likesCount - a.likesCount)
 
+  const dnaRecord = await prisma.readingDna.findUnique({ where: { userId } })
+  const dna: TasteDnaSlice | null = dnaRecord
+    ? {
+        archetypeName: dnaRecord.archetypeName,
+        axes: {
+          storyFocus: dnaRecord.storyFocus,
+          emotionalWeight: dnaRecord.emotionalWeight,
+          pace: dnaRecord.pace,
+          darkness: dnaRecord.darkness,
+          scope: dnaRecord.scope,
+          complexity: dnaRecord.complexity,
+        },
+        likedGenres: dnaRecord.likedGenres,
+        dislikedGenres: dnaRecord.dislikedGenres,
+      }
+    : null
+
   return {
     topBooks,
     midBooks,
@@ -123,6 +155,7 @@ export async function getUserTasteProfile(
     tierListNames,
     totalLikesReceived,
     popularTierLists,
+    dna,
   }
 }
 
@@ -216,6 +249,14 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
     for (const b of profile.unrankedBooks.slice(0, 10)) {
       ctx.push(`  • ${b.title}${b.author ? ` (${b.author})` : ''}`)
     }
+  }
+
+  if (profile.dna) {
+    const { archetypeName, axes, likedGenres, dislikedGenres } = profile.dna
+    const axesStr = `сюжет/рефлексия ${axes.storyFocus}, лёгкость/тяжесть ${axes.emotionalWeight}, темп ${axes.pace}, светло/мрачно ${axes.darkness}, камерно/эпично ${axes.scope}, просто/сложно ${axes.complexity}`
+    const likedStr = likedGenres.length > 0 ? ` Любимые жанры: ${likedGenres.join(', ')}.` : ''
+    const dislikedStr = dislikedGenres.length > 0 ? ` Неприязненные жанры: ${dislikedGenres.join(', ')}.` : ''
+    ctx.push(`— Читательский ДНК: архетип «${archetypeName}». Оси восприятия: ${axesStr}.${likedStr}${dislikedStr}`)
   }
 
   sections.push(ctx.join('\n'))

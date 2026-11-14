@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockFindMany = vi.fn();
+const mockDnaFindUnique = vi.fn();
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
     book: { findMany: mockFindMany },
+    readingDna: { findUnique: mockDnaFindUnique },
   },
 }));
 
@@ -157,5 +159,52 @@ describe("getMatchedBooks — opts.genres", () => {
     // оба одинаковые по 6 осям → tie-break по названию: "Фэнтези" < "Хоррор" (localeCompare ru)
     expect(books).toHaveLength(2);
     expect(books.every((b) => typeof b.score === "number")).toBe(true);
+  });
+});
+
+describe("getUserDnaMood & opts.dnaMood", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("getUserDnaMood возвращает null, если у пользователя нет ReadingDna", async () => {
+    mockDnaFindUnique.mockResolvedValue(null);
+    const { getUserDnaMood } = await import("./readingMatch.service.js");
+    const result = await getUserDnaMood(42);
+    expect(result).toBeNull();
+    expect(mockDnaFindUnique).toHaveBeenCalledWith({ where: { userId: 42 } });
+  });
+
+  it("getUserDnaMood возвращает оси сохраненного ДНК", async () => {
+    mockDnaFindUnique.mockResolvedValue({
+      storyFocus: 60,
+      emotionalWeight: 70,
+      pace: 40,
+      darkness: 80,
+      scope: 50,
+      complexity: 65,
+    });
+    const { getUserDnaMood } = await import("./readingMatch.service.js");
+    const result = await getUserDnaMood(42);
+    expect(result).toEqual({
+      storyFocus: 60,
+      emotionalWeight: 70,
+      pace: 40,
+      darkness: 80,
+      scope: 50,
+      complexity: 65,
+    });
+  });
+
+  it("getMatchedBooks с пустым mood, но заданным opts.dnaMood использует ДНК-настроение", async () => {
+    mockFindMany.mockResolvedValue([BOOK_DARK, BOOK_LIGHT]);
+    const { getMatchedBooks } = await import("./readingMatch.service.js");
+
+    const booksWithoutDna = await getMatchedBooks({});
+    expect(booksWithoutDna[0]?.score).toBe(0);
+
+    const booksWithDna = await getMatchedBooks({}, {
+      dnaMood: { darkness: 90 },
+    });
+    expect(booksWithDna[0]?.slug).toBe("dark-book");
+    expect(booksWithDna[0]?.score).toBeGreaterThan(0);
   });
 });

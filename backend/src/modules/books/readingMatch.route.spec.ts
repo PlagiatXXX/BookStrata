@@ -1,15 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
+
+const mockFindMany = vi.fn();
+const mockDnaFindUnique = vi.fn();
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
-    book: { findMany: vi.fn() },
+    book: { findMany: mockFindMany },
+    readingDna: { findUnique: mockDnaFindUnique },
     $queryRaw: vi.fn().mockResolvedValue([]),
   },
 }));
+
+let mockUser: { userId: number } | undefined = undefined;
+
 vi.mock("../auth/auth.middleware.js", () => ({
-  authMiddleware: vi.fn((_req: any, _reply: any, done: any) => done()),
+  authMiddleware: vi.fn((req: any, _reply: any, done: any) => {
+    if (mockUser) req.user = mockUser;
+    done();
+  }),
 }));
 
 const PROFILE = {
@@ -39,6 +48,10 @@ describe("GET /api/books/match", () => {
 
   async function createApp() {
     const instance = Fastify({ logger: false });
+    // Эмулируем preHandler декоратор user из authMiddleware
+    instance.addHook("preHandler", async (req: any) => {
+      if (mockUser) req.user = mockUser;
+    });
     const { booksRoutes } = await import("./books.route.js");
     await instance.register(booksRoutes, { prefix: "/api/books" });
     await instance.ready();
@@ -47,19 +60,25 @@ describe("GET /api/books/match", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { prisma } = await import("../../lib/prisma.js");
-    vi.mocked(prisma.book.findMany).mockResolvedValue([
+    mockUser = undefined;
+    mockFindMany.mockResolvedValue([
       bookRow(1, "dark-book", "Тёмная", 90),
       bookRow(2, "light-book", "Светлая", 10),
     ] as any);
     app = await createApp();
   });
-  afterEach(async () => { await app.close(); });
+
+  afterEach(async () => {
+    await app.close();
+  });
 
   it("отдаёт топ-N книг с score, отсортированный по убыванию", async () => {
-    const res = await request(app.server).get("/api/books/match?darkness=90&limit=2");
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match?darkness=90&limit=2",
+    });
     expect(res.statusCode).toBe(200);
-    const books = res.body.data.books;
+    const books = res.json().data.books;
     expect(books).toHaveLength(2);
     expect(books[0].slug).toBe("dark-book");
     expect(books[0].score).toBeGreaterThan(books[1].score);
@@ -67,36 +86,77 @@ describe("GET /api/books/match", () => {
     expect(books[0]).toHaveProperty("author");
   });
 
-  it("400, если ни одна ось не задана", async () => {
-    const res = await request(app.server).get("/api/books/match");
+  it("400, если ни одна ось не задана и пользователь без ДНК", async () => {
+    mockDnaFindUnique.mockResolvedValue(null);
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match",
+    });
     expect(res.statusCode).toBe(400);
   });
 
-  it("исключает книгу по exclude", async () => {
-    const res = await request(app.server).get("/api/books/match?darkness=90&exclude=dark-book");
+  it("без осей в query, но авторизованный пользователь с ДНК → 200 с книгами по ДНК", async () => {
+    mockUser = { userId: 42 };
+    mockDnaFindUnique.mockResolvedValue({
+      storyFocus: 20,
+      emotionalWeight: 30,
+      pace: 80,
+      darkness: 90,
+      scope: 50,
+      complexity: 70,
+    });
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match",
+    });
+
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.books.map((b: { slug: string }) => b.slug)).toEqual(["light-book"]);
+    const books = res.json().data.books;
+    expect(books.length).toBeGreaterThan(0);
+    expect(books[0].slug).toBe("dark-book");
+  });
+
+  it("исключает книгу по exclude", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match?darkness=90&exclude=dark-book",
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.books.map((b: { slug: string }) => b.slug)).toEqual(["light-book"]);
   });
 
   it("не перехватывается slug-роутом (ответ — массив books, не редирект/404)", async () => {
-    const res = await request(app.server).get("/api/books/match?pace=50");
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match?pace=50",
+    });
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.books).toBeDefined();
+    expect(res.json().data.books).toBeDefined();
   });
 
   it("genres-only: без слайдеров, но с genres — 200", async () => {
-    const res = await request(app.server).get("/api/books/match?genres=fantasy");
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match?genres=fantasy",
+    });
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.books).toBeDefined();
+    expect(res.json().data.books).toBeDefined();
   });
 
   it("мусорные genre id игнорируются: только мусор → 400", async () => {
-    const res = await request(app.server).get("/api/books/match?genres=абракадабра");
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match?genres=абракадабра",
+    });
     expect(res.statusCode).toBe(400);
   });
 
   it("слайдер + мусорный genres → 200 (слайдер спасает)", async () => {
-    const res = await request(app.server).get("/api/books/match?darkness=90&genres=мусор");
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match?darkness=90&genres=мусор",
+    });
     expect(res.statusCode).toBe(200);
   });
 });

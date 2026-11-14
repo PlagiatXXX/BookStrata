@@ -23,6 +23,8 @@ import {
   saveDna,
   getTicket,
   conductDuel,
+  findTwins,
+  incrementShareCount,
 } from "./readingDna.service.js";
 import type { ReadingDnaInput } from "./readingDna.schema.js";
 
@@ -215,6 +217,145 @@ describe("readingDna.service", () => {
         where: { id: 1 },
         data: { duelsCount: { increment: 1 } },
       });
+    });
+  });
+
+  describe("findTwins (nearest-neighbour)", () => {
+    const mockCurrentTicket = {
+      id: 10,
+      ticketNumber: "BS-1000-A",
+      archetype: "dark-archivist",
+      archetypeName: "Хранитель запретных фолиантов",
+      archetypeDesc: "Описание",
+      motto: "Цитата",
+      storyFocus: 60,
+      emotionalWeight: 80,
+      pace: 40,
+      darkness: 90,
+      scope: 50,
+      complexity: 70,
+      favoriteBooks: [{ title: "Книга 1" }, { title: "Книга 2" }, { title: "Книга 3" }],
+      kryptoniteBook: null,
+      likedGenres: ["Классика"],
+      dislikedGenres: ["Детектив"],
+      favoriteAuthors: ["Автор 1"],
+      theme: "dark",
+      isPublic: true,
+      shareUrl: null,
+      shortCode: null,
+      qrCodeUrl: null,
+      ticketImageUrl: null,
+      viewsCount: 0,
+      shareCount: 0,
+      duelsCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it("запрашивает кандидатов с фильтром по окну осей ±30, isPublic: true и id != current.id", async () => {
+      (prisma.readingDna.findUnique as any).mockResolvedValue(mockCurrentTicket);
+      (prisma.readingDna.findMany as any).mockResolvedValue([]);
+
+      await findTwins("BS-1000-A", 5);
+
+      expect(prisma.readingDna.findMany).toHaveBeenCalledWith({
+        where: {
+          isPublic: true,
+          id: { not: 10 },
+          storyFocus: { gte: 30, lte: 90 },
+          emotionalWeight: { gte: 50, lte: 100 },
+          pace: { gte: 10, lte: 70 },
+          darkness: { gte: 60, lte: 100 },
+          scope: { gte: 20, lte: 80 },
+          complexity: { gte: 40, lte: 100 },
+        },
+        take: expect.any(Number),
+      });
+    });
+
+    it("сортирует результат по убыванию similarity и ограничивает limit записями", async () => {
+      (prisma.readingDna.findUnique as any).mockResolvedValue(mockCurrentTicket);
+
+      // 3 кандидата с разной степенью сходства
+      const candidateFar = {
+        ...mockCurrentTicket,
+        id: 11,
+        ticketNumber: "BS-1111-B",
+        storyFocus: 35,
+        emotionalWeight: 55,
+        pace: 65,
+        darkness: 65,
+        scope: 25,
+        complexity: 45,
+      };
+
+      const candidateClose = {
+        ...mockCurrentTicket,
+        id: 12,
+        ticketNumber: "BS-2222-C",
+        storyFocus: 62,
+        emotionalWeight: 82,
+        pace: 42,
+        darkness: 88,
+        scope: 52,
+        complexity: 72,
+      };
+
+      const candidateTwin = {
+        ...mockCurrentTicket,
+        id: 13,
+        ticketNumber: "BS-3333-D",
+        // идентичные оси и вкусы
+      };
+
+      (prisma.readingDna.findMany as any).mockResolvedValue([
+        candidateFar,
+        candidateTwin,
+        candidateClose,
+      ]);
+
+      const twins = await findTwins("BS-1000-A", 2);
+
+      expect(twins.length).toBe(2);
+      expect(twins[0]?.id).toBe(13); // candidateTwin
+      expect(twins[1]?.id).toBe(12); // candidateClose
+      expect(twins[0]?.similarity).toBeGreaterThanOrEqual(twins[1]?.similarity ?? 0);
+    });
+
+    it("возвращает пустой массив, если текущий билет не найден", async () => {
+      (prisma.readingDna.findUnique as any).mockResolvedValue(null);
+
+      const twins = await findTwins("BS-UNKNOWN", 5);
+      expect(twins).toEqual([]);
+      expect(prisma.readingDna.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("incrementShareCount", () => {
+    it("инкрементирует shareCount и возвращает новое значение", async () => {
+      (prisma.readingDna.findFirst as any).mockResolvedValue({ id: 10, ticketNumber: "BS-1000-A" });
+      (prisma.readingDna.update as any).mockResolvedValue({ shareCount: 4 });
+
+      const count = await incrementShareCount("BS-1000-A");
+
+      expect(prisma.readingDna.findFirst).toHaveBeenCalledWith({
+        where: { OR: [{ ticketNumber: "BS-1000-A" }, { shortCode: "BS-1000-A" }] },
+      });
+      expect(prisma.readingDna.update).toHaveBeenCalledWith({
+        where: { id: 10 },
+        data: { shareCount: { increment: 1 } },
+        select: { shareCount: true },
+      });
+      expect(count).toBe(4);
+    });
+
+    it("возвращает null, если билет не найден", async () => {
+      (prisma.readingDna.findFirst as any).mockResolvedValue(null);
+
+      const count = await incrementShareCount("BS-NONEXISTENT");
+
+      expect(count).toBeNull();
+      expect(prisma.readingDna.update).not.toHaveBeenCalled();
     });
   });
 });

@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
   readingDnaInputSchema,
   readingDnaDuelInputSchema,
+  readingDnaShareInputSchema,
 } from "./readingDna.schema.js";
 import {
   previewDna,
@@ -10,7 +11,11 @@ import {
   getTicket,
   conductDuel,
   findTwins,
+  getArchetypeCatalog,
+  getMyDna,
+  incrementShareCount,
 } from "./readingDna.service.js";
+import { authMiddleware } from "../auth/auth.middleware.js";
 import {
   ErrorCodes,
   createApiError,
@@ -119,5 +124,55 @@ export async function readingDnaRoutes(fastify: FastifyInstance) {
 
     const twins = await findTwins(ticketNumber, limit);
     return reply.send(createSuccessResponse({ twins }));
+  });
+
+  /**
+   * GET /api/reading-dna/archetypes
+   * Публичный каталог всех 16 архетипов и диапазонов осей.
+   */
+  fastify.get("/archetypes", async (_request, reply) => {
+    return reply.send(createSuccessResponse({ archetypes: getArchetypeCatalog() }));
+  });
+
+  /**
+   * GET /api/reading-dna/me
+   * Получение ДНК текущего авторизованного пользователя.
+   */
+  fastify.get("/me", { preHandler: [authMiddleware] }, async (request, reply) => {
+    const userId = (request as any).user?.userId ?? (request as any).user?.id;
+    const dna = await getMyDna(userId);
+    return reply.send(createSuccessResponse({ dna }));
+  });
+
+  /**
+   * POST /api/reading-dna/share
+   * Фиксация факта шеринга читательского билета.
+   */
+  fastify.post("/share", async (request, reply) => {
+    const parseResult = readingDnaShareInputSchema.safeParse(request.body);
+    if (!parseResult.success) {
+      return reply
+        .status(400)
+        .send(
+          createApiError(
+            ErrorCodes.VALIDATION_ERROR,
+            parseResult.error.issues[0]?.message || "Номер билета обязателен"
+          )
+        );
+    }
+
+    const shareCount = await incrementShareCount(parseResult.data.ticketNumber);
+    if (shareCount === null) {
+      return reply
+        .status(404)
+        .send(
+          createApiError(
+            ErrorCodes.NOT_FOUND,
+            `Читательский билет «${parseResult.data.ticketNumber}» не найден`
+          )
+        );
+    }
+
+    return reply.send(createSuccessResponse({ shareCount }));
   });
 }

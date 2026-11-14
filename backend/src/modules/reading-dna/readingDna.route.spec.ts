@@ -8,7 +8,12 @@ const mocks = vi.hoisted(() => ({
   getTicket: vi.fn(),
   conductDuel: vi.fn(),
   findTwins: vi.fn(),
+  getArchetypeCatalog: vi.fn(),
+  getMyDna: vi.fn(),
+  incrementShareCount: vi.fn(),
 }));
+
+let mockCurrentUser: { userId: number } | null = null;
 
 vi.mock("./readingDna.service.js", () => ({
   previewDna: mocks.previewDna,
@@ -16,6 +21,18 @@ vi.mock("./readingDna.service.js", () => ({
   getTicket: mocks.getTicket,
   conductDuel: mocks.conductDuel,
   findTwins: mocks.findTwins,
+  getArchetypeCatalog: mocks.getArchetypeCatalog,
+  getMyDna: mocks.getMyDna,
+  incrementShareCount: mocks.incrementShareCount,
+}));
+
+vi.mock("../auth/auth.middleware.js", () => ({
+  authMiddleware: vi.fn(async (request: any, reply: any) => {
+    if (!mockCurrentUser) {
+      return reply.code(401).send({ error: "Unauthorized" });
+    }
+    request.user = mockCurrentUser;
+  }),
 }));
 
 describe("readingDna.route", () => {
@@ -158,6 +175,120 @@ describe("readingDna.route", () => {
       expect(response.statusCode).toBe(200);
       const json = response.json();
       expect(json.data.compatibility).toBe(87);
+    });
+  });
+
+  describe("GET /api/reading-dna/archetypes", () => {
+    it("возвращает 200 и полный каталог из 16 читательских архетипов", async () => {
+      const { ARCHETYPES } = await import("./archetypes.data.js");
+      mocks.getArchetypeCatalog.mockReturnValue(ARCHETYPES);
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/reading-dna/archetypes",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.data).toBeDefined();
+      expect(json.data.archetypes).toBeInstanceOf(Array);
+      expect(json.data.archetypes.length).toBe(16);
+
+      const first = json.data.archetypes[0];
+      expect(first.id).toBeTruthy();
+      expect(first.caste).toBeDefined();
+      expect(first.caste.name).toBeTruthy();
+      expect(first.names.dark).toBeTruthy();
+      expect(first.names.craft).toBeTruthy();
+      expect(first.rarity).toBeGreaterThanOrEqual(1);
+      expect(first.number).toBe(1);
+      expect(first.axisRanges.storyFocus).toBeDefined();
+      expect(first.axisRanges.storyFocus.min).toBeLessThan(first.axisRanges.storyFocus.max);
+    });
+  });
+
+  describe("GET /api/reading-dna/me", () => {
+    it("возвращает 401 без авторизации", async () => {
+      mockCurrentUser = null;
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/reading-dna/me",
+      });
+      expect(response.statusCode).toBe(401);
+    });
+
+    it("возвращает 200 и { dna: null }, если у авторизованного пользователя нет ДНК", async () => {
+      mockCurrentUser = { userId: 42 };
+      mocks.getMyDna.mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/reading-dna/me",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.data.dna).toBeNull();
+      expect(mocks.getMyDna).toHaveBeenCalledWith(42);
+    });
+
+    it("возвращает 200 и данные билета, если у пользователя есть ДНК", async () => {
+      mockCurrentUser = { userId: 42 };
+      const sampleTicket = {
+        ticketNumber: "BS-7492-X",
+        archetype: "meaning-architect",
+        archetypeName: "Архитектор смыслов",
+      };
+      mocks.getMyDna.mockResolvedValue(sampleTicket);
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/reading-dna/me",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.data.dna).toEqual(sampleTicket);
+      expect(mocks.getMyDna).toHaveBeenCalledWith(42);
+    });
+  });
+
+  describe("POST /api/reading-dna/share", () => {
+    it("возвращает 400 при отсутствии ticketNumber", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/reading-dna/share",
+        payload: {},
+      });
+      expect(response.statusCode).toBe(400);
+    });
+
+    it("возвращает 404, если билет не найден", async () => {
+      mocks.incrementShareCount.mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/reading-dna/share",
+        payload: { ticketNumber: "BS-NONEXISTENT" },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(mocks.incrementShareCount).toHaveBeenCalledWith("BS-NONEXISTENT");
+    });
+
+    it("возвращает 200 и обновленный shareCount для существующего билета", async () => {
+      mocks.incrementShareCount.mockResolvedValue(5);
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/reading-dna/share",
+        payload: { ticketNumber: "BS-7492-X" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.data.shareCount).toBe(5);
+      expect(mocks.incrementShareCount).toHaveBeenCalledWith("BS-7492-X");
     });
   });
 });

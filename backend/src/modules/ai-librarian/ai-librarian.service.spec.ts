@@ -12,6 +12,7 @@ const emptyProfile: TasteProfile = {
   tierListNames: [],
   totalLikesReceived: 0,
   popularTierLists: [],
+  dna: null,
 }
 
 const richProfile: TasteProfile = {
@@ -36,6 +37,7 @@ const richProfile: TasteProfile = {
     { title: 'Лучшее', likesCount: 30 },
     { title: 'Классика', likesCount: 10 },
   ],
+  dna: null,
 }
 
 describe('buildSystemPrompt', () => {
@@ -107,5 +109,82 @@ describe('buildSystemPrompt', () => {
     const prompt = buildSystemPrompt(manyBooks, 'User')
     const matches = prompt.match(/Book \d+/g)
     expect(matches).toHaveLength(15)
+  })
+
+  it('добавляет секцию «Читательский ДНК», если profile.dna задан', () => {
+    const profileWithDna: TasteProfile = {
+      ...richProfile,
+      dna: {
+        archetypeName: 'Архитектор смыслов',
+        axes: {
+          storyFocus: 90,
+          emotionalWeight: 80,
+          pace: 75,
+          darkness: 60,
+          scope: 75,
+          complexity: 90,
+        },
+        likedGenres: ['Философия', 'Классика'],
+        dislikedGenres: ['Бульварный детектив'],
+      },
+    }
+    const prompt = buildSystemPrompt(profileWithDna, 'Федя')
+    expect(prompt).toContain('Читательский ДНК')
+    expect(prompt).toContain('Архитектор смыслов')
+    expect(prompt).toContain('сюжет/рефлексия 90')
+    expect(prompt).toContain('Философия')
+  })
+
+  it('не включает секцию «Читательский ДНК», если profile.dna === null', () => {
+    const prompt = buildSystemPrompt(richProfile, 'Федя')
+    expect(prompt).not.toContain('Читательский ДНК')
+  })
+})
+
+describe('getUserTasteProfile with DNA', () => {
+  it('возвращает dna: null, если у пользователя нет ReadingDna', async () => {
+    const { getUserTasteProfile } = await import('./ai-librarian.service.js')
+    const mockPrisma = {
+      tierList: { findMany: vi.fn().mockResolvedValue([]) },
+      readingDna: { findUnique: vi.fn().mockResolvedValue(null) },
+    } as any
+
+    const profile = await getUserTasteProfile(1, mockPrisma)
+    expect(profile.dna).toBeNull()
+    expect(mockPrisma.readingDna.findUnique).toHaveBeenCalledWith({ where: { userId: 1 } })
+  })
+
+  it('возвращает dna с archetypeName, осями, likedGenres, dislikedGenres, если ДНК есть', async () => {
+    const { getUserTasteProfile } = await import('./ai-librarian.service.js')
+    const mockDna = {
+      archetypeName: 'Архитектор смыслов',
+      storyFocus: 90,
+      emotionalWeight: 80,
+      pace: 75,
+      darkness: 60,
+      scope: 75,
+      complexity: 90,
+      likedGenres: ['Философия', 'Классика'],
+      dislikedGenres: ['Бульварный детектив'],
+    }
+    const mockPrisma = {
+      tierList: { findMany: vi.fn().mockResolvedValue([]) },
+      readingDna: { findUnique: vi.fn().mockResolvedValue(mockDna) },
+    } as any
+
+    const profile = await getUserTasteProfile(1, mockPrisma)
+    expect(profile.dna).toEqual({
+      archetypeName: 'Архитектор смыслов',
+      axes: {
+        storyFocus: 90,
+        emotionalWeight: 80,
+        pace: 75,
+        darkness: 60,
+        scope: 75,
+        complexity: 90,
+      },
+      likedGenres: ['Философия', 'Классика'],
+      dislikedGenres: ['Бульварный детектив'],
+    })
   })
 })

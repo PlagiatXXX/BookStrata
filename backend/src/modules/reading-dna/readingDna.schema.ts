@@ -71,6 +71,15 @@ export const readingDnaDuelInputSchema = z
 export type ReadingDnaDuelInput = z.infer<typeof readingDnaDuelInputSchema>;
 
 /**
+ * Входные данные для фиксации шеринга билета.
+ */
+export const readingDnaShareInputSchema = z.object({
+  ticketNumber: z.string().min(1, "Номер билета обязателен"),
+});
+
+export type ReadingDnaShareInput = z.infer<typeof readingDnaShareInputSchema>;
+
+/**
  * Схема ответа публичного / сохраненного билета Reading DNA.
  */
 export const readingDnaResponseSchema = z.object({
@@ -97,5 +106,46 @@ export const readingDnaResponseSchema = z.object({
   duelsCount: z.number().default(0),
   createdAt: z.union([z.string(), z.date()]),
 });
+
+export const axisRangeSchema = z.object({
+  min: z.number().min(0).max(100),
+  max: z.number().min(0).max(100),
+});
+
+export const casteInfoSchema = z.object({
+  id: z.enum(["mind", "abyss", "action", "light"]),
+  name: z.string(),
+  sealColor: z.string(),
+  badgeClass: z.string(),
+});
+
+export const archetypeCatalogItemSchema = z.object({
+  id: z.string(),
+  number: z.number(),
+  caste: casteInfoSchema,
+  rarity: z.number(),
+  names: z.object({
+    dark: z.string(),
+    craft: z.string(),
+  }),
+  description: z.string(),
+  quote: z.string(),
+  specialSign: z.string(),
+  axisRanges: z.object({
+    storyFocus: axisRangeSchema,
+    emotionalWeight: axisRangeSchema,
+    pace: axisRangeSchema,
+    darkness: axisRangeSchema,
+    scope: axisRangeSchema,
+    complexity: axisRangeSchema,
+  }),
+});
+
+export type ArchetypeCatalogItem = z.infer<typeof archetypeCatalogItemSchema>;
+
+export const dnaArchetypesResponseSchema = z.object({
+  archetypes: z.array(archetypeCatalogItemSchema),
+});
+
 
 export type ReadingDnaResponse = z.infer<typeof readingDnaResponseSchema>;

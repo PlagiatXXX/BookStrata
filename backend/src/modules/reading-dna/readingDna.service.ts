@@ -4,6 +4,7 @@ import { NotFoundError } from "../../lib/errors.js";
 import {
   resolveArchetype,
   calculateCompatibility,
+  ARCHETYPES,
   type CompatibilityResult,
 } from "./compatibility.calculator.js";
 import type {
@@ -11,6 +12,7 @@ import type {
   ReadingDnaResponse,
   ReadingDnaDuelInput,
   DnaBookItem,
+  ArchetypeCatalogItem,
 } from "./readingDna.schema.js";
 
 /**
@@ -27,6 +29,18 @@ function generateTicketNumber(): string {
  */
 function generateShortCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+/**
+ * Проверяет, что ошибка Prisma — нарушение уникального ограничения (P2002).
+ */
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "P2002"
+  );
 }
 
 /**
@@ -108,17 +122,13 @@ export async function saveDna(
   const archetypeName =
     input.theme === "craft" ? archetypeDef.names.craft : archetypeDef.names.dark;
 
-  const ticketNumber = generateTicketNumber();
-  const shortCode = generateShortCode();
-  const shareUrl = `https://bookstrata.ru/reading-dna?ticket=${ticketNumber}`;
-
   const favoriteBookIds = input.favoriteBooks
     .map((b) => b.bookId)
     .filter((id): id is number => typeof id === "number");
 
   const kryptoniteBookId = input.kryptoniteBook?.bookId ?? null;
 
-  const dataPayload = {
+  const basePayload = {
     customName: input.customName ?? null,
     archetype: archetypeDef.id,
     archetypeName,
@@ -138,31 +148,46 @@ export async function saveDna(
     dislikedGenres: input.dislikedGenres,
     favoriteAuthors: input.favoriteAuthors,
     theme: input.theme,
-    shareUrl,
-    shortCode,
   };
 
+  const MAX_ATTEMPTS = 5;
   let savedRecord: any;
+  let lastError: unknown;
 
-  if (userId) {
-    savedRecord = await prisma.readingDna.upsert({
-      where: { userId },
-      update: dataPayload,
-      create: {
-        ...dataPayload,
-        userId,
-        ticketNumber,
-      },
-    });
-  } else {
-    savedRecord = await prisma.readingDna.create({
-      data: {
-        ...dataPayload,
-        guestToken: input.guestToken ?? null,
-        ticketNumber,
-      },
-    });
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+    const ticketNumber = generateTicketNumber();
+    const shortCode = generateShortCode();
+    const shareUrl = `https://bookstrata.ru/reading-dna?ticket=${ticketNumber}`;
+    const dataPayload = { ...basePayload, shareUrl, shortCode };
+
+    try {
+      if (userId) {
+        savedRecord = await prisma.readingDna.upsert({
+          where: { userId },
+          update: dataPayload,
+          create: {
+            ...dataPayload,
+            userId,
+            ticketNumber,
+          },
+        });
+      } else {
+        savedRecord = await prisma.readingDna.create({
+          data: {
+            ...dataPayload,
+            guestToken: input.guestToken ?? null,
+            ticketNumber,
+          },
+        });
+      }
+      break;
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) throw error;
+      lastError = error;
+    }
   }
+
+  if (!savedRecord) throw lastError;
 
   return toResponse(savedRecord);
 }
@@ -191,6 +216,42 @@ export async function getTicket(
   });
 
   return toResponse(record);
+}
+
+/**
+ * Получение ДНК пользователя по userId.
+ */
+export async function getMyDna(userId: number): Promise<ReadingDnaResponse | null> {
+  const record = await prisma.readingDna.findUnique({
+    where: { userId },
+  });
+
+  if (!record) return null;
+
+  return toResponse(record);
+}
+
+/**
+ * Инкремент счётчика шеринга билета.
+ */
+export async function incrementShareCount(
+  ticketNumber: string
+): Promise<number | null> {
+  const record = await prisma.readingDna.findFirst({
+    where: {
+      OR: [{ ticketNumber }, { shortCode: ticketNumber }],
+    },
+  });
+
+  if (!record) return null;
+
+  const updated = await prisma.readingDna.update({
+    where: { id: record.id },
+    data: { shareCount: { increment: 1 } },
+    select: { shareCount: true },
+  });
+
+  return updated.shareCount;
 }
 
 /**
@@ -287,8 +348,10 @@ export async function conductDuel(
   };
 }
 
+export const TWINS_AXIS_WINDOW = 30;
+
 /**
- * Поиск книжных близнецов (Twin Search).
+ * Поиск книжных близнецов (Nearest-neighbour по осям восприятия с расчетом совместимости).
  */
 export async function findTwins(
   ticketNumber: string,
@@ -300,10 +363,21 @@ export async function findTwins(
 
   if (!current) return [];
 
+  const clampWindow = (val: number) => ({
+    gte: Math.max(0, val - TWINS_AXIS_WINDOW),
+    lte: Math.min(100, val + TWINS_AXIS_WINDOW),
+  });
+
   const candidates = await prisma.readingDna.findMany({
     where: {
       isPublic: true,
       id: { not: current.id },
+      storyFocus: clampWindow(current.storyFocus),
+      emotionalWeight: clampWindow(current.emotionalWeight),
+      pace: clampWindow(current.pace),
+      darkness: clampWindow(current.darkness),
+      scope: clampWindow(current.scope),
+      complexity: clampWindow(current.complexity),
     },
     take: 50,
   });
@@ -353,3 +427,11 @@ export async function findTwins(
   scored.sort((x, y) => y.similarity - x.similarity);
   return scored.slice(0, limit);
 }
+
+/**
+ * Возвращает полный каталог читательских архетипов (единый источник правды).
+ */
+export function getArchetypeCatalog(): ArchetypeCatalogItem[] {
+  return ARCHETYPES;
+}
+

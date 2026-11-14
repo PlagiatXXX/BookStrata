@@ -76,6 +76,26 @@ export interface GetMatchedBooksOptions {
   excludeSlug?: string;
   /** Выбранные жанры пользователя — активируют 7-ю ось. */
   genres?: CategoryId[];
+  /** Фоновое настроение из Reading DNA (используется при пустом mood). */
+  dnaMood?: UserMood;
+}
+
+/**
+ * Получает сохраненные оси читательского ДНК пользователя.
+ */
+export async function getUserDnaMood(userId: number): Promise<UserMood | null> {
+  const dna = await prisma.readingDna.findUnique({
+    where: { userId },
+  });
+  if (!dna) return null;
+  return {
+    storyFocus: dna.storyFocus,
+    emotionalWeight: dna.emotionalWeight,
+    pace: dna.pace,
+    darkness: dna.darkness,
+    scope: dna.scope,
+    complexity: dna.complexity,
+  };
 }
 
 /**
@@ -87,7 +107,10 @@ export async function getMatchedBooks(
   mood: UserMood,
   opts: GetMatchedBooksOptions = {},
 ): Promise<MatchedBook[]> {
-  const { limit = 3, excludeSlug, genres = [] } = opts;
+  const { limit = 3, excludeSlug, genres = [], dnaMood } = opts;
+
+  const hasMoodAxes = Object.values(mood).some((v) => v !== undefined);
+  const effectiveMood: UserMood = hasMoodAxes ? mood : (dnaMood ?? mood);
 
   const rows = await prisma.book.findMany({
     where: {
@@ -126,7 +149,7 @@ export async function getMatchedBooks(
         title: row.title,
         author: row.author,
         coverImageUrl: row.coverImageUrl,
-        score: matchScore(mood, bookProfile, genreSim),
+        score: matchScore(effectiveMood, bookProfile, genreSim),
       });
     } catch {
       // Невалидный профиль в БД — пропускаем молча
