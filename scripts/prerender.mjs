@@ -71,6 +71,16 @@ export function escapeHtml(str) {
 }
 
 /**
+ * Очищает HTML от блоков всплывающих тоастов (sileo).
+ * Тоасты уведомлений об ошибках/успехах не должны попадать
+ * в статическую поисковую верстку.
+ */
+export function stripToastMarkup(html) {
+  if (!html) return "";
+  return html.replace(/<section data-sileo-viewport="true"[\s\S]*?<\/section>/g, "");
+}
+
+/**
  * CLI-фильтр роутов для флага --only (повторяемый).
  * onlyPaths пуст/не передан → все роуты; иначе — точное совпадение route.path.
  * Нет совпадений → пустой массив (вызывающий код: warn + exit 1).
@@ -173,6 +183,13 @@ function proxyApiRequest(req, res) {
   if (req.url.includes('/api/log')) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end('{}');
+    return;
+  }
+
+  // Чат поддержки: не нужен для пререндера SEO
+  if (req.url.includes('/api/support/')) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ data: null }));
     return;
   }
 
@@ -1181,13 +1198,17 @@ async function processRoute(browser, route) {
       log(`    og:desc:    ${seo.ogDescription?.slice(0, 80)}…`);
     }
 
+    // Удаляем всплывающие тоасты (sileo), чтобы временные уведомления
+    // не попадали в статический HTML для поисковиков
+    await page.evaluate(() => {
+      document.querySelectorAll('[data-sileo-viewport]').forEach((el) => el.remove());
+    });
+
     // Получаем полный HTML страницы (с head-мета-тегами)
     let html = await page.content();
 
-    // Очищаем дублирующиеся теги в <head>, которые возникают из-за
-    // react-helmet-async + fallback useEffect в SEOHead.
-    // Оставляем только первый <title>, первый canonical, и первые meta с одинаковым name/property.
-    html = deduplicateHeadTags(html);
+    // Очищаем тоасты (sileo) и дублирующиеся теги в <head>
+    html = stripToastMarkup(deduplicateHeadTags(html));
 
     // Не инлайним весь CSS — внешние таблицы кэшируются браузером на год
     // (заголовок Cache-Control: public, immutable). Инлайн всего CSS раздувает

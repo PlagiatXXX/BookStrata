@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 // escapeHtml экспортируется из prerender.mjs для тестирования
 // (импорт файла не запускает prerender: main() вызывается только напрямую)
-import { escapeHtml, filterRoutes, parseOnlyArgs } from "./prerender.mjs";
+import { escapeHtml, filterRoutes, parseOnlyArgs, stripToastMarkup } from "./prerender.mjs";
 
 describe("escapeHtml (prerender fallback XSS-гвард)", () => {
   it("экранирует HTML-инъекцию в заголовке тир-листа", () => {
@@ -98,5 +98,24 @@ describe("parseOnlyArgs (CLI --only)", () => {
     expect(() => parseOnlyArgs(["node", "prerender.mjs", "--only"])).toThrow(
       "--only",
     );
+  });
+});
+
+describe("stripToastMarkup (очистка временных тоастов Sileo)", () => {
+  it("удаляет блок data-sileo-viewport из HTML", () => {
+    const raw = `<main><h1>Книга</h1></main><section data-sileo-viewport="true" data-theme="light"><button data-sileo-toast="true">Ошибка</button></section><footer>Подвал</footer>`;
+    expect(stripToastMarkup(raw)).toBe(
+      `<main><h1>Книга</h1></main><footer>Подвал</footer>`,
+    );
+  });
+
+  it("не изменяет HTML без тоастов", () => {
+    const clean = `<main><h1>Книга</h1></main><footer>Подвал</footer>`;
+    expect(stripToastMarkup(clean)).toBe(clean);
+  });
+
+  it("обрабатывает пустую строку или undefined", () => {
+    expect(stripToastMarkup("")).toBe("");
+    expect(stripToastMarkup(undefined)).toBe("");
   });
 });
