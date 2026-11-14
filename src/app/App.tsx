@@ -7,6 +7,7 @@ import { useAchievementNotifications } from "@/hooks/useAchievementNotifications
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { SessionExpiredOverlay } from "@/components/SessionExpiredOverlay";
 import { FeedbackModal } from "@/components/FeedbackModal";
+import { SupportWidget } from "@/components/SupportWidget";
 import { useFeedbackPrompt } from "@/hooks/useFeedbackPrompt";
 import { restoreBookReturnScroll } from "@/utils/bookNavigation";
 import { AppProviders } from "./AppProviders";
@@ -15,7 +16,12 @@ import "../styles/sileo-custom.css";
 /** Внутренний контент, рендерится внутри AppProviders — хуки зависящие от AuthProvider безопасны */
 function AppShellInner() {
   const { newAchievement, clearNotification } = useAchievementNotifications();
-  const { isOpen: isFeedbackOpen, handleDismiss: handleFeedbackDismiss, handleSubmit: handleFeedbackSubmit } = useFeedbackPrompt();
+  const {
+    isOpen: isFeedbackOpen,
+    handleDismiss: handleFeedbackDismiss,
+    handleSubmit: handleFeedbackSubmit,
+    openPrompt: openFeedbackPrompt,
+  } = useFeedbackPrompt();
   useAnalyticsTracker();
 
   return (
@@ -46,6 +52,7 @@ function AppShellInner() {
         onDismiss={handleFeedbackDismiss}
         onSubmit={handleFeedbackSubmit}
       />
+      <SupportWidget onOpenFeedbackSurvey={openFeedbackPrompt} />
     </>
   );
 }

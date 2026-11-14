@@ -7,6 +7,15 @@ describe('analyticsEvents', () => {
     expect(formatEventLabel('tierlist_create')).toBe('Создание тир-листа')
   })
 
+  it('форматирует события воронки фидбека и поддержки', () => {
+    expect(formatEventLabel('feedback.prompt_shown')).toBe('Опрос: показ окна')
+    expect(formatEventLabel('feedback.prompt_dismissed')).toBe('Опрос: закрыт крестиком')
+    expect(formatEventLabel('feedback.rating_selected')).toBe('Опрос: оценка выбрана')
+    expect(formatEventLabel('feedback.prompt_submitted')).toBe('Опрос: отзыв отправлен')
+    expect(formatEventLabel('support.chat_opened')).toBe('Поддержка: чат открыт')
+    expect(formatEventLabel('support.message_sent')).toBe('Поддержка: сообщение отправлено')
+  })
+
   it('форматирует события кликов cta, nav, ui, auth', () => {
     expect(formatEventLabel('cta.dashboard.create_tierlist')).toBe('Создать тир-лист (дашборд)')
     expect(formatEventLabel('nav.main.ratings_books')).toBe('Меню: Книги')

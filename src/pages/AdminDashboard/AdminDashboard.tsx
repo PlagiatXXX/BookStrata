@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, BarChart3, ArrowLeft, ShieldAlert, MailQuestion, Library, Feather } from 'lucide-react'
+import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, MessageSquare, BarChart3, ArrowLeft, ShieldAlert, MailQuestion, Library, Feather } from 'lucide-react'
 import { getAdminDashboardStats } from '@/lib/adminStatsApi'
 import { useAuth } from '@/hooks/useAuthContext'
 
@@ -115,6 +115,16 @@ const ALL_SECTIONS: AdminSection[] = [
     color: 'from-violet-500/20 to-violet-500/5',
     borderColor: 'border-violet-500/30',
     textColor: 'text-violet-500',
+    roles: ['admin'],
+  },
+  {
+    title: 'Поддержка (Чаты)',
+    description: 'Внутренние диалоги с пользователями',
+    icon: MessageSquare,
+    path: '/admin/support',
+    color: 'from-cyan-500/20 to-cyan-500/5',
+    borderColor: 'border-cyan-500/30',
+    textColor: 'text-cyan-400',
     roles: ['admin'],
   },
   {

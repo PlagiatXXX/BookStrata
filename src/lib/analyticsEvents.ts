@@ -90,6 +90,16 @@ export const KNOWN_EVENT_LABELS: Record<string, string> = {
   // UI
   'ui.landing.menu_toggle': 'Лендинг: Мобильное меню',
   'ui.landing.scroll_to_top': 'Кнопка «Наверх»',
+
+  // Обратная связь и опрос
+  'feedback.prompt_shown': 'Опрос: показ окна',
+  'feedback.prompt_dismissed': 'Опрос: закрыт крестиком',
+  'feedback.rating_selected': 'Опрос: оценка выбрана',
+  'feedback.prompt_submitted': 'Опрос: отзыв отправлен',
+
+  // Внутренний чат поддержки
+  'support.chat_opened': 'Поддержка: чат открыт',
+  'support.message_sent': 'Поддержка: сообщение отправлено',
 }
 
 /**
@@ -163,6 +173,16 @@ export function getEventBadgeStyle(event: string): string {
   // ИИ Букстраж
   if (event.startsWith('ai_')) {
     return 'bg-violet-500/10 text-violet-400 border-violet-500/30'
+  }
+  // Обратная связь
+  if (event.startsWith('feedback.')) {
+    if (event === 'feedback.prompt_submitted') return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    if (event === 'feedback.prompt_dismissed') return 'bg-gray-500/10 text-gray-400 border-gray-500/30'
+    return 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+  }
+  // Поддержка
+  if (event.startsWith('support.')) {
+    return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
   }
   // Битвы
   if (event.startsWith('battle_')) {

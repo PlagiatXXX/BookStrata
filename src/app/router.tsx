@@ -25,6 +25,7 @@ const AdminDashboard = lazy(() => import("@/pages/AdminDashboard/AdminDashboard"
 const AdminDonorsPage = lazy(() => import("@/pages/AdminDonorsPage/AdminDonorsPage"));
 const AdminBattlesPage = lazy(() => import("@/pages/AdminBattlesPage/AdminBattlesPage"));
 const AdminFeedbackPage = lazy(() => import("@/pages/AdminFeedbackPage/AdminFeedbackPage"));
+const AdminSupportPage = lazy(() => import("@/pages/AdminSupportPage/AdminSupportPage"));
 const AdminAnalyticsPage = lazy(() => import("@/pages/AdminAnalyticsPage/AdminAnalyticsPage"));
 const AdminUsersPage = lazy(() => import("@/pages/AdminUsersPage/AdminUsersPage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
@@ -210,6 +211,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminGuard>
             <AdminFeedbackPage />
+          </AdminGuard>
+        ),
+      },
+      {
+        path: "/admin/support",
+        element: (
+          <AdminGuard>
+            <AdminSupportPage />
           </AdminGuard>
         ),
       },
