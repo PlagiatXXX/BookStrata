@@ -150,6 +150,38 @@ describe("avatar.service", () => {
       }
     });
 
+    it("falls back to free flux model if primary model fails", async () => {
+      const prompt = "cyberpunk avatar";
+      const mockStoredUrl = "https://storage.example.com/demo/image/upload/v1/fallback.webp";
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: mockUserId,
+        aiAvatarsGenerated: 0,
+        lastAvatarResetAt: new Date(),
+      } as never);
+      vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+
+      // Первый вызов (zimage с ключом) падает, второй (фолбэк flux) успешен
+      vi.mocked(uploadFromUrl)
+        .mockRejectedValueOnce(new Error("Fetch вернул 401 для zimage"))
+        .mockResolvedValueOnce({ url: mockStoredUrl, publicId: "fallback_id" });
+
+      const result = await avatarService.generateAvatar(prompt, mockUserId);
+
+      expect(result.success).toBe(true);
+      expect(result.imageUrl).toBe(mockStoredUrl);
+      expect(uploadFromUrl).toHaveBeenCalledTimes(2);
+
+      const firstCallUrl = vi.mocked(uploadFromUrl).mock.calls[0][0];
+      const secondCallUrl = vi.mocked(uploadFromUrl).mock.calls[1][0];
+
+      expect(firstCallUrl).toContain("model=zimage");
+      expect(firstCallUrl).toContain("key=test-pollinations-key");
+
+      expect(secondCallUrl).toContain("model=flux");
+      expect(secondCallUrl).not.toContain("key=");
+    });
+
     it("does not increment the counter if upload fails", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: mockUserId,

@@ -8,17 +8,22 @@ import { config } from "../../config/env.js";
 const POLLINATIONS_API_URL = "https://gen.pollinations.ai";
 const DAILY_LIMIT = 10;
 
+function isNonRetryableError(error: unknown): boolean {
+  const msg = (error as Error)?.message || "";
+  return /\b(400|401|402|403)\b/.test(msg);
+}
+
 async function uploadWithRetry(
   url: string,
   folder: string,
-  retries = 2,
-  delayMs = 1500,
+  retries = 1,
+  delayMs = 250,
 ): ReturnType<typeof uploadFromUrl> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       return await uploadFromUrl(url, folder);
     } catch (error) {
-      if (attempt < retries) {
+      if (attempt < retries && !isNonRetryableError(error)) {
         logger.warn(`uploadFromUrl attempt ${attempt + 1} failed, retrying in ${delayMs}ms`);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       } else {
@@ -27,6 +32,18 @@ async function uploadWithRetry(
     }
   }
   throw new Error("uploadWithRetry: all attempts failed");
+}
+
+function buildPollinationsUrl(
+  prompt: string,
+  model: string,
+  apiKey?: string,
+  seed?: number,
+): string {
+  const encoded = encodeURIComponent(prompt);
+  const s = seed ?? Math.floor(Math.random() * 1000000);
+  const base = `${POLLINATIONS_API_URL}/image/${encoded}?model=${model}&width=512&height=512&seed=${s}&nologo=true`;
+  return apiKey ? `${base}&key=${apiKey}` : base;
 }
 
 export async function generateAvatar(
@@ -65,27 +82,29 @@ export async function generateAvatar(
       };
     }
 
-    const encodedPrompt = encodeURIComponent(prompt);
     const seed = Math.floor(Math.random() * 1000000);
-
     const apiKey = config.POLLINATIONS_API_KEY;
-    // Без API-ключа Pollinations модели klein и zimage требуют Bearer-авторизацию (401).
-    // Бесплатной и открытой без ключа является модель flux (FLUX.1 Schnell).
-    const requestedModel = config.POLLINATIONS_MODEL;
-    const model = apiKey
-      ? (requestedModel || "flux")
-      : (requestedModel && requestedModel !== "zimage" && requestedModel !== "klein" ? requestedModel : "flux");
+    const preferredModel = config.POLLINATIONS_MODEL || "zimage";
+    // Без ключа zimage/klein возвращают 401, поэтому сразу используем бесплатную flux
+    const primaryModel = apiKey ? preferredModel : "flux";
+    const primaryUrl = buildPollinationsUrl(prompt, primaryModel, apiKey, seed);
 
-    const baseImageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=${model}&width=512&height=512&seed=${seed}&nologo=true`;
-    const imageUrl = apiKey
-      ? `${baseImageUrl}&key=${apiKey}`
-      : baseImageUrl;
-
-    if (!apiKey) {
-      logger.warn("POLLINATIONS_API_KEY not set - using free flux model");
+    let uploadResult;
+    try {
+      uploadResult = await uploadWithRetry(primaryUrl, "tiermaker-pro/generated-avatars");
+    } catch (primaryError) {
+      // Если запрос к основной платной модели упал (например, закончились квоты/401/500),
+      // делаем автоматический фолбэк на бесплатную модель flux
+      if (primaryModel !== "flux") {
+        logger.warn(
+          `Модель ${primaryModel} не сработала, пробуем фолбэк на flux: ${(primaryError as Error)?.message}`,
+        );
+        const fallbackUrl = buildPollinationsUrl(prompt, "flux", undefined, seed);
+        uploadResult = await uploadWithRetry(fallbackUrl, "tiermaker-pro/generated-avatars");
+      } else {
+        throw primaryError;
+      }
     }
-
-    const uploadResult = await uploadWithRetry(imageUrl, "tiermaker-pro/generated-avatars");
 
     await prisma.user.update({
       where: { id: userId },
