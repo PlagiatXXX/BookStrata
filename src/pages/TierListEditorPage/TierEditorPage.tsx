@@ -1146,9 +1146,9 @@ const TierListEditorContent = () => {
           />
         )}
 
-          {/* Плавающий виджет Букстража — скрыт в стрим-режиме */}
+          {/* Плавающий виджет Букстража — скрыт в стрим-режиме, поднят над SupportWidget */}
           {!isReadOnly && !isStreamMode && (
-          <div className="fixed right-6 z-50 bottom-20 md:bottom-6">
+          <div className="fixed right-6 max-md:right-4 z-50 bottom-36 md:bottom-24">
             <AiLibrarianWidget onClick={handleAiLibrarianOpen} />
           </div>
         )}

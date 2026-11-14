@@ -131,10 +131,16 @@ export const EditorLayout = ({
       hideLogout={true}
       hideFooter={isStreamMode}
       hideHeader={isStreamMode}
-      contentTopPadding="pt-24"
+      contentTopPadding="pt-0"
     >
       <main
-        className={`neo-brutalist-editor flex-1 overflow-x-clip ${isReadOnly ? "px-4 lg:px-8 pb-4 lg:pb-8 pt-1" : "p-4 lg:p-8 pb-24 lg:pb-8"}`}
+        className={`neo-brutalist-editor flex-1 overflow-x-clip ${
+          isReadOnly
+            ? `px-4 lg:px-8 pb-4 lg:pb-8 ${isStreamMode ? "pt-1" : "pt-24"}`
+            : isStreamMode
+              ? "p-4 lg:p-8 pb-24 lg:pb-8"
+              : "px-4 lg:px-8 pb-24 lg:pb-8 pt-28"
+        }`}
         data-theme={theme}
       >
         {/* Хлебные крошки — скрыты в стрим-режиме */}
