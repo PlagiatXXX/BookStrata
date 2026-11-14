@@ -96,6 +96,7 @@ const envSchema = z.object({
   // страниц книг и spa-каркаса (SEO-фолбэк). В dev не задана — фолбэк
   // отдаёт минимальный standalone HTML с meta-тегами.
   DIST_DIR: z.string().optional(),
+  PRERENDER_SECRET: z.string().default("bookstrata-prerender-internal"),
 
   // --- S3 ---
   S3_BUCKET: z.string().optional(),

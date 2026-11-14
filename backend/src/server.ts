@@ -9,6 +9,7 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 import staticFiles from "@fastify/static";
+import { isPrerenderRequest } from "./lib/rate-limit.js";
 import { config } from "./config/env.js";
 import { buildFastifyOptions } from "./config/fastify-options.js";
 import { redis, RedisRateLimitStore } from "./lib/redis.js";
@@ -121,7 +122,7 @@ await fastify.register(cookie, {
 });
 
 // Health check endpoint for deployment
-fastify.get("/health", async () => {
+const healthHandler = async () => {
   const { checkDatabaseConnection } = await import("./lib/prisma.js");
   const isDbConnected = await checkDatabaseConnection();
 
@@ -130,7 +131,10 @@ fastify.get("/health", async () => {
     database: isDbConnected ? "connected" : "disconnected",
     timestamp: new Date().toISOString(),
   };
-});
+};
+
+fastify.get("/health", healthHandler);
+fastify.get("/api/health", healthHandler);
 
 // Контекст запроса (requestId) ДО аутентификации — чтобы ALS был активен
 fastify.register(requestContext);
@@ -175,6 +179,7 @@ await fastify.register(rateLimit, {
     const userId = (req as any).user?.userId;
     return userId ? `user:${userId}` : `ip:${req.ip}`;
   },
+  allowList: (req) => isPrerenderRequest(req),
   addHeadersOnExceeding: {
     "x-ratelimit-limit": true,
     "x-ratelimit-remaining": true,

@@ -143,6 +143,7 @@ const ROUTES = [
 
 // URL бэкенда для прокси API-запросов при пререндеринге
 const BACKEND_URL = process.env.API_URL || "http://localhost:8080";
+const PRERENDER_SECRET = process.env.PRERENDER_SECRET || "bookstrata-prerender-internal";
 
 /**
  * Проксирует API-запрос из браузера на реальный бэкенд.
@@ -203,6 +204,7 @@ function proxyApiRequest(req, res) {
         "content-type": contentType,
         accept: req.headers["accept"] || "application/json",
         "user-agent": req.headers["user-agent"] || "prerender",
+        "x-prerender-secret": PRERENDER_SECRET,
       };
 
       // Пытаемся сначала https, при ошибке — http (fallback для самоподписанных сертификатов)
