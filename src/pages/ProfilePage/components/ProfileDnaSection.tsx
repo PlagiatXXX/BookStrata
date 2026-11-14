@@ -2,6 +2,7 @@
 // Секция читательского ДНК в профиле пользователя.
 import { Link } from "react-router-dom";
 import type { ReadingDnaResponseData } from "@/lib/readingDnaApi";
+import { formatQuote } from "@/pages/ReadingDnaPage/domain/dnaArchetypeMatch";
 
 export interface ProfileDnaSectionProps {
   dna: ReadingDnaResponseData | null;
@@ -65,7 +66,7 @@ export function ProfileDnaSection({ dna, isLoading }: ProfileDnaSectionProps) {
             </div>
             {dna.motto && (
               <p className="mt-1 text-xs italic text-white/50">
-                «{dna.motto}»
+                {formatQuote(dna.motto)}
               </p>
             )}
             {dna.archetypeDesc && (

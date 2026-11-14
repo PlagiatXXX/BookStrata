@@ -210,7 +210,7 @@ export const Header = ({
       analyticsKey: "reading_dna",
       onClick: isAdmin ? () => navigate("/reading-dna") : undefined,
       description: "Определи свой читательский код",
-      badge: "Скоро",
+      badge: "Новинка",
     },
     {
       label: "Новости",
@@ -371,7 +371,7 @@ export const Header = ({
                         : "bg-linear-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300/50"
                     }`}
                   >
-                    Скоро
+                    Новинка
                   </span>
                 </span>
               </button>

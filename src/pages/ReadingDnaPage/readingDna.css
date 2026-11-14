@@ -44,3 +44,12 @@
 .dna-card-shadow-light {
   box-shadow: 3px 3px 0 var(--dna-line);
 }
+
+/* Скрытие полосы прокрутки при сохранении функционала свайпа/скролла */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -66,3 +66,19 @@ export function resolveArchetypeByRanges(
 
   return best;
 }
+
+/**
+ * Очищает строку от внешних парных кавычек (русских «», английских "", фигурных “”).
+ */
+export function stripQuotes(text?: string | null): string {
+  if (!text) return "";
+  return text.trim().replace(/^[«"“\s]+|[»"”\s]+$/g, "").trim();
+}
+
+/**
+ * Гарантирует ровно одну пару русских кавычек «...» вокруг цитаты/слогана.
+ */
+export function formatQuote(text?: string | null): string {
+  const clean = stripQuotes(text);
+  return clean ? `«${clean}»` : "";
+}

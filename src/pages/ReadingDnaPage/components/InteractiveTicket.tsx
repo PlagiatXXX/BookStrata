@@ -2,14 +2,14 @@ import { useState, useCallback } from "react";
 import { motion } from "motion/react";
 import {
   Share2,
-  Swords,
   RotateCcw,
   BookMarked,
+  Sparkles,
 } from "lucide-react";
 import type { ReadingDnaResponseData, DnaAxesData, DnaArchetypeCatalogItem } from "@/lib/readingDnaApi";
 import { shareReadingTicket } from "@/lib/readingDnaApi";
 import { useDnaArchetypes } from "../hooks/useDnaArchetypes";
-import { findArchetypeByIdOrName } from "../domain/dnaArchetypeMatch";
+import { findArchetypeByIdOrName, formatQuote } from "../domain/dnaArchetypeMatch";
 import { OnboardingHub } from "./OnboardingHub";
 import { ReadingTicketQr } from "./ReadingTicketQr";
 import { TicketBookCover } from "./TicketBookCover";
@@ -222,7 +222,7 @@ export function InteractiveTicket({
       try {
         await navigator.share({
           title: `Читательский билет: ${ticket.archetypeName}`,
-          text: `Мой читательский архетип — ${ticket.archetypeName} (${caste.name}). Проверь нашу книжную совместимость на дуэли!`,
+          text: `Мой читательский архетип — ${ticket.archetypeName} (${caste.name}). Сравни наши книжные вкусы на BookStrata!`,
           url: duelUrl,
         });
         shareReadingTicket(ticket.ticketNumber).catch(() => {});
@@ -310,7 +310,7 @@ export function InteractiveTicket({
             {/* Цитата-манифест */}
             {ticket.motto && (
               <p className="text-xs sm:text-sm font-serif italic text-amber-400/90 leading-relaxed max-w-md">
-                {ticket.motto}
+                {formatQuote(ticket.motto)}
               </p>
             )}
 
@@ -367,7 +367,7 @@ export function InteractiveTicket({
                 className={`p-1.5 rounded-xl border shadow-xs ${
                   isDark ? "bg-white/95 border-amber-500/40" : "bg-white border-stone-300"
                 }`}
-                title="Сканируй для дуэли"
+                title="Сканируй для сравнения вкусов"
               >
                 <ReadingTicketQr
                   value={duelUrl}
@@ -377,7 +377,7 @@ export function InteractiveTicket({
                 />
               </div>
               <span className="block text-[8px] font-mono uppercase tracking-widest opacity-60 mt-1.5">
-                QR ДУЭЛИ
+                QR СРАВНЕНИЯ
               </span>
             </div>
 
@@ -425,8 +425,8 @@ export function InteractiveTicket({
               : "bg-white border-stone-400 text-stone-900 hover:bg-stone-50"
           }`}
         >
-          <Swords size={16} />
-          Бросить вызов
+          <Sparkles size={16} />
+          Сравнить вкусы
         </button>
 
         <button

@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { useContext, useState, useCallback, useEffect, useRef } from "react";
+import { ArrowLeft, Loader2, Swords, Copy, Compass } from "lucide-react";
+import { motion } from "motion/react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { sileo } from "sileo";
@@ -10,16 +10,22 @@ import { DnaStepFlow } from "./components/DnaStepFlow";
 import { ArchivalTicketCard } from "./components/ArchivalTicketCard";
 import { DuelSection } from "./components/DuelSection";
 import { HubSection } from "./components/HubSection";
+import { DnaIntroSection } from "./components/DnaIntroSection";
 import { useDnaArchetypes } from "./hooks/useDnaArchetypes";
 import {
   findArchetypeByIdOrName,
+  formatQuote,
   resolveArchetypeByRanges,
 } from "./domain/dnaArchetypeMatch";
+import { AuthContext } from "@/contexts/auth.context";
 import {
   saveReadingDna,
   getReadingTicket,
+  conductReadingDuel,
+  getMyReadingDna,
   type ReadingDnaInputData,
   type ReadingDnaResponseData,
+  type ReadingDnaDuelResultData,
   type DnaAxesData,
   type DnaBookItemData,
 } from "@/lib/readingDnaApi";
@@ -49,9 +55,10 @@ const INITIAL_AXES: DnaAxesData = {
 };
 
 const DOC_TABS = [
+  { label: "О проекте", id: "doc-intro" },
   { label: "Тест", id: "doc-0" },
   { label: "Билет", id: "doc-1" },
-  { label: "Дуэль", id: "doc-2" },
+  { label: "Сравнение", id: "doc-2" },
   { label: "Витрина", id: "doc-3" },
 ];
 
@@ -59,6 +66,7 @@ export default function ReadingDnaPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const ticketParam = searchParams.get("ticket");
+  const challengeParam = searchParams.get("challenge") || searchParams.get("duel");
   const { archetypes } = useDnaArchetypes();
 
   // Тема оформления с сохранением в localStorage (по умолчанию светлая "craft")
@@ -151,8 +159,46 @@ export default function ReadingDnaPage() {
     return null;
   });
 
-  const [activeTab, setActiveTab] = useState<number>(() => (ticketParam ? 1 : 0));
-  const [isDuelAccepted, setIsDuelAccepted] = useState(false);
+  const [activeTab, setActiveTab] = useState<number>(() => {
+    if (challengeParam) return 3;
+    if (ticketParam) return 2;
+    if (currentTicket) return 2;
+    if (initialDraft.step > 0) return 1;
+    return 0;
+  });
+
+  const [initialDuelResult, setInitialDuelResult] =
+    useState<ReadingDnaDuelResultData | null>(null);
+
+  // Определение номера билета оппонента для дуэли
+  const opponentTicketNumber =
+    challengeParam ||
+    (ticketParam && currentTicket?.ticketNumber !== ticketParam
+      ? ticketParam
+      : null);
+
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user ?? null;
+
+  // Запрос сохраненного ДНК авторизованного пользователя с сервера
+  const { data: myDna } = useQuery({
+    queryKey: ["readingDna", "me", user?.userId],
+    queryFn: getMyReadingDna,
+    enabled: Boolean(user?.userId),
+    staleTime: 60_000,
+  });
+
+  // Автоматическая синхронизация серверного ДНК в локальное состояние
+  useEffect(() => {
+    if (myDna && !currentTicket) {
+      setCurrentTicket(myDna);
+      try {
+        localStorage.setItem(DNA_TICKET_KEY, JSON.stringify(myDna));
+      } catch {
+        // ignore
+      }
+    }
+  }, [myDna, currentTicket]);
 
   // Загрузка билета по параметру ?ticket=BS-XXXX-X
   const { data: loadedTicket } = useQuery({
@@ -161,7 +207,21 @@ export default function ReadingDnaPage() {
     enabled: Boolean(ticketParam),
   });
 
-  const activeTicket = currentTicket || loadedTicket;
+  // Загрузка билета оппонента (для дуэли)
+  const { data: opponentTicket } = useQuery({
+    queryKey: ["readingDna", "opponentTicket", opponentTicketNumber],
+    queryFn: () => (opponentTicketNumber ? getReadingTicket(opponentTicketNumber) : null),
+    enabled: Boolean(opponentTicketNumber),
+  });
+
+  // Если в URL передан чужой билет (?ticket=BS-XXXXX) — открываем именно его, а не собственный
+  const isViewingOtherTicket = Boolean(
+    ticketParam &&
+    loadedTicket &&
+    (!myDna || loadedTicket.ticketNumber !== myDna.ticketNumber)
+  );
+
+  const activeTicket = (ticketParam && loadedTicket) ? loadedTicket : (myDna || currentTicket || loadedTicket);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "craft" : "dark"));
@@ -191,23 +251,45 @@ export default function ReadingDnaPage() {
   const handleSelectTab = useCallback((index: number) => {
     setActiveTab(index);
     if (typeof window !== "undefined" && window.scrollY > 0) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0 });
     }
   }, []);
 
   // Мутация сохранения ДНК
   const saveMutation = useMutation({
     mutationFn: (input: ReadingDnaInputData) => saveReadingDna(input),
-    onSuccess: (saved) => {
+    onSuccess: async (saved) => {
       setCurrentTicket(saved);
       try {
         localStorage.setItem(DNA_TICKET_KEY, JSON.stringify(saved));
       } catch {
         // ignore
       }
+
+      // Если пользователь пришёл по вызову на дуэль — автоматически проводим дуэль!
+      if (
+        opponentTicketNumber &&
+        opponentTicketNumber.toUpperCase() !== saved.ticketNumber.toUpperCase()
+      ) {
+        try {
+          const duelResult = await conductReadingDuel({
+            targetTicketNumber: opponentTicketNumber,
+            challengerTicketNumber: saved.ticketNumber,
+          });
+          setInitialDuelResult(duelResult);
+          setSearchParams({ ticket: saved.ticketNumber });
+          setTimeout(() => {
+            handleSelectTab(3);
+          }, 350);
+          return;
+        } catch {
+          // В случае ошибки переходим к билету
+        }
+      }
+
       setSearchParams({ ticket: saved.ticketNumber });
       setTimeout(() => {
-        handleSelectTab(1);
+        handleSelectTab(2);
       }, 300);
     },
   });
@@ -313,10 +395,26 @@ export default function ReadingDnaPage() {
 
   const handleCopyLink = useCallback(async () => {
     const num = activeTicket?.ticketNumber || "BS-04821";
-    const url = `https://bookstrata.ru/reading-dna/duel?ticket=${num}`;
+    const url = `${window.location.origin}/reading-dna?challenge=${num}`;
     try {
       await navigator.clipboard.writeText(url);
-      alert("Ссылка для друзей скопирована в буфер обмена!");
+      sileo.success({
+        title: "Ссылка для сравнения вкусов скопирована",
+        description: "Отправьте друзьям в книжный чат!",
+      });
+    } catch {
+      // Fallback
+    }
+  }, [activeTicket]);
+
+  const handleCopyTicketNumber = useCallback(async () => {
+    if (!activeTicket?.ticketNumber) return;
+    try {
+      await navigator.clipboard.writeText(activeTicket.ticketNumber);
+      sileo.success({
+        title: "Номер билета скопирован",
+        description: `${activeTicket.ticketNumber} в буфере обмена`,
+      });
     } catch {
       // Fallback
     }
@@ -327,7 +425,7 @@ export default function ReadingDnaPage() {
   return (
     <div
       data-dna-theme={isDark ? "dark" : "light"}
-      className="min-h-screen w-full transition-colors duration-500 py-2 sm:py-4 px-2.5 sm:px-6 lg:px-8 flex flex-col"
+      className="min-h-screen w-full max-w-full overflow-x-hidden transition-colors duration-500 py-2 sm:py-4 px-2 sm:px-6 lg:px-8 flex flex-col"
       style={{
         background: isDark
           ? "radial-gradient(900px 500px at 50% -10%, rgba(255, 190, 100, 0.18), transparent 70%), #1a110c"
@@ -336,12 +434,30 @@ export default function ReadingDnaPage() {
       }}
     >
       <SEOHead
-        title="Книжный ДНК — литературный код и читательский билет | BookStrata"
-        description="Пройди 60-секундный тест читательского вкуса, открой свой литературный архетип, получи номерной читательский билет тайного общества и проверь совместимость с друзьями."
-        url="/reading-dna"
+        title={
+          challengeParam
+            ? `Сравнение читательского вкуса: билет #${challengeParam} — BookStrata`
+            : ticketParam && activeTicket?.archetypeName
+            ? `Читательский билет: ${activeTicket.archetypeName} (${activeTicket.ticketNumber}) — Книжный ДНК | BookStrata`
+            : "Книжный ДНК: тест «Какой ты читатель» и читательский билет — BookStrata"
+        }
+        description={
+          challengeParam
+            ? `Сравните читательские вкусы на BookStrata с билетом #${challengeParam}. Узнайте совместимость и литературный резонанс!`
+            : ticketParam && activeTicket?.archetypeName
+            ? `Читательский билет ${activeTicket.ticketNumber} на BookStrata. Архетип: ${activeTicket.archetypeName}. Расшифруйте свой книжный ДНК или сравните вкусы с друзьями!`
+            : "Пройдите интерактивный тест и узнайте, какой вы читатель. Получите персональный читательский билет, расшифруйте книжный ДНК по 6 осям и сравните вкусы с друзьями на BookStrata."
+        }
+        url={
+          ticketParam
+            ? `/reading-dna?ticket=${ticketParam}`
+            : challengeParam
+            ? `/reading-dna?challenge=${challengeParam}`
+            : "/reading-dna"
+        }
       />
 
-      <div className="w-full flex flex-col flex-1">
+      <div className="w-full max-w-full flex flex-col flex-1">
         {/* Хлебные крошки + Назад на одном уровне */}
         <div className="flex items-center justify-between gap-3 pt-1 pb-2 text-xs select-none">
           <Breadcrumbs
@@ -356,7 +472,7 @@ export default function ReadingDnaPage() {
           <button
             type="button"
             onClick={handleBack}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer shadow-xs group ${
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer shadow-xs group ${
               isDark
                 ? "border-[rgba(201,163,91,0.3)] bg-[#24170f]/70 hover:bg-[#c9a35b]/20 text-[#efe3cc]"
                 : "border-[rgba(59,110,168,0.3)] bg-white/80 hover:bg-[#3b6ea8]/10 text-[#2e2a24]"
@@ -367,86 +483,138 @@ export default function ReadingDnaPage() {
           </button>
         </div>
 
-        {/* ШАПКА ПАПКИ (Точно как на скриншотах) */}
-        <header className="sticky top-0 z-30 flex items-end justify-between gap-3 pt-2 pb-0 bg-inherit">
-          {/* Заголовок страницы */}
-          <h1
-            className={`pb-1.5 text-2xl sm:text-3xl font-bold tracking-tight leading-none ${
-              isDark
-                ? "font-serif text-[#efe3cc]"
-                : "font-['Caveat',cursive] text-3xl sm:text-4xl text-[#2e2a24]"
-            }`}
-          >
-            Книжный ДНК
-          </h1>
+        {/* ШАПКА ПАПКИ */}
+        <header
+          className="sticky top-0 z-30 w-full max-w-full grid grid-cols-[1fr_auto] md:flex md:items-end md:justify-between gap-x-2 gap-y-1 sm:gap-y-1.5 md:gap-3 pt-1.5 sm:pt-2 pb-0 backdrop-blur-md transition-colors"
+          style={{
+            backgroundColor: isDark ? "rgba(26, 17, 12, 0.94)" : "rgba(251, 248, 242, 0.94)",
+          }}
+        >
+          {/* Заголовок страницы: картинка для тёмного ночного архива, рукописный текст для светлой крафтовой анкеты */}
+          <div className="leading-none select-none flex items-center col-start-1 row-start-1 min-w-0">
+            {isDark ? (
+              <span className="relative z-20 -mb-2 sm:-mb-6 flex items-center">
+                <span className="sr-only">Книжный ДНК</span>
+                <img
+                  src="/images/reading-dna/DNA.webp"
+                  alt="Книжный ДНК"
+                  width={290}
+                  height={92}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="h-9 sm:h-16 md:h-20 w-auto max-w-[130px] sm:max-w-[260px] md:max-w-[290px] object-contain drop-shadow-md transition-transform"
+                />
+              </span>
+            ) : (
+              <span className="pb-1 text-2xl sm:text-4xl font-bold tracking-tight leading-none font-['Caveat',cursive] text-[#2e2a24] truncate">
+                Книжный ДНК
+              </span>
+            )}
+          </div>
 
-          {/* Закладки папки — плотно прижаты к верхней линии папки */}
-          <nav
-            aria-label="Архивные разделы"
-            className="flex items-end gap-1.5 select-none relative z-10 -mb-px"
-          >
-            {DOC_TABS.map((tab, idx) => {
-              const isActive = activeTab === idx;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleSelectTab(idx)}
-                  className={`px-3.5 sm:px-5 text-xs sm:text-sm rounded-t-xl border-t border-x border-b-0 transition-all cursor-pointer select-none ${
-                    isActive
-                      ? isDark
-                        ? "bg-[#2a1a10] border-[rgba(201,163,91,0.45)] text-[#efe3cc] font-semibold pt-2 pb-2.5 relative z-20 shadow-xs"
-                        : "bg-[#e8d5ad] border-[rgba(59,110,168,0.45)] text-[#2e2a24] font-semibold pt-2 pb-2.5 relative z-20 shadow-xs"
-                      : isDark
-                        ? "bg-[#2b1d14] border-[rgba(201,163,91,0.25)] text-[#a89678] hover:text-[#efe3cc] hover:bg-[#352318] py-2 relative z-10"
-                        : "bg-[#fffdf7] border-[rgba(59,110,168,0.25)] text-[#6f6553] hover:text-[#2e2a24] hover:bg-white py-2 relative z-10"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </nav>
+          {/* Анимированный переключатель темы (на мобильных справа вверху, на десктопе справа) */}
+          <div className="col-start-2 row-start-1 md:order-last flex items-center justify-end shrink-0">
+            <motion.button
+              type="button"
+              onClick={toggleTheme}
+              whileHover={{ rotate: 180, scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+              aria-label={isDark ? "Переключить на крафтовую анкету" : "Переключить на ночной архив"}
+              title={isDark ? "Светлая крафтовая анкета" : "Темный ночной архив"}
+              className="cursor-pointer bg-transparent border-0 p-1 text-lg sm:text-2xl leading-none flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 select-none"
+            >
+              <span className="inline-block will-change-transform drop-shadow-sm">
+                {isDark ? "☀️" : "🌙"}
+              </span>
+            </motion.button>
+          </div>
 
-          {/* Анимированный переключатель темы без блока (в точности как на портфолио) */}
-          <motion.button
-            type="button"
-            onClick={toggleTheme}
-            whileHover={{ rotate: 180, scale: 1.15 }}
-            whileTap={{ scale: 0.9 }}
-            transition={{ duration: 0.3 }}
-            aria-label={isDark ? "Переключить на крафтовую анкету" : "Переключить на ночной архив"}
-            title={isDark ? "Светлая крафтовая анкета" : "Темный ночной архив"}
-            className="mb-1 cursor-pointer bg-transparent border-0 p-1 text-2xl leading-none flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 select-none"
-          >
-            <span className="inline-block will-change-transform drop-shadow-sm">
-              {isDark ? "☀️" : "🌙"}
-            </span>
-          </motion.button>
+          {/* Закладки папки — на мобильных на всю ширину со скроллом, на десктопе сдвинуты вправо */}
+          <div className="col-span-2 row-start-2 md:col-auto md:row-auto w-full md:w-auto min-w-0 max-w-full overflow-x-auto scrollbar-none -mb-px flex items-end md:ml-auto md:justify-end">
+            <nav
+              aria-label="Архивные разделы"
+              className="flex items-end gap-1 sm:gap-1.5 select-none relative z-10 min-w-max px-0.5"
+            >
+              {DOC_TABS.map((tab, idx) => {
+                const isActive = activeTab === idx;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleSelectTab(idx)}
+                    className={`px-2.5 sm:px-4 md:px-5 py-1.5 sm:py-2 text-[11px] sm:text-xs md:text-sm rounded-t-lg sm:rounded-t-xl border-t border-x border-b-0 transition-all cursor-pointer select-none whitespace-nowrap shrink-0 ${
+                      isActive
+                        ? isDark
+                          ? "bg-[#2a1a10] border-[rgba(201,163,91,0.45)] text-[#efe3cc] font-semibold relative z-20 shadow-xs"
+                          : "bg-[#e8d5ad] border-[rgba(59,110,168,0.45)] text-[#2e2a24] font-semibold relative z-20 shadow-xs"
+                        : isDark
+                          ? "bg-[#2b1d14] border-[rgba(201,163,91,0.25)] text-[#a89678] hover:text-[#efe3cc] hover:bg-[#352318] relative z-10"
+                          : "bg-[#fffdf7] border-[rgba(59,110,168,0.25)] text-[#6f6553] hover:text-[#2e2a24] hover:bg-white relative z-10"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </header>
 
         {/* ОСНОВНАЯ ПАПКА */}
         <main
-          className={`rounded-b-2xl rounded-tr-2xl border p-3.5 sm:p-5 shadow-2xl transition-all duration-300 flex-1 ${
+          className={`rounded-b-xl sm:rounded-b-2xl rounded-tr-xl sm:rounded-tr-2xl border p-2.5 sm:p-5 shadow-2xl transition-all duration-300 flex-1 ${
             isDark
               ? "bg-[#2a1a10] border-[rgba(201,163,91,0.35)]"
               : "bg-[#e8d5ad] border-[rgba(59,110,168,0.35)]"
           }`}
         >
-          <AnimatePresence mode="wait">
-            {activeTab === 0 && (
+          {activeTab === 0 && (
+            <motion.section
+              key="doc-intro"
+              id="doc-intro"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.1 }}
+              className="relative pt-3 sm:pt-4"
+            >
+                <div
+                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 mb-[-4px] ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
+                    isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
+                  }`}
+                >
+                  Манифест — О проекте
+                </div>
+
+                <div
+                  className={`rounded-lg border p-3 sm:p-6 md:p-8 shadow-md ${
+                    isDark
+                      ? "bg-[#35261b] border-[rgba(201,163,91,0.35)]"
+                      : "bg-[#fffdf7] border-[rgba(59,110,168,0.35)]"
+                  }`}
+                >
+                  <DnaIntroSection
+                    archetypes={archetypes}
+                    theme={theme}
+                    onStartTest={() => handleSelectTab(1)}
+                    onOpenDuel={() => handleSelectTab(3)}
+                  />
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 1 && (
               <motion.section
                 key="doc-0"
                 id="doc-0"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className="relative pt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.1 }}
+                className="relative pt-3 sm:pt-4"
               >
-                <div className="flex items-center justify-between mb-[-4px] ml-4 mr-2 relative z-20">
+                <div className="flex items-center justify-between mb-[-4px] ml-2 sm:ml-4 mr-2 relative z-20">
                   <div
-                    className={`inline-block px-3.5 py-1 text-white text-xs font-semibold rounded-t-sm shadow-xs ${
+                    className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                       isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                     }`}
                   >
@@ -470,7 +638,7 @@ export default function ReadingDnaPage() {
                 </div>
 
                 <div
-                  className={`rounded-lg border p-5 sm:p-7 shadow-md grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-6 items-start ${
+                  className={`rounded-lg border p-3.5 sm:p-6 md:p-7 shadow-md grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4 sm:gap-6 items-start ${
                     isDark
                       ? "bg-[#35261b] border-[rgba(201,163,91,0.35)]"
                       : "bg-[#fffdf7] border-[rgba(59,110,168,0.35)]"
@@ -478,6 +646,23 @@ export default function ReadingDnaPage() {
                 >
                   {/* Левая колонка: форма опросника */}
                   <div className="flex flex-col justify-between">
+                    {opponentTicket && (
+                      <div
+                        className={`mb-3 sm:mb-4 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 select-none shadow-xs ${
+                          isDark
+                            ? "bg-[#8a2433]/30 border-rose-500/40 text-rose-200"
+                            : "bg-[#b3412f]/10 border-rose-500/30 text-[#b3412f]"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2 font-semibold">
+                          <Swords size={16} className="shrink-0" />
+                          <span>Дуэль против {opponentTicket.customName || "Читателя"} (#{opponentTicket.ticketNumber})</span>
+                        </span>
+                        <span className="text-[10px] opacity-75 hidden sm:inline">
+                          Карты соперника вскроются после запечатывания
+                        </span>
+                      </div>
+                    )}
                     <DnaStepFlow
                       theme={theme}
                       onComplete={handleCompleteFlow}
@@ -495,7 +680,7 @@ export default function ReadingDnaPage() {
                   </div>
 
                   {/* Правая колонка: Live-превью билета */}
-                  <div className="flex flex-col justify-center space-y-2.5">
+                  <div className="flex flex-col justify-center space-y-2 sm:space-y-2.5">
                     <ArchivalTicketCard
                       ticketNumber={activeTicket?.ticketNumber || "BS-....."}
                       archetypeName={activeTicket?.archetypeName || ""}
@@ -504,9 +689,9 @@ export default function ReadingDnaPage() {
                       kryptoniteBook={liveKryptonite}
                       theme={theme}
                       isSealed={Boolean(activeTicket)}
-                      sealImageUrl="/images/reading-dna/seal.png"
+                      sealImageUrl="/images/reading-dna/seal.webp"
                     />
-                    <span className="block text-[11px] opacity-60 text-center font-sans">
+                    <span className="block text-[10px] sm:text-[11px] opacity-60 text-center font-sans">
                       Номер BS-XXXXX выдаётся по порядку при запечатывании.
                     </span>
                   </div>
@@ -514,18 +699,17 @@ export default function ReadingDnaPage() {
               </motion.section>
             )}
 
-            {activeTab === 1 && (
+            {activeTab === 2 && (
               <motion.section
                 key="doc-1"
                 id="doc-1"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.1 }}
                 className="relative pt-2"
               >
                 <div
-                  className={`inline-block px-3.5 py-1 mb-[-4px] ml-4 relative z-20 text-white text-xs font-semibold rounded-t-sm shadow-xs ${
+                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 mb-[-4px] ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                     isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                   }`}
                 >
@@ -533,7 +717,7 @@ export default function ReadingDnaPage() {
                 </div>
 
                 <div
-                  className={`rounded-lg border p-2.5 sm:p-3.5 shadow-md ${
+                  className={`rounded-lg border p-2 sm:p-3.5 shadow-md ${
                     isDark
                       ? "bg-[#35261b] border-[rgba(201,163,91,0.35)]"
                       : "bg-[#fffdf7] border-[rgba(59,110,168,0.35)]"
@@ -541,6 +725,47 @@ export default function ReadingDnaPage() {
                 >
                   {activeTicket ? (
                     <div className="space-y-3.5">
+                      {isViewingOtherTicket && (
+                        <div
+                          className={`flex flex-wrap items-center justify-between gap-2.5 p-3 sm:p-3.5 rounded-xl border text-xs ${
+                            isDark
+                              ? "bg-[#2b1d14] border-[rgba(201,163,91,0.4)] text-[#efe3cc]"
+                              : "bg-white border-[rgba(59,110,168,0.35)] text-[#2e2a24]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-amber-500">Билет читателя:</span>
+                            <span className="font-bold">{activeTicket.customName || activeTicket.ticketNumber}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectTab(3)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                                isDark
+                                  ? "bg-[#8a2433] hover:bg-[#a32b3d]"
+                                  : "bg-[#b3412f] hover:bg-[#c94935]"
+                              }`}
+                            >
+                              <Compass size={13} />
+                              <span>Сравнить вкусы</span>
+                            </button>
+                            {Boolean(myDna || currentTicket) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSearchParams({});
+                                  handleSelectTab(2);
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg border border-current/20 hover:bg-black/10 transition-colors cursor-pointer"
+                              >
+                                К моему билету
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="w-full">
                         <div ref={ticketCardRef}>
                           <ArchivalTicketCard
@@ -551,17 +776,17 @@ export default function ReadingDnaPage() {
                             kryptoniteBook={activeTicket.kryptoniteBook}
                             theme={theme}
                             isSealed={true}
-                            sealImageUrl="/images/reading-dna/seal.png"
+                            sealImageUrl="/images/reading-dna/seal.webp"
                           />
                         </div>
 
-                        {/* 3 кнопки под билетом */}
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-4">
+                        {/* Кнопки под билетом */}
+                        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center sm:justify-start gap-2 pt-3 sm:pt-4">
                           <button
                             type="button"
                             onClick={handleDownloadTicket}
                             disabled={isDownloading}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold text-white transition-all shadow-md cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${
+                            className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-bold text-white transition-all shadow-md cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${
                               isDark
                                 ? "bg-[#8a2433] hover:bg-[#a32b3d]"
                                 : "bg-[#b3412f] hover:bg-[#c94935]"
@@ -570,36 +795,64 @@ export default function ReadingDnaPage() {
                             {isDownloading ? (
                               <>
                                 <Loader2 size={14} className="animate-spin" />
-                                Готовим PNG...
+                                <span>Готовим PNG...</span>
                               </>
                             ) : (
-                              "Скачать в HD (PNG)"
+                              <span>Скачать в HD (PNG)</span>
                             )}
                           </button>
 
                           <button
                             type="button"
-                            onClick={handleCopyLink}
-                            className={`px-4 py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                            onClick={handleCopyTicketNumber}
+                            className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-mono font-medium border transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 ${
                               isDark
                                 ? "bg-[#2b1d14] border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10"
                                 : "bg-white border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10"
                             }`}
                           >
-                            Скопировать ссылку для друзей
+                            <Copy size={13} />
+                            <span>Скопировать № {activeTicket.ticketNumber}</span>
                           </button>
 
                           <button
                             type="button"
-                            onClick={() => handleSelectTab(2)}
-                            className={`px-4 py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                            onClick={handleCopyLink}
+                            className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer inline-flex items-center justify-center ${
                               isDark
                                 ? "bg-[#2b1d14] border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10"
                                 : "bg-white border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10"
                             }`}
                           >
-                            Бросить вызов другу
+                            <span>Скопировать ссылку</span>
                           </button>
+
+                          {isViewingOtherTicket ? (
+                            <button
+                              type="button"
+                              onClick={() => handleSelectTab(3)}
+                              className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-bold text-white shadow-md transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 ${
+                                isDark
+                                  ? "bg-[#8a2433] hover:bg-[#a32b3d]"
+                                  : "bg-[#b3412f] hover:bg-[#c94935]"
+                              }`}
+                            >
+                              <Compass size={13} />
+                              <span>Сравнить архетипы</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSelectTab(3)}
+                              className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer inline-flex items-center justify-center ${
+                                isDark
+                                  ? "bg-[#2b1d14] border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10"
+                                  : "bg-white border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10"
+                              }`}
+                            >
+                              <span>Сравнить с другом</span>
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -614,17 +867,17 @@ export default function ReadingDnaPage() {
                           .reduce((acc, d) => acc + parseInt(d, 10), 0);
 
                         return (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-2">
                             {/* Карточка 1: Редкость ранга */}
                             <div
-                              className={`p-4 sm:p-5 rounded-xl border flex flex-col justify-between space-y-3 ${
+                              className={`p-3.5 sm:p-5 rounded-xl border flex flex-col justify-between space-y-2.5 sm:space-y-3 ${
                                 isDark
                                   ? "bg-[#2b1d14]/70 border-[rgba(201,163,91,0.25)] text-[#efe3cc]"
                                   : "bg-white/80 border-[rgba(59,110,168,0.25)] text-[#2e2a24]"
                               }`}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="text-xs uppercase font-mono tracking-wider opacity-60">
+                                <span className="text-[11px] sm:text-xs uppercase font-mono tracking-wider opacity-60">
                                   Редкость архетипа
                                 </span>
                                 <span
@@ -649,32 +902,40 @@ export default function ReadingDnaPage() {
                               </p>
                               {arch?.quote && (
                                 <p
-                                  className={`text-xs italic font-serif border-l-2 pl-3 ${
+                                  className={`text-[11px] sm:text-xs italic font-serif border-l-2 pl-2.5 sm:pl-3 ${
                                     isDark
                                       ? "border-[#c9a35b] text-[#c9a35b]/90"
                                       : "border-[#3b6ea8] text-[#3b6ea8]/90"
                                   }`}
                                 >
-                                  «{arch.quote}»
+                                  {formatQuote(arch.quote)}
                                 </p>
                               )}
                             </div>
 
                             {/* Карточка 2: Что внутри билета */}
                             <div
-                              className={`p-4 sm:p-5 rounded-xl border space-y-2.5 text-xs ${
+                              className={`p-3.5 sm:p-5 rounded-xl border space-y-2 sm:space-y-2.5 text-xs ${
                                 isDark
                                   ? "bg-[#2b1d14]/70 border-[rgba(201,163,91,0.25)] text-[#efe3cc]"
                                   : "bg-white/80 border-[rgba(59,110,168,0.25)] text-[#2e2a24]"
                               }`}
                             >
-                              <div className="text-xs uppercase font-mono tracking-wider opacity-60 mb-1">
+                              <div className="text-[11px] sm:text-xs uppercase font-mono tracking-wider opacity-60 mb-1">
                                 Анатомия билета
                               </div>
-                              <ul className="space-y-1.5 leading-relaxed opacity-85">
+                              <ul className="space-y-1.5 leading-relaxed opacity-85 text-[11px] sm:text-xs">
                                 <li>
                                   <b className="opacity-100">№ билета:</b> номер{" "}
-                                  <span className="font-mono">{activeTicket.ticketNumber}</span>
+                                  <button
+                                    type="button"
+                                    onClick={handleCopyTicketNumber}
+                                    className="font-mono font-bold underline cursor-pointer hover:opacity-100 inline-flex items-center gap-1"
+                                    title="Нажмите, чтобы скопировать номер билета"
+                                  >
+                                    {activeTicket.ticketNumber}
+                                    <Copy size={11} className="opacity-70" />
+                                  </button>
                                   {luckySum > 0 && ` (сумма цифр ${luckySum})`}.
                                 </li>
                                 <li>
@@ -687,7 +948,7 @@ export default function ReadingDnaPage() {
                                   <b className="opacity-100">Радар & Паспорт:</b> 6 осей вкуса в координатах [0–100].
                                 </li>
                                 <li>
-                                  <b className="opacity-100">QR-код:</b> прямая ссылка на слепую дуэль читательских вкусов.
+                                  <b className="opacity-100">QR-код:</b> прямая ссылка на сравнение читательского вкуса.
                                 </li>
                               </ul>
                             </div>
@@ -697,7 +958,7 @@ export default function ReadingDnaPage() {
                     </div>
                   ) : (
                     /* НАЧАЛЬНОЕ СОСТОЯНИЕ ДОКУМЕНТА II (В ТОЧНОСТИ КАК НА СКРИНШОТЕ!) */
-                    <div className="py-8 px-4 text-center max-w-md mx-auto space-y-3">
+                    <div className="py-6 sm:py-8 px-3 sm:px-4 text-center max-w-md mx-auto space-y-2.5 sm:space-y-3">
                       <h3
                         className={`text-xl sm:text-2xl font-bold ${
                           isDark
@@ -712,8 +973,8 @@ export default function ReadingDnaPage() {
                       </p>
                       <button
                         type="button"
-                        onClick={() => handleSelectTab(0)}
-                        className={`px-6 py-2.5 rounded-lg text-xs font-bold text-white shadow-md cursor-pointer transition-all ${
+                        onClick={() => handleSelectTab(1)}
+                        className={`px-5 sm:px-6 py-2.5 rounded-lg text-xs font-bold text-white shadow-md cursor-pointer transition-all ${
                           isDark
                             ? "bg-[#8a2433] hover:bg-[#a32b3d]"
                             : "bg-[#b3412f] hover:bg-[#c94935]"
@@ -727,81 +988,53 @@ export default function ReadingDnaPage() {
               </motion.section>
             )}
 
-            {activeTab === 2 && (
+            {activeTab === 3 && (
               <motion.section
                 key="doc-2"
                 id="doc-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className="relative pt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.1 }}
+                className="relative pt-3 sm:pt-4"
               >
                 <div
-                  className={`inline-block px-3.5 py-1 mb-[-4px] ml-4 relative z-20 text-white text-xs font-semibold rounded-t-sm shadow-xs ${
+                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 mb-[-4px] ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                     isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                   }`}
                 >
-                  Документ III — Слепая дуэль
+                  Документ III — Сравнение вкусов
                 </div>
 
                 <div
-                  className={`rounded-lg border p-5 sm:p-7 shadow-md ${
+                  className={`rounded-lg border p-3.5 sm:p-6 md:p-7 shadow-md ${
                     isDark
                       ? "bg-[#35261b] border-[rgba(201,163,91,0.35)]"
                       : "bg-[#fffdf7] border-[rgba(59,110,168,0.35)]"
                   }`}
                 >
-                  {isDuelAccepted || activeTicket ? (
-                    <DuelSection
-                      userAxes={activeTicket?.axes || liveAxes}
-                      challengerName="Алексей"
-                      theme={theme}
-                    />
-                  ) : (
-                    <div className="py-8 px-4 text-center max-w-lg mx-auto space-y-3">
-                      <h2
-                        className={`text-xl sm:text-2xl font-bold ${
-                          isDark
-                            ? "font-serif text-[#efe3cc]"
-                            : "font-['Caveat',cursive] text-2xl sm:text-3xl text-[#2e2a24]"
-                        }`}
-                      >
-                        Алексей бросил вам вызов
-                      </h2>
-                      <p className="text-xs sm:text-sm opacity-75 leading-relaxed">
-                        Его ранг: <b>Хранитель запретных фолиантов</b>.<br />
-                        Отвечайте честно, без подглядывания.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setIsDuelAccepted(true)}
-                        className={`px-6 py-2.5 rounded-lg text-xs font-bold text-white shadow-md cursor-pointer transition-all ${
-                          isDark
-                            ? "bg-[#8a2433] hover:bg-[#a32b3d]"
-                            : "bg-[#b3412f] hover:bg-[#c94935]"
-                        }`}
-                      >
-                        Принять вызов
-                      </button>
-                    </div>
-                  )}
+                  <DuelSection
+                    myTicket={currentTicket}
+                    opponentTicket={opponentTicket}
+                    opponentTicketNumber={opponentTicketNumber}
+                    initialDuelResult={initialDuelResult}
+                    theme={theme}
+                    onGoToTest={() => handleSelectTab(1)}
+                  />
                 </div>
               </motion.section>
             )}
 
-            {activeTab === 3 && (
+            {activeTab === 4 && (
               <motion.section
                 key="doc-3"
                 id="doc-3"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                className="relative pt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.1 }}
+                className="relative pt-3 sm:pt-4"
               >
                 <div
-                  className={`inline-block px-3.5 py-1 mb-[-4px] ml-4 relative z-20 text-white text-xs font-semibold rounded-t-sm shadow-xs ${
+                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 mb-[-4px] ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                     isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                   }`}
                 >
@@ -809,7 +1042,7 @@ export default function ReadingDnaPage() {
                 </div>
 
                 <div
-                  className={`rounded-lg border p-5 sm:p-7 shadow-md ${
+                  className={`rounded-lg border p-3.5 sm:p-6 md:p-7 shadow-md ${
                     isDark
                       ? "bg-[#35261b] border-[rgba(201,163,91,0.35)]"
                       : "bg-[#fffdf7] border-[rgba(59,110,168,0.35)]"
@@ -819,7 +1052,6 @@ export default function ReadingDnaPage() {
                 </div>
               </motion.section>
             )}
-          </AnimatePresence>
         </main>
       </div>
     </div>

@@ -34,13 +34,13 @@ const SUGGESTIONS_BY_CONTEXT: Record<string, readonly Suggestion[]> = {
     { emoji: '📚', label: 'Что почитать из классики?' },
     { emoji: '🔥', label: 'Посоветуй бестселлер' },
     { emoji: '🎯', label: 'Подбери книгу под настроение' },
-    { emoji: '✨', label: 'Что нового я могу открыть?' },
+    { emoji: '🧭', label: 'Что нового я могу открыть?' },
   ] as const,
   default: [
     { emoji: '📚', label: 'Что почитать из классики?' },
     { emoji: '🔥', label: 'Посоветуй бестселлер' },
     { emoji: '🎯', label: 'Подбери книгу под настроение' },
-    { emoji: '✨', label: 'Что нового я могу открыть?' },
+    { emoji: '🧭', label: 'Что нового я могу открыть?' },
   ] as const,
 }
 

@@ -510,31 +510,5 @@
       </div>
     </div>
     <script type="module" src="./src/app/main.tsx"></script>
-    <!-- GhostChat — live-чат (отложенная загрузка после первого взаимодействия или idle) -->
-    <script>
-      if (/^(www\.)?bookstrata\.ru$/.test(location.hostname) && !window.__PRERENDER__) {
-        function loadGhostChat() {
-          if (window._ghostChatLoaded) return;
-          window._ghostChatLoaded = true;
-          var s = document.createElement('script');
-          s.src = 'https://api.ghostchat.dev/widget.js';
-          s.defer = true;
-          s.setAttribute('data-site', 'clc03373b8815b49de81a1ac24');
-          s.setAttribute('data-no-optimize', '1');
-          document.body.appendChild(s);
-        }
-        var chatEvents = ['scroll', 'keydown', 'touchstart', 'click'];
-        function onChatInteract() {
-          chatEvents.forEach(function(e) { window.removeEventListener(e, onChatInteract); });
-          loadGhostChat();
-        }
-        chatEvents.forEach(function(e) { window.addEventListener(e, onChatInteract, { once: true, passive: true }); });
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(function() { setTimeout(loadGhostChat, 3500); });
-        } else {
-          setTimeout(loadGhostChat, 4000);
-        }
-      }
-    </script>
   </body>
 </html>

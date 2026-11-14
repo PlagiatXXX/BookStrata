@@ -124,6 +124,7 @@ const ROUTES = [
   { path: "/rankings",   name: "Рейтинг книг" },
   { path: "/search",     name: "Поиск" },
   { path: "/collections", name: "Подборки книг" },
+  // { path: "/reading-dna", name: "Книжный ДНК" }, // раскомментировать при публичном открытии Книжного ДНК
   { path: "/community",  name: "Сообщество" },
   { path: "/history",    name: "История" },
   { path: "/what-to-read", name: "Что почитать" },
@@ -881,8 +882,6 @@ async function processRoute(browser, route) {
     // Блокируем внешние запросы, не нужные при пререндере
     await page.route("**/sitemap.xml", (route) => route.abort());
     await page.route("**/sentry.io/**", (route) => route.abort());
-    // GhostChat — виджет чата не должен попадать в prerendered HTML
-    await page.route("**/api.ghostchat.dev/**", (route) => route.abort());
 
     // Логи браузера для диагностики
     page.on("console", (msg) => {

@@ -103,7 +103,7 @@ describe("Header — «Полка» и «Угостить» выделены в 
     expect(labels.join(" ")).toContain("Новости");
   });
 
-  it("пункт «Книжный ДНК» для обычных пользователей имеет бейдж «Скоро» и не кликабелен (десктоп и мобайл)", async () => {
+  it("пункт «Книжный ДНК» для обычных пользователей имеет бейдж «Новинка» и не кликабелен (десктоп и мобайл)", async () => {
     const user = userEvent.setup();
     renderHeader();
 
@@ -111,7 +111,7 @@ describe("Header — «Полка» и «Угостить» выделены в 
     expect(dnaBtns.length).toBe(2);
     for (const btn of dnaBtns) {
       expect(btn).toBeInTheDocument();
-      expect(btn).toHaveTextContent("Скоро");
+      expect(btn).toHaveTextContent("Новинка");
       expect(btn).toBeDisabled();
       await user.click(btn);
     }

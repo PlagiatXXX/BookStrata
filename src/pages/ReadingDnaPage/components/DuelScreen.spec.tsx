@@ -66,21 +66,21 @@ describe("DuelScreen", () => {
   it("отображает карточку вызова от целевого читателя с его номером билета и кастой", () => {
     renderDuelScreen({});
 
-    expect(screen.getByText(/Литературный вызов/i)).toBeInTheDocument();
+    expect(screen.getByText(/Сравнение читательского вкуса/i)).toBeInTheDocument();
     expect(screen.getByText(/Алиса/i)).toBeInTheDocument();
     expect(screen.getAllByText(/BS-7492-X/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Хранитель запретных фолиантов")).toBeInTheDocument();
   });
 
-  it("предлагает начать дуэль и проверить совместимость", () => {
+  it("предлагает начать сравнение и проверить совместимость", () => {
     renderDuelScreen({});
 
     expect(
-      screen.getByRole("button", { name: /Принять вызов/i })
+      screen.getByRole("button", { name: /^Сравнить вкусы \(пройти тест/i })
     ).toBeInTheDocument();
   });
 
-  it("проводит дуэль по номеру билета и показывает вердикт, процент и онбординг-хаб", async () => {
+  it("проводит сравнение по номеру билета и показывает вердикт, процент и онбординг-хаб", async () => {
     const user = userEvent.setup();
     const mockDuel = vi.fn().mockResolvedValue({
       duelId: "duel-123",
@@ -95,7 +95,7 @@ describe("DuelScreen", () => {
     const input = screen.getByPlaceholderText(/Введи номер/i);
     await user.type(input, "BS-1111-A");
 
-    const duelBtn = screen.getByRole("button", { name: /Сразиться/i });
+    const duelBtn = screen.getByRole("button", { name: /^Сравнить вкусы$/i });
     await user.click(duelBtn);
 
     expect(await screen.findByText("87%")).toBeInTheDocument();

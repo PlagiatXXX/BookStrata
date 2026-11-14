@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { FeedbackModal } from "./FeedbackModal";
 
+vi.mock("@/lib/analyticsApi", () => ({
+  apiTrackEvent: vi.fn(),
+}));
+
 describe("FeedbackModal", () => {
   const onDismiss = vi.fn();
   const onSubmit = vi.fn().mockResolvedValue(undefined);
@@ -73,24 +77,23 @@ describe("FeedbackModal", () => {
     expect(await screen.findByText(/Спасибо за отзыв/i)).toBeInTheDocument();
   });
 
-  it("calls onDismiss when close button (cross) is clicked", () => {
+  it("calls onDismiss only when close button (cross) is clicked, ignoring backdrop and Escape", () => {
     render(
       <FeedbackModal isOpen={true} onDismiss={onDismiss} onSubmit={onSubmit} />
     );
 
+    // Клик по оверлею не должен закрывать
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(dialog);
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    // Нажатие Escape не должно закрывать
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    // Закрытие только по кнопке крестика
     const closeBtn = screen.getByLabelText("Закрыть");
     fireEvent.click(closeBtn);
-
-    expect(onDismiss).toHaveBeenCalled();
-  });
-
-  it("calls onDismiss when Escape key is pressed", () => {
-    render(
-      <FeedbackModal isOpen={true} onDismiss={onDismiss} onSubmit={onSubmit} />
-    );
-
-    fireEvent.keyDown(window, { key: "Escape" });
-
-    expect(onDismiss).toHaveBeenCalled();
+    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });

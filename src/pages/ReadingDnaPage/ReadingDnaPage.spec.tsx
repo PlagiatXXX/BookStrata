@@ -29,25 +29,29 @@ describe("ReadingDnaPage", () => {
     renderPage();
 
     // Заголовок и навигация
-    expect(screen.getByRole("heading", { name: /Книжный ДНК/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Книжный ДНК: узнайте, какой вы читатель/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Главная/i })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /Назад/i }).length).toBeGreaterThan(0);
-    const testTab = screen.getByRole("button", { name: /Тест/i });
-    const ticketTab = screen.getByRole("button", { name: /Билет/i });
-    const duelTab = screen.getByRole("button", { name: /Дуэль/i });
-    const hubTab = screen.getByRole("button", { name: /Витрина/i });
+    const aboutTab = screen.getByRole("button", { name: /^О проекте$/i });
+    const testTab = screen.getByRole("button", { name: /^Тест$/i });
+    const ticketTab = screen.getByRole("button", { name: /^Билет$/i });
+    const duelTab = screen.getByRole("button", { name: /^Сравнение$/i });
+    const hubTab = screen.getByRole("button", { name: /^Витрина$/i });
 
+    expect(aboutTab).toBeInTheDocument();
     expect(testTab).toBeInTheDocument();
     expect(ticketTab).toBeInTheDocument();
     expect(duelTab).toBeInTheDocument();
     expect(hubTab).toBeInTheDocument();
 
-    // По умолчанию открыт Документ I (Тест), остальные скрыты
-    expect(screen.getByText(/Документ I — Анкета читателя/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Документ II — Читательский билет/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Документ III — Слепая дуэль/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Документ IV — Витрина/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/Что держит вас у страницы\?/i)).toBeInTheDocument();
+    // По умолчанию открыт промо-лендинг «О проекте»
+    expect(screen.getByText(/Расшифруйте свой литературный вкус по 6 осям/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Документ I — Анкета читателя/i)).not.toBeInTheDocument();
+
+    // Переключаемся на Тест
+    await user.click(testTab);
+    expect(await screen.findByText(/Документ I — Анкета читателя/i)).toBeInTheDocument();
+    expect(screen.getByText(/Что вам нравится в книге\?/i)).toBeInTheDocument();
 
     // Переключаемся на Билет
     await user.click(ticketTab);
@@ -57,9 +61,9 @@ describe("ReadingDnaPage", () => {
     });
     expect(screen.getByText(/Бланк пуст/i)).toBeInTheDocument();
 
-    // Переключаемся на Дуэль
+    // Переключаемся на Сравнение
     await user.click(duelTab);
-    expect(await screen.findByText(/Документ III — Слепая дуэль/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Документ III — Сравнение вкусов/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByText(/Документ II — Читательский билет/i)).not.toBeInTheDocument();
     });
@@ -68,7 +72,7 @@ describe("ReadingDnaPage", () => {
     await user.click(hubTab);
     expect(await screen.findByText(/Документ IV — Витрина/i)).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.queryByText(/Документ III — Слепая дуэль/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Документ III — Сравнение вкусов/i)).not.toBeInTheDocument();
     });
 
     // Возвращаемся обратно на Тест
@@ -133,14 +137,37 @@ describe("ReadingDnaPage", () => {
     expect(screen.getByText(/Начать заново/i)).toBeInTheDocument();
   });
 
-  it("по умолчанию оси стоят на 0 и кнопка «Дальше» заблокирована, пока пользователь не взаимодействует", () => {
+  it("по умолчанию оси стоят на 0 и кнопка «Дальше» заблокирована, пока пользователь не взаимодействует", async () => {
+    const user = userEvent.setup();
     localStorage.clear();
     renderPage();
 
-    const nextBtn = screen.getByRole("button", { name: /Дальше/i });
+    // Переходим на вкладку «Тест»
+    const testTab = screen.getByRole("button", { name: /^Тест$/i });
+    await user.click(testTab);
+
+    const nextBtn = await screen.findByRole("button", { name: /Дальше/i });
     expect(nextBtn).toBeDisabled();
 
     const slider = screen.getByRole("slider");
     expect(slider).toHaveAttribute("aria-valuenow", "0");
+  });
+
+  it("отображает рукописный текст в светлой теме и логотип DNA.webp в тёмной теме", async () => {
+    const user = userEvent.setup();
+    localStorage.clear();
+    renderPage();
+
+    // В светлой теме — текстовый заголовок в шапке
+    expect(screen.getAllByText("Книжный ДНК").length).toBeGreaterThan(0);
+    expect(screen.queryByAltText("Книжный ДНК")).not.toBeInTheDocument();
+
+    // Переключаем на тёмную тему (кнопка переключения темы)
+    const themeBtn = screen.getByTitle(/Темный ночной архив/i);
+    await user.click(themeBtn);
+
+    // В тёмной теме появляется картинка DNA.webp
+    const logoImg = await screen.findByAltText("Книжный ДНК");
+    expect(logoImg).toHaveAttribute("src", "/images/reading-dna/DNA.webp");
   });
 });

@@ -81,19 +81,19 @@ describe("InteractiveTicket", () => {
     expect(screen.getByText("Сумерки")).toBeInTheDocument();
   });
 
-  it("предоставляет кнопки шеринга и вызова на дуэль", () => {
+  it("предоставляет кнопки шеринга и сравнения вкусов", () => {
     renderWithProviders(<InteractiveTicket ticket={sampleTicket} onRetake={vi.fn()} />);
 
     expect(screen.getByRole("button", { name: /Поделиться/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Бросить вызов/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Сравнить вкусы/i })).toBeInTheDocument();
   });
 
-  it("отображает персональный QR-код для дуэли", () => {
+  it("отображает персональный QR-код для сравнения вкусов", () => {
     const { container } = renderWithProviders(
       <InteractiveTicket ticket={sampleTicket} onRetake={vi.fn()} />
     );
 
-    expect(screen.getByText("QR ДУЭЛИ")).toBeInTheDocument();
+    expect(screen.getByText("QR СРАВНЕНИЯ")).toBeInTheDocument();
     expect(container.querySelector("svg")).toBeInTheDocument();
   });
 });

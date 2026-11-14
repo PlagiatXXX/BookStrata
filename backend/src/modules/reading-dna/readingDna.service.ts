@@ -150,6 +150,33 @@ export async function saveDna(
     theme: input.theme,
   };
 
+  // 1. Если билет уже существует для зарегистрированного пользователя или гостя —
+  // обновляем профиль, сохраняя исходный постоянный номер билета и ссылки (чтобы ссылки в чатах не ломались).
+  if (userId) {
+    const existingUserTicket = await prisma.readingDna.findUnique({
+      where: { userId },
+    });
+    if (existingUserTicket) {
+      const updated = await prisma.readingDna.update({
+        where: { id: existingUserTicket.id },
+        data: basePayload,
+      });
+      return toResponse(updated);
+    }
+  } else if (input.guestToken) {
+    const existingGuestTicket = await prisma.readingDna.findUnique({
+      where: { guestToken: input.guestToken },
+    });
+    if (existingGuestTicket) {
+      const updated = await prisma.readingDna.update({
+        where: { id: existingGuestTicket.id },
+        data: basePayload,
+      });
+      return toResponse(updated);
+    }
+  }
+
+  // 2. Первичное создание билета с генерацией уникального номера
   const MAX_ATTEMPTS = 5;
   let savedRecord: any;
   let lastError: unknown;
@@ -162,10 +189,8 @@ export async function saveDna(
 
     try {
       if (userId) {
-        savedRecord = await prisma.readingDna.upsert({
-          where: { userId },
-          update: dataPayload,
-          create: {
+        savedRecord = await prisma.readingDna.create({
+          data: {
             ...dataPayload,
             userId,
             ticketNumber,

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useSyncExternalStore } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Heart, Layers, Sparkles, Zap, Check, X } from "lucide-react"
+import { Heart, Layers, Sparkles, Zap, Check, X, ArrowRight } from "lucide-react"
 
 import { RevealBox } from "@/ui/RevealBox"
 import { Fur } from "@/components/Fur"
@@ -10,6 +10,7 @@ import { DonateModal } from "@/components/DonateModal/DonateModal"
 import { scenarios, plans, audienceItems, screenshots, type ScreenshotItem } from "./landingData"
 import { proxyImageUrl } from "@/utils/imageProxy"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
+import { useAuth } from "@/hooks/useAuthContext"
 import type { TierListShort } from "@/lib/tierListApi"
 import { CollectionFlipCard } from "@/components/CommunityComponents/CollectionFlipCard"
 import type { CollectionItem } from "@/types/collection"
@@ -261,6 +262,8 @@ interface LandingBodyProps {
 export default function LandingBody({ tierLists, collections, forumStats }: LandingBodyProps) {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const { user } = useAuth()
+  const isAdmin = user?.role === "admin"
   const [isDonateOpen, setIsDonateOpen] = useState(false)
   const [activeScreenshot, setActiveScreenshot] = useState<number | null>(null)
 
@@ -392,6 +395,73 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
           </RevealBox>
         </div>
       </section>
+
+      {isAdmin && (
+        <>
+          <div className="landing-divider" />
+
+          {/* ============ READING DNA (интерактивный спецпроект) ============ */}
+          <section className="landing-section" id="reading-dna">
+            <div className="landing-section__container">
+              <RevealBox>
+                <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-gradient-to-br from-[#1c120c] via-[#24170f] to-[#140b07] p-6 sm:p-10 lg:p-12 text-left shadow-2xl shadow-black/60">
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-20"
+                    style={{
+                      backgroundImage:
+                        "radial-gradient(ellipse at 80% 20%, rgba(217, 119, 6, 0.35), transparent 70%)",
+                    }}
+                  />
+                  <div className="relative z-10 max-w-3xl space-y-5">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border uppercase bg-amber-500/15 border-amber-500/30 text-amber-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      Новинка · Интерактивный спецпроект BookStrata
+                    </div>
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-amber-100">
+                      Книжный ДНК: узнайте, какой вы читатель
+                    </h2>
+                    <p className="text-sm sm:text-base text-amber-200/75 leading-relaxed">
+                      Пройдите тест по 6 осям литературного вкуса, откройте свой архетип из 4 великих Орденов, получите персональный винтажный читательский билет и бросьте вызов друзьям в литературной дуэли.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                      <div className="p-3.5 rounded-xl border border-amber-900/40 bg-black/30 text-amber-100">
+                        <div className="text-amber-400 font-bold text-sm mb-1">6 дилемм вкуса</div>
+                        <p className="text-xs text-amber-200/60 leading-relaxed">
+                          Определяют ваши предпочтения по темпу, мраку, масштабу и глубине текста
+                        </p>
+                      </div>
+                      <div className="p-3.5 rounded-xl border border-amber-900/40 bg-black/30 text-amber-100">
+                        <div className="text-amber-400 font-bold text-sm mb-1">16 редких архетипов</div>
+                        <p className="text-xs text-amber-200/60 leading-relaxed">
+                          4 великих Ордена читателей с уникальными девизами и титулами
+                        </p>
+                      </div>
+                      <div className="p-3.5 rounded-xl border border-amber-900/40 bg-black/30 text-amber-100">
+                        <div className="text-amber-400 font-bold text-sm mb-1">Литературная дуэль</div>
+                        <p className="text-xs text-amber-200/60 leading-relaxed">
+                          Сравните совпадение читательских формул с друзьями без спойлеров
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <Link
+                        to="/reading-dna"
+                        data-analytics="cta.landing.try_reading_dna"
+                        className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm sm:text-base font-bold transition-all shadow-lg cursor-pointer bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        <span>Пройти тест Книжного ДНК</span>
+                        <ArrowRight size={18} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </RevealBox>
+            </div>
+          </section>
+        </>
+      )}
 
       <div className="landing-divider" />
 

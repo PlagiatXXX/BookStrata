@@ -204,7 +204,7 @@ export default function AdminBooksPage() {
                               title="Живая анимированная обложка книги"
                               className="inline-block whitespace-nowrap rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-medium text-amber-300"
                             >
-                              ✨ живая
+                              живая обложка
                             </span>
                           )}
                           {b.status === "draft" && b.ownerUsername && (

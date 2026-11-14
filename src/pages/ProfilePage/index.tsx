@@ -35,10 +35,13 @@ export default function ProfilePage() {
     isLoading: isAchievementsLoading,
   } = useAchievements();
 
+  const isAdminOrModerator =
+    authUser?.role === "admin" || authUser?.role === "moderator";
+
   const { data: myDna, isLoading: isDnaLoading } = useQuery({
     queryKey: ["readingDna", "me"],
     queryFn: getMyReadingDna,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isAdminOrModerator,
   });
 
   const {
@@ -193,7 +196,10 @@ export default function ProfilePage() {
 
           <ProfileGenresSection />
 
-          <ProfileDnaSection dna={myDna ?? null} isLoading={isDnaLoading} />
+          {/* Секция ДНК скрыта для обычных пользователей до публичного релиза (доступна только админам/модераторам) */}
+          {isAdminOrModerator && (
+            <ProfileDnaSection dna={myDna ?? null} isLoading={isDnaLoading} />
+          )}
 
           <AchievementsGrid
             achievements={achievements}

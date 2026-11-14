@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   findArchetypeByIdOrName,
   resolveArchetypeByRanges,
+  stripQuotes,
+  formatQuote,
 } from "./dnaArchetypeMatch";
 import type { DnaArchetypeCatalogItem } from "@/lib/readingDnaApi";
 
@@ -78,6 +80,24 @@ describe("dnaArchetypeMatch", () => {
         complexity: 75,
       });
       expect(arch?.id).toBe("dark-archivist");
+    });
+  });
+
+  describe("stripQuotes and formatQuote", () => {
+    it("stripQuotes удаляет внешние кавычки любого типа", () => {
+      expect(stripQuotes("«Цитата без дублей»")).toBe("Цитата без дублей");
+      expect(stripQuotes('"English quotes"')).toBe("English quotes");
+      expect(stripQuotes("“Curly quotes”")).toBe("Curly quotes");
+      expect(stripQuotes("Чистый текст")).toBe("Чистый текст");
+      expect(stripQuotes(null)).toBe("");
+      expect(stripQuotes("")).toBe("");
+    });
+
+    it("formatQuote всегда оборачивает ровно в одну пару «...»", () => {
+      expect(formatQuote("«Уже в кавычках»")).toBe("«Уже в кавычках»");
+      expect(formatQuote("Без кавычек")).toBe("«Без кавычек»");
+      expect(formatQuote("««Двойные кавычки»»")).toBe("«Двойные кавычки»");
+      expect(formatQuote(null)).toBe("");
     });
   });
 });

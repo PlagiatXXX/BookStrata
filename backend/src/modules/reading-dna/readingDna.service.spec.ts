@@ -107,14 +107,74 @@ describe("readingDna.service", () => {
       };
 
       (prisma.readingDna.findUnique as any).mockResolvedValue(null);
-      (prisma.readingDna.upsert as any).mockResolvedValue(mockCreatedRecord);
+      (prisma.readingDna.create as any).mockResolvedValue(mockCreatedRecord);
 
       const saved = await saveDna(sampleInput, 42);
 
-      expect(prisma.readingDna.upsert).toHaveBeenCalled();
       expect(saved.ticketNumber).toBe("BS-7492-A");
       expect(saved.archetype).toBe("meaning-architect");
       expect(saved.axes.storyFocus).toBe(85);
+    });
+
+    it("при повторном сохранении зарегистрированного пользователя сохраняет исходный ticketNumber", async () => {
+      const existingRecord = {
+        id: 77,
+        userId: 42,
+        guestToken: null,
+        ticketNumber: "BS-1111-Z",
+        customName: "Фёдор",
+        archetype: "ancient-chronicler",
+        archetypeName: "Летописец",
+        archetypeDesc: "Старое описание",
+        motto: "Старый девиз",
+        storyFocus: 50,
+        emotionalWeight: 50,
+        pace: 50,
+        darkness: 50,
+        scope: 50,
+        complexity: 50,
+        favoriteBooks: [],
+        kryptoniteBook: null,
+        favoriteBookIds: [],
+        kryptoniteBookId: null,
+        likedGenres: [],
+        dislikedGenres: [],
+        favoriteAuthors: [],
+        theme: "craft",
+        shareUrl: "https://bookstrata.ru/reading-dna?ticket=BS-1111-Z",
+        shortCode: "1111Z",
+        qrCodeUrl: null,
+        ticketImageUrl: null,
+        isPublic: true,
+        viewsCount: 10,
+        shareCount: 2,
+        duelsCount: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      (prisma.readingDna.findUnique as any).mockResolvedValue(existingRecord);
+      (prisma.readingDna.update as any).mockImplementation(({ data }: any) =>
+        Promise.resolve({
+          ...existingRecord,
+          ...data,
+          ticketNumber: existingRecord.ticketNumber,
+          shareUrl: existingRecord.shareUrl,
+          shortCode: existingRecord.shortCode,
+        })
+      );
+
+      const updated = await saveDna(sampleInput, 42);
+
+      expect(prisma.readingDna.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 77 },
+          data: expect.not.objectContaining({ ticketNumber: expect.anything() }),
+        })
+      );
+      expect(updated.ticketNumber).toBe("BS-1111-Z");
+      expect(updated.shareUrl).toBe("https://bookstrata.ru/reading-dna?ticket=BS-1111-Z");
+      expect(updated.axes.storyFocus).toBe(85);
     });
   });
 

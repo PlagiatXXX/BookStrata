@@ -206,7 +206,7 @@ async function main() {
       log(`🔍 [ТРЕБУЕТСЯ РЕСАЙЗ] ${c.name}: ${origWidth}x${origHeight} (${origKiB} KiB) → 640px (${newKiB} KiB), экономия: ${percent}%`);
     } else {
       await saveBuffer(keyInfo, newBuffer);
-      log(`✨ [ОПТИМИЗИРОВАНО] ${c.name}: ${origWidth}x${origHeight} (${origKiB} KiB) → 640px (${newKiB} KiB), сэкономлено: ${percent}%`);
+      log(`✓ [ОПТИМИЗИРОВАНО] ${c.name}: ${origWidth}x${origHeight} (${origKiB} KiB) → 640px (${newKiB} KiB), сэкономлено: ${percent}%`);
     }
   }
 

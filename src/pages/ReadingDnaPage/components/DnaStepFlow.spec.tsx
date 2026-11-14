@@ -17,7 +17,7 @@ describe("DnaStepFlow", () => {
   it("начинается с 6 шкал калибровки и отображает вопрос шкалы 1, кнопка «Дальше» изначально заблокирована", () => {
     renderWithClient(<DnaStepFlow onComplete={vi.fn()} theme="craft" />);
 
-    expect(screen.getByText(/Что держит вас у страницы\?/i)).toBeInTheDocument();
+    expect(screen.getByText(/Что вам нравится в книге\?/i)).toBeInTheDocument();
     expect(screen.getAllByText("Сюжет").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Рефлексия").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /Дальше/i })).toBeDisabled();

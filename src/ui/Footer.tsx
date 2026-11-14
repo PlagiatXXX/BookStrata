@@ -51,6 +51,7 @@ function scrollToSection(id: string) {
 
 const mainLinks = [
   { href: "/", label: "Главная", analyticsKey: "home", icon: <List size={14} /> },
+  // { href: "/reading-dna", label: "Книжный ДНК", analyticsKey: "reading_dna", icon: <BookOpen size={14} /> }, // раскомментировать при публичном релизе Книжного ДНК
   { href: "/blog", label: "Блог", analyticsKey: "blog", icon: <BookOpen size={14} /> },
   { href: "/rankings", label: "Рейтинг книг", analyticsKey: "rankings", icon: <BarChart3 size={14} /> },
   { href: "/what-to-read", label: "Что почитать", analyticsKey: "what_to_read", icon: <BookOpen size={14} /> },

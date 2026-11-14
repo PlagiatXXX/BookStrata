@@ -148,12 +148,12 @@ describe("ArchivalTicketCard", () => {
         kryptoniteBook={null}
         theme="dark"
         isSealed={true}
-        sealImageUrl="/images/reading-dna/seal.png"
+        sealImageUrl="/images/reading-dna/seal.webp"
       />
     );
 
     const sealImg = screen.getByRole("img", { name: "Печать" });
     expect(sealImg).toBeInTheDocument();
-    expect(sealImg).toHaveAttribute("src", "/images/reading-dna/seal.png");
+    expect(sealImg).toHaveAttribute("src", "/images/reading-dna/seal.webp");
   });
 });

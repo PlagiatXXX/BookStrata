@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useId } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { X, ArrowLeft, Send, CheckCircle2, MessageCircle, ExternalLink } from "lucide-react";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { apiTrackEvent } from "@/lib/analyticsApi";
 
 export interface FeedbackModalProps {
   isOpen: boolean;
@@ -44,23 +45,13 @@ export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProp
     }
   }, [isOpen]);
 
-  // Закрытие по Escape
-  useEffect(() => {
-    if (!isOpen) return;
+  // Закрытие только по нажатию на крестик — клик мимо и Escape отключены для исключения случайных закрытий
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onDismiss();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onDismiss]);
 
   const handleSelectRating = (rating: RatingValue) => {
     setSelectedRating(rating);
     setStep("details");
+    apiTrackEvent("feedback.rating_selected", { rating });
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -99,7 +90,6 @@ export function FeedbackModal({ isOpen, onDismiss, onSubmit }: FeedbackModalProp
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          onClick={onDismiss}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}

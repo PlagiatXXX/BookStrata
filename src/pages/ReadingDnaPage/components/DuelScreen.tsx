@@ -68,7 +68,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
         setDuelResult(res);
         setIsAnswering(false);
       } catch {
-        setErrorMsg("Ошибка при расчете дуэли. Попробуйте еще раз.");
+        setErrorMsg("Ошибка при сравнении вкусов. Попробуйте еще раз.");
       } finally {
         setIsLoading(false);
       }
@@ -78,7 +78,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
-      {/* 1. ЕСЛИ РЕЗУЛЬТАТ ДУЭЛИ ГОТОВ — ПОКАЗЫВАЕМ ЭКРАН ПОБЕДЫ / СОВМЕСТИМОСТИ */}
+      {/* 1. ЕСЛИ РЕЗУЛЬТАТ СРАВНЕНИЯ ГОТОВ — ПОКАЗЫВАЕМ ЭКРАН СОВМЕСТИМОСТИ */}
       {duelResult ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -95,7 +95,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
           </div>
 
           <span className="block text-[11px] font-mono uppercase tracking-[0.2em] font-extrabold opacity-75 mb-2">
-            ИТОГ ЛИТЕРАТУРНОЙ ДУЭЛИ
+            ИТОГ СРАВНЕНИЯ ВКУСОВ
           </span>
 
           {/* Большой процент совместимости */}
@@ -103,7 +103,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
             {duelResult.compatibility}%
           </div>
 
-          {/* Вердикт дуэли */}
+          {/* Вердикт сравнения */}
           <h3 className="text-xl sm:text-2xl font-serif font-black mb-3">
             {duelResult.verdict}
           </h3>
@@ -116,7 +116,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
           <div className="p-5 rounded-2xl border text-left mb-8 bg-slate-900/60 border-slate-800">
             <span className="block text-xs font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-1.5">
               <CheckCircle2 size={14} />
-              Раскрытые книги оппонента ({targetTicket.customName || "Читатель"}):
+              Раскрытые книги второго читателя ({targetTicket.customName || "Читатель"}):
             </span>
             <div className="flex flex-wrap gap-2">
               {targetTicket.favoriteBooks.map((b, idx) => (
@@ -132,7 +132,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
             {targetTicket.kryptoniteBook && (
               <div className="mt-3 pt-3 border-t border-slate-800 flex items-center gap-2 text-xs">
                 <AlertTriangle size={14} className="text-rose-400" />
-                <span className="opacity-75">Криптонит оппонента:</span>
+                <span className="opacity-75">Криптонит второго читателя:</span>
                 <span className="font-bold line-through text-rose-300">
                   {targetTicket.kryptoniteBook.title}
                 </span>
@@ -147,7 +147,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
               onClick={() => {
                 if (navigator.share) {
                   navigator.share({
-                    title: "Итог дуэли BookStrata",
+                    title: "Итог сравнения вкусов BookStrata",
                     text: `Наша совместимость с читателем ${targetTicket.customName || ""} — ${duelResult.compatibility}%! ${duelResult.verdict}`,
                     url: window.location.href,
                   });
@@ -202,21 +202,21 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
               : "bg-[#fbf7ed] border-stone-400 text-stone-900"
           }`}
         >
-          {/* Бейдж дуэли */}
+          {/* Бейдж сравнения */}
           <div className="flex items-center gap-2 text-amber-400 mb-4">
             <Swords size={22} />
             <span className="text-xs font-mono uppercase tracking-[0.2em] font-extrabold">
-              Литературный вызов
+              Сравнение читательского вкуса
             </span>
           </div>
 
           <div className="space-y-2 mb-6">
             <h2 className="text-2xl sm:text-3xl font-serif font-black tracking-tight">
-              {targetTicket.customName || "Читатель"} бросил вам вызов!
+              {targetTicket.customName || "Читатель"} предлагает сравнить вкусы!
             </h2>
             <p className="text-xs sm:text-sm opacity-75 leading-relaxed max-w-lg">
-              Проверьте, соулмейты ли вы в литературе или ваши книжные вкусы
-              непримиримы. Вызов отправлен по билету #{targetTicket.ticketNumber}.
+              Проверьте, соулмейты ли вы в литературе и насколько резонируют ваши вкусы.
+              Приглашение отправлено по билету #{targetTicket.ticketNumber}.
             </p>
           </div>
 
@@ -225,7 +225,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
             <div className="flex items-center justify-between">
               <div>
                 <span className="block text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold">
-                  АРХЕТИП СОПЕРНИКА
+                  АРХЕТИП ЧИТАТЕЛЯ
                 </span>
                 <span className="font-serif font-bold text-lg text-slate-100">
                   {targetTicket.archetypeName}
@@ -239,7 +239,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
             {/* Завеса тайны: скрытые книги */}
             <div className="pt-2 border-t border-slate-800/60 flex items-center gap-2 text-xs text-slate-400">
               <Lock size={14} className="text-amber-400" />
-              <span>3 Книги-Святыни и Криптонит скрыты до окончания дуэли</span>
+              <span>3 Книги-Святыни и Криптонит скрыты до сравнения вкусов</span>
             </div>
           </div>
 
@@ -251,7 +251,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
               className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer bg-linear-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 text-slate-950 shadow-lg shadow-amber-500/25"
             >
               <Sparkles size={16} />
-              Принять вызов (пройти тест за 60 секунд)
+              Сравнить вкусы (пройти тест за 60 секунд)
               <ArrowRight size={16} />
             </button>
 
@@ -281,7 +281,7 @@ export function DuelScreen({ targetTicket, onConductDuel }: DuelScreenProps) {
                   disabled={isLoading || !existingTicketInput.trim()}
                   className="px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider border border-amber-500/40 text-amber-300 hover:bg-amber-500/10 transition-colors disabled:opacity-40 cursor-pointer"
                 >
-                  {isLoading ? "Дуэль..." : "Сразиться"}
+                  {isLoading ? "Сравнение..." : "Сравнить вкусы"}
                 </button>
               </div>
               {errorMsg && (
