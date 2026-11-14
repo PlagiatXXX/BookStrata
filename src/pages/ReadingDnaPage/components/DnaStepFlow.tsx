@@ -1,611 +1,390 @@
 import { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import {
-  BookOpen,
-  Skull,
-  Compass,
-  Sliders,
-  Sparkles,
-  ArrowRight,
-  ArrowLeft,
-  Check,
-} from "lucide-react";
-import { CreativeSlider } from "./CreativeSlider";
-import type { ReadingDnaInputData, DnaBookItemData, DnaAxesData } from "@/lib/readingDnaApi";
+import { JellySlider } from "@/components/JellySlider/JellySlider";
+import { BookChipInput } from "./BookChipInput";
+import { getRubricLabel } from "@/features/book-match/domain/types";
+import type {
+  ReadingDnaInputData,
+  DnaBookItemData,
+  DnaAxesData,
+} from "@/lib/readingDnaApi";
 
 export interface DnaStepFlowProps {
   onComplete: (data: ReadingDnaInputData) => void;
+  onAxisChange?: (axis: keyof DnaAxesData, value: number) => void;
+  onAxisStepChange?: (axisStep: number) => void;
+  onBooksChange?: (
+    favorite: (DnaBookItemData | null)[],
+    kryptonite: DnaBookItemData | null
+  ) => void;
+  onStepChange?: (step: number) => void;
+  onTouchedAxesChange?: (touched: Record<string, boolean>) => void;
   isLoading?: boolean;
-  theme?: "dark" | "craft";
+  theme?: "dark" | "craft" | "light";
   initialName?: string;
+  initialStep?: number;
+  initialAxes?: DnaAxesData;
+  initialBooks?: (DnaBookItemData | null)[];
+  initialKryptonite?: DnaBookItemData | null;
+  initialTouchedAxes?: Record<string, boolean>;
 }
 
-const POPULAR_GENRES = [
-  "Классика",
-  "Фантастика",
-  "Фэнтези",
-  "Детектив и триллер",
-  "Психологическая проза",
-  "Философия",
-  "Антиутопия",
-  "Ужасы и мистика",
-  "Любовный роман",
-  "Исторический роман",
-  "Нон-фикшн",
-  "Поэзия",
+const AXIS_QUESTIONS = [
+  {
+    key: "storyFocus" as const,
+    name: "Сюжет ↔ Рефлексия",
+    question: "Что держит вас у страницы?",
+    left: { title: "Сюжет", desc: "стремительный темп, драйв, загадки" },
+    right: { title: "Рефлексия", desc: "глубокий психологизм, философия" },
+    marks: ["Лёгкий бриз", "Баланс", "Глубоководное погружение"],
+  },
+  {
+    key: "emotionalWeight" as const,
+    name: "Легко ↔ Тяжело",
+    question: "Сколько усилий вы готовы вложить?",
+    left: { title: "Легко", desc: "читается за вечер, отдых для ума" },
+    right: { title: "Тяжело", desc: "требует сил и тишины" },
+    marks: ["Лёгкий лист", "Баланс", "Каменная плита"],
+  },
+  {
+    key: "pace" as const,
+    name: "Быстро ↔ Погружение",
+    question: "Как вы читаете?",
+    left: { title: "Быстро", desc: "глотаю за ночь" },
+    right: { title: "Погружение", desc: "растягиваю на недели" },
+    marks: ["Один присест", "Баланс", "Неспешный омут"],
+  },
+  {
+    key: "darkness" as const,
+    name: "Светло ↔ Мрачно",
+    question: "Какое настроение вам ближе?",
+    left: { title: "Светло", desc: "тепло, надежда, свет" },
+    right: { title: "Мрачно", desc: "тени, тревога, тьма" },
+    marks: ["Рассвет", "Сумерки", "Полночь"],
+  },
+  {
+    key: "scope" as const,
+    name: "Камерное ↔ Эпическое",
+    question: "Какого масштаба история нужна вам?",
+    left: { title: "Камерное", desc: "одна комната, один голос" },
+    right: { title: "Эпическое", desc: "миры, века, армии" },
+    marks: ["Свеча", "Баланс", "Целая империя"],
+  },
+  {
+    key: "complexity" as const,
+    name: "Доступное ↔ Многослойное",
+    question: "Любите разгадывать книгу?",
+    left: { title: "Доступное", desc: "ясно с первой страницы" },
+    right: { title: "Многослойное", desc: "двойное дно, шифры" },
+    marks: ["Открытая дверь", "Баланс", "Лабиринт"],
+  },
 ];
 
 export function DnaStepFlow({
   onComplete,
+  onAxisChange,
+  onAxisStepChange,
+  onBooksChange,
+  onStepChange,
+  onTouchedAxesChange,
   isLoading = false,
-  theme = "dark",
+  theme = "craft",
   initialName = "",
+  initialStep = 0,
+  initialAxes,
+  initialBooks,
+  initialKryptonite,
+  initialTouchedAxes,
 }: DnaStepFlowProps) {
   const isDark = theme === "dark";
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
 
-  // Состояние 3 книг
-  const [favoriteBooks, setFavoriteBooks] = useState<DnaBookItemData[]>([
-    { title: "", author: "" },
-    { title: "", author: "" },
-    { title: "", author: "" },
-  ]);
-
-  // Состояние криптонита
-  const [kryptonite, setKryptonite] = useState<DnaBookItemData>({
-    title: "",
-    author: "",
-  });
-  const [noKryptonite, setNoKryptonite] = useState(false);
-
-  // Жанры
-  const [likedGenres, setLikedGenres] = useState<string[]>([]);
-  const [dislikedGenres, setDislikedGenres] = useState<string[]>([]);
-
-  // 6 осей восприятия
-  const [axes, setAxes] = useState<DnaAxesData>({
-    storyFocus: 50,
-    emotionalWeight: 50,
-    pace: 50,
-    darkness: 50,
-    scope: 50,
-    complexity: 50,
+  // Значения 6 осей восприятия: по умолчанию стоят на 0
+  const [axes, setAxes] = useState<DnaAxesData>(() => initialAxes || {
+    storyFocus: 0,
+    emotionalWeight: 0,
+    pace: 0,
+    darkness: 0,
+    scope: 0,
+    complexity: 0,
   });
 
-  // Имя и тема билета
-  const [customName, setCustomName] = useState(initialName);
-  const [selectedTheme, setSelectedTheme] = useState<"dark" | "craft">(theme);
+  // Отслеживание взаимодействия пользователя с осями (для блокировки кнопки Дальше)
+  const [touchedAxes, setTouchedAxes] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = { ...(initialTouchedAxes || {}) };
+    if (initialAxes) {
+      Object.entries(initialAxes).forEach(([k, v]) => {
+        if (typeof v === "number" && v > 0) {
+          initial[k] = true;
+        }
+      });
+    }
+    return initial;
+  });
 
-  // Валидация шагов
-  const isStep0Valid = favoriteBooks.every((b) => b.title.trim().length > 0);
-  const isStep1Valid = noKryptonite || kryptonite.title.trim().length > 0;
-  const isStep2Valid = likedGenres.length > 0;
+  // Книги: 3 священные + 1 криптонит
+  const [favoriteBooks, setFavoriteBooks] = useState<(DnaBookItemData | null)[]>(
+    () => initialBooks || []
+  );
+  const [kryptonite, setKryptonite] = useState<DnaBookItemData | null>(() => initialKryptonite ?? null);
 
-  const handleBookChange = (index: number, field: "title" | "author", value: string) => {
-    setFavoriteBooks((prev) => {
-      const next = [...prev];
-      const current = next[index] || { title: "", author: "" };
-      next[index] = { ...current, [field]: value };
-      return next;
-    });
-  };
+  const currentAxis = step < 6 ? AXIS_QUESTIONS[step] : null;
 
-  const toggleLikedGenre = (genre: string) => {
-    setLikedGenres((prev) => {
-      if (prev.includes(genre)) return prev.filter((g) => g !== genre);
-      if (prev.length >= 3) return prev;
-      return [...prev, genre];
-    });
-    setDislikedGenres((prev) => prev.filter((g) => g !== genre));
-  };
+  // Кнопка «Дальше» активна, только если пользователь взаимодействовал с ползунком
+  const isCurrentAxisActive = currentAxis
+    ? Boolean(touchedAxes[currentAxis.key] || (axes[currentAxis.key] ?? 0) > 0)
+    : true;
 
-  const toggleDislikedGenre = (genre: string) => {
-    setDislikedGenres((prev) => {
-      if (prev.includes(genre)) return prev.filter((g) => g !== genre);
-      if (prev.length >= 3) return prev;
-      return [...prev, genre];
-    });
-    setLikedGenres((prev) => prev.filter((g) => g !== genre));
-  };
+  const handleSliderChange = useCallback(
+    (val: number) => {
+      if (!currentAxis) return;
+      setAxes((prev) => ({
+        ...prev,
+        [currentAxis.key]: val,
+      }));
+      setTouchedAxes((prev) => {
+        const next = { ...prev, [currentAxis.key]: true };
+        onTouchedAxesChange?.(next);
+        return next;
+      });
+      onAxisChange?.(currentAxis.key, val);
+    },
+    [currentAxis, onAxisChange, onTouchedAxesChange]
+  );
 
-  const handleNext = () => setStep((s) => Math.min(s + 1, 4));
-  const handleBack = () => setStep((s) => Math.max(s - 1, 0));
+  const handleNext = useCallback(() => {
+    if (step < 6) {
+      const nextStep = step + 1;
+      setStep(nextStep);
+      onAxisStepChange?.(nextStep + 1);
+      onStepChange?.(nextStep);
+    }
+  }, [step, onAxisStepChange, onStepChange]);
 
-  const handleSubmit = useCallback(() => {
+  const handleBack = useCallback(() => {
+    if (step > 0) {
+      const prevStep = step - 1;
+      setStep(prevStep);
+      onAxisStepChange?.(prevStep + 1);
+      onStepChange?.(prevStep);
+    }
+  }, [step, onAxisStepChange, onStepChange]);
+
+  const handleBooksUpdate = useCallback(
+    (
+      newBooks: (DnaBookItemData | null)[],
+      newKryptonite: DnaBookItemData | null
+    ) => {
+      setFavoriteBooks(newBooks);
+      setKryptonite(newKryptonite);
+      onBooksChange?.(newBooks, newKryptonite);
+    },
+    [onBooksChange]
+  );
+
+  const filledBooks = favoriteBooks.filter(
+    (book): book is DnaBookItemData => Boolean(book)
+  );
+
+  const handleSeal = useCallback(() => {
     onComplete({
       axes,
-      favoriteBooks: favoriteBooks.map((b) => ({
-        title: b.title.trim(),
-        author: b.author?.trim() || undefined,
-      })),
-      kryptoniteBook:
-        !noKryptonite && kryptonite.title.trim()
-          ? {
-              title: kryptonite.title.trim(),
-              author: kryptonite.author?.trim() || undefined,
-            }
-          : null,
-      likedGenres,
-      dislikedGenres,
+      favoriteBooks: filledBooks,
+      kryptoniteBook: kryptonite,
+      likedGenres: [],
+      dislikedGenres: [],
       favoriteAuthors: [],
-      customName: customName.trim() || undefined,
-      theme: selectedTheme,
+      customName: initialName.trim() || undefined,
+      theme: isDark ? "dark" : "craft",
     });
-  }, [
-    axes,
-    favoriteBooks,
-    noKryptonite,
-    kryptonite,
-    likedGenres,
-    dislikedGenres,
-    customName,
-    selectedTheme,
-    onComplete,
-  ]);
+  }, [axes, filledBooks, kryptonite, initialName, isDark, onComplete]);
 
   return (
-    <div
-      className={`rounded-3xl p-6 sm:p-10 border transition-all duration-300 shadow-2xl ${
-        isDark
-          ? "bg-[#0f1422]/90 border-slate-800 text-slate-100"
-          : "bg-[#fffdfa]/95 border-stone-300 text-stone-900"
-      }`}
-    >
-      {/* Прогресс-бар шагов */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-800/40">
-        <div className="flex items-center gap-2">
-          <span
-            className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-mono font-bold ${
-              isDark
-                ? "bg-amber-500/20 text-amber-300 border border-amber-400/30"
-                : "bg-amber-100 text-amber-900 border border-amber-300"
-            }`}
-          >
-            {step + 1}
-          </span>
-          <span className="text-xs uppercase tracking-widest font-bold opacity-60">
-            Шаг {step + 1} из 5
-          </span>
-        </div>
-
-        <div className="flex gap-1.5">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div
+    <div className="w-full flex flex-col justify-between space-y-4">
+      {/* Прогресс со звёздочками ✦ ✦ ✦ ✦ ✦ ✦ и разделительной линией под ними */}
+      <div className="space-y-2 select-none">
+        <div className="flex justify-between items-center text-sm sm:text-base px-1">
+          {AXIS_QUESTIONS.map((_, i) => (
+            <span
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === step
-                  ? "w-8 bg-amber-500"
-                  : i < step
-                    ? "w-4 bg-amber-500/50"
-                    : "w-2 bg-slate-700/40"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
-      <AnimatePresence mode="wait">
-        {/* ШАГ 0: 3 Книги-Святыни */}
-        {step === 0 && (
-          <motion.div
-            key="step-0"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-amber-400">
-                <BookOpen size={20} />
-                <h2 className="text-xl sm:text-2xl font-serif font-black">
-                  3 Книги-Святыни
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm opacity-70">
-                Книги, которые сформировали твою читательскую оптику и оставили
-                неизгладимый след в сердце.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {favoriteBooks.map((book, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 rounded-2xl border transition-all ${
-                    isDark
-                      ? "bg-slate-900/50 border-slate-800 focus-within:border-amber-500/50"
-                      : "bg-stone-50 border-stone-200 focus-within:border-amber-600/50"
-                  }`}
-                >
-                  <span className="block text-[11px] font-mono uppercase tracking-wider text-amber-500 font-bold mb-2">
-                    Святыня №{idx + 1}
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Название книги *"
-                      value={book.title}
-                      onChange={(e) => handleBookChange(idx, "title", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-xl text-sm border focus:outline-none focus:ring-1 ${
-                        isDark
-                          ? "bg-slate-950/60 border-slate-800 text-slate-100 placeholder-slate-600 focus:ring-amber-400"
-                          : "bg-white border-stone-300 text-stone-900 placeholder-stone-400 focus:ring-amber-600"
-                      }`}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Автор (необязательно)"
-                      value={book.author || ""}
-                      onChange={(e) => handleBookChange(idx, "author", e.target.value)}
-                      className={`w-full px-3 py-2 rounded-xl text-sm border focus:outline-none focus:ring-1 ${
-                        isDark
-                          ? "bg-slate-950/60 border-slate-800 text-slate-100 placeholder-slate-600 focus:ring-amber-400"
-                          : "bg-white border-stone-300 text-stone-900 placeholder-stone-400 focus:ring-amber-600"
-                      }`}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ШАГ 1: Книга-Криптонит */}
-        {step === 1 && (
-          <motion.div
-            key="step-1"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-rose-400">
-                <Skull size={20} />
-                <h2 className="text-xl sm:text-2xl font-serif font-black">
-                  Книга-Криптонит
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm opacity-70">
-                Книга, которую все хвалят, но от которой у тебя закатываются
-                глаза. Твой личный литературный аллерген.
-              </p>
-            </div>
-
-            <div
-              className={`p-5 rounded-2xl border transition-all ${
-                isDark
-                  ? "bg-slate-900/50 border-slate-800"
-                  : "bg-stone-50 border-stone-200"
+              className={`transition-colors ${
+                i <= step
+                  ? isDark
+                    ? "text-[#c9a35b] drop-shadow-[0_0_6px_rgba(201,163,91,0.6)] font-bold"
+                    : "text-[#3b6ea8] drop-shadow-[0_0_4px_rgba(59,110,168,0.4)] font-bold"
+                  : isDark
+                    ? "text-[#a89678]/40"
+                    : "text-[#6f6553]/40"
               }`}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                <input
-                  type="text"
-                  placeholder="Название книги-криптонита"
-                  disabled={noKryptonite}
-                  value={kryptonite.title}
-                  onChange={(e) =>
-                    setKryptonite((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                  className={`w-full px-3 py-2 rounded-xl text-sm border focus:outline-none focus:ring-1 ${
-                    noKryptonite ? "opacity-30 cursor-not-allowed" : ""
-                  } ${
-                    isDark
-                      ? "bg-slate-950/60 border-slate-800 text-slate-100 placeholder-slate-600 focus:ring-rose-400"
-                      : "bg-white border-stone-300 text-stone-900 placeholder-stone-400 focus:ring-rose-600"
-                  }`}
-                />
-                <input
-                  type="text"
-                  placeholder="Автор"
-                  disabled={noKryptonite}
-                  value={kryptonite.author || ""}
-                  onChange={(e) =>
-                    setKryptonite((prev) => ({ ...prev, author: e.target.value }))
-                  }
-                  className={`w-full px-3 py-2 rounded-xl text-sm border focus:outline-none focus:ring-1 ${
-                    noKryptonite ? "opacity-30 cursor-not-allowed" : ""
-                  } ${
-                    isDark
-                      ? "bg-slate-950/60 border-slate-800 text-slate-100 placeholder-slate-600 focus:ring-rose-400"
-                      : "bg-white border-stone-300 text-stone-900 placeholder-stone-400 focus:ring-rose-600"
-                  }`}
-                />
-              </div>
+              ✦
+            </span>
+          ))}
+        </div>
 
-              <label className="flex items-center gap-2 cursor-pointer text-xs select-none opacity-80 hover:opacity-100">
-                <input
-                  type="checkbox"
-                  checked={noKryptonite}
-                  onChange={(e) => setNoKryptonite(e.target.checked)}
-                  className="rounded text-amber-500 focus:ring-0"
-                />
-                <span>У меня нет явного криптонита, я великодушен к книгам</span>
-              </label>
-            </div>
-          </motion.div>
-        )}
+        {/* Тонкая разделительная линия под звёздочками на всю ширину карточки */}
+        <div
+          className={`h-0.5 w-full rounded-full ${
+            isDark ? "bg-[rgba(201,163,91,0.35)]" : "bg-[rgba(59,110,168,0.35)]"
+          }`}
+        />
+      </div>
 
-        {/* ШАГ 2: Жанры и эффект Боссона */}
-        {step === 2 && (
-          <motion.div
-            key="step-2"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-amber-400">
-                <Compass size={20} />
-                <h2 className="text-xl sm:text-2xl font-serif font-black">
-                  Жанровые ориентиры
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm opacity-70">
-                Выбери до 3 любимых жанров (зелёные) и до 3 категорически отвергаемых
-                (красные).
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <span className="block text-xs uppercase font-bold tracking-wider text-emerald-400 mb-2">
-                  Любимые жанры (выбрано: {likedGenres.length}/3):
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {POPULAR_GENRES.map((g) => {
-                    const isSelected = likedGenres.includes(g);
-                    return (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => toggleLikedGenre(g)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold"
-                            : isDark
-                              ? "bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700"
-                              : "bg-white border-stone-200 text-stone-600 hover:border-stone-400"
-                        }`}
-                      >
-                        {isSelected && <Check size={12} className="inline mr-1" />}
-                        {g}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <span className="block text-xs uppercase font-bold tracking-wider text-rose-400 mb-2">
-                  Отвергаемые жанры (эффект Боссона, выбрано: {dislikedGenres.length}/3):
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {POPULAR_GENRES.map((g) => {
-                    const isSelected = dislikedGenres.includes(g);
-                    return (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => toggleDislikedGenre(g)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-rose-500/20 border-rose-400 text-rose-300 font-bold"
-                            : isDark
-                              ? "bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700"
-                              : "bg-white border-stone-200 text-stone-600 hover:border-stone-400"
-                        }`}
-                      >
-                        {isSelected && "✕ "}
-                        {g}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* ШАГ 3: 6 Осей восприятия */}
-        {step === 3 && (
-          <motion.div
-            key="step-3"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-amber-400">
-                <Sliders size={20} />
-                <h2 className="text-xl sm:text-2xl font-serif font-black">
-                  6 Шкал восприятия текста
-                </h2>
-              </div>
-              <p className="text-xs sm:text-sm opacity-70">
-                Настрой ползунки под свой естественный пульс чтения.
-              </p>
-            </div>
-
-            <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
-              <CreativeSlider
-                label="1. Фокус повествования"
-                leftLabel="Сюжет, темп и действие"
-                rightLabel="Рефлексия, смысл и глубина"
-                value={axes.storyFocus}
-                onChange={(val) => setAxes((prev) => ({ ...prev, storyFocus: val }))}
-                theme={theme}
-              />
-              <CreativeSlider
-                label="2. Эмоциональный спектр"
-                leftLabel="Легкость и эскапизм"
-                rightLabel="Тяжелая драма и катарсис"
-                value={axes.emotionalWeight}
-                onChange={(val) =>
-                  setAxes((prev) => ({ ...prev, emotionalWeight: val }))
-                }
-                theme={theme}
-              />
-              <CreativeSlider
-                label="3. Темп чтения"
-                leftLabel="Стремительный экшен"
-                rightLabel="Неспешное медитативное смакование"
-                value={axes.pace}
-                onChange={(val) => setAxes((prev) => ({ ...prev, pace: val }))}
-                theme={theme}
-              />
-              <CreativeSlider
-                label="4. Градус мрачности"
-                leftLabel="Светлая надежда и уют"
-                rightLabel="Экзистенциальная бездна и мрак"
-                value={axes.darkness}
-                onChange={(val) => setAxes((prev) => ({ ...prev, darkness: val }))}
-                theme={theme}
-              />
-              <CreativeSlider
-                label="5. Масштаб истории"
-                leftLabel="Камерная локальная драма"
-                rightLabel="Эпос, цивилизации и вселенные"
-                value={axes.scope}
-                onChange={(val) => setAxes((prev) => ({ ...prev, scope: val }))}
-                theme={theme}
-              />
-              <CreativeSlider
-                label="6. Сложность слога"
-                leftLabel="Доступный чистый слог"
-                rightLabel="Экспериментальный языковой лабиринт"
-                value={axes.complexity}
-                onChange={(val) => setAxes((prev) => ({ ...prev, complexity: val }))}
-                theme={theme}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {/* ШАГ 4: Финал и имя на билете */}
-        {step === 4 && (
-          <motion.div
-            key="step-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6 text-center"
-          >
-            <div className="space-y-2">
-              <div className="inline-flex p-3 rounded-full bg-amber-500/10 text-amber-400">
-                <Sparkles size={28} />
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-serif font-black">
-                Последний штрих перед печатью
-              </h2>
-              <p className="text-xs sm:text-sm opacity-70 max-w-md mx-auto">
-                Укажи имя или псевдоним, который будет выгравирован на твоём
-                читательском билете.
-              </p>
-            </div>
-
-            <div className="max-w-sm mx-auto space-y-4 text-left">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 opacity-80">
-                  Имя на билете:
-                </label>
-                <input
-                  type="text"
-                  placeholder="Например: Фёдор или Читатель"
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  className={`w-full px-4 py-3 rounded-xl text-base border focus:outline-none focus:ring-2 ${
-                    isDark
-                      ? "bg-slate-950/80 border-slate-700 text-slate-100 placeholder-slate-600 focus:ring-amber-400"
-                      : "bg-white border-stone-300 text-stone-900 placeholder-stone-400 focus:ring-amber-600"
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 opacity-80">
-                  Стиль оформления билета:
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTheme("dark")}
-                    className={`p-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      selectedTheme === "dark"
-                        ? "bg-slate-900 border-amber-400 text-amber-300 shadow-sm"
-                        : "bg-slate-900/40 border-slate-800 text-slate-400"
-                    }`}
-                  >
-                    🌙 Тайный орден
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedTheme("craft")}
-                    className={`p-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      selectedTheme === "craft"
-                        ? "bg-amber-100 border-amber-600 text-amber-950 shadow-sm"
-                        : "bg-stone-100 border-stone-300 text-stone-600"
-                    }`}
-                  >
-                    ☀️ Крафтовая анкета
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Навигационные кнопки Вперёд / Назад */}
-      <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-800/40">
-        {step > 0 ? (
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
-          >
-            <ArrowLeft size={14} />
-            Назад
-          </button>
-        ) : (
-          <div />
-        )}
-
-        {step < 4 ? (
-          <button
-            type="button"
-            onClick={handleNext}
-            disabled={
-              (step === 0 && !isStep0Valid) ||
-              (step === 1 && !isStep1Valid) ||
-              (step === 2 && !isStep2Valid)
-            }
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all shadow-md ${
-              (step === 0 && !isStep0Valid) ||
-              (step === 1 && !isStep1Valid) ||
-              (step === 2 && !isStep2Valid)
-                ? "opacity-40 cursor-not-allowed bg-slate-700 text-slate-300"
-                : "bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 cursor-pointer shadow-amber-500/20"
+      {/* ШАГИ 0..5: 6 шкал калибровки вкуса */}
+      {step < 6 && currentAxis && (
+        <div className="space-y-4 animate-fade-in">
+          <h2
+            className={`text-lg sm:text-xl font-bold tracking-tight ${
+              isDark
+                ? "font-serif text-[#efe3cc]"
+                : "font-['Caveat',cursive] text-2xl sm:text-3xl text-[#2e2a24]"
             }`}
           >
-            Далее
-            <ArrowRight size={14} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-8 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg bg-linear-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-400 text-slate-950 cursor-pointer shadow-amber-500/30"
-          >
-            <Sparkles size={16} />
-            {isLoading ? "Материализация..." : "Материализовать билет"}
-          </button>
-        )}
-      </div>
+            {currentAxis.question}
+          </h2>
+
+          {/* Карточки полюсов */}
+          <div className="grid grid-cols-2 gap-3">
+            <div
+              className={`p-3 rounded-lg border border-dashed text-xs transition-colors ${
+                isDark
+                  ? "border-[rgba(201,163,91,0.3)] bg-[#24170f]/50 text-[#a89678]"
+                  : "border-[rgba(59,110,168,0.3)] bg-white/50 text-[#6f6553]"
+              }`}
+            >
+              <b
+                className={`block text-xs sm:text-sm mb-0.5 ${
+                  isDark ? "text-[#efe3cc]" : "text-[#2e2a24]"
+                }`}
+              >
+                {currentAxis.left.title}
+              </b>
+              <span>{currentAxis.left.desc}</span>
+            </div>
+
+            <div
+              className={`p-3 rounded-lg border border-dashed text-xs transition-colors ${
+                isDark
+                  ? "border-[rgba(201,163,91,0.3)] bg-[#24170f]/50 text-[#a89678]"
+                  : "border-[rgba(59,110,168,0.3)] bg-white/50 text-[#6f6553]"
+              }`}
+            >
+              <b
+                className={`block text-xs sm:text-sm mb-0.5 ${
+                  isDark ? "text-[#efe3cc]" : "text-[#2e2a24]"
+                }`}
+              >
+                {currentAxis.right.title}
+              </b>
+              <span>{currentAxis.right.desc}</span>
+            </div>
+          </div>
+
+          {/* Jelly Slider с физикой пружин, всплывающей каплей и пояснением на уровне 0 и 100 */}
+          <div className="pt-2 pb-2">
+            <JellySlider
+              value={axes[currentAxis.key]}
+              onChange={handleSliderChange}
+              theme={isDark ? "dark" : "craft"}
+              ariaLabel={currentAxis.name}
+              caption={
+                <span
+                  className={`text-xs sm:text-[13px] leading-snug font-medium transition-colors duration-200 block truncate ${
+                    isDark ? "text-amber-300/90" : "text-amber-900"
+                  }`}
+                >
+                  {getRubricLabel(currentAxis.key, axes[currentAxis.key])}
+                </span>
+              }
+            />
+          </div>
+
+          {/* Навигационные кнопки */}
+          <div className="flex justify-between items-center pt-2">
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={step === 0}
+              className={`px-4 py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                isDark
+                  ? "border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  : "border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10 disabled:opacity-30 disabled:cursor-not-allowed"
+              }`}
+            >
+              Назад
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!isCurrentAxisActive}
+              className={`px-5 py-2 rounded-lg text-xs font-bold text-white transition-all shadow-md cursor-pointer ${
+                isDark
+                  ? "bg-[#8a2433] hover:bg-[#a32b3d] disabled:opacity-35 disabled:cursor-not-allowed"
+                  : "bg-[#b3412f] hover:bg-[#c94935] disabled:opacity-35 disabled:cursor-not-allowed"
+              }`}
+            >
+              Дальше
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ШАГ 6: Печать: ваши книги (В точности как на скриншоте!) */}
+      {step === 6 && (
+        <div className="space-y-4 animate-fade-in">
+          <div>
+            <h2
+              className={`text-lg sm:text-xl font-bold tracking-tight mb-1 ${
+                isDark
+                  ? "font-serif text-[#efe3cc]"
+                  : "font-['Caveat',cursive] text-2xl sm:text-3xl text-[#2e2a24]"
+              }`}
+            >
+              Печать: ваши книги
+            </h2>
+            <p className="text-xs opacity-75 leading-relaxed">
+              Введите название: книга подтянется из каталога BookStrata. Первые три
+              станут священными, четвёртая — криптонитом.
+            </p>
+          </div>
+
+          {/* Поле ввода + чипы выбранных книг */}
+          <BookChipInput
+            books={favoriteBooks}
+            kryptonite={kryptonite}
+            onChange={handleBooksUpdate}
+            theme={isDark ? "dark" : "light"}
+          />
+
+          {/* Навигационные кнопки */}
+          <div className="flex justify-between items-center pt-4">
+            <button
+              type="button"
+              onClick={handleBack}
+              className={`px-4 py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                isDark
+                  ? "border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10"
+                  : "border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10"
+              }`}
+            >
+              Назад
+            </button>
+
+            <button
+              type="button"
+              disabled={filledBooks.length < 3 || isLoading}
+              onClick={handleSeal}
+              className={`px-5 py-2.5 rounded-lg text-xs font-bold text-white transition-all shadow-md cursor-pointer ${
+                isDark
+                  ? "bg-[#8a2433] hover:bg-[#a32b3d] disabled:opacity-40 disabled:cursor-not-allowed"
+                  : "bg-[#b3412f] hover:bg-[#c94935] disabled:opacity-40 disabled:cursor-not-allowed"
+              }`}
+            >
+              {isLoading ? "Запечатывание..." : "Запечатать билет"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

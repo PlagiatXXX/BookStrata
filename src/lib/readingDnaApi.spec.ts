@@ -5,6 +5,9 @@ import {
   getReadingTicket,
   conductReadingDuel,
   getReadingTwins,
+  getReadingArchetypes,
+  getMyReadingDna,
+  shareReadingTicket,
   type ReadingDnaInputData,
 } from "./readingDnaApi";
 import { apiClient } from "./api-client";
@@ -93,5 +96,36 @@ describe("readingDnaApi", () => {
 
     expect(apiClient.get).toHaveBeenCalledWith("/reading-dna/twins/BS-7492-X", { limit: 3 });
     expect(result).toEqual(mockTwins);
+  });
+
+  it("getReadingArchetypes отправляет GET на /reading-dna/archetypes", async () => {
+    const mockCatalog = [{ id: "meaning-architect", number: 1 }];
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ archetypes: mockCatalog });
+
+    const result = await getReadingArchetypes();
+
+    expect(apiClient.get).toHaveBeenCalledWith("/reading-dna/archetypes");
+    expect(result).toEqual(mockCatalog);
+  });
+
+  it("getMyReadingDna отправляет GET на /reading-dna/me и возвращает dna", async () => {
+    const mockDna = { ticketNumber: "BS-7492-X", archetypeName: "Архитектор смыслов" };
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ dna: mockDna });
+
+    const result = await getMyReadingDna();
+
+    expect(apiClient.get).toHaveBeenCalledWith("/reading-dna/me");
+    expect(result).toEqual(mockDna);
+  });
+
+  it("shareReadingTicket отправляет POST на /reading-dna/share и возвращает shareCount", async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ shareCount: 7 });
+
+    const result = await shareReadingTicket("BS-7492-X");
+
+    expect(apiClient.post).toHaveBeenCalledWith("/reading-dna/share", {
+      ticketNumber: "BS-7492-X",
+    });
+    expect(result).toBe(7);
   });
 });

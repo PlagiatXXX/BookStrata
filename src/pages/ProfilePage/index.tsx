@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { sileo } from "sileo";
 import { AchievementsGrid } from "./components/AchievementsGrid";
@@ -8,10 +9,12 @@ import { ProfileActions } from "./components/ProfileActions";
 import { PasswordChangeForm } from "./components/PasswordChangeForm";
 import { StatsCards } from "./components/StatsCards";
 import { ProfileGenresSection } from "./components/ProfileGenresSection";
+import { ProfileDnaSection } from "./components/ProfileDnaSection";
 import { useProfileActions } from "./hooks/useProfileActions";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useUser } from "@/hooks/useUser";
+import { getMyReadingDna } from "@/lib/readingDnaApi";
 import { AvatarSelector } from "@/components/Avatar";
 import { Spinner } from "@/components/Spinner";
 import { createLogger } from "@/lib/logger";
@@ -31,6 +34,12 @@ export default function ProfilePage() {
     status: achievementStatus,
     isLoading: isAchievementsLoading,
   } = useAchievements();
+
+  const { data: myDna, isLoading: isDnaLoading } = useQuery({
+    queryKey: ["readingDna", "me"],
+    queryFn: getMyReadingDna,
+    enabled: isAuthenticated,
+  });
 
   const {
     isEditingUsername,
@@ -183,6 +192,8 @@ export default function ProfilePage() {
           <StatsCards stats={stats} />
 
           <ProfileGenresSection />
+
+          <ProfileDnaSection dna={myDna ?? null} isLoading={isDnaLoading} />
 
           <AchievementsGrid
             achievements={achievements}

@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { motion } from "motion/react";
+import { JellySlider } from "./JellySlider";
 
 export interface CreativeSliderProps {
   label: string;
@@ -10,6 +10,8 @@ export interface CreativeSliderProps {
   theme?: "dark" | "craft";
   description?: string;
   icon?: React.ReactNode;
+  rubricLabel?: string;
+  isTouched?: boolean;
 }
 
 export function CreativeSlider({
@@ -21,43 +23,30 @@ export function CreativeSlider({
   theme = "dark",
   description,
   icon,
+  rubricLabel,
+  isTouched = true,
 }: CreativeSliderProps) {
   const isDark = theme === "dark";
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onChange(Number(e.target.value));
-    },
-    [onChange]
-  );
 
   const handleSetLeft = useCallback(() => onChange(0), [onChange]);
   const handleSetRight = useCallback(() => onChange(100), [onChange]);
 
   return (
-    <div
-      className={`rounded-2xl p-5 sm:p-6 transition-all duration-300 border ${
-        isDark
-          ? "bg-[#131926]/80 border-slate-800/80 hover:border-amber-500/30 shadow-lg shadow-black/20"
-          : "bg-white/90 border-stone-300/80 hover:border-amber-600/40 shadow-sm"
-      }`}
-    >
-      {/* Шапка слайдера */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
+    <div className="w-full flex flex-col gap-2 py-1">
+      {/* Шапка: название шкалы и значение */}
+      <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center gap-1.5">
           {icon && (
             <span
-              className={`p-1.5 rounded-lg text-sm ${
-                isDark
-                  ? "bg-amber-500/10 text-amber-400"
-                  : "bg-amber-100 text-amber-900"
+              className={`p-0.5 rounded text-xs ${
+                isDark ? "bg-amber-500/10 text-amber-400" : "bg-amber-100 text-amber-900"
               }`}
             >
               {icon}
             </span>
           )}
           <span
-            className={`font-serif font-bold text-base sm:text-lg tracking-wide ${
+            className={`font-serif font-bold text-xs sm:text-sm tracking-wide ${
               isDark ? "text-slate-100" : "text-stone-900"
             }`}
           >
@@ -65,12 +54,16 @@ export function CreativeSlider({
           </span>
         </div>
 
-        {/* Бейдж процента */}
+        {/* Минималистичный процент */}
         <span
-          className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border transition-colors ${
-            isDark
-              ? "bg-amber-500/10 border-amber-400/30 text-amber-300"
-              : "bg-amber-100 border-amber-300 text-amber-900"
+          className={`font-mono text-[11px] font-semibold px-1.5 py-0.2 rounded border transition-colors ${
+            isTouched
+              ? isDark
+                ? "bg-slate-900/60 border-slate-800 text-amber-400"
+                : "bg-stone-100 border-stone-200 text-amber-900"
+              : isDark
+                ? "bg-slate-900/30 border-slate-800/50 text-slate-500"
+                : "bg-stone-50 border-stone-200 text-stone-400"
           }`}
         >
           {value}%
@@ -79,7 +72,7 @@ export function CreativeSlider({
 
       {description && (
         <p
-          className={`text-xs mb-4 ${
+          className={`text-[11px] sm:text-xs -mt-0.5 leading-relaxed ${
             isDark ? "text-slate-400" : "text-stone-600"
           }`}
         >
@@ -87,79 +80,71 @@ export function CreativeSlider({
         </p>
       )}
 
-      {/* Интерактивные карточки полюсов */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <motion.button
+      {/* Метки полюсов оси */}
+      <div className="flex items-center justify-between text-[11px] sm:text-xs pt-0.5 select-none">
+        <button
           type="button"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
           onClick={handleSetLeft}
-          className={`text-left p-2.5 sm:p-3 rounded-xl border text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-            value < 35
+          className={`transition-colors duration-200 cursor-pointer text-left max-w-[48%] truncate ${
+            isTouched && value <= 35
               ? isDark
-                ? "bg-amber-500/15 border-amber-400/40 text-amber-200 shadow-xs"
-                : "bg-amber-100/80 border-amber-400 text-amber-950 font-semibold"
+                ? "text-amber-300 font-semibold"
+                : "text-amber-800 font-semibold"
               : isDark
-                ? "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
-                : "bg-stone-50 border-stone-200 text-stone-600 hover:text-stone-900 hover:border-stone-300"
+                ? "text-slate-400 hover:text-slate-200"
+                : "text-stone-500 hover:text-stone-800"
           }`}
+          title="Сдвинуть к левому полюсу"
         >
-          <span className="block text-[10px] uppercase font-bold tracking-wider opacity-60 mb-0.5">
-            0% · Полюс А
-          </span>
           {leftLabel}
-        </motion.button>
+        </button>
 
-        <motion.button
+        <button
           type="button"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
           onClick={handleSetRight}
-          className={`text-right p-2.5 sm:p-3 rounded-xl border text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-            value > 65
+          className={`transition-colors duration-200 cursor-pointer text-right max-w-[48%] truncate ${
+            isTouched && value >= 65
               ? isDark
-                ? "bg-amber-500/15 border-amber-400/40 text-amber-200 shadow-xs"
-                : "bg-amber-100/80 border-amber-400 text-amber-950 font-semibold"
+                ? "text-amber-300 font-semibold"
+                : "text-amber-800 font-semibold"
               : isDark
-                ? "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
-                : "bg-stone-50 border-stone-200 text-stone-600 hover:text-stone-900 hover:border-stone-300"
+                ? "text-slate-400 hover:text-slate-200"
+                : "text-stone-500 hover:text-stone-800"
           }`}
+          title="Сдвинуть к правому полюсу"
         >
-          <span className="block text-[10px] uppercase font-bold tracking-wider opacity-60 mb-0.5">
-            Полюс Б · 100%
-          </span>
           {rightLabel}
-        </motion.button>
+        </button>
       </div>
 
-      {/* Тактильный Range Slider с прогресс-баром */}
-      <div className="relative flex items-center py-2">
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={1}
+      {/* Jelly Slider с физикой пружин и всплывающей каплей */}
+      <div className="py-0.5">
+        <JellySlider
           value={value}
-          onChange={handleInputChange}
-          role="slider"
-          aria-label={label}
-          aria-valuenow={value}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className={`w-full h-3 rounded-full appearance-none cursor-pointer focus:outline-none transition-all ${
-            isDark ? "bg-slate-800" : "bg-stone-200"
-          } accent-amber-500`}
+          onChange={onChange}
+          theme={theme}
+          ariaLabel={`${leftLabel} ↔ ${rightLabel}`}
         />
       </div>
 
-      {/* Засечки делений */}
-      <div className="flex justify-between px-1 text-[10px] font-mono text-slate-500 opacity-60 select-none">
-        <span>0</span>
-        <span>25</span>
-        <span>50</span>
-        <span>75</span>
-        <span>100</span>
-      </div>
+      {/* Пояснительная надпись после протягивания ползунка */}
+      {rubricLabel && (
+        <div className="min-h-[2rem] flex items-center justify-center text-center px-1">
+          <p
+            className={`text-[11px] sm:text-xs leading-snug transition-all duration-200 ${
+              isTouched
+                ? isDark
+                  ? "text-amber-300/90 font-medium"
+                  : "text-amber-900 font-medium"
+                : isDark
+                  ? "text-slate-500 italic"
+                  : "text-stone-400 italic"
+            }`}
+          >
+            {rubricLabel}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

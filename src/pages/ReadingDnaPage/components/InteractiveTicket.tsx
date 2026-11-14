@@ -5,14 +5,20 @@ import {
   Swords,
   RotateCcw,
   BookMarked,
-  ShieldAlert,
 } from "lucide-react";
-import type { ReadingDnaResponseData, DnaAxesData } from "@/lib/readingDnaApi";
+import type { ReadingDnaResponseData, DnaAxesData, DnaArchetypeCatalogItem } from "@/lib/readingDnaApi";
+import { shareReadingTicket } from "@/lib/readingDnaApi";
+import { useDnaArchetypes } from "../hooks/useDnaArchetypes";
+import { findArchetypeByIdOrName } from "../domain/dnaArchetypeMatch";
+import { OnboardingHub } from "./OnboardingHub";
+import { ReadingTicketQr } from "./ReadingTicketQr";
+import { TicketBookCover } from "./TicketBookCover";
 
 export interface InteractiveTicketProps {
   ticket: ReadingDnaResponseData;
   onRetake: () => void;
   onDuel?: (ticketNumber: string) => void;
+  showHub?: boolean;
 }
 
 // Касты и цвета печати
@@ -24,59 +30,57 @@ interface CasteMetadata {
   icon: string;
 }
 
-function getCasteMetadata(archetype: string): CasteMetadata {
-  const mindArchetypes = [
-    "meaning-architect",
-    "aesthetic-stylist",
-    "relentless-critic",
-    "epoch-chronicler",
-  ];
-  const abyssArchetypes = [
-    "dark-archivist",
-    "soul-anatomist",
-    "dark-irony-alchemist",
-    "counterculture-rebel",
-  ];
-  const actionArchetypes = [
-    "plot-hunter",
-    "world-cartographer",
-    "mystery-detective",
-    "scifi-pathfinder",
-  ];
+const CASTE_ICONS: Record<string, string> = {
+  mind: "🏛️",
+  abyss: "🗝️",
+  action: "⚔️",
+  light: "🕯️",
+};
 
-  if (mindArchetypes.includes(archetype)) {
-    return {
-      name: "Орден Разума",
-      sealColor: "from-slate-300 via-slate-400 to-slate-600",
-      sealBorder: "border-slate-300/60",
-      badge: "text-slate-200 bg-slate-800/80 border-slate-600",
-      icon: "🏛️",
-    };
-  }
-  if (abyssArchetypes.includes(archetype)) {
-    return {
-      name: "Орден Бездны",
-      sealColor: "from-purple-900 via-indigo-950 to-slate-950",
-      sealBorder: "border-purple-400/60",
-      badge: "text-purple-300 bg-purple-950/80 border-purple-600",
-      icon: "🗝️",
-    };
-  }
-  if (actionArchetypes.includes(archetype)) {
-    return {
-      name: "Орден Действия",
-      sealColor: "from-amber-700 via-amber-800 to-amber-950",
-      sealBorder: "border-amber-500/60",
-      badge: "text-amber-300 bg-amber-950/80 border-amber-600",
-      icon: "⚔️",
-    };
-  }
-  return {
+const CASTE_STYLES: Record<
+  string,
+  { name: string; sealColor: string; sealBorder: string; badge: string }
+> = {
+  mind: {
+    name: "Орден Смыслов",
+    sealColor: "from-slate-300 via-slate-400 to-slate-600",
+    sealBorder: "border-slate-300/60",
+    badge: "text-slate-200 bg-slate-800/80 border-slate-600",
+  },
+  abyss: {
+    name: "Орден Бездны",
+    sealColor: "from-purple-900 via-indigo-950 to-slate-950",
+    sealBorder: "border-purple-400/60",
+    badge: "text-purple-300 bg-purple-950/80 border-purple-600",
+  },
+  action: {
+    name: "Орден Действия",
+    sealColor: "from-amber-700 via-amber-800 to-amber-950",
+    sealBorder: "border-amber-500/60",
+    badge: "text-amber-300 bg-amber-950/80 border-amber-600",
+  },
+  light: {
     name: "Орден Света",
     sealColor: "from-amber-400 via-yellow-500 to-amber-600",
     sealBorder: "border-amber-300/80",
     badge: "text-amber-200 bg-amber-900/60 border-amber-500",
-    icon: "🕯️",
+  },
+};
+
+function getCasteMetadata(
+  archetypeIdOrName: string,
+  archetypes: DnaArchetypeCatalogItem[]
+): CasteMetadata {
+  const found = findArchetypeByIdOrName(archetypes, archetypeIdOrName);
+  const casteId = found?.caste.id || "light";
+  const style = CASTE_STYLES[casteId] || CASTE_STYLES.light!;
+
+  return {
+    name: found?.caste.name || style.name,
+    sealColor: style.sealColor,
+    sealBorder: style.sealBorder,
+    badge: style.badge,
+    icon: CASTE_ICONS[casteId] || "🕯️",
   };
 }
 
@@ -193,9 +197,11 @@ export function InteractiveTicket({
   ticket,
   onRetake,
   onDuel,
+  showHub = true,
 }: InteractiveTicketProps) {
   const isDark = ticket.theme === "dark";
-  const caste = getCasteMetadata(ticket.archetype);
+  const { archetypes } = useDnaArchetypes();
+  const caste = getCasteMetadata(ticket.archetype || ticket.archetypeName, archetypes);
   const [copied, setCopied] = useState(false);
 
   const duelUrl = `https://bookstrata.ru/reading-dna/duel?ticket=${ticket.ticketNumber}`;
@@ -205,10 +211,11 @@ export function InteractiveTicket({
       await navigator.clipboard.writeText(duelUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
+      shareReadingTicket(ticket.ticketNumber).catch(() => {});
     } catch {
       // Fallback
     }
-  }, [duelUrl]);
+  }, [duelUrl, ticket.ticketNumber]);
 
   const handleShare = useCallback(async () => {
     if (navigator.share) {
@@ -218,13 +225,14 @@ export function InteractiveTicket({
           text: `Мой читательский архетип — ${ticket.archetypeName} (${caste.name}). Проверь нашу книжную совместимость на дуэли!`,
           url: duelUrl,
         });
+        shareReadingTicket(ticket.ticketNumber).catch(() => {});
       } catch {
         // User cancelled share
       }
     } else {
       handleCopyLink();
     }
-  }, [ticket.archetypeName, caste.name, duelUrl, handleCopyLink]);
+  }, [ticket.archetypeName, ticket.ticketNumber, caste.name, duelUrl, handleCopyLink]);
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
@@ -284,7 +292,7 @@ export function InteractiveTicket({
         </div>
 
         {/* ЦЕНТРАЛЬНАЯ ЧАСТЬ: Каста, Архетип и Сургучная печать */}
-        <div className="relative z-10 py-8 flex flex-col md:flex-row items-center gap-6 justify-between">
+        <div className="relative z-10 py-5 flex flex-col md:flex-row items-center gap-5 justify-between">
           <div className="space-y-3 flex-1 text-center md:text-left">
             {/* Бейдж касты */}
             <div
@@ -321,59 +329,78 @@ export function InteractiveTicket({
         </div>
 
         {/* НИЖНЯЯ ЧАСТЬ: Святыни, Криптонит и Сургучная печать */}
-        <div className="relative z-10 pt-6 border-t border-dashed border-amber-500/30 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-          {/* 3 Святыни */}
-          <div className="md:col-span-2 space-y-2">
+        <div className="relative z-10 pt-4 border-t border-dashed border-amber-500/30 flex flex-col md:flex-row items-center justify-between gap-5">
+          {/* Святыни и Криптонит */}
+          <div className="space-y-3 w-full md:w-auto">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-400">
               <BookMarked size={14} />
-              <span>3 Книги-Святыни:</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {ticket.favoriteBooks.map((b, idx) => (
-                <span
-                  key={idx}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${
-                    isDark
-                      ? "bg-slate-900/80 border-slate-700 text-slate-200"
-                      : "bg-white border-stone-300 text-stone-800"
-                  }`}
-                >
-                  <span className="mr-1">📖</span>
-                  <span>{b.title}</span>
-                </span>
-              ))}
+              <span>Книги читательского кода:</span>
             </div>
 
-            {/* Криптонит */}
-            {ticket.kryptoniteBook && (
-              <div className="pt-2 flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1">
-                  <ShieldAlert size={12} />
-                  Криптонит:
-                </span>
-                <span
-                  className={`px-2.5 py-0.5 rounded-lg text-xs font-medium border line-through opacity-80 ${
-                    isDark
-                      ? "bg-rose-950/40 border-rose-800/60 text-rose-300"
-                      : "bg-rose-50 border-rose-200 text-rose-900"
-                  }`}
-                >
-                  <span>{ticket.kryptoniteBook.title}</span>
-                </span>
-              </div>
-            )}
+            <div className="flex flex-wrap items-start gap-3 sm:gap-4">
+              {ticket.favoriteBooks.map((b, idx) => (
+                <TicketBookCover
+                  key={idx}
+                  book={b}
+                  isDark={isDark}
+                />
+              ))}
+
+              {/* Криптонит (если есть) */}
+              {ticket.kryptoniteBook && (
+                <div className="border-l border-dashed border-amber-500/30 pl-3 sm:pl-4">
+                  <TicketBookCover
+                    book={ticket.kryptoniteBook}
+                    isDark={isDark}
+                    isKryptonite={true}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Сургучная печать касты */}
-          <div className="flex flex-col items-center justify-center text-center">
-            <div
-              className={`w-16 h-16 rounded-full bg-linear-to-br ${caste.sealColor} border-2 ${caste.sealBorder} shadow-lg flex items-center justify-center text-2xl select-none rotate-6 transition-transform hover:rotate-0`}
-            >
-              {caste.icon}
+          {/* Сургучная печать касты и персональный QR-код */}
+          <div className="flex items-center justify-center gap-4 text-center shrink-0">
+            {/* Персональный QR-код */}
+            <div className="flex flex-col items-center">
+              <div
+                className={`p-1.5 rounded-xl border shadow-xs ${
+                  isDark ? "bg-white/95 border-amber-500/40" : "bg-white border-stone-300"
+                }`}
+                title="Сканируй для дуэли"
+              >
+                <ReadingTicketQr
+                  value={duelUrl}
+                  size={52}
+                  fgColor="#0f172a"
+                  bgColor="transparent"
+                />
+              </div>
+              <span className="block text-[8px] font-mono uppercase tracking-widest opacity-60 mt-1.5">
+                QR ДУЭЛИ
+              </span>
             </div>
-            <span className="block text-[8px] font-mono uppercase tracking-[0.2em] font-extrabold opacity-60 mt-2">
-              ПЕЧАТЬ ОРДЕНА
-            </span>
+
+            {/* Сургучная печать с надписью Иммунитет */}
+            <div className="flex flex-col items-center">
+              <div
+                className={`w-16 h-16 rounded-full bg-linear-to-br ${caste.sealColor} border-2 ${caste.sealBorder} shadow-lg flex flex-col items-center justify-center p-1 text-center select-none rotate-3 hover:rotate-0 transition-transform`}
+              >
+                <span className="text-[7.5px] font-black uppercase tracking-tighter text-amber-100 leading-tight">
+                  ИММУНИТЕТ
+                </span>
+                {ticket.kryptoniteBook ? (
+                  <span className="text-[6.5px] font-serif text-amber-200/90 leading-tight max-w-[52px] truncate">
+                    к «{ticket.kryptoniteBook.title}»
+                  </span>
+                ) : (
+                  <span className="text-xs">{caste.icon}</span>
+                )}
+              </div>
+              <span className="block text-[8px] font-mono uppercase tracking-[0.2em] font-extrabold opacity-60 mt-1.5">
+                ПЕЧАТЬ
+              </span>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -415,6 +442,16 @@ export function InteractiveTicket({
           Перепройти
         </button>
       </div>
+
+      {/* ОНБОРДИНГ-ХАБ: Близнецы и витрина экосистемы */}
+      {showHub && (
+        <OnboardingHub
+          ticketNumber={ticket.ticketNumber}
+          archetypeName={ticket.archetypeName}
+          casteName={caste.name}
+          theme={ticket.theme === "craft" ? "craft" : "dark"}
+        />
+      )}
     </div>
   );
 }

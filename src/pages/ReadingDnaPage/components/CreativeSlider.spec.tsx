@@ -34,10 +34,10 @@ describe("CreativeSlider", () => {
     );
 
     const slider = screen.getByRole("slider");
-    expect(slider).toHaveValue("30");
+    expect(slider).toHaveAttribute("aria-valuenow", "30");
 
-    fireEvent.change(slider, { target: { value: "75" } });
-    expect(handleChange).toHaveBeenCalledWith(75);
+    fireEvent.keyDown(slider, { key: "ArrowRight" });
+    expect(handleChange).toHaveBeenCalledWith(35);
   });
 
   it("корректно отображает бейдж текущего процента", () => {
@@ -53,5 +53,23 @@ describe("CreativeSlider", () => {
     );
 
     expect(screen.getByText("85%")).toBeInTheDocument();
+  });
+
+  it("отображает пояснительную надпись рубрикатора при передаче rubricLabel", () => {
+    render(
+      <CreativeSlider
+        label="Фокус повествования"
+        leftLabel="Сюжет"
+        rightLabel="Рефлексия"
+        value={15}
+        onChange={vi.fn()}
+        theme="dark"
+        rubricLabel="Чистый экшн. Погони, интриги, twist за twist."
+      />
+    );
+
+    expect(
+      screen.getByText("Чистый экшн. Погони, интриги, twist за twist.")
+    ).toBeInTheDocument();
   });
 });

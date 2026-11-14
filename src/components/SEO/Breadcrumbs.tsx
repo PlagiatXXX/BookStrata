@@ -8,6 +8,7 @@ interface Crumb {
 interface BreadcrumbsProps {
   items: Crumb[];
   theme?: "dark" | "light";
+  className?: string;
 }
 
 /**
@@ -15,13 +16,13 @@ interface BreadcrumbsProps {
  * (.neo-brutalist-editor задаёт color: var(--theme-text), что может
  * перебивать Tailwind-утилиты из-за порядка слоёв).
  */
-export function Breadcrumbs({ items, theme = "dark" }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, theme = "dark", className = "mb-6" }: BreadcrumbsProps) {
   if (!items.length) return null;
 
   const isLight = theme === "light";
 
   return (
-    <nav aria-label="Хлебные крошки" className="mb-6">
+    <nav aria-label="Хлебные крошки" className={className}>
       <ol
         className="flex items-center flex-wrap gap-y-1 text-xs"
         style={{ color: isLight ? "#64748b" : "var(--ink-2)" }}

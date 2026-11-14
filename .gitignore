@@ -73,6 +73,9 @@ skills-lock.json
 backend/tmp-test-*
 reference/
 
+# Superpowers brainstorming sessions
+.superpowers/
+
 
 # IndexNow state (живёт только на сервере)
 .indexnow-state.json

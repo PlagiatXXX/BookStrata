@@ -75,6 +75,34 @@ export interface ReadingDnaDuelResultData {
   };
 }
 
+export interface DnaAxisRange {
+  min: number;
+  max: number;
+}
+
+export interface DnaArchetypeCatalogItem {
+  id: string;
+  number: number;
+  caste: {
+    id: "mind" | "abyss" | "action" | "light";
+    name: string;
+    sealColor: string;
+    badgeClass: string;
+  };
+  rarity: number;
+  names: {
+    dark: string;
+    craft: string;
+  };
+  description: string;
+  quote: string;
+  specialSign: string;
+  axisRanges: Record<
+    "storyFocus" | "emotionalWeight" | "pace" | "darkness" | "scope" | "complexity",
+    DnaAxisRange
+  >;
+}
+
 /**
  * Публичный расчет превью билета и архетипа без сохранения в базу данных.
  */
@@ -129,4 +157,32 @@ export async function getReadingTwins(
   limit = 5
 ): Promise<{ twins: Array<ReadingDnaResponseData & { similarity: number }> }> {
   return apiClient.get(`/reading-dna/twins/${ticketNumber}`, { limit });
+}
+
+/**
+ * Получение полного каталога 16 читательских архетипов (единый источник с бэкенда).
+ */
+export async function getReadingArchetypes(): Promise<DnaArchetypeCatalogItem[]> {
+  const res = await apiClient.get<{ archetypes: DnaArchetypeCatalogItem[] }>(
+    "/reading-dna/archetypes"
+  );
+  return res.archetypes;
+}
+
+/**
+ * Получение сохраненного ДНК текущего авторизованного пользователя.
+ */
+export async function getMyReadingDna(): Promise<ReadingDnaResponseData | null> {
+  const res = await apiClient.get<{ dna: ReadingDnaResponseData | null }>("/reading-dna/me");
+  return res.dna;
+}
+
+/**
+ * Инкремент счётчика шеринга читательского билета.
+ */
+export async function shareReadingTicket(ticketNumber: string): Promise<number> {
+  const res = await apiClient.post<{ shareCount: number }>("/reading-dna/share", {
+    ticketNumber,
+  });
+  return res.shareCount;
 }
