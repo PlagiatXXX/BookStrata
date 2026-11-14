@@ -16,6 +16,7 @@ vi.mock("../../lib/upload.js", () => ({
 import * as avatarService from "./avatar.service.js";
 import { uploadFromUrl } from "../../lib/upload.js";
 import { prisma } from "../../lib/prisma.js";
+import { config } from "../../config/env.js";
 
 process.env.POLLINATIONS_API_KEY = "test-pollinations-key";
 process.env.POLLINATIONS_MODEL = "zimage";
@@ -121,6 +122,32 @@ describe("avatar.service", () => {
       );
       const callUrl = vi.mocked(uploadFromUrl).mock.calls[0][0];
       expect(callUrl).toContain(`key=test-pollinations-key`);
+    });
+
+    it("uses free flux model when POLLINATIONS_API_KEY is missing", async () => {
+      const prompt = "space cat";
+      const mockStoredUrl = "https://storage.example.com/demo/image/upload/v1/generated.webp";
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: mockUserId,
+        aiAvatarsGenerated: 0,
+        lastAvatarResetAt: new Date(),
+      } as never);
+      vi.mocked(prisma.user.update).mockResolvedValue({} as never);
+      vi.mocked(uploadFromUrl).mockResolvedValue({ url: mockStoredUrl, publicId: "test" });
+
+      const originalKey = config.POLLINATIONS_API_KEY;
+      (config as any).POLLINATIONS_API_KEY = undefined;
+
+      try {
+        const result = await avatarService.generateAvatar(prompt, mockUserId);
+        expect(result.success).toBe(true);
+        const callUrl = vi.mocked(uploadFromUrl).mock.calls[0][0];
+        expect(callUrl).toContain("model=flux");
+        expect(callUrl).not.toContain("key=");
+      } finally {
+        (config as any).POLLINATIONS_API_KEY = originalKey;
+      }
     });
 
     it("does not increment the counter if upload fails", async () => {

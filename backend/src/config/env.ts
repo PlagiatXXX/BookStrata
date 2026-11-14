@@ -39,7 +39,7 @@ const envSchema = z.object({
 
   // --- Avatars (Pollinations) ---
   POLLINATIONS_API_KEY: z.string().optional(),
-  POLLINATIONS_MODEL: z.string().default("zimage"),
+  POLLINATIONS_MODEL: z.string().default("flux"),
 
   // --- AI Librarian ---
   CUSTOM_AI_BASE_URL: z

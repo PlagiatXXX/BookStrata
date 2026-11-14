@@ -5,9 +5,6 @@ import { uploadFromUrl } from "../../lib/upload.js";
 const logger = createLogger("Avatars", { color: "yellow" });
 import { config } from "../../config/env.js";
 
-const POLLINATIONS_API_KEY = config.POLLINATIONS_API_KEY;
-
-const POLLINATIONS_MODEL = config.POLLINATIONS_MODEL;
 const POLLINATIONS_API_URL = "https://gen.pollinations.ai";
 const DAILY_LIMIT = 10;
 
@@ -71,13 +68,21 @@ export async function generateAvatar(
     const encodedPrompt = encodeURIComponent(prompt);
     const seed = Math.floor(Math.random() * 1000000);
 
-    const baseImageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=${POLLINATIONS_MODEL || "klein"}&width=512&height=512&seed=${seed}&nologo=true`;
-    const imageUrl = POLLINATIONS_API_KEY
-      ? `${baseImageUrl}&key=${POLLINATIONS_API_KEY}`
+    const apiKey = config.POLLINATIONS_API_KEY;
+    // Без API-ключа Pollinations модели klein и zimage требуют Bearer-авторизацию (401).
+    // Бесплатной и открытой без ключа является модель flux (FLUX.1 Schnell).
+    const requestedModel = config.POLLINATIONS_MODEL;
+    const model = apiKey
+      ? (requestedModel || "flux")
+      : (requestedModel && requestedModel !== "zimage" && requestedModel !== "klein" ? requestedModel : "flux");
+
+    const baseImageUrl = `${POLLINATIONS_API_URL}/image/${encodedPrompt}?model=${model}&width=512&height=512&seed=${seed}&nologo=true`;
+    const imageUrl = apiKey
+      ? `${baseImageUrl}&key=${apiKey}`
       : baseImageUrl;
 
-    if (!POLLINATIONS_API_KEY) {
-      logger.warn("POLLINATIONS_API_KEY not set - generation may be rate-limited");
+    if (!apiKey) {
+      logger.warn("POLLINATIONS_API_KEY not set - using free flux model");
     }
 
     const uploadResult = await uploadWithRetry(imageUrl, "tiermaker-pro/generated-avatars");
