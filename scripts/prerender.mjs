@@ -282,7 +282,9 @@ async function addPublicTierListRoutes() {
     let totalAdded = 0;
     let totalPages = 1;
     while (page <= totalPages) {
-      const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=${pageSize}&page=${page}&sortBy=likes`);
+      const res = await fetch(`${BACKEND_URL}/api/tier-lists/public?pageSize=${pageSize}&page=${page}&sortBy=likes`, {
+        headers: { "x-prerender-secret": PRERENDER_SECRET },
+      });
       if (!res.ok) {
         log(`⚠️  API responded with ${res.status}, skipping tier-list prerender`);
         return;
@@ -348,7 +350,9 @@ async function addTopicRoutes() {
 async function addPublicCelebrityRoutes() {
   try {
     log(`📡 Fetching public celebrities from ${BACKEND_URL}/api/celebrities…`);
-    const res = await fetch(`${BACKEND_URL}/api/celebrities?pageSize=100`);
+    const res = await fetch(`${BACKEND_URL}/api/celebrities?pageSize=100`, {
+      headers: { "x-prerender-secret": PRERENDER_SECRET },
+    });
     if (!res.ok) {
       log(`⚠️  API responded with ${res.status}, skipping celebrity prerender`);
       return;
@@ -388,7 +392,9 @@ async function addPublicCollectionRoutes() {
 
   try {
     log(`📡 Fetching public collections from ${BACKEND_URL}/api/collections…`);
-    const res = await fetch(`${BACKEND_URL}/api/collections?pageSize=200`);
+    const res = await fetch(`${BACKEND_URL}/api/collections?pageSize=200`, {
+      headers: { "x-prerender-secret": PRERENDER_SECRET },
+    });
     if (res.ok) {
       const body = await res.json();
       items = body.data || [];
@@ -530,7 +536,9 @@ async function addBlogArticleRoutes() {
 async function addNewsRoutes() {
   try {
     log(`📡 Fetching news from ${BACKEND_URL}/api/news…`);
-    const res = await fetch(`${BACKEND_URL}/api/news?limit=200`);
+    const res = await fetch(`${BACKEND_URL}/api/news?limit=200`, {
+      headers: { "x-prerender-secret": PRERENDER_SECRET },
+    });
     if (!res.ok) {
       log(`⚠️  API responded with ${res.status}, skipping news prerender`);
       return;
@@ -635,6 +643,13 @@ function deduplicateHeadTags(html) {
 
 /** Будет установлен в true, если бэкенд доступен во время сборки */
 let backendAvailable = false;
+
+/**
+ * Кэш успешных GET-ответов API во время всего прогона пререндера.
+ * Позволяет выполнять одинаковые запросы (например, /api/authors?sort=popular&limit=7
+ * на каждой странице автора) ровно 1 раз, отдавая их из памяти и снижая нагрузку на БД.
+ */
+const apiGetCache = new Map();
 
 /** Количество параллельно обрабатываемых страниц */
 const CONCURRENCY = 4;
@@ -813,6 +828,12 @@ async function processRoute(browser, route) {
         const req = route.request();
         const targetUrl = req.url().replace(BASE, BACKEND_URL);
 
+        // Идентичные GET-запросы отдаём из кэша в памяти
+        if (req.method() === "GET" && apiGetCache.has(targetUrl)) {
+          await route.fulfill(apiGetCache.get(targetUrl));
+          return;
+        }
+
         try {
           const headers = {};
           for (const [key, value] of Object.entries(req.headers())) {
@@ -820,6 +841,7 @@ async function processRoute(browser, route) {
               headers[key] = value;
             }
           }
+          headers['x-prerender-secret'] = PRERENDER_SECRET;
 
           const response = await fetch(targetUrl, {
             method: req.method(),
@@ -836,11 +858,18 @@ async function processRoute(browser, route) {
           }
           responseHeaders['content-length'] = String(Buffer.byteLength(body, 'utf-8'));
 
-          await route.fulfill({
+          const payload = {
             status: response.status,
             headers: responseHeaders,
             body,
-          });
+          };
+
+          // Кэшируем только успешные GET-ответы
+          if (req.method() === "GET" && response.ok) {
+            apiGetCache.set(targetUrl, payload);
+          }
+
+          await route.fulfill(payload);
         } catch (err) {
           log(`  ⚠️ API proxy error for ${req.url()}: ${err.message}`);
           await route.fulfill({ status: 502, contentType: 'text/plain', body: 'Backend unavailable' });

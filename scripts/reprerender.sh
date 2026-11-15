@@ -15,7 +15,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-API_URL="http://localhost:8080"
+export API_URL="http://localhost:8080"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -113,6 +113,13 @@ cd "$PROJECT_DIR"
 # ——— 6. Prerender ———
 # Упал (в т.ч. --only не совпал → exit 1 из prerender.mjs) → set -e прерывает
 # скрипт: IndexNow не пингуем, общий exit 1 (лог cron).
+if [[ -z "${PRERENDER_SECRET:-}" && -f "$PROJECT_DIR/backend/.env" ]]; then
+  PRERENDER_SECRET="$(grep -E '^PRERENDER_SECRET=' "$PROJECT_DIR/backend/.env" | head -1 | cut -d= -f2- | tr -d '"' || true)"
+  if [[ -n "$PRERENDER_SECRET" ]]; then
+    export PRERENDER_SECRET
+  fi
+fi
+
 info "Prerender: ${ONLY_ARGS[*]:-все публичные маршруты}"
 if [[ ${#ONLY_ARGS[@]} -gt 0 ]]; then
   node "$PROJECT_DIR/scripts/prerender.mjs" "${ONLY_ARGS[@]}"

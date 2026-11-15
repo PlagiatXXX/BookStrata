@@ -232,6 +232,13 @@ if [ "$SKIP_BUILD" = false ] && [ "$SKIP_PRERENDER" = false ]; then
   export API_URL="http://localhost:8080"
   ok "API_URL=http://localhost:8080 (prerender напрямую к бэкенду)"
 
+  if [ -z "${PRERENDER_SECRET:-}" ] && [ -f "$PROJECT_DIR/backend/.env" ]; then
+    PRERENDER_SECRET="$(grep -E '^PRERENDER_SECRET=' "$PROJECT_DIR/backend/.env" | head -1 | cut -d= -f2- | tr -d '"' || true)"
+    if [ -n "$PRERENDER_SECRET" ]; then
+      export PRERENDER_SECRET
+    fi
+  fi
+
   # Prerender опциональный — если нет chromium, graceful fallback
   if node "$PROJECT_DIR/scripts/prerender.mjs"; then
     ok "Prerender завершён"
