@@ -20,9 +20,11 @@ import {
   Pencil,
   Trash2,
   KeyRound,
+  MessageCircle,
 } from "lucide-react"
 import { api } from "@/lib/api-client"
 import { apiSetDonorStatus, apiAddUserBadge, apiUpdateUserBadge, apiDeleteUserBadge } from "@/lib/userApi"
+import { apiAdminGetOrCreateUserThread } from "@/lib/supportApi"
 import type { UserBadge, BadgeColor } from "@/types/auth"
 import { useAuth } from "@/hooks/useAuthContext"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
@@ -106,6 +108,19 @@ export default function AdminUsersPage() {
   const [badgeText, setBadgeText] = useState("")
   const [badgeColor, setBadgeColor] = useState<BadgeColor>("purple")
   const [editingBadge, setEditingBadge] = useState<UserBadge | null>(null)
+  const [openingChatUserId, setOpeningChatUserId] = useState<number | null>(null)
+
+  const handleOpenUserChat = async (userId: number) => {
+    try {
+      setOpeningChatUserId(userId)
+      const { threadId } = await apiAdminGetOrCreateUserThread(userId)
+      navigate(`/admin/support?thread=${threadId}`)
+    } catch {
+      sileo.error({ title: "Ошибка", description: "Не удалось открыть чат с пользователем" })
+    } finally {
+      setOpeningChatUserId(null)
+    }
+  }
 
   useBodyScrollLock(!!confirmTarget || editingBadgeUser !== null || !!resetPasswordUser)
 
@@ -621,6 +636,17 @@ export default function AdminUsersPage() {
                               title="Сбросить пароль"
                             >
                               <KeyRound size={12} />
+                            </button>
+                          )}
+                          {canChangeRole && u.userId !== currentUser?.userId && (
+                            <button
+                              onClick={() => handleOpenUserChat(u.userId)}
+                              disabled={openingChatUserId === u.userId}
+                              className="ml-2 inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-amber-400/10 text-amber-300 border border-amber-300/30 hover:bg-amber-400/20 hover:border-amber-300/50 transition-colors cursor-pointer disabled:opacity-50"
+                              type="button"
+                              title="Написать в чат"
+                            >
+                              <MessageCircle size={12} />
                             </button>
                           )}
                           {canChangeRole && u.userId !== currentUser?.userId ? (

@@ -271,3 +271,56 @@ export async function updateThreadStatus(threadId: number, status: string) {
     data: { status },
   });
 }
+
+export async function getOrCreateAdminUserThread(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new Error("Пользователь не найден");
+  }
+
+  const existingThread = await prisma.supportThread.findFirst({
+    where: { userId },
+    orderBy: { lastMessageAt: "desc" },
+  });
+
+  if (existingThread) {
+    return { threadId: existingThread.id, isNew: false };
+  }
+
+  const newThread = await prisma.supportThread.create({
+    data: {
+      userId,
+      status: "open",
+    },
+  });
+
+  return { threadId: newThread.id, isNew: true };
+}
+
+export async function searchSupportUsers(query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  return prisma.user.findMany({
+    where: {
+      OR: [
+        { username: { contains: trimmed, mode: "insensitive" } },
+        { email: { contains: trimmed, mode: "insensitive" } },
+      ],
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      avatarUrl: true,
+    },
+    take: 15,
+  });
+}
+

@@ -12,8 +12,10 @@ import {
   User,
   Search,
   ExternalLink,
+  UserPlus,
 } from "lucide-react";
 import { EditorConfirmModal } from "@/components/EditorModals/EditorConfirmModal";
+import { AdminNewChatModal } from "./AdminNewChatModal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { sileo } from "sileo";
 import {
@@ -23,8 +25,9 @@ import {
   apiAdminDeleteSupportMessage,
   apiAdminDeleteSupportThread,
   apiAdminUpdateSupportThreadStatus,
+  apiAdminGetOrCreateUserThread,
 } from "@/lib/supportApi";
-import type { SupportMessageDto } from "../../../shared/types";
+import type { SupportMessageDto, SupportUserSearchResultDto } from "../../../shared/types";
 
 export default function AdminSupportPage() {
   const navigate = useNavigate();
@@ -40,6 +43,7 @@ export default function AdminSupportPage() {
 
   const [deleteMessageId, setDeleteMessageId] = useState<number | null>(null);
   const [deleteThreadId, setDeleteThreadId] = useState<number | null>(null);
+  const [isNewChatOpen, setIsNewChatOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -47,6 +51,23 @@ export default function AdminSupportPage() {
   const handleSelectThread = (id: number) => {
     setSearchParams({ thread: String(id) });
     setReplyingTo(null);
+  };
+
+  const createThreadMutation = useMutation({
+    mutationFn: (userId: number) => apiAdminGetOrCreateUserThread(userId),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-support-threads"] });
+      setSearchParams({ thread: String(data.threadId) });
+      setIsNewChatOpen(false);
+      setTimeout(() => textareaRef.current?.focus(), 100);
+    },
+    onError: () => {
+      sileo.error({ title: "Не удалось открыть диалог с пользователем" });
+    },
+  });
+
+  const handleSelectUserForChat = (user: SupportUserSearchResultDto) => {
+    createThreadMutation.mutate(user.id);
   };
 
   // Список всех тредов
@@ -189,6 +210,16 @@ export default function AdminSupportPage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[620px]">
           {/* ЛЕВАЯ КОЛОНКА: СПИСОК ТРЕДОВ */}
           <div className="md:col-span-4 flex flex-col rounded-2xl border border-white/10 bg-[#141418] p-4 shadow-xl">
+            {/* Кнопка создания нового диалога с пользователем */}
+            <button
+              type="button"
+              onClick={() => setIsNewChatOpen(true)}
+              className="w-full mb-3 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-amber-400/10 border border-amber-300/30 text-amber-200 hover:bg-amber-400/20 hover:border-amber-300/50 text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-98"
+            >
+              <UserPlus size={15} />
+              <span>Написать пользователю</span>
+            </button>
+
             {/* Фильтры */}
             <div className="flex items-center gap-1.5 mb-3 bg-white/5 p-1 rounded-xl">
               <button
@@ -539,6 +570,14 @@ export default function AdminSupportPage() {
           description="Все сообщения этой переписки будут безвозвратно удалены из базы данных."
           confirmLabel="Очистить и удалить"
           titleId="delete-support-thread-title"
+        />
+
+        {/* Модальное окно создания нового диалога */}
+        <AdminNewChatModal
+          isOpen={isNewChatOpen}
+          onClose={() => setIsNewChatOpen(false)}
+          onSelectUser={handleSelectUserForChat}
+          isSubmitting={createThreadMutation.isPending}
         />
       </div>
     </div>

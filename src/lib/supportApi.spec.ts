@@ -9,6 +9,8 @@ import {
   apiAdminDeleteSupportMessage,
   apiAdminDeleteSupportThread,
   apiAdminUpdateSupportThreadStatus,
+  apiAdminGetOrCreateUserThread,
+  apiAdminSearchSupportUsers,
   getOrCreateGuestToken,
   GUEST_TOKEN_KEY,
 } from "./supportApi";
@@ -112,6 +114,20 @@ describe("supportApi", () => {
       expect(apiClient.patch).toHaveBeenCalledWith("/admin/support/threads/7/status", {
         status: "resolved",
       });
+    });
+
+    it("apiAdminGetOrCreateUserThread calls POST /admin/support/threads/get-or-create with userId", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({ threadId: 42, isNew: true } as any);
+      const res = await apiAdminGetOrCreateUserThread(10);
+      expect(apiClient.post).toHaveBeenCalledWith("/admin/support/threads/get-or-create", { userId: 10 });
+      expect(res).toEqual({ threadId: 42, isNew: true });
+    });
+
+    it("apiAdminSearchSupportUsers calls GET /admin/support/users/search with query param", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue([{ id: 10, username: "user1" }] as any);
+      const res = await apiAdminSearchSupportUsers("user");
+      expect(apiClient.get).toHaveBeenCalledWith("/admin/support/users/search", { q: "user" });
+      expect(res).toEqual([{ id: 10, username: "user1" }]);
     });
   });
 });

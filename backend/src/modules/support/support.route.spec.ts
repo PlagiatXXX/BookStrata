@@ -3,6 +3,10 @@ import Fastify from "fastify";
 
 vi.mock("../../lib/prisma.js", () => {
   const tx = {
+    user: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
     supportThread: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
@@ -282,6 +286,79 @@ describe("Support Routes", () => {
       });
 
       expect(res.statusCode).toBe(204);
+    });
+
+    it("rejects unauthorized request with 403 on /threads/get-or-create when user is not admin", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/support/threads/get-or-create",
+        headers: { authorization: "Bearer user-token" },
+        payload: { userId: 10 },
+      });
+      expect(response.statusCode).toBe(403);
+    });
+
+    it("returns 400 for invalid body on /threads/get-or-create", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/support/threads/get-or-create",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { userId: -5 },
+      });
+      expect(response.statusCode).toBe(400);
+    });
+
+    it("returns 404 when user does not exist on /threads/get-or-create", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/support/threads/get-or-create",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { userId: 999 },
+      });
+      expect(response.statusCode).toBe(404);
+    });
+
+    it("returns 200 with threadId on success on /threads/get-or-create", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 10 } as any);
+      vi.mocked(prisma.supportThread.findFirst).mockResolvedValue({ id: 12, userId: 10 } as any);
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/admin/support/threads/get-or-create",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { userId: 10 },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.data).toEqual({ threadId: 12, isNew: false });
+    });
+
+    it("returns 400 when query parameter q is missing on /users/search", async () => {
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/admin/support/users/search",
+        headers: { authorization: "Bearer admin-token" },
+      });
+      expect(response.statusCode).toBe(400);
+    });
+
+    it("returns users matching query on /users/search", async () => {
+      vi.mocked(prisma.user.findMany).mockResolvedValue([
+        { id: 10, username: "testreader", email: "tr@test.com", avatarUrl: null },
+      ] as any);
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/admin/support/users/search?q=test",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.data).toHaveLength(1);
+      expect(body.data[0].username).toBe("testreader");
     });
   });
 });

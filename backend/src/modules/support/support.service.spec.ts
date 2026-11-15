@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../lib/prisma.js", () => {
   const tx = {
+    user: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+    },
     supportThread: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
@@ -28,6 +32,8 @@ import {
   sendAdminReply,
   deleteMessage,
   deleteThread,
+  getOrCreateAdminUserThread,
+  searchSupportUsers,
 } from "./support.service.js";
 import { prisma } from "../../lib/prisma.js";
 
@@ -197,6 +203,67 @@ describe("support.service", () => {
       const result = await getAdminThreads({ status: "open", page: 1, limit: 10 });
       expect(result.threads).toHaveLength(1);
       expect(result.total).toBe(1);
+    });
+  });
+
+  describe("getOrCreateAdminUserThread", () => {
+    it("throws error if user not found", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+      await expect(getOrCreateAdminUserThread(999)).rejects.toThrow("Пользователь не найден");
+    });
+
+    it("returns existing thread when user has one", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 10 } as any);
+      vi.mocked(prisma.supportThread.findFirst).mockResolvedValue({ id: 5, userId: 10 } as any);
+
+      const result = await getOrCreateAdminUserThread(10);
+      expect(result).toEqual({ threadId: 5, isNew: false });
+      expect(prisma.supportThread.create).not.toHaveBeenCalled();
+    });
+
+    it("creates new thread when user has none", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: 10 } as any);
+      vi.mocked(prisma.supportThread.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.supportThread.create).mockResolvedValue({ id: 7, userId: 10 } as any);
+
+      const result = await getOrCreateAdminUserThread(10);
+      expect(result).toEqual({ threadId: 7, isNew: true });
+      expect(prisma.supportThread.create).toHaveBeenCalledWith({
+        data: { userId: 10, status: "open" },
+      });
+    });
+  });
+
+  describe("searchSupportUsers", () => {
+    it("returns empty array for empty query", async () => {
+      const res = await searchSupportUsers("   ");
+      expect(res).toEqual([]);
+      expect(prisma.user.findMany).not.toHaveBeenCalled();
+    });
+
+    it("returns matching users for non-empty query", async () => {
+      vi.mocked(prisma.user.findMany).mockResolvedValue([
+        { id: 1, username: "alice", email: "alice@test.com", avatarUrl: null },
+      ] as any);
+
+      const res = await searchSupportUsers("alice");
+      expect(res).toHaveLength(1);
+      expect(res[0].username).toBe("alice");
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { username: { contains: "alice", mode: "insensitive" } },
+            { email: { contains: "alice", mode: "insensitive" } },
+          ],
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          avatarUrl: true,
+        },
+        take: 15,
+      });
     });
   });
 });

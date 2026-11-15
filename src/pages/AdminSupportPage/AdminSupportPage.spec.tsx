@@ -12,6 +12,8 @@ vi.mock("@/lib/supportApi", () => ({
   apiAdminDeleteSupportMessage: vi.fn(),
   apiAdminDeleteSupportThread: vi.fn(),
   apiAdminUpdateSupportThreadStatus: vi.fn(),
+  apiAdminGetOrCreateUserThread: vi.fn(),
+  apiAdminSearchSupportUsers: vi.fn(),
 }));
 
 describe("AdminSupportPage", () => {
@@ -183,6 +185,39 @@ describe("AdminSupportPage", () => {
 
     await waitFor(() => {
       expect(supportApi.apiAdminDeleteSupportThread).toHaveBeenCalledWith(1);
+    });
+  });
+
+  it("renders 'Написать пользователю' button and opens new chat modal", async () => {
+    vi.mocked(supportApi.apiAdminSearchSupportUsers).mockResolvedValue([
+      { id: 25, username: "newuser", email: "newuser@test.com", avatarUrl: null },
+    ]);
+    vi.mocked(supportApi.apiAdminGetOrCreateUserThread).mockResolvedValue({
+      threadId: 99,
+      isNew: true,
+    });
+
+    renderComponent();
+
+    const newChatBtn = screen.getByRole("button", { name: /написать пользователю/i });
+    expect(newChatBtn).toBeInTheDocument();
+
+    fireEvent.click(newChatBtn);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/поиск по никнейму или email/i)).toBeInTheDocument();
+
+    const searchInput = screen.getByPlaceholderText(/поиск по никнейму или email/i);
+    fireEvent.change(searchInput, { target: { value: "newuser" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("newuser")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("newuser"));
+
+    await waitFor(() => {
+      expect(supportApi.apiAdminGetOrCreateUserThread).toHaveBeenCalledWith(25);
     });
   });
 });

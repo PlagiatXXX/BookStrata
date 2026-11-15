@@ -31,9 +31,14 @@ vi.mock("sileo", () => ({
   },
 }))
 
+vi.mock("@/lib/supportApi", () => ({
+  apiAdminGetOrCreateUserThread: vi.fn(),
+}))
+
 import { useAuth } from "@/hooks/useAuthContext"
 import { api } from "@/lib/api-client"
 import { apiGetFlags, apiResolveFlag } from "@/lib/moderationApi"
+import { apiAdminGetOrCreateUserThread } from "@/lib/supportApi"
 
 const mockUsers = [
   {
@@ -275,6 +280,27 @@ describe("AdminUsersPage — жалобы", () => {
 
     await waitFor(() => {
       expect(apiResolveFlag).toHaveBeenCalledWith(1, "dismissed")
+    })
+  })
+
+  it("должен вызывать apiAdminGetOrCreateUserThread при нажатии Написать в чат", async () => {
+    vi.mocked(apiAdminGetOrCreateUserThread).mockResolvedValue({
+      threadId: 101,
+      isNew: true,
+    })
+
+    render(<AdminUsersPage />, { wrapper: createWrapper() })
+
+    await waitFor(() => {
+      expect(screen.getByText("regular_user")).toBeInTheDocument()
+    })
+
+    const chatButtons = screen.getAllByTitle("Написать в чат")
+    expect(chatButtons.length).toBeGreaterThan(0)
+    await userEvent.click(chatButtons[0])
+
+    await waitFor(() => {
+      expect(apiAdminGetOrCreateUserThread).toHaveBeenCalled()
     })
   })
 })

@@ -1,5 +1,10 @@
 import { apiClient } from "./api-client";
-import type { SupportThreadDto, SupportMessageDto } from "../../shared/types";
+import type {
+  SupportThreadDto,
+  SupportMessageDto,
+  AdminGetOrCreateThreadResponseDto,
+  SupportUserSearchResultDto,
+} from "../../shared/types";
 
 export const GUEST_TOKEN_KEY = "bookstrata_guest_token";
 
@@ -84,3 +89,22 @@ export function apiAdminUpdateSupportThreadStatus(
 ): Promise<SupportThreadDto> {
   return apiClient.patch(`/admin/support/threads/${threadId}/status`, { status });
 }
+
+export function apiAdminGetOrCreateUserThread(
+  userId: number
+): Promise<AdminGetOrCreateThreadResponseDto> {
+  return apiClient.post<AdminGetOrCreateThreadResponseDto>(
+    "/admin/support/threads/get-or-create",
+    { userId }
+  );
+}
+
+export function apiAdminSearchSupportUsers(
+  q: string
+): Promise<SupportUserSearchResultDto[]> {
+  return apiClient.get<SupportUserSearchResultDto[]>(
+    "/admin/support/users/search",
+    { q }
+  );
+}
+

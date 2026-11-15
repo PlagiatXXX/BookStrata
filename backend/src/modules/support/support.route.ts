@@ -9,6 +9,8 @@ import {
   threadIdParamsSchema,
   messageIdParamsSchema,
   adminThreadsQuerySchema,
+  adminGetOrCreateThreadSchema,
+  adminSearchUsersQuerySchema,
 } from "./support.schema.js";
 import {
   getUserThreadWithMessages,
@@ -20,6 +22,8 @@ import {
   deleteMessage,
   deleteThread,
   updateThreadStatus,
+  getOrCreateAdminUserThread,
+  searchSupportUsers,
 } from "./support.service.js";
 import { sendTelegramSupportNotification } from "../../lib/telegramNotifier.js";
 
@@ -240,5 +244,38 @@ export const adminSupportRoutes: FastifyPluginAsync = async (fastify: FastifyIns
     } catch {
       return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, "Диалог не найден"));
     }
+  });
+
+  // POST /api/admin/support/threads/get-or-create — найти или создать тред с пользователем
+  fastify.post("/threads/get-or-create", async (request, reply) => {
+    const parsed = adminGetOrCreateThreadSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send(
+        createApiError(ErrorCodes.VALIDATION_ERROR, parsed.error.issues[0]?.message || "Некорректный ID пользователя")
+      );
+    }
+
+    try {
+      const result = await getOrCreateAdminUserThread(parsed.data.userId);
+      return reply.send({ data: result });
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === "Пользователь не найден") {
+        return reply.code(404).send(createApiError(ErrorCodes.NOT_FOUND, err.message));
+      }
+      throw err;
+    }
+  });
+
+  // GET /api/admin/support/users/search — поиск пользователей для создания диалога
+  fastify.get("/users/search", async (request, reply) => {
+    const parsed = adminSearchUsersQuerySchema.safeParse(request.query);
+    if (!parsed.success) {
+      return reply.code(400).send(
+        createApiError(ErrorCodes.VALIDATION_ERROR, parsed.error.issues[0]?.message || "Параметр поиска q обязателен")
+      );
+    }
+
+    const users = await searchSupportUsers(parsed.data.q);
+    return reply.send({ data: users });
   });
 };

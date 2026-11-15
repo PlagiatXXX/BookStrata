@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ModerationPanel } from "./ModerationPanel"
 import { MemoryRouter } from "react-router-dom"
@@ -8,6 +8,10 @@ const mockUseAuth = vi.fn()
 
 vi.mock("@/hooks/useAuthContext", () => ({
   useAuth: () => mockUseAuth(),
+}))
+
+vi.mock("@/lib/supportApi", () => ({
+  apiAdminGetOrCreateUserThread: vi.fn(),
 }))
 
 vi.mock("@/lib/moderationApi", () => ({
@@ -24,6 +28,7 @@ vi.mock("@/lib/moderationApi", () => ({
 vi.mock("sileo", () => ({ sileo: { success: vi.fn(), error: vi.fn() } }))
 
 import * as moderationApi from "@/lib/moderationApi"
+import { apiAdminGetOrCreateUserThread } from "@/lib/supportApi"
 
 function renderPanel(props: Partial<React.ComponentProps<typeof ModerationPanel>> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -116,6 +121,21 @@ describe("ModerationPanel", () => {
       expect(screen.getByText("Заблокировать")).toBeInTheDocument()
     })
   })
+
+  it("должен отображать кнопку Написать в чат для администратора и вызывать apiAdminGetOrCreateUserThread", async () => {
+    vi.mocked(apiAdminGetOrCreateUserThread).mockResolvedValue({ threadId: 10, isNew: false })
+    renderPanel()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /написать в чат/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /написать в чат/i }))
+
+    await waitFor(() => {
+      expect(apiAdminGetOrCreateUserThread).toHaveBeenCalledWith(1)
+    })
+  })
 })
 
 describe("ModerationPanel — moderator role", () => {
@@ -138,6 +158,14 @@ describe("ModerationPanel — moderator role", () => {
 
     await waitFor(() => {
       expect(screen.queryByText("Заблокировать")).not.toBeInTheDocument()
+    })
+  })
+
+  it("должен скрывать Написать в чат для модератора", async () => {
+    renderPanel()
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /написать в чат/i })).not.toBeInTheDocument()
     })
   })
 })

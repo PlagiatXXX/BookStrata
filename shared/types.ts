@@ -144,3 +144,15 @@ export interface SupportThreadDto {
   user?: SupportThreadUserDto | null;
   messages?: SupportMessageDto[];
 }
+
+export interface SupportUserSearchResultDto {
+  id: number;
+  username: string | null;
+  email: string;
+  avatarUrl?: string | null;
+}
+
+export interface AdminGetOrCreateThreadResponseDto {
+  threadId: number;
+  isNew: boolean;
+}

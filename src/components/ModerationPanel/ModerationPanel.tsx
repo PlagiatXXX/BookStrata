@@ -1,6 +1,7 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { ShieldAlert, Ban, Unlock, VolumeX, Volume2, AlertTriangle, MessageSquareWarning, ChevronDown } from "lucide-react"
+import { ShieldAlert, Ban, Unlock, VolumeX, Volume2, AlertTriangle, MessageSquareWarning, ChevronDown, MessageCircle } from "lucide-react"
 import {
   apiGetModerationStatus,
   apiBanChat,
@@ -13,6 +14,7 @@ import {
   type ModerationStatus,
   type Warning,
 } from "@/lib/moderationApi"
+import { apiAdminGetOrCreateUserThread } from "@/lib/supportApi"
 import { useAuth } from "@/hooks/useAuthContext"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { sileo } from "sileo"
@@ -31,6 +33,7 @@ const ROLE_OPTIONS = [
 
 export function ModerationPanel({ userId, username, currentRole }: Props) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const isAdmin = user?.role === "admin"
   const [showWarnModal, setShowWarnModal] = useState(false)
@@ -38,7 +41,20 @@ export function ModerationPanel({ userId, username, currentRole }: Props) {
   const [warnMessage, setWarnMessage] = useState("")
   const [showWarnings, setShowWarnings] = useState(false)
   const [suspendHours, setSuspendHours] = useState(24)
+  const [isChatOpening, setIsChatOpening] = useState(false)
   const suspendReason = ""
+
+  const handleOpenChat = async () => {
+    try {
+      setIsChatOpening(true)
+      const { threadId } = await apiAdminGetOrCreateUserThread(userId)
+      navigate(`/admin/support?thread=${threadId}`)
+    } catch {
+      sileo.error({ title: "Ошибка", description: "Не удалось открыть чат с пользователем" })
+    } finally {
+      setIsChatOpening(false)
+    }
+  }
   // Смена роли требует секрет ADMIN_ROLE_CHANGE_SECRET (второй фактор на бэке)
   const [showRoleModal, setShowRoleModal] = useState(false)
   useBodyScrollLock(showRoleModal)
@@ -223,6 +239,20 @@ export function ModerationPanel({ userId, username, currentRole }: Props) {
             </select>
             <ChevronDown size={12} className="text-purple-400/60" />
           </div>
+        )}
+
+        {/* Написать в чат (admin only) */}
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={handleOpenChat}
+            disabled={isChatOpening}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium bg-amber-400/10 text-amber-300 border border-amber-300/30 hover:bg-amber-400/20 hover:border-amber-300/50 transition-colors cursor-pointer disabled:opacity-50"
+            title="Написать в чат"
+          >
+            <MessageCircle size={12} />
+            Написать в чат
+          </button>
         )}
       </div>
 
