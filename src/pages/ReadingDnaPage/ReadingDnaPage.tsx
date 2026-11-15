@@ -472,7 +472,7 @@ export default function ReadingDnaPage() {
           <button
             type="button"
             onClick={handleBack}
-            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer shadow-xs group ${
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs font-medium transition-all active:scale-[0.98] cursor-pointer shadow-xs group ${
               isDark
                 ? "border-[rgba(201,163,91,0.3)] bg-[#24170f]/70 hover:bg-[#c9a35b]/20 text-[#efe3cc]"
                 : "border-[rgba(59,110,168,0.3)] bg-white/80 hover:bg-[#3b6ea8]/10 text-[#2e2a24]"
@@ -502,11 +502,11 @@ export default function ReadingDnaPage() {
                   height={92}
                   fetchPriority="high"
                   decoding="async"
-                  className="h-9 sm:h-16 md:h-20 w-auto max-w-[130px] sm:max-w-[260px] md:max-w-[290px] object-contain drop-shadow-md transition-transform"
+                  className="h-9 sm:h-16 md:h-20 w-auto max-w-32.5 sm:max-w-65 md:max-w-72.5 object-contain drop-shadow-md transition-transform"
                 />
               </span>
             ) : (
-              <span className="pb-1 text-2xl sm:text-4xl font-bold tracking-tight leading-none font-['Caveat',cursive] text-[#2e2a24] truncate">
+              <span className="pb-1 pr-1.5 text-2xl sm:text-4xl font-bold tracking-tight leading-none font-['Caveat',cursive] text-[#2e2a24] whitespace-nowrap">
                 Книжный ДНК
               </span>
             )}
@@ -579,7 +579,7 @@ export default function ReadingDnaPage() {
               className="relative pt-3 sm:pt-4"
             >
                 <div
-                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 mb-[-4px] ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
+                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 -mb-1 ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                     isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                   }`}
                 >
@@ -612,7 +612,7 @@ export default function ReadingDnaPage() {
                 transition={{ duration: 0.1 }}
                 className="relative pt-3 sm:pt-4"
               >
-                <div className="flex items-center justify-between mb-[-4px] ml-2 sm:ml-4 mr-2 relative z-20">
+                <div className="flex items-center justify-between -mb-1 ml-2 sm:ml-4 mr-2 relative z-20">
                   <div
                     className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                       isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
@@ -709,7 +709,7 @@ export default function ReadingDnaPage() {
                 className="relative pt-2"
               >
                 <div
-                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 mb-[-4px] ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
+                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 -mb-1 ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                     isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                   }`}
                 >
@@ -998,7 +998,7 @@ export default function ReadingDnaPage() {
                 className="relative pt-3 sm:pt-4"
               >
                 <div
-                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 mb-[-4px] ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
+                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 -mb-1 ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                     isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                   }`}
                 >
@@ -1034,7 +1034,7 @@ export default function ReadingDnaPage() {
                 className="relative pt-3 sm:pt-4"
               >
                 <div
-                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 mb-[-4px] ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
+                  className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 -mb-1 ml-2 sm:ml-4 relative z-20 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
                     isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                   }`}
                 >

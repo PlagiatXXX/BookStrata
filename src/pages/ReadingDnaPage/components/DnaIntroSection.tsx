@@ -125,7 +125,7 @@ export function DnaIntroSection({
           {/* Бейдж без эмодзи */}
           <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold tracking-wide border uppercase bg-amber-500/15 border-amber-500/30 text-amber-500">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Новинка · Интерактивный спецпроект BookStrata
+            Интерактивный спецпроект BookStrata
           </div>
 
           <h1

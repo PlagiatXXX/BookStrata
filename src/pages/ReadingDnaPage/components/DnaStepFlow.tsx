@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { JellySlider } from "@/components/JellySlider/JellySlider";
 import { BookChipInput } from "./BookChipInput";
 import { getRubricLabel } from "@/features/book-match/domain/types";
@@ -121,6 +121,11 @@ export function DnaStepFlow({
     return initial;
   });
 
+  const touchedAxesRef = useRef(touchedAxes);
+  useEffect(() => {
+    touchedAxesRef.current = touchedAxes;
+  }, [touchedAxes]);
+
   // Книги: 3 священные + 1 криптонит
   const [favoriteBooks, setFavoriteBooks] = useState<(DnaBookItemData | null)[]>(
     () => initialBooks || []
@@ -141,11 +146,12 @@ export function DnaStepFlow({
         ...prev,
         [currentAxis.key]: val,
       }));
-      setTouchedAxes((prev) => {
-        const next = { ...prev, [currentAxis.key]: true };
+      if (!touchedAxesRef.current[currentAxis.key]) {
+        const next = { ...touchedAxesRef.current, [currentAxis.key]: true };
+        touchedAxesRef.current = next;
+        setTouchedAxes(next);
         onTouchedAxesChange?.(next);
-        return next;
-      });
+      }
       onAxisChange?.(currentAxis.key, val);
     },
     [currentAxis, onAxisChange, onTouchedAxesChange]
@@ -288,7 +294,7 @@ export function DnaStepFlow({
               ariaLabel={currentAxis.name}
               caption={
                 <span
-                  className={`text-xs sm:text-[13px] leading-snug font-medium transition-colors duration-200 block truncate ${
+                  className={`text-xs sm:text-[13px] leading-snug font-medium transition-colors duration-200 block ${
                     isDark ? "text-amber-300/90" : "text-amber-900"
                   }`}
                 >
@@ -304,7 +310,7 @@ export function DnaStepFlow({
               type="button"
               onClick={handleBack}
               disabled={step === 0}
-              className={`px-4 py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.98] cursor-pointer ${
                 isDark
                   ? "border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10 disabled:opacity-30 disabled:cursor-not-allowed"
                   : "border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -317,7 +323,7 @@ export function DnaStepFlow({
               type="button"
               onClick={handleNext}
               disabled={!isCurrentAxisActive}
-              className={`px-5 py-2 rounded-lg text-xs font-bold text-white transition-all shadow-md cursor-pointer ${
+              className={`px-5 py-2 rounded-lg text-xs font-bold text-white transition-all active:scale-[0.98] shadow-md cursor-pointer ${
                 isDark
                   ? "bg-[#8a2433] hover:bg-[#a32b3d] disabled:opacity-35 disabled:cursor-not-allowed"
                   : "bg-[#b3412f] hover:bg-[#c94935] disabled:opacity-35 disabled:cursor-not-allowed"
@@ -361,7 +367,7 @@ export function DnaStepFlow({
             <button
               type="button"
               onClick={handleBack}
-              className={`px-4 py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-xs font-medium border transition-all active:scale-[0.98] cursor-pointer ${
                 isDark
                   ? "border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10"
                   : "border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10"
@@ -374,7 +380,7 @@ export function DnaStepFlow({
               type="button"
               disabled={filledBooks.length < 3 || isLoading}
               onClick={handleSeal}
-              className={`px-5 py-2.5 rounded-lg text-xs font-bold text-white transition-all shadow-md cursor-pointer ${
+              className={`px-5 py-2.5 rounded-lg text-xs font-bold text-white transition-all active:scale-[0.98] shadow-md cursor-pointer ${
                 isDark
                   ? "bg-[#8a2433] hover:bg-[#a32b3d] disabled:opacity-40 disabled:cursor-not-allowed"
                   : "bg-[#b3412f] hover:bg-[#c94935] disabled:opacity-40 disabled:cursor-not-allowed"

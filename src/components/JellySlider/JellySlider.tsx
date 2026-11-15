@@ -477,7 +477,7 @@ export function JellySlider({
       </div>
 
       {/* Строка на одном уровне: 0 слева, пояснение по центру, 100 справа */}
-      <div className="flex items-center justify-between gap-3 text-xs mt-1.5 select-none min-h-6">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 text-xs mt-1.5 select-none min-h-10">
         <button
           type="button"
           aria-label="Отметка 0"
@@ -490,13 +490,13 @@ export function JellySlider({
             onChange(0);
             syncSprings();
           }}
-          className="font-mono text-[11px] font-medium opacity-60 cursor-pointer transition-transform hover:scale-115 focus:outline-hidden shrink-0"
+          className="font-mono text-[11px] font-medium opacity-60 cursor-pointer transition-transform hover:scale-115 active:scale-90 focus:outline-hidden shrink-0 py-1.5 px-2 -my-1.5 -mx-2"
         >
           0
         </button>
 
         {caption && (
-          <div className="flex-1 text-center truncate px-2">
+          <div className="flex-1 text-center px-1 sm:px-2">
             {caption}
           </div>
         )}
@@ -513,7 +513,7 @@ export function JellySlider({
             onChange(100);
             syncSprings();
           }}
-          className="font-mono text-[11px] font-medium opacity-60 cursor-pointer transition-transform hover:scale-115 focus:outline-hidden shrink-0"
+          className="font-mono text-[11px] font-medium opacity-60 cursor-pointer transition-transform hover:scale-115 active:scale-90 focus:outline-hidden shrink-0 py-1.5 px-2 -my-1.5 -mx-2"
         >
           100
         </button>

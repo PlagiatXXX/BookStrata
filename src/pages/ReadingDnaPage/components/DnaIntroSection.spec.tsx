@@ -85,8 +85,8 @@ describe("DnaIntroSection", () => {
     const heading = screen.getByRole("heading", { level: 1 });
     expect(heading).toHaveTextContent("Книжный ДНК: узнайте, какой вы читатель");
 
-    // Проверяем наличие текста бейджа Новинка
-    expect(screen.getByText(/Новинка · Интерактивный спецпроект/i)).toBeInTheDocument();
+    // Проверяем наличие текста бейджа
+    expect(screen.getByText(/Интерактивный спецпроект/i)).toBeInTheDocument();
 
     // Проверяем, что эмодзи блесток нет в документе
     expect(screen.queryByText(/✨/)).not.toBeInTheDocument();
