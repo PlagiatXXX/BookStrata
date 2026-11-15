@@ -220,4 +220,19 @@ describe("AdminSupportPage", () => {
       expect(supportApi.apiAdminGetOrCreateUserThread).toHaveBeenCalledWith(25);
     });
   });
+
+  it("renders profile link pointing to /users/:id", async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText("reader123")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("reader123"));
+
+    await waitFor(() => {
+      const profileLink = screen.getByTitle("Открыть профиль");
+      expect(profileLink).toHaveAttribute("href", "/users/10");
+    });
+  });
 });

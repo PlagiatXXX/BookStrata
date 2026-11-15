@@ -366,8 +366,9 @@ export default function AdminSupportPage() {
                         </span>
                         {currentThread?.user && (
                           <Link
-                            to={`/user/${currentThread.user.id}`}
+                            to={`/users/${currentThread.user.id}`}
                             target="_blank"
+                            rel="noopener noreferrer"
                             className="text-gray-400 hover:text-amber-200 transition-colors"
                             title="Открыть профиль"
                           >
