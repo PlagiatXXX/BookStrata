@@ -9,7 +9,7 @@ interface DonateModalProps {
   onClose: () => void;
 }
 
-const CARD_NUMBER = "2202200609389554";
+const CARD_NUMBER = "4100119194644295";
 
 export function DonateModal({ onClose }: DonateModalProps) {
   useBodyScrollLock(true);
@@ -89,7 +89,7 @@ export function DonateModal({ onClose }: DonateModalProps) {
               </button>
             </div>
             <p className="mt-1.5 text-xs text-gray-500">
-              Сбербанк • Федор П.
+              ЮMoney • Федор П.
             </p>
           </div>
 
