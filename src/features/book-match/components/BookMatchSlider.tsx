@@ -66,15 +66,15 @@ export function BookMatchSlider({ axis, value, onChange }: BookMatchSliderProps)
           onChange={handleChange}
           theme="dark"
           ariaLabel={`${labels.left} ↔ ${labels.right}`}
+          caption={
+            isActive ? (
+              <span className="text-xs text-amber-300/90 leading-snug font-medium transition-colors duration-200 block">
+                {getRubricLabel(axis, currentVal)}
+              </span>
+            ) : null
+          }
         />
       </div>
-
-      {/* Текстовое описание выбранного уровня (рубрикатор) */}
-      {isActive && (
-        <p className="text-center text-xs text-amber-300/90 leading-snug">
-          {getRubricLabel(axis, currentVal)}
-        </p>
-      )}
     </div>
   );
 }

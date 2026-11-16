@@ -17,3 +17,4 @@ export { matchLevel } from "./matchLevel";
 export { explainMatch, describeDiff } from "./explainMatch";
 export type { ExplainResult } from "./explainMatch";
 export { genreSimilarity } from "./genreSimilarity";
+export * from "./dnaSignals";

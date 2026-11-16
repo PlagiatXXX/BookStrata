@@ -804,19 +804,6 @@ export default function ReadingDnaPage() {
 
                           <button
                             type="button"
-                            onClick={handleCopyTicketNumber}
-                            className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-mono font-medium border transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 ${
-                              isDark
-                                ? "bg-[#2b1d14] border-[rgba(201,163,91,0.3)] text-[#efe3cc] hover:bg-[#c9a35b]/10"
-                                : "bg-white border-[rgba(59,110,168,0.3)] text-[#2e2a24] hover:bg-[#3b6ea8]/10"
-                            }`}
-                          >
-                            <Copy size={13} />
-                            <span>Скопировать № {activeTicket.ticketNumber}</span>
-                          </button>
-
-                          <button
-                            type="button"
                             onClick={handleCopyLink}
                             className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer inline-flex items-center justify-center ${
                               isDark

@@ -5,3 +5,5 @@ export { BookMatch } from "./BookMatch";
 export { BookMatchSlider } from "./BookMatchSlider";
 export { BookMatchResult } from "./BookMatchResult";
 export { BookMatchBadge } from "./BookMatchBadge";
+export { DnaSignalsList } from "./DnaSignalsList";
+export type { DnaSignalsListProps } from "./DnaSignalsList";

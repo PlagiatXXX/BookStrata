@@ -3,8 +3,31 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 
+const { mockNavigate } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+}));
+
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 vi.mock("@/hooks/useDebounce", () => ({
   useDebounce: <T,>(value: T) => value,
+}));
+
+import type { ReadingDnaResponseData } from "@/lib/readingDnaApi";
+
+// Стейт моков ДНК
+const dnaMock = vi.hoisted(() => ({
+  dna: null as ReadingDnaResponseData | null,
+}));
+
+vi.mock("@/hooks/useMyReadingDna", () => ({
+  useMyReadingDna: () => ({ dna: dnaMock.dna }),
 }));
 
 // Стейт моков жанров — управляем per-test через vi.hoisted
@@ -39,6 +62,7 @@ vi.mock("./BookRecommendations", () => ({
     />
   ),
 }));
+
 // Слайдер — детально протестирован сам по себе (pointer capture не работает
 // в happy-dom). Тут мокаем: в BookMatch-тестах важна persistance-логика.
 vi.mock("./BookMatchSlider", () => ({
@@ -73,14 +97,48 @@ const BOOK = {
   source: "ai" as const,
 };
 
-function renderUi(props: { bookSlug?: string; bookGenre?: string | null; bookTags?: string[] } = {}) {
+const SAMPLE_DNA = {
+  id: 1,
+  ticketNumber: "BS-1234-A",
+  archetype: "abyss_archivist",
+  archetypeName: "Архивариус Бездны",
+  theme: "dark",
+  axes: {
+    storyFocus: 20,
+    emotionalWeight: 30,
+    pace: 80,
+    darkness: 90,
+    scope: 50,
+    complexity: 60,
+  },
+  favoriteBooks: [{ title: "Имя розы", author: "Умберто Эко", bookId: 10 }],
+  kryptoniteBook: null,
+  likedGenres: ["Детектив"],
+  dislikedGenres: ["Любовный роман"],
+  favoriteAuthors: ["Умберто Эко"],
+  viewsCount: 0,
+  shareCount: 0,
+  duelsCount: 0,
+  createdAt: "2026-01-01",
+};
+
+function renderUi(props: {
+  bookTitle?: string;
+  bookAuthor?: string | null;
+  bookId?: number;
+  bookSlug?: string;
+  bookGenre?: string | null;
+  bookTags?: string[];
+} = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
         <BookMatch
           book={BOOK}
-          bookTitle="Тест"
+          bookTitle={props.bookTitle ?? "Тест"}
+          bookAuthor={props.bookAuthor}
+          bookId={props.bookId}
           bookSlug={props.bookSlug}
           bookGenre={props.bookGenre}
           bookTags={props.bookTags}
@@ -91,7 +149,11 @@ function renderUi(props: { bookSlug?: string; bookGenre?: string | null; bookTag
 }
 
 describe("BookMatch — persistance mood", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    mockNavigate.mockReset();
+    dnaMock.dna = null;
+  });
   afterEach(() => localStorage.clear());
 
   it("слайдеры инициализируются из localStorage (score уже посчитан)", () => {
@@ -141,6 +203,8 @@ describe("BookMatch — persistance mood", () => {
 describe("BookMatch — жанры профиля (7-я ось)", () => {
   beforeEach(() => {
     localStorage.clear();
+    mockNavigate.mockReset();
+    dnaMock.dna = null;
     localStorage.setItem("bookstrata:mood", JSON.stringify({ darkness: 70 }));
     genreState.authenticated = true;
     genreState.genres = [];
@@ -213,5 +277,144 @@ describe("BookMatch — жанры профиля (7-я ось)", () => {
 
     expect(screen.queryByText("Учитывать мои жанры")).toBeNull();
     expect(screen.getByTestId("recs").getAttribute("data-genres")).toBeNull();
+  });
+});
+
+describe("BookMatch — Режим Книжного ДНК и Guest Sandbox", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    mockNavigate.mockReset();
+    dnaMock.dna = null;
+  });
+  afterEach(() => localStorage.clear());
+
+  it("если dna есть в профиле: score рассчитывается от dna.axes, виден архетип и сигналы, слайдеры свернуты", () => {
+    dnaMock.dna = SAMPLE_DNA;
+    renderUi({
+      bookTitle: "Имя розы",
+      bookAuthor: "Умберто Эко",
+      bookId: 10,
+    });
+
+    // Score рассчитан от dna.axes (100%), заглушки нет
+    expect(screen.queryByText(/настрой хотя бы одну шкалу/i)).toBeNull();
+    expect(screen.getByText("100")).toBeDefined();
+    expect(screen.getByText(/ПОПАЛО В ТОЧКУ/i)).toBeDefined();
+
+    // Отображается имя архетипа
+    expect(screen.getByText("Архивариус Бездны")).toBeDefined();
+
+    // Отображаются сигналы ДНК (автор и книга-святыня)
+    expect(screen.getByText(/Любимый автор из твоего билета/i)).toBeDefined();
+    expect(screen.getByText(/Входит в золотую тройку твоего ДНК/i)).toBeDefined();
+
+    // Слайдеры свернуты, видна кнопка настройки под настроение сейчас
+    expect(screen.queryByTestId("slider-darkness")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /настроить под настроение сейчас/i }),
+    ).toBeDefined();
+  });
+
+  it("клик по «Настроить под настроение сейчас» раскрывает слайдеры и показывает плашку оверрайда", () => {
+    dnaMock.dna = SAMPLE_DNA;
+    renderUi();
+
+    // Кликаем по кнопке настройки под настроение
+    fireEvent.click(
+      screen.getByRole("button", { name: /настроить под настроение сейчас/i }),
+    );
+
+    // Слайдеры раскрыты
+    expect(screen.getByTestId("slider-darkness")).toBeDefined();
+    expect(screen.getByTestId("slider-darkness").getAttribute("data-value")).toBe("90");
+
+    // Плашка оверрайда и кнопка возврата ДНК
+    expect(
+      screen.getByText(/Режим текущего настроения \(отклонение от твоего ДНК\)/i),
+    ).toBeDefined();
+    expect(screen.getByRole("button", { name: /вернуть мой днк/i })).toBeDefined();
+  });
+
+  it("клик по «Вернуть мой ДНК» возвращает слайдеры в свернутое состояние", () => {
+    dnaMock.dna = SAMPLE_DNA;
+    renderUi();
+
+    // Раскрываем оверрайд
+    fireEvent.click(
+      screen.getByRole("button", { name: /настроить под настроение сейчас/i }),
+    );
+    expect(screen.getByTestId("slider-darkness")).toBeDefined();
+
+    // Возвращаем ДНК
+    fireEvent.click(screen.getByRole("button", { name: /вернуть мой днк/i }));
+
+    // Слайдеры снова скрыты, кнопка настройки снова на месте
+    expect(screen.queryByTestId("slider-darkness")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /настроить под настроение сейчас/i }),
+    ).toBeDefined();
+    expect(
+      screen.queryByText(/Режим текущего настроения \(отклонение от твоего ДНК\)/i),
+    ).toBeNull();
+  });
+
+  it("смена слайдера в режиме оверрайда обновляет оценку и не затрагивает localStorage", () => {
+    dnaMock.dna = {
+      archetypeName: "Архивариус Бездны",
+      axes: {
+        storyFocus: 20,
+        emotionalWeight: 30,
+        pace: 80,
+        darkness: 90,
+        scope: 50,
+        complexity: 60,
+      },
+    } as any;
+    renderUi();
+
+    // Открываем оверрайд
+    fireEvent.click(
+      screen.getByRole("button", { name: /настроить под настроение сейчас/i }),
+    );
+
+    // Двигаем слайдер storyFocus
+    fireEvent.click(screen.getByTestId("slider-storyFocus"));
+
+    // localStorage гостя не должен быть затронут
+    expect(localStorage.getItem("bookstrata:mood")).toBeNull();
+  });
+
+  it("для гостя при настроенном настроении отображается CTA-карточка «Создать Книжный ДНК», клик сохраняет черновик и редиректит", () => {
+    dnaMock.dna = null;
+    localStorage.setItem("bookstrata:mood", JSON.stringify({ darkness: 70 }));
+    renderUi();
+
+    // Отображается CTA
+    expect(
+      screen.getByText(/Хочешь узнавать совместимость со всеми книгами автоматически\?/i),
+    ).toBeDefined();
+    expect(screen.getByText(/Создай свой Книжный ДНК за 2 минуты/i)).toBeDefined();
+
+    const ctaButton = screen.getByRole("button", { name: /Создать Книжный ДНК/i });
+    fireEvent.click(ctaButton);
+
+    // Проверяем редирект и драфт в localStorage
+    expect(mockNavigate).toHaveBeenCalledWith("/dna");
+    const rawDraft = localStorage.getItem("bs_reading_dna_draft");
+    expect(rawDraft).toBeTruthy();
+    const draft = JSON.parse(rawDraft!);
+    expect(draft.step).toBe(1);
+    expect(draft.axes.darkness).toBe(70);
+    expect(draft.favoriteBooks).toEqual([null, null, null]);
+    expect(draft.kryptonite).toBeNull();
+  });
+
+  it("для гостя без настроенного настроения CTA-карточка не отображается", () => {
+    dnaMock.dna = null;
+    renderUi();
+
+    expect(
+      screen.queryByText(/Хочешь узнавать совместимость со всеми книгами автоматически\?/i),
+    ).toBeNull();
   });
 });
