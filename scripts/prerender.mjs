@@ -943,9 +943,11 @@ async function processRoute(browser, route) {
     // так как для генерации поисковой SEO-разметки (HTML, meta, schema.org) они не нужны
     await page.route(/\.(png|jpe?g|webp|gif|svg|woff2?|ttf|eot|mp4|webm)(\?.*)?$/i, (route) => route.abort());
 
-    // Логи браузера для диагностики
+    // Логи браузера для диагностики (фильтруем шум от намеренно отменённых медиа)
     page.on("console", (msg) => {
-      log(`  🖥️ [${msg.type()}] ${msg.text()}`);
+      const text = msg.text();
+      if (text.includes("net::ERR_FAILED") || text.includes("Failed to load resource")) return;
+      log(`  🖥️ [${msg.type()}] ${text}`);
     });
     // Перехватываем консольные ошибки (не даём им упасть в reject)
     page.on("pageerror", (err) => {
