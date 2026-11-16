@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 // escapeHtml экспортируется из prerender.mjs для тестирования
 // (импорт файла не запускает prerender: main() вызывается только напрямую)
-import { escapeHtml, filterRoutes, parseOnlyArgs, stripToastMarkup } from "./prerender.mjs";
+import { escapeHtml, filterRoutes, parseOnlyArgs, parseCoreOnlyArg, stripToastMarkup } from "./prerender.mjs";
 
 describe("escapeHtml (prerender fallback XSS-гвард)", () => {
   it("экранирует HTML-инъекцию в заголовке тир-листа", () => {
@@ -98,6 +98,20 @@ describe("parseOnlyArgs (CLI --only)", () => {
     expect(() => parseOnlyArgs(["node", "prerender.mjs", "--only"])).toThrow(
       "--only",
     );
+  });
+});
+
+describe("parseCoreOnlyArg (CLI --core-only)", () => {
+  it("без флага → false", () => {
+    expect(parseCoreOnlyArg(["node", "prerender.mjs"])).toBe(false);
+  });
+
+  it("с --core-only → true", () => {
+    expect(parseCoreOnlyArg(["node", "prerender.mjs", "--core-only"])).toBe(true);
+  });
+
+  it("с алиасом --core → true", () => {
+    expect(parseCoreOnlyArg(["node", "prerender.mjs", "--core"])).toBe(true);
   });
 });
 

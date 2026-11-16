@@ -81,6 +81,14 @@ export function stripToastMarkup(html) {
 }
 
 /**
+ * CLI-флаг --core-only: рендерить только ключевые статические маршруты
+ * (для сверхбыстрого деплоя за ~1-2 минуты вместо 40 минут).
+ */
+export function parseCoreOnlyArg(argv) {
+  return argv.includes("--core-only") || argv.includes("--core");
+}
+
+/**
  * CLI-фильтр роутов для флага --only (повторяемый).
  * onlyPaths пуст/не передан → все роуты; иначе — точное совпадение route.path.
  * Нет совпадений → пустой массив (вызывающий код: warn + exit 1).
@@ -776,9 +784,9 @@ async function waitForTitle(page, timeout = 1500) {
   while (Date.now() < deadline) {
     const title = await page.title();
     // Ждём, пока title станет содержательным:
-    // не пустой, не дефолтный, содержит разделитель "| BookStrata"
-    if (title && title !== '' && !DEFAULT_TITLES.includes(title) && title.includes('| BookStrata')) return true;
-    await page.waitForTimeout(200);
+    // не пустой и не из DEFAULT_TITLES (у страниц книг нет | BookStrata из-за hideSiteName)
+    if (title && title !== '' && !DEFAULT_TITLES.includes(title)) return true;
+    await page.waitForTimeout(100);
   }
   return false;
 }
@@ -930,6 +938,10 @@ async function processRoute(browser, route) {
     // Блокируем внешние запросы, не нужные при пререндере
     await page.route("**/sitemap.xml", (route) => route.abort());
     await page.route("**/sentry.io/**", (route) => route.abort());
+
+    // Блокируем загрузку тяжелых медиа-ресурсов (изображения, шрифты, видео),
+    // так как для генерации поисковой SEO-разметки (HTML, meta, schema.org) они не нужны
+    await page.route(/\.(png|jpe?g|webp|gif|svg|woff2?|ttf|eot|mp4|webm)(\?.*)?$/i, (route) => route.abort());
 
     // Логи браузера для диагностики
     page.on("console", (msg) => {
@@ -1208,9 +1220,6 @@ async function processRoute(browser, route) {
       log(`  ⚡ Fallback: "${fallbackTitle}"`);
     }
 
-    // Небольшая пауза для завершения анимаций
-    await page.waitForTimeout(300);
-
     log(`    title: ${finalTitle}`);
 
     // Логируем SEO-мета-теги
@@ -1268,6 +1277,8 @@ async function processRoute(browser, route) {
 async function prerender() {
   // CLI-флаг --only (повторяемый): рендерим только указанные пути.
   const onlyPaths = parseOnlyArgs(process.argv);
+  // CLI-флаг --core-only: рендерим только ключевые разделы сайта без каталогов
+  const coreOnly = parseCoreOnlyArg(process.argv);
   // Проверяем, что dist уже существует (сборка уже выполнена)
   if (!existsSync(DIST)) {
     throw new Error("dist/ not found. Run 'npm run build' first, or run this script via the build command.");
@@ -1362,14 +1373,18 @@ async function prerender() {
 
     // Получаем публичные тир-листы, коллекции, знаменитостей, темы,
     // статьи блога и новости для prerender'а (если бэкенд доступен)
-    await addPublicTierListRoutes();
-    await addPublicCelebrityRoutes();
-    await addPublicCollectionRoutes();
-    await addPublicBookRoutes();
-    await addPublicAuthorRoutes();
+    if (coreOnly) {
+      log("⚡ Режим --core-only: динамические каталоги книг, авторов и тир-листов пропущены");
+    } else {
+      await addPublicTierListRoutes();
+      await addPublicCelebrityRoutes();
+      await addPublicCollectionRoutes();
+      await addPublicBookRoutes();
+      await addPublicAuthorRoutes();
+      await addNewsRoutes();
+    }
     await addTopicRoutes();
     await addBlogArticleRoutes();
-    await addNewsRoutes();
 
     // CLI-фильтр --only: применяется после сбора всех роутов.
     // Ни одного совпадения → warn + exit 1 (опечатка ≠ «успех без работы»);

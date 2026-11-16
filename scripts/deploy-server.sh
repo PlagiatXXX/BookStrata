@@ -46,17 +46,20 @@ check_health() {
 SKIP_BUILD=false
 ROLLBACK=false
 SKIP_PRERENDER=false
+FULL_PRERENDER=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-build)     SKIP_BUILD=true; shift ;;
     --skip-prerender) SKIP_PRERENDER=true; shift ;;
+    --full-prerender) FULL_PRERENDER=true; shift ;;
     --rollback)       ROLLBACK=true; shift ;;
     --help)
-      echo "Использование: $0 [--skip-build] [--skip-prerender] [--rollback]"
+      echo "Использование: $0 [--skip-build] [--skip-prerender] [--full-prerender] [--rollback]"
       echo ""
       echo "  --skip-build        не собирать фронт (если не менялся)"
       echo "  --skip-prerender    не запускать prerender (быстрый деплой за 20 сек)"
+      echo "  --full-prerender    полный пререндер всех 2600+ страниц (по умолчанию только core)"
       echo "  --rollback          откатить фронт на предыдущую версию (dist.old)"
       exit 0
       ;;
@@ -116,6 +119,23 @@ if [ "$SKIP_BUILD" = false ]; then
   ok "Фронтенд собран"
 else
   warn "Сборка пропущена (--skip-build)"
+fi
+
+# ——— 3. Перенос существующего SEO-пререндера и кэша ассетов ———
+if [ "$SKIP_BUILD" = false ] && [ -d "$PROJECT_DIR/dist" ]; then
+  info "Перенос существующего SEO-пререндера в новую сборку..."
+  # Копируем ассеты предыдущего деплоя, чтобы уже сгенерированные HTML-страницы книг/авторов
+  # не падали с 404 по старым JS/CSS чанкам до следующего полного пререндера
+  if [ -d "$PROJECT_DIR/dist/assets" ]; then
+    cp -rn "$PROJECT_DIR/dist/assets/." "$PROJECT_DIR/dist.tmp/assets/" 2>/dev/null || true
+  fi
+  # Переносим сгенерированные каталоги HTML
+  for dir in books authors collections tier-lists topics celebrities blog news; do
+    if [ -d "$PROJECT_DIR/dist/$dir" ]; then
+      cp -r "$PROJECT_DIR/dist/$dir" "$PROJECT_DIR/dist.tmp/"
+    fi
+  done
+  ok "SEO-пререндер и ассеты перенесены"
 fi
 
 # ——— 4. Пересобрать бэкенд ———
@@ -240,7 +260,15 @@ if [ "$SKIP_BUILD" = false ] && [ "$SKIP_PRERENDER" = false ]; then
   fi
 
   # Prerender опциональный — если нет chromium, graceful fallback
-  if node "$PROJECT_DIR/scripts/prerender.mjs"; then
+  PRERENDER_ARGS=()
+  if [ "$FULL_PRERENDER" = false ]; then
+    PRERENDER_ARGS+=("--core-only")
+    info "Prerender ключевых маршрутов (--core-only, быстрый деплой)..."
+  else
+    info "Полный prerender всех маршрутов (--full-prerender)..."
+  fi
+
+  if node "$PROJECT_DIR/scripts/prerender.mjs" "${PRERENDER_ARGS[@]}"; then
     ok "Prerender завершён"
   else
     warn "Prerender пропущен (опционально) — сайт работает как SPA"
