@@ -112,7 +112,7 @@ ok "Код обновлён"
 if [ "$SKIP_BUILD" = false ]; then
   info "Сборка фронтенда..."
   # Собираем в dist.tmp, чтобы не сломать работающую версию во время билда
-  npx vite build --outDir dist.tmp
+  NODE_OPTIONS="--max-old-space-size=2048" npx vite build --outDir dist.tmp
   ok "Фронтенд собран"
 else
   warn "Сборка пропущена (--skip-build)"
