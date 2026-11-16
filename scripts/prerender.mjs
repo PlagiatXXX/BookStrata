@@ -747,6 +747,13 @@ async function pageHasContent(page, routePath) {
   //
   // 2. canonical и title оба валидны, нет скелетонов — полная SEO-готовность.
   //    Важно для страниц с малым контентом, где Helmet успел раньше.
+  // Если страница уже содержит огромный объём контента (>15KB), валидный заголовок
+  // и канонический URL, и нет текста "Загрузка..." — она гарантированно загружена
+  // (даже если какой-то второстепенный бейдж или скелетон имеет класс animate-pulse).
+  if (diag.rootLen > 15000 && diag.isTitleValid && diag.isCanonicalValid && !diag.hasLoading) {
+    return true;
+  }
+
   const noSkeletons = !diag.hasAnimatePulse && !diag.hasLoading;
   const hasMinSeo = diag.isTitleValid || diag.isCanonicalValid;
 
@@ -926,8 +933,8 @@ async function processRoute(browser, route) {
     }));
 
     // Список коллекций в сайдбаре — не нужен для SEO отдельных страниц.
-    // На самой странице /collections (хаб) и /community данные нужны — мок там не ставим.
-    if (route.path !== "/collections" && route.path !== "/community") {
+    // На главной странице (/), хабе (/collections) и сообществе (/community) данные нужны — мок там не ставим.
+    if (route.path !== "/" && route.path !== "/collections" && route.path !== "/community") {
       await page.route("**/api/collections", (route) => route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -1208,9 +1215,9 @@ async function processRoute(browser, route) {
           canonical.setAttribute("href", `https://bookstrata.ru${cp}`);
         }
 
-        // 3. Заменяем root на статический контент
+        // 3. Заменяем root на статический контент только если страница пуста
         const root = document.getElementById("root");
-        if (root && (root.innerHTML.length < 2000 || root.innerHTML.includes("animate-pulse"))) {
+        if (root && (root.innerHTML.length < 2000 || (root.innerHTML.length < 5000 && root.innerHTML.includes("animate-pulse")))) {
           root.innerHTML = bodyHtml;
         }
 
