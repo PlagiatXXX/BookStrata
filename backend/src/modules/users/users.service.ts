@@ -163,9 +163,27 @@ export async function changePassword(
   return { success: true, message: "Пароль успешно изменён" };
 }
 
+const POSTGRES_INT4_MAX = 2_147_483_647;
+
+/**
+ * Валидирует строковый параметр ID пользователя перед обращением к базе данных.
+ * Защищает от NaN, отрицательных чисел, дробей и переполнения Postgres 32-bit integer (Int4).
+ * При невалидном формате выбрасывает NotFoundError ("Пользователь не найден") -> 404.
+ */
+export function parseUserIdParam(id: unknown): number {
+  if (typeof id !== "string" || !/^\d+$/.test(id)) {
+    throw new NotFoundError("Пользователь не найден");
+  }
+  const parsed = Number(id);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0 || parsed > POSTGRES_INT4_MAX) {
+    throw new NotFoundError("Пользователь не найден");
+  }
+  return parsed;
+}
+
 // GET /api/users/:id - получить пользователя по ID (публичный профиль)
 export async function getUserById(params: { id: string }) {
-  const userId = parseInt(params.id);
+  const userId = parseUserIdParam(params.id);
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

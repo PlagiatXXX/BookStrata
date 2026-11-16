@@ -5,6 +5,7 @@ import {
   updateAvatar,
   deleteAvatar,
   getUserById,
+  parseUserIdParam,
   getUserStats,
   getActivityTimeline,
   updateUser,
@@ -234,7 +235,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   }>(
     "/:id/tier-lists",
     async (request, reply) => {
-      const userId = parseInt(request.params.id);
+      const userId = parseUserIdParam(request.params.id);
       const page = Number(request.query.page) || 1;
       const pageSize = Number(request.query.pageSize) || 10;
       const result = await getUserPublicTierLists(userId, page, pageSize, {
@@ -263,7 +264,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string } }>(
     "/:id/taste-match",
     async (request, reply) => {
-      const targetUserId = parseInt(request.params.id);
+      const targetUserId = parseUserIdParam(request.params.id);
       const currentUserId = (request as any).user?.userId ?? null;
       const match = await getTasteMatch(targetUserId, currentUserId);
       return reply.send(createSuccessResponse(match));
@@ -413,7 +414,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     "/admin/:id/donor",
     { preHandler: [authMiddleware, requireRole("admin")] },
     async (request, reply) => {
-      const userId = parseInt(request.params.id);
+      const userId = parseUserIdParam(request.params.id);
       const result = await setDonorStatus(userId, request.body.isDonor);
       return reply.code(200).send(createSuccessResponse(result));
     },
@@ -425,7 +426,7 @@ export async function userRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { id: string } }>(
     "/:id/badges",
     async (request, reply) => {
-      const userId = parseInt(request.params.id);
+      const userId = parseUserIdParam(request.params.id);
       const badges = await getUserBadges(userId);
       return reply.code(200).send(createSuccessResponse(badges));
     },
@@ -451,7 +452,7 @@ export async function userRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const userId = parseInt(request.params.id);
+      const userId = parseUserIdParam(request.params.id);
       const { text, color } = request.body;
       const badge = await addUserBadge(userId, text, color as BadgeColor);
       return reply.code(201).send(createSuccessResponse(badge));

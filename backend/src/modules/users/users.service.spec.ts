@@ -60,6 +60,7 @@ vi.mock("../../repositories/index.js", () => ({
 import bcrypt from "bcryptjs";
 import * as userService from "./users.service.js";
 import { prisma } from "../../lib/prisma.js";
+import { NotFoundError } from "../../lib/errors.js";
 
 describe("users.service", () => {
   beforeEach(() => {
@@ -491,7 +492,49 @@ describe("users.service", () => {
     it("должен бросить ошибку при невалидном ID", async () => {
       await expect(
         userService.getUserById({ id: "invalid" }),
-      ).rejects.toThrow();
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it("нечисловой ID ('pavlova') → NotFoundError и Prisma не вызывается", async () => {
+      await expect(
+        userService.getUserById({ id: "pavlova" }),
+      ).rejects.toThrow(NotFoundError);
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("ID превышающий Int4 → NotFoundError и Prisma не вызывается", async () => {
+      await expect(
+        userService.getUserById({ id: "999999999999" }),
+      ).rejects.toThrow(NotFoundError);
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("parseUserIdParam", () => {
+    it("валидный числовой ID → возвращает number", () => {
+      expect(userService.parseUserIdParam("42")).toBe(42);
+      expect(userService.parseUserIdParam("1")).toBe(1);
+      expect(userService.parseUserIdParam("2147483647")).toBe(2147483647);
+    });
+
+    it("нечисловые строки → NotFoundError('Пользователь не найден')", () => {
+      expect(() => userService.parseUserIdParam("pavlova")).toThrow(NotFoundError);
+      expect(() => userService.parseUserIdParam("pavlova")).toThrow("Пользователь не найден");
+      expect(() => userService.parseUserIdParam("12abc")).toThrow(NotFoundError);
+      expect(() => userService.parseUserIdParam("abc12")).toThrow(NotFoundError);
+      expect(() => userService.parseUserIdParam("")).toThrow(NotFoundError);
+      expect(() => userService.parseUserIdParam(undefined as any)).toThrow(NotFoundError);
+    });
+
+    it("ноль, отрицательные и дробные числа → NotFoundError", () => {
+      expect(() => userService.parseUserIdParam("0")).toThrow(NotFoundError);
+      expect(() => userService.parseUserIdParam("-5")).toThrow(NotFoundError);
+      expect(() => userService.parseUserIdParam("1.5")).toThrow(NotFoundError);
+    });
+
+    it("числа, превышающие Postgres Int4 (2147483647) → NotFoundError", () => {
+      expect(() => userService.parseUserIdParam("2147483648")).toThrow(NotFoundError);
+      expect(() => userService.parseUserIdParam("99999999999999999999")).toThrow(NotFoundError);
     });
   });
 
