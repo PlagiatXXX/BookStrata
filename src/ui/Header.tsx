@@ -14,6 +14,9 @@ import {
   Play,
   BookMarked,
   Users,
+  UserRound,
+  LayoutDashboard,
+  Shield,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useAmbientSound } from "@/hooks/useAmbientSound";
@@ -75,9 +78,14 @@ export const Header = ({
 }: HeaderProps = {}) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [ratingsOpen, setRatingsOpen] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const ratingsRef = useRef<HTMLDivElement>(null);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const avatarTriggerRef = useRef<HTMLButtonElement>(null);
+  const avatarMenuListRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, user: authUser, logout } = useAuth();
   const isAdmin = authUser?.role === "admin";
+  const isStaff = isAdmin || authUser?.role === "moderator";
   const { totalCount } = useBookshelf();
   const navigate = useNavigate();
   const location = useLocation();
@@ -162,6 +170,86 @@ export const Header = ({
   const handleRatingsSubNav = (path: string) => {
     navigate(path);
     setRatingsOpen(false);
+  };
+
+  // Меню аватара: закрытие по Escape (с возвратом фокуса) и клику вне
+  const closeAvatarMenu = useCallback((restoreFocus = false) => {
+    setAvatarMenuOpen(false);
+    if (restoreFocus) avatarTriggerRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!avatarMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeAvatarMenu(true);
+      }
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        avatarMenuRef.current &&
+        !avatarMenuRef.current.contains(e.target as Node)
+      ) {
+        closeAvatarMenu();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [avatarMenuOpen, closeAvatarMenu]);
+
+  const getAvatarMenuItems = () =>
+    Array.from(
+      avatarMenuListRef.current?.querySelectorAll<HTMLButtonElement>(
+        '[role="menuitem"]',
+      ) ?? [],
+    );
+
+  const handleAvatarMenuNavigate = (path: string) => {
+    navigate(path);
+    setAvatarMenuOpen(false);
+  };
+
+  /** Стрелки/Home/End — навигация по пунктам меню (Enter срабатывает нативно у <button>). */
+  const handleAvatarMenuKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const items = getAvatarMenuItems();
+    if (items.length === 0) return;
+    const current = items.indexOf(document.activeElement as HTMLButtonElement);
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        items[(current + 1) % items.length].focus();
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        items[(current - 1 + items.length) % items.length].focus();
+        break;
+      case "Home":
+        e.preventDefault();
+        items[0].focus();
+        break;
+      case "End":
+        e.preventDefault();
+        items[items.length - 1].focus();
+        break;
+    }
+  };
+
+  /** Открытие с клавиатуры переводит фокус в меню (по WAI-ARIA). */
+  const handleAvatarTriggerKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+  ) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    setAvatarMenuOpen(true);
+    requestAnimationFrame(() => {
+      const items = getAvatarMenuItems();
+      (e.key === "ArrowDown" ? items[0] : items[items.length - 1])?.focus();
+    });
   };
 
   const handleSearchChange = (query: string) => {
@@ -475,7 +563,10 @@ export const Header = ({
                   )}
 
                   {/* User Avatar + Ambient badge */}
-                  <div className="relative flex items-center group">
+                  <div
+                    ref={avatarMenuRef}
+                    className="relative flex items-center group"
+                  >
                     {/* Пульсирующее кольцо вокруг аватарки — пока есть активный плейлист */}
                     {ambientActive && (
                       <motion.div
@@ -493,11 +584,16 @@ export const Header = ({
                       />
                     )}
                     <button
+                      ref={avatarTriggerRef}
+                      type="button"
                       data-analytics="nav.main.profile"
-                      onClick={() => navigate("/profile")}
-                      className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-800/50 dark:hover:bg-slate-800/50 light:hover:bg-gray-100/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-                      title="Профиль"
-                      aria-label="Перейти в профиль"
+                      onClick={() => setAvatarMenuOpen((prev) => !prev)}
+                      onKeyDown={handleAvatarTriggerKeyDown}
+                      className="flex items-center gap-2 min-h-11 min-w-11 p-1.5 rounded-lg hover:bg-slate-800/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+                      title="Меню пользователя"
+                      aria-label="Меню пользователя"
+                      aria-haspopup="menu"
+                      aria-expanded={avatarMenuOpen}
                     >
                       <Avatar
                         url={authUser?.avatarUrl}
@@ -506,6 +602,65 @@ export const Header = ({
                         className="size-8"
                       />
                     </button>
+
+                    {avatarMenuOpen && (
+                      <div
+                        ref={avatarMenuListRef}
+                        role="menu"
+                        aria-label="Меню пользователя"
+                        onKeyDown={handleAvatarMenuKeyDown}
+                        className="absolute top-full right-0 mt-1.5 z-50 w-56 rounded-xl border border-slate-700/50 bg-[#0f1525]/95 backdrop-blur-xl shadow-2xl shadow-black/60 py-1.5"
+                      >
+                        <button
+                          type="button"
+                          role="menuitem"
+                          data-analytics="nav.avatar.profile"
+                          onClick={() =>
+                            handleAvatarMenuNavigate(`/users/${authUser?.userId}`)
+                          }
+                          className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
+                        >
+                          <UserRound size={16} className="text-cyan-400 shrink-0" />
+                          <span>Мой профиль</span>
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          data-analytics="nav.avatar.dashboard"
+                          onClick={() => handleAvatarMenuNavigate("/dashboard")}
+                          className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
+                        >
+                          <LayoutDashboard size={16} className="text-purple-400 shrink-0" />
+                          <span>Дашборд</span>
+                        </button>
+                        {isStaff && (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            data-analytics="nav.avatar.admin"
+                            onClick={() => handleAvatarMenuNavigate("/admin")}
+                            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
+                          >
+                            <Shield size={16} className="text-amber-400 shrink-0" />
+                            <span>Админка</span>
+                          </button>
+                        )}
+                        <div className="my-1 border-t border-slate-700/50" />
+                        <button
+                          type="button"
+                          role="menuitem"
+                          data-analytics="auth.logout_menu"
+                          onClick={() => {
+                            setAvatarMenuOpen(false);
+                            handleLogout();
+                          }}
+                          className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
+                        >
+                          <LogOut size={16} className="text-rose-400 shrink-0" />
+                          <span>Выйти</span>
+                        </button>
+                      </div>
+                    )}
 
                     {/* Бейдж управления — пока есть активный плейлист */}
                     {ambientActive && (

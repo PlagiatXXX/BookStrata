@@ -1,7 +1,7 @@
 // src/ui/Header.spec.tsx
 // Дропдаун «Рейтинги»: пункт «Все авторы» ведёт на /authors (перелинковка)
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { Header } from "./Header";
@@ -19,7 +19,10 @@ vi.mock("@/components/SearchBar/SearchBar", () => ({ SearchBar: () => null }));
 vi.mock("./Logo", () => ({ Logo: () => null }));
 vi.mock("./CoffeeCup", () => ({ CoffeeCup: () => null }));
 vi.mock("@/components/Avatar", () => ({ Avatar: () => null }));
-vi.mock("./ConfirmModal", () => ({ ConfirmModal: () => null }));
+vi.mock("./ConfirmModal", () => ({
+  ConfirmModal: ({ isOpen }: { isOpen: boolean }) =>
+    isOpen ? <div data-testid="logout-modal" /> : null,
+}));
 
 import { useAuth } from "@/hooks/useAuthContext";
 import { useBookshelf } from "@/hooks/useBookshelf";
@@ -136,5 +139,166 @@ describe("Header — «Полка» и «Угостить» выделены в 
 
     await user.click(dnaBtns[0]);
     expect(screen.getByTestId("location-path").textContent).toBe("/reading-dna");
+  });
+});
+
+describe("Header — меню аватара", () => {
+  const triggerName = /меню пользователя/i;
+
+  function renderAuthenticated(role = "user") {
+    vi.mocked(useAuth).mockReturnValue({
+      isAuthenticated: true,
+      user: { userId: 42, username: "reader", role },
+      isLoading: false,
+      logout: vi.fn(),
+      refreshUser: vi.fn(),
+      loginWithData: vi.fn(),
+    } as unknown as ReturnType<typeof useAuth>);
+    return renderHeader();
+  }
+
+  it("аватар открывает меню с aria-haspopup/aria-expanded и не ведёт на /profile", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated();
+
+    const trigger = screen.getByRole("button", { name: triggerName });
+    expect(trigger).toHaveAttribute("aria-haspopup", "menu");
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+
+    await user.click(trigger);
+
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.getByTestId("location-path").textContent).toBe("/");
+  });
+
+  it("меню обычного пользователя: «Мой профиль», «Дашборд», «Выйти» — без «Админки»", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated("user");
+
+    await user.click(screen.getByRole("button", { name: triggerName }));
+
+    expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
+      "Мой профиль",
+      "Дашборд",
+      "Выйти",
+    ]);
+    expect(
+      screen.queryByRole("menuitem", { name: /админка/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("«Админка» доступна администратору", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated("admin");
+
+    await user.click(screen.getByRole("button", { name: triggerName }));
+
+    expect(
+      screen.getByRole("menuitem", { name: "Админка" }),
+    ).toBeInTheDocument();
+  });
+
+  it("«Админка» доступна модератору", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated("moderator");
+
+    await user.click(screen.getByRole("button", { name: triggerName }));
+
+    expect(
+      screen.getByRole("menuitem", { name: "Админка" }),
+    ).toBeInTheDocument();
+  });
+
+  it("«Мой профиль» ведёт на /users/:id, «Дашборд» — на /dashboard", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated();
+    const trigger = screen.getByRole("button", { name: triggerName });
+
+    await user.click(trigger);
+    await user.click(screen.getByRole("menuitem", { name: "Дашборд" }));
+    expect(screen.getByTestId("location-path").textContent).toBe("/dashboard");
+
+    await user.click(trigger);
+    await user.click(screen.getByRole("menuitem", { name: "Мой профиль" }));
+    expect(screen.getByTestId("location-path").textContent).toBe("/users/42");
+  });
+
+  it("«Админка» ведёт на /admin", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated("admin");
+
+    await user.click(screen.getByRole("button", { name: triggerName }));
+    await user.click(screen.getByRole("menuitem", { name: "Админка" }));
+
+    expect(screen.getByTestId("location-path").textContent).toBe("/admin");
+  });
+
+  it("«Выйти» открывает подтверждение выхода и закрывает меню", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated();
+
+    await user.click(screen.getByRole("button", { name: triggerName }));
+    await user.click(screen.getByRole("menuitem", { name: "Выйти" }));
+
+    expect(screen.getByTestId("logout-modal")).toBeInTheDocument();
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("Esc закрывает меню", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated();
+    const trigger = screen.getByRole("button", { name: triggerName });
+
+    await user.click(trigger);
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("клик вне меню закрывает его", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated();
+
+    await user.click(screen.getByRole("button", { name: triggerName }));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("стрелки и Home/End перемещают фокус, Enter активирует пункт, Esc возвращает фокус", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated("admin");
+    const trigger = screen.getByRole("button", { name: triggerName });
+
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    const items = await waitFor(() => screen.getAllByRole("menuitem"));
+    expect(items).toHaveLength(4);
+    await waitFor(() => expect(items[0]).toHaveFocus());
+
+    fireEvent.keyDown(items[0], { key: "ArrowDown" });
+    expect(items[1]).toHaveFocus();
+    fireEvent.keyDown(items[1], { key: "ArrowUp" });
+    expect(items[0]).toHaveFocus();
+    fireEvent.keyDown(items[0], { key: "End" });
+    expect(items[3]).toHaveFocus();
+    fireEvent.keyDown(items[3], { key: "Home" });
+    expect(items[0]).toHaveFocus();
+
+    fireEvent.keyDown(items[0], { key: "ArrowDown" });
+    await user.keyboard("{Enter}");
+    expect(screen.getByTestId("location-path").textContent).toBe("/dashboard");
+
+    await user.click(trigger);
+    const reopened = screen.getAllByRole("menuitem");
+    fireEvent.keyDown(reopened[0], { key: "Escape" });
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 });
