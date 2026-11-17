@@ -5,10 +5,11 @@ import { render, screen, fireEvent } from "@testing-library/react"
 import { ProfileTabs } from "./ProfileTabs"
 
 describe("ProfileTabs", () => {
-  it("владельцу доступны все четыре таба", () => {
+  it("владельцу доступны все пять табов", () => {
     render(<ProfileTabs active="overview" isOwner onChange={vi.fn()} />)
 
     expect(screen.getByRole("tab", { name: "Обзор" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Сравнение" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Тир-листы" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Достижения" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Настройки" })).toBeInTheDocument()
@@ -19,6 +20,7 @@ describe("ProfileTabs", () => {
 
     expect(screen.queryByRole("tab", { name: "Настройки" })).not.toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Обзор" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Сравнение" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Тир-листы" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Достижения" })).toBeInTheDocument()
   })

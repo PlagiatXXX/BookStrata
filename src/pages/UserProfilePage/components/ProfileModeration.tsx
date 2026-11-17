@@ -7,6 +7,12 @@ interface ProfileModerationProps {
   userId: number
   username: string
   currentRole: string
+  /**
+   * Скрыть собственную кнопку-тоггл: панель всегда раскрыта.
+   * Используется со страницы профиля, где переключателем служит кнопка
+   * «Управление» в hero (onOpenModeration).
+   */
+  hideToggle?: boolean
 }
 
 /**
@@ -18,6 +24,7 @@ export function ProfileModeration({
   userId,
   username,
   currentRole,
+  hideToggle = false,
 }: ProfileModerationProps) {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
@@ -27,6 +34,18 @@ export function ProfileModeration({
   const isOtherProfile = !!user && String(user.userId) !== String(userId)
 
   if (!isStaffViewer || !isOtherProfile) return null
+
+  if (hideToggle) {
+    return (
+      <div id="profile-moderation-panel" className="profile-moderation__panel">
+        <ModerationPanel
+          userId={userId}
+          username={username}
+          currentRole={currentRole}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="profile-moderation">

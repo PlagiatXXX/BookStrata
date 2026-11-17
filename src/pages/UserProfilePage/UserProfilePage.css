@@ -1252,3 +1252,33 @@ button.profile-tier-card:focus-visible,
     grid-column: 1 / -1;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Единая страница профиля: вертикальная композиция блоков
+   ══════════════════════════════════════════════════════════════ */
+
+.profile-page__hero {
+  margin-bottom: 2rem;
+}
+
+.profile-page__section {
+  margin-bottom: 2rem;
+}
+
+.profile-page__tabs {
+  margin-bottom: 2rem;
+}
+
+.profile-page__content {
+  min-width: 0;
+}
+
+/* Обзор: 1.1fr / 1fr на широких экранах (спека §10) */
+@media (min-width: 1024px) {
+  .profile-page__content > .profile-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+}

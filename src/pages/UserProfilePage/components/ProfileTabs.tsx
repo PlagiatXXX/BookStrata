@@ -1,5 +1,6 @@
 export type ProfileTab =
   | "overview"
+  | "comparison"
   | "tier-lists"
   | "achievements"
   | "settings"
@@ -12,6 +13,7 @@ interface ProfileTabsProps {
 
 const TABS: Array<{ id: ProfileTab; label: string }> = [
   { id: "overview", label: "Обзор" },
+  { id: "comparison", label: "Сравнение" },
   { id: "tier-lists", label: "Тир-листы" },
   { id: "achievements", label: "Достижения" },
   { id: "settings", label: "Настройки" },

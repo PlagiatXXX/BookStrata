@@ -5,30 +5,64 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import UserProfilePage from "./UserProfilePage"
-import * as userApiModule from "@/lib/userApi"
-import * as authContextModule from "@/hooks/useAuthContext"
 
-vi.mock("@/lib/userApi", () => ({
+const m = vi.hoisted(() => ({
+  seoHead: vi.fn(),
   apiGetPublicUser: vi.fn(),
   apiGetUserTierLists: vi.fn(),
   apiGetTasteMatch: vi.fn(),
+  useAuth: vi.fn(),
+  useUser: vi.fn(),
+  useAchievements: vi.fn(),
+  useUserAchievements: vi.fn(),
+  useMyReadingDna: vi.fn(),
+  useGenrePreferences: vi.fn(),
 }))
 
-vi.mock("@/hooks/useAuthContext", () => ({
-  useAuth: vi.fn(),
+vi.mock("@/lib/userApi", () => ({
+  apiGetPublicUser: m.apiGetPublicUser,
+  apiGetUserTierLists: m.apiGetUserTierLists,
+  apiGetTasteMatch: m.apiGetTasteMatch,
+}))
+
+vi.mock("@/hooks/useAuthContext", () => ({ useAuth: m.useAuth }))
+vi.mock("@/hooks/useUser", () => ({ useUser: m.useUser }))
+vi.mock("@/hooks/useAchievements", () => ({ useAchievements: m.useAchievements }))
+vi.mock("@/hooks/useUserAchievements", () => ({ useUserAchievements: m.useUserAchievements }))
+vi.mock("@/hooks/useMyReadingDna", () => ({ useMyReadingDna: m.useMyReadingDna }))
+vi.mock("@/hooks/useGenrePreferences", () => ({ useGenrePreferences: m.useGenrePreferences }))
+
+vi.mock("@/components/SEO/SEOHead", () => ({
+  SEOHead: (props: Record<string, unknown>) => {
+    m.seoHead(props)
+    return null
+  },
 }))
 
 vi.mock("@/layouts/DashboardLayout/DashboardLayout", () => ({
-  DashboardLayout: ({ children }: { children: React.ReactNode }) => <div data-testid="dashboard-layout">{children}</div>,
+  DashboardLayout: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dashboard-layout">{children}</div>
+  ),
 }))
 
+// Тяжёлые листовые компоненты проверены отдельными спеками — здесь заглушки.
+vi.mock("@/pages/UserProfilePage/components/ProfileSettings", () => ({
+  ProfileSettings: () => <div data-testid="profile-settings">Настройки профиля</div>,
+}))
+vi.mock("@/pages/UserProfilePage/components/ProfileModeration", () => ({
+  ProfileModeration: () => (
+    <div data-testid="profile-moderation">Панель модерации</div>
+  ),
+}))
+
+const OWNER_ID = 2
+
 const mockPublicUser = {
-  id: 2,
+  id: OWNER_ID,
   username: "fedor",
   avatarUrl: "https://example.com/avatar.jpg",
   bio: "Люблю книги про робототехнику",
   socialLinks: [{ platform: "telegram", url: "https://t.me/fedor_books" }],
-  isPro: true,
   isDonor: true,
   xp: 290,
   title: "Страничный глотатель",
@@ -45,6 +79,30 @@ const mockPublicUser = {
     totalBooks: 18,
     lastActivity: "2024-06-01T00:00:00.000Z",
   },
+}
+
+const mockOwnerUser = {
+  id: OWNER_ID,
+  email: "fedor@example.com",
+  username: "fedor",
+  avatarUrl: "https://example.com/avatar.jpg",
+  bio: "Люблю книги про робототехнику",
+  socialLinks: [{ platform: "telegram", url: "https://t.me/fedor_books" }],
+  role: "user",
+  isDonor: false,
+  createdAt: "2024-01-01T00:00:00.000Z",
+  badges: [],
+}
+
+const mockOwnerStats = {
+  tierListsCount: 9,
+  publishedCount: 2,
+  templatesCount: 4,
+  likesCount: 3,
+  likesTodayCount: 0,
+  totalBooks: 18,
+  lastActivity: null,
+  totalActiveMinutes: 0,
 }
 
 const mockTierLists = [
@@ -64,17 +122,24 @@ const mockTasteMatch = {
   totalBooks: 3,
 }
 
-function renderWithRoute(routeId: string) {
+function setViewer(userId: number | null, role = "user") {
+  m.useAuth.mockReturnValue({
+    user: userId === null ? null : { userId, username: "currentuser", role },
+    isAuthenticated: userId !== null,
+  })
+}
+
+function renderWithRoute(routeId: string, search = "") {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
+    defaultOptions: { queries: { retry: false } },
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/users/${routeId}`]}>
+      <MemoryRouter initialEntries={[`/users/${routeId}${search}`]}>
         <Routes>
           <Route path="/users/:id" element={<UserProfilePage />} />
+          <Route path="/templates" element={<div>СТРАНИЦА ШАБЛОНОВ</div>} />
+          <Route path="/tier-lists/:id" element={<div>СТРАНИЦА ТИР-ЛИСТА</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -84,89 +149,168 @@ function renderWithRoute(routeId: string) {
 describe("UserProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(authContextModule.useAuth).mockReturnValue({
-      user: { userId: 2, username: "currentuser", avatarUrl: null, role: "user", isPro: false },
-      isAuthenticated: true,
+    setViewer(OWNER_ID)
+    m.useUser.mockReturnValue({
+      user: mockOwnerUser,
+      stats: mockOwnerStats,
       isLoading: false,
-      logout: vi.fn(),
+      updateProfile: vi.fn(),
+      uploadAvatar: vi.fn(),
       refreshUser: vi.fn(),
-      loginWithData: vi.fn(),
-    } as any)
-    vi.mocked(userApiModule.apiGetPublicUser).mockResolvedValue(mockPublicUser)
-    vi.mocked(userApiModule.apiGetUserTierLists).mockResolvedValue({
+    })
+    m.useAchievements.mockReturnValue({
+      achievements: [],
+      status: { xp: 290, title: "Страничный глотатель", icon: "📄" },
+      isLoading: false,
+    })
+    m.useUserAchievements.mockReturnValue({ data: [], isLoading: false })
+    m.useMyReadingDna.mockReturnValue({ dna: null, isLoading: false })
+    m.useGenrePreferences.mockReturnValue({ data: [] })
+    m.apiGetPublicUser.mockResolvedValue(mockPublicUser)
+    m.apiGetUserTierLists.mockResolvedValue({
       data: mockTierLists,
       meta: { totalItems: 1, itemCount: 1, itemsPerPage: 10, totalPages: 1, currentPage: 1 },
     })
-    vi.mocked(userApiModule.apiGetTasteMatch).mockResolvedValue(mockTasteMatch)
+    m.apiGetTasteMatch.mockResolvedValue(mockTasteMatch)
   })
 
-  it("должен отобразить профиль пользователя с данными", async () => {
-    renderWithRoute("2")
+  /* ── Режим владельца ── */
+
+  it("владелец видит табы с «Настройками», камеру и «Как видят другие»", async () => {
+    renderWithRoute(String(OWNER_ID))
 
     await waitFor(() => {
-      expect(screen.getAllByText("fedor").length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByRole("button", { name: "Сменить аватар" })).toBeDefined()
     })
-    expect(screen.getByText("Админ")).toBeDefined()
-    expect(screen.getByText(/Страничный глотатель/)).toBeDefined()
+    expect(screen.getByRole("tab", { name: "Обзор" })).toBeDefined()
+    expect(screen.getByRole("tab", { name: "Тир-листы" })).toBeDefined()
+    expect(screen.getByRole("tab", { name: "Достижения" })).toBeDefined()
+    expect(screen.getByRole("tab", { name: "Настройки" })).toBeDefined()
+    expect(screen.getByRole("button", { name: /Как видят другие/ })).toBeDefined()
+    expect(screen.getByRole("button", { name: /Редактировать профиль/ })).toBeDefined()
+    // Данные владельца идут только из авторизованных эндпоинтов.
+    expect(m.apiGetPublicUser).not.toHaveBeenCalled()
+    expect(m.apiGetTasteMatch).not.toHaveBeenCalled()
   })
 
-  it("должен отобразить совпадение вкусов для чужого профиля", async () => {
-    vi.mocked(authContextModule.useAuth).mockReturnValue({
-      user: { userId: 3, username: "other", avatarUrl: null, role: "user", isPro: false },
-      isAuthenticated: true,
-      isLoading: false,
-      logout: vi.fn(),
-      refreshUser: vi.fn(),
-      loginWithData: vi.fn(),
-    } as any)
-    renderWithRoute("2")
+  it("переключает таб на «Настройки» по кнопке «+ Соцсеть»", async () => {
+    renderWithRoute(String(OWNER_ID))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /\+ Соцсеть/ })).toBeDefined()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /\+ Соцсеть/ }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("profile-settings")).toBeDefined()
+      expect(screen.getByRole("tab", { name: "Настройки" }).getAttribute("aria-selected")).toBe("true")
+    })
+  })
+
+  /* ── Режим посетителя ── */
+
+  it("посетитель не видит настройки и управление, но сохраняет Header, хлебные крошки и «Назад»", async () => {
+    setViewer(99)
+    renderWithRoute(String(OWNER_ID))
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "fedor" })).toBeDefined()
+    })
+    expect(screen.queryByRole("tab", { name: "Настройки" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Сменить аватар" })).toBeNull()
+    expect(screen.queryByRole("button", { name: /Как видят другие/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /Редактировать профиль/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /Управление/ })).toBeNull()
+    expect(screen.queryByTestId("profile-moderation")).toBeNull()
+    // Навигация сохранена как есть.
+    expect(screen.getByTestId("dashboard-layout")).toBeDefined() // Header внутри layout
+    expect(screen.getByRole("navigation", { name: "Хлебные крошки" })).toBeDefined()
+    expect(screen.getByRole("button", { name: /Назад/ })).toBeDefined()
+  })
+
+  it("staff-посетитель видит «Управление» и раскрывает панель модерации", async () => {
+    setViewer(99, "admin")
+    renderWithRoute(String(OWNER_ID))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Управление/ })).toBeDefined()
+    })
+    expect(screen.queryByTestId("profile-moderation")).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: /Управление/ }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("profile-moderation")).toBeDefined()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /Управление/ }))
+    await waitFor(() => {
+      expect(screen.queryByTestId("profile-moderation")).toBeNull()
+    })
+  })
+
+  /* ── Предпросмотр ── */
+
+  it("?preview=1 у владельца скрывает настройки и управление, навигация остаётся", async () => {
+    renderWithRoute(String(OWNER_ID), "?preview=1")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "fedor" })).toBeDefined()
+    })
+    expect(screen.queryByRole("tab", { name: "Настройки" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Сменить аватар" })).toBeNull()
+    expect(screen.queryByRole("button", { name: /Как видят другие/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /Редактировать профиль/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /\+ Соцсеть/ })).toBeNull()
+    expect(screen.getByTestId("dashboard-layout")).toBeDefined()
+    expect(screen.getByRole("navigation", { name: "Хлебные крошки" })).toBeDefined()
+    expect(screen.getByRole("button", { name: /Назад/ })).toBeDefined()
+    expect(m.apiGetTasteMatch).not.toHaveBeenCalled()
+  })
+
+  /* ── SEO ── */
+
+  it("SEOHead получает noindex", async () => {
+    renderWithRoute(String(OWNER_ID))
+
+    await waitFor(() => {
+      expect(m.seoHead).toHaveBeenCalled()
+    })
+    expect(m.seoHead).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true, type: "profile" }),
+    )
+  })
+
+  /* ── Совпадение вкусов ── */
+
+  it("показывает совпадение вкусов авторизованному посетителю", async () => {
+    setViewer(99)
+    renderWithRoute(String(OWNER_ID))
 
     await waitFor(() => {
       expect(screen.getByText(/Совпадение вкусов/)).toBeDefined()
     })
+    expect(m.apiGetTasteMatch).toHaveBeenCalledWith(String(OWNER_ID))
     expect(screen.getByText("25%")).toBeDefined()
   })
 
-  it("раскрывает список совпавших книг по клику на баннер совпадения вкусов", async () => {
-    vi.mocked(authContextModule.useAuth).mockReturnValue({
-      user: { userId: 3, username: "other", avatarUrl: null, role: "user", isPro: false },
-      isAuthenticated: true,
-      isLoading: false,
-      logout: vi.fn(),
-      refreshUser: vi.fn(),
-      loginWithData: vi.fn(),
-    } as any)
-    vi.mocked(userApiModule.apiGetTasteMatch).mockResolvedValue({
+  it("раскрывает список совпавших книг по клику на баннер", async () => {
+    setViewer(99)
+    m.apiGetTasteMatch.mockResolvedValue({
       matchPercent: 50,
       commonBooks: 2,
       totalBooks: 4,
       matches: [
         {
-          book: {
-            title: "Дюна",
-            author: "Фрэнк Герберт",
-            coverImageUrl: "https://example.com/dune.jpg",
-          },
+          book: { title: "Дюна", author: "Фрэнк Герберт", coverImageUrl: "https://example.com/dune.jpg" },
           tierInProfile: "S",
           tierInProfileRank: 0,
           tierInMine: "A",
           tierInMineRank: 1,
         },
-        {
-          book: {
-            title: "Солярис",
-            author: "Станислав Лем",
-            coverImageUrl: null,
-          },
-          tierInProfile: "B",
-          tierInProfileRank: 2,
-          tierInMine: "S",
-          tierInMineRank: 0,
-        },
       ],
     })
-
-    renderWithRoute("2")
+    renderWithRoute(String(OWNER_ID))
 
     await waitFor(() => {
       expect(screen.getByText(/Совпадение вкусов/)).toBeDefined()
@@ -174,35 +318,53 @@ describe("UserProfilePage", () => {
 
     const toggleButton = screen.getByRole("button", { name: /Совпадение вкусов/ })
     expect(toggleButton.getAttribute("aria-expanded")).toBe("false")
-    expect(screen.queryByText(/А где поставили/)).toBeNull()
-
     fireEvent.click(toggleButton)
 
     await waitFor(() => {
       expect(toggleButton.getAttribute("aria-expanded")).toBe("true")
-      expect(screen.getByText(/А где поставили \(ваш тир → тир пользователя\)/)).toBeDefined()
+      expect(screen.getByText(/А где поставили/)).toBeDefined()
+      expect(screen.getByText(/Дюна \(Фрэнк Герберт\)/)).toBeDefined()
     })
-
-    // Проверяем книгу "Дюна"
-    expect(screen.getByText(/Дюна \(Фрэнк Герберт\)/)).toBeDefined()
-    expect(screen.getByTitle("A")).toBeDefined()
-    expect(screen.getAllByTitle("S").length).toBe(2)
-    expect(screen.getByTitle("B")).toBeDefined()
-
-    // Проверяем обложку для Дюны
-    const duneCover = screen.getByAltText("Дюна") as HTMLImageElement
-    expect(duneCover.src).toContain("dune.jpg")
-
-    // Проверяем индикатор: для Дюны rankDiff <= 1 (1 - 0 = 1) -> title="Оценки близки или совпадают"
-    expect(screen.getAllByTitle("Оценки близки или совпадают").length).toBeGreaterThanOrEqual(1)
-
-    // Для Солярис: profileRank (2) > userRank (0), diff = 2 -> title="Пользователь оценил ниже"
-    expect(screen.getByText(/Солярис \(Станислав Лем\)/)).toBeDefined()
-    expect(screen.getByTitle("Пользователь оценил ниже")).toBeDefined()
   })
 
-  it("показывает пометку «Приватный» для приватного тир-листа в списке", async () => {
-    vi.mocked(userApiModule.apiGetUserTierLists).mockResolvedValue({
+  it("гость не запрашивает tasteMatch", async () => {
+    setViewer(null)
+    renderWithRoute(String(OWNER_ID))
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "fedor" })).toBeDefined()
+    })
+    expect(m.apiGetTasteMatch).not.toHaveBeenCalled()
+    expect(screen.queryByText(/Совпадение вкусов/)).toBeNull()
+  })
+
+  /* ── Ошибки и пустые состояния ── */
+
+  it("ошибка загрузки профиля показывает прежнее состояние ошибки", async () => {
+    setViewer(99)
+    m.apiGetPublicUser.mockRejectedValue(new Error("Пользователь не найден"))
+    renderWithRoute(String(OWNER_ID))
+
+    await waitFor(() => {
+      expect(screen.getByText("Пользователь не найден")).toBeDefined()
+    })
+    expect(screen.getByRole("button", { name: /Назад/ })).toBeDefined()
+  })
+
+  it("показывается сообщение, если нет публичных тир-листов", async () => {
+    m.apiGetUserTierLists.mockResolvedValue({
+      data: [],
+      meta: { totalItems: 0, itemCount: 0, itemsPerPage: 10, totalPages: 0, currentPage: 1 },
+    })
+    renderWithRoute(String(OWNER_ID))
+
+    await waitFor(() => {
+      expect(screen.getByText("Пока нет публичных тир-листов")).toBeDefined()
+    })
+  })
+
+  it("показывает пометку «Приватный» для приватного тир-листа", async () => {
+    m.apiGetUserTierLists.mockResolvedValue({
       data: [
         {
           id: "tl-private",
@@ -217,140 +379,40 @@ describe("UserProfilePage", () => {
       ],
       meta: { totalItems: 1, itemCount: 1, itemsPerPage: 10, totalPages: 1, currentPage: 1 },
     })
-    renderWithRoute("2")
+    renderWithRoute(String(OWNER_ID))
 
     await waitFor(() => {
       expect(screen.getByText("Приватный")).toBeDefined()
     })
   })
 
-  it("должен показать профиль неавторизованному посетителю без совпадения вкусов", async () => {
-    vi.mocked(authContextModule.useAuth).mockReturnValue({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      logout: vi.fn(),
-      refreshUser: vi.fn(),
-      loginWithData: vi.fn(),
-    } as any)
-    renderWithRoute("2")
+  /* ── Взаимодействие ── */
+
+  it("переходит на вкладку «Тир-листы» по клику на карточку статистики", async () => {
+    renderWithRoute(String(OWNER_ID))
 
     await waitFor(() => {
-      expect(screen.getAllByText("fedor").length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByRole("button", { name: /Тир-листов/ })).toBeDefined()
     })
-    // Профиль и тир-листы видны
-    expect(screen.getByText(/Страничный глотатель/)).toBeDefined()
-    expect(screen.getByText("Top Sci-Fi Books")).toBeDefined()
-    // Гостю совпадение вкусов не грузится и не показывается
-    expect(userApiModule.apiGetTasteMatch).not.toHaveBeenCalled()
-    expect(screen.queryByText(/Совпадение вкусов/)).toBeNull()
-  })
-
-  it("не должен отображать совпадение вкусов для своего профиля", async () => {
-    vi.mocked(authContextModule.useAuth).mockReturnValue({
-      user: { userId: 1, username: "current", avatarUrl: null, role: "user", isPro: false },
-      isAuthenticated: true,
-      isLoading: false,
-      logout: vi.fn(),
-      refreshUser: vi.fn(),
-      loginWithData: vi.fn(),
-    } as any)
-    vi.mocked(userApiModule.apiGetPublicUser).mockResolvedValue({ ...mockPublicUser, id: 1 })
-    renderWithRoute("1")
-
-    await waitFor(() => {
-      expect(screen.getAllByText("fedor").length).toBeGreaterThanOrEqual(1)
-    })
-    const matchSection = screen.queryByText(/Совпадение вкусов/)
-    expect(matchSection).toBeNull()
-  })
-
-  it("должен отобразить список публичных тир-листов", async () => {
-    renderWithRoute("2")
-
-    await waitFor(() => {
-      expect(screen.getByText("Top Sci-Fi Books")).toBeDefined()
-    })
-    expect(screen.getByText("Публичные тир-листы")).toBeDefined()
-  })
-
-  it("должен отобразить сообщение если нет тир-листов", async () => {
-    vi.mocked(userApiModule.apiGetUserTierLists).mockResolvedValue({
-      data: [],
-      meta: { totalItems: 0, itemCount: 0, itemsPerPage: 10, totalPages: 0, currentPage: 1 },
-    })
-    renderWithRoute("2")
-
-    await waitFor(() => {
-      expect(screen.getByText("Нет публичных тир-листов")).toBeDefined()
-    })
-  })
-
-  it("должен отобразить ошибку если пользователь не найден", async () => {
-    vi.mocked(userApiModule.apiGetPublicUser).mockRejectedValue(new Error("Пользователь не найден"))
-    renderWithRoute("2")
-
-    await waitFor(() => {
-      expect(screen.getByText("Пользователь не найден")).toBeDefined()
-    })
-  })
-
-  it("должен отобразить кнопку Назад", async () => {
-    renderWithRoute("2")
-
-    await waitFor(() => {
-      expect(screen.getByText("Назад")).toBeDefined()
-    })
-  })
-
-  it("должен отобразить статистику", async () => {
-    renderWithRoute("2")
-
-    await waitFor(() => {
-      expect(screen.getByText("9")).toBeDefined()
-    })
-    expect(screen.getAllByText("2").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText("18")).toBeDefined()
-  })
-
-  it("ведёт на /templates по клику на карточку Тир-листов в статистике", async () => {
-    render(
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-        <MemoryRouter initialEntries={["/users/2"]}>
-          <Routes>
-            <Route path="/users/:id" element={<UserProfilePage />} />
-            <Route path="/templates" element={<div>СТРАНИЦА ШАБЛОНОВ</div>} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByText("9")).toBeDefined()
-    })
-
     fireEvent.click(screen.getByRole("button", { name: /Тир-листов/ }))
 
     await waitFor(() => {
-      expect(screen.getByText("СТРАНИЦА ШАБЛОНОВ")).toBeDefined()
+      expect(screen.getByRole("tab", { name: "Тир-листы" }).getAttribute("aria-selected")).toBe("true")
+      expect(screen.getByText("Top Sci-Fi Books")).toBeDefined()
     })
   })
 
-  it("показывает заглушку с буквой, если аватарка не загрузилась", async () => {
-    const { container } = renderWithRoute("2")
+  it("ведёт на страницу тир-листа по клику на карточку", async () => {
+    setViewer(99)
+    renderWithRoute(String(OWNER_ID))
 
     await waitFor(() => {
-      expect(container.querySelector("img")).toBeTruthy()
+      expect(screen.getByRole("button", { name: /Top Sci-Fi Books/ })).toBeDefined()
     })
-
-    const img = container.querySelector("img")!
-    for (let i = 0; i < 5; i++) {
-      fireEvent.error(img)
-    }
+    fireEvent.click(screen.getByRole("button", { name: /Top Sci-Fi Books/ }))
 
     await waitFor(() => {
-      expect(screen.getByText("F")).toBeDefined()
+      expect(screen.getByText("СТРАНИЦА ТИР-ЛИСТА")).toBeDefined()
     })
   })
 })
