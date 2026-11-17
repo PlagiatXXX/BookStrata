@@ -170,4 +170,20 @@ describe("ReadingDnaPage", () => {
     const logoImg = await screen.findByAltText("Книжный ДНК");
     expect(logoImg).toHaveAttribute("src", "/images/reading-dna/DNA.webp");
   });
+
+  it("по ссылке ?ticket=X&tab=compare открывает вкладку «Сравнение вкусов»", async () => {
+    localStorage.clear();
+    renderPage("/reading-dna?ticket=BS-1234-X&tab=compare");
+
+    expect(await screen.findByText(/Документ III — Сравнение вкусов/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Документ II — Читательский билет/i)).not.toBeInTheDocument();
+  });
+
+  it("по ссылке ?ticket=X без tab открывает вкладку «Билет»", async () => {
+    localStorage.clear();
+    renderPage("/reading-dna?ticket=BS-1234-X");
+
+    expect(await screen.findByText(/Документ II — Читательский билет/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Документ III — Сравнение вкусов/i)).not.toBeInTheDocument();
+  });
 });

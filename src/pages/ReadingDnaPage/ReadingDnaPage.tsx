@@ -66,6 +66,7 @@ export default function ReadingDnaPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const ticketParam = searchParams.get("ticket");
+  const tabParam = searchParams.get("tab");
   const challengeParam = searchParams.get("challenge") || searchParams.get("duel");
   const { archetypes } = useDnaArchetypes();
 
@@ -161,6 +162,7 @@ export default function ReadingDnaPage() {
 
   const [activeTab, setActiveTab] = useState<number>(() => {
     if (challengeParam) return 3;
+    if (tabParam === "compare") return 3;
     if (ticketParam) return 2;
     if (currentTicket) return 2;
     if (initialDraft.step > 0) return 1;
