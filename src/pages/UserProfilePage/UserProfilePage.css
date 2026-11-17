@@ -740,11 +740,211 @@ button.profile-tier-card {
   gap: 0.25rem;
 }
 
+/* ── Achievements ── */
+.profile-achievements {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-achievements__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.profile-achievements__filter {
+  background: rgba(30, 32, 32, 0.4);
+  border: 1px solid rgba(73, 68, 85, 0.3);
+  border-radius: 9999px;
+  padding: 0.375rem 1rem;
+  min-height: 2.75rem;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--p-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.profile-achievements__filter:hover {
+  border-color: rgba(205, 189, 255, 0.5);
+  color: var(--p-on-surface);
+}
+
+.profile-achievements__filter[aria-pressed="true"] {
+  background: rgba(124, 77, 255, 0.2);
+  border-color: rgba(124, 77, 255, 0.5);
+  color: var(--p-primary);
+}
+
+.profile-achievements__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.profile-achievement-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  background: rgba(30, 32, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  transition: all 0.3s;
+}
+
+.profile-achievement-card--earned {
+  border-color: rgba(124, 77, 255, 0.35);
+}
+
+.profile-achievement-card--locked {
+  opacity: 0.75;
+}
+
+.profile-achievement-card__icon {
+  color: var(--p-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.profile-achievement-card__secret-icon,
+.profile-achievement-card__lock {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  color: var(--p-outline);
+}
+
+.profile-achievement-card__title {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--p-on-surface);
+}
+
+.profile-achievement-card__description {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--p-on-surface-variant);
+}
+
+.profile-achievement-card__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.profile-achievement-card__progress-track {
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: rgba(73, 68, 85, 0.4);
+  overflow: hidden;
+}
+
+.profile-achievement-card__progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--p-primary-container);
+  transition: width 0.3s;
+}
+
+.profile-achievement-card__progress-text {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--p-on-surface-variant);
+}
+
+.profile-achievement-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.375rem;
+}
+
+.profile-achievement-card__xp {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  color: var(--p-secondary-fixed-dim);
+}
+
+.profile-achievement-card__earned {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--p-on-surface-muted);
+  text-align: right;
+}
+
+.profile-achievements__show-all {
+  align-self: center;
+  background: rgba(30, 32, 32, 0.4);
+  border: 1px solid rgba(73, 68, 85, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  min-height: 2.75rem;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--p-on-surface);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.profile-achievements__show-all:hover {
+  border-color: rgba(205, 189, 255, 0.5);
+  background: rgba(205, 189, 255, 0.05);
+}
+
+.profile-achievements__empty {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.875rem;
+  color: var(--p-on-surface-variant);
+  padding: 2rem 0;
+  text-align: center;
+  width: 100%;
+}
+
+@keyframes profile-achievements-skeleton {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.profile-achievements__skeleton-card {
+  height: 8rem;
+  border-radius: 0.75rem;
+  background: rgba(30, 32, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  animation: profile-achievements-skeleton 1.5s ease-in-out infinite;
+}
+
 /* ── Focus states ── */
 .profile-tabs__tab:focus-visible,
 .profile-section__action:focus-visible,
 .profile-dna-card:focus-visible,
-button.profile-tier-card:focus-visible {
+button.profile-tier-card:focus-visible,
+.profile-achievements__filter:focus-visible,
+.profile-achievements__show-all:focus-visible {
   outline: 2px solid var(--p-primary);
   outline-offset: 2px;
 }
