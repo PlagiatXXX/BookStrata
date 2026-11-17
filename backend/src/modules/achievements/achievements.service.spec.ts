@@ -108,6 +108,122 @@ describe("Achievements Service", () => {
     });
   });
 
+  describe("getUserAchievements — прогресс", () => {
+    // Счётчики пользователя: 12 книг, 7 лайков, 2 рецензии, 4 тир-листа, 3 битвы
+    const mkAchievement = (
+      id: string,
+      opts: { isSecret?: boolean; earned?: boolean } = {},
+    ) => ({
+      id,
+      title: `title-${id}`,
+      description: `desc-${id}`,
+      iconUrl: null,
+      xpValue: 10,
+      isSecret: opts.isSecret ?? false,
+      users: opts.earned ? [{ earnedAt: new Date("2026-01-01T00:00:00Z") }] : [],
+    });
+
+    async function run(): Promise<Record<string, any>> {
+      (prisma.bookPlacement.count as any).mockResolvedValue(12);
+      (prisma.tierListLike.count as any).mockResolvedValue(7);
+      (prisma.book.count as any).mockResolvedValue(2);
+      (prisma.tierList.count as any).mockResolvedValue(4);
+      (prisma.battleParticipant.count as any).mockResolvedValue(3);
+      (prisma.achievement.findMany as any).mockResolvedValue([
+        mkAchievement("bookworm_2", { earned: true }),
+        mkAchievement("bookworm_3"),
+        mkAchievement("secret_night", { isSecret: true }),
+        mkAchievement("first_tier_list"),
+        mkAchievement("popular_1"),
+        mkAchievement("critic_1"),
+        mkAchievement("curator_1"),
+        mkAchievement("fighter_1"),
+        mkAchievement("battle_participant"),
+        mkAchievement("explorer"),
+        mkAchievement("battle_winner"),
+        mkAchievement("secret_speed", { isSecret: true, earned: true }),
+        mkAchievement("fighter_3"),
+      ]);
+
+      const result = await service.getUserAchievements(1);
+      return Object.fromEntries(result.map((a: any) => [a.id, a]));
+    }
+
+    it("полученному достижению прогресс не отдаётся", async () => {
+      const byId = await run();
+      expect(byId.bookworm_2.progress).toBeNull();
+    });
+
+    it("bookworm_3: { current: 12, target: 15 }", async () => {
+      const byId = await run();
+      expect(byId.bookworm_3.progress).toEqual({ current: 12, target: 15 });
+    });
+
+    it("нераскрытое секретное — progress: null", async () => {
+      const byId = await run();
+      expect(byId.secret_night.progress).toBeNull();
+    });
+
+    it("полученное секретное — progress: null", async () => {
+      const byId = await run();
+      expect(byId.secret_speed.progress).toBeNull();
+    });
+
+    it("first_tier_list — progress: null (условие не выражается числом)", async () => {
+      const byId = await run();
+      expect(byId.first_tier_list.progress).toBeNull();
+    });
+
+    it("popular_1: { current: 7, target: 10 }", async () => {
+      const byId = await run();
+      expect(byId.popular_1.progress).toEqual({ current: 7, target: 10 });
+    });
+
+    it("critic_1: { current: 2, target: 3 }", async () => {
+      const byId = await run();
+      expect(byId.critic_1.progress).toEqual({ current: 2, target: 3 });
+    });
+
+    it("curator_1: { current: 4, target: 1 }", async () => {
+      const byId = await run();
+      expect(byId.curator_1.progress).toEqual({ current: 4, target: 1 });
+    });
+
+    it("fighter_1 и battle_participant: { current: 3, target: 1 }", async () => {
+      const byId = await run();
+      expect(byId.fighter_1.progress).toEqual({ current: 3, target: 1 });
+      expect(byId.battle_participant.progress).toEqual({ current: 3, target: 1 });
+    });
+
+    it("explorer и battle_winner — progress: null", async () => {
+      const byId = await run();
+      expect(byId.explorer.progress).toBeNull();
+      expect(byId.battle_winner.progress).toBeNull();
+    });
+
+    it("fighter_3 (нет в таблице прогресса спеки §7.3) — progress: null", async () => {
+      const byId = await run();
+      expect(byId.fighter_3.progress).toBeNull();
+    });
+
+    it("счётчики считаются одним batch — по одному вызову на метрику", async () => {
+      await run();
+      expect(prisma.bookPlacement.count).toHaveBeenCalledTimes(1);
+      expect(prisma.tierListLike.count).toHaveBeenCalledTimes(1);
+      expect(prisma.book.count).toHaveBeenCalledTimes(1);
+      expect(prisma.tierList.count).toHaveBeenCalledTimes(1);
+      expect(prisma.battleParticipant.count).toHaveBeenCalledTimes(1);
+    });
+
+    it("progress добавляется поверх существующего контракта (isEarned, earnedAt, маскировка секретных)", async () => {
+      const byId = await run();
+      expect(byId.bookworm_2.isEarned).toBe(true);
+      expect(byId.bookworm_2.earnedAt).toEqual(new Date("2026-01-01T00:00:00Z"));
+      expect(byId.secret_night.title).toBe("Секретное достижение");
+      expect(byId.secret_night.description).toBe("???");
+    });
+  });
+
   describe("getUserPublicAchievements", () => {
     const mockAchievement = {
       id: "bookworm_1",

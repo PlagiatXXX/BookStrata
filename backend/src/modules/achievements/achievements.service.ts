@@ -38,6 +38,61 @@ export const USER_TITLES = [
 ];
 
 /**
+ * Карта прогресса достижений по спецификации §7.3.
+ * Достижения без записи здесь (секретные, first_tier_list, explorer,
+ * battle_winner, fighter_3/4) прогресс не получают.
+ */
+type ProgressMetricKey = 'books' | 'likes' | 'reviews' | 'tierLists' | 'battles';
+
+const ACHIEVEMENT_PROGRESS: Partial<Record<AchievementId, { metric: ProgressMetricKey; target: number }>> = {
+  bookworm_1: { metric: 'books', target: 1 },
+  bookworm_2: { metric: 'books', target: 5 },
+  bookworm_3: { metric: 'books', target: 15 },
+  bookworm_4: { metric: 'books', target: 50 },
+  bookworm_5: { metric: 'books', target: 100 },
+  popular_1: { metric: 'likes', target: 10 },
+  popular_2: { metric: 'likes', target: 50 },
+  popular_3: { metric: 'likes', target: 200 },
+  popular_4: { metric: 'likes', target: 1000 },
+  popular_author_10: { metric: 'likes', target: 10 },
+  critic_1: { metric: 'reviews', target: 3 },
+  critic_2: { metric: 'reviews', target: 10 },
+  critic_3: { metric: 'reviews', target: 30 },
+  critic_4: { metric: 'reviews', target: 100 },
+  critic: { metric: 'reviews', target: 1 },
+  curator_1: { metric: 'tierLists', target: 1 },
+  curator_2: { metric: 'tierLists', target: 5 },
+  curator_3: { metric: 'tierLists', target: 20 },
+  fighter_1: { metric: 'battles', target: 1 },
+  fighter_2: { metric: 'battles', target: 10 },
+  battle_participant: { metric: 'battles', target: 1 },
+};
+
+/**
+ * Текущие значения метрик для расчёта прогресса — одним batch (Promise.all).
+ * Условия совпадают с checkAchievements / syncUserAchievements этого файла.
+ */
+async function loadProgressCounters(userId: number): Promise<Record<ProgressMetricKey, number>> {
+  const [books, likes, reviews, tierLists, battles] = await Promise.all([
+    prisma.bookPlacement.count({ where: { tierList: { userId } } }),
+    prisma.tierListLike.count({ where: { tierList: { userId } } }),
+    prisma.book.count({
+      where: {
+        placements: {
+          some: {
+            tierList: { userId },
+            AND: [{ thoughts: { not: null } }, { thoughts: { not: '' } }],
+          },
+        },
+      },
+    }),
+    prisma.tierList.count({ where: { userId } }),
+    prisma.battleParticipant.count({ where: { tierList: { userId } } }),
+  ]);
+  return { books, likes, reviews, tierLists, battles };
+}
+
+/**
  * Получить все достижения пользователя
  */
 export async function getUserAchievements(userId: number) {
@@ -51,6 +106,8 @@ export async function getUserAchievements(userId: number) {
     orderBy: { xpValue: "asc" },
   });
 
+  const counters = await loadProgressCounters(userId);
+
   return allAchievements.map((achievement) => {
     const userEarned = achievement.users[0];
     const isEarned = !!userEarned;
@@ -58,6 +115,12 @@ export async function getUserAchievements(userId: number) {
 
     const { users: _users, ...rest } = achievement;
     void _users;
+
+    const progressConfig = ACHIEVEMENT_PROGRESS[achievement.id as AchievementId];
+    const progress =
+      !isEarned && progressConfig
+        ? { current: counters[progressConfig.metric], target: progressConfig.target }
+        : null;
 
     return {
       ...rest,
@@ -69,6 +132,7 @@ export async function getUserAchievements(userId: number) {
         achievement.isSecret && !isEarned ? "???" : achievement.description,
       isEarned,
       earnedAt,
+      progress,
     };
   });
 }
