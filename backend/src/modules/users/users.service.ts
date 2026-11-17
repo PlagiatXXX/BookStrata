@@ -193,6 +193,15 @@ export async function getUserById(params: { id: string }) {
       avatarUrl: true,
       bio: true,
       socialLinks: true,
+      genrePreferences: true,
+      readingDna: {
+        select: {
+          archetypeName: true,
+          archetypeDesc: true,
+          motto: true,
+          ticketNumber: true,
+        },
+      },
       xp: true,
       title: true,
       isDonor: true,
@@ -226,12 +235,30 @@ export async function getUserById(params: { id: string }) {
 
   const titleEntry = getTitleEntryByXP(user.xp);
 
+  // Жанры: мусор из JSON-поля отбрасываем по каноническому списку (см. genreTaxonomy).
+  const rawGenres = user.genrePreferences;
+  const genrePreferences = Array.isArray(rawGenres)
+    ? rawGenres.filter((v): v is CategoryId => typeof v === "string" && isCategoryId(v))
+    : [];
+
+  // ДНК чтения: только публичные поля, без customName и осей.
+  const dna = user.readingDna
+    ? {
+        archetypeName: user.readingDna.archetypeName,
+        archetypeDesc: user.readingDna.archetypeDesc,
+        motto: user.readingDna.motto,
+        ticketNumber: user.readingDna.ticketNumber,
+      }
+    : null;
+
   return {
     id: user.id,
     username: user.username,
     avatarUrl: user.avatarUrl,
     bio: user.bio,
     socialLinks: user.socialLinks,
+    genrePreferences,
+    dna,
     xp: user.xp,
     title: user.title,
     icon: titleEntry.icon,

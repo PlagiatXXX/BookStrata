@@ -444,6 +444,10 @@ describe("users.service", () => {
            avatarUrl: true,
            bio: true,
            socialLinks: true,
+           genrePreferences: true,
+           readingDna: {
+             select: { archetypeName: true, archetypeDesc: true, motto: true, ticketNumber: true },
+           },
            xp: true,
            title: true,
            isDonor: true,
@@ -464,12 +468,14 @@ describe("users.service", () => {
         avatarUrl: "https://example.com/avatar.jpg",
         bio: null,
         socialLinks: null,
+        genrePreferences: [],
         xp: 150,
         title: "Книжный червь",
         icon: "📄",
         isDonor: true,
         role: "admin",
         badges: [],
+        dna: null,
         createdAt: mockUser.createdAt,
         stats: {
           tierListsCount: 5,
@@ -479,6 +485,74 @@ describe("users.service", () => {
           lastActivity: expect.any(String),
         },
       });
+    });
+
+    it("неизвестные id в genrePreferences отбрасываются", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        genrePreferences: ["fantasy", "sci-fi", "unknown-id"],
+      });
+
+      const result = await userService.getUserById({ id: mockUserId });
+
+      expect(result.genrePreferences).toEqual(["fantasy", "sci-fi"]);
+    });
+
+    it("genrePreferences: null → пустой массив", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        genrePreferences: null,
+      });
+
+      const result = await userService.getUserById({ id: mockUserId });
+
+      expect(result.genrePreferences).toEqual([]);
+    });
+
+    it("при наличии readingDna отдаёт ровно 4 поля ДНК без customName и осей", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        readingDna: {
+          archetypeName: "Мечтатель",
+          archetypeDesc: "Любит длинные истории",
+          motto: "Читай или умри",
+          ticketNumber: "AB-000123",
+          customName: "Моё имя",
+          storyFocus: 80,
+          pace: 20,
+        },
+      });
+
+      const result = await userService.getUserById({ id: mockUserId });
+
+      expect(result.dna).toEqual({
+        archetypeName: "Мечтатель",
+        archetypeDesc: "Любит длинные истории",
+        motto: "Читай или умри",
+        ticketNumber: "AB-000123",
+      });
+    });
+
+    it("readingDna: null → dna: null", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        readingDna: null,
+      });
+
+      const result = await userService.getUserById({ id: mockUserId });
+
+      expect(result.dna).toBeNull();
+    });
+
+    it("публичный профиль не отдаёт email", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({
+        ...mockUser,
+        email: "secret@example.com",
+      });
+
+      const result = await userService.getUserById({ id: mockUserId });
+
+      expect(result).not.toHaveProperty("email");
     });
 
     it("должен бросить ошибку если пользователь не найден", async () => {
