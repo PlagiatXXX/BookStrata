@@ -23,7 +23,7 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-info() { echo -e "${CYAN}[reprerender]${NC} $1"; }
+info() { echo -e "${CYAN}[prerender]${NC} $1"; }
 ok()   { echo -e "${GREEN}[ ✓ ]${NC} $1"; }
 warn() { echo -e "${YELLOW}[ ! ]${NC} $1"; }
 err()  { echo -e "${RED}[ ✗ ]${NC} $1"; }
@@ -61,6 +61,26 @@ exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   warn "reprerender уже запущен (lock: $LOCK_FILE) — пропускаем"
   exit 0
+fi
+
+# ——— 2.5. Саморотация лога ———
+# cron запускает `... >> logs/reprerender.log 2>&1`, то есть stdout открыт
+# с O_APPEND на этот файл. Поэтому ротация делается через сжатие копии +
+# усечение (`: >`), а не mv: записи после усечения продолжатся с начала.
+LOG_FILE="${REPRERENDER_LOG:-$PROJECT_DIR/logs/reprerender.log}"
+LOG_MAX_BYTES="${REPRERENDER_LOG_MAX_BYTES:-52428800}" # 50 МБ
+LOG_KEEP_DAYS="${REPRERENDER_LOG_KEEP_DAYS:-30}"
+if [[ -f "$LOG_FILE" ]]; then
+  LOG_SIZE="$(wc -c < "$LOG_FILE" 2>/dev/null | tr -d '[:space:]')"
+  if [[ "${LOG_SIZE:-0}" =~ ^[0-9]+$ ]] && (( LOG_SIZE > LOG_MAX_BYTES )); then
+    ARCHIVE="${LOG_FILE%.log}.$(date +%Y%m%d-%H%M%S).log.gz"
+    if gzip -c "$LOG_FILE" > "$ARCHIVE" && : > "$LOG_FILE"; then
+      info "Лог ротирован: $ARCHIVE ($(( LOG_SIZE / 1048576 )) МБ → 0)"
+      find "$(dirname "$LOG_FILE")" -name '*.log.gz' -mtime +"$LOG_KEEP_DAYS" -delete 2>/dev/null || true
+    else
+      warn "Не удалось ротировать лог $LOG_FILE — продолжаем без ротации"
+    fi
+  fi
 fi
 
 # ——— 3. Health-check бэкенда ———

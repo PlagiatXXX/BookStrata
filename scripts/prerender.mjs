@@ -969,7 +969,6 @@ async function processRoute(browser, route) {
       try {
         if (req.url().includes('/api/') && !req.url().includes('/api/log')) {
           pendingApiRequests.set(req.url(), { method: req.method(), start: Date.now() });
-          log(`  🌐 Request: ${req.method()} ${req.url()}`);
         }
       } catch {
         // Игнорируем — страница/контекст могли быть уже закрыты
@@ -983,7 +982,11 @@ async function processRoute(browser, route) {
             let resp;
             try { resp = await req.response(); } catch { resp = null; }
             const status = resp ? resp.status() : 'no-resp';
-            log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
+            // Успешные ответы в лог не пишем: на полном прогоне их ~450k строк,
+            // это ~90% объёма лога. Оставляем только аномалии (не-200, без ответа).
+            if (!resp || status !== 200) {
+              log(`  🌐 Response: ${req.method()} ${req.url()} → ${status}`);
+            }
             if (!resp) {
               log(`  ⚠️  Response object is null — request was likely aborted or failed silently`);
             }
