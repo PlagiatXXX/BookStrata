@@ -5,30 +5,30 @@
 /* ── Scoped design tokens ── */
 .user-profile-page {
   /* Surfaces */
-  --p-bg: #040410;
-  --p-surface: #1e2020;
-  --p-surface-container: #1e2020;
-  --p-surface-container-low: #1a1c1c;
-  --p-surface-container-high: #282a2b;
-  --p-surface-container-highest: #333535;
+  --p-bg: #0f1020;
+  --p-surface: #1a1a2e;
+  --p-surface-container: #1a1a2e;
+  --p-surface-container-low: #151525;
+  --p-surface-container-high: #232340;
+  --p-surface-container-highest: #2a2a4a;
 
-  /* Primary (purple) */
-  --p-primary: #cdbdff;
-  --p-primary-container: #7c4dff;
+  /* Primary (amber) */
+  --p-primary: #fbbf24;
+  --p-primary-container: #fcd34d;
 
-  /* Secondary (gold) */
-  --p-secondary: #ffd799;
-  --p-secondary-container: #feb300;
-  --p-secondary-fixed-dim: #ffba38;
+  /* Secondary (pink) */
+  --p-secondary: #f9a8d4;
+  --p-secondary-container: #f472b6;
+  --p-secondary-fixed-dim: #f472b6;
 
   /* Text */
-  --p-on-surface: #e2e2e2;
-  --p-on-surface-variant: #cac3d8;
-  --p-on-surface-muted: rgba(226, 226, 226, 0.7);
+  --p-on-surface: #f1f1f5;
+  --p-on-surface-variant: #d4d6e4;
+  --p-on-surface-muted: rgba(241, 241, 245, 0.7);
 
   /* Outline */
-  --p-outline: #948ea1;
-  --p-outline-variant: #494455;
+  --p-outline: #a8aac0;
+  --p-outline-variant: rgba(255, 255, 255, 0.12);
 
   /* Error (moderator) */
   --p-error: #ffb4ab;
