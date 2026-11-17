@@ -32,6 +32,7 @@ const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const PricingPage = lazy(() => import("@/pages/PricingPage/PricingPage"));
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
+const CopyrightPage = lazy(() => import("@/pages/CopyrightPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const FaqPage = lazy(() => import("@/pages/FaqPage/FaqPage"));
 const HistoryPage = lazy(() => import("@/pages/HistoryPage"));
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
       },
       { path: "/privacy", element: <PrivacyPage /> },
       { path: "/terms", element: <TermsPage /> },
+      { path: "/copyright", element: <CopyrightPage /> },
       { path: "/about", element: <AboutPage /> },
       { path: "/faq", element: <FaqPage /> },
       { path: "/history", element: <HistoryPage /> },

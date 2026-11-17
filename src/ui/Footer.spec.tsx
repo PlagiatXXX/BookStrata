@@ -112,4 +112,29 @@ describe("Footer", () => {
       expect(mockedGetCollections).toHaveBeenCalled()
     })
   })
+
+  it("содержит ссылку на страницу для правообладателей /copyright в навигации", () => {
+    mockedGetDonors.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([])
+
+    renderFooter()
+
+    const copyrightLinks = screen.getAllByRole("link", { name: /Правообладателям/i })
+    expect(copyrightLinks.length).toBeGreaterThanOrEqual(1)
+    expect(copyrightLinks[0]).toHaveAttribute("href", "/copyright")
+  })
+
+  it("содержит сквозной дисклеймер со ст. 1274 ГК РФ и ссылкой на /copyright", () => {
+    mockedGetDonors.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([])
+
+    renderFooter()
+
+    expect(
+      screen.getByText(/Все права на представленные на сайте изображения обложек/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("link", { name: /Информация для правообладателей/i }),
+    ).toHaveAttribute("href", "/copyright")
+  })
 })

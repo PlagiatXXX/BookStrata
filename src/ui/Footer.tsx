@@ -18,6 +18,7 @@ import {
   BarChart3,
   BookOpen,
   Coffee,
+  Scale,
 } from "lucide-react";
 import { SocialIcons } from "./SocialIcons";
 import { CoffeeCup } from "./CoffeeCup";
@@ -74,11 +75,13 @@ const userLinks = [
   { href: "/faq", label: "Вопросы и ответы", analyticsKey: "faq", icon: <CircleHelp size={14} /> },
   { href: "/privacy", label: "Политика", analyticsKey: "privacy", icon: <ScrollText size={14} /> },
   { href: "/terms", label: "Условия", analyticsKey: "terms", icon: <Shield size={14} /> },
+  { href: "/copyright", label: "Правообладателям", analyticsKey: "copyright", icon: <Scale size={14} /> },
 ];
 
 const landingUserLinks: { label: string; analyticsKey: string; icon: React.ReactNode; href?: string; isExternal?: boolean }[] = [
   { href: "/privacy", label: "Политика конфиденциальности", analyticsKey: "privacy_policy", icon: <ScrollText size={14} /> },
   { href: "/terms", label: "Условия использования", analyticsKey: "terms_of_use", icon: <Shield size={14} /> },
+  { href: "/copyright", label: "Правообладателям", analyticsKey: "copyright", icon: <Scale size={14} /> },
   { href: "/about", label: "О проекте", analyticsKey: "about", icon: <Info size={14} /> },
   { href: "/contact", label: "Контакты", analyticsKey: "contact", icon: <HelpCircle size={14} /> },
   { href: "/faq", label: "Вопросы и ответы", analyticsKey: "faq", icon: <CircleHelp size={14} /> },
@@ -445,16 +448,25 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
           </div>
         )}
 
-        {/* Bottom: Copyright + Links */}
-        <div className="flex flex-col items-center gap-2 border-t border-white/6 pt-6">
-          <p className="text-[11px] text-white/50">
-            © {new Date().getFullYear()} BookStrata. Все права защищены.
+        {/* Bottom: Disclaimer + Copyright + Links */}
+        <div className="flex flex-col items-center text-center gap-3 border-t border-white/6 pt-6 max-w-4xl mx-auto">
+          <p className="text-[11px] leading-relaxed text-white/45">
+            Все права на представленные на сайте изображения обложек, названия и цитируемые материалы принадлежат их законным правообладателям. Материалы используются исключительно в информационных, культурных и ознакомительных целях в соответствии со ст. 1274 ГК РФ.{" "}
+            <Link to="/copyright" className="text-white/70 underline underline-offset-2 hover:text-white transition-colors">
+              Информация для правообладателей
+            </Link>
           </p>
-          <p className="text-[11px] text-white/50">
-            <Link to="/privacy" className="hover:text-white transition-colors">Политика конфиденциальности</Link>
-            {" | "}
-            <Link to="/terms" className="hover:text-white transition-colors">Условия использования</Link>
-          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-[11px] text-white/50">
+            <p>© {new Date().getFullYear()} BookStrata. Все права защищены.</p>
+            <span className="hidden sm:inline text-white/20">•</span>
+            <p className="flex items-center gap-2">
+              <Link to="/privacy" className="hover:text-white transition-colors">Политика конфиденциальности</Link>
+              <span>|</span>
+              <Link to="/terms" className="hover:text-white transition-colors">Условия использования</Link>
+              <span>|</span>
+              <Link to="/copyright" className="hover:text-white transition-colors">Правообладателям</Link>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

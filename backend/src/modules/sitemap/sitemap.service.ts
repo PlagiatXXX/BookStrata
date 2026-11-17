@@ -32,6 +32,7 @@ export async function generateSitemap(): Promise<string> {
     { url: `${SITE_URL}/authors`, priority: "0.7", changefreq: "weekly" },
     { url: `${SITE_URL}/privacy`, priority: "0.3", changefreq: "yearly" },
     { url: `${SITE_URL}/terms`, priority: "0.3", changefreq: "yearly" },
+    { url: `${SITE_URL}/copyright`, priority: "0.3", changefreq: "yearly" },
   ];
 
   const [newsArticles, tierLists] = await Promise.all([
