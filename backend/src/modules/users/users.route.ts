@@ -26,6 +26,7 @@ import {
   getGenrePreferences,
   setGenrePreferences,
 } from "./users.service.js";
+import { getUserPublicAchievements } from "../achievements/achievements.service.js";
 
 import type { SocialLink, BadgeColor } from "./users.service.js";
 import { authMiddleware } from "../auth/auth.middleware.js";
@@ -290,6 +291,17 @@ export async function userRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const user = await getUserById(request.params);
       return reply.code(200).send(createSuccessResponse(user));
+    },
+  );
+
+  // GET /api/users/:id/achievements — публичные достижения профиля (открыт всем, без авторизации)
+  // Только полученные достижения; полученные секретные отдаются, нераскрытые — нет
+  fastify.get<{ Params: { id: string } }>(
+    "/:id/achievements",
+    async (request, reply) => {
+      const userId = parseUserIdParam(request.params.id);
+      const achievements = await getUserPublicAchievements(userId);
+      return reply.code(200).send(createSuccessResponse(achievements));
     },
   );
 

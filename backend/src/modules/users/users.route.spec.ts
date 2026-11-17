@@ -32,6 +32,14 @@ vi.mock("./users.service.js", async (importOriginal) => {
   };
 });
 
+vi.mock("../achievements/achievements.service.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../achievements/achievements.service.js")>();
+  return {
+    ...actual,
+    getUserPublicAchievements: vi.fn(),
+  };
+});
+
 describe("Users Routes - ID Parameter Validation", () => {
   let app: FastifyInstance;
 
@@ -121,6 +129,45 @@ describe("Users Routes - ID Parameter Validation", () => {
 
     it("нечисловой id ('pavlova') → 404", async () => {
       const res = await app.inject({ method: "GET", url: "/api/users/pavlova/badges" });
+      expect(res.statusCode).toBe(404);
+      expect(res.json().error.code).toBe(ErrorCodes.NOT_FOUND);
+    });
+  });
+
+  describe("GET /api/users/:id/achievements", () => {
+    it("без авторизации, валидный id → 200 и массив достижений", async () => {
+      const { getUserPublicAchievements } = await import("../achievements/achievements.service.js");
+      (getUserPublicAchievements as any).mockResolvedValue([
+        {
+          id: "bookworm_1",
+          title: "Начинающий читатель",
+          description: "Добавить 1 книгу в тир-лист",
+          iconUrl: "🐛",
+          xpValue: 10,
+          earnedAt: "2026-01-15T10:00:00.000Z",
+        },
+      ]);
+
+      const res = await app.inject({ method: "GET", url: "/api/users/42/achievements" });
+      expect(res.statusCode).toBe(200);
+      const json = res.json();
+      expect(Array.isArray(json.data)).toBe(true);
+      expect(json.data).toHaveLength(1);
+      expect(json.data[0]).toMatchObject({ id: "bookworm_1", xpValue: 10 });
+    });
+
+    it("несуществующий пользователь → 404", async () => {
+      const { getUserPublicAchievements } = await import("../achievements/achievements.service.js");
+      const { NotFoundError } = await import("../../lib/errors.js");
+      (getUserPublicAchievements as any).mockRejectedValue(new NotFoundError("Пользователь не найден"));
+
+      const res = await app.inject({ method: "GET", url: "/api/users/999/achievements" });
+      expect(res.statusCode).toBe(404);
+      expect(res.json().error.code).toBe(ErrorCodes.NOT_FOUND);
+    });
+
+    it("нечисловой id ('pavlova') → 404", async () => {
+      const res = await app.inject({ method: "GET", url: "/api/users/pavlova/achievements" });
       expect(res.statusCode).toBe(404);
       expect(res.json().error.code).toBe(ErrorCodes.NOT_FOUND);
     });

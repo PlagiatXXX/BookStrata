@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as service from "./achievements.service.js";
 import { prisma } from "../../lib/prisma.js";
+import { NotFoundError } from "../../lib/errors.js";
 
 vi.mock("../../lib/prisma.js", () => ({
   prisma: {
@@ -11,10 +12,12 @@ vi.mock("../../lib/prisma.js", () => ({
     },
     userAchievement: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
     },
     user: {
       update: vi.fn(),
+      findUnique: vi.fn(),
     },
     tierList: {
       count: vi.fn(),
@@ -102,6 +105,86 @@ describe("Achievements Service", () => {
       const results = await service.processAction(1, 'create_tier_list');
       expect(results.some(a => a.id === 'curator_1')).toBe(true);
       expect(results.some(a => a.id === 'first_tier_list')).toBe(true);
+    });
+  });
+
+  describe("getUserPublicAchievements", () => {
+    const mockAchievement = {
+      id: "bookworm_1",
+      title: "Начинающий читатель",
+      description: "Добавить 1 книгу в тир-лист",
+      iconUrl: "🐛",
+      xpValue: 10,
+      isSecret: false,
+    };
+
+    it("возвращает только достижения с записью UserAchievement (плоский формат)", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({ id: 1 });
+      (prisma.userAchievement.findMany as any).mockResolvedValue([
+        { achievement: mockAchievement, earnedAt: new Date("2026-01-15T10:00:00Z") },
+      ]);
+
+      const result = await service.getUserPublicAchievements(1);
+
+      expect(result).toEqual([
+        {
+          id: "bookworm_1",
+          title: "Начинающий читатель",
+          description: "Добавить 1 книгу в тир-лист",
+          iconUrl: "🐛",
+          xpValue: 10,
+          earnedAt: "2026-01-15T10:00:00.000Z",
+        },
+      ]);
+      expect(prisma.userAchievement.findMany).toHaveBeenCalledWith({
+        where: { userId: 1 },
+        include: { achievement: true },
+        orderBy: { earnedAt: "desc" },
+      });
+    });
+
+    it("нераскрытое секретное (isSecret, нет записи) отсутствует, полученное секретное присутствует", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({ id: 1 });
+      // Prisma по конструкции возвращает только записи UserAchievement:
+      // secret_speed получен, secret_lucky — нет (записи нет)
+      (prisma.userAchievement.findMany as any).mockResolvedValue([
+        {
+          achievement: { ...mockAchievement, id: "secret_speed", title: "Скорочтение", isSecret: true },
+          earnedAt: new Date("2026-02-01T12:00:00Z"),
+        },
+      ]);
+
+      const result = await service.getUserPublicAchievements(1);
+
+      expect(result).toHaveLength(1);
+      const revealed = result[0] as any;
+      expect(revealed.id).toBe("secret_speed");
+      expect(revealed.title).toBe("Скорочтение");
+      expect(revealed.description).not.toBe("???");
+      // Сервис не запрашивает все достижения — нераскрытые секретные не могут попасть в ответ
+      expect(prisma.achievement.findMany).not.toHaveBeenCalled();
+    });
+
+    it("earnedAt — ISO-строка, iconUrl прокидывается", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue({ id: 1 });
+      (prisma.userAchievement.findMany as any).mockResolvedValue([
+        {
+          achievement: { ...mockAchievement, iconUrl: null },
+          earnedAt: new Date("2026-03-05T08:30:00Z"),
+        },
+      ]);
+
+      const result = await service.getUserPublicAchievements(1);
+
+      expect(typeof (result[0] as any).earnedAt).toBe("string");
+      expect((result[0] as any).earnedAt).toBe("2026-03-05T08:30:00.000Z");
+      expect((result[0] as any).iconUrl).toBeNull();
+    });
+
+    it("несуществующий пользователь → NotFoundError", async () => {
+      (prisma.user.findUnique as any).mockResolvedValue(null);
+
+      await expect(service.getUserPublicAchievements(999)).rejects.toThrow(NotFoundError);
     });
   });
 });

@@ -2,6 +2,7 @@ import { prisma } from "../../lib/prisma.js";
 import { createLogger } from "../../lib/logger.js";
 import { tierListRepository } from "../../repositories/index.js";
 import { registerModule } from "../../lib/module-loader.js";
+import { NotFoundError } from "../../lib/errors.js";
 
 const logger = createLogger("Achievements", { color: "yellow" });
 
@@ -70,6 +71,36 @@ export async function getUserAchievements(userId: number) {
       earnedAt,
     };
   });
+}
+
+/**
+ * Получить публичный список полученных достижений пользователя (для чужих профилей).
+ * Записи UserAchievement существуют только для полученных достижений, поэтому
+ * нераскрытые секретные в выборку не попадают by construction.
+ */
+export async function getUserPublicAchievements(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+  if (!user) {
+    throw new NotFoundError("Пользователь не найден");
+  }
+
+  const userAchievements = await prisma.userAchievement.findMany({
+    where: { userId },
+    include: { achievement: true },
+    orderBy: { earnedAt: "desc" },
+  });
+
+  return userAchievements.map((userAchievement) => ({
+    id: userAchievement.achievement.id,
+    title: userAchievement.achievement.title,
+    description: userAchievement.achievement.description,
+    iconUrl: userAchievement.achievement.iconUrl,
+    xpValue: userAchievement.achievement.xpValue,
+    earnedAt: userAchievement.earnedAt.toISOString(),
+  }));
 }
 
 /**
