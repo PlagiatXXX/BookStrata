@@ -123,8 +123,18 @@ export function DnaIntroSection({
 
         <div className="relative z-10 w-full space-y-4 sm:space-y-6 text-left">
           {/* Бейдж без эмодзи */}
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold tracking-wide border uppercase bg-amber-500/15 border-amber-500/30 text-amber-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+          <div
+            className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold tracking-wide border uppercase ${
+              isDark
+                ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                : "bg-amber-100 border-amber-300 text-amber-900"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                isDark ? "bg-amber-400" : "bg-amber-700"
+              }`}
+            />
             Интерактивный спецпроект BookStrata
           </div>
 
@@ -138,7 +148,7 @@ export function DnaIntroSection({
 
           <p
             className={`text-xs sm:text-base md:text-lg leading-relaxed ${
-              isDark ? "text-amber-200/75" : "text-[#6f6553]"
+              isDark ? "text-amber-200/75" : "text-[#423d33]"
             }`}
           >
             Расшифруйте свой литературный вкус по 6 осям, откройте свой архетип из 4 великих
@@ -155,10 +165,14 @@ export function DnaIntroSection({
                   : "bg-white/80 border-[#d8c7a5]/60 text-[#2e2a24]"
               }`}
             >
-              <div className="text-amber-500 font-bold text-xs sm:text-sm mb-1 flex items-center gap-1.5">
+              <div
+                className={`font-bold text-xs sm:text-sm mb-1 flex items-center gap-1.5 ${
+                  isDark ? "text-amber-400" : "text-amber-800"
+                }`}
+              >
                 <CheckCircle2 size={15} className="shrink-0" /> 6 дилемм вкуса
               </div>
-              <p className={`text-[11px] sm:text-xs leading-relaxed ${isDark ? "text-amber-200/60" : "text-[#6f6553]"}`}>
+              <p className={`text-[11px] sm:text-xs leading-relaxed ${isDark ? "text-amber-200/60" : "text-[#423d33]"}`}>
                 Никаких скучных тестов: честные дилеммы вашего настоящего опыта чтения
               </p>
             </div>
@@ -170,10 +184,14 @@ export function DnaIntroSection({
                   : "bg-white/80 border-[#d8c7a5]/60 text-[#2e2a24]"
               }`}
             >
-              <div className="text-amber-500 font-bold text-xs sm:text-sm mb-1 flex items-center gap-1.5">
+              <div
+                className={`font-bold text-xs sm:text-sm mb-1 flex items-center gap-1.5 ${
+                  isDark ? "text-amber-400" : "text-amber-800"
+                }`}
+              >
                 <CheckCircle2 size={15} className="shrink-0" /> 16 редких архетипов
               </div>
-              <p className={`text-[11px] sm:text-xs leading-relaxed ${isDark ? "text-amber-200/60" : "text-[#6f6553]"}`}>
+              <p className={`text-[11px] sm:text-xs leading-relaxed ${isDark ? "text-amber-200/60" : "text-[#423d33]"}`}>
                 4 великих Ордена с распределением по канонической матрице предпочтений
               </p>
             </div>
@@ -185,10 +203,14 @@ export function DnaIntroSection({
                   : "bg-white/80 border-[#d8c7a5]/60 text-[#2e2a24]"
               }`}
             >
-              <div className="text-amber-500 font-bold text-xs sm:text-sm mb-1 flex items-center gap-1.5">
+              <div
+                className={`font-bold text-xs sm:text-sm mb-1 flex items-center gap-1.5 ${
+                  isDark ? "text-amber-400" : "text-amber-800"
+                }`}
+              >
                 <CheckCircle2 size={15} className="shrink-0" /> Сравнение вкусов
               </div>
-              <p className={`text-[11px] sm:text-xs leading-relaxed ${isDark ? "text-amber-200/60" : "text-[#6f6553]"}`}>
+              <p className={`text-[11px] sm:text-xs leading-relaxed ${isDark ? "text-amber-200/60" : "text-[#423d33]"}`}>
                 Сравнение радаров читательского вкуса, поиск книжных близнецов и вычисление криптонита
               </p>
             </div>
@@ -234,7 +256,7 @@ export function DnaIntroSection({
           </h2>
           <p
             className={`text-xs sm:text-base max-w-2xl mx-auto ${
-              isDark ? "text-amber-200/70" : "text-[#6f6553]"
+              isDark ? "text-amber-200/70" : "text-[#423d33]"
             }`}
           >
             Без скучных школьных опросников. Только честные дилеммы вашего настоящего читательского опыта.
@@ -250,11 +272,17 @@ export function DnaIntroSection({
                 : "bg-[#fffdf7] border-[#d8c7a5] text-[#2e2a24] shadow-sm"
             }`}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center font-bold text-base sm:text-lg mb-3 sm:mb-4">
+            <div
+              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center font-bold text-base sm:text-lg mb-3 sm:mb-4 border ${
+                isDark
+                  ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                  : "bg-amber-100 border-amber-300 text-amber-900"
+              }`}
+            >
               1
             </div>
             <h3 className="text-sm sm:text-lg font-bold mb-1.5 sm:mb-2">6 вопросов с дилеммами</h3>
-            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-amber-200/70" : "text-[#6f6553]"}`}>
+            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-amber-200/70" : "text-[#423d33]"}`}>
               Никаких правильных или неправильных ответов. Выбирайте то, что ближе вам: динамичный сюжет
               или медитативный слог, уютная романтика или леденящий психологический триллер.
             </p>
@@ -268,11 +296,17 @@ export function DnaIntroSection({
                 : "bg-[#fffdf7] border-[#d8c7a5] text-[#2e2a24] shadow-sm"
             }`}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center font-bold text-base sm:text-lg mb-3 sm:mb-4">
+            <div
+              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center font-bold text-base sm:text-lg mb-3 sm:mb-4 border ${
+                isDark
+                  ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                  : "bg-amber-100 border-amber-300 text-amber-900"
+              }`}
+            >
               2
             </div>
             <h3 className="text-sm sm:text-lg font-bold mb-1.5 sm:mb-2">16 архетипов и билет</h3>
-            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-amber-200/70" : "text-[#6f6553]"}`}>
+            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-amber-200/70" : "text-[#423d33]"}`}>
               Алгоритм рассчитывает баланс 6 осей, распределяет вас в один из 4 великих Орденов и
               создаёт именной архивный читательский билет с уникальным номером и персональным литературным криптонитом.
             </p>
@@ -286,11 +320,17 @@ export function DnaIntroSection({
                 : "bg-[#fffdf7] border-[#d8c7a5] text-[#2e2a24] shadow-sm"
             }`}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center font-bold text-base sm:text-lg mb-3 sm:mb-4">
+            <div
+              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center font-bold text-base sm:text-lg mb-3 sm:mb-4 border ${
+                isDark
+                  ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
+                  : "bg-amber-100 border-amber-300 text-amber-900"
+              }`}
+            >
               3
             </div>
             <h3 className="text-sm sm:text-lg font-bold mb-1.5 sm:mb-2">Сравнение вкусов</h3>
-            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-amber-200/70" : "text-[#6f6553]"}`}>
+            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-amber-200/70" : "text-[#423d33]"}`}>
               Отправьте ссылку другу или введите его номер билета: система наложит ваши радары,
               рассчитает процент совместимости и проверит литературный криптонит.
             </p>
@@ -310,7 +350,7 @@ export function DnaIntroSection({
           </h2>
           <p
             className={`text-xs sm:text-base max-w-2xl mx-auto ${
-              isDark ? "text-amber-200/70" : "text-[#6f6553]"
+              isDark ? "text-amber-200/70" : "text-[#423d33]"
             }`}
           >
             Каждый читатель уникален. Ваш Книжный ДНК раскладывается на 6 ключевых координат.
@@ -328,16 +368,26 @@ export function DnaIntroSection({
               }`}
             >
               <div className="flex items-center justify-between pb-1.5 sm:pb-2 border-b border-amber-500/15 mb-2 sm:mb-3">
-                <span className="font-bold text-xs sm:text-sm text-amber-500 uppercase tracking-wider">
+                <span
+                  className={`font-bold text-xs sm:text-sm uppercase tracking-wider ${
+                    isDark ? "text-amber-400" : "text-amber-800"
+                  }`}
+                >
                   Ось {i + 1}: {axis.title}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[11px] sm:text-xs font-semibold mb-2">
-                <span className="text-left text-amber-600 dark:text-amber-400">{axis.left}</span>
-                <span className="text-xs opacity-40 px-1 sm:px-2">↔</span>
-                <span className="text-right text-amber-600 dark:text-amber-400">{axis.right}</span>
+                <span className={`text-left font-semibold ${isDark ? "text-amber-300" : "text-amber-900"}`}>
+                  {axis.left}
+                </span>
+                <span className={`text-xs px-1 sm:px-2 ${isDark ? "text-amber-400/50" : "text-amber-900/40"}`}>
+                  ↔
+                </span>
+                <span className={`text-right font-semibold ${isDark ? "text-amber-300" : "text-amber-900"}`}>
+                  {axis.right}
+                </span>
               </div>
-              <p className={`text-[11px] sm:text-xs leading-relaxed ${isDark ? "text-amber-200/70" : "text-[#6f6553]"}`}>
+              <p className={`text-[11px] sm:text-xs leading-relaxed ${isDark ? "text-amber-200/70" : "text-[#423d33]"}`}>
                 {axis.desc}
               </p>
             </div>
@@ -357,7 +407,7 @@ export function DnaIntroSection({
           </h2>
           <p
             className={`text-xs sm:text-base max-w-2xl mx-auto ${
-              isDark ? "text-amber-200/70" : "text-[#6f6553]"
+              isDark ? "text-amber-200/70" : "text-[#423d33]"
             }`}
           >
             В какой Орден определит вас алгоритм? Нажмите на Орден, чтобы посмотреть его архетипы:
@@ -377,14 +427,26 @@ export function DnaIntroSection({
                   isSelected
                     ? isDark
                       ? "bg-amber-950/60 border-amber-500 text-amber-100 shadow-md shadow-amber-950/50 scale-[1.01]"
-                      : "bg-[#f5ecdc] border-amber-600 text-[#2e2a24] shadow-sm scale-[1.01]"
+                      : "bg-[#f5ecdc] border-amber-700 text-[#2e2a24] shadow-sm scale-[1.01]"
                     : isDark
-                    ? "bg-[#23170e]/60 border-amber-900/30 text-amber-200/60 hover:text-amber-200 hover:bg-amber-950/30"
-                    : "bg-[#fffdf7] border-[#e2d5bc] text-[#6f6553] hover:text-[#2e2a24] hover:bg-[#faf4e8]"
+                    ? "bg-[#23170e]/60 border-amber-900/30 text-amber-200/75 hover:text-amber-100 hover:bg-amber-950/30"
+                    : "bg-[#fffdf7] border-[#d8c7a5] text-[#2e2a24] hover:bg-[#faf4e8]"
                 }`}
               >
                 <div className="text-xs sm:text-sm font-bold leading-tight">{caste.name}</div>
-                <div className="text-[10px] sm:text-[11px] opacity-75 mt-0.5 line-clamp-1">{caste.subtitle}</div>
+                <div
+                  className={`text-[10px] sm:text-[11px] mt-0.5 line-clamp-1 ${
+                    isSelected
+                      ? isDark
+                        ? "text-amber-200/85"
+                        : "text-[#4a4235]"
+                      : isDark
+                      ? "text-amber-200/65"
+                      : "text-[#574f42]"
+                  }`}
+                >
+                  {caste.subtitle}
+                </div>
               </button>
             );
           })}
@@ -399,10 +461,10 @@ export function DnaIntroSection({
               className={`p-3 sm:p-4 rounded-xl border text-xs sm:text-sm leading-relaxed ${
                 isDark
                   ? "bg-amber-950/20 border-amber-900/40 text-amber-200/80"
-                  : "bg-[#faf4e8] border-[#e2d5bc] text-[#6f6553]"
+                  : "bg-[#faf4e8] border-[#e2d5bc] text-[#3d3830]"
               }`}
             >
-              <strong className="text-amber-500 font-semibold">{currentCaste.name}: </strong>
+              <strong className={`font-bold ${isDark ? "text-amber-400" : "text-amber-900"}`}>{currentCaste.name}: </strong>
               {currentCaste.description}
             </div>
           );
@@ -420,22 +482,42 @@ export function DnaIntroSection({
               }`}
             >
               <div className="flex items-center justify-between pb-1.5 sm:pb-2 border-b border-amber-500/15 mb-2">
-                <span className="text-[10px] sm:text-xs font-mono font-bold text-amber-500">
+                <span
+                  className={`text-[10px] sm:text-xs font-mono font-bold ${
+                    isDark ? "text-amber-400" : "text-amber-800"
+                  }`}
+                >
                   №{arch.number}
                 </span>
-                <span className="text-[10px] sm:text-[11px] opacity-60">Редкость: {arch.rarity}/10</span>
+                <span
+                  className={`text-[10px] sm:text-[11px] font-medium ${
+                    isDark ? "text-amber-200/75" : "text-[#574f42]"
+                  }`}
+                >
+                  Редкость: {arch.rarity}/10
+                </span>
               </div>
 
-              <div className="text-sm sm:text-base font-bold text-amber-400 mb-1">
+              <div
+                className={`text-sm sm:text-base font-bold mb-1 ${
+                  isDark ? "text-amber-300" : "text-amber-900"
+                }`}
+              >
                 {isDark ? arch.names.dark : arch.names.craft}
               </div>
 
-              <p className={`text-xs leading-relaxed mb-2 sm:mb-3 ${isDark ? "text-amber-200/70" : "text-[#6f6553]"}`}>
+              <p className={`text-xs leading-relaxed mb-2 sm:mb-3 ${isDark ? "text-amber-200/70" : "text-[#423d33]"}`}>
                 {arch.description}
               </p>
 
               {arch.quote && (
-                <p className="text-[11px] sm:text-xs italic opacity-75 border-l-2 border-amber-500/40 pl-2 sm:pl-2.5 py-0.5">
+                <p
+                  className={`text-[11px] sm:text-xs italic border-l-2 pl-2 sm:pl-2.5 py-0.5 ${
+                    isDark
+                      ? "border-amber-500/40 text-amber-200/80"
+                      : "border-amber-600/50 text-[#423d33]"
+                  }`}
+                >
                   «{arch.quote.replace(/^[«"“\s]+|[»"”\s]+$/g, "")}»
                 </p>
               )}
@@ -454,12 +536,18 @@ export function DnaIntroSection({
       >
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-center">
           <div className="md:col-span-8 space-y-2 sm:space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] sm:text-xs font-bold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30">
+            <div
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] sm:text-xs font-bold uppercase tracking-wider border ${
+                isDark
+                  ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
+                  : "bg-rose-100 text-rose-900 border-rose-300"
+              }`}
+            >
               <Swords size={12} />
               Резонанс вкусов
             </div>
             <h2 className="text-lg sm:text-2xl font-bold">Сравнение читательских вкусов и криптонит</h2>
-            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-amber-200/75" : "text-[#6f6553]"}`}>
+            <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? "text-amber-200/75" : "text-[#423d33]"}`}>
               Хотите узнать, насколько совпадают ваши книжные ориентиры с другом или книжным блогером?
               Сравнение накладывает радары обоих читателей, вычисляет процент совпадения и активирует
               штраф за «криптонит» — книгу или жанр, который один обожает, а второй органически не переносит.
@@ -469,7 +557,11 @@ export function DnaIntroSection({
             <button
               type="button"
               onClick={onOpenDuel}
-              className="w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all border cursor-pointer border-amber-500/50 hover:bg-amber-500/10 text-amber-400 flex items-center justify-center gap-2"
+              className={`w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all border cursor-pointer flex items-center justify-center gap-2 ${
+                isDark
+                  ? "border-amber-500/50 hover:bg-amber-500/10 text-amber-400"
+                  : "border-amber-700/80 hover:bg-amber-100/60 text-amber-900 font-semibold"
+              }`}
             >
               <Swords size={16} />
               <span>Сравнить читательские вкусы</span>
@@ -490,7 +582,7 @@ export function DnaIntroSection({
         </h2>
         <p
           className={`text-xs sm:text-base max-w-xl mx-auto ${
-            isDark ? "text-amber-200/70" : "text-[#6f6553]"
+            isDark ? "text-amber-200/70" : "text-[#423d33]"
           }`}
         >
           Всего 6 вопросов отделяют вас от персонального билета и посвящения в Орден.
