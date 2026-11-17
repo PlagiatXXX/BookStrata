@@ -120,19 +120,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "/reading-dna",
-        element: (
-          <AdminGuard>
-            <ReadingDnaPage />
-          </AdminGuard>
-        ),
+        element: <ReadingDnaPage />,
       },
       {
         path: "/reading-dna/duel",
-        element: (
-          <AdminGuard>
-            <ReadingDnaPage />
-          </AdminGuard>
-        ),
+        element: <ReadingDnaPage />,
       },
       {
         path: "/admin/news",

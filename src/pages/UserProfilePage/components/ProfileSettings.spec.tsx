@@ -159,7 +159,6 @@ describe("ProfileSettings", () => {
       }),
     );
     expect(m.onAvatar).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("avatar-selector")).toBeInTheDocument();
   });
 
   it("пароль вызывает togglePasswordForm и показывает форму", () => {

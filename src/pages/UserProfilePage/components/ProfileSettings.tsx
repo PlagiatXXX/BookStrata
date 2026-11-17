@@ -5,7 +5,6 @@ import { useUser } from "@/hooks/useUser";
 import { useProfileActions } from "@/pages/ProfilePage/hooks/useProfileActions";
 import { PasswordChangeForm } from "@/pages/ProfilePage/components/PasswordChangeForm";
 import { ProfileGenresSection } from "@/pages/ProfilePage/components/ProfileGenresSection";
-import { AvatarSelector } from "@/components/Avatar";
 import { AmbientSettingsModal } from "@/components/AmbientSound/AmbientSettingsModal";
 import { SocialLinksEditor } from "./SocialLinksEditor";
 import type { SocialLink, User } from "@/lib/userApi";
@@ -39,7 +38,6 @@ export function ProfileSettings({
     user.socialLinks ?? [],
   );
   const [isSavingSocials, setIsSavingSocials] = useState(false);
-  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [showAmbient, setShowAmbient] = useState(false);
 
   const genresRef = useRef<HTMLDivElement>(null);
@@ -58,7 +56,6 @@ export function ProfileSettings({
   }, [initialSection]);
 
   const handleAvatarClick = () => {
-    setShowAvatarSelector(true);
     onAvatar();
   };
 
@@ -243,18 +240,6 @@ export function ProfileSettings({
           isSaving={isSavingSocials}
         />
       </div>
-
-      {showAvatarSelector && (
-        <AvatarSelector
-          currentAvatar={user.avatarUrl}
-          username={user.username}
-          onSave={async () => {
-            setShowAvatarSelector(false);
-            onRefresh();
-          }}
-          onClose={() => setShowAvatarSelector(false)}
-        />
-      )}
 
       <AmbientSettingsModal
         isOpen={showAmbient}
