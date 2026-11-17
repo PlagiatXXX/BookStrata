@@ -8,8 +8,8 @@ import {
 } from "./genre-taxonomy";
 
 describe("genre-taxonomy", () => {
-  it("19 категорий, каждая в группе из GENRE_GROUPS", () => {
-    expect(GENRE_CATEGORIES).toHaveLength(19);
+  it("24 категории, каждая в группе из GENRE_GROUPS", () => {
+    expect(GENRE_CATEGORIES).toHaveLength(24);
     const groupIds = new Set(GENRE_GROUPS.map((g) => g.id));
     for (const c of GENRE_CATEGORIES) expect(groupIds.has(c.group)).toBe(true);
   });
@@ -27,7 +27,7 @@ describe("genre-taxonomy", () => {
     expect(parseBookGenre("  фэнтези ")).toEqual(["fantasy"]);
     expect(parseBookGenre("Научная фантастика,")).toEqual(["sci-fi"]);
     expect(parseBookGenre("Young Adul")).toEqual(["young-adult"]);
-    expect(parseBookGenre("Ромэнтези")).toEqual(["fantasy"]);
+    expect(parseBookGenre("Ромэнтези")).toEqual(["romantasy"]);
     expect(parseBookGenre("Нон-фикшен")).toEqual(["non-fiction"]);
   });
 

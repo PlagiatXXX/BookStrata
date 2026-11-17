@@ -1,4 +1,3 @@
-import { Trophy, Layers, Heart, BookOpen, type LucideIcon } from "lucide-react"
 import type { PublicUserStats, UserStats } from "@/lib/userApi"
 
 interface ProfileStatsProps {
@@ -14,48 +13,40 @@ interface ProfileStatsVisitorProps {
   onOpenTierLists?: () => void
 }
 
-type ProfileStatsAllProps = ProfileStatsProps | ProfileStatsVisitorProps
+export type ProfileStatsAllProps = ProfileStatsProps | ProfileStatsVisitorProps
 
 interface StatCard {
-  icon: LucideIcon
   label: string
   value: number
   onClick?: () => void
 }
 
 /**
- * Три подписанные карточки статистики (спека §6.3).
- * Кликабельна только карточка «Тир-листов» — у остальных нет ложного cursor-pointer.
- * «За сутки: +N» из карточек убран (в макете его нет).
+ * Три подписанные карточки статистики (спека §6.3, макет обзор).
+ * Кликабельна только карточка «Тир-листов» — у остальных нет cursor-pointer.
  */
 export function ProfileStats(props: ProfileStatsAllProps) {
-  const { mode, stats, onOpenTierLists } = props
+  const { stats, onOpenTierLists } = props
 
   const tierListsCard: StatCard = {
-    icon: Trophy,
     label: "Тир-листов",
     value: stats.tierListsCount,
     onClick: onOpenTierLists,
   }
 
-  const cards: StatCard[] =
-    mode === "owner"
-      ? [
-          tierListsCard,
-          { icon: Layers, label: "Шаблонов", value: (stats as UserStats).templatesCount },
-          { icon: Heart, label: "Лайков на тир-листах", value: stats.likesCount },
-        ]
-      : [
-          tierListsCard,
-          { icon: BookOpen, label: "Книг в тир-листах", value: stats.totalBooks },
-          { icon: Heart, label: "Лайков на тир-листах", value: stats.likesCount },
-        ]
+  const cards: StatCard[] = [
+    tierListsCard,
+    { label: "Книг в тир-листах", value: stats.totalBooks },
+    { label: "Лайков на тир-листах", value: stats.likesCount },
+  ]
 
   return (
-    <div className="profile-stats">
-      {cards.map(({ icon: Icon, label, value, onClick }) => {
+    <section className="profile-stats-grid" aria-label="Статистика пользователя">
+      {cards.map(({ label, value, onClick }) => {
         const interactive = !!onClick
         const Tag = interactive ? "button" : "div"
+        const isLikes = label.includes("Лайков")
+
         return (
           <Tag
             key={label}
@@ -66,16 +57,23 @@ export function ProfileStats(props: ProfileStatsAllProps) {
                   "aria-label": `${label}: ${value}`,
                 }
               : {})}
-            className={`profile-stat-card${interactive ? " cursor-pointer" : ""}`}
+            className={`card profile-stat-card${interactive ? " cursor-pointer" : ""}`}
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+              font: "inherit",
+            }}
           >
-            <div className="profile-stat-label">
-              <Icon size={14} aria-hidden="true" />
-              {label}
+            <div
+              className="profile-stat-num"
+              style={{ color: isLikes ? "#f9a8d4" : undefined }}
+            >
+              {value}
             </div>
-            <div className="profile-stat-value">{value}</div>
+            <div className="m profile-stat-label">{label}</div>
           </Tag>
         )
       })}
-    </div>
+    </section>
   )
 }

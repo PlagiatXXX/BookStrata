@@ -3,20 +3,17 @@ import type { TierListShort } from "@/lib/tierListApi"
 import { Spinner } from "@/components/Spinner"
 import { PrivateBadge } from "@/components/PrivateBadge"
 
-/** Превью обзора — до 6 карточек (спека §6.5). */
 const PREVIEW_LIMIT = 6
 
 interface ProfileTierListsProps {
   tierLists: TierListShort[]
   isLoading?: boolean
   isOwner: boolean
-  /** Клик по карточке; получает slug или id — как в существующем поведении страницы. */
   onOpen: (id: string) => void
 }
 
 /**
- * Блок «Публичные тир-листы» (спека §6.4/§6.5): превью до 6 карточек,
- * пустое состояние «Пока нет публичных тир-листов», владельцу — ссылка в дашборд.
+ * Блок «Публичные тир-листы» (спека §6.5, макет обзор).
  */
 export function ProfileTierLists({
   tierLists,
@@ -27,35 +24,47 @@ export function ProfileTierLists({
   const open = (tierList: TierListShort) => onOpen(tierList.id)
 
   return (
-    <section aria-label="Публичные тир-листы" className="profile-section">
-      <div className="profile-section__header">
-        <span className="profile-pill-label">Публичные тир-листы</span>
+    <section aria-label="Публичные тир-листы" className="card">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <h2 className="h" style={{ margin: 0 }}>Публичные тир-листы</h2>
         {isOwner && (
           <a
             href="/dashboard"
-            className="profile-section__action"
+            className="btn"
+            style={{ padding: "6px 14px", minHeight: 34, fontSize: 13, textDecoration: "none" }}
           >
-            <ExternalLink size={14} aria-hidden="true" />
+            <ExternalLink size={13} aria-hidden="true" />
             Управлять в дашборде
           </a>
         )}
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
+        <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
           <Spinner size="md" />
         </div>
       ) : tierLists.length === 0 ? (
-        <p className="profile-tier-lists__empty">
+        <p className="m" style={{ margin: 0 }}>
           Пока нет публичных тир-листов
         </p>
       ) : (
-        <div className="profile-tier-lists__grid">
+        <div className="profile-tierlists-grid">
           {tierLists.slice(0, PREVIEW_LIMIT).map((tierList) => (
             <button
               key={tierList.id}
               type="button"
-              className="profile-tier-card text-left"
+              className="text-left cursor-pointer"
+              style={{
+                background: "#232340",
+                borderRadius: 14,
+                padding: 14,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                color: "inherit",
+                font: "inherit",
+              }}
               onClick={() => open(tierList)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -64,18 +73,29 @@ export function ProfileTierLists({
                 }
               }}
             >
-              <span className="profile-tier-card__title">{tierList.title}</span>
-              {!tierList.isPublic && <PrivateBadge />}
-              <span className="profile-tier-card__meta">
-                <span className="profile-tier-card__meta-item">
-                  <Heart size={12} aria-hidden="true" />
-                  {tierList.likesCount ?? 0}
-                </span>
-                <span className="profile-tier-card__meta-item">
+              {/* Декоративные цветные плашки тиров из макета */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 4 }}>
+                <i style={{ height: 8, width: "90%", background: "#f87171", borderRadius: 4, display: "block" }} />
+                <i style={{ height: 8, width: "70%", background: "#fb923c", borderRadius: 4, display: "block" }} />
+                <i style={{ height: 8, width: "50%", background: "#facc15", borderRadius: 4, display: "block" }} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <b style={{ fontSize: 14, color: "#f1f1f5" }} className="truncate">
+                  {tierList.title}
+                </b>
+                {!tierList.isPublic && <PrivateBadge />}
+              </div>
+              <div className="m" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
                   <BookOpen size={12} aria-hidden="true" />
-                  {tierList.booksCount ?? 0}
+                  <span>{tierList.booksCount ?? 0}</span> книг
                 </span>
-              </span>
+                <span>·</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <Heart size={12} aria-hidden="true" />
+                  <span>{tierList.likesCount ?? 0}</span> лайков
+                </span>
+              </div>
             </button>
           ))}
         </div>

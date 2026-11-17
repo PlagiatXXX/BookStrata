@@ -13,22 +13,22 @@ export function ProfileLevel({ xp, showXpLabel }: ProfileLevelProps) {
   return (
     <div className="profile-hero__level">
       <div className="profile-hero__level-row">
-        <span className="profile-hero__level-value">Уровень {level}</span>
+        <b className="profile-hero__level-value">Уровень {level}</b>
         {showXpLabel && (
-          <span className="profile-hero__level-xp">
+          <span className="profile-hero__level-xp m">
             {progress} / {XP_PER_LEVEL} XP до уровня {level + 1}
           </span>
         )}
       </div>
       <div
-        className="profile-hero__level-bar"
+        className="bar profile-hero__level-bar"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={XP_PER_LEVEL}
         aria-valuenow={progress}
         aria-label={`Прогресс до уровня ${level + 1}`}
       >
-        <div
+        <i
           className="profile-hero__level-bar-fill"
           style={{ width: `${percent}%` }}
         />

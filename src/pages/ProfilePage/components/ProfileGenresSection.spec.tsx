@@ -33,7 +33,7 @@ describe("ProfileGenresSection", () => {
     mockSet.mockResolvedValue([]);
   });
 
-  it("рендерит заголовок, группы и все 19 жанров со счётчиком", async () => {
+  it("рендерит заголовок, группы и все 24 жанра со счётчиком", async () => {
     renderUi();
 
     expect(await screen.findByText("Любимые жанры")).toBeInTheDocument();
@@ -41,8 +41,8 @@ describe("ProfileGenresSection", () => {
     expect(screen.getByTestId("genre-group-detective")).toBeInTheDocument();
     expect(screen.getByTestId("genre-group-nonfiction")).toBeInTheDocument();
     expect(screen.getByTestId("genre-group-kids")).toBeInTheDocument();
-    expect(await screen.findByText("0/7")).toBeInTheDocument();
-    expect(screen.getAllByRole("button")).toHaveLength(19);
+    expect(await screen.findByText("0/9")).toBeInTheDocument();
+    expect(screen.getAllByRole("button")).toHaveLength(24);
   });
 
   it("кликом добавляет жанр и шлёт мутацию с новым списком", async () => {
@@ -66,14 +66,14 @@ describe("ProfileGenresSection", () => {
     await waitFor(() => expect(mockSet).toHaveBeenCalledWith([]));
   });
 
-  it("при лимите 7 невыбранные жанры disabled, выбранные — нет", async () => {
+  it("при лимите 9 невыбранные жанры disabled, выбранные — нет", async () => {
     mockGet.mockResolvedValue([
-      "fantasy", "sci-fi", "cyberpunk", "romance", "historical", "classics", "thriller",
+      "fantasy", "sci-fi", "cyberpunk", "romance", "historical", "classics", "thriller", "horror", "romantasy",
     ]);
     renderUi();
 
-    // Счётчик отражает загруженные данные — дожидаемся 7/7
-    expect(await screen.findByText("7/7")).toBeInTheDocument();
+    // Счётчик отражает загруженные данные — дожидаемся 9/9
+    expect(await screen.findByText("9/9")).toBeInTheDocument();
     const selected = screen.getByRole("button", { name: "Фэнтези" });
     expect(selected).toBeEnabled();
     expect(screen.getByRole("button", { name: "Японская литература" })).toBeDisabled();

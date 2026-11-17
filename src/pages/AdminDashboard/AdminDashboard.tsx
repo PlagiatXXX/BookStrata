@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Newspaper, BookOpen, Users, Crown, Sword, Heart, MessageCircle, MessageSquare, BarChart3, ArrowLeft, ShieldAlert, MailQuestion, Library, Feather } from 'lucide-react'
 import { getAdminDashboardStats } from '@/lib/adminStatsApi'
@@ -141,7 +142,47 @@ const ALL_SECTIONS: AdminSection[] = [
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
+
+  useEffect(() => {
+    const stateFrom = (location.state as { from?: string } | null)?.from
+    if (stateFrom && !stateFrom.startsWith('/admin')) {
+      sessionStorage.setItem('admin_return_url', stateFrom)
+    } else if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem('admin_return_url') && typeof document !== 'undefined') {
+      const referrer = document.referrer
+      if (referrer) {
+        try {
+          const url = new URL(referrer)
+          if (url.origin === window.location.origin && !url.pathname.startsWith('/admin')) {
+            sessionStorage.setItem('admin_return_url', url.pathname + url.search)
+          }
+        } catch {
+          // ignore invalid referrer
+        }
+      }
+    }
+  }, [location.state])
+
+  const handleBack = () => {
+    const stateFrom = (location.state as { from?: string } | null)?.from
+    const storedFrom = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('admin_return_url') : null
+    const target = (stateFrom && !stateFrom.startsWith('/admin')) ? stateFrom : storedFrom
+
+    if (target && !target.startsWith('/admin')) {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('admin_return_url')
+      }
+      navigate(target)
+      return
+    }
+
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/dashboard')
+    }
+  }
 
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['admin', 'stats'],
@@ -158,13 +199,14 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-[#0f0f1a] py-6 dark:bg-[#0f0f1a] light:bg-gray-100 sm:py-10">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Back to Home */}
+        {/* Back button */}
         <button
-          onClick={() => navigate("/")}
+          type="button"
+          onClick={handleBack}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 cursor-pointer"
         >
           <ArrowLeft size={20} />
-          <span>На главную</span>
+          <span>Назад</span>
         </button>
 
         {/* Header */}

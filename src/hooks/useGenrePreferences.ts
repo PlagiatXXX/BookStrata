@@ -11,7 +11,7 @@ import type { CategoryId } from "@/data/genre-taxonomy";
 export const genrePreferencesKey = ["genre-preferences"] as const;
 
 /** Лимит выбора жанров (дизайн 7-й оси Book Match). */
-export const MAX_GENRE_PREFERENCES = 7;
+export const MAX_GENRE_PREFERENCES = 9;
 
 export function useGenrePreferences() {
   const { isAuthenticated } = useAuth();

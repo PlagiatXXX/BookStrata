@@ -30,7 +30,10 @@ vi.mock("@/hooks/useUser", () => ({ useUser: m.useUser }))
 vi.mock("@/hooks/useAchievements", () => ({ useAchievements: m.useAchievements }))
 vi.mock("@/hooks/useUserAchievements", () => ({ useUserAchievements: m.useUserAchievements }))
 vi.mock("@/hooks/useMyReadingDna", () => ({ useMyReadingDna: m.useMyReadingDna }))
-vi.mock("@/hooks/useGenrePreferences", () => ({ useGenrePreferences: m.useGenrePreferences }))
+vi.mock("@/hooks/useGenrePreferences", () => ({
+  useGenrePreferences: m.useGenrePreferences,
+  MAX_GENRE_PREFERENCES: 9,
+}))
 
 vi.mock("@/components/SEO/SEOHead", () => ({
   SEOHead: (props: Record<string, unknown>) => {

@@ -15,7 +15,6 @@ import {
   BookMarked,
   Users,
   UserRound,
-  LayoutDashboard,
   Shield,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -89,6 +88,9 @@ export const Header = ({
   const { totalCount } = useBookshelf();
   const navigate = useNavigate();
   const location = useLocation();
+  const isOwnProfile = Boolean(
+    authUser?.userId && location.pathname === `/users/${authUser.userId}`,
+  );
 
   // Светлая тема под хедером (полка/редактор) → тёмный текст на светлом стекле
   const [isLightTheme, setIsLightTheme] = useState(() => detectLightTheme());
@@ -210,7 +212,9 @@ export const Header = ({
     );
 
   const handleAvatarMenuNavigate = (path: string) => {
-    navigate(path);
+    navigate(path, {
+      state: { from: location.pathname + location.search },
+    });
     setAvatarMenuOpen(false);
   };
 
@@ -528,40 +532,6 @@ export const Header = ({
 
               {isAuthenticated ? (
                 <>
-                  {/* Logout Button (Desktop) */}
-                  {!hideLogout && (
-                    <button
-                      data-analytics="auth.logout"
-                      onClick={handleLogout}
-                      className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                        isLightTheme
-                          ? "text-slate-700 hover:bg-slate-200/70 hover:text-slate-950"
-                          : "text-gray-300 hover:bg-slate-800/50 hover:text-white"
-                      }`}
-                      title="Выйти"
-                      aria-label="Выйти"
-                    >
-                      <LogOut size={16} />
-                      <span>Выйти</span>
-                    </button>
-                  )}
-
-                  {/* Mobile logout */}
-                  {!hideLogout && (
-                    <button
-                      data-analytics="auth.logout_mobile"
-                      onClick={handleLogout}
-                      className={`md:hidden p-3.5 rounded-lg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                        isLightTheme
-                          ? "text-slate-600 hover:bg-slate-200/70 hover:text-slate-950"
-                          : "hover:bg-slate-800/50 text-gray-400 hover:text-white"
-                      }`}
-                      aria-label="Выйти"
-                    >
-                      <LogOut size={18} />
-                    </button>
-                  )}
-
                   {/* User Avatar + Ambient badge */}
                   <div
                     ref={avatarMenuRef}
@@ -611,28 +581,20 @@ export const Header = ({
                         onKeyDown={handleAvatarMenuKeyDown}
                         className="absolute top-full right-0 mt-1.5 z-50 w-56 rounded-xl border border-slate-700/50 bg-[#0f1525]/95 backdrop-blur-xl shadow-2xl shadow-black/60 py-1.5"
                       >
-                        <button
-                          type="button"
-                          role="menuitem"
-                          data-analytics="nav.avatar.profile"
-                          onClick={() =>
-                            handleAvatarMenuNavigate(`/users/${authUser?.userId}`)
-                          }
-                          className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
-                        >
-                          <UserRound size={16} className="text-cyan-400 shrink-0" />
-                          <span>Мой профиль</span>
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          data-analytics="nav.avatar.dashboard"
-                          onClick={() => handleAvatarMenuNavigate("/dashboard")}
-                          className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
-                        >
-                          <LayoutDashboard size={16} className="text-purple-400 shrink-0" />
-                          <span>Дашборд</span>
-                        </button>
+                        {!isOwnProfile && (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            data-analytics="nav.avatar.profile"
+                            onClick={() =>
+                              handleAvatarMenuNavigate(`/users/${authUser?.userId}`)
+                            }
+                            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
+                          >
+                            <UserRound size={16} className="text-cyan-400 shrink-0" />
+                            <span>Мой профиль</span>
+                          </button>
+                        )}
                         {isStaff && (
                           <button
                             type="button"
@@ -645,20 +607,24 @@ export const Header = ({
                             <span>Админка</span>
                           </button>
                         )}
-                        <div className="my-1 border-t border-slate-700/50" />
-                        <button
-                          type="button"
-                          role="menuitem"
-                          data-analytics="auth.logout_menu"
-                          onClick={() => {
-                            setAvatarMenuOpen(false);
-                            handleLogout();
-                          }}
-                          className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
-                        >
-                          <LogOut size={16} className="text-rose-400 shrink-0" />
-                          <span>Выйти</span>
-                        </button>
+                        {(!isOwnProfile || isStaff) && !hideLogout && (
+                          <div className="my-1 border-t border-slate-700/50" />
+                        )}
+                        {!hideLogout && (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            data-analytics="auth.logout_menu"
+                            onClick={() => {
+                              setAvatarMenuOpen(false);
+                              handleLogout();
+                            }}
+                            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:bg-slate-800/60"
+                          >
+                            <LogOut size={16} className="text-rose-400 shrink-0" />
+                            <span>Выйти</span>
+                          </button>
+                        )}
                       </div>
                     )}
 

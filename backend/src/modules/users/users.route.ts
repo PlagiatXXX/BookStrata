@@ -142,7 +142,7 @@ export async function userRoutes(fastify: FastifyInstance) {
           properties: {
             genres: {
               type: "array",
-              maxItems: 19,
+              maxItems: 24,
               items: { type: "string", minLength: 1, maxLength: 40 },
             },
           },

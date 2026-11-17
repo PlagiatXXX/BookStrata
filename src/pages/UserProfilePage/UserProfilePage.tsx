@@ -11,7 +11,7 @@ import {
   type PublicUserDna,
   type PublicUserStats,
 } from "@/lib/userApi";
-import { getReadingDnaByTicket } from "@/lib/readingDnaApi";
+import { getReadingTicket } from "@/lib/readingDnaApi";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useUser } from "@/hooks/useUser";
 import { useAchievements } from "@/hooks/useAchievements";
@@ -29,7 +29,6 @@ import { ProfileOverview } from "./components/ProfileOverview";
 import { ProfileTierLists } from "./components/ProfileTierLists";
 import { ProfileAchievements } from "./components/ProfileAchievements";
 import type { PublicAchievement } from "@/lib/achievementApi";
-import { ProfileDnaCard } from "./components/ProfileDnaCard";
 import { TasteMatchBanner } from "./components/TasteMatchBanner";
 import { ProfileSettings } from "./components/ProfileSettings";
 import { ProfileModeration } from "./components/ProfileModeration";
@@ -67,6 +66,7 @@ export default function UserProfilePage() {
     stats: ownerStats,
     isLoading: ownerLoading,
     uploadAvatar: uploadOwnerAvatar,
+    updateProfile: updateOwnerProfile,
     refreshUser,
   } = useUser();
   const {
@@ -94,7 +94,7 @@ export default function UserProfilePage() {
   const visitorDnaTicket = !isOwner ? publicUserQuery.data?.dna?.ticketNumber : undefined;
   const fullDnaQuery = useQuery({
     queryKey: ["readingDna", "ticket", visitorDnaTicket],
-    queryFn: () => getReadingDnaByTicket(visitorDnaTicket!),
+    queryFn: () => getReadingTicket(visitorDnaTicket!),
     enabled: !!visitorDnaTicket,
     staleTime: 5 * 60 * 1000,
   });
@@ -161,13 +161,40 @@ export default function UserProfilePage() {
   const tierLists = tierListsQuery.data?.data ?? [];
 
   /* ── Действия ── */
+  const handleExitPreview = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("preview");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
+
+  const handlePreview = useCallback(() => {
+    setActiveTab("overview");
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("preview", "1");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
+
   const handleBack = useCallback(() => {
+    if (isPreview) {
+      handleExitPreview();
+      return;
+    }
     if (window.history.length > 1) {
       navigate(-1);
     } else {
       navigate("/");
     }
-  }, [navigate]);
+  }, [isPreview, handleExitPreview, navigate]);
 
   const handleTierListClick = useCallback(
     (tierListId: string) => navigate(`/tier-lists/${tierListId}`),
@@ -179,26 +206,9 @@ export default function UserProfilePage() {
     setActiveTab("settings");
   }, []);
 
-  const handlePreview = useCallback(() => {
-    setActiveTab("overview");
-    setSearchParams({ preview: "1" });
-  }, [setSearchParams]);
-
-  const handleShare = useCallback(async () => {
-    const url = window.location.href;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: username ?? "BookStrata", url });
-        return;
-      }
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        sileo.success({ title: "Ссылка скопирована", duration: 2000 });
-      }
-    } catch {
-      // Пользователь отменил системный шаринг — ничего не делаем.
-    }
-  }, [username]);
+  const handleShare = useCallback(() => {
+    // Вызывается при открытии меню шаринга в Hero
+  }, []);
 
   const handleAvatarSave = useCallback(
     async (avatarUrl: string) => {
@@ -215,6 +225,20 @@ export default function UserProfilePage() {
       }
     },
     [uploadOwnerAvatar],
+  );
+
+  const handleSaveBio = useCallback(
+    async (newBio: string) => {
+      if (!ownerUser) return;
+      await updateOwnerProfile({
+        username: ownerUser.username,
+        bio: newBio.trim() || null,
+        socialLinks: ownerUser.socialLinks,
+      });
+      sileo.success({ title: "Профиль обновлён", duration: 2000 });
+      await refreshUser();
+    },
+    [ownerUser, updateOwnerProfile, refreshUser],
   );
 
   /* ── Слоты контента ── */
@@ -236,7 +260,7 @@ export default function UserProfilePage() {
       mode="owner"
       achievements={ownerAchievements}
       isLoading={ownerAchievementsLoading}
-      limit={6}
+      limit={3}
       onShowAll={() => setActiveTab("achievements")}
     />
   ) : (
@@ -246,7 +270,7 @@ export default function UserProfilePage() {
       isLoading={
         isPreview ? ownerAchievementsLoading : publicAchievementsQuery.isLoading
       }
-      limit={6}
+      limit={3}
       onShowAll={() => setActiveTab("achievements")}
     />
   );
@@ -310,13 +334,18 @@ export default function UserProfilePage() {
     );
   }
 
-  const seoDescription = `Профиль пользователя ${username ?? "BookStrata"} на BookStrata. ${publicStats?.tierListsCount ?? ownerStats?.tierListsCount ?? 0} тир-листов, ${publicStats?.totalBooks ?? ownerStats?.totalBooks ?? 0} книг.`;
-  const seoImage = publicUserQuery.data?.avatarUrl ?? ownerUser?.avatarUrl ?? undefined;
+  const seoDescription = `Читательский профиль ${username ?? "BookStrata"} на BookStrata: ${publicStats?.tierListsCount ?? ownerStats?.tierListsCount ?? 0} тир-листов, ${publicStats?.totalBooks ?? ownerStats?.totalBooks ?? 0} книг. Заходи сравнить вкусы!`;
+  const rawAvatar = publicUserQuery.data?.avatarUrl ?? ownerUser?.avatarUrl;
+  const seoImage = rawAvatar
+    ? rawAvatar.startsWith("http")
+      ? rawAvatar
+      : `https://bookstrata.ru${rawAvatar.startsWith("/") ? "" : "/"}${rawAvatar}`
+    : "https://bookstrata.ru/og-landing.webp";
 
   return (
     <>
       <SEOHead
-        title={username}
+        title={username ? `${username} — читательский профиль` : "Читательский профиль"}
         description={seoDescription}
         image={seoImage}
         url={`/users/${id}`}
@@ -325,7 +354,7 @@ export default function UserProfilePage() {
         person={{
           name: username ?? "BookStrata",
           image: seoImage,
-          description: `Пользователь BookStrata: ${publicStats?.tierListsCount ?? ownerStats?.tierListsCount ?? 0} тир-листов, ${publicStats?.totalBooks ?? ownerStats?.totalBooks ?? 0} книг в подборках.`,
+          description: seoDescription,
         }}
         breadcrumbs={[
           { name: "Главная", url: "/" },
@@ -333,22 +362,41 @@ export default function UserProfilePage() {
         ]}
       />
       <DashboardLayout showSearch={false} contentTopPadding="pt-16">
-        <div className="user-profile-page user-profile-mesh min-h-screen cursor-default">
-          <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-12 sm:pb-16">
-            {/* Навигация сохраняется как есть */}
-            <Breadcrumbs
-              items={[
-                { label: "Главная", href: "/" },
-                { label: username ?? "Профиль" },
-              ]}
-            />
-            <button
-              onClick={handleBack}
-              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[var(--p-on-surface-variant)] hover:text-[var(--p-on-surface)] mb-8 transition-colors"
+        <div className="user-profile-page min-h-screen cursor-default">
+          <div className="profile-container">
+            {/* Навигация: хлебные крошки слева, кнопка «Назад» справа */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 16,
+              }}
             >
-              <ArrowLeft size={14} />
-              Назад
-            </button>
+              <Breadcrumbs
+                className="mb-0"
+                items={[
+                  { label: "Главная", href: "/" },
+                  { label: username ?? "Профиль" },
+                ]}
+              />
+              <button
+                type="button"
+                onClick={handleBack}
+                className="btn"
+                style={{
+                  padding: "6px 14px",
+                  minHeight: 34,
+                  fontSize: 12,
+                  gap: 6,
+                  flexShrink: 0,
+                }}
+              >
+                <ArrowLeft size={14} />
+                Назад
+              </button>
+            </div>
 
             {/* Hero */}
             <div className="profile-page__hero">
@@ -363,6 +411,8 @@ export default function UserProfilePage() {
                 onOpenSettings={() => openSettings("social")}
                 onOpenModeration={() => setModerationOpen((prev) => !prev)}
                 onPreview={isOwner && !isPreview ? handlePreview : undefined}
+                onExitPreview={isPreview ? handleExitPreview : undefined}
+                onSaveBio={isOwner && !isPreview ? handleSaveBio : undefined}
               />
             </div>
 
@@ -420,11 +470,6 @@ export default function UserProfilePage() {
                   isOwner={displayMode === "owner"}
                   onOpen={handleTierListClick}
                 />
-              )}
-              {activeTab === "comparison" && (
-                <div className="profile-page__section">
-                  <ProfileDnaCard dna={dna} isOwner={displayMode === "owner"} axes={dnaAxes} />
-                </div>
               )}
               {activeTab === "achievements" && achievementsTab}
               {activeTab === "settings" && displayMode === "owner" && ownerUser && (

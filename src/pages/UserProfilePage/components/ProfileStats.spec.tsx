@@ -30,14 +30,13 @@ function statCard(label: string): HTMLElement {
 }
 
 describe("ProfileStats", () => {
-  it("владелец видит Тир-листов / Шаблонов / Лайков на тир-листах", () => {
+  it("владелец видит Тир-листов / Книг в тир-листах / Лайков на тир-листах", () => {
     render(<ProfileStats mode="owner" stats={ownerStats} />)
 
     expect(screen.getByText("9")).toBeInTheDocument()
-    expect(screen.getByText("4")).toBeInTheDocument()
+    expect(screen.getByText("18")).toBeInTheDocument()
     expect(screen.getByText("3")).toBeInTheDocument()
-    expect(screen.queryByText("18")).not.toBeInTheDocument()
-    expect(statCard("Шаблонов")).toBeInTheDocument()
+    expect(statCard("Книг в тир-листах")).toBeInTheDocument()
     expect(statCard("Лайков на тир-листах")).toBeInTheDocument()
   })
 
@@ -48,13 +47,12 @@ describe("ProfileStats", () => {
     expect(screen.getByText("18")).toBeInTheDocument()
     expect(screen.getByText("3")).toBeInTheDocument()
     expect(statCard("Книг в тир-листах")).toBeInTheDocument()
-    expect(screen.queryByText("Шаблонов")).not.toBeInTheDocument()
   })
 
   it("некликабельные карточки без cursor-pointer и без роли кнопки", () => {
     render(<ProfileStats mode="owner" stats={ownerStats} onOpenTierLists={vi.fn()} />)
 
-    for (const label of ["Шаблонов", "Лайков на тир-листах"]) {
+    for (const label of ["Книг в тир-листах", "Лайков на тир-листах"]) {
       const card = statCard(label)
       expect(card).not.toHaveClass("cursor-pointer")
       expect(card).not.toHaveAttribute("role", "button")

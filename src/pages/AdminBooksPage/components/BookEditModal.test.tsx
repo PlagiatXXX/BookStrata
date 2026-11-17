@@ -244,6 +244,29 @@ describe("BookEditModal — readingGuide", () => {
 });
 
 describe("BookEditModal — animated cover prompt & upload", () => {
+  it("раздел видео по умолчанию свернут и разворачивается по клику", () => {
+    render(
+      <BookEditModal
+        book={baseBook}
+        saving={false}
+        publishing={false}
+        unpublishing={false}
+        enriching={false}
+        enrichResult={null}
+        onSave={vi.fn()}
+        onPublish={vi.fn()}
+        onUnpublish={vi.fn()}
+        onEnrich={vi.fn()}
+        onMerge={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /загрузить видео/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText(/живая анимированная обложка/i));
+    expect(screen.getByRole("button", { name: /загрузить видео/i })).toBeInTheDocument();
+  });
+
   it("отображает кнопки подсказки для AI и загрузку видео в оригинале", () => {
     render(
       <BookEditModal
@@ -261,6 +284,9 @@ describe("BookEditModal — animated cover prompt & upload", () => {
         onClose={vi.fn()}
       />,
     );
+
+    // Разворачиваем раздел видео
+    fireEvent.click(screen.getByText(/живая анимированная обложка/i));
 
     expect(screen.getByRole("button", { name: /скопировать режиссёрский промпт/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /краткие техпараметры/i })).toBeInTheDocument();
@@ -293,6 +319,9 @@ describe("BookEditModal — animated cover prompt & upload", () => {
         onClose={vi.fn()}
       />,
     );
+
+    // Разворачиваем раздел видео
+    fireEvent.click(screen.getByText(/живая анимированная обложка/i));
 
     const slider = screen.getByLabelText(/смещение кадра по вертикали/i) as HTMLInputElement;
     expect(slider).toBeInTheDocument();
@@ -336,6 +365,9 @@ describe("BookEditModal — animated cover prompt & upload", () => {
         onClose={vi.fn()}
       />,
     );
+
+    // Разворачиваем раздел видео
+    fireEvent.click(screen.getByText(/живая анимированная обложка/i));
 
     fireEvent.click(screen.getByRole("button", { name: /50% центр/i }));
     fireEvent.click(screen.getByRole("button", { name: /сохранить/i }));

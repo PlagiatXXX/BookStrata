@@ -178,6 +178,7 @@ export function BookEditModal({
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedSpecs, setCopiedSpecs] = useState(false);
   const [showPromptDetails, setShowPromptDetails] = useState(false);
+  const [videoSectionOpen, setVideoSectionOpen] = useState(false);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
   const handleVideoUpload = async (file: File | undefined) => {
@@ -190,6 +191,7 @@ export function BookEditModal({
         aspectRatio: "original",
       });
       set("animatedCoverUrl", res.animatedCoverUrl);
+      setVideoSectionOpen(true);
       if (syncCoverPoster && res.coverImageUrl) {
         set("coverImageUrl", res.coverImageUrl);
       }
@@ -447,209 +449,6 @@ export function BookEditModal({
               <p className="mt-1 text-xs text-red-400">{coverError}</p>
             )}
           </label>
-          <div className="md:col-span-2 rounded-xl border border-(--ink-3) bg-(--bg-0)/60 p-4">
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-(--ink-0) flex items-center gap-2">
-                  <Film size={16} className="text-(--accent-main)" />
-                  Живая анимированная обложка (видео)
-                </span>
-                {(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) && (
-                  <button
-                    type="button"
-                    onClick={() => set("animatedCoverUrl", null)}
-                    className="text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
-                  >
-                    Удалить видео
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-(--ink-1)">
-                Загрузите исходное видео (MP4/WebM). Сервер сожмет его через ffmpeg (H.264, ~400 КБ, no-audio, faststart) и создаст четкий постер первого кадра в качестве обложки.
-              </p>
-              {/* Блок помощи и генерации в AI */}
-              <div className="rounded-lg border border-amber-400/30 bg-amber-400/5 p-3 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-300">
-                    <Sparkles size={14} className="text-amber-400" />
-                    Как сгенерировать видео без банов и в точном размере 2:3
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowPromptDetails(!showPromptDetails)}
-                    className="flex items-center gap-1 text-[11px] text-amber-400/80 hover:text-amber-300 cursor-pointer"
-                  >
-                    {showPromptDetails ? "Скрыть промпт" : "Показать промпт"}
-                    {showPromptDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                  </button>
-                </div>
-                <p className="text-[11px] text-(--ink-1) leading-relaxed">
-                  Используйте наш готовый режиссёрский промпт: он заставляет модель сохранять пропорции 2:3, не ломать лица и текст обложки, а также содержит формулировки добросовестного использования (Fair Use), снимающие ложные отказы из-за авторских прав в Kling, Luma и Runway.
-                </p>
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleCopyPrompt}
-                    className="flex items-center gap-1.5 rounded-md bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 px-2.5 py-1 text-xs font-medium text-amber-200 transition-colors cursor-pointer"
-                  >
-                    {copiedPrompt ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                    {copiedPrompt ? "Скопировано в буфер!" : "Скопировать режиссёрский промпт"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCopySpecs}
-                    className="flex items-center gap-1.5 rounded-md bg-(--bg-1) hover:bg-(--bg-0) border border-(--ink-3) px-2.5 py-1 text-xs text-(--ink-1) hover:text-(--ink-0) transition-colors cursor-pointer"
-                  >
-                    {copiedSpecs ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                    {copiedSpecs ? "Скопировано!" : "Краткие техпараметры"}
-                  </button>
-                </div>
-                {showPromptDetails && (
-                  <div className="mt-2 rounded border border-(--ink-3) bg-black/50 p-2.5">
-                    <pre className="text-[11px] text-(--ink-1) font-mono whitespace-pre-wrap select-all max-h-48 overflow-y-auto">
-                      {buildBookAnimationPrompt(currentBookTitle, currentBookAuthor)}
-                    </pre>
-                  </div>
-                )}
-              </div>
-
-              <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-(--ink-1)">
-                <input
-                  type="checkbox"
-                  checked={syncCoverPoster}
-                  onChange={(e) => setSyncCoverPoster(e.target.checked)}
-                  className="rounded border-(--ink-3) text-(--accent-main) focus:ring-(--accent-main)"
-                />
-                Обновить статичную обложку книги из 1-го кадра видео (четкий WebP-постер)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  value={(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) ?? ""}
-                  onChange={(e) => set("animatedCoverUrl", e.target.value.trim() || null)}
-                  placeholder="/images/books/... или https://cdn.bookstrata.ru/.../video.mp4"
-                  className="w-full rounded-lg border border-(--ink-3) bg-(--bg-1) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
-                />
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*,.mp4,.webm,.mov,.m4v"
-                  className="hidden"
-                  onChange={(e) => {
-                    handleVideoUpload(e.target.files?.[0]);
-                    e.target.value = "";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => videoInputRef.current?.click()}
-                  disabled={videoUploading}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg border border-(--accent-main)/40 bg-(--accent-main)/10 px-3.5 py-2 text-sm font-medium text-(--accent-main) hover:bg-(--accent-main)/20 disabled:opacity-50 cursor-pointer transition-colors"
-                >
-                  <Film size={14} />
-                  {videoUploading ? "Сжатие ffmpeg…" : "Загрузить видео"}
-                </button>
-              </div>
-              {videoError && (
-                <p className="text-xs text-red-400">{videoError}</p>
-              )}
-              {(() => {
-                const currentVideoUrl = (form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) ?? "";
-                if (!currentVideoUrl) return null;
-                const { cleanUrl, positionY, objectPosition } = parseAnimatedCoverUrl(currentVideoUrl);
-
-                return (
-                  <div className="mt-2 rounded-lg border border-(--ink-3) bg-(--bg-1) p-3 space-y-3">
-                    <div className="flex items-start gap-4">
-                      <div className="relative w-24 aspect-2/3 overflow-hidden rounded-md border border-(--ink-3) bg-black shrink-0 shadow-sm">
-                        <video
-                          key={cleanUrl}
-                          src={cleanUrl}
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                          style={{ objectPosition }}
-                          className="h-full w-full object-cover transition-[object-position] duration-75"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0 space-y-2 text-xs">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-(--ink-0) flex items-center gap-1.5">
-                            <Sparkles size={13} className="text-amber-400 shrink-0" />
-                            <span>Живая обложка включена</span>
-                          </p>
-                          <span className="font-mono text-[11px] text-(--accent-main) bg-(--accent-main)/10 px-1.5 py-0.5 rounded font-medium">
-                            {positionY}%
-                          </span>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between text-[11px] text-(--ink-1) mb-1">
-                            <span>Смещение кадра по вертикали:</span>
-                            <span className="text-(--ink-2)">
-                              {positionY === 0 ? "0% (Верх)" : positionY === 50 ? "50% (Центр)" : positionY === 100 ? "100% (Низ)" : `${positionY}%`}
-                            </span>
-                          </div>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            step={1}
-                            value={positionY}
-                            onChange={(e) => {
-                              const newPos = Math.round(Number(e.target.value));
-                              set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, newPos));
-                            }}
-                            aria-label="Смещение кадра по вертикали"
-                            className="w-full accent-(--accent-main) cursor-pointer"
-                          />
-                          <div className="flex items-center gap-1.5 mt-1.5">
-                            <button
-                              type="button"
-                              onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 0))}
-                              className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
-                                positionY === 0
-                                  ? "bg-(--accent-main) text-white font-medium"
-                                  : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
-                              }`}
-                            >
-                              0% Верх
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 50))}
-                              className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
-                                positionY === 50
-                                  ? "bg-(--accent-main) text-white font-medium"
-                                  : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
-                              }`}
-                            >
-                              50% Центр
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 100))}
-                              className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
-                                positionY === 100
-                                  ? "bg-(--accent-main) text-white font-medium"
-                                  : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
-                              }`}
-                            >
-                              100% Низ
-                            </button>
-                          </div>
-                        </div>
-
-                        <p className="text-[11px] text-(--ink-2) leading-relaxed">
-                          Для видео 9:16 (Gemini / Veo): двигайте ползунок, чтобы в рамку 2:3 попали название и имя автора.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
           <label className="block md:col-span-2">
             <span className="mb-1 block text-sm text-(--ink-1)">
               Описание *
@@ -661,6 +460,248 @@ export function BookEditModal({
               className="w-full resize-y rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
             />
           </label>
+          {(() => {
+            const hasAnimatedCover = Boolean(
+              (form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl)
+            );
+
+            return (
+              <div className="md:col-span-2 rounded-xl border border-(--ink-3) bg-(--bg-0)/60 p-4 transition-colors">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setVideoSectionOpen((prev) => !prev)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setVideoSectionOpen((prev) => !prev);
+                    }
+                  }}
+                  className="flex items-center justify-between cursor-pointer select-none"
+                  aria-expanded={videoSectionOpen}
+                >
+                  <div className="flex items-center gap-2">
+                    <Film size={16} className="text-(--accent-main)" />
+                    <span className="text-sm font-semibold text-(--ink-0)">
+                      Живая анимированная обложка (видео)
+                    </span>
+                    {hasAnimatedCover && (
+                      <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+                        ✓ Прикреплено
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {hasAnimatedCover && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          set("animatedCoverUrl", null);
+                        }}
+                        className="text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                      >
+                        Удалить видео
+                      </button>
+                    )}
+                    <span className="flex items-center gap-1 text-xs text-(--ink-1) hover:text-(--ink-0)">
+                      {videoSectionOpen ? "Свернуть" : "Развернуть"}
+                      {videoSectionOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </span>
+                  </div>
+                </div>
+
+                {videoSectionOpen && (
+                  <div className="mt-3.5 flex flex-col gap-2.5 border-t border-(--ink-3)/50 pt-3">
+                    <p className="text-xs text-(--ink-1)">
+                      Загрузите исходное видео (MP4/WebM). Сервер сожмет его через ffmpeg (H.264, ~400 КБ, no-audio, faststart) и создаст четкий постер первого кадра в качестве обложки.
+                    </p>
+                    {/* Блок помощи и генерации в AI */}
+                    <div className="rounded-lg border border-amber-400/30 bg-amber-400/5 p-3 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-300">
+                          <Sparkles size={14} className="text-amber-400" />
+                          Как сгенерировать видео без банов и в точном размере 2:3
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowPromptDetails(!showPromptDetails)}
+                          className="flex items-center gap-1 text-[11px] text-amber-400/80 hover:text-amber-300 cursor-pointer"
+                        >
+                          {showPromptDetails ? "Скрыть промпт" : "Показать промпт"}
+                          {showPromptDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-(--ink-1) leading-relaxed">
+                        Используйте наш готовый режиссёрский промпт: он заставляет модель сохранять пропорции 2:3, не ломать лица и текст обложки, а также содержит формулировки добросовестного использования (Fair Use), снимающие ложные отказы из-за авторских прав в Kling, Luma и Runway.
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={handleCopyPrompt}
+                          className="flex items-center gap-1.5 rounded-md bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 px-2.5 py-1 text-xs font-medium text-amber-200 transition-colors cursor-pointer"
+                        >
+                          {copiedPrompt ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                          {copiedPrompt ? "Скопировано в буфер!" : "Скопировать режиссёрский промпт"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCopySpecs}
+                          className="flex items-center gap-1.5 rounded-md bg-(--bg-1) hover:bg-(--bg-0) border border-(--ink-3) px-2.5 py-1 text-xs text-(--ink-1) hover:text-(--ink-0) transition-colors cursor-pointer"
+                        >
+                          {copiedSpecs ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                          {copiedSpecs ? "Скопировано!" : "Краткие техпараметры"}
+                        </button>
+                      </div>
+                      {showPromptDetails && (
+                        <div className="mt-2 rounded border border-(--ink-3) bg-black/50 p-2.5">
+                          <pre className="text-[11px] text-(--ink-1) font-mono whitespace-pre-wrap select-all max-h-48 overflow-y-auto">
+                            {buildBookAnimationPrompt(currentBookTitle, currentBookAuthor)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+
+                    <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-(--ink-1)">
+                      <input
+                        type="checkbox"
+                        checked={syncCoverPoster}
+                        onChange={(e) => setSyncCoverPoster(e.target.checked)}
+                        className="rounded border-(--ink-3) text-(--accent-main) focus:ring-(--accent-main)"
+                      />
+                      Обновить статичную обложку книги из 1-го кадра видео (четкий WebP-постер)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        value={(form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) ?? ""}
+                        onChange={(e) => set("animatedCoverUrl", e.target.value.trim() || null)}
+                        placeholder="/images/books/... или https://cdn.bookstrata.ru/.../video.mp4"
+                        className="w-full rounded-lg border border-(--ink-3) bg-(--bg-1) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
+                      />
+                      <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/*,.mp4,.webm,.mov,.m4v"
+                        className="hidden"
+                        onChange={(e) => {
+                          handleVideoUpload(e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => videoInputRef.current?.click()}
+                        disabled={videoUploading}
+                        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-(--accent-main)/40 bg-(--accent-main)/10 px-3.5 py-2 text-sm font-medium text-(--accent-main) hover:bg-(--accent-main)/20 disabled:opacity-50 cursor-pointer transition-colors"
+                      >
+                        <Film size={14} />
+                        {videoUploading ? "Сжатие ffmpeg…" : "Загрузить видео"}
+                      </button>
+                    </div>
+                    {videoError && (
+                      <p className="text-xs text-red-400">{videoError}</p>
+                    )}
+                    {(() => {
+                      const currentVideoUrl = (form.animatedCoverUrl !== undefined ? form.animatedCoverUrl : book.animatedCoverUrl) ?? "";
+                      if (!currentVideoUrl) return null;
+                      const { cleanUrl, positionY, objectPosition } = parseAnimatedCoverUrl(currentVideoUrl);
+
+                      return (
+                        <div className="mt-2 rounded-lg border border-(--ink-3) bg-(--bg-1) p-3 space-y-3">
+                          <div className="flex items-start gap-4">
+                            <div className="relative w-24 aspect-2/3 overflow-hidden rounded-md border border-(--ink-3) bg-black shrink-0 shadow-sm">
+                              <video
+                                key={cleanUrl}
+                                src={cleanUrl}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                style={{ objectPosition }}
+                                className="h-full w-full object-cover transition-[object-position] duration-75"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0 space-y-2 text-xs">
+                              <div className="flex items-center justify-between">
+                                <p className="font-medium text-(--ink-0) flex items-center gap-1.5">
+                                  <Sparkles size={13} className="text-amber-400 shrink-0" />
+                                  <span>Живая обложка включена</span>
+                                </p>
+                                <span className="font-mono text-[11px] text-(--accent-main) bg-(--accent-main)/10 px-1.5 py-0.5 rounded font-medium">
+                                  {positionY}%
+                                </span>
+                              </div>
+
+                              <div>
+                                <div className="flex items-center justify-between text-[11px] text-(--ink-1) mb-1">
+                                  <span>Смещение кадра по вертикали:</span>
+                                  <span className="text-(--ink-2)">
+                                    {positionY === 0 ? "0% (Верх)" : positionY === 50 ? "50% (Центр)" : positionY === 100 ? "100% (Низ)" : `${positionY}%`}
+                                  </span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min={0}
+                                  max={100}
+                                  step={1}
+                                  value={positionY}
+                                  onChange={(e) => {
+                                    const newPos = Math.round(Number(e.target.value));
+                                    set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, newPos));
+                                  }}
+                                  aria-label="Смещение кадра по вертикали"
+                                  className="w-full accent-(--accent-main) cursor-pointer"
+                                />
+                                <div className="flex items-center gap-1.5 mt-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 0))}
+                                    className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
+                                      positionY === 0
+                                        ? "bg-(--accent-main) text-white font-medium"
+                                        : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
+                                    }`}
+                                  >
+                                    0% Верх
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 50))}
+                                    className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
+                                      positionY === 50
+                                        ? "bg-(--accent-main) text-white font-medium"
+                                        : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
+                                    }`}
+                                  >
+                                    50% Центр
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => set("animatedCoverUrl", formatAnimatedCoverUrl(cleanUrl, 100))}
+                                    className={`px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer ${
+                                      positionY === 100
+                                        ? "bg-(--accent-main) text-white font-medium"
+                                        : "bg-(--bg-0) text-(--ink-1) hover:bg-(--ink-3)/40 border border-(--ink-3)"
+                                    }`}
+                                  >
+                                    100% Низ
+                                  </button>
+                                </div>
+                              </div>
+
+                              <p className="text-[11px] text-(--ink-2) leading-relaxed">
+                                Для видео 9:16 (Gemini / Veo): двигайте ползунок, чтобы в рамку 2:3 попали название и имя автора.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* AI-паспорт «Гид по чтению» */}

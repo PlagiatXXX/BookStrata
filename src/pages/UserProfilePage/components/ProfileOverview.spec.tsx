@@ -66,8 +66,8 @@ describe("ProfileOverview", () => {
     expect(sectionOrder()).toEqual([
       "Любимые жанры",
       "Читательский ДНК",
-      "Достижения",
       "Публичные тир-листы",
+      "Достижения",
     ])
     expect(screen.getByText("Слот достижений")).toBeInTheDocument()
   })
@@ -82,17 +82,19 @@ describe("ProfileOverview", () => {
     ])
   })
 
-  it("пустые жанры скрывают блок жанров даже у владельца", () => {
+  it("пустые жанры оставляют блок жанров с предложением добавить", () => {
     renderOverview({ genres: [] })
 
-    expect(screen.queryByRole("region", { name: "Любимые жанры" })).not.toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "Любимые жанры" })).toBeInTheDocument()
+    expect(screen.getByText(/Выберите до 9 любимых жанров/)).toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Читательский ДНК" })).toBeInTheDocument()
   })
 
-  it("посетителю без ДНК блок ДНК не показывается", () => {
+  it("посетителю без ДНК блок ДНК показывается с сообщением", () => {
     renderOverview({ mode: "visitor", dna: null })
 
-    expect(screen.queryByRole("region", { name: "Читательский ДНК" })).not.toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "Читательский ДНК" })).toBeInTheDocument()
+    expect(screen.getByText(/Пользователь пока не прошёл тест на читательский ДНК/)).toBeInTheDocument()
   })
 
   it("кнопка «Изменить» у владельца вызывает onEditGenres", () => {
@@ -111,11 +113,10 @@ describe("ProfileOverview", () => {
     expect(onOpenTierList).toHaveBeenCalledWith("tl-1")
   })
 
-  it("кнопка «Все достижения» вызывает onOpenAchievements", () => {
-    const onOpenAchievements = vi.fn()
-    renderOverview({ achievementsSlot: <div>Слот достижений</div>, onOpenAchievements })
+  it("рендерит слот достижений внутри секции Достижения", () => {
+    renderOverview({ achievementsSlot: <div data-testid="ach-slot">Слот достижений</div> })
 
-    fireEvent.click(screen.getByRole("button", { name: "Все достижения" }))
-    expect(onOpenAchievements).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId("ach-slot")).toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "Достижения" })).toBeInTheDocument()
   })
 })

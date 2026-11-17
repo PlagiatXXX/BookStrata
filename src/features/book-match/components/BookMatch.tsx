@@ -311,7 +311,7 @@ export function BookMatch({
                   key={genre}
                   type="button"
                   onClick={() => removeGenre(genre)}
-                  className="rounded-full border border-(--bp-primary)/60 bg-(--bp-primary)/20 px-3 py-1 text-xs font-medium text-white transition-colors hover:border-(--bp-primary)"
+                  className="cursor-pointer rounded-full border border-amber-400/50 bg-amber-400/20 px-3 py-1 text-xs font-semibold text-amber-200 transition-all hover:border-amber-300 hover:bg-amber-400/30 hover:shadow-[0_0_10px_rgba(251,191,36,0.3)]"
                   title="Убрать из предпочтений"
                 >
                   {GENRE_CATEGORIES.find((c) => c.id === genre)?.label ?? genre}

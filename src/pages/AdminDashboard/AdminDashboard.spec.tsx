@@ -96,4 +96,14 @@ describe("AdminDashboard", () => {
       expect(screen.getByText("12")).toBeInTheDocument();
     });
   });
+
+  it("клик по кнопке «Назад» возвращает назад", async () => {
+    renderComponent();
+    const user = userEvent.setup();
+
+    const backBtn = screen.getByRole("button", { name: "Назад" });
+    await user.click(backBtn);
+
+    expect(mockNavigate).toHaveBeenCalled();
+  });
 });

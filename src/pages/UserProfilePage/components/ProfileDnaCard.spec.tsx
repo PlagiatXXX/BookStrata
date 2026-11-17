@@ -31,16 +31,20 @@ describe("ProfileDnaCard", () => {
     expect(screen.getByText("#BS-7492-X")).toBeInTheDocument()
   })
 
-  it("без ДНК у владельца — CTA «Пройти тест» на /reading-dna", () => {
+  it("без ДНК у владельца — подзаголовок и CTA «Пройти тест» на /reading-dna", () => {
     render(<ProfileDnaCard dna={null} isOwner />)
 
+    expect(screen.getByText("Литературный психотип, оси восприятия и совместимость")).toBeInTheDocument()
+    expect(screen.getByText(/Вы ещё не прошли тест на читательский ДНК/)).toBeInTheDocument()
     const cta = screen.getByRole("link", { name: /Пройти тест/ })
     expect(cta).toHaveAttribute("href", "/reading-dna")
   })
 
-  it("без ДНК у посетителя блок не рендерится", () => {
-    const { container } = render(<ProfileDnaCard dna={null} isOwner={false} />)
+  it("без ДНК у посетителя показывает заглушку о непройденном тесте", () => {
+    render(<ProfileDnaCard dna={null} isOwner={false} />)
 
-    expect(container).toBeEmptyDOMElement()
+    expect(screen.getByRole("region", { name: "Читательский ДНК" })).toBeInTheDocument()
+    expect(screen.getByText(/Пользователь пока не прошёл тест на читательский ДНК/)).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Пройти тест/ })).not.toBeInTheDocument()
   })
 })

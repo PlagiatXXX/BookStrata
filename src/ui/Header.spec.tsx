@@ -31,9 +31,9 @@ function LocationSpy() {
   return <span data-testid="location-path">{useLocation().pathname}</span>;
 }
 
-function renderHeader() {
+function renderHeader(initialEntry = "/") {
   return render(
-    <MemoryRouter initialEntries={["/"]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <LocationSpy />
       <Header />
     </MemoryRouter>,
@@ -145,7 +145,7 @@ describe("Header — «Полка» и «Угостить» выделены в 
 describe("Header — меню аватара", () => {
   const triggerName = /меню пользователя/i;
 
-  function renderAuthenticated(role = "user") {
+  function renderAuthenticated(role = "user", initialEntry = "/") {
     vi.mocked(useAuth).mockReturnValue({
       isAuthenticated: true,
       user: { userId: 42, username: "reader", role },
@@ -154,8 +154,22 @@ describe("Header — меню аватара", () => {
       refreshUser: vi.fn(),
       loginWithData: vi.fn(),
     } as unknown as ReturnType<typeof useAuth>);
-    return renderHeader();
+    return renderHeader(initialEntry);
   }
+
+  it("находясь на странице своего профиля, пункт «Мой профиль» скрывается", async () => {
+    const user = userEvent.setup();
+    renderAuthenticated("user", "/users/42");
+
+    await user.click(screen.getByRole("button", { name: triggerName }));
+
+    expect(
+      screen.queryByRole("menuitem", { name: "Мой профиль" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: "Выйти" }),
+    ).toBeInTheDocument();
+  });
 
   it("аватар открывает меню с aria-haspopup/aria-expanded и не ведёт на /profile", async () => {
     const user = userEvent.setup();
@@ -173,7 +187,7 @@ describe("Header — меню аватара", () => {
     expect(screen.getByTestId("location-path").textContent).toBe("/");
   });
 
-  it("меню обычного пользователя: «Мой профиль», «Дашборд», «Выйти» — без «Админки»", async () => {
+  it("меню обычного пользователя: «Мой профиль», «Выйти» — без «Админки»", async () => {
     const user = userEvent.setup();
     renderAuthenticated("user");
 
@@ -181,7 +195,6 @@ describe("Header — меню аватара", () => {
 
     expect(screen.getAllByRole("menuitem").map((i) => i.textContent)).toEqual([
       "Мой профиль",
-      "Дашборд",
       "Выйти",
     ]);
     expect(
@@ -211,14 +224,10 @@ describe("Header — меню аватара", () => {
     ).toBeInTheDocument();
   });
 
-  it("«Мой профиль» ведёт на /users/:id, «Дашборд» — на /dashboard", async () => {
+  it("«Мой профиль» ведёт на /users/:id", async () => {
     const user = userEvent.setup();
     renderAuthenticated();
     const trigger = screen.getByRole("button", { name: triggerName });
-
-    await user.click(trigger);
-    await user.click(screen.getByRole("menuitem", { name: "Дашборд" }));
-    expect(screen.getByTestId("location-path").textContent).toBe("/dashboard");
 
     await user.click(trigger);
     await user.click(screen.getByRole("menuitem", { name: "Мой профиль" }));
@@ -279,7 +288,7 @@ describe("Header — меню аватара", () => {
 
     fireEvent.keyDown(trigger, { key: "ArrowDown" });
     const items = await waitFor(() => screen.getAllByRole("menuitem"));
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(3);
     await waitFor(() => expect(items[0]).toHaveFocus());
 
     fireEvent.keyDown(items[0], { key: "ArrowDown" });
@@ -287,13 +296,13 @@ describe("Header — меню аватара", () => {
     fireEvent.keyDown(items[1], { key: "ArrowUp" });
     expect(items[0]).toHaveFocus();
     fireEvent.keyDown(items[0], { key: "End" });
-    expect(items[3]).toHaveFocus();
-    fireEvent.keyDown(items[3], { key: "Home" });
+    expect(items[2]).toHaveFocus();
+    fireEvent.keyDown(items[2], { key: "Home" });
     expect(items[0]).toHaveFocus();
 
     fireEvent.keyDown(items[0], { key: "ArrowDown" });
     await user.keyboard("{Enter}");
-    expect(screen.getByTestId("location-path").textContent).toBe("/dashboard");
+    expect(screen.getByTestId("location-path").textContent).toBe("/admin");
 
     await user.click(trigger);
     const reopened = screen.getAllByRole("menuitem");

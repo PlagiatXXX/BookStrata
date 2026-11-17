@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react"
+import { getBadgeDescription } from "@/lib/badgeDescriptions"
 
 /**
  * Единая мапа цветов бейджей профиля (роль + кастомные бейджи).
@@ -41,16 +42,24 @@ const BADGE_COLOR_STYLES: Record<string, CSSProperties> = {
 interface ProfileBadgeProps {
   text: string
   color: string
+  description?: string
 }
 
-export function ProfileBadge({ text, color }: ProfileBadgeProps) {
+export function ProfileBadge({ text, color, description }: ProfileBadgeProps) {
   const colorKey = color in BADGE_COLOR_STYLES ? color : "cyan"
+  const tooltipText = description ?? getBadgeDescription(text)
+
   return (
     <span
       className={`profile-badge profile-badge--${colorKey}`}
       style={BADGE_COLOR_STYLES[colorKey]}
+      tabIndex={0}
+      aria-label={`${text}: ${tooltipText}`}
     >
       {text}
+      <span className="profile-badge__tooltip" role="tooltip">
+        {tooltipText}
+      </span>
     </span>
   )
 }

@@ -21,22 +21,38 @@ describe("ProfileGenres", () => {
     render(<ProfileGenres genres={genres} isOwner={false} />)
 
     expect(screen.queryByText(/\/\d+$/)).not.toBeInTheDocument()
-    expect(screen.queryByText("3/7")).not.toBeInTheDocument()
+    expect(screen.queryByText("3/9")).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Изменить" })).not.toBeInTheDocument()
   })
 
-  it("у владельца есть кнопка «Изменить», клик вызывает onEdit", () => {
+  it("у владельца есть кнопка «Изменить» и клик по тегу жанра вызывает onEdit", () => {
     const onEdit = vi.fn()
     render(<ProfileGenres genres={genres} isOwner onEdit={onEdit} />)
 
     fireEvent.click(screen.getByRole("button", { name: "Изменить" }))
     expect(onEdit).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByText("Фэнтези"))
+    expect(onEdit).toHaveBeenCalledTimes(2)
   })
 
-  it("при пустом массиве блок не рендерится", () => {
-    const { container } = render(<ProfileGenres genres={[]} isOwner onEdit={vi.fn()} />)
+  it("при пустом массиве у владельца показывает предложение добавить любимые жанры", () => {
+    const onEdit = vi.fn()
+    render(<ProfileGenres genres={[]} isOwner onEdit={onEdit} />)
 
-    expect(container).toBeEmptyDOMElement()
-    expect(screen.queryByText("Любимые жанры")).not.toBeInTheDocument()
+    expect(screen.getByRole("region", { name: "Любимые жанры" })).toBeInTheDocument()
+    expect(screen.getByText(/Выберите до 9 любимых жанров/)).toBeInTheDocument()
+    const addBtn = screen.getByRole("button", { name: /Добавить любимые жанры/ })
+    expect(addBtn).toBeInTheDocument()
+    fireEvent.click(addBtn)
+    expect(onEdit).toHaveBeenCalledTimes(1)
+  })
+
+  it("при пустом массиве у посетителя показывает заглушку", () => {
+    render(<ProfileGenres genres={[]} isOwner={false} />)
+
+    expect(screen.getByRole("region", { name: "Любимые жанры" })).toBeInTheDocument()
+    expect(screen.getByText(/Пользователь пока не добавил любимые жанры/)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Добавить/ })).not.toBeInTheDocument()
   })
 })

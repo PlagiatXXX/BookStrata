@@ -110,26 +110,50 @@ export function SocialLinksEditor({
 
   return (
     <div className="social-links-editor" data-testid="social-links-editor">
-      <div className="social-links-editor__header">
-        <span className="social-links-editor__heading">Соцсети</span>
-        <span className="social-links-editor__counter" aria-label="Количество ссылок">
+      <div
+        className="social-links-editor__header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 14,
+        }}
+      >
+        <h2 className="h social-links-editor__heading" style={{ margin: 0 }}>
+          Соцсети
+        </h2>
+        <span className="m social-links-editor__counter" aria-label="Количество ссылок">
           {value.length} из {MAX_LINKS}
         </span>
       </div>
 
       {value.length === 0 ? (
-        <p className="social-links-editor__empty">Пока нет добавленных ссылок</p>
+        <p className="m social-links-editor__empty" style={{ margin: "14px 0" }}>
+          Пока нет добавленных ссылок
+        </p>
       ) : (
-        <div className="social-links-editor__rows">
+        <div
+          className="social-links-editor__rows"
+          style={{ display: "flex", flexDirection: "column", gap: 10 }}
+        >
           {value.map((link, index) => {
             const isInvalid = invalid.has(index);
             const placeholder = getPlatformPlaceholder(link.platform);
             return (
-              <div className="social-links-editor__row" key={index}>
+              <div
+                className="social-links-editor__row"
+                key={index}
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 10,
+                  alignItems: "center",
+                }}
+              >
                 <select
                   aria-label="Платформа"
-                  className="social-links-editor__select"
-                  style={TOUCH_TARGET}
+                  className="inp sel social-links-editor__select"
+                  style={{ width: 140, ...TOUCH_TARGET }}
                   value={link.platform}
                   disabled={isSaving}
                   onChange={(e) => handleChange(index, "platform", e.target.value)}
@@ -143,8 +167,13 @@ export function SocialLinksEditor({
                 <input
                   aria-label="Ссылка"
                   aria-invalid={isInvalid}
-                  className="social-links-editor__input"
-                  style={TOUCH_TARGET}
+                  className="inp social-links-editor__input"
+                  style={{
+                    flex: 1,
+                    minWidth: 160,
+                    borderColor: isInvalid ? "#f87171" : undefined,
+                    ...TOUCH_TARGET,
+                  }}
                   type="url"
                   value={link.url}
                   placeholder={placeholder}
@@ -155,15 +184,18 @@ export function SocialLinksEditor({
                   type="button"
                   aria-label="Удалить"
                   title="Удалить"
-                  className="social-links-editor__remove"
-                  style={TOUCH_TARGET}
+                  className="btn social-links-editor__remove"
+                  style={{ padding: "0 14px", ...TOUCH_TARGET }}
                   disabled={isSaving}
                   onClick={() => handleRemove(index)}
                 >
                   <Trash2 size={16} />
                 </button>
                 {isInvalid && (
-                  <p className="social-links-editor__error">
+                  <p
+                    className="social-links-editor__error"
+                    style={{ flexBasis: "100%", margin: 0, fontSize: 12, color: "#f87171" }}
+                  >
                     Некорректная ссылка. Пример: {placeholder}
                   </p>
                 )}
@@ -173,11 +205,14 @@ export function SocialLinksEditor({
         </div>
       )}
 
-      <div className="social-links-editor__actions">
+      <div
+        className="social-links-editor__actions"
+        style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}
+      >
         <button
           type="button"
-          className="social-links-editor__add"
-          style={TOUCH_TARGET}
+          className="btn social-links-editor__add"
+          style={{ borderStyle: "dashed", ...TOUCH_TARGET }}
           disabled={atLimit || isSaving}
           onClick={handleAdd}
         >
@@ -186,7 +221,7 @@ export function SocialLinksEditor({
         </button>
         <button
           type="button"
-          className="social-links-editor__save"
+          className="btn pri social-links-editor__save"
           style={TOUCH_TARGET}
           disabled={isSaving}
           onClick={handleSave}
@@ -196,7 +231,7 @@ export function SocialLinksEditor({
         {onCancel && (
           <button
             type="button"
-            className="social-links-editor__cancel"
+            className="btn social-links-editor__cancel"
             style={TOUCH_TARGET}
             disabled={isSaving}
             onClick={onCancel}

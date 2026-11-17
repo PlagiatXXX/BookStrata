@@ -121,7 +121,7 @@ describe("ProfileSettings", () => {
     expect(screen.getByText("reader@example.com")).toBeInTheDocument();
     expect(screen.getByText("Любимые жанры")).toBeInTheDocument();
     expect(screen.getByTestId("settings-social")).toBeInTheDocument();
-    expect(await screen.findByText("0/7")).toBeInTheDocument();
+    expect(await screen.findByText("0/9")).toBeInTheDocument();
   });
 
   it("инлайн-редактор ника вызывает экшены и onRefresh после сохранения", async () => {

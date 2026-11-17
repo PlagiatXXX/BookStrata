@@ -202,7 +202,7 @@ describe("ProfileAchievements", () => {
     expect(screen.queryByText("10 / 50")).not.toBeInTheDocument()
   })
 
-  it("limit обрезает список и показывает кнопку «Все достижения»", () => {
+  it("limit обрезает список и показывает кнопку «Показать все»", () => {
     const onShowAll = vi.fn()
     const { container } = render(
       <ProfileAchievements
@@ -214,7 +214,7 @@ describe("ProfileAchievements", () => {
     )
 
     expect(getCards(container)).toHaveLength(2)
-    fireEvent.click(screen.getByRole("button", { name: "Все достижения" }))
+    fireEvent.click(screen.getByRole("button", { name: "Показать все" }))
     expect(onShowAll).toHaveBeenCalledTimes(1)
   })
 

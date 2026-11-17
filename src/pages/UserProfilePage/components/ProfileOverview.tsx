@@ -1,4 +1,3 @@
-import { Trophy } from "lucide-react"
 import type { ReactNode } from "react"
 import type { CategoryId } from "@/data/genre-taxonomy"
 import type { PublicUserDna } from "@/lib/userApi"
@@ -15,18 +14,15 @@ interface ProfileOverviewProps {
   dnaAxes?: DnaAxesData | null
   tierLists: TierListShort[]
   tierListsLoading?: boolean
-  /** Слот блока достижений (сетка рендерится задачей достижений). */
   achievementsSlot?: ReactNode
-  /** Кнопка «Изменить» в блоке жанров — к настройкам, блок жанров. */
   onEditGenres?: () => void
-  /** Кнопка «Все достижения» — к вкладке достижений. */
   onOpenAchievements?: () => void
   onOpenTierList: (id: string) => void
 }
 
 /**
- * Вкладка «Обзор» (спека §6.5). Порядок блоков:
- * жанры → читательский ДНК → достижения → публичные тир-листы.
+ * Вкладка «Обзор» (спека §6.5, макет обзор). Порядок:
+ * 2 колонки (жанры + читательский ДНК слева, достижения справа) + публичные тир-листы снизу.
  */
 export function ProfileOverview({
   mode,
@@ -37,42 +33,38 @@ export function ProfileOverview({
   tierListsLoading = false,
   achievementsSlot,
   onEditGenres,
-  onOpenAchievements,
+  onOpenAchievements: _onOpenAchievements,
   onOpenTierList,
 }: ProfileOverviewProps) {
   const isOwner = mode === "owner"
 
   return (
-    <div className="profile-overview">
-      <ProfileGenres genres={genres} isOwner={isOwner} onEdit={onEditGenres} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Верхний ряд: Любимые жанры слева, Читательский билет справа */}
+      <div className="profile-overview-layout">
+        <ProfileGenres genres={genres} isOwner={isOwner} onEdit={onEditGenres} />
+        <ProfileDnaCard dna={dna} isOwner={isOwner} axes={dnaAxes} />
+      </div>
 
-      <ProfileDnaCard dna={dna} isOwner={isOwner} axes={dnaAxes} />
-
-      {achievementsSlot && (
-        <section aria-label="Достижения" className="profile-section">
-          <div className="profile-section__header">
-            <span className="profile-pill-label">Достижения</span>
-            {onOpenAchievements && (
-              <button
-                type="button"
-                className="profile-section__action"
-                onClick={onOpenAchievements}
-              >
-                <Trophy size={14} aria-hidden="true" />
-                Все достижения
-              </button>
-            )}
-          </div>
-          {achievementsSlot}
-        </section>
-      )}
-
+      {/* Публичные тир-листы выше достижений */}
       <ProfileTierLists
         tierLists={tierLists}
         isLoading={tierListsLoading}
         isOwner={isOwner}
         onOpen={onOpenTierList}
       />
+
+      {/* Секция достижений ниже */}
+      {achievementsSlot && (
+        <section
+          aria-label="Достижения"
+          className="card"
+          style={{ display: "flex", flexDirection: "column" }}
+        >
+          <h2 className="h">Достижения</h2>
+          <div style={{ flex: 1 }}>{achievementsSlot}</div>
+        </section>
+      )}
     </div>
   )
 }

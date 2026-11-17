@@ -1,6 +1,5 @@
 export type ProfileTab =
   | "overview"
-  | "comparison"
   | "tier-lists"
   | "achievements"
   | "settings"
@@ -13,28 +12,40 @@ interface ProfileTabsProps {
 
 const TABS: Array<{ id: ProfileTab; label: string }> = [
   { id: "overview", label: "Обзор" },
-  { id: "comparison", label: "Сравнение" },
   { id: "tier-lists", label: "Тир-листы" },
   { id: "achievements", label: "Достижения" },
   { id: "settings", label: "Настройки" },
 ]
 
-/** Табы профиля (спека §6.4). «Настройки» видны только владельцу. */
+/** Табы профиля (спека §6.4, макет Obsidian Strata). «Настройки» видны только владельцу. */
 export function ProfileTabs({ active, isOwner, onChange }: ProfileTabsProps) {
   return (
-    <div className="profile-tabs" role="tablist" aria-label="Разделы профиля">
-      {TABS.filter((tab) => isOwner || tab.id !== "settings").map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          role="tab"
-          aria-selected={active === tab.id}
-          onClick={() => onChange(tab.id)}
-          className={`profile-tabs__tab${active === tab.id ? " profile-tabs__tab--active" : ""}`}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
+    <nav
+      className="profile-tabs-nav"
+      style={{
+        borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+        display: "flex",
+        overflowX: "auto",
+        gap: 0,
+      }}
+      role="tablist"
+      aria-label="Разделы профиля"
+    >
+      {TABS.filter((tab) => isOwner || tab.id !== "settings").map((tab) => {
+        const isActive = active === tab.id
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onChange(tab.id)}
+            className={`tab${isActive ? " on" : ""}`}
+          >
+            {tab.label}
+          </button>
+        )
+      })}
+    </nav>
   )
 }

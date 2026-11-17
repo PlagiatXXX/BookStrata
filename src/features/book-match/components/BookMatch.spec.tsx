@@ -43,7 +43,7 @@ vi.mock("@/hooks/useAuthContext", () => ({
 
 vi.mock("@/hooks/useGenrePreferences", () => ({
   genrePreferencesKey: ["genre-preferences"],
-  MAX_GENRE_PREFERENCES: 7,
+  MAX_GENRE_PREFERENCES: 9,
   useGenrePreferences: () => ({ data: genreState.genres }),
   useSetGenrePreferences: () => ({ mutate: genreState.mutate }),
 }));

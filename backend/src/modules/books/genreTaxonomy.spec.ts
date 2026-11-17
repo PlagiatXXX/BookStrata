@@ -3,14 +3,14 @@ import { describe, it, expect } from "vitest";
 import { parseBookGenre, tagToCategoryId, isCategoryId, GENRE_CATEGORIES } from "./genreTaxonomy.js";
 
 describe("genreTaxonomy (бэк-порт)", () => {
-  it("19 категорий", () => {
-    expect(GENRE_CATEGORIES).toHaveLength(19);
+  it("24 категории", () => {
+    expect(GENRE_CATEGORIES).toHaveLength(24);
   });
 
   it("мульти-жанр и опечатки", () => {
     expect(parseBookGenre("Детектив, Классика").sort()).toEqual(["classics", "thriller"]);
     expect(parseBookGenre("Young Adul")).toEqual(["young-adult"]);
-    expect(parseBookGenre("Ромэнтези")).toEqual(["fantasy"]);
+    expect(parseBookGenre("Ромэнтези")).toEqual(["romantasy"]);
   });
 
   it("неопознанное → []", () => {

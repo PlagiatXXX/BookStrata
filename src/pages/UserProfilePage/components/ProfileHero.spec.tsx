@@ -1,7 +1,7 @@
 /// <reference types="vitest/globals" />
 
 import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { ProfileHero } from "./ProfileHero"
 import type { ProfileHeroUser } from "./ProfileHero"
 
@@ -32,6 +32,7 @@ const baseProps = {
   onEditAvatar: vi.fn(),
   onEditProfile: vi.fn(),
   onPreview: vi.fn(),
+  onSaveBio: vi.fn(),
 }
 
 describe("ProfileHero — владелец", () => {
@@ -49,7 +50,7 @@ describe("ProfileHero — владелец", () => {
 
     expect(screen.getByText("Страничный глотатель")).toBeInTheDocument()
     expect(screen.getByText("📄")).toBeInTheDocument()
-    expect(screen.getByText(/На BookStrata с 15 января 2024/)).toBeInTheDocument()
+    expect(screen.getByText(/На сайте с 15 января 2024/)).toBeInTheDocument()
   })
 
   it("показывает уровень с XP-подписью", () => {
@@ -82,20 +83,55 @@ describe("ProfileHero — владелец", () => {
     expect(baseProps.onOpenSettings).toHaveBeenCalledTimes(1)
   })
 
-  it("«Редактировать профиль» и камера вызывают свои колбэки", () => {
+  it("«Редактировать профиль» открывает инлайн-редактор bio и вызывает onEditProfile", () => {
     render(<ProfileHero mode="owner" profile={makeProfile()} isStaffVisitor={false} isPreview={false} {...baseProps} />)
 
     fireEvent.click(screen.getByRole("button", { name: /Редактировать профиль/ }))
     expect(baseProps.onEditProfile).toHaveBeenCalledTimes(1)
-    fireEvent.click(screen.getByRole("button", { name: "Сменить аватар" }))
-    expect(baseProps.onEditAvatar).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole("textbox", { name: "О себе" })).toBeInTheDocument()
   })
 
-  it("кнопка «Поделиться» вызывает onShare", () => {
+  it("инлайн-редактирование bio: ввод и сохранение", async () => {
+    const onSaveBio = vi.fn().mockResolvedValue(undefined)
+    render(<ProfileHero mode="owner" profile={makeProfile()} isStaffVisitor={false} isPreview={false} {...baseProps} onSaveBio={onSaveBio} />)
+
+    fireEvent.click(screen.getByRole("button", { name: /Редактировать профиль/ }))
+    const textarea = screen.getByRole("textbox", { name: "О себе" })
+    fireEvent.change(textarea, { target: { value: "Новое описание профиля" } })
+    fireEvent.click(screen.getByRole("button", { name: "Сохранить" }))
+
+    await waitFor(() => {
+      expect(onSaveBio).toHaveBeenCalledWith("Новое описание профиля")
+    })
+  })
+
+  it("инлайн-редактирование bio: отмена возвращает исходный текст", () => {
+    render(<ProfileHero mode="owner" profile={makeProfile()} isStaffVisitor={false} isPreview={false} {...baseProps} />)
+
+    fireEvent.click(screen.getByRole("button", { name: /Редактировать профиль/ }))
+    const textarea = screen.getByRole("textbox", { name: "О себе" })
+    fireEvent.change(textarea, { target: { value: "Несохраненный текст" } })
+    fireEvent.click(screen.getByRole("button", { name: "Отмена" }))
+
+    expect(screen.queryByRole("textbox", { name: "О себе" })).not.toBeInTheDocument()
+    expect(screen.getByText("Люблю книги про робототехнику")).toBeInTheDocument()
+  })
+
+  it("клик по заполненному bio владельца открывает инлайн-редактор", () => {
+    render(<ProfileHero mode="owner" profile={makeProfile()} isStaffVisitor={false} isPreview={false} {...baseProps} />)
+
+    fireEvent.click(screen.getByText("Люблю книги про робототехнику"))
+    expect(screen.getByRole("textbox", { name: "О себе" })).toBeInTheDocument()
+  })
+
+  it("кнопка «Поделиться» вызывает onShare и открывает меню с Telegram, VK и ссылкой", () => {
     render(<ProfileHero mode="owner" profile={makeProfile()} isStaffVisitor={false} isPreview={false} {...baseProps} />)
 
     fireEvent.click(screen.getByRole("button", { name: /Поделиться/ }))
     expect(baseProps.onShare).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole("button", { name: /Telegram/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /ВКонтакте/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Копировать ссылку/ })).toBeInTheDocument()
   })
 
   it("isPreview скрывает камеру, редактирование, «Как видят другие» и счётчик соцсетей", () => {
@@ -122,7 +158,7 @@ describe("ProfileHero — владелец", () => {
 })
 
 describe("ProfileHero — посетитель", () => {
-  it("не видит камеру, редактирование и счётчик соцсетей; видит «Поделиться»", () => {
+  it("не видит камеру, редактирование и счётчик соцсетей; видит bio и «Поделиться»", () => {
     render(<ProfileHero mode="visitor" profile={makeProfile()} isStaffVisitor={false} isPreview={false} {...baseProps} />)
 
     expect(screen.queryByRole("button", { name: "Сменить аватар" })).not.toBeInTheDocument()
@@ -130,6 +166,7 @@ describe("ProfileHero — посетитель", () => {
     expect(screen.queryByRole("button", { name: /\+ Соцсеть/ })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /Как видят другие/ })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: /Поделиться/ })).toBeInTheDocument()
+    expect(screen.getByText("Люблю книги про робототехнику")).toBeInTheDocument()
   })
 
   it("не видит подпись XP, но видит уровень", () => {
@@ -152,5 +189,26 @@ describe("ProfileHero — staff-посетитель", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Управление/ }))
     expect(baseProps.onOpenModeration).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("ProfileHero — предпросмотр (isPreview)", () => {
+  it("показывает кнопку «Вернуться» и вызывает onExitPreview при клике", () => {
+    const onExitPreview = vi.fn()
+    render(
+      <ProfileHero
+        mode="visitor"
+        profile={makeProfile()}
+        isStaffVisitor={false}
+        isPreview={true}
+        onExitPreview={onExitPreview}
+        {...baseProps}
+      />,
+    )
+
+    const returnBtn = screen.getByRole("button", { name: "Вернуться" })
+    expect(returnBtn).toBeInTheDocument()
+    fireEvent.click(returnBtn)
+    expect(onExitPreview).toHaveBeenCalledTimes(1)
   })
 })
