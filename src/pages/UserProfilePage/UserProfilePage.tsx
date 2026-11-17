@@ -8,10 +8,10 @@ import {
   apiGetPublicUser,
   apiGetTasteMatch,
   apiGetUserTierLists,
-  getReadingDnaByTicket,
   type PublicUserDna,
   type PublicUserStats,
 } from "@/lib/userApi";
+import { getReadingDnaByTicket } from "@/lib/readingDnaApi";
 import { useAuth } from "@/hooks/useAuthContext";
 import { useUser } from "@/hooks/useUser";
 import { useAchievements } from "@/hooks/useAchievements";
