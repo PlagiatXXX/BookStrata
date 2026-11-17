@@ -2,6 +2,7 @@ import { Trophy } from "lucide-react"
 import type { ReactNode } from "react"
 import type { CategoryId } from "@/data/genre-taxonomy"
 import type { PublicUserDna } from "@/lib/userApi"
+import type { DnaAxesData } from "@/lib/readingDnaApi"
 import type { TierListShort } from "@/lib/tierListApi"
 import { ProfileGenres } from "./ProfileGenres"
 import { ProfileDnaCard } from "./ProfileDnaCard"
@@ -11,6 +12,7 @@ interface ProfileOverviewProps {
   mode: "owner" | "visitor"
   genres: CategoryId[]
   dna: PublicUserDna | null
+  dnaAxes?: DnaAxesData | null
   tierLists: TierListShort[]
   tierListsLoading?: boolean
   /** Слот блока достижений (сетка рендерится задачей достижений). */
@@ -30,6 +32,7 @@ export function ProfileOverview({
   mode,
   genres,
   dna,
+  dnaAxes,
   tierLists,
   tierListsLoading = false,
   achievementsSlot,
@@ -43,7 +46,7 @@ export function ProfileOverview({
     <div className="profile-overview">
       <ProfileGenres genres={genres} isOwner={isOwner} onEdit={onEditGenres} />
 
-      <ProfileDnaCard dna={dna} isOwner={isOwner} />
+      <ProfileDnaCard dna={dna} isOwner={isOwner} axes={dnaAxes} />
 
       {achievementsSlot && (
         <section aria-label="Достижения" className="profile-section">

@@ -8,6 +8,7 @@ import {
   apiGetPublicUser,
   apiGetTasteMatch,
   apiGetUserTierLists,
+  getReadingDnaByTicket,
   type PublicUserDna,
   type PublicUserStats,
 } from "@/lib/userApi";
@@ -88,6 +89,15 @@ export default function UserProfilePage() {
     queryFn: () => apiGetUserTierLists(id!, 1, 20),
     enabled: !!id,
   });
+
+  // Полный билет ДНК посетителя (с осями) для миниатюры в профиле.
+  const visitorDnaTicket = !isOwner ? publicUserQuery.data?.dna?.ticketNumber : undefined;
+  const fullDnaQuery = useQuery({
+    queryKey: ["readingDna", "ticket", visitorDnaTicket],
+    queryFn: () => getReadingDnaByTicket(visitorDnaTicket!),
+    enabled: !!visitorDnaTicket,
+    staleTime: 5 * 60 * 1000,
+  });
   const tasteMatchQuery = useQuery({
     queryKey: ["tasteMatch", id],
     queryFn: () => apiGetTasteMatch(id!),
@@ -143,6 +153,10 @@ export default function UserProfilePage() {
         }
       : null
     : (publicUserQuery.data?.dna ?? null);
+
+  const dnaAxes = isOwner
+    ? (ownerDna?.axes ?? null)
+    : (fullDnaQuery.data?.axes ?? null);
 
   const tierLists = tierListsQuery.data?.data ?? [];
 
@@ -390,6 +404,7 @@ export default function UserProfilePage() {
                   mode={displayMode}
                   genres={genres}
                   dna={dna}
+                  dnaAxes={dnaAxes}
                   tierLists={tierLists}
                   tierListsLoading={tierListsQuery.isLoading}
                   achievementsSlot={achievementsPreview}
@@ -408,7 +423,7 @@ export default function UserProfilePage() {
               )}
               {activeTab === "comparison" && (
                 <div className="profile-page__section">
-                  <ProfileDnaCard dna={dna} isOwner={displayMode === "owner"} />
+                  <ProfileDnaCard dna={dna} isOwner={displayMode === "owner"} axes={dnaAxes} />
                 </div>
               )}
               {activeTab === "achievements" && achievementsTab}
