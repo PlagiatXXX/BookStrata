@@ -493,6 +493,22 @@
   background: rgba(30, 32, 32, 0.4);
 }
 
+/* Кнопка раскрытия баннера — минимум 44×44 px (спека §10) */
+.profile-taste-banner__toggle {
+  min-height: 2.75rem;
+}
+
+/* ── Moderation (спека §6.7) ── */
+.profile-moderation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-moderation__panel {
+  min-width: 0;
+}
+
 /* ══════════════════════════════════════════════════════════════
    Обзор профиля: статистика, табы, жанры, ДНК, тир-листы
    ══════════════════════════════════════════════════════════════ */
