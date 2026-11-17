@@ -19,6 +19,13 @@ export interface User {
   badges?: UserBadge[];
 }
 
+export interface PublicUserDna {
+  archetypeName: string;
+  archetypeDesc: string | null;
+  motto: string | null;
+  ticketNumber: string;
+}
+
 export interface PublicUser {
   id: number;
   username: string;
@@ -33,6 +40,8 @@ export interface PublicUser {
   createdAt: string;
   stats: PublicUserStats;
   badges: UserBadge[];
+  genrePreferences: CategoryId[];
+  dna: PublicUserDna | null;
 }
 
 export interface SocialLink {

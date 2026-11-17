@@ -82,6 +82,44 @@ describe("userApi", () => {
 
       await expect(apiGetPublicUser("1")).rejects.toThrow("Требуется авторизация")
     })
+
+    it("должен разобрать ответ с genrePreferences и dna", async () => {
+      const userWithDna = {
+        ...mockPublicUser,
+        genrePreferences: ["fantasy", "horror"],
+        dna: {
+          archetypeName: "Прожигатель жизней",
+          archetypeDesc: "Читает запоем",
+          motto: "Книга — лучший друг",
+          ticketNumber: "KB-042",
+        },
+      }
+      mockFetch.mockResolvedValue(mockResponse({ data: userWithDna }))
+
+      const result = await apiGetPublicUser("1")
+
+      expect(result.genrePreferences).toEqual(["fantasy", "horror"])
+      expect(result.dna).toEqual({
+        archetypeName: "Прожигатель жизней",
+        archetypeDesc: "Читает запоем",
+        motto: "Книга — лучший друг",
+        ticketNumber: "KB-042",
+      })
+    })
+
+    it("должен разобрать ответ с dna: null и пустыми жанрами", async () => {
+      const userWithoutDna = {
+        ...mockPublicUser,
+        genrePreferences: [],
+        dna: null,
+      }
+      mockFetch.mockResolvedValue(mockResponse({ data: userWithoutDna }))
+
+      const result = await apiGetPublicUser("1")
+
+      expect(result.genrePreferences).toEqual([])
+      expect(result.dna).toBeNull()
+    })
   })
 
   describe("apiGetUserTierLists", () => {
