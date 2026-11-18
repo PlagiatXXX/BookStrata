@@ -129,6 +129,7 @@ const TierListEditorContent = () => {
   const [createdTierListId, setCreatedTierListId] = useState<string | null>(
     null,
   );
+  const effectiveTierListId = createdTierListId || tierListId;
 
   // Получаем данные через React Query
   const {
@@ -771,7 +772,7 @@ const TierListEditorContent = () => {
   };
 
   const handleViewBook = (book: Book) => {
-    const target = getBookViewAction(book, tierListId, isReadOnly);
+    const target = getBookViewAction(book, effectiveTierListId, isReadOnly);
     if (target.type === "navigate") {
       navigate(target.path);
       return;
@@ -851,7 +852,7 @@ const TierListEditorContent = () => {
     }),
   };
 
-  const pageUrl = apiData?.slug || tierListId;
+  const pageUrl = apiData?.slug || effectiveTierListId;
   const shareUrl = `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}/tier-lists/${pageUrl}`;
 
   /* Модальные окна — рендерятся внутри main[data-theme] через EditorLayout,
@@ -877,7 +878,7 @@ const TierListEditorContent = () => {
         bookToEdit={bookToEdit}
         bookToView={bookToView}
         isSearchModalOpen={isSearchModalOpen}
-        tierListId={tierListId}
+        tierListId={effectiveTierListId}
         listData={listData}
         onCloseDeleteTier={() => setTierToDelete(null)}
         onCloseDeleteBook={() => setBookToDelete(null)}
@@ -912,7 +913,7 @@ const TierListEditorContent = () => {
         }}
         username={authUser?.username || "user"}
         isReadOnly={isReadOnly}
-        localMode={tierListId === "new"}
+        localMode={!createdTierListId && tierListId === "new"}
         tierListTheme={displayTheme}
         onRequireAuth={openDemoAuthModal}
       />
@@ -1058,7 +1059,7 @@ const TierListEditorContent = () => {
           onMyRatingsClick={handleMyRatingsClick}
           isReadOnly={isReadOnly}
           isStreamMode={isStreamMode}
-          tierListId={tierListId}
+          tierListId={effectiveTierListId}
           coverImageUrl={displayCoverImageUrl}
           hideCover={fromBattle}
           theme={normalizedDisplayTheme}
@@ -1142,8 +1143,8 @@ const TierListEditorContent = () => {
             }
           />
 
-          {!isStreamMode && tierListId && tierListId !== "new" && (
-            <SimilarTierListsCarousel tierListId={tierListId} initialSimilar={apiData?.similar} />
+          {!isStreamMode && effectiveTierListId && effectiveTierListId !== "new" && (
+            <SimilarTierListsCarousel tierListId={effectiveTierListId} initialSimilar={apiData?.similar} />
           )}
         </>
 
