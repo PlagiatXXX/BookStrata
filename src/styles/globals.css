@@ -673,3 +673,119 @@ body {
   pointer-events: none;
   z-index: 1;
 }
+
+/* ── Collection Books Guide in themed containers (autumn, glasshouse, halloween) ── */
+.theme-container .collection-books-guide {
+  border-top-color: var(--theme-outline-variant) !important;
+}
+
+.theme-container .collection-books-guide-badge {
+  color: var(--theme-primary) !important;
+  background-color: color-mix(in srgb, var(--theme-primary) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 28%, transparent) !important;
+}
+
+.theme-container .collection-books-guide-heading {
+  color: var(--theme-ink, var(--theme-on-surface)) !important;
+  font-family: var(--theme-font-headline) !important;
+}
+
+.theme-container .collection-books-guide-text {
+  color: var(--theme-on-surface-variant) !important;
+  font-family: var(--theme-font-body);
+}
+
+.theme-container .collection-books-guide-subtle {
+  color: var(--theme-on-surface-variant) !important;
+  opacity: 0.85;
+}
+
+.theme-container .collection-books-guide-divider {
+  background-color: var(--theme-outline-variant) !important;
+}
+
+.theme-container .collection-books-guide-card {
+  background-color: var(--theme-surface) !important;
+  border-color: var(--theme-outline-variant) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+.theme-container .collection-books-guide-card:hover {
+  background-color: var(--theme-surface-high) !important;
+  border-color: var(--theme-primary) !important;
+}
+
+.theme-container .collection-books-guide-cover-frame {
+  background-color: var(--theme-surface-high) !important;
+  border-color: var(--theme-outline-variant) !important;
+}
+
+.theme-container .collection-books-guide-card-title,
+.theme-container .collection-books-guide-card-title a {
+  color: var(--theme-ink, var(--theme-on-surface)) !important;
+  font-family: var(--theme-font-headline);
+}
+
+.theme-container .collection-books-guide-card-title:hover,
+.theme-container .collection-books-guide-card-title a:hover,
+.theme-container .collection-books-guide-card:hover .collection-books-guide-card-title,
+.theme-container .collection-books-guide-card:hover .collection-books-guide-card-title a {
+  color: var(--theme-primary) !important;
+}
+
+.theme-container .collection-books-guide-card-author,
+.theme-container .collection-books-guide-card-author a {
+  color: var(--theme-on-surface-variant) !important;
+}
+
+.theme-container .collection-books-guide-card-author a:hover {
+  color: var(--theme-primary) !important;
+}
+
+.theme-container .collection-books-guide-card-desc {
+  color: var(--theme-on-surface) !important;
+  font-family: var(--theme-font-body);
+}
+
+.theme-container .collection-books-guide-btn-default {
+  background-color: var(--theme-surface-high) !important;
+  color: var(--theme-on-surface) !important;
+  border-color: var(--theme-outline-variant) !important;
+}
+
+.theme-container .collection-books-guide-btn-default:hover {
+  background-color: var(--theme-surface) !important;
+  border-color: var(--theme-primary) !important;
+}
+
+.theme-container .collection-books-guide-btn-default svg {
+  color: var(--theme-on-surface-variant) !important;
+}
+
+.theme-container .collection-books-guide-btn-want {
+  background-color: color-mix(in srgb, var(--theme-primary) 15%, transparent) !important;
+  color: var(--theme-primary) !important;
+  border-color: color-mix(in srgb, var(--theme-primary) 40%, transparent) !important;
+}
+
+.theme-container .collection-books-guide-btn-want svg {
+  color: var(--theme-primary) !important;
+}
+
+.theme-container .collection-books-guide-btn-read {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #15803d !important;
+  border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+.theme-container .collection-books-guide-btn-read svg {
+  color: #15803d !important;
+}
+
+.theme-container .collection-books-guide-more-link {
+  color: var(--theme-primary) !important;
+}
+
+.theme-container .collection-books-guide-more-link:hover {
+  color: var(--theme-primary-container) !important;
+}

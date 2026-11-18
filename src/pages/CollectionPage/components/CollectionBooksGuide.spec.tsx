@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { CollectionBooksGuide } from "./CollectionBooksGuide";
+import { ThemeProvider } from "@/themes/ThemeProvider";
+import { autumnTheme } from "@/themes/themes/autumn";
 import type { Tier, Book } from "@/types";
 
 const mockTiers: Record<string, Tier> = {
@@ -147,5 +149,32 @@ describe("CollectionBooksGuide", () => {
     );
 
     expect(screen.getByText("— Книги с невероятной концовкой")).toBeInTheDocument();
+  });
+
+  it("рендерит семантические классы для тем оформления (осенняя и др.)", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ThemeProvider theme={autumnTheme}>
+          <CollectionBooksGuide
+            tiers={mockTiers}
+            tierOrder={["tier_master"]}
+            books={mockBooks}
+            shelfStatuses={{ b1: "want_to_read" }}
+            onToggleShelf={() => {}}
+          />
+        </ThemeProvider>
+      </MemoryRouter>,
+    );
+
+    const guideSection = container.querySelector(".collection-books-guide");
+    expect(guideSection).toBeInTheDocument();
+    expect(container.querySelector(".collection-books-guide-heading")).toBeInTheDocument();
+    expect(container.querySelector(".collection-books-guide-badge")).toBeInTheDocument();
+    expect(container.querySelector(".collection-books-guide-text")).toBeInTheDocument();
+    expect(container.querySelector(".collection-books-guide-card")).toBeInTheDocument();
+    expect(container.querySelector(".collection-books-guide-card-title")).toBeInTheDocument();
+    expect(container.querySelector(".collection-books-guide-card-author")).toBeInTheDocument();
+    expect(container.querySelector(".collection-books-guide-card-desc")).toBeInTheDocument();
+    expect(container.querySelector(".collection-books-guide-btn-want")).toBeInTheDocument();
   });
 });

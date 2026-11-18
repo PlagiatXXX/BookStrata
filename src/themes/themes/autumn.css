@@ -1,7 +1,7 @@
 /* Autumn theme — global overrides */
 
 /* Tier list headers — warm autumn colors */
-.theme-container .tier-label {
+.theme-container--autumn .tier-label {
   font-family: var(--theme-font-headline) !important;
   font-weight: 600 !important;
   letter-spacing: 0.02em;
@@ -9,18 +9,18 @@
 }
 
 /* Book covers — subtle warm shadow */
-.theme-container .book-cover {
+.theme-container--autumn .book-cover {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   border-radius: 8px;
 }
 
-.theme-container .book-cover:hover {
+.theme-container--autumn .book-cover:hover {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 0 8px 24px rgba(134, 69, 42, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Prose headings — autumn accent */
-.theme-container .prose h3 {
+.theme-container--autumn .prose h3 {
   font-family: var(--theme-font-label);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -33,31 +33,31 @@
 }
 
 /* Links — warm accent */
-.theme-container a {
+.theme-container--autumn a {
   color: var(--theme-primary);
   text-decoration-color: rgba(134, 69, 42, 0.3);
   transition: color 0.2s, text-decoration-color 0.2s;
 }
 
-.theme-container a:hover {
+.theme-container--autumn a:hover {
   color: var(--theme-primary-container);
   text-decoration-color: var(--theme-primary);
 }
 
 /* Scrollbar — autumn tint */
-.theme-container ::-webkit-scrollbar {
+.theme-container--autumn ::-webkit-scrollbar {
   width: 8px;
 }
 
-.theme-container ::-webkit-scrollbar-track {
+.theme-container--autumn ::-webkit-scrollbar-track {
   background: rgba(134, 69, 42, 0.05);
 }
 
-.theme-container ::-webkit-scrollbar-thumb {
+.theme-container--autumn ::-webkit-scrollbar-thumb {
   background: rgba(134, 69, 42, 0.2);
   border-radius: 4px;
 }
 
-.theme-container ::-webkit-scrollbar-thumb:hover {
+.theme-container--autumn ::-webkit-scrollbar-thumb:hover {
   background: rgba(134, 69, 42, 0.35);
 }

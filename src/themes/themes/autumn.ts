@@ -1,4 +1,5 @@
 import type { ThemeConfig } from "../types";
+import "./autumn.css";
 
 export const autumnTheme: ThemeConfig = {
   id: "autumn",

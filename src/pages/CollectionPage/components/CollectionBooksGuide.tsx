@@ -93,22 +93,22 @@ export const CollectionBooksGuide = memo(function CollectionBooksGuide({
       {/* Заголовок секции */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#f59e0b] bg-[#f59e0b]/10 border border-[#f59e0b]/20 mb-2">
+          <div className="collection-books-guide-badge inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider text-[#f59e0b] bg-[#f59e0b]/10 border border-[#f59e0b]/20 mb-2">
             <BookOpen size={13} />
             Читательский разбор
           </div>
           <h2
             id="books-guide-heading"
-            className="text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-[#dfe2f1]"
+            className="collection-books-guide-heading text-2xl sm:text-3xl md:text-4xl font-normal tracking-tight text-[#dfe2f1]"
             style={{ fontFamily: "'Newsreader', serif" }}
           >
             Гид по книгам рейтинга
           </h2>
-          <p className="text-sm sm:text-base text-white/60 mt-1 max-w-2xl leading-relaxed">
+          <p className="collection-books-guide-text text-sm sm:text-base text-white/60 mt-1 max-w-2xl leading-relaxed">
             Книги рейтинга с аннотациями, распределением по уровням и быстрым сохранением в свой список чтения.
           </p>
         </div>
-        <span className="text-xs font-mono uppercase tracking-widest text-white/40 self-start sm:self-auto">
+        <span className="collection-books-guide-subtle text-xs font-mono uppercase tracking-widest text-white/40 self-start sm:self-auto">
           {totalBooksCount} книг в списке
         </span>
       </div>
@@ -130,14 +130,14 @@ export const CollectionBooksGuide = memo(function CollectionBooksGuide({
                   >
                     {section.tierTitle}
                   </span>
-                  <div className="h-px w-6 sm:w-12 bg-white/20 sm:hidden" />
+                  <div className="collection-books-guide-divider h-px w-6 sm:w-12 bg-white/20 sm:hidden" />
                 </div>
                 {tierCriteria && (
-                  <span className="text-xs sm:text-sm text-white/50 italic">
+                  <span className="collection-books-guide-text text-xs sm:text-sm text-white/50 italic">
                     — {tierCriteria}
                   </span>
                 )}
-                <div className="hidden sm:block h-px flex-1 bg-white/10" />
+                <div className="collection-books-guide-divider hidden sm:block h-px flex-1 bg-white/10" />
               </div>
 
             {/* Карточки книг этого уровня */}
@@ -151,10 +151,10 @@ export const CollectionBooksGuide = memo(function CollectionBooksGuide({
                 return (
                   <article
                     key={book.id}
-                    className="group relative bg-[#171b26]/70 hover:bg-[#171b26] border border-white/10 hover:border-[#f59e0b]/30 rounded-2xl p-4 sm:p-6 transition-all duration-300 shadow-lg flex flex-col sm:flex-row gap-5 items-start"
+                    className="collection-books-guide-card group relative bg-[#171b26]/70 hover:bg-[#171b26] border border-white/10 hover:border-[#f59e0b]/30 rounded-2xl p-4 sm:p-6 transition-all duration-300 shadow-lg flex flex-col sm:flex-row gap-5 items-start"
                   >
                     {/* Обложка */}
-                    <div className="shrink-0 w-24 sm:w-28 aspect-[2/3] rounded-lg overflow-hidden bg-black/40 border border-white/10 shadow-md relative group-hover:scale-[1.02] transition-transform">
+                    <div className="collection-books-guide-cover-frame shrink-0 w-24 sm:w-28 aspect-[2/3] rounded-lg overflow-hidden bg-black/40 border border-white/10 shadow-md relative group-hover:scale-[1.02] transition-transform">
                       {book.coverImageUrl ? (
                         <img
                           src={proxyImageUrl(book.coverImageUrl, 300)}
@@ -190,14 +190,14 @@ export const CollectionBooksGuide = memo(function CollectionBooksGuide({
                             {section.tierTitle}
                           </span>
                           {book.genre && (
-                            <span className="text-xs text-white/40 tracking-wider">
+                            <span className="collection-books-guide-subtle text-xs text-white/40 tracking-wider">
                               • {book.genre}
                             </span>
                           )}
                         </div>
 
                         {/* Название и автор */}
-                        <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-[#f59e0b] transition-colors leading-snug">
+                        <h3 className="collection-books-guide-card-title text-lg sm:text-xl font-bold text-white group-hover:text-[#f59e0b] transition-colors leading-snug">
                           {bookUrl ? (
                             <Link to={bookUrl} className="hover:underline">
                               {book.title}
@@ -207,7 +207,7 @@ export const CollectionBooksGuide = memo(function CollectionBooksGuide({
                           )}
                         </h3>
                         {book.author && (
-                          <p className="text-sm font-medium text-white/70 mt-0.5">
+                          <p className="collection-books-guide-card-author text-sm font-medium text-white/70 mt-0.5">
                             {book.authorSlug ? (
                               <Link
                                 to={`/authors/${book.authorSlug}`}
@@ -223,11 +223,11 @@ export const CollectionBooksGuide = memo(function CollectionBooksGuide({
 
                         {/* Аннотация / разбор */}
                         {book.description ? (
-                          <p className="text-sm sm:text-[15px] text-white/80 leading-relaxed mt-2.5 line-clamp-3 sm:line-clamp-none">
+                          <p className="collection-books-guide-card-desc text-sm sm:text-[15px] text-white/80 leading-relaxed mt-2.5 line-clamp-3 sm:line-clamp-none">
                             {book.description}
                           </p>
                         ) : (
-                          <p className="text-xs italic text-white/40 mt-2.5">
+                          <p className="collection-books-guide-subtle text-xs italic text-white/40 mt-2.5">
                             Описание подготавливается редакцией.
                           </p>
                         )}
@@ -246,10 +246,10 @@ export const CollectionBooksGuide = memo(function CollectionBooksGuide({
                             }
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                               isWantToRead
-                                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                                ? "collection-books-guide-btn-want bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
                                 : isRead
-                                  ? "bg-green-500/20 text-green-300 border border-green-500/40"
-                                  : "bg-white/5 hover:bg-white/10 text-white/80 border border-white/10 hover:border-white/30"
+                                  ? "collection-books-guide-btn-read bg-green-500/20 text-green-300 border border-green-500/40"
+                                  : "collection-books-guide-btn-default bg-white/5 hover:bg-white/10 text-white/80 border border-white/10 hover:border-white/30"
                             }`}
                           >
                             {isRead ? (
@@ -278,7 +278,7 @@ export const CollectionBooksGuide = memo(function CollectionBooksGuide({
                         {bookUrl && (
                           <Link
                             to={bookUrl}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#f59e0b] hover:text-[#ffc174] transition-colors ml-auto sm:ml-0"
+                            className="collection-books-guide-more-link inline-flex items-center gap-1 text-xs font-semibold text-[#f59e0b] hover:text-[#ffc174] transition-colors ml-auto sm:ml-0"
                           >
                             <span>Подробнее</span>
                             <ArrowRight size={13} />
