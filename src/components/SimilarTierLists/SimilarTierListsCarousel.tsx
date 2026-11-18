@@ -21,11 +21,12 @@ export function SimilarTierListsCarousel({
   tierListId,
   initialSimilar,
 }: SimilarTierListsCarouselProps) {
+  const isRealTierList = Boolean(tierListId && tierListId !== "new");
   const hasInitial = Array.isArray(initialSimilar);
   const { data, isLoading } = useQuery({
     queryKey: ["similar-tier-lists", tierListId],
     queryFn: () => getSimilarTierLists(tierListId, 4),
-    enabled: !!tierListId && !hasInitial,
+    enabled: isRealTierList && !hasInitial,
     initialData: hasInitial ? initialSimilar : undefined,
     staleTime: hasInitial ? 5 * 60 * 1000 : 0,
   });
@@ -39,7 +40,7 @@ export function SimilarTierListsCarousel({
     });
   };
 
-  if (isLoading || !data || data.length === 0) return null;
+  if (!isRealTierList || isLoading || !data || data.length === 0) return null;
 
   const similarJsonLd = buildSimilarTierListsJsonLd(data);
 

@@ -47,6 +47,20 @@
   }
 }
 
+.ai-widget--rain .ai-widget__avatar {
+  width: 5.25rem;
+  height: 5.25rem;
+  animation: none;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.45));
+}
+
+@media (min-width: 768px) {
+  .ai-widget--rain .ai-widget__avatar {
+    width: 7.25rem;
+    height: 7.25rem;
+  }
+}
+
 @keyframes ai-float {
   0%   { transform: translateX(0) translateY(0); }
   25%  { transform: translateY(-0.8em) translateX(-0.5em); rotate: -6deg; }

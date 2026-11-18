@@ -131,6 +131,52 @@ describe("useTierListActions", () => {
       );
     });
 
+    it("должен создавать тир-лист с сезонной темой", async () => {
+      const mockCreatedTierList: Awaited<
+        ReturnType<typeof apiModule.createTierList>
+      > = {
+        id: "2",
+        slug: "autumn-list",
+        title: "Autumn List",
+        year: null,
+        theme: "autumn-leaves",
+        isPublic: false,
+        createdAt: "2026-11-18T00:00:00Z",
+        updatedAt: "2026-11-18T00:00:00Z",
+        user: { id: 1, username: "testuser" },
+        likesCount: 0,
+        tiers: [],
+        unrankedBooks: [],
+      };
+
+      vi.mocked(apiModule.createTierList).mockResolvedValue(
+        mockCreatedTierList,
+      );
+
+      const onSuccess = vi.fn();
+      const onRefetch = vi.fn();
+
+      const { result } = renderHook(
+        () => useTierListActions({ onSuccess, onRefetch }),
+        { wrapper: createWrapper() },
+      );
+
+      result.current.createNewTierList("Autumn List", "Описание", "autumn-leaves");
+
+      await vi.waitFor(() => {
+        expect(apiModule.createTierList).toHaveBeenCalledWith(
+          "Autumn List",
+          "Описание",
+          "autumn-leaves",
+        );
+      });
+
+      await vi.waitFor(() => {
+        expect(onSuccess).toHaveBeenCalled();
+        expect(onRefetch).toHaveBeenCalled();
+      });
+    });
+
     it("должен показывать ошибку при неудачном создании", async () => {
       vi.mocked(apiModule.createTierList).mockRejectedValue(
         new Error("Failed to create"),

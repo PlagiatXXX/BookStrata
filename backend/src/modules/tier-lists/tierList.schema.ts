@@ -11,6 +11,7 @@ export const getTierListsQuerySchema = z.object({
 export const createTierListBodySchema = z.object({
   title: z.string().min(1, 'Title is required').max(50),
   description: z.string().max(200).nullable().optional(),
+  theme: z.string().max(50).optional(),
 });
 
 export const togglePublicBodySchema = z.object({
@@ -47,6 +48,7 @@ export const createTierListSchema = {
     properties: {
       title: { type: 'string', minLength: 1, maxLength: 50 },
       description: { type: ['string', 'null'], maxLength: 200 },
+      theme: { type: 'string', maxLength: 50 },
     },
   },
 };
@@ -78,7 +80,7 @@ export const updateTierListSchema = {
     properties: {
       title: { type: 'string', minLength: 1, maxLength: 50 },
       description: { type: ['string', 'null'], maxLength: 200 },
-      theme: { type: 'string' },
+      theme: { type: 'string', maxLength: 50 },
     },
   },
 };

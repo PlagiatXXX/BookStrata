@@ -8,7 +8,7 @@ import { useTierList } from "@/hooks/useTierList";
 import type { Action } from "@/hooks/useTierList";
 import { useAuth } from "@/hooks/useAuthContext";
 import { createLogger } from "@/lib/logger";
-import { normalizeTheme } from "@/lib/tierListApi";
+import { resolveDisplayTheme } from "@/lib/tierListApi";
 import { EditorModals } from "./components/EditorModals";
 import { EditorLayout } from "./components/EditorLayout";
 import { EditorMainContent } from "./components/EditorMainContent";
@@ -33,7 +33,7 @@ import { AiRecommendationPrompt } from "@/components/AiLibrarian/AiRecommendatio
 import { Helmet } from "react-helmet-async";
 import { SEOHead } from "@/components/SEO/SEOHead";
 
-import { useDemoStorage } from "./hooks/useDemoStorage";
+import { useDemoStorage, DEMO_DEFAULT_THEME } from "./hooks/useDemoStorage";
 import { useDemoOnboarding } from "./hooks/useDemoOnboarding";
 import { AuthOnSaveModal } from "./components/AuthOnSaveModal";
 import { DemoOnboarding } from "./components/DemoOnboarding";
@@ -148,14 +148,30 @@ const TierListEditorContent = () => {
     createdTierListId,
   );
 
+  // ========== ДЕМО-РЕЖИМ (часть 1: инициализация) ==========
+  const isDemo = tierListId === "new" && !isAuthenticated;
+  const { loadDemo, saveDemo, clearDemo, getDemoTheme, saveDemoTheme } = useDemoStorage();
+
   // Переопределения от пользователя (null = не менял, берём из apiData)
   const [userCoverOverride, setUserCoverOverride] = useState<string | null>(
     null,
   );
-  const [userThemeOverride, setUserThemeOverride] = useState<string | null>(
-    null,
-  );
+  const [userThemeOverride, setUserThemeOverride] = useState<string | null>(() => {
+    // В демо-режиме (или при создании нового списка без авторизации):
+    // восстанавливаем тему из localStorage или используем "autumn-rain" по умолчанию
+    if (tierListId === "new" && !isAuthenticated) {
+      return getDemoTheme();
+    }
+    return null;
+  });
   const [tierListDescription, setTierListDescription] = useState<string>("");
+
+  const handleThemeChanged = useCallback((newTheme: string) => {
+    setUserThemeOverride(newTheme);
+    if (isDemo || tierListId === "new") {
+      saveDemoTheme(newTheme);
+    }
+  }, [isDemo, tierListId, saveDemoTheme]);
 
   // Синхронизация описания с apiData
   useEffect(() => {
@@ -172,11 +188,14 @@ const TierListEditorContent = () => {
   const displayTheme =
     userThemeOverride !== null
       ? userThemeOverride
-      : (apiData?.theme ?? "default");
+      : (apiData?.theme ?? (isDemo ? DEMO_DEFAULT_THEME : "default"));
 
-  // Старые темы из БД (midnight, frost и т.д.) приводятся к "default"
+  const isAdmin = authUser?.role === "admin";
+
+  // Старые темы из БД (midnight, frost и т.д.) приводятся к "default",
+  // а темы в разработке (autumn-leaves, winter-newyear) для не-админов подменяются на открытые аналоги
   const normalizedDisplayTheme =
-    displayTheme !== null ? normalizeTheme(displayTheme) : "default";
+    displayTheme !== null ? resolveDisplayTheme(displayTheme, isAdmin) : "default";
 
   const [isAiLibrarianOpen, setAiLibrarianOpen] = useState(false);
 
@@ -202,9 +221,7 @@ const TierListEditorContent = () => {
   // только staff (admin/moderator) — для него тоже read-only.
   const isReadOnly = !isOwner && (isPublic || !!apiData);
 
-  // ========== ДЕМО-РЕЖИМ (часть 1: инициализация) ==========
-  const isDemo = tierListId === "new" && !isAuthenticated;
-  const { loadDemo, saveDemo, clearDemo } = useDemoStorage();
+  // ========== ДЕМО-РЕЖИМ (часть 1: книги гостевой полки) ==========
 
   // Книги гостевой полки — для предзаполнения при ?from=shelf.
   // Гостевая полка живёт в localStorage (shelf + guestBookMeta).
@@ -1049,9 +1066,10 @@ const TierListEditorContent = () => {
           description={tierListDescription}
           onDescriptionChange={setTierListDescription}
           onCoverUpdated={setUserCoverOverride}
-          onThemeChanged={setUserThemeOverride}
+          onThemeChanged={handleThemeChanged}
           ownerUserId={ownerUserId}
           currentUserId={currentUserId}
+          isAdmin={isAdmin}
           breadcrumbItems={[
             { label: "Тир-листы", href: "/templates" },
             { label: apiData?.title || "Тир-лист" },
@@ -1124,7 +1142,7 @@ const TierListEditorContent = () => {
             }
           />
 
-          {!isStreamMode && (
+          {!isStreamMode && tierListId && tierListId !== "new" && (
             <SimilarTierListsCarousel tierListId={tierListId} initialSimilar={apiData?.similar} />
           )}
         </>
@@ -1149,7 +1167,7 @@ const TierListEditorContent = () => {
           {/* Плавающий виджет Букстража — скрыт в стрим-режиме, поднят над SupportWidget */}
           {!isReadOnly && !isStreamMode && (
           <div className="fixed right-6 max-md:right-4 z-50 bottom-36 md:bottom-24">
-            <AiLibrarianWidget onClick={handleAiLibrarianOpen} />
+            <AiLibrarianWidget onClick={handleAiLibrarianOpen} theme={normalizedDisplayTheme} />
           </div>
         )}
       </EditorScreens>

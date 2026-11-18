@@ -246,13 +246,14 @@ export class TierListRepository {
 
   // ─── Write ────────────────────────────────────────────────────
 
-  async create(userId: number, data: { title: string; slug: string; description?: string | null }) {
+  async create(userId: number, data: { title: string; slug: string; description?: string | null; theme?: string }) {
     return this.db.tierList.create({
       data: {
         userId,
         title: data.title,
         slug: data.slug,
         ...(data.description ? { description: data.description } : {}),
+        ...(data.theme ? { theme: data.theme } : {}),
         isPublic: true,
         tiers: {
           create: [

@@ -171,10 +171,15 @@ export async function getLikedTierLists(
   };
 }
 
-export async function createTierList(userId: number, title: string, description?: string | null) {
+export async function createTierList(
+  userId: number,
+  title: string,
+  description?: string | null,
+  theme: string = "default",
+) {
   const randomSuffix = Math.random().toString(36).substring(2, 8);
   const slug = generateUniqueSlug(title, randomSuffix);
-  const tierList = await tierListRepository.create(userId, { title, slug, description });
+  const tierList = await tierListRepository.create(userId, { title, slug, description, theme });
   const { placements: unrankedBooks, ...rest } = tierList;
   return { ...rest, unrankedBooks };
 }

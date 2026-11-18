@@ -3,6 +3,8 @@ import type { TierListData } from "@/types"
 import { DEMO_DATA_VERSION } from "../_initialData"
 
 const DEMO_STORAGE_KEY = "bookstrata_demo_tierlist"
+export const DEMO_THEME_STORAGE_KEY = "bookstrata_demo_theme"
+export const DEMO_DEFAULT_THEME = "autumn-rain"
 
 interface DemoStore {
   version: number
@@ -16,6 +18,10 @@ export interface UseDemoStorageResult {
   saveDemo: (data: TierListData) => void
   /** Очистить демо-черновик после успешного сохранения на сервер */
   clearDemo: () => void
+  /** Получить сохранённую тему демо-режима (по умолчанию "autumn-rain") */
+  getDemoTheme: () => string
+  /** Сохранить выбранную тему демо-режима в localStorage */
+  saveDemoTheme: (theme: string) => void
   /** Есть ли сохранённый черновик актуальной версии */
   hasDraft: boolean
 }
@@ -57,14 +63,31 @@ export function useDemoStorage(): UseDemoStorageResult {
     }
   }, [])
 
+  const getDemoTheme = useCallback((): string => {
+    try {
+      return localStorage.getItem(DEMO_THEME_STORAGE_KEY) || DEMO_DEFAULT_THEME
+    } catch {
+      return DEMO_DEFAULT_THEME
+    }
+  }, [])
+
+  const saveDemoTheme = useCallback((theme: string) => {
+    try {
+      localStorage.setItem(DEMO_THEME_STORAGE_KEY, theme)
+    } catch {
+      // ignore
+    }
+  }, [])
+
   const clearDemo = useCallback(() => {
     try {
       localStorage.removeItem(DEMO_STORAGE_KEY)
+      localStorage.removeItem(DEMO_THEME_STORAGE_KEY)
       setHasDraft(false)
     } catch {
       // ignore
     }
   }, [])
 
-  return { loadDemo, saveDemo, clearDemo, hasDraft }
+  return { loadDemo, saveDemo, clearDemo, getDemoTheme, saveDemoTheme, hasDraft }
 }

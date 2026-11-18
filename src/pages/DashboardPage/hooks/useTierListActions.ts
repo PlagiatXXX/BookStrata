@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createTierList, updateTierListTitle, deleteTierList } from "@/lib/tierListApi";
-import type { PaginatedTierListsResponse, TierListShort } from "@/lib/tierListApi";
+import type { PaginatedTierListsResponse, TierListShort, TierListTheme } from "@/lib/tierListApi";
 import { createLogger } from "@/lib/logger";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { sileo } from "sileo";
@@ -14,7 +14,7 @@ interface UseTierListActionsOptions {
 }
 
 interface UseTierListActionsReturn {
-  createNewTierList: (title: string, description?: string | null) => void;
+  createNewTierList: (title: string, description?: string | null, theme?: TierListTheme) => void;
   renameTierList: (id: string, title: string) => void;
   removeTierList: (id: string) => void;
   isCreating: boolean;
@@ -33,8 +33,23 @@ export function useTierListActions({
   const queryClient = useQueryClient();
 
   const { mutate: createNewTierListMutate, isPending: isCreating } = useMutation({
-    mutationFn: ({ title, description }: { title: string; description?: string | null }) =>
-      description ? createTierList(title, description) : createTierList(title),
+    mutationFn: ({
+      title,
+      description,
+      theme,
+    }: {
+      title: string;
+      description?: string | null;
+      theme?: TierListTheme;
+    }) => {
+      if (theme && theme !== "default") {
+        return createTierList(title, description, theme);
+      }
+      if (description) {
+        return createTierList(title, description);
+      }
+      return createTierList(title);
+    },
     onSuccess: async (tierList) => {
       logger.info("New tier list created - navigating to editor", {
         id: tierList.id,
@@ -68,8 +83,12 @@ export function useTierListActions({
     },
   });
 
-  const createNewTierList = (title: string, description?: string | null) => {
-    createNewTierListMutate({ title, description });
+  const createNewTierList = (
+    title: string,
+    description?: string | null,
+    theme?: TierListTheme,
+  ) => {
+    createNewTierListMutate({ title, description, theme });
   };
 
   const { mutateAsync: renameMutation, isPending: isRenaming } = useMutation({

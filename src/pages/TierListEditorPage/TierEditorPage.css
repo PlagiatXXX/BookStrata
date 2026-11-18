@@ -1040,6 +1040,246 @@ main.grid:has(> .neo-brutalist-editor) {
   box-shadow: 0 2px 0 rgba(60, 60, 60, 0.12);
 }
 
+/* ══════════════════════════════════════════════════════════
+   СЕЗОННЫЕ ТЕМЫ
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Autumn Leaves: Золотой листопад ── */
+.neo-brutalist-editor[data-theme="autumn-leaves"] {
+  --theme-bg: #18110b;
+  --theme-surface: #241910;
+  --theme-surface-2: #2f2115;
+  --theme-surface-3: #1e140d;
+  --theme-surface-4: #150d08;
+  --theme-surface-bright: #fef3c7;
+  --theme-border: #b45309;
+  --theme-border-width: 1.5px;
+  --theme-accent-primary: #d97706;
+  --theme-accent-secondary: #92400e;
+  --theme-accent-tertiary: #b45309;
+  --theme-on-accent: #18110b;
+  --theme-text: #fef3c7;
+  --theme-text-muted: #bfa07e;
+  --theme-danger: #c25e4a;
+  --theme-success: #8fae6b;
+  --theme-focus: #f59e0b;
+  --theme-radius: 4px;
+  --theme-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(217, 119, 6, 0.2);
+  --theme-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.35);
+  --theme-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(217, 119, 6, 0.25);
+  --theme-shadow-hover: 0 4px 16px rgba(217, 119, 6, 0.35);
+  --theme-glow: #d97706;
+  --theme-font-display: 'Instrument Serif', Georgia, serif;
+  --theme-font-body: 'Inter Variable', Inter, system-ui, sans-serif;
+}
+
+/* Autumn Leaves: тёплые золотистые акценты при ховере карточек книг, медная рамка */
+.neo-brutalist-editor[data-theme="autumn-leaves"] .nb-book-card:hover {
+  border-color: var(--theme-accent-primary);
+  box-shadow: 0 4px 16px rgba(217, 119, 6, 0.35);
+}
+
+/* ── Autumn Rain: Осенний дождь ── */
+.neo-brutalist-editor[data-theme="autumn-rain"] {
+  --theme-bg: #0e131b;
+  --theme-surface: #161e2b;
+  --theme-surface-2: #1e293b;
+  --theme-surface-3: #121924;
+  --theme-surface-4: #0a0e15;
+  --theme-surface-bright: #f8fafc;
+  --theme-border: #475569;
+  --theme-border-width: 1.5px;
+  --theme-accent-primary: #f59e0b;
+  --theme-accent-secondary: #64748b;
+  --theme-accent-tertiary: #d97706;
+  --theme-on-accent: #0e131b;
+  --theme-text: #f1f5f9;
+  --theme-text-muted: #94a3b8;
+  --theme-danger: #ef4444;
+  --theme-success: #10b981;
+  --theme-focus: #f59e0b;
+  --theme-radius: 6px;
+  --theme-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 10px rgba(245, 158, 11, 0.1);
+  --theme-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --theme-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.15);
+  --theme-shadow-hover: 0 4px 14px rgba(245, 158, 11, 0.25);
+  --theme-glow: #f59e0b;
+  --theme-font-display: 'Instrument Serif', Georgia, serif;
+  --theme-font-body: 'Inter Variable', Inter, system-ui, sans-serif;
+}
+
+/* Autumn Rain: лёгкий стеклянный эффект для строк тиров и банка книг */
+.neo-brutalist-editor[data-theme="autumn-rain"] .nb-tier-row,
+.neo-brutalist-editor[data-theme="autumn-rain"] .nb-sidebar {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  background: rgba(22, 30, 43, 0.85);
+}
+
+/* Мобильные экраны: отключаем тяжелый GPU blur — заменяем на плотный полупрозрачный фон 60 FPS */
+@media (max-width: 768px) {
+  .neo-brutalist-editor[data-theme="autumn-rain"] .nb-tier-row,
+  .neo-brutalist-editor[data-theme="autumn-rain"] .nb-sidebar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(18, 25, 38, 0.94);
+  }
+}
+
+/* При активном перетаскивании отключаем backdrop-filter для максимальной плавности кадров */
+.neo-brutalist-editor[data-theme="autumn-rain"].is-dragging .nb-tier-row,
+.neo-brutalist-editor[data-theme="autumn-rain"].is-dragging .nb-sidebar {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Autumn Rain: полупрозрачное поле описания с размытием, открывающее вид на грозовые тучи */
+.neo-brutalist-editor[data-theme="autumn-rain"] textarea {
+  background: rgba(14, 19, 27, 0.42);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-color: rgba(71, 85, 105, 0.45);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.neo-brutalist-editor[data-theme="autumn-rain"] textarea:focus {
+  background: rgba(14, 19, 27, 0.68);
+  border-color: var(--theme-accent-primary);
+}
+
+/* ── Winter Frost: Морозные узоры ── */
+.neo-brutalist-editor[data-theme="winter-frost"] {
+  --theme-bg: #080d18;
+  --theme-surface: #0f172a;
+  --theme-surface-2: #17243d;
+  --theme-surface-3: #0c1322;
+  --theme-surface-4: #050810;
+  --theme-surface-bright: #ffffff;
+  --theme-border: #38bdf8;
+  --theme-border-width: 1.5px;
+  --theme-accent-primary: #7dd3fc;
+  --theme-accent-secondary: #0284c7;
+  --theme-accent-tertiary: #38bdf8;
+  --theme-on-accent: #080d18;
+  --theme-text: #e0f2fe;
+  --theme-text-muted: #7dd3fc99;
+  --theme-danger: #f87171;
+  --theme-success: #34d399;
+  --theme-focus: #38bdf8;
+  --theme-radius: 6px;
+  --theme-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.15);
+  --theme-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --theme-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.25);
+  --theme-shadow-hover: 0 4px 16px rgba(56, 189, 248, 0.4);
+  --theme-glow: #38bdf8;
+  --theme-font-display: 'Inter Variable', Inter, system-ui, sans-serif;
+  --theme-font-body: 'Inter Variable', Inter, system-ui, sans-serif;
+}
+
+/* Winter Frost: декоративные снежные шапки на метках тиров */
+.neo-brutalist-editor[data-theme="winter-frost"] .nb-rank-box {
+  position: relative;
+}
+.neo-brutalist-editor[data-theme="winter-frost"] .nb-rank-box::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -2px;
+  right: -2px;
+  height: 7px;
+  background: radial-gradient(ellipse at 50% 100%, #ffffff 60%, #bae6fd 90%, transparent 100%);
+  border-radius: 4px 4px 2px 2px;
+  filter: drop-shadow(0 1px 2px rgba(56, 189, 248, 0.5));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Winter Aurora: Северное сияние ── */
+.neo-brutalist-editor[data-theme="winter-aurora"] {
+  --theme-bg: #050b14;
+  --theme-surface: #0a1726;
+  --theme-surface-2: #0f2238;
+  --theme-surface-3: #081220;
+  --theme-surface-4: #03070d;
+  --theme-surface-bright: #f0fdfa;
+  --theme-border: #2dd4bf;
+  --theme-border-width: 1.5px;
+  --theme-accent-primary: #2dd4bf;
+  --theme-accent-secondary: #a855f7;
+  --theme-accent-tertiary: #06b6d4;
+  --theme-on-accent: #050b14;
+  --theme-text: #f0fdfa;
+  --theme-text-muted: #99f6e4aa;
+  --theme-danger: #fb7185;
+  --theme-success: #2dd4bf;
+  --theme-focus: #a855f7;
+  --theme-radius: 8px;
+  --theme-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 20px rgba(45, 212, 191, 0.18);
+  --theme-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --theme-shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.22);
+  --theme-shadow-hover: 0 4px 18px rgba(45, 212, 191, 0.35), 0 0 10px rgba(168, 85, 247, 0.35);
+  --theme-glow: #2dd4bf;
+  --theme-font-display: 'Inter Variable', Inter, system-ui, sans-serif;
+  --theme-font-body: 'Inter Variable', Inter, system-ui, sans-serif;
+}
+
+/* Winter Aurora: неоновый аврора-бордер для строк тиров */
+.neo-brutalist-editor[data-theme="winter-aurora"] .nb-tier-row {
+  border-image: linear-gradient(90deg, #2dd4bf, #a855f7, #06b6d4) 1;
+}
+
+/* ── Winter New Year: Новогодняя сказка ── */
+.neo-brutalist-editor[data-theme="winter-newyear"] {
+  --theme-bg: #061a14;
+  --theme-surface: #0b2920;
+  --theme-surface-2: #10382c;
+  --theme-surface-3: #082119;
+  --theme-surface-4: #04100c;
+  --theme-surface-bright: #ecfdf5;
+  --theme-border: #166534;
+  --theme-border-width: 2px;
+  --theme-accent-primary: #dc2626;
+  --theme-accent-secondary: #fbbf24;
+  --theme-accent-tertiary: #10b981;
+  --theme-on-accent: #ffffff;
+  --theme-text: #f0fdf4;
+  --theme-text-muted: #86efaccc;
+  --theme-danger: #ef4444;
+  --theme-success: #10b981;
+  --theme-focus: #fbbf24;
+  --theme-radius: 6px;
+  --theme-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 0 16px rgba(220, 38, 38, 0.15);
+  --theme-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --theme-shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.6), 0 0 24px rgba(251, 191, 36, 0.2);
+  --theme-shadow-hover: 0 4px 18px rgba(220, 38, 38, 0.35), 0 0 12px rgba(251, 191, 36, 0.3);
+  --theme-glow: #fbbf24;
+  --theme-font-display: 'Inter Variable', Inter, system-ui, sans-serif;
+  --theme-font-body: 'Inter Variable', Inter, system-ui, sans-serif;
+}
+
+/* Снежные шапки на рангах с новогодним свечением */
+.neo-brutalist-editor[data-theme="winter-newyear"] .nb-rank-box {
+  position: relative;
+}
+.neo-brutalist-editor[data-theme="winter-newyear"] .nb-rank-box::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -2px;
+  right: -2px;
+  height: 7px;
+  background: radial-gradient(ellipse at 50% 100%, #ffffff 60%, #bbf7d0 90%, transparent 100%);
+  border-radius: 4px 4px 2px 2px;
+  filter: drop-shadow(0 1px 3px rgba(220, 38, 38, 0.4));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Праздничный градиентный бордер для строк тир-листа */
+.neo-brutalist-editor[data-theme="winter-newyear"] .nb-tier-row {
+  border-image: linear-gradient(90deg, #dc2626, #fbbf24, #15803d) 1;
+}
+
 /* TierListCoverEditor */
 .tier-list-cover-editor {
 }

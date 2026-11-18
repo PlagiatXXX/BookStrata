@@ -1,4 +1,4 @@
-import type { TierListShort } from '@/lib/tierListApi';
+import type { TierListShort, TierListTheme } from '@/lib/tierListApi';
 
 // === Sort options ===
 export type SortOption = 'newest' | 'oldest' | 'title-asc' | 'likes';
@@ -84,12 +84,14 @@ export interface EmptyStatesProps {
 export interface CreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (title: string, description?: string) => void;
+  onCreate: (title: string, description?: string, theme?: TierListTheme) => void;
   createTitle: string;
   onTitleChange: (title: string) => void;
   createDescription?: string;
   onDescriptionChange?: (description: string) => void;
   isPending: boolean;
+  defaultTheme?: TierListTheme;
+  isAdmin?: boolean;
 }
 
 export interface RenameModalProps {

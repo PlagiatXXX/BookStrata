@@ -223,6 +223,7 @@ describe("tierList.service", () => {
             userId: mockUserId,
             slug: expect.any(String),
             title: mockTitle,
+            theme: "default",
             isPublic: true,
             tiers: {
               create: [
@@ -282,6 +283,23 @@ describe("tierList.service", () => {
 
       expect(result.unrankedBooks).toHaveLength(1);
       expect(result.unrankedBooks[0].book.title).toBe("Book 1");
+    });
+
+    it("должен создать новый тир-лист с указанной темой", async () => {
+      (prisma.tierList.create as any).mockResolvedValue({
+        ...mockCreatedTierList,
+        theme: "autumn-leaves",
+      });
+
+      await service.createTierList(mockUserId, mockTitle, null, "autumn-leaves");
+
+      expect(prisma.tierList.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            theme: "autumn-leaves",
+          }),
+        }),
+      );
     });
   });
 

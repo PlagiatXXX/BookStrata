@@ -113,7 +113,11 @@ export function useTierEditorSave({
 
       if (!isNumericId && !isUuid) {
         // Создаём новый тир-лист
-        const created = await createTierList(listData.title || "Новый тир-лист", description ?? undefined);
+        const created = await createTierList(
+          listData.title || "Новый тир-лист",
+          description ?? undefined,
+          theme ?? undefined,
+        );
         effectiveId = String(created.id);
         onTierListCreated?.(effectiveId);
         pushDataLayerEvent("create_tier_list", {

@@ -307,7 +307,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       const userId = request.user!.userId;
-      const tierList = await service.createTierList(userId, request.body.title, request.body.description);
+      const tierList = await service.createTierList(userId, request.body.title, request.body.description, request.body.theme);
       const newAchievements = await eventBus.emit("tier-list:created", { userId });
       return reply.code(201).header("Location", `/api/tier-lists/${tierList.id}`).send({ data: { ...tierList, newAchievements } });
     },

@@ -13,6 +13,12 @@ vi.mock("@/lib/tierListApi", () => ({
   getUserTierLists: vi.fn(),
   getPublicTierLists: vi.fn(),
   getLikedTierLists: vi.fn(),
+  isSeasonalTheme: vi.fn((theme?: string | null) =>
+    ["autumn-leaves", "autumn-rain", "winter-frost", "winter-aurora", "winter-newyear"].includes(theme as string),
+  ),
+  isAdminOnlyTheme: vi.fn((theme?: string | null) =>
+    ["autumn-leaves", "winter-newyear"].includes(theme as string),
+  ),
 }));
 
 vi.mock("../../hooks/useAuthContext", () => ({

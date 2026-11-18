@@ -20,9 +20,36 @@ export type TierListTheme =
   | 'y2k'
   | 'clay'
   | 'soft'
+  // Сезонные темы
+  | 'autumn-leaves'
+  | 'autumn-rain'
+  | 'winter-frost'
+  | 'winter-aurora'
+  | 'winter-newyear'
 
 // Устаревшие темы, удалённые из списка (маппинг на default при чтении из БД)
 export const LEGACY_THEMES: string[] = ['midnight', 'candlelight', 'frost', 'lunar', 'sapphire', 'moss']
+
+export const SEASONAL_THEMES = [
+  'autumn-leaves',
+  'autumn-rain',
+  'winter-frost',
+  'winter-aurora',
+  'winter-newyear',
+] as const;
+
+export type SeasonalTheme = (typeof SEASONAL_THEMES)[number];
+
+/** Темы, временно доступные только администраторам (находятся в доработке) */
+export const ADMIN_ONLY_THEMES = ['autumn-leaves', 'winter-newyear'] as const;
+
+export function isAdminOnlyTheme(theme: string | null | undefined): boolean {
+  return Boolean(theme && (ADMIN_ONLY_THEMES as readonly string[]).includes(theme));
+}
+
+export function isSeasonalTheme(theme: string | null | undefined): theme is SeasonalTheme {
+  return Boolean(theme && (SEASONAL_THEMES as readonly string[]).includes(theme));
+}
 
 /** Приводит произвольное значение темы из БД к актуальному списку. */
 export function normalizeTheme(theme: string | null | undefined): TierListTheme {
@@ -32,11 +59,29 @@ export function normalizeTheme(theme: string | null | undefined): TierListTheme 
   return 'default'
 }
 
+/**
+ * Приводит тему к отображаемой с учётом прав доступа.
+ * Для не-админов темы из ADMIN_ONLY_THEMES подменяются на открытые сезонные:
+ * 'autumn-leaves' -> 'autumn-rain'
+ * 'winter-newyear' -> 'winter-frost'
+ */
+export function resolveDisplayTheme(
+  theme: string | null | undefined,
+  isAdmin = false,
+): TierListTheme {
+  const normalized = normalizeTheme(theme);
+  if (!isAdmin && isAdminOnlyTheme(normalized)) {
+    return normalized === 'winter-newyear' ? 'winter-frost' : 'autumn-rain';
+  }
+  return normalized;
+}
+
 // Все темы бесплатны
 export const PRO_THEMES: TierListTheme[] = []
 export const FREE_THEMES: TierListTheme[] = [
   'default', 'sunset', 'forest', 'ocean', 'cyberpunk', 'burgundy',
   'dark-academia', 'pixel', 'vintage', 'y2k', 'clay', 'soft',
+  'autumn-leaves', 'autumn-rain', 'winter-frost', 'winter-aurora', 'winter-newyear',
 ]
 
 export const THEME_LABELS: Record<TierListTheme, string> = {
@@ -52,6 +97,11 @@ export const THEME_LABELS: Record<TierListTheme, string> = {
   y2k: 'Y2K',
   clay: 'Пластилин',
   soft: 'Мягкий',
+  'autumn-leaves': 'Золотой листопад',
+  'autumn-rain': 'Осенний дождь',
+  'winter-frost': 'Морозные узоры',
+  'winter-aurora': 'Северное сияние',
+  'winter-newyear': 'Новогодняя сказка',
 }
 
 /**
@@ -74,6 +124,11 @@ export const THEME_COLORS: Record<TierListTheme, { bg: string; tier: string; tex
   y2k: { bg: '#c1e0f5', tier: '#ff5fa2', text: '#0a3d62' },
   clay: { bg: '#cdeee1', tier: '#7c4df7', text: '#3b3226' },
   soft: { bg: '#fdf6ee', tier: '#58cc02', text: '#3c3c3c' },
+  'autumn-leaves': { bg: '#1c120c', tier: '#d97706', text: '#fef3c7' },
+  'autumn-rain': { bg: '#111827', tier: '#f59e0b', text: '#f3f4f6' },
+  'winter-frost': { bg: '#0b1326', tier: '#38bdf8', text: '#e0f2fe' },
+  'winter-aurora': { bg: '#06131c', tier: '#2dd4bf', text: '#f0fdfa' },
+  'winter-newyear': { bg: '#061a14', tier: '#dc2626', text: '#f0fdf4' },
 }
 
 export interface TierListShort {
@@ -130,11 +185,13 @@ export interface SaveTierListPayload {
 export async function createTierList(
   title: string,
   description?: string | null,
+  theme?: TierListTheme | string,
 ): Promise<ApiTierListResponse> {
-  tierListLogger.info('Создание нового рейтингового списка', { title });
+  tierListLogger.info('Создание нового рейтингового списка', { title, theme });
   const result = await apiClient.post<ApiTierListResponse>('/tier-lists', {
     title,
     ...(description ? { description } : {}),
+    ...(theme ? { theme } : {}),
   });
   tierListLogger.info('Успешно создан рейтинговый список', { tierListId: result.id, title });
   return result;

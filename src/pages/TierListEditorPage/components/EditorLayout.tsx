@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSensors, useSensor } from "@dnd-kit/core";
 import { MouseSensor, TouchSensor, KeyboardSensor } from "@dnd-kit/core";
 import {
@@ -24,7 +24,8 @@ import type { EditorHeaderProps } from "./EditorHeader";
 import { EditorHeader } from "./EditorHeader";
 import { TierListCoverEditor } from "./TierListCoverEditor";
 import { ThemePicker } from "./ThemePicker";
-import { updateTierListDescription } from "@/lib/tierListApi";
+import { updateTierListDescription, isSeasonalTheme } from "@/lib/tierListApi";
+import { SeasonalAtmosphere } from "@/themes/decor/seasonal/SeasonalAtmosphere";
 
 // Кастомный алгоритм коллизий:
 // 1. pointerWithin — точное попадание курсора в карточку/контейнер
@@ -61,6 +62,7 @@ interface EditorLayoutProps {
   onThemeChanged?: (theme: string) => void;
   ownerUserId?: number;
   currentUserId?: number | null;
+  isAdmin?: boolean;
   breadcrumbItems?: { label: string; href?: string }[];
   /** Модалки, которым нужны токены темы (рендерятся внутри main[data-theme]) */
   modals?: React.ReactNode;
@@ -88,10 +90,35 @@ export const EditorLayout = ({
   onThemeChanged,
   ownerUserId,
   currentUserId,
+  isAdmin,
   breadcrumbItems,
   modals,
 }: EditorLayoutProps) => {
   const [isTopCollapsed, setIsTopCollapsed] = useState(false);
+  const [effectsEnabled, setEffectsEnabled] = useState(() => {
+    try {
+      return (
+        typeof window !== "undefined" &&
+        localStorage.getItem("bookstrata_seasonal_effects") !== "false"
+      );
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    const handleToggle = (e: Event) => {
+      const customEvent = e as CustomEvent<{ enabled: boolean }>;
+      if (customEvent.detail && typeof customEvent.detail.enabled === "boolean") {
+        setEffectsEnabled(customEvent.detail.enabled);
+      }
+    };
+    window.addEventListener("seasonal-effects-toggle", handleToggle);
+    return () => {
+      window.removeEventListener("seasonal-effects-toggle", handleToggle);
+    };
+  }, []);
+
   const activeBook: Book | null =
     activeItem && "coverImageUrl" in activeItem ? (activeItem as Book) : null;
   const activeTier: Tier | null =
@@ -108,8 +135,8 @@ export const EditorLayout = ({
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
-        tolerance: 8,
+        delay: 120,
+        tolerance: 12,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -134,7 +161,7 @@ export const EditorLayout = ({
       contentTopPadding="pt-0"
     >
       <main
-        className={`neo-brutalist-editor flex-1 overflow-x-clip ${
+        className={`neo-brutalist-editor flex-1 overflow-x-clip ${activeItem ? "is-dragging" : ""} ${
           isReadOnly
             ? `px-4 lg:px-8 pb-4 lg:pb-8 ${isStreamMode ? "pt-1" : "pt-24"}`
             : isStreamMode
@@ -142,23 +169,27 @@ export const EditorLayout = ({
               : "px-4 lg:px-8 pb-24 lg:pb-8 pt-28"
         }`}
         data-theme={theme}
+        data-dnd-dragging={activeItem ? "true" : undefined}
       >
+        {isSeasonalTheme(theme) && (
+          <SeasonalAtmosphere theme={theme} effectsEnabled={effectsEnabled} />
+        )}
         {/* Хлебные крошки — скрыты в стрим-режиме */}
         {!isStreamMode && breadcrumbItems && (
-          <div className="mb-4">
+          <div className="mb-4 relative z-10">
             <Breadcrumbs items={breadcrumbItems} theme={["clay", "soft", "vintage", "y2k"].includes(theme) ? "light" : "dark"} />
           </div>
         )}
         {/* Заголовок — скрыт в стрим-режиме */}
         {!isStreamMode && (
-          <div className="min-h-0 min-w-0">
+          <div className="min-h-0 min-w-0 relative z-10">
             <EditorHeader {...headerProps} />
           </div>
         )}
 
         {/* Панель обложки и темы — скрыта в стрим-режиме */}
         {!isReadOnly && !isStreamMode && (
-          <div className="space-y-3">
+          <div className="space-y-3 relative z-10">
             <div
               className={`overflow-hidden transition-[grid-template-rows] duration-300 ease-in-out ${
                 isTopCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
@@ -185,6 +216,9 @@ export const EditorLayout = ({
                         tierListId={tierListId}
                         currentTheme={theme}
                         onThemeChanged={(t) => onThemeChanged?.(t)}
+                        effectsEnabled={effectsEnabled}
+                        onToggleEffects={setEffectsEnabled}
+                        isAdmin={isAdmin}
                       />
                     </div>
                   )}
