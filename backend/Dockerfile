@@ -23,7 +23,8 @@ WORKDIR /build
 # Сначала только package.json — для кэширования слоя зависимостей
 COPY package.json package-lock.json ./
 # Устанавливаем все зависимости (включая prisma CLI для генерации клиента)
-RUN npm ci
+# BuildKit cache mount сохраняет скачанные tarball-архивы npm между сборками
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Prisma schema + генерация клиента
 COPY prisma/ ./prisma/

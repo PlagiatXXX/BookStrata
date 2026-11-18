@@ -146,7 +146,9 @@ ok "Бэкенд собран"
 
 # ——— 5. Чистим build cache ———
 info "Чистка Docker build cache..."
-docker builder prune -af
+# Удаляем только висячие (dangling) слои сборки без флага -a,
+# чтобы сохранять кэш неизменных слоёв (например, npm ci и генерация Prisma)
+docker builder prune -f
 ok "Build cache очищен"
 
 # ——— 6. Перезапускаем бэкенд (postgres/redis не трогаем) ———
