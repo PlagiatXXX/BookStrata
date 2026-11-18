@@ -233,6 +233,7 @@ export const BookCover = memo(
               src={imgUrl}
               alt={`Обложка: ${label}`}
               loading={priority ? "eager" : "lazy"}
+              decoding="async"
               fetchPriority={priority ? "high" : undefined}
               onError={handleCoverError}
               onLoad={handleCoverLoad}

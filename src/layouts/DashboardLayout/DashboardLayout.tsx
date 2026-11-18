@@ -37,7 +37,6 @@ const BG_STYLES: Record<BgVariant, React.CSSProperties> = {
       "radial-gradient(circle at 95% 95%, rgba(180,0,255,0.15) 0%, transparent 30%)",
       "linear-gradient(180deg, #02062c 0%, #040b35 25%, #02081d 60%, #00060d 100%)",
     ].join(", "),
-    backgroundAttachment: "fixed",
   },
   dark: {
     backgroundColor: "#121212",
@@ -49,7 +48,6 @@ const BG_STYLES: Record<BgVariant, React.CSSProperties> = {
       "radial-gradient(circle at 50% 100%, rgba(255,140,90,0.12) 0%, transparent 50%)",
       "linear-gradient(180deg, #d9f2e7 0%, #cdeee1 55%, #c2e6d8 100%)",
     ].join(", "),
-    backgroundAttachment: "fixed",
   },
   collection: {
     backgroundColor: "#0f131d",
@@ -73,10 +71,14 @@ export function DashboardLayout({
   contentTopPadding,
 }: DashboardLayoutProps) {
   return (
-    <div
-      className="flex min-h-screen flex-col text-white"
-      style={BG_STYLES[bgVariant]}
-    >
+    <div className="relative flex min-h-screen flex-col text-white">
+      {/* Аппаратно-ускоренный фиксированный фон: отдельный GPU-слой вместо
+          background-attachment: fixed, который принудительно перерисовывал весь экран при скролле */}
+      <div
+        className="fixed inset-0 pointer-events-none -z-10"
+        style={BG_STYLES[bgVariant]}
+        aria-hidden="true"
+      />
       {!hideHeader && (
         <Header
           onMyRatingsClick={onMyRatingsClick}
