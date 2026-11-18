@@ -28,7 +28,7 @@ echo "==> Получение сертификата для $DOMAIN и $WWW_DOMAI
 sudo certbot --nginx \
   --non-interactive \
   --agree-tos \
-  --email fedorpasyada@yandex.ru \
+  --email bookstrata@mail.ru \
   --domains "$DOMAIN" \
   --domains "$WWW_DOMAIN" \
   --redirect

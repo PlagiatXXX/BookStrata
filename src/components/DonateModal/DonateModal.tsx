@@ -116,10 +116,10 @@ export function DonateModal({ onClose }: DonateModalProps) {
                 ВКонтакте
               </a>
               <a
-                href="mailto:fedorpasyada@yandex.ru"
+                href="mailto:bookstrata@mail.ru"
                 className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-amber-300 transition-colors"
               >
-                fedorpasyada@yandex.ru
+                bookstrata@mail.ru
               </a>
             </div>
           </div>

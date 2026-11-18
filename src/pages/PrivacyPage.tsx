@@ -2,6 +2,8 @@ import { SEOHead } from "@/components/SEO/SEOHead"
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs"
 
 export default function PrivacyPage() {
+  const operatorEmail = import.meta.env.VITE_OPERATOR_EMAIL || "bookstrata@mail.ru";
+
   return (
     <div className="min-h-screen bg-zinc-50 py-16 px-4">
       <SEOHead title="Политика конфиденциальности BookStrata — защита данных" description="Политика конфиденциальности BookStrata. Какие данные мы собираем, как храним и защищаем, ваши права по 152-ФЗ при использовании сервиса тир лист книг." url="/privacy" breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Политика конфиденциальности", url: "/privacy" }]} />
@@ -18,7 +20,7 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-slate-800 mb-2">Сведения об операторе</h2>
             <ul className="list-disc pl-5 space-y-1">
               <li>Оператор персональных данных: {import.meta.env.VITE_OPERATOR_NAME}</li>
-              <li>Контактный email: <a href={`mailto:${import.meta.env.VITE_OPERATOR_EMAIL}`} className="text-orange-500 hover:underline">{import.meta.env.VITE_OPERATOR_EMAIL}</a></li>
+              <li>Контактный email: <a href={`mailto:${operatorEmail}`} className="text-orange-500 hover:underline">{operatorEmail}</a></li>
             </ul>
           </section>
 
@@ -104,7 +106,7 @@ export default function PrivacyPage() {
             <p className="mt-2">
               Для запроса на удаление аккаунта или по иным вопросам, связанным с
               персональными данными, напишите на email:
-              <a href={`mailto:${import.meta.env.VITE_OPERATOR_EMAIL}`} className="text-orange-500 hover:underline ml-1">{import.meta.env.VITE_OPERATOR_EMAIL}</a>
+              <a href={`mailto:${operatorEmail}`} className="text-orange-500 hover:underline ml-1">{operatorEmail}</a>
             </p>
           </section>
 
@@ -114,7 +116,7 @@ export default function PrivacyPage() {
               По всем вопросам, связанным с обработкой персональных данных, обращайтесь:
             </p>
             <ul className="list-disc pl-5 space-y-1 mt-1">
-              <li>Email: <a href={`mailto:${import.meta.env.VITE_OPERATOR_EMAIL}`} className="text-orange-500 hover:underline">{import.meta.env.VITE_OPERATOR_EMAIL}</a></li>
+              <li>Email: <a href={`mailto:${operatorEmail}`} className="text-orange-500 hover:underline">{operatorEmail}</a></li>
               <li>Оператор: {import.meta.env.VITE_OPERATOR_NAME}</li>
             </ul>
           </section>

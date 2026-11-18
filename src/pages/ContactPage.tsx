@@ -39,11 +39,11 @@ export default function ContactPage() {
           Если у вас есть вопросы по сервису, предложения о сотрудничестве, реклама или запросы об удалении контента — напишите нам. Мы открыты к диалогу и ценим обратную связь.
         </p>
         <a
-          href="mailto:fedorpasyada@yandex.ru"
+          href="mailto:bookstrata@mail.ru"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-(--ink-0) text-(--bg-0) text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           <Mail size={16} />
-          fedorpasyada@yandex.ru
+          bookstrata@mail.ru
         </a>
         <p className="text-sm text-(--ink-2)">
           Или посмотрите{" "}

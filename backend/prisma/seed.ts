@@ -8,7 +8,7 @@ function envOrFallback(key: string, fallback: string): string {
 }
 
 async function main() {
-  const admin1Email = envOrFallback("SEED_ADMIN1_EMAIL", "Fedor-Pasyada@yandex.ru")
+  const admin1Email = envOrFallback("SEED_ADMIN1_EMAIL", "bookstrata@mail.ru")
   const admin1Username = envOrFallback("SEED_ADMIN1_USERNAME", "fedor")
   const admin1Password = envOrFallback("SEED_ADMIN1_PASSWORD", "")
 

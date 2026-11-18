@@ -363,7 +363,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                     telegram: TELEGRAM_URL,
                     vk: VK_URL,
                     github: "https://github.com/PlagiatXXX",
-                    yandexMail: "mailto:fedorpasyada@yandex.ru",
+                    mail: "mailto:bookstrata@mail.ru",
                     youtube: "https://www.youtube.com/@bookstrata",
                   }}
                 />

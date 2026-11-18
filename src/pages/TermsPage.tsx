@@ -83,11 +83,11 @@ export default function TermsPage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <a
-                href="mailto:fedorpasyada@yandex.ru"
+                href="mailto:bookstrata@mail.ru"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 text-white text-sm font-medium hover:bg-slate-700 transition-colors"
               >
                 <Mail size={16} />
-                fedorpasyada@yandex.ru
+                bookstrata@mail.ru
               </a>
               <a
                 href="https://t.me/PasFedor"

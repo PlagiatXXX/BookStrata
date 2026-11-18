@@ -7,6 +7,7 @@ interface SocialIconsProps {
     vk?: string;
     max?: string;
     youtube?: string;
+    mail?: string;
     yandexMail?: string;
     github?: string;
     phone?: string;
@@ -53,6 +54,7 @@ export const SocialIcons = ({
     vk = "#",
     max = "#",
     youtube = "#",
+    mail,
     yandexMail = "#",
     github = "#",
     phone = "#",
@@ -123,7 +125,7 @@ export const SocialIcons = ({
       ),
     },
     {
-      href: yandexMail,
+      href: mail || yandexMail,
       className: `${ICON_BASE} hover:bg-orange-500 text-orange-500`,
       label: "Почта",
       children: (

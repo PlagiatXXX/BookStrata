@@ -137,4 +137,14 @@ describe("Footer", () => {
       screen.getByRole("link", { name: /Информация для правообладателей/i }),
     ).toHaveAttribute("href", "/copyright")
   })
+
+  it("содержит ссылку на почту bookstrata@mail.ru в блоке соцсетей", () => {
+    mockedGetDonors.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([])
+
+    renderFooter()
+
+    const mailLink = screen.getByRole("link", { name: /Почта/i })
+    expect(mailLink).toHaveAttribute("href", "mailto:bookstrata@mail.ru")
+  })
 })
