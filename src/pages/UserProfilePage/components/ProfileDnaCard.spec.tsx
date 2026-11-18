@@ -2,8 +2,20 @@
 
 import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ProfileDnaCard } from "./ProfileDnaCard"
 import type { PublicUserDna } from "@/lib/userApi"
+
+function renderWithClient(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>
+  )
+}
 
 const dna: PublicUserDna = {
   archetypeName: "Архивариус",
@@ -46,5 +58,37 @@ describe("ProfileDnaCard", () => {
     expect(screen.getByRole("region", { name: "Читательский ДНК" })).toBeInTheDocument()
     expect(screen.getByText(/Пользователь пока не прошёл тест на читательский ДНК/)).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: /Пройти тест/ })).not.toBeInTheDocument()
+  })
+
+  it("при наличии осей и книг пробрасывает священные книги и криптонит в ArchivalTicketCard", () => {
+    const axes = {
+      storyFocus: 60,
+      emotionalWeight: 70,
+      pace: 50,
+      darkness: 80,
+      scope: 40,
+      complexity: 90,
+    }
+    const favoriteBooks = [
+      { title: "Мастер и Маргарита", author: "М. Булгаков", coverImageUrl: "https://example.com/master.jpg" },
+      { title: "1984", author: "Дж. Оруэлл" },
+    ]
+    const kryptoniteBook = {
+      title: "Сумерки",
+      author: "С. Майер",
+    }
+
+    renderWithClient(
+      <ProfileDnaCard
+        dna={dna}
+        isOwner={false}
+        axes={axes}
+        favoriteBooks={favoriteBooks}
+        kryptoniteBook={kryptoniteBook}
+      />
+    )
+
+    expect(screen.getByAltText("Мастер и Маргарита")).toBeInTheDocument()
+    expect(screen.getByText("Сумерки")).toBeInTheDocument()
   })
 })

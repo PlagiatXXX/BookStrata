@@ -1,11 +1,13 @@
 import type { PublicUserDna } from "@/lib/userApi"
-import type { DnaAxesData } from "@/lib/readingDnaApi"
+import type { DnaAxesData, DnaBookItemData } from "@/lib/readingDnaApi"
 import { ArchivalTicketCard } from "@/pages/ReadingDnaPage/components/ArchivalTicketCard"
 
 export interface ProfileDnaCardProps {
   dna: PublicUserDna | null
   isOwner: boolean
   axes?: DnaAxesData | null
+  favoriteBooks?: (DnaBookItemData | null)[]
+  kryptoniteBook?: DnaBookItemData | null
 }
 
 /**
@@ -13,7 +15,13 @@ export interface ProfileDnaCardProps {
  * - При наличии билета — живая миниатюра ArchivalTicketCard со всеми эффектами.
  * - При отсутствии — пунктирная карточка с CTA владельцу, посетителю — null.
  */
-export function ProfileDnaCard({ dna, isOwner, axes }: ProfileDnaCardProps) {
+export function ProfileDnaCard({
+  dna,
+  isOwner,
+  axes,
+  favoriteBooks = [],
+  kryptoniteBook = null,
+}: ProfileDnaCardProps) {
   if (!dna) {
     return (
       <section
@@ -64,6 +72,8 @@ export function ProfileDnaCard({ dna, isOwner, axes }: ProfileDnaCardProps) {
             ticketNumber={dna.ticketNumber}
             archetypeName={dna.archetypeName}
             axes={axes!}
+            favoriteBooks={favoriteBooks}
+            kryptoniteBook={kryptoniteBook}
             theme="dark"
             isSealed={true}
             sealImageUrl="/images/reading-dna/seal.webp"

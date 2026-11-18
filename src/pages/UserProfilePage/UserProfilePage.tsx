@@ -158,6 +158,14 @@ export default function UserProfilePage() {
     ? (ownerDna?.axes ?? null)
     : (fullDnaQuery.data?.axes ?? null);
 
+  const dnaFavoriteBooks = isOwner
+    ? (ownerDna?.favoriteBooks ?? [])
+    : (fullDnaQuery.data?.favoriteBooks ?? []);
+
+  const dnaKryptoniteBook = isOwner
+    ? (ownerDna?.kryptoniteBook ?? null)
+    : (fullDnaQuery.data?.kryptoniteBook ?? null);
+
   const tierLists = tierListsQuery.data?.data ?? [];
 
   /* ── Действия ── */
@@ -455,6 +463,8 @@ export default function UserProfilePage() {
                   genres={genres}
                   dna={dna}
                   dnaAxes={dnaAxes}
+                  dnaFavoriteBooks={dnaFavoriteBooks}
+                  dnaKryptoniteBook={dnaKryptoniteBook}
                   tierLists={tierLists}
                   tierListsLoading={tierListsQuery.isLoading}
                   achievementsSlot={achievementsPreview}
