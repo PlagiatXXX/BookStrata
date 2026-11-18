@@ -134,6 +134,9 @@ async function request<T>(
       json = await response.json();
     } catch {
       if (!response.ok) {
+        if (response.status === 499) {
+          throw new ApiRequestError("client_closed", "Запрос отменён клиентом", 499);
+        }
         const msg = `Ошибка ${response.status}: ${response.statusText || "нет описания"}`;
         notifyError("Ошибка запроса", msg);
         throw new ApiRequestError("parse_error", msg, response.status);
@@ -158,6 +161,9 @@ async function request<T>(
 
     // Ошибки в формате { error: { code, message } }
     if (!response.ok) {
+      if (response.status === 499) {
+        throw new ApiRequestError("client_closed", "Запрос отменён клиентом", 499);
+      }
       const errObj = json as Record<string, unknown> | null;
       const errorData = errObj?.error as Record<string, unknown> | undefined;
       const code = errorData?.code as string ?? "unknown";

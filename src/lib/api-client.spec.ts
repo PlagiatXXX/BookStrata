@@ -73,4 +73,26 @@ describe("apiClient: HTML-фолбэк после 301-редиректа", () =>
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(result).toBeUndefined();
   });
+
+  it("при статусе 499 не вызывает notifyError и выбрасывает ошибку client_closed", async () => {
+    const notifyErrorModule = await import("./notifyError");
+    const spy = vi.spyOn(notifyErrorModule, "notifyError");
+
+    const fetchMock = vi.fn().mockImplementationOnce(async () => {
+      return new Response("Client Closed Request", {
+        status: 499,
+        statusText: "Client Closed Request",
+      });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.get("/test")).rejects.toMatchObject({
+      code: "client_closed",
+      status: 499,
+    });
+
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
 });

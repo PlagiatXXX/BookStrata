@@ -20,6 +20,11 @@ interface NotifyErrorOptions {
 export function notifyError(titleOrOpts: string | NotifyErrorOptions, description?: string): void {
   if (typeof document === "undefined") return;
 
+  // Поисковым ботам, краулерам и Lighthouse не показываем UI-уведомления
+  if (typeof navigator !== "undefined" && /bot|google|yandex|bing|lighthouse/i.test(navigator.userAgent)) {
+    return;
+  }
+
   const opts = typeof titleOrOpts === "string"
     ? { title: titleOrOpts, description }
     : titleOrOpts;
