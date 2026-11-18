@@ -26,6 +26,10 @@ import { isStaff } from "../../middleware/requireRole.js";
 // Логгер для роутов тир-листов
 const logger = createLogger("TierListsRoutes", { color: "cyan" });
 
+/** Ограничение ширины обложек книг (640px) покрывает Retina 2x для карточек и модалок,
+ *  избегая раздувания WebP до 1600px и экономит 80-90% трафика/VRAM при скролле */
+const BOOK_COVER_MAX_WIDTH = 640;
+
 // Опциональный middleware - ничего не делает, так как request.user
 // уже заполняется глобальным плагином authPlugin, если токен верный.
 // Оставляем для совместимости с текущими определениями роутов.
@@ -528,7 +532,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
               return { ...book, coverImageUrl: "" };
             }
             try {
-              const uploadResult = await uploadBase64WithOg(url, "tiermaker-pro/book-covers");
+              const uploadResult = await uploadBase64WithOg(url, "tiermaker-pro/book-covers", BOOK_COVER_MAX_WIDTH);
               return { ...book, coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl };
             } catch (error) {
               fastify.log.error({ error: String(error) }, "Failed to upload base64 image");
@@ -546,7 +550,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
           const isExternalUrl = url.startsWith("http") && !ourHosts.some((h) => url.includes(h));
           if (isExternalUrl) {
             try {
-              const uploadResult = await uploadFromUrlWithOg(url, "tiermaker-pro/book-covers");
+              const uploadResult = await uploadFromUrlWithOg(url, "tiermaker-pro/book-covers", BOOK_COVER_MAX_WIDTH);
               return { ...book, coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl };
             } catch (error) {
               fastify.log.error({ error: String(error) }, "Failed to upload external cover");
@@ -719,6 +723,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         const uploadResult = await uploadBase64WithOg(
           coverImageUrl,
           "tiermaker-pro/book-covers",
+          BOOK_COVER_MAX_WIDTH,
         );
 
         // Обновляем обложку книги (личная обложка вхождения, Фаза 2.3 — каталог не трогаем)
@@ -827,6 +832,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
         const uploadResult = await uploadFromUrl(
           coverUrl,
           "tiermaker-pro/book-covers",
+          BOOK_COVER_MAX_WIDTH,
         );
 
         // Используем единую функцию для добавления книги в тир-лист
@@ -934,6 +940,7 @@ export async function tierListRoutes(fastify: FastifyInstance) {
                 const uploadResult = await uploadBase64WithOg(
                   book.coverImageUrl,
                   "tiermaker-pro/book-covers",
+                  BOOK_COVER_MAX_WIDTH,
                 );
                 return { ...book, coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl };
               } catch {

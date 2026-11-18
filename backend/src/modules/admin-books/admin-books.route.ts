@@ -191,6 +191,7 @@ export const adminBooksRoutes: FastifyPluginAsync = async (fastify) => {
         const uploadResult = await uploadBase64WithOg(
           coverImageUrl,
           "tiermaker-pro/book-covers",
+          640,
         );
         return reply.code(200).send({ data: { coverImageUrl: uploadResult.url, ogImageUrl: uploadResult.ogUrl } });
       } catch (error: unknown) {

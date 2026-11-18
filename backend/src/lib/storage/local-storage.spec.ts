@@ -24,6 +24,7 @@ vi.mock("../logger.js", () => ({
 }));
 
 import { LocalStorage } from "./local-storage.js";
+import sharp from "sharp";
 
 describe("LocalStorage.deleteFile: защита от path traversal", () => {
   let storage: LocalStorage;
@@ -56,6 +57,33 @@ describe("LocalStorage.deleteFile: защита от path traversal", () => {
   it("молча игнорирует абсолютные/сторонние пути", async () => {
     await expect(storage.deleteFile("/uploads//etc/passwd")).resolves.not.toThrow();
     await expect(storage.deleteFile("https://evil.com/x.png")).resolves.not.toThrow();
+  });
+});
+
+describe("LocalStorage.uploadBase64WithOg: кастомный maxWidth", () => {
+  it("уменьшает основное изображение до указанного maxWidth", async () => {
+    const storage = new LocalStorage();
+    const pngBuffer = await sharp({
+      create: {
+        width: 1500,
+        height: 2000,
+        channels: 3,
+        background: { r: 100, g: 150, b: 200 },
+      },
+    })
+      .png()
+      .toBuffer();
+
+    const base64 = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+    const result = await storage.uploadBase64WithOg(base64, "covers", 640);
+
+    expect(result.url).toBeDefined();
+    expect(result.ogUrl).toBeDefined();
+
+    // Читаем сохраненный файл с диска
+    const mainFilePath = join(TEST_DIR, result.publicId.replace(/^\/uploads\//, ""));
+    const meta = await sharp(mainFilePath).metadata();
+    expect(meta.width).toBe(640);
   });
 });
 

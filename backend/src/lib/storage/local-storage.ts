@@ -111,10 +111,10 @@ export class LocalStorage implements ImageStorageService {
     return writeFile(bufferToWrite, folder, ext)
   }
 
-  async uploadBase64WithOg(base64Data: string, folder = UPLOADS_SUBDIR): Promise<UploadWithOgResult> {
+  async uploadBase64WithOg(base64Data: string, folder = UPLOADS_SUBDIR, maxWidth?: number): Promise<UploadWithOgResult> {
     const buffer = bufferFromBase64(base64Data)
 
-    const { buffer: mainBuffer, contentType } = await prepareImage(buffer)
+    const { buffer: mainBuffer, contentType } = await prepareImage(buffer, maxWidth)
     const { buffer: ogBuffer } = await prepareOgImage(buffer)
 
     const mainExt = contentType.split('/')[1] || 'png'
@@ -124,10 +124,10 @@ export class LocalStorage implements ImageStorageService {
     return { ...mainResult, ogUrl: ogResult.url }
   }
 
-  async uploadFromUrlWithOg(url: string, folder = UPLOADS_SUBDIR): Promise<UploadWithOgResult> {
+  async uploadFromUrlWithOg(url: string, folder = UPLOADS_SUBDIR, maxWidth?: number): Promise<UploadWithOgResult> {
     const buffer = await fetchToBuffer(url)
 
-    const { buffer: mainBuffer, contentType } = await prepareImage(buffer)
+    const { buffer: mainBuffer, contentType } = await prepareImage(buffer, maxWidth)
     const { buffer: ogBuffer } = await prepareOgImage(buffer)
 
     const mainExt = contentType.split('/')[1] || 'png'

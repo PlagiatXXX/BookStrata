@@ -139,10 +139,10 @@ export class S3Storage implements ImageStorageService {
     return uploadBuffer(bufferToUpload, folder, finalContentType ?? contentType)
   }
 
-  async uploadBase64WithOg(base64Data: string, folder = 'tiermaker-pro/uploads'): Promise<UploadWithOgResult> {
+  async uploadBase64WithOg(base64Data: string, folder = 'tiermaker-pro/uploads', maxWidth?: number): Promise<UploadWithOgResult> {
     const buffer = bufferFromBase64(base64Data)
 
-    const { buffer: mainBuffer, contentType } = await prepareImage(buffer)
+    const { buffer: mainBuffer, contentType } = await prepareImage(buffer, maxWidth)
     const { buffer: ogBuffer } = await prepareOgImage(buffer)
 
     const mainResult = await uploadBuffer(mainBuffer, folder, contentType)
@@ -151,10 +151,10 @@ export class S3Storage implements ImageStorageService {
     return { ...mainResult, ogUrl: ogResult.url }
   }
 
-  async uploadFromUrlWithOg(url: string, folder = 'tiermaker-pro/uploads'): Promise<UploadWithOgResult> {
+  async uploadFromUrlWithOg(url: string, folder = 'tiermaker-pro/uploads', maxWidth?: number): Promise<UploadWithOgResult> {
     const { buffer, contentType } = await fetchToBuffer(url)
 
-    const { buffer: mainBuffer, contentType: mainContentType } = await prepareImage(buffer)
+    const { buffer: mainBuffer, contentType: mainContentType } = await prepareImage(buffer, maxWidth)
     const { buffer: ogBuffer } = await prepareOgImage(buffer)
 
     const mainResult = await uploadBuffer(mainBuffer, folder, mainContentType ?? contentType)

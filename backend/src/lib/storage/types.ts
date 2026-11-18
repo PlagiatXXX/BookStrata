@@ -14,9 +14,9 @@ export interface ImageStorageService {
   uploadBase64(base64Data: string, folder?: string, maxWidth?: number): Promise<UploadResult>
   uploadFromUrl(url: string, folder?: string, maxWidth?: number): Promise<UploadResult>
   /** Загрузка base64 с OG-вариантом (1200×630) для обложек книг. */
-  uploadBase64WithOg(base64Data: string, folder?: string): Promise<UploadWithOgResult>
+  uploadBase64WithOg(base64Data: string, folder?: string, maxWidth?: number): Promise<UploadWithOgResult>
   /** Загрузка по URL с OG-вариантом (1200×630) для обложек книг. */
-  uploadFromUrlWithOg(url: string, folder?: string): Promise<UploadWithOgResult>
+  uploadFromUrlWithOg(url: string, folder?: string, maxWidth?: number): Promise<UploadWithOgResult>
   /** Загрузка MP4-видео без пережатия через sharp. */
   uploadVideo(buffer: Buffer, folder?: string): Promise<UploadResult>
   /** Удаляет файл по key (S3) или publicId/URL (/uploads/... для local). */
