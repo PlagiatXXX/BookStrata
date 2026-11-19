@@ -112,4 +112,12 @@ describe("AuthForm", () => {
       acceptedTerms: true,
     });
   });
+
+  it("видео фона имеет poster=/library.webp и preload=metadata для оптимизации первого кадра", () => {
+    const { container } = renderForm();
+    const video = container.querySelector("video");
+    expect(video).toBeTruthy();
+    expect(video?.getAttribute("poster")).toBe("/library.webp");
+    expect(video?.getAttribute("preload")).toBe("metadata");
+  });
 });

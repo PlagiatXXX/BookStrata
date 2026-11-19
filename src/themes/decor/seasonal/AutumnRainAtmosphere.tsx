@@ -376,12 +376,12 @@ export function AutumnRainAtmosphere() {
               "radial-gradient(circle 280px at var(--rain-lamp-x, 50%) var(--rain-lamp-y, 35%), rgba(245, 158, 11, 0.12), transparent 80%)",
           }}
         />
-        <div className="absolute inset-0 bg-slate-950/[0.08] pointer-events-none" />
+        <div className="absolute inset-0 bg-slate-950/8 pointer-events-none" />
 
         {/* ── АУТЕНТИЧНОЕ ФОТОГРАФИЧЕСКОЕ ГРОЗОВОЕ НЕБО (Адаптировано под мобильные и десктоп) ── */}
-        <div className="absolute inset-x-0 top-0 h-[360px] sm:h-[460px] md:h-[540px] lg:h-[620px] xl:h-[680px] 2xl:h-[740px] pointer-events-none overflow-hidden select-none">
+        <div className="absolute inset-x-0 top-0 h-90 sm:h-115 md:h-135 lg:h-155 xl:h-170 2xl:h-185 pointer-events-none overflow-hidden select-none">
           {/* Базовый тяжелый градиент плотного неба */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#02050c] via-[#060d1b] via-45% to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-b from-[#02050c] via-[#060d1b] via-45% to-transparent pointer-events-none" />
 
           {/* Фотографический холст грозовых туч: адаптивный источник для мобилок и больших экранов */}
           <picture className="absolute inset-0 w-full h-full pointer-events-none">
@@ -398,7 +398,7 @@ export function AutumnRainAtmosphere() {
               type="image/webp"
             />
             <img
-              src="/autumn-storm-clouds-hd.png"
+              src="/autumn-storm-clouds-hd.webp"
               alt=""
               className="absolute -top-3 sm:-top-6 md:-top-8 inset-x-[-4%] md:inset-x-[-3%] w-[108%] md:w-[106%] h-full object-cover object-top md:object-[50%_35%] lg:object-[50%_38%] max-w-none pointer-events-none opacity-95 will-change-transform transition-[filter] duration-150"
               style={{
