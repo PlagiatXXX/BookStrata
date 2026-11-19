@@ -29,13 +29,20 @@ import {
   type DnaAxesData,
   type DnaBookItemData,
 } from "@/lib/readingDnaApi";
+import {
+  getDnaTicketStorageKey,
+  getDnaDraftStorageKey,
+  cleanupLegacyDnaStorage,
+  DNA_THEME_KEY,
+  LEGACY_DNA_DRAFT_KEY as DNA_DRAFT_KEY,
+  LEGACY_DNA_TICKET_KEY as DNA_TICKET_KEY,
+} from "./utils/dnaStorage";
+import { DnaComingSoonTeaser } from "./components/DnaComingSoonTeaser";
 import "./readingDna.css";
 
 export type DnaTheme = "dark" | "craft";
 
-export const DNA_THEME_KEY = "bs_reading_dna_theme";
-export const DNA_DRAFT_KEY = "bs_reading_dna_draft";
-export const DNA_TICKET_KEY = "bs_reading_dna_ticket";
+export { DNA_THEME_KEY, DNA_DRAFT_KEY, DNA_TICKET_KEY };
 
 export interface ReadingDnaDraft {
   step: number;
@@ -70,6 +77,19 @@ export default function ReadingDnaPage() {
   const challengeParam = searchParams.get("challenge") || searchParams.get("duel");
   const { archetypes } = useDnaArchetypes();
 
+  const authContext = useContext(AuthContext);
+  const user = authContext?.user ?? null;
+  const isAuthLoading = authContext?.isLoading ?? false;
+  const isAdmin = user?.role === "ADMIN";
+
+  // Очистка устаревших глобальных ключей прошлых версий
+  useEffect(() => {
+    cleanupLegacyDnaStorage();
+  }, []);
+
+  const draftKey = getDnaDraftStorageKey(user?.userId);
+  const ticketKey = getDnaTicketStorageKey(user?.userId);
+
   // Тема оформления с сохранением в localStorage (по умолчанию светлая "craft")
   const [theme, setTheme] = useState<DnaTheme>(() => {
     try {
@@ -94,7 +114,7 @@ export default function ReadingDnaPage() {
   // Восстановление черновика теста при входе
   const [initialDraft] = useState<ReadingDnaDraft>(() => {
     try {
-      const raw = localStorage.getItem(DNA_DRAFT_KEY);
+      const raw = localStorage.getItem(draftKey);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object") {
@@ -141,16 +161,16 @@ export default function ReadingDnaPage() {
         kryptonite: liveKryptonite,
         touchedAxes,
       };
-      localStorage.setItem(DNA_DRAFT_KEY, JSON.stringify(draftToSave));
+      localStorage.setItem(draftKey, JSON.stringify(draftToSave));
     } catch {
       // ignore
     }
-  }, [currentStep, liveAxes, liveBooks, liveKryptonite, touchedAxes]);
+  }, [draftKey, currentStep, liveAxes, liveBooks, liveKryptonite, touchedAxes]);
 
-  // Сохраненный билет из localStorage
+  // Сохраненный билет из localStorage (изолированный по пользователю)
   const [currentTicket, setCurrentTicket] = useState<ReadingDnaResponseData | null>(() => {
     try {
-      const raw = localStorage.getItem(DNA_TICKET_KEY);
+      const raw = localStorage.getItem(ticketKey);
       if (raw) {
         return JSON.parse(raw);
       }
@@ -159,6 +179,16 @@ export default function ReadingDnaPage() {
     }
     return null;
   });
+
+  // При смене пользователя актуализируем локальный билет
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ticketKey);
+      setCurrentTicket(raw ? JSON.parse(raw) : null);
+    } catch {
+      setCurrentTicket(null);
+    }
+  }, [ticketKey]);
 
   const [activeTab, setActiveTab] = useState<number>(() => {
     if (challengeParam) return 3;
@@ -179,9 +209,6 @@ export default function ReadingDnaPage() {
       ? ticketParam
       : null);
 
-  const authContext = useContext(AuthContext);
-  const user = authContext?.user ?? null;
-
   // Запрос сохраненного ДНК авторизованного пользователя с сервера
   const { data: myDna } = useQuery({
     queryKey: ["readingDna", "me", user?.userId],
@@ -195,12 +222,12 @@ export default function ReadingDnaPage() {
     if (myDna && !currentTicket) {
       setCurrentTicket(myDna);
       try {
-        localStorage.setItem(DNA_TICKET_KEY, JSON.stringify(myDna));
+        localStorage.setItem(ticketKey, JSON.stringify(myDna));
       } catch {
         // ignore
       }
     }
-  }, [myDna, currentTicket]);
+  }, [myDna, currentTicket, ticketKey]);
 
   // Загрузка билета по параметру ?ticket=BS-XXXX-X
   const { data: loadedTicket } = useQuery({
@@ -223,7 +250,9 @@ export default function ReadingDnaPage() {
     (!myDna || loadedTicket.ticketNumber !== myDna.ticketNumber)
   );
 
-  const activeTicket = (ticketParam && loadedTicket) ? loadedTicket : (myDna || currentTicket || loadedTicket);
+  const activeTicket = (ticketParam && loadedTicket)
+    ? loadedTicket
+    : (user ? (myDna || currentTicket) : currentTicket);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "craft" : "dark"));
@@ -239,7 +268,7 @@ export default function ReadingDnaPage() {
 
   const handleResetProgress = useCallback(() => {
     try {
-      localStorage.removeItem(DNA_DRAFT_KEY);
+      localStorage.removeItem(draftKey);
     } catch {
       // ignore
     }
@@ -248,7 +277,7 @@ export default function ReadingDnaPage() {
     setLiveBooks([]);
     setLiveKryptonite(null);
     setTouchedAxes({});
-  }, []);
+  }, [draftKey]);
 
   const handleSelectTab = useCallback((index: number) => {
     setActiveTab(index);
@@ -263,7 +292,7 @@ export default function ReadingDnaPage() {
     onSuccess: async (saved) => {
       setCurrentTicket(saved);
       try {
-        localStorage.setItem(DNA_TICKET_KEY, JSON.stringify(saved));
+        localStorage.setItem(ticketKey, JSON.stringify(saved));
       } catch {
         // ignore
       }
@@ -424,6 +453,18 @@ export default function ReadingDnaPage() {
 
   const isDark = theme === "dark";
 
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-[#0d0907] flex items-center justify-center text-amber-200/60">
+        <Loader2 className="animate-spin" size={28} />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return <DnaComingSoonTeaser />;
+  }
+
   return (
     <div
       data-dna-theme={isDark ? "dark" : "light"}
@@ -460,6 +501,15 @@ export default function ReadingDnaPage() {
       />
 
       <div className="w-full max-w-full flex flex-col flex-1">
+        {isAdmin && (
+          <aside
+            aria-label="Панель администратора"
+            className="w-full bg-amber-500/15 border border-amber-500/30 rounded-lg px-3 py-1.5 mb-2 text-center text-xs text-amber-200/90 font-medium select-none"
+          >
+            <span>🛡️ Режим администратора · Для обычных пользователей страница открывается в режиме «Скоро»</span>
+          </aside>
+        )}
+
         {/* Хлебные крошки + Назад на одном уровне */}
         <div className="flex items-center justify-between gap-3 pt-1 pb-2 text-xs select-none">
           <Breadcrumbs
