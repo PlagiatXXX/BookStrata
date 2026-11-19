@@ -80,6 +80,7 @@ describe('useTierEditorDrag', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockToPng.mockResolvedValue('data:image/png;base64,test');
     originalFetch = globalThis.fetch;
   });
 
@@ -560,6 +561,66 @@ describe('useTierEditorDrag', () => {
 
       // После экспорта — оригинальный URL
       expect(card.style.backgroundImage).toBe('url("http://example.com/cover.jpg")');
+    });
+
+    it('должен вызывать navigator.share при mode = "share" и наличии поддержки', async () => {
+      const mockShare = vi.fn().mockResolvedValue(undefined);
+      const originalNavigator = window.navigator;
+      Object.defineProperty(window, "navigator", {
+        value: {
+          ...originalNavigator,
+          share: mockShare,
+          canShare: vi.fn().mockReturnValue(true),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      const { result } = renderHookWithRef();
+      await result.current.onDownloadImage("user", { mode: "share" });
+
+      expect(mockShare).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Test List",
+          files: expect.any(Array),
+        })
+      );
+
+      Object.defineProperty(window, "navigator", {
+        value: originalNavigator,
+        writable: true,
+        configurable: true,
+      });
+    });
+
+    it('не должен вызывать sileo.error если пользователь закрыл нативный шеринг (AbortError)', async () => {
+      const abortError = new Error("Abort");
+      abortError.name = "AbortError";
+      const mockShare = vi.fn().mockRejectedValue(abortError);
+      const originalNavigator = window.navigator;
+      Object.defineProperty(window, "navigator", {
+        value: {
+          ...originalNavigator,
+          share: mockShare,
+          canShare: vi.fn().mockReturnValue(true),
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      const { sileo } = await import("sileo");
+      vi.mocked(sileo.error).mockClear();
+
+      const { result } = renderHookWithRef();
+      await result.current.onDownloadImage("user", { mode: "share" });
+
+      expect(sileo.error).not.toHaveBeenCalled();
+
+      Object.defineProperty(window, "navigator", {
+        value: originalNavigator,
+        writable: true,
+        configurable: true,
+      });
     });
   });
 });

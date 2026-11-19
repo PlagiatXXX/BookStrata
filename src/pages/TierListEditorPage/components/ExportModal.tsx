@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal } from '@/ui/Modal';
-import { Download } from 'lucide-react';
+import { Download, Share2 } from 'lucide-react';
 import Spinner from '@/components/Spinner/Spinner';
 import { THEME_COLORS } from '@/lib/tierListApi';
 import { YM_GOALS } from '@/lib/ym-goals';
@@ -9,22 +9,27 @@ import type { TierListTheme } from '@/lib/tierListApi';
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onExport: () => Promise<void>;
+  onExport: (options?: { mode?: 'download' | 'share' }) => Promise<void>;
   tierListTheme?: string;
 }
 
 export const ExportModal = ({ isOpen, onClose, onExport, tierListTheme = 'default' }: ExportModalProps) => {
-  const [isExporting, setIsExporting] = useState(false);
+  const [exportingMode, setExportingMode] = useState<'download' | 'share' | null>(null);
   const colors = THEME_COLORS[tierListTheme as TierListTheme] ?? THEME_COLORS.default;
 
-  const handleExport = async () => {
-    setIsExporting(true);
+  const canShare =
+    typeof navigator !== 'undefined' &&
+    typeof navigator.share === 'function' &&
+    typeof File !== 'undefined';
+
+  const handleExport = async (mode: 'download' | 'share' = 'download') => {
+    setExportingMode(mode);
     try {
-      await onExport();
-      window.ym?.(109755750, 'reachGoal', YM_GOALS.EXPORT_PNG)
+      await onExport({ mode });
+      window.ym?.(109755750, 'reachGoal', YM_GOALS.EXPORT_PNG);
       onClose();
     } finally {
-      setIsExporting(false);
+      setExportingMode(null);
     }
   };
 
@@ -58,7 +63,7 @@ export const ExportModal = ({ isOpen, onClose, onExport, tierListTheme = 'defaul
         </div>
 
         {/* Actions — стилизованы под тему тир-листа */}
-        <div className="mt-4 flex gap-2 sm:mt-5 sm:gap-3">
+        <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:mt-5 sm:gap-3">
           <button
             type="button"
             onClick={onClose}
@@ -71,23 +76,51 @@ export const ExportModal = ({ isOpen, onClose, onExport, tierListTheme = 'defaul
           >
             Отмена
           </button>
+          {canShare && (
+            <button
+              type="button"
+              onClick={() => handleExport('share')}
+              disabled={exportingMode !== null}
+              className="flex cursor-pointer items-center justify-center gap-1.5 flex-1 nb-heavy-border px-2 py-2 text-[10px] font-black tracking-wide uppercase transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed sm:px-4 sm:py-2 sm:text-xs"
+              style={{
+                backgroundColor: colors.tier,
+                color: colors.bg,
+                borderColor: colors.bg,
+              }}
+            >
+              {exportingMode === 'share' ? (
+                <Spinner size="sm" />
+              ) : (
+                <Share2 size={14} />
+              )}
+              {exportingMode === 'share' ? 'Создаём...' : 'Поделиться'}
+            </button>
+          )}
           <button
             type="button"
-            onClick={handleExport}
-            disabled={isExporting}
+            onClick={() => handleExport('download')}
+            disabled={exportingMode !== null}
             className="flex cursor-pointer items-center justify-center gap-1.5 flex-1 nb-heavy-border px-2 py-2 text-[10px] font-black tracking-wide uppercase transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed sm:px-4 sm:py-2 sm:text-xs"
-            style={{
-              backgroundColor: colors.tier,
-              color: colors.bg,
-              borderColor: colors.bg,
-            }}
+            style={
+              canShare
+                ? {
+                    backgroundColor: colors.bg,
+                    color: colors.text,
+                    borderColor: colors.tier,
+                  }
+                : {
+                    backgroundColor: colors.tier,
+                    color: colors.bg,
+                    borderColor: colors.bg,
+                  }
+            }
           >
-            {isExporting ? (
+            {exportingMode === 'download' ? (
               <Spinner size="sm" />
             ) : (
               <Download size={14} />
             )}
-            {isExporting ? 'Создаём...' : 'Скачать PNG'}
+            {exportingMode === 'download' ? 'Создаём...' : 'Скачать PNG'}
           </button>
         </div>
       </div>

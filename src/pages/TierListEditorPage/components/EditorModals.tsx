@@ -77,7 +77,7 @@ interface EditorModalsProps {
   isUpdatingBook: boolean;
   isExportModalOpen: boolean;
   onCloseExport: () => void;
-  onConfirmExport: () => Promise<void>;
+  onConfirmExport: (options?: { mode?: 'download' | 'share' }) => Promise<void>;
   username: string;
   isReadOnly?: boolean;
   tierListTheme?: string;

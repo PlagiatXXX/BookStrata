@@ -902,7 +902,7 @@ const TierListEditorContent = () => {
         isUpdatingBook={isUpdatingBook}
         isExportModalOpen={isExportModalOpen}
         onCloseExport={() => setIsExportModalOpen(false)}
-        onConfirmExport={async () => {
+        onConfirmExport={async (options) => {
           if (hasUnsavedChanges && !isDemo) {
             try {
               await handleSave();
@@ -910,7 +910,7 @@ const TierListEditorContent = () => {
               // Ошибка сохранения — не блокируем экспорт
             }
           }
-          onDownloadImage(authUser?.username);
+          await onDownloadImage(authUser?.username, options);
         }}
         username={authUser?.username || "user"}
         isReadOnly={isReadOnly}

@@ -50,6 +50,19 @@ function normalizeExportError(err: unknown): Error {
   return new Error(String(err));
 }
 
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [header, base64Data] = dataUrl.split(",");
+  const mimeMatch = header?.match(/:(.*?);/);
+  const mime = mimeMatch ? mimeMatch[1] : "image/png";
+  const binaryStr = atob(base64Data || "");
+  const len = binaryStr.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return new File([bytes], filename, { type: mime });
+}
+
 export interface UseTierEditorDragResult {
   tierGridRef: React.RefObject<HTMLDivElement | null>;
   handleDragStart: (event: DragStartEvent) => void;
@@ -57,6 +70,7 @@ export interface UseTierEditorDragResult {
   handleDragEndAndClear: (event: DragEndEvent) => void;
   onDownloadImage: (
     username?: string,
+    options?: { mode?: "download" | "share" },
   ) => Promise<void>;
 }
 
@@ -104,6 +118,7 @@ export function useTierEditorDrag({
   const onDownloadImage = useCallback(
     async (
       username = "",
+      options?: { mode?: "download" | "share" },
     ) => {
       if (tierGridRef.current === null) return;
 
@@ -215,9 +230,49 @@ export function useTierEditorDrag({
         }
         inlineMap.clear();
 
-        // 7. Скачиваем файл
+        // 7. Скачиваем файл или открываем нативный шеринг
+        const filename = `${listData.title.replace(/\s+/g, "-")}.png`;
+        const nav =
+          typeof window !== "undefined" && window.navigator
+            ? window.navigator
+            : typeof navigator !== "undefined"
+              ? navigator
+              : null;
+
+        if (
+          options?.mode === "share" &&
+          nav &&
+          typeof nav.share === "function"
+        ) {
+          try {
+            const file = dataUrlToFile(dataUrl, filename);
+
+            if (!nav.canShare || nav.canShare({ files: [file] })) {
+              await nav.share({
+                files: [file],
+                title: listData.title,
+                text: `Мой книжный тир-лист «${listData.title}» на BookStrata`,
+              });
+              logger.info("Tier list image shared successfully", {
+                title: listData.title,
+              });
+              return;
+            }
+          } catch (shareErr) {
+            if ((shareErr as { name?: string })?.name === "AbortError") {
+              logger.info("Tier list image share aborted by user", {
+                title: listData.title,
+              });
+              return;
+            }
+            logger.warn("Web Share API failed, falling back to download", {
+              error: shareErr,
+            });
+          }
+        }
+
         const link = document.createElement("a");
-        link.download = `${listData.title.replace(/\s+/g, "-")}.png`;
+        link.download = filename;
         link.href = dataUrl;
         link.click();
 
