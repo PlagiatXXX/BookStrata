@@ -104,30 +104,6 @@ export const TierLabel = memo(
     const wrapperRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-      function handleClickOutside(event: MouseEvent) {
-        if (
-          wrapperRef.current &&
-          !wrapperRef.current.contains(event.target as Node)
-        ) {
-          setIsPaletteOpen(false);
-        }
-      }
-
-      function handleKeyDown(event: KeyboardEvent) {
-        if (event.key === "Escape") {
-          setIsPaletteOpen(false);
-        }
-      }
-
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-        document.removeEventListener("keydown", handleKeyDown);
-      };
-    }, [wrapperRef]);
-
     const dynamicSizeClass = sizeClasses[labelSize];
     const textColor = getTextColorForBackground(color);
     const weightClass = weightClasses[labelWeight];
@@ -239,6 +215,7 @@ export const TierLabel = memo(
               onChangeColor(tierId, newColor);
             }}
             onClose={() => setIsPaletteOpen(false)}
+            anchorRef={wrapperRef}
           />
         )}
       </div>

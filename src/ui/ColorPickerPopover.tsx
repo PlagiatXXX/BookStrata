@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { HexColorPicker } from "react-colorful";
 
 interface ColorPickerPopoverProps {
   currentColor: string;
   onChangeColor: (color: string) => void;
   onClose: () => void;
+  anchorRef?: React.RefObject<HTMLElement | null>;
 }
 
 /** Базовые цвета для быстрого выбора */
@@ -21,6 +23,10 @@ const PRESET_COLORS = [
   "#808080", // Серый
   "#000000", // Чёрный
 ];
+
+const POPOVER_WIDTH = 224;
+const POPOVER_HEIGHT = 296;
+const VIEWPORT_PADDING = 12;
 
 /** Проверяет, является ли строка валидным hex-цветом (3 или 6 символов, без #) */
 function isValidHex(str: string): boolean {
@@ -44,10 +50,79 @@ export function ColorPickerPopover({
   currentColor,
   onChangeColor,
   onClose,
+  anchorRef,
 }: ColorPickerPopoverProps) {
   const [color, setColor] = useState(currentColor);
   const [hexInput, setHexInput] = useState(currentColor.replace("#", ""));
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const updatePosition = () => {
+      if (!popoverRef.current || !anchorRef?.current) return;
+      const rect = anchorRef.current.getBoundingClientRect();
+
+      let top = rect.top;
+      if (top + POPOVER_HEIGHT > window.innerHeight - VIEWPORT_PADDING) {
+        top = Math.max(
+          VIEWPORT_PADDING,
+          window.innerHeight - POPOVER_HEIGHT - VIEWPORT_PADDING,
+        );
+      }
+      if (top < VIEWPORT_PADDING) {
+        top = VIEWPORT_PADDING;
+      }
+
+      let left = rect.right + 8;
+      if (left + POPOVER_WIDTH > window.innerWidth - VIEWPORT_PADDING) {
+        const leftOption = rect.left - POPOVER_WIDTH - 8;
+        if (leftOption >= VIEWPORT_PADDING) {
+          left = leftOption;
+        } else {
+          left = Math.max(
+            VIEWPORT_PADDING,
+            window.innerWidth - POPOVER_WIDTH - VIEWPORT_PADDING,
+          );
+        }
+      }
+
+      popoverRef.current.style.top = `${top}px`;
+      popoverRef.current.style.left = `${left}px`;
+    };
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, {
+      capture: true,
+      passive: true,
+    });
+    window.addEventListener("resize", updatePosition, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [anchorRef]);
+
+  // Закрытие по Escape и клику вне поповера и anchor
+  useEffect(() => {
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (popoverRef.current?.contains(target)) return;
+      if (anchorRef?.current?.contains(target)) return;
+      onClose();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose, anchorRef]);
 
   // Применяем цвет сразу при выборе из круга
   const handlePickerChange = useCallback(
@@ -128,20 +203,15 @@ export function ColorPickerPopover({
     [onChangeColor, onClose],
   );
 
-  // Закрытие по Escape / клику вне
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       ref={popoverRef}
-      className="nb-heavy-border absolute left-full top-0 z-50 ml-2 bg-white p-3 shadow-[4px_4px_0_0_#000000]"
-      style={{ width: "220px" }}
+      className="nb-heavy-border fixed z-100 bg-white p-3 shadow-[4px_4px_0_0_#000000] text-gray-900 rounded-sm"
+      style={{
+        width: "220px",
+      }}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Цветовой круг */}
@@ -178,7 +248,11 @@ export function ColorPickerPopover({
       <div className="mb-2 border-t border-gray-200" />
 
       {/* Предустановленные цвета */}
-      <div className="flex flex-wrap gap-1" role="group" aria-label="Основные цвета">
+      <div
+        className="flex flex-wrap gap-1"
+        role="group"
+        aria-label="Основные цвета"
+      >
         {PRESET_COLORS.map((swatch) => (
           <button
             key={swatch}
@@ -189,7 +263,7 @@ export function ColorPickerPopover({
             style={{ backgroundColor: swatch }}
             className={`size-5 cursor-pointer border border-black hover:scale-110 transition-transform focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1 outline-none ${
               color.toLowerCase() === swatch.toLowerCase()
-                ? "ring-2 ring-cyan-200 ring-offset-2"
+                ? "ring-2 ring-cyan-400 ring-offset-2"
                 : ""
             }`}
             aria-label={`Выбрать цвет: ${swatch}`}
@@ -197,6 +271,7 @@ export function ColorPickerPopover({
           />
         ))}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
