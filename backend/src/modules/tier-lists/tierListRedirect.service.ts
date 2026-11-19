@@ -74,7 +74,7 @@ export async function findTierListBySlugOrId(
       },
       placements: {
         take: 1,
-        orderBy: [{ tier: { rank: "asc" } }, { position: "asc" }],
+        orderBy: [{ tier: { rank: "asc" } }, { rank: "asc" }],
         select: {
           coverImageUrl: true,
           book: {
