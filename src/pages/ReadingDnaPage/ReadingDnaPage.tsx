@@ -80,7 +80,7 @@ export default function ReadingDnaPage() {
   const authContext = useContext(AuthContext);
   const user = authContext?.user ?? null;
   const isAuthLoading = authContext?.isLoading ?? false;
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   // Очистка устаревших глобальных ключей прошлых версий
   useEffect(() => {

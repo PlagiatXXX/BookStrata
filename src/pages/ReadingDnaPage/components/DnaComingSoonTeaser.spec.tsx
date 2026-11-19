@@ -35,7 +35,7 @@ describe("DnaComingSoonTeaser", () => {
     expect(screen.getByText("Винтажный читательский билет")).toBeInTheDocument();
   });
 
-  it("содержит навигационные ссылки на главную и в каталог тир-листов", () => {
+  it("содержит навигационные ссылки на главную и в каталог рейтингов, а также брендовый логотип", () => {
     renderTeaser();
 
     const homeLinks = screen.getAllByRole("link", { name: /На главную/i });
@@ -43,6 +43,8 @@ describe("DnaComingSoonTeaser", () => {
     expect(homeLinks[0]).toHaveAttribute("href", "/");
 
     const listsLink = screen.getByRole("link", { name: /Смотреть рейтинги/i });
-    expect(listsLink).toHaveAttribute("href", "/tier-lists");
+    expect(listsLink).toHaveAttribute("href", "/rankings");
+
+    expect(screen.getByRole("button", { name: /BookStrata - Рейтинг всего/i })).toBeInTheDocument();
   });
 });

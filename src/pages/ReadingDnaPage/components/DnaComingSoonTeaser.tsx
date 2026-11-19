@@ -1,9 +1,12 @@
 import type { ReactElement } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, BookOpen, Compass, Sparkles, Swords, Ticket } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, BookOpen, Compass, Swords, Ticket } from "lucide-react";
 import { SEOHead } from "@/components/SEO/SEOHead";
+import { Logo } from "@/ui/Logo";
 
 export function DnaComingSoonTeaser(): ReactElement {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-[#0d0907] text-[#f7ede2] font-sans relative overflow-hidden flex flex-col justify-between selection:bg-amber-600/30 selection:text-amber-200">
       <SEOHead
@@ -22,6 +25,7 @@ export function DnaComingSoonTeaser(): ReactElement {
 
       {/* Верхняя навигационная панель */}
       <header className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 flex items-center justify-between">
+        <Logo onClick={() => navigate("/")} />
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-amber-200/80 hover:text-amber-100 transition-colors py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-amber-900/30"
@@ -29,14 +33,6 @@ export function DnaComingSoonTeaser(): ReactElement {
           <ArrowLeft size={16} />
           <span>На главную</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-linear-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-md shadow-amber-950/50">
-            <Sparkles size={14} className="text-white" />
-          </div>
-          <span className="text-xs sm:text-sm font-semibold tracking-wide text-amber-100">
-            BookStrata
-          </span>
-        </div>
       </header>
 
       {/* Основной контент тизера */}
@@ -112,7 +108,7 @@ export function DnaComingSoonTeaser(): ReactElement {
             <span>На главную</span>
           </Link>
           <Link
-            to="/tier-lists"
+            to="/rankings"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-md bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:scale-[1.02] active:scale-[0.98]"
           >
             <span>Смотреть рейтинги</span>

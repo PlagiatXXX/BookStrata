@@ -72,6 +72,14 @@ describe("ReadingDnaPage", () => {
       expect(screen.getByText(/Режим администратора/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Тест$/i })).toBeInTheDocument();
     });
+
+    it("отображает полноценный интерфейс для роли admin в нижнем регистре (из БД)", () => {
+      const adminUser: AuthUser = { userId: 1, username: "admin", role: "admin" };
+      renderPage("/reading-dna", adminUser);
+
+      expect(screen.getByText(/Режим администратора/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Тест$/i })).toBeInTheDocument();
+    });
   });
 
   describe("Изоляция хранилища и защита от показа чужого билета", () => {
