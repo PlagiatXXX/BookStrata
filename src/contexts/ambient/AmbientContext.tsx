@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Howl } from "howler";
+// Howl импортируется динамически (см. playFn), чтобы не тащить howler в основной бандл
 import type { ReactNode } from "react";
 import { TRACKS_BY_CATEGORY } from "@/components/AmbientSound/ambient-tracks";
 import type {
@@ -93,7 +93,7 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
     loadFromSession<number>(SS_VOLUME, 0.5),
   );
 
-  const soundRef = useRef<Howl | null>(null);
+  const soundRef = useRef<import("howler").Howl | null>(null);
   const [seek, setSeek] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -118,7 +118,7 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
 
   /* ── play: основная логика (в ref для безопасного вызова из onend) ── */
 
-  const playFn = (cat: AmbientCategory, trackIndex = 0) => {
+  const playFn = async (cat: AmbientCategory, trackIndex = 0) => {
     const tracks = TRACKS_BY_CATEGORY[cat];
     if (!tracks[trackIndex]) return;
 
@@ -126,6 +126,8 @@ export function AmbientProvider({ children }: AmbientProviderProps) {
 
     const track = tracks[trackIndex];
     const isNoise = cat === "noise";
+
+    const { Howl } = await import("howler");
 
     const howl = new Howl({
       src: [track.src],

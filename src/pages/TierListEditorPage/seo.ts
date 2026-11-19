@@ -6,6 +6,8 @@
  * добавляется автор: никнейм уникален в системе и заодно даёт E-E-A-T-сигнал.
  */
 
+import { pluralize } from "@/utils/pluralize";
+
 const DEFAULT_TITLE = "Книжный тир-лист";
 const DEFAULT_DESCRIPTION = "Книжный тир-лист на BookStrata — рейтинг книг по уровням";
 
@@ -36,7 +38,9 @@ export function buildTierListSeoTitle(
   if (!title) return DEFAULT_TITLE;
   const authorPart = username ? ` от ${username}` : "";
   const booksPart =
-    booksCount && booksCount > 0 ? ` из ${booksCount} книг` : "";
+    booksCount && booksCount > 0
+      ? ` из ${booksCount} ${pluralize(booksCount, "книга", "книги", "книг")}`
+      : "";
   return `${title} — книжный тир-лист${booksPart}${authorPart}`;
 }
 
@@ -50,7 +54,9 @@ export function buildTierListSeoDescription(
   if (!title) return DEFAULT_DESCRIPTION;
   const authorPart = username ? ` от пользователя ${username}` : "";
   const booksPart =
-    booksCount && booksCount > 0 ? `: ${booksCount} книг` : "";
+    booksCount && booksCount > 0
+      ? `: ${booksCount} ${pluralize(booksCount, "книга", "книги", "книг")}`
+      : "";
   const topPart =
     topBooks && topBooks.length > 0
       ? ` (топ: ${topBooks.slice(0, 3).join(", ")})`

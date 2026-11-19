@@ -77,9 +77,10 @@ export function escapeHtml(str) {
  */
 export function stripToastMarkup(html) {
   if (!html) return "";
-  return html
-    .replace(/<section\s+[^>]*data-sileo-viewport[^>]*>[\s\S]*?<\/section>/gi, "")
-    .replace(/<div\s+[^>]*class="[^"]*sileo-[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "");
+  // DOM-очистка перед page.content() уже удаляет [data-sileo-viewport],
+  // [data-sileo-container] и .sileo-toast. Здесь на случай позднего рендера
+  // остаётся только удаление viewport-секции (без хрупкого regex по <div>).
+  return html.replace(/<section\s+[^>]*data-sileo-viewport[^>]*>[\s\S]*?<\/section>/gi, "");
 }
 
 /**
@@ -269,12 +270,12 @@ function proxyApiRequest(req, res) {
       }
     } catch (err) {
       log(`⚠️  Proxy error for ${req.url}: ${err?.message || err}`);
-      const fallback = resolve(DIST, "index.html");
-      if (existsSync(fallback)) {
-        send(200, { "Content-Type": "text/html; charset=utf-8" }, readFileSync(fallback));
-      } else {
-        send(502, {}, "Backend unavailable");
-      }
+      // ВАЖНО: не отдаём 200 text/html (index.html) — иначе api-client.ts
+      // увидит 200 + text/html и попытается рекурсивно перезапросить
+      // финальный путь, что приводит к петле/мусору. Отдаём явный 502 JSON.
+      send(502, { "Content-Type": "application/json" }, JSON.stringify({
+        error: { code: "proxy_error", message: "Backend unavailable" },
+      }));
     }
   });
   req.on("error", () => send(502, {}, "Backend unavailable"));
@@ -313,8 +314,8 @@ async function addPublicTierListRoutes() {
           log(`  ⚠️  Tier list "${item.title}" has no slug, skipping`);
           continue;
         }
-        if (!item.booksCount || item.booksCount === 0) {
-          log(`  ⏭️  Tier list "${item.title}" has 0 books, skipping prerender (noindex)`);
+        if (!item.booksCount || item.booksCount < 5) {
+          log(`  ⏭️  Tier list "${item.title}" has ${item.booksCount ?? 0} books (< 5), skipping prerender (noindex)`);
           continue;
         }
         const path = `/tier-lists/${slug}`;
@@ -1023,6 +1024,18 @@ async function processRoute(browser, route) {
     // Для динамических страниц (тир-листы, коллекции) даём больше времени
     const contentTimeout = (isTierList || isCollection || isCelebrity || isTopic || isNews) ? PAGE_TIMEOUT_DYNAMIC : PAGE_TIMEOUT;
     const contentLoaded = await waitForContent(page, contentTimeout, route.path);
+
+    // ── Дожидаемся завершения in-flight API-запросов ──
+    // pageHasContent() может вернуть true до того, как React Query догрузит
+    // данные (например, /api/forum/stats). Если снять HTML в этот момент,
+    // в статику попадут фоллбэк-цифры, а бэкенд получит 499 (вкладка закрыта).
+    // Ждём, пока pendingApiRequests опустеет, но не дольше 2 секунд.
+    if (contentLoaded) {
+      const apiDeadline = Date.now() + 2000;
+      while (pendingApiRequests.size > 0 && Date.now() < apiDeadline) {
+        await page.waitForTimeout(100);
+      }
+    }
 
     // ── Дополнительно ждём обновления title (useEffect SEOHead) ──
     // После того как canonical/og-теги обновились (Helmet), нужно дать время

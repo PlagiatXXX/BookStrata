@@ -20,9 +20,6 @@ export default defineConfig({
     // чтобы не требовать CORS-заголовков от nginx для статики и не ломать prerender.
     sri({ publicPath: "/" }),
   ],
-  optimizeDeps: {
-    exclude: ["nsfwjs"],
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
@@ -53,6 +50,7 @@ export default defineConfig({
           "motion-vendor": ["motion"],
           "sileo-vendor": ["sileo"],
           "sentry-vendor": ["@sentry/browser"],
+          "dnd-vendor": ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/utilities", "@dnd-kit/modifiers"],
         },
       },
     },

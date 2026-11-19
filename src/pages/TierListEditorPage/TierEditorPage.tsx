@@ -16,6 +16,9 @@ import { EditorScreens } from "./components/EditorScreens";
 import { StreamModeExitButton } from "./components/StreamModeExitButton";
 import { useTierEditorActions } from "./hooks/useTierEditorActions";
 import { useTierEditorState } from "./hooks/useTierEditorState";
+import { buildTierListJsonLd } from "./buildTierListJsonLd";
+import { processBookFiles as processBookFilesUtil } from "./processBookFiles";
+import { useUndoDeleteBook } from "./hooks/useUndoDeleteBook";
 import { useTierEditorQueries } from "./hooks/useTierEditorQueries";
 import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
@@ -47,15 +50,6 @@ const isUuid = (value: string) =>
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
     value,
   );
-
-type PendingDeletedBook = {
-  book: Book;
-  containerId: string | null;
-  index: number;
-  timeoutId: ReturnType<typeof setTimeout>;
-};
-
-const DELETE_UNDO_DURATION_MS = 3000;
 
 // Логгер для страницы редактора
 const logger = createLogger("TierEditorPage", { color: "green" });
@@ -390,6 +384,8 @@ const TierListEditorContent = () => {
     handleSaveRef.current = handleSave;
   }, [handleSave]);
 
+
+
   // При успешной регистрации:
   // 1. Применяем название, которое пользователь ввёл в модалке
   // 2. Закрываем модалку
@@ -401,15 +397,12 @@ const TierListEditorContent = () => {
     // Шаг 2: закрываем модалку
     setShowAuthModal(false);
 
-    // Шаг 3: после того как React обработает dispatch (название применится),
-    // запускаем сохранение на сервер. Используем setTimeout, чтобы гарантировать,
-    // что handleSave прочитает уже обновлённый listData.title.
-    setTimeout(async () => {
-      const saved = await handleSaveRef.current();
-      if (saved) {
-        clearDemo();
-      }
-    }, 50);
+    // Шаг 3: сохраняем на сервер, передавая название напрямую (без setTimeout),
+    // чтобы не зависеть от того, успел ли React обновить listData.title.
+    const saved = await handleSaveRef.current(demoTitle);
+    if (saved) {
+      clearDemo();
+    }
   }, [demoTitle, dispatch, clearDemo]);
 
   const openDemoAuthModal = useCallback(() => {
@@ -497,70 +490,21 @@ const TierListEditorContent = () => {
 
   const processBookFiles = useCallback(
     async (files: File[]) => {
-      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-      const MAX_TOTAL_SIZE = 30 * 1024 * 1024; // 30 MB
+      if (files.length === 0) return;
 
-      // Проверяем каждый файл
-      const tooBig = files.find((f) => f.size > MAX_FILE_SIZE);
-      if (tooBig) {
+      const result = await processBookFilesUtil(files, listData.books);
+
+      if (result.error) {
         sileo.error({
-          title: "Файл слишком большой",
-          description: `«${tooBig.name}» больше 5 MB. Максимум 5 MB на одну обложку.`,
+          title: result.error.title,
+          description: result.error.description,
         });
         return;
       }
 
-      // Проверяем суммарный размер
-      const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-      if (totalSize > MAX_TOTAL_SIZE) {
-        sileo.error({
-          title: "Слишком большой общий объём",
-          description: `Общий размер файлов (${(totalSize / 1024 / 1024).toFixed(1)} MB) превышает лимит 30 MB.`,
-        });
-        return;
-      }
+      const { added, skipped } = result;
 
-      // Собираем existingKeys заранее, чтобы не показывать тост на дубликаты
-      const existingKeys = new Set(
-        Object.values(listData.books).map(
-          (b) => `${b.title.toLowerCase()}|${(b.author || "").toLowerCase()}`,
-        ),
-      );
-
-      let addedCount = 0;
-      for (const file of files) {
-        const title = file.name.replace(/\.[^/.]+$/, "");
-        const author = "Неизвестен";
-        const key = `${title.toLowerCase()}|${author.toLowerCase()}`;
-
-        // Пропускаем дубликаты
-        if (existingKeys.has(key)) continue;
-        existingKeys.add(key);
-
-        const coverImageUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-        const bookId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        dispatch({
-          type: "ADD_BOOKS",
-          payload: {
-            newBooks: [
-              {
-                id: bookId,
-                title,
-                author,
-                coverImageUrl,
-              },
-            ],
-          },
-        });
-        setHasUnsavedChanges(true);
-        addedCount++;
-      }
-
-      if (addedCount === 0) {
+      if (added.length === 0) {
         if (files.length === 1) {
           sileo.info({
             title: "Книга уже добавлена",
@@ -585,8 +529,14 @@ const TierListEditorContent = () => {
         return;
       }
 
-      const skipped = files.length - addedCount;
-      const n = addedCount;
+      // Один dispatch на весь пакет — без N лишних ререндеров
+      dispatch({
+        type: "ADD_BOOKS",
+        payload: { newBooks: added },
+      });
+      setHasUnsavedChanges(true);
+
+      const n = added.length;
       const lastDigit = n % 10;
       const lastTwoDigits = n % 100;
       const prefix =
@@ -617,6 +567,14 @@ const TierListEditorContent = () => {
     [dispatch, setHasUnsavedChanges, listData.books],
   );
 
+  const { deleteBookWithUnsaved, cancelPendingDeletes } = useUndoDeleteBook({
+    listData,
+    deleteBook,
+    restoreBook,
+    setHasUnsavedChanges,
+    handleDeleteBook,
+  });
+
   const handleUploadBooks = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return;
@@ -624,10 +582,6 @@ const TierListEditorContent = () => {
       await processBookFiles(files);
     },
     [processBookFiles],
-  );
-
-  const pendingDeletedBooksRef = useRef<Map<string, PendingDeletedBook>>(
-    new Map(),
   );
 
   // Обработчики с установкой hasUnsavedChanges
@@ -656,96 +610,6 @@ const TierListEditorContent = () => {
         }
       }
     }
-  };
-
-  const getBookPlacement = (bookId: string) => {
-    for (const tierId of listData.tierOrder) {
-      const tier = listData.tiers[tierId];
-      const index = tier?.bookIds.indexOf(bookId) ?? -1;
-
-      if (index >= 0) {
-        return {
-          containerId: tierId,
-          index,
-        };
-      }
-    }
-
-    const unrankedIndex = listData.unrankedBookIds.indexOf(bookId);
-    if (unrankedIndex >= 0) {
-      return {
-        containerId: null,
-        index: unrankedIndex,
-      };
-    }
-
-    return {
-      containerId: null,
-      index: listData.unrankedBookIds.length,
-    };
-  };
-
-  const undoDeleteBook = (bookId: string) => {
-    const pendingDeletedBook = pendingDeletedBooksRef.current.get(bookId);
-    if (!pendingDeletedBook) return;
-
-    clearTimeout(pendingDeletedBook.timeoutId);
-    pendingDeletedBooksRef.current.delete(bookId);
-    restoreBook(
-      pendingDeletedBook.book,
-      pendingDeletedBook.containerId,
-      pendingDeletedBook.index,
-    );
-    setHasUnsavedChanges(true);
-
-    sileo.success({
-      title: "Удаление отменено",
-      duration: 2500,
-    });
-  };
-
-  const deleteBookWithUnsaved = (bookId: string) => {
-    const book = listData.books[bookId];
-    if (!book) return;
-
-    const placement = getBookPlacement(bookId);
-    deleteBook(bookId);
-    setHasUnsavedChanges(true);
-
-    const timeoutId = setTimeout(() => {
-      const pendingDeletedBook = pendingDeletedBooksRef.current.get(bookId);
-      if (!pendingDeletedBook) return;
-
-      pendingDeletedBooksRef.current.delete(bookId);
-      handleDeleteBook(bookId, {
-        showSuccessToast: false,
-        onError: () => {
-          restoreBook(
-            pendingDeletedBook.book,
-            pendingDeletedBook.containerId,
-            pendingDeletedBook.index,
-          );
-          setHasUnsavedChanges(true);
-        },
-      });
-    }, DELETE_UNDO_DURATION_MS);
-
-    pendingDeletedBooksRef.current.set(bookId, {
-      book,
-      containerId: placement.containerId,
-      index: placement.index,
-      timeoutId,
-    });
-
-    sileo.action({
-      title: "Книга удалена",
-      description: `Удалили "${book.title}"`,
-      duration: DELETE_UNDO_DURATION_MS,
-      button: {
-        title: "Отменить",
-        onClick: () => undoDeleteBook(bookId),
-      },
-    });
   };
 
   const addRowWithUnsaved = (title?: string) => {
@@ -809,7 +673,7 @@ const TierListEditorContent = () => {
   };
 
   // Логика блокировщика перехода (в демо-режиме не блокируем)
-  const { handleConfirmLeave, handleSaveBeforeLeave, handleCancelLeave } =
+  const { handleConfirmLeave: handleConfirmLeaveBase, handleSaveBeforeLeave, handleCancelLeave } =
     useTierEditorBlocker({
       isReadOnly: isReadOnly || isDemo,
       ignoreUnsavedBlocker,
@@ -825,6 +689,12 @@ const TierListEditorContent = () => {
       logger,
       sileo,
     });
+
+  // Обёртка: при «Выйти без сохранения» очищаем pending deletes БЕЗ flush на сервер
+  const handleConfirmLeave = useCallback(() => {
+    cancelPendingDeletes();
+    handleConfirmLeaveBase();
+  }, [cancelPendingDeletes, handleConfirmLeaveBase]);
 
   // Получаем D&D логику из хука
   const {
@@ -974,6 +844,8 @@ const TierListEditorContent = () => {
     </>
   );
 
+  const jsonLd = isPublic && apiData ? buildTierListJsonLd(listData, apiData, pageUrl) : null;
+
   return (
     <>
       {/* Не рендерим SEOHead пока грузятся данные — чтобы избежать пустых мета-тегов */}
@@ -1035,54 +907,9 @@ const TierListEditorContent = () => {
       )}
 
       {/* ItemList + Book JSON-LD для публичных тир-листов (SEO) */}
-      {isPublic && apiData && Object.keys(listData.books).length > 0 && (
+      {jsonLd && (
         <Helmet>
-          <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "ItemList",
-              name: apiData.title,
-              description: `Тир-лист «${apiData.title}» — визуальный рейтинг книг, созданный на BookStrata`,
-              url: `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}/tier-lists/${pageUrl}`,
-              author: apiData.user
-                ? {
-                    "@type": "Person",
-                    name: apiData.user.username || "Anonymous",
-                    url: `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}/users/${apiData.user.id}`,
-                  }
-                : undefined,
-              itemListElement: listData.tierOrder
-                .map((tierId) => {
-                  const tier = listData.tiers[tierId];
-                  if (!tier) return [];
-                  return tier.bookIds
-                    .map((bookId, index) => {
-                      const book = listData.books[bookId];
-                      if (!book) return null;
-                      return {
-                        "@type": "ListItem",
-                        position: index + 1,
-                        item: {
-                          "@type": "Book",
-                          name: book.title,
-                          author: book.author
-                            ? { "@type": "Person", name: book.author }
-                            : undefined,
-                          ...(book.coverImageUrl
-                            ? { image: book.coverImageUrl }
-                            : {}),
-                          ...(book.description
-                            ? { description: book.description }
-                            : {}),
-                          position: tier.title,
-                        },
-                      };
-                    })
-                    .filter(Boolean);
-                })
-                .flat(),
-            })}
-          </script>
+          <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         </Helmet>
       )}
 

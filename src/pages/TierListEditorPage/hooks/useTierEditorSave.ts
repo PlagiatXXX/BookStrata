@@ -15,7 +15,7 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error";
 export interface UseTierEditorSaveResult {
   saveStatus: SaveStatus;
   lastSaved: Date | null;
-  handleSave: () => Promise<boolean>;
+  handleSave: (titleOverride?: string) => Promise<boolean>;
   getSavePayload: () => AtomicSavePayload;
   hasChangesToSave: () => boolean;
 }
@@ -98,7 +98,8 @@ export function useTierEditorSave({
     return savedSnapshotRef.current !== currentSerialized;
   }, [listData]);
 
-  const handleSave = useCallback(async (): Promise<boolean> => {
+  const handleSave = useCallback(async (titleOverride?: string): Promise<boolean> => {
+    const titleForSave = titleOverride ?? listData.title;
     if (!tierListId || isLoading || isReadOnly) return false;
 
     setSaveStatus("saving");
@@ -119,7 +120,7 @@ export function useTierEditorSave({
       if (!isNumericId && !isUuid) {
         // Создаём новый тир-лист
         const created = await createTierList(
-          listData.title || "Новый тир-лист",
+          titleForSave || "Новый тир-лист",
           description ?? undefined,
           theme ?? undefined,
         );
@@ -127,7 +128,7 @@ export function useTierEditorSave({
         onTierListCreated?.(effectiveId);
         pushDataLayerEvent("create_tier_list", {
           tier_list_id: effectiveId,
-          tier_list_title: listData.title || "Новый тир-лист",
+          tier_list_title: titleForSave || "Новый тир-лист",
         });
 
         // Отправка в Яндекс.Метрику: успешное создание нового тир-листа.
@@ -213,7 +214,7 @@ export function useTierEditorSave({
       logger.info("Сохранение успешно", { tierListId });
       apiTrackEvent("tierlist_save", {
         tierListId: effectiveId,
-        title: listData.title,
+        title: titleForSave,
         placementsCount: payload.placements.length,
       });
 

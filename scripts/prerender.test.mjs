@@ -123,11 +123,11 @@ describe("stripToastMarkup (очистка временных тоастов Sil
     );
   });
 
-  it("удаляет блок div с классом sileo-toast", () => {
+  it("не трогает div с классом sileo-toast (удаляются через DOM-очистку до снимка)", () => {
     const raw = `<main><h1>Книга</h1></main><div class="sileo-toast error"><span>Ошибка 499</span></div><footer>Подвал</footer>`;
-    expect(stripToastMarkup(raw)).toBe(
-      `<main><h1>Книга</h1></main><footer>Подвал</footer>`,
-    );
+    // stripToastMarkup больше не обрабатывает <div> — их удаляет page.evaluate
+    // ([data-sileo-viewport], [data-sileo-container], .sileo-toast) до page.content().
+    expect(stripToastMarkup(raw)).toBe(raw);
   });
 
   it("не изменяет HTML без тоастов", () => {

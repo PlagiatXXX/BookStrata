@@ -118,6 +118,8 @@ export class GlassEngine {
   private gl: WebGL2RenderingContext | null = null
   private u: Record<string, WebGLUniformLocation | null> = {}
   private tex: Record<string, WebGLTexture | null> = {}
+  private prog: WebGLProgram | null = null
+  private buf: WebGLBuffer | null = null
   private imgSize = [1, 1]
   private w = 1
   private h = 1
@@ -134,6 +136,10 @@ export class GlassEngine {
   private writeP = 0
   private blade = -1
   private zoom = 1
+  // флаги ленивой аллокации текстур (чтобы не переаллоцировать каждый кадр)
+  private maskStorageReady = false
+  private dropsStorageReady = false
+  private dropsHadContent = false
 
   // drips
   private drops: Drop[] = []
@@ -168,9 +174,11 @@ export class GlassEngine {
       gl.linkProgram(prog)
       if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) || 'link')
       gl.useProgram(prog)
+      this.prog = prog
       const buf = gl.createBuffer()
       gl.bindBuffer(gl.ARRAY_BUFFER, buf)
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+      this.buf = buf
       const loc = gl.getAttribLocation(prog, 'aPos')
       gl.enableVertexAttribArray(loc)
       gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
@@ -288,6 +296,10 @@ export class GlassEngine {
     }
     this.drops = []
     this.beads = []
+    // сбрасываем флаги аллокации — размеры могли измениться
+    this.maskStorageReady = false
+    this.dropsStorageReady = false
+    this.dropsHadContent = false
     this.rasterWriting()
   }
 
@@ -307,7 +319,7 @@ export class GlassEngine {
     ctx.strokeStyle = ctx.fillStyle = '#fff'
     const cx = this.gw * 0.5
     const cy = this.gh * (this.mobile ? 0.47 : 0.5)
-    const words = this.text.split(/\\s+/).filter(Boolean)
+    const words = this.text.split(/\s+/).filter(Boolean)
     const lines: string[] = []
     if (words.length <= 2 && this.text.length < 24) {
       lines.push(this.text)
@@ -611,24 +623,45 @@ export class GlassEngine {
       }
     gl.activeTexture(gl.TEXTURE2)
     gl.bindTexture(gl.TEXTURE_2D, this.tex.mask)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, this.gw, this.gh, 0, gl.RED, gl.UNSIGNED_BYTE, b)
+    if (!this.maskStorageReady) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, this.gw, this.gh, 0, gl.RED, gl.UNSIGNED_BYTE, b)
+      this.maskStorageReady = true
+    } else {
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.gw, this.gh, gl.RED, gl.UNSIGNED_BYTE, b)
+    }
 
     // drips → normal-map canvas (half res)
     const ctx = this.dctx
-    ctx.clearRect(0, 0, this.dc.width, this.dc.height)
-    for (const bd of this.beads) {
-      const r = bd.r * Math.min(1, (bd.life / bd.max) * 2) * 0.5
-      if (r > 0.3) ctx.drawImage(this.sprite, bd.x / 2 - r, bd.y / 2 - r, r * 2, r * 2)
+    const hasDrops = this.drops.length > 0 || this.beads.length > 0
+    if (hasDrops) {
+      ctx.clearRect(0, 0, this.dc.width, this.dc.height)
+      for (const bd of this.beads) {
+        const r = bd.r * Math.min(1, (bd.life / bd.max) * 2) * 0.5
+        if (r > 0.3) ctx.drawImage(this.sprite, bd.x / 2 - r, bd.y / 2 - r, r * 2, r * 2)
+      }
+      for (const d of this.drops) {
+        const r = d.r / 2
+        const stretch = 1 + Math.min(0.5, d.v / 260)
+        ctx.drawImage(this.sprite, d.x / 2 - r * 0.62, d.y / 2 - r * 2.1 * stretch, r * 1.24, r * 1.5 * stretch) // tail
+        ctx.drawImage(this.sprite, d.x / 2 - r, d.y / 2 - r * stretch, r * 2, r * 2 * stretch)
+      }
+      gl.activeTexture(gl.TEXTURE3)
+      gl.bindTexture(gl.TEXTURE_2D, this.tex.drops)
+      if (!this.dropsStorageReady) {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.dc)
+        this.dropsStorageReady = true
+      } else {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.dc)
+      }
+      this.dropsHadContent = true
+    } else if (this.dropsHadContent) {
+      // один раз очищаем текстуру на GPU, затем пропускаем загрузку
+      ctx.clearRect(0, 0, this.dc.width, this.dc.height)
+      gl.activeTexture(gl.TEXTURE3)
+      gl.bindTexture(gl.TEXTURE_2D, this.tex.drops)
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.dc)
+      this.dropsHadContent = false
     }
-    for (const d of this.drops) {
-      const r = d.r / 2
-      const stretch = 1 + Math.min(0.5, d.v / 260)
-      ctx.drawImage(this.sprite, d.x / 2 - r * 0.62, d.y / 2 - r * 2.1 * stretch, r * 1.24, r * 1.5 * stretch) // tail
-      ctx.drawImage(this.sprite, d.x / 2 - r, d.y / 2 - r * stretch, r * 2, r * 2 * stretch)
-    }
-    gl.activeTexture(gl.TEXTURE3)
-    gl.bindTexture(gl.TEXTURE_2D, this.tex.drops)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.dc)
 
     const u = this.u
     gl.viewport(0, 0, this.canvas.width, this.canvas.height)
@@ -642,8 +675,22 @@ export class GlassEngine {
   }
 
   dispose() {
-    this.canvas.removeEventListener('webglcontextlost', this.onLost)
-    this.gl = null
-    this.ok = false
+    const gl = this.gl;
+    try {
+      if (!gl) return;
+      this.canvas.removeEventListener('webglcontextlost', this.onLost);
+      for (const t of Object.values(this.tex)) {
+        if (t) gl.deleteTexture(t);
+      }
+      if (this.buf) gl.deleteBuffer(this.buf);
+      if (this.prog) gl.deleteProgram(this.prog);
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+    } finally {
+      this.tex = {};
+      this.buf = null;
+      this.prog = null;
+      this.gl = null;
+      this.ok = false;
+    }
   }
 }

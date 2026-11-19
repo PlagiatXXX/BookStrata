@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Outlet, ScrollRestoration, useLocation } from "react-router-dom";
 import { Toaster } from "sileo";
 import { Spinner } from "@/components/Spinner";
@@ -6,8 +6,8 @@ import { AchievementNotification } from "@/components/AchievementNotification/Ac
 import { useAchievementNotifications } from "@/hooks/useAchievementNotifications";
 import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { SessionExpiredOverlay } from "@/components/SessionExpiredOverlay";
-import { FeedbackModal } from "@/components/FeedbackModal";
-import { SupportWidget } from "@/components/SupportWidget";
+const FeedbackModal = lazy(() => import("@/components/FeedbackModal").then((m) => ({ default: m.FeedbackModal })));
+const SupportWidget = lazy(() => import("@/components/SupportWidget").then((m) => ({ default: m.SupportWidget })));
 import { useFeedbackPrompt } from "@/hooks/useFeedbackPrompt";
 import { restoreBookReturnScroll } from "@/utils/bookNavigation";
 import { AppProviders } from "./AppProviders";
@@ -47,12 +47,18 @@ function AppShellInner() {
         achievement={newAchievement}
         onClose={clearNotification}
       />
-      <FeedbackModal
-        isOpen={isFeedbackOpen}
-        onDismiss={handleFeedbackDismiss}
-        onSubmit={handleFeedbackSubmit}
-      />
-      <SupportWidget onOpenFeedbackSurvey={openFeedbackPrompt} />
+      {isFeedbackOpen && (
+        <Suspense fallback={null}>
+          <FeedbackModal
+            isOpen={isFeedbackOpen}
+            onDismiss={handleFeedbackDismiss}
+            onSubmit={handleFeedbackSubmit}
+          />
+        </Suspense>
+      )}
+      <Suspense fallback={null}>
+        <SupportWidget onOpenFeedbackSurvey={openFeedbackPrompt} />
+      </Suspense>
     </>
   );
 }

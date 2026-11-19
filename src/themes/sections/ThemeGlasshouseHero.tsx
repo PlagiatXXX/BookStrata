@@ -1,7 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Lenis from 'lenis'
 import { GlassEngine } from '@/GlassEngine'
 import { StaticTierView } from '@/components/StaticTierView'
 import { createLogger } from '@/lib/logger'
@@ -15,7 +13,6 @@ import '@fontsource/instrument-serif/400-italic.css'
 import '@fontsource-variable/inter'
 import '@fontsource/ibm-plex-mono/500.css'
 
-gsap.registerPlugin(ScrollTrigger)
 
 const SHARP = new URL('../../assets/greenhouse.webp', import.meta.url).href
 const FOG = new URL('../../assets/greenhouse-fog.webp', import.meta.url).href
@@ -64,7 +61,6 @@ export default function ThemeGlasshouseHero({ collection, onViewBook }: Props) {
   const bladeRef = useRef<HTMLDivElement>(null)
   const clearRef = useRef<HTMLElement>(null)
   const engineRef = useRef<GlassEngine | null>(null)
-  const lenisRef = useRef<Lenis | null>(null)
   const progressRef = useRef(0)
   const writeRef = useRef(0)
   const reduced = usePrefersReducedMotion()
@@ -82,17 +78,7 @@ export default function ThemeGlasshouseHero({ collection, onViewBook }: Props) {
     const slug = collection?.slug ?? 'default'
     const engine = engineRef.current
     if (!engine) return
-    let cached = maskCache.get(slug)
-    if (!cached) {
-      try {
-        const raw = sessionStorage.getItem(`glasshouse:${slug}`)
-        if (raw) {
-          const d = JSON.parse(raw) as { mask: number[]; gw: number; gh: number; unlocked: boolean; cleared: boolean }
-          cached = { mask: new Float32Array(d.mask), gw: d.gw, gh: d.gh, unlocked: d.unlocked, cleared: d.cleared }
-          maskCache.set(slug, cached)
-        }
-      } catch { /* ignore */ }
-    }
+    const cached = maskCache.get(slug)
     if (cached && engine.importMask(cached.mask, cached.gw, cached.gh)) {
       const u = cached.unlocked
       const c = cached.cleared
@@ -194,7 +180,6 @@ export default function ThemeGlasshouseHero({ collection, onViewBook }: Props) {
           try {
             const exp = engine.exportMask()
             maskCache.set(collection?.slug ?? 'default', { ...exp, unlocked: unlockedRef.current, cleared: clearedRef.current })
-try { sessionStorage.setItem(`glasshouse:${collection?.slug ?? 'default'}`, JSON.stringify({ mask: Array.from(exp.mask), gw: exp.gw, gh: exp.gh, unlocked: unlockedRef.current, cleared: clearedRef.current })) } catch { /* ignore */ }
           } catch (e) {
             logger.warn('cache save failed', { e })
           }
@@ -269,22 +254,6 @@ try { sessionStorage.setItem(`glasshouse:${collection?.slug ?? 'default'}`, JSON
       stage.removeEventListener('touchend', tEnd)
     }
   }, [])
-
-  useEffect(() => {
-    if (reduced) return
-    const lenis = new Lenis({ lerp: 0.085 })
-    lenisRef.current = lenis
-    lenis.on('scroll', ScrollTrigger.update)
-    const tick = (t: number) => lenis.raf(t * 1000)
-    gsap.ticker.add(tick)
-    gsap.ticker.lagSmoothing(0)
-    return () => {
-      gsap.ticker.remove(tick)
-      lenis.destroy()
-      lenisRef.current = null
-    }
-  }, [reduced])
-
   useLayoutEffect(() => {
     const track = trackRef.current
     if (!track) return
