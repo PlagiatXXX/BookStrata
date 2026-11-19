@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Heart, X, Check, Copy, Send, ArrowLeft } from "lucide-react"
+import { Heart, X, Check, Copy, Send, ArrowLeft, Server, Database, Cpu, HardDrive, Sparkles, ShieldCheck } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
 import { SEOHead } from "@/components/SEO/SEOHead"
@@ -137,6 +137,39 @@ function DonateModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+const infrastructureItems = [
+  {
+    icon: Server,
+    title: "Сервер приложений (Fastify / Node.js)",
+    description: "Быстрый облачный сервер в Timeweb Cloud с NVMe для мгновенного отклика редактора и страниц.",
+    cost: "~1 200 ₽/мес",
+  },
+  {
+    icon: Database,
+    title: "База данных PostgreSQL",
+    description: "Надёжное хранение десятков тысяч книг, рейтингов и полок с ежедневными автоматическими бэкапами.",
+    cost: "~900 ₽/мес",
+  },
+  {
+    icon: Cpu,
+    title: "Кэш и очереди Redis",
+    description: "Быстрые сессии, защита от перегрузок и мгновенный кэш популярных списков.",
+    cost: "~400 ₽/мес",
+  },
+  {
+    icon: HardDrive,
+    title: "S3-хранилище обложек",
+    description: "Хранение сотен тысяч обложек книг, аватарок и тир-листов с быстрой отдачей через CDN.",
+    cost: "~500 ₽/мес",
+  },
+  {
+    icon: Sparkles,
+    title: "Букстраж и AI-поиск",
+    description: "Интеллектуальные рекомендации книг и умный поиск по читательским вкусам.",
+    cost: "~500 ₽/мес",
+  },
+]
+
 const features = [
   "Безлимитные тир-листы",
   "Безлимит книг в тир-листе",
@@ -257,6 +290,71 @@ export default function PricingPage() {
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+
+        {/* Блок прозрачности инфраструктуры и расходов */}
+        <div className="pricing-page__transparency">
+          <div className="pricing-page__transparency-header">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-xs font-semibold mb-3">
+              <ShieldCheck size={14} />
+              <span>Прозрачность проекта</span>
+            </div>
+            <h2 className="pricing-page__transparency-title">Куда идут средства</h2>
+            <p className="pricing-page__transparency-subtitle">
+              BookStrata — независимый книжный проект без навязчивой рекламы, инвесторов и скрытых подписок.
+              Все возможности бесплатны для каждого читателя, а проект существует и развивается благодаря вашей поддержке.
+            </p>
+          </div>
+
+          <div className="pricing-page__goal-card">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wider font-bold text-amber-400/90 mb-1">
+                  Ежемесячная цель инфраструктуры
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-white">~3 500 ₽</span>
+                  <span className="text-xs text-slate-400">/ в месяц на серверы и бэкапы</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { apiTrackEvent('donate_page_open'); setShowDonateModal(true) }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-400/40 bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-xs font-bold text-white transition-all hover:brightness-110 cursor-pointer shadow-md shadow-amber-950/40 shrink-0"
+              >
+                <Heart size={14} className="fill-white" />
+                <span>Угостить автора</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="pricing-page__infrastructure-grid">
+            {infrastructureItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <div key={item.title} className="pricing-infra-card">
+                  <div className="flex items-start gap-3.5">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-amber-300">
+                      <Icon size={18} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <h3 className="text-sm font-bold text-white leading-snug">
+                          {item.title}
+                        </h3>
+                        <span className="text-xs font-mono font-medium text-amber-300/80 shrink-0">
+                          {item.cost}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>

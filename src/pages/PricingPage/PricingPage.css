@@ -213,3 +213,74 @@
   font-weight: 700;
   color: #22c55e;
 }
+
+/* ── Transparency Section ── */
+.pricing-page__transparency {
+  margin-top: 5rem;
+  max-width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 639px) {
+  .pricing-page__transparency {
+    max-width: 100%;
+    margin-top: 3.5rem;
+  }
+}
+
+.pricing-page__transparency-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.pricing-page__transparency-title {
+  font-family: "Space Grotesk", "Manrope", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.pricing-page__transparency-subtitle {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.pricing-page__goal-card {
+  background: rgba(251, 191, 36, 0.05);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(8px);
+}
+
+.pricing-page__infrastructure-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .pricing-page__infrastructure-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pricing-infra-card {
+  background: rgba(15, 30, 50, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pricing-infra-card:hover {
+  border-color: rgba(251, 191, 36, 0.25);
+  transform: translateY(-1px);
+}
