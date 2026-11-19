@@ -508,7 +508,7 @@ export const BookEditModal = ({
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
                     onChange={handleFileSelect}
                     className="hidden"
                     aria-hidden="true"

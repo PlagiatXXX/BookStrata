@@ -30,7 +30,7 @@ export const ImageUploader = ({
       setError(
         tooBig
           ? "Файл слишком большой. Максимум 5 MB."
-          : "Можно загружать только изображения (JPEG, PNG, WebP, GIF).",
+          : "Можно загружать только изображения (JPEG, PNG, WebP, AVIF, GIF).",
       );
     },
     [],
@@ -41,10 +41,11 @@ export const ImageUploader = ({
     onDropRejected,
     maxSize: MAX_FILE_SIZE,
     accept: {
-      "image/jpeg": [],
-      "image/png": [],
-      "image/webp": [],
-      "image/gif": [],
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/png": [".png"],
+      "image/webp": [".webp"],
+      "image/avif": [".avif"],
+      "image/gif": [".gif"],
     },
   });
 

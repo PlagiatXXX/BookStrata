@@ -987,7 +987,7 @@ export const BookSearchModal = ({
                   Загрузите изображения книг с вашего устройства
                 </p>
                 <p className="mt-1 text-xs text-(--theme-text-muted) text-center">
-                  JPEG, PNG, WebP, GIF. До 5 MB на файл
+                  JPEG, PNG, WebP, AVIF, GIF. До 5 MB на файл
                 </p>
               </div>
             )}

@@ -26,4 +26,11 @@ describe('ImageUploader', () => {
     render(<ImageUploader />);
     expect(screen.getByText('Загрузить')).toBeInTheDocument();
   });
+
+  it('принимает формат image/avif среди поддерживаемых типов', () => {
+    const { container } = render(<ImageUploader />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(input.accept).toContain('image/avif');
+  });
 });

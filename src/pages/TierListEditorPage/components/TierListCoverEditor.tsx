@@ -98,7 +98,7 @@ export function TierListCoverEditor({
             <input
               ref={inputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/avif"
               onChange={handleFile}
               style={{ display: "none" }}
             />
