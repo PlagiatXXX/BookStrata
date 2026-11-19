@@ -370,7 +370,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
               </div>
 
             {/* Donate button */}
-            <div className="relative flex justify-center">
+            <div className="relative flex justify-center" data-nosnippet>
               <button
                 type="button"
                 id="donate-button"
@@ -384,51 +384,49 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                 <span>Угостить автора кофе</span>
               </button>
 
-              <div
-                id="donate-menu"
-                className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] max-h-[60dvh] overflow-y-auto rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-500 origin-bottom-right ${
-                  popupDirection === "below"
-                    ? "top-full mt-2"
-                    : "bottom-full mb-2"
-                } ${
-                  isDonateOpen
-                    ? "pointer-events-auto scale-100 border-white/15 opacity-100 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
-                    : "pointer-events-none scale-95 border-white/5 opacity-0"
-                } right-0`}
-              >
-                <div className="relative p-5">
-                  <h4 className="text-base font-bold text-white">
-                    Угостить автора
-                  </h4>
-                  <p className="mt-2 text-xs text-white/60 leading-relaxed text-left">
-                    Ваша помощь помогает оплачивать сервера и делать BookStrata
-                    лучше. Спасибо, что вы с нами!
-                  </p>
+              {isDonateOpen && (
+                <div
+                  id="donate-menu"
+                  className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] max-h-[60dvh] overflow-y-auto rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-300 origin-bottom-right ${
+                    popupDirection === "below"
+                      ? "top-full mt-2"
+                      : "bottom-full mb-2"
+                  } pointer-events-auto scale-100 border-white/15 opacity-100 shadow-[0_20px_50px_rgba(0,0,0,0.5)] right-0`}
+                >
+                  <div className="relative p-5">
+                    <h4 className="text-base font-bold text-white">
+                      Угостить автора
+                    </h4>
+                    <p className="mt-2 text-xs text-white/60 leading-relaxed text-left">
+                      Ваша помощь помогает оплачивать сервера и делать BookStrata
+                      лучше. Спасибо, что вы с нами!
+                    </p>
 
-                  <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2.5">
-                    <span className="font-mono text-xs font-bold text-white tracking-wider text-center sm:text-left">
-                      {cardNumber}
-                    </span>
-                    <button
-                      data-analytics="donate.footer.copy_card"
-                      onClick={handleCopyCard}
-                      className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-white/20 px-2 py-1.5 sm:py-1 text-[10px] font-medium text-white/80 transition-colors hover:bg-white/10 shrink-0"
-                      type="button"
-                      aria-label="Копировать номер карты"
-                    >
-                      {copied ? (
-                        <Check className="h-3 w-3 text-green-400" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                      {copied ? "Скопировано" : "Копировать"}
-                    </button>
+                    <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2.5">
+                      <span className="font-mono text-xs font-bold text-white tracking-wider text-center sm:text-left">
+                        {cardNumber}
+                      </span>
+                      <button
+                        data-analytics="donate.footer.copy_card"
+                        onClick={handleCopyCard}
+                        className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-white/20 px-2 py-1.5 sm:py-1 text-[10px] font-medium text-white/80 transition-colors hover:bg-white/10 shrink-0"
+                        type="button"
+                        aria-label="Копировать номер карты"
+                      >
+                        {copied ? (
+                          <Check className="h-3 w-3 text-green-400" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                        {copied ? "Скопировано" : "Копировать"}
+                      </button>
+                    </div>
+                    <p className="mt-1.5 text-[10px] text-white/40">
+                      ЮMoney
+                    </p>
                   </div>
-                  <p className="mt-1.5 text-[10px] text-white/40">
-                    ЮMoney
-                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { fetchTierList, transformApiToState } from '@/lib/tierListApi';
 import { getCollectionBySlug } from '@/lib/collectionsApi';
 import { getCelebrityBySlug } from '@/lib/celebritiesApi';
 import { apiGetTierListLikes, apiGetLikedTierListIds } from '@/lib/likesApi';
+import { hasSession } from '@/lib/authApi';
 import { getInitialData, getTemplateInitialData } from '../_initialData';
 import { TEMPLATES } from '@/data/mockData';
 import type { TierListData, Book, Tier } from '@/types';
@@ -95,6 +96,11 @@ export interface TierEditorQueriesResult {
   isPublic: boolean;
 }
 
+export interface TierEditorAuthOptions {
+  isAuthLoading?: boolean;
+  isAuthenticated?: boolean;
+}
+
 export function useTierEditorQueries(
   tierListId: string | undefined,
   forkSlug?: string | null,
@@ -103,10 +109,18 @@ export function useTierEditorQueries(
   celebrityForkSlug?: string | null,
   /** Реальный ID тир-листа после его создания на сервере (когда tierListId="new") */
   createdTierListId?: string | null,
+  authOptions?: TierEditorAuthOptions,
 ): TierEditorQueriesResult {
   const isNew = tierListId === "new";
   // После создания тир-листа используем реальный ID для запроса данных
   const effectiveId = isNew && createdTierListId ? createdTierListId : tierListId;
+
+  // При пререндере не делаем запросы, требующие авторизации
+  const isPrerender = typeof window !== 'undefined' && window.__PRERENDER__ === true;
+
+  // Если у пользователя есть сохранённая сессия, но она ещё восстанавливается в памяти,
+  // ждём завершения восстановления, чтобы запрос не ушёл анонимным (иначе приватный тир-лист вернёт 403)
+  const isWaitingForAuth = !isPrerender && hasSession() && Boolean(authOptions?.isAuthLoading);
 
   // Шаблон из mockData (для /tier-lists/new?template=N)
   const template = useMemo(() => {
@@ -123,7 +137,7 @@ export function useTierEditorQueries(
   } = useQuery({
     queryKey: ['tierList', effectiveId],
     queryFn: () => fetchTierList(effectiveId!),
-    enabled: !!effectiveId && (!isNew || !!createdTierListId),
+    enabled: !!effectiveId && (!isNew || !!createdTierListId) && !isWaitingForAuth,
     staleTime: 0,
   });
 
@@ -151,9 +165,6 @@ export function useTierEditorQueries(
     staleTime: 60_000,
   });
 
-  // При пререндере не делаем запросы, требующие авторизации
-  const isPrerender = typeof window !== 'undefined' && window.__PRERENDER__ === true;
-
   // Получаем количество лайков
   const { data: likesData } = useQuery({
     queryKey: ['tierListLikes', effectiveId],
@@ -161,12 +172,12 @@ export function useTierEditorQueries(
     enabled: !!effectiveId && (!isNew || !!createdTierListId) && !isPrerender,
   });
 
-  // Получаем все лайкнутые тир-листы
+  // Получаем все лайкнутые тир-листы (только для авторизованного пользователя)
   const { data: likedTierListIds } = useQuery({
     queryKey: ['likedTierListIds'],
     queryFn: () => apiGetLikedTierListIds(),
     staleTime: 5 * 60 * 1000,
-    enabled: !isPrerender && (!isNew || !!createdTierListId),
+    enabled: !isPrerender && (!isNew || !!createdTierListId) && Boolean(authOptions?.isAuthenticated),
   });
 
   const likedIdsSet = useMemo(
@@ -205,8 +216,8 @@ export function useTierEditorQueries(
     return emptyData;
   }, [apiData, isTierListError, tierListId, isNew, forkCollection, forkCelebrity, forkReadIds, template]);
 
-  const isLoading = isNew ? (isForkLoading || isCelebrityForkLoading) : isTierListLoading;
-  const isError = isNew ? (isForkError || isCelebrityForkError) : isTierListError;
+  const isLoading = isWaitingForAuth || (isNew ? (isForkLoading || isCelebrityForkLoading) : isTierListLoading);
+  const isError = !isWaitingForAuth && (isNew ? (isForkError || isCelebrityForkError) : isTierListError);
 
   // Получаем isPublic из API данных (для новых — по умолчанию публичный)
   const isPublic = apiData?.isPublic ?? isNew;

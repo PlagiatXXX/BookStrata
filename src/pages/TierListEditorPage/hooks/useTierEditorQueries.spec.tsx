@@ -17,6 +17,10 @@ vi.mock("@/lib/likesApi", () => ({
   apiGetLikedTierListIds: vi.fn(),
 }));
 
+vi.mock("@/lib/authApi", () => ({
+  hasSession: vi.fn(() => false),
+}));
+
 vi.mock("../_initialData", async () => {
   const actual = await vi.importActual("../_initialData");
   return {
@@ -36,6 +40,7 @@ vi.mock("../_initialData", async () => {
 
 import { fetchTierList } from "@/lib/tierListApi";
 import { apiGetTierListLikes, apiGetLikedTierListIds } from "@/lib/likesApi";
+import { hasSession } from "@/lib/authApi";
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -191,14 +196,24 @@ describe("useTierEditorQueries", () => {
       expect(apiGetTierListLikes).not.toHaveBeenCalled();
     });
 
-    it("должен загружать список лайкнутых тир-листов", async () => {
+    it("должен загружать список лайкнутых тир-листов только для авторизованного пользователя", async () => {
       vi.mocked(apiGetLikedTierListIds).mockResolvedValue({
         likedIds: ["1", "2", "3"],
       });
 
-      const { result } = renderHook(() => useTierEditorQueries("test-list-1"), {
-        wrapper: createWrapper(),
-      });
+      const { result } = renderHook(
+        () =>
+          useTierEditorQueries(
+            "test-list-1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            { isAuthenticated: true },
+          ),
+        { wrapper: createWrapper() },
+      );
 
       await waitFor(() => {
         expect(result.current.likedTierListIds).toBeDefined();
@@ -207,20 +222,90 @@ describe("useTierEditorQueries", () => {
       expect(apiGetLikedTierListIds).toHaveBeenCalled();
     });
 
+    it("не должен загружать список лайкнутых тир-листов для гостя", () => {
+      renderHook(
+        () =>
+          useTierEditorQueries(
+            "test-list-1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            { isAuthenticated: false },
+          ),
+        { wrapper: createWrapper() },
+      );
+
+      expect(apiGetLikedTierListIds).not.toHaveBeenCalled();
+    });
+
     it("должен создавать Set из likedIds", async () => {
       vi.mocked(apiGetLikedTierListIds).mockResolvedValue({
         likedIds: ["1", "2", "3"],
       });
 
-      const { result } = renderHook(() => useTierEditorQueries("test-list-1"), {
-        wrapper: createWrapper(),
-      });
+      const { result } = renderHook(
+        () =>
+          useTierEditorQueries(
+            "test-list-1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            { isAuthenticated: true },
+          ),
+        {
+          wrapper: createWrapper(),
+        },
+      );
 
       await waitFor(() => {
         expect(result.current.likedIdsSet).toBeInstanceOf(Set);
         expect(result.current.likedIdsSet.has("1")).toBe(true);
         expect(result.current.likedIdsSet.has("2")).toBe(true);
         expect(result.current.likedIdsSet.has("3")).toBe(true);
+      });
+    });
+
+    it("ждет завершения восстановления сессии перед запросом тир-листа при наличии активной сессии", async () => {
+      vi.mocked(hasSession).mockReturnValue(true);
+      vi.mocked(fetchTierList).mockResolvedValue({
+        id: "1",
+        title: "Private List",
+        year: null,
+        isPublic: false,
+        user: { id: 1, username: "admin" },
+        tiers: [],
+        unrankedBooks: [],
+      });
+
+      const { result, rerender } = renderHook(
+        ({ isAuthLoading }: { isAuthLoading: boolean }) =>
+          useTierEditorQueries(
+            "test-list-1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            { isAuthLoading, isAuthenticated: false },
+          ),
+        {
+          initialProps: { isAuthLoading: true },
+          wrapper: createWrapper(),
+        },
+      );
+
+      expect(fetchTierList).not.toHaveBeenCalled();
+      expect(result.current.isLoading).toBe(true);
+
+      rerender({ isAuthLoading: false });
+
+      await waitFor(() => {
+        expect(fetchTierList).toHaveBeenCalledWith("test-list-1");
+        expect(result.current.isLoading).toBe(false);
       });
     });
   });

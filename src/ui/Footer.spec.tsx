@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render as rtlRender, screen, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Footer } from "./Footer";
@@ -146,5 +146,40 @@ describe("Footer", () => {
 
     const mailLink = screen.getByRole("link", { name: /Почта/i })
     expect(mailLink).toHaveAttribute("href", "mailto:bookstrata@mail.ru")
+  })
+
+  it("по умолчанию меню доната не отрисовывается в DOM (номер карты изолирован от поисковиков)", () => {
+    mockedGetDonors.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([])
+
+    renderFooter()
+
+    expect(document.getElementById("donate-menu")).toBeNull()
+    expect(screen.queryByText(/2204/)).not.toBeInTheDocument()
+  })
+
+  it("при клике на кнопку «Угостить автора кофе» меню доната монтируется в DOM", async () => {
+    mockedGetDonors.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([])
+
+    renderFooter()
+
+    const donateButton = screen.getByRole("button", { name: /Угостить автора кофе/i })
+    expect(document.getElementById("donate-menu")).toBeNull()
+
+    fireEvent.click(donateButton)
+
+    expect(document.getElementById("donate-menu")).not.toBeNull()
+    expect(screen.getByText(/2204/)).toBeInTheDocument()
+  })
+
+  it("блок доната содержит data-nosnippet для защиты сниппетов поисковых систем", () => {
+    mockedGetDonors.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([])
+
+    renderFooter()
+
+    const donateContainer = document.querySelector("[data-nosnippet]")
+    expect(donateContainer).not.toBeNull()
   })
 })

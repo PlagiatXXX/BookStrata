@@ -116,8 +116,15 @@ describe("parseCoreOnlyArg (CLI --core-only)", () => {
 });
 
 describe("stripToastMarkup (очистка временных тоастов Sileo)", () => {
-  it("удаляет блок data-sileo-viewport из HTML", () => {
-    const raw = `<main><h1>Книга</h1></main><section data-sileo-viewport="true" data-theme="light"><button data-sileo-toast="true">Ошибка</button></section><footer>Подвал</footer>`;
+  it("удаляет блок data-sileo-viewport из HTML независимо от порядка атрибутов", () => {
+    const raw = `<main><h1>Книга</h1></main><section class="viewport-box" data-sileo-viewport="true" data-theme="light"><button data-sileo-toast="true">Ошибка</button></section><footer>Подвал</footer>`;
+    expect(stripToastMarkup(raw)).toBe(
+      `<main><h1>Книга</h1></main><footer>Подвал</footer>`,
+    );
+  });
+
+  it("удаляет блок div с классом sileo-toast", () => {
+    const raw = `<main><h1>Книга</h1></main><div class="sileo-toast error"><span>Ошибка 499</span></div><footer>Подвал</footer>`;
     expect(stripToastMarkup(raw)).toBe(
       `<main><h1>Книга</h1></main><footer>Подвал</footer>`,
     );

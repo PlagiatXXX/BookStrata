@@ -95,4 +95,93 @@ describe("apiClient: HTML-фолбэк после 301-редиректа", () =>
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
   });
+
+  it("переводит ошибку ACCESS_DENIED и 403 в понятный русский текст", async () => {
+    const notifyErrorModule = await import("./notifyError");
+    const spy = vi.spyOn(notifyErrorModule, "notifyError");
+
+    const fetchMock = vi.fn().mockImplementationOnce(async () => {
+      return new Response(
+        JSON.stringify({
+          error: { code: "ACCESS_DENIED", message: "Access denied" },
+        }),
+        {
+          status: 403,
+          headers: { "content-type": "application/json" },
+        },
+      );
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.get("/tier-lists/private")).rejects.toMatchObject({
+      code: "ACCESS_DENIED",
+      status: 403,
+      message: "Доступ ограничен автором. Этот материал является приватным",
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      "Ошибка",
+      "Доступ ограничен автором. Этот материал является приватным",
+    );
+    spy.mockRestore();
+  });
+
+  it("сохраняет исходное понятное сообщение на русском языке", async () => {
+    const notifyErrorModule = await import("./notifyError");
+    const spy = vi.spyOn(notifyErrorModule, "notifyError");
+
+    const fetchMock = vi.fn().mockImplementationOnce(async () => {
+      return new Response(
+        JSON.stringify({
+          error: { code: "CUSTOM_ERROR", message: "Вы уже оценили эту книгу" },
+        }),
+        {
+          status: 400,
+          headers: { "content-type": "application/json" },
+        },
+      );
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.post("/books/rate")).rejects.toMatchObject({
+      code: "CUSTOM_ERROR",
+      status: 400,
+      message: "Вы уже оценили эту книгу",
+    });
+
+    expect(spy).toHaveBeenCalledWith("Ошибка", "Вы уже оценили эту книгу");
+    spy.mockRestore();
+  });
+
+  it("переводит 500 ошибку сервера в дружелюбное сообщение в тосте", async () => {
+    const notifyErrorModule = await import("./notifyError");
+    const spy = vi.spyOn(notifyErrorModule, "notifyError");
+
+    const fetchMock = vi.fn().mockImplementationOnce(async () => {
+      return new Response(
+        JSON.stringify({
+          error: { code: "INTERNAL_ERROR", message: "Database connection failed" },
+        }),
+        {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        },
+      );
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiClient.get("/server-error")).rejects.toMatchObject({
+      code: "INTERNAL_ERROR",
+      status: 500,
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      "Ошибка",
+      "Сервер временно недоступен. Попробуйте обновить страницу позже",
+    );
+    spy.mockRestore();
+  });
 });

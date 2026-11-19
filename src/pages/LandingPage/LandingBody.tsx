@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useSyncExternalStore } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Heart, Layers, Sparkles, Zap, Check, X, ArrowRight } from "lucide-react"
 
@@ -65,35 +65,13 @@ function MiniTierCard({ item }: { item: TierListShort }) {
   )
 }
 
-/* ---------- Animated counter ---------- */
-function AnimatedCounter({ target, suffix = "", label }: { target: number; suffix?: string; label: string }) {
-  const [displayed, setDisplayed] = useState(0)
-  const prevTarget = useRef(0)
-
-  useEffect(() => {
-    if (target === 0) return
-    if (prevTarget.current === target) return
-    prevTarget.current = target
-
-    const from = displayed || 0
-    const delta = target - from
-    const duration = 2000
-    const start = performance.now()
-
-    function tick(now: number) {
-      const elapsed = now - start
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setDisplayed(Math.round(from + eased * delta))
-      if (progress < 1) requestAnimationFrame(tick)
-    }
-
-    requestAnimationFrame(tick)
-  }, [target, displayed])
-
+/* ---------- Stat counter (мгновенный рендер без задержек для пользователя и пререндера) ---------- */
+function StatCounter({ target, suffix = "", label }: { target: number; suffix?: string; label: string }) {
   return (
     <div className="landing-stat">
-      <span className="landing-stat__number">{displayed.toLocaleString()}{suffix}</span>
+      <span className="landing-stat__number">
+        {target > 0 ? `${target.toLocaleString()}${suffix}` : "—"}
+      </span>
       <span className="landing-stat__label">{label}</span>
     </div>
   )
@@ -498,9 +476,21 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
       {/* ============ STATS ============ */}
       <section className="landing-stats" id="stats">
         <div className="landing-stats__grid">
-          <AnimatedCounter target={forumStats?.totalUsers ?? 0} suffix="+" label="Пользователей" />
-          <AnimatedCounter target={forumStats?.tierLists ?? 0} suffix="" label="Создано тир-листов" />
-          <AnimatedCounter target={forumStats?.totalBooks ?? 0} suffix="+" label="Книг в базе" />
+          <StatCounter
+            target={forumStats?.totalUsers && forumStats.totalUsers > 0 ? forumStats.totalUsers : 80}
+            suffix="+"
+            label="Пользователей"
+          />
+          <StatCounter
+            target={forumStats?.tierLists && forumStats.tierLists > 0 ? forumStats.tierLists : 59}
+            suffix=""
+            label="Создано тир-листов"
+          />
+          <StatCounter
+            target={forumStats?.totalBooks && forumStats.totalBooks > 0 ? forumStats.totalBooks : 1715}
+            suffix="+"
+            label="Книг в базе"
+          />
         </div>
       </section>
 

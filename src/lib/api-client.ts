@@ -44,6 +44,33 @@ export class ApiRequestError extends Error {
 }
 
 /**
+ * Локализует сырые коды и сообщения об ошибках API в понятный текст на русском языке.
+ */
+export function getFriendlyErrorMessage(code: string, rawMessage: string, status: number): string {
+  if (rawMessage && /[а-яёА-ЯЁ]/.test(rawMessage)) {
+    return rawMessage;
+  }
+
+  if (code === "ACCESS_DENIED" || status === 403) {
+    return "Доступ ограничен автором. Этот материал является приватным";
+  }
+  if (code === "TIER_LIST_NOT_FOUND" || code === "NOT_FOUND" || status === 404) {
+    return "Запрашиваемый материал не найден";
+  }
+  if (code === "AUTHENTICATION_REQUIRED" || status === 401) {
+    return "Требуется авторизация";
+  }
+  if (code === "RATE_LIMIT_EXCEEDED" || status === 429) {
+    return "Слишком много запросов. Пожалуйста, подождите минуту";
+  }
+  if (status >= 500) {
+    return "Сервер временно недоступен. Попробуйте обновить страницу позже";
+  }
+
+  return rawMessage || `Ошибка ${status}`;
+}
+
+/**
  * Разворачивает ответ API из формата { data: ... }.
  * Пагинированные ответы ({ data, meta, links }) возвращаются целиком.
  */
@@ -137,7 +164,7 @@ async function request<T>(
         if (response.status === 499) {
           throw new ApiRequestError("client_closed", "Запрос отменён клиентом", 499);
         }
-        const msg = `Ошибка ${response.status}: ${response.statusText || "нет описания"}`;
+        const msg = getFriendlyErrorMessage("parse_error", response.statusText || "", response.status);
         notifyError("Ошибка запроса", msg);
         throw new ApiRequestError("parse_error", msg, response.status);
       }
@@ -166,13 +193,23 @@ async function request<T>(
       }
       const errObj = json as Record<string, unknown> | null;
       const errorData = errObj?.error as Record<string, unknown> | undefined;
-      const code = errorData?.code as string ?? "unknown";
-      const message = errorData?.message as string
-        ?? errObj?.error as string
-        ?? errObj?.message as string
-        ?? `Ошибка ${response.status}: ${response.statusText || "нет описания"}`;
-      notifyError("Ошибка", message);
-      throw new ApiRequestError(code, message, response.status);
+      const code = (errorData?.code as string) ?? "unknown";
+      const rawMessage =
+        (errorData?.message as string) ??
+        (errObj?.error as string) ??
+        (errObj?.message as string) ??
+        `Ошибка ${response.status}: ${response.statusText || "нет описания"}`;
+      const friendlyMessage = getFriendlyErrorMessage(code, rawMessage, response.status);
+      notifyError("Ошибка", friendlyMessage);
+
+      // Для 403 / ACCESS_DENIED выбрасываем дружелюбное сообщение для UI экранов.
+      // Для остальных ошибок сохраняем rawMessage для совместимости с обработчиками сервисов.
+      const thrownMessage =
+        code === "ACCESS_DENIED" || response.status === 403
+          ? friendlyMessage
+          : rawMessage;
+
+      throw new ApiRequestError(code, thrownMessage, response.status);
     }
 
     // Разворачиваем { data: ... } → ...

@@ -150,4 +150,16 @@ describe("generateSitemap — тир-листы", () => {
     );
     expect(xml).toContain("<loc>https://bookstrata.ru/tier-lists/top-books</loc>");
   });
+
+  it("исключает из sitemap тир-листы, где менее 5 книг (thin content)", async () => {
+    mocks.prisma.tierList.findMany.mockResolvedValue([
+      { id: "tl-thin", slug: "one-book", updatedAt: new Date("2026-09-01"), _count: { placements: 1 } },
+      { id: "tl-good", slug: "ten-books", updatedAt: new Date("2026-09-01"), _count: { placements: 10 } },
+    ]);
+
+    const xml = await generateSitemap();
+
+    expect(xml).not.toContain("/tier-lists/one-book");
+    expect(xml).toContain("/tier-lists/ten-books");
+  });
 });

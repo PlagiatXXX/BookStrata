@@ -39,6 +39,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={onClose}
+      data-nosnippet
     >
       <div
         className="relative w-full max-w-md rounded-2xl border border-amber-200/20 bg-[#111] p-6 shadow-2xl animate-scale-in"

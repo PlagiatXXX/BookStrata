@@ -9,7 +9,25 @@
 const DEFAULT_TITLE = "Книжный тир-лист";
 const DEFAULT_DESCRIPTION = "Книжный тир-лист на BookStrata — рейтинг книг по уровням";
 
-/** «Название — книжный тир-лист из N книг от автора» (автор и количество — опционально). */
+/** Минимальное количество книг для индексации в поисковых системах (защита от thin content) */
+export const MIN_BOOKS_FOR_SEO = 5;
+
+/**
+ * Определяет, нужно ли ставить noindex на тир-лист.
+ * Списки менее 5 книг, черновики или списки без названия закрываются от индексации.
+ */
+export function shouldNoindexTierList(
+  tierListId: string | undefined,
+  isPublic: boolean | undefined,
+  booksCount: number,
+  title?: string | null,
+): boolean {
+  if (tierListId === "new") return true;
+  if (isPublic === false) return true;
+  if (!title || title.trim().length === 0) return true;
+  if (booksCount < MIN_BOOKS_FOR_SEO) return true;
+  return false;
+}
 export function buildTierListSeoTitle(
   title: string | null | undefined,
   username?: string | null,

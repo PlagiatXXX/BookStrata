@@ -77,7 +77,9 @@ export function escapeHtml(str) {
  */
 export function stripToastMarkup(html) {
   if (!html) return "";
-  return html.replace(/<section data-sileo-viewport="true"[\s\S]*?<\/section>/g, "");
+  return html
+    .replace(/<section\s+[^>]*data-sileo-viewport[^>]*>[\s\S]*?<\/section>/gi, "")
+    .replace(/<div\s+[^>]*class="[^"]*sileo-[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "");
 }
 
 /**
@@ -1252,7 +1254,7 @@ async function processRoute(browser, route) {
     // Удаляем всплывающие тоасты (sileo), чтобы временные уведомления
     // не попадали в статический HTML для поисковиков
     await page.evaluate(() => {
-      document.querySelectorAll('[data-sileo-viewport]').forEach((el) => el.remove());
+      document.querySelectorAll('[data-sileo-viewport], [data-sileo-container], .sileo-toast').forEach((el) => el.remove());
     });
 
     // Получаем полный HTML страницы (с head-мета-тегами)

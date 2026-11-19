@@ -47,7 +47,14 @@ export async function generateSitemap(): Promise<string> {
         isPublic: true,
         placements: { some: {} },
       },
-      select: { id: true, slug: true, updatedAt: true },
+      select: {
+        id: true,
+        slug: true,
+        updatedAt: true,
+        _count: {
+          select: { placements: true },
+        },
+      },
       orderBy: { likesCount: "desc" },
       take: 1000,
     }),
@@ -105,8 +112,14 @@ export async function generateSitemap(): Promise<string> {
     ),
   );
 
-  const tierListUrls = tierLists.map((t) => {
-    const path = t.slug ? `/tier-lists/${t.slug}` : `/tier-lists/${t.id}`;
+  // Исключаем пустые и тонкие тир-листы (< 5 книг), чтобы защитить краулинговый бюджет от thin content
+  const tierListUrls = tierLists
+    .filter((t) => {
+      const count = (t as { _count?: { placements: number } })._count?.placements;
+      return count === undefined || count >= 5;
+    })
+    .map((t) => {
+      const path = t.slug ? `/tier-lists/${t.slug}` : `/tier-lists/${t.id}`;
     return xmlTag(
       `${SITE_URL}${path}`,
       "0.6",

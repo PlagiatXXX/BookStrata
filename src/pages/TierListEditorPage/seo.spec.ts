@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildTierListSeoDescription,
   buildTierListSeoTitle,
+  shouldNoindexTierList,
 } from "./seo";
 
 describe("buildTierListSeoTitle", () => {
@@ -68,5 +69,31 @@ describe("buildTierListSeoDescription", () => {
     expect(buildTierListSeoDescription(undefined, "fedora")).toBe(
       "Книжный тир-лист на BookStrata — рейтинг книг по уровням",
     );
+  });
+});
+
+describe("shouldNoindexTierList", () => {
+  it("возвращает true для нового несохранённого тир-листа (new)", () => {
+    expect(shouldNoindexTierList("new", true, 10, "Мой список")).toBe(true);
+  });
+
+  it("возвращает true для приватного тир-листа", () => {
+    expect(shouldNoindexTierList("tl-1", false, 10, "Мой список")).toBe(true);
+  });
+
+  it("возвращает true если в списке менее 5 книг (thin content)", () => {
+    expect(shouldNoindexTierList("tl-1", true, 4, "Мой список")).toBe(true);
+    expect(shouldNoindexTierList("tl-1", true, 1, "Мой список")).toBe(true);
+    expect(shouldNoindexTierList("tl-1", true, 0, "Мой список")).toBe(true);
+  });
+
+  it("возвращает true если отсутствует название", () => {
+    expect(shouldNoindexTierList("tl-1", true, 10, "")).toBe(true);
+    expect(shouldNoindexTierList("tl-1", true, 10, null)).toBe(true);
+  });
+
+  it("возвращает false для публичного тир-листа с названием и >= 5 книг", () => {
+    expect(shouldNoindexTierList("tl-1", true, 5, "Топ фэнтези")).toBe(false);
+    expect(shouldNoindexTierList("tl-1", true, 12, "Топ фэнтези")).toBe(false);
   });
 });

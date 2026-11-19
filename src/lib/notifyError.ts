@@ -20,6 +20,11 @@ interface NotifyErrorOptions {
 export function notifyError(titleOrOpts: string | NotifyErrorOptions, description?: string): void {
   if (typeof document === "undefined") return;
 
+  // При пререндеринге (Playwright) подавляем любые тосты, чтобы ошибки не попадали в статический HTML
+  if (typeof window !== "undefined" && (window as unknown as { __PRERENDER__?: boolean }).__PRERENDER__) {
+    return;
+  }
+
   // Поисковым ботам, краулерам и Lighthouse не показываем UI-уведомления
   if (typeof navigator !== "undefined" && /bot|google|yandex|bing|lighthouse/i.test(navigator.userAgent)) {
     return;

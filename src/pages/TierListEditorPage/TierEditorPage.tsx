@@ -21,7 +21,7 @@ import { useTierEditorDrag } from "./hooks/useTierEditorDrag";
 import { useTierEditorBlocker } from "./hooks/useTierEditorBlocker";
 import { useTierEditorSave } from "./hooks/useTierEditorSave";
 import { resolveDemoInitialData } from "./_initialData";
-import { buildTierListSeoDescription, buildTierListSeoTitle } from "./seo";
+import { buildTierListSeoDescription, buildTierListSeoTitle, shouldNoindexTierList } from "./seo";
 import { getBookViewAction } from "./bookClick";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { useBookshelf } from "@/hooks/useBookshelf";
@@ -122,7 +122,7 @@ const TierListEditorContent = () => {
   } = useTierEditorState(tierListId);
 
   // Получаем данные и настройки пользователя
-  const { user: authUser, isAuthenticated } = useAuth();
+  const { user: authUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   // Реальный ID тир-листа после его создания на сервере (когда tierListId="new").
   // Нужен, чтобы React Query мог загрузить apiData после первого сохранения.
@@ -147,6 +147,7 @@ const TierListEditorContent = () => {
     templateId,
     celebrityForkSlug,
     createdTierListId,
+    { isAuthLoading, isAuthenticated },
   );
 
   // ========== ДЕМО-РЕЖИМ (часть 1: инициализация) ==========
@@ -974,11 +975,12 @@ const TierListEditorContent = () => {
           author={apiData?.user?.username}
           type="article"
           noindex={
-            tierListId === "new" ||
-            (apiData ? !isPublic : undefined) ||
-            (apiData
-              ? Object.keys(listData.books).length === 0 || !apiData.title
-              : undefined)
+            shouldNoindexTierList(
+              tierListId,
+              isPublic,
+              Object.keys(listData.books).length,
+              apiData?.title,
+            )
           }
           breadcrumbs={[
             { name: "Главная", url: "/" },
