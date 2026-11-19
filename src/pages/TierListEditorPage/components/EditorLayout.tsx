@@ -158,6 +158,7 @@ export const EditorLayout = ({
       hideLogout={true}
       hideFooter={isStreamMode}
       hideHeader={isStreamMode}
+      bgVariant={theme === "autumn-rain" ? "dark" : undefined}
       contentTopPadding="pt-0"
     >
       <main
@@ -277,7 +278,9 @@ export const EditorLayout = ({
           </div>
         )}
 
-        {children}
+        <div className="relative z-10 w-full">
+          {children}
+        </div>
 
         {/* Модалки внутри main[data-theme] — наследуют токены темы */}
         {modals}

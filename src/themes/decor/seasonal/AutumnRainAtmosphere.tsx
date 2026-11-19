@@ -367,7 +367,7 @@ export function AutumnRainAtmosphere() {
       `}</style>
 
       {/* ── СЛОЙ 1: За полками (z-0) ── */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 bg-[#0e131b]">
         {/* Мягкий рассеянный свет фонаря вокруг курсора */}
         <div
           className="absolute inset-0 pointer-events-none transition-opacity duration-500"
@@ -379,7 +379,7 @@ export function AutumnRainAtmosphere() {
         <div className="absolute inset-0 bg-slate-950/8 pointer-events-none" />
 
         {/* ── АУТЕНТИЧНОЕ ФОТОГРАФИЧЕСКОЕ ГРОЗОВОЕ НЕБО (Адаптировано под мобильные и десктоп) ── */}
-        <div className="absolute inset-x-0 top-0 h-90 sm:h-115 md:h-135 lg:h-155 xl:h-170 2xl:h-185 pointer-events-none overflow-hidden select-none">
+        <div className="absolute inset-x-0 top-0 h-95 sm:h-120 md:h-150 lg:h-180 xl:h-195 2xl:h-210 pointer-events-none overflow-hidden select-none">
           {/* Базовый тяжелый градиент плотного неба */}
           <div className="absolute inset-0 bg-linear-to-b from-[#02050c] via-[#060d1b] via-45% to-transparent pointer-events-none" />
 
@@ -400,7 +400,7 @@ export function AutumnRainAtmosphere() {
             <img
               src="/autumn-storm-clouds-hd.webp"
               alt=""
-              className="absolute -top-3 sm:-top-6 md:-top-8 inset-x-[-4%] md:inset-x-[-3%] w-[108%] md:w-[106%] h-full object-cover object-top md:object-[50%_35%] lg:object-[50%_38%] max-w-none pointer-events-none opacity-95 will-change-transform transition-[filter] duration-150"
+              className="absolute -top-3 sm:-top-6 md:-top-8 inset-x-[-4%] md:inset-x-[-3%] w-[108%] md:w-[106%] h-full object-cover object-top md:object-[50%_80%] lg:object-[50%_88%] max-w-none pointer-events-none opacity-95 will-change-transform transition-[filter] duration-150"
               style={{
                 animation: isReducedMotion() ? "none" : "cloudPanSlow 55s ease-in-out infinite",
                 filter:
@@ -432,12 +432,12 @@ export function AutumnRainAtmosphere() {
             }}
           />
 
-          {/* Мягкий переход нижнего края туч в дождь и мглу */}
+          {/* Мягкий переход нижнего края туч в дождь и мглу без резкого стыка с фоном */}
           <div
-            className="absolute bottom-0 inset-x-0 h-36 pointer-events-none"
+            className="absolute bottom-0 inset-x-0 h-72 sm:h-80 md:h-96 pointer-events-none"
             style={{
               background:
-                "linear-gradient(to bottom, transparent, rgba(6, 13, 26, 0.5) 50%, rgba(2, 6, 14, 0.85) 100%)",
+                "linear-gradient(to bottom, transparent 0%, rgba(14, 19, 27, 0.25) 25%, rgba(14, 19, 27, 0.75) 65%, #0e131b 100%)",
             }}
           />
         </div>

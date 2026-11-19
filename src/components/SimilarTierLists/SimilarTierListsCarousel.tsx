@@ -53,8 +53,8 @@ export function SimilarTierListsCarousel({
           </script>
         </Helmet>
       )}
-      <section className="mt-8">
-      <h2 className="text-lg font-bold mb-4 text-(--theme-text)">
+      <section className="mt-10 relative z-10 max-w-450 w-full mx-auto" aria-labelledby="similar-tier-lists-heading">
+      <h2 id="similar-tier-lists-heading" className="text-lg font-bold mb-4 text-(--theme-text)">
         Похожие тир-листы
       </h2>
       <div className="relative group">
