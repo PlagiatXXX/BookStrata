@@ -12,7 +12,7 @@ import "./PricingPage.css"
 function DonateModal({ onClose }: { onClose: () => void }) {
   useBodyScrollLock(true)
   const [copied, setCopied] = useState(false)
-  const cardNumber = '4100119194644295'
+  const cardNumber = '2204120127692388'
 
   const handleCopy = async () => {
     try {
@@ -88,7 +88,7 @@ function DonateModal({ onClose }: { onClose: () => void }) {
               </button>
             </div>
             <p className="mt-1.5 text-xs text-gray-500">
-              ЮMoney • Федор П.
+              ЮMoney
             </p>
           </div>
 

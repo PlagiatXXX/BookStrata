@@ -145,7 +145,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
     enabled: shouldFetchCollections,
   });
 
-  const cardNumber = "4100119194644295";
+  const cardNumber = "2204120127692388";
 
   const handleCopyCard = async () => {
     try {
@@ -425,7 +425,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
                     </button>
                   </div>
                   <p className="mt-1.5 text-[10px] text-white/40">
-                    ЮMoney • Федор П.
+                    ЮMoney
                   </p>
                 </div>
               </div>
