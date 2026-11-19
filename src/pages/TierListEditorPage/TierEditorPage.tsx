@@ -36,6 +36,7 @@ import { SEOHead } from "@/components/SEO/SEOHead";
 import { useDemoStorage, DEMO_DEFAULT_THEME } from "./hooks/useDemoStorage";
 import { useDemoOnboarding } from "./hooks/useDemoOnboarding";
 import { AuthOnSaveModal } from "./components/AuthOnSaveModal";
+import { ShareSuccessModal } from "./components/ShareSuccessModal";
 import { DemoOnboarding } from "./components/DemoOnboarding";
 import { apiTrackEvent } from "@/lib/analyticsApi";
 import { UNRANKED_AREA_ID } from "@/constants/dnd";
@@ -343,7 +344,32 @@ const TierListEditorContent = () => {
 
   // ========== КОНЕЦ ДЕМО-РЕЖИМ (часть 2) ==========
 
+  // Обложка первой книги для красивого превью при шеринге и Open Graph
+  const firstBookCoverUrl = useMemo(() => {
+    for (const tierId of listData.tierOrder) {
+      const bookIds = listData.tiers[tierId]?.bookIds || [];
+      for (const bookId of bookIds) {
+        const book = listData.books[bookId];
+        if (book?.coverImageUrl) return book.coverImageUrl;
+      }
+    }
+    const unranked = listData.unrankedBookIds || [];
+    for (const bookId of unranked) {
+      const book = listData.books[bookId];
+      if (book?.coverImageUrl) return book.coverImageUrl;
+    }
+    return null;
+  }, [listData]);
+
   // ========== ОПТИМИЗИРОВАННОЕ АВТОСОХРАНЕНИЕ ==========
+  const [showShareSuccessModal, setShowShareSuccessModal] = useState(false);
+  const [firstCreatedSharePath, setFirstCreatedSharePath] = useState<string | null>(null);
+
+  const handleFirstSaveSuccess = useCallback((urlPath: string) => {
+    setFirstCreatedSharePath(urlPath);
+    setShowShareSuccessModal(true);
+  }, []);
+
   const { saveStatus, lastSaved, handleSave } = useTierEditorSave({
     tierListId,
     listData,
@@ -355,6 +381,7 @@ const TierListEditorContent = () => {
     theme: normalizedDisplayTheme,
     description: tierListDescription,
     onTierListCreated: setCreatedTierListId,
+    onFirstSaveSuccess: handleFirstSaveSuccess,
   });
 
   // Ref на handleSave для использования после обновления состояния (регистрация)
@@ -869,6 +896,20 @@ const TierListEditorContent = () => {
         onTitleChange={setDemoTitle}
       />
 
+      {/* Модалка шеринга при первом успешном сохранении тир-листа */}
+      <ShareSuccessModal
+        isOpen={showShareSuccessModal}
+        onClose={() => setShowShareSuccessModal(false)}
+        title={listData.title}
+        coverImageUrl={displayCoverImageUrl || firstBookCoverUrl}
+        booksCount={Object.keys(listData.books).length}
+        shareUrl={
+          firstCreatedSharePath
+            ? `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}${firstCreatedSharePath}`
+            : shareUrl
+        }
+      />
+
       {/* Модальные окна */}
       <EditorModals
         tierToDelete={tierToDelete}
@@ -965,9 +1006,9 @@ const TierListEditorContent = () => {
           }
           url={`/tier-lists/${pageUrl}`}
           image={
-            apiData?.coverImageUrl &&
-            !apiData.coverImageUrl.includes("encrypted-tbn0.gstatic.com")
-              ? apiData.coverImageUrl
+            (displayCoverImageUrl || firstBookCoverUrl) &&
+            !(displayCoverImageUrl || firstBookCoverUrl)!.includes("encrypted-tbn0.gstatic.com")
+              ? (displayCoverImageUrl || firstBookCoverUrl)!
               : undefined
           }
           publishedTime={apiData?.createdAt ?? apiData?.updatedAt}

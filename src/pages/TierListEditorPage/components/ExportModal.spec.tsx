@@ -66,8 +66,20 @@ describe("ExportModal", () => {
     const shareBtn = screen.getByText("Поделиться");
     expect(shareBtn).toBeInTheDocument();
 
-    fireEvent.click(shareBtn);
+    const onClose = vi.fn();
+    render(
+      <ExportModal
+        isOpen={true}
+        onClose={onClose}
+        onExport={onExport}
+      />
+    );
+
+    const shareBtns = screen.getAllByText("Поделиться");
+    fireEvent.click(shareBtns[shareBtns.length - 1]);
     expect(onExport).toHaveBeenCalledWith({ mode: "share" });
+    // При шеринге модалка остаётся открытой в исходном состоянии
+    expect(onClose).not.toHaveBeenCalled();
 
     // Восстанавливаем navigator
     Object.defineProperty(window, "navigator", {

@@ -35,6 +35,8 @@ interface UseTierEditorSaveParams {
   description?: string | null;
   /** Вызывается при создании нового тир-листа на сервере (передаёт реальный ID) */
   onTierListCreated?: (id: string) => void;
+  /** Вызывается при первом успешном сохранении нового тир-листа (для модалки шеринга) */
+  onFirstSaveSuccess?: (urlPath: string) => void;
 }
 
 /**
@@ -58,6 +60,7 @@ export function useTierEditorSave({
   theme = "default",
   description,
   onTierListCreated,
+  onFirstSaveSuccess,
 }: UseTierEditorSaveParams): UseTierEditorSaveResult {
   const queryClient = useQueryClient();
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -104,7 +107,9 @@ export function useTierEditorSave({
       const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const isNumericId = /^\d+$/.test(listData.id);
       const isUuid = UUID_RE.test(listData.id);
+      const isFirstCreation = !isNumericId && !isUuid;
       let effectiveId = isNumericId || isUuid ? listData.id : tierListId;
+      let createdUrlPath: string | null = null;
 
       // При создании нового tier list: backend создаёт дефолтные тиры (rank 0-4),
       // frontend хранит их с временными ID (tier-1...tier-5). Маппим temp → real,
@@ -135,6 +140,7 @@ export function useTierEditorSave({
         const urlPath = created.slug
           ? `/tier-lists/${created.slug}`
           : `/tier-lists/${effectiveId}`;
+        createdUrlPath = urlPath;
         window.history.replaceState(null, "", urlPath);
 
         // Обновляем ID в данных редактора
@@ -174,6 +180,10 @@ export function useTierEditorSave({
       setHasUnsavedChanges(false);
       setSaveStatus("saved");
       setLastSaved(new Date());
+
+      if (isFirstCreation && createdUrlPath) {
+        onFirstSaveSuccess?.(createdUrlPath);
+      }
 
       // Заменяем временные ID на реальные (атомарно)
       if (result?.bookReplacements?.length) {
@@ -219,7 +229,7 @@ export function useTierEditorSave({
       });
       return false;
     }
-  }, [tierListId, isLoading, isReadOnly, setHasUnsavedChanges, dispatch, queryClient, logger, theme, description, listData, onTierListCreated]);
+  }, [tierListId, isLoading, isReadOnly, setHasUnsavedChanges, dispatch, queryClient, logger, theme, description, listData, onTierListCreated, onFirstSaveSuccess]);
 
   return {
     saveStatus,

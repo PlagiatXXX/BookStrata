@@ -177,5 +177,36 @@ describe("GET /tier-lists/:slug (публичный серверный роут)
     expect(res.body).toContain("<title>Свежие книги — книжный тир-лист из 7 книг от fedor | BookStrata</title>");
     expect(res.body).toContain('<link rel="canonical" href="https://bookstrata.ru/tier-lists/fresh-books" />');
     expect(res.body).toContain('meta property="og:title" content="Свежие книги — книжный тир-лист из 7 книг от fedor | BookStrata"');
+    expect(res.body).toContain('meta property="og:image" content="https://bookstrata.ru/img/cover.webp"');
+    expect(res.body).toContain('meta name="twitter:card" content="summary_large_image"');
+  });
+
+  it("свежий тир-лист без coverImageUrl подтягивает обложку первой книги для Open Graph и Twitter", async () => {
+    mocks.fs.existsSync.mockImplementation((file: string) => file.endsWith("spa-index.html"));
+    mocks.fs.readFileSync.mockReturnValue(SPA_SHELL);
+
+    mocks.prisma.tierList.findFirst.mockResolvedValue({
+      id: "tl-new-2",
+      slug: "zolotoj-listopad",
+      title: "Золотой листопад",
+      description: null,
+      isPublic: true,
+      _count: { placements: 5 },
+      user: { username: "fedor" },
+      coverImageUrl: null,
+      placements: [
+        {
+          coverImageUrl: null,
+          book: { coverImageUrl: "https://bookstrata.ru/img/book-1.webp" },
+        },
+      ],
+    });
+
+    const res = await app.inject({ method: "GET", url: "/tier-lists/zolotoj-listopad" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('meta property="og:image" content="https://bookstrata.ru/img/book-1.webp"');
+    expect(res.body).toContain('meta name="twitter:image" content="https://bookstrata.ru/img/book-1.webp"');
+    expect(res.body).toContain('meta name="twitter:card" content="summary_large_image"');
   });
 });

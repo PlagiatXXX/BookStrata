@@ -21,6 +21,7 @@ export interface TierListMeta {
   description: string | null;
   isPublic: boolean;
   coverImageUrl: string | null;
+  firstBookCoverUrl?: string | null;
   booksCount: number;
   user: {
     username: string;
@@ -71,10 +72,28 @@ export async function findTierListBySlugOrId(
           placements: true,
         },
       },
+      placements: {
+        take: 1,
+        orderBy: [{ tier: { rank: "asc" } }, { position: "asc" }],
+        select: {
+          coverImageUrl: true,
+          book: {
+            select: {
+              coverImageUrl: true,
+            },
+          },
+        },
+      },
     },
   });
 
   if (!tierList) return null;
+
+  const firstPlacement = tierList.placements?.[0];
+  const firstBookCoverUrl =
+    firstPlacement?.coverImageUrl ||
+    firstPlacement?.book?.coverImageUrl ||
+    null;
 
   return {
     id: tierList.id,
@@ -83,6 +102,7 @@ export async function findTierListBySlugOrId(
     description: tierList.description,
     isPublic: tierList.isPublic,
     coverImageUrl: tierList.coverImageUrl,
+    firstBookCoverUrl,
     booksCount: tierList._count?.placements ?? 0,
     user: tierList.user,
   };
@@ -193,11 +213,16 @@ export function buildTierListSeoFallbackHtml(tierList: TierListMeta): string {
     tierList.description?.slice(0, 240) ??
     `Тир-лист «${tierList.title}»${author ? ` от ${author}` : ""}: визуальный рейтинг книг на BookStrata.`;
 
-  const ogImage =
-    tierList.coverImageUrl &&
-    !tierList.coverImageUrl.includes("encrypted-tbn0.gstatic.com")
-      ? tierList.coverImageUrl
-      : `${siteUrl}/og-landing.webp`;
+  const rawCover =
+    tierList.coverImageUrl ||
+    tierList.firstBookCoverUrl;
+
+  let ogImage = `${siteUrl}/og-landing.webp`;
+  if (rawCover && !rawCover.includes("encrypted-tbn0.gstatic.com")) {
+    ogImage = rawCover.startsWith("http")
+      ? rawCover
+      : `${siteUrl}${rawCover.startsWith("/") ? "" : "/"}${rawCover}`;
+  }
 
   const metaTags = [
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -206,6 +231,12 @@ export function buildTierListSeoFallbackHtml(tierList: TierListMeta): string {
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     `<meta property="og:url" content="${pageUrl}" />`,
     `<meta property="og:image" content="${escapeHtml(ogImage)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(ogImage)}" />`,
     `<meta name="robots" content="index, follow" />`,
   ].join("\n    ");
 
