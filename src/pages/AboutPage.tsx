@@ -117,8 +117,8 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-zinc-50">
       <SEOHead
-        title="О крупнейшем книжном рейтинге"
-        description="BookStrata — библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите библиотеку, находите книги по вкусу с ИИ."
+        title="О проекте"
+        description="BookStrata — твоё книжное пространство. Создавайте тир-листы, ведите личную библиотеку, находите книги по вкусу с ИИ и делитесь впечатлениями."
         url="/about"
         breadcrumbs={[{ name: "Главная", url: "/" }, { name: "О проекте", url: "/about" }]}
       />
@@ -130,7 +130,7 @@ export default function AboutPage() {
             "@context": "https://schema.org",
             "@type": "AboutPage",
             name: "О проекте BookStrata",
-            description: "BookStrata — библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите библиотеку, находите книги по вкусу с ИИ.",
+            description: "BookStrata — твоё книжное пространство. Создавайте тир-листы, ведите личную библиотеку, находите книги по вкусу с ИИ и делитесь впечатлениями.",
             url: "https://bookstrata.ru/about",
             mainEntity: {
               "@type": "Organization",
@@ -141,10 +141,10 @@ export default function AboutPage() {
       </Helmet>
 
       {/* ======== HERO ======== */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900 py-20 md:py-28 px-4">
+      <section className="relative overflow-hidden bg-linear-to-br from-slate-900 via-violet-950 to-slate-900 py-20 md:py-28 px-4">
         {/* Decorative blobs */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-200 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-125 h-125 bg-fuchsia-600/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative max-w-4xl mx-auto text-center">
           <motion.div
@@ -322,7 +322,7 @@ export default function AboutPage() {
             ].map((step, i) => (
               <FadeIn key={i} delay={i * 0.1}>
                 <div className="relative bg-white rounded-2xl border border-slate-200 p-6 text-center shadow-xs hover:shadow-md transition-shadow duration-300">
-                  <span className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white text-sm font-bold flex items-center justify-center shadow-md">
+                  <span className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-linear-to-br from-violet-600 to-fuchsia-600 text-white text-sm font-bold flex items-center justify-center shadow-md">
                     {step.number}
                   </span>
                   <div className="w-12 h-12 rounded-xl bg-linear-to-br from-violet-100 to-fuchsia-100 text-violet-700 flex items-center justify-center mx-auto mb-4">
@@ -338,7 +338,7 @@ export default function AboutPage() {
       </section>
 
       {/* ======== КОНТАКТЫ ======== */}
-      <section className="py-16 md:py-20 px-4 bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900">
+      <section className="py-16 md:py-20 px-4 bg-linear-to-br from-slate-900 via-violet-950 to-slate-900">
         <div className="max-w-3xl mx-auto text-center">
           <FadeIn>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">

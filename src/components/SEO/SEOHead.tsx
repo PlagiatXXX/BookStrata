@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 const SITE_NAME = "BookStrata";
-const DEFAULT_DESC = "BookStrata — библиотека пользовательских рейтингов книг. Создавайте тир-листы, ведите библиотеку, находите книги по вкусу с ИИ.";
+const DEFAULT_DESC = "BookStrata — твоё книжное пространство. Создавайте тир-листы, ведите личную библиотеку, находите книги по вкусу с ИИ и делитесь впечатлениями.";
 const DEFAULT_IMAGE = "/og-landing.webp";
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
 const BRAND_SUFFIX = ` | ${SITE_NAME}`;
@@ -32,12 +32,13 @@ interface SEOHeadProps {
   breadcrumbs?: { name: string; url: string }[];
   /** Не добавлять «| BookStrata» к <title> (страницы книг: место в выдаче важнее бренда). og:title/twitter:title всё равно получают бренд. */
   hideSiteName?: boolean;
-  /** Данные для Person JSON-LD (страницы людей: профили, знаменитости) */
+  /** Данные для Person JSON-LD (страницы людей: профили, знаменитости, авторы) */
   person?: {
     name: string;
     image?: string;
     description?: string;
     knowsAbout?: string;
+    jobTitle?: string;
   };
   /** URL изображения для LCP предзагрузки в <head> */
   preloadImage?: string;
@@ -126,7 +127,7 @@ export function SEOHead({
     ? hideSiteName
       ? cleanTitle
       : `${cleanTitle} | ${SITE_NAME}`
-    : `Интерактивный рейтинг книг — топ лучших книг и что почитать | ${SITE_NAME}`;
+    : `${SITE_NAME} — твоё книжное пространство | Рейтинги книг и тир-листы`;
   // Соцсети всегда получают бренд: узнаваемость при шаринге не зависит от сниппета.
   const socialTitle = cleanTitle ? `${cleanTitle} | ${SITE_NAME}` : pageTitle;
   // Обрезка под лимиты соцсетей (og:title ≤60, twitter:title ≤70, description ≤200).
@@ -233,6 +234,7 @@ export function SEOHead({
         image: person.image || imageUrl,
         description: person.description || description,
         ...(person.knowsAbout ? { knowsAbout: person.knowsAbout } : {}),
+        ...(person.jobTitle ? { jobTitle: person.jobTitle } : {}),
       }
     : null;
 

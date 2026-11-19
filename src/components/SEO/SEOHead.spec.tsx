@@ -61,6 +61,25 @@ describe("SEOHead", () => {
     expect(person!.knowsAbout).toBe("Писатель");
   });
 
+  it("рендерит jobTitle в Person JSON-LD при передаче", () => {
+    render(
+      <SEOHead
+        title="Лев Толстой"
+        url="/authors/lev-tolstoy"
+        person={{
+          name: "Лев Толстой",
+          description: "Русский писатель и мыслитель",
+          jobTitle: "Писатель",
+        }}
+      />,
+    );
+
+    const person = getPersonJsonLd();
+    expect(person).toBeDefined();
+    expect(person!.name).toBe("Лев Толстой");
+    expect(person!.jobTitle).toBe("Писатель");
+  });
+
   it("использует description из пропа description, если person.description не задан", () => {
     render(
       <SEOHead

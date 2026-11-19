@@ -31,7 +31,7 @@ export default function AuthorPage() {
 
   if (isLoading) {
     return (
-      <div className="author-page flex min-h-screen items-center justify-center bg-[var(--ap-bg)]">
+      <div className="author-page flex min-h-screen items-center justify-center bg-(--ap-bg)">
         <Spinner size="xl" />
       </div>
     );
@@ -50,8 +50,8 @@ export default function AuthorPage() {
     return (
       <>
         <Header showSearch={false} />
-        <main className="author-page flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-[var(--ap-bg)] pt-28 text-center">
-          <p className="text-sm text-[var(--ap-ink-muted)]">Не удалось загрузить данные автора</p>
+        <main className="author-page flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-(--ap-bg) pt-28 text-center">
+          <p className="text-sm text-(--ap-ink-muted)">Не удалось загрузить данные автора</p>
           <button
             type="button"
             onClick={() => refetch()}
@@ -96,6 +96,7 @@ export default function AuthorPage() {
         person={{
           name: author.name,
           description: seoText,
+          jobTitle: "Писатель",
           ...(genres ? { knowsAbout: genres } : {}),
         }}
       />
@@ -103,7 +104,7 @@ export default function AuthorPage() {
       <Header showSearch={false} />
 
       {/* pt-20 — полоса под fixed-хедером (~80px): хиро не залезает под него */}
-      <main className="author-page relative min-h-screen bg-[var(--ap-bg)] pb-24 pt-20">
+      <main className="author-page relative min-h-screen bg-(--ap-bg) pb-24 pt-20">
         {/* Крошки поверх хиро (верх пустой, justify-end) — не сдвигают контент страницы.
             z-20 > z-10 у hero-обёртки — иначе её div перехватывает клики по ссылкам.
             pt-18 xs:pt-22 sm:pt-24 — компактный отступ под хедером (64px на моб / 80px на десктопе), приподняты к шапке */}
