@@ -13,4 +13,10 @@ describe("Logo", () => {
     expect(screen.getByRole("button", { name: /BookStrata - Книжное пространство/i })).toBeInTheDocument();
     expect(screen.getByText("Книжное пространство")).toBeInTheDocument();
   });
+
+  it("рендерит векторный логотип без растровых изображений", () => {
+    const { container } = render(<Logo />);
+    expect(container.querySelectorAll("image").length).toBe(0);
+    expect(container.querySelector("linearGradient#bookCoverS")).toBeInTheDocument();
+  });
 });

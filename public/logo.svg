@@ -1,3 +1,58 @@
-<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-  <image href="data:image/webp;base64,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" x="0" y="7" width="32" height="18" preserveAspectRatio="xMidYMid meet" />
+<svg width="40" height="32" viewBox="0 0 40 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoCoverS" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="45%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+    <linearGradient id="logoCoverA" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4338ca" />
+      <stop offset="50%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <linearGradient id="logoCoverB" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#312e81" />
+      <stop offset="50%" stop-color="#3730a3" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+    <linearGradient id="logoPages" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cbd5e1" />
+      <stop offset="40%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#e0f2fe" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(1, 4.3)">
+    <!-- Top Book S -->
+    <g>
+      <path d="M 4.5 0 L 34.5 0 Q 36.5 0 38 1.5 L 38 5.5 Q 36.5 7 34.5 7 L 4.5 7 Q 1.5 7 1.5 3.5 Q 1.5 0 4.5 0 Z" fill="url(#logoCoverS)" />
+      <path d="M 4.5 0 Q 1.5 0 1.5 3.5 Q 1.5 7 4.5 7" fill="none" stroke="#22d3ee" stroke-width="0.8" stroke-opacity="0.9" />
+      <line x1="5.6" y1="0.5" x2="5.6" y2="6.5" stroke="#1e1b4b" stroke-width="0.6" stroke-opacity="0.7" />
+      <polygon points="28,1.2 37.2,1.2 36.2,5.8 28,5.8" fill="url(#logoPages)" />
+      <line x1="28.8" y1="2.6" x2="36.5" y2="2.6" stroke="#94a3b8" stroke-width="0.4" stroke-opacity="0.6" />
+      <line x1="28.8" y1="4.2" x2="35.8" y2="4.2" stroke="#94a3b8" stroke-width="0.4" stroke-opacity="0.6" />
+      <path d="M 4.5 0.4 L 34.5 0.4 Q 36.5 0.4 37.8 1.5 L 37.8 5.5 Q 36.5 6.6 34.5 6.6" fill="none" stroke="#38bdf8" stroke-width="0.75" stroke-opacity="0.95" />
+    </g>
+
+    <!-- Mid Book A -->
+    <g transform="translate(0, 8.2)">
+      <path d="M 4.5 0 L 31.5 0 Q 33.5 0 35 1.5 L 35 5.5 Q 33.5 7 31.5 7 L 4.5 7 Q 1.5 7 1.5 3.5 Q 1.5 0 4.5 0 Z" fill="url(#logoCoverA)" />
+      <path d="M 4.5 0 Q 1.5 0 1.5 3.5 Q 1.5 7 4.5 7" fill="none" stroke="#38bdf8" stroke-width="0.7" stroke-opacity="0.8" />
+      <line x1="5.6" y1="0.5" x2="5.6" y2="6.5" stroke="#1e1b4b" stroke-width="0.6" stroke-opacity="0.7" />
+      <polygon points="26,1.2 34.2,1.2 33.2,5.8 26,5.8" fill="url(#logoPages)" />
+      <line x1="26.8" y1="2.6" x2="33.5" y2="2.6" stroke="#94a3b8" stroke-width="0.4" stroke-opacity="0.6" />
+      <line x1="26.8" y1="4.2" x2="32.8" y2="4.2" stroke="#94a3b8" stroke-width="0.4" stroke-opacity="0.6" />
+      <path d="M 4.5 0.4 L 31.5 0.4 Q 33.5 0.4 34.8 1.5 L 34.8 5.5 Q 33.5 6.6 31.5 6.6" fill="none" stroke="#38bdf8" stroke-width="0.6" stroke-opacity="0.85" />
+    </g>
+
+    <!-- Bot Book B -->
+    <g transform="translate(0, 16.4)">
+      <path d="M 4.5 0 L 28.5 0 Q 30.5 0 32 1.5 L 32 5.5 Q 30.5 7 28.5 7 L 4.5 7 Q 1.5 7 1.5 3.5 Q 1.5 0 4.5 0 Z" fill="url(#logoCoverB)" />
+      <path d="M 4.5 0 Q 1.5 0 1.5 3.5 Q 1.5 7 4.5 7" fill="none" stroke="#38bdf8" stroke-width="0.6" stroke-opacity="0.65" />
+      <line x1="5.6" y1="0.5" x2="5.6" y2="6.5" stroke="#0f172a" stroke-width="0.6" stroke-opacity="0.7" />
+      <polygon points="23,1.2 31.2,1.2 30.2,5.8 23,5.8" fill="url(#logoPages)" />
+      <line x1="23.8" y1="2.6" x2="30.5" y2="2.6" stroke="#94a3b8" stroke-width="0.4" stroke-opacity="0.6" />
+      <line x1="23.8" y1="4.2" x2="29.8" y2="4.2" stroke="#94a3b8" stroke-width="0.4" stroke-opacity="0.6" />
+      <path d="M 4.5 0.4 L 28.5 0.4 Q 30.5 0.4 31.8 1.5 L 31.8 5.5 Q 30.5 6.6 28.5 6.6" fill="none" stroke="#38bdf8" stroke-width="0.6" stroke-opacity="0.65" />
+    </g>
+  </g>
 </svg>
