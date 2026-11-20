@@ -67,6 +67,7 @@ export interface ForumStats {
   activeBattles: number;
   tierLists: number;
   totalBooks: number;
+  totalThoughts?: number;
 }
 
 export async function getForumStats(): Promise<ForumStats> {

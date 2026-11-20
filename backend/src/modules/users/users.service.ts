@@ -221,7 +221,7 @@ export async function getUserById(params: { id: string }) {
   }
 
   // Статистика
-  const [tierListStats, publishedCount, placementCount, lastUpdated] =
+  const [tierListStats, publishedCount, placementCount, lastUpdated, commentsCount] =
     await Promise.all([
       tierListRepository.aggregateUserStats(userId),
       prisma.tierList.count({ where: { userId, isPublic: true } }),
@@ -231,6 +231,7 @@ export async function getUserById(params: { id: string }) {
         orderBy: { updatedAt: "desc" },
         select: { updatedAt: true },
       }),
+      prisma.bookComment.count({ where: { userId, deletedAt: null } }),
     ]);
 
   const titleEntry = getTitleEntryByXP(user.xp);
@@ -271,6 +272,7 @@ export async function getUserById(params: { id: string }) {
       publishedCount,
       likesCount: tierListStats._sum.likesCount || 0,
       totalBooks: placementCount,
+      commentsCount,
       lastActivity: lastUpdated?.updatedAt.toISOString() ?? null,
     },
   };
@@ -284,7 +286,9 @@ export interface UserStats {
   likesCount: number;
   likesTodayCount: number;
   totalBooks: number;
+  commentsCount: number;
   lastActivity: string | null;
+  totalActiveMinutes?: number;
 }
 
 // GET /api/users/me/stats - получить статистику пользователя
@@ -299,6 +303,7 @@ export async function getUserStats(userId: number) {
     placementCount,
     lastUpdated,
     userRow,
+    commentsCount,
   ] = await Promise.all([
     tierListRepository.aggregateUserStats(userId),
     prisma.template.count({ where: { authorId: userId } }),
@@ -323,6 +328,7 @@ export async function getUserStats(userId: number) {
       where: { id: userId },
       select: { totalActiveMinutes: true },
     }),
+    prisma.bookComment.count({ where: { userId, deletedAt: null } }),
   ]);
 
   return {
@@ -332,6 +338,7 @@ export async function getUserStats(userId: number) {
     likesCount: tierListStats._sum.likesCount || 0,
     likesTodayCount,
     totalBooks: placementCount,
+    commentsCount,
     lastActivity: lastUpdated?.updatedAt.toISOString() ?? null,
     totalActiveMinutes: userRow?.totalActiveMinutes ?? 0,
   };

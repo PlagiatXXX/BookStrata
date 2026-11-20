@@ -5,10 +5,19 @@ export interface ForumStats {
   activeBattles: number;
   tierLists: number;
   totalBooks: number;
+  totalThoughts: number;
 }
 
 export async function getForumStats(): Promise<ForumStats> {
-  const [totalUsers, activeBattles, tierLists, totalBooks] = await Promise.all([
+  const [
+    totalUsers,
+    activeBattles,
+    tierLists,
+    totalBooks,
+    bookCommentsCount,
+    discussionsCount,
+    placementThoughtsCount,
+  ] = await Promise.all([
     prisma.user.count(),
     prisma.battle.count({
       where: {
@@ -18,7 +27,18 @@ export async function getForumStats(): Promise<ForumStats> {
     }),
     prisma.tierList.count(),
     prisma.book.count(),
+    prisma.bookComment.count({ where: { deletedAt: null } }),
+    prisma.discussionMessage.count(),
+    prisma.bookPlacement.count({
+      where: {
+        thoughts: {
+          not: null,
+          gt: "",
+        },
+      },
+    }),
   ]);
 
-  return { totalUsers, activeBattles, tierLists, totalBooks };
+  const totalThoughts = bookCommentsCount + discussionsCount + placementThoughtsCount;
+  return { totalUsers, activeBattles, tierLists, totalBooks, totalThoughts };
 }

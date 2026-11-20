@@ -37,6 +37,7 @@ describe("Forum Routes", () => {
         activeBattles: 5,
         tierLists: 100,
         totalBooks: 500,
+        totalThoughts: 30,
       });
 
       const response = await request(app.server)
@@ -44,7 +45,7 @@ describe("Forum Routes", () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        data: { totalUsers: 42, activeBattles: 5, tierLists: 100, totalBooks: 500 },
+        data: { totalUsers: 42, activeBattles: 5, tierLists: 100, totalBooks: 500, totalThoughts: 30 },
       });
     });
 
@@ -54,6 +55,7 @@ describe("Forum Routes", () => {
         activeBattles: 0,
         tierLists: 0,
         totalBooks: 0,
+        totalThoughts: 0,
       });
 
       const response = await request(app.server)
@@ -61,7 +63,7 @@ describe("Forum Routes", () => {
         .expect(200);
 
       expect(response.body).toEqual({
-        data: { totalUsers: 0, activeBattles: 0, tierLists: 0, totalBooks: 0 },
+        data: { totalUsers: 0, activeBattles: 0, tierLists: 0, totalBooks: 0, totalThoughts: 0 },
       });
     });
 

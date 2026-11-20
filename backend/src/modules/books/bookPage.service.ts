@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma.js";
 import { normTitleForSql } from "../tier-lists/tierList.books.service.js";
 import type { ReadingGuide } from "./readingGuide.schema.js";
 import type { ReadingProfile } from "./readingProfile.schema.js";
+import { formatBookComment, type FormattedBookComment } from "./bookComment.service.js";
 
 /** Компактная выборка книги для карточек (similarBooks / otherBooksByAuthor) */
 const bookCardSelect = {
@@ -18,14 +19,7 @@ const bookCardSelect = {
   publishedYear: true,
 } satisfies Prisma.BookSelect;
 
-export interface BookPageComment {
-  id: number;
-  content: string;
-  likesCount: number;
-  editedAt: Date | null;
-  createdAt: Date;
-  user: { id: number; username: string; avatarUrl: string | null };
-}
+export type BookPageComment = FormattedBookComment;
 
 export interface BookPageData {
   book: {
@@ -262,10 +256,12 @@ export async function getBookPageData(
         likesCount: true,
         editedAt: true,
         createdAt: true,
+        parentId: true,
+        deletedAt: true,
         user: { select: { id: true, username: true, avatarUrl: true } },
       },
     }),
-    prisma.bookComment.count({ where: { bookId: id } }),
+    prisma.bookComment.count({ where: { bookId: id, deletedAt: null } }),
     userId
       ? prisma.bookLike.findUnique({
           where: { bookId_userId: { bookId: id, userId } },
@@ -301,7 +297,7 @@ export async function getBookPageData(
     celebrities,
     similarBooks,
     otherBooksByAuthor,
-    comments: { items: comments, total: commentsTotal },
+    comments: { items: comments.map(formatBookComment), total: commentsTotal },
     userLike: Boolean(userLike),
   };
 }

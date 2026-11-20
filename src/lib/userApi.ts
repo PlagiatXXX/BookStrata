@@ -62,6 +62,7 @@ export interface UserStats {
   likesCount: number;
   likesTodayCount: number;
   totalBooks: number;
+  commentsCount?: number;
   lastActivity: string | null;
   totalActiveMinutes: number;
 }
@@ -71,6 +72,7 @@ export interface PublicUserStats {
   publishedCount: number;
   likesCount: number;
   totalBooks: number;
+  commentsCount?: number;
   lastActivity: string | null;
 }
 

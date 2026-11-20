@@ -163,23 +163,57 @@ describe("updateBookComment", () => {
 describe("deleteBookComment", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("владелец удаляет свой комментарий", async () => {
-    (prisma.bookComment.findUnique as any).mockResolvedValue({ id: 10, userId: 3 });
+  it("владелец удаляет свой комментарий без ответов: hard delete", async () => {
+    (prisma.bookComment.findUnique as any).mockResolvedValue({
+      id: 10,
+      userId: 3,
+      deletedAt: null,
+      _count: { replies: 0 },
+    });
     (prisma.bookComment.delete as any).mockResolvedValue({ id: 10 });
 
-    await expect(deleteBookComment(10, 3, "user")).resolves.toEqual({ success: true });
+    await expect(deleteBookComment(10, 3, "user")).resolves.toEqual({ success: true, softDeleted: false });
     expect(prisma.bookComment.delete).toHaveBeenCalledWith({ where: { id: 10 } });
   });
 
-  it("moderator удаляет чужой", async () => {
-    (prisma.bookComment.findUnique as any).mockResolvedValue({ id: 10, userId: 3 });
+  it("при наличии ответов выполняет soft delete (tombstone)", async () => {
+    (prisma.bookComment.findUnique as any).mockResolvedValue({
+      id: 10,
+      userId: 3,
+      deletedAt: null,
+      _count: { replies: 2 },
+    });
+    (prisma.bookComment.update as any).mockResolvedValue({ id: 10 });
+
+    await expect(deleteBookComment(10, 3, "user")).resolves.toEqual({ success: true, softDeleted: true });
+    expect(prisma.bookComment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 10 },
+        data: expect.objectContaining({ content: "Комментарий удалён" }),
+      }),
+    );
+    expect(prisma.bookComment.delete).not.toHaveBeenCalled();
+  });
+
+  it("moderator удаляет чужой комментарий", async () => {
+    (prisma.bookComment.findUnique as any).mockResolvedValue({
+      id: 10,
+      userId: 3,
+      deletedAt: null,
+      _count: { replies: 0 },
+    });
     (prisma.bookComment.delete as any).mockResolvedValue({ id: 10 });
 
-    await expect(deleteBookComment(10, 99, "moderator")).resolves.toEqual({ success: true });
+    await expect(deleteBookComment(10, 99, "moderator")).resolves.toEqual({ success: true, softDeleted: false });
   });
 
   it("обычный пользователь не может удалить чужой", async () => {
-    (prisma.bookComment.findUnique as any).mockResolvedValue({ id: 10, userId: 3 });
+    (prisma.bookComment.findUnique as any).mockResolvedValue({
+      id: 10,
+      userId: 3,
+      deletedAt: null,
+      _count: { replies: 0 },
+    });
     await expect(deleteBookComment(10, 99, "user")).rejects.toThrow(CommentForbiddenError);
     expect(prisma.bookComment.delete).not.toHaveBeenCalled();
   });

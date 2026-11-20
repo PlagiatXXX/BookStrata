@@ -15,6 +15,7 @@ import type { TierListShort } from "@/lib/tierListApi"
 import { CollectionFlipCard } from "@/components/CommunityComponents/CollectionFlipCard"
 import type { CollectionItem } from "@/types/collection"
 import { TEMPLATES, type TemplateItem } from "@/data/mockData"
+import { pluralize } from "@/utils/pluralize"
 
 // Готовые шаблоны для секции «Попробуйте прямо сейчас» (см. mockData.ts)
 const LANDING_TEMPLATE_IDS = [101, 102, 103]
@@ -234,6 +235,7 @@ interface LandingBodyProps {
     totalUsers: number
     tierLists: number
     totalBooks: number
+    totalThoughts?: number
   } | undefined
 }
 
@@ -244,6 +246,7 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
   const isAdmin = user?.role === "admin"
   const [isDonateOpen, setIsDonateOpen] = useState(false)
   const [activeScreenshot, setActiveScreenshot] = useState<number | null>(null)
+  const thoughtsCount = forumStats?.totalThoughts && forumStats.totalThoughts > 0 ? forumStats.totalThoughts : 24
 
   return (
     <>
@@ -293,6 +296,34 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
               <ChevronRightIcon />
             </button>
           </RevealBox>
+        </div>
+      </section>
+
+      <div className="landing-divider" />
+
+      {/* ============ STATS ============ */}
+      <section className="landing-stats" id="stats">
+        <div className="landing-stats__grid">
+          <StatCounter
+            target={forumStats?.totalUsers && forumStats.totalUsers > 0 ? forumStats.totalUsers : 80}
+            suffix="+"
+            label="Пользователей"
+          />
+          <StatCounter
+            target={forumStats?.tierLists && forumStats.tierLists > 0 ? forumStats.tierLists : 59}
+            suffix=""
+            label="Создано тир-листов"
+          />
+          <StatCounter
+            target={forumStats?.totalBooks && forumStats.totalBooks > 0 ? forumStats.totalBooks : 1715}
+            suffix="+"
+            label="Книг в базе"
+          />
+          <StatCounter
+            target={thoughtsCount}
+            suffix=""
+            label={pluralize(thoughtsCount, "мысль пользователя", "мысли пользователей", "мыслей пользователей")}
+          />
         </div>
       </section>
 
@@ -468,29 +499,6 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
               />
             ))}
           </div>
-        </div>
-      </section>
-
-      <div className="landing-divider" />
-
-      {/* ============ STATS ============ */}
-      <section className="landing-stats" id="stats">
-        <div className="landing-stats__grid">
-          <StatCounter
-            target={forumStats?.totalUsers && forumStats.totalUsers > 0 ? forumStats.totalUsers : 80}
-            suffix="+"
-            label="Пользователей"
-          />
-          <StatCounter
-            target={forumStats?.tierLists && forumStats.tierLists > 0 ? forumStats.tierLists : 59}
-            suffix=""
-            label="Создано тир-листов"
-          />
-          <StatCounter
-            target={forumStats?.totalBooks && forumStats.totalBooks > 0 ? forumStats.totalBooks : 1715}
-            suffix="+"
-            label="Книг в базе"
-          />
         </div>
       </section>
 

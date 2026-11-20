@@ -6,6 +6,9 @@ vi.mock("../../lib/prisma.js", () => {
     battle: { count: vi.fn() },
     tierList: { count: vi.fn() },
     book: { count: vi.fn() },
+    bookComment: { count: vi.fn().mockResolvedValue(0) },
+    discussionMessage: { count: vi.fn().mockResolvedValue(0) },
+    bookPlacement: { count: vi.fn().mockResolvedValue(0) },
   };
   return { prisma: tx };
 });
@@ -20,10 +23,13 @@ describe("forum.service", () => {
       vi.mocked(prisma.battle.count).mockResolvedValue(5);
       vi.mocked(prisma.tierList.count).mockResolvedValue(100);
       vi.mocked(prisma.book.count).mockResolvedValue(500);
+      vi.mocked(prisma.bookComment.count).mockResolvedValue(15);
+      vi.mocked(prisma.discussionMessage.count).mockResolvedValue(5);
+      vi.mocked(prisma.bookPlacement.count).mockResolvedValue(10);
 
       const stats = await getForumStats();
 
-      expect(stats).toEqual({ totalUsers: 42, activeBattles: 5, tierLists: 100, totalBooks: 500 });
+      expect(stats).toEqual({ totalUsers: 42, activeBattles: 5, tierLists: 100, totalBooks: 500, totalThoughts: 30 });
       expect(prisma.user.count).toHaveBeenCalledOnce();
       expect(prisma.battle.count).toHaveBeenCalledWith({
         where: {
@@ -40,10 +46,13 @@ describe("forum.service", () => {
       vi.mocked(prisma.battle.count).mockResolvedValue(0);
       vi.mocked(prisma.tierList.count).mockResolvedValue(0);
       vi.mocked(prisma.book.count).mockResolvedValue(0);
+      vi.mocked(prisma.bookComment.count).mockResolvedValue(0);
+      vi.mocked(prisma.discussionMessage.count).mockResolvedValue(0);
+      vi.mocked(prisma.bookPlacement.count).mockResolvedValue(0);
 
       const stats = await getForumStats();
 
-      expect(stats).toEqual({ totalUsers: 0, activeBattles: 0, tierLists: 0, totalBooks: 0 });
+      expect(stats).toEqual({ totalUsers: 0, activeBattles: 0, tierLists: 0, totalBooks: 0, totalThoughts: 0 });
     });
 
     it("должен считать активные битвы, а не все", async () => {

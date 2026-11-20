@@ -26,6 +26,42 @@ export class CannotLikeOwnCommentError extends Error {
   }
 }
 
+export interface FormattedBookComment {
+  id: number;
+  content: string;
+  likesCount: number;
+  editedAt: Date | null;
+  createdAt: Date;
+  parentId: number | null;
+  isDeleted: boolean;
+  user: { id: number; username: string; avatarUrl: string | null };
+}
+
+export function formatBookComment(c: {
+  id: number;
+  content: string;
+  likesCount: number;
+  editedAt: Date | null;
+  createdAt: Date;
+  parentId: number | null;
+  deletedAt: Date | null;
+  user: { id: number; username: string; avatarUrl: string | null };
+}): FormattedBookComment {
+  const isDeleted = Boolean(c.deletedAt);
+  return {
+    id: c.id,
+    content: isDeleted ? "Комментарий удалён" : c.content,
+    likesCount: isDeleted ? 0 : c.likesCount,
+    editedAt: c.editedAt,
+    createdAt: c.createdAt,
+    parentId: c.parentId,
+    isDeleted,
+    user: isDeleted
+      ? { id: 0, username: "Пользователь", avatarUrl: null }
+      : c.user,
+  };
+}
+
 /** Проверка: книга существует и опубликована (иначе комментарии не публикуются) */
 async function assertPublishedBook(slug: string): Promise<number> {
   const book = await prisma.book.findUnique({
@@ -49,7 +85,7 @@ export async function getBookComments(
   const safeLimit = Math.min(Math.max(limit, 1), COMMENT_MAX_LIMIT);
   const safeOffset = Math.max(offset, 0);
 
-  const [items, total] = await Promise.all([
+  const [rawItems, total] = await Promise.all([
     prisma.bookComment.findMany({
       where: { bookId },
       orderBy: { createdAt: "desc" },
@@ -62,12 +98,14 @@ export async function getBookComments(
         editedAt: true,
         createdAt: true,
         parentId: true,
+        deletedAt: true,
         user: { select: { id: true, username: true, avatarUrl: true } },
       },
     }),
-    prisma.bookComment.count({ where: { bookId } }),
+    prisma.bookComment.count({ where: { bookId, deletedAt: null } }),
   ]);
 
+  const items = rawItems.map(formatBookComment);
   return { items, total };
 }
 
@@ -128,9 +166,9 @@ export async function updateBookComment(
 
   const comment = await prisma.bookComment.findUnique({
     where: { id: commentId },
-    select: { userId: true },
+    select: { userId: true, deletedAt: true },
   });
-  if (!comment) {
+  if (!comment || comment.deletedAt) {
     throw new CommentNotFoundError();
   }
   if (comment.userId !== userId && role !== "admin") {
@@ -152,7 +190,7 @@ export async function updateBookComment(
   });
 }
 
-/** DELETE — удаление (только свой или admin/moderator). Cascade на replies. */
+/** DELETE — удаление (только свой или admin/moderator). Soft-delete при наличии ответов. */
 export async function deleteBookComment(
   commentId: number,
   userId: number,
@@ -160,26 +198,43 @@ export async function deleteBookComment(
 ) {
   const comment = await prisma.bookComment.findUnique({
     where: { id: commentId },
-    select: { userId: true },
+    select: {
+      userId: true,
+      deletedAt: true,
+      _count: { select: { replies: true } },
+    },
   });
-  if (!comment) {
+  if (!comment || comment.deletedAt) {
     throw new CommentNotFoundError();
   }
   if (comment.userId !== userId && !["admin", "moderator"].includes(role)) {
     throw new CommentForbiddenError();
   }
 
-  await prisma.bookComment.delete({ where: { id: commentId } });
-  return { success: true };
+  if ((comment._count?.replies ?? 0) > 0) {
+    // Есть ответы — soft delete (tombstone), сохраняем ветку ответов
+    await prisma.bookComment.update({
+      where: { id: commentId },
+      data: {
+        deletedAt: new Date(),
+        content: "Комментарий удалён",
+      },
+    });
+    return { success: true, softDeleted: true };
+  } else {
+    // Нет ответов — полное удаление из БД
+    await prisma.bookComment.delete({ where: { id: commentId } });
+    return { success: true, softDeleted: false };
+  }
 }
 
-/** POST /:commentId/like — лайк/анлайк комментария. Нельзя лайкнуть свой. */
+/** POST /:commentId/like — лайк/анлайк комментария. Нельзя лайкнуть свой или удалённый. */
 export async function toggleBookCommentLike(commentId: number, userId: number) {
   const comment = await prisma.bookComment.findUnique({
     where: { id: commentId },
-    select: { id: true, userId: true },
+    select: { id: true, userId: true, deletedAt: true },
   });
-  if (!comment) {
+  if (!comment || comment.deletedAt) {
     throw new CommentNotFoundError();
   }
   if (comment.userId === userId) {

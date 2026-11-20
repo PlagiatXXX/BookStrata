@@ -71,6 +71,8 @@ export interface BookComment {
   likesCount: number;
   editedAt: string | null;
   createdAt: string;
+  parentId?: number | null;
+  isDeleted?: boolean;
   user: BookCommentAuthor;
 }
 

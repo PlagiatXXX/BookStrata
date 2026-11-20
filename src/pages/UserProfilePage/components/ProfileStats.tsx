@@ -1,4 +1,5 @@
 import type { PublicUserStats, UserStats } from "@/lib/userApi"
+import { pluralize } from "@/utils/pluralize"
 
 interface ProfileStatsProps {
   mode: "owner"
@@ -28,16 +29,31 @@ interface StatCard {
 export function ProfileStats(props: ProfileStatsAllProps) {
   const { stats, onOpenTierLists } = props
 
+  const tierListsCount = stats.tierListsCount ?? 0
+  const booksCount = stats.totalBooks ?? 0
+  const likesCount = stats.likesCount ?? 0
+  const commentsCount = stats.commentsCount ?? 0
+
   const tierListsCard: StatCard = {
-    label: "Тир-листов",
-    value: stats.tierListsCount,
+    label: pluralize(tierListsCount, "Тир-лист", "Тир-листа", "Тир-листов"),
+    value: tierListsCount,
     onClick: onOpenTierLists,
   }
 
   const cards: StatCard[] = [
     tierListsCard,
-    { label: "Книг в тир-листах", value: stats.totalBooks },
-    { label: "Лайков на тир-листах", value: stats.likesCount },
+    {
+      label: pluralize(booksCount, "Книга в тир-листах", "Книги в тир-листах", "Книг в тир-листах"),
+      value: booksCount,
+    },
+    {
+      label: pluralize(likesCount, "Лайк на тир-листах", "Лайка на тир-листах", "Лайков на тир-листах"),
+      value: likesCount,
+    },
+    {
+      label: pluralize(commentsCount, "Комментарий", "Комментария", "Комментариев"),
+      value: commentsCount,
+    },
   ]
 
   return (
@@ -45,7 +61,7 @@ export function ProfileStats(props: ProfileStatsAllProps) {
       {cards.map(({ label, value, onClick }) => {
         const interactive = !!onClick
         const Tag = interactive ? "button" : "div"
-        const isLikes = label.includes("Лайков")
+        const isLikes = label.toLowerCase().includes("лайк")
 
         return (
           <Tag

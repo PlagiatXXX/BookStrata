@@ -173,6 +173,7 @@ model BookComment {
   parentId   Int?            // для ответов на комментарии (threading)
   likesCount Int             @default(0)
   editedAt   DateTime?       // дата последнего редактирования; null = не редактировался
+  deletedAt  DateTime?       @map("deleted_at") // дата мягкого удаления (tombstone)
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
   book       Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)

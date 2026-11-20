@@ -121,6 +121,7 @@ const ICON_MAP: Record<string, string> = {
   psychology: "\uEA4A",
   public: "\uE80B",
   queue_music: "\uE03C",
+  reply: "\uE15E",
   rocket_launch: "\uEB9B",
   shield: "\uE9E0",
   sort: "\uE164",

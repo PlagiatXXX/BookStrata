@@ -518,24 +518,24 @@ select.inp {
 /* ── Stats Section ── */
 .profile-stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .profile-stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 }
 
 .profile-stat-card {
   text-align: center;
-  padding: 20px;
+  padding: 14px 10px;
 }
 
 .profile-stat-num {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 800;
   line-height: 1.2;
 }

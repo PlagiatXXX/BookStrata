@@ -24,6 +24,9 @@ vi.mock("../../lib/prisma.js", () => ({
       count: vi.fn(),
       findMany: vi.fn(),
     },
+    bookComment: {
+      count: vi.fn().mockResolvedValue(0),
+    },
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn(),
     userBadge: {
@@ -429,6 +432,7 @@ describe("users.service", () => {
       ;(prisma.tierList.count as any).mockResolvedValue(3)
       ;(prisma.bookPlacement.count as any).mockResolvedValue(20)
       ;(prisma.tierList.findFirst as any).mockResolvedValue({ updatedAt: new Date("2024-06-01") })
+      ;(prisma.bookComment.count as any).mockResolvedValue(0)
     })
 
     it("должен вернуть пользователя по ID с расширенными полями", async () => {
@@ -482,6 +486,7 @@ describe("users.service", () => {
           publishedCount: 3,
           likesCount: 10,
           totalBooks: 20,
+          commentsCount: 0,
           lastActivity: expect.any(String),
         },
       });
@@ -617,6 +622,7 @@ describe("users.service", () => {
 
     beforeEach(() => {
       mockAggregateUserStats.mockReset()
+      ;(prisma.bookComment.count as any).mockResolvedValue(0)
     })
 
     it("должен вернуть статистику пользователя", async () => {
@@ -639,6 +645,7 @@ describe("users.service", () => {
         likesCount: 10,
         likesTodayCount: 2,
         totalBooks: 20,
+        commentsCount: 0,
         lastActivity: expect.any(String),
         totalActiveMinutes: 0,
       });
@@ -700,6 +707,7 @@ describe("users.service", () => {
         likesCount: 0,
         likesTodayCount: 0,
         totalBooks: 0,
+        commentsCount: 0,
         lastActivity: null,
         totalActiveMinutes: 0,
       });
