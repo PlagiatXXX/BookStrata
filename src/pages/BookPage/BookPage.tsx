@@ -41,6 +41,7 @@ import { getAffiliateLinks } from "@/lib/affiliateLinks";
 import { pushDataLayerEvent } from "@/lib/gtm";
 import { rememberBookReturnScroll } from "@/utils/bookNavigation";
 import { GENRE_CATEGORIES, parseBookGenre } from "@/data/genre-taxonomy";
+import { pluralize } from "@/utils/pluralize";
 import "./BookPage.css";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || "https://bookstrata.ru";
@@ -171,6 +172,7 @@ export default function BookPage() {
   const bookJsonLd = buildBookJsonLd({
     ...book,
     url: `${SITE_URL}/books/${slug}`,
+    comments: comments.items,
   });
 
   // Статус книги в «Моей полке» (want_to_read / read / null)
@@ -254,6 +256,7 @@ export default function BookPage() {
           hasReadingGuide: Boolean(book.readingGuide),
           hasSimilarBooks: similarBooks.length > 0,
           tierListsCount: tierLists.length,
+          commentsCount: comments.total,
         })}
         image={
           book.ogImageUrl ||
@@ -602,6 +605,28 @@ export default function BookPage() {
                   {/* Оценить книгу: слайдер 0–10, одна оценка на пользователя */}
                   <BookRatingPanel bookId={book.id} defaultRating={rating} />
 
+                  {/* Быстрый переход к обсуждению книги */}
+                  <a
+                    href="#discussion"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById("discussion")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="mt-4 mb-6 flex items-center justify-between p-3 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon name="comment" className="text-primary text-base" />
+                      <span className="text-xs text-white/90 font-medium group-hover:text-primary transition-colors">
+                        {comments.total > 0
+                          ? `${comments.total} ${pluralize(comments.total, "мысль", "мысли", "мыслей")}`
+                          : "Обсуждение книги"}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-primary/70 bp-label-caps group-hover:text-primary transition-colors">
+                      {comments.total > 0 ? "Читать" : "Написать"} →
+                    </span>
+                  </a>
+
                   {/* «Где читать» — аффилиат-ссылки на Читай Город и ЛитРес */}
                   {affiliateLinks.length > 0 && (
                     <div>
@@ -684,6 +709,13 @@ export default function BookPage() {
             bookId={book.id}
           />
         )}
+
+        {/* ── Обсуждение ── */}
+        <BookComments
+          slug={slug!}
+          initialItems={comments.items}
+          initialTotal={comments.total}
+        />
 
         {/* ── Другие книги автора ── */}
         {otherBooksByAuthor.length > 0 && (
@@ -799,13 +831,6 @@ export default function BookPage() {
             </div>
           </section>
         )}
-
-        {/* ── Обсуждение ── */}
-        <BookComments
-          slug={slug!}
-          initialItems={comments.items}
-          initialTotal={comments.total}
-        />
 
         {/* ── Призыв к регистрации для гостей ── */}
         <BookSignUpCta redirectTo={`/books/${slug}`} />

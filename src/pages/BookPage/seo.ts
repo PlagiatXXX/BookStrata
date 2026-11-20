@@ -2,7 +2,7 @@
 // Утилиты SEO для страницы книги: meta description и JSON-LD (Schema.org Book).
 // Вынесены в отдельный файл — react-refresh запрещает экспорт не-компонентов
 // из файлов компонентов.
-import type { ReadingGuide } from "@/lib/bookApi";
+import type { BookComment, ReadingGuide } from "@/lib/bookApi";
 
 /** Лимит длины meta description страницы книги (влезает в сниппет выдачи). */
 const DESCRIPTION_LIMIT = 160;
@@ -20,6 +20,8 @@ export interface BookDescriptionInput {
   hasSimilarBooks?: boolean;
   /** Сколько тир-листов содержит книгу */
   tierListsCount?: number;
+  /** Количество комментариев/мыслей читателей */
+  commentsCount?: number;
 }
 
 /** Оценка редакции в тексте: целое — как есть, дробное — один знак с запятой. */
@@ -52,6 +54,7 @@ export function buildDescriptionSnippet(book: BookDescriptionInput): string {
     markers.push(`оценка редакции ${formatEditorRating(book.rating)} из 10`);
   }
   if (book.hasReadingGuide) markers.push("гид по чтению");
+  if (book.commentsCount && book.commentsCount > 0) markers.push("мысли читателей");
   if (book.tierListsCount && book.tierListsCount > 0) markers.push("тир-листы читателей");
   if (book.hasSimilarBooks) markers.push("похожие книги");
 
@@ -98,8 +101,28 @@ export function buildBookJsonLd(book: {
   readingGuide?: ReadingGuide | null;
   /** Канонический URL страницы книги (для url и mainEntityOfPage) */
   url: string;
+  /** Комментарии / мысли читателей для микроразметки Schema.org Comment */
+  comments?: BookComment[] | null;
 }): Record<string, unknown> {
   const guide = book.readingGuide ?? null;
+
+  const activeComments = (book.comments ?? [])
+    .filter((c) => !c.isDeleted && c.content?.trim())
+    .slice(0, 10);
+
+  const jsonLdComments =
+    activeComments.length > 0
+      ? activeComments.map((c) => ({
+          "@type": "Comment",
+          text: c.content,
+          dateCreated: c.createdAt,
+          upvoteCount: c.likesCount,
+          author: {
+            "@type": "Person",
+            name: c.user.username,
+          },
+        }))
+      : null;
 
   // Description: хук паспорта вперёд (уникальная суть), затем синопсис.
   // Хук и аудитория реально отображаются на странице — правила Schema.org
@@ -132,5 +155,6 @@ export function buildBookJsonLd(book: {
     inLanguage: "ru",
     url: book.url,
     mainEntityOfPage: { "@type": "WebPage", "@id": book.url },
+    ...(jsonLdComments ? { comment: jsonLdComments } : {}),
   };
 }

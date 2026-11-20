@@ -205,4 +205,33 @@ describe("BookComments", () => {
       screen.getByText(/Если на него уже ответили другие пользователи, вместо текста отобразится «Комментарий удалён»/i),
     ).toBeTruthy();
   });
+
+  it("секция имеет id='discussion' и машиночитаемый тег <time dateTime='...'>", () => {
+    const createdAt = "2026-04-12T10:15:30.000Z";
+    mockUseBookComments.mockReturnValue({
+      data: {
+        items: [
+          {
+            ...sampleComments[0],
+            createdAt,
+          },
+        ],
+        total: 1,
+      },
+      isFetching: false,
+    });
+
+    const { container } = render(
+      <MemoryRouter>
+        <BookComments slug="test-book" initialItems={sampleComments} initialTotal={1} />
+      </MemoryRouter>,
+    );
+
+    const section = container.querySelector("section#discussion");
+    expect(section).toBeInTheDocument();
+
+    const timeEl = container.querySelector("time");
+    expect(timeEl).toBeInTheDocument();
+    expect(timeEl).toHaveAttribute("datetime", createdAt);
+  });
 });

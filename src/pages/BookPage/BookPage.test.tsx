@@ -8,7 +8,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter, useParams } from "react-router-dom";
 import BookPage from "./BookPage";
 import { buildBookJsonLd, buildDescriptionSnippet } from "./seo";
-import type { BookPageData } from "@/lib/bookApi";
+import type { BookComment, BookPageData } from "@/lib/bookApi";
 
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
@@ -535,6 +535,23 @@ describe("BookPage", () => {
     expect(screen.queryByText("Создать аккаунт")).toBeNull();
   });
 
+  it("рендерит якорную ссылку на обсуждение в hero и секцию обсуждения", async () => {
+    mockedUseBook.mockReturnValue({
+      data: bookPageData,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    const { container } = renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText("Роман, ставший символом века джаза.")).toBeTruthy();
+    });
+
+    const discussionLink = container.querySelector('a[href="#discussion"]');
+    expect(discussionLink).toBeInTheDocument();
+  });
+
   it("создаёт новый тир-лист из выпадашки и добавляет в него книгу", async () => {
     const mutateMock = vi.fn();
     vi.mocked(createTierList).mockResolvedValue({
@@ -715,6 +732,69 @@ describe("BookPage", () => {
     expect(ld).not.toHaveProperty("keywords");
     expect(ld).not.toHaveProperty("review");
     expect(ld.description).toBe("Эпопея о пустынной планете.");
+  });
+
+  it("buildBookJsonLd: добавляет комментарии читателей как Schema.org Comment, фильтруя удалённые", () => {
+    const comments: BookComment[] = [
+      {
+        id: 1,
+        content: "Прекрасный глубокий роман о выживании.",
+        likesCount: 5,
+        editedAt: null,
+        createdAt: "2026-05-10T14:30:00.000Z",
+        user: { id: 10, username: "paul_atreides", avatarUrl: null },
+      },
+      {
+        id: 2,
+        content: "Комментарий удален",
+        likesCount: 0,
+        editedAt: null,
+        createdAt: "2026-05-11T10:00:00.000Z",
+        isDeleted: true,
+        user: { id: 11, username: "deleted_user", avatarUrl: null },
+      },
+    ];
+
+    const ld = buildBookJsonLd({
+      title: "Дюна",
+      author: "Фрэнк Герберт",
+      coverImageUrl: "https://example.com/cover.jpg",
+      description: "Эпопея о пустынной планете.",
+      genre: "Фантастика",
+      publishedYear: 1965,
+      isbn: null,
+      url: "https://bookstrata.ru/books/dyuna",
+      comments,
+    });
+
+    expect(ld.comment).toEqual([
+      {
+        "@type": "Comment",
+        text: "Прекрасный глубокий роман о выживании.",
+        dateCreated: "2026-05-10T14:30:00.000Z",
+        upvoteCount: 5,
+        author: {
+          "@type": "Person",
+          name: "paul_atreides",
+        },
+      },
+    ]);
+  });
+
+  it("buildBookJsonLd без комментариев не добавляет поле comment", () => {
+    const ld = buildBookJsonLd({
+      title: "Дюна",
+      author: "Фрэнк Герберт",
+      coverImageUrl: "https://example.com/cover.jpg",
+      description: "Эпопея о пустынной планете.",
+      genre: "Фантастика",
+      publishedYear: 1965,
+      isbn: null,
+      url: "https://bookstrata.ru/books/dyuna",
+      comments: [],
+    });
+
+    expect(ld).not.toHaveProperty("comment");
   });
 });
 
@@ -959,6 +1039,26 @@ describe("buildDescriptionSnippet", () => {
   it("rating = 0 не выводит оценку", () => {
     const result = buildDescriptionSnippet({ title: "Дюна", author: "Ф. Герберт", description: "Роман.", rating: 0 });
     expect(result).not.toContain("оценка редакции");
+  });
+
+  it("добавляет маркер 'мысли читателей' при commentsCount > 0", () => {
+    const withComments = buildDescriptionSnippet({
+      title: "1984",
+      author: "Джордж Оруэлл",
+      description: "Роман-антиутопия.",
+      commentsCount: 5,
+    });
+    expect(withComments).toBe(
+      "1984 — Джордж Оруэлл: о чём книга и мысли читателей. Роман-антиутопия.",
+    );
+
+    const zeroComments = buildDescriptionSnippet({
+      title: "1984",
+      author: "Джордж Оруэлл",
+      description: "Роман-антиутопия.",
+      commentsCount: 0,
+    });
+    expect(zeroComments).not.toContain("мысли читателей");
   });
 
   it("длинное описание обрезает по границе слова, итог ≤ 160 с многоточием", () => {

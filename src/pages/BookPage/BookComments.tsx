@@ -171,10 +171,14 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
                 {c.user.username}
               </Link>
             )}
-            <span className="text-[10px] text-primary/60 tracking-widest uppercase shrink-0">
+            <time
+              dateTime={c.createdAt}
+              title={new Date(c.createdAt).toLocaleString("ru-RU")}
+              className="text-[10px] text-primary/60 tracking-widest uppercase shrink-0"
+            >
               {formatRelativeTime(c.createdAt)}
               {c.editedAt ? " · ред." : ""}
-            </span>
+            </time>
           </div>
 
           {editingId === c.id ? (
@@ -343,10 +347,17 @@ export function BookComments({ slug, initialItems, initialTotal }: BookCommentsP
   );
 
   return (
-    <section className="relative py-10 md:py-16 bg-[var(--bp-background)] border-t border-primary/20">
+    <section
+      id="discussion"
+      aria-labelledby="book-discussion-heading"
+      className="relative py-10 md:py-16 bg-[var(--bp-background)] border-t border-primary/20 scroll-mt-20"
+    >
       <div className="max-w-[1100px] mx-auto px-4 md:px-5">
         <div className="flex items-center justify-between mb-6 md:mb-8 border-b border-primary/20 pb-4">
-          <h2 className="bp-display text-white tracking-widest uppercase text-xl md:text-2xl">
+          <h2
+            id="book-discussion-heading"
+            className="bp-display text-white tracking-widest uppercase text-xl md:text-2xl"
+          >
             Обсуждение <span className="text-[var(--bp-primary)] text-base ml-2">{total}</span>
           </h2>
         </div>
