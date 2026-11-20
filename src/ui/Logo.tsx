@@ -17,7 +17,7 @@ export const Logo = ({ onClick, light = false }: LogoProps) => {
     <button
       onClick={onClick}
       className="flex items-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-lg"
-      aria-label="BookStrata - Рейтинг всего"
+      aria-label="BookStrata - Книжное пространство"
     >
       <svg
         viewBox="0 0 180 48"
@@ -126,9 +126,9 @@ export const Logo = ({ onClick, light = false }: LogoProps) => {
           fontFamily="Inter, system-ui, sans-serif"
           fontWeight="400"
           fill="url(#textGradientSecondary)"
-          letterSpacing="0.5"
+          letterSpacing="0.25"
         >
-          Рейтинг всего
+          Книжное пространство
         </text>
 
         {/* Gradients for text */}

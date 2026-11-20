@@ -45,6 +45,6 @@ describe("DnaComingSoonTeaser", () => {
     const listsLink = screen.getByRole("link", { name: /Смотреть рейтинги/i });
     expect(listsLink).toHaveAttribute("href", "/rankings");
 
-    expect(screen.getByRole("button", { name: /BookStrata - Рейтинг всего/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /BookStrata - Книжное пространство/i })).toBeInTheDocument();
   });
 });
