@@ -127,15 +127,28 @@ describe("detectAgeRatingFromMetadata", () => {
     ).toEqual({ rating: "16+", reason: "жанр/тег: ужасы" });
   });
 
-  it("НЕ ставит 0+ взрослому роману только из-за слова 'сказка' в аннотации (кейс Сары Джио)", () => {
+  it("распознаёт 16+ для современной зарубежной прозы и НЕ ставит 0+ из-за слова 'сказка' (кейс Сары Джио)", () => {
     const sgioBook = {
       genre: "Современная зарубежная проза",
       tags: ["романтика", "драма"],
       description: "Их встреча в Лондоне была похожа на сказку, но тайны прошлого разрушили идиллию.",
     };
-    // Слово "сказку" в описании не должно делать книгу 0+!
-    const result = detectAgeRatingFromMetadata(sgioBook);
-    expect(result?.rating).not.toBe("0+");
+    expect(detectAgeRatingFromMetadata(sgioBook)).toEqual({
+      rating: "16+",
+      reason: "жанр/тег: современная зарубежная проза",
+    });
+  });
+
+  it("распознаёт 18+ для молодежных романов со сценами насилия/буллинга (кейс Хлои Уолш)", () => {
+    const walshBook = {
+      genre: "Young Adult",
+      tags: ["спорт", "young adult"],
+      description: "Она бежит от жестокости и буллинга. Содержит сцены насилия и тяжелые травмы.",
+    };
+    expect(detectAgeRatingFromMetadata(walshBook)).toEqual({
+      rating: "18+",
+      reason: "описание: сцены насилия",
+    });
   });
 
   it("ставит 0+ для настоящей детской литературы по жанру/тегу", () => {
