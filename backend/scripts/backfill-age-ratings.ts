@@ -1,98 +1,37 @@
 /**
  * Скрипт автоматической разметки возрастного ценза (ageRating) для книг.
- * Анализирует жанры, теги и Google Books API (maturityRating: "MATURE").
+ * Анализирует официальные маркировки 436-ФЗ в аннотации, жанры, теги,
+ * Google Books API (maturityRating: "MATURE") и опционально LLM/AI.
  *
  * Запуск:
  *   cd backend && npx tsx scripts/backfill-age-ratings.ts
  * Опции:
- *   --dry-run (только вывод в консоль, без записи в БД)
+ *   --dry-run   (только вывод в консоль, без записи в БД)
  *   --limit=100 (ограничение количества обрабатываемых книг)
- *   --all (обрабатывать даже книги, у которых уже стоит ageRating)
+ *   --all       (обрабатывать даже книги, у которых уже стоит ageRating)
+ *   --ai        (использовать LLM/AI для книг, не распознанных по метаданным)
  */
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import {
+  detectAgeRatingFromMetadata,
+  checkGoogleBooksMaturity,
+  detectAgeRatingWithAi,
+  type AgeRatingResult,
+} from "../src/modules/books/ageRating.service.js";
 
 const prisma = new PrismaClient();
-
-const ADULT_KEYWORDS = [
-  "эротика",
-  "erotica",
-  "эротический роман",
-  "dark romance",
-  "дарк романс",
-  "дарк-романс",
-  "сплаттерпанк",
-  "splatterpunk",
-  "боди-хоррор",
-  "body horror",
-  "18+",
-  "для взрослых",
-  "adult fiction",
-  "хентай",
-  "hentai",
-];
-
-const CHILD_KEYWORDS = [
-  "детская литература",
-  "для детей",
-  "сказки",
-  "для малышей",
-  "детские стихи",
-  "детские рассказы",
-  "младший школьный возраст",
-];
-
-const YA_KEYWORDS = [
-  "young adult",
-  "подростковая литература",
-  "для подростков",
-  "ya фэнтези",
-];
-
-function detectAgeRatingFromMetadata(genre: string | null, tags: string[], description: string | null): string | null {
-  const haystack = [genre ?? "", ...tags, description ?? ""].join(" ").toLowerCase();
-
-  for (const kw of ADULT_KEYWORDS) {
-    if (haystack.includes(kw)) {
-      return "18+";
-    }
-  }
-
-  for (const kw of CHILD_KEYWORDS) {
-    if (haystack.includes(kw)) {
-      return "0+";
-    }
-  }
-
-  for (const kw of YA_KEYWORDS) {
-    if (haystack.includes(kw)) {
-      return "12+";
-    }
-  }
-
-  return null;
-}
-
-async function checkGoogleBooksMaturity(volumeId: string): Promise<string | null> {
-  try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes/${volumeId}`);
-    if (!res.ok) return null;
-    const json = (await res.json()) as { volumeInfo?: { maturityRating?: string } };
-    if (json.volumeInfo?.maturityRating === "MATURE") {
-      return "18+";
-    }
-  } catch {
-    // Сетевая ошибка — пропускаем
-  }
-  return null;
-}
 
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
   const processAll = process.argv.includes("--all");
+  const useAi = process.argv.includes("--ai");
   const limitArg = process.argv.find((a) => a.startsWith("--limit="));
   const limit = limitArg ? Number(limitArg.split("=")[1]) : Infinity;
 
-  console.log(`Запуск разметки ageRating... [dryRun=${dryRun}, all=${processAll}, limit=${limit}]`);
+  console.log(
+    `Запуск разметки ageRating... [dryRun=${dryRun}, all=${processAll}, ai=${useAi}, limit=${limit}]`,
+  );
 
   const books = await prisma.book.findMany({
     where: processAll ? {} : { ageRating: null },
@@ -108,50 +47,69 @@ async function main() {
       ageRating: true,
     },
     take: Number.isFinite(limit) ? limit : undefined,
+    orderBy: { id: "asc" },
   });
 
-  console.log(`Найдено книг для анализа: ${books.length}`);
+  console.log(`Найдено книг для анализа: ${books.length}\n`);
 
   let updatedCount = 0;
-  let adultCount = 0;
   let skippedCount = 0;
+  const stats: Record<string, number> = {
+    "18+": 0,
+    "16+": 0,
+    "12+": 0,
+    "6+": 0,
+    "0+": 0,
+  };
 
   for (const book of books) {
-    let rating = detectAgeRatingFromMetadata(book.genre, book.tags, book.description);
+    let result: AgeRatingResult | null = detectAgeRatingFromMetadata(book);
 
-    // Если метаданные не дали 18+, но есть Google Books ID — проверяем API
-    if (!rating && book.source === "google_books" && book.externalId) {
-      const gRating = await checkGoogleBooksMaturity(book.externalId);
-      if (gRating) {
-        rating = gRating;
-      }
+    // Если метаданные не дали рейтинг, но есть Google Books ID — опрашиваем Google Books API
+    if (!result && book.source === "google_books" && book.externalId) {
+      result = await checkGoogleBooksMaturity(book.externalId);
     }
 
-    if (!rating) {
+    // Если всё ещё нет рейтинга и включен AI-режим (--ai) — опрашиваем LLM
+    if (!result && useAi) {
+      result = await detectAgeRatingWithAi({
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        description: book.description,
+      });
+    }
+
+    if (!result) {
       skippedCount++;
       continue;
     }
 
-    if (rating === "18+") {
-      adultCount++;
-    }
-
+    stats[result.rating] = (stats[result.rating] || 0) + 1;
     updatedCount++;
-    console.log(`[${rating}] #${book.id}: «${book.title}» (${book.author ?? "нет автора"})`);
+
+    console.log(
+      `[${result.rating}] #${book.id}: «${book.title}» (${book.author ?? "нет автора"}) — ${result.reason}`,
+    );
 
     if (!dryRun) {
       await prisma.book.update({
         where: { id: book.id },
-        data: { ageRating: rating },
+        data: { ageRating: result.rating },
       });
     }
   }
 
-  console.log("\nИтоги разметки:");
-  console.log(`Всего размечено: ${updatedCount} (из них 18+: ${adultCount})`);
+  console.log("\n================ Итоги разметки ================");
+  console.log(`Всего размечено: ${updatedCount}`);
+  for (const [rating, count] of Object.entries(stats)) {
+    if (count > 0) {
+      console.log(`  • ${rating}: ${count}`);
+    }
+  }
   console.log(`Пропущено (без явных признаков): ${skippedCount}`);
   if (dryRun) {
-    console.log("(Запуск был в режиме --dry-run, изменения в БД не записаны)");
+    console.log("\n(Запуск был в режиме --dry-run, изменения в БД не записаны)");
   }
 }
 
@@ -160,4 +118,6 @@ main()
     console.error("Ошибка при разметке:", e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
