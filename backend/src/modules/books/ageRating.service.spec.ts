@@ -139,6 +139,19 @@ describe("detectAgeRatingFromMetadata", () => {
     });
   });
 
+  it("распознаёт 18+ для книг Стивена Кинга (кейс 'Бегущий человек')", () => {
+    const kingBook = {
+      title: "Бегущий человек",
+      author: "Стивен Кинг",
+      genre: "Антиутопия",
+      description: "Борьба за жизнь в тоталитарном реалити-шоу на выживание.",
+    };
+    expect(detectAgeRatingFromMetadata(kingBook)).toEqual({
+      rating: "18+",
+      reason: "автор 18+: Стивен Кинг",
+    });
+  });
+
   it("распознаёт 18+ для молодежных романов со сценами насилия/буллинга (кейс Хлои Уолш)", () => {
     const walshBook = {
       genre: "Young Adult",

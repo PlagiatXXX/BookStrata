@@ -163,15 +163,39 @@ const TEEN_12_GENRES_AND_TAGS = sortByLengthDesc([
   "детский детектив",
 ]);
 
+const ADULT_AUTHORS = sortByLengthDesc([
+  "стивен кинг",
+  "stephen king",
+  "ричард бахман",
+  "richard bachman",
+  "чак паланик",
+  "chuck palahniuk",
+  "чарльз буковски",
+  "charles bukowski",
+  "ирвин уэлш",
+  "irvine welsh",
+  "клайв баркер",
+  "clive barker",
+  "владимир сорокин",
+  "эдуард лимонов",
+  "маркиз де сад",
+  "поппи брайт",
+  "пенелопа дуглас",
+  "penelope douglas",
+  "ана хуан",
+  "ana huang",
+]);
+
 /**
  * Детектирует возрастной ценз по метаданным (аннотация, жанр, теги).
  */
 export function detectAgeRatingFromMetadata(book: {
+  author?: string | null;
   genre?: string | null;
   tags?: string[];
   description?: string | null;
 }): AgeRatingResult | null {
-  const { genre, tags = [], description } = book;
+  const { author, genre, tags = [], description } = book;
 
   // Шаг 1. Прямая маркировка в описании или в тегах
   if (description) {
@@ -184,9 +208,17 @@ export function detectAgeRatingFromMetadata(book: {
     if (directFromTag) return directFromTag;
   }
 
+  const authorLower = author?.toLowerCase() ?? "";
   const tagList = tags.map((t) => t.toLowerCase());
   const genreLower = genre?.toLowerCase() ?? "";
   const descLower = description?.toLowerCase() ?? "";
+
+  // Шаг 2. Авторы взрослой литературы 18+ (Стивен Кинг, Паланик, Буковски и др.)
+  for (const a of ADULT_AUTHORS) {
+    if (authorLower.includes(a)) {
+      return { rating: "18+", reason: `автор 18+: ${author ?? a}` };
+    }
+  }
 
   // Шаг 2. Взрослый контент (18+)
   for (const kw of ADULT_KEYWORDS) {
