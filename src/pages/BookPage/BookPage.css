@@ -404,3 +404,48 @@
     padding-top: 0.2rem;
   }
 }
+
+/* ── 18+ Age Rating Styles ── */
+/* Шильдик-флажок на 3D-обложке книги */
+.book-cover-badge-18 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  padding: 0.3rem 0.65rem 0.35rem 0.55rem;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.95) 0%, rgba(153, 27, 27, 0.95) 100%);
+  color: #ffffff;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  border-bottom-right-radius: 0.5rem;
+  border-top-left-radius: 0.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Бейдж в мета-строке книги */
+.bp-age-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--bp-on-surface-variant);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.bp-age-rating-badge--adult {
+  color: #f87171;
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.15);
+}

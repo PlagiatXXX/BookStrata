@@ -120,6 +120,7 @@ status          BookCatalogStatus @default(draft)
 publishedAt     DateTime?       // дата ПЕРВОГО перехода в published; не перезаписывается
 isbn            String?         // ISBN издания (для affiliate — этап 3 Roadmap)
 publishedYear   Int?            // Год издания; обязателен для published (решение 13.08)
+ageRating       String?         @map("age_rating") // Возрастной ценз: "0+" | "6+" | "12+" | "16+" | "18+"
 rating          Float?          // Рейтинг каталога 0–10; синхронизируется из последней сохранённой коллекции/знаменитости (last write wins)
 likesCount      Int             @default(0) // Счётчик лайков (денормализация)
 isTrending      Boolean         @default(false) @map("is_trending")

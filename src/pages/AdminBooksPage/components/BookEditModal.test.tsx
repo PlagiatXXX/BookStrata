@@ -78,6 +78,33 @@ describe("BookEditModal — isTrending", () => {
     );
     expect(screen.getByRole("checkbox", { name: /тренде/i })).toBeChecked();
   });
+
+  it("позволяет выбрать возрастной ценз и отправляет его при сохранении", () => {
+    const onSave = vi.fn();
+    render(
+      <BookEditModal
+        book={baseBook}
+        saving={false}
+        publishing={false}
+        unpublishing={false}
+        enriching={false}
+        enrichResult={null}
+        onSave={onSave}
+        onPublish={vi.fn()}
+        onUnpublish={vi.fn()}
+        onEnrich={vi.fn()}
+        onMerge={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    const select = screen.getByLabelText(/ценз/i);
+    expect(select).toBeInTheDocument();
+    fireEvent.change(select, { target: { value: "18+" } });
+    fireEvent.click(screen.getByRole("button", { name: /сохранить/i }));
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ ageRating: "18+" }),
+    );
+  });
 });
 
 describe("BookEditModal — rating", () => {

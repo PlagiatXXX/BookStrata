@@ -66,6 +66,7 @@ const BOOK_LIST_SELECT = {
   rating: true,
   likesCount: true,
   isTrending: true,
+  ageRating: true,
   publishedAt: true,
   updatedAt: true,
   mergedIntoId: true,
@@ -487,6 +488,7 @@ export async function getBookAdmin(id: number) {
       coverImageUrl: true,
       animatedCoverUrl: true,
       publishedYear: true,
+      ageRating: true,
       isbn: true,
       rating: true,
       likesCount: true,
@@ -516,6 +518,7 @@ export interface BookUpdateInput {
   ogImageUrl?: string | null;
   animatedCoverUrl?: string | null;
   publishedYear?: number | null;
+  ageRating?: string | null;
   slug?: string;
   contextChain?: Array<{ icon: string; title: string; text: string }> | null;
   /** AI-паспорт «Гид по чтению» (структура см. readingGuide.schema) */
@@ -597,6 +600,9 @@ export async function updateBookAdmin(id: number, data: BookUpdateInput) {
   }
   if (data.publishedYear !== undefined)
     updateData.publishedYear = data.publishedYear;
+  if (data.ageRating !== undefined) {
+    updateData.ageRating = data.ageRating?.trim() || null;
+  }
   if (data.rating !== undefined) {
     if (data.rating !== null && (data.rating < 0 || data.rating > 10)) {
       throw new ValidationError("Рейтинг должен быть в диапазоне 0–10");

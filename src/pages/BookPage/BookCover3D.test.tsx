@@ -44,4 +44,30 @@ describe("BookCover3D", () => {
     expect(video).toHaveAttribute("tabindex", "-1");
     expect(screen.getByText(/Наведи мышь/i)).toBeInTheDocument();
   });
+
+  it("рендерит флажок 18+ на обложке, если ageRating='18+'", () => {
+    const { container } = render(
+      <BookCover3D
+        coverImageUrl="https://bookstrata.ru/img/test.webp"
+        title="Тестовая книга"
+        ageRating="18+"
+      />,
+    );
+
+    const badge = container.querySelector(".book-cover-badge-18");
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveTextContent("18+");
+  });
+
+  it("не рендерит флажок 18+, если ageRating не указан или меньше 18+", () => {
+    const { container } = render(
+      <BookCover3D
+        coverImageUrl="https://bookstrata.ru/img/test.webp"
+        title="Тестовая книга"
+        ageRating="16+"
+      />,
+    );
+
+    expect(container.querySelector(".book-cover-badge-18")).toBeNull();
+  });
 });

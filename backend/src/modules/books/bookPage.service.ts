@@ -43,6 +43,7 @@ export interface BookPageData {
     rating: number | null;
     likesCount: number;
     publishedYear: number | null;
+    ageRating: string | null;
     isbn: string | null;
     contextChain: unknown;
     readingGuide: ReadingGuide | null;
@@ -93,6 +94,7 @@ export async function getBookPageData(
       rating: true,
       likesCount: true,
       publishedYear: true,
+      ageRating: true,
       isbn: true,
       contextChain: true,
       readingGuide: true,
@@ -287,6 +289,7 @@ export async function getBookPageData(
       rating: book.rating,
       likesCount: book.likesCount,
       publishedYear: book.publishedYear,
+      ageRating: book.ageRating,
       isbn: book.isbn,
       contextChain: book.contextChain,
       readingGuide: book.readingGuide as ReadingGuide | null,

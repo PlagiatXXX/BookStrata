@@ -56,6 +56,7 @@ export interface BookCard {
   tags: string[];
   rating: number | null;
   publishedYear: number | null;
+  ageRating?: string | null;
 }
 
 export interface BookCommentAuthor {
@@ -95,6 +96,7 @@ export interface BookPageData {
     rating: number | null;
     likesCount: number;
     publishedYear: number | null;
+    ageRating: string | null;
     isbn: string | null;
     contextChain: BookContextChainItem[] | null;
     readingGuide: ReadingGuide | null;

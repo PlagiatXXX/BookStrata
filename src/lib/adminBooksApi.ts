@@ -70,6 +70,7 @@ export interface AdminBookListItem {
   tierListNames: string[];
   _count: { comments: number; placements: number };
   isTrending: boolean;
+  ageRating?: string | null;
   /** Первая цитата лонгрида (блок format_quote) — автозаполнение
    *  «Избранных книг» админки авторов (отдаётся только при фильтре authorId) */
   pullQuote?: string | null;
@@ -111,6 +112,7 @@ export interface BookUpdateInput {
   coverImageUrl?: string;
   animatedCoverUrl?: string | null;
   publishedYear?: number | null;
+  ageRating?: string | null;
   slug?: string;
   contextChain?: ContextChainItem[] | null;
   readingGuide?: ReadingGuide | null;

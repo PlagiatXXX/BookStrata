@@ -13,6 +13,7 @@ interface BookCover3DProps {
   title: string;
   className?: string;
   liveVideoUrl?: string;
+  ageRating?: string | null;
 }
 
 export function BookCover3D({
@@ -20,6 +21,7 @@ export function BookCover3D({
   title,
   className = "",
   liveVideoUrl,
+  ageRating,
 }: BookCover3DProps) {
   const coverContainerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -188,6 +190,16 @@ export function BookCover3D({
           <div className="book-3d relative w-full h-full rounded-r-lg overflow-visible group">
             {coverImageUrl ? (
               <>
+                {/* Флажок 18+ в верхнем левом углу обложки */}
+                {ageRating === "18+" && (
+                  <div
+                    className="book-cover-badge-18"
+                    aria-label="Возрастное ограничение 18+"
+                  >
+                    18+
+                  </div>
+                )}
+
                 {/* Статичный четкий постер (всегда в DOM для мгновенного LCP) */}
                 <img
                   src={coverImageUrl}

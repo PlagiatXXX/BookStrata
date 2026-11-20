@@ -96,6 +96,7 @@ const bookPageData: BookPageData = {
     rating: 8.4,
     likesCount: 12,
     publishedYear: 1925,
+    ageRating: null,
     isbn: null,
     contextChain: null,
     readingGuide: null,
@@ -187,6 +188,29 @@ describe("BookPage", () => {
     expect(screen.getByText("Великие романы")).toBeTruthy();
     expect(screen.getByText("Стивен Кинг")).toBeTruthy();
     expect(screen.getByText("Обсуждение")).toBeTruthy();
+  });
+
+  it("рендерит плашку возрастного ценза 18+ в мета-строке и флажок на обложке", async () => {
+    mockedUseBook.mockReturnValue({
+      data: {
+        ...bookPageData,
+        book: {
+          ...bookPageData.book,
+          ageRating: "18+",
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as never);
+    const { container } = renderPage();
+
+    await waitFor(() => {
+      const badges = screen.getAllByText("18+");
+      expect(badges.length).toBe(2);
+      expect(container.querySelector(".bp-age-rating-badge--adult")).toBeInTheDocument();
+      expect(container.querySelector(".book-cover-badge-18")).toBeInTheDocument();
+    });
   });
 
   it("показывает «Гид по чтению» при заполненном AI-паспорте", async () => {

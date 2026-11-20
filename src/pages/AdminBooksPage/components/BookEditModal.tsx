@@ -360,22 +360,42 @@ export function BookEditModal({
               className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
             />
           </label>
-          <label className="block">
-            <span className="mb-1 block text-sm text-(--ink-1)">
-              Год издания *
-            </span>
-            <input
-              type="number"
-              value={form.publishedYear ?? book.publishedYear ?? ""}
-              onChange={(e) =>
-                set(
-                  "publishedYear",
-                  e.target.value ? Number(e.target.value) : null,
-                )
-              }
-              className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
-            />
-          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="mb-1 block text-sm text-(--ink-1)">
+                Год издания *
+              </span>
+              <input
+                type="number"
+                value={form.publishedYear ?? book.publishedYear ?? ""}
+                onChange={(e) =>
+                  set(
+                    "publishedYear",
+                    e.target.value ? Number(e.target.value) : null,
+                  )
+                }
+                className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm text-(--ink-1)">
+                Возрастной ценз
+              </span>
+              <select
+                aria-label="Возрастной ценз"
+                value={form.ageRating ?? book.ageRating ?? ""}
+                onChange={(e) => set("ageRating", e.target.value || null)}
+                className="w-full rounded-lg border border-(--ink-3) bg-(--bg-0) px-3 py-2 text-sm text-(--ink-0) outline-none focus:border-(--accent-main)"
+              >
+                <option value="">Не указан</option>
+                <option value="0+">0+</option>
+                <option value="6+">6+</option>
+                <option value="12+">12+</option>
+                <option value="16+">16+</option>
+                <option value="18+">18+</option>
+              </select>
+            </label>
+          </div>
           <label className="block">
             <span className="mb-1 block text-sm text-(--ink-1)">Жанр *</span>
             <input

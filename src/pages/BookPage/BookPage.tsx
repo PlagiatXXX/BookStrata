@@ -328,6 +328,7 @@ export default function BookPage() {
                   coverImageUrl={book.coverImageUrl}
                   title={book.title}
                   liveVideoUrl={book.animatedCoverUrl || undefined}
+                  ageRating={book.ageRating}
                 />
               </div>
 
@@ -345,6 +346,15 @@ export default function BookPage() {
                   {book.publishedYear && (
                     <span className="bp-label-caps text-(--bp-on-surface-variant) tracking-widest">
                       {book.publishedYear} г.
+                    </span>
+                  )}
+                  {book.ageRating && (
+                    <span
+                      className={`bp-age-rating-badge ${
+                        book.ageRating === "18+" ? "bp-age-rating-badge--adult" : ""
+                      }`}
+                    >
+                      {book.ageRating}
                     </span>
                   )}
                   {hasTags && (

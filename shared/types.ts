@@ -26,6 +26,7 @@ export interface Book {
   createdAt?: string;
   genre?: string | null;
   tags?: string[];
+  ageRating?: string | null;
 }
 
 export interface Tier {
