@@ -1,7 +1,7 @@
 import React, { useReducer, useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search, Lock, Star } from "lucide-react";
+import { Search, Lock, Star, Plus } from "lucide-react";
 
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { useAuth } from "@/hooks/useAuthContext";
@@ -519,6 +519,18 @@ const TemplateLibrary: React.FC = () => {
               {SECTION_LABELS_MOBILE[key]}
             </button>
           ))}
+        </div>
+
+        {/* Mobile create tier list button */}
+        <div className="tpl-mobile-actions">
+          <button
+            type="button"
+            className="tpl-mobile-create-btn"
+            onClick={openCreateModal}
+          >
+            <Plus size={16} aria-hidden="true" />
+            <span>Новый тир-лист</span>
+          </button>
         </div>
 
         <div className="tpl-layout">

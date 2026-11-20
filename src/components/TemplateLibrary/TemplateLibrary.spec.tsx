@@ -210,4 +210,18 @@ describe("TemplateLibrary", () => {
       expect(screen.getByText("Public Tier List 1")).toBeInTheDocument();
     });
   });
+
+  it("должен отображать мобильную кнопку создания тир-листа и открывать модальное окно создания по клику", async () => {
+    const { container } = render(<TemplateLibrary />, { wrapper: createWrapper() });
+
+    const mobileCreateBtn = container.querySelector(".tpl-mobile-create-btn");
+    expect(mobileCreateBtn).toBeInTheDocument();
+    expect(mobileCreateBtn).toHaveTextContent("Новый тир-лист");
+
+    fireEvent.click(mobileCreateBtn!);
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Создать новый тир-лист" })).toBeInTheDocument();
+    });
+  });
 });
