@@ -103,8 +103,15 @@ export function useCreateBookComment(slug: string | undefined) {
   return useMutation({
     mutationFn: (input: { content: string; parentId?: number }) =>
       createBookComment(slug!, input.content, input.parentId),
-    onSuccess: () => {
+    onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: commentsKey(slug ?? "") });
+      // Синхронизируем счётчик в bookKey (кнопка «N мыслей», SEO), чтобы
+      // не приходилось перезагружать страницу после добавления комментария.
+      updateBookPageComments(queryClient, slug, (list) => ({
+        ...list,
+        total: list.total + 1,
+        items: result?.comment ? [result.comment, ...list.items] : list.items,
+      }));
     },
   });
 }
@@ -128,8 +135,51 @@ export function useDeleteBookComment(slug: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (commentId: number) => deleteBookComment(slug!, commentId),
-    onSuccess: (_result, commentId) => {
-      updateCommentInCache(queryClient, slug, (c) => (c.id === commentId ? null : c));
+    onSuccess: (result, commentId) => {
+      const softDeleted = Boolean(result?.softDeleted);
+      if (softDeleted) {
+        // Soft delete: комментарий остаётся tombstone'ом, чтобы не ломать ветку ответов.
+        updateCommentInCache(queryClient, slug, (c) =>
+          c.id === commentId
+            ? {
+                ...c,
+                isDeleted: true,
+                content: "Комментарий удалён",
+                likesCount: 0,
+                user: { id: 0, username: "Пользователь", avatarUrl: null },
+              }
+            : c,
+        );
+      } else {
+        updateCommentInCache(queryClient, slug, (c) => (c.id === commentId ? null : c));
+      }
+      // Счётчик total должен уменьшиться в обоих случаях.
+      decrementCommentsTotal(queryClient, slug);
+      // Синхронизируем bookKey (кнопка «N мыслей», SEO).
+      updateBookPageComments(queryClient, slug, (list) => {
+        if (softDeleted) {
+          return {
+            ...list,
+            items: list.items.map((c) =>
+              c.id === commentId
+                ? {
+                    ...c,
+                    isDeleted: true,
+                    content: "Комментарий удалён",
+                    likesCount: 0,
+                    user: { id: 0, username: "Пользователь", avatarUrl: null },
+                  }
+                : c,
+            ),
+            total: Math.max(list.total - 1, 0),
+          };
+        }
+        return {
+          ...list,
+          items: list.items.filter((c) => c.id !== commentId),
+          total: Math.max(list.total - 1, 0),
+        };
+      });
     },
   });
 }
@@ -147,25 +197,50 @@ export function useToggleCommentLike(slug: string | undefined) {
   });
 }
 
-/** Обновить комментарий в кэше (или удалить при fn → null). */
+/** Уменьшить total в кэше комментариев (плоский shape { items, total }). */
+function decrementCommentsTotal(
+  queryClient: ReturnType<typeof useQueryClient>,
+  slug: string | undefined,
+) {
+  if (!slug) return;
+  queryClient.setQueriesData<{ items: BookComment[]; total: number }>(
+    { queryKey: commentsKey(slug) },
+    (old) => {
+      if (!old) return old;
+      return { ...old, total: Math.max(old.total - 1, 0) };
+    },
+  );
+}
+
+/** Обновить блок comments в кэше страницы книги (bookKey). */
+function updateBookPageComments(
+  queryClient: ReturnType<typeof useQueryClient>,
+  slug: string | undefined,
+  fn: (list: BookPageData["comments"]) => BookPageData["comments"],
+) {
+  if (!slug) return;
+  queryClient.setQueryData<BookPageData>(bookKey(slug), (old) => {
+    if (!old) return old;
+    return { ...old, comments: fn(old.comments) };
+  });
+}
+
+/** Обновить комментарий в кэше (или удалить при fn → null). Плоский shape { items, total }. */
 function updateCommentInCache(
   queryClient: ReturnType<typeof useQueryClient>,
   slug: string | undefined,
   fn: (c: BookComment) => BookComment | null,
 ) {
   if (!slug) return;
-  queryClient.setQueriesData<{ pages: { items: BookComment[] }[] }>(
+  queryClient.setQueriesData<{ items: BookComment[]; total: number }>(
     { queryKey: commentsKey(slug) },
     (old) => {
       if (!old) return old;
       return {
         ...old,
-        pages: old.pages.map((page) => ({
-          ...page,
-          items: page.items
-            .map(fn)
-            .filter((c): c is BookComment => c !== null),
-        })),
+        items: old.items
+          .map(fn)
+          .filter((c): c is BookComment => c !== null),
       };
     },
   );

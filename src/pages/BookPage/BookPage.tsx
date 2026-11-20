@@ -622,9 +622,7 @@ export default function BookPage() {
                           : "Обсуждение книги"}
                       </span>
                     </div>
-                    <span className="text-[10px] text-primary/70 bp-label-caps group-hover:text-primary transition-colors">
-                      {comments.total > 0 ? "Читать" : "Написать"} →
-                    </span>
+
                   </a>
 
                   {/* «Где читать» — аффилиат-ссылки на Читай Город и ЛитРес */}

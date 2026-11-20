@@ -166,7 +166,10 @@ export async function updateBookComment(
 }
 
 /** Удалить комментарий (свой или admin/moderator). */
-export async function deleteBookComment(slug: string, commentId: number): Promise<{ success: boolean }> {
+export async function deleteBookComment(
+  slug: string,
+  commentId: number,
+): Promise<{ success: boolean; softDeleted?: boolean }> {
   return apiClient.delete(`/books/${slug}/comments/${commentId}`);
 }
 
