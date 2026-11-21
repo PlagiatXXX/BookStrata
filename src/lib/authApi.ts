@@ -339,10 +339,9 @@ export function handleUnauthorized() {
 let refreshPromise: Promise<string> | null = null;
 
 // ─── Proactive Refresh ─────────────────────────────────────────────────────
-// Обновляем токен за 1 день до истечения (при 7-дневном access token).
-// Запас в 1 день — чтобы при сетевых проблемах было время повторить.
+// Обновляем токен за 5 минут до истечения (при 60-минутном access token).
 
-const REFRESH_BUFFER_MS = 24 * 60 * 60 * 1000; // 1 день до истечения
+const REFRESH_BUFFER_MS = 5 * 60 * 1000; // 5 минут до истечения
 let proactiveRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**

@@ -133,6 +133,8 @@ describe("livelib: защита от зависания и кэшировани�
     await fetchUserBooks("testuser", true);
 
     expect(cacheMock.deleteFromCache).toHaveBeenCalledWith("livelib:user:testuser");
-    expect(cacheMock.releaseLock).toHaveBeenCalled();
+    // При успехе лок НЕ снимается — живёт 5 минут по TTL, чтобы защитить
+    // от повторных forceRefresh. releaseLock вызывается только при ошибке.
+    expect(cacheMock.releaseLock).not.toHaveBeenCalled();
   });
 });

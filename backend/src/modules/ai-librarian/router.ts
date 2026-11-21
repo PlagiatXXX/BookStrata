@@ -100,6 +100,9 @@ export async function* routeAiResponse(
       return
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
+      if (fullResponse.length > 0 || signal?.aborted) {
+        throw err
+      }
       logger.error('AI provider failed', { provider: provider.name, error: errorMessage })
       errors.push({ provider: provider.name, error: errorMessage })
       fullResponse = ''
@@ -135,6 +138,12 @@ async function fetchProvidersStatus() {
   }
 }
 
+let statusPromise: Promise<{
+  online: boolean
+  providers: Array<{ name: string; online: boolean; model: string | null; error?: string }>
+  activeModel: string | null
+}> | undefined
+
 export async function checkAllProvidersStatus(): Promise<{
   online: boolean
   providers: Array<{ name: string; online: boolean; model: string | null; error?: string }>
@@ -144,7 +153,19 @@ export async function checkAllProvidersStatus(): Promise<{
     return statusCache.value
   }
 
-  const value = await fetchProvidersStatus()
-  statusCache = { expiresAt: Date.now() + STATUS_CACHE_TTL_MS, value }
-  return value
+  if (statusPromise) {
+    return statusPromise
+  }
+
+  statusPromise = (async () => {
+    try {
+      const value = await fetchProvidersStatus()
+      statusCache = { expiresAt: Date.now() + STATUS_CACHE_TTL_MS, value }
+      return value
+    } finally {
+      statusPromise = undefined
+    }
+  })()
+
+  return statusPromise
 }

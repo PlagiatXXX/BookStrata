@@ -143,8 +143,14 @@ export function AiLibrarianProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Отправляем всю историю текущей сессии + новое сообщение
-      const sessionMessages = sessionsRef.current[currentSessionKey] ?? []
+      // Отправляем последние 20 сообщений; assistant-ответы подрезаем до 8000 символов
+      const sessionMessages = (sessionsRef.current[currentSessionKey] ?? [])
+        .slice(-20)
+        .map((m) =>
+          m.role === 'assistant' && m.content.length > 8000
+            ? { ...m, content: m.content.slice(0, 8000) }
+            : m,
+        )
 
       try {
         await streamAiChat(

@@ -7,9 +7,9 @@ import { AuthenticationError } from "../../lib/errors.js";
 
 const logger = createLogger("Token", { color: "cyan" });
 
-// Access-токен живёт 7 дней — пользователи не страдают от частых истечений.
+// Access-токен живёт 60 минут — баланс между безопасностью и удобством.
 // Refresh token — 14 дней (на случай если access не обновился превентивно).
-const ACCESS_TOKEN_EXPIRY = "7d";
+const ACCESS_TOKEN_EXPIRY = "60m";
 const REFRESH_TOKEN_EXPIRY = "14d";
 
 const REFRESH_VERSION_PREFIX = "auth:refresh_version:";
@@ -55,17 +55,22 @@ export async function incrementRefreshVersion(userId: number): Promise<void> {
 }
 
 function generateToken(payload: Partial<AuthTokenPayload>): string {
-  return jwt.sign(payload, config.JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
+  return jwt.sign({ ...payload, type: "access" }, config.JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
 }
 
 function generateRefreshToken(payload: Partial<AuthTokenPayload>): string {
-  return jwt.sign(payload, config.JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+  return jwt.sign({ ...payload, type: "refresh" }, config.JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
 }
 
 export function validateToken(token: string): AuthTokenPayload {
   try {
     const payload = jwt.verify(token, config.JWT_SECRET);
-    return jwtPayloadSchema.parse(payload);
+    const decoded = jwtPayloadSchema.parse(payload);
+    // Мягкая совместимость: старые токены без type пропускаем.
+    if (decoded.type === "refresh") {
+      throw new AuthenticationError("Невалидный токен");
+    }
+    return decoded;
   } catch {
     throw new AuthenticationError("Невалидный токен");
   }
@@ -75,6 +80,10 @@ export async function validateRefreshToken(token: string): Promise<AuthTokenPayl
   try {
     const payload = jwt.verify(token, config.JWT_SECRET);
     const decoded = jwtPayloadSchema.parse(payload);
+    // Мягкая совместимость: старые токены без type пропускаем.
+    if (decoded.type === "access") {
+      throw new AuthenticationError("Невалидный refresh токен");
+    }
 
     // Проверяем версию refresh-токена (обратная совместимость: старые токены без refreshVersion пропускаем)
     if (decoded.refreshVersion !== undefined) {

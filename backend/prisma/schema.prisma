@@ -151,6 +151,8 @@ updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at")
 @@index([title, author])
 @@index([authorId])
 @@index([status])
+@@index([status, userId, likesCount])
+@@index([status, isTrending])
 }
 
 // История slug: смена slug у published-книги не теряет проиндексированный URL (301)
@@ -269,6 +271,8 @@ updatedAt   DateTime        @updatedAt @map("updated_at")
 @@index([userId, isPublic])
 @@index([createdAt])
 @@index([likesCount])
+@@index([isPublic, likesCount])
+@@index([isPublic, createdAt])
 @@map("tier_lists")
 }
  
@@ -453,7 +457,6 @@ user      User     @relation(fields: [userId], references: [id], onDelete: Casca
 expiresAt DateTime @map("expires_at")
 createdAt DateTime @default(now()) @map("created_at")
  
-@@index([token])
 @@index([userId])
 }
 
@@ -485,6 +488,7 @@ model Collection {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
+  @@index([isPublished, order])
   @@map("collections")
 }
 
@@ -528,6 +532,7 @@ model Celebrity {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
+  @@index([isPublished, order])
   @@map("celebrities")
 }
 
@@ -741,6 +746,7 @@ model AnalyticsEvent {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([event])
+  @@index([event, createdAt])
   @@index([userId])
   @@index([createdAt])
   @@map("analytics_events")
@@ -768,7 +774,6 @@ model Author {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@index([name])
   @@map("authors")
 }
 
@@ -875,9 +880,6 @@ model ReadingDna {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
-  @@index([userId])
-  @@index([guestToken])
-  @@index([ticketNumber])
   @@index([archetype])
   @@index([isPublic])
   @@index([favoriteBookIds], type: Gin)

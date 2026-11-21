@@ -225,8 +225,9 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
       scope.setTag("url", request.url);
       scope.setTag("method", request.method);
       scope.setTag("user-agent", request.headers["user-agent"] || "unknown");
-      if ((request as any).userId) {
-        scope.setUser({ id: String((request as any).userId) });
+      const sentryUserId = (request as any).user?.userId;
+      if (sentryUserId) {
+        scope.setUser({ id: String(sentryUserId) });
       }
       if (queryParams) {
         scope.setExtra("query", queryParams);
@@ -302,11 +303,12 @@ fastify.setErrorHandler(async (error: any, request, reply) => {
   );
 });
 
-await fastify.register(swagger, {
-  swagger: {
-    info: {
-      title: "BookStrata API",
-      description: `
+if (config.NODE_ENV !== "production") {
+  await fastify.register(swagger, {
+    swagger: {
+      info: {
+        title: "BookStrata API",
+        description: `
 ## API Documentation for BookStrata
 
 ### Error Response Format
@@ -347,40 +349,41 @@ List endpoints return pagination metadata and links:
 ### Authentication
 All protected endpoints require Bearer token in Authorization header.
       `.trim(),
-      version: "1.1.0",
-    },
-    schemes: ["http", "https"],
-    produces: ["application/json"],
-    consumes: ["application/json"],
-    securityDefinitions: {
-      bearerAuth: {
-        type: "apiKey",
-        name: "Authorization",
-        in: "header",
-        description: "Enter your bearer token in the format 'Bearer <token>'",
+        version: "1.1.0",
       },
+      schemes: ["http", "https"],
+      produces: ["application/json"],
+      consumes: ["application/json"],
+      securityDefinitions: {
+        bearerAuth: {
+          type: "apiKey",
+          name: "Authorization",
+          in: "header",
+          description: "Enter your bearer token in the format 'Bearer <token>'",
+        },
+      },
+      tags: [
+        { name: "Auth", description: "Authentication endpoints" },
+        { name: "Users", description: "User management" },
+        { name: "Tier Lists", description: "Tier list CRUD operations" },
+        { name: "News", description: "News articles" },
+        { name: "Battles", description: "Battles and voting" },
+        { name: "Achievements", description: "User achievements" },
+        { name: "Avatars", description: "Avatar generation" },
+        { name: "Books", description: "Book search" },
+        { name: "Subscriptions", description: "Subscription management" },
+      ],
     },
-    tags: [
-      { name: "Auth", description: "Authentication endpoints" },
-      { name: "Users", description: "User management" },
-      { name: "Tier Lists", description: "Tier list CRUD operations" },
-      { name: "News", description: "News articles" },
-      { name: "Battles", description: "Battles and voting" },
-      { name: "Achievements", description: "User achievements" },
-      { name: "Avatars", description: "Avatar generation" },
-      { name: "Books", description: "Book search" },
-      { name: "Subscriptions", description: "Subscription management" },
-    ],
-  },
-});
+  });
 
-await fastify.register(swaggerUi, {
-  routePrefix: "/documentation",
-  uiConfig: {
-    docExpansion: "list", // 'full', 'none'
-    deepLinking: true,
-  },
-});
+  await fastify.register(swaggerUi, {
+    routePrefix: "/documentation",
+    uiConfig: {
+      docExpansion: "list", // 'full', 'none'
+      deepLinking: true,
+    },
+  });
+}
 
 // Регистрируем все роуты из модулей
 fastify.register(adminStatsRoutes, { prefix: "/api/admin" });

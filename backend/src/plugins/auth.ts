@@ -31,7 +31,12 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     const token = authHeader.substring(7);
 
     try {
-      const payload = jwt.verify(token, config.JWT_SECRET) as JwtPayload;
+      const payload = jwt.verify(token, config.JWT_SECRET) as JwtPayload & { type?: string };
+
+      // Мягкая совместимость: старые токены без type пропускаем.
+      if (payload.type === "refresh") {
+        return;
+      }
 
       logger.debug("Пользователь аутентифицирован", {
         userId: payload.userId,

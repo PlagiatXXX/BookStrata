@@ -14,6 +14,12 @@ export async function imageProxyRoutes(fastify: FastifyInstance) {
   }>(
     "/proxy",
     {
+      config: {
+        rateLimit: {
+          max: 120,
+          timeWindow: "1 minute",
+        },
+      },
       schema: {
         querystring: {
           type: "object",
@@ -76,7 +82,6 @@ export async function imageProxyRoutes(fastify: FastifyInstance) {
         // Если ошибка конвертации — можно попробовать вернуть оригинал через существующий proxy
         return reply.code(502).send({
           error: "Failed to process image",
-          message: error instanceof Error ? error.message : String(error),
         });
       }
     },

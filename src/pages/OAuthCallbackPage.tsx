@@ -1,24 +1,37 @@
 import { useEffect, useState } from "react"
-import { useSearchParams, useNavigate } from "react-router-dom"
-import { setAuthToken } from "@/lib/authApi"
+import { useNavigate } from "react-router-dom"
+import { refreshAccessToken } from "@/lib/authApi"
 import { StorageService } from "@/lib/storage"
 
 export default function OAuthCallbackPage() {
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const token = searchParams.get("token")
-  const [error] = useState<string | null>(
-    !token ? "Токен авторизации не получен. Попробуйте снова." : null,
-  )
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) return
+    let cancelled = false
 
-    setAuthToken(token)
-    StorageService.setString("username", "")
-    window.dispatchEvent(new Event("auth-token-changed"))
-    navigate("/", { replace: true })
-  }, [token, navigate])
+    const run = async () => {
+      try {
+        await refreshAccessToken()
+        if (cancelled) return
+        StorageService.setString("username", "")
+        window.dispatchEvent(new Event("auth-token-changed"))
+        navigate("/", { replace: true })
+      } catch {
+        if (cancelled) return
+        setError("Токен авторизации не получен. Попробуйте снова.")
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [navigate])
 
   if (error) {
     return (
@@ -37,12 +50,16 @@ export default function OAuthCallbackPage() {
     )
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50">
-      <div className="flex flex-col items-center gap-3">
-        <div className="size-12 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin" />
-        <p className="text-slate-600">Выполняется вход...</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-12 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin" />
+          <p className="text-slate-600">Выполняется вход...</p>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  return null
 }

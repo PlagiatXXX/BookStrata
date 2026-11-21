@@ -20,6 +20,12 @@ export async function livelibRoutes(fastify: FastifyInstance) {
     "/livelib-import",
     {
       preHandler: [authMiddleware],
+      config: {
+        rateLimit: {
+          max: 3,
+          timeWindow: "10 minutes",
+        },
+      },
       schema: {
         body: {
           type: "object",
@@ -28,6 +34,8 @@ export async function livelibRoutes(fastify: FastifyInstance) {
             username: {
               type: "string",
               minLength: 1,
+              maxLength: 64,
+              pattern: "^[^/\\s?&#]+$",
               description: "LiveLib username",
             },
             forceRefresh: {
@@ -58,6 +66,16 @@ export async function livelibRoutes(fastify: FastifyInstance) {
                 createApiError(
                   ErrorCodes.NOT_FOUND,
                   "Пользователь не найден на LiveLib",
+                ),
+              );
+          }
+          if (error.message.includes("слишком часто")) {
+            return reply
+              .code(429)
+              .send(
+                createApiError(
+                  ErrorCodes.RATE_LIMIT_EXCEEDED,
+                  error.message,
                 ),
               );
           }

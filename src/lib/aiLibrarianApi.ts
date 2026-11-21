@@ -6,7 +6,7 @@ import { createLogger } from './logger'
 const logger = createLogger('AiLibrarianApi', { color: 'cyan' })
 
 export interface ChatMessage {
-  role: 'user' | 'assistant' | 'system'
+  role: 'user' | 'assistant'
   content: string
 }
 

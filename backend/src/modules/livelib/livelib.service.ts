@@ -418,8 +418,11 @@ export async function fetchUserBooks(
       logger.info(`Force refresh for LiveLib user "${username}" — clearing cache`);
       await deleteFromCache(cacheKey);
       return await fetchUserBooksWithDeadline(username, cacheKey);
-    } finally {
+    } catch (err) {
+      // При ошибке снимаем лок, чтобы не блокировать повторные попытки.
+      // При успехе лок живёт все FORCE_REFRESH_LOCK_TTL (5 минут) по TTL.
       await releaseLock(lockKey);
+      throw err;
     }
   }
 

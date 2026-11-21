@@ -83,8 +83,17 @@ function publicUrl(key: string): string {
 
 // ── In-memory кэш URL → S3 URL ──
 // Сбрасывается при перезапуске сервера — не критично, S3 постоянный
-const urlCache = new Map<string, string>();
-const CACHE_FOLDER = "image-cache";
+const URL_CACHE_MAX = 5000
+const CACHE_FOLDER = "image-cache"
+const urlCache = new Map<string, string>()
+
+function urlCacheSet(key: string, value: string): void {
+  if (urlCache.size >= URL_CACHE_MAX) {
+    const firstKey = urlCache.keys().next().value
+    if (firstKey !== undefined) urlCache.delete(firstKey)
+  }
+  urlCache.set(key, value)
+}
 
 /**
  * Проверяет, разрешён ли URL для проксирования.
@@ -108,8 +117,14 @@ export function isAllowedUrl(url: string): boolean {
 /**
  * Хэш URL для использования в качестве имени файла на S3.
  */
-function urlHash(url: string): string {
-  return createHash("md5").update(url).digest("hex");
+function urlHash(url: string, width: number, quality: number): string {
+  const snappedWidth = [200, 300, 400, 800, 1200].reduce((prev, curr) =>
+    Math.abs(curr - width) < Math.abs(prev - width) ? curr : prev,
+  )
+  const snappedQuality = [75, 80, 85].reduce((prev, curr) =>
+    Math.abs(curr - quality) < Math.abs(prev - quality) ? curr : prev,
+  )
+  return createHash("md5").update(`${url}|${snappedWidth}|${snappedQuality}`).digest("hex")
 }
 
 /**
@@ -234,15 +249,13 @@ export async function getWebP(
   width: number = 300,
   quality: number = 80,
 ): Promise<{ buffer: Buffer; s3Url: string | null }> {
-  const hash = urlHash(url);
+  const hash = urlHash(url, width, quality);
   const key = cacheKey(hash);
 
   // 1. In-memory кэш
   const cached = urlCache.get(hash);
   if (cached) {
     logger.debug(`Cache HIT (memory): ${url} → ${cached}`);
-    // В памяти только URL, нужно вернуть buffer — грузим с S3
-    // Но можно просто вернуть URL без buffer (редирект)
     return { buffer: null as unknown as Buffer, s3Url: cached };
   }
 
@@ -250,7 +263,7 @@ export async function getWebP(
   const exists = await existsOnS3(key);
   if (exists) {
     const s3Url = publicUrl(key);
-    urlCache.set(hash, s3Url);
+    urlCacheSet(hash, s3Url);
     logger.debug(`Cache HIT (S3): ${url} → ${s3Url}`);
     return { buffer: null as unknown as Buffer, s3Url };
   }
@@ -262,7 +275,7 @@ export async function getWebP(
   // 4. Сохраняем на S3 (fire & forget — не ждём, отдаём buffer сразу)
   const uploadPromise = uploadToS3(webpBuffer, key)
     .then((s3Url) => {
-      urlCache.set(hash, s3Url);
+      urlCacheSet(hash, s3Url);
       logger.info(`Cached on S3: ${s3Url}`);
     })
     .catch((err) => {
@@ -318,7 +331,7 @@ export async function externalToCdnUrl(
     return null;
   }
 
-  const hash = urlHash(url);
+  const hash = urlHash(url, width, 85);
   const key = cacheKey(hash);
 
   // Уже закэширован (в памяти или на S3)
@@ -329,7 +342,7 @@ export async function externalToCdnUrl(
     const exists = await existsOnS3(key);
     if (exists) {
       const s3Url = publicUrl(key);
-      urlCache.set(hash, s3Url);
+      urlCacheSet(hash, s3Url);
       return s3Url;
     }
   } catch (err) {
@@ -343,7 +356,7 @@ export async function externalToCdnUrl(
   try {
     const webpBuffer = await convertToWebP(url, width, 85);
     const s3Url = await uploadToS3(webpBuffer, key);
-    urlCache.set(hash, s3Url);
+    urlCacheSet(hash, s3Url);
     return s3Url;
   } catch (err) {
     logger.error(err as Error, { action: "externalToCdnUrl", url });

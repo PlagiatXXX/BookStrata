@@ -31,6 +31,12 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
     '/librarian/chat',
     {
       preHandler: [authMiddleware],
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: '1 minute',
+        },
+      },
       schema: {
         body: {
           type: 'object',
@@ -39,12 +45,13 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
             messages: {
               type: 'array',
               minItems: 1,
+              maxItems: 20,
               items: {
                 type: 'object',
                 required: ['role', 'content'],
                 properties: {
-                  role: { type: 'string', enum: ['user', 'assistant', 'system'] },
-                  content: { type: 'string' },
+                  role: { type: 'string', enum: ['user', 'assistant'] },
+                  content: { type: 'string', minLength: 1, maxLength: 8000 },
                 },
               },
             },
@@ -216,6 +223,7 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
           Connection: 'keep-alive',
+          'X-Accel-Buffering': 'no',
           'Access-Control-Allow-Origin': CLIENT_URL,
           'Access-Control-Allow-Credentials': 'true',
         })

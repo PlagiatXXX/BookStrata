@@ -316,7 +316,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       maxAge: 10 * 60, // 10 минут
     });
     const { getVkAuthUrl } = await import("../../lib/oauth.js");
-    return reply.redirect(getVkAuthUrl(state), 301);
+    return reply.redirect(getVkAuthUrl(state), 302);
   });
 
   fastify.get("/oauth/vk/callback", async (request, reply) => {
@@ -345,11 +345,11 @@ export async function authRoutes(fastify: FastifyInstance) {
       });
 
       const frontendUrl = config.CLIENT_URL;
-      return reply.redirect(`${frontendUrl}/oauth/callback?token=${result.accessToken}`, 301);
+      return reply.redirect(`${frontendUrl}/oauth/callback`, 302);
     } catch (error) {
       fastify.log.error(error, "VK OAuth error");
       const frontendUrl = config.CLIENT_URL;
-      return reply.redirect(`${frontendUrl}/oauth/error`, 301);
+      return reply.redirect(`${frontendUrl}/oauth/error`, 302);
     }
   });
 
@@ -364,7 +364,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       maxAge: 10 * 60, // 10 минут
     });
     const { getGoogleAuthUrl } = await import("../../lib/oauth.js");
-    return reply.redirect(getGoogleAuthUrl(state), 301);
+    return reply.redirect(getGoogleAuthUrl(state), 302);
   });
 
   fastify.get("/oauth/google/callback", async (request, reply) => {
@@ -393,11 +393,11 @@ export async function authRoutes(fastify: FastifyInstance) {
       });
 
       const frontendUrl = config.CLIENT_URL;
-      return reply.redirect(`${frontendUrl}/oauth/callback?token=${result.accessToken}`, 301);
+      return reply.redirect(`${frontendUrl}/oauth/callback`, 302);
     } catch (error) {
       fastify.log.error(error, "Google OAuth error");
       const frontendUrl = config.CLIENT_URL;
-      return reply.redirect(`${frontendUrl}/oauth/error`, 301);
+      return reply.redirect(`${frontendUrl}/oauth/error`, 302);
     }
   });
 }
