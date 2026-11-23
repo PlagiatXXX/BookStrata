@@ -40,6 +40,7 @@ import { useDemoStorage, DEMO_DEFAULT_THEME } from "./hooks/useDemoStorage";
 import { useDemoOnboarding } from "./hooks/useDemoOnboarding";
 import { AuthOnSaveModal } from "./components/AuthOnSaveModal";
 import { ShareSuccessModal } from "./components/ShareSuccessModal";
+import { TierListRoastModal } from "./components/TierListRoastModal";
 import { DemoOnboarding } from "./components/DemoOnboarding";
 import { apiTrackEvent } from "@/lib/analyticsApi";
 import { UNRANKED_AREA_ID } from "@/constants/dnd";
@@ -358,6 +359,30 @@ const TierListEditorContent = () => {
   // ========== ОПТИМИЗИРОВАННОЕ АВТОСОХРАНЕНИЕ ==========
   const [showShareSuccessModal, setShowShareSuccessModal] = useState(false);
   const [firstCreatedSharePath, setFirstCreatedSharePath] = useState<string | null>(null);
+  const [isRoastModalOpen, setIsRoastModalOpen] = useState(false);
+
+  const orderedTiers = useMemo(() => {
+    return (listData.tierOrder || []).map((id) => listData.tiers[id]).filter(Boolean);
+  }, [listData.tierOrder, listData.tiers]);
+
+  const totalPlacedBooks = useMemo(() => {
+    return Object.values(listData.tiers || {}).reduce(
+      (acc: number, tier: Tier) => acc + (tier.bookIds?.length || 0),
+      0,
+    );
+  }, [listData.tiers]);
+
+  const handleRoastClick = useCallback(() => {
+    if (isReadOnly) return;
+    if (totalPlacedBooks < 4) {
+      sileo.info({
+        title: "Нужно больше книг",
+        description: "Разложите хотя бы 4 книги по рядам, чтобы ИИ мог оценить расстановку",
+      });
+      return;
+    }
+    setIsRoastModalOpen(true);
+  }, [isReadOnly, totalPlacedBooks]);
 
   const handleFirstSaveSuccess = useCallback((urlPath: string) => {
     setFirstCreatedSharePath(urlPath);
@@ -773,11 +798,22 @@ const TierListEditorContent = () => {
         title={listData.title}
         coverImageUrl={displayCoverImageUrl || firstBookCoverUrl}
         booksCount={Object.keys(listData.books).length}
+        onRoast={!isReadOnly ? handleRoastClick : undefined}
         shareUrl={
           firstCreatedSharePath
             ? `${import.meta.env.VITE_SITE_URL || "https://bookstrata.ru"}${firstCreatedSharePath}`
             : shareUrl
         }
+      />
+
+      {/* Модалка прожарки тир-листа */}
+      <TierListRoastModal
+        isOpen={isRoastModalOpen}
+        onClose={() => setIsRoastModalOpen(false)}
+        tierListTitle={listData.title}
+        tierListDescription={tierListDescription}
+        tiers={orderedTiers}
+        books={listData.books}
       />
 
       {/* Модальные окна */}
@@ -996,9 +1032,9 @@ const TierListEditorContent = () => {
             onUpdateTier={updateTierSettingsWithUnsaved}
             onClearRows={() => setIsClearAllModalOpen(true)}
             onDownloadImage={() => setIsExportModalOpen(true)}
+            onRoast={!isReadOnly ? handleRoastClick : undefined}
             shareUrl={shareUrl}
             title={listData.title}
-            onDeleteRating={() => setShowDeleteRatingModal(true)}
             isPublic={isPublic}
             onTogglePublic={togglePublic}
             isTogglingPublic={isTogglingPublic}

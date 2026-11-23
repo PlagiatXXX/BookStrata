@@ -26,6 +26,32 @@ export interface AiLibrarianContext {
   ticketNumber?: string
 }
 
+export interface TierListRoastPayload {
+  tierListTitle: string
+  tierListDescription?: string
+  tiers: Array<{
+    label: string
+    color?: string
+    books: Array<{
+      title: string
+      author?: string
+    }>
+  }>
+}
+
+export interface TierListRoastResult {
+  archetype: string
+  roast: string
+  hotTake: string
+  cynicismScore: number
+  cached?: boolean
+}
+
+export async function roastTierList(payload: TierListRoastPayload): Promise<TierListRoastResult> {
+  return apiClient.post<TierListRoastResult>('/ai/librarian/roast-tier-list', payload)
+}
+
+
 /**
  * Удаляет вопросительные предложения из ответа AI.
  * Оставляет только текст описания без вопросов и вовлекающих фраз.

@@ -69,7 +69,6 @@ const defaultProps = {
   onUpdateTier: vi.fn(),
   onClearRows: vi.fn(),
   onDownloadImage: vi.fn(),
-  onDeleteRating: vi.fn(),
   isPublic: false,
   onTogglePublic: vi.fn(),
   isTogglingPublic: false,

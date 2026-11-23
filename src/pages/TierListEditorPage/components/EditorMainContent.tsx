@@ -32,9 +32,9 @@ interface EditorMainContentProps {
   onUpdateTier?: (tierId: string, settings: any) => void;
   onClearRows?: () => void;
   onDownloadImage: () => void;
+  onRoast?: () => void;
   shareUrl?: string;
   title?: string;
-  onDeleteRating?: () => void;
   isPublic: boolean;
   onTogglePublic?: (value: boolean) => void;
   isTogglingPublic: boolean;
@@ -67,9 +67,9 @@ export const EditorMainContent = memo(
     onUpdateTier,
     onClearRows,
     onDownloadImage,
+    onRoast,
     shareUrl,
     title,
-    onDeleteRating,
     isPublic,
     onTogglePublic,
     isTogglingPublic,
@@ -241,11 +241,9 @@ export const EditorMainContent = memo(
                     onAddRow={isReadOnly ? undefined : onAddRow}
                     onClearRows={isReadOnly ? undefined : () => onClearRows?.()}
                     onDownloadImage={onDownloadImage}
+                    onRoast={isReadOnly ? undefined : onRoast}
                     shareUrl={shareUrl}
                     title={title}
-                    onDeleteRating={
-                      isReadOnly ? undefined : () => onDeleteRating?.()
-                    }
                     isPublic={isPublic}
                     onTogglePublic={isReadOnly ? undefined : onTogglePublic}
                     isTogglingPublic={isTogglingPublic}
@@ -301,10 +299,10 @@ export const EditorMainContent = memo(
             onFindBook={onFindBook}
             onAddRow={onAddRow}
             onDownloadImage={onDownloadImage}
+            onRoast={isReadOnly ? undefined : onRoast}
             shareUrl={shareUrl}
             title={title}
             onClearRows={() => onClearRows?.()}
-            onDeleteRating={() => onDeleteRating?.()}
             isPublic={isPublic}
             onTogglePublic={onTogglePublic}
             isTogglingPublic={isTogglingPublic}

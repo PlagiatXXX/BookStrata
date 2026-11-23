@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Modal } from "@/ui/Modal";
-import { Check, Copy, Share2, Sparkles, X } from "lucide-react";
+import { Check, Copy, Flame, Share2, Sparkles, X } from "lucide-react";
 import { useShare } from "@/hooks/useShare";
 import { apiTrackEvent } from "@/lib/analyticsApi";
 
@@ -11,6 +11,7 @@ export interface ShareSuccessModalProps {
   shareUrl: string;
   coverImageUrl?: string | null;
   booksCount?: number;
+  onRoast?: () => void;
 }
 
 export function ShareSuccessModal({
@@ -20,6 +21,7 @@ export function ShareSuccessModal({
   shareUrl,
   coverImageUrl,
   booksCount,
+  onRoast,
 }: ShareSuccessModalProps) {
   const { getShareUrls, copyLink, copied, shareTo } = useShare();
   const [isNativeSharing, setIsNativeSharing] = useState(false);
@@ -165,6 +167,23 @@ export function ShareSuccessModal({
               <Share2 size={13} />
               <span>Другие приложения...</span>
             </button>
+          )}
+
+          {/* Кнопка «Прожарить тир-лист» */}
+          {onRoast && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onRoast();
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 py-2.5 px-3 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 hover:border-amber-500/50 transition-all cursor-pointer"
+              >
+                <Flame size={15} className="text-amber-400" />
+                <span>🔥 Узнать вердикт ИИ о расстановке</span>
+              </button>
+            </div>
           )}
         </div>
 

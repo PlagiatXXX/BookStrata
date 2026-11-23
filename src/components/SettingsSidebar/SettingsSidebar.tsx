@@ -8,13 +8,13 @@ import {
   Share2,
   Check,
   Copy,
-  Trash,
   Type,
   Search,
   Italic,
   CaseSensitive,
   Palette,
   Monitor,
+  Flame,
 } from "lucide-react";
 import type { Tier } from "@/types";
 import { Switch } from "@/ui/Switch";
@@ -53,9 +53,9 @@ interface SettingsSidebarProps {
   onAddRow?: () => void;
   onClearRows?: () => void;
   onDownloadImage?: () => void;
+  onRoast?: () => void;
   shareUrl?: string;
   title?: string;
-  onDeleteRating?: () => void;
   isPublic?: boolean;
   onTogglePublic?: (isPublic: boolean) => void;
   isTogglingPublic?: boolean;
@@ -75,9 +75,9 @@ export const SettingsSidebar = memo(({
   onAddRow = () => {},
   onClearRows = () => {},
   onDownloadImage = () => {},
+  onRoast,
   shareUrl,
   title,
-  onDeleteRating,
   isPublic = false,
   onTogglePublic,
   isTogglingPublic = false,
@@ -421,13 +421,14 @@ export const SettingsSidebar = memo(({
           Скачать тир-лист
         </button>
 
-        {onDeleteRating && (
+        {onRoast && (
           <button
-            onClick={onDeleteRating}
-            className={dangerActionButtonClass}
+            type="button"
+            onClick={onRoast}
+            className={`${secondaryActionButtonClass} border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/50 transition-colors`}
           >
-            <Trash size={16} className={actionIconClass} />
-            Удалить рейтинг
+            <Flame size={16} className={`${actionIconClass} text-amber-400`} />
+            Прожарить тир-лист
           </button>
         )}
 

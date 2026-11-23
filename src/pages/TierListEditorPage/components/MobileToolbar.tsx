@@ -14,6 +14,7 @@ import {
   CaseSensitive,
   Italic,
   Palette,
+  Flame,
 } from "lucide-react";
 import type { SaveStatus } from "../hooks/useTierEditorSave";
 import type { Tier } from "@/types";
@@ -28,10 +29,10 @@ interface MobileToolbarProps {
   onFindBook?: () => void;
   onAddRow?: () => void;
   onDownloadImage: () => void;
+  onRoast?: () => void;
   shareUrl?: string;
   title?: string;
   onClearRows?: () => void;
-  onDeleteRating?: () => void;
   isPublic: boolean;
   onTogglePublic?: (value: boolean) => void;
   isTogglingPublic: boolean;
@@ -73,10 +74,10 @@ export const MobileToolbar = memo(function MobileToolbar({
   onFindBook,
   onAddRow: _onAddRow,
   onDownloadImage,
+  onRoast,
   shareUrl,
   title,
   onClearRows,
-  onDeleteRating,
   isPublic,
   onTogglePublic,
   isTogglingPublic,
@@ -295,6 +296,21 @@ export const MobileToolbar = memo(function MobileToolbar({
           style={{ bottom: bottomOffset + 60 }}
         >
           <div className="flex flex-col gap-2">
+            {/* Roast */}
+            {onRoast && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMore(false);
+                  onRoast();
+                }}
+                className="flex items-center gap-3 rounded-xl border border-amber-500/30 px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-amber-400 transition-[transform,background] duration-100 ease-out hover:bg-amber-500/10 active:scale-[0.97]"
+              >
+                <Flame size={16} className="text-amber-400" />
+                Прожарить тир-лист
+              </button>
+            )}
+
             {/* Share */}
             {shareUrl && (
               <button
@@ -351,21 +367,6 @@ export const MobileToolbar = memo(function MobileToolbar({
                   />
                 </button>
               </div>
-            )}
-
-            {/* Delete Rating */}
-            {onDeleteRating && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMore(false);
-                  onDeleteRating();
-                }}
-                className="flex items-center gap-3 rounded-xl border border-[#ff51fa]/40 px-3 py-2.5 text-[11px] font-black uppercase tracking-wider text-[#ff51fa] transition-[transform,background] duration-100 ease-out hover:bg-[#ff51fa]/10 active:scale-[0.97]"
-              >
-                <Trash2 size={16} />
-                Удалить рейтинг
-              </button>
             )}
           </div>
         </div>

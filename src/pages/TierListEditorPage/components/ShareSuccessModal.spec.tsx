@@ -96,4 +96,16 @@ describe("ShareSuccessModal", () => {
     expect(img).toHaveAttribute("src", "https://bookstrata.ru/img/test-cover.jpg");
     expect(screen.getByText(/12 книг в списке/)).toBeInTheDocument();
   });
+
+  it("отображает кнопку прожарки, если передан onRoast, и вызывает onRoast при клике", () => {
+    const onRoast = vi.fn();
+    render(<ShareSuccessModal {...defaultProps} onRoast={onRoast} />);
+    const roastBtn = screen.getByRole("button", { name: /вердикт ИИ/i });
+    expect(roastBtn).toBeInTheDocument();
+
+    fireEvent.click(roastBtn);
+    expect(onRoast).toHaveBeenCalledTimes(1);
+    expect(defaultProps.onClose).toHaveBeenCalled();
+  });
 });
+

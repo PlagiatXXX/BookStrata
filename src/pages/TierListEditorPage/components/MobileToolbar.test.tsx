@@ -178,4 +178,21 @@ describe("MobileToolbar — настройки полки по шестерён�
     const bar = container.querySelector("[data-mobile-bottom-bar]");
     expect(bar).toBeInTheDocument();
   });
+
+  it("отображает кнопку прожарки в меню «Ещё» и вызывает onRoast при клике", () => {
+    const onRoast = vi.fn();
+    render(<MobileToolbar {...defaultProps} onRoast={onRoast} />);
+
+    // Открываем меню «Ещё»
+    const moreBtn = screen.getByRole("button", { name: "Ещё" });
+    fireEvent.click(moreBtn);
+
+    const roastBtn = screen.getByRole("button", { name: /Прожарить тир-лист/i });
+    expect(roastBtn).toBeInTheDocument();
+
+    fireEvent.click(roastBtn);
+    expect(onRoast).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: /Прожарить тир-лист/i })).not.toBeInTheDocument();
+  });
 });
+
