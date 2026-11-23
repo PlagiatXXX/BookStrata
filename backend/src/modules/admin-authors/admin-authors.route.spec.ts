@@ -1,7 +1,6 @@
 // backend/src/modules/admin-authors/admin-authors.route.spec.ts
 // Админ-роуты контента автора: только admin, list/get/put, Zod-валидация входа.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import type { PrismaClient } from "@prisma/client";
 
@@ -61,26 +60,30 @@ describe("admin-authors routes", () => {
   });
 
   it("без токена → 401", async () => {
-    const res = await request(app.server).get("/api/admin/authors");
-    expect(res.status).toBe(401);
+    const res = await app.inject({ method: "GET", url: "/api/admin/authors" });
+    expect(res.statusCode).toBe(401);
   });
 
   it("токен обычного пользователя → 403", async () => {
-    const res = await request(app.server)
-      .get("/api/admin/authors")
-      .set("Authorization", "Bearer user-token");
-    expect(res.status).toBe(403);
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/admin/authors",
+      headers: { authorization: "Bearer user-token" },
+    });
+    expect(res.statusCode).toBe(403);
   });
 
   it("admin: GET / → 200 со списком авторов", async () => {
     mocks.prisma.author.findMany.mockResolvedValue([
       { id: 1, name: "Вэнс", slug: "vans", _count: { stats: 1, showcase: 0, adaptations: 0, pressQuotes: 2 } },
     ]);
-    const res = await request(app.server)
-      .get("/api/admin/authors?q=вэнс")
-      .set("Authorization", "Bearer admin-token");
-    expect(res.status).toBe(200);
-    expect(res.body.data.authors[0]).toMatchObject({ id: 1, name: "Вэнс", statsCount: 1 });
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/admin/authors?q=вэнс",
+      headers: { authorization: "Bearer admin-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.authors[0]).toMatchObject({ id: 1, name: "Вэнс", statsCount: 1 });
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { name: { contains: "вэнс", mode: "insensitive" } } }),
     );
@@ -89,11 +92,13 @@ describe("admin-authors routes", () => {
   it("admin: GET /?page=2&onlyWithoutHero=true — прокидывает параметры, отвечает с total", async () => {
     mocks.prisma.author.findMany.mockResolvedValue([]);
     mocks.prisma.author.count.mockResolvedValue(150);
-    const res = await request(app.server)
-      .get("/api/admin/authors?page=2&onlyWithoutHero=true")
-      .set("Authorization", "Bearer admin-token");
-    expect(res.status).toBe(200);
-    expect(res.body.data).toMatchObject({ total: 150, page: 2, pageSize: 100 });
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/admin/authors?page=2&onlyWithoutHero=true",
+      headers: { authorization: "Bearer admin-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data).toMatchObject({ total: 150, page: 2, pageSize: 100 });
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { heroImageUrl: null },
@@ -105,11 +110,13 @@ describe("admin-authors routes", () => {
 
   it("admin: GET / с мусорным page → page 1", async () => {
     mocks.prisma.author.findMany.mockResolvedValue([]);
-    const res = await request(app.server)
-      .get("/api/admin/authors?page=abc")
-      .set("Authorization", "Bearer admin-token");
-    expect(res.status).toBe(200);
-    expect(res.body.data.page).toBe(1);
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/admin/authors?page=abc",
+      headers: { authorization: "Bearer admin-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.page).toBe(1);
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ skip: 0 }),
     );
@@ -117,11 +124,13 @@ describe("admin-authors routes", () => {
 
   it("admin: GET / с чрезмерным page → page 1 (без Int32 overflow в Prisma)", async () => {
     mocks.prisma.author.findMany.mockResolvedValue([]);
-    const res = await request(app.server)
-      .get("/api/admin/authors?page=100000000")
-      .set("Authorization", "Bearer admin-token");
-    expect(res.status).toBe(200);
-    expect(res.body.data.page).toBe(1);
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/admin/authors?page=100000000",
+      headers: { authorization: "Bearer admin-token" },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.page).toBe(1);
     expect(mocks.prisma.author.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ skip: 0 }),
     );
@@ -129,26 +138,32 @@ describe("admin-authors routes", () => {
 
   it("admin: GET /:id/content несуществующего → 404", async () => {
     mocks.prisma.author.findUnique.mockResolvedValue(null);
-    const res = await request(app.server)
-      .get("/api/admin/authors/99/content")
-      .set("Authorization", "Bearer admin-token");
-    expect(res.status).toBe(404);
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/admin/authors/99/content",
+      headers: { authorization: "Bearer admin-token" },
+    });
+    expect(res.statusCode).toBe(404);
   });
 
   it("admin: GET /:id/content с нечисловым id → 404, Prisma не вызывается", async () => {
-    const res = await request(app.server)
-      .get("/api/admin/authors/abc/content")
-      .set("Authorization", "Bearer admin-token");
-    expect(res.status).toBe(404);
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/admin/authors/abc/content",
+      headers: { authorization: "Bearer admin-token" },
+    });
+    expect(res.statusCode).toBe(404);
     expect(mocks.prisma.author.findUnique).not.toHaveBeenCalled();
   });
 
   it("admin: PUT /:id/content с нечисловым id → 404, транзакция не вызвана", async () => {
-    const res = await request(app.server)
-      .put("/api/admin/authors/abc/content")
-      .set("Authorization", "Bearer admin-token")
-      .send({ badge: "Лауреат" });
-    expect(res.status).toBe(404);
+    const res = await app.inject({
+      method: "PUT",
+      url: "/api/admin/authors/abc/content",
+      headers: { authorization: "Bearer admin-token" },
+      payload: { badge: "Лауреат" },
+    });
+    expect(res.statusCode).toBe(404);
     expect(mocks.prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -156,11 +171,13 @@ describe("admin-authors routes", () => {
     mocks.prisma.author.findMany.mockRejectedValue(
       new AdminAuthorError("author_not_found", "Автор не найден"),
     );
-    const res = await request(app.server)
-      .get("/api/admin/authors")
-      .set("Authorization", "Bearer admin-token");
-    expect(res.status).toBe(404);
-    expect(res.body).toMatchObject({ error: { code: "not_found" } });
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/admin/authors",
+      headers: { authorization: "Bearer admin-token" },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toMatchObject({ error: { code: "not_found" } });
   });
 
   it("admin: PUT /:id/content с валидным телом → 200 и $transaction вызван", async () => {
@@ -175,55 +192,65 @@ describe("admin-authors routes", () => {
       }),
     );
 
-    const res = await request(app.server)
-      .put("/api/admin/authors/1/content")
-      .set("Authorization", "Bearer admin-token")
-      .send({
+    const res = await app.inject({
+      method: "PUT",
+      url: "/api/admin/authors/1/content",
+      headers: { authorization: "Bearer admin-token" },
+      payload: {
         badge: "Лауреат",
         stats: [{ value: "14 млн", label: "книг" }],
         showcase: [{ bookId: 7, pullQuote: null }],
-      });
+      },
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(mocks.prisma.$transaction).toHaveBeenCalled();
   });
 
   it("admin: PUT с невалидным kind → 400, транзакция не вызвана", async () => {
-    const res = await request(app.server)
-      .put("/api/admin/authors/1/content")
-      .set("Authorization", "Bearer admin-token")
-      .send({ adaptations: [{ kind: "podcast", title: "X" }] });
-    expect(res.status).toBe(400);
+    const res = await app.inject({
+      method: "PUT",
+      url: "/api/admin/authors/1/content",
+      headers: { authorization: "Bearer admin-token" },
+      payload: { adaptations: [{ kind: "podcast", title: "X" }] },
+    });
+    expect(res.statusCode).toBe(400);
     expect(mocks.prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it("admin: POST /upload-hero без токена → 401, storage не вызван", async () => {
-    const res = await request(app.server)
-      .post("/api/admin/authors/upload-hero")
-      .send({ heroImageUrl: "data:image/webp;base64,AAAA" });
-    expect(res.status).toBe(401);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/authors/upload-hero",
+      payload: { heroImageUrl: "data:image/webp;base64,AAAA" },
+    });
+    expect(res.statusCode).toBe(401);
     expect(mocks.uploadBase64).not.toHaveBeenCalled();
   });
 
   it("admin: POST /upload-hero невалидный body (не base64) → 400", async () => {
-    const res = await request(app.server)
-      .post("/api/admin/authors/upload-hero")
-      .set("Authorization", "Bearer admin-token")
-      .send({ heroImageUrl: "https://example.com/photo.jpg" });
-    expect(res.status).toBe(400);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/authors/upload-hero",
+      headers: { authorization: "Bearer admin-token" },
+      payload: { heroImageUrl: "https://example.com/photo.jpg" },
+    });
+    expect(res.statusCode).toBe(400);
     expect(mocks.uploadBase64).not.toHaveBeenCalled();
   });
 
   it("admin: POST /upload-hero успех → 200 + data.heroImageUrl", async () => {
     mocks.uploadBase64.mockResolvedValue({ url: "https://cdn.example.com/hero.webp" });
 
-    const res = await request(app.server)
-      .post("/api/admin/authors/upload-hero")
-      .set("Authorization", "Bearer admin-token")
-      .send({ heroImageUrl: "data:image/webp;base64,AAAA" });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/authors/upload-hero",
+      headers: { authorization: "Bearer admin-token" },
+      payload: { heroImageUrl: "data:image/webp;base64,AAAA" },
+    });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.heroImageUrl).toBe("https://cdn.example.com/hero.webp");
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.heroImageUrl).toBe("https://cdn.example.com/hero.webp");
     expect(mocks.uploadBase64).toHaveBeenCalledWith(
       "data:image/webp;base64,AAAA",
       "tiermaker-pro/author-heroes",

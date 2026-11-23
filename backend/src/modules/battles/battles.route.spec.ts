@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 vi.mock("./battles.service.js", () => ({
@@ -66,9 +65,10 @@ describe("Battles Routes", () => {
       const mockBattles = [{ id: "battle-1", title: "Weekly Battle" }];
       (mockService.getActiveBattles as any).mockResolvedValue(mockBattles);
 
-      const res = await request(app.server).get("/api/battles").expect(200);
+      const res = await app.inject({ method: "GET", url: "/api/battles" });
 
-      expect(res.body.data).toEqual(mockBattles);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual(mockBattles);
     });
   });
 
@@ -77,18 +77,20 @@ describe("Battles Routes", () => {
       const mockBattle = { id: "battle-1", title: "Test" };
       (mockService.getBattleById as any).mockResolvedValue(mockBattle);
 
-      const res = await request(app.server).get("/api/battles/battle-1").expect(200);
+      const res = await app.inject({ method: "GET", url: "/api/battles/battle-1" });
 
-      expect(res.body.data).toEqual(mockBattle);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual(mockBattle);
       expect(mockService.getBattleById).toHaveBeenCalledWith("battle-1");
     });
 
     it("должен вернуть 404 если битва не найдена", async () => {
       (mockService.getBattleById as any).mockResolvedValue(null);
 
-      const res = await request(app.server).get("/api/battles/unknown").expect(404);
+      const res = await app.inject({ method: "GET", url: "/api/battles/unknown" });
 
-      expect(res.body.error.code).toBe("not_found");
+      expect(res.statusCode).toBe(404);
+      expect(res.json().error.code).toBe("not_found");
     });
   });
 
@@ -97,63 +99,72 @@ describe("Battles Routes", () => {
       const mockBattle = { id: "new-battle", title: "New Battle" };
       (mockService.createBattle as any).mockResolvedValue(mockBattle);
 
-      const res = await request(app.server)
-        .post("/api/battles")
-        .set("Authorization", "Bearer admin-token")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles",
+        headers: { authorization: "Bearer admin-token" },
+        payload: {
           title: "New Battle",
           type: "weekly",
           endTime: new Date(Date.now() + 86400000).toISOString(),
           participantTierListIds: ["tl-1", "tl-2"],
-        })
-        .expect(201);
+        },
+      });
 
-      expect(res.body.data).toEqual(mockBattle);
+      expect(res.statusCode).toBe(201);
+      expect(res.json().data).toEqual(mockBattle);
       expect(res.headers.location).toBe("/api/battles/new-battle");
     });
 
     it("должен вернуть 401 без авторизации", async () => {
-      const res = await request(app.server)
-        .post("/api/battles")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles",
+        payload: {
           title: "Test",
           type: "weekly",
           endTime: new Date(Date.now() + 86400000).toISOString(),
           participantTierListIds: ["tl-1", "tl-2"],
-        })
-        .expect(401);
+        },
+      });
 
-      expect(res.body.error).toBe("Unauthorized");
+      expect(res.statusCode).toBe(401);
+      expect(res.json().error).toBe("Unauthorized");
     });
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      const res = await request(app.server)
-        .post("/api/battles")
-        .set("Authorization", "Bearer user-token")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles",
+        headers: { authorization: "Bearer user-token" },
+        payload: {
           title: "Test",
           type: "weekly",
           endTime: new Date(Date.now() + 86400000).toISOString(),
           participantTierListIds: ["tl-1", "tl-2"],
-        })
-        .expect(403);
+        },
+      });
 
-      expect(res.body.error).toBe("Требуется роль администратора или модератора");
+      expect(res.statusCode).toBe(403);
+      expect(res.json().error).toBe("Требуется роль администратора или модератора");
     });
 
     it("должен создать битву (moderator)", async () => {
       (mockService.createBattle as any).mockResolvedValue({ id: "new-battle" });
 
-      await request(app.server)
-        .post("/api/battles")
-        .set("Authorization", "Bearer moderator-token")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles",
+        headers: { authorization: "Bearer moderator-token" },
+        payload: {
           title: "Mod Battle",
           type: "weekly",
           endTime: new Date(Date.now() + 86400000).toISOString(),
           participantTierListIds: ["tl-1", "tl-2"],
-        })
-        .expect(201);
+        },
+      });
+
+      expect(res.statusCode).toBe(201);
     });
   });
 
@@ -161,21 +172,26 @@ describe("Battles Routes", () => {
     it("должен проголосовать", async () => {
       (mockService.voteInBattle as any).mockResolvedValue({ success: true });
 
-      const res = await request(app.server)
-        .post("/api/battles/battle-1/vote")
-        .set("Authorization", "Bearer user-token")
-        .send({ tierListId: "tl-1" })
-        .expect(200);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles/battle-1/vote",
+        headers: { authorization: "Bearer user-token" },
+        payload: { tierListId: "tl-1" },
+      });
 
-      expect(res.body.data).toEqual({ success: true });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ success: true });
       expect(mockService.voteInBattle).toHaveBeenCalledWith(2, "battle-1", "tl-1");
     });
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .post("/api/battles/battle-1/vote")
-        .send({ tierListId: "tl-1" })
-        .expect(401);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles/battle-1/vote",
+        payload: { tierListId: "tl-1" },
+      });
+
+      expect(res.statusCode).toBe(401);
     });
 
     it("должен вернуть 409 при повторном голосе", async () => {
@@ -183,13 +199,15 @@ describe("Battles Routes", () => {
       (p2002 as any).code = "P2002";
       (mockService.voteInBattle as any).mockRejectedValue(p2002);
 
-      const res = await request(app.server)
-        .post("/api/battles/battle-1/vote")
-        .set("Authorization", "Bearer user-token")
-        .send({ tierListId: "tl-1" })
-        .expect(409);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles/battle-1/vote",
+        headers: { authorization: "Bearer user-token" },
+        payload: { tierListId: "tl-1" },
+      });
 
-      expect(res.body.error.code).toBe("conflict");
+      expect(res.statusCode).toBe(409);
+      expect(res.json().error.code).toBe("conflict");
     });
   });
 
@@ -197,19 +215,24 @@ describe("Battles Routes", () => {
     it("должен вернуть pending заявки (admin)", async () => {
       (mockService.getPendingApplications as any).mockResolvedValue([{ id: 1, status: "pending" }]);
 
-      const res = await request(app.server)
-        .get("/api/battles/applications/pending")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/battles/applications/pending",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.body.data).toEqual([{ id: 1, status: "pending" }]);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual([{ id: 1, status: "pending" }]);
     });
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      await request(app.server)
-        .get("/api/battles/applications/pending")
-        .set("Authorization", "Bearer user-token")
-        .expect(403);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/battles/applications/pending",
+        headers: { authorization: "Bearer user-token" },
+      });
+
+      expect(res.statusCode).toBe(403);
     });
   });
 
@@ -217,10 +240,13 @@ describe("Battles Routes", () => {
     it("должен вернуть approved заявки (admin)", async () => {
       (mockService.getApprovedApplications as any).mockResolvedValue([]);
 
-      await request(app.server)
-        .get("/api/battles/applications/approved")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/battles/applications/approved",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      expect(res.statusCode).toBe(200);
     });
   });
 
@@ -228,21 +254,26 @@ describe("Battles Routes", () => {
     it("должен создать общую заявку", async () => {
       (mockService.applyGeneral as any).mockResolvedValue({ id: 1 });
 
-      const res = await request(app.server)
-        .post("/api/battles/apply")
-        .set("Authorization", "Bearer user-token")
-        .send({ tierListId: "tl-1", message: "Join!" })
-        .expect(201);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles/apply",
+        headers: { authorization: "Bearer user-token" },
+        payload: { tierListId: "tl-1", message: "Join!" },
+      });
 
-      expect(res.body.data).toEqual({ id: 1 });
+      expect(res.statusCode).toBe(201);
+      expect(res.json().data).toEqual({ id: 1 });
       expect(mockService.applyGeneral).toHaveBeenCalledWith(2, "tl-1", "Join!");
     });
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .post("/api/battles/apply")
-        .send({ tierListId: "tl-1" })
-        .expect(401);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles/apply",
+        payload: { tierListId: "tl-1" },
+      });
+
+      expect(res.statusCode).toBe(401);
     });
   });
 
@@ -250,17 +281,23 @@ describe("Battles Routes", () => {
     it("должен закрыть битву (admin)", async () => {
       (mockService.closeBattle as any).mockResolvedValue({ id: "battle-1", status: "completed" });
 
-      await request(app.server)
-        .post("/api/battles/battle-1/close")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles/battle-1/close",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      expect(res.statusCode).toBe(200);
     });
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      await request(app.server)
-        .post("/api/battles/battle-1/close")
-        .set("Authorization", "Bearer user-token")
-        .expect(403);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles/battle-1/close",
+        headers: { authorization: "Bearer user-token" },
+      });
+
+      expect(res.statusCode).toBe(403);
     });
   });
 
@@ -268,13 +305,15 @@ describe("Battles Routes", () => {
     it("должен создать заявку на битву", async () => {
       (mockService.applyToBattle as any).mockResolvedValue({ id: 1 });
 
-      const res = await request(app.server)
-        .post("/api/battles/battle-1/apply")
-        .set("Authorization", "Bearer user-token")
-        .send({ tierListId: "tl-1" })
-        .expect(201);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/battles/battle-1/apply",
+        headers: { authorization: "Bearer user-token" },
+        payload: { tierListId: "tl-1" },
+      });
 
-      expect(res.body.data).toEqual({ id: 1 });
+      expect(res.statusCode).toBe(201);
+      expect(res.json().data).toEqual({ id: 1 });
     });
   });
 
@@ -282,10 +321,13 @@ describe("Battles Routes", () => {
     it("должен вернуть заявки битвы (admin)", async () => {
       (mockService.getApplications as any).mockResolvedValue([]);
 
-      await request(app.server)
-        .get("/api/battles/battle-1/applications")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/battles/battle-1/applications",
+        headers: { authorization: "Bearer admin-token" },
+      });
+
+      expect(res.statusCode).toBe(200);
     });
   });
 
@@ -293,21 +335,26 @@ describe("Battles Routes", () => {
     it("должен одобрить общую заявку (admin)", async () => {
       (mockService.reviewApplication as any).mockResolvedValue({ status: "approved" });
 
-      await request(app.server)
-        .patch("/api/battles/applications/1")
-        .set("Authorization", "Bearer admin-token")
-        .send({ status: "approved" })
-        .expect(200);
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/battles/applications/1",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { status: "approved" },
+      });
+
+      expect(res.statusCode).toBe(200);
     });
 
     it("должен вернуть 400 при невалидном ID", async () => {
-      const res = await request(app.server)
-        .patch("/api/battles/applications/abc")
-        .set("Authorization", "Bearer admin-token")
-        .send({ status: "approved" })
-        .expect(400);
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/battles/applications/abc",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { status: "approved" },
+      });
 
-      expect(res.body.error.code).toBe("invalid_input");
+      expect(res.statusCode).toBe(400);
+      expect(res.json().error.code).toBe("invalid_input");
     });
   });
 
@@ -315,11 +362,14 @@ describe("Battles Routes", () => {
     it("должен одобрить заявку в битве (admin)", async () => {
       (mockService.reviewApplication as any).mockResolvedValue({ status: "approved" });
 
-      await request(app.server)
-        .patch("/api/battles/battle-1/applications/1")
-        .set("Authorization", "Bearer admin-token")
-        .send({ status: "approved" })
-        .expect(200);
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/battles/battle-1/applications/1",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { status: "approved" },
+      });
+
+      expect(res.statusCode).toBe(200);
     });
   });
 });

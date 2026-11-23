@@ -18,6 +18,7 @@ export interface DnaStepFlowProps {
   ) => void;
   onStepChange?: (step: number) => void;
   onTouchedAxesChange?: (touched: Record<string, boolean>) => void;
+  onNameChange?: (name: string) => void;
   isLoading?: boolean;
   theme?: "dark" | "craft" | "light";
   initialName?: string;
@@ -86,6 +87,7 @@ export function DnaStepFlow({
   onBooksChange,
   onStepChange,
   onTouchedAxesChange,
+  onNameChange,
   isLoading = false,
   theme = "craft",
   initialName = "",
@@ -97,6 +99,7 @@ export function DnaStepFlow({
 }: DnaStepFlowProps) {
   const isDark = theme === "dark";
   const [step, setStep] = useState(initialStep);
+  const [customName, setCustomName] = useState(initialName);
 
   // Значения 6 осей восприятия: по умолчанию стоят на 0
   const [axes, setAxes] = useState<DnaAxesData>(() => initialAxes || {
@@ -191,6 +194,15 @@ export function DnaStepFlow({
     (book): book is DnaBookItemData => Boolean(book)
   );
 
+  const handleNameInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setCustomName(val);
+      onNameChange?.(val);
+    },
+    [onNameChange]
+  );
+
   const handleSeal = useCallback(() => {
     onComplete({
       axes,
@@ -199,10 +211,10 @@ export function DnaStepFlow({
       likedGenres: [],
       dislikedGenres: [],
       favoriteAuthors: [],
-      customName: initialName.trim() || undefined,
+      customName: customName.trim() || undefined,
       theme: isDark ? "dark" : "craft",
     });
-  }, [axes, filledBooks, kryptonite, initialName, isDark, onComplete]);
+  }, [axes, filledBooks, kryptonite, customName, isDark, onComplete]);
 
   return (
     <div className="w-full flex flex-col justify-between space-y-4">
@@ -361,6 +373,32 @@ export function DnaStepFlow({
             onChange={handleBooksUpdate}
             theme={isDark ? "dark" : "light"}
           />
+
+          {/* Поле имени / ника для билета и вызовов на дуэль */}
+          <div className="space-y-1.5 pt-1">
+            <label
+              htmlFor="dna-custom-name"
+              className="block text-xs font-semibold opacity-85"
+            >
+              Ваше имя или ник на билете <span className="font-normal opacity-60">(необязательно)</span>
+            </label>
+            <input
+              id="dna-custom-name"
+              type="text"
+              maxLength={50}
+              value={customName}
+              onChange={handleNameInputChange}
+              placeholder="Например, Саша или @bookworm"
+              className={`w-full px-3.5 py-2 rounded-xl text-sm border focus:outline-none transition-all ${
+                isDark
+                  ? "bg-[#24170f] border-[rgba(201,163,91,0.35)] text-[#efe3cc] placeholder-[#a89678]/60 focus:border-[#c9a35b]"
+                  : "bg-white border-[rgba(59,110,168,0.35)] text-[#2e2a24] placeholder-[#6f6553]/60 focus:border-[#3b6ea8]"
+              }`}
+            />
+            <p className="text-[11px] opacity-60">
+              Отобразится на читательском билете и в приглашении на сравнение вкусов.
+            </p>
+          </div>
 
           {/* Навигационные кнопки */}
           <div className="flex justify-between items-center pt-4">

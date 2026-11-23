@@ -11,6 +11,11 @@ import { ArchivalTicketCard } from "./components/ArchivalTicketCard";
 import { DuelSection } from "./components/DuelSection";
 import { HubSection } from "./components/HubSection";
 import { DnaIntroSection } from "./components/DnaIntroSection";
+import { DnaBookMatchBridge } from "./components/DnaBookMatchBridge";
+import { DnaDuelsJournal } from "./components/DnaDuelsJournal";
+import { DnaTwinsSection } from "./components/DnaTwinsSection";
+import { StoryTicketCard } from "./components/StoryTicketCard";
+import { AiLibrarianModal } from "@/components/AiLibrarian/AiLibrarianModal";
 import { useDnaArchetypes } from "./hooks/useDnaArchetypes";
 import {
   findArchetypeByIdOrName,
@@ -23,21 +28,25 @@ import {
   getReadingTicket,
   conductReadingDuel,
   getMyReadingDna,
+  shareReadingTicket,
+  getReadingArchetypeStats,
   type ReadingDnaInputData,
   type ReadingDnaResponseData,
   type ReadingDnaDuelResultData,
   type DnaAxesData,
   type DnaBookItemData,
 } from "@/lib/readingDnaApi";
+import { apiTrackEvent } from "@/lib/analyticsApi";
+import { pushDataLayerEvent } from "@/lib/gtm";
 import {
   getDnaTicketStorageKey,
   getDnaDraftStorageKey,
+  getOrCreateDnaGuestToken,
   cleanupLegacyDnaStorage,
   DNA_THEME_KEY,
   LEGACY_DNA_DRAFT_KEY as DNA_DRAFT_KEY,
   LEGACY_DNA_TICKET_KEY as DNA_TICKET_KEY,
 } from "./utils/dnaStorage";
-import { DnaComingSoonTeaser } from "./components/DnaComingSoonTeaser";
 import "./readingDna.css";
 
 export type DnaTheme = "dark" | "craft";
@@ -50,6 +59,7 @@ export interface ReadingDnaDraft {
   favoriteBooks: (DnaBookItemData | null)[];
   kryptonite: DnaBookItemData | null;
   touchedAxes?: Record<string, boolean>;
+  customName?: string;
 }
 
 const INITIAL_AXES: DnaAxesData = {
@@ -75,12 +85,13 @@ export default function ReadingDnaPage() {
   const ticketParam = searchParams.get("ticket");
   const tabParam = searchParams.get("tab");
   const challengeParam = searchParams.get("challenge") || searchParams.get("duel");
+  const compareParam = searchParams.get("compare");
+  const withParam = searchParams.get("with");
   const { archetypes } = useDnaArchetypes();
 
   const authContext = useContext(AuthContext);
   const user = authContext?.user ?? null;
   const isAuthLoading = authContext?.isLoading ?? false;
-  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   // Очистка устаревших глобальных ключей прошлых версий
   useEffect(() => {
@@ -126,6 +137,7 @@ export default function ReadingDnaPage() {
               : [],
             kryptonite: parsed.kryptonite || null,
             touchedAxes: parsed.touchedAxes || {},
+            customName: typeof parsed.customName === "string" ? parsed.customName : undefined,
           };
         }
       }
@@ -138,6 +150,7 @@ export default function ReadingDnaPage() {
       favoriteBooks: [],
       kryptonite: null,
       touchedAxes: {},
+      customName: undefined,
     };
   });
 
@@ -148,8 +161,14 @@ export default function ReadingDnaPage() {
   );
   const [liveKryptonite, setLiveKryptonite] = useState<DnaBookItemData | null>(initialDraft.kryptonite);
   const [touchedAxes, setTouchedAxes] = useState<Record<string, boolean>>(initialDraft.touchedAxes || {});
+  const [customName, setCustomName] = useState<string>(
+    () => initialDraft.customName ?? user?.username ?? ""
+  );
   const ticketCardRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const storyCardRef = useRef<HTMLDivElement>(null);
+  const [downloadingFormat, setDownloadingFormat] = useState<"ticket" | "stories" | null>(null);
+  const [isAiLibrarianOpen, setIsAiLibrarianOpen] = useState(false);
+  const dnaStartedTrackedRef = useRef(false);
 
   // Автосохранение черновика при любом изменении
   useEffect(() => {
@@ -160,12 +179,13 @@ export default function ReadingDnaPage() {
         favoriteBooks: liveBooks,
         kryptonite: liveKryptonite,
         touchedAxes,
+        customName: customName || undefined,
       };
       localStorage.setItem(draftKey, JSON.stringify(draftToSave));
     } catch {
       // ignore
     }
-  }, [draftKey, currentStep, liveAxes, liveBooks, liveKryptonite, touchedAxes]);
+  }, [draftKey, currentStep, liveAxes, liveBooks, liveKryptonite, touchedAxes, customName]);
 
   // Сохраненный билет из localStorage (изолированный по пользователю)
   const [currentTicket, setCurrentTicket] = useState<ReadingDnaResponseData | null>(() => {
@@ -191,9 +211,12 @@ export default function ReadingDnaPage() {
   }, [ticketKey]);
 
   const [activeTab, setActiveTab] = useState<number>(() => {
-    if (challengeParam) return 3;
+    if (challengeParam || compareParam || withParam) return 3;
     if (tabParam === "compare") return 3;
-    if (ticketParam) return 2;
+    if (tabParam === "test") return 1;
+    if (tabParam === "ticket" || ticketParam) return 2;
+    if (tabParam === "hub") return 4;
+    if (tabParam === "intro" || tabParam === "overview") return 0;
     if (currentTicket) return 2;
     if (initialDraft.step > 0) return 1;
     return 0;
@@ -202,12 +225,54 @@ export default function ReadingDnaPage() {
   const [initialDuelResult, setInitialDuelResult] =
     useState<ReadingDnaDuelResultData | null>(null);
 
+  const [selectedOpponentTicket, setSelectedOpponentTicket] = useState<string | null>(
+    () =>
+      withParam ||
+      challengeParam ||
+      (compareParam && currentTicket?.ticketNumber === compareParam ? withParam : compareParam) ||
+      (ticketParam && currentTicket?.ticketNumber !== ticketParam && tabParam === "compare"
+        ? ticketParam
+        : null) ||
+      null
+  );
+
+  // Синхронизация активного таба и оппонента с URL при внешней навигации (popstate / вперед-назад)
+  useEffect(() => {
+    const curTabParam = searchParams.get("tab");
+    const curChallengeParam = searchParams.get("challenge") || searchParams.get("duel");
+    const curCompareParam = searchParams.get("compare");
+    const curWithParam = searchParams.get("with");
+    const curTicketParam = searchParams.get("ticket");
+
+    if (curChallengeParam || curCompareParam || curWithParam) {
+      setActiveTab(3);
+    } else if (curTabParam === "compare") {
+      setActiveTab(3);
+    } else if (curTabParam === "test") {
+      setActiveTab(1);
+    } else if (curTabParam === "ticket" || curTicketParam) {
+      setActiveTab(2);
+    } else if (curTabParam === "hub") {
+      setActiveTab(4);
+    } else if (curTabParam === "intro" || curTabParam === "overview") {
+      setActiveTab(0);
+    }
+
+    const target =
+      curWithParam ||
+      curChallengeParam ||
+      (curCompareParam && currentTicket?.ticketNumber === curCompareParam
+        ? curWithParam
+        : curCompareParam) ||
+      (curTicketParam && currentTicket?.ticketNumber !== curTicketParam && curTabParam === "compare"
+        ? curTicketParam
+        : null) ||
+      null;
+    setSelectedOpponentTicket(target);
+  }, [searchParams, currentTicket?.ticketNumber]);
+
   // Определение номера билета оппонента для дуэли
-  const opponentTicketNumber =
-    challengeParam ||
-    (ticketParam && currentTicket?.ticketNumber !== ticketParam
-      ? ticketParam
-      : null);
+  const opponentTicketNumber = selectedOpponentTicket;
 
   // Запрос сохраненного ДНК авторизованного пользователя с сервера
   const { data: myDna } = useQuery({
@@ -241,6 +306,13 @@ export default function ReadingDnaPage() {
     queryKey: ["readingDna", "opponentTicket", opponentTicketNumber],
     queryFn: () => (opponentTicketNumber ? getReadingTicket(opponentTicketNumber) : null),
     enabled: Boolean(opponentTicketNumber),
+  });
+
+  // Реальная статистика распределения архетипов по базе данных
+  const { data: archetypeStats } = useQuery({
+    queryKey: ["readingDna", "stats"],
+    queryFn: getReadingArchetypeStats,
+    staleTime: 5 * 60_000,
   });
 
   // Если в URL передан чужой билет (?ticket=BS-XXXXX) — открываем именно его, а не собственный
@@ -277,14 +349,94 @@ export default function ReadingDnaPage() {
     setLiveBooks([]);
     setLiveKryptonite(null);
     setTouchedAxes({});
-  }, [draftKey]);
+    setCustomName(user?.username ?? "");
+  }, [draftKey, user?.username]);
 
-  const handleSelectTab = useCallback((index: number) => {
-    setActiveTab(index);
-    if (typeof window !== "undefined" && window.scrollY > 0) {
-      window.scrollTo({ top: 0 });
+  const handleSelectTab = useCallback(
+    (index: number) => {
+      setActiveTab(index);
+      if (index === 1 && !dnaStartedTrackedRef.current) {
+        dnaStartedTrackedRef.current = true;
+        apiTrackEvent("dna_started", { hasChallenge: Boolean(challengeParam) });
+        pushDataLayerEvent("dna_started", { has_challenge: Boolean(challengeParam) });
+      }
+
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        // Очищаем параметры дуэли при переключении табов
+        next.delete("with");
+        next.delete("compare");
+        next.delete("challenge");
+        next.delete("duel");
+
+        switch (index) {
+          case 0:
+            next.delete("tab");
+            next.delete("ticket");
+            break;
+          case 1:
+            next.set("tab", "test");
+            next.delete("ticket");
+            break;
+          case 2:
+            next.set("tab", "ticket");
+            if (!isViewingOtherTicket) {
+              next.delete("ticket");
+            }
+            break;
+          case 3:
+            next.set("tab", "compare");
+            next.delete("ticket");
+            break;
+          case 4:
+            next.set("tab", "hub");
+            next.delete("ticket");
+            break;
+          default:
+            break;
+        }
+        return next;
+      });
+
+      if (index !== 3) {
+        setSelectedOpponentTicket(null);
+        setInitialDuelResult(null);
+      }
+
+      if (typeof window !== "undefined" && window.scrollY > 0) {
+        window.scrollTo({ top: 0 });
+      }
+    },
+    [challengeParam, isViewingOtherTicket, setSearchParams]
+  );
+
+  const handleResetDuel = useCallback(() => {
+    setSelectedOpponentTicket(null);
+    setInitialDuelResult(null);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("with");
+      next.delete("compare");
+      next.delete("challenge");
+      next.delete("duel");
+      next.set("tab", "compare");
+      return next;
+    });
+  }, [setSearchParams]);
+
+  const handleOpenDuelWith = useCallback((oppTicketNum: string) => {
+    setSelectedOpponentTicket(oppTicketNum);
+    setActiveTab(3);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", "compare");
+      next.set("with", oppTicketNum);
+      return next;
+    });
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, []);
+  }, [setSearchParams]);
 
   // Мутация сохранения ДНК
   const saveMutation = useMutation({
@@ -297,6 +449,16 @@ export default function ReadingDnaPage() {
         // ignore
       }
 
+      apiTrackEvent("dna_sealed", {
+        ticketNumber: saved.ticketNumber,
+        archetype: saved.archetype,
+        isGuest: !user,
+      });
+      pushDataLayerEvent("dna_sealed", {
+        archetype: saved.archetype,
+        is_guest: !user,
+      });
+
       // Если пользователь пришёл по вызову на дуэль — автоматически проводим дуэль!
       if (
         opponentTicketNumber &&
@@ -306,6 +468,13 @@ export default function ReadingDnaPage() {
           const duelResult = await conductReadingDuel({
             targetTicketNumber: opponentTicketNumber,
             challengerTicketNumber: saved.ticketNumber,
+          });
+          apiTrackEvent("dna_duel", {
+            targetTicketNumber: opponentTicketNumber,
+            compatibility: duelResult.compatibility,
+          });
+          pushDataLayerEvent("dna_duel", {
+            compatibility: duelResult.compatibility,
           });
           setInitialDuelResult(duelResult);
           setSearchParams({ ticket: saved.ticketNumber });
@@ -327,9 +496,12 @@ export default function ReadingDnaPage() {
 
   const handleCompleteFlow = useCallback(
     (data: ReadingDnaInputData) => {
-      saveMutation.mutate(data);
+      const payload: ReadingDnaInputData = user
+        ? data
+        : { ...data, guestToken: getOrCreateDnaGuestToken() };
+      saveMutation.mutate(payload);
     },
-    [saveMutation]
+    [saveMutation, user]
   );
 
   const handleLiveAxisChange = useCallback((axis: keyof DnaAxesData, val: number) => {
@@ -347,88 +519,113 @@ export default function ReadingDnaPage() {
     []
   );
 
-  // Скачивание билета в PNG (HD): инлайним картинки через прокси ради CORS
-  const handleDownloadTicket = useCallback(async () => {
-    const element = ticketCardRef.current;
-    if (!element || !activeTicket) return;
+  // Скачивание билета в PNG (HD) или вертикальной карточки Stories (540×960 ×2 = 1080×1920)
+  const handleDownloadTicket = useCallback(
+    async (format: "ticket" | "stories" = "ticket") => {
+      const element = format === "stories" ? storyCardRef.current : ticketCardRef.current;
+      if (!element || !activeTicket) return;
 
-    const originalSrc = new Map<HTMLImageElement, string>();
+      const originalSrc = new Map<HTMLImageElement, string>();
+      setDownloadingFormat(format);
 
-    setIsDownloading(true);
+      try {
+        const { toPng } = await import("html-to-image");
 
-    try {
-      const { toPng } = await import("html-to-image");
+        const images = Array.from(element.querySelectorAll<HTMLImageElement>("img"));
+        await Promise.all(
+          images.map(async (img) => {
+            const src = img.getAttribute("src");
+            if (!src || src.startsWith("data:")) return;
 
-      const images = Array.from(element.querySelectorAll<HTMLImageElement>("img"));
-      await Promise.all(
-        images.map(async (img) => {
-          const src = img.getAttribute("src");
-          if (!src || src.startsWith("data:")) return;
+            try {
+              const absoluteUrl = new URL(src, window.location.origin);
+              const isSameOrigin = absoluteUrl.origin === window.location.origin;
+              const proxyUrl = isSameOrigin
+                ? absoluteUrl.toString()
+                : `/api/proxy/image?url=${encodeURIComponent(absoluteUrl.toString())}`;
 
-          try {
-            const absoluteUrl = new URL(src, window.location.origin);
-            const isSameOrigin = absoluteUrl.origin === window.location.origin;
-            const proxyUrl = isSameOrigin
-              ? absoluteUrl.toString()
-              : `/api/proxy/image?url=${encodeURIComponent(absoluteUrl.toString())}`;
+              const response = await fetch(proxyUrl);
+              if (!response.ok) return;
 
-            const response = await fetch(proxyUrl);
-            if (!response.ok) return;
+              const blob = await response.blob();
+              const dataUrl = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result));
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(blob);
+              });
 
-            const blob = await response.blob();
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(String(reader.result));
-              reader.onerror = () => reject(reader.error);
-              reader.readAsDataURL(blob);
-            });
+              originalSrc.set(img, src);
+              img.src = dataUrl;
+            } catch {
+              // Не удалось — html-to-image попробует загрузить как есть
+            }
+          })
+        );
 
-            originalSrc.set(img, src);
-            img.src = dataUrl;
-          } catch {
-            // Не удалось — html-to-image попробует загрузить как есть
-          }
-        })
-      );
+        if (document.fonts) {
+          await document.fonts.ready;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 60));
 
-      if (document.fonts) {
-        await document.fonts.ready;
+        const dataUrl = await toPng(element, {
+          cacheBust: true,
+          pixelRatio: 2,
+          ...(format === "stories" ? { width: 540, height: 960 } : {}),
+          backgroundColor: theme === "dark" ? "#2b1d14" : "#fffdf7",
+        });
+
+        const link = document.createElement("a");
+        link.download =
+          format === "stories"
+            ? `bookstrata-stories-${activeTicket.ticketNumber}.png`
+            : `bookstrata-ticket-${activeTicket.ticketNumber}.png`;
+        link.href = dataUrl;
+        link.click();
+
+        apiTrackEvent("dna_shared", {
+          ticketNumber: activeTicket.ticketNumber,
+          method: format === "stories" ? "png_stories" : "png_ticket",
+        });
+        pushDataLayerEvent("dna_shared", {
+          method: format === "stories" ? "png_stories" : "png_ticket",
+        });
+
+        sileo.success({
+          title: format === "stories" ? "Карточка для Stories сохранена" : "Билет сохранён",
+          description:
+            format === "stories"
+              ? "Вертикальный PNG 1080×1920 скачан."
+              : "PNG в HD-качестве скачан.",
+        });
+      } catch {
+        sileo.error({
+          title: "Не удалось скачать изображение",
+          description: "Попробуйте ещё раз.",
+        });
+      } finally {
+        for (const [img, src] of originalSrc) {
+          img.src = src;
+        }
+        setDownloadingFormat(null);
       }
-      await new Promise((resolve) => setTimeout(resolve, 60));
-
-      const dataUrl = await toPng(element, {
-        cacheBust: true,
-        pixelRatio: 2,
-        backgroundColor: theme === "dark" ? "#2b1d14" : "#fffdf7",
-      });
-
-      const link = document.createElement("a");
-      link.download = `bookstrata-ticket-${activeTicket.ticketNumber}.png`;
-      link.href = dataUrl;
-      link.click();
-
-      sileo.success({
-        title: "Билет сохранён",
-        description: "PNG в HD-качестве скачан.",
-      });
-    } catch {
-      sileo.error({
-        title: "Не удалось скачать билет",
-        description: "Попробуйте ещё раз.",
-      });
-    } finally {
-      for (const [img, src] of originalSrc) {
-        img.src = src;
-      }
-      setIsDownloading(false);
-    }
-  }, [activeTicket, theme]);
+    },
+    [activeTicket, theme]
+  );
 
   const handleCopyLink = useCallback(async () => {
     const num = activeTicket?.ticketNumber || "BS-04821";
     const url = `${window.location.origin}/reading-dna?challenge=${num}`;
     try {
       await navigator.clipboard.writeText(url);
+      if (activeTicket?.ticketNumber) {
+        shareReadingTicket(activeTicket.ticketNumber).catch(() => {});
+      }
+      apiTrackEvent("dna_shared", {
+        ticketNumber: num,
+        method: "copy_challenge_link",
+      });
+      pushDataLayerEvent("dna_shared", { method: "copy_challenge_link" });
       sileo.success({
         title: "Ссылка для сравнения вкусов скопирована",
         description: "Отправьте друзьям в книжный чат!",
@@ -437,6 +634,18 @@ export default function ReadingDnaPage() {
       // Fallback
     }
   }, [activeTicket]);
+
+  const handleOpenBukstrazh = useCallback(() => {
+    if (!user) {
+      sileo.info({
+        title: "Войдите, чтобы пообщаться с Букстражем",
+        description: "AI-библиотекарь разберёт ваш ДНК и подберёт книги.",
+      });
+      navigate("/auth?redirect=/reading-dna");
+      return;
+    }
+    setIsAiLibrarianOpen(true);
+  }, [user, navigate]);
 
   const handleCopyTicketNumber = useCallback(async () => {
     if (!activeTicket?.ticketNumber) return;
@@ -459,10 +668,6 @@ export default function ReadingDnaPage() {
         <Loader2 className="animate-spin" size={28} />
       </div>
     );
-  }
-
-  if (!isAdmin) {
-    return <DnaComingSoonTeaser />;
   }
 
   return (
@@ -501,14 +706,6 @@ export default function ReadingDnaPage() {
       />
 
       <div className="w-full max-w-full flex flex-col flex-1">
-        {isAdmin && (
-          <aside
-            aria-label="Панель администратора"
-            className="w-full bg-amber-500/15 border border-amber-500/30 rounded-lg px-3 py-1.5 mb-2 text-center text-xs text-amber-200/90 font-medium select-none"
-          >
-            <span>🛡️ Режим администратора · Для обычных пользователей страница открывается в режиме «Скоро»</span>
-          </aside>
-        )}
 
         {/* Хлебные крошки + Назад на одном уровне */}
         <div className="flex items-center justify-between gap-3 pt-1 pb-2 text-xs select-none">
@@ -594,7 +791,13 @@ export default function ReadingDnaPage() {
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() => handleSelectTab(idx)}
+                    onClick={() => {
+                      if (isActive && idx === 3) {
+                        handleResetDuel();
+                      } else {
+                        handleSelectTab(idx);
+                      }
+                    }}
                     className={`px-2.5 sm:px-4 md:px-5 py-1.5 sm:py-2 text-[11px] sm:text-xs md:text-sm rounded-t-lg sm:rounded-t-xl border-t border-x border-b-0 transition-all cursor-pointer select-none whitespace-nowrap shrink-0 ${
                       isActive
                         ? isDark
@@ -648,8 +851,10 @@ export default function ReadingDnaPage() {
                   <DnaIntroSection
                     archetypes={archetypes}
                     theme={theme}
+                    userTicket={activeTicket}
                     onStartTest={() => handleSelectTab(1)}
                     onOpenDuel={() => handleSelectTab(3)}
+                    onGoToTicket={() => handleSelectTab(2)}
                   />
                 </div>
               </motion.section>
@@ -722,6 +927,8 @@ export default function ReadingDnaPage() {
                       onBooksChange={handleBooksChange}
                       onStepChange={setCurrentStep}
                       onTouchedAxesChange={setTouchedAxes}
+                      onNameChange={setCustomName}
+                      initialName={customName}
                       initialStep={initialDraft.step}
                       initialAxes={initialDraft.axes}
                       initialBooks={initialDraft.favoriteBooks}
@@ -735,6 +942,7 @@ export default function ReadingDnaPage() {
                   <div className="flex flex-col justify-center space-y-2 sm:space-y-2.5">
                     <ArchivalTicketCard
                       ticketNumber={activeTicket?.ticketNumber || "BS-....."}
+                      customName={customName || activeTicket?.customName || null}
                       archetypeName={activeTicket?.archetypeName || ""}
                       axes={liveAxes}
                       favoriteBooks={liveBooks}
@@ -822,7 +1030,13 @@ export default function ReadingDnaPage() {
                         <div ref={ticketCardRef}>
                           <ArchivalTicketCard
                             ticketNumber={activeTicket.ticketNumber}
+                            customName={activeTicket.customName}
                             archetypeName={activeTicket.archetypeName}
+                            rarityPercent={
+                              archetypeStats && archetypeStats.totalTickets > 0
+                                ? archetypeStats.distribution[activeTicket.archetype]?.percent ?? null
+                                : null
+                            }
                             axes={activeTicket.axes}
                             favoriteBooks={activeTicket.favoriteBooks}
                             kryptoniteBook={activeTicket.kryptoniteBook}
@@ -836,21 +1050,41 @@ export default function ReadingDnaPage() {
                         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center sm:justify-start gap-2 pt-3 sm:pt-4">
                           <button
                             type="button"
-                            onClick={handleDownloadTicket}
-                            disabled={isDownloading}
+                            onClick={() => handleDownloadTicket("ticket")}
+                            disabled={downloadingFormat !== null}
                             className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-bold text-white transition-all shadow-md cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${
                               isDark
                                 ? "bg-[#8a2433] hover:bg-[#a32b3d]"
                                 : "bg-[#b3412f] hover:bg-[#c94935]"
                             }`}
                           >
-                            {isDownloading ? (
+                            {downloadingFormat === "ticket" ? (
                               <>
                                 <Loader2 size={14} className="animate-spin" />
                                 <span>Готовим PNG...</span>
                               </>
                             ) : (
                               <span>Скачать в HD (PNG)</span>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadTicket("stories")}
+                            disabled={downloadingFormat !== null}
+                            className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${
+                              isDark
+                                ? "bg-[#2b1d14] border-[rgba(201,163,91,0.35)] text-[#efe3cc] hover:bg-[#c9a35b]/15"
+                                : "bg-white border-[rgba(59,110,168,0.35)] text-[#2e2a24] hover:bg-[#3b6ea8]/10"
+                            }`}
+                          >
+                            {downloadingFormat === "stories" ? (
+                              <>
+                                <Loader2 size={14} className="animate-spin" />
+                                <span>Готовим 9:16...</span>
+                              </>
+                            ) : (
+                              <span>Для Stories (9:16)</span>
                             )}
                           </button>
 
@@ -895,6 +1129,53 @@ export default function ReadingDnaPage() {
                         </div>
                       </div>
 
+                      {/* Скрытый контейнер 540×960 для экспорта в Stories 9:16 (×2 = 1080×1920) */}
+                      <div
+                        aria-hidden="true"
+                        style={{
+                          position: "fixed",
+                          left: -9999,
+                          top: 0,
+                          pointerEvents: "none",
+                          zIndex: -1,
+                        }}
+                      >
+                        <div ref={storyCardRef}>
+                          <StoryTicketCard
+                            ticketNumber={activeTicket.ticketNumber}
+                            customName={activeTicket.customName}
+                            archetypeName={activeTicket.archetypeName}
+                            motto={activeTicket.motto}
+                            axes={activeTicket.axes}
+                            favoriteBooks={activeTicket.favoriteBooks}
+                            kryptoniteBook={activeTicket.kryptoniteBook}
+                            theme={theme}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Мост в каталог (Book Match) + Букстраж */}
+                      <DnaBookMatchBridge
+                        axes={activeTicket.axes}
+                        theme={theme}
+                        onOpenBukstrazh={handleOpenBukstrazh}
+                      />
+
+                      {/* Журнал дуэлей: входящие и исходящие сравнения вкусов */}
+                      <DnaDuelsJournal
+                        ticketNumber={activeTicket.ticketNumber}
+                        isOtherTicket={isViewingOtherTicket}
+                        theme={theme}
+                        onCopyChallengeLink={handleCopyLink}
+                        onOpenDuel={handleOpenDuelWith}
+                      />
+
+                      {/* Книжные близнецы: реальные читатели с похожим вкусом */}
+                      <DnaTwinsSection
+                        ticketNumber={activeTicket.ticketNumber}
+                        theme={theme}
+                      />
+
                       {/* Архивные карточки: Редкость и Анатомия билета */}
                       {(() => {
                         const arch =
@@ -904,6 +1185,16 @@ export default function ReadingDnaPage() {
                           .replace(/\D/g, "")
                           .split("")
                           .reduce((acc, d) => acc + parseInt(d, 10), 0);
+                        const dbEntry =
+                          archetypeStats && archetypeStats.totalTickets > 0
+                            ? archetypeStats.distribution[activeTicket.archetype] ||
+                              (arch?.id ? archetypeStats.distribution[arch.id] : undefined)
+                            : undefined;
+                        const displayPercent = dbEntry
+                          ? Number.isInteger(dbEntry.percent)
+                            ? String(dbEntry.percent)
+                            : dbEntry.percent.toFixed(1)
+                          : String(arch?.rarity || 7);
 
                         return (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-2">
@@ -926,18 +1217,32 @@ export default function ReadingDnaPage() {
                                       : "bg-[#b3412f]/10 border-rose-500/30 text-[#b3412f]"
                                   }`}
                                 >
-                                  {arch?.rarity || 7}%
+                                  {displayPercent}%
                                 </span>
                               </div>
                               <p className="text-xs sm:text-sm leading-relaxed opacity-90">
-                                Из 1000 читателей лишь ~
-                                <b>{(arch?.rarity || 7) * 10}</b> получают ранг «
-                                <b>
-                                  {isDark
-                                    ? arch?.names.dark || activeTicket.archetypeName
-                                    : arch?.names.craft || activeTicket.archetypeName}
-                                </b>
-                                ».
+                                {dbEntry && archetypeStats ? (
+                                  <>
+                                    Среди <b>{archetypeStats.totalTickets}</b> читателей BookStrata ранг «
+                                    <b>
+                                      {isDark
+                                        ? arch?.names.dark || activeTicket.archetypeName
+                                        : arch?.names.craft || activeTicket.archetypeName}
+                                    </b>
+                                    » получили <b>{dbEntry.count}</b> ({displayPercent}%).
+                                  </>
+                                ) : (
+                                  <>
+                                    Из 1000 читателей лишь ~
+                                    <b>{(arch?.rarity || 7) * 10}</b> получают ранг «
+                                    <b>
+                                      {isDark
+                                        ? arch?.names.dark || activeTicket.archetypeName
+                                        : arch?.names.craft || activeTicket.archetypeName}
+                                    </b>
+                                    ».
+                                  </>
+                                )}
                               </p>
                               {arch?.quote && (
                                 <p
@@ -1053,11 +1358,12 @@ export default function ReadingDnaPage() {
                 >
                   <DuelSection
                     myTicket={currentTicket}
-                    opponentTicket={opponentTicket}
+                    opponentTicket={opponentTicketNumber ? opponentTicket : null}
                     opponentTicketNumber={opponentTicketNumber}
                     initialDuelResult={initialDuelResult}
                     theme={theme}
                     onGoToTest={() => handleSelectTab(1)}
+                    onResetDuel={handleResetDuel}
                   />
                 </div>
               </motion.section>
@@ -1093,6 +1399,22 @@ export default function ReadingDnaPage() {
             )}
         </main>
       </div>
+
+      {user && isAiLibrarianOpen && (
+        <AiLibrarianModal
+          isOpen={isAiLibrarianOpen}
+          onClose={() => setIsAiLibrarianOpen(false)}
+          context={
+            activeTicket
+              ? {
+                  pageType: "reading-dna",
+                  ticketNumber: activeTicket.ticketNumber,
+                }
+              : undefined
+          }
+          variant="sidebar"
+        />
+      )}
     </div>
   );
 }

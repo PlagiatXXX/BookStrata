@@ -1,6 +1,5 @@
 // backend/src/modules/users/genrePreferences.route.spec.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 vi.mock("../../lib/prisma.js", () => ({
@@ -29,30 +28,38 @@ describe("GET/PUT /api/users/me/genre-preferences", () => {
   it("GET: отдаёт genres из сервиса", async () => {
     const { prisma } = await import("../../lib/prisma.js");
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ genrePreferences: ["fantasy"] } as never);
-    const res = await request(app.server).get("/api/users/me/genre-preferences");
+    const res = await app.inject({ method: "GET", url: "/api/users/me/genre-preferences" });
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.genres).toEqual(["fantasy"]);
+    expect(res.json().data.genres).toEqual(["fantasy"]);
   });
 
   it("PUT: валидный body → 200 с очищенным списком", async () => {
     const { prisma } = await import("../../lib/prisma.js");
     vi.mocked(prisma.user.update).mockResolvedValue({} as never);
-    const res = await request(app.server)
-      .put("/api/users/me/genre-preferences")
-      .send({ genres: ["fantasy", "horror"] });
+    const res = await app.inject({
+      method: "PUT",
+      url: "/api/users/me/genre-preferences",
+      payload: { genres: ["fantasy", "horror"] },
+    });
     expect(res.statusCode).toBe(200);
-    expect(res.body.data.genres).toEqual(["fantasy", "horror"]);
+    expect(res.json().data.genres).toEqual(["fantasy", "horror"]);
   });
 
   it("PUT: без genres → 400", async () => {
-    const res = await request(app.server).put("/api/users/me/genre-preferences").send({});
+    const res = await app.inject({
+      method: "PUT",
+      url: "/api/users/me/genre-preferences",
+      payload: {},
+    });
     expect(res.statusCode).toBe(400);
   });
 
   it("PUT: genres не массив → 400", async () => {
-    const res = await request(app.server)
-      .put("/api/users/me/genre-preferences")
-      .send({ genres: "fantasy" });
+    const res = await app.inject({
+      method: "PUT",
+      url: "/api/users/me/genre-preferences",
+      payload: { genres: "fantasy" },
+    });
     expect(res.statusCode).toBe(400);
   });
 });

@@ -145,7 +145,7 @@ const ROUTES = [
   { path: "/rankings",   name: "Рейтинг книг" },
   { path: "/search",     name: "Поиск" },
   { path: "/collections", name: "Подборки книг" },
-  // { path: "/reading-dna", name: "Книжный ДНК" }, // раскомментировать при публичном открытии Книжного ДНК
+  { path: "/reading-dna", name: "Книжный ДНК" },
   { path: "/community",  name: "Сообщество" },
   { path: "/history",    name: "История" },
   { path: "/what-to-read", name: "Что почитать" },

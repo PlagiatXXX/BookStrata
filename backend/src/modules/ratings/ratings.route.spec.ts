@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import request from "supertest"
 import Fastify from "fastify"
 
 vi.mock("../../lib/prisma.js", () => {
@@ -56,13 +55,15 @@ describe("Ratings Routes", () => {
         { ratings: { plot: 8 } },
       ] as any)
 
-      const res = await request(app.server)
-        .post("/api/ratings")
-        .set("Authorization", "Bearer user-token")
-        .send({ bookId: 10, ratings: { plot: 8 } })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/ratings",
+        headers: { authorization: "Bearer user-token" },
+        payload: { bookId: 10, ratings: { plot: 8 } },
+      })
 
-      expect(res.body.data.rating).toHaveProperty("id", 1)
+      expect(res.statusCode).toBe(201)
+      expect(res.json().data.rating).toHaveProperty("id", 1)
     })
 
     it("должен обновить рейтинг при повторной отправке (upsert)", async () => {
@@ -74,21 +75,25 @@ describe("Ratings Routes", () => {
         { ratings: { plot: 9 } },
       ] as any)
 
-      const res = await request(app.server)
-        .post("/api/ratings")
-        .set("Authorization", "Bearer user-token")
-        .send({ bookId: 10, ratings: { plot: 9 } })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/ratings",
+        headers: { authorization: "Bearer user-token" },
+        payload: { bookId: 10, ratings: { plot: 9 } },
+      })
 
-      expect(res.body.data.rating).toHaveProperty("ratings")
-      expect(res.body.data.rating.ratings).toEqual({ plot: 9 })
+      expect(res.statusCode).toBe(201)
+      expect(res.json().data.rating).toHaveProperty("ratings")
+      expect(res.json().data.rating.ratings).toEqual({ plot: 9 })
     })
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .post("/api/ratings")
-        .send({ bookId: 10, ratings: { plot: 8 } })
-        .expect(401)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/ratings",
+        payload: { bookId: 10, ratings: { plot: 8 } },
+      })
+      expect(res.statusCode).toBe(401)
     })
   })
 
@@ -100,12 +105,14 @@ describe("Ratings Routes", () => {
         { ratings: { plot: 8, style: 7 } },
       ] as any)
 
-      const res = await request(app.server)
-        .get("/api/ratings/10")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/ratings/10",
+      })
 
-      expect(res.body.data).toHaveProperty("averages")
-      expect(res.body.data).toHaveProperty("categories")
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toHaveProperty("averages")
+      expect(res.json().data).toHaveProperty("categories")
     })
 
     it("должен вернуть нули если нет оценок", async () => {
@@ -113,11 +120,13 @@ describe("Ratings Routes", () => {
       vi.mocked(prisma.book.findUnique).mockResolvedValue({ rating: null } as any)
       vi.mocked(prisma.bookRating.findMany).mockResolvedValue([])
 
-      const res = await request(app.server)
-        .get("/api/ratings/10")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/ratings/10",
+      })
 
-      expect(res.body.data).toMatchObject({ count: 0, overall: 0 })
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toMatchObject({ count: 0, overall: 0 })
     })
   })
 
@@ -128,12 +137,14 @@ describe("Ratings Routes", () => {
         id: 1, bookId: 10, userId: 1, ratings: { plot: 8 },
       } as any)
 
-      const res = await request(app.server)
-        .get("/api/ratings/10/mine")
-        .set("Authorization", "Bearer user-token")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/ratings/10/mine",
+        headers: { authorization: "Bearer user-token" },
+      })
 
-      expect(res.body.data).toHaveProperty("ratings")
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toHaveProperty("ratings")
     })
   })
 })

@@ -149,13 +149,28 @@ export async function conductReadingDuel(
   return apiClient.post<ReadingDnaDuelResultData>("/reading-dna/duel", input);
 }
 
+export interface ReadingDnaTwinData extends ReadingDnaResponseData {
+  similarity: number;
+  user?: {
+    id: number;
+    username: string;
+    avatarUrl: string | null;
+  } | null;
+  topTierList?: {
+    id: string;
+    slug: string | null;
+    title: string;
+  } | null;
+  publicTierListsCount?: number;
+}
+
 /**
  * Поиск книжных близнецов (Twin Search).
  */
 export async function getReadingTwins(
   ticketNumber: string,
   limit = 5
-): Promise<{ twins: Array<ReadingDnaResponseData & { similarity: number }> }> {
+): Promise<{ twins: ReadingDnaTwinData[] }> {
   return apiClient.get(`/reading-dna/twins/${ticketNumber}`, { limit });
 }
 
@@ -185,4 +200,109 @@ export async function shareReadingTicket(ticketNumber: string): Promise<number> 
     ticketNumber,
   });
   return res.shareCount;
+}
+
+/**
+ * Привязка гостевого билета Reading DNA к аккаунту после входа/регистрации.
+ */
+export async function claimReadingDna(
+  guestToken: string,
+): Promise<{ claimed: boolean; dna: ReadingDnaResponseData }> {
+  return apiClient.post<{ claimed: boolean; dna: ReadingDnaResponseData }>(
+    "/reading-dna/claim",
+    { guestToken },
+  );
+}
+
+export interface ReadingDnaDuelEntryData {
+  id: number;
+  direction?: "incoming" | "outgoing";
+  opponentName: string;
+  opponentTicketNumber: string | null;
+  opponentArchetypeName: string | null;
+  compatibility: number;
+  verdict: string | null;
+  kryptoniteConflict: boolean;
+  createdAt: string;
+}
+
+export interface ReadingDnaDuelsSummaryData {
+  totalDuels: number;
+  bestMatch: ReadingDnaDuelEntryData | null;
+  mainAntagonist: ReadingDnaDuelEntryData | null;
+  recentDuels: ReadingDnaDuelEntryData[];
+}
+
+/**
+ * Журнал входящих дуэлей билета («Кто сравнил вкус со мной»).
+ */
+export async function getTicketDuels(
+  ticketNumber: string,
+  limit = 10
+): Promise<ReadingDnaDuelsSummaryData> {
+  return apiClient.get<ReadingDnaDuelsSummaryData>(
+    `/reading-dna/duels/${ticketNumber}`,
+    { limit }
+  );
+}
+
+export interface ReadingDnaArchetypeStatsData {
+  totalTickets: number;
+  distribution: Record<string, { count: number; percent: number }>;
+}
+
+/**
+ * Реальное распределение архетипов по базе данных.
+ */
+export async function getReadingArchetypeStats(): Promise<ReadingDnaArchetypeStatsData> {
+  return apiClient.get<ReadingDnaArchetypeStatsData>("/reading-dna/stats");
+}
+
+export interface CelebrityDnaProfileData {
+  id: number;
+  slug: string;
+  name: string;
+  photoUrl: string;
+  category: string;
+  focalX: number;
+  focalY: number;
+  archetype: string;
+  archetypeName: string;
+  motto: string;
+  axes: DnaAxesData;
+  favoriteBooks: DnaBookItemData[];
+  kryptoniteBook: DnaBookItemData | null;
+  likedGenres: string[];
+  favoriteAuthors: string[];
+  booksCount: number;
+}
+
+export interface CelebrityDuelResultData {
+  compatibility: number;
+  verdict: string;
+  breakdown: ReadingDnaDuelResultData["breakdown"];
+  celebrity: CelebrityDnaProfileData;
+}
+
+/**
+ * Список реальных знаменитостей BookStrata с вычисленным ДНК.
+ */
+export async function getReadingCelebrities(): Promise<CelebrityDnaProfileData[]> {
+  const res = await apiClient.get<{ celebrities: CelebrityDnaProfileData[] }>(
+    "/reading-dna/celebrities"
+  );
+  return res.celebrities;
+}
+
+/**
+ * Дуэль вкусов со знаменитостью из базы BookStrata.
+ */
+export async function conductCelebrityDuel(
+  slug: string,
+  payload: { challengerTicketNumber?: string; challengerDna?: ReadingDnaInputData }
+): Promise<CelebrityDuelResultData> {
+  return apiClient.post<CelebrityDuelResultData>(
+    `/reading-dna/duel/celebrity/${encodeURIComponent(slug)}`,
+    payload
+  );
 }

@@ -10,6 +10,7 @@ import { getCollectionBySlug, getCollections } from '../collections/collection.s
 import { getCelebrityBySlug } from '../celebrities/celebrity.service.js'
 import { AiRouterError } from './router.js'
 import { createLogger } from '../../lib/logger.js'
+import { prisma } from '../../lib/prisma.js'
 
 const logger = createLogger('AiLibrarianRoute', { color: 'cyan' })
 
@@ -59,8 +60,9 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
               type: 'object',
               required: ['pageType'],
               properties: {
-                pageType: { type: 'string', enum: ['rankings', 'collection', 'book-description', 'celebrity'] },
+                pageType: { type: 'string', enum: ['rankings', 'collection', 'book-description', 'celebrity', 'reading-dna'] },
                 slug: { type: 'string' },
+                ticketNumber: { type: 'string' },
               },
             },
           },
@@ -158,6 +160,50 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
             logger.warn('Failed to load rankings context', { error: err instanceof Error ? err.message : String(err) })
           }
         }
+
+        if (rawContext.pageType === 'reading-dna' && rawContext.ticketNumber) {
+          try {
+            const ticket = await prisma.readingDna.findFirst({
+              where: {
+                OR: [
+                  { ticketNumber: rawContext.ticketNumber },
+                  { shortCode: rawContext.ticketNumber },
+                ],
+              },
+            })
+            if (ticket) {
+              const favoriteBooks = Array.isArray(ticket.favoriteBooks)
+                ? (ticket.favoriteBooks as Array<{ title: string; author?: string | null }>)
+                : []
+              const kryptoniteBook =
+                ticket.kryptoniteBook && typeof ticket.kryptoniteBook === 'object'
+                  ? (ticket.kryptoniteBook as { title: string; author?: string | null })
+                  : null
+
+              pageContext = {
+                pageType: 'reading-dna',
+                readingDna: {
+                  ticketNumber: ticket.ticketNumber,
+                  archetypeName: ticket.archetypeName,
+                  motto: ticket.motto,
+                  storyFocus: ticket.storyFocus,
+                  emotionalWeight: ticket.emotionalWeight,
+                  pace: ticket.pace,
+                  darkness: ticket.darkness,
+                  scope: ticket.scope,
+                  complexity: ticket.complexity,
+                  favoriteBooks,
+                  kryptoniteBook,
+                },
+              }
+            }
+          } catch (err) {
+            logger.warn('Failed to load reading-dna context', {
+              ticketNumber: rawContext.ticketNumber,
+              error: err instanceof Error ? err.message : String(err),
+            })
+          }
+        }
       }
 
       const systemPrompt = buildSystemPrompt(tasteProfile, user.username, pageContext)
@@ -169,6 +215,9 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
         ...tasteProfile.lowBooks.map((b) => b.title),
         ...tasteProfile.unrankedBooks.map((b) => b.title),
       ]
+      if (pageContext?.readingDna?.kryptoniteBook?.title) {
+        userBookTitles.push(pageContext.readingDna.kryptoniteBook.title)
+      }
 
       logger.info('Starting AI stream', {
         userId: user.userId,

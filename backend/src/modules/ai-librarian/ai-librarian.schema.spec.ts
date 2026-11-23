@@ -62,4 +62,15 @@ describe('ChatRequestSchema', () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it('validates context with pageType reading-dna and ticketNumber', () => {
+    const result = ChatRequestSchema.safeParse({
+      messages: [{ role: 'user', content: 'Разбери мой ДНК' }],
+      context: {
+        pageType: 'reading-dna',
+        ticketNumber: 'DNA-12345',
+      },
+    })
+    expect(result.success).toBe(true)
+  })
 })

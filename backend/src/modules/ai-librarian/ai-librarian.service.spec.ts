@@ -139,6 +139,38 @@ describe('buildSystemPrompt', () => {
     const prompt = buildSystemPrompt(richProfile, 'Федя')
     expect(prompt).not.toContain('Читательский ДНК')
   })
+
+  it('включает блок Книжного ДНК с осями вкуса, священными книгами и запретом криптонита при pageType reading-dna', () => {
+    const prompt = buildSystemPrompt(emptyProfile, 'User', {
+      pageType: 'reading-dna',
+      readingDna: {
+        ticketNumber: 'DNA-777',
+        archetypeName: 'Архивариус бездны',
+        motto: 'Истина скрыта во тьме фолиантов',
+        storyFocus: 85,
+        emotionalWeight: 90,
+        pace: 40,
+        darkness: 95,
+        scope: 70,
+        complexity: 88,
+        favoriteBooks: [
+          { title: 'Имя розы', author: 'Умберто Эко' },
+          { title: 'Хребты безумия', author: 'Г. Ф. Лавкрафт' },
+        ],
+        kryptoniteBook: { title: 'Сумерки', author: 'Стефани Майер' },
+      },
+    })
+
+    expect(prompt).toContain('читательский билет № DNA-777')
+    expect(prompt).toContain('«Архивариус бездны»')
+    expect(prompt).toContain('«Истина скрыта во тьме фолиантов»')
+    expect(prompt).toContain('Сюжет vs Рефлексия: 85')
+    expect(prompt).toContain('Свет vs Мрак: 95')
+    expect(prompt).toContain('«Имя розы» (Умберто Эко)')
+    expect(prompt).toContain('КНИГА-КРИПТОНИТ')
+    expect(prompt).toContain('«Сумерки» (Стефани Майер)')
+    expect(prompt).toContain('СТРОЖАЙШИЙ ЗАПРЕТ: Категорически запрещено рекомендовать читателю эту книгу')
+  })
 })
 
 describe('getUserTasteProfile with DNA', () => {

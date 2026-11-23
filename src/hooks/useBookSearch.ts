@@ -49,6 +49,7 @@ function getCachedResult(query: string): OpenLibraryBook[] | null {
 
 interface UseBookSearchOptions {
   cacheEnabled?: boolean;
+  requireCover?: boolean;
 }
 
 interface UseBookSearchReturn {
@@ -65,7 +66,7 @@ interface UseBookSearchReturn {
 export function useBookSearch(
   options: UseBookSearchOptions = {},
 ): UseBookSearchReturn {
-  const { cacheEnabled = true } = options;
+  const { cacheEnabled = true, requireCover = true } = options;
 
   const [results, setResults] = useState<OpenLibraryBook[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -118,13 +119,13 @@ export function useBookSearch(
           searchGoogleBooks(query.trim(), 0).catch(() => [] as OpenLibraryBook[]),
         ]);
 
-        // Фильтруем только книги с обложками
-        const filteredSite = siteBooks.filter(
-          (book) => book.coverUrl || book.coverUrlLarge,
-        );
-        const filteredGoogle = googleBooks.filter(
-          (book) => book.coverUrl || book.coverUrlLarge,
-        );
+        // Фильтруем книги (при requireCover=true оставляем только с обложками)
+        const filteredSite = requireCover
+          ? siteBooks.filter((book) => book.coverUrl || book.coverUrlLarge)
+          : siteBooks;
+        const filteredGoogle = requireCover
+          ? googleBooks.filter((book) => book.coverUrl || book.coverUrlLarge)
+          : googleBooks;
 
         // Дедупликация: site-books первые, потом Google (без дублей по openLibraryKey)
         const seen = new Set<string>();
@@ -156,7 +157,7 @@ export function useBookSearch(
         setIsLoading(false);
       }
     },
-    [cacheEnabled],
+    [cacheEnabled, requireCover],
   );
 
   const loadMore = useCallback(async () => {
@@ -167,10 +168,10 @@ export function useBookSearch(
 
     try {
       const newBooks = await searchGoogleBooks(currentQuery, nextStartIndex);
-      // Фильтруем только книги с обложками
-      const filteredBooks = newBooks.filter(
-        (book) => book.coverUrl || book.coverUrlLarge,
-      );
+      // Фильтруем книги (при requireCover=true оставляем только с обложками)
+      const filteredBooks = requireCover
+        ? newBooks.filter((book) => book.coverUrl || book.coverUrlLarge)
+        : newBooks;
 
       // Дедупликация по openLibraryKey (защита от дубликатов API)
       const uniqueBooks = Array.from(
@@ -209,7 +210,7 @@ export function useBookSearch(
     } finally {
       setIsLoadingMore(false);
     }
-  }, [currentQuery, isLoadingMore, hasMore, startIndex]);
+  }, [currentQuery, isLoadingMore, hasMore, startIndex, requireCover]);
 
   // Intersection Observer для автоматической загрузки при скролле
   useEffect(() => {

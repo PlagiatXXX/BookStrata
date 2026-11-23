@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 vi.mock("./admin-users.service.js", () => ({
@@ -41,44 +40,54 @@ describe("POST /api/admin/users/:id/reset-password", () => {
   });
 
   it("возвращает 401 без авторизации", async () => {
-    await request(app.server)
-      .post("/api/admin/users/42/reset-password")
-      .send({ password: "newPassword123" })
-      .expect(401);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/users/42/reset-password",
+      payload: { password: "newPassword123" },
+    });
+    expect(res.statusCode).toBe(401);
   });
 
   it("возвращает 403 для обычного пользователя", async () => {
-    await request(app.server)
-      .post("/api/admin/users/42/reset-password")
-      .set("Authorization", "Bearer user-token")
-      .send({ password: "newPassword123" })
-      .expect(403);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/users/42/reset-password",
+      headers: { authorization: "Bearer user-token" },
+      payload: { password: "newPassword123" },
+    });
+    expect(res.statusCode).toBe(403);
   });
 
   it("возвращает 400 для некорректного ID", async () => {
-    await request(app.server)
-      .post("/api/admin/users/abc/reset-password")
-      .set("Authorization", "Bearer admin-token")
-      .send({ password: "newPassword123" })
-      .expect(400);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/users/abc/reset-password",
+      headers: { authorization: "Bearer admin-token" },
+      payload: { password: "newPassword123" },
+    });
+    expect(res.statusCode).toBe(400);
   });
 
   it("возвращает 404 если пользователь не найден", async () => {
     vi.mocked(adminResetPassword).mockRejectedValue(new Error("Пользователь не найден"));
 
-    await request(app.server)
-      .post("/api/admin/users/999/reset-password")
-      .set("Authorization", "Bearer admin-token")
-      .send({ password: "newPassword123" })
-      .expect(404);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/users/999/reset-password",
+      headers: { authorization: "Bearer admin-token" },
+      payload: { password: "newPassword123" },
+    });
+    expect(res.statusCode).toBe(404);
   });
 
   it("возвращает 400 для слишком короткого пароля", async () => {
-    await request(app.server)
-      .post("/api/admin/users/42/reset-password")
-      .set("Authorization", "Bearer admin-token")
-      .send({ password: "short" })
-      .expect(400);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/users/42/reset-password",
+      headers: { authorization: "Bearer admin-token" },
+      payload: { password: "short" },
+    });
+    expect(res.statusCode).toBe(400);
   });
 
   it("сбрасывает пароль для админа", async () => {
@@ -86,13 +95,15 @@ describe("POST /api/admin/users/:id/reset-password", () => {
       message: "Пароль пользователя testuser успешно сброшен",
     });
 
-    const res = await request(app.server)
-      .post("/api/admin/users/42/reset-password")
-      .set("Authorization", "Bearer admin-token")
-      .send({ password: "newPassword123" })
-      .expect(200);
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/admin/users/42/reset-password",
+      headers: { authorization: "Bearer admin-token" },
+      payload: { password: "newPassword123" },
+    });
 
-    expect(res.body).toEqual({
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
       data: { message: "Пароль пользователя testuser успешно сброшен" },
     });
     expect(adminResetPassword).toHaveBeenCalledWith(42, "newPassword123");

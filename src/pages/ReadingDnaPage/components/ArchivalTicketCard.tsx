@@ -10,7 +10,9 @@ import {
 
 export interface ArchivalTicketCardProps {
   ticketNumber?: string;
+  customName?: string | null;
   archetypeName?: string;
+  rarityPercent?: number | null;
   axes: DnaAxesData;
   favoriteBooks?: (DnaBookItemData | null)[];
   kryptoniteBook?: DnaBookItemData | null;
@@ -38,7 +40,9 @@ const BOOK_SPINE_COLORS = [
 
 export function ArchivalTicketCard({
   ticketNumber = "BS-.....",
+  customName = null,
   archetypeName = "",
+  rarityPercent = null,
   axes,
   favoriteBooks = [],
   kryptoniteBook = null,
@@ -259,8 +263,26 @@ export function ArchivalTicketCard({
               : "Тайное общество читателей — BookStrata"}
           </span>
 
+          {customName?.trim() && (
+            <div
+              className={`font-serif font-semibold truncate mt-[1.8cqw] leading-tight ${
+                isDark ? "text-[#f3d999]" : "text-[#3b6ea8]"
+              }`}
+              style={{
+                fontSize: "1.5cqw",
+                maxWidth: "42cqw",
+                transform: "translateZ(10px)",
+              }}
+              title={customName.trim()}
+            >
+              {customName.trim()}
+            </div>
+          )}
+
           <h2
-            className={`font-['Caveat',cursive] font-bold tracking-tight leading-[1.05] mt-[4.2cqw] ${
+            className={`font-['Caveat',cursive] font-bold tracking-tight leading-[1.05] ${
+              customName?.trim() ? "mt-[0.7cqw]" : "mt-[4.2cqw]"
+            } ${
               isDark
                 ? "text-[#fff2d6] drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
                 : "text-[#2e2a24] drop-shadow-[0_1px_0_rgba(255,255,255,0.8)]"
@@ -335,7 +357,7 @@ export function ArchivalTicketCard({
                 : "bg-[#b3412f]/10 border-rose-500/30 text-[#b3412f]"
             }`}
           >
-            РЕДКОСТЬ {resolvedArchetype.rarity}%
+            РЕДКОСТЬ {rarityPercent !== null && rarityPercent !== undefined ? (Number.isInteger(rarityPercent) ? rarityPercent : rarityPercent.toFixed(1)) : resolvedArchetype.rarity}%
           </span>
         </div>
       )}

@@ -398,13 +398,14 @@ describe("BookMatch — Режим Книжного ДНК и Guest Sandbox", ()
     const ctaButton = screen.getByRole("button", { name: /Создать Книжный ДНК/i });
     fireEvent.click(ctaButton);
 
-    // Проверяем редирект и драфт в localStorage
-    expect(mockNavigate).toHaveBeenCalledWith("/dna");
-    const rawDraft = localStorage.getItem("bs_reading_dna_draft");
+    // Проверяем редирект и изолированный драфт в localStorage
+    expect(mockNavigate).toHaveBeenCalledWith("/reading-dna?tab=test");
+    const rawDraft = localStorage.getItem("bs_reading_dna_draft_guest");
     expect(rawDraft).toBeTruthy();
     const draft = JSON.parse(rawDraft!);
-    expect(draft.step).toBe(1);
+    expect(draft.step).toBe(0);
     expect(draft.axes.darkness).toBe(70);
+    expect(draft.touchedAxes).toEqual({ darkness: true });
     expect(draft.favoriteBooks).toEqual([null, null, null]);
     expect(draft.kryptonite).toBeNull();
   });

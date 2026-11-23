@@ -156,4 +156,38 @@ describe("ArchivalTicketCard", () => {
     expect(sealImg).toBeInTheDocument();
     expect(sealImg).toHaveAttribute("src", "/images/reading-dna/seal.webp");
   });
+
+  it("отображает имя владельца customName на билете, если оно передано", () => {
+    render(
+      <ArchivalTicketCard
+        ticketNumber="BS-04821"
+        customName="Саша"
+        archetypeName="Хранитель запретных фолиантов"
+        axes={sampleAxes}
+        favoriteBooks={[]}
+        kryptoniteBook={null}
+        theme="dark"
+        isSealed={true}
+      />
+    );
+
+    expect(screen.getByText("Саша")).toBeInTheDocument();
+  });
+
+  it("использует реальный rarityPercent из БД на бейдже вместо статичной редкости", () => {
+    render(
+      <ArchivalTicketCard
+        ticketNumber="BS-04821"
+        archetypeName="Хранитель запретных фолиантов"
+        rarityPercent={4.2}
+        axes={sampleAxes}
+        favoriteBooks={[]}
+        kryptoniteBook={null}
+        theme="dark"
+        isSealed={true}
+      />
+    );
+
+    expect(screen.getByText(/РЕДКОСТЬ 4.2%/i)).toBeInTheDocument();
+  });
 });

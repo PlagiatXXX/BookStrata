@@ -148,4 +148,73 @@ describe("DnaIntroSection", () => {
     expect(grid).toHaveTextContent("Хранитель запретных фолиантов");
     expect(grid).not.toHaveTextContent("Архитектор смыслов");
   });
+
+  it("рендерит печать «Запечатано» для карточек и вызывает onStartTest при клике на карточку архетипа", () => {
+    const onStartTest = vi.fn();
+    renderWithClient(
+      <DnaIntroSection
+        archetypes={mockArchetypes}
+        theme="dark"
+        onStartTest={onStartTest}
+        onOpenDuel={vi.fn()}
+      />
+    );
+
+    const seals = screen.getAllByText(/Запечатано/i);
+    expect(seals.length).toBeGreaterThan(0);
+
+    const card = screen.getByRole("button", { name: /Архитектор смыслов/i });
+    fireEvent.click(card);
+    expect(onStartTest).toHaveBeenCalledTimes(1);
+  });
+
+  it("снимает печать со всех карточек, если у пользователя есть билет, и подсвечивает его архетип", () => {
+    const onGoToTicket = vi.fn();
+    const mockTicket = {
+      id: 1,
+      ticketNumber: "BS-7777-7",
+      archetype: "meaning-architect",
+      archetypeName: "Архитектор смыслов",
+      theme: "dark",
+      axes: {
+        storyFocus: 90,
+        emotionalWeight: 80,
+        pace: 70,
+        darkness: 60,
+        scope: 75,
+        complexity: 90,
+      },
+      favoriteBooks: [],
+      likedGenres: [],
+      dislikedGenres: [],
+      favoriteAuthors: [],
+      viewsCount: 1,
+      shareCount: 0,
+      duelsCount: 1,
+      createdAt: new Date().toISOString(),
+    };
+
+    renderWithClient(
+      <DnaIntroSection
+        archetypes={mockArchetypes}
+        theme="dark"
+        userTicket={mockTicket}
+        onStartTest={vi.fn()}
+        onOpenDuel={vi.fn()}
+        onGoToTicket={onGoToTicket}
+      />
+    );
+
+    // Печать «Запечатано» должна отсутствовать
+    expect(screen.queryByText(/Запечатано/i)).not.toBeInTheDocument();
+
+    // Должен отображаться бейдж «Ваш архетип»
+    expect(screen.getByText(/Ваш архетип/i)).toBeInTheDocument();
+
+    // Должна быть кнопка перехода к своему билету
+    const myTicketBtns = screen.getAllByRole("button", { name: /билет.*BS-7777-7/i });
+    expect(myTicketBtns.length).toBeGreaterThan(0);
+    fireEvent.click(myTicketBtns[0]);
+    expect(onGoToTicket).toHaveBeenCalledTimes(1);
+  });
 });

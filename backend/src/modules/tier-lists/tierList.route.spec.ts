@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 
@@ -53,26 +52,31 @@ describe("Tier List Routes (E2E)", () => {
 
   describe("GET /health", () => {
     it("должен вернуть статус ok", async () => {
-      const response = await request(app.server).get("/health").expect(200);
+      const response = await app.inject({ method: "GET", url: "/health" });
 
-      expect(response.body.status).toBe("ok");
+      expect(response.statusCode).toBe(200);
+      expect(response.json().status).toBe("ok");
     });
   });
 
   describe("POST /api/tier-lists", () => {
     it("должен вернуть 401 без авторизации", async () => {
-      const response = await request(app.server)
-        .post("/api/tier-lists")
-        .send({ title: "Unauthorized List" })
-        .expect(401);
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/tier-lists",
+        payload: { title: "Unauthorized List" },
+      });
 
-      expect(response.body.message).toContain("Unauthorized");
+      expect(response.statusCode).toBe(401);
+      expect(response.json().message).toContain("Unauthorized");
     });
   });
 
   describe("GET /api/tier-lists", () => {
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server).get("/api/tier-lists").expect(401);
+      const response = await app.inject({ method: "GET", url: "/api/tier-lists" });
+
+      expect(response.statusCode).toBe(401);
     });
   });
 });

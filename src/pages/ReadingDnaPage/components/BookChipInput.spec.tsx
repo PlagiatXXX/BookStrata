@@ -4,12 +4,22 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BookChipInput } from "./BookChipInput";
 import * as bookApi from "@/lib/bookApi";
+import * as bookSearchApi from "@/lib/bookSearchApi";
 
 vi.mock("@/lib/bookApi", async () => {
   const actual = await vi.importActual<typeof import("@/lib/bookApi")>("@/lib/bookApi");
   return {
     ...actual,
-    searchCatalogBooks: vi.fn(),
+    searchCatalogBooks: vi.fn().mockResolvedValue([]),
+  };
+});
+
+vi.mock("@/lib/bookSearchApi", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/bookSearchApi")>("@/lib/bookSearchApi");
+  return {
+    ...actual,
+    searchSiteBooks: vi.fn().mockResolvedValue([]),
+    searchGoogleBooks: vi.fn().mockResolvedValue([]),
   };
 });
 
@@ -98,14 +108,15 @@ describe("BookChipInput", () => {
   });
 
   it("позволяет выбрать книгу из автокомплита каталога", async () => {
-    vi.mocked(bookApi.searchCatalogBooks).mockResolvedValue([
+    vi.mocked(bookSearchApi.searchSiteBooks).mockResolvedValue([
       {
-        id: 10,
+        openLibraryKey: "site-10",
+        source: "bookstrata",
+        externalId: "10",
         title: "Мастер и Маргарита",
         author: "Михаил Булгаков",
-        coverImageUrl: "/covers/master.jpg",
-        slug: "master",
-        rating: 4.9,
+        coverUrl: "/covers/master.jpg",
+        coverUrlLarge: "/covers/master.jpg",
       },
     ]);
 
@@ -259,5 +270,152 @@ describe("BookChipInput", () => {
     );
     expect(screen.getByText("Все 4 книги выбраны")).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/Название книги/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Быстрый выбор в 1 клик/i)).not.toBeInTheDocument();
+  });
+
+  it("добавляет популярную книгу в 1 клик с обложкой из каталога и скрывает уже выбранную из подсказок", async () => {
+    vi.mocked(bookApi.searchCatalogBooks).mockResolvedValueOnce([
+      {
+        id: 77,
+        title: "Дюна",
+        author: "Фрэнк Герберт",
+        coverImageUrl: "/covers/dune.jpg",
+        slug: "dune",
+        rating: 4.9,
+      },
+    ]);
+
+    const user = userEvent.setup();
+    const handleChange = vi.fn();
+
+    renderWithClient(
+      <BookChipInput
+        books={[{ title: "1984", author: "Джордж Оруэлл" }]}
+        kryptonite={null}
+        onChange={handleChange}
+        theme="light"
+      />
+    );
+
+    expect(screen.getByText(/Быстрый выбор в 1 клик/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /\+ 1984/i })).not.toBeInTheDocument();
+
+    const quickBtn = screen.getByRole("button", { name: /Дюна/i });
+    await user.click(quickBtn);
+
+    await waitFor(() => {
+      expect(handleChange).toHaveBeenCalledWith(
+        [
+          { title: "1984", author: "Джордж Оруэлл" },
+          {
+            title: "Дюна",
+            author: "Фрэнк Герберт",
+            bookId: 77,
+            coverImageUrl: "/covers/dune.jpg",
+          },
+        ],
+        null
+      );
+    });
+  });
+
+  it("парсит строку формата «Название — Автор» при ручном вводе", async () => {
+    const user = userEvent.setup();
+    const handleChange = vi.fn();
+
+    renderWithClient(
+      <BookChipInput
+        books={[]}
+        kryptonite={null}
+        onChange={handleChange}
+        theme="light"
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/Название книги/i);
+    await user.type(input, "Война и мир — Лев Толстой{Enter}");
+
+    expect(handleChange).toHaveBeenCalledWith(
+      [{ title: "Война и мир", author: "Лев Толстой" }],
+      null
+    );
+  });
+
+  it("позволяет указать автора через кнопку «+ Указать автора»", async () => {
+    const user = userEvent.setup();
+    const handleChange = vi.fn();
+
+    renderWithClient(
+      <BookChipInput
+        books={[]}
+        kryptonite={null}
+        onChange={handleChange}
+        theme="light"
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/Название книги/i);
+    await user.type(input, "Редкий самиздат");
+
+    const addAuthorBtn = await screen.findByRole("button", { name: /\+ Указать автора/i });
+    await user.click(addAuthorBtn);
+
+    const authorInput = screen.getByPlaceholderText(/Автор \(например/i);
+    await user.type(authorInput, "Иван Иванов");
+
+    const submitBtn = screen.getByRole("button", { name: /^Добавить$/i });
+    await user.click(submitBtn);
+
+    expect(handleChange).toHaveBeenCalledWith(
+      [{ title: "Редкий самиздат", author: "Иван Иванов" }],
+      null
+    );
+  });
+
+  it("отображает книги из Google Books и добавляет выбранную книгу с обложкой и автором", async () => {
+    vi.mocked(bookApi.searchCatalogBooks).mockResolvedValueOnce([]);
+    vi.mocked(bookSearchApi.searchGoogleBooks).mockResolvedValueOnce([
+      {
+        openLibraryKey: "vol-999",
+        source: "google_books",
+        title: "Сиддхартха",
+        author: "Герман Гессе",
+        coverUrl: "https://books.google.com/cover.jpg",
+        coverUrlLarge: "https://books.google.com/cover-lg.jpg",
+        publishYear: 1922,
+      },
+    ]);
+
+    const user = userEvent.setup();
+    const handleChange = vi.fn();
+
+    renderWithClient(
+      <BookChipInput
+        books={[]}
+        kryptonite={null}
+        onChange={handleChange}
+        theme="light"
+      />
+    );
+
+    const input = screen.getByPlaceholderText(/Название книги/i);
+    await user.type(input, "Сиддхартха");
+
+    expect(await screen.findByText(/Мировая библиотека \(Google Books\)/i)).toBeInTheDocument();
+    expect(screen.getByText("Герман Гессе")).toBeInTheDocument();
+
+    const bookBtn = screen.getByRole("button", { name: /Сиддхартха Герман Гессе/i });
+    await user.click(bookBtn);
+
+    expect(handleChange).toHaveBeenCalledWith(
+      [
+        {
+          title: "Сиддхартха",
+          author: "Герман Гессе",
+          coverImageUrl: "https://books.google.com/cover-lg.jpg",
+        },
+      ],
+      null
+    );
   });
 });

@@ -5,7 +5,6 @@
 //   - cache miss (getWebP вернул buffer) → 200 с телом image/webp;
 //   - URL вне белого списка → 403.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 const mocks = vi.hoisted(() => ({
@@ -45,11 +44,12 @@ describe("GET /api/images/proxy", () => {
   it("cache hit → 302 на собственный домен без лишних параметров в Location", async () => {
     mocks.getWebP.mockResolvedValue({ buffer: null, s3Url: MEDIA_URL });
 
-    const res = await request(app.server).get(
-      "/api/images/proxy?url=" + encodeURIComponent("https://content.img-gorod.ru/cover.jpg"),
-    );
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/images/proxy?url=" + encodeURIComponent("https://content.img-gorod.ru/cover.jpg"),
+    });
 
-    expect(res.status).toBe(302);
+    expect(res.statusCode).toBe(302);
     // CDN отключён: отдаём чистый URL, cache-buster больше не нужен
     expect(res.headers.location).toBe(MEDIA_URL);
   });
@@ -58,23 +58,25 @@ describe("GET /api/images/proxy", () => {
     const buffer = Buffer.from("fake-webp");
     mocks.getWebP.mockResolvedValue({ buffer, s3Url: null });
 
-    const res = await request(app.server).get(
-      "/api/images/proxy?url=" + encodeURIComponent("https://content.img-gorod.ru/cover.jpg"),
-    );
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/images/proxy?url=" + encodeURIComponent("https://content.img-gorod.ru/cover.jpg"),
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(res.headers["content-type"]).toBe("image/webp");
-    expect(Buffer.isBuffer(res.body)).toBe(true);
+    expect(Buffer.isBuffer(res.rawPayload)).toBe(true);
   });
 
   it("URL вне белого списка → 403", async () => {
     mocks.isAllowedUrl.mockReturnValue(false);
 
-    const res = await request(app.server).get(
-      "/api/images/proxy?url=" + encodeURIComponent("https://evil.example.com/cover.jpg"),
-    );
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/images/proxy?url=" + encodeURIComponent("https://evil.example.com/cover.jpg"),
+    });
 
-    expect(res.status).toBe(403);
+    expect(res.statusCode).toBe(403);
     expect(mocks.getWebP).not.toHaveBeenCalled();
   });
 });

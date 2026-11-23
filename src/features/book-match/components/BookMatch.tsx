@@ -4,7 +4,7 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { DNA_DRAFT_KEY } from "@/pages/ReadingDnaPage/ReadingDnaPage";
+import { getDnaDraftStorageKey } from "@/pages/ReadingDnaPage/utils/dnaStorage";
 import { BookMatchSlider } from "./BookMatchSlider";
 import { BookMatchResult } from "./BookMatchResult";
 import { BookRecommendations } from "./BookRecommendations";
@@ -64,7 +64,7 @@ export function BookMatch({
 
   // 7-я ось: жанры профиля. Блок виден только залогиненным с выбранными
   // жанрами; тумблер исключает их из расчёта на этот раз (не сохраняется).
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { data: selectedGenres = [] } = useGenrePreferences();
   const setPreferences = useSetGenrePreferences();
   const [useGenresInMatch, setUseGenresInMatch] = useState(false);
@@ -127,19 +127,30 @@ export function BookMatch({
         scope: userMood.scope ?? 50,
         complexity: userMood.complexity ?? 50,
       };
+      const touchedAxes: Record<string, boolean> = {};
+      for (const axis of AXES) {
+        if (typeof userMood[axis] === "number") {
+          touchedAxes[axis] = true;
+        }
+      }
+      const firstUntouchedIndex = AXES.findIndex((axis) => !touchedAxes[axis]);
+      const nextStep = firstUntouchedIndex === -1 ? 6 : firstUntouchedIndex;
+      const draftKey = getDnaDraftStorageKey(user?.userId);
+
       localStorage.setItem(
-        DNA_DRAFT_KEY,
+        draftKey,
         JSON.stringify({
-          step: 1,
+          step: nextStep,
           axes: draftAxes,
           favoriteBooks: [null, null, null],
           kryptonite: null,
+          touchedAxes,
         }),
       );
     } catch {
       // Игнорируем недоступность localStorage в приватном режиме
     }
-    navigate("/dna");
+    navigate("/reading-dna?tab=test");
   };
 
   // Вычисляем результат
@@ -196,7 +207,7 @@ export function BookMatch({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           {/* Слайдеры или свернутая карточка ДНК */}
           {dna && !isOverridden ? (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col items-center justify-center text-center min-h-[220px] space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col items-center justify-center text-center min-h-55 space-y-4">
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white">
                   Расчёт выполнен по твоему Книжному ДНК
@@ -277,7 +288,7 @@ export function BookMatch({
                   onReset={handleReset}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center">
+                <div className="flex flex-col items-center justify-center h-full min-h-50 text-center">
                   <div className="text-4xl font-bold text-white/20 mb-2">—</div>
                   <p className="text-xs text-white/60">
                     Настрой хотя бы одну шкалу, чтобы увидеть совпадение
@@ -332,7 +343,7 @@ export function BookMatch({
         {!dna && activeAxesCount > 0 && (
           <div
             data-testid="dna-cta-card"
-            className="mt-8 rounded-2xl border border-(--bp-primary)/30 bg-gradient-to-r from-(--bp-primary)/10 via-white/5 to-transparent p-6 flex flex-col md:flex-row items-center justify-between gap-4"
+            className="mt-8 rounded-2xl border border-(--bp-primary)/30 bg-linear-to-r from-(--bp-primary)/10 via-white/5 to-transparent p-6 flex flex-col md:flex-row items-center justify-between gap-4"
           >
             <div className="space-y-1 text-center md:text-left">
               <h3 className="text-base font-semibold text-white">

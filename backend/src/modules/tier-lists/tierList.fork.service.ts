@@ -1,8 +1,10 @@
 import { prisma, tierListRepository } from "./tierList.utils.js";
+import type { Prisma, BookSource } from "@prisma/client";
 import { AuthorizationError } from "../../lib/errors.js";
 import { createLogger } from "../../lib/logger.js";
 import { generateUniqueSlug } from "../../utils/slugify.js";
-import { findExistingUserBook } from "./tierList.books.service.js";
+import { findExistingUserBook, normTitleForSql } from "./tierList.books.service.js";
+import { matchBook } from "../books/bookMatching.service.js";
 
 const logger = createLogger("TierListsFork", { color: "cyan" });
 
@@ -66,19 +68,46 @@ export async function forkTierList(id: string, userId: number) {
           );
         }
 
-        // Модель «личные книги» (18.08): форк = отдельное имущество —
-        // копия книги принадлежит новому владельцу, удаление/правка
-        // оригинала не влияет на форк (и наоборот).
-        // Но если у пользователя УЖЕ есть своя книга (тот же внешний ID или
-        // то же название) — линкуемся на неё: прямой create упал бы с P2002
-        // (unique userId+source+externalId) при повторном форке / форке своего листа.
-        const own = await findExistingUserBook(tx, userId, {
-          title: placement.book.title,
-          author: placement.book.author,
-          authorId: placement.book.authorId,
-          externalId: placement.book.externalId,
-          source: placement.book.source,
-        });
+        // Объединение с каноном (единый каталог): если книга уже есть в
+        // каталоге (published) — линкуемся на неё, placementsCount канона
+        // увеличивается на 1, дубль в админке не создаётся. Иначе ищем
+        // свою draft-книгу пользователя; только если и её нет — создаём
+        // личную копию (draft) для изоляции форка от оригинала.
+        const hasAuthor = Boolean(
+          placement.book.author?.trim() || placement.book.authorId,
+        );
+        let catalogId: number | null = null;
+        if (hasAuthor) {
+          try {
+            const match = await matchBook(
+              tx,
+              {
+                title: placement.book.title,
+                author: placement.book.author,
+                authorId: placement.book.authorId,
+                externalId: placement.book.externalId,
+                source: placement.book.source,
+              },
+              { statusFilter: "published", fuzzy: false },
+            );
+            catalogId = match.book?.id ?? null;
+          } catch {
+            // Окружение без $queryRaw (например, моки) — деградируем
+            // до простого поиска по externalId / authorId
+            catalogId = await findPublishedCanonFallback(tx, placement.book);
+          }
+        }
+
+        const own =
+          catalogId != null
+            ? { id: catalogId }
+            : await findExistingUserBook(tx, userId, {
+                title: placement.book.title,
+                author: placement.book.author,
+                authorId: placement.book.authorId,
+                externalId: placement.book.externalId,
+                source: placement.book.source,
+              });
 
         return {
           rank: placement.rank,
@@ -133,4 +162,65 @@ export async function forkTierList(id: string, userId: number) {
 
     return newTierList;
   });
+}
+
+/** Упрощённый поиск канона (published) без $queryRaw — для окружений,
+ *  где полный matchBook недоступен (моки/старые тесты). */
+async function findPublishedCanonFallback(
+  tx: Prisma.TransactionClient,
+  book: {
+    title: string;
+    author?: string | null;
+    authorId?: number | null;
+    externalId?: string | null;
+    source?: string | null;
+  },
+): Promise<number | null> {
+  if (book.source && book.externalId) {
+    const byExt = await tx.book.findFirst({
+      where: {
+        source: book.source as BookSource,
+        externalId: book.externalId,
+        status: "published",
+      },
+      select: { id: true },
+    });
+    if (byExt) return byExt.id;
+  }
+
+  const norm = normTitleForSql(book.title);
+  if (book.authorId != null) {
+    const rows = await tx.book.findMany({
+      where: { authorId: book.authorId, status: "published" },
+      select: { id: true, title: true },
+    });
+    const exact = rows.filter((b: { id: number; title: string }) => normTitleForSql(b.title) === norm);
+    if (exact.length === 1 && exact[0]) return exact[0].id;
+  }
+
+  if (book.author?.trim()) {
+    const normAuthor = normTitleForSql(book.author);
+    const rows = await tx.book.findMany({
+      where: { status: "published" },
+      select: { id: true, title: true, author: true },
+    });
+    const exact = rows.filter(
+      (b: { id: number; title: string; author: string | null }) =>
+        normTitleForSql(b.title) === norm &&
+        !!b.author &&
+        normTitleForSql(b.author) === normAuthor,
+    );
+    if (exact.length === 1 && exact[0]) return exact[0].id;
+  }
+
+  if (!book.author?.trim() && book.authorId == null) {
+    const rows = await tx.book.findMany({
+      where: { status: "published", authorId: null },
+      select: { id: true, title: true },
+    });
+    const exact = rows.filter((b: { id: number; title: string }) => normTitleForSql(b.title) === norm);
+    if (exact.length === 1 && exact[0]) return exact[0].id;
+  }
+
+  return null;
 }

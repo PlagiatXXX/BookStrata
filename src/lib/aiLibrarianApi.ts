@@ -21,8 +21,9 @@ export interface AiStatusResponse {
 }
 
 export interface AiLibrarianContext {
-  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity'
+  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity' | 'reading-dna'
   slug?: string
+  ticketNumber?: string
 }
 
 /**

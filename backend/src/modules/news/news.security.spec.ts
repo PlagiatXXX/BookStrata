@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import { NewsService } from "./news.service.js";
 import { newsRoutes } from "./news.route.js";
@@ -65,10 +64,11 @@ describe("News Security (Vulnerability Reproduction)", () => {
     (prisma.newsArticle.count as any).mockResolvedValue(0);
 
     // Act: Calling the route as anonymous user trying to see unpublished
-    await request(app.server)
-      .get("/")
-      .query({ publishedOnly: "false" })
-      .expect(200);
+    const res = await app.inject({
+      method: "GET",
+      url: "/?publishedOnly=false",
+    });
+    expect(res.statusCode).toBe(200);
 
     // Assert: Check that service was called with publishedOnly: true despite query
     expect(prisma.newsArticle.findMany).toHaveBeenCalledWith(expect.objectContaining({
@@ -89,10 +89,11 @@ describe("News Security (Vulnerability Reproduction)", () => {
     await adminApp.ready();
 
     // Act: Calling the route as admin user
-    await request(adminApp.server)
-      .get("/")
-      .query({ publishedOnly: "false" })
-      .expect(200);
+    const res = await adminApp.inject({
+      method: "GET",
+      url: "/?publishedOnly=false",
+    });
+    expect(res.statusCode).toBe(200);
 
     // Assert: Check that service was called with publishedOnly: false
     expect(prisma.newsArticle.findMany).toHaveBeenCalledWith(expect.objectContaining({
@@ -120,9 +121,11 @@ describe("News Security (Vulnerability Reproduction)", () => {
     (prisma.newsArticle.findFirst as any).mockResolvedValue(null);
 
     // Act: Calling the route as anonymous user
-    await request(app.server)
-      .get("/99")
-      .expect(404);
+    const res = await app.inject({
+      method: "GET",
+      url: "/99",
+    });
+    expect(res.statusCode).toBe(404);
 
     // Assert: Check that service was called with publishedOnly: true (implicit or explicit)
     // We expect the where clause to have included isPublished: true

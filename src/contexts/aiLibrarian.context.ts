@@ -12,6 +12,8 @@ export interface AiLibrarianContextValue {
   error: string | null
   status: AiStatus
   sendMessage: (content: string, context?: AiLibrarianPageContext) => Promise<void>
+  retryLastMessage: (context?: AiLibrarianPageContext) => Promise<void>
+  editLastMessage: () => string | null
   clearMessages: () => void
   refreshStatus: () => void
   switchSession: (sessionKey: string) => void
@@ -26,5 +28,6 @@ export const AiLibrarianReactContext = createContext<AiLibrarianContextValue | u
 export function getSessionKey(context?: AiLibrarianPageContext): string {
   if (!context) return '__global'
   if (context.pageType === 'collection' && context.slug) return `collection:${context.slug}`
+  if (context.pageType === 'reading-dna') return `reading-dna:${context.ticketNumber || 'active'}`
   return context.pageType
 }

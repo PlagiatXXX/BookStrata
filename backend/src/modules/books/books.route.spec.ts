@@ -4,7 +4,6 @@
 // читать user.userId (а не user.id). До 13.08.2026 здесь был user?.id → все
 // авторизованные эндпоинты книг отдавали 401 даже с валидным токеном.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 const mocks = vi.hoisted(() => ({
@@ -98,31 +97,37 @@ describe("books.route.ts — request.user.userId (регресс user?.id → 40
   });
 
   it("POST /:slug/like с валидным токеном проходит и передаёт userId=7", async () => {
-    const res = await request(app.server)
-      .post("/api/books/anna-karenina-lev-tolstoj/like")
-      .set("Authorization", "Bearer valid-token");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/books/anna-karenina-lev-tolstoj/like",
+      headers: { authorization: "Bearer valid-token" },
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(mocks.toggleBookLike).toHaveBeenCalledWith("anna-karenina-lev-tolstoj", 7);
   });
 
   it("POST /:slug/like без токена → 401, сервис не вызван", async () => {
-    const res = await request(app.server)
-      .post("/api/books/anna-karenina-lev-tolstoj/like");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/books/anna-karenina-lev-tolstoj/like",
+    });
 
-    expect(res.status).toBe(401);
+    expect(res.statusCode).toBe(401);
     expect(mocks.toggleBookLike).not.toHaveBeenCalled();
   });
 
   it("POST /:slug/comments с токеном создаёт комментарий от userId=7", async () => {
     mocks.createBookComment.mockResolvedValue({ id: 5, content: "Шедевр" });
 
-    const res = await request(app.server)
-      .post("/api/books/anna-karenina-lev-tolstoj/comments")
-      .set("Authorization", "Bearer valid-token")
-      .send({ content: "Шедевр" });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/books/anna-karenina-lev-tolstoj/comments",
+      headers: { authorization: "Bearer valid-token" },
+      payload: { content: "Шедевр" },
+    });
 
-    expect(res.status).toBe(201);
+    expect(res.statusCode).toBe(201);
     expect(mocks.createBookComment).toHaveBeenCalledWith(
       "anna-karenina-lev-tolstoj", 7, "Шедевр", undefined,
     );
@@ -131,45 +136,53 @@ describe("books.route.ts — request.user.userId (регресс user?.id → 40
   it("PATCH /:slug/comments/:id — правка от userId=7 с ролью", async () => {
     mocks.updateBookComment.mockResolvedValue({ id: 5, content: "Исправлено" });
 
-    const res = await request(app.server)
-      .patch("/api/books/anna-karenina-lev-tolstoj/comments/5")
-      .set("Authorization", "Bearer valid-token")
-      .send({ content: "Исправлено" });
+    const res = await app.inject({
+      method: "PATCH",
+      url: "/api/books/anna-karenina-lev-tolstoj/comments/5",
+      headers: { authorization: "Bearer valid-token" },
+      payload: { content: "Исправлено" },
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(mocks.updateBookComment).toHaveBeenCalledWith(5, 7, "user", "Исправлено");
   });
 
   it("DELETE /:slug/comments/:id — удаление от userId=7", async () => {
     mocks.deleteBookComment.mockResolvedValue({ success: true });
 
-    const res = await request(app.server)
-      .delete("/api/books/anna-karenina-lev-tolstoj/comments/5")
-      .set("Authorization", "Bearer valid-token");
+    const res = await app.inject({
+      method: "DELETE",
+      url: "/api/books/anna-karenina-lev-tolstoj/comments/5",
+      headers: { authorization: "Bearer valid-token" },
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(mocks.deleteBookComment).toHaveBeenCalledWith(5, 7, "user");
   });
 
   it("POST /:slug/comments/:id/like — лайк комментария от userId=7", async () => {
     mocks.toggleBookCommentLike.mockResolvedValue({ liked: true, likesCount: 1 });
 
-    const res = await request(app.server)
-      .post("/api/books/anna-karenina-lev-tolstoj/comments/5/like")
-      .set("Authorization", "Bearer valid-token");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/books/anna-karenina-lev-tolstoj/comments/5/like",
+      headers: { authorization: "Bearer valid-token" },
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(mocks.toggleBookCommentLike).toHaveBeenCalledWith(5, 7);
   });
 
   it("GET /:slug с токеном передаёт userId=7 в getBookPageData (userLike)", async () => {
     mocks.getBookPageData.mockResolvedValue({ book: { id: 1 }, userLike: true });
 
-    const res = await request(app.server)
-      .get("/api/books/anna-karenina-lev-tolstoj")
-      .set("Authorization", "Bearer valid-token");
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/anna-karenina-lev-tolstoj",
+      headers: { authorization: "Bearer valid-token" },
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(mocks.getBookPageData).toHaveBeenCalledWith("anna-karenina-lev-tolstoj", 7);
   });
 
@@ -177,12 +190,14 @@ describe("books.route.ts — request.user.userId (регресс user?.id → 40
     mocks.assertOwner.mockResolvedValue(undefined);
     mocks.addBooksToTierList.mockResolvedValue([{ id: "p1" }]);
 
-    const res = await request(app.server)
-      .post("/api/books/anna-karenina-lev-tolstoj/tier-lists")
-      .set("Authorization", "Bearer valid-token")
-      .send({ tierListId: "tl-1" });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/books/anna-karenina-lev-tolstoj/tier-lists",
+      headers: { authorization: "Bearer valid-token" },
+      payload: { tierListId: "tl-1" },
+    });
 
-    expect(res.status).toBe(201);
+    expect(res.statusCode).toBe(201);
     expect(mocks.assertOwner).toHaveBeenCalledWith("tl-1", 7);
     expect(mocks.addBooksToTierList).toHaveBeenCalledWith(
       "tl-1",
@@ -195,14 +210,14 @@ describe("books.route.ts — request.user.userId (регресс user?.id → 40
       { id: 1, title: "Дюна", author: "Герберт", slug: "dune", coverImageUrl: "/c/dune.jpg", rating: 9.0 },
     ]);
 
-    const res = await request(app.server).get("/api/books/catalog-search?q=Дюна");
-    expect(res.status).toBe(200);
-    expect(res.body.data.books).toHaveLength(1);
-    expect(res.body.data.books[0].title).toBe("Дюна");
+    const res = await app.inject({ method: "GET", url: "/api/books/catalog-search?q=Дюна" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.books).toHaveLength(1);
+    expect(res.json().data.books[0].title).toBe("Дюна");
   });
 
   it("GET /catalog-search — отклоняет короткий запрос", async () => {
-    const res = await request(app.server).get("/api/books/catalog-search?q=a");
-    expect(res.status).toBe(400);
+    const res = await app.inject({ method: "GET", url: "/api/books/catalog-search?q=a" });
+    expect(res.statusCode).toBe(400);
   });
 });

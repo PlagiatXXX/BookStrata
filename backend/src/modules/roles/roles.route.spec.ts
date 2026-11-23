@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 
@@ -85,19 +84,23 @@ describe("Roles Routes", () => {
       ];
       (prisma.role.findMany as any).mockResolvedValue(mockRoles);
 
-      const res = await request(app.server)
-        .get("/api/roles")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/roles",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.body.data).toEqual(mockRoles);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual(mockRoles);
     });
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      await request(app.server)
-        .get("/api/roles")
-        .set("Authorization", "Bearer user-token")
-        .expect(403);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/roles",
+        headers: { authorization: "Bearer user-token" },
+      });
+      expect(res.statusCode).toBe(403);
     });
   });
 
@@ -109,12 +112,14 @@ describe("Roles Routes", () => {
         role: { id: 3, name: "user", description: "Regular user" },
       });
 
-      const res = await request(app.server)
-        .get("/api/roles/me")
-        .set("Authorization", "Bearer user-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/roles/me",
+        headers: { authorization: "Bearer user-token" },
+      });
 
-      expect(res.body.data.name).toBe("user");
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.name).toBe("user");
     });
 
     it("должен вернуть null если у пользователя нет роли", async () => {
@@ -124,16 +129,19 @@ describe("Roles Routes", () => {
         role: null,
       });
 
-      const res = await request(app.server)
-        .get("/api/roles/me")
-        .set("Authorization", "Bearer user-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/roles/me",
+        headers: { authorization: "Bearer user-token" },
+      });
 
-      expect(res.body.data).toBeNull();
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toBeNull();
     });
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server).get("/api/roles/me").expect(401);
+      const res = await app.inject({ method: "GET", url: "/api/roles/me" });
+      expect(res.statusCode).toBe(401);
     });
   });
 
@@ -145,21 +153,25 @@ describe("Roles Routes", () => {
         { id: 1, email: "admin@test.com", username: "admin", roleId: 1 },
       ]);
 
-      const res = await request(app.server)
-        .get("/api/roles/users/admin")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/roles/users/admin",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.body.data).toHaveLength(1);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toHaveLength(1);
     });
 
     it("должен вернуть 400 при неверном имени роли", async () => {
-      const res = await request(app.server)
-        .get("/api/roles/users/invalid-role")
-        .set("Authorization", "Bearer admin-token")
-        .expect(400);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/roles/users/invalid-role",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.body.error.code).toBe("invalid_input");
+      expect(res.statusCode).toBe(400);
+      expect(res.json().error.code).toBe("invalid_input");
     });
   });
 
@@ -172,25 +184,29 @@ describe("Roles Routes", () => {
         role: { id: 1, name: "admin", description: "Admin" },
       });
 
-      const res = await request(app.server)
-        .put("/api/roles/user/2")
-        .set("Authorization", "Bearer admin-token")
-        .send({ role: "admin", password: "route-test-secret" })
-        .expect(200);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/roles/user/2",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { role: "admin", password: "route-test-secret" },
+      });
 
-      expect(res.body.data.success).toBe(true);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.success).toBe(true);
     });
 
     it("должен вернуть 403 при неверном секрете", async () => {
       const { prisma } = await import("../../lib/prisma.js");
       (prisma.role.findUnique as any).mockResolvedValue({ id: 1, name: "admin", description: "Admin" });
 
-      await request(app.server)
-        .put("/api/roles/user/2")
-        .set("Authorization", "Bearer admin-token")
-        .send({ role: "admin", password: "wrong-secret" })
-        .expect(403);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/roles/user/2",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { role: "admin", password: "wrong-secret" },
+      });
 
+      expect(res.statusCode).toBe(403);
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
@@ -198,13 +214,15 @@ describe("Roles Routes", () => {
       const { prisma } = await import("../../lib/prisma.js");
       (prisma.role.findUnique as any).mockResolvedValue(null);
 
-      const res = await request(app.server)
-        .put("/api/roles/user/2")
-        .set("Authorization", "Bearer admin-token")
-        .send({ role: "moderator", password: "route-test-secret" })
-        .expect(404);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/roles/user/2",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { role: "moderator", password: "route-test-secret" },
+      });
 
-      expect(res.body.error.code).toBe("not_found");
+      expect(res.statusCode).toBe(404);
+      expect(res.json().error.code).toBe("not_found");
     });
   });
 
@@ -213,40 +231,51 @@ describe("Roles Routes", () => {
       const { prisma } = await import("../../lib/prisma.js");
       (prisma.user.update as any).mockResolvedValue({ id: 2, roleId: null });
 
-      await request(app.server)
-        .delete("/api/roles/user/2")
-        .set("Authorization", "Bearer admin-token")
-        .send({ password: "route-test-secret" })
-        .expect(200);
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/roles/user/2",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { password: "route-test-secret" },
+      });
+
+      expect(res.statusCode).toBe(200);
     });
 
     it("должен вернуть 403 при неверном секрете снятия", async () => {
       const { prisma } = await import("../../lib/prisma.js");
 
-      await request(app.server)
-        .delete("/api/roles/user/2")
-        .set("Authorization", "Bearer admin-token")
-        .send({ password: "wrong" })
-        .expect(403);
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/roles/user/2",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { password: "wrong" },
+      });
 
+      expect(res.statusCode).toBe(403);
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     it("НЕ позволяет снять роль самому себе", async () => {
       // admin-token = userId 1 → снятие роли с userId 1 = само-локOut
-      await request(app.server)
-        .delete("/api/roles/user/1")
-        .set("Authorization", "Bearer admin-token")
-        .send({ password: "route-test-secret" })
-        .expect(400);
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/roles/user/1",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { password: "route-test-secret" },
+      });
+
+      expect(res.statusCode).toBe(400);
     });
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      await request(app.server)
-        .delete("/api/roles/user/2")
-        .set("Authorization", "Bearer user-token")
-        .send({ password: "route-test-secret" })
-        .expect(403);
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/roles/user/2",
+        headers: { authorization: "Bearer user-token" },
+        payload: { password: "route-test-secret" },
+      });
+
+      expect(res.statusCode).toBe(403);
     });
   });
 });

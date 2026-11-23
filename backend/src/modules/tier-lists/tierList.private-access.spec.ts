@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 // Мокаем тяжёлые/внешние зависимости роута
@@ -94,37 +93,49 @@ describe("Доступ к приватным тир-листам (admin/moderato
     });
 
     it("admin видит приватный список (200)", async () => {
-      const res = await request(app.server)
-        .get("/api/tier-lists/list-1")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
-      expect(res.body.data.id).toBe("list-1");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/list-1",
+        headers: { authorization: "Bearer admin-token" },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.id).toBe("list-1");
     });
 
     it("moderator видит приватный список (200)", async () => {
-      const res = await request(app.server)
-        .get("/api/tier-lists/list-1")
-        .set("Authorization", "Bearer mod-token")
-        .expect(200);
-      expect(res.body.data.id).toBe("list-1");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/list-1",
+        headers: { authorization: "Bearer mod-token" },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.id).toBe("list-1");
     });
 
     it("чужой пользователь получает 403", async () => {
-      await request(app.server)
-        .get("/api/tier-lists/list-1")
-        .set("Authorization", "Bearer user-token")
-        .expect(403);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/list-1",
+        headers: { authorization: "Bearer user-token" },
+      });
+      expect(res.statusCode).toBe(403);
     });
 
     it("аноним получает 403", async () => {
-      await request(app.server).get("/api/tier-lists/list-1").expect(403);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/list-1",
+      });
+      expect(res.statusCode).toBe(403);
     });
 
     it("владелец видит свой приватный список (200)", async () => {
-      await request(app.server)
-        .get("/api/tier-lists/list-1")
-        .set("Authorization", "Bearer owner-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/list-1",
+        headers: { authorization: "Bearer owner-token" },
+      });
+      expect(res.statusCode).toBe(200);
     });
   });
 
@@ -134,7 +145,11 @@ describe("Доступ к приватным тир-листам (admin/moderato
     });
 
     it("аноним видит публичный список (200)", async () => {
-      await request(app.server).get("/api/tier-lists/list-1").expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/list-1",
+      });
+      expect(res.statusCode).toBe(200);
     });
   });
 
@@ -148,10 +163,12 @@ describe("Доступ к приватным тир-листам (admin/moderato
     });
 
     it("admin получает приватные списки в ленте", async () => {
-      await request(app.server)
-        .get("/api/tier-lists/public")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/public",
+        headers: { authorization: "Bearer admin-token" },
+      });
+      expect(res.statusCode).toBe(200);
       expect(service.getPublicTierLists).toHaveBeenCalledWith(
         expect.anything(),
         { includePrivate: true },
@@ -159,10 +176,12 @@ describe("Доступ к приватным тир-листам (admin/moderato
     });
 
     it("moderator получает приватные списки в ленте", async () => {
-      await request(app.server)
-        .get("/api/tier-lists/public")
-        .set("Authorization", "Bearer mod-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/public",
+        headers: { authorization: "Bearer mod-token" },
+      });
+      expect(res.statusCode).toBe(200);
       expect(service.getPublicTierLists).toHaveBeenCalledWith(
         expect.anything(),
         { includePrivate: true },
@@ -170,7 +189,11 @@ describe("Доступ к приватным тир-листам (admin/moderato
     });
 
     it("аноним получает только публичные", async () => {
-      await request(app.server).get("/api/tier-lists/public").expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/public",
+      });
+      expect(res.statusCode).toBe(200);
       expect(service.getPublicTierLists).toHaveBeenCalledWith(
         expect.anything(),
         { includePrivate: false },
@@ -178,10 +201,12 @@ describe("Доступ к приватным тир-листам (admin/moderato
     });
 
     it("обычный пользователь получает только публичные", async () => {
-      await request(app.server)
-        .get("/api/tier-lists/public")
-        .set("Authorization", "Bearer user-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/public",
+        headers: { authorization: "Bearer user-token" },
+      });
+      expect(res.statusCode).toBe(200);
       expect(service.getPublicTierLists).toHaveBeenCalledWith(
         expect.anything(),
         { includePrivate: false },

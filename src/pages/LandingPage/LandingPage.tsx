@@ -29,8 +29,6 @@ const LandingBody = lazy(() => import("./LandingBody"));
 function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
 
   const scrollTo = useCallback((id: string) => {
     setMobileOpen(false);
@@ -76,18 +74,16 @@ function LandingNav() {
           >
             Знаменитости
           </Link>
-          {isAdmin && (
-            <Link
-              data-analytics="nav.landing.reading_dna"
-              to="/reading-dna"
-              className="landing-nav__link relative inline-flex items-center gap-1.5"
-            >
-              <span>Книжный ДНК</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-linear-to-r from-amber-400 to-amber-500 text-slate-950 border border-amber-300/50 shadow-xs">
-                Новинка
-              </span>
-            </Link>
-          )}
+          <Link
+            data-analytics="nav.landing.reading_dna"
+            to="/reading-dna"
+            className="landing-nav__link relative inline-flex items-center gap-1.5"
+          >
+            <span>Книжный ДНК</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-linear-to-r from-amber-400 to-amber-500 text-slate-950 border border-amber-300/50 shadow-xs">
+              Новинка
+            </span>
+          </Link>
           <Link
             data-analytics="nav.landing.authors"
             to="/authors"

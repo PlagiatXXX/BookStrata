@@ -476,6 +476,10 @@ fastify.register(bookRedirectRoutes);
 import { tierListRedirectRoutes } from "../src/modules/tier-lists/tierListRedirect.route.js";
 fastify.register(tierListRedirectRoutes);
 
+// Публичные OG-фолбэки для Книжного ДНК (/reading-dna?ticket=... / ?challenge=...)
+import { readingDnaRedirectRoutes } from "./modules/reading-dna/readingDnaRedirect.route.js";
+fastify.register(readingDnaRedirectRoutes);
+
 // Инициализация подписок на события
 registerAchievementSubscriptions();
 registerAnalyticsSubscriptions();

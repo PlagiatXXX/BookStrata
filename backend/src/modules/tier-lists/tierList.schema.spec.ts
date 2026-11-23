@@ -7,7 +7,6 @@
 //
 // Тесты фиксируют: реальные ответы роутов должны проходить насквозь, без обрезки полей.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 vi.mock("./tierList.service.js", () => ({
@@ -117,24 +116,28 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
     it("отдаёт data/meta/links насквозь, без обрезки полей", async () => {
       vi.mocked(service.getUserTierLists).mockResolvedValue(serviceResponse as any);
 
-      const res = await request(app.server)
-        .get("/api/tier-lists/")
-        .set("x-user-id", "42")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/",
+        headers: { "x-user-id": "42" },
+      });
+      expect(res.statusCode).toBe(200);
 
-      expect(res.body.data).toHaveLength(1);
-      const item = res.body.data[0];
+      const body = res.json();
+      expect(body.data).toHaveLength(1);
+      const item = body.data[0];
       expect(item.id).toBe("list-1");
       expect(item.slug).toBe("moi-knigi");
       expect(item.authorName).toBe("vlp");
       expect(item.booksCount).toBe(12);
       expect(item.theme).toBe("dark");
-      expect(res.body.meta.totalItems).toBe(1);
-      expect(res.body.links.self).toBeDefined();
+      expect(body.meta.totalItems).toBe(1);
+      expect(body.links.self).toBeDefined();
     });
 
     it("без авторизации → 401 (схема валидации активна)", async () => {
-      await request(app.server).get("/api/tier-lists/").expect(401);
+      const res = await app.inject({ method: "GET", url: "/api/tier-lists/" });
+      expect(res.statusCode).toBe(401);
     });
   });
 
@@ -149,27 +152,32 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
         isPublic: false,
       } as any);
 
-      const res = await request(app.server)
-        .post("/api/tier-lists/")
-        .set("x-user-id", "42")
-        .send({ title: "Новый список" })
-        .expect(201);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/tier-lists/",
+        headers: { "x-user-id": "42" },
+        payload: { title: "Новый список" },
+      });
+      expect(res.statusCode).toBe(201);
 
-      expect(res.body.data).toBeDefined();
-      expect(res.body.data.id).toBe("list-9");
-      expect(res.body.data.slug).toBe("novyi-spisok");
-      expect(res.body.data.title).toBe("Новый список");
-      expect(res.body.data.newAchievements).toEqual([]);
+      const body = res.json();
+      expect(body.data).toBeDefined();
+      expect(body.data.id).toBe("list-9");
+      expect(body.data.slug).toBe("novyi-spisok");
+      expect(body.data.title).toBe("Новый список");
+      expect(body.data.newAchievements).toEqual([]);
     });
 
     it("без title → 400 (body-валидация активна)", async () => {
-      const res = await request(app.server)
-        .post("/api/tier-lists/")
-        .set("x-user-id", "42")
-        .send({})
-        .expect(400);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/tier-lists/",
+        headers: { "x-user-id": "42" },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(400);
 
-      expect(res.body.error).toBeDefined();
+      expect(res.json().error).toBeDefined();
       expect(service.createTierList).not.toHaveBeenCalled();
     });
   });
@@ -184,25 +192,29 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
         { book: { id: 1, title: "Книга" } },
       ] as any);
 
-      const res = await request(app.server)
-        .post("/api/tier-lists/list-1/books")
-        .set("x-user-id", "42")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/tier-lists/list-1/books",
+        headers: { "x-user-id": "42" },
+        payload: {
           books: [
             { title: "Книга с обложкой", coverImageUrl: base64Cover },
           ],
-        })
-        .expect(201);
+        },
+      });
+      expect(res.statusCode).toBe(201);
 
-      expect(res.body.data.results).toHaveLength(1);
+      expect(res.json().data.results).toHaveLength(1);
     });
 
     it("без books → 400 (body-валидация активна)", async () => {
-      await request(app.server)
-        .post("/api/tier-lists/list-1/books")
-        .set("x-user-id", "42")
-        .send({})
-        .expect(400);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/tier-lists/list-1/books",
+        headers: { "x-user-id": "42" },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(400);
     });
   });
 
@@ -220,23 +232,28 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
       vi.mocked(service.assertOwner).mockResolvedValue(undefined);
       vi.mocked(service.togglePublic).mockResolvedValue(updated as any);
 
-      const res = await request(app.server)
-        .put("/api/tier-lists/list-1/public")
-        .set("x-user-id", "42")
-        .send({ isPublic: true })
-        .expect(200);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/tier-lists/list-1/public",
+        headers: { "x-user-id": "42" },
+        payload: { isPublic: true },
+      });
+      expect(res.statusCode).toBe(200);
 
-      expect(res.body.data.id).toBe("list-1");
-      expect(res.body.data.title).toBe("Мои книги");
-      expect(res.body.data.likesCount).toBe(3);
+      const body = res.json();
+      expect(body.data.id).toBe("list-1");
+      expect(body.data.title).toBe("Мои книги");
+      expect(body.data.likesCount).toBe(3);
     });
 
     it("без isPublic → 400 (body-валидация активна)", async () => {
-      await request(app.server)
-        .put("/api/tier-lists/list-1/public")
-        .set("x-user-id", "42")
-        .send({})
-        .expect(400);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/tier-lists/list-1/public",
+        headers: { "x-user-id": "42" },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(400);
     });
   });
 
@@ -250,16 +267,19 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
       } as any);
       vi.mocked(eventBus.emit).mockResolvedValue([]);
 
-      const res = await request(app.server)
-        .put("/api/tier-lists/list-1/save-all")
-        .set("x-user-id", "42")
-        .send({
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/tier-lists/list-1/save-all",
+        headers: { "x-user-id": "42" },
+        payload: {
           newBooks: [{ tempId: "t1", title: "Книга", coverImageUrl: "http://x/c.jpg" }],
-        })
-        .expect(200);
+        },
+      });
+      expect(res.statusCode).toBe(200);
 
-      expect(res.body.data.message).toBe("Saved successfully");
-      expect(res.body.data.bookReplacements[0].tempId).toBe("t1");
+      const body = res.json();
+      expect(body.data.message).toBe("Saved successfully");
+      expect(body.data.bookReplacements[0].tempId).toBe("t1");
     });
   });
 
@@ -276,10 +296,11 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
         { book: { id: 1, title: "Книга" } },
       ] as any);
 
-      const res = await request(app.server)
-        .post("/api/tier-lists/list-1/books")
-        .set("x-user-id", "42")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/tier-lists/list-1/books",
+        headers: { "x-user-id": "42" },
+        payload: {
           books: [
             {
               title: "Книга",
@@ -287,10 +308,11 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
               description: "О".repeat(3000),
             },
           ],
-        })
-        .expect(201);
+        },
+      });
+      expect(res.statusCode).toBe(201);
 
-      expect(res.body.data.results).toHaveLength(1);
+      expect(res.json().data.results).toHaveLength(1);
     });
 
     it("POST /:id/books — title длиной 300 (shelf-лимит 500) принимается", async () => {
@@ -299,20 +321,22 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
         { book: { id: 2, title: "Длинный" } },
       ] as any);
 
-      const res = await request(app.server)
-        .post("/api/tier-lists/list-1/books")
-        .set("x-user-id", "42")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/tier-lists/list-1/books",
+        headers: { "x-user-id": "42" },
+        payload: {
           books: [
             {
               title: "Т".repeat(300),
               coverImageUrl: "http://x/c.jpg",
             },
           ],
-        })
-        .expect(201);
+        },
+      });
+      expect(res.statusCode).toBe(201);
 
-      expect(res.body.data.results).toHaveLength(1);
+      expect(res.json().data.results).toHaveLength(1);
     });
 
     it("PUT /:id/books/:bookId — description 3000 и thoughts 2500 принимаются", async () => {
@@ -324,26 +348,30 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
       vi.mocked(service.updateBookCatalogIfPlaced).mockResolvedValue(undefined);
       vi.mocked(eventBus.emit).mockResolvedValue([]);
 
-      const res = await request(app.server)
-        .put("/api/tier-lists/list-1/books/7")
-        .set("x-user-id", "42")
-        .send({
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/tier-lists/list-1/books/7",
+        headers: { "x-user-id": "42" },
+        payload: {
           description: "Д".repeat(3000),
           thoughts: "М".repeat(2500),
-        })
-        .expect(200);
+        },
+      });
+      expect(res.statusCode).toBe(200);
 
-      expect(res.body.data.id).toBe(7);
+      expect(res.json().data.id).toBe(7);
     });
 
     it("PUT /:id/books/:bookId — пустой title (фронт шлёт title.trim()) отклоняется", async () => {
       vi.mocked(service.assertOwner).mockResolvedValue(undefined);
 
-      await request(app.server)
-        .put("/api/tier-lists/list-1/books/7")
-        .set("x-user-id", "42")
-        .send({ title: "" })
-        .expect(400);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/tier-lists/list-1/books/7",
+        headers: { "x-user-id": "42" },
+        payload: { title: "" },
+      });
+      expect(res.statusCode).toBe(400);
 
       expect(service.updateBookCatalogIfPlaced).not.toHaveBeenCalled();
     });
@@ -358,13 +386,16 @@ describe("tier-lists — схемы вложены в schema:{} и не обре
         links: {},
       } as any);
 
-      const res = await request(app.server)
-        .get("/api/tier-lists/liked")
-        .set("x-user-id", "42")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/tier-lists/liked",
+        headers: { "x-user-id": "42" },
+      });
+      expect(res.statusCode).toBe(200);
 
-      expect(res.body.data[0].authorName).toBe("a");
-      expect(res.body.meta.totalItems).toBe(1);
+      const body = res.json();
+      expect(body.data[0].authorName).toBe("a");
+      expect(body.meta.totalItems).toBe(1);
     });
   });
 });

@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import request from "supertest"
 import Fastify from "fastify"
 import cors from "@fastify/cors"
 
@@ -74,18 +73,22 @@ describe("Subscriptions Routes", () => {
         id: 2, isPro: true, proExpiresAt: new Date(Date.now() + 86400000),
       } as any)
 
-      const res = await request(app.server)
-        .get("/api/subscriptions/me")
-        .set("Authorization", "Bearer user-token")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/subscriptions/me",
+        headers: { authorization: "Bearer user-token" },
+      })
 
-      expect(res.body.data).toHaveProperty("isPro")
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toHaveProperty("isPro")
     })
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .get("/api/subscriptions/me")
-        .expect(401)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/subscriptions/me",
+      })
+      expect(res.statusCode).toBe(401)
     })
   })
 
@@ -94,19 +97,23 @@ describe("Subscriptions Routes", () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.user.count).mockResolvedValue(10)
 
-      const res = await request(app.server)
-        .get("/api/subscriptions/stats")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/subscriptions/stats",
+        headers: { authorization: "Bearer admin-token" },
+      })
 
-      expect(res.body.data).toHaveProperty("totalProUsers")
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toHaveProperty("totalProUsers")
     })
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      await request(app.server)
-        .get("/api/subscriptions/stats")
-        .set("Authorization", "Bearer user-token")
-        .expect(403)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/subscriptions/stats",
+        headers: { authorization: "Bearer user-token" },
+      })
+      expect(res.statusCode).toBe(403)
     })
   })
 
@@ -120,21 +127,25 @@ describe("Subscriptions Routes", () => {
         id: 1, isPro: true, proExpiresAt: new Date(Date.now() + 86400000 * 30),
       } as any)
 
-      const res = await request(app.server)
-        .post("/api/subscriptions/activate")
-        .set("Authorization", "Bearer admin-token")
-        .send({ userId: 1, durationDays: 30 })
-        .expect(200)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/subscriptions/activate",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { userId: 1, durationDays: 30 },
+      })
 
-      expect(res.body.data.isPro).toBe(true)
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data.isPro).toBe(true)
     })
 
     it("должен вернуть 403 без прав админа", async () => {
-      await request(app.server)
-        .post("/api/subscriptions/activate")
-        .set("Authorization", "Bearer user-token")
-        .send({ userId: 1 })
-        .expect(403)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/subscriptions/activate",
+        headers: { authorization: "Bearer user-token" },
+        payload: { userId: 1 },
+      })
+      expect(res.statusCode).toBe(403)
     })
   })
 
@@ -148,13 +159,15 @@ describe("Subscriptions Routes", () => {
         id: 1, isPro: false, proExpiresAt: null,
       } as any)
 
-      const res = await request(app.server)
-        .post("/api/subscriptions/deactivate")
-        .set("Authorization", "Bearer admin-token")
-        .send({ userId: 1 })
-        .expect(200)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/subscriptions/deactivate",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { userId: 1 },
+      })
 
-      expect(res.body.data.isPro).toBe(false)
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data.isPro).toBe(false)
     })
   })
 })

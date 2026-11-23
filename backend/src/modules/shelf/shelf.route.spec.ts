@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 
 vi.mock("../../lib/prisma.js", () => {
@@ -60,18 +59,21 @@ describe("Shelf Routes", () => {
         { bookId: 11, status: "want_to_read", createdAt: new Date(), book: { slug: null } },
       ] as any);
 
-      const res = await request(app.server)
-        .get("/api/shelf")
-        .set("Authorization", "Bearer user-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/shelf",
+        headers: { authorization: "Bearer user-token" },
+      });
 
-      expect(res.body.data).toHaveLength(2);
-      expect(res.body.data[0]).toEqual({ bookId: 10, status: "read", slug: "anna-karenina" });
-      expect(res.body.data[1]).toEqual({ bookId: 11, status: "want_to_read", slug: null });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toHaveLength(2);
+      expect(res.json().data[0]).toEqual({ bookId: 10, status: "read", slug: "anna-karenina" });
+      expect(res.json().data[1]).toEqual({ bookId: 11, status: "want_to_read", slug: null });
     });
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server).get("/api/shelf").expect(401);
+      const res = await app.inject({ method: "GET", url: "/api/shelf" });
+      expect(res.statusCode).toBe(401);
     });
   });
 
@@ -86,14 +88,16 @@ describe("Shelf Routes", () => {
         },
       ] as any);
 
-      const res = await request(app.server)
-        .get("/api/shelf/books")
-        .set("Authorization", "Bearer user-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/shelf/books",
+        headers: { authorization: "Bearer user-token" },
+      });
 
-      expect(res.body.data).toHaveLength(1);
-      expect(res.body.data[0].book.title).toBe("Цирцея");
-      expect(res.body.data[0].status).toBe("read");
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toHaveLength(1);
+      expect(res.json().data[0].book.title).toBe("Цирцея");
+      expect(res.json().data[0].status).toBe("read");
     });
   });
 
@@ -107,13 +111,15 @@ describe("Shelf Routes", () => {
         book: { slug: null },
       } as any);
 
-      const res = await request(app.server)
-        .put("/api/shelf/books/10")
-        .set("Authorization", "Bearer user-token")
-        .send({ status: "read" })
-        .expect(200);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/shelf/books/10",
+        headers: { authorization: "Bearer user-token" },
+        payload: { status: "read" },
+      });
 
-      expect(res.body.data).toEqual({ bookId: 10, status: "read", slug: null });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ bookId: 10, status: "read", slug: null });
       expect(prisma.bookStatus.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { bookId_userId: { bookId: 10, userId: 1 } },
@@ -132,10 +138,11 @@ describe("Shelf Routes", () => {
         book: { slug: "astralnaya-biblioteka" },
       } as any);
 
-      const res = await request(app.server)
-        .put("/api/shelf/books/curated_1_1782461891402")
-        .set("Authorization", "Bearer user-token")
-        .send({
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/shelf/books/curated_1_1782461891402",
+        headers: { authorization: "Bearer user-token" },
+        payload: {
           status: "read",
           book: {
             title: "Астральная библиотека",
@@ -143,10 +150,11 @@ describe("Shelf Routes", () => {
             coverImageUrl: "/images/collections/test.webp",
             slug: "astralnaya-biblioteka",
           },
-        })
-        .expect(200);
+        },
+      });
 
-      expect(res.body.data).toEqual({ bookId: 42, status: "read", slug: "astralnaya-biblioteka" });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ bookId: 42, status: "read", slug: "astralnaya-biblioteka" });
       expect(prisma.book.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ title: "Астральная библиотека" }),
         select: { id: true },
@@ -162,21 +170,25 @@ describe("Shelf Routes", () => {
       const { prisma } = await import("../../lib/prisma.js");
       vi.mocked(prisma.book.findUnique).mockResolvedValue(null);
 
-      const res = await request(app.server)
-        .put("/api/shelf/books/999")
-        .set("Authorization", "Bearer user-token")
-        .send({ status: "want_to_read" })
-        .expect(404);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/shelf/books/999",
+        headers: { authorization: "Bearer user-token" },
+        payload: { status: "want_to_read" },
+      });
 
-      expect(res.status).toBe(404);
+      expect(res.statusCode).toBe(404);
     });
 
     it("должен вернуть 400 на невалидный статус", async () => {
-      await request(app.server)
-        .put("/api/shelf/books/10")
-        .set("Authorization", "Bearer user-token")
-        .send({ status: "reading" })
-        .expect(400);
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/shelf/books/10",
+        headers: { authorization: "Bearer user-token" },
+        payload: { status: "reading" },
+      });
+
+      expect(res.statusCode).toBe(400);
     });
   });
 
@@ -185,25 +197,29 @@ describe("Shelf Routes", () => {
       const { prisma } = await import("../../lib/prisma.js");
       vi.mocked(prisma.bookStatus.deleteMany).mockResolvedValue({ count: 1 } as any);
 
-      const res = await request(app.server)
-        .delete("/api/shelf/books/10")
-        .set("Authorization", "Bearer user-token")
-        .expect(204);
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/shelf/books/10",
+        headers: { authorization: "Bearer user-token" },
+      });
 
+      expect(res.statusCode).toBe(204);
       expect(prisma.bookStatus.deleteMany).toHaveBeenCalledWith({
         where: { bookId: 10, userId: 1 },
       });
-      expect(res.text).toBe("");
+      expect(res.body).toBe("");
     });
 
     it("должен вернуть 204 для строкового ключа без удаления", async () => {
       const { prisma } = await import("../../lib/prisma.js");
 
-      await request(app.server)
-        .delete("/api/shelf/books/curated_1_1782461891402")
-        .set("Authorization", "Bearer user-token")
-        .expect(204);
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/shelf/books/curated_1_1782461891402",
+        headers: { authorization: "Bearer user-token" },
+      });
 
+      expect(res.statusCode).toBe(204);
       expect(prisma.bookStatus.deleteMany).not.toHaveBeenCalled();
     });
   });
@@ -213,13 +229,15 @@ describe("Shelf Routes", () => {
       const { prisma } = await import("../../lib/prisma.js");
       vi.mocked(prisma.bookStatus.deleteMany).mockResolvedValue({ count: 2 } as any);
 
-      const res = await request(app.server)
-        .post("/api/shelf/remove")
-        .set("Authorization", "Bearer user-token")
-        .send({ bookKeys: ["10", "11"] })
-        .expect(200);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/shelf/remove",
+        headers: { authorization: "Bearer user-token" },
+        payload: { bookKeys: ["10", "11"] },
+      });
 
-      expect(res.body.data).toEqual({ removed: 2 });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ removed: 2 });
       expect(prisma.bookStatus.deleteMany).toHaveBeenCalledWith({
         where: { userId: 1, bookId: { in: [10, 11] } },
       });
@@ -229,26 +247,30 @@ describe("Shelf Routes", () => {
       const { prisma } = await import("../../lib/prisma.js");
       vi.mocked(prisma.bookStatus.deleteMany).mockResolvedValue({ count: 1 } as any);
 
-      const res = await request(app.server)
-        .post("/api/shelf/remove")
-        .set("Authorization", "Bearer user-token")
-        .send({ bookKeys: ["10", "curated_x"] })
-        .expect(200);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/shelf/remove",
+        headers: { authorization: "Bearer user-token" },
+        payload: { bookKeys: ["10", "curated_x"] },
+      });
 
-      expect(res.body.data).toEqual({ removed: 1 });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ removed: 1 });
       expect(prisma.bookStatus.deleteMany).toHaveBeenCalledWith({
         where: { userId: 1, bookId: { in: [10] } },
       });
     });
 
     it("должен вернуть removed: 0 на пустой список", async () => {
-      const res = await request(app.server)
-        .post("/api/shelf/remove")
-        .set("Authorization", "Bearer user-token")
-        .send({ bookKeys: [] })
-        .expect(200);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/shelf/remove",
+        headers: { authorization: "Bearer user-token" },
+        payload: { bookKeys: [] },
+      });
 
-      expect(res.body.data).toEqual({ removed: 0 });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ removed: 0 });
     });
   });
 
@@ -257,18 +279,20 @@ describe("Shelf Routes", () => {
       const { prisma } = await import("../../lib/prisma.js");
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({} as any);
 
-      const res = await request(app.server)
-        .post("/api/shelf/import")
-        .set("Authorization", "Bearer user-token")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/shelf/import",
+        headers: { authorization: "Bearer user-token" },
+        payload: {
           items: [
             { bookKey: "1", status: "read" },
             { bookKey: "2", status: "want_to_read" },
           ],
-        })
-        .expect(200);
+        },
+      });
 
-      expect(res.body.data).toEqual({ imported: 2 });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ imported: 2 });
       expect(prisma.bookStatus.upsert).toHaveBeenCalledTimes(2);
     });
 
@@ -277,10 +301,11 @@ describe("Shelf Routes", () => {
       vi.mocked(prisma.book.findFirst).mockResolvedValue({ id: 100 } as any);
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({} as any);
 
-      const res = await request(app.server)
-        .post("/api/shelf/import")
-        .set("Authorization", "Bearer user-token")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/shelf/import",
+        headers: { authorization: "Bearer user-token" },
+        payload: {
           items: [
             {
               bookKey: "curated_1_1782461891402",
@@ -288,10 +313,11 @@ describe("Shelf Routes", () => {
               book: { title: "Цирцея", author: "Мадлен Миллер" },
             },
           ],
-        })
-        .expect(200);
+        },
+      });
 
-      expect(res.body.data).toEqual({ imported: 1 });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ imported: 1 });
       expect(prisma.book.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ title: "Цирцея" }),
@@ -303,36 +329,43 @@ describe("Shelf Routes", () => {
       const { prisma } = await import("../../lib/prisma.js");
       vi.mocked(prisma.bookStatus.upsert).mockResolvedValue({} as any);
 
-      const res = await request(app.server)
-        .post("/api/shelf/import")
-        .set("Authorization", "Bearer user-token")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/shelf/import",
+        headers: { authorization: "Bearer user-token" },
+        payload: {
           items: [
             { bookKey: "1", status: "read" },
             { bookKey: "curated_x", status: "read" }, // нет данных — пропускается
           ],
-        })
-        .expect(200);
+        },
+      });
 
-      expect(res.body.data).toEqual({ imported: 1 });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ imported: 1 });
       expect(prisma.bookStatus.upsert).toHaveBeenCalledTimes(1);
     });
 
     it("должен пропустить импорт при пустом списке", async () => {
-      const res = await request(app.server)
-        .post("/api/shelf/import")
-        .set("Authorization", "Bearer user-token")
-        .send({ items: [] })
-        .expect(200);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/shelf/import",
+        headers: { authorization: "Bearer user-token" },
+        payload: { items: [] },
+      });
 
-      expect(res.body.data).toEqual({ imported: 0 });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({ imported: 0 });
     });
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .post("/api/shelf/import")
-        .send({ items: [{ bookKey: "1", status: "read" }] })
-        .expect(401);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/shelf/import",
+        payload: { items: [{ bookKey: "1", status: "read" }] },
+      });
+
+      expect(res.statusCode).toBe(401);
     });
   });
 });

@@ -5,7 +5,6 @@
 //   - запрос без Origin/Referer (curl, prerender, server-to-server) → пропускается,
 //   - без cookie → штатный 401.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 
@@ -81,42 +80,48 @@ describe("POST /api/auth/refresh — Origin/Referer check (CSRF defense-in-depth
   });
 
   it("чужой Origin → 403, refresh-токен не валидируется", async () => {
-    const res = await request(app.server)
-      .post("/api/auth/refresh")
-      .set("Origin", "https://evil.example.com");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/refresh",
+      headers: { origin: "https://evil.example.com" },
+    });
 
-    expect(res.status).toBe(403);
-    expect(res.body.error.code).toBe("forbidden");
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error.code).toBe("forbidden");
     expect(mocks.tokenService.validateRefreshToken).not.toHaveBeenCalled();
   });
 
   it("чужой Referer → 403, refresh-токен не валидируется", async () => {
-    const res = await request(app.server)
-      .post("/api/auth/refresh")
-      .set("Referer", "https://evil.example.com/hack-page");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/refresh",
+      headers: { referer: "https://evil.example.com/hack-page" },
+    });
 
-    expect(res.status).toBe(403);
+    expect(res.statusCode).toBe(403);
     expect(mocks.tokenService.validateRefreshToken).not.toHaveBeenCalled();
   });
 
   it("чужой Origin срабатывает даже при наличии валидной cookie", async () => {
-    const res = await request(app.server)
-      .post("/api/auth/refresh")
-      .set("Origin", "https://evil.example.com")
-      .set("Cookie", "refreshToken=valid-token");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/refresh",
+      headers: { origin: "https://evil.example.com", cookie: "refreshToken=valid-token" },
+    });
 
-    expect(res.status).toBe(403);
+    expect(res.statusCode).toBe(403);
     expect(mocks.tokenService.validateRefreshToken).not.toHaveBeenCalled();
   });
 
   it("свой Origin + валидная cookie → 200 с новым accessToken", async () => {
-    const res = await request(app.server)
-      .post("/api/auth/refresh")
-      .set("Origin", "https://bookstrata.ru")
-      .set("Cookie", "refreshToken=valid-token");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/refresh",
+      headers: { origin: "https://bookstrata.ru", cookie: "refreshToken=valid-token" },
+    });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.accessToken).toBe("new-access-token");
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.accessToken).toBe("new-access-token");
     expect(mocks.tokenService.validateRefreshToken).toHaveBeenCalledWith("valid-token");
     expect(mocks.tokenService.generateTokenPair).toHaveBeenCalledWith({
       userId: 1,
@@ -126,29 +131,34 @@ describe("POST /api/auth/refresh — Origin/Referer check (CSRF defense-in-depth
   });
 
   it("свой Origin с траiling slash (нормализация через new URL) → 200", async () => {
-    const res = await request(app.server)
-      .post("/api/auth/refresh")
-      .set("Origin", "https://bookstrata.ru/")
-      .set("Cookie", "refreshToken=valid-token");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/refresh",
+      headers: { origin: "https://bookstrata.ru/", cookie: "refreshToken=valid-token" },
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
   });
 
   it("без Origin и Referer (server-to-server, prerender) → запрос пропускается", async () => {
-    const res = await request(app.server)
-      .post("/api/auth/refresh")
-      .set("Cookie", "refreshToken=valid-token");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/refresh",
+      headers: { cookie: "refreshToken=valid-token" },
+    });
 
-    expect(res.status).toBe(200);
+    expect(res.statusCode).toBe(200);
     expect(mocks.tokenService.validateRefreshToken).toHaveBeenCalledWith("valid-token");
   });
 
   it("свой Origin без cookie → штатный 401 (токен не найден)", async () => {
-    const res = await request(app.server)
-      .post("/api/auth/refresh")
-      .set("Origin", "https://bookstrata.ru");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/refresh",
+      headers: { origin: "https://bookstrata.ru" },
+    });
 
-    expect(res.status).toBe(401);
+    expect(res.statusCode).toBe(401);
   });
 });
 
@@ -185,20 +195,22 @@ describe("Response envelope — схемы сериализации не тер�
       refreshToken: "refresh-token-abc",
     });
 
-    const res = await request(app.server)
-      .post("/api/auth/register")
-      .send({
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/register",
+      payload: {
         username: "vlp",
         email: "vlp@studioroom.ru",
         password: "password123",
         acceptedTerms: true,
-      });
+      },
+    });
 
-    expect(res.status).toBe(201);
-    expect(res.body.data).toBeDefined();
-    expect(res.body.data.accessToken).toBe("access-token-abc");
-    expect(res.body.data.userId).toBe(58);
-    expect(res.body.data.username).toBe("vlp");
+    expect(res.statusCode).toBe(201);
+    expect(res.json().data).toBeDefined();
+    expect(res.json().data.accessToken).toBe("access-token-abc");
+    expect(res.json().data.userId).toBe(58);
+    expect(res.json().data.username).toBe("vlp");
   });
 
   it("POST /validate — 200 отдаёт data.valid/data.userId/data.username, а не пустой объект", async () => {
@@ -208,14 +220,16 @@ describe("Response envelope — схемы сериализации не тер�
       role: "user",
     });
 
-    const res = await request(app.server)
-      .post("/api/auth/validate")
-      .send({ token: "header.payload.signature" });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/auth/validate",
+      payload: { token: "header.payload.signature" },
+    });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data).toBeDefined();
-    expect(res.body.data.valid).toBe(true);
-    expect(res.body.data.userId).toBe(58);
-    expect(res.body.data.username).toBe("vlp");
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data).toBeDefined();
+    expect(res.json().data.valid).toBe(true);
+    expect(res.json().data.userId).toBe(58);
+    expect(res.json().data.username).toBe("vlp");
   });
 });

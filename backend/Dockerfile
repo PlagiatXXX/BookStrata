@@ -40,6 +40,12 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-bullseye-slim AS production
 
+# Системный шрифт с кириллицей (DejaVu) для рендеринга SVG → PNG через sharp (OG-карточки Reading DNA)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core && \
+    fc-cache -f && \
+    rm -rf /var/lib/apt/lists/*
+
 # Статический бинарник ffmpeg (автономный, без лишних 189 apt-пакетов и без сетевых 404)
 COPY --from=mwader/static-ffmpeg:6.1 /ffmpeg /usr/local/bin/ffmpeg
 

@@ -4,7 +4,6 @@
 // публикация через publishBook(), merge дублей, enrich из Google Books,
 // топ по просмотрам, модерация комментариев.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import { Prisma } from "@prisma/client";
 
@@ -175,26 +174,33 @@ describe("Admin Books Routes", () => {
 
   describe("доступ", () => {
     it("без токена → 401", async () => {
-      const res = await request(app.server).get("/api/admin/books");
-      expect(res.status).toBe(401);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books",
+      });
+      expect(res.statusCode).toBe(401);
     });
 
     it("обычный пользователь → 403", async () => {
-      const res = await request(app.server)
-        .get("/api/admin/books")
-        .set("Authorization", "Bearer user-token");
-      expect(res.status).toBe(403);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books",
+        headers: { authorization: "Bearer user-token" },
+      });
+      expect(res.statusCode).toBe(403);
     });
 
     it("admin → 200", async () => {
       mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
       mocks.prisma.book.count.mockResolvedValue(1);
-      const res = await request(app.server)
-        .get("/api/admin/books")
-        .set("Authorization", "Bearer admin-token");
-      expect(res.status).toBe(200);
-      expect(res.body.data.items).toHaveLength(1);
-      expect(res.body.data.total).toBe(1);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books",
+        headers: { authorization: "Bearer admin-token" },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.items).toHaveLength(1);
+      expect(res.json().data.total).toBe(1);
     });
   });
 
@@ -203,9 +209,11 @@ describe("Admin Books Routes", () => {
       mocks.prisma.$queryRaw.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get("/api/admin/books?q=толстой&status=published")
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: "/api/admin/books?q=толстой&status=published",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.prisma.$queryRaw).toHaveBeenCalled();
       // Первый вызов — count (raw), второй — выдача
@@ -233,9 +241,11 @@ describe("Admin Books Routes", () => {
       mocks.prisma.$queryRaw.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get(`/api/admin/books?q=${encodeURIComponent("четвёртое крыло")}`)
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: `/api/admin/books?q=${encodeURIComponent("четвёртое крыло")}`,
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.prisma.$queryRaw).toHaveBeenCalled();
       const call = mocks.prisma.$queryRaw.mock.calls[0][0] as {
@@ -274,12 +284,14 @@ describe("Admin Books Routes", () => {
         .mockResolvedValueOnce([{ count: 1 }]) // count — тоже raw (нормализация ё→е)
         .mockResolvedValueOnce([row]);
 
-      const res = await request(app.server)
-        .get("/api/admin/books?q=война")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books?q=война",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.items).toEqual([
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.items).toEqual([
         expect.objectContaining({
           id: 10,
           title: "Война и мир",
@@ -288,7 +300,7 @@ describe("Admin Books Routes", () => {
           _count: { comments: 2, placements: 3 },
         }),
       ]);
-      expect(res.body.data.total).toBe(1);
+      expect(res.json().data.total).toBe(1);
     });
 
     it("q → draft-книга с владельцем и тир-листами (единый каталог, 19.08)", async () => {
@@ -321,12 +333,14 @@ describe("Admin Books Routes", () => {
         { bookId: 10, tierList: { title: "На лето" } },
       ]);
 
-      const res = await request(app.server)
-        .get("/api/admin/books?q=моя")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books?q=моя",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.items[0]).toEqual(
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.items[0]).toEqual(
         expect.objectContaining({
           id: 10,
           ownerUsername: "reader",
@@ -339,9 +353,11 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get("/api/admin/books?duplicatesOnly=true")
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: "/api/admin/books?duplicatesOnly=true",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { mergedIntoId: { not: null } } }),
@@ -352,9 +368,11 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get("/api/admin/books?origin=tier-list")
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: "/api/admin/books?origin=tier-list",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -372,9 +390,11 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get("/api/admin/books?origin=catalog")
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: "/api/admin/books?origin=catalog",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -387,9 +407,11 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get("/api/admin/books?origin=foo")
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: "/api/admin/books?origin=foo",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: {} }),
@@ -400,9 +422,11 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get("/api/admin/books?authorId=7")
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: "/api/admin/books?authorId=7",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { authorId: 7 } }),
@@ -416,9 +440,11 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get("/api/admin/books?authorId=abc")
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: "/api/admin/books?authorId=abc",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: {} }),
@@ -429,11 +455,13 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      const res = await request(app.server)
-        .get("/api/admin/books?authorId=2.5")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books?authorId=2.5",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.prisma.book.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: {} }),
       );
@@ -454,13 +482,15 @@ describe("Admin Books Routes", () => {
         ]);
       mocks.prisma.book.count.mockResolvedValue(1);
 
-      const res = await request(app.server)
-        .get("/api/admin/books?authorId=7")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books?authorId=7",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       // Кавычки срезаются: на странице автора они добавляются CSS-псевдоэлементами
-      expect(res.body.data.items[0].pullQuote).toBe("Первая цитата");
+      expect(res.json().data.items[0].pullQuote).toBe("Первая цитата");
     });
 
     it("extractPullQuote: срезает разные парные кавычки, непарные не трогает", async () => {
@@ -504,34 +534,40 @@ describe("Admin Books Routes", () => {
         ]);
       mocks.prisma.book.count.mockResolvedValue(1);
 
-      const res = await request(app.server)
-        .get("/api/admin/books?authorId=7")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books?authorId=7",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.items[0].pullQuote).toBeNull();
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.items[0].pullQuote).toBeNull();
     });
 
     it("без authorId → pullQuote не запрашивается и не отдаётся", async () => {
       mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
       mocks.prisma.book.count.mockResolvedValue(1);
 
-      const res = await request(app.server)
-        .get("/api/admin/books")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.prisma.book.findMany).toHaveBeenCalledTimes(1);
-      expect(res.body.data.items[0].pullQuote).toBeUndefined();
+      expect(res.json().data.items[0].pullQuote).toBeUndefined();
     });
 
     it("q + authorId → фильтр и в raw-поиске (и count, и выдача)", async () => {
       mocks.prisma.$queryRaw.mockResolvedValue([]);
       mocks.prisma.book.count.mockResolvedValue(0);
 
-      await request(app.server)
-        .get("/api/admin/books?q=война&authorId=7")
-        .set("Authorization", "Bearer admin-token");
+      await app.inject({
+        method: "GET",
+        url: "/api/admin/books?q=война&authorId=7",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       const calls = mocks.prisma.$queryRaw.mock.calls;
       const countSql = (calls[0][0] as { strings: string[] }).strings.join("$");
@@ -549,12 +585,14 @@ describe("Admin Books Routes", () => {
         { url: "/books/anna-karenina-lev-tolstoj", _count: { url: 3 } },
       ]);
 
-      const res = await request(app.server)
-        .get("/api/admin/books")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.items[0].views).toBe(12);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.items[0].views).toBe(12);
       expect(mocks.prisma.analyticsEvent.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { event: "page_view", url: { contains: "/books/" } },
@@ -570,12 +608,14 @@ describe("Admin Books Routes", () => {
         .mockResolvedValueOnce(null); // slug свободен
       mocks.prisma.book.update.mockResolvedValue({ ...bookRow, slug: "anna-karenina-2" });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ slug: "anna-karenina-2" });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { slug: "anna-karenina-2" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.prisma.bookSlugHistory.create).toHaveBeenCalledWith({
         data: { oldSlug: "anna-karenina-lev-tolstoj", bookId: 10 },
       });
@@ -587,10 +627,12 @@ describe("Admin Books Routes", () => {
         .mockResolvedValueOnce(null);
       mocks.prisma.book.update.mockResolvedValue({ ...bookRow, slug: "anna-draft" });
 
-      await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ slug: "anna-draft" });
+      await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { slug: "anna-draft" },
+      });
 
       expect(mocks.prisma.bookSlugHistory.create).not.toHaveBeenCalled();
     });
@@ -600,33 +642,39 @@ describe("Admin Books Routes", () => {
         .mockResolvedValueOnce({ ...bookRow, id: 10 })
         .mockResolvedValueOnce({ id: 77, slug: "drugoj-zanyat" });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ slug: "drugoj-zanyat" });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { slug: "drugoj-zanyat" },
+      });
 
-      expect(res.status).toBe(409);
+      expect(res.statusCode).toBe(409);
     });
 
     it("невалидный slug (кириллица/пробелы) → 400", async () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ slug: "анна каренина" });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { slug: "анна каренина" },
+      });
 
-      expect(res.status).toBe(400);
+      expect(res.statusCode).toBe(400);
     });
 
     it("contextChain сохраняется как JSON", async () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
       mocks.prisma.book.update.mockResolvedValue({ ...bookRow });
 
-      await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ contextChain: [{ icon: "menu_book", title: "Экранизации", text: "Текст" }] });
+      await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { contextChain: [{ icon: "menu_book", title: "Экранизации", text: "Текст" }] },
+      });
 
       expect(mocks.prisma.book.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -651,10 +699,12 @@ describe("Admin Books Routes", () => {
         key_takeaways: ["Любовь и долг", "Цена выбора", "Суд общества"],
       };
 
-      await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ readingGuide: guide });
+      await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { readingGuide: guide },
+      });
 
       expect(mocks.prisma.book.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -667,10 +717,12 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
       mocks.prisma.book.update.mockResolvedValue({ ...bookRow });
 
-      await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ readingGuide: null });
+      await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { readingGuide: null },
+      });
 
       expect(mocks.prisma.book.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -682,10 +734,11 @@ describe("Admin Books Routes", () => {
     it("readingGuide: нестандартный reading_pace → 400, без записи в БД", async () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: {
           readingGuide: {
             short_hook: "Хук",
             target_audience: "Аудитория книги",
@@ -695,9 +748,10 @@ describe("Admin Books Routes", () => {
             vibe: "Мрачное",
             key_takeaways: ["Тезис"],
           },
-        });
+        },
+      });
 
-      expect(res.status).toBe(400);
+      expect(res.statusCode).toBe(400);
       expect(mocks.prisma.book.update).not.toHaveBeenCalled();
     });
 
@@ -705,10 +759,12 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
       mocks.prisma.book.update.mockResolvedValue({ ...bookRow, rating: 8.7 });
 
-      await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ rating: 8.7 });
+      await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { rating: 8.7 },
+      });
 
       expect(mocks.prisma.book.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -721,10 +777,12 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
       mocks.prisma.book.update.mockResolvedValue({ ...bookRow, rating: null });
 
-      await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ rating: null });
+      await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { rating: null },
+      });
 
       expect(mocks.prisma.book.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -736,12 +794,14 @@ describe("Admin Books Routes", () => {
     it("rating вне диапазона 0–10 → 400, update не вызывается", async () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ rating: 42 });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { rating: 42 },
+      });
 
-      expect(res.status).toBe(400);
+      expect(res.statusCode).toBe(400);
       expect(mocks.prisma.book.update).not.toHaveBeenCalled();
     });
 
@@ -751,13 +811,15 @@ describe("Admin Books Routes", () => {
         "Картинка слишком маленькая (182×277). Минимум 390×590",
       );
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ coverImageUrl: "https://example.com/small.jpg" });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { coverImageUrl: "https://example.com/small.jpg" },
+      });
 
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain("Картинка слишком маленькая");
+      expect(res.statusCode).toBe(400);
+      expect(res.json().message).toContain("Картинка слишком маленькая");
       expect(mocks.prisma.book.update).not.toHaveBeenCalled();
     });
 
@@ -765,12 +827,14 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
       mocks.prisma.book.update.mockResolvedValue({ ...bookRow, coverImageUrl: "" });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ coverImageUrl: "" });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { coverImageUrl: "" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.validateRemoteImageDimensions).toHaveBeenCalledWith("");
     });
 
@@ -778,12 +842,14 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
       mocks.prisma.book.update.mockResolvedValue({ ...bookRow });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ title: "Новое название", coverImageUrl: "/cover.jpg" });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { title: "Новое название", coverImageUrl: "/cover.jpg" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.validateRemoteImageDimensions).not.toHaveBeenCalled();
       // Обложка не менялась — старый файл не чистим
       expect(mocks.deleteIfOrphaned).not.toHaveBeenCalled();
@@ -796,12 +862,14 @@ describe("Admin Books Routes", () => {
         coverImageUrl: "/new-cover.jpg",
       });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ coverImageUrl: "/new-cover.jpg" });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { coverImageUrl: "/new-cover.jpg" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.deleteIfOrphaned).toHaveBeenCalledWith("/cover.jpg");
     });
 
@@ -815,12 +883,14 @@ describe("Admin Books Routes", () => {
         animatedCoverUrl: null,
       });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/10")
-        .set("Authorization", "Bearer admin-token")
-        .send({ animatedCoverUrl: null });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/10",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { animatedCoverUrl: null },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.deleteIfOrphaned).toHaveBeenCalledWith("/old-video.mp4");
     });
   });
@@ -851,12 +921,14 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValueOnce([]); // дублей нет
       mocks.prisma.book.update.mockResolvedValueOnce({ id: 10 });
 
-      const res = await request(app.server)
-        .post("/api/admin/books/10/publish")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/10/publish",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
       expect(mocks.publishBook).toHaveBeenCalledWith(10);
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
     });
 
     it("неполная книга → 422 ДО мутаций: владелец и дубли не тронуты", async () => {
@@ -869,12 +941,14 @@ describe("Admin Books Routes", () => {
         userId: 5, // владелец тир-листа
       });
 
-      const res = await request(app.server)
-        .post("/api/admin/books/10/publish")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/10/publish",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(422);
-      expect(res.body.error.message).toContain("publishedYear");
+      expect(res.statusCode).toBe(422);
+      expect(res.json().error.message).toContain("publishedYear");
       // Никаких мутаций: дубли не искались, userId не снимался, publishBook не вызван
       expect(mocks.prisma.book.findMany).not.toHaveBeenCalled();
       expect(mocks.prisma.book.update).not.toHaveBeenCalled();
@@ -891,11 +965,13 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findMany.mockResolvedValueOnce([]); // дублей нет
       mocks.prisma.book.update.mockResolvedValueOnce({ id: 10, userId: null });
 
-      const res = await request(app.server)
-        .post("/api/admin/books/10/publish")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/10/publish",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       // Книга становится общей (каталоговой)
       expect(mocks.prisma.book.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ userId: null }) }),
@@ -946,11 +1022,13 @@ describe("Admin Books Routes", () => {
       // Возврат: findUniqueOrThrow каталогового канона
       mocks.prisma.book.findUniqueOrThrow.mockResolvedValueOnce({ id: 30, status: "published" });
 
-      const res = await request(app.server)
-        .post("/api/admin/books/10/publish")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/10/publish",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       // Вливание в каталоговый канон #30, а не публикация новой книги
       expect(mocks.mergeGroup).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1007,11 +1085,13 @@ describe("Admin Books Routes", () => {
         });
       mocks.prisma.book.update.mockResolvedValueOnce({ id: 10, userId: null });
 
-      const res = await request(app.server)
-        .post("/api/admin/books/10/publish")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/10/publish",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.mergeGroup).toHaveBeenCalledWith(
         expect.objectContaining({
           books: expect.arrayContaining([
@@ -1030,11 +1110,13 @@ describe("Admin Books Routes", () => {
     it("книга не найдена → 404", async () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce(null);
 
-      const res = await request(app.server)
-        .post("/api/admin/books/999/publish")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/999/publish",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(404);
+      expect(res.statusCode).toBe(404);
       expect(mocks.publishBook).not.toHaveBeenCalled();
     });
   });
@@ -1059,12 +1141,14 @@ describe("Admin Books Routes", () => {
       mocks.mergeGroup.mockResolvedValue(undefined);
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
 
-      const res = await request(app.server)
-        .post("/api/admin/books/20/merge")
-        .set("Authorization", "Bearer admin-token")
-        .send({ targetId: 10 });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/20/merge",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { targetId: 10 },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.mergeGroup).toHaveBeenCalledWith(
         expect.objectContaining({ key: "manual:20->10", books: expect.any(Array) }),
         { forceCanonId: 10 },
@@ -1076,12 +1160,14 @@ describe("Admin Books Routes", () => {
         .mockResolvedValueOnce({ ...bookRow, id: 20, status: "published" }) // дубль
         .mockResolvedValueOnce({ ...bookRow, id: 10, status: "draft" }); // канон
 
-      const res = await request(app.server)
-        .post("/api/admin/books/20/merge")
-        .set("Authorization", "Bearer admin-token")
-        .send({ targetId: 10 });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/20/merge",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { targetId: 10 },
+      });
 
-      expect(res.status).toBe(409);
+      expect(res.statusCode).toBe(409);
       expect(mocks.mergeGroup).not.toHaveBeenCalled();
     });
 
@@ -1105,12 +1191,14 @@ describe("Admin Books Routes", () => {
       mocks.mergeGroup.mockResolvedValue(undefined);
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ ...bookRow, id: 10 });
 
-      const res = await request(app.server)
-        .post("/api/admin/books/20/merge")
-        .set("Authorization", "Bearer admin-token")
-        .send({ targetId: 10 });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/20/merge",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { targetId: 10 },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.mergeGroup).toHaveBeenCalled();
     });
 
@@ -1119,12 +1207,14 @@ describe("Admin Books Routes", () => {
         .mockResolvedValueOnce({ ...bookRow, id: 20, mergedIntoId: 10 })
         .mockResolvedValueOnce({ ...bookRow, id: 10 });
 
-      const res = await request(app.server)
-        .post("/api/admin/books/20/merge")
-        .set("Authorization", "Bearer admin-token")
-        .send({ targetId: 10 });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/20/merge",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { targetId: 10 },
+      });
 
-      expect(res.status).toBe(409);
+      expect(res.statusCode).toBe(409);
     });
   });
 
@@ -1153,11 +1243,13 @@ describe("Admin Books Routes", () => {
       ]);
       mocks.prisma.book.update.mockResolvedValue({});
 
-      const res = await request(app.server)
-        .post("/api/admin/books/10/enrich")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/10/enrich",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.findOrCreate).toHaveBeenCalledWith("Leo Tolstoy");
       expect(mocks.prisma.book.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1175,11 +1267,13 @@ describe("Admin Books Routes", () => {
       mocks.prisma.book.findUnique.mockResolvedValueOnce({ id: 10, title: "X", author: null, coverImageUrl: "", publishedYear: null, genre: null });
       mocks.searchBooks.mockResolvedValue([]);
 
-      const res = await request(app.server)
-        .post("/api/admin/books/10/enrich")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books/10/enrich",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(404);
+      expect(res.statusCode).toBe(404);
     });
   });
 
@@ -1190,12 +1284,14 @@ describe("Admin Books Routes", () => {
       ]);
       mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
 
-      const res = await request(app.server)
-        .get("/api/admin/books/top-views")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books/top-views",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.items[0].views).toBe(42);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.items[0].views).toBe(42);
       expect(mocks.prisma.analyticsEvent.groupBy).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { event: "page_view", url: { contains: "/books/" } },
@@ -1209,12 +1305,14 @@ describe("Admin Books Routes", () => {
       ]);
       mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
 
-      const res = await request(app.server)
-        .get("/api/admin/books/top-views")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books/top-views",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.items[0].views).toBe(7);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.items[0].views).toBe(7);
     });
 
     it("сливает href и путь одной книги в одну строку топа", async () => {
@@ -1224,13 +1322,15 @@ describe("Admin Books Routes", () => {
       ]);
       mocks.prisma.book.findMany.mockResolvedValue([bookRow]);
 
-      const res = await request(app.server)
-        .get("/api/admin/books/top-views")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books/top-views",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
-      expect(res.body.data.items).toHaveLength(1);
-      expect(res.body.data.items[0].views).toBe(16);
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data.items).toHaveLength(1);
+      expect(res.json().data.items[0].views).toBe(16);
     });
   });
 
@@ -1246,16 +1346,18 @@ describe("Admin Books Routes", () => {
         coverImageUrl: "/images/books/default-cover.jpg",
       });
 
-      const res = await request(app.server)
-        .post("/api/admin/books")
-        .set("Authorization", "Bearer admin-token")
-        .send({});
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books",
+        headers: { authorization: "Bearer admin-token" },
+        payload: {},
+      });
 
-      expect(res.status).toBe(201);
-      expect(res.body.data.title).toBe("Новая книга");
-      expect(res.body.data.status).toBe("draft");
-      expect(res.body.data.coverImageUrl).toBe("/images/books/default-cover.jpg");
-      expect(res.body.data.slug).toBeTruthy();
+      expect(res.statusCode).toBe(201);
+      expect(res.json().data.title).toBe("Новая книга");
+      expect(res.json().data.status).toBe("draft");
+      expect(res.json().data.coverImageUrl).toBe("/images/books/default-cover.jpg");
+      expect(res.json().data.slug).toBeTruthy();
       expect(mocks.prisma.book.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           title: "Новая книга",
@@ -1276,13 +1378,15 @@ describe("Admin Books Routes", () => {
         coverImageUrl: "/images/books/default-cover.jpg",
       });
 
-      const res = await request(app.server)
-        .post("/api/admin/books")
-        .set("Authorization", "Bearer admin-token")
-        .send({ title: "Война и мир" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { title: "Война и мир" },
+      });
 
-      expect(res.status).toBe(201);
-      expect(res.body.data.title).toBe("Война и мир");
+      expect(res.statusCode).toBe(201);
+      expect(res.json().data.title).toBe("Война и мир");
       expect(mocks.prisma.book.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ title: "Война и мир" }),
       });
@@ -1299,29 +1403,37 @@ describe("Admin Books Routes", () => {
         coverImageUrl: "https://example.com/cover.jpg",
       });
 
-      const res = await request(app.server)
-        .post("/api/admin/books")
-        .set("Authorization", "Bearer admin-token")
-        .send({ coverImageUrl: "https://example.com/cover.jpg" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { coverImageUrl: "https://example.com/cover.jpg" },
+      });
 
-      expect(res.status).toBe(201);
-      expect(res.body.data.coverImageUrl).toBe("https://example.com/cover.jpg");
+      expect(res.statusCode).toBe(201);
+      expect(res.json().data.coverImageUrl).toBe("https://example.com/cover.jpg");
       expect(mocks.prisma.book.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ coverImageUrl: "https://example.com/cover.jpg" }),
       });
     });
 
     it("без токена → 401", async () => {
-      const res = await request(app.server).post("/api/admin/books").send({});
-      expect(res.status).toBe(401);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books",
+        payload: {},
+      });
+      expect(res.statusCode).toBe(401);
     });
 
     it("обычный пользователь → 403", async () => {
-      const res = await request(app.server)
-        .post("/api/admin/books")
-        .set("Authorization", "Bearer user-token")
-        .send({});
-      expect(res.status).toBe(403);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/admin/books",
+        headers: { authorization: "Bearer user-token" },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(403);
     });
   });
 
@@ -1330,11 +1442,13 @@ describe("Admin Books Routes", () => {
       mocks.prisma.bookComment.findMany.mockResolvedValue([]);
       mocks.prisma.bookComment.count.mockResolvedValue(0);
 
-      const res = await request(app.server)
-        .get("/api/admin/books/comments?bookId=10")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/books/comments?bookId=10",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.prisma.bookComment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { bookId: 10 } }),
       );
@@ -1343,12 +1457,14 @@ describe("Admin Books Routes", () => {
     it("PATCH /comments/:id — правка контента (max 2000)", async () => {
       mocks.prisma.bookComment.update.mockResolvedValue({ id: 5, content: "новый текст" });
 
-      const res = await request(app.server)
-        .patch("/api/admin/books/comments/5")
-        .set("Authorization", "Bearer admin-token")
-        .send({ content: "новый текст" });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/comments/5",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { content: "новый текст" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.prisma.bookComment.update).toHaveBeenCalledWith({
         where: { id: 5 },
         data: { content: "новый текст", editedAt: expect.any(Date) },
@@ -1356,22 +1472,26 @@ describe("Admin Books Routes", () => {
     });
 
     it("пустой контент → 400", async () => {
-      const res = await request(app.server)
-        .patch("/api/admin/books/comments/5")
-        .set("Authorization", "Bearer admin-token")
-        .send({ content: "   " });
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/admin/books/comments/5",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { content: "   " },
+      });
 
-      expect(res.status).toBe(400);
+      expect(res.statusCode).toBe(400);
     });
 
     it("DELETE /comments/:id", async () => {
       mocks.prisma.bookComment.delete.mockResolvedValue({ id: 5 });
 
-      const res = await request(app.server)
-        .delete("/api/admin/books/comments/5")
-        .set("Authorization", "Bearer admin-token");
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/admin/books/comments/5",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.status).toBe(200);
+      expect(res.statusCode).toBe(200);
       expect(mocks.prisma.bookComment.delete).toHaveBeenCalledWith({ where: { id: 5 } });
     });
   });

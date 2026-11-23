@@ -94,22 +94,18 @@ export function AiLibrarianProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const sendMessage = useCallback(
-    async (content: string, context?: AiLibrarianPageContext) => {
-      if (!content.trim() || isStreaming || status !== 'online') return
-
+  const streamChatSession = useCallback(
+    async (
+      currentSessionKey: string,
+      messagesToStream: ChatMessage[],
+      context?: AiLibrarianPageContext,
+    ) => {
       setError(null)
 
       abortRef.current?.abort()
       abortRef.current = new AbortController()
       const timeoutId = setTimeout(() => abortRef.current?.abort(), 65_000)
 
-      const userMessage: ChatMessage = { role: 'user', content: content.trim() }
-
-      // Фиксируем ключ сессии на момент отправки
-      const currentSessionKey = activeSessionKey
-
-      updateSessionMessages(currentSessionKey, (prev) => [...prev, userMessage])
       setIsStreaming(true)
       setStreamingContent('')
 
@@ -144,7 +140,7 @@ export function AiLibrarianProvider({ children }: { children: ReactNode }) {
       }
 
       // Отправляем последние 20 сообщений; assistant-ответы подрезаем до 8000 символов
-      const sessionMessages = (sessionsRef.current[currentSessionKey] ?? [])
+      const formatted = messagesToStream
         .slice(-20)
         .map((m) =>
           m.role === 'assistant' && m.content.length > 8000
@@ -154,7 +150,7 @@ export function AiLibrarianProvider({ children }: { children: ReactNode }) {
 
       try {
         await streamAiChat(
-          [...sessionMessages, userMessage],
+          formatted,
           handleEvent,
           abortRef.current.signal,
           context,
@@ -179,8 +175,56 @@ export function AiLibrarianProvider({ children }: { children: ReactNode }) {
         clearTimeout(timeoutId)
       }
     },
-    [activeSessionKey, isStreaming, status, updateSessionMessages],
+    [updateSessionMessages],
   )
+
+  const sendMessage = useCallback(
+    async (content: string, context?: AiLibrarianPageContext) => {
+      if (!content.trim() || isStreaming || status !== 'online') return
+
+      const userMessage: ChatMessage = { role: 'user', content: content.trim() }
+      const currentSessionKey = activeSessionKey
+
+      updateSessionMessages(currentSessionKey, (prev) => [...prev, userMessage])
+      const previousMessages = sessionsRef.current[currentSessionKey] ?? []
+
+      await streamChatSession(
+        currentSessionKey,
+        [...previousMessages, userMessage],
+        context,
+      )
+    },
+    [activeSessionKey, isStreaming, status, streamChatSession, updateSessionMessages],
+  )
+
+  const retryLastMessage = useCallback(
+    async (context?: AiLibrarianPageContext) => {
+      if (isStreaming || status !== 'online') return
+      const currentSessionKey = activeSessionKey
+      const currentMessages = sessionsRef.current[currentSessionKey] ?? []
+      if (currentMessages.length === 0) return
+
+      const lastMessage = currentMessages[currentMessages.length - 1]
+      if (lastMessage?.role !== 'user') return
+
+      await streamChatSession(currentSessionKey, currentMessages, context)
+    },
+    [activeSessionKey, isStreaming, status, streamChatSession],
+  )
+
+  const editLastMessage = useCallback(() => {
+    const currentSessionKey = activeSessionKey
+    const currentMessages = sessionsRef.current[currentSessionKey] ?? []
+    if (currentMessages.length === 0) return null
+
+    const lastMessage = currentMessages[currentMessages.length - 1]
+    if (lastMessage?.role !== 'user') return null
+
+    updateSessionMessages(currentSessionKey, (prev) => prev.slice(0, -1))
+    setError(null)
+    setStreamingContent('')
+    return lastMessage.content
+  }, [activeSessionKey, updateSessionMessages])
 
   const clearMessages = useCallback(() => {
     setSessions((prev) => ({ ...prev, [activeSessionKey]: [] }))
@@ -199,6 +243,8 @@ export function AiLibrarianProvider({ children }: { children: ReactNode }) {
         error,
         status,
         sendMessage,
+        retryLastMessage,
+        editLastMessage,
         clearMessages,
         refreshStatus,
         switchSession,

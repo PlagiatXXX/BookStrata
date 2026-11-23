@@ -46,13 +46,40 @@ describe("DnaStepFlow", () => {
     expect(screen.getByText(/Сколько усилий вы готовы вложить\?/i)).toBeInTheDocument();
   });
 
-  it("на 7-м шаге отображает ввод книг с автокомплитом и кнопку «Запечатать билет»", async () => {
-    renderWithClient(<DnaStepFlow onComplete={vi.fn()} theme="light" initialStep={6} />);
+  it("на 7-м шаге отображает ввод книг с автокомплитом, поле имени и кнопку «Запечатать билет»", async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    const onNameChange = vi.fn();
+
+    renderWithClient(
+      <DnaStepFlow
+        onComplete={onComplete}
+        onNameChange={onNameChange}
+        theme="light"
+        initialStep={6}
+        initialBooks={[
+          { title: "Мастер и Маргарита" },
+          { title: "1984" },
+          { title: "Дюна" },
+        ]}
+      />
+    );
 
     expect(screen.getByText(/Печать: ваши книги/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Название книги/i)).toBeInTheDocument();
 
+    const nameInput = screen.getByLabelText(/Ваше имя или ник на билете/i);
+    await user.type(nameInput, "Саша");
+    expect(onNameChange).toHaveBeenLastCalledWith("Саша");
+
     const sealBtn = screen.getByRole("button", { name: /Запечатать билет/i });
-    expect(sealBtn).toBeInTheDocument();
+    expect(sealBtn).toBeEnabled();
+    await user.click(sealBtn);
+
+    expect(onComplete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customName: "Саша",
+      })
+    );
   });
 });

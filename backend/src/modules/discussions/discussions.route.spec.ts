@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import request from "supertest"
 import Fastify from "fastify"
 
 vi.mock("./discussions.service.js", () => ({
@@ -95,17 +94,19 @@ describe("Discussions Routes", () => {
     it("должен вернуть список топиков", async () => {
       vi.mocked(mockService.getTopics).mockResolvedValue([mockTopic])
 
-      const res = await request(app.server).get("/api/discussions/topics").expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/topics" })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body).toEqual({ data: [mockTopic] })
+      expect(res.json()).toEqual({ data: [mockTopic] })
     })
 
     it("не требует авторизации", async () => {
       vi.mocked(mockService.getTopics).mockResolvedValue([])
 
-      const res = await request(app.server).get("/api/discussions/topics").expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/topics" })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.data).toEqual([])
+      expect(res.json().data).toEqual([])
     })
   })
 
@@ -113,31 +114,37 @@ describe("Discussions Routes", () => {
     it("должен создать топик (авторизован)", async () => {
       vi.mocked(mockService.createTopic).mockResolvedValue(mockTopic)
 
-      const res = await request(app.server)
-        .post("/api/discussions/topics")
-        .set("Authorization", "Bearer user-token")
-        .send({ title: "New Topic" })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions/topics",
+        headers: { authorization: "Bearer user-token" },
+        payload: { title: "New Topic" },
+      })
+      expect(res.statusCode).toBe(201)
 
-      expect(res.body).toEqual({ data: mockTopic })
+      expect(res.json()).toEqual({ data: mockTopic })
       expect(mockService.createTopic).toHaveBeenCalledWith("New Topic", 2)
     })
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .post("/api/discussions/topics")
-        .send({ title: "New Topic" })
-        .expect(401)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions/topics",
+        payload: { title: "New Topic" },
+      })
+      expect(res.statusCode).toBe(401)
     })
 
     it("должен вернуть 400 если title пустой", async () => {
-      const res = await request(app.server)
-        .post("/api/discussions/topics")
-        .set("Authorization", "Bearer user-token")
-        .send({ title: "" })
-        .expect(400)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions/topics",
+        headers: { authorization: "Bearer user-token" },
+        payload: { title: "" },
+      })
+      expect(res.statusCode).toBe(400)
 
-      expect(res.body.error.code).toBe("validation_error")
+      expect(res.json().error.code).toBe("validation_error")
     })
   })
 
@@ -149,12 +156,14 @@ describe("Discussions Routes", () => {
         pinnedAt: new Date().toISOString(),
       })
 
-      const res = await request(app.server)
-        .patch("/api/discussions/topics/t-1/pin")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/discussions/topics/t-1/pin",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.data.pinned).toBe(true)
+      expect(res.json().data.pinned).toBe(true)
     })
 
     it("должен открепить топик (админ)", async () => {
@@ -164,32 +173,38 @@ describe("Discussions Routes", () => {
         pinnedAt: null,
       })
 
-      const res = await request(app.server)
-        .patch("/api/discussions/topics/t-1/pin")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/discussions/topics/t-1/pin",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.data.pinned).toBe(false)
+      expect(res.json().data.pinned).toBe(false)
     })
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      const res = await request(app.server)
-        .patch("/api/discussions/topics/t-1/pin")
-        .set("Authorization", "Bearer user-token")
-        .expect(403)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/discussions/topics/t-1/pin",
+        headers: { authorization: "Bearer user-token" },
+      })
+      expect(res.statusCode).toBe(403)
 
-      expect(res.body.error.code).toBe("forbidden")
+      expect(res.json().error.code).toBe("forbidden")
     })
 
     it("должен вернуть 404 если топик не найден", async () => {
       vi.mocked(mockService.pinTopic).mockRejectedValue(new Error("Topic not found"))
 
-      const res = await request(app.server)
-        .patch("/api/discussions/topics/not-found/pin")
-        .set("Authorization", "Bearer admin-token")
-        .expect(404)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/discussions/topics/not-found/pin",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(res.statusCode).toBe(404)
 
-      expect(res.body.error.code).toBe("not_found")
+      expect(res.json().error.code).toBe("not_found")
     })
   })
 
@@ -197,39 +212,47 @@ describe("Discussions Routes", () => {
     it("должен удалить топик (админ)", async () => {
       vi.mocked(mockService.deleteTopic).mockResolvedValue(undefined)
 
-      await request(app.server)
-        .delete("/api/discussions/topics/t-1")
-        .set("Authorization", "Bearer admin-token")
-        .expect(204)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/discussions/topics/t-1",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(res.statusCode).toBe(204)
     })
 
     it("должен удалить топик (модератор)", async () => {
       vi.mocked(mockService.deleteTopic).mockResolvedValue(undefined)
 
-      await request(app.server)
-        .delete("/api/discussions/topics/t-1")
-        .set("Authorization", "Bearer mod-token")
-        .expect(204)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/discussions/topics/t-1",
+        headers: { authorization: "Bearer mod-token" },
+      })
+      expect(res.statusCode).toBe(204)
     })
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      const res = await request(app.server)
-        .delete("/api/discussions/topics/t-1")
-        .set("Authorization", "Bearer user-token")
-        .expect(403)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/discussions/topics/t-1",
+        headers: { authorization: "Bearer user-token" },
+      })
+      expect(res.statusCode).toBe(403)
 
-      expect(res.body.error.code).toBe("forbidden")
+      expect(res.json().error.code).toBe("forbidden")
     })
 
     it("должен вернуть 404 если топик не найден", async () => {
       vi.mocked(mockService.deleteTopic).mockRejectedValue(new Error("Topic not found"))
 
-      const res = await request(app.server)
-        .delete("/api/discussions/topics/not-found")
-        .set("Authorization", "Bearer admin-token")
-        .expect(404)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/discussions/topics/not-found",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(res.statusCode).toBe(404)
 
-      expect(res.body.error.code).toBe("not_found")
+      expect(res.json().error.code).toBe("not_found")
     })
   })
 
@@ -240,16 +263,19 @@ describe("Discussions Routes", () => {
         type: "general",
       })
 
-      const res = await request(app.server)
-        .get("/api/discussions/general")
-        .set("Authorization", "Bearer user-token")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/discussions/general",
+        headers: { authorization: "Bearer user-token" },
+      })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.data.type).toBe("general")
+      expect(res.json().data.type).toBe("general")
     })
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server).get("/api/discussions/general").expect(401)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/general" })
+      expect(res.statusCode).toBe(401)
     })
   })
 
@@ -257,27 +283,26 @@ describe("Discussions Routes", () => {
     it("должен вернуть обсуждение для битвы", async () => {
       vi.mocked(mockService.getDiscussionByBattle).mockResolvedValue(mockDiscussion)
 
-      const res = await request(app.server)
-        .get("/api/discussions/battle/b-1")
-        .expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/battle/b-1" })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.data).toEqual(mockDiscussion)
+      expect(res.json().data).toEqual(mockDiscussion)
     })
 
     it("должен вернуть 404 если обсуждения нет", async () => {
       vi.mocked(mockService.getDiscussionByBattle).mockResolvedValue(null)
 
-      const res = await request(app.server)
-        .get("/api/discussions/battle/unknown")
-        .expect(404)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/battle/unknown" })
+      expect(res.statusCode).toBe(404)
 
-      expect(res.body.error.code).toBe("not_found")
+      expect(res.json().error.code).toBe("not_found")
     })
 
     it("не требует авторизации", async () => {
       vi.mocked(mockService.getDiscussionByBattle).mockResolvedValue(mockDiscussion)
 
-      await request(app.server).get("/api/discussions/battle/b-1").expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/battle/b-1" })
+      expect(res.statusCode).toBe(200)
     })
   })
 
@@ -285,27 +310,26 @@ describe("Discussions Routes", () => {
     it("должен вернуть обсуждение по ID", async () => {
       vi.mocked(mockService.getDiscussionById).mockResolvedValue(mockDiscussion)
 
-      const res = await request(app.server)
-        .get("/api/discussions/d-1")
-        .expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/d-1" })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.data.id).toBe("d-1")
+      expect(res.json().data.id).toBe("d-1")
     })
 
     it("должен вернуть 404 если не найдено", async () => {
       vi.mocked(mockService.getDiscussionById).mockResolvedValue(null)
 
-      const res = await request(app.server)
-        .get("/api/discussions/not-found")
-        .expect(404)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/not-found" })
+      expect(res.statusCode).toBe(404)
 
-      expect(res.body.error.code).toBe("not_found")
+      expect(res.json().error.code).toBe("not_found")
     })
 
     it("не требует авторизации", async () => {
       vi.mocked(mockService.getDiscussionById).mockResolvedValue(mockDiscussion)
 
-      await request(app.server).get("/api/discussions/d-1").expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/d-1" })
+      expect(res.statusCode).toBe(200)
     })
   })
 
@@ -313,13 +337,15 @@ describe("Discussions Routes", () => {
     it("должен создать обсуждение с battleId", async () => {
       vi.mocked(mockService.createDiscussion).mockResolvedValue(mockDiscussion)
 
-      const res = await request(app.server)
-        .post("/api/discussions")
-        .set("Authorization", "Bearer user-token")
-        .send({ battleId: "b-1" })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions",
+        headers: { authorization: "Bearer user-token" },
+        payload: { battleId: "b-1" },
+      })
+      expect(res.statusCode).toBe(201)
 
-      expect(res.body.data).toEqual(mockDiscussion)
+      expect(res.json().data).toEqual(mockDiscussion)
     })
 
     it("должен создать обсуждение с заголовком", async () => {
@@ -328,20 +354,24 @@ describe("Discussions Routes", () => {
         title: "Comments",
       })
 
-      await request(app.server)
-        .post("/api/discussions")
-        .set("Authorization", "Bearer user-token")
-        .send({ battleId: "b-1", title: "Comments" })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions",
+        headers: { authorization: "Bearer user-token" },
+        payload: { battleId: "b-1", title: "Comments" },
+      })
+      expect(res.statusCode).toBe(201)
 
       expect(mockService.createDiscussion).toHaveBeenCalledWith("b-1", "Comments")
     })
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .post("/api/discussions")
-        .send({ battleId: "b-1" })
-        .expect(401)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions",
+        payload: { battleId: "b-1" },
+      })
+      expect(res.statusCode).toBe(401)
     })
   })
 
@@ -352,13 +382,12 @@ describe("Discussions Routes", () => {
         total: 1,
       })
 
-      const res = await request(app.server)
-        .get("/api/discussions/d-1/messages")
-        .expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/d-1/messages" })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.data).toEqual([mockMessage])
-      expect(res.body.meta.currentPage).toBe(1)
-      expect(res.body.links.self).toContain("/api/discussions/d-1/messages")
+      expect(res.json().data).toEqual([mockMessage])
+      expect(res.json().meta.currentPage).toBe(1)
+      expect(res.json().links.self).toContain("/api/discussions/d-1/messages")
     })
 
     it("должен поддерживать пагинацию", async () => {
@@ -371,13 +400,12 @@ describe("Discussions Routes", () => {
         total: 150,
       })
 
-      const res = await request(app.server)
-        .get("/api/discussions/d-1/messages?page=2&limit=50")
-        .expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/d-1/messages?page=2&limit=50" })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.meta.currentPage).toBe("2")
-      expect(res.body.links.next).toBeDefined()
-      expect(res.body.links.prev).toBeDefined()
+      expect(res.json().meta.currentPage).toBe("2")
+      expect(res.json().links.next).toBeDefined()
+      expect(res.json().links.prev).toBeDefined()
     })
 
     it("не требует авторизации", async () => {
@@ -386,7 +414,8 @@ describe("Discussions Routes", () => {
         total: 0,
       })
 
-      await request(app.server).get("/api/discussions/d-1/messages").expect(200)
+      const res = await app.inject({ method: "GET", url: "/api/discussions/d-1/messages" })
+      expect(res.statusCode).toBe(200)
     })
   })
 
@@ -394,13 +423,15 @@ describe("Discussions Routes", () => {
     it("должен создать сообщение", async () => {
       vi.mocked(mockService.createMessage).mockResolvedValue(mockMessage)
 
-      const res = await request(app.server)
-        .post("/api/discussions/d-1/messages")
-        .set("Authorization", "Bearer user-token")
-        .send({ content: "Hello" })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions/d-1/messages",
+        headers: { authorization: "Bearer user-token" },
+        payload: { content: "Hello" },
+      })
+      expect(res.statusCode).toBe(201)
 
-      expect(res.body.data).toEqual(mockMessage)
+      expect(res.json().data).toEqual(mockMessage)
     })
 
     it("должен создать ответ с parentId", async () => {
@@ -409,20 +440,24 @@ describe("Discussions Routes", () => {
         parentId: "parent-1",
       })
 
-      await request(app.server)
-        .post("/api/discussions/d-1/messages")
-        .set("Authorization", "Bearer user-token")
-        .send({ content: "Reply", parentId: "parent-1" })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions/d-1/messages",
+        headers: { authorization: "Bearer user-token" },
+        payload: { content: "Reply", parentId: "parent-1" },
+      })
+      expect(res.statusCode).toBe(201)
 
       expect(mockService.createMessage).toHaveBeenCalledWith("d-1", 2, "Reply", "parent-1")
     })
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .post("/api/discussions/d-1/messages")
-        .send({ content: "Hello" })
-        .expect(401)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/discussions/d-1/messages",
+        payload: { content: "Hello" },
+      })
+      expect(res.statusCode).toBe(401)
     })
   })
 
@@ -433,25 +468,29 @@ describe("Discussions Routes", () => {
         content: "Edited",
       })
 
-      const res = await request(app.server)
-        .patch("/api/discussions/d-1/messages/msg-1")
-        .set("Authorization", "Bearer user-token")
-        .send({ content: "Edited" })
-        .expect(200)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/discussions/d-1/messages/msg-1",
+        headers: { authorization: "Bearer user-token" },
+        payload: { content: "Edited" },
+      })
+      expect(res.statusCode).toBe(200)
 
-      expect(res.body.data.content).toBe("Edited")
+      expect(res.json().data.content).toBe("Edited")
     })
 
     it("должен вернуть 404 если сообщение не найдено", async () => {
       vi.mocked(mockService.updateMessage).mockRejectedValue(new Error("Message not found"))
 
-      const res = await request(app.server)
-        .patch("/api/discussions/d-1/messages/not-found")
-        .set("Authorization", "Bearer user-token")
-        .send({ content: "Edited" })
-        .expect(404)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/discussions/d-1/messages/not-found",
+        headers: { authorization: "Bearer user-token" },
+        payload: { content: "Edited" },
+      })
+      expect(res.statusCode).toBe(404)
 
-      expect(res.body.error.code).toBe("not_found")
+      expect(res.json().error.code).toBe("not_found")
     })
 
     it("должен вернуть 403 при попытке редактировать чужое", async () => {
@@ -459,13 +498,15 @@ describe("Discussions Routes", () => {
         new Error("You can only edit your own messages"),
       )
 
-      const res = await request(app.server)
-        .patch("/api/discussions/d-1/messages/msg-1")
-        .set("Authorization", "Bearer user-token")
-        .send({ content: "Edited" })
-        .expect(403)
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/discussions/d-1/messages/msg-1",
+        headers: { authorization: "Bearer user-token" },
+        payload: { content: "Edited" },
+      })
+      expect(res.statusCode).toBe(403)
 
-      expect(res.body.error.code).toBe("forbidden")
+      expect(res.json().error.code).toBe("forbidden")
     })
   })
 
@@ -473,10 +514,12 @@ describe("Discussions Routes", () => {
     it("должен удалить сообщение (админ)", async () => {
       vi.mocked(mockService.deleteMessage).mockResolvedValue(undefined)
 
-      await request(app.server)
-        .delete("/api/discussions/d-1/messages/msg-1")
-        .set("Authorization", "Bearer admin-token")
-        .expect(204)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/discussions/d-1/messages/msg-1",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(res.statusCode).toBe(204)
     })
 
     it("должен вернуть 403 для обычного пользователя", async () => {
@@ -484,23 +527,27 @@ describe("Discussions Routes", () => {
         new Error("Only admins and moderators can delete messages"),
       )
 
-      const res = await request(app.server)
-        .delete("/api/discussions/d-1/messages/msg-1")
-        .set("Authorization", "Bearer user-token")
-        .expect(403)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/discussions/d-1/messages/msg-1",
+        headers: { authorization: "Bearer user-token" },
+      })
+      expect(res.statusCode).toBe(403)
 
-      expect(res.body.error.code).toBe("forbidden")
+      expect(res.json().error.code).toBe("forbidden")
     })
 
     it("должен вернуть 404 если сообщение не найдено", async () => {
       vi.mocked(mockService.deleteMessage).mockRejectedValue(new Error("Message not found"))
 
-      const res = await request(app.server)
-        .delete("/api/discussions/d-1/messages/not-found")
-        .set("Authorization", "Bearer admin-token")
-        .expect(404)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/discussions/d-1/messages/not-found",
+        headers: { authorization: "Bearer admin-token" },
+      })
+      expect(res.statusCode).toBe(404)
 
-      expect(res.body.error.code).toBe("not_found")
+      expect(res.json().error.code).toBe("not_found")
     })
   })
 })

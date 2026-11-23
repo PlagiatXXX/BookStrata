@@ -1,7 +1,29 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { DuelSection } from "./DuelSection";
 import type { ReadingDnaResponseData, ReadingDnaDuelResultData } from "@/lib/readingDnaApi";
+import * as readingDnaApi from "@/lib/readingDnaApi";
+
+const { mockToPng } = vi.hoisted(() => ({
+  mockToPng: vi.fn().mockResolvedValue("data:image/png;base64,fake"),
+}));
+
+vi.mock("html-to-image", () => ({
+  toPng: mockToPng,
+}));
+
+vi.mock("sileo", () => ({
+  sileo: { success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock("@/lib/readingDnaApi", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/readingDnaApi")>("@/lib/readingDnaApi");
+  return {
+    ...actual,
+    getReadingCelebrities: vi.fn().mockResolvedValue([]),
+    conductCelebrityDuel: vi.fn(),
+  };
+});
 
 const mockMyTicket: ReadingDnaResponseData = {
   id: 1,
@@ -171,7 +193,11 @@ describe("DuelSection", () => {
     expect(submitBtn).toBeDisabled();
   });
 
-  it("если передан готовый результат сравнения — рендерит вердикт, процент, радар и раскрытые книги второго читателя", () => {
+  beforeEach(() => {
+    mockToPng.mockClear();
+  });
+
+  it("если передан готовый результат сравнения — рендерит вердикт, процент, радар, книги и кнопки экспорта PNG / Stories", async () => {
     render(
       <DuelSection
         myTicket={mockMyTicket}
@@ -183,12 +209,144 @@ describe("DuelSection", () => {
     );
 
     expect(screen.getByText(/ИТОГ СРАВНЕНИЯ ВКУСОВ/i)).toBeInTheDocument();
-    expect(screen.getByText("84%")).toBeInTheDocument();
-    expect(screen.getByText(/Литературные соулмейты/i)).toBeInTheDocument();
+    expect(screen.getAllByText("84%").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Литературные соулмейты/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Раскрытые книги второго читателя/i)).toBeInTheDocument();
     expect(screen.getByText("1984")).toBeInTheDocument();
     expect(screen.getByText("Дюна")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Поделиться в чате/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Сравнить с другим билетом/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Все сравнения и знаменитости/i })).toBeInTheDocument();
+
+    const pngBtn = screen.getByRole("button", { name: /Скачать карточку \(PNG\)/i });
+    const storiesBtn = screen.getByRole("button", { name: /Для Stories \(9:16\)/i });
+    expect(pngBtn).toBeInTheDocument();
+    expect(storiesBtn).toBeInTheDocument();
+
+    fireEvent.click(pngBtn);
+    await waitFor(() => {
+      expect(mockToPng).toHaveBeenCalledWith(
+        expect.any(HTMLElement),
+        expect.objectContaining({ width: 600, height: 760, pixelRatio: 2 })
+      );
+    });
+
+    fireEvent.click(storiesBtn);
+    await waitFor(() => {
+      expect(mockToPng).toHaveBeenCalledWith(
+        expect.any(HTMLElement),
+        expect.objectContaining({ width: 540, height: 960, pixelRatio: 2 })
+      );
+    });
+  });
+
+  it("при нажатии на кнопку возврата в хаб сбрасывает карточку и вызывает onResetDuel", () => {
+    const onReset = vi.fn();
+    render(
+      <DuelSection
+        myTicket={mockMyTicket}
+        opponentTicket={mockOpponentTicket}
+        initialDuelResult={mockDuelResult}
+        theme="dark"
+        onGoToTest={vi.fn()}
+        onResetDuel={onReset}
+      />
+    );
+
+    const backBtn = screen.getByRole("button", { name: /Все сравнения и знаменитости/i });
+    fireEvent.click(backBtn);
+
+    expect(onReset).toHaveBeenCalled();
+    expect(screen.queryByText(/ИТОГ СРАВНЕНИЯ ВКУСОВ/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/СРАВНЕНИЕ ВКУСОВ С ДРУЗЬЯМИ/i)).toBeInTheDocument();
+  });
+
+  it("при криптонит-конфликте отображает плашку конфликта и название конфликтной книги", () => {
+    const conflictOpponent: ReadingDnaResponseData = {
+      ...mockOpponentTicket,
+      kryptoniteBook: { title: "Имя розы", author: "Умберто Эко" },
+    };
+    const conflictResult: ReadingDnaDuelResultData = {
+      ...mockDuelResult,
+      compatibility: 31,
+      verdict: "Взрывоопасная смесь: ваша любимая книга — криптонит оппонента!",
+      breakdown: {
+        ...mockDuelResult.breakdown,
+        kryptoniteConflict: true,
+        kryptonitePenalty: 25,
+      },
+    };
+
+    render(
+      <DuelSection
+        myTicket={mockMyTicket}
+        opponentTicket={conflictOpponent}
+        initialDuelResult={conflictResult}
+        theme="dark"
+        onGoToTest={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText(/Криптонит-конфликт.*−25%.*Имя розы/i).length).toBeGreaterThan(0);
+  });
+
+  it("показывает реальных знаменитостей и проводит дуэль в 1 клик с раскрытием криптонита", async () => {
+    const celeb = {
+      id: 7,
+      slug: "stephen-king",
+      name: "Стивен Кинг",
+      photoUrl: "",
+      category: "writer",
+      focalX: 50,
+      focalY: 50,
+      archetype: "abyss-archivist",
+      archetypeName: "Архивариус Бездны",
+      motto: "Тьма честнее света",
+      axes: { storyFocus: 70, emotionalWeight: 80, pace: 55, darkness: 90, scope: 60, complexity: 75 },
+      favoriteBooks: [
+        { title: "Повелитель мух" },
+        { title: "Кровавый меридиан" },
+        { title: "1984" },
+      ],
+      kryptoniteBook: { title: "Сумерки" },
+      likedGenres: ["Ужасы"],
+      favoriteAuthors: ["Уильям Голдинг"],
+      booksCount: 8,
+    };
+
+    vi.mocked(readingDnaApi.getReadingCelebrities).mockResolvedValueOnce([celeb]);
+    vi.mocked(readingDnaApi.conductCelebrityDuel).mockResolvedValueOnce({
+      compatibility: 78,
+      verdict: "Книжные единомышленники",
+      breakdown: {
+        axesSimilarity: 82,
+        genreScore: 50,
+        bookScore: 0,
+        authorScore: 0,
+        sharedDislikeBonus: 0,
+        kryptoniteConflict: false,
+        kryptonitePenalty: 0,
+      },
+      celebrity: celeb,
+    });
+
+    render(
+      <DuelSection
+        myTicket={mockMyTicket}
+        theme="dark"
+        onGoToTest={vi.fn()}
+      />
+    );
+
+    const celebBtn = await screen.findByRole("button", { name: /Стивен Кинг/i });
+    fireEvent.click(celebBtn);
+
+    expect(await screen.findAllByText("78%")).toBeTruthy();
+    expect(screen.getByText(/Криптонит \(последняя книга тир-листа\):/i)).toBeInTheDocument();
+    expect(screen.getByText("Сумерки")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Открыть полку знаменитости/i })).toHaveAttribute(
+      "href",
+      "/celebrities/stephen-king"
+    );
   });
 });

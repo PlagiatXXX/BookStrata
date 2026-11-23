@@ -12,6 +12,15 @@ vi.mock("../../lib/prisma.js", () => ({
     },
     readingDnaDuel: {
       create: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    book: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
     },
     $transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
   },
@@ -25,6 +34,7 @@ import {
   conductDuel,
   findTwins,
   incrementShareCount,
+  getTicketDuels,
 } from "./readingDna.service.js";
 import type { ReadingDnaInput } from "./readingDna.schema.js";
 
@@ -114,6 +124,45 @@ describe("readingDna.service", () => {
       expect(saved.ticketNumber).toBe("BS-7492-A");
       expect(saved.archetype).toBe("meaning-architect");
       expect(saved.axes.storyFocus).toBe(85);
+    });
+
+    it("автоматически связывает существующие книги или регистрирует новые книги в каталоге", async () => {
+      const inputWithNewBooks: ReadingDnaInput = {
+        ...sampleInput,
+        favoriteBooks: [
+          { title: "Существующая книга", author: "Известный Автор" },
+          { title: "Новая редкая книга", author: "Новый Автор", coverImageUrl: "https://gbooks.com/cover.jpg" },
+        ],
+        kryptoniteBook: null,
+      };
+
+      (prisma.readingDna.findUnique as any).mockResolvedValue(null);
+      // Первая книга уже есть в каталоге
+      (prisma.book.findFirst as any)
+        .mockResolvedValueOnce({ id: 555, title: "Существующая книга", author: "Известный Автор", coverImageUrl: "https://local.jpg" })
+        .mockResolvedValueOnce(null); // Вторая книга новая
+      (prisma.book.findUnique as any).mockResolvedValue(null);
+      (prisma.book.create as any).mockResolvedValue({ id: 777 });
+      (prisma.readingDna.create as any).mockImplementation(({ data }: any) =>
+        Promise.resolve({
+          ...data,
+          id: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      );
+
+      const saved = await saveDna(inputWithNewBooks, 42);
+
+      expect(saved.favoriteBooks[0]?.bookId).toBe(555);
+      expect(saved.favoriteBooks[1]?.bookId).toBe(777);
+      expect(prisma.readingDna.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            favoriteBookIds: [555, 777],
+          }),
+        })
+      );
     });
 
     it("при повторном сохранении зарегистрированного пользователя сохраняет исходный ticketNumber", async () => {
@@ -278,6 +327,62 @@ describe("readingDna.service", () => {
         data: { duelsCount: { increment: 1 } },
       });
     });
+
+    it("если между билетами уже есть запись дуэли — обновляет её, не создавая дубликат", async () => {
+      const mockTarget = {
+        id: 1,
+        ticketNumber: "BS-7492-A",
+        storyFocus: 85,
+        emotionalWeight: 80,
+        pace: 70,
+        darkness: 60,
+        scope: 75,
+        complexity: 90,
+        favoriteBooks: sampleInput.favoriteBooks,
+        kryptoniteBook: sampleInput.kryptoniteBook,
+        likedGenres: sampleInput.likedGenres,
+        dislikedGenres: sampleInput.dislikedGenres,
+        favoriteAuthors: sampleInput.favoriteAuthors,
+        theme: "dark",
+      };
+
+      const mockChallenger = {
+        id: 2,
+        ticketNumber: "BS-2222-B",
+        storyFocus: 50,
+        emotionalWeight: 50,
+        pace: 50,
+        darkness: 50,
+        scope: 50,
+        complexity: 50,
+        favoriteBooks: sampleInput.favoriteBooks,
+        kryptoniteBook: null,
+        likedGenres: [],
+        dislikedGenres: [],
+        favoriteAuthors: [],
+        theme: "craft",
+      };
+
+      (prisma.readingDna.findUnique as any)
+        .mockResolvedValueOnce(mockTarget)
+        .mockResolvedValueOnce(mockChallenger);
+
+      (prisma.readingDnaDuel.findFirst as any).mockResolvedValueOnce({ id: 99 });
+      (prisma.readingDnaDuel.update as any).mockResolvedValue({});
+
+      await conductDuel({
+        targetTicketNumber: "BS-7492-A",
+        challengerTicketNumber: "BS-2222-B",
+      });
+
+      expect(prisma.readingDnaDuel.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 99 },
+          data: expect.objectContaining({ compatibility: expect.any(Number) }),
+        })
+      );
+      expect(prisma.readingDnaDuel.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("findTwins (nearest-neighbour)", () => {
@@ -318,19 +423,24 @@ describe("readingDna.service", () => {
 
       await findTwins("BS-1000-A", 5);
 
-      expect(prisma.readingDna.findMany).toHaveBeenCalledWith({
-        where: {
-          isPublic: true,
-          id: { not: 10 },
-          storyFocus: { gte: 30, lte: 90 },
-          emotionalWeight: { gte: 50, lte: 100 },
-          pace: { gte: 10, lte: 70 },
-          darkness: { gte: 60, lte: 100 },
-          scope: { gte: 20, lte: 80 },
-          complexity: { gte: 40, lte: 100 },
-        },
-        take: expect.any(Number),
-      });
+      expect(prisma.readingDna.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            isPublic: true,
+            id: { not: 10 },
+            storyFocus: { gte: 30, lte: 90 },
+            emotionalWeight: { gte: 50, lte: 100 },
+            pace: { gte: 10, lte: 70 },
+            darkness: { gte: 60, lte: 100 },
+            scope: { gte: 20, lte: 80 },
+            complexity: { gte: 40, lte: 100 },
+          },
+          include: expect.objectContaining({
+            user: expect.any(Object),
+          }),
+          take: expect.any(Number),
+        })
+      );
     });
 
     it("сортирует результат по убыванию similarity и ограничивает limit записями", async () => {
@@ -416,6 +526,85 @@ describe("readingDna.service", () => {
 
       expect(count).toBeNull();
       expect(prisma.readingDna.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getTicketDuels (двусторонний журнал)", () => {
+    it("находит и входящие, и исходящие дуэли и определяет направление", async () => {
+      const myTicket = { id: 42, ticketNumber: "BS-4242-X" };
+      (prisma.readingDna.findFirst as any).mockResolvedValue(myTicket);
+
+      (prisma.readingDnaDuel.count as any).mockResolvedValue(2);
+
+      const incomingDuel = {
+        id: 1,
+        targetDnaId: 42,
+        challengerDnaId: 99,
+        challengerName: "Олег",
+        compatibility: 88,
+        verdict: "Отличное совпадение",
+        breakdown: { kryptoniteConflict: false },
+        createdAt: new Date("2026-11-20T10:00:00Z"),
+        challengerDna: {
+          ticketNumber: "BS-9999-O",
+          customName: "Олег",
+          archetypeName: "Искатель",
+        },
+        targetDna: {
+          ticketNumber: "BS-4242-X",
+          customName: "Я",
+          archetypeName: "Философ",
+        },
+      };
+
+      const outgoingDuel = {
+        id: 2,
+        targetDnaId: 105,
+        challengerDnaId: 42,
+        challengerName: null,
+        compatibility: 74,
+        verdict: "Хороший резонанс",
+        breakdown: { kryptoniteConflict: true },
+        createdAt: new Date("2026-11-21T12:00:00Z"),
+        challengerDna: {
+          ticketNumber: "BS-4242-X",
+          customName: "Я",
+          archetypeName: "Философ",
+        },
+        targetDna: {
+          ticketNumber: "BS-1050-T",
+          customName: "Татьяна",
+          archetypeName: "Хранитель",
+        },
+      };
+
+      (prisma.readingDnaDuel.findMany as any).mockResolvedValue([outgoingDuel, incomingDuel]);
+      (prisma.readingDnaDuel.findFirst as any)
+        .mockResolvedValueOnce(incomingDuel) // best
+        .mockResolvedValueOnce(outgoingDuel); // worst
+
+      const summary = await getTicketDuels("BS-4242-X", 10);
+
+      expect(summary).not.toBeNull();
+      expect(summary?.totalDuels).toBe(2);
+
+      // Входящая дуэль
+      expect(summary?.bestMatch?.direction).toBe("incoming");
+      expect(summary?.bestMatch?.opponentName).toBe("Олег");
+      expect(summary?.bestMatch?.opponentTicketNumber).toBe("BS-9999-O");
+
+      // Исходящая дуэль
+      expect(summary?.mainAntagonist?.direction).toBe("outgoing");
+      expect(summary?.mainAntagonist?.opponentName).toBe("Татьяна");
+      expect(summary?.mainAntagonist?.opponentTicketNumber).toBe("BS-1050-T");
+      expect(summary?.mainAntagonist?.kryptoniteConflict).toBe(true);
+
+      // Проверяем, что запрос в БД содержал OR по обоим полям
+      expect(prisma.readingDnaDuel.count).toHaveBeenCalledWith({
+        where: {
+          OR: [{ targetDnaId: 42 }, { challengerDnaId: 42 }],
+        },
+      });
     });
   });
 });

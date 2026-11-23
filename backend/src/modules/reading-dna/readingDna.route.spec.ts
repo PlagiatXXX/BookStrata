@@ -11,9 +11,16 @@ const mocks = vi.hoisted(() => ({
   getArchetypeCatalog: vi.fn(),
   getMyDna: vi.fn(),
   incrementShareCount: vi.fn(),
+  getTicketDuels: vi.fn(),
+  getArchetypeStats: vi.fn(),
 }));
 
 let mockCurrentUser: { userId: number } | null = null;
+
+const celebrityMocks = vi.hoisted(() => ({
+  getCelebritiesWithDna: vi.fn(),
+  conductCelebrityDuel: vi.fn(),
+}));
 
 vi.mock("./readingDna.service.js", () => ({
   previewDna: mocks.previewDna,
@@ -24,6 +31,13 @@ vi.mock("./readingDna.service.js", () => ({
   getArchetypeCatalog: mocks.getArchetypeCatalog,
   getMyDna: mocks.getMyDna,
   incrementShareCount: mocks.incrementShareCount,
+  getTicketDuels: mocks.getTicketDuels,
+  getArchetypeStats: mocks.getArchetypeStats,
+}));
+
+vi.mock("./celebrityDna.service.js", () => ({
+  getCelebritiesWithDna: celebrityMocks.getCelebritiesWithDna,
+  conductCelebrityDuel: celebrityMocks.conductCelebrityDuel,
 }));
 
 vi.mock("../auth/auth.middleware.js", () => ({
@@ -178,6 +192,58 @@ describe("readingDna.route", () => {
     });
   });
 
+  describe("GET /api/reading-dna/duels/:ticketNumber", () => {
+    it("возвращает 200 и сводку дуэлей с лучшим совпадением и антагонистом", async () => {
+      mocks.getTicketDuels.mockResolvedValue({
+        totalDuels: 2,
+        bestMatch: {
+          id: 1,
+          opponentName: "Маша",
+          opponentTicketNumber: "BS-1111-A",
+          opponentArchetypeName: "Искатель истин",
+          compatibility: 92,
+          verdict: "Литературные соулмейты",
+          kryptoniteConflict: false,
+          createdAt: "2026-11-21T10:00:00.000Z",
+        },
+        mainAntagonist: {
+          id: 2,
+          opponentName: "Игорь",
+          opponentTicketNumber: "BS-2222-B",
+          opponentArchetypeName: "Архивариус Бездны",
+          compatibility: 24,
+          verdict: "Полярные противоположности",
+          kryptoniteConflict: true,
+          createdAt: "2026-11-21T11:00:00.000Z",
+        },
+        recentDuels: [],
+      });
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/reading-dna/duels/BS-7492-X?limit=5",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.data.totalDuels).toBe(2);
+      expect(json.data.bestMatch.opponentName).toBe("Маша");
+      expect(json.data.mainAntagonist.opponentName).toBe("Игорь");
+      expect(mocks.getTicketDuels).toHaveBeenCalledWith("BS-7492-X", 5);
+    });
+
+    it("возвращает 404, если билет не найден", async () => {
+      mocks.getTicketDuels.mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/reading-dna/duels/BS-MISSING",
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe("GET /api/reading-dna/archetypes", () => {
     it("возвращает 200 и полный каталог из 16 читательских архетипов", async () => {
       const { ARCHETYPES } = await import("./archetypes.data.js");
@@ -204,6 +270,76 @@ describe("readingDna.route", () => {
       expect(first.number).toBe(1);
       expect(first.axisRanges.storyFocus).toBeDefined();
       expect(first.axisRanges.storyFocus.min).toBeLessThan(first.axisRanges.storyFocus.max);
+    });
+  });
+
+  describe("GET /api/reading-dna/stats", () => {
+    it("возвращает 200 и реальное распределение архетипов по базе", async () => {
+      mocks.getArchetypeStats.mockResolvedValue({
+        totalTickets: 250,
+        distribution: {
+          "meaning-architect": { count: 15, percent: 6 },
+        },
+      });
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/reading-dna/stats",
+      });
+
+      expect(response.statusCode).toBe(200);
+      const json = response.json();
+      expect(json.data.totalTickets).toBe(250);
+      expect(json.data.distribution["meaning-architect"]).toEqual({ count: 15, percent: 6 });
+    });
+  });
+
+  describe("GET /api/reading-dna/celebrities & POST /duel/celebrity/:slug", () => {
+    it("GET /celebrities возвращает список знаменитостей с вычисленным ДНК", async () => {
+      celebrityMocks.getCelebritiesWithDna.mockResolvedValue([
+        { id: 1, slug: "stephen-king", name: "Стивен Кинг", archetypeName: "Архивариус Бездны" },
+      ]);
+
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/reading-dna/celebrities",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json().data.celebrities).toHaveLength(1);
+    });
+
+    it("POST /duel/celebrity/:slug возвращает 400 без challengerTicketNumber и challengerDna", async () => {
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/reading-dna/duel/celebrity/stephen-king",
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it("POST /duel/celebrity/:slug возвращает 200 и результат дуэли со знаменитостью", async () => {
+      celebrityMocks.conductCelebrityDuel.mockResolvedValue({
+        compatibility: 82,
+        verdict: "Книжные единомышленники",
+        breakdown: { kryptoniteConflict: false },
+        celebrity: { id: 1, slug: "stephen-king", name: "Стивен Кинг" },
+      });
+
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/reading-dna/duel/celebrity/stephen-king",
+        payload: { challengerTicketNumber: "BS-7492-X" },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json().data.compatibility).toBe(82);
+      expect(celebrityMocks.conductCelebrityDuel).toHaveBeenCalledWith({
+        slug: "stephen-king",
+        challengerTicketNumber: "BS-7492-X",
+        challengerDna: undefined,
+      });
     });
   });
 

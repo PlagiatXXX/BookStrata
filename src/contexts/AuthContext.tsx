@@ -9,6 +9,8 @@ import {
   hasSession,
 } from "@/lib/authApi";
 import { apiGetMe } from "@/lib/userApi";
+import { claimReadingDna } from "@/lib/readingDnaApi";
+import { getDnaGuestToken, clearDnaGuestToken } from "@/pages/ReadingDnaPage/utils/dnaStorage";
 import { ApiRequestError } from "@/lib/api-client";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { createLogger } from "@/lib/logger";
@@ -53,6 +55,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       authLogger.debug(
         `User data fetched: id=${fullUserData.id} username=${fullUserData.username}`,
       );
+      const pendingDnaGuestToken = getDnaGuestToken();
+      if (pendingDnaGuestToken) {
+        claimReadingDna(pendingDnaGuestToken)
+          .catch(() => {
+            // Билет мог быть уже привязан или не найден — не блокируем вход
+          })
+          .finally(() => {
+            clearDnaGuestToken();
+          });
+      }
     } catch (err) {
       authLogger.warn("Failed to fetch user profile", {
         error: err instanceof Error ? err.message : String(err),

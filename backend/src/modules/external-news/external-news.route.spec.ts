@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import request from "supertest"
 import Fastify from "fastify"
 
 vi.mock("../../lib/cache.js", () => ({
@@ -56,30 +55,37 @@ describe("External News Routes", () => {
         { id: "1", title: "News", excerpt: "Desc", imageUrl: null, url: "https://example.com", source: "Test", lang: "en", publishedAt: "" },
       ])
 
-      const res = await request(app.server)
-        .get("/api/external-news")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/external-news",
+      })
 
-      expect(res.body.data).toHaveLength(1)
-      expect(res.body.data[0].title).toBe("News")
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toHaveLength(1)
+      expect(res.json().data[0].title).toBe("News")
     })
 
     it("должен вернуть пустой массив", async () => {
       vi.mocked(ExternalNewsService.prototype.getBooksNews).mockResolvedValue([])
 
-      const res = await request(app.server)
-        .get("/api/external-news")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/external-news",
+      })
 
-      expect(res.body.data).toEqual([])
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toEqual([])
     })
 
     it("не требует авторизации", async () => {
       vi.mocked(ExternalNewsService.prototype.getBooksNews).mockResolvedValue([])
 
-      await request(app.server)
-        .get("/api/external-news")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/external-news",
+      })
+
+      expect(res.statusCode).toBe(200)
     })
   })
 })

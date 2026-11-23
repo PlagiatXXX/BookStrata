@@ -80,6 +80,15 @@ export const readingDnaShareInputSchema = z.object({
 export type ReadingDnaShareInput = z.infer<typeof readingDnaShareInputSchema>;
 
 /**
+ * Входные данные для привязки гостевого билета к аккаунту после входа/регистрации.
+ */
+export const readingDnaClaimInputSchema = z.object({
+  guestToken: z.string().min(1, "guestToken обязателен").max(100),
+});
+
+export type ReadingDnaClaimInput = z.infer<typeof readingDnaClaimInputSchema>;
+
+/**
  * Схема ответа публичного / сохраненного билета Reading DNA.
  */
 export const readingDnaResponseSchema = z.object({

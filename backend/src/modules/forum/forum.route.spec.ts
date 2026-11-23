@@ -1,5 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
-import request from "supertest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Fastify from "fastify";
 
 vi.mock("./forum.service.js", () => ({
@@ -40,11 +39,13 @@ describe("Forum Routes", () => {
         totalThoughts: 30,
       });
 
-      const response = await request(app.server)
-        .get("/api/forum/stats")
-        .expect(200);
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/forum/stats",
+      });
 
-      expect(response.body).toEqual({
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({
         data: { totalUsers: 42, activeBattles: 5, tierLists: 100, totalBooks: 500, totalThoughts: 30 },
       });
     });
@@ -58,11 +59,13 @@ describe("Forum Routes", () => {
         totalThoughts: 0,
       });
 
-      const response = await request(app.server)
-        .get("/api/forum/stats")
-        .expect(200);
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/forum/stats",
+      });
 
-      expect(response.body).toEqual({
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({
         data: { totalUsers: 0, activeBattles: 0, tierLists: 0, totalBooks: 0, totalThoughts: 0 },
       });
     });
@@ -75,11 +78,13 @@ describe("Forum Routes", () => {
         totalBooks: 200,
       });
 
-      const response = await request(app.server)
-        .get("/api/forum/stats")
-        .expect(200);
+      const response = await app.inject({
+        method: "GET",
+        url: "/api/forum/stats",
+      });
 
-      expect(response.body.data).toBeDefined();
+      expect(response.statusCode).toBe(200);
+      expect(response.json().data).toBeDefined();
     });
   });
 });

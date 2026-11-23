@@ -4,7 +4,6 @@
 //   - неизвестный slug → 404,
 //   - автор без seoDescription → 200 (страница живёт по ручному контенту).
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import type { PrismaClient } from "@prisma/client";
 
@@ -50,11 +49,11 @@ describe("GET /api/authors/:slug", () => {
       books: [],
     });
 
-    const res = await request(app.server).get("/api/authors/lev-tolstoy");
+    const res = await app.inject({ method: "GET", url: "/api/authors/lev-tolstoy" });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.author.slug).toBe("lev-tolstoy");
-    expect(res.body.data.author.bookCount).toBe(0);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.author.slug).toBe("lev-tolstoy");
+    expect(res.json().data.author.bookCount).toBe(0);
     expect(mocks.prisma.author.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({ where: { slug: "lev-tolstoy" } }),
     );
@@ -63,10 +62,10 @@ describe("GET /api/authors/:slug", () => {
   it("неизвестный slug → 404 с error.code", async () => {
     mocks.prisma.author.findUnique.mockResolvedValue(null);
 
-    const res = await request(app.server).get("/api/authors/net-takogo");
+    const res = await app.inject({ method: "GET", url: "/api/authors/net-takogo" });
 
-    expect(res.status).toBe(404);
-    expect(res.body.error.code).toBe(ErrorCodes.NOT_FOUND);
+    expect(res.statusCode).toBe(404);
+    expect(res.json().error.code).toBe(ErrorCodes.NOT_FOUND);
     expect(mocks.prisma.bookPlacement.findMany).not.toHaveBeenCalled();
   });
 
@@ -79,19 +78,19 @@ describe("GET /api/authors/:slug", () => {
       books: [],
     });
 
-    const res = await request(app.server).get("/api/authors/bez-opisaniya");
+    const res = await app.inject({ method: "GET", url: "/api/authors/bez-opisaniya" });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.author.seoDescription).toBe("");
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.author.seoDescription).toBe("");
   });
 
   it("GET /api/authors/ (со слэшем) — статический роут списка, а не :slug", async () => {
     mocks.prisma.author.findMany.mockResolvedValue([]);
 
-    const res = await request(app.server).get("/api/authors/");
+    const res = await app.inject({ method: "GET", url: "/api/authors/" });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.authors).toEqual([]);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.authors).toEqual([]);
     expect(mocks.prisma.author.findUnique).not.toHaveBeenCalled();
   });
 });
@@ -125,10 +124,10 @@ describe("GET /api/authors", () => {
       { id: 2, name: "Артур Конан Дойл", slug: "arthur-conan-doyle", _count: { books: 1 } },
     ]);
 
-    const res = await request(app.server).get("/api/authors");
+    const res = await app.inject({ method: "GET", url: "/api/authors" });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.authors).toEqual([
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.authors).toEqual([
       { id: 1, name: "Лев Толстой", slug: "lev-tolstoy", bookCount: 3, heroImageUrl: null },
       { id: 2, name: "Артур Конан Дойл", slug: "arthur-conan-doyle", bookCount: 1, heroImageUrl: null },
     ]);
@@ -143,10 +142,10 @@ describe("GET /api/authors", () => {
   it("пустая БД → 200 + пустой массив", async () => {
     mocks.prisma.author.findMany.mockResolvedValue([]);
 
-    const res = await request(app.server).get("/api/authors");
+    const res = await app.inject({ method: "GET", url: "/api/authors" });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.authors).toEqual([]);
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.authors).toEqual([]);
   });
 
   it("sort=popular&limit=1 → популярные авторы, ограниченные", async () => {
@@ -155,10 +154,10 @@ describe("GET /api/authors", () => {
       { id: 2, name: "Артур Конан Дойл", slug: "arthur-conan-doyle", _count: { books: 8 } },
     ]);
 
-    const res = await request(app.server).get("/api/authors?sort=popular&limit=1");
+    const res = await app.inject({ method: "GET", url: "/api/authors?sort=popular&limit=1" });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.authors).toEqual([
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.authors).toEqual([
       { id: 2, name: "Артур Конан Дойл", slug: "arthur-conan-doyle", bookCount: 8, heroImageUrl: null },
     ]);
   });

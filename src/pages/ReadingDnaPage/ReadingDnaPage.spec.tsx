@@ -5,10 +5,36 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ReadingDnaPage from "./ReadingDnaPage";
 import { AuthContext, type AuthContextType, type AuthUser } from "@/contexts/auth.context";
+import * as readingDnaApi from "@/lib/readingDnaApi";
 
 vi.mock("@/components/SEO/SEOHead", () => ({
   SEOHead: () => null,
 }));
+
+vi.mock("@/lib/analyticsApi", () => ({
+  apiTrackEvent: vi.fn(),
+}));
+
+vi.mock("@/lib/gtm", () => ({
+  pushDataLayerEvent: vi.fn(),
+}));
+
+vi.mock("@/lib/readingDnaApi", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/readingDnaApi")>();
+  return {
+    ...actual,
+    getReadingArchetypes: vi.fn().mockResolvedValue([]),
+    getMyReadingDna: vi.fn().mockResolvedValue(null),
+    getReadingTicket: vi.fn().mockResolvedValue(null),
+    getReadingArchetypeStats: vi.fn().mockResolvedValue({
+      totalTickets: 100,
+      distribution: {},
+    }),
+    saveReadingDna: vi.fn(),
+    conductReadingDuel: vi.fn(),
+    shareReadingTicket: vi.fn(),
+  };
+});
 
 function renderPage(
   initialRoute = "/reading-dna",
@@ -43,42 +69,30 @@ describe("ReadingDnaPage", () => {
     localStorage.clear();
   });
 
-  describe("Доступ и тизер «Скоро»", () => {
-    it("отображает экран-тизер «Скоро» для неавторизованного пользователя (гостя)", () => {
+  describe("Публичный доступ к Книжному ДНК", () => {
+    it("отображает полноценный интерфейс для неавторизованного пользователя (гостя)", () => {
       renderPage("/reading-dna", null);
 
-      expect(
-        screen.getByRole("heading", {
-          level: 1,
-          name: /Книжный ДНК: узнайте свою читательскую формулу/i,
-        })
-      ).toBeInTheDocument();
-      expect(screen.getByText(/Спецпроект BookStrata · Скоро открытие/i)).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /^Тест$/i })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^Тест$/i })).toBeInTheDocument();
+      expect(screen.queryByText(/Спецпроект BookStrata · Скоро открытие/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Режим администратора/i)).not.toBeInTheDocument();
     });
 
-    it("отображает экран-тизер «Скоро» для авторизованного обычного пользователя (не админа)", () => {
+    it("отображает полноценный интерфейс для авторизованного обычного пользователя", () => {
       const normalUser: AuthUser = { userId: 42, username: "reader", role: "USER" };
       renderPage("/reading-dna", normalUser);
 
-      expect(screen.getByText(/Спецпроект BookStrata · Скоро открытие/i)).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /^Тест$/i })).not.toBeInTheDocument();
-    });
-
-    it("отображает полноценный интерфейс и админ-плашку для пользователя с ролью ADMIN", () => {
-      const adminUser: AuthUser = { userId: 1, username: "admin", role: "ADMIN" };
-      renderPage("/reading-dna", adminUser);
-
-      expect(screen.getByText(/Режим администратора/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Тест$/i })).toBeInTheDocument();
+      expect(screen.queryByText(/Спецпроект BookStrata · Скоро открытие/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Режим администратора/i)).not.toBeInTheDocument();
     });
 
-    it("отображает полноценный интерфейс для роли admin в нижнем регистре (из БД)", () => {
+    it("отображает полноценный интерфейс без админ-плашки для роли ADMIN/admin", () => {
       const adminUser: AuthUser = { userId: 1, username: "admin", role: "admin" };
       renderPage("/reading-dna", adminUser);
 
-      expect(screen.getByText(/Режим администратора/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^Тест$/i })).toBeInTheDocument();
+      expect(screen.queryByText(/Режим администратора/i)).not.toBeInTheDocument();
     });
   });
 
@@ -115,7 +129,7 @@ describe("ReadingDnaPage", () => {
     });
   });
 
-  describe("Основная функциональность в режиме администратора", () => {
+  describe("Основная функциональность", () => {
     it("отображает заголовок, навигационные вкладки и переключает архивные документы по клику на вкладку", async () => {
       const user = userEvent.setup();
       renderPage();
@@ -263,6 +277,67 @@ describe("ReadingDnaPage", () => {
 
       expect(await screen.findByText(/Документ II — Читательский билет/i)).toBeInTheDocument();
       expect(screen.queryByText(/Документ III — Сравнение вкусов/i)).not.toBeInTheDocument();
+    });
+
+    it("по ссылке ?tab=test открывает вкладку «Тест» даже с нулевого шага", async () => {
+      renderPage("/reading-dna?tab=test", null);
+
+      expect(await screen.findByText(/Документ I — Анкета читателя/i)).toBeInTheDocument();
+      expect(screen.getByText(/Что вам нравится в книге\?/i)).toBeInTheDocument();
+    });
+
+    it("при переключении с вкладки сравнения с оппонентом на вкладку «Билет» переключает документ", async () => {
+      const user = userEvent.setup();
+      renderPage("/reading-dna?tab=compare&with=BS-4530-V", null);
+
+      expect(await screen.findByText(/Документ III — Сравнение вкусов/i)).toBeInTheDocument();
+
+      const ticketTab = screen.getByRole("button", { name: /^Билет$/i });
+      await user.click(ticketTab);
+
+      expect(await screen.findByText(/Документ II — Читательский билет/i)).toBeInTheDocument();
+      expect(screen.queryByText(/Документ III — Сравнение вкусов/i)).not.toBeInTheDocument();
+    });
+
+    it("клик по кнопке «Все сравнения и знаменитости» с одного нажатия возвращает в хаб сравнений", async () => {
+      const user = userEvent.setup();
+      const mockTicket = {
+        id: 1,
+        ticketNumber: "BS-1111-A",
+        customName: "Тестер",
+        archetype: "truth-seeker",
+        archetypeName: "Искатель",
+        axes: { storyFocus: 50, emotionalWeight: 50, pace: 50, darkness: 50, scope: 50, complexity: 50 },
+        favoriteBooks: [],
+      };
+      localStorage.setItem("bs_reading_dna_ticket_user_1", JSON.stringify(mockTicket));
+
+      vi.mocked(readingDnaApi.getReadingTicket).mockResolvedValue({
+        id: 2,
+        ticketNumber: "BS-4530-V",
+        customName: "Оппонент",
+        axes: { storyFocus: 50, emotionalWeight: 50, pace: 50, darkness: 50, scope: 50, complexity: 50 },
+        favoriteBooks: [],
+      } as any);
+
+      vi.mocked(readingDnaApi.conductReadingDuel).mockResolvedValue({
+        compatibility: 70,
+        verdict: "Резонанс",
+        breakdown: {},
+      } as any);
+
+      renderPage("/reading-dna?tab=compare&with=BS-4530-V");
+
+      // Дожидаемся экрана дуэли
+      const backBtn = await screen.findByRole("button", { name: /Все сравнения и знаменитости/i });
+      expect(backBtn).toBeInTheDocument();
+
+      // Нажимаем ровно один раз
+      await user.click(backBtn);
+
+      // С одного нажатия сразу отображается хаб сравнений
+      expect(await screen.findByText(/СРАВНЕНИЕ ВКУСОВ С ДРУЗЬЯМИ/i)).toBeInTheDocument();
+      expect(screen.queryByText(/ИТОГ СРАВНЕНИЯ ВКУСОВ/i)).not.toBeInTheDocument();
     });
   });
 });

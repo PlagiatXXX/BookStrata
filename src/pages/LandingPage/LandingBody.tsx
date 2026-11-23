@@ -10,7 +10,6 @@ import { DonateModal } from "@/components/DonateModal/DonateModal"
 import { scenarios, plans, audienceItems, screenshots, type ScreenshotItem } from "./landingData"
 import { proxyImageUrl } from "@/utils/imageProxy"
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock"
-import { useAuth } from "@/hooks/useAuthContext"
 import type { TierListShort } from "@/lib/tierListApi"
 import { CollectionFlipCard } from "@/components/CommunityComponents/CollectionFlipCard"
 import type { CollectionItem } from "@/types/collection"
@@ -242,8 +241,6 @@ interface LandingBodyProps {
 export default function LandingBody({ tierLists, collections, forumStats }: LandingBodyProps) {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
-  const { user } = useAuth()
-  const isAdmin = user?.role === "admin"
   const [isDonateOpen, setIsDonateOpen] = useState(false)
   const [activeScreenshot, setActiveScreenshot] = useState<number | null>(null)
   const thoughtsCount = forumStats?.totalThoughts && forumStats.totalThoughts > 0 ? forumStats.totalThoughts : 24
@@ -405,11 +402,9 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
         </div>
       </section>
 
-      {isAdmin && (
-        <>
-          <div className="landing-divider" />
+      <div className="landing-divider" />
 
-          {/* ============ READING DNA (интерактивный спецпроект) ============ */}
+      {/* ============ READING DNA (интерактивный спецпроект) ============ */}
           <section className="landing-section" id="reading-dna">
             <div className="landing-section__container">
               <RevealBox>
@@ -469,8 +464,6 @@ export default function LandingBody({ tierLists, collections, forumStats }: Land
               </RevealBox>
             </div>
           </section>
-        </>
-      )}
 
       <div className="landing-divider" />
 

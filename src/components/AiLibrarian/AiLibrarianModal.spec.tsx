@@ -29,6 +29,8 @@ beforeEach(() => {
     error: null,
     status: 'online',
     sendMessage: vi.fn(),
+    retryLastMessage: vi.fn(),
+    editLastMessage: vi.fn(),
     clearMessages: vi.fn(),
     refreshStatus: vi.fn(),
     switchSession: vi.fn(),
@@ -152,5 +154,61 @@ describe('AiLibrarianModal', () => {
     })
     render(withRouter(<AiLibrarianModal isOpen={true} onClose={() => {}} />))
     expect(screen.getByText('Проверить ещё раз')).toBeDefined()
+  })
+
+  it('рендерит интерактивную карточку ошибки с кнопками повтора и редактирования', () => {
+    const retryLastMessage = vi.fn()
+    const editLastMessage = vi.fn().mockReturnValue('Мой вопрос по книгам')
+
+    mockUseAiLibrarian.mockReturnValue({
+      messages: [{ role: 'user', content: 'Мой вопрос по книгам' }],
+      isStreaming: false,
+      streamingContent: '',
+      error: 'Букстраж сейчас на перерыве. Постучись через минуту.',
+      status: 'online',
+      sendMessage: vi.fn(),
+      retryLastMessage,
+      editLastMessage,
+      clearMessages: vi.fn(),
+      refreshStatus: vi.fn(),
+      switchSession: vi.fn(),
+      activeSessionKey: '__global',
+    })
+
+    render(withRouter(<AiLibrarianModal isOpen={true} onClose={() => {}} />))
+
+    expect(screen.getByText(/Букстраж сейчас на перерыве/i)).toBeInTheDocument()
+    const retryBtn = screen.getByRole('button', { name: /Повторить запрос/i })
+    const editBtn = screen.getByRole('button', { name: /Редактировать/i })
+
+    expect(retryBtn).toBeInTheDocument()
+    expect(editBtn).toBeInTheDocument()
+
+    // Клик на повторить
+    fireEvent.click(retryBtn)
+    expect(retryLastMessage).toHaveBeenCalledTimes(1)
+
+    // Клик на редактировать
+    fireEvent.click(editBtn)
+    expect(editLastMessage).toHaveBeenCalledTimes(1)
+    const textarea = screen.getByPlaceholderText('Спроси у библиотекаря...') as HTMLTextAreaElement
+    expect(textarea.value).toBe('Мой вопрос по книгам')
+  })
+
+  it('рендерит приветствие и чипсы Книжного ДНК при pageType reading-dna', () => {
+    render(
+      withRouter(
+        <AiLibrarianModal
+          isOpen={true}
+          onClose={() => {}}
+          context={{ pageType: 'reading-dna', ticketNumber: 'DNA-42' }}
+        />,
+      ),
+    )
+
+    expect(screen.getByText(/литературный ДНК/i)).toBeInTheDocument()
+    expect(screen.getByText(/Разбери мой читательский архетип/i)).toBeInTheDocument()
+    expect(screen.getByText(/Посоветуй книги под мои 6 осей ДНК/i)).toBeInTheDocument()
+    expect(screen.getByText(/Что почитать взамен моего криптонита/i)).toBeInTheDocument()
   })
 })

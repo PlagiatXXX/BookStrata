@@ -69,11 +69,26 @@ export interface CelebrityContext {
   books?: Record<string, CollectionBookContext>
 }
 
+export interface ReadingDnaPageContext {
+  ticketNumber: string
+  archetypeName: string
+  motto: string | null
+  storyFocus: number
+  emotionalWeight: number
+  pace: number
+  darkness: number
+  scope: number
+  complexity: number
+  favoriteBooks: Array<{ title: string; author?: string | null }>
+  kryptoniteBook?: { title: string; author?: string | null } | null
+}
+
 export interface PageContext {
-  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity'
+  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity' | 'reading-dna'
   collection?: CollectionContext
   celebrity?: CelebrityContext
   featuredCollections?: Array<{ title: string; slug: string; editorialNote: string | null }>
+  readingDna?: ReadingDnaPageContext
 }
 
 export async function getUserTasteProfile(
@@ -323,6 +338,39 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
       lines.push(``)
       lines.push(`Пользователь может спросить про любую книгу из этого списка, про вкусы или привычки чтения знаменитости. Отвечай с учётом контекста.`)
       lines.push(`Не предлагай книги, которых нет в этом списке, если пользователь явно не просит «а что ещё почитать из похожего». Если просит — используй базовую коллекцию пользователя.`)
+      sections.push(lines.join('\n'))
+    }
+
+    if (pageContext.pageType === 'reading-dna' && pageContext.readingDna) {
+      const dna = pageContext.readingDna
+      const lines: string[] = [
+        `Ты находишься в режиме анализа Книжного ДНК (читательский билет № ${dna.ticketNumber}).`,
+        `Читательский архетип пользователя: «${dna.archetypeName}»${dna.motto ? ` (девиз: «${dna.motto.replace(/^[«"']+|[»"']+$/g, '')}»)` : ''}.`,
+        `Оси вкуса пользователя (шкала 0–100):`,
+        `— Сюжет vs Рефлексия: ${dna.storyFocus}`,
+        `— Эмоциональный вес: ${dna.emotionalWeight}`,
+        `— Темп чтения: ${dna.pace}`,
+        `— Свет vs Мрак: ${dna.darkness}`,
+        `— Масштаб мира: ${dna.scope}`,
+        `— Сложность слога: ${dna.complexity}`,
+      ]
+
+      if (dna.favoriteBooks && dna.favoriteBooks.length > 0) {
+        lines.push(`Священные книги читателя (топ-3):`)
+        for (const b of dna.favoriteBooks) {
+          lines.push(`— «${b.title}»${b.author ? ` (${b.author})` : ''}`)
+        }
+      }
+
+      if (dna.kryptoniteBook) {
+        const k = dna.kryptoniteBook
+        lines.push(``)
+        lines.push(`КНИГА-КРИПТОНИТ (ИММУНИТЕТ ЧИТАТЕЛЯ): «${k.title}»${k.author ? ` (${k.author})` : ''}.`)
+        lines.push(`СТРОЖАЙШИЙ ЗАПРЕТ: Категорически запрещено рекомендовать читателю эту книгу, а также книги того же автора или близкие по манере и стилю произведения, которые читатель терпеть не может! Если читатель спрашивает про криптонит — объясни, почему эта книга могла ему не зайти, и предложи диаметрально противоположные или более подходящие по осям альтернативы.`)
+      }
+
+      lines.push(``)
+      lines.push(`Помоги читателю осмыслить свой архетип, сильные и парадоксальные стороны вкуса и подбери книги в точности под его баланс 6 осей.`)
       sections.push(lines.join('\n'))
     }
   }

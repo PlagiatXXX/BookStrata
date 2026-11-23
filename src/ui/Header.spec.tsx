@@ -106,7 +106,7 @@ describe("Header — «Полка» и «Угостить» выделены в 
     expect(labels.join(" ")).toContain("Новости");
   });
 
-  it("пункт «Книжный ДНК» для обычных пользователей имеет бейдж «Новинка» и не кликабелен (десктоп и мобайл)", async () => {
+  it("пункт «Книжный ДНК» для обычных пользователей и гостей имеет бейдж «Новинка» и ведёт на /reading-dna (десктоп и мобайл)", async () => {
     const user = userEvent.setup();
     renderHeader();
 
@@ -115,29 +115,19 @@ describe("Header — «Полка» и «Угостить» выделены в 
     for (const btn of dnaBtns) {
       expect(btn).toBeInTheDocument();
       expect(btn).toHaveTextContent("Новинка");
-      expect(btn).toBeDisabled();
-      await user.click(btn);
-    }
-    expect(screen.getByTestId("location-path").textContent).toBe("/");
-  });
-
-  it("пункт «Книжный ДНК» для администратора кликабелен и ведет на /reading-dna", async () => {
-    const user = userEvent.setup();
-    vi.mocked(useAuth).mockReturnValue({
-      isAuthenticated: true,
-      user: { userId: 1, username: "admin", role: "admin" },
-      logout: vi.fn(),
-    } as unknown as ReturnType<typeof useAuth>);
-
-    renderHeader();
-
-    const dnaBtns = screen.getAllByRole("button", { name: /Книжный ДНК/i });
-    expect(dnaBtns.length).toBe(2);
-    for (const btn of dnaBtns) {
       expect(btn).not.toBeDisabled();
     }
 
     await user.click(dnaBtns[0]);
+    expect(screen.getByTestId("location-path").textContent).toBe("/reading-dna");
+  });
+
+  it("пункт «Книжный ДНК» в мобильном хедере ведёт на /reading-dna", async () => {
+    const user = userEvent.setup();
+    renderHeader();
+
+    const dnaBtns = screen.getAllByRole("button", { name: /Книжный ДНК/i });
+    await user.click(dnaBtns[1]);
     expect(screen.getByTestId("location-path").textContent).toBe("/reading-dna");
   });
 });

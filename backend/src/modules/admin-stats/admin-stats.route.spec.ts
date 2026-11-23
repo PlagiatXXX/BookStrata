@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import request from "supertest";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 
@@ -63,12 +62,14 @@ describe("Admin Stats Routes", () => {
       (prisma.tierList.count as any).mockResolvedValue(200);
       (prisma.feedback.count as any).mockResolvedValue(15);
 
-      const res = await request(app.server)
-        .get("/api/admin/stats")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/stats",
+        headers: { authorization: "Bearer admin-token" },
+      });
 
-      expect(res.body.data).toEqual({
+      expect(res.statusCode).toBe(200);
+      expect(res.json().data).toEqual({
         totalUsers: 42,
         proUsers: 42,
         activeNews: 7,
@@ -79,16 +80,20 @@ describe("Admin Stats Routes", () => {
     });
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      await request(app.server)
-        .get("/api/admin/stats")
-        .set("Authorization", "Bearer user-token")
-        .expect(403);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/stats",
+        headers: { authorization: "Bearer user-token" },
+      });
+      expect(res.statusCode).toBe(403);
     });
 
     it("должен вернуть 401 без авторизации", async () => {
-      await request(app.server)
-        .get("/api/admin/stats")
-        .expect(401);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/admin/stats",
+      });
+      expect(res.statusCode).toBe(401);
     });
   });
 });

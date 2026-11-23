@@ -300,7 +300,7 @@ export const Header = ({
     {
       label: "Книжный ДНК",
       analyticsKey: "reading_dna",
-      onClick: isAdmin ? () => navigate("/reading-dna") : undefined,
+      onClick: () => navigate("/reading-dna"),
       description: "Определи свой читательский код",
       badge: "Новинка",
     },
@@ -440,11 +440,8 @@ export const Header = ({
             <div className="md:hidden flex items-center justify-center flex-1 px-1">
               <button
                 data-analytics="nav.mobile.reading_dna"
-                onClick={isAdmin ? () => navigate("/reading-dna") : undefined}
-                disabled={!isAdmin}
-                className={`group relative px-2 py-1 rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                  isAdmin ? "cursor-pointer" : "cursor-not-allowed opacity-90"
-                } ${
+                onClick={() => navigate("/reading-dna")}
+                className={`group relative px-2 py-1 rounded-lg transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                   activeItem === "Книжный ДНК"
                     ? isLightTheme
                       ? "text-cyan-700 bg-cyan-50/60"

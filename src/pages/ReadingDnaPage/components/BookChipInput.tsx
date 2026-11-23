@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Search, Loader2, ArrowRight } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { searchCatalogBooks, type CatalogBook } from "@/lib/bookApi";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Search, Loader2, ArrowRight, Globe, X } from "lucide-react";
+import { useBookSearch } from "@/hooks/useBookSearch";
+import { searchCatalogBooks } from "@/lib/bookApi";
+import type { OpenLibraryBook } from "@/lib/bookSearchApi";
 import type { DnaBookItemData } from "@/lib/readingDnaApi";
 
 export interface BookChipInputProps {
@@ -24,36 +25,61 @@ export interface BookSlotMeta {
   isKryptonite?: boolean;
 }
 
+function parseTitleAndAuthor(raw: string): { title: string; author?: string } {
+  const cleaned = raw.trim();
+  const match = cleaned.match(/^(.+?)\s+[—–-]\s+(.+)$/);
+  if (match && match[1]?.trim() && match[2]?.trim()) {
+    return {
+      title: match[1].trim().replace(/^["«']|["»']$/g, ""),
+      author: match[2].trim().replace(/^["«']|["»']$/g, ""),
+    };
+  }
+  return { title: cleaned };
+}
+
 const BOOK_SLOTS: BookSlotMeta[] = [
   {
     slot: 1,
     badge: "1/4",
     role: "Главная святыня",
     desc: "Книга, которая сформировала ваш литературный вкус или перевернула сознание",
-    placeholder: "Название книги (главная святыня)",
+    placeholder: "Название книги или «Название — Автор» (главная святыня)",
   },
   {
     slot: 2,
     badge: "2/4",
     role: "Любимый шедевр",
     desc: "Книга, к которой вы возвращаетесь и готовы перечитывать снова и снова",
-    placeholder: "Название книги (любимый шедевр)",
+    placeholder: "Название книги или «Название — Автор» (любимый шедевр)",
   },
   {
     slot: 3,
     badge: "3/4",
     role: "Личное сокровище",
     desc: "Книга, которую вы горячо рекомендуете близким друзьям",
-    placeholder: "Название книги (личное сокровище)",
+    placeholder: "Название книги или «Название — Автор» (личное сокровище)",
   },
   {
     slot: 4,
     badge: "4/4",
     role: "Личный криптонит ☠",
     desc: "Книга, которую все превозносят, а вы бросили или терпеть не можете",
-    placeholder: "Название книги (криптонит: не зашла / бросили)",
+    placeholder: "Название книги или «Название — Автор» (криптонит)",
     isKryptonite: true,
   },
+];
+
+const QUICK_POPULAR_BOOKS: DnaBookItemData[] = [
+  { title: "Мастер и Маргарита", author: "Михаил Булгаков" },
+  { title: "1984", author: "Джордж Оруэлл" },
+  { title: "Преступление и наказание", author: "Фёдор Достоевский" },
+  { title: "Дюна", author: "Фрэнк Герберт" },
+  { title: "Гарри Поттер и философский камень", author: "Дж. К. Роулинг" },
+  { title: "Маленький принц", author: "Антуан де Сент-Экзюпери" },
+  { title: "Три товарища", author: "Эрих Мария Ремарк" },
+  { title: "Цветы для Элджернона", author: "Дэниел Киз" },
+  { title: "Властелин колец", author: "Дж. Р. Р. Толкин" },
+  { title: "Портрет Дориана Грея", author: "Оскар Уайльд" },
 ];
 
 const DEBOUNCE_MS = 250;
@@ -67,29 +93,49 @@ export function BookChipInput({
 }: BookChipInputProps) {
   const isDark = theme === "dark";
   const [inputValue, setInputValue] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [manualAuthor, setManualAuthor] = useState("");
+  const [isManualAuthorOpen, setIsManualAuthorOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [loadingQuickTitle, setLoadingQuickTitle] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Единый параллельный поиск через канонический хук с кэшированием в localStorage
+  const {
+    search,
+    results: searchResults,
+    isLoading,
+    clearResults,
+  } = useBookSearch({ cacheEnabled: true, requireCover: false });
+
+  const lastSearchedRef = useRef("");
 
   // Debounce для автокомплита
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      setDebouncedQuery(inputValue);
+      const trimmed = inputValue.trim();
+      if (trimmed.length >= 2 && isOpen) {
+        lastSearchedRef.current = trimmed;
+        search(trimmed);
+      } else if (trimmed.length < 2) {
+        clearResults();
+      }
     }, DEBOUNCE_MS);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [inputValue]);
+  }, [inputValue, isOpen, search, clearResults]);
 
-  // Запрос в каталог BookStrata
-  const { data: results = [], isLoading } = useQuery({
-    queryKey: ["catalog-search", "chip-input", debouncedQuery],
-    queryFn: () => searchCatalogBooks(debouncedQuery, 5),
-    enabled: isOpen && debouncedQuery.trim().length >= 2,
-    staleTime: 60_000,
-  });
+  const catalogResults = useMemo(
+    () => searchResults.filter((b) => b.source === "bookstrata"),
+    [searchResults]
+  );
+
+  const worldResults = useMemo(
+    () => searchResults.filter((b) => b.source !== "bookstrata"),
+    [searchResults]
+  );
 
   // Закрытие выпадающего списка при клике снаружи
   useEffect(() => {
@@ -99,6 +145,7 @@ export function BookChipInput({
         !containerRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
+        setIsManualAuthorOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -120,33 +167,85 @@ export function BookChipInput({
       }
 
       setInputValue("");
+      setManualAuthor("");
+      setIsManualAuthorOpen(false);
       setIsOpen(false);
+      clearResults();
     },
-    [books, kryptonite, onChange]
+    [books, kryptonite, onChange, clearResults]
+  );
+
+  const handleSelectBook = useCallback(
+    (book: OpenLibraryBook) => {
+      handleAddBook({
+        title: book.title,
+        author: book.author || undefined,
+        bookId:
+          book.source === "bookstrata" && book.externalId
+            ? Number(book.externalId)
+            : undefined,
+        coverImageUrl: book.coverUrlLarge || book.coverUrl || undefined,
+      });
+    },
+    [handleAddBook]
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        if (inputValue.trim()) {
-          handleAddBook({ title: inputValue.trim() });
+        const trimmed = inputValue.trim();
+        if (!trimmed) return;
+
+        // Если выпадающий список открыт и есть результаты — выбираем первый результат
+        if (isOpen && searchResults.length > 0) {
+          handleSelectBook(searchResults[0]);
+          return;
         }
+
+        const parsed = parseTitleAndAuthor(trimmed);
+        handleAddBook(parsed);
       }
     },
-    [inputValue, handleAddBook]
+    [inputValue, isOpen, searchResults, handleSelectBook, handleAddBook]
   );
 
-  const handleSelectCatalogBook = useCallback(
-    (catalogBook: CatalogBook) => {
-      handleAddBook({
-        title: catalogBook.title,
-        author: catalogBook.author || undefined,
-        bookId: catalogBook.id,
-        coverImageUrl: catalogBook.coverImageUrl || undefined,
-      });
+  const handleSelectQuickBook = useCallback(
+    async (book: DnaBookItemData) => {
+      if (loadingQuickTitle) return;
+      setLoadingQuickTitle(book.title);
+      try {
+        const matches = await searchCatalogBooks(book.title, 5);
+        const targetTitle = book.title.trim().toLowerCase();
+        const exactMatch =
+          matches.find(
+            (m) => m.title.trim().toLowerCase() === targetTitle && Boolean(m.coverImageUrl)
+          ) ||
+          matches.find((m) => m.title.trim().toLowerCase() === targetTitle) ||
+          matches.find(
+            (m) =>
+              m.title.trim().toLowerCase().includes(targetTitle) && Boolean(m.coverImageUrl)
+          ) ||
+          matches.find((m) => Boolean(m.coverImageUrl)) ||
+          matches[0];
+
+        if (exactMatch) {
+          handleAddBook({
+            title: exactMatch.title,
+            author: exactMatch.author || book.author,
+            bookId: exactMatch.id,
+            coverImageUrl: exactMatch.coverImageUrl || undefined,
+          });
+          return;
+        }
+      } catch {
+        // Fallback: добавляем книгу без данных каталога
+      } finally {
+        setLoadingQuickTitle(null);
+      }
+      handleAddBook(book);
     },
-    [handleAddBook]
+    [handleAddBook, loadingQuickTitle]
   );
 
   const handleRemoveFavorite = useCallback(
@@ -166,6 +265,16 @@ export function BookChipInput({
   const isFull = currentBooks.length >= 3 && kryptonite !== null;
   const currentSlotNumber = currentBooks.length < 3 ? currentBooks.length + 1 : 4;
   const currentSlot = BOOK_SLOTS[currentSlotNumber - 1]!;
+
+  const selectedTitles = new Set(
+    [
+      ...currentBooks.map((b) => b.title.trim().toLowerCase()),
+      ...(kryptonite ? [kryptonite.title.trim().toLowerCase()] : []),
+    ]
+  );
+  const availableQuickBooks = QUICK_POPULAR_BOOKS.filter(
+    (b) => !selectedTitles.has(b.title.trim().toLowerCase())
+  );
 
   return (
     <div ref={containerRef} className={`space-y-3 ${className}`}>
@@ -272,7 +381,14 @@ export function BookChipInput({
             {inputValue.trim().length > 0 && (
               <button
                 type="button"
-                onClick={() => handleAddBook({ title: inputValue.trim() })}
+                onClick={() => {
+                  if (searchResults.length > 0) {
+                    handleSelectBook(searchResults[0]);
+                  } else {
+                    const parsed = parseTitleAndAuthor(inputValue);
+                    handleAddBook(parsed);
+                  }
+                }}
                 aria-label="Подтвердить добавление книги"
                 title="Подтвердить добавление книги"
                 className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95 z-10 ${
@@ -290,33 +406,34 @@ export function BookChipInput({
             {/* Выпадающий список подсказок */}
             {isOpen && (
               <div
-                className={`absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border shadow-xl max-h-60 overflow-y-auto py-1 text-xs backdrop-blur-md ${
+                className={`absolute top-full left-0 right-0 mt-1 z-30 rounded-xl border shadow-xl max-h-72 overflow-y-auto py-1 text-xs backdrop-blur-md ${
                   isDark
                     ? "bg-[#2a1a10]/95 border-[#c9a35b]/40 text-[#efe3cc]"
                     : "bg-white/95 border-[#3b6ea8]/40 text-[#2e2a24]"
                 }`}
               >
-                {results.length > 0 && (
+                {/* 1. Секция каталога BookStrata */}
+                {catalogResults.length > 0 && (
                   <>
                     <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider opacity-60 border-b border-current/10 flex items-center justify-between">
                       <span>Каталог BookStrata</span>
                       <Search size={10} />
                     </div>
 
-                    {results.map((book) => (
+                    {catalogResults.map((book) => (
                       <button
-                        key={book.id}
+                        key={book.openLibraryKey || book.title}
                         type="button"
-                        onClick={() => handleSelectCatalogBook(book)}
+                        onClick={() => handleSelectBook(book)}
                         className={`w-full px-3 py-2 text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
                           isDark
                             ? "hover:bg-[#c9a35b]/20 focus:bg-[#c9a35b]/20"
                             : "hover:bg-[#3b6ea8]/10 focus:bg-[#3b6ea8]/10"
                         }`}
                       >
-                        {book.coverImageUrl ? (
+                        {book.coverUrlLarge || book.coverUrl ? (
                           <img
-                            src={book.coverImageUrl}
+                            src={book.coverUrlLarge || book.coverUrl || ""}
                             alt={book.title}
                             className="w-6 h-8 object-cover rounded shadow-xs shrink-0"
                           />
@@ -344,37 +461,227 @@ export function BookChipInput({
                   </>
                 )}
 
-                {/* Опция добавить введенное название как свою книгу */}
+                {/* Индикатор загрузки поиска */}
+                {isLoading && (
+                  <div className="px-3 py-2 text-[11px] opacity-65 flex items-center gap-2">
+                    <Loader2 size={12} className="animate-spin" />
+                    <span>Ищем в каталоге и мировой библиотеке...</span>
+                  </div>
+                )}
+
+                {/* 2. Секция Google Books */}
+                {worldResults.length > 0 && (
+                  <>
+                    <div
+                      className={`px-3 py-1 text-[10px] font-mono uppercase tracking-wider opacity-60 flex items-center justify-between ${
+                        catalogResults.length > 0 ? "border-t border-current/10" : "border-b border-current/10"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1">
+                        <Globe size={11} className={isDark ? "text-[#f4d03f]" : "text-[#3b6ea8]"} />
+                        <span>Мировая библиотека (Google Books)</span>
+                      </span>
+                      <span className="text-[9px] opacity-60 font-mono">мировая база</span>
+                    </div>
+
+                    {worldResults.map((gb, idx) => (
+                      <button
+                        key={`${gb.openLibraryKey || gb.title}-${idx}`}
+                        type="button"
+                        onClick={() => handleSelectBook(gb)}
+                        className={`w-full px-3 py-2 text-left flex items-center gap-2.5 transition-colors cursor-pointer ${
+                          isDark
+                            ? "hover:bg-[#c9a35b]/20 focus:bg-[#c9a35b]/20"
+                            : "hover:bg-[#3b6ea8]/10 focus:bg-[#3b6ea8]/10"
+                        }`}
+                      >
+                        {gb.coverUrlLarge || gb.coverUrl ? (
+                          <img
+                            src={gb.coverUrlLarge || gb.coverUrl || ""}
+                            alt={gb.title}
+                            className="w-6 h-8 object-cover rounded shadow-xs shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className={`w-6 h-8 rounded flex items-center justify-center text-xs shrink-0 border ${
+                              isDark
+                                ? "bg-[#1a110c] border-[#c9a35b]/30 text-[#c9a35b]"
+                                : "bg-stone-100 border-stone-300 text-stone-700"
+                            }`}
+                          >
+                            🌍
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold truncate text-xs">{gb.title}</div>
+                          <div className="text-[10px] opacity-70 truncate flex items-center gap-1.5">
+                            {gb.author && <span>{gb.author}</span>}
+                            {gb.publishYear && <span>· {gb.publishYear}</span>}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {/* 3. Секция ручного ввода со своей книгой и автором */}
                 {inputValue.trim().length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => handleAddBook({ title: inputValue.trim() })}
-                    className={`w-full px-3 py-2 text-left flex items-center gap-2 transition-colors cursor-pointer ${
-                      results.length > 0 ? "border-t border-current/10" : ""
-                    } ${
-                      currentSlot.isKryptonite
-                        ? "hover:bg-rose-500/20 text-rose-300"
-                        : isDark
-                          ? "hover:bg-[#c9a35b]/20 text-[#c9a35b]"
-                          : "hover:bg-[#3b6ea8]/10 text-[#3b6ea8]"
+                  <div
+                    className={`p-2 transition-colors ${
+                      catalogResults.length > 0 || worldResults.length > 0
+                        ? "border-t border-current/10"
+                        : ""
                     }`}
                   >
-                    <ArrowRight size={13} className="shrink-0" />
-                    <span className="truncate">
-                      Добавить «<strong className="font-semibold">{inputValue.trim()}</strong>»
-                    </span>
-                    <span className="text-[10px] opacity-60 ml-auto shrink-0 font-normal">
-                      {currentSlot.isKryptonite
-                        ? "как криптонит"
-                        : results.length === 0 && !isLoading
-                          ? "своя книга"
-                          : "свой вариант"}
-                    </span>
-                  </button>
+                    {!isManualAuthorOpen ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const parsed = parseTitleAndAuthor(inputValue);
+                            handleAddBook(parsed);
+                          }}
+                          className={`grow px-2 py-1.5 text-left flex items-center gap-2 rounded-lg transition-colors cursor-pointer ${
+                            currentSlot.isKryptonite
+                              ? "hover:bg-rose-500/20 text-rose-300"
+                              : isDark
+                                ? "hover:bg-[#c9a35b]/20 text-[#c9a35b]"
+                                : "hover:bg-[#3b6ea8]/10 text-[#3b6ea8]"
+                          }`}
+                        >
+                          <ArrowRight size={13} className="shrink-0" />
+                          <span className="truncate">
+                            Добавить «
+                            <strong className="font-semibold">
+                              {parseTitleAndAuthor(inputValue).title}
+                            </strong>
+                            »
+                            {parseTitleAndAuthor(inputValue).author && (
+                              <span className="opacity-75 italic text-[11px] ml-1">
+                                ({parseTitleAndAuthor(inputValue).author})
+                              </span>
+                            )}
+                          </span>
+                        </button>
+
+                        {!parseTitleAndAuthor(inputValue).author && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setManualAuthor("");
+                              setIsManualAuthorOpen(true);
+                            }}
+                            className={`shrink-0 px-2.5 py-1 text-[11px] rounded-md border font-medium cursor-pointer transition-all ${
+                              isDark
+                                ? "border-[rgba(201,163,91,0.35)] hover:bg-[#c9a35b]/15 text-[#efe3cc]"
+                                : "border-[rgba(59,110,168,0.35)] hover:bg-[#3b6ea8]/10 text-[#2e2a24]"
+                            }`}
+                          >
+                            + Указать автора
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5 p-2 rounded-lg border bg-black/15 border-current/15">
+                        <div className="text-[11px] font-semibold flex items-center justify-between">
+                          <span className="truncate">
+                            Книга: <strong>«{inputValue.trim()}»</strong>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsManualAuthorOpen(false)}
+                            className="opacity-60 hover:opacity-100 p-0.5 cursor-pointer"
+                            aria-label="Закрыть поле автора"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="Автор (например: Михаил Булгаков)"
+                            value={manualAuthor}
+                            onChange={(e) => setManualAuthor(e.target.value)}
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddBook({
+                                  title: inputValue.trim(),
+                                  author: manualAuthor.trim() || undefined,
+                                });
+                              }
+                            }}
+                            className={`grow px-2.5 py-1 text-xs rounded-md border bg-black/10 border-current/20 focus:outline-none ${
+                              isDark ? "text-[#efe3cc]" : "text-[#2e2a24]"
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleAddBook({
+                                title: inputValue.trim(),
+                                author: manualAuthor.trim() || undefined,
+                              });
+                            }}
+                            className={`px-3 py-1 text-xs font-bold rounded-md text-white cursor-pointer transition-all ${
+                              currentSlot.isKryptonite
+                                ? "bg-[#8a2433] hover:bg-[#a32b3d]"
+                                : isDark
+                                  ? "bg-[#c9a35b] text-[#1a110c] hover:bg-[#dfb76c]"
+                                  : "bg-[#3b6ea8] hover:bg-[#4d82c2]"
+                            }`}
+                          >
+                            Добавить
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
           </div>
+
+          {/* Быстрые популярные книги-подсказки в 1 клик */}
+          {availableQuickBooks.length > 0 && (
+            <div className="space-y-1.5 pt-0.5">
+              <span className="block text-[11px] opacity-65">
+                Быстрый выбор в 1 клик:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {availableQuickBooks.map((book) => {
+                  const isBusy = loadingQuickTitle === book.title;
+                  return (
+                    <button
+                      key={book.title}
+                      type="button"
+                      disabled={Boolean(loadingQuickTitle)}
+                      onClick={() => handleSelectQuickBook(book)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] border transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-wait ${
+                        currentSlot.isKryptonite
+                          ? isDark
+                            ? "border-rose-500/35 bg-rose-950/25 text-rose-200/90 hover:bg-rose-500/20"
+                            : "border-rose-300 bg-rose-50/70 text-rose-900 hover:bg-rose-100"
+                          : isDark
+                            ? "border-[rgba(201,163,91,0.3)] bg-[#24170f]/70 text-[#efe3cc]/90 hover:bg-[#c9a35b]/20"
+                            : "border-[rgba(59,110,168,0.3)] bg-white/80 text-[#2e2a24] hover:bg-[#3b6ea8]/10"
+                      }`}
+                    >
+                      {isBusy ? (
+                        <>
+                          <Loader2 size={11} className="animate-spin" />
+                          <span>{book.title}</span>
+                        </>
+                      ) : (
+                        `+ ${book.title}`
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -396,6 +703,11 @@ export function BookChipInput({
                 {meta.role}:
               </span>
               <span>{book.title}</span>
+              {book.author && (
+                <span className="opacity-75 text-[10px] font-normal italic truncate max-w-[140px]">
+                  ({book.author})
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => handleRemoveFavorite(idx)}
@@ -421,6 +733,11 @@ export function BookChipInput({
               Криптонит ☠:
             </span>
             <span>{kryptonite.title}</span>
+            {kryptonite.author && (
+              <span className="opacity-80 text-[10px] font-normal italic truncate max-w-[140px]">
+                ({kryptonite.author})
+              </span>
+            )}
             <button
               type="button"
               onClick={handleRemoveKryptonite}

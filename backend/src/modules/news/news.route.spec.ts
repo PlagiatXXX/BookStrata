@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import request from "supertest"
 import Fastify from "fastify"
 
 vi.mock("../../lib/prisma.js", () => {
@@ -99,11 +98,13 @@ describe("News Routes", () => {
       vi.mocked(prisma.newsArticle.findMany).mockResolvedValue([mockArticle] as any)
       vi.mocked(prisma.newsArticle.count).mockResolvedValue(1)
 
-      const res = await request(app.server)
-        .get("/api/news?page=1&limit=10")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/news?page=1&limit=10",
+      })
 
-      expect(res.body.data).toHaveLength(1)
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toHaveLength(1)
     })
 
     it("должен показывать только опубликованные для неавторизованных", async () => {
@@ -111,9 +112,10 @@ describe("News Routes", () => {
       vi.mocked(prisma.newsArticle.findMany).mockResolvedValue([])
       vi.mocked(prisma.newsArticle.count).mockResolvedValue(0)
 
-      await request(app.server)
-        .get("/api/news")
-        .expect(200)
+      await app.inject({
+        method: "GET",
+        url: "/api/news",
+      })
 
       expect(prisma.newsArticle.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { isPublished: true } }),
@@ -125,10 +127,11 @@ describe("News Routes", () => {
       vi.mocked(prisma.newsArticle.findMany).mockResolvedValue([])
       vi.mocked(prisma.newsArticle.count).mockResolvedValue(0)
 
-      await request(app.server)
-        .get("/api/news")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200)
+      await app.inject({
+        method: "GET",
+        url: "/api/news",
+        headers: { authorization: "Bearer admin-token" },
+      })
 
       const findManyCall = vi.mocked(prisma.newsArticle.findMany).mock.calls[0]?.[0]
       expect(findManyCall?.where).toEqual({})
@@ -140,11 +143,13 @@ describe("News Routes", () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.newsArticle.findMany).mockResolvedValue([mockArticle] as any)
 
-      const res = await request(app.server)
-        .get("/api/news/published")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/news/published",
+      })
 
-      expect(res.body.data).toHaveLength(1)
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toHaveLength(1)
     })
   })
 
@@ -153,20 +158,25 @@ describe("News Routes", () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.newsArticle.findFirst).mockResolvedValue(mockArticle as any)
 
-      const res = await request(app.server)
-        .get("/api/news/1")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/news/1",
+      })
 
-      expect(res.body.data.title).toBe("Test News")
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data.title).toBe("Test News")
     })
 
     it("должен вернуть 404 если новость не найдена", async () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.newsArticle.findFirst).mockResolvedValue(null)
 
-      await request(app.server)
-        .get("/api/news/999")
-        .expect(404)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/news/999",
+      })
+
+      expect(res.statusCode).toBe(404)
     })
   })
 
@@ -175,32 +185,40 @@ describe("News Routes", () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.newsArticle.create).mockResolvedValue(mockArticle as any)
 
-      const res = await request(app.server)
-        .post("/api/news")
-        .set("Authorization", "Bearer admin-token")
-        .send({
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news",
+        headers: { authorization: "Bearer admin-token" },
+        payload: {
           title: "Test News",
           content: "Content here with enough length for validation",
           excerpt: "Excerpt",
-        })
-        .expect(201)
+        },
+      })
 
-      expect(res.body.data.message).toBe("Новость создана")
+      expect(res.statusCode).toBe(201)
+      expect(res.json().data.message).toBe("Новость создана")
     })
 
     it("должен вернуть 400 при неверных данных", async () => {
-      await request(app.server)
-        .post("/api/news")
-        .set("Authorization", "Bearer admin-token")
-        .send({ title: "" })
-        .expect(400)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { title: "" },
+      })
+
+      expect(res.statusCode).toBe(400)
     })
 
     it("должен вернуть 403 без авторизации", async () => {
-      await request(app.server)
-        .post("/api/news")
-        .send({ title: "Test", content: "x".repeat(20) })
-        .expect(403)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news",
+        payload: { title: "Test", content: "x".repeat(20) },
+      })
+
+      expect(res.statusCode).toBe(403)
     })
   })
 
@@ -210,22 +228,28 @@ describe("News Routes", () => {
       vi.mocked(prisma.newsArticle.findFirst).mockResolvedValue({ id: "1" } as any)
       vi.mocked(prisma.newsArticle.update).mockResolvedValue(mockArticle as any)
 
-      await request(app.server)
-        .put("/api/news/1")
-        .set("Authorization", "Bearer admin-token")
-        .send({ title: "Updated" })
-        .expect(200)
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/news/1",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { title: "Updated" },
+      })
+
+      expect(res.statusCode).toBe(200)
     })
 
     it("должен вернуть 404 если новость не найдена", async () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.newsArticle.findFirst).mockResolvedValue(null)
 
-      await request(app.server)
-        .put("/api/news/999")
-        .set("Authorization", "Bearer admin-token")
-        .send({ title: "Updated" })
-        .expect(404)
+      const res = await app.inject({
+        method: "PUT",
+        url: "/api/news/999",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { title: "Updated" },
+      })
+
+      expect(res.statusCode).toBe(404)
     })
   })
 
@@ -235,10 +259,13 @@ describe("News Routes", () => {
       vi.mocked(prisma.newsArticle.findFirst).mockResolvedValue({ id: "1" } as any)
       vi.mocked(prisma.newsArticle.delete).mockResolvedValue({} as any)
 
-      await request(app.server)
-        .delete("/api/news/1")
-        .set("Authorization", "Bearer admin-token")
-        .expect(200)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/news/1",
+        headers: { authorization: "Bearer admin-token" },
+      })
+
+      expect(res.statusCode).toBe(200)
     })
   })
 
@@ -248,13 +275,15 @@ describe("News Routes", () => {
       vi.mocked(prisma.newsArticle.findFirst).mockResolvedValue({ id: "1" } as any)
       vi.mocked(prisma.newsArticle.update).mockResolvedValue({ ...mockArticle, isPublished: true } as any)
 
-      const res = await request(app.server)
-        .post("/api/news/1/publish")
-        .set("Authorization", "Bearer admin-token")
-        .send({ isPublished: true })
-        .expect(200)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news/1/publish",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { isPublished: true },
+      })
 
-      expect(res.body.data.message).toBe("Статус публикации изменён")
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data.message).toBe("Статус публикации изменён")
     })
   })
 
@@ -270,38 +299,44 @@ describe("News Routes", () => {
       vi.mocked(assertImageAllowed).mockResolvedValue(null)
       vi.mocked(uploadBase64).mockResolvedValue({ url: "https://cdn.example.com/news/1.webp", publicId: "1" } as any)
 
-      const res = await request(app.server)
-        .post("/api/news/upload-image")
-        .set("Authorization", "Bearer admin-token")
-        .send({ imageUrl: base64 })
-        .expect(200)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news/upload-image",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { imageUrl: base64 },
+      })
 
-      expect(res.body.data.imageUrl).toBe("https://cdn.example.com/news/1.webp")
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data.imageUrl).toBe("https://cdn.example.com/news/1.webp")
       expect(uploadBase64).toHaveBeenCalledWith(base64, "tiermaker-pro/news-images")
       expect(assertImageAllowed).toHaveBeenCalledWith(base64)
     })
 
     it("должен вернуть 400 при не-base64 данных", async () => {
-      const res = await request(app.server)
-        .post("/api/news/upload-image")
-        .set("Authorization", "Bearer admin-token")
-        .send({ imageUrl: "https://example.com/pic.jpg" })
-        .expect(400)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news/upload-image",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { imageUrl: "https://example.com/pic.jpg" },
+      })
 
-      expect(res.body.error.code).toBe("invalid_format")
+      expect(res.statusCode).toBe(400)
+      expect(res.json().error.code).toBe("invalid_format")
     })
 
     it("должен вернуть 400 при превышении размера", async () => {
       const { validateImageSize } = await import("../../lib/validators.js")
       vi.mocked(validateImageSize).mockReturnValue("Файл слишком большой")
 
-      const res = await request(app.server)
-        .post("/api/news/upload-image")
-        .set("Authorization", "Bearer admin-token")
-        .send({ imageUrl: base64 })
-        .expect(400)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news/upload-image",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { imageUrl: base64 },
+      })
 
-      expect(res.body.error.code).toBe("validation_error")
+      expect(res.statusCode).toBe(400)
+      expect(res.json().error.code).toBe("validation_error")
     })
 
     it("должен вернуть 400 при NSFW-контенте", async () => {
@@ -311,13 +346,15 @@ describe("News Routes", () => {
       vi.mocked(validateImageSize).mockReturnValue(null)
       vi.mocked(assertImageAllowed).mockResolvedValue("Изображение содержит NSFW-контент")
 
-      const res = await request(app.server)
-        .post("/api/news/upload-image")
-        .set("Authorization", "Bearer admin-token")
-        .send({ imageUrl: base64 })
-        .expect(400)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news/upload-image",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { imageUrl: base64 },
+      })
 
-      expect(res.body.error.code).toBe("nsfw_content")
+      expect(res.statusCode).toBe(400)
+      expect(res.json().error.code).toBe("nsfw_content")
     })
 
     it("должен вернуть 500 при ошибке хранилища", async () => {
@@ -329,20 +366,25 @@ describe("News Routes", () => {
       vi.mocked(assertImageAllowed).mockResolvedValue(null)
       vi.mocked(uploadBase64).mockRejectedValue(new Error("S3 down"))
 
-      const res = await request(app.server)
-        .post("/api/news/upload-image")
-        .set("Authorization", "Bearer admin-token")
-        .send({ imageUrl: base64 })
-        .expect(500)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news/upload-image",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { imageUrl: base64 },
+      })
 
-      expect(res.body.error.code).toBe("upload_failed")
+      expect(res.statusCode).toBe(500)
+      expect(res.json().error.code).toBe("upload_failed")
     })
 
     it("должен вернуть 403 без роли", async () => {
-      await request(app.server)
-        .post("/api/news/upload-image")
-        .send({ imageUrl: base64 })
-        .expect(403)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/news/upload-image",
+        payload: { imageUrl: base64 },
+      })
+
+      expect(res.statusCode).toBe(403)
     })
   })
 })

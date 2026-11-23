@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import request from "supertest"
 import Fastify from "fastify"
 
 vi.mock("../../lib/prisma.js", () => {
@@ -64,11 +63,13 @@ describe("Donors Routes", () => {
         { id: 1, name: "Иван" },
       ] as any)
 
-      const res = await request(app.server)
-        .get("/api/donors")
-        .expect(200)
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/donors",
+      })
 
-      expect(res.body.data).toHaveLength(1)
+      expect(res.statusCode).toBe(200)
+      expect(res.json().data).toHaveLength(1)
     })
   })
 
@@ -77,21 +78,25 @@ describe("Donors Routes", () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.donor.create).mockResolvedValue({ id: 1, name: "Иван" } as any)
 
-      const res = await request(app.server)
-        .post("/api/donors")
-        .set("Authorization", "Bearer admin-token")
-        .send({ name: "Иван" })
-        .expect(201)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/donors",
+        headers: { authorization: "Bearer admin-token" },
+        payload: { name: "Иван" },
+      })
 
-      expect(res.body.data.name).toBe("Иван")
+      expect(res.statusCode).toBe(201)
+      expect(res.json().data.name).toBe("Иван")
     })
 
     it("должен вернуть 403 для обычного пользователя", async () => {
-      await request(app.server)
-        .post("/api/donors")
-        .set("Authorization", "Bearer user-token")
-        .send({ name: "Иван" })
-        .expect(403)
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/donors",
+        headers: { authorization: "Bearer user-token" },
+        payload: { name: "Иван" },
+      })
+      expect(res.statusCode).toBe(403)
     })
   })
 
@@ -100,20 +105,26 @@ describe("Donors Routes", () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.donor.delete).mockResolvedValue({ id: 1 } as any)
 
-      await request(app.server)
-        .delete("/api/donors/1")
-        .set("Authorization", "Bearer admin-token")
-        .expect(204)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/donors/1",
+        headers: { authorization: "Bearer admin-token" },
+      })
+
+      expect(res.statusCode).toBe(204)
     })
 
     it("должен вернуть 404 если донатер не найден", async () => {
       const { prisma } = await import("../../lib/prisma.js")
       vi.mocked(prisma.donor.delete).mockRejectedValue(new Error("Not found"))
 
-      await request(app.server)
-        .delete("/api/donors/999")
-        .set("Authorization", "Bearer admin-token")
-        .expect(404)
+      const res = await app.inject({
+        method: "DELETE",
+        url: "/api/donors/999",
+        headers: { authorization: "Bearer admin-token" },
+      })
+
+      expect(res.statusCode).toBe(404)
     })
   })
 })

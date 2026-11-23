@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useSyncExternalStore } from 'react'
-import { Send, X, RotateCcw, Wifi, WifiOff, Loader, LogIn } from 'lucide-react'
+import { Send, X, RotateCcw, Wifi, WifiOff, Loader, LogIn, AlertCircle, Edit3 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { useAiLibrarian, type AiStatus } from '@/hooks/useAiLibrarian'
@@ -36,6 +36,12 @@ const SUGGESTIONS_BY_CONTEXT: Record<string, readonly Suggestion[]> = {
     { emoji: '🎯', label: 'Подбери книгу под настроение' },
     { emoji: '🧭', label: 'Что нового я могу открыть?' },
   ] as const,
+  'reading-dna': [
+    { emoji: '🧬', label: 'Разбери мой читательский архетип' },
+    { emoji: '🎯', label: 'Посоветуй книги под мои 6 осей ДНК' },
+    { emoji: '☠', label: 'Что почитать взамен моего криптонита?' },
+    { emoji: '⚖', label: 'В чём главная особенность моего вкуса?' },
+  ] as const,
   default: [
     { emoji: '📚', label: 'Что почитать из классики?' },
     { emoji: '🔥', label: 'Посоветуй бестселлер' },
@@ -55,6 +61,7 @@ const WELCOME_BY_CONTEXT: Record<string, string> = {
   collection: 'Я проанализировал эту подборку и могу рассказать, какие книги в неё входят и почему они здесь.',
   celebrity: 'Я проанализировал подборку этой знаменитости и могу рассказать, какие книги в неё вошли.',
   rankings: 'Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.',
+  'reading-dna': 'Я изучил твой читательский билет и готов разобрать литературный ДНК, подобрать книги по осям вкуса или найти альтернативу криптониту.',
   default: 'Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.',
 }
 
@@ -384,6 +391,8 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
     error,
     status,
     sendMessage,
+    retryLastMessage,
+    editLastMessage,
     clearMessages,
     refreshStatus,
     switchSession,
@@ -395,6 +404,21 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
   const isMobile = useIsMobile()
   const suggestions = getSuggestions(context)
   const welcomeMessage = getWelcomeMessage(context)
+
+  const handleRetry = useCallback(async () => {
+    if (isStreaming) return
+    await retryLastMessage(context)
+  }, [isStreaming, retryLastMessage, context])
+
+  const handleEdit = useCallback(() => {
+    const text = editLastMessage()
+    if (text) {
+      setInput(text)
+      setTimeout(() => {
+        textareaRef.current?.focus()
+      }, 50)
+    }
+  }, [editLastMessage])
 
   const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
@@ -621,9 +645,38 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-red-500/20 bg-red-500/8 px-4 py-2.5 text-sm text-red-400"
+                    className="rounded-xl border border-red-500/25 bg-red-500/10 p-3.5 space-y-2.5"
                   >
-                    {error}
+                    <div className="flex items-start gap-2.5 text-sm text-red-300">
+                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
+                      <p className="leading-snug flex-1">{error}</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={handleRetry}
+                        disabled={isStreaming}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 text-red-200 hover:bg-red-500/30 border border-red-500/30 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-red-400 focus:outline-none"
+                      >
+                        {isStreaming ? (
+                          <Loader className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        )}
+                        <span>Повторить запрос</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleEdit}
+                        disabled={isStreaming}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 text-[#d4d4d4] hover:bg-white/10 hover:text-white border border-white/10 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-cyan-400 focus:outline-none"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        <span>Редактировать</span>
+                      </button>
+                    </div>
                   </motion.div>
                 )}
 
