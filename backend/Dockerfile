@@ -15,6 +15,15 @@
 # Prisma 4.x engine требует libssl.so.1.1. На Debian 12 (Bookworm)
 # только OpenSSL 3.0, а на Bullseye — 1.1 из коробки.
 
+# ---------- Stage 0: Шрифты DejaVu для sharp ----------
+# Используем актуальный Debian 12 (Bookworm) для чистой загрузки шрифтов с кириллицей,
+# избегая сетевых 404-ошибок устаревшего репозитория безопасности Debian 11 Bullseye.
+FROM debian:bookworm-slim AS font-provider
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends fonts-dejavu-core fontconfig && \
+    fc-cache -f && \
+    rm -rf /var/lib/apt/lists/*
+
 # ---------- Stage 1: Builder ----------
 FROM node:20-bullseye-slim AS builder
 
@@ -40,11 +49,10 @@ RUN npm run build
 # ---------- Stage 2: Production ----------
 FROM node:20-bullseye-slim AS production
 
-# Системный шрифт с кириллицей (DejaVu) для рендеринга SVG → PNG через sharp (OG-карточки Reading DNA)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core && \
-    fc-cache -f && \
-    rm -rf /var/lib/apt/lists/*
+# Системные шрифты DejaVu с кириллицей и fontconfig (из Bookworm без сетевых 404 в EOL Bullseye)
+COPY --from=font-provider /usr/share/fonts /usr/share/fonts
+COPY --from=font-provider /etc/fonts /etc/fonts
+COPY --from=font-provider /var/cache/fontconfig /var/cache/fontconfig
 
 # Статический бинарник ffmpeg (автономный, без лишних 189 apt-пакетов и без сетевых 404)
 COPY --from=mwader/static-ffmpeg:6.1 /ffmpeg /usr/local/bin/ffmpeg
