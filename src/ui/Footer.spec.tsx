@@ -182,4 +182,19 @@ describe("Footer", () => {
     const donateContainer = document.querySelector("[data-nosnippet]")
     expect(donateContainer).not.toBeNull()
   })
+
+  it("если VITE_DONATE_CARD_NUMBER не задан — кнопка доната не рендерится", () => {
+    const originalCard = import.meta.env.VITE_DONATE_CARD_NUMBER
+    try {
+      delete (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER
+      mockedGetDonors.mockResolvedValue([])
+      mockedGetCollections.mockResolvedValue([])
+
+      renderFooter()
+
+      expect(screen.queryByRole("button", { name: /Угостить автора кофе/i })).not.toBeInTheDocument()
+    } finally {
+      (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER = originalCard
+    }
+  })
 })

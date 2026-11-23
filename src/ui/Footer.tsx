@@ -52,7 +52,7 @@ function scrollToSection(id: string) {
 
 const mainLinks = [
   { href: "/", label: "Главная", analyticsKey: "home", icon: <List size={14} /> },
-  // { href: "/reading-dna", label: "Книжный ДНК", analyticsKey: "reading_dna", icon: <BookOpen size={14} /> }, // раскомментировать при публичном релизе Книжного ДНК
+  { href: "/reading-dna", label: "Книжный ДНК", analyticsKey: "reading_dna", icon: <BookOpen size={14} /> },
   { href: "/blog", label: "Блог", analyticsKey: "blog", icon: <BookOpen size={14} /> },
   { href: "/rankings", label: "Рейтинг книг", analyticsKey: "rankings", icon: <BarChart3 size={14} /> },
   { href: "/what-to-read", label: "Что почитать", analyticsKey: "what_to_read", icon: <BookOpen size={14} /> },
@@ -145,7 +145,7 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
     enabled: shouldFetchCollections,
   });
 
-  const cardNumber = "2204120127692388";
+  const cardNumber = import.meta.env.VITE_DONATE_CARD_NUMBER?.trim() || "";
 
   const handleCopyCard = async () => {
     try {
@@ -370,64 +370,66 @@ export const Footer = ({ variant }: { variant?: "default" | "landing" }) => {
               </div>
 
             {/* Donate button */}
-            <div className="relative flex justify-center" data-nosnippet>
-              <button
-                type="button"
-                id="donate-button"
-                data-analytics="cta.footer.donate"
-                onClick={toggleDonate}
-                className="group relative z-20 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#f6ebd7] px-5 py-2.5 text-sm font-medium text-slate-900 shadow-[0_0_25px_rgba(246,235,215,0.3)] transition-all hover:bg-white hover:scale-[1.02]"
-                aria-expanded={isDonateOpen}
-                aria-controls="donate-menu"
-              >
-                <CoffeeCup className="h-5 w-5 text-amber-700 shrink-0" />
-                <span>Угостить автора кофе</span>
-              </button>
-
-              {isDonateOpen && (
-                <div
-                  id="donate-menu"
-                  className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] max-h-[60dvh] overflow-y-auto rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-300 origin-bottom-right ${
-                    popupDirection === "below"
-                      ? "top-full mt-2"
-                      : "bottom-full mb-2"
-                  } pointer-events-auto scale-100 border-white/15 opacity-100 shadow-[0_20px_50px_rgba(0,0,0,0.5)] right-0`}
+            {cardNumber ? (
+              <div className="relative flex justify-center" data-nosnippet>
+                <button
+                  type="button"
+                  id="donate-button"
+                  data-analytics="cta.footer.donate"
+                  onClick={toggleDonate}
+                  className="group relative z-20 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#f6ebd7] px-5 py-2.5 text-sm font-medium text-slate-900 shadow-[0_0_25px_rgba(246,235,215,0.3)] transition-all hover:bg-white hover:scale-[1.02]"
+                  aria-expanded={isDonateOpen}
+                  aria-controls="donate-menu"
                 >
-                  <div className="relative p-5">
-                    <h4 className="text-base font-bold text-white">
-                      Угостить автора
-                    </h4>
-                    <p className="mt-2 text-xs text-white/60 leading-relaxed text-left">
-                      Ваша помощь помогает оплачивать сервера и делать BookStrata
-                      лучше. Спасибо, что вы с нами!
-                    </p>
+                  <CoffeeCup className="h-5 w-5 text-amber-700 shrink-0" />
+                  <span>Угостить автора кофе</span>
+                </button>
 
-                    <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2.5">
-                      <span className="font-mono text-xs font-bold text-white tracking-wider text-center sm:text-left">
-                        {cardNumber}
-                      </span>
-                      <button
-                        data-analytics="donate.footer.copy_card"
-                        onClick={handleCopyCard}
-                        className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-white/20 px-2 py-1.5 sm:py-1 text-[10px] font-medium text-white/80 transition-colors hover:bg-white/10 shrink-0"
-                        type="button"
-                        aria-label="Копировать номер карты"
-                      >
-                        {copied ? (
-                          <Check className="h-3 w-3 text-green-400" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                        {copied ? "Скопировано" : "Копировать"}
-                      </button>
+                {isDonateOpen && (
+                  <div
+                    id="donate-menu"
+                    className={`absolute z-10 w-[min(calc(100vw-3rem),320px)] max-h-[60dvh] overflow-y-auto rounded-2xl border bg-slate-900/95 backdrop-blur-md transition-all duration-300 origin-bottom-right ${
+                      popupDirection === "below"
+                        ? "top-full mt-2"
+                        : "bottom-full mb-2"
+                    } pointer-events-auto scale-100 border-white/15 opacity-100 shadow-[0_20px_50px_rgba(0,0,0,0.5)] right-0`}
+                  >
+                    <div className="relative p-5">
+                      <h4 className="text-base font-bold text-white">
+                        Угостить автора
+                      </h4>
+                      <p className="mt-2 text-xs text-white/60 leading-relaxed text-left">
+                        Ваша помощь помогает оплачивать сервера и делать BookStrata
+                        лучше. Спасибо, что вы с нами!
+                      </p>
+
+                      <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2.5">
+                        <span className="font-mono text-xs font-bold text-white tracking-wider text-center sm:text-left">
+                          {cardNumber}
+                        </span>
+                        <button
+                          data-analytics="donate.footer.copy_card"
+                          onClick={handleCopyCard}
+                          className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-white/20 px-2 py-1.5 sm:py-1 text-[10px] font-medium text-white/80 transition-colors hover:bg-white/10 shrink-0"
+                          type="button"
+                          aria-label="Копировать номер карты"
+                        >
+                          {copied ? (
+                            <Check className="h-3 w-3 text-green-400" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                          {copied ? "Скопировано" : "Копировать"}
+                        </button>
+                      </div>
+                      <p className="mt-1.5 text-[10px] text-white/40">
+                        ЮMoney
+                      </p>
                     </div>
-                    <p className="mt-1.5 text-[10px] text-white/40">
-                      ЮMoney
-                    </p>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
         </div>
