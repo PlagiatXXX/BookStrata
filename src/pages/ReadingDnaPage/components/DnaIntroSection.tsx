@@ -171,7 +171,8 @@ export function DnaIntroSection({
           >
             Расшифруйте свой литературный вкус по 6 осям, откройте свой архетип из 4 великих
             Орденов, получите персональный винтажный читательский билет и сравните читательские
-            вкусы с друзьями.
+            вкусы с друзьями. Хотите узнать, какой вы читатель? Пройдите тест «Какой я читатель» —
+            и получите свой читательский ДНК.
           </p>
 
           {/* Информационные плашки фич */}
@@ -240,7 +241,7 @@ export function DnaIntroSection({
               <button
                 type="button"
                 onClick={onGoToTicket ?? onStartTest}
-                className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl text-xs sm:text-base font-semibold transition-all shadow-lg cursor-pointer bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:shadow-amber-900/50 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl text-xs sm:text-base font-semibold transition-all shadow-lg cursor-pointer bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:shadow-amber-900/50 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Ticket size={18} className="shrink-0" />
                 <span>Мой билет №{userTicket?.ticketNumber}</span>
@@ -277,10 +278,10 @@ export function DnaIntroSection({
               <button
                 type="button"
                 onClick={onStartTest}
-                className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl text-xs sm:text-base font-semibold transition-all shadow-lg cursor-pointer bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:shadow-amber-900/50 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl text-xs sm:text-base font-semibold transition-all shadow-lg cursor-pointer bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:shadow-amber-900/50 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Compass size={18} className="shrink-0" />
-                <span>Начать тест (3 минуты)</span>
+                <span>Начать тест (2 минуты)</span>
                 <ArrowRight size={18} className="shrink-0" />
               </button>
 
@@ -323,7 +324,7 @@ export function DnaIntroSection({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5">
           {/* Шаг 1 */}
           <div
-            className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all hover:translate-y-[-2px] ${
+            className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all hover:-translate-y-0.5 ${
               isDark
                 ? "bg-[#23170e]/80 border-amber-900/40 text-amber-100 shadow-lg"
                 : "bg-[#fffdf7] border-[#d8c7a5] text-[#2e2a24] shadow-sm"
@@ -347,7 +348,7 @@ export function DnaIntroSection({
 
           {/* Шаг 2 */}
           <div
-            className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all hover:translate-y-[-2px] ${
+            className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all hover:-translate-y-0.5 ${
               isDark
                 ? "bg-[#23170e]/80 border-amber-900/40 text-amber-100 shadow-lg"
                 : "bg-[#fffdf7] border-[#d8c7a5] text-[#2e2a24] shadow-sm"
@@ -371,7 +372,7 @@ export function DnaIntroSection({
 
           {/* Шаг 3 */}
           <div
-            className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all hover:translate-y-[-2px] ${
+            className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl border transition-all hover:-translate-y-0.5 ${
               isDark
                 ? "bg-[#23170e]/80 border-amber-900/40 text-amber-100 shadow-lg"
                 : "bg-[#fffdf7] border-[#d8c7a5] text-[#2e2a24] shadow-sm"
@@ -626,7 +627,7 @@ export function DnaIntroSection({
                 </div>
 
                 {/* Тело карточки — запечатано туманом архива только для новичков без билета */}
-                <div className="relative mt-1 min-h-[120px] sm:min-h-[135px] flex items-center justify-center">
+                <div className="relative mt-1 min-h-30 sm:min-h-33.75 flex items-center justify-center">
                   {isCardSealed ? (
                     <>
                       {/* Размытый текст для поисковых систем и скринридеров */}
@@ -743,8 +744,8 @@ export function DnaIntroSection({
       <section
         className={`p-4 sm:p-7 md:p-8 rounded-xl sm:rounded-2xl border text-left ${
           isDark
-            ? "bg-gradient-to-br from-[#23170e] to-[#1c120b] border-amber-900/50 text-amber-100"
-            : "bg-gradient-to-br from-[#fffdf7] to-[#f7f0e1] border-[#d8c7a5] text-[#2e2a24]"
+            ? "bg-linear-to-br from-[#23170e] to-[#1c120b] border-amber-900/50 text-amber-100"
+            : "bg-linear-to-br from-[#fffdf7] to-[#f7f0e1] border-[#d8c7a5] text-[#2e2a24]"
         }`}
       >
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-center">
@@ -814,7 +815,7 @@ export function DnaIntroSection({
               <button
                 type="button"
                 onClick={onGoToTicket ?? onStartTest}
-                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition-all shadow-xl cursor-pointer bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition-all shadow-xl cursor-pointer bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Ticket size={18} className="shrink-0" />
                 <span>Открыть мой билет</span>
@@ -837,7 +838,7 @@ export function DnaIntroSection({
             <button
               type="button"
               onClick={onStartTest}
-              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition-all shadow-xl cursor-pointer bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:scale-[1.02] active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold transition-all shadow-xl cursor-pointer bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-amber-900/30 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Compass size={18} className="shrink-0" />
               <span>Пройти тест прямо сейчас</span>
@@ -846,6 +847,220 @@ export function DnaIntroSection({
           )}
         </div>
       </section>
+
+      {/* ─── ЧАСТЫЕ ВОПРОСЫ ─── */}
+      <section className="space-y-4 sm:space-y-6 text-left">
+        <div className="text-center space-y-1.5 sm:space-y-2">
+          <h2
+            className={`text-lg sm:text-2xl md:text-3xl font-bold ${
+              isDark ? "text-amber-100" : "text-[#2e2a24]"
+            }`}
+          >
+            Частые вопросы
+          </h2>
+          <p
+            className={`text-xs sm:text-base max-w-2xl mx-auto ${
+              isDark ? "text-amber-200/70" : "text-[#423d33]"
+            }`}
+          >
+            Ответы на самые популярные вопросы о Книжном ДНК и читательском билете.
+          </p>
+        </div>
+
+        <div className="space-y-3 max-w-3xl mx-auto">
+          {[
+            {
+              q: "Какой я читатель?",
+              a: "Пройдите интерактивный тест из 6 вопросов с дилеммами — и алгоритм расшифрует ваш читательский ДНК по 6 осям, определит архетип из 16 и выдаст персональный читательский билет с уникальным номером.",
+            },
+            {
+              q: "Что такое книжный ДНК?",
+              a: "Книжный ДНК — это ваш литературный профиль: баланс 6 осей читательского вкуса (сюжет vs атмосфера, лёгкость vs глубина, темп, мрак, масштаб, сложность), архетип из 4 Орденов и персональный литературный криптонит.",
+            },
+            {
+              q: "Что такое читательский билет?",
+              a: "Это персональная карточка с вашим архетипом, номером билета и расшифровкой вкуса. Билет можно скачать, поделиться ссылкой и сравнить с друзьями.",
+            },
+            {
+              q: "Как сравнить читательские вкусы с друзьями?",
+              a: "Введите номер билета друга или отправьте ему ссылку для сравнения — система наложит ваши радары, рассчитает процент совместимости и проверит литературный криптонит.",
+            },
+            {
+              q: "Что такое литературный криптонит?",
+              a: "Книга или жанр, который вы терпеть не можете. Криптонит показывает, какие книги вам точно не стоит рекомендовать.",
+            },
+            {
+              q: "Сколько вопросов в тесте?",
+              a: "Всего 6 вопросов с дилеммами. Никаких правильных или неправильных ответов — только честный выбор.",
+            },
+          ].map((item, i) => (
+            <details
+              key={i}
+              className={`group rounded-xl border p-4 sm:p-5 transition-colors ${
+                isDark
+                  ? "bg-[#23170e]/60 border-amber-900/30 text-amber-100"
+                  : "bg-[#fffdf7] border-[#e2d5bc] text-[#2e2a24]"
+              }`}
+            >
+              <summary
+                className={`cursor-pointer font-bold text-sm sm:text-base list-none flex items-center justify-between gap-2 ${
+                  isDark ? "text-amber-100" : "text-[#2e2a24]"
+                }`}
+              >
+                <span>{item.q}</span>
+                <span
+                  className={`shrink-0 transition-transform group-open:rotate-180 ${
+                    isDark ? "text-amber-400" : "text-amber-800"
+                  }`}
+                >
+                  ▾
+                </span>
+              </summary>
+              <p
+                className={`mt-3 text-xs sm:text-sm leading-relaxed ${
+                  isDark ? "text-amber-200/75" : "text-[#423d33]"
+                }`}
+              >
+                {item.a}
+              </p>
+            </details>
+          ))}
+        </div>
+
+        <p
+          className={`text-center text-xs sm:text-sm mt-4 ${
+            isDark ? "text-amber-200/60" : "text-[#423d33]"
+          }`}
+        >
+          Хотите узнать подробнее? Читайте статьи{" "}
+          <a
+            href="/blog/kakoy-ya-chitatel"
+            className={`underline underline-offset-2 ${
+              isDark ? "text-amber-400 hover:text-amber-300" : "text-amber-800 hover:text-amber-700"
+            }`}
+          >
+            «Какой я читатель: тест на читательский ДНК»
+          </a>{" "}
+          и{" "}
+          <a
+            href="/blog/matematika-chitatelskogo-dnk"
+            className={`underline underline-offset-2 ${
+              isDark ? "text-amber-400 hover:text-amber-300" : "text-amber-800 hover:text-amber-700"
+            }`}
+          >
+            «Математика читательского ДНК»
+          </a>
+          .
+        </p>
+      </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Quiz",
+            name: "Книжный ДНК: тест «Какой я читатель»",
+            description:
+              "Интерактивный тест из 6 вопросов с дилеммами, который расшифровывает ваш читательский ДНК по 6 осям, определяет архетип из 16 и выдаёт персональный читательский билет.",
+            about: { "@type": "Thing", name: "Читательский вкус и литературный профиль" },
+            numberOfQuestions: 6,
+            educationalUse: "self-assessment",
+            inLanguage: "ru",
+            hasPart: [
+              {
+                "@type": "Question",
+                name: "Динамичный сюжет или медитативный слог?",
+                acceptedAnswer: { "@type": "Answer", text: "Выбор между скоростью повествования и глубиной текста." },
+              },
+              {
+                "@type": "Question",
+                name: "Уютная романтика или психологический триллер?",
+                acceptedAnswer: { "@type": "Answer", text: "Выбор между комфортом и напряжением." },
+              },
+              {
+                "@type": "Question",
+                name: "Читать ради сюжета или ради атмосферы?",
+                acceptedAnswer: { "@type": "Answer", text: "Выбор между событиями и настроением." },
+              },
+              {
+                "@type": "Question",
+                name: "Масштабная эпопея или камерная история?",
+                acceptedAnswer: { "@type": "Answer", text: "Выбор между размахом и интимностью." },
+              },
+              {
+                "@type": "Question",
+                name: "Глубина текста или лёгкость чтения?",
+                acceptedAnswer: { "@type": "Answer", text: "Выбор между сложностью и доступностью." },
+              },
+              {
+                "@type": "Question",
+                name: "Читать ради эмоций или ради идей?",
+                acceptedAnswer: { "@type": "Answer", text: "Выбор между чувствами и мыслями." },
+              },
+            ],
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "Какой я читатель?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Пройдите интерактивный тест из 6 вопросов с дилеммами — и алгоритм расшифрует ваш читательский ДНК по 6 осям, определит архетип из 16 и выдаст персональный читательский билет с уникальным номером.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Что такое книжный ДНК?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Книжный ДНК — это ваш литературный профиль: баланс 6 осей читательского вкуса (сюжет vs атмосфера, лёгкость vs глубина, темп, мрак, масштаб, сложность), архетип из 4 Орденов и персональный литературный криптонит.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Что такое читательский билет?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Это персональная карточка с вашим архетипом, номером билета и расшифровкой вкуса. Билет можно скачать, поделиться ссылкой и сравнить с друзьями.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Как сравнить читательские вкусы с друзьями?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Введите номер билета друга или отправьте ему ссылку для сравнения — система наложит ваши радары, рассчитает процент совместимости и проверит литературный криптонит.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Что такое литературный криптонит?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Книга или жанр, который вы терпеть не можете. Криптонит показывает, какие книги вам точно не стоит рекомендовать.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Сколько вопросов в тесте?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Всего 6 вопросов с дилеммами. Никаких правильных или неправильных ответов — только честный выбор.",
+                },
+              },
+            ],
+          }),
+        }}
+      />
     </div>
   );
 }

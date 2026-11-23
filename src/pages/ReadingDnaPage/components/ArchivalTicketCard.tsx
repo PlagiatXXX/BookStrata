@@ -7,6 +7,7 @@ import {
   formatQuote,
   resolveArchetypeByRanges,
 } from "../domain/dnaArchetypeMatch";
+import { getCasteSealUrl } from "../utils/casteSeals";
 
 export interface ArchivalTicketCardProps {
   ticketNumber?: string;
@@ -71,6 +72,13 @@ export function ArchivalTicketCard({
     }
     return undefined;
   }, [archetypeName, axes, hasActiveAxes, isSealed, archetypes]);
+
+  // Печать ордена: если передан специфический URL — используем его,
+  // иначе автоматически подтягиваем печать соответствующего Ордена
+  const effectiveSealImageUrl = useMemo(
+    () => sealImageUrl || getCasteSealUrl(resolvedArchetype?.caste?.id),
+    [sealImageUrl, resolvedArchetype?.caste?.id]
+  );
 
   // Расчет точек для радара вкуса (SVG polygon на сетке 220x220)
   const size = 220;
@@ -368,13 +376,13 @@ export function ArchivalTicketCard({
         style={{ transform: "translateZ(26px)" }}
       >
         {isSealed ? (
-          sealImageUrl && !sealImgFailed ? (
+          effectiveSealImageUrl && !sealImgFailed ? (
             <div
               style={{ width: "10.5cqw", height: "10.5cqw" }}
               className="flex items-center justify-center relative select-none"
             >
               <img
-                src={sealImageUrl}
+                src={effectiveSealImageUrl}
                 alt="Печать"
                 width={68}
                 height={68}

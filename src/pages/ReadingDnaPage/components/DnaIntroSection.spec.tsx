@@ -103,7 +103,7 @@ describe("DnaIntroSection", () => {
       />
     );
 
-    const startButton = screen.getByRole("button", { name: /Начать тест \(3 минуты\)/i });
+    const startButton = screen.getByRole("button", { name: /Начать тест \(2 минуты\)/i });
     fireEvent.click(startButton);
     expect(onStartTest).toHaveBeenCalledTimes(1);
   });

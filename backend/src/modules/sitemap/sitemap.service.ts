@@ -17,7 +17,7 @@ export async function generateSitemap(): Promise<string> {
     { url: `${SITE_URL}/`, priority: "1.0", changefreq: "weekly" },
     { url: `${SITE_URL}/rankings`, priority: "0.8", changefreq: "daily" },
     { url: `${SITE_URL}/collections`, priority: "0.8", changefreq: "weekly" },
-    // { url: `${SITE_URL}/reading-dna`, priority: "0.8", changefreq: "weekly" }, // раскомментировать при публичном открытии Книжного ДНК
+    { url: `${SITE_URL}/reading-dna`, priority: "0.8", changefreq: "weekly" },
     { url: `${SITE_URL}/community`, priority: "0.6", changefreq: "weekly" },
     { url: `${SITE_URL}/forum`, priority: "0.6", changefreq: "weekly" },
     { url: `${SITE_URL}/what-to-read`, priority: "0.8", changefreq: "weekly" },
@@ -28,6 +28,8 @@ export async function generateSitemap(): Promise<string> {
     { url: `${SITE_URL}/blog`, priority: "0.7", changefreq: "weekly" },
     { url: `${SITE_URL}/blog/why-not-goodreads`, priority: "0.6", changefreq: "monthly" },
     { url: `${SITE_URL}/blog/ssr-without-nextjs`, priority: "0.6", changefreq: "monthly" },
+    { url: `${SITE_URL}/blog/kakoy-ya-chitatel`, priority: "0.7", changefreq: "monthly" },
+    { url: `${SITE_URL}/blog/matematika-chitatelskogo-dnk`, priority: "0.6", changefreq: "monthly" },
     { url: `${SITE_URL}/celebrities`, priority: "0.7", changefreq: "weekly" },
     { url: `${SITE_URL}/authors`, priority: "0.7", changefreq: "weekly" },
     { url: `${SITE_URL}/privacy`, priority: "0.3", changefreq: "yearly" },

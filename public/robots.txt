@@ -23,6 +23,7 @@ Clean-param: redirect
 Clean-param: context
 Clean-param: from
 Clean-param: section
+Clean-param: ticket&challenge&duel&tab /reading-dna
 
 User-agent: OAI-SearchBot
 Allow: /
@@ -50,6 +51,7 @@ Clean-param: redirect
 Clean-param: context
 Clean-param: from
 Clean-param: section
+Clean-param: ticket&challenge&duel&tab /reading-dna
 
 User-agent: GPTBot
 Allow: /
@@ -77,6 +79,7 @@ Clean-param: redirect
 Clean-param: context
 Clean-param: from
 Clean-param: section
+Clean-param: ticket&challenge&duel&tab /reading-dna
 
 # Явное управление AI-краулерами (иначе наследуют правила *)
 User-agent: ClaudeBot
@@ -114,5 +117,6 @@ Clean-param: redirect
 Clean-param: context
 Clean-param: from
 Clean-param: section
+Clean-param: ticket&challenge&duel&tab /reading-dna
 
 Sitemap: https://bookstrata.ru/sitemap.xml

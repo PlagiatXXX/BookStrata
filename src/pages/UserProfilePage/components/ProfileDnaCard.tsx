@@ -76,7 +76,6 @@ export function ProfileDnaCard({
             kryptoniteBook={kryptoniteBook}
             theme="dark"
             isSealed={true}
-            sealImageUrl="/images/reading-dna/seal.webp"
           />
         ) : (
           <div style={{ background: "#232340", borderRadius: 14, padding: 18 }}>

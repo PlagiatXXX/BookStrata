@@ -1,10 +1,12 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Calendar, Clock, ArrowRight } from "lucide-react"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Footer } from "@/ui/Footer"
+import { Logo } from "@/ui/Logo"
 import { articlesMeta } from "@/content/articles"
 
 export default function BlogPage() {
+  const navigate = useNavigate()
   return (
     <div className="min-h-screen bg-[#0b1620] text-[#e2e8f0]">
       <SEOHead
@@ -20,9 +22,7 @@ export default function BlogPage() {
       {/* Nav */}
       <nav className="border-b border-white/5 bg-[#0b1620]/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Link to="/" className="font-display text-lg font-bold tracking-tight text-[#f3efe6]">
-            BookStrata
-          </Link>
+          <Logo onClick={() => navigate("/")} />
           <Link
             to="/"
             className="text-sm text-[#94a3b8] transition-colors hover:text-[#06bcf9]"

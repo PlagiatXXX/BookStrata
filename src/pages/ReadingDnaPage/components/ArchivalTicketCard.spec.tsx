@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { ArchivalTicketCard } from "./ArchivalTicketCard";
+import { getCasteSealUrl } from "../utils/casteSeals";
 
 vi.mock("../hooks/useDnaArchetypes", () => ({
   useDnaArchetypes: () => ({
@@ -134,7 +135,7 @@ describe("ArchivalTicketCard", () => {
     expect(screen.getByText(/РЕДКОСТЬ 7%/i)).toBeInTheDocument();
     expect(screen.getByText(/АРХЕТИП №5\/16/i)).toBeInTheDocument();
     expect(screen.getByText(/ДНК · 60—75—50—80—45—70/)).toBeInTheDocument();
-    expect(screen.getByText("ИММУНИТЕТ")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Печать" })).toHaveAttribute("src", "/images/reading-dna/seal-abyss.webp");
     expect(screen.getByText("Преступление и наказание")).toBeInTheDocument();
   });
 
@@ -155,6 +156,24 @@ describe("ArchivalTicketCard", () => {
     const sealImg = screen.getByRole("img", { name: "Печать" });
     expect(sealImg).toBeInTheDocument();
     expect(sealImg).toHaveAttribute("src", "/images/reading-dna/seal.webp");
+  });
+
+  it("рендерит фолбэк ИММУНИТЕТ, если загрузка изображения печати завершилась с ошибкой", () => {
+    render(
+      <ArchivalTicketCard
+        ticketNumber="BS-04821"
+        archetypeName=""
+        axes={sampleAxes}
+        favoriteBooks={[]}
+        kryptoniteBook={null}
+        theme="dark"
+        isSealed={true}
+      />
+    );
+
+    const sealImg = screen.getByRole("img", { name: "Печать" });
+    fireEvent.error(sealImg);
+    expect(screen.getByText("ИММУНИТЕТ")).toBeInTheDocument();
   });
 
   it("отображает имя владельца customName на билете, если оно передано", () => {
@@ -189,5 +208,33 @@ describe("ArchivalTicketCard", () => {
     );
 
     expect(screen.getByText(/РЕДКОСТЬ 4.2%/i)).toBeInTheDocument();
+  });
+
+  it("getCasteSealUrl возвращает правильные пути к печатям орденов", () => {
+    expect(getCasteSealUrl("mind")).toBe("/images/reading-dna/seal-mind.webp");
+    expect(getCasteSealUrl("abyss")).toBe("/images/reading-dna/seal-abyss.webp");
+    expect(getCasteSealUrl("action")).toBe("/images/reading-dna/seal-action.webp");
+    expect(getCasteSealUrl("light")).toBe("/images/reading-dna/seal-light.webp");
+    expect(getCasteSealUrl(null)).toBe("/images/reading-dna/seal.webp");
+    expect(getCasteSealUrl(undefined)).toBe("/images/reading-dna/seal.webp");
+  });
+
+  it("автоматически подставляет печать ордена по архетипу, если sealImageUrl не передан", () => {
+    render(
+      <ArchivalTicketCard
+        ticketNumber="BS-04821"
+        archetypeName="Хранитель запретных фолиантов"
+        axes={sampleAxes}
+        favoriteBooks={[]}
+        kryptoniteBook={null}
+        theme="dark"
+        isSealed={true}
+      />
+    );
+
+    const sealImg = screen.getByRole("img", { name: "Печать" });
+    expect(sealImg).toBeInTheDocument();
+    // В моке архетип Хранитель запретных фолиантов принадлежит caste: abyss
+    expect(sealImg).toHaveAttribute("src", "/images/reading-dna/seal-abyss.webp");
   });
 });

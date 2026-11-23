@@ -687,22 +687,19 @@ export default function ReadingDnaPage() {
             ? `Сравнение читательского вкуса: билет #${challengeParam} — BookStrata`
             : ticketParam && activeTicket?.archetypeName
             ? `Читательский билет: ${activeTicket.archetypeName} (${activeTicket.ticketNumber}) — Книжный ДНК | BookStrata`
-            : "Книжный ДНК: тест «Какой ты читатель» и читательский билет — BookStrata"
+            : "Книжный ДНК: тест «Какой я читатель» и читательский билет — BookStrata"
         }
         description={
           challengeParam
             ? `Сравните читательские вкусы на BookStrata с билетом #${challengeParam}. Узнайте совместимость и литературный резонанс!`
             : ticketParam && activeTicket?.archetypeName
             ? `Читательский билет ${activeTicket.ticketNumber} на BookStrata. Архетип: ${activeTicket.archetypeName}. Расшифруйте свой книжный ДНК или сравните вкусы с друзьями!`
-            : "Пройдите интерактивный тест и узнайте, какой вы читатель. Получите персональный читательский билет, расшифруйте книжный ДНК по 6 осям и сравните вкусы с друзьями на BookStrata."
+            : "Узнайте, какой вы читатель — пройдите тест «Какой я читатель» на BookStrata. Получите персональный читательский билет, расшифруйте книжный ДНК по 6 осям и сравните вкусы с друзьями."
         }
-        url={
-          ticketParam
-            ? `/reading-dna?ticket=${ticketParam}`
-            : challengeParam
-            ? `/reading-dna?challenge=${challengeParam}`
-            : "/reading-dna"
-        }
+        image="/og-reading-dna.webp"
+        breadcrumbs={[{ name: "Главная", url: "/" }, { name: "Книжный ДНК", url: "/reading-dna" }]}
+        url="/reading-dna"
+        noindex={Boolean(ticketParam || challengeParam)}
       />
 
       <div className="w-full max-w-full flex flex-col flex-1">
@@ -949,7 +946,6 @@ export default function ReadingDnaPage() {
                       kryptoniteBook={liveKryptonite}
                       theme={theme}
                       isSealed={Boolean(activeTicket)}
-                      sealImageUrl="/images/reading-dna/seal.webp"
                     />
                     <span className="block text-[10px] sm:text-[11px] opacity-60 text-center font-sans">
                       Номер BS-XXXXX выдаётся по порядку при запечатывании.
@@ -1042,7 +1038,6 @@ export default function ReadingDnaPage() {
                             kryptoniteBook={activeTicket.kryptoniteBook}
                             theme={theme}
                             isSealed={true}
-                            sealImageUrl="/images/reading-dna/seal.webp"
                           />
                         </div>
 

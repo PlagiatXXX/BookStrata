@@ -17,6 +17,10 @@ function renderInline(line: string): string {
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`(.+?)`/g, "<code>$1</code>")
     .replace(
+      /!\[(.*?)\]\((.+?)\)/g,
+      '<img src="$2" alt="$1" loading="lazy" />',
+    )
+    .replace(
       /\[(.+?)\]\((.+?)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
     )
@@ -49,6 +53,17 @@ export function mdToHtml(md: string): string {
     }
     if (inCodeBlock) {
       codeBuf.push(line)
+      continue
+    }
+
+    // Image on standalone line: ![alt](src)
+    const imgMatch = line.match(/^!\[(.*?)\]\((.+?)\)$/)
+    if (imgMatch) {
+      const alt = escapeHtml(imgMatch[1])
+      const src = escapeHtml(imgMatch[2])
+      html.push(
+        `<figure><img src="${src}" alt="${alt}" loading="lazy" />${alt ? `<figcaption>${alt}</figcaption>` : ""}</figure>`,
+      )
       continue
     }
 

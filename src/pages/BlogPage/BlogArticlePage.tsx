@@ -1,7 +1,8 @@
-import { useParams, Link } from "react-router-dom"
+import { useParams, Link, useNavigate } from "react-router-dom"
 import { Calendar, Clock, ArrowLeft } from "lucide-react"
 import { SEOHead } from "@/components/SEO/SEOHead"
 import { Footer } from "@/ui/Footer"
+import { Logo } from "@/ui/Logo"
 import { articlesMeta } from "@/content/articles"
 import { mdToHtml } from "@/utils/mdToHtml"
 import { normalizeArticleHtml } from "./normalizeArticleHtml"
@@ -19,6 +20,7 @@ function pathToSlug(path: string): string {
 }
 
 export default function BlogArticlePage() {
+  const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
   const meta = articlesMeta.find((a) => a.slug === slug)
 
@@ -38,6 +40,7 @@ export default function BlogArticlePage() {
       <SEOHead
         title={meta.title}
         description={meta.description}
+        image={meta.image}
         url={`/blog/${meta.slug}`}
         type="article"
         publishedTime={meta.date}
@@ -51,12 +54,7 @@ export default function BlogArticlePage() {
       {/* Nav */}
       <nav className="border-b border-white/5 bg-[#0b1620]/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link
-            to="/"
-            className="font-display text-lg font-bold tracking-tight text-[#f3efe6]"
-          >
-            BookStrata
-          </Link>
+          <Logo onClick={() => navigate("/")} />
           <Link
             to="/blog"
             className="flex items-center gap-1 text-sm text-[#94a3b8] transition-colors hover:text-[#06bcf9]"
@@ -178,6 +176,24 @@ export default function BlogArticlePage() {
           padding-left: 1rem;
           margin-bottom: 1.25rem;
           color: #94a3b8;
+          font-style: italic;
+        }
+        .prose-custom figure {
+          margin: 2rem 0;
+        }
+        .prose-custom figure img {
+          width: 100%;
+          height: auto;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          display: block;
+        }
+        .prose-custom figcaption {
+          text-align: center;
+          font-size: 0.8125rem;
+          color: #94a3b8;
+          margin-top: 0.625rem;
           font-style: italic;
         }
       `}</style>
