@@ -26,3 +26,41 @@ export const ChatRequestSchema = z.object({
   messages: z.array(ChatMessageSchema).min(1).max(20),
   context: PageContextSchema.optional(),
 })
+
+export const TierBookSchema = z.object({
+  title: z.string().min(1).max(300),
+  author: z.string().max(200).optional(),
+})
+
+export const TierItemSchema = z.object({
+  label: z.string().min(1).max(50),
+  color: z.string().max(30).optional(),
+  books: z.array(TierBookSchema),
+})
+
+export const TierListRoastRequestSchema = z.object({
+  tierListTitle: z.string().min(1).max(200),
+  tierListDescription: z.string().max(2000).optional(),
+  tiers: z.array(TierItemSchema),
+}).superRefine((val, ctx) => {
+  const totalBooks = val.tiers.reduce((acc, tier) => acc + tier.books.length, 0)
+  if (totalBooks < 4) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'Для прожарки нужно распределить минимум 4 книги',
+      path: ['tiers'],
+    })
+  }
+})
+
+export type TierListRoastRequest = z.infer<typeof TierListRoastRequestSchema>
+
+export const TierListRoastResponseSchema = z.object({
+  archetype: z.string().min(1).max(100),
+  roast: z.string().min(1).max(1000),
+  hotTake: z.string().min(1).max(500),
+  cynicismScore: z.number().int().min(0).max(100),
+  cached: z.boolean().optional(),
+})
+
+export type TierListRoastResponse = z.infer<typeof TierListRoastResponseSchema>

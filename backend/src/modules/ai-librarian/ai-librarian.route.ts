@@ -3,8 +3,14 @@ import type { FastifyInstance } from 'fastify'
 import { authMiddleware } from '../auth/auth.middleware.js'
 
 import { ErrorCodes, createApiError } from '../../lib/api-response.js'
-import { ChatRequestSchema } from './ai-librarian.schema.js'
-import { getUserTasteProfile, buildSystemPrompt, streamAiResponse, checkAiStatus } from './ai-librarian.service.js'
+import { ChatRequestSchema, TierListRoastRequestSchema } from './ai-librarian.schema.js'
+import {
+  getUserTasteProfile,
+  buildSystemPrompt,
+  streamAiResponse,
+  checkAiStatus,
+  generateTierListRoast,
+} from './ai-librarian.service.js'
 import type { AiChunk, PageContext } from './ai-librarian.service.js'
 import { getCollectionBySlug, getCollections } from '../collections/collection.service.js'
 import { getCelebrityBySlug } from '../celebrities/celebrity.service.js'
@@ -321,4 +327,51 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
       }
     },
   )
+
+  fastify.post(
+    '/librarian/roast-tier-list',
+    {
+      preHandler: [authMiddleware],
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: '1 minute',
+        },
+      },
+    },
+    async (request, reply) => {
+      const parseResult = TierListRoastRequestSchema.safeParse(request.body)
+      if (!parseResult.success) {
+        return reply.code(400).send(
+          createApiError(
+            ErrorCodes.INVALID_INPUT,
+            parseResult.error.issues[0]?.message || 'Некорректные данные тир-листа',
+          ),
+        )
+      }
+
+      const userId = String((request as any).user?.id || (request as any).user?.userId || '')
+
+      try {
+        const roast = await generateTierListRoast(parseResult.data, userId)
+        return reply.code(200).send({ data: roast })
+      } catch (err) {
+        if (err instanceof AiRouterError) {
+          logger.error('AI router: все провайдеры недоступны для прожарки', {
+            providerErrors: err.providerErrors,
+          })
+          return reply.code(502).send(
+            createApiError(ErrorCodes.SERVICE_UNAVAILABLE, 'Букстраж сейчас на перерыве. Постучись через минуту.'),
+          )
+        }
+        logger.error(err instanceof Error ? err : new Error(String(err)), {
+          context: 'Roast tier list generation error',
+        })
+        return reply.code(500).send(
+          createApiError(ErrorCodes.INTERNAL_ERROR, 'Не удалось сгенерировать прожарку'),
+        )
+      }
+    },
+  )
 }
+

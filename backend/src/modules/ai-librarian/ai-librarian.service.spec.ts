@@ -220,3 +220,96 @@ describe('getUserTasteProfile with DNA', () => {
     })
   })
 })
+
+describe('TierList Roast', () => {
+  const sampleInput = {
+    tierListTitle: 'Мой идеальный топ',
+    tierListDescription: 'Классика против новинок',
+    tiers: [
+      {
+        label: 'S',
+        books: [
+          { title: 'Преступление и наказание', author: 'Фёдор Достоевский' },
+          { title: 'Мастер и Маргарита', author: 'Михаил Булгаков' },
+        ],
+      },
+      {
+        label: 'D',
+        books: [
+          { title: 'Сумерки', author: 'Стефани Майер' },
+          { title: 'Пятьдесят оттенков серого', author: 'Э. Л. Джеймс' },
+        ],
+      },
+    ],
+  }
+
+  it('buildTierListRoastPrompt formats tiers and books into prompt', async () => {
+    const { buildTierListRoastPrompt } = await import('./ai-librarian.service.js')
+    const prompt = buildTierListRoastPrompt(sampleInput)
+
+    expect(prompt).toContain('Мой идеальный топ')
+    expect(prompt).toContain('Классика против новинок')
+    expect(prompt).toContain('Тир S:')
+    expect(prompt).toContain('Преступление и наказание')
+    expect(prompt).toContain('Тир D:')
+    expect(prompt).toContain('Сумерки')
+  })
+
+  it('parseTierListRoastResponse parses raw JSON string into valid response', async () => {
+    const { parseTierListRoastResponse } = await import('./ai-librarian.service.js')
+    const raw = JSON.stringify({
+      archetype: 'Сноб-интеллектуал',
+      roast: 'Вы выстроили этот тир-лист, чтобы казаться глубже Марианской впадины.',
+      hotTake: 'Опустить вампиров на дно — это так свежо для 2008 года.',
+      cynicismScore: 82,
+    })
+
+    const parsed = parseTierListRoastResponse(raw)
+    expect(parsed.archetype).toBe('Сноб-интеллектуал')
+    expect(parsed.roast).toContain('Марианской впадины')
+    expect(parsed.hotTake).toContain('2008 года')
+    expect(parsed.cynicismScore).toBe(82)
+  })
+
+  it('parseTierListRoastResponse cleans markdown codeblocks before parsing', async () => {
+    const { parseTierListRoastResponse } = await import('./ai-librarian.service.js')
+    const raw = `\`\`\`json
+{
+  "archetype": "Псевдоэстет",
+  "roast": "Прекрасный тир-лист для хвастовства.",
+  "hotTake": "Булгаков в S — никто не удивлён.",
+  "cynicismScore": 65
+}
+\`\`\``
+
+    const parsed = parseTierListRoastResponse(raw)
+    expect(parsed.archetype).toBe('Псевдоэстет')
+    expect(parsed.cynicismScore).toBe(65)
+  })
+
+  it('parseTierListRoastResponse cleans leading/trailing quotes from text fields', async () => {
+    const { parseTierListRoastResponse } = await import('./ai-librarian.service.js')
+    const raw = JSON.stringify({
+      archetype: '«Сноб-интеллектуал»',
+      roast: '«Вы выстроили этот тир-лист, чтобы казаться глубже.»',
+      hotTake: '«Сумерки в D-тире — это классика.»',
+      cynicismScore: 82,
+    })
+
+    const parsed = parseTierListRoastResponse(raw)
+    expect(parsed.archetype).toBe('Сноб-интеллектуал')
+    expect(parsed.roast).toBe('Вы выстроили этот тир-лист, чтобы казаться глубже.')
+    expect(parsed.hotTake).toBe('Сумерки в D-тире — это классика.')
+  })
+
+  it('parseTierListRoastResponse returns safe fallback on broken JSON', async () => {
+    const { parseTierListRoastResponse } = await import('./ai-librarian.service.js')
+    const raw = 'Not a valid JSON at all, but some rant about books.'
+
+    const parsed = parseTierListRoastResponse(raw)
+    expect(parsed.archetype).toBeDefined()
+    expect(parsed.roast).toContain('Not a valid JSON')
+    expect(typeof parsed.cynicismScore).toBe('number')
+  })
+})
+

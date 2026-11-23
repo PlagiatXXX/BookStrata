@@ -1,5 +1,8 @@
 import type { PrismaClient } from '@prisma/client'
 import { routeAiResponse, checkAllProvidersStatus } from './router.js'
+import type { TierListRoastRequest, TierListRoastResponse } from './ai-librarian.schema.js'
+import { TierListRoastResponseSchema } from './ai-librarian.schema.js'
+
 
 export interface TasteBook {
   title: string
@@ -433,3 +436,90 @@ export async function* streamAiResponse(
 ): AsyncGenerator<AiChunk> {
   yield* routeAiResponse(messages, systemPrompt, signal, userId, userBooks)
 }
+
+export function buildTierListRoastPrompt(input: TierListRoastRequest): string {
+  const parts: string[] = []
+  parts.push(`Название тир-листа: "${input.tierListTitle}"`)
+  if (input.tierListDescription?.trim()) {
+    parts.push(`Описание от автора: "${input.tierListDescription.trim()}"`)
+  }
+  parts.push('\nРаспределение книг по тирам:')
+  for (const tier of input.tiers) {
+    if (tier.books.length === 0) continue
+    const booksList = tier.books
+      .map((b) => (b.author ? `«${b.title}» (${b.author})` : `«${b.title}»`))
+      .join(', ')
+    parts.push(`- Тир ${tier.label}: ${booksList}`)
+  }
+  return parts.join('\n')
+}
+
+export const TIER_LIST_ROAST_SYSTEM_PROMPT = `Ты — Букстраж в режиме «Литературная прожарка» (Roast). Твой образ: остроумный, начитанный, ироничный литературный критик с тонким вкусом.
+
+Твоя задача — сделать меткий, сатирический разбор расстановки книг в тир-листе пользователя.
+
+Ключевые правила:
+1. ЮМОР ЧЕРЕЗ ИЕРАРХИЮ РАССТАНОВКИ: Главный объект прожарки — это контраст между тирами. Почему одни книги вознесены в «Шедевры» (S/A), а другие сброшены в «Средне» или «Дно» (C/D)? Высмеивай парадоксы вкуса, снобизм, любовь к драме или, наоборот, тягу к попсовым клише.
+2. ЕСЛИ У КНИГ НЕТ АВТОРОВ ИЛИ СТРАННЫЕ НАЗВАНИЯ: Ни в коем случае НЕ шути про отсутствие авторов, амнезию, плохую память или неполные данные. Воспринимай каждое название книги как самостоятельное законченное произведение и шути строго по СУТИ названий, жанровому контрасту и смелости расстановки.
+3. ЧЁТКИЙ И ПОНЯТНЫЙ ЯЗЫК: Пиши остроумно, легко и естественно на хорошем русском языке. Избегай громоздких заумных фраз и витиеватых абстрактных метафор. Шутка должна быть понятна читателю с первого взгляда.
+4. БЕЗ ОСКОРБЛЕНИЙ: Никакого мата, оскорблений личности, возраста или внешности. Высмеивай только литературные претензии и читательский выбор.
+5. БЕЗ ВНЕШНИХ КАВЫЧЕК: Не оборачивай весь текст полей "roast", "hotTake" или "archetype" в кавычки — пиши чистый текст.
+6. СТРОГИЙ ФОРМАТ JSON: Ответ должен быть строго в формате JSON без markdown-тегов и постороннего текста:
+{
+  "archetype": "Короткий ироничный читательский диагноз (2-4 слова, например: 'Литературный мазохист в поисках драмы')",
+  "roast": "Едкий, саркастичный, но остроумный разбор расстановки тир-листа (40-70 слов, максимум 3 предложения)",
+  "hotTake": "Главный грех/скандал этого тир-листа — самое спорное или возмутительное решение по распределению книги (1-2 предложения)",
+  "cynicismScore": 75
+}`
+
+function cleanQuotes(str?: string | null): string {
+  if (!str) return ''
+  return str.trim().replace(/^["'«\s]+/, '').replace(/["'»\s]+$/, '').trim()
+}
+
+export function parseTierListRoastResponse(rawText: string): TierListRoastResponse {
+  let cleaned = rawText.trim()
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '').trim()
+  }
+
+  try {
+    const parsed = JSON.parse(cleaned)
+    const validated = TierListRoastResponseSchema.safeParse(parsed)
+    if (validated.success) {
+      return {
+        ...validated.data,
+        archetype: cleanQuotes(validated.data.archetype),
+        roast: cleanQuotes(validated.data.roast),
+        hotTake: cleanQuotes(validated.data.hotTake),
+      }
+    }
+  } catch {
+    // Игнорируем ошибку JSON-парсинга и переходим к фолбэку
+  }
+
+  return {
+    archetype: 'Непостижимый эстет',
+    roast: cleanQuotes(cleaned.slice(0, 300)) || 'Ваш тир-лист вызвал у ИИ-библиотекаря глубокое экзистенциальное замешательство.',
+    hotTake: 'Расстановка настолько парадоксальна, что ломает даже нейросети.',
+    cynicismScore: 70,
+  }
+}
+
+export async function generateTierListRoast(
+  input: TierListRoastRequest,
+  userId?: string,
+): Promise<TierListRoastResponse> {
+  const userPrompt = buildTierListRoastPrompt(input)
+  const messages = [{ role: 'user', content: userPrompt }]
+
+  let fullResponse = ''
+  for await (const chunk of routeAiResponse(messages, TIER_LIST_ROAST_SYSTEM_PROMPT, undefined, userId)) {
+    if (!chunk.done && chunk.content) {
+      fullResponse += chunk.content
+    }
+  }
+
+  return parseTierListRoastResponse(fullResponse)
+}
+
