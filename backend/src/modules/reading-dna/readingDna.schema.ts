@@ -113,8 +113,12 @@ export const readingDnaResponseSchema = z.object({
   viewsCount: z.number().default(0),
   shareCount: z.number().default(0),
   duelsCount: z.number().default(0),
+  retestCount: z.number().default(0),
+  retestsLeft: z.number().default(3),
   createdAt: z.union([z.string(), z.date()]),
 });
+
+export const MAX_DNA_RETESTS = 3;
 
 export const axisRangeSchema = z.object({
   min: z.number().min(0).max(100),

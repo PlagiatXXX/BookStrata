@@ -82,8 +82,19 @@ export async function readingDnaRoutes(fastify: FastifyInstance) {
     }
 
     const userId = (request as any).user?.userId as number | undefined;
-    const saved = await saveDna(parseResult.data, userId);
-    return reply.send(createSuccessResponse(saved));
+    try {
+      const saved = await saveDna(parseResult.data, userId);
+      return reply.send(createSuccessResponse(saved));
+    } catch (err: any) {
+      return reply
+        .status(400)
+        .send(
+          createApiError(
+            ErrorCodes.INVALID_INPUT,
+            err.message || "Не удалось сохранить читательский билет"
+          )
+        );
+    }
   });
 
   /**

@@ -875,6 +875,7 @@ model ReadingDna {
   viewsCount       Int              @default(0) @map("views_count")
   shareCount       Int              @default(0) @map("share_count")
   duelsCount       Int              @default(0) @map("duels_count")
+  retestCount      Int              @default(0) @map("retest_count")
   receivedDuels    ReadingDnaDuel[] @relation("TargetDuels")
   initiatedDuels   ReadingDnaDuel[] @relation("ChallengerDuels")
   createdAt        DateTime         @default(now()) @map("created_at")

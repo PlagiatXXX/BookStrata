@@ -16,6 +16,7 @@ import type {
   DnaBookItem,
   ArchetypeCatalogItem,
 } from "./readingDna.schema.js";
+import { MAX_DNA_RETESTS } from "./readingDna.schema.js";
 
 /**
  * Генерирует уникальный номер читательского билета вида BS-7492-X.
@@ -49,6 +50,9 @@ function isUniqueConstraintError(error: unknown): boolean {
  * Преобразует запись Prisma reading_dna в контракт ответа ReadingDnaResponse.
  */
 function toResponse(record: any): ReadingDnaResponse {
+  const retestCount = typeof record.retestCount === "number" ? record.retestCount : 0;
+  const retestsLeft = Math.max(0, MAX_DNA_RETESTS - retestCount);
+
   return {
     id: record.id,
     ticketNumber: record.ticketNumber,
@@ -78,6 +82,8 @@ function toResponse(record: any): ReadingDnaResponse {
     viewsCount: record.viewsCount,
     shareCount: record.shareCount,
     duelsCount: record.duelsCount,
+    retestCount,
+    retestsLeft,
     createdAt: record.createdAt,
   };
 }
@@ -233,9 +239,17 @@ export async function saveDna(
       where: { userId },
     });
     if (existingUserTicket) {
+      if ((existingUserTicket.retestCount ?? 0) >= MAX_DNA_RETESTS) {
+        throw new Error(
+          `Лимит повторных калибровок исчерпан (максимум ${MAX_DNA_RETESTS} перекалибровки на аккаунт)`
+        );
+      }
       const updated = await prisma.readingDna.update({
         where: { id: existingUserTicket.id },
-        data: basePayload,
+        data: {
+          ...basePayload,
+          retestCount: { increment: 1 },
+        },
       });
       return toResponse(updated);
     }
@@ -244,11 +258,9 @@ export async function saveDna(
       where: { guestToken: input.guestToken },
     });
     if (existingGuestTicket) {
-      const updated = await prisma.readingDna.update({
-        where: { id: existingGuestTicket.id },
-        data: basePayload,
-      });
-      return toResponse(updated);
+      throw new Error(
+        "Для повторной калибровки билета необходимо войти или зарегистрироваться"
+      );
     }
   }
 

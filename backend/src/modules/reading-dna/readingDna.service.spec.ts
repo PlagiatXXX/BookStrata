@@ -224,6 +224,45 @@ describe("readingDna.service", () => {
       expect(updated.ticketNumber).toBe("BS-1111-Z");
       expect(updated.shareUrl).toBe("https://bookstrata.ru/reading-dna?ticket=BS-1111-Z");
       expect(updated.axes.storyFocus).toBe(85);
+      expect(prisma.readingDna.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            retestCount: { increment: 1 },
+          }),
+        })
+      );
+    });
+
+    it("запрещает перекалибровку при исчерпании лимита 3 попыток на аккаунт", async () => {
+      const existingRecord = {
+        id: 77,
+        userId: 42,
+        retestCount: 3,
+        ticketNumber: "BS-1111-Z",
+      };
+
+      (prisma.readingDna.findUnique as any).mockResolvedValue(existingRecord);
+
+      await expect(saveDna(sampleInput, 42)).rejects.toThrow(
+        "Лимит повторных калибровок исчерпан"
+      );
+      expect(prisma.readingDna.update).not.toHaveBeenCalled();
+    });
+
+    it("запрещает повторную калибровку гостю без авторизации", async () => {
+      const existingGuest = {
+        id: 88,
+        userId: null,
+        guestToken: "guest-token-123",
+        ticketNumber: "BS-2222-G",
+      };
+
+      (prisma.readingDna.findUnique as any).mockResolvedValue(existingGuest);
+
+      await expect(saveDna(sampleInput, undefined)).rejects.toThrow(
+        "Для повторной калибровки билета необходимо войти или зарегистрироваться"
+      );
+      expect(prisma.readingDna.update).not.toHaveBeenCalled();
     });
   });
 
