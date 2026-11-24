@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PricingPage from "./PricingPage";
@@ -21,9 +21,22 @@ vi.mock("@/lib/analyticsApi", () => ({
   apiTrackEvent: vi.fn(),
 }));
 
+const TEST_CARD_NUMBER = "0000 0000 0000 0000";
+let originalCardNumber: string | undefined;
+
 describe("PricingPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    originalCardNumber = import.meta.env.VITE_DONATE_CARD_NUMBER;
+    (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER = TEST_CARD_NUMBER;
+  });
+
+  afterEach(() => {
+    if (originalCardNumber !== undefined) {
+      (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER = originalCardNumber;
+    } else {
+      delete (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER;
+    }
   });
 
   it("рендерит заголовок страницы и карточки возможностей", () => {
@@ -62,6 +75,23 @@ describe("PricingPage", () => {
     fireEvent.click(donateBtns[0]);
 
     expect(screen.getByText("Реквизиты для перевода")).toBeInTheDocument();
+    expect(screen.getByText(TEST_CARD_NUMBER)).toBeInTheDocument();
     expect(screen.getByText("ЮMoney")).toBeInTheDocument();
+  });
+
+  it("если VITE_DONATE_CARD_NUMBER не задан — открывает модалку со связью без блока карты", () => {
+    delete (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER;
+
+    render(
+      <MemoryRouter>
+        <PricingPage />
+      </MemoryRouter>
+    );
+
+    const donateBtns = screen.getAllByRole("button", { name: /угостить/i });
+    fireEvent.click(donateBtns[0]);
+
+    expect(screen.queryByText("Реквизиты для перевода")).not.toBeInTheDocument();
+    expect(screen.getByText("Связаться")).toBeInTheDocument();
   });
 });

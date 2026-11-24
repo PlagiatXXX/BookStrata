@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render as rtlRender, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -17,6 +17,9 @@ vi.mock("@/lib/collectionsApi", () => ({
 const mockedGetDonors = vi.mocked(getDonors)
 const mockedGetCollections = vi.mocked(getCollections)
 
+const TEST_CARD_NUMBER = "0000 0000 0000 0000"
+let originalCardNumber: string | undefined
+
 function renderFooter() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -32,6 +35,9 @@ function renderFooter() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  originalCardNumber = import.meta.env.VITE_DONATE_CARD_NUMBER
+  ;(import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER = TEST_CARD_NUMBER
+
   class MockIntersectionObserver {
     callback: IntersectionObserverCallback;
     constructor(cb: IntersectionObserverCallback) {
@@ -44,6 +50,14 @@ beforeEach(() => {
     disconnect() {}
   }
   vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
+})
+
+afterEach(() => {
+  if (originalCardNumber !== undefined) {
+    ;(import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER = originalCardNumber
+  } else {
+    delete (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER
+  }
 })
 
 describe("Footer", () => {
@@ -155,7 +169,7 @@ describe("Footer", () => {
     renderFooter()
 
     expect(document.getElementById("donate-menu")).toBeNull()
-    expect(screen.queryByText(/2204/)).not.toBeInTheDocument()
+    expect(screen.queryByText(TEST_CARD_NUMBER)).not.toBeInTheDocument()
   })
 
   it("при клике на кнопку «Угостить автора кофе» меню доната монтируется в DOM", async () => {
@@ -170,7 +184,7 @@ describe("Footer", () => {
     fireEvent.click(donateButton)
 
     expect(document.getElementById("donate-menu")).not.toBeNull()
-    expect(screen.getByText(/2204/)).toBeInTheDocument()
+    expect(screen.getByText(TEST_CARD_NUMBER)).toBeInTheDocument()
   })
 
   it("блок доната содержит data-nosnippet для защиты сниппетов поисковых систем", () => {
@@ -184,17 +198,12 @@ describe("Footer", () => {
   })
 
   it("если VITE_DONATE_CARD_NUMBER не задан — кнопка доната не рендерится", () => {
-    const originalCard = import.meta.env.VITE_DONATE_CARD_NUMBER
-    try {
-      delete (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER
-      mockedGetDonors.mockResolvedValue([])
-      mockedGetCollections.mockResolvedValue([])
+    delete (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER
+    mockedGetDonors.mockResolvedValue([])
+    mockedGetCollections.mockResolvedValue([])
 
-      renderFooter()
+    renderFooter()
 
-      expect(screen.queryByRole("button", { name: /Угостить автора кофе/i })).not.toBeInTheDocument()
-    } finally {
-      (import.meta.env as Record<string, unknown>).VITE_DONATE_CARD_NUMBER = originalCard
-    }
+    expect(screen.queryByRole("button", { name: /Угостить автора кофе/i })).not.toBeInTheDocument()
   })
 })

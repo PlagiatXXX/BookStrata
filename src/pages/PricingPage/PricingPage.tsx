@@ -12,7 +12,7 @@ import "./PricingPage.css"
 function DonateModal({ onClose }: { onClose: () => void }) {
   useBodyScrollLock(true)
   const [copied, setCopied] = useState(false)
-  const cardNumber = '2204120127692388'
+  const cardNumber = import.meta.env.VITE_DONATE_CARD_NUMBER?.trim() || ""
 
   const handleCopy = async () => {
     try {
@@ -67,31 +67,33 @@ function DonateModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-amber-200/20 bg-amber-500/5 p-4">
-            <p className="text-sm font-medium text-amber-300 mb-2">
-              Реквизиты для перевода
-            </p>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg bg-black/40 px-4 py-3">
-              <span className="font-mono text-sm sm:text-base font-bold text-white tracking-wider break-all">
-                {cardNumber}
-              </span>
-              <button
-                onClick={handleCopy}
-                className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-200 transition-colors hover:bg-amber-500/20 shrink-0"
-                type="button"
-              >
-                {copied ? (
-                  <Check className="h-3.5 w-3.5 text-green-400" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-                {copied ? 'Скопировано' : 'Копировать'}
-              </button>
+          {cardNumber ? (
+            <div className="rounded-xl border border-amber-200/20 bg-amber-500/5 p-4">
+              <p className="text-sm font-medium text-amber-300 mb-2">
+                Реквизиты для перевода
+              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg bg-black/40 px-4 py-3">
+                <span className="font-mono text-sm sm:text-base font-bold text-white tracking-wider break-all">
+                  {cardNumber}
+                </span>
+                <button
+                  onClick={handleCopy}
+                  className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-amber-400/30 px-3 py-1.5 text-xs font-medium text-amber-200 transition-colors hover:bg-amber-500/20 shrink-0"
+                  type="button"
+                >
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-green-400" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                  {copied ? 'Скопировано' : 'Копировать'}
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-gray-500">
+                ЮMoney
+              </p>
             </div>
-            <p className="mt-1.5 text-xs text-gray-500">
-              ЮMoney
-            </p>
-          </div>
+          ) : null}
 
           <div className="rounded-xl border border-amber-200/20 bg-amber-500/5 p-4">
             <p className="text-sm font-medium text-amber-300 mb-2">
