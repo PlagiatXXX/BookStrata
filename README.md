@@ -8,7 +8,7 @@
 [![Fastify](https://img.shields.io/badge/Fastify-5.7-000000?logo=fastify)](https://www.fastify.io)
 [![Prisma](https://img.shields.io/badge/Prisma-4.16-2d3748?logo=prisma)](https://www.prisma.io)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38b2ac?logo=tailwindcss)](https://tailwindcss.com)
-[![Tests](https://img.shields.io/badge/Tests-2750%2B_passed-brightgreen)](./README.md)
+[![Tests](https://img.shields.io/badge/Tests-3190%2B_passed-brightgreen)](./README.md)
 
 ---
 
@@ -72,6 +72,7 @@
 
 ### 🤖 AI-библиотекарь
 - **AI-рекомендации** — Персональные подборки книг на основе ваших тир-листов.
+- **AI-прожарка тир-листа (Roast)** — Ироничный и беспощадный литературный разбор вкусов читателя на странице тир-листа (`/tier-lists/:id`) с настраиваемым градусом снобизма, генерацией визуальной карточки в PNG и экспортом в Telegram.
 - **Failover** — Автоматическое переключение между провайдерами (OpenRouter → кастомный OpenAI-совместимый с запасным ключом → abliteration.ai → streaming) при недоступности.
 - **Проверка статуса провайдеров** — пробной генерацией с кэшем на 60 секунд, дефолтная модель — бесплатная `qwen3.6-35b-a3b-noreason`.
 - **Защита от повторов** — запрет повторных обращений в библиотекаре на один запрос.
@@ -80,6 +81,8 @@
 
 ### 🧬 Reading DNA и Book Match
 - **Reading DNA** — Читательский геном пользователя (`/reading-dna`) с анализом вкусовых осей, визуализацией архетипов, архивацией персональных срезов и калибровкой совместимости.
+- **Читательский билет и дуэли** — Уникальный архивный читательский билет, дуэли вкусов читателей (`tab=duels`), история противостояний и бесшовный переход из профиля пользователя (`/user/:id`).
+- **Архивная перекалибровка Reading DNA** — До 3 попыток повторного тестирования на аккаунт при сохранении номера билета, автоматическое предзаполнение осей и книг текущими данными, шлюз статуса калибровки с защитой от случайных сбросов и требованием авторизации для гостей.
 - **Жанровая ось** — словарь жанров и функция `genreSimilarity` в оценке совместимости (7-я ось matchScore).
 - **Жанровые предпочтения** — выбор жанров в профиле (`GET/PUT /api/users/me/genre-preferences`), учёт в `GET /api/books/match?genres=`.
 - **AI-разбор совместимости** — калибровка `genreConfidence`, batch-backfill и автоматический анализ пересечения вкусов.
@@ -159,7 +162,7 @@ cd backend && npm run build  # Сборка бэкенда
 Проект следует принципам **чистой архитектуры** и модульности:
 
 - **Frontend:** Разделение на `pages/`, `components/`, `hooks/`, `contexts/`. Логика редактора вынесена в специализированные хуки (`useTierEditorState`, `useTierEditorSave`, `useTierEditorDraft` и др.).
-- **Backend:** Модульный подход (`modules/`). 34 модуля: `auth`, `users`, `books`, `bookPages`, `tier-lists`, `battles`, `discussions`, `forum`, `news`, `feedback`, `templates`, `avatars`, `achievements`, `ai-librarian`, `livelib`, `moderation`, `ratings`, `subscriptions`, `donors`, `roles`, `admin`, `admin-authors`, `admin-books`, `admin-stats`, `external-news`, `sitemap`, `proxy`, `image-proxy`, `authors`, `celebrities`, `collections`, `analytics`, `rss`, `shelf`.
+- **Backend:** Модульный подход (`modules/`). 36 модулей: `auth`, `users`, `books`, `bookPages`, `tier-lists`, `battles`, `discussions`, `forum`, `news`, `feedback`, `templates`, `avatars`, `achievements`, `ai-librarian`, `reading-dna`, `livelib`, `moderation`, `ratings`, `subscriptions`, `donors`, `roles`, `admin`, `admin-authors`, `admin-books`, `admin-stats`, `external-news`, `sitemap`, `proxy`, `image-proxy`, `authors`, `celebrities`, `collections`, `analytics`, `rss`, `shelf`, `support`.
 - **SEO:** prerender публичных маршрутов (включая коллекции и авторов), sitemap, RSS, экспортируемые маршруты коллекций/авторов из БД.
 - **API:** RESTful API с автоматической Swagger-документацией на `/documentation`.
 - **Discussions:** Общий чат, топики форума, комментарии к битвам. CRUD сообщений, закрепление/удаление топиков (admin/mod).
@@ -195,7 +198,7 @@ PATH=/usr/local/bin:/usr/bin:/bin
 
 ## 🧪 Тестирование
 
-Проект покрыт **2750+ unit-тестами** (1389 фронтенд + 1367 бэкенд unit) + 121 e2e — Vitest + React Testing Library + Playwright (e2e).
+Проект покрыт **3190+ unit-тестами** (1733 фронтенд + 1465 бэкенд unit) + 121 e2e — Vitest + React Testing Library + Playwright (e2e).
 
 ```bash
 # Запуск всех тестов
@@ -207,7 +210,7 @@ cd backend && npm test  # Бэкенд unit
 cd backend && npm run test:integration  # Интеграционные (нужна БД)
 npm run test:e2e      # Playwright e2e
 ```
-*Статус: **2750+/2750+** unit-тестов проходят успешно ✅*
+*Статус: **3190+/3190+** unit-тестов проходят успешно ✅*
 
 ---
 
@@ -237,6 +240,6 @@ MIT License — подробности в файле [LICENSE](./LICENSE).
 
 ---
 
-**Последнее обновление:** 15 ноября 2026 г.
-**Статус:** Страницы книг и авторов, рейтинги, «Что почитать», полка, OAuth (VK/Google), коллекции, знаменитости, блог, FAQ-страница, AI-библиотекарь, Reading DNA, Book Match с жанровой осью, LiveLib импорт, NSFW Detection, приватные тир-листы, внутренний чат поддержки и ЛС от администрации, опросы обратной связи, аффилиат-ссылки (Читай-город, ЛитРес) (2750+ тестов)
+**Последнее обновление:** 24 ноября 2026 г.
+**Статус:** Страницы книг и авторов, рейтинги, «Что почитать», полка, OAuth (VK/Google), коллекции, знаменитости, блог, FAQ-страница, AI-библиотекарь и AI-прожарка тир-листов, Reading DNA с читательскими билетами, дуэлями и архивом перекалибровки, Book Match с жанровой осью, LiveLib импорт, NSFW Detection, приватные тир-листы, внутренний чат поддержки и ЛС от администрации, опросы обратной связи, аффилиат-ссылки (Читай-город, ЛитРес) (3190+ тестов)
 **Автор:** [@PlagiatXXX](https://github.com/PlagiatXXX)
