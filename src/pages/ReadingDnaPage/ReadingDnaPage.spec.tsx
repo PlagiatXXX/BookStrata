@@ -19,6 +19,11 @@ vi.mock("@/lib/gtm", () => ({
   pushDataLayerEvent: vi.fn(),
 }));
 
+vi.mock("@/lib/matchApi", () => ({
+  getMatchedBooks: vi.fn().mockResolvedValue([]),
+  matchedBooksKey: vi.fn().mockReturnValue(["matchedBooks"]),
+}));
+
 vi.mock("@/lib/readingDnaApi", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/readingDnaApi")>();
   return {
@@ -26,6 +31,12 @@ vi.mock("@/lib/readingDnaApi", async (importOriginal) => {
     getReadingArchetypes: vi.fn().mockResolvedValue([]),
     getMyReadingDna: vi.fn().mockResolvedValue(null),
     getReadingTicket: vi.fn().mockResolvedValue(null),
+    getTicketDuels: vi.fn().mockResolvedValue({
+      totalDuels: 0,
+      bestMatch: null,
+      mainAntagonist: null,
+      recentDuels: [],
+    }),
     getReadingArchetypeStats: vi.fn().mockResolvedValue({
       totalTickets: 100,
       distribution: {},
@@ -338,6 +349,70 @@ describe("ReadingDnaPage", () => {
       // С одного нажатия сразу отображается хаб сравнений
       expect(await screen.findByText(/СРАВНЕНИЕ ВКУСОВ С ДРУЗЬЯМИ/i)).toBeInTheDocument();
       expect(screen.queryByText(/ИТОГ СРАВНЕНИЯ ВКУСОВ/i)).not.toBeInTheDocument();
+    });
+
+    it("при просмотре чужого билета кнопка «Сравнить вкусы» в плашке открывает сравнение с этим оппонентом", async () => {
+      const user = userEvent.setup();
+      vi.mocked(readingDnaApi.getReadingTicket).mockResolvedValue({
+        id: 42,
+        ticketNumber: "BS-9999-Z",
+        customName: "Другой Читатель",
+        archetype: "truth-seeker",
+        archetypeName: "Искатель",
+        axes: { storyFocus: 60, emotionalWeight: 40, pace: 50, darkness: 30, scope: 70, complexity: 50 },
+        favoriteBooks: [],
+      } as any);
+
+      renderPage("/reading-dna?ticket=BS-9999-Z");
+
+      // Дожидаемся загрузки чужого билета по query
+      expect(await screen.findByText(/Билет читателя:/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Другой Читатель/i).length).toBeGreaterThan(0);
+
+      const compareBtn = screen.getByRole("button", { name: /Сравнить вкусы/i });
+      await user.click(compareBtn);
+
+      // Должен открыться экран сравнения вкусов
+      expect(await screen.findByText(/Документ III — Сравнение вкусов/i)).toBeInTheDocument();
+    });
+
+    it("если билет уже запечатан, на вкладке «Тест» показывается шлюз перекалибровки с попытками", async () => {
+      const user = userEvent.setup();
+      const mockTicket = {
+        id: 1,
+        ticketNumber: "BS-7777-K",
+        customName: "Тестер",
+        archetype: "meaning-architect",
+        archetypeName: "Архитектор смыслов",
+        motto: "Книга — архитектура мысли",
+        axes: { storyFocus: 80, emotionalWeight: 70, pace: 60, darkness: 50, scope: 70, complexity: 85 },
+        favoriteBooks: [
+          { title: "Книга 1", author: "Автор 1" },
+          { title: "Книга 2", author: "Автор 2" },
+          { title: "Книга 3", author: "Автор 3" },
+        ],
+        kryptoniteBook: null,
+        retestCount: 1,
+        retestsLeft: 2,
+      };
+
+      vi.mocked(readingDnaApi.getMyReadingDna).mockResolvedValue(mockTicket as any);
+
+      renderPage("/reading-dna?tab=test");
+
+      // Должен отобразиться шлюз перекалибровки, а не сырая анкета
+      expect(await screen.findByText(/Читательский ДНК зафиксирован/i)).toBeInTheDocument();
+      expect(screen.getByText(/#BS-7777-K/i)).toBeInTheDocument();
+      expect(screen.getByText(/Архивная перекалибровка/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Начать перекалибровку \(2 из 3\)/i })).toBeInTheDocument();
+
+      // Нажимаем «Начать перекалибровку»
+      const startRetestBtn = screen.getByRole("button", { name: /Начать перекалибровку/i });
+      await user.click(startRetestBtn);
+
+      // Должен открыться режим перекалибровки
+      expect(await screen.findByText(/Режим архивной перекалибровки/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /✕ Отменить перекалибровку/i })).toBeInTheDocument();
     });
   });
 });

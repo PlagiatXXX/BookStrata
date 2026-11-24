@@ -7,6 +7,7 @@ import { sileo } from "sileo";
 import { SEOHead } from "@/components/SEO/SEOHead";
 import { Breadcrumbs } from "@/components/SEO/Breadcrumbs";
 import { DnaStepFlow } from "./components/DnaStepFlow";
+import { DnaRetestGate } from "./components/DnaRetestGate";
 import { ArchivalTicketCard } from "./components/ArchivalTicketCard";
 import { DuelSection } from "./components/DuelSection";
 import { HubSection } from "./components/HubSection";
@@ -326,6 +327,40 @@ export default function ReadingDnaPage() {
     ? loadedTicket
     : (user ? (myDna || currentTicket) : currentTicket);
 
+  const myTicket = user ? (myDna || currentTicket) : currentTicket;
+  const hasMySealedTicket = Boolean(myTicket);
+
+  const [isRetesting, setIsRetesting] = useState(false);
+
+  const handleStartRetest = useCallback(() => {
+    if (!myTicket) return;
+    const existingAxes = { ...INITIAL_AXES, ...(myTicket.axes || {}) };
+    const existingBooks: (DnaBookItemData | null)[] = [0, 1, 2].map(
+      (i) => myTicket.favoriteBooks?.[i] ?? null
+    );
+    const existingKryptonite = myTicket.kryptoniteBook ?? null;
+    const existingName = myTicket.customName || user?.username || "";
+
+    setLiveAxes(existingAxes);
+    setLiveBooks(existingBooks);
+    setLiveKryptonite(existingKryptonite);
+    setCustomName(existingName);
+    setTouchedAxes({
+      storyFocus: true,
+      emotionalWeight: true,
+      pace: true,
+      darkness: true,
+      scope: true,
+      complexity: true,
+    });
+    setCurrentStep(0);
+    setIsRetesting(true);
+  }, [myTicket, user?.username]);
+
+  const handleCancelRetest = useCallback(() => {
+    setIsRetesting(false);
+  }, []);
+
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "craft" : "dark"));
   }, []);
@@ -397,6 +432,10 @@ export default function ReadingDnaPage() {
         }
         return next;
       });
+
+      if (index !== 1) {
+        setIsRetesting(false);
+      }
 
       if (index !== 3) {
         setSelectedOpponentTicket(null);
@@ -487,10 +526,19 @@ export default function ReadingDnaPage() {
         }
       }
 
+      setIsRetesting(false);
       setSearchParams({ ticket: saved.ticketNumber });
       setTimeout(() => {
         handleSelectTab(2);
       }, 300);
+    },
+    onError: (err: Error) => {
+      const message = err?.message || "Не удалось запечатать читательский билет";
+      sileo.error({
+        title: "Ошибка перекалибровки",
+        description: message,
+        duration: 4000,
+      });
     },
   });
 
@@ -859,99 +907,165 @@ export default function ReadingDnaPage() {
 
             {activeTab === 1 && (
               <motion.section
-                key="doc-0"
+                key={hasMySealedTicket && !isRetesting ? "doc-retest-gate" : "doc-0"}
                 id="doc-0"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.1 }}
                 className="relative pt-3 sm:pt-4"
               >
-                <div className="flex items-center justify-between -mb-1 ml-2 sm:ml-4 mr-2 relative z-20">
-                  <div
-                    className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
-                      isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
-                    }`}
-                  >
-                    Документ I — Анкета читателя
-                  </div>
-                  {(currentStep > 0 ||
-                    liveBooks.some(Boolean) ||
-                    liveKryptonite !== null ||
-                    Object.values(liveAxes).some((v) => v !== 50)) && (
-                    <button
-                      type="button"
-                      onClick={handleResetProgress}
-                      className={`text-[11px] underline opacity-60 hover:opacity-100 transition-opacity cursor-pointer ${
-                        isDark ? "text-[#c9a35b]" : "text-[#3b6ea8]"
-                      }`}
-                      title="Очистить сохранённый черновик и начать опросник сначала"
-                    >
-                      ↺ Начать заново
-                    </button>
-                  )}
-                </div>
-
-                <div
-                  className={`rounded-lg border p-3.5 sm:p-6 md:p-7 shadow-md grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4 sm:gap-6 items-start ${
-                    isDark
-                      ? "bg-[#35261b] border-[rgba(201,163,91,0.35)]"
-                      : "bg-[#fffdf7] border-[rgba(59,110,168,0.35)]"
-                  }`}
-                >
-                  {/* Левая колонка: форма опросника */}
-                  <div className="flex flex-col justify-between">
-                    {opponentTicket && (
+                {hasMySealedTicket && !isRetesting ? (
+                  <>
+                    <div className="flex items-center justify-between -mb-1 ml-2 sm:ml-4 mr-2 relative z-20">
                       <div
-                        className={`mb-3 sm:mb-4 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 select-none shadow-xs ${
-                          isDark
-                            ? "bg-[#8a2433]/30 border-rose-500/40 text-rose-200"
-                            : "bg-[#b3412f]/10 border-rose-500/30 text-[#b3412f]"
+                        className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
+                          isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
                         }`}
                       >
-                        <span className="flex items-center gap-2 font-semibold">
-                          <Swords size={16} className="shrink-0" />
-                          <span>Дуэль против {opponentTicket.customName || "Читателя"} (#{opponentTicket.ticketNumber})</span>
+                        Документ I — Калибровка восприятия
+                      </div>
+                    </div>
+                    <DnaRetestGate
+                      ticket={myTicket!}
+                      theme={theme}
+                      isGuest={!user}
+                      onStartRetest={handleStartRetest}
+                      onViewTicket={() => handleSelectTab(2)}
+                      onLogin={() =>
+                        navigate(
+                          "/login?redirect=" + encodeURIComponent("/reading-dna?tab=test")
+                        )
+                      }
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between -mb-1 ml-2 sm:ml-4 mr-2 relative z-20">
+                      <div
+                        className={`inline-block px-2.5 sm:px-3.5 py-0.5 sm:py-1 text-white text-[11px] sm:text-xs font-semibold rounded-t-sm shadow-xs ${
+                          isDark ? "bg-[#8a2433]" : "bg-[#b3412f]"
+                        }`}
+                      >
+                        {isRetesting
+                          ? "Документ I — Повторная калибровка"
+                          : "Документ I — Анкета читателя"}
+                      </div>
+                      {isRetesting ? (
+                        <button
+                          type="button"
+                          onClick={handleCancelRetest}
+                          className={`text-[11px] underline opacity-75 hover:opacity-100 transition-opacity cursor-pointer ${
+                            isDark ? "text-rose-300" : "text-[#b3412f]"
+                          }`}
+                        >
+                          ✕ Отменить перекалибровку
+                        </button>
+                      ) : (
+                        (currentStep > 0 ||
+                          liveBooks.some(Boolean) ||
+                          liveKryptonite !== null ||
+                          Object.values(liveAxes).some((v) => v !== 50)) && (
+                          <button
+                            type="button"
+                            onClick={handleResetProgress}
+                            className={`text-[11px] underline opacity-60 hover:opacity-100 transition-opacity cursor-pointer ${
+                              isDark ? "text-[#c9a35b]" : "text-[#3b6ea8]"
+                            }`}
+                            title="Очистить сохранённый черновик и начать опросник сначала"
+                          >
+                            ↺ Начать заново
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    {isRetesting && (
+                      <div
+                        className={`mb-3 px-3.5 py-2.5 rounded-xl border text-xs flex flex-wrap items-center justify-between gap-2 shadow-xs ${
+                          isDark
+                            ? "bg-amber-500/15 border-amber-400/30 text-amber-200"
+                            : "bg-amber-50 border-amber-300 text-amber-900"
+                        }`}
+                      >
+                        <span className="leading-relaxed">
+                          <b>Режим архивной перекалибровки:</b> текущие ответы предзаполнены. Попытка будет списана только после нажатия «Запечатать билет».
                         </span>
-                        <span className="text-[10px] opacity-75 hidden sm:inline">
-                          Карты соперника вскроются после запечатывания
-                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCancelRetest}
+                          className="font-bold underline cursor-pointer hover:opacity-80"
+                        >
+                          Отмена
+                        </button>
                       </div>
                     )}
-                    <DnaStepFlow
-                      theme={theme}
-                      onComplete={handleCompleteFlow}
-                      onAxisChange={handleLiveAxisChange}
-                      onBooksChange={handleBooksChange}
-                      onStepChange={setCurrentStep}
-                      onTouchedAxesChange={setTouchedAxes}
-                      onNameChange={setCustomName}
-                      initialName={customName}
-                      initialStep={initialDraft.step}
-                      initialAxes={initialDraft.axes}
-                      initialBooks={initialDraft.favoriteBooks}
-                      initialKryptonite={initialDraft.kryptonite}
-                      initialTouchedAxes={initialDraft.touchedAxes}
-                      isLoading={saveMutation.isPending}
-                    />
-                  </div>
 
-                  {/* Правая колонка: Live-превью билета */}
-                  <div className="flex flex-col justify-center space-y-2 sm:space-y-2.5">
-                    <ArchivalTicketCard
-                      ticketNumber={activeTicket?.ticketNumber || "BS-....."}
-                      customName={customName || activeTicket?.customName || null}
-                      archetypeName={activeTicket?.archetypeName || ""}
-                      axes={liveAxes}
-                      favoriteBooks={liveBooks}
-                      kryptoniteBook={liveKryptonite}
-                      theme={theme}
-                      isSealed={Boolean(activeTicket)}
-                    />
-                    <span className="block text-[10px] sm:text-[11px] opacity-60 text-center font-sans">
-                      Номер BS-XXXXX выдаётся по порядку при запечатывании.
-                    </span>
-                  </div>
-                </div>
+                    <div
+                      className={`rounded-lg border p-3.5 sm:p-6 md:p-7 shadow-md grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-4 sm:gap-6 items-start ${
+                        isDark
+                          ? "bg-[#35261b] border-[rgba(201,163,91,0.35)]"
+                          : "bg-[#fffdf7] border-[rgba(59,110,168,0.35)]"
+                      }`}
+                    >
+                      {/* Левая колонка: форма опросника */}
+                      <div className="flex flex-col justify-between">
+                        {opponentTicket && (
+                          <div
+                            className={`mb-3 sm:mb-4 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 select-none shadow-xs ${
+                              isDark
+                                ? "bg-[#8a2433]/30 border-rose-500/40 text-rose-200"
+                                : "bg-[#b3412f]/10 border-rose-500/30 text-[#b3412f]"
+                            }`}
+                          >
+                            <span className="flex items-center gap-2 font-semibold">
+                              <Swords size={16} className="shrink-0" />
+                              <span>Дуэль против {opponentTicket.customName || "Читателя"} (#{opponentTicket.ticketNumber})</span>
+                            </span>
+                            <span className="text-[10px] opacity-75 hidden sm:inline">
+                              Карты соперника вскроются после запечатывания
+                            </span>
+                          </div>
+                        )}
+                        <DnaStepFlow
+                          key={isRetesting ? "retesting-stepflow" : "initial-stepflow"}
+                          theme={theme}
+                          onComplete={handleCompleteFlow}
+                          onAxisChange={handleLiveAxisChange}
+                          onBooksChange={handleBooksChange}
+                          onStepChange={setCurrentStep}
+                          onTouchedAxesChange={setTouchedAxes}
+                          onNameChange={setCustomName}
+                          initialName={customName}
+                          initialStep={isRetesting ? 0 : initialDraft.step}
+                          initialAxes={liveAxes}
+                          initialBooks={liveBooks}
+                          initialKryptonite={liveKryptonite}
+                          initialTouchedAxes={touchedAxes}
+                          isLoading={saveMutation.isPending}
+                        />
+                      </div>
+
+                      {/* Правая колонка: Live-превью билета */}
+                      <div className="flex flex-col justify-center space-y-2 sm:space-y-2.5">
+                        <ArchivalTicketCard
+                          ticketNumber={myTicket?.ticketNumber || activeTicket?.ticketNumber || "BS-....."}
+                          customName={customName || activeTicket?.customName || null}
+                          archetypeName={activeTicket?.archetypeName || ""}
+                          axes={liveAxes}
+                          favoriteBooks={liveBooks}
+                          kryptoniteBook={liveKryptonite}
+                          theme={theme}
+                          isSealed={Boolean(activeTicket)}
+                        />
+                        <span className="block text-[10px] sm:text-[11px] opacity-60 text-center font-sans">
+                          {isRetesting
+                            ? `Постоянный номер билета #${myTicket?.ticketNumber} сохраняется.`
+                            : "Номер BS-XXXXX выдаётся по порядку при запечатывании."}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </motion.section>
             )}
 
@@ -996,7 +1110,7 @@ export default function ReadingDnaPage() {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => handleSelectTab(3)}
+                              onClick={() => handleOpenDuelWith(activeTicket.ticketNumber)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                                 isDark
                                   ? "bg-[#8a2433] hover:bg-[#a32b3d]"
@@ -1221,8 +1335,8 @@ export default function ReadingDnaPage() {
                                     Среди <b>{archetypeStats.totalTickets}</b> читателей BookStrata ранг «
                                     <b>
                                       {isDark
-                                        ? arch?.names.dark || activeTicket.archetypeName
-                                        : arch?.names.craft || activeTicket.archetypeName}
+                                        ? arch?.names?.dark || activeTicket.archetypeName
+                                        : arch?.names?.craft || activeTicket.archetypeName}
                                     </b>
                                     » получили <b>{dbEntry.count}</b> ({displayPercent}%).
                                   </>
@@ -1232,8 +1346,8 @@ export default function ReadingDnaPage() {
                                     <b>{(arch?.rarity || 7) * 10}</b> получают ранг «
                                     <b>
                                       {isDark
-                                        ? arch?.names.dark || activeTicket.archetypeName
-                                        : arch?.names.craft || activeTicket.archetypeName}
+                                        ? arch?.names?.dark || activeTicket.archetypeName
+                                        : arch?.names?.craft || activeTicket.archetypeName}
                                     </b>
                                     ».
                                   </>
@@ -1278,7 +1392,7 @@ export default function ReadingDnaPage() {
                                   {luckySum > 0 && ` (сумма цифр ${luckySum})`}.
                                 </li>
                                 <li>
-                                  <b className="opacity-100">Орден:</b> {arch?.caste.name} (серия «ДНК»).
+                                  <b className="opacity-100">Орден:</b> {arch?.caste?.name || "Орден"} (серия «ДНК»).
                                 </li>
                                 <li>
                                   <b className="opacity-100">Канон:</b> 3 священные книги + 1 криптонит с печатью иммунитета.

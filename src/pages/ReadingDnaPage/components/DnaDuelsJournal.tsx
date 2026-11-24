@@ -244,7 +244,7 @@ export function DnaDuelsJournal({
           )}
 
           {/* Список последних сравнений */}
-          {data.recentDuels.length > 0 && (
+          {(data.recentDuels?.length ?? 0) > 0 && (
             <div className="space-y-1.5">
               <div className="text-[11px] uppercase font-mono tracking-wider opacity-60">
                 Последние сравнения

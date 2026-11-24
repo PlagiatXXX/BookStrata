@@ -50,6 +50,8 @@ export interface ReadingDnaResponseData {
   viewsCount: number;
   shareCount: number;
   duelsCount: number;
+  retestCount?: number;
+  retestsLeft?: number;
   createdAt: string;
 }
 
