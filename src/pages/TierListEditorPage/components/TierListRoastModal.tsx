@@ -12,7 +12,16 @@ export interface TierListRoastModalProps {
   tierListDescription?: string;
   tiers: Tier[];
   books: Record<string, Book>;
+  tierListId?: string | number | null;
 }
+
+import {
+  getRoastStorageKey,
+  getRecentRoastAttempts,
+  recordRoastAttempt,
+  getRoastCooldownRemaining,
+  formatCooldownTime,
+} from "./roastCooldownHelper";
 
 const LOADING_PHRASES: ReactNode[] = [
   "Сканирую литературные грехи...",
@@ -44,14 +53,44 @@ export function TierListRoastModal({
   tierListDescription,
   tiers,
   books,
+  tierListId,
 }: TierListRoastModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<TierListRoastResult | null>(null);
+  const [result, setResult] = useState<TierListRoastResult | null>(() => {
+    try {
+      const key = getRoastStorageKey(tierListId, tierListTitle);
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed.roast === "string") {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  });
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [loadingPhraseIndex, setLoadingPhraseIndex] = useState(0);
+  const [cooldownRemainingMs, setCooldownRemainingMs] = useState(() => getRoastCooldownRemaining());
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const storageKey = getRoastStorageKey(tierListId, tierListTitle);
+  const recentAttemptsCount = getRecentRoastAttempts().length;
+
+  // Обновление таймера кулдауна каждую секунду при открытом окне
+  useEffect(() => {
+    if (!isOpen) return;
+    const updateCooldown = () => {
+      setCooldownRemainingMs(getRoastCooldownRemaining());
+    };
+    updateCooldown();
+    const interval = setInterval(updateCooldown, 1000);
+    return () => clearInterval(interval);
+  }, [isOpen]);
 
   // Циклическая смена фраз при загрузке
   useEffect(() => {
@@ -63,6 +102,13 @@ export function TierListRoastModal({
   }, [loading]);
 
   const loadRoast = useCallback(async () => {
+    const cooldown = getRoastCooldownRemaining();
+    if (cooldown > 0) {
+      setCooldownRemainingMs(cooldown);
+      setError(`Превышен лимит (2 попытки подряд). Букстраж остывает. Доступно через ${formatCooldownTime(cooldown)}.`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -87,19 +133,44 @@ export function TierListRoastModal({
         tiers: formattedTiers,
       });
       setResult(data);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(data));
+      } catch {
+        // ignore
+      }
+      recordRoastAttempt();
+      setCooldownRemainingMs(getRoastCooldownRemaining());
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Не удалось получить прожарку";
       setError(msg);
     } finally {
       setLoading(false);
     }
-  }, [tierListTitle, tierListDescription, tiers, books]);
+  }, [tierListTitle, tierListDescription, tiers, books, storageKey]);
 
+  // Загрузка сохранённой прожарки из localStorage или запуск генерации
   useEffect(() => {
-    if (isOpen && !result && !loading && !error) {
-      loadRoast();
+    if (!isOpen || result || loading || error) return;
+
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed.roast === "string") {
+          setResult(parsed);
+          return;
+        }
+      }
+    } catch {
+      // ignore
     }
-  }, [isOpen, result, loading, error, loadRoast]);
+
+    loadRoast();
+  }, [isOpen, storageKey, result, loading, error, loadRoast]);
+
+  const handleReRoast = useCallback(() => {
+    loadRoast();
+  }, [loadRoast]);
 
   const handleCopy = useCallback(() => {
     if (!result) return;
@@ -153,30 +224,44 @@ export function TierListRoastModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="w-[95vw] sm:max-w-xl md:max-w-2xl lg:max-w-3xl">
-      <div className="relative rounded-2xl border border-amber-500/20 bg-[#0d0f14] p-4 sm:p-6 text-white shadow-2xl shadow-amber-500/5 max-h-[92dvh] flex flex-col">
+      <div className="relative rounded-2xl border border-amber-500/20 bg-[#0d0f14] p-3.5 sm:p-5 text-white shadow-2xl shadow-amber-500/5 max-h-[85dvh] flex flex-col overflow-hidden">
         {/* Кнопка закрытия */}
         <button
           onClick={onClose}
           type="button"
           aria-label="Закрыть"
-          className="absolute right-4 top-4 z-10 flex size-7 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-400 transition-colors hover:border-white/20 hover:text-white"
+          className="absolute right-3.5 top-3.5 z-10 flex size-7 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-400 transition-colors hover:border-white/20 hover:text-white"
         >
           <X size={15} />
         </button>
 
         {/* Загрузка */}
         {loading && (
-          <div className="py-14 flex flex-col items-center justify-center text-center space-y-4">
+          <div className="py-4 sm:py-6 flex flex-col items-center justify-center text-center space-y-3.5">
             <div className="relative flex items-center justify-center">
-              <div className="size-16 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
-              <Flame size={24} className="absolute text-amber-400 animate-pulse" />
+              <div className="size-13 rounded-full border-2 border-amber-500/20 border-t-amber-400 animate-spin" />
+              <Flame size={20} className="absolute text-amber-400 animate-pulse" />
             </div>
             <div>
-              <p className="text-base font-semibold text-amber-300">
+              <p className="text-sm sm:text-base font-semibold text-amber-300">
                 {LOADING_PHRASES[loadingPhraseIndex]}
               </p>
-              <p className="text-xs text-white/40 mt-1">
+              <p className="text-[11px] text-white/40 mt-0.5">
                 ИИ-библиотекарь взвешивает книги в тирах...
+              </p>
+            </div>
+
+            {/* Памятка во время ожидания */}
+            <div className="w-full max-w-md rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 sm:p-4 text-left text-xs text-white/80 leading-relaxed shadow-inner">
+              <div className="flex items-center gap-1.5 mb-1.5 font-semibold text-amber-400 text-xs sm:text-[13px]">
+                <span>☕</span>
+                <span>Минутка спокойствия, пока кипят литературные страсти</span>
+              </div>
+              <p className="text-white/85 mb-2 text-[11px] sm:text-xs">
+                Эта прожарка — чистый юмор и повод по-доброму посмеяться над своими вкусами. Мы никого не судим и не обижаем! Ваш результат полностью конфиденциален, но если захотите удивить друзей — кнопка «Поделиться» будет наготове.
+              </p>
+              <p className="text-white/60 text-[10px] sm:text-[11px] border-t border-amber-500/15 pt-1.5">
+                <span className="font-semibold text-amber-300/80">P.S.</span> Чем больше книг, тем дольше Букстраж собирает мысли. А книги без названий и авторов он расшифровать не сможет. Добра и мира вашим книжным полкам! ✨
               </p>
             </div>
           </div>
@@ -184,12 +269,12 @@ export function TierListRoastModal({
 
         {/* Ошибка */}
         {!loading && error && (
-          <div className="py-8 flex flex-col items-center text-center space-y-4">
-            <div className="p-3 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
-              <AlertTriangle size={28} />
+          <div className="py-6 flex flex-col items-center text-center space-y-3">
+            <div className="p-2.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+              <AlertTriangle size={24} />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-white">Не удалось прожарить тир-лист</h3>
+              <h3 className="text-sm sm:text-base font-bold text-white">Не удалось прожарить тир-лист</h3>
               <p className="text-xs text-white/60 max-w-sm">{error}</p>
             </div>
             <button
@@ -205,19 +290,19 @@ export function TierListRoastModal({
 
         {/* Карточка-вердикт */}
         {!loading && !error && result && (
-          <div className="overflow-y-auto max-h-[calc(92dvh-3rem)] pr-1 sm:pr-2 space-y-4">
+          <div className="overflow-y-auto max-h-[calc(85dvh-2rem)] pr-1 sm:pr-1.5 space-y-2.5">
             {/* Экспортируемая область карточки */}
             <div
               ref={cardRef}
-              className="rounded-xl border border-amber-500/30 bg-linear-to-b from-amber-500/10 via-[#12151c] to-[#0d0f14] p-5 sm:p-7"
+              className="rounded-xl border border-amber-500/30 bg-linear-to-b from-amber-500/10 via-[#12151c] to-[#0d0f14] p-3.5 sm:p-5"
             >
               {/* Хэдер карточки */}
-              <div className="flex items-center justify-between gap-3 pb-3 mb-4 border-b border-amber-500/20">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3 pb-2 mb-2.5 border-b border-amber-500/20">
+                <div className="flex items-center gap-1.5">
                   <div className="p-1 rounded bg-amber-500/20 text-amber-400">
-                    <Flame size={16} />
+                    <Flame size={14} />
                   </div>
-                  <span className="text-[11px] font-black uppercase tracking-widest text-amber-400">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">
                     Прожарка тир-листа
                   </span>
                 </div>
@@ -227,38 +312,38 @@ export function TierListRoastModal({
               </div>
 
               {/* Архетип */}
-              <div className="space-y-1 mb-4">
+              <div className="space-y-0.5 mb-2.5">
                 <p className="text-[10px] font-black uppercase tracking-wider text-amber-400/80">
                   Ваш читательский архетип
                 </p>
-                <h3 className="text-xl sm:text-2xl font-black text-amber-300 leading-tight">
+                <h3 className="text-lg sm:text-xl font-black text-amber-300 leading-tight">
                   {cleanQuotes(result.archetype)}
                 </h3>
               </div>
 
               {/* Текст прожарки */}
-              <div className="space-y-1 mb-4">
+              <div className="space-y-0.5 mb-2.5">
                 <p className="text-[10px] font-black uppercase tracking-wider text-white/40">
                   Вердикт Букстража
                 </p>
-                <p className="text-sm sm:text-base text-white/90 leading-relaxed italic border-l-2 border-amber-400/50 pl-3.5 py-1">
+                <p className="text-xs sm:text-sm text-white/90 leading-relaxed italic border-l-2 border-amber-400/50 pl-3 py-0.5">
                   «{cleanQuotes(result.roast)}»
                 </p>
               </div>
 
               {/* Главный грех (Hot Take) */}
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3.5 sm:p-4 mb-4">
-                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400 mb-1">
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 sm:p-3 mb-2.5">
+                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-400 mb-0.5">
                   <span>💥 Главный скандал расстановки</span>
                 </div>
-                <p className="text-xs sm:text-sm text-white/85 leading-relaxed">
+                <p className="text-xs text-white/85 leading-relaxed">
                   {cleanQuotes(result.hotTake)}
                 </p>
               </div>
 
               {/* Шкала цинизма */}
-              <div className="pt-2 border-t border-white/5">
-                <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-white/50 mb-1.5">
+              <div className="pt-1.5 border-t border-white/5">
+                <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-white/50 mb-1">
                   <span>Градус снобизма расстановки</span>
                   <span className="font-bold text-amber-400">{result.cynicismScore}%</span>
                 </div>
@@ -271,36 +356,74 @@ export function TierListRoastModal({
               </div>
             </div>
 
-            {/* Кнопки действий */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+            {/* Компактный ряд из 4 кнопок: 4 в ряд на ПК, 2x2 на мобильных */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              {/* 1. Скачать постер */}
               <button
                 type="button"
                 onClick={handleDownloadImage}
                 disabled={isDownloading}
-                className="nb-btn-primary flex items-center justify-center gap-1.5 text-xs py-2.5"
+                aria-label="Скачать постер"
+                className="nb-btn-primary flex items-center justify-center gap-1.5 text-xs py-2 px-2"
               >
-                <Download size={15} />
-                <span>{isDownloading ? "Создаю..." : "Скачать постер"}</span>
+                <Download size={14} className="shrink-0" />
+                <span className="truncate">{isDownloading ? "Создаю..." : "Скачать"}</span>
               </button>
 
+              {/* 2. Поделиться в Telegram */}
               <button
                 type="button"
                 onClick={handleShareTelegram}
-                className="nb-btn-secondary flex items-center justify-center gap-1.5 text-xs py-2.5 border-white/10 hover:border-amber-400/40 text-white"
+                aria-label="Поделиться в Telegram"
+                className="nb-btn-secondary flex items-center justify-center gap-1.5 text-xs py-2 px-2 border-white/10 hover:border-amber-400/40 text-white"
               >
-                <Share2 size={15} className="text-amber-400" />
-                <span>В Telegram</span>
+                <Share2 size={14} className="text-amber-400 shrink-0" />
+                <span className="truncate">В Telegram</span>
               </button>
 
+              {/* 3. Копировать */}
               <button
                 type="button"
                 onClick={handleCopy}
-                className="nb-btn-secondary flex items-center justify-center gap-1.5 text-xs py-2.5 border-white/10 text-white/70 hover:text-white"
+                aria-label="Копировать текст прожарки"
+                className="nb-btn-secondary flex items-center justify-center gap-1.5 text-xs py-2 px-2 border-white/10 text-white/70 hover:text-white"
               >
-                {copied ? <Check size={15} className="text-green-400" /> : <Copy size={15} />}
-                <span>{copied ? "Скопировано" : "Копировать"}</span>
+                {copied ? <Check size={14} className="text-green-400 shrink-0" /> : <Copy size={14} className="shrink-0" />}
+                <span className="truncate">{copied ? "Скопировано" : "Копировать"}</span>
+              </button>
+
+              {/* 4. Перепрожарить */}
+              <button
+                type="button"
+                onClick={handleReRoast}
+                disabled={loading || cooldownRemainingMs > 0}
+                aria-label={
+                  cooldownRemainingMs > 0
+                    ? `Перепрожарить (через ${formatCooldownTime(cooldownRemainingMs)})`
+                    : "Перепрожарить тир-лист"
+                }
+                title={
+                  cooldownRemainingMs > 0
+                    ? `Кулдаун: доступно через ${formatCooldownTime(cooldownRemainingMs)}`
+                    : `Перепрожарить тир-лист${recentAttemptsCount === 1 ? " (осталась 1 попытка)" : ""}`
+                }
+                className="nb-btn-secondary flex items-center justify-center gap-1.5 text-xs py-2 px-2 text-amber-300/90 border-amber-500/30 hover:border-amber-400 hover:text-amber-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+              >
+                <RefreshCw size={13} className={`shrink-0 ${loading ? "animate-spin" : ""}`} />
+                <span className="truncate">
+                  {cooldownRemainingMs > 0
+                    ? formatCooldownTime(cooldownRemainingMs)
+                    : "Перепрожарить"}
+                </span>
               </button>
             </div>
+
+            {/* Подсказка кулдауна (если активен) */}
+            {cooldownRemainingMs > 0 && (
+              <p className="text-[10px] text-white/40 text-center mt-0.5">
+                Лимит: 2 попытки подряд. Букстраж остывает.
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -814,6 +814,7 @@ const TierListEditorContent = () => {
         tierListDescription={tierListDescription}
         tiers={orderedTiers}
         books={listData.books}
+        tierListId={effectiveTierListId}
       />
 
       {/* Модальные окна */}
