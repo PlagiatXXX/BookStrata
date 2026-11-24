@@ -53,8 +53,10 @@ const envSchema = z.object({
   OPENROUTER_MODEL: z
     .string()
     .default("meta-llama/llama-3.1-8b-instruct"),
-  ABLITERATION_API_KEY: z.string().default(""),
-  ABLITERATION_MODEL: z.string().default("abliterated-model-large-v2"),
+  HMS_API_KEY: z.string().default(""),
+  HMS_BASE_URL: z.string().default("https://100milionseek.top/v1"),
+  HMS_MODEL: z.string().default("deepseek-v4.1-flash-free"),
+  DEEPSEEK_API_KEY: z.string().default(""),
 
   // --- Redis ---
   REDIS_URL: z.string().default("redis://localhost:6379"),

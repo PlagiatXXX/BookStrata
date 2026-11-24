@@ -204,7 +204,7 @@
 - `backend/src/modules/ai-librarian/ai-librarian.service.spec.ts`: Файл .ts в проекте.
 - `backend/src/modules/ai-librarian/ai-librarian.service.ts`: Файл .ts в проекте.
 - `backend/src/modules/ai-librarian/cache.ts`: Файл .ts в проекте.
-- `backend/src/modules/ai-librarian/providers/abliteration.ts`: Файл .ts в проекте.
+- `backend/src/modules/ai-librarian/providers/deepseek.ts`: Файл .ts в проекте.
 - `backend/src/modules/ai-librarian/providers/custom.spec.ts`: Файл .ts в проекте.
 - `backend/src/modules/ai-librarian/providers/custom.ts`: Файл .ts в проекте.
 - `backend/src/modules/ai-librarian/providers/openai-stream.spec.ts`: Тесты параметров запроса к OpenAI-совместимому API (streaming) и статуса провайдера..

@@ -59,7 +59,7 @@
 - `GET /api/admin/analytics/*` — метрики, retention, воронка
 
 ## AI-библиотекарь (Букстраж)
-- `POST /api/ai/librarian/chat` — чат-рекомендации (провайдеры: OpenRouter → кастомный → abliteration.ai → streaming)
+- `POST /api/ai/librarian/chat` — чат-рекомендации (провайдеры: кастомный → DeepSeek 100milionseek → OpenRouter → streaming)
 - `GET /api/ai/librarian/status` — статус провайдеров (пробная генерация, кэш 60с)
 
 ## Служебные

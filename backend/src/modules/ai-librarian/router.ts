@@ -1,7 +1,7 @@
 import { createLogger } from '../../lib/logger.js'
 import type { AiProvider } from './providers/types.js'
 import { customProvider } from './providers/custom.js'
-import { abliterationProvider } from './providers/abliteration.js'
+import { deepseekProvider } from './providers/deepseek.js'
 import { openrouterProvider } from './providers/openrouter.js'
 import type { AiChunk } from './ai-librarian.service.js'
 import { getCachedResponse, setCachedResponse } from './cache.js'
@@ -10,14 +10,35 @@ const logger = createLogger('AiRouter', { color: 'cyan' })
 
 const providers: AiProvider[] = [
   customProvider,
-  abliterationProvider,
+  deepseekProvider,
   openrouterProvider,
 ]
 
-const API_KEY_MAP: Record<string, string> = {
-  custom: 'CUSTOM_AI_API_KEY',
-  abliteration: 'ABLITERATION_API_KEY',
-  openrouter: 'OPENROUTER_API_KEY',
+const API_KEY_MAP: Record<string, string[]> = {
+  custom: ['CUSTOM_AI_API_KEY'],
+  deepseek: ['HMS_API_KEY', 'DEEPSEEK_API_KEY'],
+  openrouter: ['OPENROUTER_API_KEY'],
+}
+
+function getProviderApiKey(name: string): string {
+  const keys = API_KEY_MAP[name]
+  if (!keys) return ''
+  for (const key of keys) {
+    const val = process.env[key]
+    if (val) return val
+  }
+  return ''
+}
+
+export interface RouteAiOptions {
+  preferredProvider?: 'deepseek' | 'custom' | 'openrouter'
+}
+
+function getOrderedProviders(preferred?: string): AiProvider[] {
+  if (!preferred) return providers
+  const primary = providers.find((p) => p.name === preferred)
+  if (!primary) return providers
+  return [primary, ...providers.filter((p) => p.name !== preferred)]
 }
 
 export class AiRouterError extends Error {
@@ -49,6 +70,7 @@ export async function* routeAiResponse(
   signal?: AbortSignal,
   userId?: string,
   userBooks?: string[],
+  options?: RouteAiOptions,
 ): AsyncGenerator<AiChunk> {
   const cached = getCachedResponse(systemPrompt, messages)
   if (cached !== null) {
@@ -59,10 +81,10 @@ export async function* routeAiResponse(
 
   const errors: Array<{ provider: string; error: string }> = []
   let fullResponse = ''
+  const activeProviders = getOrderedProviders(options?.preferredProvider)
 
-  for (const provider of providers) {
-    const envKey = API_KEY_MAP[provider.name]
-    const apiKey = envKey ? process.env[envKey] : ''
+  for (const provider of activeProviders) {
+    const apiKey = getProviderApiKey(provider.name)
     if (!provider.model || !apiKey) {
       logger.warn('Skipping provider — no API key configured', { provider: provider.name })
       continue

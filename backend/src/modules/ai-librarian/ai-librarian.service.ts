@@ -514,7 +514,14 @@ export async function generateTierListRoast(
   const messages = [{ role: 'user', content: userPrompt }]
 
   let fullResponse = ''
-  for await (const chunk of routeAiResponse(messages, TIER_LIST_ROAST_SYSTEM_PROMPT, undefined, userId)) {
+  for await (const chunk of routeAiResponse(
+    messages,
+    TIER_LIST_ROAST_SYSTEM_PROMPT,
+    undefined,
+    userId,
+    undefined,
+    { preferredProvider: 'deepseek' },
+  )) {
     if (!chunk.done && chunk.content) {
       fullResponse += chunk.content
     }

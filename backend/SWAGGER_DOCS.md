@@ -179,7 +179,7 @@ fastify.get('/', handler);
 - `PUT /api/admin/authors/:id/content` — Сохранение контента одной транзакцией
 
 ### AI-библиотекарь
-- `POST /api/ai/librarian/chat` — Чат-рекомендации (авторизация; провайдеры: OpenRouter → кастомный → abliteration.ai → streaming)
+- `POST /api/ai/librarian/chat` — Чат-рекомендации (авторизация; провайдеры: кастомный → DeepSeek 100milionseek → OpenRouter → streaming)
 - `GET /api/ai/librarian/status` — Статус провайдеров (пробная генерация с кэшем 60с)
 
 ### Avatars (AI)
