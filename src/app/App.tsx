@@ -8,13 +8,17 @@ import { useAnalyticsTracker } from "@/hooks/useAnalyticsTracker";
 import { SessionExpiredOverlay } from "@/components/SessionExpiredOverlay";
 const FeedbackModal = lazy(() => import("@/components/FeedbackModal").then((m) => ({ default: m.FeedbackModal })));
 const SupportWidget = lazy(() => import("@/components/SupportWidget").then((m) => ({ default: m.SupportWidget })));
+const DnaWelcomeModal = lazy(() => import("@/components/DnaWelcomeModal").then((m) => ({ default: m.DnaWelcomeModal })));
 import { useFeedbackPrompt } from "@/hooks/useFeedbackPrompt";
+import { useAuth } from "@/hooks/useAuthContext";
+import { useDnaWelcomeModal } from "@/components/DnaWelcomeModal";
 import { restoreBookReturnScroll } from "@/utils/bookNavigation";
 import { AppProviders } from "./AppProviders";
 import "../styles/sileo-custom.css";
 
 /** Внутренний контент, рендерится внутри AppProviders — хуки зависящие от AuthProvider безопасны */
 function AppShellInner() {
+  const { user } = useAuth();
   const { newAchievement, clearNotification } = useAchievementNotifications();
   const {
     isOpen: isFeedbackOpen,
@@ -22,6 +26,11 @@ function AppShellInner() {
     handleSubmit: handleFeedbackSubmit,
     openPrompt: openFeedbackPrompt,
   } = useFeedbackPrompt();
+  const {
+    isOpen: isDnaWelcomeOpen,
+    handleDismiss: handleDnaDismiss,
+    handleAccept: handleDnaAccept,
+  } = useDnaWelcomeModal({ userId: user?.userId });
   useAnalyticsTracker();
 
   return (
@@ -53,6 +62,15 @@ function AppShellInner() {
             isOpen={isFeedbackOpen}
             onDismiss={handleFeedbackDismiss}
             onSubmit={handleFeedbackSubmit}
+          />
+        </Suspense>
+      )}
+      {isDnaWelcomeOpen && (
+        <Suspense fallback={null}>
+          <DnaWelcomeModal
+            isOpen={isDnaWelcomeOpen}
+            onDismiss={handleDnaDismiss}
+            onAccept={handleDnaAccept}
           />
         </Suspense>
       )}
