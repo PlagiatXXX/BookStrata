@@ -25,13 +25,23 @@ const dna: PublicUserDna = {
 }
 
 describe("ProfileDnaCard", () => {
-  it("полученная ДНК: вся карточка — ссылка на сравнение вкусов ДНК", () => {
+  it("полученная ДНК: вся карточка — ссылка на читательский билет", () => {
     render(<ProfileDnaCard dna={dna} isOwner={false} />)
 
     const link = screen.getByRole("link", { name: /Архивариус/ })
     expect(link).toHaveAttribute(
       "href",
-      "/reading-dna?ticket=BS-7492-X&tab=compare",
+      "/reading-dna?ticket=BS-7492-X",
+    )
+  })
+
+  it("у владельца карточка также ведёт на просмотр билета", () => {
+    render(<ProfileDnaCard dna={dna} isOwner={true} />)
+
+    const link = screen.getByRole("link", { name: /Архивариус/ })
+    expect(link).toHaveAttribute(
+      "href",
+      "/reading-dna?ticket=BS-7492-X",
     )
   })
 

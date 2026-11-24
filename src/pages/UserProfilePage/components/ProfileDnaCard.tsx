@@ -62,7 +62,7 @@ export function ProfileDnaCard({
     <section className="card" aria-label="Читательский ДНК" style={{ padding: 20 }}>
       <h2 className="h" style={{ marginBottom: 14 }}>Читательский ДНК</h2>
       <a
-        href={`/reading-dna?ticket=${dna.ticketNumber}&tab=compare`}
+        href={`/reading-dna?ticket=${dna.ticketNumber}`}
         className="block transition-transform hover:scale-[1.01]"
         style={{ textDecoration: "none" }}
         aria-label={`${dna.archetypeName} #${dna.ticketNumber}`}
