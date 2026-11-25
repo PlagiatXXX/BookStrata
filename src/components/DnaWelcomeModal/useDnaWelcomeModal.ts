@@ -28,7 +28,7 @@ export function isBotUserAgent(userAgent?: string): boolean {
   const ua =
     userAgent ?? (typeof navigator !== "undefined" ? navigator.userAgent : "");
   if (!ua) return false;
-  return /bot|crawler|spider|crawling|googlebot|yandex|bingbot|baiduspider|slurp|duckduckbot|facebookexternalhit|twitterbot|headless|lighthouse/i.test(
+  return /bot|crawler|spider|crawling|googlebot|google-inspectiontool|inspectiontool|googleother|storebot-google|adsbot|mediapartners-google|apis-google|feedfetcher-google|google-read-aloud|duplexweb-google|googleweblight|yandex|bingbot|baiduspider|slurp|duckduckbot|facebookexternalhit|twitterbot|headless|lighthouse/i.test(
     ua
   );
 }
