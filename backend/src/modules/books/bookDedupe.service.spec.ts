@@ -49,6 +49,10 @@ vi.mock("../../lib/prisma.js", () => ({
     bookSlugHistory: {
       create: vi.fn(),
     },
+    readingDna: {
+      findMany: vi.fn().mockResolvedValue([]),
+      update: vi.fn(),
+    },
   },
 }));
 
@@ -625,5 +629,56 @@ describe("mergeGroup", () => {
     await mergeGroup(g);
 
     expect(prisma.bookSlugHistory.create).not.toHaveBeenCalled();
+  });
+
+  it("переносит ссылки и снимки книг в reading_dna с дубля на канон при склейке", async () => {
+    const g: DuplicateGroup = {
+      key: "local:book:1",
+      books: [
+        { ...groupBook(1), title: "Канон", coverImageUrl: "https://bookstrata.ru/canon.webp", status: "published" },
+        { ...groupBook(2), title: "черновик", coverImageUrl: "", status: "draft" },
+      ],
+    };
+
+    (prisma.readingDna.findMany as any).mockResolvedValue([
+      {
+        id: 10,
+        favoriteBookIds: [2, 55],
+        kryptoniteBookId: 2,
+        favoriteBooks: [
+          { title: "черновик", bookId: 2 },
+          { title: "Другая книга", author: "Автор", bookId: 55, coverImageUrl: "https://bookstrata.ru/55.webp" },
+        ],
+        kryptoniteBook: { title: "черновик", bookId: 2 },
+      },
+    ]);
+
+    await mergeGroup(g, { forceCanonId: 1 });
+
+    expect(prisma.readingDna.update).toHaveBeenCalledWith({
+      where: { id: 10 },
+      data: expect.objectContaining({
+        favoriteBookIds: [1, 55],
+        kryptoniteBookId: 1,
+        favoriteBooks: [
+          {
+            title: "Канон",
+            bookId: 1,
+            coverImageUrl: "https://bookstrata.ru/canon.webp",
+          },
+          {
+            title: "Другая книга",
+            author: "Автор",
+            bookId: 55,
+            coverImageUrl: "https://bookstrata.ru/55.webp",
+          },
+        ],
+        kryptoniteBook: {
+          title: "Канон",
+          bookId: 1,
+          coverImageUrl: "https://bookstrata.ru/canon.webp",
+        },
+      }),
+    });
   });
 });

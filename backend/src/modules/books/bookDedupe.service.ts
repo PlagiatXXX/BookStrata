@@ -391,6 +391,70 @@ export async function mergeGroup(
       });
     }
 
+    // 4b. ReadingDna: переносим ссылки и снимки в читательских билетах
+    //     (favoriteBookIds, kryptoniteBookId и JSON favoriteBooks/kryptoniteBook),
+    //     чтобы при удалении дубля не оставались битые ID и старые снимки.
+    if (typeof prisma.readingDna?.findMany === "function") {
+      const affectedDnas = await prisma.readingDna.findMany({
+        where: {
+          OR: [
+            { favoriteBookIds: { has: dup.id } },
+            { kryptoniteBookId: dup.id },
+          ],
+        },
+        select: {
+          id: true,
+          favoriteBookIds: true,
+          kryptoniteBookId: true,
+          favoriteBooks: true,
+          kryptoniteBook: true,
+        },
+      });
+
+      const patchDnaBookItem = (entry: unknown) => {
+        if (!entry || typeof entry !== "object") return entry;
+        const b = entry as Record<string, unknown>;
+        if (b.bookId !== dup.id) return entry;
+        return {
+          ...b,
+          bookId: canon.id,
+          title: canon.title,
+          ...(canon.coverImageUrl ? { coverImageUrl: canon.coverImageUrl } : {}),
+        };
+      };
+
+      for (const dna of affectedDnas) {
+        const nextFavIds = Array.isArray(dna.favoriteBookIds)
+          ? Array.from(
+              new Set(
+                dna.favoriteBookIds.map((bid) => (bid === dup.id ? canon.id : bid)),
+              ),
+            )
+          : [];
+        const nextKryptoniteId =
+          dna.kryptoniteBookId === dup.id ? canon.id : dna.kryptoniteBookId;
+        const nextFavBooks = Array.isArray(dna.favoriteBooks)
+          ? dna.favoriteBooks.map(patchDnaBookItem)
+          : dna.favoriteBooks;
+        const nextKryptoniteBook =
+          dna.kryptoniteBook != null
+            ? patchDnaBookItem(dna.kryptoniteBook)
+            : undefined;
+
+        await prisma.readingDna.update({
+          where: { id: dna.id },
+          data: {
+            favoriteBookIds: nextFavIds,
+            kryptoniteBookId: nextKryptoniteId,
+            favoriteBooks: nextFavBooks as never,
+            ...(nextKryptoniteBook !== undefined
+              ? { kryptoniteBook: nextKryptoniteBook as never }
+              : {}),
+          },
+        });
+      }
+    }
+
     // 5. Помечаем неканон (аудит) и удаляем, если больше нигде не встречается
     await prisma.book.update({
       where: { id: dup.id },

@@ -20,6 +20,7 @@ vi.mock("../../lib/prisma.js", () => ({
     book: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
     },
     $transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
@@ -644,6 +645,244 @@ describe("readingDna.service", () => {
           OR: [{ targetDnaId: 42 }, { challengerDnaId: 42 }],
         },
       });
+    });
+  });
+
+  describe("автообогащение книг билета из каталога", () => {
+    it("getTicket подтягивает актуальные title, author и coverImageUrl для published-книг", async () => {
+      (prisma.readingDna.findFirst as any).mockResolvedValue({
+        id: 5,
+        ticketNumber: "BS-6915-F",
+        customName: "shenyao",
+        archetype: "meaning-architect",
+        archetypeName: "Архитектор смыслов",
+        archetypeDesc: "Описание",
+        motto: "Девиз",
+        theme: "dark",
+        storyFocus: 50,
+        emotionalWeight: 50,
+        pace: 50,
+        darkness: 50,
+        scope: 50,
+        complexity: 50,
+        favoriteBooks: [
+          { title: "повелитель тайн Е Юань", bookId: 3033 },
+        ],
+        kryptoniteBook: { title: "старое название", bookId: 1707 },
+        likedGenres: [],
+        dislikedGenres: [],
+        favoriteAuthors: [],
+        shareUrl: null,
+        shortCode: null,
+        qrCodeUrl: null,
+        ticketImageUrl: null,
+        viewsCount: 0,
+        shareCount: 0,
+        duelsCount: 0,
+        retestCount: 0,
+        createdAt: new Date(),
+      });
+      (prisma.readingDna.update as any).mockResolvedValue({});
+      (prisma.book.findMany as any).mockResolvedValue([
+        {
+          id: 3033,
+          title: "Повелитель тайн",
+          author: "Е Юань",
+          coverImageUrl: "https://bookstrata.ru/img/cover-3033.webp",
+          status: "published",
+          mergedIntoId: null,
+        },
+        {
+          id: 1707,
+          title: "Гарри Поттер",
+          author: "Джоан Роулинг",
+          coverImageUrl: "https://bookstrata.ru/img/cover-1707.webp",
+          status: "published",
+          mergedIntoId: null,
+        },
+      ]);
+
+      const ticket = await getTicket("BS-6915-F");
+
+      expect(ticket?.favoriteBooks[0]).toEqual({
+        title: "Повелитель тайн",
+        author: "Е Юань",
+        bookId: 3033,
+        coverImageUrl: "https://bookstrata.ru/img/cover-3033.webp",
+      });
+      expect(ticket?.kryptoniteBook).toEqual({
+        title: "Гарри Поттер",
+        author: "Джоан Роулинг",
+        bookId: 1707,
+        coverImageUrl: "https://bookstrata.ru/img/cover-1707.webp",
+      });
+    });
+
+    it("getTicket переходит по mergedIntoId, если книга билета склеена с каноном", async () => {
+      (prisma.readingDna.findFirst as any).mockResolvedValue({
+        id: 6,
+        ticketNumber: "BS-9999-M",
+        customName: "user",
+        archetype: "meaning-architect",
+        archetypeName: "Архитектор смыслов",
+        archetypeDesc: "Описание",
+        motto: "Девиз",
+        theme: "dark",
+        storyFocus: 50,
+        emotionalWeight: 50,
+        pace: 50,
+        darkness: 50,
+        scope: 50,
+        complexity: 50,
+        favoriteBooks: [{ title: "старый черновик", bookId: 500 }],
+        kryptoniteBook: null,
+        likedGenres: [],
+        dislikedGenres: [],
+        favoriteAuthors: [],
+        shareUrl: null,
+        shortCode: null,
+        qrCodeUrl: null,
+        ticketImageUrl: null,
+        viewsCount: 0,
+        shareCount: 0,
+        duelsCount: 0,
+        retestCount: 0,
+        createdAt: new Date(),
+      });
+      (prisma.readingDna.update as any).mockResolvedValue({});
+      (prisma.book.findMany as any)
+        .mockResolvedValueOnce([
+          {
+            id: 500,
+            title: "старый черновик",
+            author: null,
+            coverImageUrl: "",
+            status: "draft",
+            mergedIntoId: 900,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: 900,
+            title: "Каноническое название",
+            author: "Канонический Автор",
+            coverImageUrl: "https://bookstrata.ru/img/canon-900.webp",
+            status: "published",
+            mergedIntoId: null,
+          },
+        ]);
+
+      const ticket = await getTicket("BS-9999-M");
+
+      expect(ticket?.favoriteBooks[0]).toEqual({
+        title: "Каноническое название",
+        author: "Канонический Автор",
+        bookId: 900,
+        coverImageUrl: "https://bookstrata.ru/img/canon-900.webp",
+      });
+    });
+
+    it("getTicket дозаполняет author и coverImageUrl для draft-книги, сохраняя title", async () => {
+      (prisma.readingDna.findFirst as any).mockResolvedValue({
+        id: 7,
+        ticketNumber: "BS-1234-D",
+        customName: "user",
+        archetype: "meaning-architect",
+        archetypeName: "Архитектор смыслов",
+        archetypeDesc: "Описание",
+        motto: "Девиз",
+        theme: "dark",
+        storyFocus: 50,
+        emotionalWeight: 50,
+        pace: 50,
+        darkness: 50,
+        scope: 50,
+        complexity: 50,
+        favoriteBooks: [{ title: "Пользовательское название", bookId: 600 }],
+        kryptoniteBook: null,
+        likedGenres: [],
+        dislikedGenres: [],
+        favoriteAuthors: [],
+        shareUrl: null,
+        shortCode: null,
+        qrCodeUrl: null,
+        ticketImageUrl: null,
+        viewsCount: 0,
+        shareCount: 0,
+        duelsCount: 0,
+        retestCount: 0,
+        createdAt: new Date(),
+      });
+      (prisma.readingDna.update as any).mockResolvedValue({});
+      (prisma.book.findMany as any).mockResolvedValue([
+        {
+          id: 600,
+          title: "Другое название в черновике",
+          author: "Автор из админки",
+          coverImageUrl: "https://bookstrata.ru/img/draft-600.webp",
+          status: "draft",
+          mergedIntoId: null,
+        },
+      ]);
+
+      const ticket = await getTicket("BS-1234-D");
+
+      expect(ticket?.favoriteBooks[0]).toEqual({
+        title: "Пользовательское название",
+        author: "Автор из админки",
+        bookId: 600,
+        coverImageUrl: "https://bookstrata.ru/img/draft-600.webp",
+      });
+    });
+
+    it("saveDna при наличии $queryRaw матчит published-книгу через matchBook (с нормализацией кавычек/ё)", async () => {
+      (prisma as any).$queryRaw = vi.fn().mockResolvedValue([
+        {
+          id: 808,
+          title: "Божественная комедия",
+          author: "Данте Алигьери",
+          authorId: null,
+          coverImageUrl: "https://bookstrata.ru/img/dante.webp",
+          slug: "bozhestvennaya-komediya",
+          status: "published",
+          source: null,
+          externalId: null,
+          publishedYear: 1320,
+          rating: null,
+        },
+      ]);
+      (prisma.readingDna.findUnique as any).mockResolvedValue(null);
+      (prisma.book.findMany as any).mockResolvedValue([]);
+      (prisma.readingDna.create as any).mockImplementation(({ data }: any) =>
+        Promise.resolve({
+          ...data,
+          id: 8,
+          ticketNumber: "BS-8080-A",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      );
+
+      try {
+        const saved = await saveDna(
+          {
+            ...sampleInput,
+            favoriteBooks: [{ title: "«божественная комедия»", author: "Данте Алигьери" }],
+            kryptoniteBook: null,
+          },
+          42
+        );
+
+        expect(saved.favoriteBooks[0]).toEqual({
+          title: "Божественная комедия",
+          author: "Данте Алигьери",
+          bookId: 808,
+          coverImageUrl: "https://bookstrata.ru/img/dante.webp",
+        });
+        expect(prisma.book.create).not.toHaveBeenCalled();
+      } finally {
+        delete (prisma as any).$queryRaw;
+      }
     });
   });
 });

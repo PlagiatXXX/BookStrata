@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma.js";
 import { NotFoundError } from "../../lib/errors.js";
 import { createBookWithSlug } from "../../lib/slug.js";
 import { createAuthorService } from "../authors/authors.service.js";
+import { matchBook } from "../books/bookMatching.service.js";
 import {
   resolveArchetype,
   calculateCompatibility,
@@ -46,12 +47,152 @@ function isUniqueConstraintError(error: unknown): boolean {
   );
 }
 
+interface BookEnrichRow {
+  id: number;
+  title: string;
+  author: string | null;
+  coverImageUrl: string;
+  status: string;
+  mergedIntoId: number | null;
+}
+
+const ENRICH_BOOK_SELECT = {
+  id: true,
+  title: true,
+  author: true,
+  coverImageUrl: true,
+  status: true,
+  mergedIntoId: true,
+} as const;
+
+/**
+ * Извлекает bookId из элемента книги билета.
+ */
+function extractBookIds(records: any[]): number[] {
+  const ids = new Set<number>();
+  for (const record of records) {
+    if (Array.isArray(record?.favoriteBooks)) {
+      for (const item of record.favoriteBooks) {
+        if (item && typeof item.bookId === "number") {
+          ids.add(item.bookId);
+        }
+      }
+    }
+    const kryp = record?.kryptoniteBook;
+    if (kryp && typeof kryp === "object" && typeof kryp.bookId === "number") {
+      ids.add(kryp.bookId);
+    }
+  }
+  return Array.from(ids);
+}
+
+/**
+ * Batch-загрузка актуальных данных книг из каталога (с переходом по mergedIntoId).
+ */
+async function loadEnrichBookMap(records: any[]): Promise<Map<number, BookEnrichRow>> {
+  const result = new Map<number, BookEnrichRow>();
+  if (typeof prisma.book?.findMany !== "function") return result;
+
+  const ids = extractBookIds(records);
+  if (ids.length === 0) return result;
+
+  const rows = await prisma.book.findMany({
+    where: { id: { in: ids } },
+    select: ENRICH_BOOK_SELECT,
+  });
+  if (!Array.isArray(rows) || rows.length === 0) return result;
+
+  const byId = new Map<number, BookEnrichRow>(
+    rows.map((row: BookEnrichRow) => [row.id, row])
+  );
+
+  const canonIds = Array.from(
+    new Set(
+      rows
+        .map((row: BookEnrichRow) => row.mergedIntoId)
+        .filter((id: number | null): id is number => id != null && !byId.has(id))
+    )
+  );
+
+  if (canonIds.length > 0) {
+    const canonRows = await prisma.book.findMany({
+      where: { id: { in: canonIds } },
+      select: ENRICH_BOOK_SELECT,
+    });
+    if (Array.isArray(canonRows)) {
+      for (const canon of canonRows as BookEnrichRow[]) {
+        byId.set(canon.id, canon);
+      }
+    }
+  }
+
+  for (const row of rows as BookEnrichRow[]) {
+    let target = row;
+    if (row.mergedIntoId != null) {
+      target = byId.get(row.mergedIntoId) ?? row;
+    }
+    result.set(row.id, target);
+  }
+
+  return result;
+}
+
+/**
+ * Обогащает элемент книги билета актуальными данными из каталога.
+ * Для published-книг — канонические bookId, title, author, coverImageUrl;
+ * для draft — дозаполняет author/coverImageUrl, если их не было в снимке.
+ */
+function enrichDnaBookItem(
+  item: DnaBookItem,
+  bookMap?: Map<number, BookEnrichRow>
+): DnaBookItem {
+  if (!item || typeof item.bookId !== "number" || !bookMap) {
+    return item;
+  }
+
+  const book = bookMap.get(item.bookId);
+  if (!book) return item;
+
+  if (book.status === "published") {
+    const author = book.author || item.author;
+    const coverImageUrl = book.coverImageUrl || item.coverImageUrl;
+    return {
+      ...item,
+      bookId: book.id,
+      title: book.title || item.title,
+      ...(author ? { author } : {}),
+      ...(coverImageUrl ? { coverImageUrl } : {}),
+    };
+  }
+
+  const author = item.author || book.author;
+  const coverImageUrl = item.coverImageUrl || book.coverImageUrl;
+  return {
+    ...item,
+    bookId: book.id,
+    ...(author ? { author } : {}),
+    ...(coverImageUrl ? { coverImageUrl } : {}),
+  };
+}
+
 /**
  * Преобразует запись Prisma reading_dna в контракт ответа ReadingDnaResponse.
  */
-function toResponse(record: any): ReadingDnaResponse {
+function toResponse(
+  record: any,
+  bookMap?: Map<number, BookEnrichRow>
+): ReadingDnaResponse {
   const retestCount = typeof record.retestCount === "number" ? record.retestCount : 0;
   const retestsLeft = Math.max(0, MAX_DNA_RETESTS - retestCount);
+
+  const rawFavorites = Array.isArray(record.favoriteBooks)
+    ? (record.favoriteBooks as DnaBookItem[])
+    : [];
+  const favoriteBooks = rawFavorites.map((item) => enrichDnaBookItem(item, bookMap));
+  const rawKryptonite = (record.kryptoniteBook as DnaBookItem) ?? null;
+  const kryptoniteBook = rawKryptonite
+    ? enrichDnaBookItem(rawKryptonite, bookMap)
+    : null;
 
   return {
     id: record.id,
@@ -70,8 +211,8 @@ function toResponse(record: any): ReadingDnaResponse {
       scope: record.scope,
       complexity: record.complexity,
     },
-    favoriteBooks: record.favoriteBooks as DnaBookItem[],
-    kryptoniteBook: (record.kryptoniteBook as DnaBookItem) ?? null,
+    favoriteBooks,
+    kryptoniteBook,
     likedGenres: record.likedGenres,
     dislikedGenres: record.dislikedGenres,
     favoriteAuthors: record.favoriteAuthors,
@@ -86,6 +227,11 @@ function toResponse(record: any): ReadingDnaResponse {
     retestsLeft,
     createdAt: record.createdAt,
   };
+}
+
+async function toEnrichedResponse(record: any): Promise<ReadingDnaResponse> {
+  const bookMap = await loadEnrichBookMap([record]);
+  return toResponse(record, bookMap);
 }
 
 /**
@@ -136,7 +282,30 @@ async function resolveOrCreateDnaBook(item: DnaBookItem): Promise<DnaBookItem> {
   try {
     if (!prisma.book) return item;
 
-    // 1. Проверяем, существует ли уже такая книга в БД BookStrata
+    // 1a. Точный поиск среди опубликованных книг каталога через matchBook
+    //     (учитывает нормализацию регистра, кавычек, тире и ё→е)
+    if (typeof (prisma as any).$queryRaw === "function") {
+      try {
+        const matched = await matchBook(
+          prisma,
+          { title: cleanTitle, author: cleanAuthor },
+          { statusFilter: "published", fuzzy: false },
+        );
+        if (matched.book) {
+          return {
+            ...item,
+            bookId: matched.book.id,
+            title: matched.book.title || item.title,
+            author: matched.book.author || item.author || undefined,
+            coverImageUrl: matched.book.coverImageUrl || item.coverImageUrl || undefined,
+          };
+        }
+      } catch {
+        // Если $queryRaw недоступен или упал — переходим к findFirst
+      }
+    }
+
+    // 1b. Fallback-проверка существования книги в БД BookStrata
     const existing = await prisma.book.findFirst({
       where: {
         title: { equals: cleanTitle, mode: "insensitive" },
@@ -251,7 +420,7 @@ export async function saveDna(
           retestCount: { increment: 1 },
         },
       });
-      return toResponse(updated);
+      return toEnrichedResponse(updated);
     }
   } else if (input.guestToken) {
     const existingGuestTicket = await prisma.readingDna.findUnique({
@@ -302,7 +471,7 @@ export async function saveDna(
 
   if (!savedRecord) throw lastError;
 
-  return toResponse(savedRecord);
+  return toEnrichedResponse(savedRecord);
 }
 
 /**
@@ -328,7 +497,7 @@ export async function getTicket(
     data: { viewsCount: { increment: 1 } },
   });
 
-  return toResponse(record);
+  return toEnrichedResponse(record);
 }
 
 /**
@@ -341,7 +510,7 @@ export async function getMyDna(userId: number): Promise<ReadingDnaResponse | nul
 
   if (!record) return null;
 
-  return toResponse(record);
+  return toEnrichedResponse(record);
 }
 
 /**
@@ -357,7 +526,7 @@ export async function claimGuestDna(
     where: { userId },
   });
   if (existingUserDna) {
-    return { claimed: false, dna: toResponse(existingUserDna) };
+    return { claimed: false, dna: await toEnrichedResponse(existingUserDna) };
   }
 
   const updated = await prisma.readingDna.updateMany({
@@ -374,7 +543,7 @@ export async function claimGuestDna(
   });
   if (!claimedRecord) return null;
 
-  return { claimed: true, dna: toResponse(claimedRecord) };
+  return { claimed: true, dna: await toEnrichedResponse(claimedRecord) };
 }
 
 /**
@@ -615,6 +784,8 @@ export async function findTwins(
     theme: current.theme as "dark" | "craft",
   };
 
+  const bookMap = await loadEnrichBookMap(candidates);
+
   const scored: ReadingDnaTwinResult[] = candidates.map((cand: any) => {
     const candProfile: ReadingDnaInput = {
       axes: {
@@ -639,7 +810,7 @@ export async function findTwins(
       : [];
 
     return {
-      ...toResponse(cand),
+      ...toResponse(cand, bookMap),
       similarity: res.compatibility,
       user: cand.user
         ? {
