@@ -14,6 +14,7 @@ import {
 import type { AiChunk, PageContext } from './ai-librarian.service.js'
 import { getCollectionBySlug, getCollections } from '../collections/collection.service.js'
 import { getCelebrityBySlug } from '../celebrities/celebrity.service.js'
+import { ARCHETYPES } from '../reading-dna/archetypes.data.js'
 import { AiRouterError } from './router.js'
 import { createLogger } from '../../lib/logger.js'
 import { prisma } from '../../lib/prisma.js'
@@ -66,9 +67,10 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
               type: 'object',
               required: ['pageType'],
               properties: {
-                pageType: { type: 'string', enum: ['rankings', 'collection', 'book-description', 'celebrity', 'reading-dna'] },
+                pageType: { type: 'string', enum: ['rankings', 'collection', 'book-description', 'celebrity', 'reading-dna', 'tier-list'] },
                 slug: { type: 'string' },
                 ticketNumber: { type: 'string' },
+                tierListId: { type: 'string' },
               },
             },
           },
@@ -86,9 +88,17 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
         )
       }
 
+      const rawContext = parsed.data.context
+      const isScopedPage =
+        rawContext?.pageType === 'tier-list' ||
+        rawContext?.pageType === 'celebrity' ||
+        rawContext?.pageType === 'collection'
+
       let tasteProfile
       try {
-        tasteProfile = await getUserTasteProfile(user.userId, fastify.prisma)
+        tasteProfile = await getUserTasteProfile(user.userId, fastify.prisma, {
+          includeDna: !isScopedPage,
+        })
       } catch (err) {
         logger.error(err instanceof Error ? err : new Error(String(err)), {
           context: 'getUserTasteProfile',
@@ -100,7 +110,6 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
 
       // Загружаем контекст страницы, если передан
       let pageContext: PageContext | undefined
-      const rawContext = parsed.data.context
       if (rawContext) {
         if (rawContext.pageType === 'collection' && rawContext.slug) {
           try {
@@ -185,12 +194,20 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
                 ticket.kryptoniteBook && typeof ticket.kryptoniteBook === 'object'
                   ? (ticket.kryptoniteBook as { title: string; author?: string | null })
                   : null
+              const matchedArchetype = ARCHETYPES.find(
+                (a) =>
+                  a.id === ticket.archetype ||
+                  a.names.dark === ticket.archetypeName ||
+                  a.names.craft === ticket.archetypeName,
+              )
 
               pageContext = {
                 pageType: 'reading-dna',
                 readingDna: {
                   ticketNumber: ticket.ticketNumber,
+                  customName: ticket.customName,
                   archetypeName: ticket.archetypeName,
+                  casteName: matchedArchetype?.caste.name ?? null,
                   motto: ticket.motto,
                   storyFocus: ticket.storyFocus,
                   emotionalWeight: ticket.emotionalWeight,
@@ -204,25 +221,103 @@ export async function aiLibrarianRoutes(fastify: FastifyInstance) {
               }
             }
           } catch (err) {
-            logger.warn('Failed to load reading-dna context', {
-              ticketNumber: rawContext.ticketNumber,
-              error: err instanceof Error ? err.message : String(err),
-            })
+              logger.warn('Failed to load reading-dna context', {
+                ticketNumber: rawContext.ticketNumber,
+                error: err instanceof Error ? err.message : String(err),
+              })
+            }
+          }
+
+          if (rawContext.pageType === 'tier-list') {
+            let tierListContext: PageContext['tierList']
+            if (rawContext.tierListId) {
+              try {
+                const tierList = await fastify.prisma.tierList.findFirst({
+                  where: {
+                    AND: [
+                      {
+                        OR: [
+                          { id: rawContext.tierListId },
+                          { slug: rawContext.tierListId },
+                        ],
+                      },
+                      {
+                        OR: [
+                          { userId: user.userId },
+                          { isPublic: true },
+                        ],
+                      },
+                    ],
+                  },
+                  include: {
+                    tiers: { orderBy: { rank: 'asc' } },
+                    placements: {
+                      include: { book: true, tier: true },
+                    },
+                  },
+                })
+                if (tierList) {
+                  const booksByTierId = new Map<number, Array<{ title: string; author?: string | null }>>()
+                  const unrankedBooks: Array<{ title: string; author?: string | null }> = []
+                  for (const p of tierList.placements) {
+                    const entry = { title: p.book.title, author: p.book.author }
+                    if (p.tierId !== null) {
+                      const arr = booksByTierId.get(p.tierId) ?? []
+                      arr.push(entry)
+                      booksByTierId.set(p.tierId, arr)
+                    } else {
+                      unrankedBooks.push(entry)
+                    }
+                  }
+                  tierListContext = {
+                    title: tierList.title,
+                    description: tierList.description,
+                    tiers: tierList.tiers.map((t) => ({
+                      title: t.title,
+                      books: booksByTierId.get(t.id) ?? [],
+                    })),
+                    unrankedBooks,
+                  }
+                }
+              } catch (err) {
+                logger.warn('Failed to load tier-list context', {
+                  tierListId: rawContext.tierListId,
+                  error: err instanceof Error ? err.message : String(err),
+                })
+              }
+            }
+
+            pageContext = {
+              pageType: 'tier-list',
+              ...(tierListContext ? { tierList: tierListContext } : {}),
+            }
           }
         }
-      }
 
-      const systemPrompt = buildSystemPrompt(tasteProfile, user.username, pageContext)
+        const systemPrompt = buildSystemPrompt(tasteProfile, user.username, pageContext)
 
-      // Собираем все названия книг пользователя для пост-валидации
-      const userBookTitles = [
-        ...tasteProfile.topBooks.map((b) => b.title),
-        ...tasteProfile.midBooks.map((b) => b.title),
-        ...tasteProfile.lowBooks.map((b) => b.title),
-        ...tasteProfile.unrankedBooks.map((b) => b.title),
-      ]
+        // Собираем названия книг пользователя для пост-валидации анти-дубля
+        const userBookTitles =
+          pageContext?.pageType === 'tier-list' && pageContext.tierList
+            ? [
+                ...pageContext.tierList.tiers.flatMap((t) => t.books.map((b) => b.title)),
+                ...pageContext.tierList.unrankedBooks.map((b) => b.title),
+              ]
+            : pageContext?.pageType === 'collection' || pageContext?.pageType === 'celebrity'
+              ? []
+              : [
+                  ...tasteProfile.topBooks.map((b) => b.title),
+                  ...tasteProfile.midBooks.map((b) => b.title),
+                  ...tasteProfile.lowBooks.map((b) => b.title),
+                  ...tasteProfile.unrankedBooks.map((b) => b.title),
+                ]
       if (pageContext?.readingDna?.kryptoniteBook?.title) {
         userBookTitles.push(pageContext.readingDna.kryptoniteBook.title)
+      }
+      if (pageContext?.readingDna?.favoriteBooks?.length) {
+        for (const fav of pageContext.readingDna.favoriteBooks) {
+          if (fav.title) userBookTitles.push(fav.title)
+        }
       }
 
       logger.info('Starting AI stream', {

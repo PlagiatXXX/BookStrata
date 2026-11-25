@@ -29,5 +29,6 @@ export function getSessionKey(context?: AiLibrarianPageContext): string {
   if (!context) return '__global'
   if (context.pageType === 'collection' && context.slug) return `collection:${context.slug}`
   if (context.pageType === 'reading-dna') return `reading-dna:${context.ticketNumber || 'active'}`
+  if (context.pageType === 'tier-list') return `tier-list:${context.tierListId || 'draft'}`
   return context.pageType
 }

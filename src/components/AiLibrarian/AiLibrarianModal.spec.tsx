@@ -211,4 +211,20 @@ describe('AiLibrarianModal', () => {
     expect(screen.getByText(/Посоветуй книги под мои 6 осей ДНК/i)).toBeInTheDocument()
     expect(screen.getByText(/Что почитать взамен моего криптонита/i)).toBeInTheDocument()
   })
+
+  it('рендерит приветствие и чипсы тир-листа с подсказкой про страницу билета при pageType tier-list', () => {
+    render(
+      withRouter(
+        <AiLibrarianModal
+          isOpen={true}
+          onClose={() => {}}
+          context={{ pageType: 'tier-list', tierListId: 'tl-99' }}
+        />,
+      ),
+    )
+
+    expect(screen.getByText(/книги в этом тир-листе/i)).toBeInTheDocument()
+    expect(screen.getByText(/на странице читательского билета/i)).toBeInTheDocument()
+    expect(screen.getByText(/Оцени расстановку книг в этом тир-листе/i)).toBeInTheDocument()
+  })
 })

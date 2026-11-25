@@ -1068,6 +1068,12 @@ const TierListEditorContent = () => {
           <AiLibrarianModal
             isOpen={isAiLibrarianOpen}
             onClose={handleAiLibrarianClose}
+            context={{
+              pageType: "tier-list",
+              ...(effectiveTierListId && effectiveTierListId !== "new"
+                ? { tierListId: effectiveTierListId }
+                : {}),
+            }}
             variant="sidebar"
           />
         )}

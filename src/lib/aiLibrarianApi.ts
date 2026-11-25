@@ -21,9 +21,10 @@ export interface AiStatusResponse {
 }
 
 export interface AiLibrarianContext {
-  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity' | 'reading-dna'
+  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity' | 'reading-dna' | 'tier-list'
   slug?: string
   ticketNumber?: string
+  tierListId?: string
 }
 
 export interface TierListRoastPayload {

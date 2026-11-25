@@ -74,7 +74,9 @@ export interface CelebrityContext {
 
 export interface ReadingDnaPageContext {
   ticketNumber: string
+  customName?: string | null
   archetypeName: string
+  casteName?: string | null
   motto: string | null
   storyFocus: number
   emotionalWeight: number
@@ -86,17 +88,35 @@ export interface ReadingDnaPageContext {
   kryptoniteBook?: { title: string; author?: string | null } | null
 }
 
+export interface TierListPageTierContext {
+  title: string
+  books: Array<{ title: string; author?: string | null }>
+}
+
+export interface TierListPageContext {
+  title: string
+  description?: string | null
+  tiers: TierListPageTierContext[]
+  unrankedBooks: Array<{ title: string; author?: string | null }>
+}
+
 export interface PageContext {
-  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity' | 'reading-dna'
+  pageType: 'rankings' | 'collection' | 'book-description' | 'celebrity' | 'reading-dna' | 'tier-list'
   collection?: CollectionContext
   celebrity?: CelebrityContext
   featuredCollections?: Array<{ title: string; slug: string; editorialNote: string | null }>
   readingDna?: ReadingDnaPageContext
+  tierList?: TierListPageContext
+}
+
+export interface TasteProfileOptions {
+  includeDna?: boolean
 }
 
 export async function getUserTasteProfile(
   userId: number,
   prisma: PrismaClient,
+  options?: TasteProfileOptions,
 ): Promise<TasteProfile> {
   const tierLists = await prisma.tierList.findMany({
     where: { userId },
@@ -146,7 +166,10 @@ export async function getUserTasteProfile(
 
   popularTierLists.sort((a, b) => b.likesCount - a.likesCount)
 
-  const dnaRecord = await prisma.readingDna.findUnique({ where: { userId } })
+  const includeDna = options?.includeDna ?? true
+  const dnaRecord = includeDna
+    ? await prisma.readingDna.findUnique({ where: { userId } })
+    : null
   const dna: TasteDnaSlice | null = dnaRecord
     ? {
         archetypeName: dnaRecord.archetypeName,
@@ -175,6 +198,60 @@ export async function getUserTasteProfile(
     popularTierLists,
     dna,
   }
+}
+
+function formatContextBook(b: CollectionBookContext): string {
+  const parts = [b.title]
+  if (b.author) parts.push(b.author)
+  if (b.genre) parts.push(`[${b.genre}]`)
+  return parts.join(' — ')
+}
+
+function appendTieredOrFlatBooks(
+  lines: string[],
+  headerLabel: string,
+  tierOrder?: string[],
+  tiers?: Record<string, { title: string; bookIds: string[] }>,
+  books?: Record<string, CollectionBookContext>,
+): void {
+  if (!books) return
+  const entries = Object.entries(books)
+  if (entries.length === 0) return
+
+  const seenIds = new Set<string>()
+  const tierLines: string[] = []
+
+  if (tiers && Object.keys(tiers).length > 0) {
+    const orderedIds = tierOrder && tierOrder.length > 0 ? tierOrder : Object.keys(tiers)
+    for (const tierId of orderedIds) {
+      const tier = tiers[tierId]
+      if (!tier || !Array.isArray(tier.bookIds) || tier.bookIds.length === 0) continue
+      const formatted: string[] = []
+      for (const bookId of tier.bookIds) {
+        if (seenIds.size >= 35) break
+        const book = books[bookId]
+        if (!book) continue
+        seenIds.add(bookId)
+        formatted.push(formatContextBook(book))
+      }
+      if (formatted.length > 0) {
+        tierLines.push(`— Тир «${tier.title}»: ${formatted.join('; ')}`)
+      }
+    }
+  }
+
+  const remaining = entries
+    .filter(([id]) => !seenIds.has(id))
+    .slice(0, Math.max(0, 35 - seenIds.size))
+    .map(([, book]) => `— ${formatContextBook(book)}`)
+
+  const totalCount = Math.min(entries.length, 35)
+  lines.push(`${headerLabel} (${totalCount}):`)
+  lines.push(...tierLines)
+  if (tierLines.length > 0 && remaining.length > 0) {
+    lines.push(`Прочие книги в списке:`)
+  }
+  lines.push(...remaining)
 }
 
 export function buildSystemPrompt(profile: TasteProfile, username: string, pageContext?: PageContext): string {
@@ -223,58 +300,85 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
 — Если ${username} явно не просит совета — не навязывай. Можно заметить тенденцию и спросить мнение.`)
 
   // ============================================================
-  // 3. КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ (его коллекция)
+  // 3. КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ (имя + профиль в рамках режима страницы)
   // ============================================================
+  const isTierListPage = pageContext?.pageType === 'tier-list'
+  const isCollectionPage = pageContext?.pageType === 'collection' && Boolean(pageContext.collection)
+  const isCelebrityPage = pageContext?.pageType === 'celebrity' && Boolean(pageContext.celebrity)
+  const isDnaPage = pageContext?.pageType === 'reading-dna' && Boolean(pageContext.readingDna)
+  const isScopedListPage = (isTierListPage && Boolean(pageContext?.tierList)) || isCollectionPage || isCelebrityPage
+
   const ctx: string[] = []
-  ctx.push(`Контекст пользователя ${username}:`)
+  ctx.push(`Имя собеседника (пользователя): ${username}.`)
 
-  if (profile.totalTierLists > 0) {
-    ctx.push(`— Тир-листы (${profile.totalTierLists}): ${profile.tierListNames.join(', ')}.`)
+  if (isTierListPage && pageContext?.tierList) {
+    ctx.push(`Контекст пользователя на этой странице ограничен текущим тир-листом «${pageContext.tierList.title}».`)
+  } else if (isCollectionPage && pageContext?.collection) {
+    ctx.push(`Контекст пользователя на этой странице ограничен подборкой «${pageContext.collection.title}».`)
+  } else if (isCelebrityPage && pageContext?.celebrity) {
+    ctx.push(`Контекст пользователя на этой странице ограничен страницей знаменитости «${pageContext.celebrity.name}».`)
+  } else if (isDnaPage) {
+    // На странице билета ДНК личный профиль не дублируем; из тир-листов передаём лишь список уже добавленных книг (анти-дубль)
+    const knownTitles = Array.from(
+      new Set([
+        ...profile.topBooks,
+        ...profile.midBooks,
+        ...profile.lowBooks,
+        ...profile.unrankedBooks,
+      ].map((b) => (b.author ? `«${b.title}» (${b.author})` : `«${b.title}»`))),
+    ).slice(0, 30)
+    if (knownTitles.length > 0) {
+      ctx.push(`Уже есть в тир-листах пользователя (не предлагай повторно как новые рекомендации): ${knownTitles.join(', ')}.`)
+    }
   } else {
-    ctx.push(`— Пока не создал ни одного тир-листа.`)
-  }
-
-  if (profile.totalBooks > 0) {
-    ctx.push(`— Всего книг в коллекции: ${profile.totalBooks}.`)
-  } else {
-    ctx.push(`— Коллекция книг пуста.`)
-  }
-
-  if (profile.totalLikesReceived > 0) {
-    ctx.push(`— Тир-листы собрали ${profile.totalLikesReceived} лайков.`)
-    if (profile.popularTierLists.length > 0) {
-      const popular = profile.popularTierLists.slice(0, 3).map(t => `«${t.title}» — ${t.likesCount} лайков`).join('; ')
-      ctx.push(`— Самые популярные: ${popular}.`)
+    if (profile.totalTierLists > 0) {
+      ctx.push(`— Тир-листы (${profile.totalTierLists}): ${profile.tierListNames.join(', ')}.`)
+    } else {
+      ctx.push(`— Пока не создал ни одного тир-листа.`)
     }
-  }
 
-  if (profile.topBooks.length > 0) {
-    ctx.push(`— Любимые книги (высший рейтинг):`)
-    for (const b of profile.topBooks.slice(0, 15)) {
-      ctx.push(`  • ${b.title}${b.author ? ` (${b.author})` : ''}`)
+    if (profile.totalBooks > 0) {
+      ctx.push(`— Всего книг в коллекции: ${profile.totalBooks}.`)
+    } else {
+      ctx.push(`— Коллекция книг пуста.`)
     }
-  }
 
-  if (profile.midBooks.length > 0) {
-    ctx.push(`— Книги со средним рейтингом:`)
-    for (const b of profile.midBooks.slice(0, 10)) {
-      ctx.push(`  • ${b.title}${b.author ? ` (${b.author})` : ''}`)
+    if (profile.totalLikesReceived > 0) {
+      ctx.push(`— Тир-листы собрали ${profile.totalLikesReceived} лайков.`)
+      if (profile.popularTierLists.length > 0) {
+        const popular = profile.popularTierLists.slice(0, 3).map(t => `«${t.title}» — ${t.likesCount} лайков`).join('; ')
+        ctx.push(`— Самые популярные: ${popular}.`)
+      }
     }
-  }
 
-  if (profile.unrankedBooks.length > 0) {
-    ctx.push(`— Нераспределённые книги:`)
-    for (const b of profile.unrankedBooks.slice(0, 10)) {
-      ctx.push(`  • ${b.title}${b.author ? ` (${b.author})` : ''}`)
+    if (profile.topBooks.length > 0) {
+      ctx.push(`— Любимые книги (высший рейтинг):`)
+      for (const b of profile.topBooks.slice(0, 15)) {
+        ctx.push(`  • ${b.title}${b.author ? ` (${b.author})` : ''}`)
+      }
     }
-  }
 
-  if (profile.dna) {
-    const { archetypeName, axes, likedGenres, dislikedGenres } = profile.dna
-    const axesStr = `сюжет/рефлексия ${axes.storyFocus}, лёгкость/тяжесть ${axes.emotionalWeight}, темп ${axes.pace}, светло/мрачно ${axes.darkness}, камерно/эпично ${axes.scope}, просто/сложно ${axes.complexity}`
-    const likedStr = likedGenres.length > 0 ? ` Любимые жанры: ${likedGenres.join(', ')}.` : ''
-    const dislikedStr = dislikedGenres.length > 0 ? ` Неприязненные жанры: ${dislikedGenres.join(', ')}.` : ''
-    ctx.push(`— Читательский ДНК: архетип «${archetypeName}». Оси восприятия: ${axesStr}.${likedStr}${dislikedStr}`)
+    if (profile.midBooks.length > 0) {
+      ctx.push(`— Книги со средним рейтингом:`)
+      for (const b of profile.midBooks.slice(0, 10)) {
+        ctx.push(`  • ${b.title}${b.author ? ` (${b.author})` : ''}`)
+      }
+    }
+
+    if (profile.unrankedBooks.length > 0) {
+      ctx.push(`— Нераспределённые книги:`)
+      for (const b of profile.unrankedBooks.slice(0, 10)) {
+        ctx.push(`  • ${b.title}${b.author ? ` (${b.author})` : ''}`)
+      }
+    }
+
+    if (profile.dna && !isScopedListPage && !isTierListPage) {
+      const { archetypeName, axes, likedGenres, dislikedGenres } = profile.dna
+      const axesStr = `сюжет/рефлексия ${axes.storyFocus}, лёгкость/тяжесть ${axes.emotionalWeight}, темп ${axes.pace}, светло/мрачно ${axes.darkness}, камерно/эпично ${axes.scope}, просто/сложно ${axes.complexity}`
+      const likedStr = likedGenres.length > 0 ? ` Любимые жанры: ${likedGenres.join(', ')}.` : ''
+      const dislikedStr = dislikedGenres.length > 0 ? ` Неприязненные жанры: ${dislikedGenres.join(', ')}.` : ''
+      ctx.push(`— Читательский ДНК: архетип «${archetypeName}». Оси восприятия: ${axesStr}.${likedStr}${dislikedStr}`)
+    }
   }
 
   sections.push(ctx.join('\n'))
@@ -305,19 +409,11 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
       ]
       if (coll.excerpt) lines.push(`Описание подборки: ${coll.excerpt}`)
       if (coll.editorialNote) lines.push(`Как составлялась: ${coll.editorialNote}`)
-      if (coll.books) {
-        const bookList = Object.values(coll.books).slice(0, 30)
-        lines.push(`Книги в этой подборке (${bookList.length}):`)
-        for (const b of bookList) {
-          const parts = [b.title]
-          if (b.author) parts.push(b.author)
-          if (b.genre) parts.push(`[${b.genre}]`)
-          lines.push(`— ${parts.join(' — ')}`)
-        }
-      }
+      appendTieredOrFlatBooks(lines, `Книги в этой подборке`, coll.tierOrder, coll.tiers, coll.books)
       lines.push(``)
-      lines.push(`Пользователь может спросить про любую книгу из этой подборки — отвечай по ней.`)
-      lines.push(`Не предлагай книги, которых нет в этой подборке, если пользователь явно не просит «а что ещё почитать». Если просит — используй базовую коллекцию пользователя.`)
+      lines.push(`ОГРАНИЧЕНИЕ КОНТЕКСТА НА СТРАНИЦЕ КОЛЛЕКЦИИ:`)
+      lines.push(`— Отвечай по книгам из этой подборки, их месту в тирах и логике составления коллекции.`)
+      lines.push(`— Не предлагай книги, которых нет в этой подборке. Если пользователь просит персональные рекомендации под личный вкус или с учётом Книжного ДНК — вежливо объясни, что здесь ты обсуждаешь только книги из этой подборки, а персональный подбор доступен в личном кабинете или на странице читательского билета («Книжный ДНК»).`)
       sections.push(lines.join('\n'))
     }
 
@@ -328,19 +424,11 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
         `Категория: ${c.category || 'без категории'}.`,
       ]
       if (c.biography) lines.push(`О знаменитости: ${c.biography}`)
-      if (c.books) {
-        const bookList = Object.values(c.books).slice(0, 30)
-        lines.push(`Книги, которые упоминала эта знаменитость (${bookList.length}):`)
-        for (const b of bookList) {
-          const parts = [b.title]
-          if (b.author) parts.push(b.author)
-          if (b.genre) parts.push(`[${b.genre}]`)
-          lines.push(`— ${parts.join(' — ')}`)
-        }
-      }
+      appendTieredOrFlatBooks(lines, `Книги, которые упоминала эта знаменитость`, c.tierOrder, c.tiers, c.books)
       lines.push(``)
-      lines.push(`Пользователь может спросить про любую книгу из этого списка, про вкусы или привычки чтения знаменитости. Отвечай с учётом контекста.`)
-      lines.push(`Не предлагай книги, которых нет в этом списке, если пользователь явно не просит «а что ещё почитать из похожего». Если просит — используй базовую коллекцию пользователя.`)
+      lines.push(`ОГРАНИЧЕНИЕ КОНТЕКСТА НА СТРАНИЦЕ ЗНАМЕНИТОСТИ:`)
+      lines.push(`— Обсуждай только эту знаменитость, её читательские вкусы и книги из её списка (учитывая их распределение по тирам).`)
+      lines.push(`— Не предлагай книги, которых нет в списке этой знаменитости. Если пользователь просит персональные рекомендации «под мой вкус» или с учётом его Книжного ДНК — вежливо объясни, что здесь ты обсуждаешь только вкусы и книги ${c.name}, а персональный подбор по ДНК или коллекции пользователя доступен на странице читательского билета («Книжный ДНК») или в личном кабинете.`)
       sections.push(lines.join('\n'))
     }
 
@@ -348,15 +436,23 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
       const dna = pageContext.readingDna
       const lines: string[] = [
         `Ты находишься в режиме анализа Книжного ДНК (читательский билет № ${dna.ticketNumber}).`,
-        `Читательский архетип пользователя: «${dna.archetypeName}»${dna.motto ? ` (девиз: «${dna.motto.replace(/^[«"']+|[»"']+$/g, '')}»)` : ''}.`,
-        `Оси вкуса пользователя (шкала 0–100):`,
-        `— Сюжет vs Рефлексия: ${dna.storyFocus}`,
-        `— Эмоциональный вес: ${dna.emotionalWeight}`,
-        `— Темп чтения: ${dna.pace}`,
-        `— Свет vs Мрак: ${dna.darkness}`,
-        `— Масштаб мира: ${dna.scope}`,
-        `— Сложность слога: ${dna.complexity}`,
       ]
+      if (dna.customName) {
+        lines.push(`Имя на читательском билете: ${dna.customName}.`)
+      }
+      if (dna.casteName) {
+        lines.push(`Орден читателя: ${dna.casteName}.`)
+      }
+      lines.push(
+        `Читательский архетип: «${dna.archetypeName}»${dna.motto ? ` (девиз: «${dna.motto.replace(/^[«"']+|[»"']+$/g, '')}»)` : ''}.`,
+        `Оси вкуса (шкала 0–100):`,
+        `— Сюжет vs Рефлексия: ${dna.storyFocus} (0 — стремительный сюжет и драйв, 100 — глубокая рефлексия и философия)`,
+        `— Эмоциональный вес: ${dna.emotionalWeight} (0 — легко, чтение для отдыха, 100 — эмоционально тяжело и глубоко)`,
+        `— Темп чтения: ${dna.pace} (0 — быстро, книга за вечер, 100 — неспешное глубокое погружение)`,
+        `— Свет vs Мрак: ${dna.darkness} (0 — тепло, надежда и свет, 100 — мрак, тревога и тьма)`,
+        `— Масштаб мира: ${dna.scope} (0 — камерная история, 100 — масштабный эпик, миры и века)`,
+        `— Сложность слога: ${dna.complexity} (0 — ясный доступный слог, 100 — многослойная сложная проза)`,
+      )
 
       if (dna.favoriteBooks && dna.favoriteBooks.length > 0) {
         lines.push(`Священные книги читателя (топ-3):`)
@@ -373,7 +469,49 @@ export function buildSystemPrompt(profile: TasteProfile, username: string, pageC
       }
 
       lines.push(``)
-      lines.push(`Помоги читателю осмыслить свой архетип, сильные и парадоксальные стороны вкуса и подбери книги в точности под его баланс 6 осей.`)
+      lines.push(`На этой странице обсуждай Книжный ДНК этого билета: орден, архетип, баланс 6 осей, священные книги и криптонит, и подбирай книги строго под эти параметры (не повторяя книги из тир-листов и священные книги). Если пользователь просит разобрать конкретный его тир-лист целиком — вежливо предложи открыть чат на странице этого тир-листа.`)
+      sections.push(lines.join('\n'))
+    }
+
+    if (pageContext.pageType === 'tier-list') {
+      const tl = pageContext.tierList
+      const lines: string[] = [
+        tl
+          ? `Ты находишься на странице тир-листа «${tl.title}».`
+          : `Ты находишься на странице создания или редактирования тир-листа.`,
+      ]
+      if (tl?.description) {
+        lines.push(`Описание тир-листа: ${tl.description}`)
+      }
+      if (tl) {
+        const hasAnyBooks =
+          tl.tiers.some((t) => t.books.length > 0) || tl.unrankedBooks.length > 0
+        if (hasAnyBooks) {
+          lines.push(`Книги в этом тир-листе:`)
+          for (const tier of tl.tiers) {
+            if (tier.books.length === 0) continue
+            const formatted = tier.books
+              .slice(0, 20)
+              .map((b) => `«${b.title}»${b.author ? ` (${b.author})` : ''}`)
+              .join(', ')
+            lines.push(`— Тир ${tier.title}: ${formatted}`)
+          }
+          if (tl.unrankedBooks.length > 0) {
+            const formattedUnranked = tl.unrankedBooks
+              .slice(0, 20)
+              .map((b) => `«${b.title}»${b.author ? ` (${b.author})` : ''}`)
+              .join(', ')
+            lines.push(`— Без тира (нераспределённые): ${formattedUnranked}`)
+          }
+        } else {
+          lines.push(`В этом тир-листе пока нет книг.`)
+        }
+      }
+
+      lines.push(``)
+      lines.push(`ОГРАНИЧЕНИЕ КОНТЕКСТА НА СТРАНИЦЕ ТИР-ЛИСТА:`)
+      lines.push(`— Здесь ты можешь обсуждать и советовать книги ТОЛЬКО опираясь на книги внутри этого тир-листа (расстановку по тирам, оценки и похожие варианты к этим книгам).`)
+      lines.push(`— СТРОГИЙ ЗАПРЕТ НА КНИЖНЫЙ ДНК: На странице тир-листа ты НЕ работаешь с Книжным ДНК и не имеешь к нему доступа. Если пользователь просит посоветовать книгу с учётом его Книжного ДНК, разобрать архетип, 6 осей вкуса, криптонит или читательский билет — НЕ подбирай книги под ДНК и не угадывай его параметры. Вежливо дай понять, что здесь ты можешь обсудить только книги в этом тир-листе, а обсуждать Книжный ДНК и подбирать книги по нему можно на странице читательского билета в разделе «Книжный ДНК».`)
       sections.push(lines.join('\n'))
     }
   }

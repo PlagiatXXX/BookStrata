@@ -78,6 +78,17 @@ describe('ChatRequestSchema', () => {
     })
     expect(result.success).toBe(true)
   })
+
+  it('validates context with pageType tier-list and tierListId', () => {
+    const result = ChatRequestSchema.safeParse({
+      messages: [{ role: 'user', content: 'Что думаешь о тире S?' }],
+      context: {
+        pageType: 'tier-list',
+        tierListId: 'tl-123',
+      },
+    })
+    expect(result.success).toBe(true)
+  })
 })
 
 describe('TierListRoastRequestSchema', () => {

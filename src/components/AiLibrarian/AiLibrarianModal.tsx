@@ -42,6 +42,12 @@ const SUGGESTIONS_BY_CONTEXT: Record<string, readonly Suggestion[]> = {
     { emoji: '☠', label: 'Что почитать взамен моего криптонита?' },
     { emoji: '⚖', label: 'В чём главная особенность моего вкуса?' },
   ] as const,
+  'tier-list': [
+    { emoji: '📊', label: 'Оцени расстановку книг в этом тир-листе' },
+    { emoji: '🎯', label: 'Что почитать похожего на топ-тир списка?' },
+    { emoji: '🔍', label: 'Какие сильные стороны у моего тир-листа?' },
+    { emoji: '⚖', label: 'Есть ли перекосы в оценках этого списка?' },
+  ] as const,
   default: [
     { emoji: '📚', label: 'Что почитать из классики?' },
     { emoji: '🔥', label: 'Посоветуй бестселлер' },
@@ -62,6 +68,7 @@ const WELCOME_BY_CONTEXT: Record<string, string> = {
   celebrity: 'Я проанализировал подборку этой знаменитости и могу рассказать, какие книги в неё вошли.',
   rankings: 'Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.',
   'reading-dna': 'Я изучил твой читательский билет и готов разобрать литературный ДНК, подобрать книги по осям вкуса или найти альтернативу криптониту.',
+  'tier-list': 'Я вижу книги в этом тир-листе и помогу обсудить расстановку или подобрать похожие книги по списку. Обсудить свой Книжный ДНК можно на странице читательского билета.',
   default: 'Я проанализирую твои тир-листы и посоветую книги, которые тебе точно понравятся.',
 }
 
@@ -442,13 +449,13 @@ export function AiLibrarianModal({ isOpen, onClose, context, variant = 'modal' }
     }
   }, [isOpen, isMobile])
 
-  // Переключаем сессию в соответствии с контекстом страницы
+  // Переключаем сессию в соответствии с контекстом страницы (по строковому ключу, чтобы inline-объект context не обрывал стрим)
+  const sessionKey = getSessionKey(context)
   useEffect(() => {
     if (isOpen) {
-      const key = getSessionKey(context)
-      switchSession(key)
+      switchSession(sessionKey)
     }
-  }, [isOpen, context, switchSession])
+  }, [isOpen, sessionKey, switchSession])
 
   // Rotate pre-token statuses
   useEffect(() => {

@@ -17,9 +17,10 @@ export const ChatMessageSchema = z.object({
 })
 
 export const PageContextSchema = z.object({
-  pageType: z.enum(['rankings', 'collection', 'book-description', 'celebrity', 'reading-dna']),
+  pageType: z.enum(['rankings', 'collection', 'book-description', 'celebrity', 'reading-dna', 'tier-list']),
   slug: z.string().optional(),
   ticketNumber: z.string().optional(),
+  tierListId: z.string().optional(),
 })
 
 export const ChatRequestSchema = z.object({
