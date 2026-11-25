@@ -249,4 +249,60 @@ describe("Tier List forkTierList BOLA Security Tests", () => {
       }),
     );
   });
+
+  it("should link published book directly without creating a draft copy (even without author)", async () => {
+    const userId = 8;
+
+    (prisma.tierList.findUniqueOrThrow as any).mockResolvedValue({
+      id: 12,
+      userId: 99,
+      title: "Public Published List",
+      isPublic: true,
+      tiers: [],
+      placements: [{
+        tierId: null,
+        rank: 0,
+        thoughts: "мысль",
+        book: {
+          id: 777,
+          title: "Книга без автора",
+          author: null,
+          authorId: null,
+          coverImageUrl: "u",
+          description: "d",
+          genre: null,
+          tags: [],
+          publishedYear: 2020,
+          externalId: null,
+          source: null,
+          userId: null,
+          status: "published",
+        },
+      }],
+    });
+
+    prismaMock.tierList.create.mockResolvedValue({
+      id: 202,
+      userId,
+      title: "Public Published List (копия)",
+      tiers: [],
+    });
+
+    await forkTierList(12, userId);
+
+    expect(prismaMock.book.create).not.toHaveBeenCalled();
+    expect(prismaMock.tierList.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          placements: expect.objectContaining({
+            create: [
+              expect.objectContaining({
+                book: { connect: { id: 777 } },
+              }),
+            ],
+          }),
+        }),
+      }),
+    );
+  });
 });

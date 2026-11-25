@@ -103,6 +103,24 @@ describe("matchBook: externalId (ступень 1)", () => {
     // каскад пошёл дальше: 3b — точное по строке автора (raw), автор не резолвнут
     expect(prisma.$queryRaw).toHaveBeenCalled();
   });
+
+  it("3b: SQL-нормализация автора снимает дефисы, кавычки и лишние пробелы (как normalizeTitle)", async () => {
+    (prisma.book.findFirst as any).mockResolvedValue(null);
+    (prisma.$queryRaw as any).mockResolvedValue([
+      candidate({ id: 42, title: "Маленький принц", author: "Антуан де Сент-Экзюпери" }),
+    ]);
+
+    const result = await matchBook(prisma as any, {
+      title: "Маленький принц",
+      author: "Антуан де Сент-Экзюпери",
+    });
+
+    expect(result.confidence).toBe("HIGH");
+    expect(result.book?.id).toBe(42);
+    const sql = sqlText((prisma.$queryRaw as any).mock.calls[0]);
+    expect(sql).toContain("regexp_replace");
+    expect(sql).toContain('AS "coverImageUrl"');
+  });
 });
 
 describe("matchBook: точное совпадение (ступень 2)", () => {

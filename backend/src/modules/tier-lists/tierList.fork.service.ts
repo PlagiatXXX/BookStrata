@@ -57,26 +57,31 @@ export async function forkTierList(id: string, userId: number) {
       });
     }
 
-    const placementCreates = await Promise.all(
-      original.placements.map(async (placement) => {
-        const mappedTierId =
-          placement.tierId === null ? null : tierMap.get(placement.tierId);
+    const placementCreates = [];
+    for (const placement of original.placements) {
+      const mappedTierId =
+        placement.tierId === null ? null : tierMap.get(placement.tierId);
 
-        if (placement.tierId !== null && mappedTierId === undefined) {
-          throw new Error(
-            `Mapped tier ID not found for source tier ID: ${placement.tierId}`,
-          );
-        }
+      if (placement.tierId !== null && mappedTierId === undefined) {
+        throw new Error(
+          `Mapped tier ID not found for source tier ID: ${placement.tierId}`,
+        );
+      }
 
-        // Объединение с каноном (единый каталог): если книга уже есть в
-        // каталоге (published) — линкуемся на неё, placementsCount канона
-        // увеличивается на 1, дубль в админке не создаётся. Иначе ищем
-        // свою draft-книгу пользователя; только если и её нет — создаём
-        // личную копию (draft) для изоляции форка от оригинала.
+      // Объединение с каноном (единый каталог):
+      // 1) Если книга оригинала уже опубликована (status === "published") —
+      //    линкуемся напрямую на неё, не дублируем в draft и не рискуем
+      //    потерять связь при отсутствии автора или неоднозначности.
+      // 2) Иначе (draft) — пытаемся сматчить с опубликованным каноном;
+      //    если не найден — ищем свою draft-книгу пользователя; только если
+      //    и её нет — создаём личную копию (draft) для изоляции форка.
+      let catalogId: number | null =
+        placement.book.status === "published" ? placement.book.id : null;
+
+      if (catalogId == null) {
         const hasAuthor = Boolean(
           placement.book.author?.trim() || placement.book.authorId,
         );
-        let catalogId: number | null = null;
         if (hasAuthor) {
           try {
             const match = await matchBook(
@@ -97,53 +102,53 @@ export async function forkTierList(id: string, userId: number) {
             catalogId = await findPublishedCanonFallback(tx, placement.book);
           }
         }
+      }
 
-        const own =
-          catalogId != null
-            ? { id: catalogId }
-            : await findExistingUserBook(tx, userId, {
+      const own =
+        catalogId != null
+          ? { id: catalogId }
+          : await findExistingUserBook(tx, userId, {
+              title: placement.book.title,
+              author: placement.book.author,
+              authorId: placement.book.authorId,
+              externalId: placement.book.externalId,
+              source: placement.book.source,
+            });
+
+      placementCreates.push({
+        rank: placement.rank,
+        ...(mappedTierId !== null && mappedTierId !== undefined
+          ? {
+              tier: {
+                connect: { id: mappedTierId },
+              },
+            }
+          : {}),
+        // Фаза 1.2: мысли — личные данные вхождения (BookPlacement.thoughts),
+        // копируем их из оригинального вхождения, а не из каталога
+        thoughts: placement.thoughts ?? null,
+        book: own
+          ? { connect: { id: own.id } }
+          : {
+              create: {
                 title: placement.book.title,
                 author: placement.book.author,
                 authorId: placement.book.authorId,
+                coverImageUrl: placement.book.coverImageUrl,
+                description: placement.book.description,
+                genre: placement.book.genre,
+                tags: placement.book.tags,
+                publishedYear: placement.book.publishedYear,
                 externalId: placement.book.externalId,
                 source: placement.book.source,
-              });
-
-        return {
-          rank: placement.rank,
-          ...(mappedTierId !== null && mappedTierId !== undefined
-            ? {
-                tier: {
-                  connect: { id: mappedTierId },
-                },
-              }
-            : {}),
-          // Фаза 1.2: мысли — личные данные вхождения (BookPlacement.thoughts),
-          // копируем их из оригинального вхождения, а не из каталога
-          thoughts: placement.thoughts ?? null,
-          book: own
-            ? { connect: { id: own.id } }
-            : {
-                create: {
-                  title: placement.book.title,
-                  author: placement.book.author,
-                  authorId: placement.book.authorId,
-                  coverImageUrl: placement.book.coverImageUrl,
-                  description: placement.book.description,
-                  genre: placement.book.genre,
-                  tags: placement.book.tags,
-                  publishedYear: placement.book.publishedYear,
-                  externalId: placement.book.externalId,
-                  source: placement.book.source,
-                  userId,
-                  status: "draft" as const,
-                  // slug не копируем: каталог должен иметь чистый URL, у личной
-                  // книги страницы нет — slug ей не нужен
-                },
+                userId,
+                status: "draft" as const,
+                // slug не копируем: каталог должен иметь чистый URL, у личной
+                // книги страницы нет — slug ей не нужен
               },
-        };
-      }),
-    );
+            },
+      });
+    }
 
     await tx.tierList.update({
       where: { id: newTierList.id },

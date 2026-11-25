@@ -202,8 +202,8 @@ async function findExactMatch(
         publishedYear: number | null;
         rating: number | null;
       }>
-    >`SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating
-      FROM ${ENTITY_SQL} WHERE lower(trim(translate(author, 'Ёё', 'Ее'))) = ${normAuthor} ${statusFilterSql(options)}`;
+    >`SELECT id, title, author, "authorId", "cover_image_url" AS "coverImageUrl", slug, status, source, "externalId", "publishedYear", rating
+      FROM ${ENTITY_SQL} WHERE trim(regexp_replace(regexp_replace(lower(translate(author, 'Ёё', 'Ее')), '[«»"''(){}—–-]', ' ', 'g'), '\\s+', ' ', 'g')) = ${normAuthor} ${statusFilterSql(options)}`;
     const exact = rows.filter((b) => normalizeTitle(b.title) === normTitle);
     if (exact.length === 1) return resultHigh(toCandidate(exact[0]!));
     if (exact.length > 1) {
@@ -225,7 +225,7 @@ async function findExactMatch(
         publishedYear: number | null;
         rating: number | null;
       }>
-    >`SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating
+    >`SELECT id, title, author, "authorId", "cover_image_url" AS "coverImageUrl", slug, status, source, "externalId", "publishedYear", rating
       FROM ${ENTITY_SQL} WHERE "authorId" IS NULL ${statusFilterSql(options)}`;
     const exact = rows.filter((b) => normalizeTitle(b.title) === normTitle);
     if (exact.length === 1) return resultHigh(toCandidate(exact[0]!));
@@ -259,7 +259,7 @@ async function findFuzzyMatch(
 ): Promise<MatchResult> {
   // top-N по триграммному сходству; GIN-индекс books_trgm_idx на title
   const rows = await db.$queryRaw<FuzzyRow[]>`
-    SELECT id, title, author, "authorId", "cover_image_url", slug, status, source, "externalId", "publishedYear", rating,
+    SELECT id, title, author, "authorId", "cover_image_url" AS "coverImageUrl", slug, status, source, "externalId", "publishedYear", rating,
            similarity(title, ${normTitle}) AS score
     FROM ${ENTITY_SQL}
     WHERE title % ${normTitle} ${statusFilterSql(options)}
