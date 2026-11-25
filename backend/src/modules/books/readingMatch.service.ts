@@ -74,6 +74,8 @@ export interface MatchedBook {
 export interface GetMatchedBooksOptions {
   limit?: number;
   excludeSlug?: string;
+  /** ID книг для исключения (например, священные книги и криптонит из ДНК). */
+  excludeIds?: number[];
   /** Выбранные жанры пользователя — активируют 7-ю ось. */
   genres?: CategoryId[];
   /** Фоновое настроение из Reading DNA (используется при пустом mood). */
@@ -107,7 +109,8 @@ export async function getMatchedBooks(
   mood: UserMood,
   opts: GetMatchedBooksOptions = {},
 ): Promise<MatchedBook[]> {
-  const { limit = 3, excludeSlug, genres = [], dnaMood } = opts;
+  const { limit = 3, excludeSlug, excludeIds = [], genres = [], dnaMood } = opts;
+  const excludedIdSet = new Set(excludeIds);
 
   const hasMoodAxes = Object.values(mood).some((v) => v !== undefined);
   const effectiveMood: UserMood = hasMoodAxes ? mood : (dnaMood ?? mood);
@@ -132,7 +135,7 @@ export async function getMatchedBooks(
 
   const scored: MatchedBook[] = [];
   for (const row of rows) {
-    if (!row.slug || row.slug === excludeSlug) continue;
+    if (!row.slug || row.slug === excludeSlug || excludedIdSet.has(row.id)) continue;
     try {
       const bookProfile = validateReadingProfile(row.readingProfile);
       const genreSim =

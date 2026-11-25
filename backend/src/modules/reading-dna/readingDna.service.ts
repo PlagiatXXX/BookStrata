@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma.js";
 import { NotFoundError } from "../../lib/errors.js";
 import { createBookWithSlug } from "../../lib/slug.js";
@@ -305,14 +306,14 @@ async function resolveOrCreateDnaBook(item: DnaBookItem): Promise<DnaBookItem> {
       }
     }
 
-    // 1b. Fallback-проверка существования книги в БД BookStrata
+    // 1b. Fallback-проверка существования книги в БД BookStrata (приоритет published > draft)
     const existing = await prisma.book.findFirst({
       where: {
         title: { equals: cleanTitle, mode: "insensitive" },
         ...(cleanAuthor ? { author: { equals: cleanAuthor, mode: "insensitive" } } : {}),
       },
       select: { id: true, title: true, author: true, coverImageUrl: true },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ status: "desc" }, { createdAt: "asc" }],
     });
 
     if (existing) {
@@ -379,6 +380,17 @@ export async function saveDna(
 
   const kryptoniteBookId = resolvedKryptoniteBook?.bookId ?? null;
 
+  const derivedAuthors =
+    input.favoriteAuthors && input.favoriteAuthors.length > 0
+      ? input.favoriteAuthors
+      : Array.from(
+          new Set(
+            resolvedFavoriteBooks
+              .map((b) => b.author?.trim())
+              .filter((a): a is string => Boolean(a))
+          )
+        ).slice(0, 5);
+
   const basePayload = {
     customName: input.customName ?? null,
     archetype: archetypeDef.id,
@@ -392,12 +404,12 @@ export async function saveDna(
     scope: input.axes.scope,
     complexity: input.axes.complexity,
     favoriteBooks: resolvedFavoriteBooks as any,
-    kryptoniteBook: resolvedKryptoniteBook ? (resolvedKryptoniteBook as any) : undefined,
+    kryptoniteBook: resolvedKryptoniteBook ? (resolvedKryptoniteBook as any) : Prisma.DbNull,
     favoriteBookIds,
     kryptoniteBookId,
     likedGenres: input.likedGenres,
     dislikedGenres: input.dislikedGenres,
-    favoriteAuthors: input.favoriteAuthors,
+    favoriteAuthors: derivedAuthors,
     theme: input.theme,
   };
 

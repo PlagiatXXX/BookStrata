@@ -19,6 +19,24 @@ const ALLOWED_HOSTS = [
   "googleusercontent.com",
   "s3.twcstorage.ru",
   "cdn.twcstorage.ru",
+  "m.media-amazon.com",
+  "images-na.ssl-images-amazon.com",
+  "s1.livelib.ru",
+  "s2.livelib.ru",
+  "s3.livelib.ru",
+  "s4.livelib.ru",
+  "litres.ru",
+  "cdn.litres.ru",
+  "cdn1.litres.ru",
+  "upload.wikimedia.org",
+  "fantlab.ru",
+  "chitai-gorod.ru",
+  "labirint.ru",
+  "imo10.labirint.ru",
+  "azbooka.ru",
+  "cdn.azbooka.ru",
+  "eksmo.ru",
+  "cdn.eksmo.ru",
 ];
 
 /** RFC 1918 + loopback + link-local + AWS metadata (169.254.0.0/16) */
@@ -108,7 +126,7 @@ export async function proxyRoutes(fastify: FastifyInstance) {
           redirect: "error",
           headers: {
             // Some book APIs check Referer
-            "Referer": "https://bookstrata.pro",
+            "Referer": "https://bookstrata.ru",
             "User-Agent": "BookStrata/1.0",
           },
         });

@@ -90,4 +90,40 @@ describe("readingDnaRedirect.route", () => {
       queryParamValue: "BS-1111-A",
     });
   });
+
+  it("поддерживает QR-маршрут /reading-dna/duel?ticket=BS-7492-X в режиме challenge", async () => {
+    ogMocks.findReadingDnaForOg.mockResolvedValue(null);
+    ogMocks.buildReadingDnaOgFallbackHtml.mockReturnValue("<!DOCTYPE html><html><head><title>Дуэль</title></head></html>");
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/reading-dna/duel?ticket=BS-7492-X",
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(ogMocks.findReadingDnaForOg).toHaveBeenCalledWith("BS-7492-X");
+    expect(ogMocks.buildReadingDnaOgFallbackHtml).toHaveBeenCalledWith({
+      ticket: null,
+      mode: "challenge",
+      queryParamValue: "BS-7492-X",
+    });
+  });
+
+  it("поддерживает ?compare=A&with=B в режиме challenge", async () => {
+    ogMocks.findReadingDnaForOg.mockResolvedValue(null);
+    ogMocks.buildReadingDnaOgFallbackHtml.mockReturnValue("<!DOCTYPE html><html><head><title>Сравнение</title></head></html>");
+
+    const res = await app.inject({
+      method: "GET",
+      url: "/reading-dna?compare=BS-1111-A&with=BS-2222-B",
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(ogMocks.findReadingDnaForOg).toHaveBeenCalledWith("BS-2222-B");
+    expect(ogMocks.buildReadingDnaOgFallbackHtml).toHaveBeenCalledWith({
+      ticket: null,
+      mode: "challenge",
+      queryParamValue: "BS-2222-B",
+    });
+  });
 });

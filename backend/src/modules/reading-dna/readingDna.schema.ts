@@ -19,14 +19,30 @@ export const dnaAxesSchema = z.object({
 
 export type DnaAxes = z.infer<typeof dnaAxesSchema>;
 
+function normalizeBookTitle(title: string): string {
+  return title.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function isSameBookItem(a: DnaBookItem, b: DnaBookItem): boolean {
+  if (a.bookId && b.bookId && a.bookId === b.bookId) return true;
+  return normalizeBookTitle(a.title) === normalizeBookTitle(b.title);
+}
+
 /**
  * Книга в профиле ДНК (Святыня или Криптонит).
  */
 export const dnaBookItemSchema = z.object({
-  title: z.string().min(1, "Название книги обязательно").max(200),
-  author: z.string().max(200).optional(),
+  title: z.string().trim().min(1, "Название книги обязательно").max(200),
+  author: z.string().trim().max(200).optional(),
   bookId: z.number().int().positive().optional(),
-  coverImageUrl: z.string().optional(),
+  coverImageUrl: z
+    .string()
+    .max(1000, "Слишком длинный URL обложки")
+    .refine(
+      (val) => val === "" || /^https?:\/\/|^\//i.test(val),
+      "Некорректный URL обложки"
+    )
+    .optional(),
 });
 
 export type DnaBookItem = z.infer<typeof dnaBookItemSchema>;
@@ -34,19 +50,44 @@ export type DnaBookItem = z.infer<typeof dnaBookItemSchema>;
 /**
  * Входные данные для создания / расчета Reading DNA.
  */
-export const readingDnaInputSchema = z.object({
-  axes: dnaAxesSchema,
-  favoriteBooks: z
-    .array(dnaBookItemSchema)
-    .length(3, "Необходимо указать ровно 3 любимые книги"),
-  kryptoniteBook: dnaBookItemSchema.nullable().optional(),
-  likedGenres: z.array(z.string().max(100)).max(3).default([]),
-  dislikedGenres: z.array(z.string().max(100)).max(3).default([]),
-  favoriteAuthors: z.array(z.string().max(100)).max(5).default([]),
-  customName: z.string().max(50).optional(),
-  theme: z.enum(["dark", "craft"]).default("dark"),
-  guestToken: z.string().max(100).optional(),
-});
+export const readingDnaInputSchema = z
+  .object({
+    axes: dnaAxesSchema,
+    favoriteBooks: z
+      .array(dnaBookItemSchema)
+      .length(3, "Необходимо указать ровно 3 любимые книги"),
+    kryptoniteBook: dnaBookItemSchema.nullable().optional(),
+    likedGenres: z.array(z.string().max(100)).max(3).default([]),
+    dislikedGenres: z.array(z.string().max(100)).max(3).default([]),
+    favoriteAuthors: z.array(z.string().max(100)).max(5).default([]),
+    customName: z.string().max(50).optional(),
+    theme: z.enum(["dark", "craft"]).default("dark"),
+    guestToken: z.string().max(100).optional(),
+  })
+  .superRefine((data, ctx) => {
+    for (let i = 0; i < data.favoriteBooks.length; i++) {
+      for (let j = i + 1; j < data.favoriteBooks.length; j++) {
+        if (isSameBookItem(data.favoriteBooks[i]!, data.favoriteBooks[j]!)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["favoriteBooks", j],
+            message: "Нельзя добавлять одну и ту же книгу несколько раз",
+          });
+          return;
+        }
+      }
+    }
+    if (
+      data.kryptoniteBook &&
+      data.favoriteBooks.some((fav) => isSameBookItem(fav, data.kryptoniteBook!))
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["kryptoniteBook"],
+        message: "Любимая книга не может одновременно быть криптонитом",
+      });
+    }
+  });
 
 export type ReadingDnaInput = z.infer<typeof readingDnaInputSchema>;
 

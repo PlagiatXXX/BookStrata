@@ -142,6 +142,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
       complexity?: number;
       limit?: number;
       exclude?: string;
+      excludeIds?: string;
       genres?: string;
     };
   }>("/match",
@@ -158,6 +159,7 @@ export async function booksRoutes(fastify: FastifyInstance) {
             complexity: { type: "number", minimum: 0, maximum: 100 },
             limit: { type: "number", minimum: 1, maximum: 10, default: 3 },
             exclude: { type: "string" },
+            excludeIds: { type: "string" },
             genres: { type: "string" }, // "fantasy,horror"
           },
         },
@@ -173,8 +175,14 @@ export async function booksRoutes(fastify: FastifyInstance) {
         complexity,
         limit = 3,
         exclude,
+        excludeIds,
         genres,
       } = request.query;
+
+      const excludedBookIds = (excludeIds ?? "")
+        .split(",")
+        .map((id) => Number.parseInt(id.trim(), 10))
+        .filter((id) => Number.isInteger(id) && id > 0);
 
       const genreList = (genres ?? "")
         .split(",")
@@ -212,7 +220,13 @@ export async function booksRoutes(fastify: FastifyInstance) {
 
       const books = await getMatchedBooks(
         queryMood,
-        { limit, excludeSlug: exclude, genres: genreList, dnaMood: dnaMood ?? undefined },
+        {
+          limit,
+          excludeSlug: exclude,
+          excludeIds: excludedBookIds,
+          genres: genreList,
+          dnaMood: dnaMood ?? undefined,
+        },
       );
       return reply.send(createSuccessResponse({ books }));
     },

@@ -244,7 +244,7 @@ export function buildReadingDnaOgFallbackHtml(params: {
       : "Книжный ДНК: узнай свой читательский архетип | BookStrata";
     description =
       "Пройдите интерактивный тест по 6 осям вкуса, получите читательский билет с архетипом и сравните вкусы с друзьями на BookStrata.";
-    ogImage = `${siteUrl}/og-landing.webp`;
+    ogImage = `${siteUrl}/og-reading-dna.webp`;
   }
 
   const metaTags = [

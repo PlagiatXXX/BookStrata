@@ -92,6 +92,38 @@ describe("readingDna.schema", () => {
     expect(parsed.challengerName).toBe("Алиса");
   });
 
+  it("запрещает дубликаты книг в favoriteBooks и совпадение криптонита с любимой книгой", () => {
+    expect(() =>
+      readingDnaInputSchema.parse({
+        axes: validAxes,
+        favoriteBooks: [
+          { title: "1984", bookId: 25 },
+          { title: "1984", bookId: 25 },
+          { title: "Дюна" },
+        ],
+      })
+    ).toThrow(/одну и ту же книгу/i);
+
+    expect(() =>
+      readingDnaInputSchema.parse({
+        axes: validAxes,
+        favoriteBooks: validBooks,
+        kryptoniteBook: { title: " дюна " },
+      })
+    ).toThrow(/одновременно быть криптонитом/i);
+
+    expect(() =>
+      readingDnaInputSchema.parse({
+        axes: validAxes,
+        favoriteBooks: [
+          { title: "1984", coverImageUrl: "javascript:alert(1)" },
+          { title: "Дюна" },
+          { title: "Улисс" },
+        ],
+      })
+    ).toThrow(/Некорректный URL обложки/i);
+  });
+
   it("валидирует выходную схему ответа билета ReadingDna", () => {
     const responseData = {
       id: 1,

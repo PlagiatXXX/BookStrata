@@ -152,6 +152,15 @@ describe("GET /api/books/match", () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it("исключает книги по excludeIds", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/api/books/match?darkness=90&excludeIds=1",
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().data.books.map((b: { id: number }) => b.id)).toEqual([2]);
+  });
+
   it("слайдер + мусорный genres → 200 (слайдер спасает)", async () => {
     const res = await app.inject({
       method: "GET",

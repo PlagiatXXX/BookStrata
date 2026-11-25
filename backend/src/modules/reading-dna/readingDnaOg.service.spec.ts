@@ -76,7 +76,7 @@ describe("readingDnaOg.service", () => {
       });
 
       expect(html).toContain("<title>Книжный ДНК: узнай свой читательский архетип | BookStrata</title>");
-      expect(html).toContain('property="og:image" content="https://bookstrata.ru/og-landing.webp"');
+      expect(html).toContain('property="og:image" content="https://bookstrata.ru/og-reading-dna.webp"');
       expect(html).toContain('name="robots" content="noindex, follow"');
     });
 
