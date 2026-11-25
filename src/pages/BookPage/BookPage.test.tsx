@@ -1005,6 +1005,17 @@ describe("BookPage: мобильная адаптивность действий
       }
     });
   });
+
+  it("hero-блок ограничивает минимальную высоту и на мобильных выравнивает контент к верху (защита от tall-скриншотов)", async () => {
+    const { container } = renderPage();
+
+    await screen.findByRole("heading", { level: 1 });
+    const hero = container.querySelector("main > header");
+    expect(hero).not.toBeNull();
+    expect(hero!.className).toContain("min-h-[min(calc(100dvh-4rem),56rem)]");
+    expect(hero!.className).toContain("justify-start");
+    expect(hero!.className).toContain("md:justify-center");
+  });
 });
 
 describe("buildDescriptionSnippet", () => {
